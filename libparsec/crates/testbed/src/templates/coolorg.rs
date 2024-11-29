@@ -75,7 +75,7 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
     builder.workspace_data_storage_fetch_workspace_vlob(
         "alice@dev1",
         wksp1_id,
-        libparsec_types::Regex::empty(),
+        libparsec_types::PreventSyncPattern::empty(),
     );
     builder.workspace_data_storage_fetch_realm_checkpoint("alice@dev1", wksp1_id);
 
@@ -87,7 +87,7 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
     builder.workspace_data_storage_fetch_workspace_vlob(
         "bob@dev1",
         wksp1_id,
-        libparsec_types::Regex::empty(),
+        libparsec_types::PreventSyncPattern::empty(),
     );
     builder.workspace_data_storage_fetch_realm_checkpoint("bob@dev1", wksp1_id);
 

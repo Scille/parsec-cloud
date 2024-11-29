@@ -46,7 +46,7 @@ pub struct ClientConfig {
     pub mountpoint_mount_strategy: MountpointMountStrategy,
     pub workspace_storage_cache_size: WorkspaceStorageCacheSize,
     /// The pattern used to filter out files that should not be synced with the server like temporary files.
-    pub prevent_sync_pattern: Regex,
+    pub prevent_sync_pattern: PreventSyncPattern,
     pub proxy: ProxyConfig,
     /// If `false`, nothing runs & react in the background, useful for tests
     /// or CLI where the client is started to only perform a single operation.

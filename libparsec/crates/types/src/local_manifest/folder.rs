@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, DataError, DataResult,
-    DateTime, DeviceID, EntryName, FolderManifest, Regex, VlobID,
+    DateTime, DeviceID, EntryName, FolderManifest, PreventSyncPattern, VlobID,
 };
 
 use super::{impl_local_manifest_dump, impl_local_manifest_load};
@@ -165,7 +165,7 @@ impl LocalFolderManifest {
     pub fn evolve_children_and_mark_updated(
         &mut self,
         data: HashMap<EntryName, Option<VlobID>>,
-        prevent_sync_pattern: &Regex,
+        prevent_sync_pattern: &PreventSyncPattern,
         timestamp: DateTime,
     ) {
         let mut actually_updated = false;
@@ -217,7 +217,7 @@ impl LocalFolderManifest {
 
     pub fn apply_prevent_sync_pattern(
         &self,
-        prevent_sync_pattern: &Regex,
+        prevent_sync_pattern: &PreventSyncPattern,
         timestamp: DateTime,
     ) -> Self {
         UnconfinedLocalFolderManifest::remove_confinement(self).apply_confinement(
@@ -227,7 +227,7 @@ impl LocalFolderManifest {
         )
     }
 
-    pub fn from_remote(remote: FolderManifest, prevent_sync_pattern: &Regex) -> Self {
+    pub fn from_remote(remote: FolderManifest, prevent_sync_pattern: &PreventSyncPattern) -> Self {
         UnconfinedLocalFolderManifest::apply_confinement_from_remote(remote, prevent_sync_pattern)
     }
 
@@ -246,7 +246,7 @@ impl LocalFolderManifest {
     /// set to the provided `timestamp`.
     pub fn from_remote_with_restored_local_confinement_points(
         remote: FolderManifest,
-        prevent_sync_pattern: &Regex,
+        prevent_sync_pattern: &PreventSyncPattern,
         local_manifest: &Self,
         timestamp: DateTime,
     ) -> Self {
@@ -302,7 +302,7 @@ impl UnconfinedLocalFolderManifest {
     /// local manifest to merge with. Otherwise, use `apply_confinement`.
     pub fn apply_confinement_from_remote(
         remote: FolderManifest,
-        prevent_sync_pattern: &Regex,
+        prevent_sync_pattern: &PreventSyncPattern,
     ) -> LocalFolderManifest {
         // Filter out the base entries that matches the prevent sync pattern
         let mut new_children = remote.children.clone();
@@ -347,7 +347,7 @@ impl UnconfinedLocalFolderManifest {
     pub fn apply_confinement(
         self,
         existing_local_manifest: &LocalFolderManifest,
-        prevent_sync_pattern: &Regex,
+        prevent_sync_pattern: &PreventSyncPattern,
         timestamp: DateTime,
     ) -> LocalFolderManifest {
         // Filter out the base entries that matches the prevent sync pattern

@@ -3437,7 +3437,7 @@ impl TestbedEventWorkspaceDataStorageFetchFolderVlob {
         device: DeviceID,
         realm: VlobID,
         vlob: VlobID,
-        prevent_sync_pattern: Regex,
+        prevent_sync_pattern: PreventSyncPattern,
     ) -> Self {
         // 1) Consistency checks
 

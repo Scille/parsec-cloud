@@ -299,7 +299,10 @@ fn from_remote(
         children,
     };
 
-    let lfm = LocalFolderManifest::from_remote(fm.clone(), &Regex::from_regex_str(regex).unwrap());
+    let lfm = LocalFolderManifest::from_remote(
+        fm.clone(),
+        &PreventSyncPattern::from_regex_str(regex).unwrap(),
+    );
 
     p_assert_eq!(lfm.base, fm);
     assert!(!lfm.need_sync);
@@ -474,7 +477,7 @@ fn from_remote_with_restored_local_confinement_points(
 
     let lfm = LocalFolderManifest::from_remote_with_restored_local_confinement_points(
         fm.clone(),
-        &Regex::from_regex_str(regex).unwrap(),
+        &PreventSyncPattern::from_regex_str(regex).unwrap(),
         &lfm,
         timestamp,
     );
@@ -692,7 +695,8 @@ fn evolve_children_and_mark_updated(
     #[case] expected_local_confinement_points: HashSet<VlobID>,
     #[case] expected_need_sync: bool,
 ) {
-    let prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
+    let prevent_sync_pattern =
+        PreventSyncPattern::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let t1 = "2000-01-01T00:00:00Z".parse().unwrap();
     let t2 = "2000-01-02T00:00:00Z".parse().unwrap();
 
@@ -795,7 +799,8 @@ fn apply_prevent_sync_pattern_nothing_confined() {
     };
 
     // New prevent sync pattern doesn't match any entry, so nothing should change
-    let new_prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
+    let new_prevent_sync_pattern =
+        PreventSyncPattern::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let lfm2 = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     p_assert_eq!(lfm2, lfm);
@@ -875,7 +880,8 @@ fn apply_prevent_sync_pattern_stability_with_confined() {
     };
 
     // We re-apply the same `\.tmp$` prevent sync pattern, so nothing should change
-    let current_prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
+    let current_prevent_sync_pattern =
+        PreventSyncPattern::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let lfm2 = lfm.apply_prevent_sync_pattern(&current_prevent_sync_pattern, t3);
 
     p_assert_eq!(lfm2, lfm);
@@ -923,7 +929,8 @@ fn apply_prevent_sync_pattern_with_non_confined_local_children_matching_future_p
     };
 
     // Now we change the prevent sync pattern to something that matches some of the local children
-    let new_prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
+    let new_prevent_sync_pattern =
+        PreventSyncPattern::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     p_assert_eq!(lfm.remote_confinement_points, HashSet::new());
@@ -1007,7 +1014,8 @@ fn apply_prevent_sync_pattern_with_non_confined_remote_children_matching_future_
     };
 
     // Now we change the prevent sync pattern to something that matches some of the remote children
-    let new_prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
+    let new_prevent_sync_pattern =
+        PreventSyncPattern::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     p_assert_eq!(
@@ -1071,7 +1079,7 @@ fn apply_prevent_sync_pattern_with_confined_local_children_turning_non_confined(
 
     // The new prevent sync pattern doesn't match any entry, hence `fileA.tmp` is
     // no longer confined, hence manifest's `updated` field should also get updated.
-    let new_prevent_sync_pattern = Regex::from_regex_str(r"\.tmp~$").unwrap();
+    let new_prevent_sync_pattern = PreventSyncPattern::from_regex_str(r"\.tmp~$").unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     p_assert_eq!(lfm.remote_confinement_points, HashSet::new());
@@ -1149,7 +1157,7 @@ fn apply_prevent_sync_pattern_with_local_changes_and_confined_remote_children_tu
     // Manifest is still need sync due to the removal of `file2.txt`, however the
     // `updated` shouldn't has changed since the change in confinement is on
     // an entry that is already in remote manifest !
-    let new_prevent_sync_pattern = Regex::from_regex_str(r"\.tmp~$").unwrap();
+    let new_prevent_sync_pattern = PreventSyncPattern::from_regex_str(r"\.tmp~$").unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     p_assert_eq!(lfm.remote_confinement_points, HashSet::new());
@@ -1218,7 +1226,7 @@ fn apply_prevent_sync_pattern_with_only_confined_remote_children_turning_non_con
     // The new prevent sync pattern doesn't match any entry, hence `file3.tmp` is
     // no longer confined, but manifest doesn't need to be sync since this
     // entry is already in remote manifest !
-    let new_prevent_sync_pattern = Regex::from_regex_str(r"\.tmp~$").unwrap();
+    let new_prevent_sync_pattern = PreventSyncPattern::from_regex_str(r"\.tmp~$").unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t2);
 
     p_assert_eq!(lfm.remote_confinement_points, HashSet::new());
@@ -1306,7 +1314,7 @@ fn apply_prevent_sync_pattern_with_broader_prevent_sync_pattern() {
 
     // `.+` is a superset of the previous `\.tmp$` pattern, all entries should
     // be confined now
-    let new_prevent_sync_pattern = Regex::from_regex_str(".+").unwrap();
+    let new_prevent_sync_pattern = PreventSyncPattern::from_regex_str(".+").unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     p_assert_eq!(
@@ -1433,7 +1441,7 @@ fn apply_prevent_sync_pattern_on_renamed_entry(
     };
 
     // Now apply the new prevent sync pattern...
-    let new_prevent_sync_pattern = Regex::from_regex_str(r"\.tmp~$").unwrap();
+    let new_prevent_sync_pattern = PreventSyncPattern::from_regex_str(r"\.tmp~$").unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     p_assert_eq!(

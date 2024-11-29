@@ -241,7 +241,7 @@ pub(super) fn merge_local_file_manifest(
 pub(super) fn merge_local_folder_manifest(
     local_author: DeviceID,
     timestamp: DateTime,
-    prevent_sync_pattern: &Regex,
+    prevent_sync_pattern: &PreventSyncPattern,
     local: &LocalFolderManifest,
     remote: FolderManifest,
 ) -> MergeLocalFolderManifestOutcome {

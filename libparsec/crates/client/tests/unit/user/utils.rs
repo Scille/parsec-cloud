@@ -19,7 +19,7 @@ pub(crate) async fn user_ops_factory(env: &TestbedEnv, device: &Arc<LocalDevice>
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,
-        prevent_sync_pattern: Regex::empty(),
+        prevent_sync_pattern: PreventSyncPattern::empty(),
     });
     let event_bus = EventBus::default();
     let cmds = Arc::new(

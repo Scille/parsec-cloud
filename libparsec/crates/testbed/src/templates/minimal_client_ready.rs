@@ -114,7 +114,7 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
     builder.workspace_data_storage_fetch_workspace_vlob(
         "alice@dev1",
         wksp1_id,
-        libparsec_types::Regex::empty(),
+        libparsec_types::PreventSyncPattern::empty(),
     );
     builder.workspace_data_storage_fetch_file_vlob("alice@dev1", wksp1_id, bar_txt_id);
     builder.workspace_cache_storage_fetch_block("alice@dev1", wksp1_id, bar_txt_block_id);
@@ -122,13 +122,13 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
         "alice@dev1",
         wksp1_id,
         foo_id,
-        libparsec_types::Regex::empty(),
+        libparsec_types::PreventSyncPattern::empty(),
     );
     builder.workspace_data_storage_fetch_folder_vlob(
         "alice@dev1",
         wksp1_id,
         foo_spam_id,
-        libparsec_types::Regex::empty(),
+        libparsec_types::PreventSyncPattern::empty(),
     );
     builder.workspace_data_storage_fetch_file_vlob("alice@dev1", wksp1_id, foo_egg_txt_id);
     builder.workspace_data_storage_fetch_realm_checkpoint("alice@dev1", wksp1_id);

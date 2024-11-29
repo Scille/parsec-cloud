@@ -28,7 +28,7 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
             builder.workspace_data_storage_fetch_workspace_vlob(
                 "alice@dev1",
                 wksp1_id,
-                libparsec_types::Regex::empty(),
+                libparsec_types::PreventSyncPattern::empty(),
             );
         } else {
             builder
@@ -41,7 +41,7 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
                 "alice@dev1",
                 wksp1_id,
                 wksp1_foo_id,
-                libparsec_types::Regex::empty(),
+                libparsec_types::PreventSyncPattern::empty(),
             );
         }
     })
@@ -466,7 +466,7 @@ async fn bootstrap_env(env: &TestbedEnv, root_level: bool) -> Env {
 
     let (base_path, parent_id) = env
         .customize(|builder| {
-            let prevent_sync_pattern = Regex::from_regex_str(r"\.tmp$").unwrap();
+            let prevent_sync_pattern = PreventSyncPattern::from_regex_str(r"\.tmp$").unwrap();
             let res = if root_level {
                 // Remove all children from the workspace
                 builder
@@ -752,7 +752,7 @@ async fn rename_a_entry_to_be_confined(
         &env.discriminant_dir,
         &bob,
         realm_id,
-        Regex::empty(), // Use empty pattern to prevent workspace to filter out any entry
+        PreventSyncPattern::empty(), // Use empty pattern to prevent workspace to filter out any entry
     )
     .await;
     ops_inbound_sync(&bob_ops).await;
@@ -890,7 +890,7 @@ async fn rename_a_confined_entry_to_not_be_confined(
         &env.discriminant_dir,
         &bob,
         realm_id,
-        Regex::empty(), // Use empty pattern to prevent workspace to filter out any entry
+        PreventSyncPattern::empty(), // Use empty pattern to prevent workspace to filter out any entry
     )
     .await;
     ops_inbound_sync(&bob_ops).await;
@@ -1022,7 +1022,7 @@ async fn rename_a_entry_to_be_confined_with_different_parent(
         &env.discriminant_dir,
         &bob,
         realm_id,
-        Regex::empty(), // Use empty pattern to prevent workspace to filter out any entry
+        PreventSyncPattern::empty(), // Use empty pattern to prevent workspace to filter out any entry
     )
     .await;
     ops_inbound_sync(&bob_ops).await;
@@ -1167,7 +1167,7 @@ async fn rename_a_confined_entry_to_not_be_confined_with_different_parent(
         &env.discriminant_dir,
         &bob,
         realm_id,
-        Regex::empty(), // Use empty pattern to prevent workspace to filter out any entry
+        PreventSyncPattern::empty(), // Use empty pattern to prevent workspace to filter out any entry
     )
     .await;
     ops_inbound_sync(&bob_ops).await;

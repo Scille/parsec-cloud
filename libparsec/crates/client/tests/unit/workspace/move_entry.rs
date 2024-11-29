@@ -183,7 +183,7 @@ async fn src_not_found(
                 "alice@dev1",
                 wksp1_id,
                 wksp1_id,
-                libparsec_types::Regex::empty(),
+                libparsec_types::PreventSyncPattern::empty(),
             );
         }
     })
@@ -253,7 +253,7 @@ async fn exchange_but_dst_not_found(
                 "alice@dev1",
                 wksp1_id,
                 wksp1_id,
-                libparsec_types::Regex::empty(),
+                libparsec_types::PreventSyncPattern::empty(),
             );
         }
     })

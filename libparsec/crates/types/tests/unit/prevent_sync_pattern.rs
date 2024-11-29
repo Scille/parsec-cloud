@@ -7,7 +7,7 @@ use std::{
 
 use libparsec_tests_lite::prelude::*;
 
-use crate::prevent_sync_pattern::Regex;
+use crate::prevent_sync_pattern::PreventSyncPattern;
 
 #[rstest]
 #[case::base("*.rs\n*.py", "base.tmp")]
@@ -23,8 +23,8 @@ use crate::prevent_sync_pattern::Regex;
 )]
 fn from_pattern_file_content(#[case] file_content: &str, #[case] filename: &str) {
     let reader = Cursor::new(file_content.to_string());
-    let regex =
-        Regex::from_glob_reader(filename, BufReader::new(reader)).expect("Regex should be valid");
+    let regex = PreventSyncPattern::from_glob_reader(filename, BufReader::new(reader))
+        .expect("Regex should be valid");
 
     assert!(regex.is_match("file.py"));
     assert!(regex.is_match("file.rs"));
@@ -33,7 +33,7 @@ fn from_pattern_file_content(#[case] file_content: &str, #[case] filename: &str)
 
 #[test]
 fn load_default_pattern_file() {
-    let regex = Regex::from_file(Path::new("src/default_pattern.ignore"))
+    let regex = PreventSyncPattern::from_file(Path::new("src/default_pattern.ignore"))
         .expect("Load default pattern file failed");
 
     for pattern in &[
@@ -65,7 +65,7 @@ fn wildcard_pattern(
     #[case] bad_base: &str,
     #[case] other_case: &str,
 ) {
-    let regex = Regex::from_glob_pattern(pattern_str).expect("Should be valid");
+    let regex = PreventSyncPattern::from_glob_pattern(pattern_str).expect("Should be valid");
     assert!(regex.is_match(valid_case));
     assert!(!regex.is_match(bad_base));
     assert!(regex.is_match(other_case));
@@ -79,7 +79,7 @@ fn regex_pattern(
     #[case] bad_base: &str,
     #[case] other_case: &str,
 ) {
-    let regex = Regex::from_regex_str(regex_str).expect("Should be valid");
+    let regex = PreventSyncPattern::from_regex_str(regex_str).expect("Should be valid");
     assert!(regex.is_match(valid_case));
     assert!(!regex.is_match(bad_base));
     assert!(regex.is_match(other_case));
@@ -87,6 +87,6 @@ fn regex_pattern(
 
 #[test]
 fn bad_regex_str_creation() {
-    let r = crate::prevent_sync_pattern::Regex::from_regex_str(r"fooo][?");
+    let r = crate::prevent_sync_pattern::PreventSyncPattern::from_regex_str(r"fooo][?");
     assert!(r.is_err());
 }

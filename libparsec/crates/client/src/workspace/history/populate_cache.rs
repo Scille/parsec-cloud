@@ -63,7 +63,7 @@ pub(super) async fn populate_cache_from_server(
             LocalFileManifest::from_remote(manifest),
         ))),
         Ok(ChildManifest::Folder(manifest)) => Some(ArcLocalChildManifest::Folder(Arc::new(
-            LocalFolderManifest::from_remote(manifest, &Regex::empty()),
+            LocalFolderManifest::from_remote(manifest, &PreventSyncPattern::empty()),
         ))),
         // This is unexpected: we got an entry ID from a parent folder/workspace
         // manifest, but this ID points to nothing according to the server :/
