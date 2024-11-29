@@ -55,12 +55,12 @@ impl From<ClientConfig> for libparsec_client::ClientConfig {
             proxy: ProxyConfig::default(),
             with_monitors: config.with_monitors,
             prevent_sync_pattern: match config.prevent_sync_pattern {
-                Some(pattern) => Regex::from_glob_reader(
+                Some(pattern) => PreventSyncPattern::from_glob_reader(
                     "client_prevent_sync_pattern",
                     std::io::Cursor::new(pattern),
                 )
                 .expect("Cannot process provided prevent sync pattern file"),
-                None => Regex::default(),
+                None => PreventSyncPattern::default(),
             },
         }
     }

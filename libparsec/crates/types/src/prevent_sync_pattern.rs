@@ -11,11 +11,11 @@ use std::{
 use crate::{RegexError, RegexResult};
 
 #[derive(Clone, Debug)]
-pub struct Regex(pub Vec<regex::Regex>);
+pub struct PreventSyncPattern(pub Vec<regex::Regex>);
 
 const DEFAULT_PREVENT_SYNC_PATTERN: &str = std::include_str!("default_pattern.ignore");
 
-impl Default for Regex {
+impl Default for PreventSyncPattern {
     fn default() -> Self {
         Self::from_glob_reader(
             stringify!(DEFAULT_PREVENT_SYNC_PATTERN),
@@ -32,7 +32,7 @@ fn escape_globing_pattern(string: &str) -> String {
     str::replace(string, "$", "\\$")
 }
 
-impl Regex {
+impl PreventSyncPattern {
     /// Returns a regex which is built from a file that contains shell like patterns
     pub fn from_file(file_path: &Path) -> RegexResult<Self> {
         let reader = fs::File::open(file_path).map(BufReader::new).map_err(|e| {
@@ -102,7 +102,7 @@ fn from_glob_pattern(pattern: &str) -> RegexResult<regex::Regex> {
     fnmatch_regex::glob_to_regex(&escaped_str).map_err(|err| RegexError::GlobPatternError { err })
 }
 
-impl PartialEq for Regex {
+impl PartialEq for PreventSyncPattern {
     // This overload is only used in python tests. We are not using HashSet directly
     // in the `Regex` type because `regex::Regex` has no implementation of `Hash`.
     fn eq(&self, other: &Self) -> bool {
@@ -116,7 +116,7 @@ impl PartialEq for Regex {
     }
 }
 
-impl Display for Regex {
+impl Display for PreventSyncPattern {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(
             f,

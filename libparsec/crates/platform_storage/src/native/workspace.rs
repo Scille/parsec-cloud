@@ -424,7 +424,10 @@ impl PlatformWorkspaceStorage {
         })
     }
 
-    pub async fn set_prevent_sync_pattern(&mut self, pattern: &Regex) -> anyhow::Result<bool> {
+    pub async fn set_prevent_sync_pattern(
+        &mut self,
+        pattern: &PreventSyncPattern,
+    ) -> anyhow::Result<bool> {
         let pattern = pattern.to_string();
 
         let mut transaction = self.conn.begin().await?;
@@ -436,11 +439,11 @@ impl PlatformWorkspaceStorage {
         Ok(fully_applied)
     }
 
-    pub async fn get_prevent_sync_pattern(&mut self) -> anyhow::Result<(Regex, bool)> {
+    pub async fn get_prevent_sync_pattern(&mut self) -> anyhow::Result<(PreventSyncPattern, bool)> {
         db_get_prevent_sync_pattern(&mut self.conn)
             .await
             .and_then(|(pattern, fully_applied)| {
-                Regex::from_regex_str(&pattern)
+                PreventSyncPattern::from_regex_str(&pattern)
                     .map(|re| (re, fully_applied))
                     .map_err(anyhow::Error::from)
             })
@@ -448,7 +451,7 @@ impl PlatformWorkspaceStorage {
 
     pub async fn mark_prevent_sync_pattern_fully_applied(
         &mut self,
-        pattern: &Regex,
+        pattern: &PreventSyncPattern,
     ) -> Result<(), MarkPreventSyncPatternFullyAppliedError> {
         let pattern = pattern.to_string();
 

@@ -333,7 +333,7 @@ async fn read_only_realm(
         builder.workspace_data_storage_fetch_workspace_vlob(
             "bob@dev1",
             wksp1_id,
-            libparsec_types::Regex::empty(),
+            libparsec_types::PreventSyncPattern::empty(),
         );
         builder.workspace_data_storage_fetch_file_vlob("bob@dev1", wksp1_id, bar_txt_id);
     })

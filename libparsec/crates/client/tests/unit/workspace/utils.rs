@@ -20,7 +20,7 @@ pub(crate) async fn workspace_ops_factory(
         discriminant_dir,
         device,
         realm_id,
-        Regex::from_regex_str(r"\.tmp$").unwrap(),
+        PreventSyncPattern::from_regex_str(r"\.tmp$").unwrap(),
     )
     .await
 }
@@ -29,7 +29,7 @@ pub(crate) async fn workspace_ops_with_prevent_sync_pattern_factory(
     discriminant_dir: &Path,
     device: &Arc<LocalDevice>,
     realm_id: VlobID,
-    prevent_sync_pattern: Regex,
+    prevent_sync_pattern: PreventSyncPattern,
 ) -> WorkspaceOps {
     let config = Arc::new(ClientConfig {
         config_dir: discriminant_dir.to_owned(),

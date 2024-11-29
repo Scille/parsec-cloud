@@ -13,12 +13,12 @@ pub enum ApplyPreventSyncPatternError {
 pub(super) async fn ensure_prevent_sync_pattern_applied_to_wksp(
     storage: &mut WorkspaceStorage,
     device: Arc<LocalDevice>,
-    pattern: &Regex,
+    prevent_sync_pattern: &PreventSyncPattern,
 ) -> Result<(), ApplyPreventSyncPatternError> {
     const PAGE_SIZE: u32 = 1000;
 
     let fully_applied = storage
-        .set_prevent_sync_pattern(pattern)
+        .set_prevent_sync_pattern(prevent_sync_pattern)
         .await
         .map_err(ApplyPreventSyncPatternError::Internal)?;
 
@@ -38,8 +38,8 @@ pub(super) async fn ensure_prevent_sync_pattern_applied_to_wksp(
             // Only the prevent sync pattern could be applied to a folder type manifest.
             // We assume that workspace manifest and folder manifest could both be deserialize as folder manifest.
             if let Some(folder) = decode_folder(encoded_manifest, &device.local_symkey)? {
-                let new_folder =
-                    folder.apply_prevent_sync_pattern(pattern, device.time_provider.now());
+                let new_folder = folder
+                    .apply_prevent_sync_pattern(prevent_sync_pattern, device.time_provider.now());
                 if new_folder != folder {
                     updated_manifest.push(UpdateManifestData {
                         entry_id: new_folder.base.id,
@@ -65,7 +65,7 @@ pub(super) async fn ensure_prevent_sync_pattern_applied_to_wksp(
         offset += PAGE_SIZE;
     }
     storage
-        .mark_prevent_sync_pattern_fully_applied(pattern)
+        .mark_prevent_sync_pattern_fully_applied(prevent_sync_pattern)
         .await
         .map_err(|e| ApplyPreventSyncPatternError::Internal(e.into()))?;
     Ok(())

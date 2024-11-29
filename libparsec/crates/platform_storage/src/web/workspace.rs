@@ -22,8 +22,6 @@ use crate::{
     },
 };
 
-use super::{db, model::PreventSyncPattern};
-
 #[derive(Debug)]
 pub(crate) struct PlatformWorkspaceStorage {
     conn: Arc<IdbDatabase>,
@@ -411,10 +409,13 @@ impl PlatformWorkspaceStorage {
         })
     }
 
-    pub async fn set_prevent_sync_pattern(&mut self, pattern: &Regex) -> anyhow::Result<bool> {
-        let tx = PreventSyncPattern::write(&self.conn)?;
+    pub async fn set_prevent_sync_pattern(
+        &mut self,
+        pattern: &PreventSyncPattern,
+    ) -> anyhow::Result<bool> {
+        let tx = super::model::PreventSyncPattern::write(&self.conn)?;
 
-        let current = PreventSyncPattern::get(&tx).await?;
+        let current = super::model::PreventSyncPattern::get(&tx).await?;
 
         let regex = pattern.to_string();
         match current {
@@ -423,34 +424,34 @@ impl PlatformWorkspaceStorage {
             // Either we don't have a prevent sync pattern in the database
             // or the pattern is different from the one provided.
             None | Some(_) => {
-                let value = PreventSyncPattern {
+                let value = super::model::PreventSyncPattern {
                     pattern: regex,
                     fully_applied: false,
                 };
                 value.insert(&tx).await?;
-                db::commit(tx).await.and(Ok(false))
+                super::db::commit(tx).await.and(Ok(false))
             }
         }
     }
 
-    pub async fn get_prevent_sync_pattern(&mut self) -> anyhow::Result<(Regex, bool)> {
-        let tx = PreventSyncPattern::read(&self.conn)?;
-        let res = PreventSyncPattern::get(&tx)
+    pub async fn get_prevent_sync_pattern(&mut self) -> anyhow::Result<(PreventSyncPattern, bool)> {
+        let tx = super::model::PreventSyncPattern::read(&self.conn)?;
+        let res = super::model::PreventSyncPattern::get(&tx)
             .await?
             .expect("The database should be initialized with a default value");
 
-        let regex = Regex::from_regex_str(&res.pattern).map_err(anyhow::Error::from)?;
+        let pattern = PreventSyncPattern::from_regex(&res.pattern).map_err(anyhow::Error::from)?;
 
-        Ok((regex, res.fully_applied))
+        Ok((pattern, res.fully_applied))
     }
 
     pub async fn mark_prevent_sync_pattern_fully_applied(
         &mut self,
-        pattern: &Regex,
+        pattern: &PreventSyncPattern,
     ) -> Result<(), MarkPreventSyncPatternFullyAppliedError> {
-        let tx = PreventSyncPattern::write(&self.conn)?;
+        let tx = super::model::PreventSyncPattern::write(&self.conn)?;
 
-        let current = PreventSyncPattern::get(&tx).await?;
+        let current = super::model::PreventSyncPattern::get(&tx).await?;
 
         let regex = pattern.to_string();
         match current {
@@ -461,14 +462,14 @@ impl PlatformWorkspaceStorage {
                     return Ok(());
                 }
 
-                let value = PreventSyncPattern {
+                let value = super::model::PreventSyncPattern {
                     pattern: regex,
                     fully_applied: true,
                 };
 
                 value.insert(&tx).await?;
 
-                db::commit(tx)
+                super::db::commit(tx)
                     .await
                     .map_err(MarkPreventSyncPatternFullyAppliedError::Internal)
             }

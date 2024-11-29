@@ -117,7 +117,7 @@ pub(super) struct WorkspaceStore {
     /// Given accessing `storage` requires exclusive access, it is better to have it
     /// under its own lock so that all cache hit operations can occur concurrently.
     storage: AsyncMutex<Option<WorkspaceStorage>>,
-    prevent_sync_pattern: Regex,
+    prevent_sync_pattern: PreventSyncPattern,
 }
 
 impl std::panic::UnwindSafe for WorkspaceStore {}
@@ -130,7 +130,7 @@ impl WorkspaceStore {
         certificates_ops: Arc<CertificateOps>,
         cache_size: u64,
         realm_id: VlobID,
-        pattern: &Regex,
+        pattern: &PreventSyncPattern,
     ) -> Result<Self, anyhow::Error> {
         // 1) Open the database
 

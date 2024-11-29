@@ -23,7 +23,7 @@ async fn multi_devices(env: &TestbedEnv) {
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: libparsec_client_connection::ProxyConfig::default(),
         with_monitors: true,
-        prevent_sync_pattern: Regex::empty(),
+        prevent_sync_pattern: PreventSyncPattern::empty(),
     });
     let alice1_event_bus = EventBus::default();
     let alice2_event_bus = EventBus::default();
@@ -139,7 +139,7 @@ async fn sharing(env: &TestbedEnv) {
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: libparsec_client_connection::ProxyConfig::default(),
         with_monitors: true,
-        prevent_sync_pattern: Regex::empty(),
+        prevent_sync_pattern: PreventSyncPattern::empty(),
     });
     let alice_event_bus = EventBus::default();
     let bob_event_bus = EventBus::default();

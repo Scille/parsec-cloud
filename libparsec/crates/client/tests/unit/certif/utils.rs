@@ -22,7 +22,7 @@ pub(crate) async fn certificates_ops_factory(
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,
-        prevent_sync_pattern: Regex::empty(),
+        prevent_sync_pattern: PreventSyncPattern::empty(),
     });
     let event_bus = EventBus::default();
     let cmds = Arc::new(

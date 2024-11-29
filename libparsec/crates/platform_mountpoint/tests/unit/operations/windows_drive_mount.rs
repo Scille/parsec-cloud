@@ -23,7 +23,7 @@ async fn mount_on_drive(env: &TestbedEnv) {
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,
-        prevent_sync_pattern: Regex::empty(),
+        prevent_sync_pattern: PreventSyncPattern::empty(),
     });
     let client = Client::start(config, event_bus, alice).await.unwrap();
 
