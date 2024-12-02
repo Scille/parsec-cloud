@@ -152,6 +152,7 @@ export const msTest = base.extend<{
   },
 
   clientArea: async ({ home }, use) => {
+    UserData.reset();
     await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home);
     await MockBms.mockListOrganizations(home);
@@ -180,8 +181,4 @@ export const msTest = base.extend<{
 
     await use(home);
   },
-});
-
-msTest.beforeEach(async () => {
-  UserData.reset();
 });
