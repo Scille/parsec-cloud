@@ -1,0 +1,1 @@
+Fix the server shutdown hanging indefinitely while a client is connected through SSE.
