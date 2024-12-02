@@ -1424,6 +1424,7 @@ async fn local_and_remote_changes(
             expected.parent = local.base.id;
             expected.base.parent = local.base.id;
 
+
             let local_child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
             let remote_child_id = VlobID::from_hex("9a20331879744a149f55bc3ba16e8225").unwrap();
 
@@ -2237,8 +2238,7 @@ async fn local_and_remote_changes(
             local.need_sync = false;
             // ...the remote hasn't anything important to merge, but this should
             // refresh the confinement in local with the new prevent sync pattern.
-           remote.author = local_author;
-
+            remote.author = local_author;
             // Given the remote is from ourself, the merge considers we already know
             // about it and hence acknowledges it and preserve the local children.
             // However the new prevent sync pattern means the local child is now
