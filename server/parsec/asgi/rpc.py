@@ -24,6 +24,7 @@ from pydantic import (
     GetPydanticSchema,
 )
 from pydantic_core import core_schema
+from starlette.requests import ClientDisconnect
 
 from parsec._parsec import (
     ApiVersion,
@@ -168,10 +169,16 @@ async def _rpc_get_body_with_limit_check(request: Request) -> bytes:
             raise HTTPException(status_code=413)
 
     chunks = []
-    async for chunk in request.stream():
-        chunks.append(chunk)
-        if sum(len(c) for c in chunks) > content_length:
-            raise HTTPException(status_code=413)
+    try:
+        async for chunk in request.stream():
+            chunks.append(chunk)
+            if sum(len(c) for c in chunks) > content_length:
+                raise HTTPException(status_code=413)
+    # The client disconnected while sending the body.
+    # Here we simply raise an HTTP exception to ignore the `ClientDisconnect` exception
+    # so that it doesn't get logged as an error.
+    except ClientDisconnect:
+        raise HTTPException(status_code=413)
 
     return b"".join(chunks)
 
