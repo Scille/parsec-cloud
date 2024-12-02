@@ -32,7 +32,7 @@ python = "~3.12.0"
 # Base requirements
 anyio = ">=3.7.1,<4.0.0"
 click = "^8.0"
-httpx = ">=0.25,<0.28"
+httpx = ">=0.25,<0.29"
 pbr = { version = ">=5.9,<7.0" }
 pydantic = "^2.7.1"
 pydantic-core = "^2.18.2"
