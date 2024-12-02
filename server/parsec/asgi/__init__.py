@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import anyio
 import uvicorn
@@ -13,7 +14,7 @@ from starlette.types import Receive, Scope, Send
 from parsec._version import __version__ as parsec_version
 from parsec.asgi.administration import administration_router
 from parsec.asgi.redirect import redirect_router
-from parsec.asgi.rpc import rpc_router
+from parsec.asgi.rpc import Backend, rpc_router
 from parsec.templates import JINJA_ENV_CONFIG
 
 type AsgiApp = FastAPI
@@ -59,6 +60,26 @@ def app_factory() -> AsgiApp:
 
 
 app: AsgiApp = app_factory()
+
+
+class Server(uvicorn.Server):
+    _should_exit: bool
+
+    @property
+    def should_exit(self) -> bool:
+        try:
+            return self._should_exit
+        except AttributeError:
+            return False
+
+    @should_exit.setter
+    def should_exit(self, value: bool) -> None:
+        self._should_exit = value
+        if self._should_exit:
+            app = cast(AsgiApp, self.config.app)
+            backend = cast(Backend, app.state.backend)
+            for client in backend.events._registered_clients.values():
+                client.cancel_scope.cancel()
 
 
 async def serve_parsec_asgi_app(
@@ -113,7 +134,7 @@ async def serve_parsec_asgi_app(
         # here we configure peer address + req line + rep status + rep body size + time
         # (e.g. "GET 88.0.12.52:54160 /foo 1.1 404 823o 12343ms")
     )
-    server = uvicorn.Server(config)
+    server = Server(config)
 
     async def server_task(task_status):
         # Protect server against cancellation
