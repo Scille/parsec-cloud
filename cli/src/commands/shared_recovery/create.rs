@@ -2,7 +2,7 @@ use std::{collections::HashMap, num::NonZeroU8};
 
 use libparsec::{UserID, UserProfile};
 
-use crate::utils::{load_client, start_spinner};
+use crate::utils::{start_spinner, StartedClient};
 
 // TODO: should provide the recipients and their share count as a single parameter
 //       e.g. `--recipients=foo@example.com=2,bar@example.com=3`
@@ -12,12 +12,12 @@ crate::clap_parser_with_shared_opts_builder!(
         /// Share recipients, if missing organization's admins will be used instead
         /// Author must not be included as recipient.
         /// User email is expected.
-        #[arg(short, long,  num_args = 1..=255)]
+        #[arg(short, long, num_args = 1..=255)]
         recipients: Option<Vec<String>>,
         /// Share weights. Requires Share recipient list.
         /// Must have the same length as recipients.
         /// Defaults to one per recipient.
-        #[arg(short, long, requires = "recipients",  num_args = 1..=255)]
+        #[arg(short, long, requires = "recipients", num_args = 1..=255)]
         weights: Option<Vec<NonZeroU8>>,
         /// Threshold number of shares required to proceed with recovery.
         #[arg(short, long)]
@@ -25,17 +25,15 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(shamir_setup: Args) -> anyhow::Result<()> {
+crate::build_main_with_client!(main, create_shared_recovery);
+
+pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyhow::Result<()> {
     let Args {
         recipients,
         weights,
         threshold,
-        password_stdin,
-        device,
-        config_dir,
-    } = shamir_setup;
-
-    let client = load_client(&config_dir, device, password_stdin).await?;
+        ..
+    } = args;
 
     {
         let _spinner = start_spinner("Poll server for new certificates".into());

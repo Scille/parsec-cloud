@@ -39,9 +39,9 @@ enum Command {
     /// To run testenv, see the script run_testenv in the current directory.
     RunTestenv(run_testenv::RunTestenv),
     /// List files in a workspace
-    Ls(ls::Ls),
+    Ls(ls::Args),
     /// Remove a file from a workspace
-    Rm(rm::Rm),
+    Rm(rm::Args),
     /// Contains subcommands related to Term of Service (TOS).
     #[command(subcommand)]
     Tos(tos::Group),
@@ -64,8 +64,8 @@ async fn main() -> anyhow::Result<()> {
         Command::Workspace(workspace) => workspace::dispatch_command(workspace).await,
         #[cfg(feature = "testenv")]
         Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,
-        Command::Ls(ls) => ls::ls(ls).await,
-        Command::Rm(rm) => rm::rm(rm).await,
+        Command::Ls(ls) => ls::main(ls).await,
+        Command::Rm(rm) => rm::main(rm).await,
         Command::Tos(tos) => tos::dispatch_command(tos).await,
         Command::SharedRecovery(shared_recovery) => {
             shared_recovery::dispatch_command(shared_recovery).await

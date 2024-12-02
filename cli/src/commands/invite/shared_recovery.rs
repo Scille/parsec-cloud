@@ -16,21 +16,13 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
-    let Args {
-        email,
-        send_email,
-        device,
-        config_dir,
-        password_stdin,
-    } = args;
-    log::trace!(
-        "Inviting an user to perform a shared recovery (confdir={}, device={})",
-        config_dir.display(),
-        device.as_deref().unwrap_or("N/A")
-    );
+crate::build_main_with_client!(main, invite_shared_recovery);
 
-    let client = load_client(&config_dir, device, password_stdin).await?;
+pub async fn invite_shared_recovery(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+    let Args {
+        email, send_email, ..
+    } = args;
+    log::trace!("Inviting an user to perform a shared recovery");
 
     {
         let _spinner = start_spinner("Poll server for new certificates".into());

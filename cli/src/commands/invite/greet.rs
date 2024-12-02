@@ -1,17 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
-
+use anyhow::Context;
 use libparsec::{
-    authenticated_cmds::latest::invite_list::{self, InviteListItem},
+    authenticated_cmds::latest::invite_list::InviteListItem,
     internal::{
         DeviceGreetInProgress1Ctx, DeviceGreetInProgress2Ctx, DeviceGreetInProgress3Ctx,
-        DeviceGreetInProgress4Ctx, DeviceGreetInitialCtx, EventBus, UserGreetInProgress1Ctx,
+        DeviceGreetInProgress4Ctx, DeviceGreetInitialCtx, UserGreetInProgress1Ctx,
         UserGreetInProgress2Ctx, UserGreetInProgress3Ctx, UserGreetInProgress4Ctx,
         UserGreetInitialCtx,
     },
-    AuthenticatedCmds, InvitationToken,
+    InvitationToken,
 };
+use libparsec_client::Client;
 
 use crate::utils::*;
 
@@ -24,26 +24,17 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
-    let Args {
-        token,
-        device,
-        config_dir,
-        password_stdin,
-    } = args;
-    log::trace!(
-        "Greeting invitation (confdir={}, device={})",
-        config_dir.display(),
-        device.as_deref().unwrap_or("N/A")
-    );
+crate::build_main_with_client!(main, device_greet);
 
-    let (cmds, device) = load_cmds(&config_dir, device, password_stdin).await?;
+pub async fn device_greet(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+    let Args { token, .. } = args;
+    log::trace!("Greeting invitation");
 
-    let invitation = step0(&cmds, token).await?;
+    let invitation = step0(client, token).await?;
 
     match invitation {
-        InviteListItem::User { .. } => {
-            let ctx = UserGreetInitialCtx::new(device, Arc::new(cmds), EventBus::default(), token);
+        InviteListItem::User { token, .. } => {
+            let ctx = client.start_user_invitation_greet(token);
 
             let ctx = step1_user(ctx).await?;
             let ctx = step2_user(ctx).await?;
@@ -51,9 +42,8 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             let ctx = step4_user(ctx).await?;
             step5_user(ctx).await
         }
-        InviteListItem::Device { .. } => {
-            let ctx =
-                DeviceGreetInitialCtx::new(device, Arc::new(cmds), EventBus::default(), token);
+        InviteListItem::Device { token, .. } => {
+            let ctx = client.start_device_invitation_greet(token);
 
             let ctx = step1_device(ctx).await?;
             let ctx = step2_device(ctx).await?;
@@ -70,17 +60,12 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 
 /// Step 0: retrieve info
 async fn step0(
-    cmds: &AuthenticatedCmds,
+    client: &Client,
     invitation_token: InvitationToken,
 ) -> anyhow::Result<InviteListItem> {
     let mut handle = start_spinner("Retrieving invitation info".into());
 
-    let rep = cmds.send(invite_list::Req).await?;
-
-    let invitations = match rep {
-        invite_list::InviteListRep::Ok { invitations } => invitations,
-        rep => return Err(anyhow::anyhow!("Server error: {rep:?}")),
-    };
+    let invitations = client.list_invitations().await.context("Server error")?;
 
     let invitation = match invitations.into_iter().find(|invitation| match invitation {
         InviteListItem::User { token, .. } if *token == invitation_token => true,

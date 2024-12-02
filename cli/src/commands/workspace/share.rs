@@ -16,22 +16,17 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+crate::build_main_with_client!(main, share_workspace);
+
+pub async fn share_workspace(args: Args, client: &StartedClient) -> anyhow::Result<()> {
     let Args {
         workspace: wid,
         user,
         role,
-        device,
-        config_dir,
-        password_stdin,
+        ..
     } = args;
-    log::trace!(
-        "Sharing workspace {wid} to {user} with role {role} (confdir={}, device={})",
-        config_dir.display(),
-        device.as_deref().unwrap_or("N/A")
-    );
+    log::trace!("Sharing workspace {wid} to {user} with role {role}");
 
-    let client = load_client(&config_dir, device, password_stdin).await?;
     let mut handle = start_spinner("Sharing workspace".into());
 
     client.share_workspace(wid, user, Some(role)).await?;
