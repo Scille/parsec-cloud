@@ -711,13 +711,13 @@ rtd = ["ipython", "myst-nb", "sphinx", "sphinx-book-theme", "sphinx-examples"]
 
 [[package]]
 name = "sphinx-intl"
-version = "2.3.0"
+version = "2.3.1"
 description = "Sphinx utility that make it easy to translate and to apply translation."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "sphinx_intl-2.3.0-py3-none-any.whl", hash = "sha256:d753168145035a1378715523e0203fbcfe350b574bfab4d7ae432b36d338b4cf"},
-    {file = "sphinx_intl-2.3.0.tar.gz", hash = "sha256:4ddc63be820c94e23393538cc3d4c31631acab7001b0052e4530ff5bf623af97"},
+    {file = "sphinx_intl-2.3.1-py3-none-any.whl", hash = "sha256:e3f4be80743e0e4c778fbc07e72b062c13c88c50645a69b62557a3f57a24b7fc"},
+    {file = "sphinx_intl-2.3.1.tar.gz", hash = "sha256:e2d04b907f57a029d46b4da344fd791e660d935eab6ced8a274fc65446389af1"},
 ]
 
 [package.dependencies]
@@ -954,4 +954,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12.0"
-content-hash = "1c07bafad1eecd132460ffa687d14e5ab46cf2239c0f4cd9972d2383a81f1d42"
+content-hash = "d713642c55adcf3407419800a16e119649dc4aa52e9c5eac55716ec7408bcc30"

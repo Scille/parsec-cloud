@@ -10,7 +10,7 @@ packages = [{ include = "conf.py" }]
 python = "^3.12.0"
 sphinx = "<9.0.0"
 sphinx-copybutton = "^0.5.2"
-sphinx-intl = "^2.3.0"
+sphinx-intl = "^2.3.1"
 sphinx-rtd-theme = "^3.0.2"
 sphinx-tabs = "^3.4.7"
 docutils = "0.21.2"
