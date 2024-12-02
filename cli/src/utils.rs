@@ -16,6 +16,9 @@ use spinners::{Spinner, Spinners, Stream};
 /// Environment variable to set the Parsec config directory
 /// Should not be confused with [`libparsec::PARSEC_BASE_CONFIG_DIR`]
 pub const PARSEC_CONFIG_DIR: &str = "PARSEC_CONFIG_DIR";
+/// Environment variable to set the Parsec data directory
+/// Should not be confused with [`libparsec::PARSEC_BASE_DATA_DIR`]
+pub const PARSEC_DATA_DIR: &str = "PARSEC_DATA_DIR";
 
 pub const GREEN: &str = "\x1B[92m";
 pub const RED: &str = "\x1B[91m";
