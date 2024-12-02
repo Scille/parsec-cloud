@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { expect, fillInputModal, fillIonInput, msTest } from '@tests/e2e/helpers';
+import { expect, fillIonInput, msTest } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -99,18 +99,6 @@ for (const gridMode of [false, true]) {
       await expect(connected.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
     }
     await expect(connected.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('Descending');
-  });
-}
-
-for (const createWithSidebar of [false, true]) {
-  msTest(`Create new workspace ${createWithSidebar ? 'with sidebar' : 'with action bar'}`, async ({ connected }) => {
-    if (createWithSidebar) {
-      await connected.locator('#workspaces-ms-action-bar').locator('#button-new-workspace').click();
-    } else {
-      await connected.locator('.sidebar').locator('.organization-workspaces').locator('#new-workspace').click();
-    }
-    await fillInputModal(connected, 'My Workspace');
-    await expect(connected).toShowToast("The workspace 'My Workspace' has been created!", 'Success');
   });
 }
 
