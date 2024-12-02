@@ -106,6 +106,8 @@ async def serve_parsec_asgi_app(
         # Disable lifespan events, we don't need them for the moment
         # and they can cause CancelledError to bubble up in some cases
         lifespan="off",
+        # Force a shutdown after 10 seconds, in case of a graceful shutdown failure
+        timeout_graceful_shutdown=10,
         # TODO: configure access log format:
         # Timestamp is added by the log processor configured in `parsec.logging`,
         # here we configure peer address + req line + rep status + rep body size + time
