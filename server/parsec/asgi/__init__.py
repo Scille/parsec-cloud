@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import anyio
 import uvicorn
@@ -13,7 +14,7 @@ from starlette.types import Receive, Scope, Send
 from parsec._version import __version__ as parsec_version
 from parsec.asgi.administration import administration_router
 from parsec.asgi.redirect import redirect_router
-from parsec.asgi.rpc import rpc_router
+from parsec.asgi.rpc import Backend, rpc_router
 from parsec.templates import JINJA_ENV_CONFIG
 
 type AsgiApp = FastAPI
@@ -59,6 +60,42 @@ def app_factory() -> AsgiApp:
 
 
 app: AsgiApp = app_factory()
+
+
+class Server(uvicorn.Server):
+    """
+    We are patching the unicorn server in order to be notified when the server should exit.
+
+    This way we are able to communicate to the app that the SSE connections for the registered
+    clients should get closed. This allows for the graceful shutdown of the server to properly
+    complete, since this procedure does not cancel the ongoing tasks.
+
+    Also note that the "force quit" feature of uvicorn (i.e sending another SIGINT while the
+    server is in "should exit" mode) does not behave as expected in the sense that it won't
+    cancel the ongoing tasks, as reported here:
+    https://github.com/encode/uvicorn/discussions/2525#discussion-7603322
+
+    This is why we also set a timeout for the graceful shutdown, so that the server won't
+    hang indefinitely when shutting down while clients with SSE connections are still active.
+    """
+
+    _should_exit: bool
+
+    @property
+    def should_exit(self) -> bool:
+        try:
+            return self._should_exit
+        except AttributeError:
+            return False
+
+    @should_exit.setter
+    def should_exit(self, value: bool) -> None:
+        self._should_exit = value
+        if self._should_exit:
+            app = cast(AsgiApp, self.config.app)
+            backend = cast(Backend, app.state.backend)
+            for client in backend.events._registered_clients.values():
+                client.cancel_scope.cancel()
 
 
 async def serve_parsec_asgi_app(
@@ -107,12 +144,15 @@ async def serve_parsec_asgi_app(
         # Disable lifespan events, we don't need them for the moment
         # and they can cause CancelledError to bubble up in some cases
         lifespan="off",
+        # Force a shutdown after 10 seconds, in case of a graceful shutdown failure
+        # See the `Server` docstring for more information
+        timeout_graceful_shutdown=10,
         # TODO: configure access log format:
         # Timestamp is added by the log processor configured in `parsec.logging`,
         # here we configure peer address + req line + rep status + rep body size + time
         # (e.g. "GET 88.0.12.52:54160 /foo 1.1 404 823o 12343ms")
     )
-    server = uvicorn.Server(config)
+    server = Server(config)
 
     async def server_task(task_status):
         # Protect server against cancellation
