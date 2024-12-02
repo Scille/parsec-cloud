@@ -14,19 +14,18 @@ use libparsec::{
 
 use crate::utils::*;
 
-#[derive(clap::Parser)]
-pub struct Args {
-    // cspell:disable-next-line
-    /// Server invitation address (e.g.: parsec3://127.0.0.1:41997/Org?no_ssl=true&a=claim_shamir_recovery&p=xBA2FaaizwKy4qG5cGDFlXaL`)
-    #[arg(short, long)]
-    addr: ParsecInvitationAddr,
-    /// Read the password from stdin instead of a TTY.
-    #[arg(long, default_value_t)]
-    password_stdin: bool,
-    /// Use keyring to store the password for the device.
-    #[arg(long, default_value_t, conflicts_with = "password_stdin")]
-    use_keyring: bool,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = config_dir, data_dir, password_stdin]
+    pub struct Args {
+        // cspell:disable-next-line
+        /// Server invitation address (e.g.: parsec3://127.0.0.1:41997/Org?no_ssl=true&a=claim_shamir_recovery&p=xBA2FaaizwKy4qG5cGDFlXaL`)
+        #[arg(short, long)]
+        addr: ParsecInvitationAddr,
+        /// Use keyring to store the password for the device.
+        #[arg(long, default_value_t, conflicts_with = "password_stdin")]
+        use_keyring: bool,
+    }
+);
 
 enum SaveMode {
     Password { read_from_stdin: bool },
@@ -35,6 +34,8 @@ enum SaveMode {
 
 pub async fn main(args: Args) -> anyhow::Result<()> {
     let Args {
+        config_dir,
+        data_dir,
         addr,
         password_stdin,
         use_keyring,
@@ -47,7 +48,12 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             read_from_stdin: password_stdin,
         }
     };
-    let ctx = step0(addr).await?;
+    let config = ClientConfig {
+        config_dir,
+        data_base_dir: data_dir,
+        ..Default::default()
+    };
+    let ctx = step0(addr, config).await?;
 
     match ctx {
         UserOrDeviceClaimInitialCtx::User(ctx) => {
@@ -68,10 +74,13 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 }
 
 /// Step 0: retrieve info
-async fn step0(addr: ParsecInvitationAddr) -> anyhow::Result<UserOrDeviceClaimInitialCtx> {
+async fn step0(
+    addr: ParsecInvitationAddr,
+    config: ClientConfig,
+) -> anyhow::Result<UserOrDeviceClaimInitialCtx> {
     let mut handle = start_spinner("Retrieving invitation info".into());
 
-    let ctx = claimer_retrieve_info(Arc::new(ClientConfig::default().into()), addr, None).await?;
+    let ctx = claimer_retrieve_info(Arc::new(config.into()), addr, None).await?;
 
     handle.stop_with_newline();
 
