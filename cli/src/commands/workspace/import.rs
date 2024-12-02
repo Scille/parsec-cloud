@@ -3,7 +3,7 @@ use std::{path::PathBuf, vec};
 use libparsec::{anyhow::Context, FsPath, OpenOptions};
 use tokio::io::AsyncReadExt;
 
-use crate::utils::load_client;
+use crate::utils::StartedClient;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin, workspace]
@@ -15,14 +15,14 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
+crate::build_main_with_client!(main, workspace_import);
+
+pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Result<()> {
     let Args {
         src,
         dest,
         workspace,
-        password_stdin,
-        device,
-        config_dir,
+        ..
     } = args;
 
     log::trace!(
@@ -31,7 +31,6 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         dst = dest
     );
 
-    let client = load_client(&config_dir, device, password_stdin).await?;
     let workspace = client.start_workspace(workspace).await?;
     let fd = workspace
         .open_file(

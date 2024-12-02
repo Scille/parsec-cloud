@@ -1,5 +1,5 @@
 pub mod commands;
-pub mod macro_opts;
+pub mod macros;
 
 #[cfg(test)]
 #[path = "../tests/integration/mod.rs"]

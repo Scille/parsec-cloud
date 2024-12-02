@@ -1,4 +1,4 @@
-use crate::utils::{load_client, start_spinner};
+use crate::utils::{start_spinner, StartedClient};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin, workspace]
@@ -8,17 +8,13 @@ crate::clap_parser_with_shared_opts_builder!(
 const INBOUND_SYNC_BATCH_SIZE: u32 = 32;
 const OUTBOUND_SYNC_BATCH_SIZE: u32 = 32;
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
-    let Args {
-        password_stdin,
-        device,
-        config_dir,
-        workspace: wid,
-    } = args;
+crate::build_main_with_client!(main, workspace_sync);
+
+pub async fn workspace_sync(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+    let Args { workspace: wid, .. } = args;
 
     log::trace!("workspace_sync: {wid}");
 
-    let client = load_client(&config_dir, device, password_stdin).await?;
     let workspace = client.start_workspace(wid).await?;
 
     let (name, role) = workspace.get_current_name_and_self_role();
@@ -60,7 +56,6 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 
     drop(workspace);
     client.stop_workspace(wid).await;
-    client.stop().await;
 
     Ok(())
 }
