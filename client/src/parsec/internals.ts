@@ -3,7 +3,7 @@
 import { ClientConfig } from '@/parsec/types';
 import { MountpointMountStrategyTag, WorkspaceStorageCacheSizeTag } from '@/plugins/libparsec';
 
-export const MOCK_WAITING_TIME = 500;
+export const MOCK_WAITING_TIME = 800;
 export const DEFAULT_HANDLE = 42;
 
 export async function wait(delay: number): Promise<void> {
