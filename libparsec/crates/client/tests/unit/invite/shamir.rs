@@ -46,7 +46,7 @@ async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
         proxy: ProxyConfig::default(),
         mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
         with_monitors: false,
-        prevent_sync_pattern: Regex::from_regex_str(r"\.tmp$").unwrap(),
+        prevent_sync_pattern: PreventSyncPattern::from_regex(r"\.tmp$").unwrap(),
     });
 
     let alice_ctx = claimer_retrieve_info(config, addr, None).await.unwrap();
