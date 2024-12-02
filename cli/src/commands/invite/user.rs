@@ -1,9 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec::{
-    authenticated_cmds::latest::invite_new_user::{self, InviteNewUserRep},
-    InvitationType, ParsecInvitationAddr,
-};
+use anyhow::Context;
+use libparsec::{InvitationType, ParsecInvitationAddr};
 
 use crate::utils::*;
 
@@ -19,44 +17,28 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
-    let Args {
-        email,
-        send_email,
-        device,
-        config_dir,
-        password_stdin,
-    } = args;
-    log::trace!(
-        "Inviting an user (confdir={}, device={})",
-        config_dir.display(),
-        device.as_deref().unwrap_or("N/A")
-    );
+crate::build_main_with_client!(main, invite_user);
 
-    let (cmds, device) = load_cmds(&config_dir, device, password_stdin).await?;
+pub async fn invite_user(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+    let Args {
+        email, send_email, ..
+    } = args;
+    log::trace!("Inviting an user");
+
     let mut handle = start_spinner("Creating user invitation".into());
 
-    let rep = cmds
-        .send(invite_new_user::Req {
-            claimer_email: email,
-            send_email,
-        })
-        .await?;
+    let (token, _sent_email_status) = client
+        .new_user_invitation(email, send_email)
+        .await
+        .context("Server refused to create user invitation")?;
 
-    let url = match rep {
-        InviteNewUserRep::Ok { token, .. } => ParsecInvitationAddr::new(
-            device.organization_addr.clone(),
-            device.organization_id().clone(),
-            InvitationType::Device,
-            token,
-        )
-        .to_url(),
-        rep => {
-            return Err(anyhow::anyhow!(
-                "Server refused to create user invitation: {rep:?}"
-            ));
-        }
-    };
+    let url = ParsecInvitationAddr::new(
+        client.organization_addr().clone(),
+        client.organization_id().clone(),
+        InvitationType::Device,
+        token,
+    )
+    .to_url();
 
     handle.stop_with_message(format!("Invitation URL: {YELLOW}{url}{RESET}"));
 

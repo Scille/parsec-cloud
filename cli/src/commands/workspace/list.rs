@@ -7,19 +7,11 @@ crate::clap_parser_with_shared_opts_builder!(
     pub struct Args {}
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
-    let Args {
-        device,
-        config_dir,
-        password_stdin,
-    } = args;
-    log::trace!(
-        "Listing workspaces (confdir={}, device={})",
-        config_dir.display(),
-        device.as_deref().unwrap_or("N/A")
-    );
+crate::build_main_with_client!(main, list_workspace);
 
-    let client = load_client(&config_dir, device, password_stdin).await?;
+pub async fn list_workspace(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
+    log::trace!("Listing workspaces");
+
     client.poll_server_for_new_certificates().await?;
     client.refresh_workspaces_list().await?;
     let workspaces = client.list_workspaces().await;

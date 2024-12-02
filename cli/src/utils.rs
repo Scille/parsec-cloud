@@ -205,6 +205,11 @@ pub async fn load_and_unlock_device(
     device: Option<String>,
     password_stdin: bool,
 ) -> Result<Arc<LocalDevice>, LoadAndUnlockDeviceError> {
+    log::trace!(
+        "Loading device {device} from {dir}",
+        dir = config_dir.display(),
+        device = device.as_deref().unwrap_or("N/A")
+    );
     let device = load_device_file(config_dir, device).await?;
 
     log::debug!("Loading device {:?}", device.ty);

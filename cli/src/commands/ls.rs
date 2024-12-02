@@ -1,30 +1,24 @@
 use libparsec::FsPath;
 
+use crate::utils::StartedClient;
+
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin, workspace]
-    pub struct Ls {
+    pub struct Args {
         /// Path to list
-        path: Option<FsPath>,
+        #[arg(default_value_t)]
+        path: FsPath,
     }
 );
 
-pub async fn ls(args: Ls) -> anyhow::Result<()> {
-    let Ls {
-        workspace,
-        path,
-        password_stdin,
-        device,
-        config_dir,
+crate::build_main_with_client!(main, ls);
+
+pub async fn ls(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+    let Args {
+        workspace, path, ..
     } = args;
-    let path = path.unwrap_or(FsPath::default());
+    log::trace!("ls: {workspace}:{path}");
 
-    log::trace!(
-        "ls: {workspace}:{path:?}",
-        workspace = workspace,
-        path = path
-    );
-
-    let client = crate::utils::load_client(&config_dir, device, password_stdin).await?;
     let workspace = client.start_workspace(workspace).await?;
     let entries = workspace.stat_folder_children(&path).await?;
 

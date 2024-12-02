@@ -1,3 +1,28 @@
+/// This macro builds a main function that takes the `Args` struct defined in the same module.
+///
+/// Once called, it will initialize a client using the provided arguments and then call the sub-task and cleanup the client ressource before returning.
+///
+/// the callback takes (args: Args, client: &StartedClient) as arguments and returns anyhow::Result<()>
+#[macro_export]
+macro_rules! build_main_with_client {
+    ($fn_name:ident, $callback:expr) => {
+        pub async fn $fn_name(args: Args) -> anyhow::Result<()> {
+            let client = $crate::utils::load_client(
+                &args.config_dir,
+                args.device.clone(),
+                args.password_stdin,
+            )
+            .await?;
+
+            let res = ($callback)(args, client.as_ref()).await;
+
+            client.stop().await;
+
+            res
+        }
+    };
+}
+
 /// This macros builds a Clap argument parser by combining the provided structure
 /// with common CLI options.
 ///
