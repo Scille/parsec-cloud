@@ -222,13 +222,14 @@ async def _shamir_exchange(
         greeter_private_key,
         claimer_verify_key,
     )
+    shared_key = SecretKey.generate()
     to_communicate = ShamirRecoveryCommunicatedData(share.weighted_share)
     await claimer_ctlr.send_order("4_communicate", b"")
-    await greeter_ctlr.send_order("4_communicate", to_communicate.dump())
+    await greeter_ctlr.send_order("4_communicate", to_communicate.dump_and_encrypt(shared_key))
     greeter_rep = await greeter_ctlr.get_result()
     assert greeter_rep.payload == b""
     claimer_rep = await claimer_ctlr.get_result()
-    return ShamirRecoveryCommunicatedData.load(claimer_rep.payload)
+    return ShamirRecoveryCommunicatedData.decrypt_and_load(claimer_rep.payload, shared_key)
 
 
 @pytest.mark.trio
