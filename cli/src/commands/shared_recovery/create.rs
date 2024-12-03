@@ -42,7 +42,7 @@ pub async fn main(shamir_setup: Args) -> anyhow::Result<()> {
         client.poll_server_for_new_certificates().await?;
     }
 
-    let mut handle = start_spinner("Creating shamir setup".into());
+    let mut handle = start_spinner("Creating shared recovery setup".into());
     let users = client.list_users(true, None, None).await?;
     let recipients_ids: Vec<_> = if let Some(recipients) = recipients {
         let recipient_info: HashMap<_, _> = users
@@ -88,7 +88,7 @@ pub async fn main(shamir_setup: Args) -> anyhow::Result<()> {
         .setup_shamir_recovery(per_recipient_shares, threshold)
         .await?;
 
-    handle.stop_with_message("Shamir setup has been created".into());
+    handle.stop_with_message("Shared recovery setup has been created".into());
 
     client.stop().await;
 
