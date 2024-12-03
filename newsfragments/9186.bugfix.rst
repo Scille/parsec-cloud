@@ -1,1 +1,0 @@
-Fix CLI command ``invite user`` generating a device invitation link instead of a user invitation link.
