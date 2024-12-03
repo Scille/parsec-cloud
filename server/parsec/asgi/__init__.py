@@ -63,6 +63,22 @@ app: AsgiApp = app_factory()
 
 
 class Server(uvicorn.Server):
+    """
+    We are patching the unicorn server in order to be notified when the server should exit.
+
+    This way we are able to communicate to the app that the SSE connections for the registered
+    clients should get closed. This allows for the graceful shutdown of the server to properly
+    complete, since this procedure does not cancel the ongoing tasks.
+
+    Also note that the "force quit" feature of uvicorn (i.e sending another SIGINT while the
+    server is in "should exit" mode) does not behave as expected in the sense that it won't
+    cancel the ongoing tasks, as reported here:
+    https://github.com/encode/uvicorn/discussions/2525#discussion-7603322
+
+    This is why we also set a timeout for the graceful shutdown, so that the server won't
+    hang indefinitely when shutting down while clients with SSE connections are still active.
+    """
+
     _should_exit: bool
 
     @property
@@ -128,6 +144,7 @@ async def serve_parsec_asgi_app(
         # and they can cause CancelledError to bubble up in some cases
         lifespan="off",
         # Force a shutdown after 10 seconds, in case of a graceful shutdown failure
+        # See the `Server` docstring for more information
         timeout_graceful_shutdown=10,
         # TODO: configure access log format:
         # Timestamp is added by the log processor configured in `parsec.logging`,
