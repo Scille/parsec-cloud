@@ -721,6 +721,7 @@ Vlob
 Vlobs
 volname
 VueJs
+wasi
 wasmbind
 webengine
 webpki

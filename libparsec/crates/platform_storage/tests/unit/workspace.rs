@@ -20,7 +20,7 @@ use crate::{
 use super::{workspace_storage_non_speculative_init, WorkspaceStorage};
 
 #[cfg(target_arch = "wasm32")]
-libparsec_tests_lite::wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+libparsec_tests_lite::platform::wasm_bindgen_test_configure!(run_in_browser);
 
 enum FetchStrategy {
     No,

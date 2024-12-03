@@ -33,10 +33,11 @@ mod retrieve_path_from_id;
 mod stat_entry;
 mod utils;
 
-#[cfg(unix)]
+#[cfg(unix)] // Test uses UNIX filesystem as oracle
+#[cfg(not(target_arch = "wasm32"))] // Async stateful requires Tokio runtime
 mod file_transactions_stateful;
 
-#[cfg(unix)]
+#[allow(dead_code)]
 pub trait AsyncStateMachineTest {
     /// The concrete state, that is the system under test (SUT).
     type SystemUnderTest;
@@ -88,6 +89,7 @@ pub trait AsyncStateMachineTest {
     }
 }
 
+#[allow(dead_code)]
 #[macro_export]
 macro_rules! impl_async_state_machine {
     ($t:ty) => {
