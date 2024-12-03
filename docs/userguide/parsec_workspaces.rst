@@ -24,7 +24,7 @@ Parsec.
 
 Each workspace has its own :ref:`role-based policy <doc_userguide_parsec_workspaces_roles>`
 for read and write access. This allows a fine-grained access control as each
-user can have different roles in different workspaces.
+member can have different roles in different workspaces.
 
 .. note::
 
@@ -69,18 +69,18 @@ Share a workspace
 If you have the **Owner** or **Manager** role, the ``Sharing and roles`` option
 will be available from the workspace menu.
 
-Find the user you want to share the workspace with and select its
+Find the member you want to share the workspace with and select its
 :ref:`workspace roles <doc_userguide_parsec_workspaces_roles>`.
 
 .. image:: screens/share_workspace.png
     :align: center
     :alt: Sharing a workspace
 
-Depending on the user profile within the organization, some roles may not be
-available for the selected user.
+Depending on the member profile within the organization, some roles may not be
+available for the selected member.
 
 You can remove access to this workspace by selecting ``Not shared`` for a given
-user.
+member.
 
 
 .. _doc_userguide_parsec_workspaces_roles:
@@ -88,8 +88,8 @@ user.
 Workspace roles
 ---------------
 
-The **workspace role** defines what the user is allowed to do within the
-workspace. Since the role is specific to the workspace, a user can have
+The **workspace role** defines what the member is allowed to do within the
+workspace. Since the role is specific to the workspace, a member can have
 different roles in different workspaces.
 
 The available roles and what they allow to do are shown in the following table.
@@ -98,7 +98,7 @@ The available roles and what they allow to do are shown in the following table.
    :align: center
    :header-rows: 1
 
-   * - User rights
+   * - Member rights
      - Reader
      - Contributor
      - Manager
@@ -113,7 +113,7 @@ The available roles and what they allow to do are shown in the following table.
      - ✅
      - ✅
      - ✅
-   * - Can manage user access to the workspace
+   * - Can manage member access to the workspace
      - ❌
      - ❌
      - ✅
@@ -123,20 +123,20 @@ The available roles and what they allow to do are shown in the following table.
      - ❌
      - ❌
      - ✅
-   * - Can promote other users to Owner
+   * - Can promote other members to Owner
      - ❌
      - ❌
      - ❌
      - ✅
 
-Users without a role in the workspace, are not allowed to access nor see the
+Members without a role in the workspace, are not allowed to access nor see the
 workspace.
 
 .. warning::
-  It is recommended to always share the workspace with other users.
+  It is recommended to always share the workspace with other members.
 
   Strong cryptographic security prevents data recovery. If the workspace is
-  not shared with others, and the user loses access to its device or cannot
+  not shared with others, and the member loses access to its device or cannot
   log in for any reason, data stored in the workspace will be lost forever.
 
 Browse workspace history and restore files
