@@ -47,7 +47,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                     revoked_recipients,
                     ..
                 } => println!("{RED}Unusable{RESET} shared recovery - contains revoked recipients: {} ({} out of {} total recipients, with threshold {threshold})", revoked_recipients.iter().join(","), revoked_recipients.len(), per_recipient_shares.len()),
-                libparsec_client::SelfShamirRecoveryInfo::NeverSetup => println!("Shared recovery {GREEN}setup{RESET}"),
+                libparsec_client::SelfShamirRecoveryInfo::NeverSetup => println!("Shared recovery {RED}never setup{RESET}"),
             }
 
     Ok(())
