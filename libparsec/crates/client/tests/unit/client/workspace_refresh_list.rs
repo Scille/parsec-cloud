@@ -2,7 +2,9 @@
 
 use std::sync::Arc;
 
-use libparsec_client_connection::test_register_sequence_of_send_hooks;
+use libparsec_client_connection::{
+    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle,
+};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -104,55 +106,56 @@ async fn ok_with_changes(
         })
         .await;
 
-    let keys_bundles = HashMap::<VlobID, (Bytes, Bytes)>::from_iter(
-        expected_workspaces.iter().filter_map(|wksp| {
-            if wksp.is_bootstrapped {
-                let keys_bundle = env.get_last_realm_keys_bundle(wksp.id);
-                let keys_bundle_access =
-                    env.get_last_realm_keys_bundle_access_for(wksp.id, "alice".parse().unwrap());
-
-                let alice = env.local_device("alice@dev1");
-
-                let cleartext_keys_bundle_access = alice
-                    .private_key
-                    .decrypt_from_self(&keys_bundle_access)
-                    .unwrap();
-                let access = RealmKeysBundleAccess::load(&cleartext_keys_bundle_access).unwrap();
-
-                let cleartext_keys_bundle = access.keys_bundle_key.decrypt(&keys_bundle).unwrap();
-                RealmKeysBundle::unsecure_load(Bytes::from(cleartext_keys_bundle)).unwrap();
-
-                Some((wksp.id, (keys_bundle, keys_bundle_access)))
-            } else {
-                None
-            }
-        }),
-    );
-    let keys_bundles_to_fetch = keys_bundles.len();
-    let keys_bundles = Arc::new(Mutex::new(keys_bundles));
-
+    let keys_bundles_to_fetch = expected_workspaces
+        .iter()
+        .filter(|x| x.is_bootstrapped)
+        .count();
     match keys_bundles_to_fetch {
         0 => (),
         1 => {
-            test_register_sequence_of_send_hooks!(&env.discriminant_dir, {
-                let keys_bundles = keys_bundles.clone();
-                move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                    keys_bundles
-                        .lock()
-                        .unwrap()
-                        .remove(&req.realm_id)
-                        .map(|(keys_bundle, keys_bundle_access)| {
-                            authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                                keys_bundle: keys_bundle.clone(),
-                                keys_bundle_access: keys_bundle_access.clone(),
-                            }
-                        })
-                        .unwrap_or_else(|| panic!("Unexpected realm_id: {:?}", req.realm_id))
-                }
-            },);
+            test_register_sequence_of_send_hooks!(
+                &env.discriminant_dir,
+                test_send_hook_realm_get_keys_bundle!(
+                    env,
+                    "alice".parse().unwrap(),
+                    expected_workspaces[0].id
+                ),
+            );
         }
 
         2 => {
+            // Cannot use `test_send_hook_realm_get_keys_bundle` helper here since
+            // the client is going to fetch multiple key bundles in an arbitrary order.
+
+            let keys_bundles = Arc::new(Mutex::new(HashMap::<VlobID, (Bytes, Bytes)>::from_iter(
+                expected_workspaces.iter().filter_map(|wksp| {
+                    if wksp.is_bootstrapped {
+                        let keys_bundle = env.get_last_realm_keys_bundle(wksp.id);
+                        let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(
+                            wksp.id,
+                            "alice".parse().unwrap(),
+                        );
+
+                        let alice = env.local_device("alice@dev1");
+
+                        let cleartext_keys_bundle_access = alice
+                            .private_key
+                            .decrypt_from_self(&keys_bundle_access)
+                            .unwrap();
+                        let access =
+                            RealmKeysBundleAccess::load(&cleartext_keys_bundle_access).unwrap();
+
+                        let cleartext_keys_bundle =
+                            access.keys_bundle_key.decrypt(&keys_bundle).unwrap();
+                        RealmKeysBundle::unsecure_load(Bytes::from(cleartext_keys_bundle)).unwrap();
+
+                        Some((wksp.id, (keys_bundle, keys_bundle_access)))
+                    } else {
+                        None
+                    }
+                }),
+            )));
+
             test_register_sequence_of_send_hooks!(
                 &env.discriminant_dir,
                 {
@@ -164,8 +167,8 @@ async fn ok_with_changes(
                             .remove(&req.realm_id)
                             .map(|(keys_bundle, keys_bundle_access)| {
                                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                                    keys_bundle: keys_bundle.clone(),
-                                    keys_bundle_access: keys_bundle_access.clone(),
+                                    keys_bundle,
+                                    keys_bundle_access,
                                 }
                             })
                             .unwrap_or_else(|| panic!("Unexpected realm_id: {:?}", req.realm_id))
@@ -180,8 +183,8 @@ async fn ok_with_changes(
                             .remove(&req.realm_id)
                             .map(|(keys_bundle, keys_bundle_access)| {
                                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                                    keys_bundle: keys_bundle.clone(),
-                                    keys_bundle_access: keys_bundle_access.clone(),
+                                    keys_bundle,
+                                    keys_bundle_access,
                                 }
                             })
                             .unwrap_or_else(|| panic!("Unexpected realm_id: {:?}", req.realm_id))
@@ -190,7 +193,7 @@ async fn ok_with_changes(
             );
         }
 
-        _ => panic!(),
+        _ => unreachable!(),
     }
 
     let alice = env.local_device("alice@dev1");

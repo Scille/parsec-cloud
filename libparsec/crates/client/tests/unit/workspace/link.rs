@@ -2,6 +2,7 @@
 
 use libparsec_client_connection::{
     protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
+    test_send_hook_realm_get_keys_bundle,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -22,19 +23,7 @@ async fn generate(env: &TestbedEnv) {
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         // Fetch workspace keys bundle to decrypt the vlob
-        {
-            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-            let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.realm_id, wksp1_id);
-                p_assert_eq!(req.key_index, 1);
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
     );
 
     let link = ops.generate_path_addr(&target_path).await.unwrap();
@@ -52,9 +41,6 @@ async fn generate(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn decrypt_path(#[values(true, false)] key_in_storage: bool, env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let keys_bundle_1 = env.get_last_realm_keys_bundle(wksp1_id);
-    let keys_bundle_1_access =
-        env.get_last_realm_keys_bundle_access_for(wksp1_id, "alice".parse().unwrap());
     env.customize(|builder| {
         if !key_in_storage {
             // The link uses a key our client doesn't know about
@@ -84,28 +70,14 @@ async fn decrypt_path(#[values(true, false)] key_in_storage: bool, env: &Testbed
         test_register_sequence_of_send_hooks!(
             &env.discriminant_dir,
             // Fetch workspace keys bundle to decrypt the vlob
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.realm_id, wksp1_id);
-                p_assert_eq!(req.key_index, 1);
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle: keys_bundle_1,
-                    keys_bundle_access: keys_bundle_1_access,
-                }
-            }
+            test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
         );
     } else {
         p_assert_eq!(link.key_index(), 2);
         test_register_sequence_of_send_hooks!(
             &env.discriminant_dir,
-            // 1) Client fetches the keys bundle it knows about...
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.realm_id, wksp1_id);
-                p_assert_eq!(req.key_index, 1);
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle: keys_bundle_1,
-                    keys_bundle_access: keys_bundle_1_access,
-                }
-            },
+            // 1) Client fetches the keys bundle it knows about (i.e. index 1)...
+            test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id, 1),
             // 2) ..then it realizes it is missing a key rotation and hence poll for certificates...
             {
                 let mut realm_certificates = env.get_realms_certificates_signed();
@@ -123,19 +95,7 @@ async fn decrypt_path(#[values(true, false)] key_in_storage: bool, env: &Testbed
                 }
             },
             // 3) ...and finally it fetches the actual last keys bundle
-            {
-                let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-                let keys_bundle_access =
-                    env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
-                move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                    p_assert_eq!(req.realm_id, wksp1_id);
-                    p_assert_eq!(req.key_index, 2);
-                    authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                        keys_bundle,
-                        keys_bundle_access,
-                    }
-                }
-            },
+            test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
         );
     }
 
@@ -193,19 +153,7 @@ async fn bad_decrypt_realm_unknown_key_index(env: &TestbedEnv) {
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         // 1) Client fetches the keys bundle it knows about...
-        {
-            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-            let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.realm_id, wksp1_id);
-                p_assert_eq!(req.key_index, 1);
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
         // 2) ...since the key index is not in the current keys bundle, client tries to get more certifs...
         move |_req: authenticated_cmds::latest::certificate_get::Req| {
             authenticated_cmds::latest::certificate_get::Rep::Ok {
@@ -243,19 +191,7 @@ async fn decrypt_bad_encryption(env: &TestbedEnv) {
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         // Fetch workspace keys bundle to decrypt the vlob
-        {
-            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-            let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.realm_id, wksp1_id);
-                p_assert_eq!(req.key_index, 1);
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
     );
 
     let err = ops.decrypt_path_addr(&link).await.unwrap_err();

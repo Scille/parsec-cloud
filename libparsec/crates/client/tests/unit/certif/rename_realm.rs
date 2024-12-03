@@ -2,7 +2,8 @@
 
 use libparsec_client_connection::{
     test_register_low_level_send_hook, test_register_send_hook,
-    test_register_sequence_of_send_hooks, HeaderMap, ResponseMock, StatusCode,
+    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle, HeaderMap,
+    ResponseMock, StatusCode,
 };
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
@@ -28,21 +29,9 @@ async fn ok(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        {
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.key_index, 1);
-                p_assert_eq!(req.realm_id, realm_id);
-
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, realm_id),
         {
             move |req: authenticated_cmds::latest::realm_rename::Req| {
                 p_assert_eq!(req.initial_name_or_fail, false);
@@ -128,21 +117,9 @@ async fn server_error(
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        {
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.key_index, 1);
-                p_assert_eq!(req.realm_id, realm_id);
-
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, realm_id),
         {
             move |req: authenticated_cmds::latest::realm_rename::Req| {
                 p_assert_eq!(req.initial_name_or_fail, false);
@@ -175,21 +152,9 @@ async fn server_initial_name_already_exists(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        {
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.key_index, 1);
-                p_assert_eq!(req.realm_id, realm_id);
-
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, realm_id),
         {
             move |req: authenticated_cmds::latest::realm_rename::Req| {
                 p_assert_eq!(req.initial_name_or_fail, false);

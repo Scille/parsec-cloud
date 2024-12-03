@@ -5,7 +5,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use libparsec_client_connection::test_register_sequence_of_send_hooks;
+use libparsec_client_connection::{
+    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle,
+};
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -98,6 +100,8 @@ async fn ok(env: &TestbedEnv) {
             }
         },
         // 4) Fetch keys bundle (required for initial rename)
+        // Cannot use `test_send_hook_realm_get_keys_bundle` helper here since we are
+        // referring to a key rotation that didn't occur in the testbed template.
         {
             let new_realm_initial_keys_bundle = new_realm_initial_keys_bundle.clone();
             let new_realm_initial_keys_bundle_access = new_realm_initial_keys_bundle_access.clone();
@@ -247,6 +251,8 @@ async fn legacy_shared_before_bootstrapped(env: &TestbedEnv) {
             }
         },
         // 4) Fetch keys bundle (required for initial rename)
+        // Cannot use `test_send_hook_realm_get_keys_bundle` helper here since we are
+        // referring to a key rotation that didn't occur in the testbed template.
         {
             let new_realm_initial_keys_bundle = new_realm_initial_keys_bundle.clone();
             let new_realm_initial_keys_bundle_accesses =
@@ -331,17 +337,7 @@ async fn partially_bootstrapped(
         // No step 3: certificates already fetched
 
         // 4) Fetch keys bundle (required for initial rename)
-        {
-            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-            let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
-            move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
         // 5) Actual rename
         {
             let (key_derivation, expected_key_index) = env.get_last_realm_key(wksp1_id);
