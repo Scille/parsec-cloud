@@ -101,9 +101,9 @@ pub async fn watch_entry_oneshot(
             let entry_watchers = ops.entry_watchers.clone();
             let event_bus = ops.event_bus.clone();
 
-            move |candidate_realm_id: VlobID, candidate_entry_id: VlobID| {
+            move |candidate_realm_id: VlobID, candidate_entry_id: VlobID| -> bool {
                 if candidate_realm_id != realm_id || candidate_entry_id != entry_id {
-                    return;
+                    return false;
                 }
 
                 // Disconnect the entry watcher since it is a one-shot
@@ -117,7 +117,7 @@ pub async fn watch_entry_oneshot(
                         .position(|x| x.id == entry_watcher_id);
                     match index {
                         // The watcher is already disconnected, we should not have received the event !
-                        None => return,
+                        None => return true,
                         Some(index) => {
                             let watcher = entry_watchers_guard.watchers.swap_remove(index);
                             // The watcher object contains an event bus connection lifetime
@@ -140,18 +140,34 @@ pub async fn watch_entry_oneshot(
                 // the one being send are of a different type (as each event
                 // type has it own dedicated lock).
                 event_bus.send(&event);
+
+                true
             }
         };
 
         let on_local_change_lifetime = ops.event_bus.connect({
             let on_event_triggered = on_event_triggered.clone();
             move |e: &EventWorkspaceOpsOutboundSyncNeeded| {
-                on_event_triggered(e.realm_id, e.entry_id)
+                on_event_triggered(e.realm_id, e.entry_id);
             }
         });
 
         let on_remote_change_lifetime = ops.event_bus.connect({
-            move |e: &EventWorkspaceOpsInboundSyncDone| on_event_triggered(e.realm_id, e.entry_id)
+            move |e: &EventWorkspaceOpsInboundSyncDone| {
+                let triggered = on_event_triggered(e.realm_id, e.entry_id);
+                if !triggered {
+                    // A parent may contain a child whose entry ID is missing, this is
+                    // typically the case if the child has not been synchronized yet.
+                    //
+                    // In this case, the content of the folder will change (i.e. the missing
+                    // child will appear) once the child is finally synchronized and we do
+                    // its inbound sync.
+                    //
+                    // Hence any change in a child is can constitute a potential change
+                    // in the parent !
+                    on_event_triggered(e.realm_id, e.parent_id);
+                }
+            }
         });
 
         entry_watchers_guard.watchers.push(EntryWatcher {

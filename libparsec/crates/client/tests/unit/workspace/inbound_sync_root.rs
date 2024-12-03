@@ -231,7 +231,11 @@ async fn non_placeholder(
     if matches!(&remote_modification, RemoteModification::Nothing) {
         spy.assert_no_events();
     } else {
-        spy.assert_next(|e| p_assert_matches!(e, EventWorkspaceOpsInboundSyncDone { realm_id,entry_id } if *realm_id == wksp1_id && *entry_id == wksp1_id));
+        spy.assert_next(|e| {
+            p_assert_matches!(e, EventWorkspaceOpsInboundSyncDone { realm_id, entry_id, parent_id }
+                if *realm_id == wksp1_id && *entry_id == wksp1_id && *parent_id == wksp1_id
+            )
+        });
     }
 
     let workspace_manifest = wksp1_ops.store.get_root_manifest();
