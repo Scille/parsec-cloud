@@ -107,17 +107,27 @@
                 v-for="invoice in invoices"
                 :key="invoice.id"
               >
-                <ion-text class="invoices-list-item__data invoices-date subtitles-sm">{{ invoice.start.toFormat('LLLL yyyy') }}</ion-text>
+                <ion-text class="invoices-list-item__data invoices-date subtitles-sm">
+                  {{ $msTranslate(formatTimeSince(invoice.start, '--', 'short')) }}
+                </ion-text>
                 <ion-text class="invoices-list-item__data invoices-organization body">{{ invoice.organizationId }}</ion-text>
                 <ion-text class="invoices-list-item__data invoices-amount body">{{ invoice.total }}</ion-text>
                 <ion-text class="invoices-list-item__data invoices-status">
-                  <span class="badge-status body-sm incoming">{{ invoice.status }}</span>
+                  <span
+                    class="badge-status body-sm"
+                    :class="invoice.status"
+                  >
+                    {{ $msTranslate(getInvoiceStatusTranslationKey(invoice.status)) }}
+                  </span>
                   <a
                     class="custom-button custom-button-ghost button-medium"
                     :href="invoice.pdfLink"
                     download
                   >
-                    <ion-icon :icon="download" />
+                    <ms-image
+                      :image="Download"
+                      class="custom-button__icon"
+                    />
                     {{ $msTranslate('clientArea.dashboard.invoices.download') }}
                   </a>
                 </ion-text>
@@ -197,8 +207,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonTitle, IonText, IonList, IonItem, IonIcon, IonSkeletonText } from '@ionic/vue';
-import { download } from 'ionicons/icons';
+import { getInvoiceStatusTranslationKey } from '@/services/translation';
+import { IonTitle, IonText, IonList, IonItem, IonSkeletonText } from '@ionic/vue';
 import { ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import {
   BmsAccessInstance,
@@ -209,7 +219,15 @@ import {
   BillingDetailsPaymentMethodCard,
   PaymentMethod,
 } from '@/services/bms';
-import { MsInformationTooltip, I18n, MsStripeCardDetails, PaymentMethod as MsPaymentMethod } from 'megashark-lib';
+import {
+  MsInformationTooltip,
+  I18n,
+  MsStripeCardDetails,
+  PaymentMethod as MsPaymentMethod,
+  formatTimeSince,
+  Download,
+  MsImage,
+} from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 import { formatFileSize } from '@/common/file';
 import { DateTime } from 'luxon';
@@ -333,16 +351,6 @@ onMounted(async () => {
         &-text {
           color: var(--parsec-color-light-secondary-contrast);
         }
-
-        &-icon {
-          color: var(--parsec-color-light-secondary-grey);
-          font-size: 1.5rem;
-          cursor: pointer;
-
-          &:hover {
-            color: var(--parsec-color-light-secondary-text);
-          }
-        }
       }
 
       .data-info {
@@ -455,15 +463,33 @@ onMounted(async () => {
         .badge-status {
           border-radius: var(--parsec-radius-32);
           padding-inline: 0.5rem;
+          background: var(--parsec-color-light-secondary-disabled);
+          color: var(--parsec-color-light-secondary-text);
 
-          &.incoming {
+          &.paid {
             background: var(--parsec-color-light-info-100);
             color: var(--parsec-color-light-info-700);
           }
 
-          &.paid {
-            background: var(--parsec-color-light-success-100);
-            color: var(--parsec-color-light-success-700);
+          &.open {
+            background: var(--parsec-color-tags-orange100);
+            color: var(--parsec-color-tags-orange500);
+          }
+        }
+
+        .custom-button {
+          &__icon {
+            width: 1rem;
+            --fill-color: var(--parsec-color-light-primary-500);
+          }
+
+          &:hover {
+            color: var(--parsec-color-light-primary-600);
+            background: var(--parsec-color-light-primary-50);
+
+            .custom-button__icon {
+              --fill-color: var(--parsec-color-light-primary-600);
+            }
           }
         }
       }
