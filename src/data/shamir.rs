@@ -136,14 +136,17 @@ impl ShamirRecoveryCommunicatedData {
             .collect()
     }
 
-    fn dump<'p>(&self, py: Python<'p>) -> DataResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump()?))
+    fn dump_and_encrypt<'p>(&self, py: Python<'p>, key: &SecretKey) -> PyResult<&'p PyBytes> {
+        Ok(PyBytes::new(py, &self.0.dump_and_encrypt(&key.0)))
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, data: &[u8]) -> DataResult<Self> {
-        let share_data = libparsec::types::ShamirRecoveryCommunicatedData::load(data)?;
-        Ok(Self(share_data))
+    fn decrypt_and_load(_cls: &PyType, encrypted: &[u8], key: &SecretKey) -> PyResult<Self> {
+        match libparsec::types::ShamirRecoveryCommunicatedData::decrypt_and_load(encrypted, &key.0)
+        {
+            Ok(x) => Ok(Self(x)),
+            Err(err) => Err(PyValueError::new_err(err)),
+        }
     }
 }
 

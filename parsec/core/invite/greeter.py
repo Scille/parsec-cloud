@@ -375,7 +375,7 @@ class ShamirRecoveryGreetInProgress3Ctx:
     async def send_share_data(self, share_data: ShamirRecoveryShareData) -> None:
         to_communicate = ShamirRecoveryCommunicatedData(share_data.weighted_share)
         rep = await self._cmds.invite_4_greeter_communicate(
-            token=self.token, payload=to_communicate.dump()
+            token=self.token, payload=to_communicate.dump_and_encrypt(self._shared_secret_key)
         )
         _check_rep(rep, step_name="step 4 (data exchange)", ok_type=Invite4GreeterCommunicateRepOk)
 

@@ -592,6 +592,6 @@ class ShamirRecoveryClaimInProgress3Ctx:
         rep = _check_rep(
             rep, step_name="step 4 (data exchange)", ok_type=Invite4ClaimerCommunicateRepOk
         )
-        data = ShamirRecoveryCommunicatedData.load(rep.payload)
+        data = ShamirRecoveryCommunicatedData.decrypt_and_load(rep.payload, self._shared_secret_key)
 
         return self.prelude.add_shares(self.greeter_user_id, data.weighted_share)

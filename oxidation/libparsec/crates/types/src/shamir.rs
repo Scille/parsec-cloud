@@ -214,12 +214,26 @@ impl_transparent_data_format_conversion!(
 );
 
 impl ShamirRecoveryCommunicatedData {
-    pub fn dump(&self) -> DataResult<Vec<u8>> {
-        Ok(::rmp_serde::to_vec_named(self).map_err(|_| DataError::Serialization)?)
+    pub fn dump_and_encrypt(&self, key: &::libparsec_crypto::SecretKey) -> Vec<u8> {
+        let serialized = ::rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
+        let mut e = ::flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
+        e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
+        let compressed = e.finish().unwrap_or_else(|_| unreachable!());
+        key.encrypt(&compressed)
     }
 
-    pub fn load(buf: &[u8]) -> DataResult<Self> {
-        Ok(::rmp_serde::from_slice(buf).map_err(|_| DataError::Serialization)?)
+    pub fn decrypt_and_load(
+        encrypted: &[u8],
+        key: &::libparsec_crypto::SecretKey,
+    ) -> Result<ShamirRecoveryCommunicatedData, &'static str> {
+        let compressed = key.decrypt(encrypted).map_err(|_| "Invalid encryption")?;
+        let mut serialized = vec![];
+        ::flate2::read::ZlibDecoder::new(&compressed[..])
+            .read_to_end(&mut serialized)
+            .map_err(|_| "Invalid compression")?;
+        let obj: ShamirRecoveryCommunicatedData =
+            ::rmp_serde::from_slice(&serialized).map_err(|_| "Invalid serialization")?;
+        Ok(obj)
     }
 }
 
