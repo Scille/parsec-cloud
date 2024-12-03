@@ -30,7 +30,7 @@ pub use transactions::{
     WorkspaceGetNeedInboundSyncEntriesError, WorkspaceGetNeedOutboundSyncEntriesError,
     WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError,
     WorkspaceRemoveEntryError, WorkspaceStatEntryError, WorkspaceStatFolderChildrenError,
-    WorkspaceSyncError,
+    WorkspaceSyncError, WorkspaceWatchEntryOneShotError,
 };
 
 use self::{store::FileUpdater, transactions::FdWriteStrategy};
@@ -120,6 +120,7 @@ pub struct WorkspaceOps {
     /// This contains the workspaces info that can change by uploading new
     /// certificates, and hence can be updated at any time.
     workspace_external_info: Mutex<WorkspaceExternalInfo>,
+    entry_watchers: Arc<Mutex<transactions::EntryWatchers>>,
     pub history: Arc<WorkspaceHistoryOps>,
 }
 
@@ -195,6 +196,7 @@ impl WorkspaceOps {
                 file_descriptors: HashMap::new(),
                 opened_files: HashMap::new(),
             }),
+            entry_watchers: Default::default(),
             history,
         })
     }
@@ -359,6 +361,13 @@ impl WorkspaceOps {
             Some(store::PathConfinementPoint::NotConfined),
         )
         .await
+    }
+
+    pub async fn watch_entry_oneshot(
+        &self,
+        path: &FsPath,
+    ) -> Result<VlobID, WorkspaceWatchEntryOneShotError> {
+        transactions::watch_entry_oneshot(self, path).await
     }
 
     pub async fn open_folder_reader(

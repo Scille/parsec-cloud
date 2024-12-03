@@ -8,18 +8,14 @@ pub use libparsec_client::workspace::{
     WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
     WorkspaceFdWriteError, WorkspaceGeneratePathAddrError, WorkspaceMoveEntryError,
     WorkspaceOpenFileError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
-    WorkspaceStatFolderChildrenError,
-};
-use libparsec_client::{
-    EventWorkspaceOpsInboundSyncDone, EventWorkspaceOpsOutboundSyncNeeded,
-    EventWorkspaceWatchedEntryChanged,
+    WorkspaceStatFolderChildrenError, WorkspaceWatchEntryOneShotError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
 
 use crate::handle::{
     borrow_from_handle, filter_close_handles, register_handle_with_init, take_and_close_handle,
-    EntryWatcher, FilterCloseHandle, Handle, HandleItem,
+    FilterCloseHandle, Handle, HandleItem,
 };
 
 fn borrow_workspace(workspace: Handle) -> anyhow::Result<Arc<libparsec_client::WorkspaceOps>> {
@@ -122,7 +118,6 @@ pub async fn client_start_workspace(
             HandleItem::Workspace {
                 client: client_handle,
                 workspace_ops,
-                entry_watchers: Default::default(),
             },
         );
         match starting {
@@ -269,118 +264,6 @@ pub async fn workspace_info(workspace: Handle) -> Result<StartedWorkspaceInfo, W
         current_self_role,
         mountpoints,
     })
-}
-
-/*
- * Get notified on changes in a path
- */
-
-pub type WorkspaceWatchError = WorkspaceStatEntryError;
-
-pub async fn workspace_watch_entry_oneshot(
-    workspace: Handle,
-    path: FsPath,
-) -> Result<VlobID, WorkspaceWatchError> {
-    let workspace_handle = workspace;
-    let (client_handle, workspace, entry_watchers) =
-        borrow_from_handle(workspace_handle, |x| match x {
-            HandleItem::Workspace {
-                client,
-                workspace_ops,
-                entry_watchers,
-                ..
-            } => Some((*client, workspace_ops.clone(), entry_watchers.clone())),
-            _ => None,
-        })?;
-
-    let event_bus = borrow_from_handle(client_handle, |x| match x {
-        HandleItem::Client { on_event, .. } => Some(on_event.event_bus.clone()),
-        _ => None,
-    })?;
-
-    // 1) Resolve the path to get the entry id
-
-    let stat = workspace.stat_entry(&path).await?;
-    let realm_id = workspace.realm_id();
-    let entry_id = stat.id();
-
-    // 2) Connect the entry watcher to the event bus
-
-    // Note step 1 and 2 are not atomic, hence a modification occurring between the two
-    // steps will not be caught by the watcher. This should be okay though, as step 1
-    // is only used to get the entry ID from the path, so we can just pretend the
-    // modification occured just before step 1 (it would be different if we were
-    // returning the stat obtained from step 1 to the caller).
-
-    {
-        let mut entry_watchers_guard = entry_watchers.lock().expect("Mutex is poisoned");
-        entry_watchers_guard.last_id += 1;
-        let entry_watcher_id = entry_watchers_guard.last_id;
-
-        let on_event_triggered = {
-            let entry_watchers = entry_watchers.clone();
-            let event_bus = event_bus.clone();
-
-            move |candidate_realm_id: VlobID, candidate_entry_id: VlobID| {
-                if candidate_realm_id != realm_id || candidate_entry_id != entry_id {
-                    return;
-                }
-
-                // Disconnect the entry watcher since it is a one-shot
-
-                {
-                    let mut entry_watchers_guard =
-                        entry_watchers.lock().expect("Mutex is poisoned");
-                    let index = entry_watchers_guard
-                        .watchers
-                        .iter()
-                        .position(|x| x.id == entry_watcher_id);
-                    match index {
-                        // The watcher is already disconnected, we should not have received the event !
-                        None => return,
-                        Some(index) => {
-                            let watcher = entry_watchers_guard.watchers.swap_remove(index);
-                            // The watcher object contains an event bus connection lifetime
-                            // about the event type we are currently handling.
-                            // Given each event type has its own dedicated lock, dropping
-                            // the lifetime here would created a deadlock !
-                            // So instead we spawn a task to do the drop later.
-                            libparsec_platform_async::spawn(async move {
-                                drop(watcher);
-                            });
-                        }
-                    }
-                }
-
-                // Dispatch the watcher event
-
-                let event = EventWorkspaceWatchedEntryChanged { realm_id, entry_id };
-                // Sending a event from within an event handler :/
-                // This is fine as long as the event currently handled and
-                // the one being send are of a different type (as each event
-                // type has it own dedicated lock).
-                event_bus.send(&event);
-            }
-        };
-
-        let on_local_change_lifetime = event_bus.connect({
-            let on_event_triggered = on_event_triggered.clone();
-            move |e: &EventWorkspaceOpsOutboundSyncNeeded| {
-                on_event_triggered(e.realm_id, e.entry_id)
-            }
-        });
-
-        let on_remote_change_lifetime = event_bus.connect({
-            move |e: &EventWorkspaceOpsInboundSyncDone| on_event_triggered(e.realm_id, e.entry_id)
-        });
-
-        entry_watchers_guard.watchers.push(EntryWatcher {
-            id: entry_watcher_id,
-            lifetimes: (on_local_change_lifetime, on_remote_change_lifetime),
-        });
-    }
-
-    Ok(entry_id)
 }
 
 /*
@@ -603,6 +486,15 @@ pub async fn workspace_stat_entry_by_id_ignore_confinement_point(
     workspace
         .stat_entry_by_id_ignore_confinement_point(entry_id)
         .await
+}
+
+pub async fn workspace_watch_entry_oneshot(
+    workspace: Handle,
+    path: FsPath,
+) -> Result<VlobID, WorkspaceWatchEntryOneShotError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.watch_entry_oneshot(&path).await
 }
 
 pub async fn workspace_stat_folder_children(

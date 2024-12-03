@@ -2,10 +2,6 @@
 
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock};
 
-use libparsec_client::{
-    EventBusConnectionLifetime, EventWorkspaceOpsInboundSyncDone,
-    EventWorkspaceOpsOutboundSyncNeeded,
-};
 use libparsec_platform_async::event::Event;
 use libparsec_types::prelude::*;
 
@@ -16,32 +12,6 @@ const INVALID_HANDLE_ERROR_MSG: &str = "Invalid Handle";
 enum RegisteredHandleItem {
     Open(HandleItem),
     Closed,
-}
-
-pub(crate) struct EntryWatcher {
-    pub id: u32,
-    // Never accessed, but we need to keep it alive
-    #[allow(dead_code)]
-    pub lifetimes: (
-        // Event triggered when a local change occurred
-        EventBusConnectionLifetime<EventWorkspaceOpsOutboundSyncNeeded>,
-        // Event triggered when a remote change occurred
-        EventBusConnectionLifetime<EventWorkspaceOpsInboundSyncDone>,
-    ),
-}
-
-impl std::fmt::Debug for EntryWatcher {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("EntryWatcher")
-            .field("id", &self.id)
-            .finish()
-    }
-}
-
-#[derive(Default, Debug)]
-pub(crate) struct EntryWatchers {
-    pub last_id: u32,
-    pub watchers: Vec<EntryWatcher>,
 }
 
 pub(crate) enum HandleItem {
@@ -67,7 +37,6 @@ pub(crate) enum HandleItem {
     Workspace {
         client: Handle,
         workspace_ops: Arc<libparsec_client::WorkspaceOps>,
-        entry_watchers: Arc<Mutex<EntryWatchers>>,
     },
     #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
     StartingMountpoint {
