@@ -965,6 +965,36 @@ export type ClientNewDeviceInvitationError =
   | ClientNewDeviceInvitationErrorInternal
   | ClientNewDeviceInvitationErrorOffline
 
+// ClientNewShamirRecoveryInvitationError
+export enum ClientNewShamirRecoveryInvitationErrorTag {
+    Internal = 'ClientNewShamirRecoveryInvitationErrorInternal',
+    NotAllowed = 'ClientNewShamirRecoveryInvitationErrorNotAllowed',
+    Offline = 'ClientNewShamirRecoveryInvitationErrorOffline',
+    UserNotFound = 'ClientNewShamirRecoveryInvitationErrorUserNotFound',
+}
+
+export interface ClientNewShamirRecoveryInvitationErrorInternal {
+    tag: ClientNewShamirRecoveryInvitationErrorTag.Internal
+    error: string
+}
+export interface ClientNewShamirRecoveryInvitationErrorNotAllowed {
+    tag: ClientNewShamirRecoveryInvitationErrorTag.NotAllowed
+    error: string
+}
+export interface ClientNewShamirRecoveryInvitationErrorOffline {
+    tag: ClientNewShamirRecoveryInvitationErrorTag.Offline
+    error: string
+}
+export interface ClientNewShamirRecoveryInvitationErrorUserNotFound {
+    tag: ClientNewShamirRecoveryInvitationErrorTag.UserNotFound
+    error: string
+}
+export type ClientNewShamirRecoveryInvitationError =
+  | ClientNewShamirRecoveryInvitationErrorInternal
+  | ClientNewShamirRecoveryInvitationErrorNotAllowed
+  | ClientNewShamirRecoveryInvitationErrorOffline
+  | ClientNewShamirRecoveryInvitationErrorUserNotFound
+
 // ClientNewUserInvitationError
 export enum ClientNewUserInvitationErrorTag {
     AlreadyMember = 'ClientNewUserInvitationErrorAlreadyMember',
@@ -2991,59 +3021,59 @@ export type WorkspaceStorageCacheSize =
   | WorkspaceStorageCacheSizeCustom
   | WorkspaceStorageCacheSizeDefault
 
-// WorkspaceWatchError
-export enum WorkspaceWatchErrorTag {
-    EntryNotFound = 'WorkspaceWatchErrorEntryNotFound',
-    Internal = 'WorkspaceWatchErrorInternal',
-    InvalidCertificate = 'WorkspaceWatchErrorInvalidCertificate',
-    InvalidKeysBundle = 'WorkspaceWatchErrorInvalidKeysBundle',
-    InvalidManifest = 'WorkspaceWatchErrorInvalidManifest',
-    NoRealmAccess = 'WorkspaceWatchErrorNoRealmAccess',
-    Offline = 'WorkspaceWatchErrorOffline',
-    Stopped = 'WorkspaceWatchErrorStopped',
+// WorkspaceWatchEntryOneShotError
+export enum WorkspaceWatchEntryOneShotErrorTag {
+    EntryNotFound = 'WorkspaceWatchEntryOneShotErrorEntryNotFound',
+    Internal = 'WorkspaceWatchEntryOneShotErrorInternal',
+    InvalidCertificate = 'WorkspaceWatchEntryOneShotErrorInvalidCertificate',
+    InvalidKeysBundle = 'WorkspaceWatchEntryOneShotErrorInvalidKeysBundle',
+    InvalidManifest = 'WorkspaceWatchEntryOneShotErrorInvalidManifest',
+    NoRealmAccess = 'WorkspaceWatchEntryOneShotErrorNoRealmAccess',
+    Offline = 'WorkspaceWatchEntryOneShotErrorOffline',
+    Stopped = 'WorkspaceWatchEntryOneShotErrorStopped',
 }
 
-export interface WorkspaceWatchErrorEntryNotFound {
-    tag: WorkspaceWatchErrorTag.EntryNotFound
+export interface WorkspaceWatchEntryOneShotErrorEntryNotFound {
+    tag: WorkspaceWatchEntryOneShotErrorTag.EntryNotFound
     error: string
 }
-export interface WorkspaceWatchErrorInternal {
-    tag: WorkspaceWatchErrorTag.Internal
+export interface WorkspaceWatchEntryOneShotErrorInternal {
+    tag: WorkspaceWatchEntryOneShotErrorTag.Internal
     error: string
 }
-export interface WorkspaceWatchErrorInvalidCertificate {
-    tag: WorkspaceWatchErrorTag.InvalidCertificate
+export interface WorkspaceWatchEntryOneShotErrorInvalidCertificate {
+    tag: WorkspaceWatchEntryOneShotErrorTag.InvalidCertificate
     error: string
 }
-export interface WorkspaceWatchErrorInvalidKeysBundle {
-    tag: WorkspaceWatchErrorTag.InvalidKeysBundle
+export interface WorkspaceWatchEntryOneShotErrorInvalidKeysBundle {
+    tag: WorkspaceWatchEntryOneShotErrorTag.InvalidKeysBundle
     error: string
 }
-export interface WorkspaceWatchErrorInvalidManifest {
-    tag: WorkspaceWatchErrorTag.InvalidManifest
+export interface WorkspaceWatchEntryOneShotErrorInvalidManifest {
+    tag: WorkspaceWatchEntryOneShotErrorTag.InvalidManifest
     error: string
 }
-export interface WorkspaceWatchErrorNoRealmAccess {
-    tag: WorkspaceWatchErrorTag.NoRealmAccess
+export interface WorkspaceWatchEntryOneShotErrorNoRealmAccess {
+    tag: WorkspaceWatchEntryOneShotErrorTag.NoRealmAccess
     error: string
 }
-export interface WorkspaceWatchErrorOffline {
-    tag: WorkspaceWatchErrorTag.Offline
+export interface WorkspaceWatchEntryOneShotErrorOffline {
+    tag: WorkspaceWatchEntryOneShotErrorTag.Offline
     error: string
 }
-export interface WorkspaceWatchErrorStopped {
-    tag: WorkspaceWatchErrorTag.Stopped
+export interface WorkspaceWatchEntryOneShotErrorStopped {
+    tag: WorkspaceWatchEntryOneShotErrorTag.Stopped
     error: string
 }
-export type WorkspaceWatchError =
-  | WorkspaceWatchErrorEntryNotFound
-  | WorkspaceWatchErrorInternal
-  | WorkspaceWatchErrorInvalidCertificate
-  | WorkspaceWatchErrorInvalidKeysBundle
-  | WorkspaceWatchErrorInvalidManifest
-  | WorkspaceWatchErrorNoRealmAccess
-  | WorkspaceWatchErrorOffline
-  | WorkspaceWatchErrorStopped
+export type WorkspaceWatchEntryOneShotError =
+  | WorkspaceWatchEntryOneShotErrorEntryNotFound
+  | WorkspaceWatchEntryOneShotErrorInternal
+  | WorkspaceWatchEntryOneShotErrorInvalidCertificate
+  | WorkspaceWatchEntryOneShotErrorInvalidKeysBundle
+  | WorkspaceWatchEntryOneShotErrorInvalidManifest
+  | WorkspaceWatchEntryOneShotErrorNoRealmAccess
+  | WorkspaceWatchEntryOneShotErrorOffline
+  | WorkspaceWatchEntryOneShotErrorStopped
 
 export interface LibParsecPlugin {
     archiveDevice(
@@ -3180,6 +3210,10 @@ export interface LibParsecPlugin {
         client: Handle,
         send_email: boolean
     ): Promise<Result<NewInvitationInfo, ClientNewDeviceInvitationError>>
+    clientNewShamirRecoveryInvitation(
+        client: Handle,
+        send_email: boolean
+    ): Promise<Result<NewInvitationInfo, ClientNewShamirRecoveryInvitationError>>
     clientNewUserInvitation(
         client: Handle,
         claimer_email: string,
@@ -3542,5 +3576,5 @@ export interface LibParsecPlugin {
     workspaceWatchEntryOneshot(
         workspace: Handle,
         path: FsPath
-    ): Promise<Result<VlobID, WorkspaceWatchError>>
+    ): Promise<Result<VlobID, WorkspaceWatchEntryOneShotError>>
 }

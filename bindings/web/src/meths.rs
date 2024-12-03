@@ -4526,6 +4526,48 @@ fn variant_client_new_device_invitation_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientNewShamirRecoveryInvitationError
+
+#[allow(dead_code)]
+fn variant_client_new_shamir_recovery_invitation_error_rs_to_js(
+    rs_obj: libparsec::ClientNewShamirRecoveryInvitationError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientNewShamirRecoveryInvitationError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientNewShamirRecoveryInvitationErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientNewShamirRecoveryInvitationError::NotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientNewShamirRecoveryInvitationErrorNotAllowed".into(),
+            )?;
+        }
+        libparsec::ClientNewShamirRecoveryInvitationError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientNewShamirRecoveryInvitationErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientNewShamirRecoveryInvitationError::UserNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientNewShamirRecoveryInvitationErrorUserNotFound".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientNewUserInvitationError
 
 #[allow(dead_code)]
@@ -9387,63 +9429,71 @@ fn variant_workspace_storage_cache_size_rs_to_js(
     Ok(js_obj)
 }
 
-// WorkspaceWatchError
+// WorkspaceWatchEntryOneShotError
 
 #[allow(dead_code)]
-fn variant_workspace_watch_error_rs_to_js(
-    rs_obj: libparsec::WorkspaceWatchError,
+fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceWatchEntryOneShotError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceWatchError::EntryNotFound { .. } => {
+        libparsec::WorkspaceWatchEntryOneShotError::EntryNotFound { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceWatchErrorEntryNotFound".into(),
+                &"WorkspaceWatchEntryOneShotErrorEntryNotFound".into(),
             )?;
         }
-        libparsec::WorkspaceWatchError::Internal { .. } => {
+        libparsec::WorkspaceWatchEntryOneShotError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceWatchErrorInternal".into(),
+                &"WorkspaceWatchEntryOneShotErrorInternal".into(),
             )?;
         }
-        libparsec::WorkspaceWatchError::InvalidCertificate { .. } => {
+        libparsec::WorkspaceWatchEntryOneShotError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceWatchErrorInvalidCertificate".into(),
+                &"WorkspaceWatchEntryOneShotErrorInvalidCertificate".into(),
             )?;
         }
-        libparsec::WorkspaceWatchError::InvalidKeysBundle { .. } => {
+        libparsec::WorkspaceWatchEntryOneShotError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceWatchErrorInvalidKeysBundle".into(),
+                &"WorkspaceWatchEntryOneShotErrorInvalidKeysBundle".into(),
             )?;
         }
-        libparsec::WorkspaceWatchError::InvalidManifest { .. } => {
+        libparsec::WorkspaceWatchEntryOneShotError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceWatchErrorInvalidManifest".into(),
+                &"WorkspaceWatchEntryOneShotErrorInvalidManifest".into(),
             )?;
         }
-        libparsec::WorkspaceWatchError::NoRealmAccess { .. } => {
+        libparsec::WorkspaceWatchEntryOneShotError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceWatchErrorNoRealmAccess".into(),
+                &"WorkspaceWatchEntryOneShotErrorNoRealmAccess".into(),
             )?;
         }
-        libparsec::WorkspaceWatchError::Offline { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"WorkspaceWatchErrorOffline".into())?;
+        libparsec::WorkspaceWatchEntryOneShotError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceWatchEntryOneShotErrorOffline".into(),
+            )?;
         }
-        libparsec::WorkspaceWatchError::Stopped { .. } => {
-            Reflect::set(&js_obj, &"tag".into(), &"WorkspaceWatchErrorStopped".into())?;
+        libparsec::WorkspaceWatchEntryOneShotError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceWatchEntryOneShotErrorStopped".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -10575,6 +10625,31 @@ pub fn clientNewDeviceInvitation(client: u32, send_email: bool) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_new_device_invitation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_new_shamir_recovery_invitation
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientNewShamirRecoveryInvitation(client: u32, send_email: bool) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_new_shamir_recovery_invitation(client, send_email).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_new_invitation_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_new_shamir_recovery_invitation_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -13499,7 +13574,7 @@ pub fn workspaceWatchEntryOneshot(workspace: u32, path: String) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_watch_error_rs_to_js(err)?;
+                let js_err = variant_workspace_watch_entry_one_shot_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
