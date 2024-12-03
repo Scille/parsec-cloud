@@ -464,6 +464,7 @@ impl_events!(
     WorkspaceOpsInboundSyncDone {
         realm_id: VlobID,
         entry_id: VlobID,
+        parent_id: VlobID
     },
     /// This event is fired by the workspace ops when a manifest that is watched gets
     /// modified on local or remote (see `WorkspaceOps::watch_entry_oneshot`).

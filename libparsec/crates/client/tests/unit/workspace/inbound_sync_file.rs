@@ -294,7 +294,18 @@ async fn non_placeholder(
     if matches!(&remote_modification, RemoteModification::Nothing) {
         spy.assert_no_events();
     } else {
-        spy.assert_next(|e| p_assert_matches!(e, EventWorkspaceOpsInboundSyncDone { realm_id,entry_id } if *realm_id == wksp1_id && *entry_id == wksp1_bar_txt_id));
+        let expected_parent_id = if matches!(&remote_modification, RemoteModification::ReParented) {
+            wksp1_foo_id
+        } else {
+            wksp1_id
+        };
+        spy.assert_next(|e| {
+            p_assert_matches!(e, EventWorkspaceOpsInboundSyncDone { realm_id, entry_id, parent_id }
+                if *realm_id == wksp1_id
+                && *entry_id == wksp1_bar_txt_id
+                && *parent_id == expected_parent_id
+            )
+        });
     }
 
     let bar_txt_manifest = match wksp1_ops
