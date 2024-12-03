@@ -1515,6 +1515,13 @@
                 "status": "Status",
                 "download": "Télécharger"
             },
+            "status": {
+                "paid": "Payée",
+                "toPay": "À payer",
+                "draft": "En cours de création",
+                "uncollectible": "Impayée",
+                "void": "Vide"
+            },
             "retrieveError": "Impossible de récupérer la liste des factures."
         },
         "invoicesCustomOrder": {

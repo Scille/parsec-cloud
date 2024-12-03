@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { InvitationStatus, UserProfile, WorkspaceRole } from '@/parsec';
+import { InvoiceStatus } from '@/services/bms';
 import { Locale, Translatable } from 'megashark-lib';
 
 export function getProfileTranslationKey(profile: UserProfile): Translatable {
@@ -12,6 +13,21 @@ export function getProfileTranslationKey(profile: UserProfile): Translatable {
     return 'UsersPage.profile.outsider.label';
   }
   return '';
+}
+
+export function getInvoiceStatusTranslationKey(status: InvoiceStatus): Translatable {
+  switch (status) {
+    case InvoiceStatus.Paid:
+      return 'clientArea.invoices.status.paid';
+    case InvoiceStatus.Draft:
+      return 'clientArea.invoices.status.draft';
+    case InvoiceStatus.Open:
+      return 'clientArea.invoices.status.toPay';
+    case InvoiceStatus.Uncollectible:
+      return 'clientArea.invoices.status.uncollectible';
+    default:
+      return 'clientArea.invoices.status.void';
+  }
 }
 
 interface WorkspaceRoleTranslations {
