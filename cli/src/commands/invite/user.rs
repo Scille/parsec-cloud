@@ -35,7 +35,7 @@ pub async fn invite_user(args: Args, client: &StartedClient) -> anyhow::Result<(
     let url = ParsecInvitationAddr::new(
         client.organization_addr().clone(),
         client.organization_id().clone(),
-        InvitationType::Device,
+        InvitationType::User,
         token,
     )
     .to_url();
