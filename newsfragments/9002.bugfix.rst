@@ -1,1 +1,0 @@
-Fix rare freeze when the folder displayed by the GUI is remotely modified.
