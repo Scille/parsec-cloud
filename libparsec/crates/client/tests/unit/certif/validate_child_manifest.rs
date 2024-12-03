@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_client_connection::{
-    test_register_low_level_send_hook, test_register_send_hook, HeaderMap, ResponseMock, StatusCode,
+    test_register_low_level_send_hook, test_register_send_hook,
+    test_send_hook_realm_get_keys_bundle, HeaderMap, ResponseMock, StatusCode,
 };
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
@@ -39,16 +40,9 @@ async fn ok(env: &TestbedEnv) {
 
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
-        move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-            authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                keys_bundle,
-                keys_bundle_access,
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, realm_id),
     );
 
     let manifest = ops
@@ -117,16 +111,9 @@ async fn non_existent_author(env: &TestbedEnv) {
 
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
-        move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-            authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                keys_bundle,
-                keys_bundle_access,
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, realm_id),
     );
 
     let err = ops
@@ -173,16 +160,9 @@ async fn cannot_decrypt(env: &TestbedEnv) {
 
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
-        move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-            authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                keys_bundle,
-                keys_bundle_access,
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, realm_id),
     );
 
     let err = ops
@@ -259,16 +239,9 @@ async fn cleartext_corrupted(
 
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
-        move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-            authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                keys_bundle,
-                keys_bundle_access,
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, realm_id),
     );
 
     let err = ops
@@ -328,17 +301,9 @@ async fn author_no_access_to_realm(env: &TestbedEnv) {
 
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
-        move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-            p_assert_eq!(req.realm_id, realm_id);
-            authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                keys_bundle,
-                keys_bundle_access,
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, realm_id),
     );
 
     let err = ops
@@ -401,16 +366,9 @@ async fn revoked(env: &TestbedEnv) {
         e => panic!("Unexpected event {:?}", e),
     };
 
-    let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, bob.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
-        move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-            authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                keys_bundle,
-                keys_bundle_access,
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, bob.user_id, realm_id),
     );
 
     let err = ops
@@ -478,7 +436,6 @@ async fn cannot_write(env: &TestbedEnv) {
         .await;
     let (_, shared_realm_key_index) = env.get_last_realm_key(shared_realm_id);
 
-    let alice = env.local_device("alice@dev1");
     let bob = env.local_device("bob@dev1");
 
     let ops = certificates_ops_factory(env, &bob).await;
@@ -490,26 +447,9 @@ async fn cannot_write(env: &TestbedEnv) {
         e => panic!("Unexpected event {:?}", e),
     };
 
-    let keys_bundle = env.get_last_realm_keys_bundle(shared_realm_id);
-    let keys_bundle_access = {
-        let alice_keys_bundle_access =
-            env.get_last_realm_keys_bundle_access_for(shared_realm_id, alice.user_id);
-        let cleartext_keys_bundle_access = alice
-            .private_key
-            .decrypt_from_self(&alice_keys_bundle_access)
-            .unwrap();
-        bob.public_key()
-            .encrypt_for_self(&cleartext_keys_bundle_access)
-            .into()
-    };
     test_register_send_hook(
         &env.discriminant_dir,
-        move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-            authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                keys_bundle,
-                keys_bundle_access,
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, bob.user_id, shared_realm_id),
     );
 
     let err = ops

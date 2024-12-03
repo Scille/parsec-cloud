@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_client_connection::{
-    test_register_low_level_send_hook, test_register_send_hook, HeaderMap, ResponseMock, StatusCode,
+    test_register_low_level_send_hook, test_register_send_hook,
+    test_send_hook_realm_get_keys_bundle, HeaderMap, ResponseMock, StatusCode,
 };
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
@@ -13,7 +14,7 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(#[values("last_key_index", "old_key_index")] kind: &str, env: &TestbedEnv) {
-    let (realm_id, name, timestamp, expected_key_index_fetched) = env
+    let (realm_id, name, timestamp) = env
         .customize(|builder| {
             let realm_id = builder
                 .new_realm("alice")
@@ -24,38 +25,27 @@ async fn ok(#[values("last_key_index", "old_key_index")] kind: &str, env: &Testb
                 .rename_realm(realm_id, "wkp1")
                 .map(|event| (event.name.clone(), event.timestamp));
 
-            let expected_key_index_fetched = match kind {
+            match kind {
                 "old_key_index" => {
                     builder.rotate_key_realm(realm_id);
-                    2
                 }
-                "last_key_index" => 1,
+                "last_key_index" => (),
                 unknown => panic!("Unknown kind: {}", unknown),
-            };
+            }
 
             builder.certificates_storage_fetch_certificates("alice@dev1");
 
-            (realm_id, name, timestamp, expected_key_index_fetched)
+            (realm_id, name, timestamp)
         })
         .await;
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
-        move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-            // Remember: the last keys bundle is fetched but it also contains the previous
-            // keys (in our case, it's the first key that is going to be used).
-            p_assert_eq!(req.key_index, expected_key_index_fetched);
-            p_assert_eq!(req.realm_id, realm_id);
-
-            authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                keys_bundle,
-                keys_bundle_access,
-            }
-        },
+        // Remember: the last keys bundle is fetched but it also contains the previous
+        // keys (in our case, it's the first key that is going to be used).
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, realm_id),
     );
 
     let res = ops.decrypt_current_realm_name(realm_id).await.unwrap();

@@ -2,6 +2,7 @@
 
 use libparsec_client_connection::{
     protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
+    test_send_hook_realm_get_keys_bundle,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -222,19 +223,7 @@ async fn non_placeholder(
             }
         },
         // 2) Fetch workspace keys bundle to decrypt the vlob
-        {
-            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-            let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.realm_id, wksp1_id);
-                p_assert_eq!(req.key_index, 1);
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
     );
 
     let mut spy = wksp1_ops.event_bus.spy.start_expecting();
@@ -415,19 +404,7 @@ async fn placeholder(
             }
         },
         // 2) Fetch workspace keys bundle to decrypt the vlob
-        {
-            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-            let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.realm_id, wksp1_id);
-                p_assert_eq!(req.key_index, 1);
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
     );
 
     wksp1_ops.inbound_sync(wksp1_id).await.unwrap();

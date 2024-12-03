@@ -5,7 +5,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use libparsec_client_connection::test_register_sequence_of_send_hooks;
+use libparsec_client_connection::{
+    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle,
+};
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -77,22 +79,9 @@ async fn need_key_rotation_only(env: &TestbedEnv) {
         },
     );
 
-    let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-    let keys_bundle_access =
-        env.get_last_realm_keys_bundle_access_for(wksp1_id, "alice".parse().unwrap());
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        {
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.key_index, 1);
-                p_assert_eq!(req.realm_id, wksp1_id);
-
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, "alice".parse().unwrap(), wksp1_id),
         {
             move |req: authenticated_cmds::latest::realm_rotate_key::Req| {
                 let participants: Vec<_> = req
@@ -136,9 +125,6 @@ async fn need_unshare_then_key_rotation(env: &TestbedEnv) {
     );
 
     let new_realm_certificates: Arc<Mutex<Vec<Bytes>>> = Arc::default();
-    let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-    let keys_bundle_access =
-        env.get_last_realm_keys_bundle_access_for(wksp1_id, "alice".parse().unwrap());
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         {
@@ -173,17 +159,7 @@ async fn need_unshare_then_key_rotation(env: &TestbedEnv) {
                 }
             }
         },
-        {
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.key_index, 1);
-                p_assert_eq!(req.realm_id, wksp1_id);
-
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, "alice".parse().unwrap(), wksp1_id),
         {
             move |req: authenticated_cmds::latest::realm_rotate_key::Req| {
                 let participants: Vec<_> = req
