@@ -5,6 +5,18 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.2.1-rc.0 (2024-12-03)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix the server shutdown hanging indefinitely while a client is connected
+  through SSE.
+  (`#9099 <https://github.com/Scille/parsec-cloud/issues/9099>`__)
+
+
+
 Parsec v3.2.0 (2024-11-22)
 --------------------------
 
