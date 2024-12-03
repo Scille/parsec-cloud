@@ -1513,6 +1513,13 @@
                 "status": "Status",
                 "download": "Download"
             },
+            "status": {
+                "paid": "Paid",
+                "toPay": "To pay",
+                "draft": "In progress",
+                "uncollectible": "Uncollectible",
+                "void": "Void"
+            },
             "retrieveError": "Could not retrieve your invoices."
         },
         "invoicesCustomOrder": {

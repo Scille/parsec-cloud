@@ -341,6 +341,7 @@ export {
   CustomOrderStatusResultData,
   DataType,
   DeletePaymentMethodQueryData,
+  InvoiceStatus,
   ListOrganizationsResultData,
   LoginQueryData,
   LoginResultData,
