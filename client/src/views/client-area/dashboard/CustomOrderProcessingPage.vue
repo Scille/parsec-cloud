@@ -40,11 +40,10 @@
               {{ $msTranslate(step.description) }}
               <a
                 class="custom-button custom-button-ghost button-medium"
-                :href="invoice.pdfLink"
+                :href="customOrderDetail.link"
                 download
               >
-                <ion-icon :icon="download" />
-                {{ $msTranslate('clientArea.invoices.cell.download') }}
+                {{ $msTranslate('Voir le devis') }}
               </a>
             </ion-text>
           </div>
