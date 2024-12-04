@@ -2697,6 +2697,7 @@ export function clientNewDeviceInvitation(
 ): Promise<Result<NewInvitationInfo, ClientNewDeviceInvitationError>>
 export function clientNewShamirRecoveryInvitation(
     client: number,
+    claimer_user_id: string,
     send_email: boolean
 ): Promise<Result<NewInvitationInfo, ClientNewShamirRecoveryInvitationError>>
 export function clientNewUserInvitation(

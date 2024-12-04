@@ -10635,9 +10635,22 @@ pub fn clientNewDeviceInvitation(client: u32, send_email: bool) -> Promise {
 // client_new_shamir_recovery_invitation
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientNewShamirRecoveryInvitation(client: u32, send_email: bool) -> Promise {
+pub fn clientNewShamirRecoveryInvitation(
+    client: u32,
+    claimer_user_id: String,
+    send_email: bool,
+) -> Promise {
     future_to_promise(async move {
-        let ret = libparsec::client_new_shamir_recovery_invitation(client, send_email).await;
+        let claimer_user_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(claimer_user_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret =
+            libparsec::client_new_shamir_recovery_invitation(client, claimer_user_id, send_email)
+                .await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
