@@ -2,6 +2,7 @@
 
 import { InvitationStatus, UserProfile, WorkspaceRole } from '@/parsec';
 import { InvoiceStatus } from '@/services/bms';
+import { CustomOrderStatus } from '@/services/bms';
 import { Locale, Translatable } from 'megashark-lib';
 
 export function getProfileTranslationKey(profile: UserProfile): Translatable {
@@ -66,6 +67,49 @@ export function getWorkspaceRoleTranslationKey(role: WorkspaceRole | null): Work
         description: 'workspaceRoles.owner.description',
       };
     }
+  }
+}
+
+interface CustomOrderStatusTranslations {
+  title: Translatable;
+  description?: Translatable;
+}
+
+export function getCustomOrderStatusTranslationKey(status: CustomOrderStatus): CustomOrderStatusTranslations {
+  const locale = 'clientArea.dashboard.processing';
+
+  switch (status) {
+    case CustomOrderStatus.Unknown: {
+      return {
+        title: `${locale}.error.title`,
+        description: `${locale}.error.description`,
+      };
+    }
+    case CustomOrderStatus.NothingLinked:
+      return {
+        title: `${locale}.requestSent.title`,
+        description: `${locale}.requestSent.description`,
+      };
+    case CustomOrderStatus.EstimateLinked:
+      return {
+        title: `${locale}.estimateLinked.title`,
+        description: `${locale}.estimateLinked.description`,
+      };
+    case CustomOrderStatus.InvoiceToBePaid:
+      return {
+        title: `${locale}.invoiceToBePaid.title`,
+        description: `${locale}.invoiceToBePaid.description`,
+      };
+    case CustomOrderStatus.InvoicePaid:
+      return {
+        title: `${locale}.organizationAvailable.title`,
+        description: `${locale}.organizationAvailable.description`,
+      };
+    default:
+      return {
+        title: `${locale}.error.title`,
+        description: `${locale}.error.description`,
+      };
   }
 }
 

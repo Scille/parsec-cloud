@@ -113,7 +113,10 @@
                 v-if="currentPage === ClientAreaPages.CustomOrderBillingDetails"
                 :organization="currentOrganization"
               />
-              <custom-order-processing-page v-if="currentPage === ClientAreaPages.CustomOrderProcessing" />
+              <custom-order-processing-page
+                v-if="currentPage === ClientAreaPages.CustomOrderProcessing"
+                :organization="currentOrganization"
+              />
             </div>
           </div>
         </ion-content>
@@ -204,7 +207,7 @@ onMounted(async () => {
       currentPage.value = ClientAreaPages.Contracts;
       const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(currentOrganization.value);
       if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus) {
-        if (statusResp.data.status === CustomOrderStatus.NothingLinked) {
+        if (statusResp.data.status !== CustomOrderStatus.ContractEnded) {
           currentPage.value = ClientAreaPages.CustomOrderProcessing;
         }
       }
@@ -285,8 +288,8 @@ function getTitleByPage(): Translatable {
       return 'clientArea.header.titles.customOrderStatistics';
     case ClientAreaPages.CustomOrderBillingDetails:
       return 'clientArea.header.titles.customOrderBillingDetails';
-    case ClientAreaPages.Orders:
-      return 'clientArea.header.titles.orders';
+    case ClientAreaPages.CustomOrderProcessing:
+      return 'clientArea.header.titles.customOrderProcessing';
     default:
       return '';
   }
