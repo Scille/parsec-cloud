@@ -2,7 +2,7 @@
 
 <template>
   <div class="client-page-processing">
-    <template v-if="!querying && !error && customOrderStatus">
+    <template v-if="!querying && !error && customOrderStatus && customOrderDetail">
       <div class="process-container">
         <div
           class="process-step"
@@ -38,8 +38,26 @@
               v-if="currentStatusStep === step.status"
             >
               {{ $msTranslate(step.description) }}
+              <a
+                class="custom-button custom-button-ghost button-medium"
+                :href="invoice.pdfLink"
+                download
+              >
+                <ion-icon :icon="download" />
+                {{ $msTranslate('clientArea.invoices.cell.download') }}
+              </a>
             </ion-text>
           </div>
+        </div>
+      </div>
+      <div class="process-request">
+        <div class="div">
+          <ion-text class="form-label">
+            {{ $msTranslate('Nombre de personnes') }}
+          </ion-text>
+          <ion-text class="title-h1">
+            {{ customOrderDetail.amountWithoutTaxes }}
+          </ion-text>
         </div>
       </div>
     </template>
@@ -48,7 +66,7 @@
     </template>
     <template v-else-if="error">
       <ms-report-text :theme="MsReportTheme.Error">
-        {{ $msTranslate('clientArea.dashboard.processing') }}
+        {{ $msTranslate(error) }}
       </ms-report-text>
     </template>
   </div>
@@ -57,13 +75,15 @@
 <script setup lang="ts">
 import { IonIcon, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { BmsAccessInstance, CustomOrderStatusResultData, DataType, BmsOrganization, CustomOrderStatus } from '@/services/bms';
+import { BmsAccessInstance, CustomOrderStatusResultData, CustomOrderDetailsResultData,
+  DataType, BmsOrganization, CustomOrderStatus } from '@/services/bms';
 import { isDefaultOrganization } from '@/views/client-area/types';
 import { ref, onMounted } from 'vue';
 import { MsSpinner, MsReportText, MsReportTheme } from 'megashark-lib';
 import { getCustomOrderStatusTranslationKey } from '@/services/translation';
 
 const customOrderStatus = ref<CustomOrderStatusResultData>();
+const customOrderDetail = ref<CustomOrderDetailsResultData>();
 const querying = ref(true);
 const error = ref('');
 
@@ -108,13 +128,22 @@ onMounted(async () => {
     querying.value = false;
     return;
   }
+
   const orgStatusResponse = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
+  const orgDetailsResponse = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
 
   if (!orgStatusResponse.isError && orgStatusResponse.data && orgStatusResponse.data.type === DataType.CustomOrderStatus) {
     customOrderStatus.value = orgStatusResponse.data;
   } else {
-    error.value = 'clientArea.statistics.error';
+    error.value = 'clientArea.dashboard.processing.error.title';
   }
+
+  if(!orgDetailsResponse.isError && orgDetailsResponse.data && orgDetailsResponse.data.type === DataType.CustomOrderDetails) {
+    customOrderDetail.value = orgDetailsResponse.data;
+  } else {
+    error.value = 'clientArea.dashboard.processing.error.title';
+  }
+
   querying.value = false;
 
   if (customOrderStatus.value) {
