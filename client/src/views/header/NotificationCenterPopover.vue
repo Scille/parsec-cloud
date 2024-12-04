@@ -53,6 +53,9 @@ const props = defineProps<{
 
 const unreadCount = props.notificationManager.getUnreadCount();
 const notifications = computed(() => {
+  if (!props.notificationManager || !props.notificationManager.getNotifications()) {
+    return [];
+  }
   return props.notificationManager
     .getNotifications()
     .filter((n) => (onlyReadToggle.value ? !n.read : true))
