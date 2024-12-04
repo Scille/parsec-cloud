@@ -69,7 +69,6 @@ async fn invite_user_dance(tmp_path: TmpPath) {
         .args([
             "invite",
             "greet",
-            "--token",
             &token.hex().to_string(),
             "--device",
             &alice.device_id.hex(),
