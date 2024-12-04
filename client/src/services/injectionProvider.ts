@@ -61,7 +61,7 @@ export class InjectionProvider {
     return this.default;
   }
 
-  async distributeEventToAll(event: Events, data: EventData): Promise<void> {
+  async distributeEventToAll(event: Events, data?: EventData): Promise<void> {
     for (const injections of this.injections.values()) {
       await injections.eventDistributor.dispatchEvent(event, data);
     }
