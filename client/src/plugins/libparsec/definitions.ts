@@ -3212,6 +3212,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<NewInvitationInfo, ClientNewDeviceInvitationError>>
     clientNewShamirRecoveryInvitation(
         client: Handle,
+        claimer_user_id: UserID,
         send_email: boolean
     ): Promise<Result<NewInvitationInfo, ClientNewShamirRecoveryInvitationError>>
     clientNewUserInvitation(

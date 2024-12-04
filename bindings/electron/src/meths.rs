@@ -10574,8 +10574,20 @@ fn client_new_shamir_recovery_invitation(mut cx: FunctionContext) -> JsResult<Js
             v
         }
     };
+    let claimer_user_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
     let send_email = {
-        let js_val = cx.argument::<JsBoolean>(1)?;
+        let js_val = cx.argument::<JsBoolean>(2)?;
         js_val.value(&mut cx)
     };
     let channel = cx.channel();
@@ -10586,7 +10598,12 @@ fn client_new_shamir_recovery_invitation(mut cx: FunctionContext) -> JsResult<Js
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_new_shamir_recovery_invitation(client, send_email).await;
+            let ret = libparsec::client_new_shamir_recovery_invitation(
+                client,
+                claimer_user_id,
+                send_email,
+            )
+            .await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
