@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { InvitationStatus, UserProfile, WorkspaceRole } from '@/parsec';
-import { InvoiceStatus } from '@/services/bms';
+import { CustomOrderRequestStatus, CustomOrderStatus, InvoiceStatus } from '@/services/bms';
 import { Locale, Translatable } from 'megashark-lib';
 
 export function getProfileTranslationKey(profile: UserProfile): Translatable {
@@ -66,6 +66,52 @@ export function getWorkspaceRoleTranslationKey(role: WorkspaceRole | null): Work
         description: 'workspaceRoles.owner.description',
       };
     }
+  }
+}
+
+interface CustomOrderStatusTranslations {
+  title: Translatable;
+  description?: Translatable;
+}
+
+export function getCustomOrderStatusTranslationKey(
+  statusBms: CustomOrderStatus,
+  statusSellsy: CustomOrderRequestStatus,
+): CustomOrderStatusTranslations {
+  const key = `${statusBms}-${statusSellsy}`;
+  const locale = 'clientArea.dashboard.step';
+
+  switch (key) {
+    case `${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Received}`:
+      return {
+        title: `${locale}.requestSent.title`,
+        description: `${locale}.requestSent.description`,
+      };
+    case `${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Processing}`:
+      return {
+        title: `${locale}.processing.title`,
+        description: `${locale}.processing.description`,
+      };
+    case `${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Finished}`:
+      return {
+        title: `${locale}.validate.title`,
+        description: `${locale}.validate.description`,
+      };
+    case `${CustomOrderStatus.InvoiceToBePaid}-${CustomOrderRequestStatus.Finished}`:
+      return {
+        title: `${locale}.invoiceToBePaid.title`,
+        description: `${locale}.invoiceToBePaid.description`,
+      };
+    case `${CustomOrderStatus.InvoicePaid}-${CustomOrderRequestStatus.Finished}`:
+      return {
+        title: `${locale}.organizationAvailable.title`,
+        description: `${locale}.organizationAvailable.description`,
+      };
+    default:
+      return {
+        title: `${locale}.error.title`,
+        description: `${locale}.error.description`,
+      };
   }
 }
 
