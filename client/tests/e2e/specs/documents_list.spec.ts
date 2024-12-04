@@ -20,50 +20,44 @@ const DIR_MATCHER = /^Dir_[a-z_]+$/;
 const TIME_MATCHER = /^(now|< 1 minute|(\d{1,2}|one) minutes? ago)$/;
 const SIZE_MATCHER = /^[0-9.]+ (K|M|G)?B$/;
 
+const NAME_MATCHER_ARRAY = new Array(2).fill(DIR_MATCHER).concat(new Array(8).fill(FILE_MATCHER));
+const TIME_MATCHER_ARRAY = new Array(10).fill(TIME_MATCHER);
+const SIZE_MATCHER_ARRAY = new Array(2).fill('').concat(new Array(8).fill(SIZE_MATCHER));
+
 msTest('Documents page default state', async ({ documents }) => {
   const actionBar = documents.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['New folder', 'Import']);
-  await expect(actionBar.locator('.counter')).toHaveText('4 items', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('10 items', { useInnerText: true });
   await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
   await expect(actionBar.locator('#grid-view')).not.toHaveDisabledAttribute();
   await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
   const entries = documents.locator('.folder-container').locator('.file-list-item');
-  await expect(entries).toHaveCount(4);
-  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText([
-    DIR_MATCHER,
-    DIR_MATCHER,
-    FILE_MATCHER,
-    FILE_MATCHER,
-  ]);
-  await expect(entries.locator('.file-lastUpdate')).toHaveText(new Array(4).fill(TIME_MATCHER));
-  await expect(entries.locator('.file-size')).toHaveText(['', '', SIZE_MATCHER, SIZE_MATCHER]);
+  await expect(entries).toHaveCount(10);
+  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
+  await expect(entries.locator('.file-lastUpdate')).toHaveText(TIME_MATCHER_ARRAY);
+  await expect(entries.locator('.file-size')).toHaveText(SIZE_MATCHER_ARRAY);
 });
 
 msTest('Check documents in grid mode', async ({ documents }) => {
   await toggleViewMode(documents);
   const entries = documents.locator('.folder-container').locator('.file-card-item');
-  await expect(entries).toHaveCount(4);
-  await expect(entries.locator('.card-content__title')).toHaveText([DIR_MATCHER, DIR_MATCHER, FILE_MATCHER, FILE_MATCHER]);
-  await expect(entries.locator('.card-content-last-update')).toHaveText(new Array(4).fill(TIME_MATCHER));
+  await expect(entries).toHaveCount(10);
+  await expect(entries.locator('.card-content__title')).toHaveText(NAME_MATCHER_ARRAY);
+  await expect(entries.locator('.card-content-last-update')).toHaveText(TIME_MATCHER_ARRAY);
 });
 
 msTest('Documents page default state in a read only workspace', async ({ documentsReadOnly }) => {
   const actionBar = documentsReadOnly.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(0);
-  await expect(actionBar.locator('.counter')).toHaveText('4 items', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('10 items', { useInnerText: true });
   await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
   await expect(actionBar.locator('#grid-view')).not.toHaveDisabledAttribute();
   await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
   const entries = documentsReadOnly.locator('.folder-container').locator('.file-list-item');
-  await expect(entries).toHaveCount(4);
-  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText([
-    DIR_MATCHER,
-    DIR_MATCHER,
-    FILE_MATCHER,
-    FILE_MATCHER,
-  ]);
-  await expect(entries.locator('.file-lastUpdate')).toHaveText(new Array(4).fill(TIME_MATCHER));
-  await expect(entries.locator('.file-size')).toHaveText(['', '', SIZE_MATCHER, SIZE_MATCHER]);
+  await expect(entries).toHaveCount(10);
+  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
+  await expect(entries.locator('.file-lastUpdate')).toHaveText(TIME_MATCHER_ARRAY);
+  await expect(entries.locator('.file-size')).toHaveText(SIZE_MATCHER_ARRAY);
   // Useless click just to move the mouse
   await documentsReadOnly.locator('.folder-list-header__label').nth(1).click();
   for (const checkbox of await entries.locator('ion-checkbox').all()) {
@@ -150,9 +144,9 @@ msTest('Selection in grid mode', async ({ documents }) => {
   }
   await entries.nth(1).locator('ion-checkbox').click();
   const actionBar = documents.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.counter')).toHaveText('3 selected items', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('9 selected items', { useInnerText: true });
   await entries.nth(3).locator('ion-checkbox').click();
-  await expect(actionBar.locator('.counter')).toHaveText('2 selected items', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('8 selected items', { useInnerText: true });
 
   await expect(entries.nth(0).locator('ion-checkbox')).toHaveState('checked');
   await expect(entries.nth(1).locator('ion-checkbox')).toHaveState('unchecked');
