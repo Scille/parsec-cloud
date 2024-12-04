@@ -1,0 +1,1 @@
+Fix bug on macOS where a drag&drop on the mount point caused a datetime overflow preventing the operation to finish.

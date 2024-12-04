@@ -31,7 +31,9 @@ fn init_sentry() {
 
 #[neon::main]
 pub fn main(mut cx: ModuleContext) -> NeonResult<()> {
-    let mut builder = env_logger::Builder::from_default_env();
+    let env = env_logger::Env::default()
+        .default_filter_or("libparsec_platform_mountpoint=trace,fuser=trace");
+    let mut builder = env_logger::Builder::from_env(env);
     // FIXME: This is a workaround to be able to get logs from libparsec
     // Since electron seems to block stderr writes from libparsec.
     // But only on unix system, on windows it works fine the logs are display on cmd.
