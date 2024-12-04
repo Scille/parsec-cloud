@@ -1,0 +1,1 @@
+Ensure that the mountpoint folder exists before adding a link to it in the sidebar

@@ -8,6 +8,7 @@ import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, session, shell }
 import log from 'electron-log/main';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
+import fs from 'fs';
 import { join } from 'path';
 import { WindowToPageChannel } from './communicationChannels';
 import AppUpdater, { UpdaterState, createAppUpdater } from './updater';
@@ -214,6 +215,7 @@ export class ElectronCapacitorApp {
   }
 
   updateMountpoint(path: string): void {
+    fs.mkdirSync(path, { recursive: true });
     this.winRegistry.addMountpointToQuickAccess(path, this.getIconPaths().tray);
   }
 
