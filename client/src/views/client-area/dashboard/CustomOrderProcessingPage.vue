@@ -1,21 +1,24 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="client-page-processing">
-    <ms-report-text :theme="MsReportTheme.Info">
-      {{ $msTranslate('clientArea.dashboard.processing') }}
-    </ms-report-text>
-  </div>
+  <progress-order
+    :organization="props.organization"
+    class="client-page-processing"
+  />
 </template>
 
 <script setup lang="ts">
-import { MsReportText, MsReportTheme } from 'megashark-lib';
+import { BmsOrganization } from '@/services/bms';
+import ProgressOrder from '@/components/client-area/ProgressOrder.vue';
+
+const props = defineProps<{
+  organization: BmsOrganization;
+}>();
 </script>
 
 <style scoped lang="scss">
-.client-page-processing {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+// eslint-disable-next-line vue-scoped-css/no-unused-selector
+.client-page-processing.process-container {
+  box-shadow: var(--parsec-shadow-light);
 }
 </style>
