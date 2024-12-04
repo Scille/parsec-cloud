@@ -3,7 +3,7 @@
 import { needsMocks } from '@/parsec/environment';
 import { wait } from '@/parsec/internals';
 import { MockFiles } from '@/parsec/mock_files';
-import { MockEntry, generateEntries, generateFile, generateFolder } from '@/parsec/mock_generator';
+import { MockEntry, generateEntriesForEachFileType, generateFile, generateFolder } from '@/parsec/mock_generator';
 import { Path } from '@/parsec/path';
 import { getParsecHandle, getWorkspaceHandle } from '@/parsec/routing';
 import {
@@ -182,7 +182,7 @@ export async function statFolderChildren(
   }
 
   await wait(500);
-  const items = (await generateEntries(path)).map((entry) => {
+  const items = (await generateEntriesForEachFileType(path)).map((entry) => {
     (entry as any as EntryStat).baseVersion = entry.version;
     (entry as any as EntryStat).confinementPoint = null;
     (entry as any as EntryStat).isConfined = (): boolean => false;
