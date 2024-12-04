@@ -369,6 +369,7 @@ class FileOperationManager {
       let fdW: FileDescriptor | null = null;
       let copied = false;
       let cancelled = false;
+      let filenameCount = 2;
       try {
         // Open the source
         const openReadResult = await openFile(data.workspaceHandle, entry.path, { read: true });
@@ -378,21 +379,24 @@ class FileOperationManager {
         fdR = openReadResult.value;
         // Try to open the destination
         let openWriteResult = await openFile(data.workspaceHandle, dstPath, { write: true, createNew: true });
-        let count = 2;
+        const filename = (await Path.filename(dstPath)) || '';
         // If opened failed because the file already exists, we append a number to its name and try opening it again,
         // until that number reaches 10 or until we manage to open it
-        while (!openWriteResult.ok && openWriteResult.error.tag === WorkspaceOpenFileErrorTag.EntryExistsInCreateNewMode && count < 10) {
-          const filename = (await Path.filename(dstPath)) || '';
+        while (
+          !openWriteResult.ok &&
+          openWriteResult.error.tag === WorkspaceOpenFileErrorTag.EntryExistsInCreateNewMode &&
+          filenameCount < 10
+        ) {
           const ext = Path.getFileExtension(dstPath);
           let newFilename = '';
           if (ext.length) {
-            newFilename = `${Path.filenameWithoutExtension(filename)} (${count}).${ext}`;
+            newFilename = `${Path.filenameWithoutExtension(filename)} (${filenameCount}).${ext}`;
           } else {
-            newFilename = `${Path.filenameWithoutExtension(filename)} (${count})`;
+            newFilename = `${Path.filenameWithoutExtension(filename)} (${filenameCount})`;
           }
           dstPath = await Path.join(await Path.parent(dstPath), newFilename);
           openWriteResult = await openFile(data.workspaceHandle, dstPath, { write: true, createNew: true });
-          count += 1;
+          filenameCount += 1;
         }
         // No luck, cancel the copy
         if (!openWriteResult.ok) {
@@ -462,7 +466,10 @@ class FileOperationManager {
           return;
         }
         if (!copied) {
-          await deleteFile(data.workspaceHandle, dstPath);
+          // We don't want to delete anything if count is 10 since no file has been created
+          if (!Path.areSame(data.srcPath, dstPath) && filenameCount < 10) {
+            await deleteFile(data.workspaceHandle, dstPath);
+          }
           await this.sendState(FileOperationState.CopyFailed, data, { error: CopyFailedError.OneFailed });
           // eslint-disable-next-line no-unsafe-finally
           return;
