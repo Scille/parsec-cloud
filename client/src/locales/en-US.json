@@ -1722,7 +1722,42 @@
                 "description": "You can change your credit card at any time.",
                 "update": "Update"
             },
-            "processing": "Your order is being processed."
+            "processing": "Your order is being processed.",
+            "step": {
+                "requestSent": {
+                    "title": "Request sent",
+                    "description": "Your request is being processed. We will contact you as soon as possible."
+                },
+                "processing": {
+                    "title": "Exchange with the sales department",
+                    "description": "Our sales department will contact you to finalize your order."
+                },
+                "validate": {
+                    "title": "Order confirmed",
+                    "description": "Your order is confirmed, you will receive an invoice soon."
+                },
+                "invoiceToBePaid": {
+                    "title": "Invoice to be paid",
+                    "description": "Your organization will be available upon payment of the invoice."
+                },
+                "organizationAvailable": {
+                    "title": "Organization available",
+                    "description": "You can now access to your organization."
+                },
+                "standby": {
+                    "title": "Order in standby",
+                    "description": "Your order has been put on hold, please contact us for more information."
+                },
+                "cancel": {
+                    "title": "Order cancelled",
+                    "description": "Your order has been cancelled, please contact us for more information."
+                },
+                "error": {
+                    "title": "Failed to retrieve the information.",
+                    "description": "An error occurred while processing your order. Please contact us."
+                }
+            },
+            "error": "Failed to retrieve the information"
         },
         "billingDetailsPage": {
             "placeholders": {

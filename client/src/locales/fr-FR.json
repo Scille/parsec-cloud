@@ -1722,7 +1722,41 @@
                 "description": "Vous pouvez à tout moment changer votre carte bancaire.",
                 "update": "Modifier"
             },
-            "processing": "Votre commande est en cours de traitement."
+            "processing": "Votre commande est en cours de traitement.",
+            "step": {
+                "requestSent": {
+                    "title": "Demande envoyée",
+                    "description": "Nous traitons votre demande. Nous allons vous recontacter dès que possible."
+                },
+                "processing": {
+                    "title": "Échange avec le service commercial",
+                    "description": "Vous allez être contacté par notre service commercial pour finaliser votre commande."
+                },
+                "validate": {
+                    "title": "Commande confirmée",
+                    "description": "Votre commande a été confirmée, vous allez bientôt recevoir votre contrat."
+                },
+                "invoiceToBePaid": {
+                    "title": "Facture à régler",
+                    "description": "Votre organisation sera disponible au règlement de la facture."
+                },
+                "organizationAvailable": {
+                    "title": "Organisation disponible",
+                    "description": "Vous avez maintenant accès à votre organisation."
+                },
+                "standby": {
+                    "title": "Commande suspendue",
+                    "description": "Votre commande a été suspendue, veuillez nous recontacter si vous avez des questions."
+                },
+                "cancel": {
+                    "title": "Commande annulée",
+                    "description": "Votre commande a été annulée, veuillez nous recontacter si vous avez des questions."
+                },
+                "error": {
+                    "title": "Erreur lors de la récupération des informations",
+                    "description": "Une erreur est survenue. Veuillez nous contacter."
+                }
+            }
         },
         "billingDetailsPage": {
             "placeholders": {
