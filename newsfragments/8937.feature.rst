@@ -1,0 +1,1 @@
+Allows overwriting default config & data directory during CLI command ``invite claim``

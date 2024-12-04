@@ -58,6 +58,31 @@ macro_rules! clap_parser_with_shared_opts_builder {
             }
         );
     };
+    // data dir option
+    (
+        #[with = data_dir $(,$modifier:ident)*]
+        $(#[$struct_attr:meta])*
+        $visibility:vis struct $name:ident {
+            $(
+                $(#[$field_attr:meta])*
+                $field_vis:vis $field:ident: $field_type:ty,
+            )*
+        }
+    ) => {
+        $crate::clap_parser_with_shared_opts_builder!(
+            #[with = $($modifier),*]
+            $(#[$struct_attr])*
+            $visibility struct $name {
+                #[doc = "Parsec data directory"]
+                #[arg(short, long, default_value_os_t = libparsec::get_default_data_base_dir(), env = $crate::utils::PARSEC_DATA_DIR)]
+                pub(crate) data_dir: std::path::PathBuf,
+                $(
+                    $(#[$field_attr])*
+                    $field_vis $field: $field_type,
+                )*
+            }
+        );
+    };
     // Device option
     (
         #[with = device $(,$modifier:ident)*]
