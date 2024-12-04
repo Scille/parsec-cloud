@@ -1,0 +1,1 @@
+Fix infinite loop during synchronization of a workspace when importing a file using the CLI command ``workspace import``
