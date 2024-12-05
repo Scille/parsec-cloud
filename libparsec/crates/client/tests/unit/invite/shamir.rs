@@ -8,9 +8,8 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    claimer_retrieve_info, ClientConfig, MountpointMountStrategy, ProxyConfig,
-    ShamirRecoveryClaimMaybeRecoverDeviceCtx, UserOrDeviceClaimInitialCtx,
-    WorkspaceStorageCacheSize,
+    claimer_retrieve_info, AnyClaimRetrievedInfoCtx, ClientConfig, MountpointMountStrategy,
+    ProxyConfig, ShamirRecoveryClaimMaybeRecoverDeviceCtx, WorkspaceStorageCacheSize,
 };
 
 #[parsec_test(testbed = "shamir", with_server)]
@@ -50,9 +49,9 @@ async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
     });
 
     let alice_ctx = claimer_retrieve_info(config, addr, None).await.unwrap();
-    p_assert_matches!(&alice_ctx, UserOrDeviceClaimInitialCtx::ShamirRecovery(_));
+    p_assert_matches!(&alice_ctx, AnyClaimRetrievedInfoCtx::ShamirRecovery(_));
     let alice_recipient_pick_ctx = match alice_ctx {
-        UserOrDeviceClaimInitialCtx::ShamirRecovery(alice_ctx) => {
+        AnyClaimRetrievedInfoCtx::ShamirRecovery(alice_ctx) => {
             p_assert_eq!(*alice_ctx.claimer_user_id(), alice.user_id);
             p_assert_eq!(*alice_ctx.claimer_human_handle(), alice.human_handle);
             p_assert_eq!(

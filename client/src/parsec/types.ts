@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 export {
+  AnyClaimRetrievedInfoTag,
   BootstrapOrganizationErrorTag,
   CancelledGreetingAttemptReason,
   ClaimInProgressErrorTag,
@@ -38,7 +39,6 @@ export {
   ParseParsecAddrErrorTag,
   ParsedParsecAddrTag,
   Platform,
-  UserOrDeviceClaimInitialInfoTag,
   UserProfile,
   WorkspaceCreateFileErrorTag,
   WorkspaceCreateFolderErrorTag,
@@ -63,6 +63,8 @@ export {
   WorkspaceStopErrorTag,
 } from '@/plugins/libparsec';
 export type {
+  AnyClaimRetrievedInfoDevice,
+  AnyClaimRetrievedInfoUser,
   ArchiveDeviceError,
   AvailableDevice,
   BootstrapOrganizationError,
@@ -144,8 +146,6 @@ export type {
   UserGreetInProgress4Info,
   UserGreetInitialInfo,
   InviteListItemUser as UserInvitation,
-  UserOrDeviceClaimInitialInfoDevice,
-  UserOrDeviceClaimInitialInfoUser,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
   WorkspaceDecryptPathAddrError,
