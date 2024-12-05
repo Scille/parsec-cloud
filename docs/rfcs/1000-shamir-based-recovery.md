@@ -344,12 +344,12 @@ This secret contains both:
         {
             // Minimal number of shares to retrieve to reach the quorum and compute the secret
             "name": "threshold",
-            "type": "NonZeroInteger"
+            "type": "NonZeroU8"
         },
         {
             // A recipient can have multiple shares (to have a bigger weight than others)
             "name": "per_recipient_shares",
-            "type": "Map<UserID, NonZeroInteger>"
+            "type": "Map<UserID, NonZeroU8>"
         }
     ]
 }
@@ -705,7 +705,7 @@ Invited API, we reuse the `invite_info` command:
                         "fields": [
                             {
                                 "name": "threshold",
-                                "type": "NonZeroInteger"
+                                "type": "NonZeroU8"
                             },
                             {
                                 "name": "recipients",
@@ -728,7 +728,7 @@ Invited API, we reuse the `invite_info` command:
                     },
                     {
                         "name": "shares",
-                        "type": "NonZeroInteger"
+                        "type": "NonZeroU8"
                     }
                 ]
             }
@@ -908,17 +908,17 @@ authenticated API, `organization_config`
                     {
                         "name": "shamir_recovery_min_shares",
                         // Default should be 1
-                        "type": "NonZeroInteger"
+                        "type": "NonZeroU8"
                     },
                     {
                         "name": "shamir_recovery_max_shares",
                         // `None` for no limit (the default)
-                        "type": "RequiredOption<NonZeroInteger>"
+                        "type": "RequiredOption<NonZeroU8>"
                     },
                     {
                         "name": "shamir_recovery_max_shares_per_recipient",
                         // `None` for no limit (the default)
-                        "type": "RequiredOption<NonZeroInteger>"
+                        "type": "RequiredOption<NonZeroU8>"
                     },
                     {
                         "name": "shamir_recovery_recipient_allowed_profiles",
