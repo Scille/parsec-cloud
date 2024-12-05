@@ -123,6 +123,7 @@ crypto_secretbox = { version = "0.1.1", default-features = false }
 ctrlc = { version = "3.4.5", default-features = false }
 # You need base64&co ? This is the crate you need !
 data-encoding = { version = "2.6.0", default-features = false }
+dialoguer = { version = "0.11.0", default-features = false }
 digest = { version = "0.10.7", default-features = false }
 dirs = { version = "5.0.1", default-features = false }
 ed25519-dalek = { version = "2.1.1", default-features = false }
