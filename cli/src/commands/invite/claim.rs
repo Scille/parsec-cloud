@@ -4,10 +4,10 @@ use std::{path::PathBuf, sync::Arc};
 
 use libparsec::{
     internal::{
-        claimer_retrieve_info, DeviceClaimFinalizeCtx, DeviceClaimInProgress1Ctx,
-        DeviceClaimInProgress2Ctx, DeviceClaimInProgress3Ctx, DeviceClaimInitialCtx,
-        UserClaimFinalizeCtx, UserClaimInProgress1Ctx, UserClaimInProgress2Ctx,
-        UserClaimInProgress3Ctx, UserClaimInitialCtx, UserOrDeviceClaimInitialCtx,
+        claimer_retrieve_info, AnyClaimRetrievedInfoCtx, DeviceClaimFinalizeCtx,
+        DeviceClaimInProgress1Ctx, DeviceClaimInProgress2Ctx, DeviceClaimInProgress3Ctx,
+        DeviceClaimInitialCtx, UserClaimFinalizeCtx, UserClaimInProgress1Ctx,
+        UserClaimInProgress2Ctx, UserClaimInProgress3Ctx, UserClaimInitialCtx,
     },
     ClientConfig, DeviceAccessStrategy, ParsecInvitationAddr,
 };
@@ -55,21 +55,21 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     let ctx = step0(addr, config).await?;
 
     match ctx {
-        UserOrDeviceClaimInitialCtx::User(ctx) => {
+        AnyClaimRetrievedInfoCtx::User(ctx) => {
             let ctx = step1_user(ctx).await?;
             let ctx = step2_user(ctx).await?;
             let ctx = step3_user(ctx).await?;
             let ctx = step4_user(ctx).await?;
             save_user(ctx, save_mode).await
         }
-        UserOrDeviceClaimInitialCtx::Device(ctx) => {
+        AnyClaimRetrievedInfoCtx::Device(ctx) => {
             let ctx = step1_device(ctx).await?;
             let ctx = step2_device(ctx).await?;
             let ctx = step3_device(ctx).await?;
             let ctx = step4_device(ctx).await?;
             save_device(ctx, save_mode).await
         }
-        UserOrDeviceClaimInitialCtx::ShamirRecovery(_) => {
+        AnyClaimRetrievedInfoCtx::ShamirRecovery(_) => {
             panic!("Shamir recovery invitation is not supported")
         }
     }
@@ -79,7 +79,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 async fn step0(
     addr: ParsecInvitationAddr,
     config: ClientConfig,
-) -> anyhow::Result<UserOrDeviceClaimInitialCtx> {
+) -> anyhow::Result<AnyClaimRetrievedInfoCtx> {
     let mut handle = start_spinner("Retrieving invitation info".into());
 
     let ctx = claimer_retrieve_info(Arc::new(config.into()), addr, None).await?;

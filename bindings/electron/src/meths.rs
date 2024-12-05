@@ -2881,6 +2881,152 @@ fn variant_active_users_limit_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// AnyClaimRetrievedInfo
+
+#[allow(dead_code)]
+fn variant_any_claim_retrieved_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::AnyClaimRetrievedInfo> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "AnyClaimRetrievedInfoDevice" => {
+            let handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let greeter_user_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let greeter_human_handle = {
+                let js_val: Handle<JsObject> = obj.get(cx, "greeterHumanHandle")?;
+                struct_human_handle_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::AnyClaimRetrievedInfo::Device {
+                handle,
+                greeter_user_id,
+                greeter_human_handle,
+            })
+        }
+        "AnyClaimRetrievedInfoUser" => {
+            let handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let claimer_email = {
+                let js_val: Handle<JsString> = obj.get(cx, "claimerEmail")?;
+                js_val.value(cx)
+            };
+            let greeter_user_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let greeter_human_handle = {
+                let js_val: Handle<JsObject> = obj.get(cx, "greeterHumanHandle")?;
+                struct_human_handle_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::AnyClaimRetrievedInfo::User {
+                handle,
+                claimer_email,
+                greeter_user_id,
+                greeter_human_handle,
+            })
+        }
+        _ => cx.throw_type_error("Object is not a AnyClaimRetrievedInfo"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_any_claim_retrieved_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::AnyClaimRetrievedInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::AnyClaimRetrievedInfo::Device {
+            handle,
+            greeter_user_id,
+            greeter_human_handle,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AnyClaimRetrievedInfoDevice").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_handle = JsNumber::new(cx, handle as f64);
+            js_obj.set(cx, "handle", js_handle)?;
+            let js_greeter_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(greeter_user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
+            let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, greeter_human_handle)?;
+            js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
+        }
+        libparsec::AnyClaimRetrievedInfo::User {
+            handle,
+            claimer_email,
+            greeter_user_id,
+            greeter_human_handle,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "AnyClaimRetrievedInfoUser").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_handle = JsNumber::new(cx, handle as f64);
+            js_obj.set(cx, "handle", js_handle)?;
+            let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
+            js_obj.set(cx, "claimerEmail", js_claimer_email)?;
+            let js_greeter_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(greeter_user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
+            let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, greeter_human_handle)?;
+            js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ArchiveDeviceError
 
 #[allow(dead_code)]
@@ -6619,153 +6765,6 @@ fn variant_testbed_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// UserOrDeviceClaimInitialInfo
-
-#[allow(dead_code)]
-fn variant_user_or_device_claim_initial_info_js_to_rs<'a>(
-    cx: &mut impl Context<'a>,
-    obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::UserOrDeviceClaimInitialInfo> {
-    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
-    match tag.as_str() {
-        "UserOrDeviceClaimInitialInfoDevice" => {
-            let handle = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        cx.throw_type_error("Not an u32 number")?
-                    }
-                    let v = v as u32;
-                    v
-                }
-            };
-            let greeter_user_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
-                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let greeter_human_handle = {
-                let js_val: Handle<JsObject> = obj.get(cx, "greeterHumanHandle")?;
-                struct_human_handle_js_to_rs(cx, js_val)?
-            };
-            Ok(libparsec::UserOrDeviceClaimInitialInfo::Device {
-                handle,
-                greeter_user_id,
-                greeter_human_handle,
-            })
-        }
-        "UserOrDeviceClaimInitialInfoUser" => {
-            let handle = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        cx.throw_type_error("Not an u32 number")?
-                    }
-                    let v = v as u32;
-                    v
-                }
-            };
-            let claimer_email = {
-                let js_val: Handle<JsString> = obj.get(cx, "claimerEmail")?;
-                js_val.value(cx)
-            };
-            let greeter_user_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
-                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let greeter_human_handle = {
-                let js_val: Handle<JsObject> = obj.get(cx, "greeterHumanHandle")?;
-                struct_human_handle_js_to_rs(cx, js_val)?
-            };
-            Ok(libparsec::UserOrDeviceClaimInitialInfo::User {
-                handle,
-                claimer_email,
-                greeter_user_id,
-                greeter_human_handle,
-            })
-        }
-        _ => cx.throw_type_error("Object is not a UserOrDeviceClaimInitialInfo"),
-    }
-}
-
-#[allow(dead_code)]
-fn variant_user_or_device_claim_initial_info_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::UserOrDeviceClaimInitialInfo,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    match rs_obj {
-        libparsec::UserOrDeviceClaimInitialInfo::Device {
-            handle,
-            greeter_user_id,
-            greeter_human_handle,
-            ..
-        } => {
-            let js_tag =
-                JsString::try_new(cx, "UserOrDeviceClaimInitialInfoDevice").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_handle = JsNumber::new(cx, handle as f64);
-            js_obj.set(cx, "handle", js_handle)?;
-            let js_greeter_user_id = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(greeter_user_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
-            let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, greeter_human_handle)?;
-            js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
-        }
-        libparsec::UserOrDeviceClaimInitialInfo::User {
-            handle,
-            claimer_email,
-            greeter_user_id,
-            greeter_human_handle,
-            ..
-        } => {
-            let js_tag = JsString::try_new(cx, "UserOrDeviceClaimInitialInfoUser").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_handle = JsNumber::new(cx, handle as f64);
-            js_obj.set(cx, "handle", js_handle)?;
-            let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
-            js_obj.set(cx, "claimerEmail", js_claimer_email)?;
-            let js_greeter_user_id = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(greeter_user_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
-            let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, greeter_human_handle)?;
-            js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // WaitForDeviceAvailableError
 
 #[allow(dead_code)]
@@ -9196,8 +9195,7 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value =
-                            variant_user_or_device_claim_initial_info_rs_to_js(&mut cx, ok)?;
+                        let js_value = variant_any_claim_retrieved_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }

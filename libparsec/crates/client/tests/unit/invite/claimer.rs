@@ -10,8 +10,8 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    claimer_retrieve_info, ClientConfig, MountpointMountStrategy, ProxyConfig,
-    UserOrDeviceClaimInitialCtx, WorkspaceStorageCacheSize,
+    claimer_retrieve_info, AnyClaimRetrievedInfoCtx, ClientConfig, MountpointMountStrategy,
+    ProxyConfig, WorkspaceStorageCacheSize,
 };
 
 #[parsec_test(testbed = "minimal")]
@@ -52,9 +52,9 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
     let ctx = claimer_retrieve_info(config, addr, None).await.unwrap();
 
-    p_assert_matches!(&ctx, UserOrDeviceClaimInitialCtx::User(_));
+    p_assert_matches!(&ctx, AnyClaimRetrievedInfoCtx::User(_));
     let ctx = match ctx {
-        UserOrDeviceClaimInitialCtx::User(ctx) => {
+        AnyClaimRetrievedInfoCtx::User(ctx) => {
             p_assert_eq!(ctx.claimer_email, "john@example.com");
             p_assert_eq!(*ctx.greeter_user_id(), alice.user_id);
             p_assert_eq!(*ctx.greeter_human_handle(), alice.human_handle);

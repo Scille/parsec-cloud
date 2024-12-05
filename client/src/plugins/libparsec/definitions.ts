@@ -325,6 +325,29 @@ export type ActiveUsersLimit =
   | ActiveUsersLimitLimitedTo
   | ActiveUsersLimitNoLimit
 
+// AnyClaimRetrievedInfo
+export enum AnyClaimRetrievedInfoTag {
+    Device = 'AnyClaimRetrievedInfoDevice',
+    User = 'AnyClaimRetrievedInfoUser',
+}
+
+export interface AnyClaimRetrievedInfoDevice {
+    tag: AnyClaimRetrievedInfoTag.Device
+    handle: Handle
+    greeterUserId: UserID
+    greeterHumanHandle: HumanHandle
+}
+export interface AnyClaimRetrievedInfoUser {
+    tag: AnyClaimRetrievedInfoTag.User
+    handle: Handle
+    claimerEmail: string
+    greeterUserId: UserID
+    greeterHumanHandle: HumanHandle
+}
+export type AnyClaimRetrievedInfo =
+  | AnyClaimRetrievedInfoDevice
+  | AnyClaimRetrievedInfoUser
+
 // ArchiveDeviceError
 export enum ArchiveDeviceErrorTag {
     Internal = 'ArchiveDeviceErrorInternal',
@@ -1808,29 +1831,6 @@ export type TestbedError =
   | TestbedErrorDisabled
   | TestbedErrorInternal
 
-// UserOrDeviceClaimInitialInfo
-export enum UserOrDeviceClaimInitialInfoTag {
-    Device = 'UserOrDeviceClaimInitialInfoDevice',
-    User = 'UserOrDeviceClaimInitialInfoUser',
-}
-
-export interface UserOrDeviceClaimInitialInfoDevice {
-    tag: UserOrDeviceClaimInitialInfoTag.Device
-    handle: Handle
-    greeterUserId: UserID
-    greeterHumanHandle: HumanHandle
-}
-export interface UserOrDeviceClaimInitialInfoUser {
-    tag: UserOrDeviceClaimInitialInfoTag.User
-    handle: Handle
-    claimerEmail: string
-    greeterUserId: UserID
-    greeterHumanHandle: HumanHandle
-}
-export type UserOrDeviceClaimInitialInfo =
-  | UserOrDeviceClaimInitialInfoDevice
-  | UserOrDeviceClaimInitialInfoUser
-
 // WaitForDeviceAvailableError
 export enum WaitForDeviceAvailableErrorTag {
     Internal = 'WaitForDeviceAvailableErrorInternal',
@@ -3127,7 +3127,7 @@ export interface LibParsecPlugin {
         config: ClientConfig,
         on_event_callback: (handle: number, event: ClientEvent) => void,
         addr: ParsecInvitationAddr
-    ): Promise<Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError>>
+    ): Promise<Result<AnyClaimRetrievedInfo, ClaimerRetrieveInfoError>>
     claimerUserFinalizeSaveLocalDevice(
         handle: Handle,
         save_strategy: DeviceSaveStrategy
