@@ -579,6 +579,13 @@ impl Client {
         shamir_recovery_list::list_shamir_recoveries_for_others(self).await
     }
 
+    pub async fn get_shamir_recovery_share_data(
+        &self,
+        user_id: UserID,
+    ) -> Result<ShamirRecoveryShareData, ClientGetShamirRecoveryShareDataError> {
+        shamir_recovery_list::get_shamir_recovery_share_data(self, user_id).await
+    }
+
     pub async fn setup_shamir_recovery(
         &self,
         per_recipient_shares: HashMap<UserID, NonZeroU8>,
