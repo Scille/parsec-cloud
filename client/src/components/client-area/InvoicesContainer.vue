@@ -61,7 +61,12 @@
           {{ invoice.total }}
         </ion-text>
         <ion-text class="invoices-year-content-list-item__data invoices-status">
-          <span class="badge-status body-sm incoming">{{ invoice.status }}</span>
+          <span
+            class="badge-status dd body-sm"
+            :class="invoice.status"
+          >
+            {{ $msTranslate(getInvoiceStatusTranslationKey(invoice.status)) }}
+          </span>
           <a
             class="custom-button custom-button-ghost button-medium"
             :href="invoice.pdfLink"
@@ -77,6 +82,7 @@
 </template>
 
 <script setup lang="ts">
+import { getInvoiceStatusTranslationKey } from '@/services/translation';
 import { BmsInvoice } from '@/services/bms';
 import { IonItem, IonList, IonText, IonIcon } from '@ionic/vue';
 import { download, chevronDown } from 'ionicons/icons';
@@ -247,15 +253,17 @@ const isVisible = ref(true);
       .badge-status {
         border-radius: var(--parsec-radius-32);
         padding-inline: 0.5rem;
+        background: var(--parsec-color-light-secondary-disabled);
+        color: var(--parsec-color-light-secondary-text);
 
-        &.incoming {
+        &.paid {
           background: var(--parsec-color-light-info-100);
           color: var(--parsec-color-light-info-700);
         }
 
-        &.paid {
-          background: var(--parsec-color-light-success-100);
-          color: var(--parsec-color-light-success-700);
+        &.open {
+          background: var(--parsec-color-tags-orange100);
+          color: var(--parsec-color-tags-orange500);
         }
       }
     }
