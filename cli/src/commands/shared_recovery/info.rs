@@ -40,13 +40,20 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                     per_recipient_shares,
                     revoked_recipients,
                     ..
-                } => println!("Shared recovery for {YELLOW}set up{RESET} - contains revoked recipients: {} ({} out of {} total recipients, with threshold {threshold})", revoked_recipients.iter().join(","), revoked_recipients.len(), per_recipient_shares.len()),
+                } => println!(
+                    "Shared recovery for {YELLOW}set up{RESET} - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                    revoked = revoked_recipients.iter().join(", "),
+                    revoked_len = revoked_recipients.len(),
+                    total = per_recipient_shares.len()),
                 libparsec_client::SelfShamirRecoveryInfo::SetupButUnusable {
                     threshold,
                     per_recipient_shares,
                     revoked_recipients,
                     ..
-                } => println!("{RED}Unusable{RESET} shared recovery - contains revoked recipients: {} ({} out of {} total recipients, with threshold {threshold})", revoked_recipients.iter().join(","), revoked_recipients.len(), per_recipient_shares.len()),
+                } => println!("{RED}Unusable{RESET} shared recovery - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                    revoked = revoked_recipients.iter().join(", "),
+                    revoked_len = revoked_recipients.len(),
+                    total = per_recipient_shares.len()),
                 libparsec_client::SelfShamirRecoveryInfo::NeverSetup => println!("Shared recovery {RED}never setup{RESET}"),
             }
 
