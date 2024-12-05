@@ -43,7 +43,8 @@ pub use realm_share::CertifShareRealmError;
 pub use realms_needs::{CertifGetRealmNeedsError, RealmNeeds};
 pub use shamir_recovery_delete::CertifDeleteShamirRecoveryError;
 pub use shamir_recovery_list::{
-    CertifListShamirRecoveryError, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
+    CertifGetSelfShamirRecoveryError, CertifGetShamirRecoveryShareDataError,
+    CertifListShamirRecoveriesForOthersError, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
 };
 pub use shamir_recovery_setup::{
     CertifSetupShamirRecoveryError, ShamirRecoverySetupCertificateTimestamps,
@@ -613,20 +614,20 @@ impl CertificateOps {
 
     pub async fn get_self_shamir_recovery(
         &self,
-    ) -> Result<SelfShamirRecoveryInfo, CertifListShamirRecoveryError> {
+    ) -> Result<SelfShamirRecoveryInfo, CertifGetSelfShamirRecoveryError> {
         shamir_recovery_list::get_self_shamir_recovery(self).await
     }
 
     pub async fn list_shamir_recoveries_for_others(
         &self,
-    ) -> Result<Vec<OtherShamirRecoveryInfo>, CertifListShamirRecoveryError> {
+    ) -> Result<Vec<OtherShamirRecoveryInfo>, CertifListShamirRecoveriesForOthersError> {
         shamir_recovery_list::list_shamir_recoveries_for_others(self).await
     }
 
     pub async fn get_shamir_recovery_share_data(
         &self,
         user_id: UserID,
-    ) -> Result<ShamirRecoveryShareData, CertifListShamirRecoveryError> {
+    ) -> Result<ShamirRecoveryShareData, CertifGetShamirRecoveryShareDataError> {
         shamir_recovery_list::get_shamir_recovery_share_data(self, user_id).await
     }
 
