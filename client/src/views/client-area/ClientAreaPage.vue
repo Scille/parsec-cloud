@@ -107,7 +107,10 @@
                 v-if="currentPage === ClientAreaPages.CustomOrderBillingDetails"
                 :organization="currentOrganization"
               />
-              <custom-order-processing-page v-if="currentPage === ClientAreaPages.CustomOrderProcessing" />
+              <custom-order-processing-page
+                v-if="currentPage === ClientAreaPages.CustomOrderProcessing"
+                :organization="currentOrganization"
+              />
             </div>
           </div>
         </ion-content>
@@ -278,6 +281,8 @@ function getTitleByPage(): Translatable {
       return 'clientArea.header.titles.customOrderStatistics';
     case ClientAreaPages.CustomOrderBillingDetails:
       return 'clientArea.header.titles.customOrderBillingDetails';
+    case ClientAreaPages.CustomOrderProcessing:
+      return 'clientArea.header.titles.customOrderProcessing';
     default:
       return '';
   }
