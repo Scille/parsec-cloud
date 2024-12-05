@@ -6,7 +6,7 @@ use std::{
     sync::Arc,
 };
 
-use libparsec_platform_storage::certificates::UpTo;
+use libparsec_platform_storage::certificates::{GetCertificateError, UpTo};
 use libparsec_types::prelude::*;
 
 use super::{
@@ -351,6 +351,14 @@ pub async fn list_shamir_recoveries_for_others(
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifGetShamirRecoveryShareDataError {
+    #[error("No shamir certificate found for provided user id `{user_id}`")]
+    ShamirRecoveryNotFound { user_id: UserID },
+    #[error("Shamir recovery is unusable for provided user id `{user_id}`")]
+    ShamirRecoveryUnusable { user_id: UserID },
+    #[error("No verify key found for author of the share certificate `{device_id}`")]
+    VerifyKeyNotFound { device_id: DeviceID },
+    #[error(transparent)]
+    CorruptedShareData(DataError),
     #[error("Component has stopped")]
     Stopped,
     #[error(transparent)]
@@ -372,32 +380,83 @@ pub async fn get_shamir_recovery_share_data(
 ) -> Result<ShamirRecoveryShareData, CertifGetShamirRecoveryShareDataError> {
     ops.store
         .for_read(|store| async move {
-            // TODO: check that the shamir is actually recoverable
-            let certificate = store
+            // 1. Retrieve the last shamir recovery brief and share certificate
+
+            let brief_certificate = store
+                .get_last_shamir_recovery_brief_certificate_for_author(UpTo::Current, &user_id)
+                .await?;
+            let brief_certificate = match brief_certificate {
+                Some(brief_certificate) => Ok(brief_certificate),
+                None => {
+                    Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryNotFound { user_id })
+                }
+            }?;
+
+            let share_certificate = store
                 .get_last_shamir_recovery_share_certificate_for_recipient(
                     UpTo::Current,
                     user_id,
                     ops.device.user_id,
                 )
                 .await?;
-            let certificate = match certificate {
-                Some(certificate) => Ok(certificate),
-                None => Err(CertifGetShamirRecoveryShareDataError::Internal(
-                    anyhow::anyhow!("No share data found for user {}", user_id),
-                )),
+            let share_certificate = match share_certificate {
+                Some(share_certificate) => Ok(share_certificate),
+                None => {
+                    Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryNotFound { user_id })
+                }
             }?;
+
+            // 2. Detect if the shamir recovery is usable
+
+            let mut usable_share_count = 0;
+            for (&recipient_user_id, &recipient_share_count) in
+                &brief_certificate.per_recipient_shares
+            {
+                let maybe_revoked = store
+                    .get_revoked_user_certificate(UpTo::Current, recipient_user_id)
+                    .await?;
+                if maybe_revoked.is_none() {
+                    usable_share_count += recipient_share_count.get() as usize;
+                }
+            }
+            if usable_share_count < brief_certificate.threshold.get() as usize {
+                return Err(
+                    CertifGetShamirRecoveryShareDataError::ShamirRecoveryUnusable { user_id },
+                );
+            }
+
+            // 3. Retrieve the verify key of the author of the share certificate
+
             let author_verify_key = store
-                .get_device_verify_key(UpTo::Current, certificate.author)
+                .get_device_verify_key(UpTo::Current, share_certificate.author)
                 .await
-                .map_err(|e| CertifGetShamirRecoveryShareDataError::Internal(e.into()))?;
+                .map_err(|e| match e {
+                    GetCertificateError::NonExisting => {
+                        CertifGetShamirRecoveryShareDataError::VerifyKeyNotFound {
+                            device_id: share_certificate.author,
+                        }
+                    }
+                    GetCertificateError::ExistButTooRecent {
+                        certificate_timestamp,
+                    } => panic!(
+                        "Got a certificate that is too recent: {:?}",
+                        certificate_timestamp
+                    ),
+                    GetCertificateError::Internal(_) => {
+                        CertifGetShamirRecoveryShareDataError::Internal(e.into())
+                    }
+                })?;
+
+            // 4. Decrypt the share data
+
             ShamirRecoveryShareData::decrypt_verify_and_load_for(
-                &certificate.ciphered_share,
+                &share_certificate.ciphered_share,
                 &ops.device.private_key,
                 &author_verify_key,
-                certificate.author,
-                certificate.timestamp,
+                share_certificate.author,
+                share_certificate.timestamp,
             )
-            .map_err(|e| CertifGetShamirRecoveryShareDataError::Internal(e.into()))
+            .map_err(CertifGetShamirRecoveryShareDataError::CorruptedShareData)
         })
         .await?
 }

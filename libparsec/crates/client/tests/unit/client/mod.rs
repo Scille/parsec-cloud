@@ -13,6 +13,7 @@ mod rename_workspace;
 mod revoke_user;
 mod shamir_recovery_delete;
 mod shamir_recovery_get_self;
+mod shamir_recovery_get_share_data;
 mod shamir_recovery_list_others;
 mod shamir_recovery_setup;
 mod share_workspace;
