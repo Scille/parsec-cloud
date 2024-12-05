@@ -2,7 +2,7 @@
 
 <template>
   <ion-item-divider class="toolbar ion-margin-bottom secondary file-controls">
-    <ms-action-bar-button
+    <file-controls-button
       v-for="(action, key) in actions"
       :key="key"
       :icon="action.icon"
@@ -13,7 +13,8 @@
 </template>
 
 <script setup lang="ts">
-import { MsActionBarButton, Translatable } from 'megashark-lib';
+import { Translatable } from 'megashark-lib';
+import { FileControlsButton } from '@/components/viewers';
 import { IonItemDivider } from '@ionic/vue';
 
 // TODO: add a disabled state to the button (ex: max zoom level).

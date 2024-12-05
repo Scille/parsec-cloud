@@ -22,7 +22,7 @@ const SIZE_MATCHER = /^[0-9.]+ (K|M|G)?B$/;
 
 msTest('Documents page default state', async ({ documents }) => {
   const actionBar = documents.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['New folder', 'Import']);
+  await expect(actionBar.locator('.file-controls-button:visible')).toHaveText(['New folder', 'Import']);
   await expect(actionBar.locator('.counter')).toHaveText('4 items', { useInnerText: true });
   await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
   await expect(actionBar.locator('#grid-view')).not.toHaveDisabledAttribute();
@@ -49,7 +49,7 @@ msTest('Check documents in grid mode', async ({ documents }) => {
 
 msTest('Documents page default state in a read only workspace', async ({ documentsReadOnly }) => {
   const actionBar = documentsReadOnly.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(0);
+  await expect(actionBar.locator('.file-controls-button:visible')).toHaveCount(0);
   await expect(actionBar.locator('.counter')).toHaveText('4 items', { useInnerText: true });
   await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
   await expect(actionBar.locator('#grid-view')).not.toHaveDisabledAttribute();
@@ -85,8 +85,8 @@ msTest('Select all documents', async ({ documents }) => {
   }
 
   const actionBar = documents.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(3);
-  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['Move to', 'Make a copy', 'Delete']);
+  await expect(actionBar.locator('.file-controls-button:visible')).toHaveCount(3);
+  await expect(actionBar.locator('.file-controls-button:visible')).toHaveText(['Move to', 'Make a copy', 'Delete']);
   await expect(actionBar.locator('.counter')).toHaveText(/\d+ selected items/, { useInnerText: true });
 
   await entries.nth(1).locator('ion-checkbox').click();
@@ -113,7 +113,7 @@ msTest('Delete all documents', async ({ documents }) => {
   await globalCheckbox.click();
 
   const actionBar = documents.locator('#folders-ms-action-bar');
-  await actionBar.locator('.ms-action-bar-button:visible').nth(2).click();
+  await actionBar.locator('.file-controls-button:visible').nth(2).click();
   await answerQuestion(documents, true, {
     expectedTitleText: 'Delete multiple items',
     expectedQuestionText: /Are you sure you want to delete these \d+ items\?/,
@@ -124,7 +124,7 @@ msTest('Delete all documents', async ({ documents }) => {
 
 msTest('Create a folder', async ({ documents }) => {
   const actionBar = documents.locator('#folders-ms-action-bar');
-  await actionBar.locator('.ms-action-bar-button:visible').nth(0).click();
+  await actionBar.locator('.file-controls-button:visible').nth(0).click();
   await fillInputModal(documents, 'My folder');
   await expect(documents).toShowToast('Failed to create folder `My folder` because an entry with the same name already exists.', 'Error');
 });
@@ -132,7 +132,7 @@ msTest('Create a folder', async ({ documents }) => {
 msTest('Import context menu', async ({ documents }) => {
   await expect(documents.locator('.import-popover')).toBeHidden();
   const actionBar = documents.locator('#folders-ms-action-bar');
-  await actionBar.locator('.ms-action-bar-button:visible').nth(1).click();
+  await actionBar.locator('.file-controls-button:visible').nth(1).click();
 
   const popover = documents.locator('.import-popover');
   await expect(popover).toBeVisible();
