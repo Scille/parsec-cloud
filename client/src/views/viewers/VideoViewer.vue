@@ -20,7 +20,7 @@
       </video>
     </template>
     <template #controls>
-      <file-viewer-action-bar
+      <file-controls
         :actions="[
           { icon: paused ? play : pause, handler: togglePlayback },
           { icon: getVolumeIcon(), handler: toggleVolume },
@@ -35,7 +35,7 @@
 import { play, pause, volumeHigh, volumeLow, volumeMedium, volumeMute, scan } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
-import { FileViewerActionBar } from '@/components/viewers';
+import { FileControls } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 
 const props = defineProps<{

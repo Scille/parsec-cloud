@@ -17,7 +17,7 @@
     </template>
     <!-- Disabled till we add an illustration in the viewer -->
     <!-- <template #controls>
-      <file-viewer-action-bar
+      <file-controls
         :actions="[
           { icon: paused ? play : pause, handler: togglePlayback },
           { icon: getVolumeIcon(), handler: toggleVolume },
