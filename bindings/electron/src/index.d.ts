@@ -327,6 +327,25 @@ export type ActiveUsersLimit =
   | ActiveUsersLimitNoLimit
 
 
+// AnyClaimRetrievedInfo
+export interface AnyClaimRetrievedInfoDevice {
+    tag: "Device"
+    handle: number
+    greeter_user_id: string
+    greeter_human_handle: HumanHandle
+}
+export interface AnyClaimRetrievedInfoUser {
+    tag: "User"
+    handle: number
+    claimer_email: string
+    greeter_user_id: string
+    greeter_human_handle: HumanHandle
+}
+export type AnyClaimRetrievedInfo =
+  | AnyClaimRetrievedInfoDevice
+  | AnyClaimRetrievedInfoUser
+
+
 // ArchiveDeviceError
 export interface ArchiveDeviceErrorInternal {
     tag: "Internal"
@@ -1533,25 +1552,6 @@ export type TestbedError =
   | TestbedErrorInternal
 
 
-// UserOrDeviceClaimInitialInfo
-export interface UserOrDeviceClaimInitialInfoDevice {
-    tag: "Device"
-    handle: number
-    greeter_user_id: string
-    greeter_human_handle: HumanHandle
-}
-export interface UserOrDeviceClaimInitialInfoUser {
-    tag: "User"
-    handle: number
-    claimer_email: string
-    greeter_user_id: string
-    greeter_human_handle: HumanHandle
-}
-export type UserOrDeviceClaimInitialInfo =
-  | UserOrDeviceClaimInitialInfoDevice
-  | UserOrDeviceClaimInitialInfoUser
-
-
 // WaitForDeviceAvailableError
 export interface WaitForDeviceAvailableErrorInternal {
     tag: "Internal"
@@ -2612,7 +2612,7 @@ export function claimerRetrieveInfo(
     config: ClientConfig,
     on_event_callback: (handle: number, event: ClientEvent) => void,
     addr: string
-): Promise<Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError>>
+): Promise<Result<AnyClaimRetrievedInfo, ClaimerRetrieveInfoError>>
 export function claimerUserFinalizeSaveLocalDevice(
     handle: number,
     save_strategy: DeviceSaveStrategy
