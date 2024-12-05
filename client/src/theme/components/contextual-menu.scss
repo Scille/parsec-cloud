@@ -1,0 +1,44 @@
+/* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
+
+/* contextual menu button */
+
+.contextual-menu {
+  .counter {
+    flex-shrink: 0;
+  }
+
+  #search-input-workspace,
+  #search-input-users {
+    height: auto;
+    border: none;
+    padding: 0.25rem 0 0.25rem 0.75rem !important;
+    outline: 1px solid var(--parsec-color-light-secondary-medium);
+    background: var(--parsec-color-light-secondary-white);
+    transition: all 0.2s ease;
+
+    &:hover {
+      border: none;
+    }
+
+    &:focus-within {
+      outline: 2px solid var(--parsec-color-light-primary-200);
+      border: none;
+    }
+
+    .icon {
+      width: 1rem;
+      height: 1rem;
+      flex-shrink: 0;
+    }
+
+    .input {
+      --placeholder-color: var(--parsec-color-light-secondary-grey) !important;
+      transition: all 0.2s ease;
+    }
+
+    .input-clear-icon {
+      height: auto;
+      margin-inline-end: 0 !important;
+    }
+  }
+}

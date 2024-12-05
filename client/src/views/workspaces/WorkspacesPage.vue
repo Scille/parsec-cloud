@@ -24,7 +24,7 @@
           <ms-search-input
             v-model="filterWorkspaceName"
             placeholder="WorkspacesPage.filterPlaceholder"
-            class="search-filter-workspace"
+            id="search-input-workspace"
           />
           <ms-sorter
             id="workspace-filter-select"
