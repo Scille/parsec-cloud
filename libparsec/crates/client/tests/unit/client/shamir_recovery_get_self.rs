@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use libparsec_tests_fixtures::prelude::*;
 
-use crate::{CertifListShamirRecoveryError, SelfShamirRecoveryInfo};
+use crate::{CertifGetSelfShamirRecoveryError, SelfShamirRecoveryInfo};
 
 use super::utils::client_factory;
 
@@ -144,6 +144,6 @@ async fn stopped(env: &TestbedEnv) {
 
     p_assert_matches!(
         client.get_self_shamir_recovery().await.unwrap_err(),
-        CertifListShamirRecoveryError::Stopped
+        CertifGetSelfShamirRecoveryError::Stopped
     );
 }
