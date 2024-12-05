@@ -15,14 +15,14 @@ use super::{
 };
 
 #[derive(Debug, thiserror::Error)]
-pub enum CertifListShamirRecoveryError {
+pub enum CertifGetSelfShamirRecoveryError {
     #[error("Component has stopped")]
     Stopped,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
 
-impl From<CertifStoreError> for CertifListShamirRecoveryError {
+impl From<CertifStoreError> for CertifGetSelfShamirRecoveryError {
     fn from(value: CertifStoreError) -> Self {
         match value {
             CertifStoreError::Stopped => Self::Stopped,
@@ -68,7 +68,7 @@ pub enum SelfShamirRecoveryInfo {
 
 pub async fn get_self_shamir_recovery(
     ops: &CertificateOps,
-) -> Result<SelfShamirRecoveryInfo, CertifListShamirRecoveryError> {
+) -> Result<SelfShamirRecoveryInfo, CertifGetSelfShamirRecoveryError> {
     ops.store
         .for_read(|store| async move {
             // 1. Retrieve the shamir recovery and it potential deletion
@@ -145,6 +145,23 @@ pub async fn get_self_shamir_recovery(
         .await?
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum CertifListShamirRecoveriesForOthersError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<CertifStoreError> for CertifListShamirRecoveriesForOthersError {
+    fn from(value: CertifStoreError) -> Self {
+        match value {
+            CertifStoreError::Stopped => Self::Stopped,
+            CertifStoreError::Internal(err) => err.into(),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum OtherShamirRecoveryInfo {
     Deleted {
@@ -185,7 +202,7 @@ pub enum OtherShamirRecoveryInfo {
 
 pub async fn list_shamir_recoveries_for_others(
     ops: &CertificateOps,
-) -> Result<Vec<OtherShamirRecoveryInfo>, CertifListShamirRecoveryError> {
+) -> Result<Vec<OtherShamirRecoveryInfo>, CertifListShamirRecoveriesForOthersError> {
     ops.store
         .for_read(|store| async move {
             let mut per_user_last_shamir: HashMap<
@@ -332,10 +349,27 @@ pub async fn list_shamir_recoveries_for_others(
         .await?
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum CertifGetShamirRecoveryShareDataError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<CertifStoreError> for CertifGetShamirRecoveryShareDataError {
+    fn from(value: CertifStoreError) -> Self {
+        match value {
+            CertifStoreError::Stopped => Self::Stopped,
+            CertifStoreError::Internal(err) => err.into(),
+        }
+    }
+}
+
 pub async fn get_shamir_recovery_share_data(
     ops: &CertificateOps,
     user_id: UserID,
-) -> Result<ShamirRecoveryShareData, CertifListShamirRecoveryError> {
+) -> Result<ShamirRecoveryShareData, CertifGetShamirRecoveryShareDataError> {
     ops.store
         .for_read(|store| async move {
             // TODO: check that the shamir is actually recoverable
@@ -348,15 +382,14 @@ pub async fn get_shamir_recovery_share_data(
                 .await?;
             let certificate = match certificate {
                 Some(certificate) => Ok(certificate),
-                None => Err(CertifListShamirRecoveryError::Internal(anyhow::anyhow!(
-                    "No share data found for user {}",
-                    user_id
-                ))),
+                None => Err(CertifGetShamirRecoveryShareDataError::Internal(
+                    anyhow::anyhow!("No share data found for user {}", user_id),
+                )),
             }?;
             let author_verify_key = store
                 .get_device_verify_key(UpTo::Current, certificate.author)
                 .await
-                .map_err(|e| CertifListShamirRecoveryError::Internal(e.into()))?;
+                .map_err(|e| CertifGetShamirRecoveryShareDataError::Internal(e.into()))?;
             ShamirRecoveryShareData::decrypt_verify_and_load_for(
                 &certificate.ciphered_share,
                 &ops.device.private_key,
@@ -364,7 +397,7 @@ pub async fn get_shamir_recovery_share_data(
                 certificate.author,
                 certificate.timestamp,
             )
-            .map_err(|e| CertifListShamirRecoveryError::Internal(e.into()))
+            .map_err(|e| CertifGetShamirRecoveryShareDataError::Internal(e.into()))
         })
         .await?
 }
