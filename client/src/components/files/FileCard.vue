@@ -37,8 +37,8 @@
       >
         <ion-icon :icon="ellipsisHorizontal" />
       </div>
-      <div class="card-content">
-        <div class="card-content-icons">
+      <div class="file-card">
+        <div class="file-card-icons">
           <ms-image
             :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
             class="file-icon"
@@ -50,11 +50,11 @@
           />
         </div>
 
-        <ion-text class="card-content__title body">
+        <ion-text class="file-card__title body">
           {{ entry.name }}
         </ion-text>
 
-        <ion-text class="card-content-last-update body-sm">
+        <ion-text class="file-card-last-update body-sm">
           {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
         </ion-text>
       </div>
@@ -125,37 +125,12 @@ async function onOptionsClick(event: Event): Promise<void> {
 
 <style lang="scss" scoped>
 .file-card-item {
-  position: relative;
-  cursor: default;
-  text-align: center;
   --background: var(--parsec-color-light-secondary-background);
   background: var(--parsec-color-light-secondary-background);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
+  cursor: default;
+  text-align: center;
   user-select: none;
-  border-radius: var(--parsec-radius-12);
   width: 10.5rem;
-
-  &::part(native) {
-    --inner-padding-end: 0px;
-    height: 100%;
-  }
-
-  &:hover {
-    --background: var(--parsec-color-light-primary-30);
-    --background-hover: var(--parsec-color-light-primary-30);
-    --background-hover-opacity: 1;
-  }
-
-  &.selected {
-    --background: var(--parsec-color-light-primary-100);
-    --background-hover: var(--parsec-color-light-primary-100);
-    border: 1px solid var(--parsec-color-light-primary-300);
-  }
-}
-
-.card-option,
-.card-checkbox {
-  position: absolute;
 }
 
 .card-checkbox {
@@ -164,22 +139,12 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 .card-option {
-  color: var(--parsec-color-light-secondary-grey);
-  text-align: right;
-  display: flex;
-  align-items: center;
+  padding: 0.5rem;
   top: 0;
   right: 0;
-  font-size: 1.5rem;
-  padding: 0.5rem;
-  cursor: pointer;
-
-  &:hover {
-    color: var(--parsec-color-light-primary-500);
-  }
 }
 
-.card-content {
+.file-card {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -235,7 +200,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 }
 
-.card-content-last-update {
+.file-card-last-update {
   color: var(--parsec-color-light-secondary-grey);
   text-align: center;
   display: flex;
@@ -245,8 +210,8 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 /* No idea how to change the color of the ion-item */
-.card-content__title::part(native),
-.card-content-last-update::part(native) {
+.file-card__title::part(native),
+.file-card-last-update::part(native) {
   background-color: var(--parsec-color-light-secondary-background);
 }
 </style>
