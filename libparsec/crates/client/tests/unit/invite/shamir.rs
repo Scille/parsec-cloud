@@ -9,7 +9,8 @@ use libparsec_types::prelude::*;
 
 use crate::{
     claimer_retrieve_info, AnyClaimRetrievedInfoCtx, ClientConfig, MountpointMountStrategy,
-    ProxyConfig, ShamirRecoveryClaimMaybeRecoverDeviceCtx, WorkspaceStorageCacheSize,
+    ProxyConfig, ShamirRecoveryClaimMaybeFinalizeCtx, ShamirRecoveryClaimMaybeRecoverDeviceCtx,
+    WorkspaceStorageCacheSize,
 };
 
 #[parsec_test(testbed = "shamir", with_server)]
@@ -191,10 +192,14 @@ async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
     // Recover with Alice
 
     let device_label: DeviceLabel = "my new device".parse().unwrap();
-    let alice_finalize_ctx = alice_recover_device_ctx
+    let alice_finalize_ctx = match alice_recover_device_ctx
         .recover_device(device_label.clone())
         .await
-        .unwrap();
+        .unwrap()
+    {
+        ShamirRecoveryClaimMaybeFinalizeCtx::Finalize(ctx) => ctx,
+        _ => panic!("Expected Finalize context"),
+    };
 
     // Finalize with Alice
 
