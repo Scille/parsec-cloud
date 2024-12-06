@@ -46,6 +46,7 @@ libparsec = { workspace = true, features = ["cli-tests"] }
 
 assert_cmd = { workspace = true }
 predicates = { workspace = true, features = ["regex"] }
+rexpect = { workspace = true }
 rstest = { workspace = true }
 uuid = { workspace = true, features = ["v6", "std", "rng"] }
 
