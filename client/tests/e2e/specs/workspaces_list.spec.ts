@@ -165,7 +165,7 @@ for (const gridMode of [false, true]) {
     if (!gridMode) {
       await toggleViewMode(connected);
     }
-    const searchInput = connected.locator('#workspaces-ms-action-bar').locator('.search-filter-workspace').locator('ion-input');
+    const searchInput = connected.locator('#workspaces-ms-action-bar').locator('#search-input-workspace').locator('ion-input');
     const container = connected.locator('.workspaces-container');
     const titles = gridMode ? container.locator('.card-content__title') : container.locator('.workspace-name__label');
 
