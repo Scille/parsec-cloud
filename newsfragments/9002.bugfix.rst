@@ -1,0 +1,2 @@
+Fix rare freeze in the application when the folder the GUI is displaying gets
+remotely modified.
