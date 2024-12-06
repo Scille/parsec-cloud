@@ -1,5 +1,6 @@
 use std::{collections::HashMap, num::NonZeroU8};
 
+use dialoguer::Input;
 use libparsec::{UserID, UserProfile};
 
 use crate::utils::{load_client, start_spinner};
@@ -20,8 +21,8 @@ crate::clap_parser_with_shared_opts_builder!(
         #[arg(short, long, requires = "recipients",  num_args = 1..=255)]
         weights: Option<Vec<NonZeroU8>>,
         /// Threshold number of shares required to proceed with recovery.
-        #[arg(short, long)]
-        threshold: NonZeroU8,
+        #[arg(short, long, requires = "recipients")]
+        threshold: Option<NonZeroU8>,
     }
 );
 
@@ -82,6 +83,16 @@ pub async fn main(shamir_setup: Args) -> anyhow::Result<()> {
             .into_iter()
             .map(|user_id| (user_id, weight))
             .collect()
+    };
+
+    let threshold = if let Some(t) = threshold {
+        t
+    } else {
+        Input::<NonZeroU8>::new()
+        .with_prompt(format!(
+            "Choose a threshold between 1 and {}\nThe threshold is the minimum number of recipients that one must gather to recover the account",
+            per_recipient_shares.len()
+        )) .interact_text()?
     };
 
     client
