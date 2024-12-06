@@ -5,28 +5,35 @@
 /// Notes:
 /// - Use the `allowed: [...]` parameter in case the order the client will query multiple
 ///   entries is not guaranteed (typically the case when iterating over children).
+/// - Use `at: <DateTime>` to specify the value fo the `at` field the client is
+///   expected to provide in the `vlob_read_batch` request.
+/// - Use `server_up_to: <DateTime>` to limit the template events used. This is useful to
+///   have the client fetch an old version of a vlob (using `client_up_to: <old vlob timestamp>`).
+/// - If `at` is specified but not `server_up_to`, then `server_up_to` takes `at` value.
 /// - No access control is done ! So only use this for a user that has access to the realm.
 /// - Non-existence of `$realm_id` or `$entry_id` is handled fine.
 #[macro_export]
 macro_rules! test_send_hook_vlob_read_batch {
-    (__internal, $strict: expr, $env: expr, $at:expr, $realm_id: expr, $($entry_id: expr),* $(,)?) => {
+    (__internal, $strict: expr, $env: expr, $server_up_to:expr, $at:expr, $realm_id: expr, $($entry_id: expr),* $(,)?) => {
         {
             let env: &TestbedEnv = $env;
             let realm_id: VlobID = $realm_id;
             let at: Option<DateTime> = $at;
+            let server_up_to: Option<DateTime> = $server_up_to;
+            let server_up_to = server_up_to.or(at);
 
             let last_common_certificate_timestamp = env.get_last_common_certificate_timestamp();
             let last_realm_certificate_timestamp = env.get_last_realm_certificate_timestamp(realm_id);
             let last_realm_key_index = env.get_last_realm_keys_bundle_index(realm_id);
 
             let mk_rev_iter_events = || env.template.events.iter().rev()
-                .filter(|e| match at {
+                .filter(|e| match server_up_to {
                     None => true,
-                    Some(at) => match e {
-                        TestbedEvent::CreateOrUpdateUserManifestVlob(e) => e.manifest.timestamp <= at,
-                        TestbedEvent::CreateOrUpdateFileManifestVlob(e) => e.manifest.timestamp <= at,
-                        TestbedEvent::CreateOrUpdateFolderManifestVlob(e) => e.manifest.timestamp <= at,
-                        TestbedEvent::CreateOrUpdateOpaqueVlob(e) => e.timestamp <= at,
+                    Some(up_to) => match e {
+                        TestbedEvent::CreateOrUpdateUserManifestVlob(e) => e.manifest.timestamp <= up_to,
+                        TestbedEvent::CreateOrUpdateFileManifestVlob(e) => e.manifest.timestamp <= up_to,
+                        TestbedEvent::CreateOrUpdateFolderManifestVlob(e) => e.manifest.timestamp <= up_to,
+                        TestbedEvent::CreateOrUpdateOpaqueVlob(e) => e.timestamp <= up_to,
                         _ => false,
                     }
                 });
@@ -106,8 +113,8 @@ macro_rules! test_send_hook_vlob_read_batch {
             let realm_exists = if items.is_empty() {
                 // If we didn't find any item, it might be because the realm doesn't
                 // exist yet, in which case we should return an error
-                env.template.events.iter().find_map(|e| match (e, at) {
-                    (TestbedEvent::NewRealm(e), Some(at)) if e.timestamp > at => Some(false),
+                env.template.events.iter().find_map(|e| match (e, server_up_to) {
+                    (TestbedEvent::NewRealm(e), Some(up_to)) if e.timestamp > up_to => Some(false),
                     (TestbedEvent::NewRealm(e), _) if e.realm_id == realm_id => Some(true),
                     _ => None,
                 }).unwrap_or(false)
@@ -141,17 +148,37 @@ macro_rules! test_send_hook_vlob_read_batch {
         }
     };
 
+    // Base
     ($env: expr, $realm_id: expr, $($entry_id: expr),* $(,)?) => {
-        test_send_hook_vlob_read_batch!(__internal, true, $env, None, $realm_id, $($entry_id),*)
+        test_send_hook_vlob_read_batch!(__internal, true, $env, None, None, $realm_id, $($entry_id),*)
     };
+    // at
     ($env: expr, at: $at: expr, $realm_id: expr, $($entry_id: expr),* $(,)?) => {
-        test_send_hook_vlob_read_batch!(__internal, true, $env, Some($at), $realm_id, $($entry_id),*)
+        test_send_hook_vlob_read_batch!(__internal, true, $env, None, Some($at), $realm_id, $($entry_id),*)
     };
+    // allowed
     ($env: expr, $realm_id: expr, allowed: [$($entry_id: expr),*] $(,)?) => {
-        test_send_hook_vlob_read_batch!(__internal, false, $env, None, $realm_id, $($entry_id),*)
+        test_send_hook_vlob_read_batch!(__internal, false, $env, None, None, $realm_id, $($entry_id),*)
     };
+    // at + allowed
     ($env: expr, at: $at: expr, $realm_id: expr, allowed: [$($entry_id: expr),*] $(,)?) => {
-        test_send_hook_vlob_read_batch!(__internal, false, $env, Some($at), $realm_id, $($entry_id),*)
+        test_send_hook_vlob_read_batch!(__internal, false, $env, None, Some($at), $realm_id, $($entry_id),*)
+    };
+    // server_up_to
+    ($env: expr, server_up_to: $server_up_to: expr, $realm_id: expr, $($entry_id: expr),* $(,)?) => {
+        test_send_hook_vlob_read_batch!(__internal, true, $env, Some($server_up_to), None, $realm_id, $($entry_id),*)
+    };
+    // server_up_to + at
+    ($env: expr, server_up_to: $server_up_to: expr, at: $at: expr, $realm_id: expr, $($entry_id: expr),* $(,)?) => {
+        test_send_hook_vlob_read_batch!(__internal, true, $env, Some($server_up_to), Some($at), $realm_id, $($entry_id),*)
+    };
+    // server_up_to + allowed
+    ($env: expr, server_up_to: $server_up_to: expr, $realm_id: expr, allowed: [$($entry_id: expr),*] $(,)?) => {
+        test_send_hook_vlob_read_batch!(__internal, false, $env, Some($server_up_to), None, $realm_id, $($entry_id),*)
+    };
+    // server_up_to + at + allowed
+    ($env: expr, server_up_to: $server_up_to: expr, at: $at: expr, $realm_id: expr, allowed: [$($entry_id: expr),*] $(,)?) => {
+        test_send_hook_vlob_read_batch!(__internal, false, $env, Some($server_up_to), Some($at), $realm_id, $($entry_id),*)
     };
 }
 
