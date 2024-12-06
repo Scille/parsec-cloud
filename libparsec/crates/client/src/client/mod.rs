@@ -54,7 +54,7 @@ use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_types::prelude::*;
 pub use recovery_device::{
     import_recovery_device, register_new_device, ClientExportRecoveryDeviceError,
-    ImportRecoveryDeviceError,
+    ImportRecoveryDeviceError, RegisterNewDeviceError,
 };
 
 // Re-exposed for public API

@@ -11,7 +11,7 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_protocol::invited_cmds::v4::invite_info::ShamirRecoveryRecipient;
 use libparsec_types::prelude::*;
 
-use crate::client::register_new_device;
+use crate::client::{register_new_device, RegisterNewDeviceError};
 use crate::invite::common::{Throttle, WAIT_PEER_MAX_ATTEMPTS};
 use crate::ClientConfig;
 
@@ -291,6 +291,26 @@ pub async fn claimer_retrieve_info(
 
 // ShamirRecoveryClaimPickRecipientCtx
 
+#[derive(Debug, thiserror::Error)]
+pub enum ShamirRecoveryClaimPickRecipientError {
+    #[error("Recipient not found")]
+    RecipientNotFound,
+    #[error("Recipient already picked")]
+    RecipientAlreadyPicked,
+}
+
+#[derive(Debug)]
+pub enum ShamirRecoveryClaimMaybeRecoverDeviceCtx {
+    RecoverDevice(ShamirRecoveryClaimRecoverDeviceCtx),
+    PickRecipient(ShamirRecoveryClaimPickRecipientCtx),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ShamirRecoveryClaimAddShareError {
+    #[error(transparent)]
+    CorruptedSecret(DataError),
+}
+
 #[derive(Debug)]
 pub struct ShamirRecoveryClaimPickRecipientCtx {
     config: Arc<ClientConfig>,
@@ -330,20 +350,18 @@ impl ShamirRecoveryClaimPickRecipientCtx {
     pub fn pick_recipient(
         &self,
         recipient_user_id: UserID,
-    ) -> Result<ShamirRecoveryClaimInitialCtx, ClaimInProgressError> {
+    ) -> Result<ShamirRecoveryClaimInitialCtx, ShamirRecoveryClaimPickRecipientError> {
         let recipient = self
             .recipients
             .iter()
             .find(|r| r.user_id == recipient_user_id)
-            // TODO: add dedicated error
-            .ok_or_else(|| anyhow::anyhow!("Recipient not found"))?;
+            .ok_or(ShamirRecoveryClaimPickRecipientError::RecipientNotFound)?;
 
         let greeter_user_id = recipient.user_id;
         let greeter_human_handle = recipient.human_handle.clone();
 
         if self.shares.contains_key(&greeter_user_id) {
-            // TODO: add dedicated error
-            return Err(anyhow::anyhow!("Recipient already picked").into());
+            return Err(ShamirRecoveryClaimPickRecipientError::RecipientAlreadyPicked);
         }
 
         Ok(ShamirRecoveryClaimInitialCtx::new(
@@ -358,8 +376,11 @@ impl ShamirRecoveryClaimPickRecipientCtx {
     pub fn add_share(
         self,
         share_ctx: ShamirRecoveryClaimShare,
-    ) -> Result<ShamirRecoveryClaimMaybeRecoverDeviceCtx, ClaimInProgressError> {
+    ) -> Result<ShamirRecoveryClaimMaybeRecoverDeviceCtx, ShamirRecoveryClaimAddShareError> {
         let mut shares = self.shares;
+        // Note that we do not check if the share is already present
+        // This is to avoid handling an extra error that has no real value,
+        // since adding shares can be seen as an idempotent operation.
         shares.insert(share_ctx.recipient, share_ctx.weighted_share);
         if shares
             .values()
@@ -371,7 +392,7 @@ impl ShamirRecoveryClaimPickRecipientCtx {
                 self.threshold,
                 shares.values().flatten(),
             )
-            .map_err(|e| ClaimInProgressError::Internal(e.into()))?;
+            .map_err(ShamirRecoveryClaimAddShareError::CorruptedSecret)?;
             Ok(ShamirRecoveryClaimMaybeRecoverDeviceCtx::RecoverDevice(
                 ShamirRecoveryClaimRecoverDeviceCtx {
                     config: self.config,
@@ -390,7 +411,31 @@ impl ShamirRecoveryClaimPickRecipientCtx {
     }
 }
 
-// ShamirRecoveryClaimFinalizeCtx
+// ShamirRecoveryClaimRecoverDeviceCtx
+
+#[derive(Debug, thiserror::Error)]
+pub enum ShamirRecoveryClaimRecoverDeviceError {
+    #[error("Organization has expired")]
+    OrganizationExpired,
+    #[error("Organization or invitation not found")]
+    NotFound,
+    #[error("Invitation already used")]
+    AlreadyUsed,
+    #[error("Ciphered data not found")]
+    CipheredDataNotFound,
+    #[error("Corrupted ciphered data: {0}")]
+    CorruptedCipheredData(&'static str),
+    #[error("Error while registering new device: {0}")]
+    RegisterNewDeviceError(RegisterNewDeviceError),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+#[derive(Debug)]
+pub enum ShamirRecoveryClaimMaybeFinalizeCtx {
+    Offline(ShamirRecoveryClaimRecoverDeviceCtx),
+    Finalize(ShamirRecoveryClaimFinalizeCtx),
+}
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -415,7 +460,7 @@ impl ShamirRecoveryClaimRecoverDeviceCtx {
     pub async fn recover_device(
         self,
         requested_device_label: DeviceLabel,
-    ) -> Result<ShamirRecoveryClaimFinalizeCtx, ClaimInProgressError> {
+    ) -> Result<ShamirRecoveryClaimMaybeFinalizeCtx, ShamirRecoveryClaimRecoverDeviceError> {
         let ciphered_data = {
             use invited_cmds::latest::invite_shamir_recovery_reveal::{Rep, Req};
 
@@ -424,21 +469,40 @@ impl ShamirRecoveryClaimRecoverDeviceCtx {
                 .send(Req {
                     reveal_token: self.secret.reveal_token,
                 })
-                .await?;
+                .await;
 
             match rep {
-                Rep::Ok { ciphered_data } => Ok(ciphered_data),
-                // TODO: specialize error
-                Rep::NotFound => Err(ClaimInProgressError::NotFound),
-                Rep::UnknownStatus { .. } => {
+                // Results
+                // Important note: a `NoResponse`` connection error leads to a result containing the current ctx
+                // This allows the caller to retry the operation without losing the current state.
+                // On the contrary, other errors are deemed irrecoverable and are turned into a specific error type.
+                Ok(Rep::Ok { ciphered_data }) => Ok(ciphered_data),
+                Err(ConnectionError::NoResponse(_)) => {
+                    return Ok(ShamirRecoveryClaimMaybeFinalizeCtx::Offline(self))
+                }
+                // Errors
+                Ok(Rep::NotFound) => {
+                    Err(ShamirRecoveryClaimRecoverDeviceError::CipheredDataNotFound)
+                }
+                Ok(Rep::UnknownStatus { .. }) => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
                 }
+                Err(ConnectionError::InvitationAlreadyUsedOrDeleted) => {
+                    Err(ShamirRecoveryClaimRecoverDeviceError::AlreadyUsed)
+                }
+                Err(ConnectionError::ExpiredOrganization) => {
+                    Err(ShamirRecoveryClaimRecoverDeviceError::OrganizationExpired)
+                }
+                Err(ConnectionError::InvitationNotFound) => {
+                    Err(ShamirRecoveryClaimRecoverDeviceError::NotFound)
+                }
+                Err(err) => Err(ShamirRecoveryClaimRecoverDeviceError::Internal(err.into())),
             }?
         };
 
         let mut recovery_device =
             LocalDevice::decrypt_and_load(&ciphered_data, &self.secret.data_key)
-                .map_err(|e| ClaimInProgressError::Internal(anyhow::Error::msg(e)))?;
+                .map_err(ShamirRecoveryClaimRecoverDeviceError::CorruptedCipheredData)?;
 
         // When using the tested, the recovery device organization address is set to a placeholder address.
         // This is because the organization address is not known yet when the testbed is initialized.
@@ -467,30 +531,32 @@ impl ShamirRecoveryClaimRecoverDeviceCtx {
             self.config.proxy.clone(),
         )?;
 
-        register_new_device(
+        match register_new_device(
             &recovery_cmds,
             &new_local_device,
             DevicePurpose::Standard,
             &recovery_device,
         )
         .await
-        // TODO: specialize error
-        .map_err(|e| ClaimInProgressError::Internal(e.into()))?;
+        {
+            // Success
+            Ok(_) => Ok(()),
+            // Offline, let the caller retry the operation later
+            Err(RegisterNewDeviceError::Offline) => {
+                return Ok(ShamirRecoveryClaimMaybeFinalizeCtx::Offline(self))
+            }
+            // Unrecoverable error, propagate it
+            Err(e) => Err(ShamirRecoveryClaimRecoverDeviceError::RegisterNewDeviceError(e)),
+        }?;
 
-        Ok(ShamirRecoveryClaimFinalizeCtx {
-            config: self.config,
-            new_local_device: Arc::new(new_local_device),
-            token: self.cmds.addr().token(),
-        })
+        Ok(ShamirRecoveryClaimMaybeFinalizeCtx::Finalize(
+            ShamirRecoveryClaimFinalizeCtx {
+                config: self.config,
+                new_local_device: Arc::new(new_local_device),
+                token: self.cmds.addr().token(),
+            },
+        ))
     }
-}
-
-// ShamirRecoveryClaimMaybeRecoverDeviceCtx
-
-#[derive(Debug)]
-pub enum ShamirRecoveryClaimMaybeRecoverDeviceCtx {
-    RecoverDevice(ShamirRecoveryClaimRecoverDeviceCtx),
-    PickRecipient(ShamirRecoveryClaimPickRecipientCtx),
 }
 
 // ClaimCancellerCtx
