@@ -281,6 +281,12 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
 
     // 2) Entry not in the local storage, last chance is to fetch from the server
 
+    #[cfg(test)]
+    libparsec_tests_fixtures::moment_define_inject_point(
+        libparsec_tests_fixtures::Moment::WorkspaceStorePopulateCacheFetchRemote,
+    )
+    .await;
+
     let outcome = super::super::fetch::fetch_remote_child_manifest(
         &store.cmds,
         &store.certificates_ops,
