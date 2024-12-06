@@ -33,11 +33,11 @@ pub(super) async fn get_manifest(
     entry_id: VlobID,
 ) -> Result<ArcLocalChildManifest, GetManifestError> {
     // Fast path: cache lookup
-    {
-        let cache = store.current_view_cache.lock().expect("Mutex is poisoned");
-        if let Some(manifest) = cache.manifests.get(&entry_id) {
-            return Ok(manifest.clone());
-        }
+    let maybe_found = store
+        .data
+        .with_current_view_cache(|cache| cache.manifests.get(&entry_id).cloned());
+    if let Some(manifest) = maybe_found {
+        return Ok(manifest);
     }
 
     // Entry not in the cache, try to fetch it from the local storage...
