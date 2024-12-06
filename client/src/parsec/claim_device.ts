@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import {
+  AnyClaimRetrievedInfoDevice,
+  AnyClaimRetrievedInfoTag,
   AvailableDevice,
   ClaimInProgressError,
   ClaimerRetrieveInfoError,
@@ -16,8 +18,6 @@ import {
   HumanHandle,
   Result,
   SASCode,
-  UserOrDeviceClaimInitialInfoDevice,
-  UserOrDeviceClaimInitialInfoTag,
 } from '@/parsec';
 import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
@@ -72,7 +72,7 @@ export class DeviceClaim {
     }
   }
 
-  async retrieveInfo(invitationLink: string): Promise<Result<UserOrDeviceClaimInitialInfoDevice, ClaimerRetrieveInfoError>> {
+  async retrieveInfo(invitationLink: string): Promise<Result<AnyClaimRetrievedInfoDevice, ClaimerRetrieveInfoError>> {
     function eventCallback(_handle: number, event: ClientEvent): void {
       console.log('On event', event);
     }
@@ -86,7 +86,7 @@ export class DeviceClaim {
         this.handle = result.value.handle;
         this.greeter = result.value.greeterHumanHandle;
       }
-      return result as Result<UserOrDeviceClaimInitialInfoDevice, ClaimerRetrieveInfoError>;
+      return result as Result<AnyClaimRetrievedInfoDevice, ClaimerRetrieveInfoError>;
     } else {
       await wait(MOCK_WAITING_TIME);
       this.handle = DEFAULT_HANDLE;
@@ -98,7 +98,7 @@ export class DeviceClaim {
       return {
         ok: true,
         value: {
-          tag: UserOrDeviceClaimInitialInfoTag.Device,
+          tag: AnyClaimRetrievedInfoTag.Device,
           handle: DEFAULT_HANDLE,
           greeterUserId: '1234',
           greeterHumanHandle: {

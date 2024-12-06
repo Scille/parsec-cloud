@@ -63,6 +63,7 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
                     user_id=shamirorg.mike.user_id,
                     human_handle=shamirorg.mike.human_handle,
                     shares=1,
+                    revoked_on=None,
                 ),
             ],
         )
@@ -186,6 +187,7 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
                     user_id=shamirorg.mike.user_id,
                     human_handle=shamirorg.mike.human_handle,
                     shares=1,
+                    revoked_on=None,
                 ),
             ],
         )

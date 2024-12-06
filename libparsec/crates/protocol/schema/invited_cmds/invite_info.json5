@@ -77,7 +77,7 @@
                             },
                             {
                                 "name": "threshold",
-                                "type": "NonZeroInteger"
+                                "type": "NonZeroU8"
                             },
                             {
                                 "name": "recipients",
@@ -100,8 +100,14 @@
                     },
                     {
                         "name": "shares",
-                        "type": "NonZeroInteger"
+                        "type": "NonZeroU8"
+                    },
+                    {
+                        "name": "revoked_on",
+                        "type": "RequiredOption<DateTime>"
                     }
+                    // TODO: Add a status field like:
+                    // - status: ONLINE | OFFLINE | UNKNOWN
                 ]
             }
         ]
