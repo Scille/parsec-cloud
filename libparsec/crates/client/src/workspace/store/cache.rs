@@ -354,12 +354,6 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
     // 3) We got our manifest, update local storage with it
 
     let manifest = loop {
-        let mut maybe_storage = store.storage.lock().await;
-        let storage = match &mut *maybe_storage {
-            None => return Err(PopulateCacheFromLocalStorageOrServerError::Stopped),
-            Some(storage) => storage,
-        };
-
         let update_data = match &manifest {
             ArcLocalChildManifest::File(manifest) => UpdateManifestData {
                 entry_id: manifest.base.id,
@@ -374,17 +368,35 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
                 encrypted: manifest.dump_and_encrypt(&store.device.local_symkey),
             },
         };
-        let outcome = storage
-            .populate_manifest(&update_data)
-            .await
-            .map_err(|err| {
-                PopulateCacheFromLocalStorageOrServerError::Internal(
-                    err.context("cannot populate local storage with manifest"),
-                )
-            })?;
+        let outcome = {
+            let mut maybe_storage = store.storage.lock().await;
+            let storage = match &mut *maybe_storage {
+                None => return Err(PopulateCacheFromLocalStorageOrServerError::Stopped),
+                Some(storage) => storage,
+            };
+            storage
+                .populate_manifest(&update_data)
+                .await
+                .map_err(|err| {
+                    PopulateCacheFromLocalStorageOrServerError::Internal(
+                        err.context("cannot populate local storage with manifest"),
+                    )
+                })?
+        };
         match outcome {
             PopulateManifestOutcome::Stored => break manifest,
             // A concurrent operation has populated the local storage !
+            //
+            // Note we don't try to be clever and check the version of the existing local
+            // data in order to replace it if we have a more recent version.
+            //
+            // This is for three reasons:
+            // - It adds complexity for a corner case, especially since the local data might
+            //   have been modified in the meantime (so some merge logic is needed).
+            // - It is most likely that the concurrent operation has fetched the same data
+            //   from the server anyway.
+            // - If a different version did arrive, the inbound sync monitor will also
+            //   be notified and update the local storage no matter what we do here.
             PopulateManifestOutcome::AlreadyPresent => {
                 let manifest = match populate_cache_from_local_storage(store, entry_id).await {
                     Ok(manifest) => manifest,
