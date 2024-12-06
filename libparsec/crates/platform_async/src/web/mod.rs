@@ -11,6 +11,13 @@ pub async fn sleep(duration: std::time::Duration) {
     pretend_future_is_send_on_web(not_send_future).await
 }
 
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+pub struct TaskID;
+
+pub fn try_task_id() -> Option<TaskID> {
+    todo!()
+}
+
 #[derive(Debug)]
 pub struct JoinHandle<T> {
     phantom: std::marker::PhantomData<T>,
