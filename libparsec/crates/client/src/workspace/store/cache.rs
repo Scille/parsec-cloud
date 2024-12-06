@@ -193,17 +193,20 @@ pub(super) async fn populate_cache_from_local_storage(
 ) -> Result<ArcLocalChildManifest, PopulateCacheFromLocalStorageError> {
     // 1) Local storage lookup
 
-    let maybe_found = {
-        let mut maybe_storage = store.storage.lock().await;
-        let storage = match &mut *maybe_storage {
-            None => return Err(PopulateCacheFromLocalStorageError::Stopped),
-            Some(storage) => storage,
-        };
+    let maybe_found = store
+        .data
+        .with_storage(|maybe_storage| async move {
+            let storage = maybe_storage
+                .as_mut()
+                .ok_or_else(|| PopulateCacheFromLocalStorageError::Stopped)?;
 
-        storage.get_manifest(entry_id).await.map_err(|err| {
-            PopulateCacheFromLocalStorageError::Internal(err.context("cannot access local storage"))
-        })?
-    };
+            storage.get_manifest(entry_id).await.map_err(|err| {
+                PopulateCacheFromLocalStorageError::Internal(
+                    err.context("cannot access local storage"),
+                )
+            })
+        })
+        .await?;
 
     let manifest = match maybe_found {
         Some(encrypted) => {
@@ -230,8 +233,9 @@ pub(super) async fn populate_cache_from_local_storage(
 
     // 2) We got our manifest, don't forget to update the cache before returning it
 
-    let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
-    let manifest = cache.manifests.insert_if_missing(manifest);
+    let manifest = store
+        .data
+        .with_current_view_cache(|cache| cache.manifests.insert_if_missing(manifest));
 
     Ok(manifest)
 }
@@ -368,21 +372,23 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
                 encrypted: manifest.dump_and_encrypt(&store.device.local_symkey),
             },
         };
-        let outcome = {
-            let mut maybe_storage = store.storage.lock().await;
-            let storage = match &mut *maybe_storage {
-                None => return Err(PopulateCacheFromLocalStorageOrServerError::Stopped),
-                Some(storage) => storage,
-            };
-            storage
-                .populate_manifest(&update_data)
-                .await
-                .map_err(|err| {
-                    PopulateCacheFromLocalStorageOrServerError::Internal(
-                        err.context("cannot populate local storage with manifest"),
-                    )
-                })?
-        };
+        let outcome = store
+            .data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| PopulateCacheFromLocalStorageOrServerError::Stopped)?;
+
+                storage
+                    .populate_manifest(&update_data)
+                    .await
+                    .map_err(|err| {
+                        PopulateCacheFromLocalStorageOrServerError::Internal(
+                            err.context("cannot populate local storage with manifest"),
+                        )
+                    })
+            })
+            .await?;
         match outcome {
             PopulateManifestOutcome::Stored => break manifest,
             // A concurrent operation has populated the local storage !
@@ -424,8 +430,9 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
 
     // 4) Also update the cache
 
-    let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
-    let manifest = cache.manifests.insert_if_missing(manifest);
+    let manifest = store
+        .data
+        .with_current_view_cache(|cache| cache.manifests.insert_if_missing(manifest));
 
     Ok(manifest)
 }

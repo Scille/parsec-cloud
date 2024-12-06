@@ -75,17 +75,14 @@ struct ReparentingUpdaterGuards<'a> {
 impl Drop for ReparentingUpdaterGuards<'_> {
     fn drop(&mut self) {
         if let Some((guard1, guard2, guard3, guard4)) = self.update_guards.take() {
-            let mut cache = self
-                .store
-                .current_view_cache
-                .lock()
-                .expect("Mutex is poisoned");
-            cache.lock_update_manifests.release(guard1);
-            cache.lock_update_manifests.release(guard2);
-            cache.lock_update_manifests.release(guard3);
-            if let Some(guard4) = guard4 {
-                cache.lock_update_manifests.release(guard4);
-            }
+            self.store.data.with_current_view_cache(move |cache| {
+                cache.lock_update_manifests.release(guard1);
+                cache.lock_update_manifests.release(guard2);
+                cache.lock_update_manifests.release(guard3);
+                if let Some(guard4) = guard4 {
+                    cache.lock_update_manifests.release(guard4);
+                }
+            });
         }
     }
 }
@@ -102,11 +99,6 @@ impl ReparentingUpdater<'_> {
             guards,
         } = self;
         let store = guards.store;
-
-        let mut storage_guard = store.storage.lock().await;
-        let storage = storage_guard
-            .as_mut()
-            .ok_or_else(|| UpdateManifestsForReparentingError::Stopped)?;
 
         // 1) Insert in database
 
@@ -140,15 +132,25 @@ impl ReparentingUpdater<'_> {
         match &dst_child_manifest {
             // 3 manifests to update
             None => {
-                storage
-                    .update_manifests(
-                        [
-                            src_parent_update_data,
-                            src_child_update_data,
-                            dst_parent_update_data,
-                        ]
-                        .into_iter(),
-                    )
+                store
+                    .data
+                    .with_storage(|maybe_storage| async move {
+                        let storage = maybe_storage
+                            .as_mut()
+                            .ok_or_else(|| UpdateManifestsForReparentingError::Stopped)?;
+
+                        storage
+                            .update_manifests(
+                                [
+                                    src_parent_update_data,
+                                    src_child_update_data,
+                                    dst_parent_update_data,
+                                ]
+                                .into_iter(),
+                            )
+                            .await
+                            .map_err(UpdateManifestsForReparentingError::Internal)
+                    })
                     .await?;
             }
 
@@ -169,34 +171,44 @@ impl ReparentingUpdater<'_> {
                     },
                 };
 
-                storage
-                    .update_manifests(
-                        [
-                            src_parent_update_data,
-                            src_child_update_data,
-                            dst_parent_update_data,
-                            dst_child_update_data,
-                        ]
-                        .into_iter(),
-                    )
+                store
+                    .data
+                    .with_storage(|maybe_storage| async move {
+                        let storage = maybe_storage
+                            .as_mut()
+                            .ok_or_else(|| UpdateManifestsForReparentingError::Stopped)?;
+
+                        storage
+                            .update_manifests(
+                                [
+                                    src_parent_update_data,
+                                    src_child_update_data,
+                                    dst_parent_update_data,
+                                    dst_child_update_data,
+                                ]
+                                .into_iter(),
+                            )
+                            .await
+                            .map_err(UpdateManifestsForReparentingError::Internal)
+                    })
                     .await?;
             }
         }
 
         // 2) Update the cache
 
-        let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
-
-        cache
-            .manifests
-            .insert(ArcLocalChildManifest::Folder(src_parent_manifest));
-        cache
-            .manifests
-            .insert(ArcLocalChildManifest::Folder(dst_parent_manifest));
-        cache.manifests.insert(src_child_manifest);
-        if let Some(dst_child_manifest) = dst_child_manifest {
-            cache.manifests.insert(dst_child_manifest);
-        }
+        store.data.with_current_view_cache(move |cache| {
+            cache
+                .manifests
+                .insert(ArcLocalChildManifest::Folder(src_parent_manifest));
+            cache
+                .manifests
+                .insert(ArcLocalChildManifest::Folder(dst_parent_manifest));
+            cache.manifests.insert(src_child_manifest);
+            if let Some(dst_child_manifest) = dst_child_manifest {
+                cache.manifests.insert(dst_child_manifest);
+            }
+        });
 
         Ok(())
     }

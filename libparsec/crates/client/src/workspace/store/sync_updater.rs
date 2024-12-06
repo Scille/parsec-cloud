@@ -84,43 +84,57 @@ pub(super) async fn for_update_sync_local_only(
     // Guard's drop will panic if the lock is not released
     macro_rules! release_guard_on_error {
         ($entry_guard:expr) => {
-            let mut cache_guard = store.current_view_cache.lock().expect("Mutex is poisoned");
-            cache_guard.lock_update_manifests.release($entry_guard);
+            store.data.with_current_view_cache(|cache| {
+                cache.lock_update_manifests.release($entry_guard);
+            });
         };
     }
 
     // Step 1, 2 and 3 are about retrieving the manifest and locking it for update
 
     let (entry_guard, manifest) = 'get_lock_and_manifest: {
-        let entry_guard = {
-            let mut cache_guard = store.current_view_cache.lock().expect("Mutex is poisoned");
+        // 1) Lock for update
 
-            // 1) Lock for update
+        enum LockForUpdateOutcome {
+            GoToStep3(ManifestUpdateLockGuard),
+            GoToStep4((ManifestUpdateLockGuard, ArcLocalChildManifest)),
+            WouldBlock,
+        }
 
-            // Don't wait for the lock: we'd rather wait for the entry to settle
-            // before synchronizing it anyway.
-            let outcome = cache_guard.lock_update_manifests.try_take(entry_id);
-            match outcome {
+        // Don't wait for the lock: we'd rather wait for the entry to settle
+        // before synchronizing it anyway.
+        let outcome = store.data.with_current_view_cache(|cache| {
+            match cache.lock_update_manifests.try_take(entry_id) {
                 Some(entry_guard) => {
                     // 2) Cache lookup for entry...
 
-                    let found = cache_guard.manifests.get(&entry_id);
+                    let found = cache.manifests.get(&entry_id);
                     if let Some(manifest) = found {
                         // Cache hit ! We go to step 4.
-                        break 'get_lock_and_manifest (entry_guard, Some(manifest.clone()));
+                        LockForUpdateOutcome::GoToStep4((entry_guard, manifest.clone()))
+                    } else {
+                        // The entry is not in cache, go to step 3 for a lookup in the local storage.
+                        // Note we keep the update lock: this has no impact on read operation, and
+                        // any other write operation taking the lock will have no choice but to try
+                        // to populate the cache just like we are going to do.
+                        LockForUpdateOutcome::GoToStep3(entry_guard)
                     }
-                    // The entry is not in cache, go to step 3 for a lookup in the local storage.
-                    // Note we keep the update lock: this has no impact on read operation, and
-                    // any other write operation taking the lock will have no choice but to try
-                    // to populate the cache just like we are going to do.
-                    entry_guard
                 }
 
                 None => {
                     // Note it's not a big deal to return `WouldBlock` here: the caller
                     // will just re-schedule the operation and try again later.
-                    return Err(ForUpdateSyncLocalOnlyError::WouldBlock);
+                    LockForUpdateOutcome::WouldBlock
                 }
+            }
+        });
+        let entry_guard = match outcome {
+            LockForUpdateOutcome::GoToStep3(entry_guard) => entry_guard,
+            LockForUpdateOutcome::GoToStep4((entry_guard, manifest)) => {
+                break 'get_lock_and_manifest (entry_guard, Some(manifest))
+            }
+            LockForUpdateOutcome::WouldBlock => {
+                return Err(ForUpdateSyncLocalOnlyError::WouldBlock);
             }
         };
 
@@ -261,11 +275,6 @@ impl<'a> SyncUpdater<'a> {
             }
         }
 
-        let mut storage_guard = self.store.storage.lock().await;
-        let storage = storage_guard
-            .as_mut()
-            .ok_or_else(|| UpdateManifestForSyncError::Stopped)?;
-
         let update_data = match &manifest {
             ArcLocalChildManifest::File(manifest) => UpdateManifestData {
                 entry_id: manifest.base.id,
@@ -280,16 +289,24 @@ impl<'a> SyncUpdater<'a> {
                 encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
             },
         };
+        self.store
+            .data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| UpdateManifestForSyncError::Stopped)?;
 
-        storage.update_manifest(&update_data).await?;
+                storage
+                    .update_manifest(&update_data)
+                    .await
+                    .map_err(UpdateManifestForSyncError::Internal)
+            })
+            .await?;
 
         // Finally update cache
-        let mut cache = self
-            .store
-            .current_view_cache
-            .lock()
-            .expect("Mutex is poisoned");
-        cache.manifests.insert(manifest);
+        self.store.data.with_current_view_cache(|cache| {
+            cache.manifests.insert(manifest);
+        });
 
         Ok(())
     }
@@ -314,34 +331,35 @@ impl<'a> SyncUpdater<'a> {
             }
         }
 
-        let mut storage_guard = self.store.storage.lock().await;
-        let storage = storage_guard
-            .as_mut()
-            .ok_or_else(|| UpdateManifestForSyncError::Stopped)?;
-
         let update_data = UpdateManifestData {
             entry_id: manifest.base.id,
             base_version: manifest.base.version,
             need_sync: manifest.need_sync,
             encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
         };
-
         let new_chunks = new_chunks.map(|(chunk_id, cleartext)| {
             (chunk_id, self.store.device.local_symkey.encrypt(cleartext))
         });
-        storage
-            .update_manifest_and_chunks(&update_data, new_chunks, removed_chunks)
+        self.store
+            .data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| UpdateManifestForSyncError::Stopped)?;
+
+                storage
+                    .update_manifest_and_chunks(&update_data, new_chunks, removed_chunks)
+                    .await
+                    .map_err(UpdateManifestForSyncError::Internal)
+            })
             .await?;
 
         // Finally update cache
-        let mut cache = self
-            .store
-            .current_view_cache
-            .lock()
-            .expect("Mutex is poisoned");
-        cache
-            .manifests
-            .insert(ArcLocalChildManifest::File(manifest));
+        self.store.data.with_current_view_cache(|cache| {
+            cache
+                .manifests
+                .insert(ArcLocalChildManifest::File(manifest));
+        });
 
         Ok(())
     }
@@ -374,39 +392,46 @@ impl<'a> SyncUpdater<'a> {
         // lead to a deadlock !
 
         let (parent_update_guard, parent_manifest) = 'get_lock_and_manifest: {
-            let parent_update_guard = {
-                let mut cache_guard = self
-                    .store
-                    .current_view_cache
-                    .lock()
-                    .expect("Mutex is poisoned");
+            // 1) Lock for update
 
-                // 1) Lock for update
+            enum LockForUpdateOutcome {
+                GoToStep3(ManifestUpdateLockGuard),
+                GoToStep4((ManifestUpdateLockGuard, ArcLocalChildManifest)),
+                WouldBlock,
+            }
 
+            let outcome = self.store.data.with_current_view_cache(|cache| {
                 // Don't try to wait for the lock as it may lead to a deadlock !
-                let outcome = cache_guard.lock_update_manifests.try_take(parent_id);
-                match outcome {
+                match cache.lock_update_manifests.try_take(parent_id) {
                     Some(parent_update_guard) => {
                         // 2) Cache lookup for entry...
 
-                        let found = cache_guard.manifests.get(&parent_id);
+                        let found = cache.manifests.get(&parent_id);
                         if let Some(parent_manifest) = found {
                             // Cache hit ! We go to step 4.
-                            break 'get_lock_and_manifest (
+                            LockForUpdateOutcome::GoToStep4((
                                 parent_update_guard,
                                 parent_manifest.to_owned(),
-                            );
+                            ))
+                        } else {
+                            // The entry is not in cache, go to step 3 for a lookup in the local storage.
+                            // Note we keep the update lock: this has no impact on read operation, and
+                            // any other write operation taking the lock will have no choice but to try
+                            // to populate the cache just like we are going to do.
+                            LockForUpdateOutcome::GoToStep3(parent_update_guard)
                         }
-                        // The entry is not in cache, go to step 3 for a lookup in the local storage.
-                        // Note we keep the update lock: this has no impact on read operation, and
-                        // any other write operation taking the lock will have no choice but to try
-                        // to populate the cache just like we are going to do.
-                        parent_update_guard
                     }
 
-                    None => {
-                        return Err((self, IntoSyncConflictUpdaterError::WouldBlock));
-                    }
+                    None => LockForUpdateOutcome::WouldBlock,
+                }
+            });
+            let parent_update_guard = match outcome {
+                LockForUpdateOutcome::GoToStep4((parent_update_guard, parent_manifest)) => {
+                    break 'get_lock_and_manifest (parent_update_guard, parent_manifest);
+                }
+                LockForUpdateOutcome::GoToStep3(parent_update_guard) => parent_update_guard,
+                LockForUpdateOutcome::WouldBlock => {
+                    return Err((self, IntoSyncConflictUpdaterError::WouldBlock));
                 }
             };
 
@@ -478,12 +503,9 @@ impl<'a> SyncUpdater<'a> {
 impl Drop for SyncUpdater<'_> {
     fn drop(&mut self) {
         if let Some(update_guard) = self.update_guard.take() {
-            self.store
-                .current_view_cache
-                .lock()
-                .expect("Mutex is poisoned")
-                .lock_update_manifests
-                .release(update_guard);
+            self.store.data.with_current_view_cache(|cache| {
+                cache.lock_update_manifests.release(update_guard);
+            });
         }
     }
 }
@@ -540,11 +562,6 @@ impl<'a> SyncConflictUpdater<'a> {
             }
         }
 
-        let mut storage_guard = self.store.storage.lock().await;
-        let storage = storage_guard
-            .as_mut()
-            .ok_or_else(|| UpdateManifestForSyncError::Stopped)?;
-
         let child_update_data = match &child_manifest {
             ArcLocalChildManifest::File(manifest) => UpdateManifestData {
                 entry_id: manifest.base.id,
@@ -559,14 +576,12 @@ impl<'a> SyncConflictUpdater<'a> {
                 encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
             },
         };
-
         let parent_update_data = UpdateManifestData {
             entry_id: parent_manifest.base.id,
             base_version: parent_manifest.base.version,
             need_sync: parent_manifest.need_sync,
             encrypted: parent_manifest.dump_and_encrypt(&self.store.device.local_symkey),
         };
-
         let conflicting_new_child_update_data = match &conflicting_new_child_manifest {
             ArcLocalChildManifest::File(manifest) => UpdateManifestData {
                 entry_id: manifest.base.id,
@@ -581,31 +596,35 @@ impl<'a> SyncConflictUpdater<'a> {
                 encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
             },
         };
+        self.store
+            .data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| UpdateManifestForSyncError::Stopped)?;
 
-        storage
-            .update_manifests(
-                [
-                    child_update_data,
-                    parent_update_data,
-                    conflicting_new_child_update_data,
-                ]
-                .into_iter(),
-            )
+                storage
+                    .update_manifests(
+                        [
+                            child_update_data,
+                            parent_update_data,
+                            conflicting_new_child_update_data,
+                        ]
+                        .into_iter(),
+                    )
+                    .await
+                    .map_err(UpdateManifestForSyncError::Internal)
+            })
             .await?;
 
         // Finally update cache
-
-        let mut cache = self
-            .store
-            .current_view_cache
-            .lock()
-            .expect("Mutex is poisoned");
-
-        cache
-            .manifests
-            .insert(ArcLocalChildManifest::Folder(parent_manifest));
-        cache.manifests.insert(child_manifest);
-        cache.manifests.insert(conflicting_new_child_manifest);
+        self.store.data.with_current_view_cache(|cache| {
+            cache
+                .manifests
+                .insert(ArcLocalChildManifest::Folder(parent_manifest));
+            cache.manifests.insert(child_manifest);
+            cache.manifests.insert(conflicting_new_child_manifest);
+        });
 
         Ok(())
     }
@@ -614,13 +633,10 @@ impl<'a> SyncConflictUpdater<'a> {
 impl Drop for SyncConflictUpdater<'_> {
     fn drop(&mut self) {
         if let Some((child_update_guard, parent_update_guard)) = self.update_guards.take() {
-            let mut store = self
-                .store
-                .current_view_cache
-                .lock()
-                .expect("Mutex is poisoned");
-            store.lock_update_manifests.release(child_update_guard);
-            store.lock_update_manifests.release(parent_update_guard);
+            self.store.data.with_current_view_cache(|cache| {
+                cache.lock_update_manifests.release(child_update_guard);
+                cache.lock_update_manifests.release(parent_update_guard);
+            });
         }
     }
 }
