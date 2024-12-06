@@ -16,7 +16,7 @@ use std::{
 };
 
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_platform_async::lock::Mutex as AsyncMutex;
+use libparsec_platform_async::{lock::Mutex as AsyncMutex, try_task_id, TaskID};
 use libparsec_platform_storage::workspace::{UpdateManifestData, WorkspaceStorage};
 use libparsec_types::prelude::*;
 
@@ -107,6 +107,197 @@ pub(super) enum EnsureManifestExistsWithParentError {
  * WorkspaceStore & friends
  */
 
+mod data {
+    //! This module keeps private the internals of `WorkspaceStoreData` in order to reduce
+    //! the risk of deadlocks.
+    //!
+    //! Indeed, the current view cache and storage (i.e. local database) are both protected
+    //! by a mutex and used in conjunction, so deadlock may occur due to the wrong order of
+    //! acquisition or if a lock it kept too long (especially since locks are not reentrant).
+    //!
+    //! So to solve this issue we only give access to store and storage through a callback
+    //! based API:
+    //! - It better limits and makes explicit the scope of the lock.
+    //! - It is not possible to acquire the storage lock when the view cache lock is acquired
+    //!   (since the former is protected by an async lock and the latter by a sync lock).
+    //! - In debug build a deadlock detection mechanism is in place to ensure only a single
+    //!   lock is acquired at a time for any given task.
+
+    use super::*;
+
+    /*
+     * WorkspaceStoreData
+     */
+
+    #[derive(Debug)]
+    pub(super) struct WorkspaceStoreData {
+        /// Note cache also contains the update locks.
+        current_view_cache: Mutex<CurrentViewCache>,
+        /// Given accessing `storage` requires exclusive access, it is better to have it
+        /// under its own lock so that all cache hit operations can occur concurrently.
+        storage: AsyncMutex<Option<WorkspaceStorage>>,
+        #[cfg(debug_assertions)]
+        lock_tracking: Mutex<Vec<(RunningFutureID, DataLock)>>,
+    }
+
+    impl WorkspaceStoreData {
+        pub fn new(storage: WorkspaceStorage, root_manifest: LocalWorkspaceManifest) -> Self {
+            Self {
+                current_view_cache: Mutex::new(CurrentViewCache::new(Arc::new(
+                    root_manifest.into(),
+                ))),
+                storage: AsyncMutex::new(Some(storage)),
+                #[cfg(debug_assertions)]
+                lock_tracking: Default::default(),
+            }
+        }
+
+        /// Acquire the lock on the current view cache.
+        ///
+        /// There is two rules when acquiring data lock:
+        /// - A task should never lock both current view cache and storage at the same time.
+        /// - You should do the minimum amount of work inside the closure (e.g. avoid
+        ///   doing encryption).
+        pub fn with_current_view_cache<T>(&self, cb: impl FnOnce(&mut CurrentViewCache) -> T) -> T {
+            #[cfg(debug_assertions)]
+            let _lock_tracker_guard =
+                DataLockTrackerGuard::register(&self.lock_tracking, DataLock::Cache);
+
+            let mut guard = self.current_view_cache.lock().expect("Mutex is poisoned !");
+            cb(&mut guard)
+        }
+
+        /// Acquire the lock on the storage.
+        ///
+        /// There is two rules when acquiring data lock:
+        /// - A task should never lock both current view cache and storage at the same time.
+        /// - You should do the minimum amount of work inside the closure (e.g. avoid
+        ///   doing encryption).
+        pub async fn with_storage<T, Fut>(
+            &self,
+            cb: impl FnOnce(&'static mut Option<WorkspaceStorage>) -> Fut,
+        ) -> T
+        where
+            Fut: std::future::Future<Output = T>,
+        {
+            let mut guard = self.storage.lock().await;
+            let storage_mut_ref = &mut *guard;
+
+            unsafe fn pretend_static(
+                src: &mut Option<WorkspaceStorage>,
+            ) -> &'static mut Option<WorkspaceStorage> {
+                std::mem::transmute(src)
+            }
+            // SAFETY: It is not currently possible to express the fact the lifetime
+            // of a Future returned by a closure depends on the closure parameter if
+            // they are references.
+            // Here things are even worst because we have references coming from
+            // `for_write` body and from `cb` closure (so workarounds as boxed future
+            // don't work).
+            // However in practice all our references have a lifetime bound to the
+            // parent (i.e. `for_write`) or the grand-parent (i.e.
+            // `CertificateOps::add_certificates_batch`) which are going to poll this
+            // future directly, so the references' lifetimes *are* long enough.
+            // TODO: Remove this once async closure are available
+            let static_storage_mut_ref = unsafe { pretend_static(storage_mut_ref) };
+
+            #[cfg(debug_assertions)]
+            let _lock_tracker_guard =
+                DataLockTrackerGuard::register(&self.lock_tracking, DataLock::Storage);
+
+            let fut = cb(static_storage_mut_ref);
+            fut.await
+        }
+    }
+
+    /*
+     * Deadlock detection stuff
+     */
+
+    #[cfg(debug_assertions)]
+    #[derive(Debug)]
+    enum DataLock {
+        Cache,
+        Storage,
+    }
+
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    enum RunningFutureID {
+        /// The future is being executed as a task (i.e. `tokio::spawn(<my_future>)`).
+        AsTask(TaskID),
+        /// The future is being executed as-is by a thread (i.e. `block_on(<my_future>)`).
+        FromBlockOn(std::thread::ThreadId),
+    }
+
+    #[cfg(debug_assertions)]
+    struct DataLockTrackerGuard<'a> {
+        running_future_id: RunningFutureID,
+        lock_tracking: &'a Mutex<Vec<(RunningFutureID, DataLock)>>,
+    }
+
+    impl<'a> DataLockTrackerGuard<'a> {
+        fn register(
+            lock_tracking: &'a Mutex<Vec<(RunningFutureID, DataLock)>>,
+            lock: DataLock,
+        ) -> Self {
+            // Task ID is only available when within a task (i.e. a spawned future) !
+            //
+            // Put it another way, `try_task_id()` will return `None` if:
+            // a) It is called from a synchronous context (e.g. the main function).
+            // b) It is called from an asynchronous context that is not a task.
+            //
+            // In practice a) is not a problem since this code is deep within asynchronous
+            // land, however b) is very common since it occurs whenever Tokio's `block_on`
+            // is used, i.e.:
+            // b1) Functions decorated by `tokio::main` (using `tokio::Runtime::block_on` under the hood).
+            // b2) Functions decorated by `tokio::test` (using `tokio::Runtime::block_on` under the hood).
+            // b3) Non Tokio threads calling `tokio::Handle::block_on`.
+            //
+            // So, in a nutshell, we are going to end up with `None` as task ID in any
+            // code coming from:
+            // - Our CLI main functions (due to b1).
+            // - Our test functions (due to b2).
+            // - Mountpoint operations on Windows (due to b3). This is because WinFSP
+            //   schedules them on a pool of threads with a synchronous API.
+            //
+            // And now the final twist: whenever task ID is `None`, it means we are in a
+            // thread doing a `block_on` on a future. This means we can simply use the ID
+            // of the thread to identify this running future \o/
+            let id = {
+                match try_task_id() {
+                    Some(task_id) => RunningFutureID::AsTask(task_id),
+                    None => RunningFutureID::FromBlockOn(std::thread::current().id()),
+                }
+            };
+
+            let mut guard = lock_tracking.lock().expect("Mutex is poisoned !");
+            for (candidate_id, candidate_lock) in guard.iter() {
+                if *candidate_id == id {
+                    panic!("Running future {:?} is trying to acquire {:?} lock while holding another {:?} lock !", id, lock, *candidate_lock);
+                }
+            }
+            guard.push((id, lock));
+
+            Self {
+                running_future_id: id,
+                lock_tracking,
+            }
+        }
+    }
+
+    #[cfg(debug_assertions)]
+    impl Drop for DataLockTrackerGuard<'_> {
+        fn drop(&mut self) {
+            let mut guard = self.lock_tracking.lock().expect("Mutex is poisoned !");
+            let index = guard
+                .iter()
+                .position(|(running_future_id, _)| *running_future_id == self.running_future_id)
+                .expect("Running future not found !");
+            guard.swap_remove(index);
+        }
+    }
+}
+
 #[derive(Debug)]
 pub(super) struct WorkspaceStore {
     realm_id: VlobID,
@@ -114,11 +305,7 @@ pub(super) struct WorkspaceStore {
     cmds: Arc<AuthenticatedCmds>,
     certificates_ops: Arc<CertificateOps>,
 
-    /// Note cache also contains the update locks.
-    current_view_cache: Mutex<CurrentViewCache>,
-    /// Given accessing `storage` requires exclusive access, it is better to have it
-    /// under its own lock so that all cache hit operations can occur concurrently.
-    storage: AsyncMutex<Option<WorkspaceStorage>>,
+    data: data::WorkspaceStoreData,
     prevent_sync_pattern: PreventSyncPattern,
 }
 
@@ -192,17 +379,21 @@ impl WorkspaceStore {
             device,
             cmds,
             certificates_ops,
-            current_view_cache: Mutex::new(CurrentViewCache::new(Arc::new(root_manifest.into()))),
-            storage: AsyncMutex::new(Some(storage)),
+            data: data::WorkspaceStoreData::new(storage, root_manifest),
             prevent_sync_pattern: prevent_sync_pattern.clone(),
         })
     }
 
     pub async fn stop(&self) -> anyhow::Result<()> {
-        let maybe_storage = self.storage.lock().await.take();
-        if let Some(storage) = maybe_storage {
-            storage.stop().await?;
-        }
+        self.data
+            .with_storage(|maybe_storage| async move {
+                if let Some(storage) = maybe_storage.take() {
+                    storage.stop().await
+                } else {
+                    Ok(())
+                }
+            })
+            .await?;
         Ok(())
     }
 
@@ -221,12 +412,8 @@ impl WorkspaceStore {
     }
 
     pub fn get_root_manifest(&self) -> Arc<LocalFolderManifest> {
-        self.current_view_cache
-            .lock()
-            .expect("Mutex is poisoned")
-            .manifests
-            .root_manifest()
-            .clone()
+        self.data
+            .with_current_view_cache(|cache| cache.manifests.root_manifest().clone())
     }
 
     pub async fn get_manifest(
@@ -376,37 +563,40 @@ impl WorkspaceStore {
     }
 
     pub async fn is_entry_locked(&self, entry_id: VlobID) -> bool {
-        let cache_guard = self.current_view_cache.lock().expect("Mutex is poisoned");
-        cache_guard.lock_update_manifests.is_taken(entry_id)
+        self.data
+            .with_current_view_cache(|cache| cache.lock_update_manifests.is_taken(entry_id))
     }
 
     pub async fn get_chunk_or_block_local_only(
         &self,
         chunk_view: &ChunkView,
     ) -> Result<Bytes, ReadChunkOrBlockLocalOnlyError> {
-        {
-            let cache = self.current_view_cache.lock().expect("Mutex is poisoned");
-            let found = cache.chunks.get(&chunk_view.id);
-            if let Some(data) = found {
-                return Ok(data);
-            }
+        let found = self
+            .data
+            .with_current_view_cache(|cache| cache.chunks.get(&chunk_view.id));
+        if let Some(data) = found {
+            return Ok(data);
         }
 
         // Cache miss ! Try to fetch from the local storage
 
-        let mut maybe_storage = self.storage.lock().await;
-        let storage = match &mut *maybe_storage {
-            None => return Err(ReadChunkOrBlockLocalOnlyError::Stopped),
-            Some(storage) => storage,
-        };
+        let maybe_encrypted = self
+            .data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| ReadChunkOrBlockLocalOnlyError::Stopped)?;
 
-        let mut maybe_encrypted = storage.get_chunk(chunk_view.id).await?;
+                let mut maybe_encrypted = storage.get_chunk(chunk_view.id).await?;
+                if maybe_encrypted.is_none() {
+                    maybe_encrypted = storage
+                        .get_block(chunk_view.id.into(), self.device.now())
+                        .await?;
+                }
 
-        if maybe_encrypted.is_none() {
-            maybe_encrypted = storage
-                .get_block(chunk_view.id.into(), self.device.now())
-                .await?;
-        }
+                Result::<_, ReadChunkOrBlockLocalOnlyError>::Ok(maybe_encrypted)
+            })
+            .await?;
 
         if let Some(encrypted) = maybe_encrypted {
             let data: Bytes = self
@@ -418,8 +608,9 @@ impl WorkspaceStore {
 
             // Don't forget to update the cache !
 
-            let mut cache = self.current_view_cache.lock().expect("Mutex is poisoned");
-            cache.chunks.push(chunk_view.id, data.clone());
+            self.data.with_current_view_cache(|cache| {
+                cache.chunks.push(chunk_view.id, data.clone());
+            });
 
             return Ok(data);
         }
@@ -482,20 +673,25 @@ impl WorkspaceStore {
 
         // Should both store the data in local storage...
 
-        let mut maybe_storage = self.storage.lock().await;
-        let storage = match &mut *maybe_storage {
-            None => return Err(ReadChunkOrBlockError::Stopped),
-            Some(storage) => storage,
-        };
         let encrypted = self.device.local_symkey.encrypt(&data);
-        storage
-            .set_block(access.id, &encrypted, self.device.now())
+        self.data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| ReadChunkOrBlockError::Stopped)?;
+
+                storage
+                    .set_block(access.id, &encrypted, self.device.now())
+                    .await
+                    .map_err(ReadChunkOrBlockError::Internal)
+            })
             .await?;
 
         // ...and update the cache !
 
-        let mut cache = self.current_view_cache.lock().expect("Mutex is poisoned");
-        cache.chunks.push(chunk_view.id, data.clone());
+        self.data.with_current_view_cache(|cache| {
+            cache.chunks.push(chunk_view.id, data.clone());
+        });
 
         Ok(data)
     }
@@ -506,16 +702,19 @@ impl WorkspaceStore {
     ) -> Result<Option<Bytes>, GetNotUploadedChunkError> {
         // Don't use the in-memory cache given it doesn't tell if the data is from and
         // uploaded block or not.
-        let mut maybe_storage = self.storage.lock().await;
-        let storage = match &mut *maybe_storage {
-            None => return Err(GetNotUploadedChunkError::Stopped),
-            Some(storage) => storage,
-        };
+        let maybe_encrypted = self
+            .data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| GetNotUploadedChunkError::Stopped)?;
 
-        let maybe_encrypted = storage
-            .get_chunk(chunk_id)
-            .await
-            .map_err(GetNotUploadedChunkError::Internal)?;
+                storage
+                    .get_chunk(chunk_id)
+                    .await
+                    .map_err(GetNotUploadedChunkError::Internal)
+            })
+            .await?;
 
         match maybe_encrypted {
             None => Ok(None),
@@ -537,53 +736,69 @@ impl WorkspaceStore {
         &self,
         chunk_id: ChunkID,
     ) -> Result<(), PromoteLocalOnlyChunkToUploadedBlockError> {
-        let mut storage_guard = self.storage.lock().await;
-        let storage = storage_guard
-            .as_mut()
-            .ok_or_else(|| PromoteLocalOnlyChunkToUploadedBlockError::Stopped)?;
-        storage
-            .promote_chunk_to_block(chunk_id, self.device.now())
+        self.data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| PromoteLocalOnlyChunkToUploadedBlockError::Stopped)?;
+
+                storage
+                    .promote_chunk_to_block(chunk_id, self.device.now())
+                    .await
+                    .map_err(PromoteLocalOnlyChunkToUploadedBlockError::Internal)
+            })
             .await
-            .map_err(PromoteLocalOnlyChunkToUploadedBlockError::Internal)
     }
 
     pub async fn get_inbound_need_sync_entries(
         &self,
         limit: u32,
     ) -> Result<Vec<VlobID>, GetNeedSyncEntriesError> {
-        let mut storage_guard = self.storage.lock().await;
-        let storage = storage_guard
-            .as_mut()
-            .ok_or_else(|| GetNeedSyncEntriesError::Stopped)?;
-        storage
-            .get_inbound_need_sync(limit)
+        self.data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| GetNeedSyncEntriesError::Stopped)?;
+
+                storage
+                    .get_inbound_need_sync(limit)
+                    .await
+                    .map_err(GetNeedSyncEntriesError::Internal)
+            })
             .await
-            .map_err(GetNeedSyncEntriesError::Internal)
     }
 
     pub async fn get_outbound_need_sync_entries(
         &self,
         limit: u32,
     ) -> Result<Vec<VlobID>, GetNeedSyncEntriesError> {
-        let mut storage_guard = self.storage.lock().await;
-        let storage = storage_guard
-            .as_mut()
-            .ok_or_else(|| GetNeedSyncEntriesError::Stopped)?;
-        storage
-            .get_outbound_need_sync(limit)
+        self.data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| GetNeedSyncEntriesError::Stopped)?;
+
+                storage
+                    .get_outbound_need_sync(limit)
+                    .await
+                    .map_err(GetNeedSyncEntriesError::Internal)
+            })
             .await
-            .map_err(GetNeedSyncEntriesError::Internal)
     }
 
     pub async fn get_realm_checkpoint(&self) -> Result<IndexInt, GetRealmCheckpointError> {
-        let mut storage_guard = self.storage.lock().await;
-        let storage = storage_guard
-            .as_mut()
-            .ok_or_else(|| GetRealmCheckpointError::Stopped)?;
-        storage
-            .get_realm_checkpoint()
+        self.data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| GetRealmCheckpointError::Stopped)?;
+
+                storage
+                    .get_realm_checkpoint()
+                    .await
+                    .map_err(GetRealmCheckpointError::Internal)
+            })
             .await
-            .map_err(GetRealmCheckpointError::Internal)
     }
 
     pub async fn update_realm_checkpoint(
@@ -591,13 +806,17 @@ impl WorkspaceStore {
         current_checkpoint: IndexInt,
         changes: &[(VlobID, VersionInt)],
     ) -> Result<(), UpdateRealmCheckpointError> {
-        let mut storage_guard = self.storage.lock().await;
-        let storage = storage_guard
-            .as_mut()
-            .ok_or_else(|| UpdateRealmCheckpointError::Stopped)?;
-        storage
-            .update_realm_checkpoint(current_checkpoint, changes)
+        self.data
+            .with_storage(|maybe_storage| async move {
+                let storage = maybe_storage
+                    .as_mut()
+                    .ok_or_else(|| UpdateRealmCheckpointError::Stopped)?;
+
+                storage
+                    .update_realm_checkpoint(current_checkpoint, changes)
+                    .await
+                    .map_err(UpdateRealmCheckpointError::Internal)
+            })
             .await
-            .map_err(UpdateRealmCheckpointError::Internal)
     }
 }

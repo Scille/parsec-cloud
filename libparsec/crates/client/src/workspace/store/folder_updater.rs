@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use libparsec_platform_async::event::EventListener;
 use libparsec_types::prelude::*;
 
 use crate::certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError};
@@ -47,8 +48,9 @@ pub(super) async fn for_update_folder(
     // Guard's drop will panic if the lock is not released
     macro_rules! release_guard_on_error {
         ($update_guard:expr) => {
-            let mut cache_guard = store.current_view_cache.lock().expect("Mutex is poisoned");
-            cache_guard.lock_update_manifests.release($update_guard);
+            store.data.with_current_view_cache(|cache| {
+                cache.lock_update_manifests.release($update_guard);
+            });
         };
     }
 
@@ -60,32 +62,42 @@ pub(super) async fn for_update_folder(
             listener.await;
         }
 
-        let update_guard = {
-            let mut cache_guard = store.current_view_cache.lock().expect("Mutex is poisoned");
-
-            // 1) Lock for update
-
-            let outcome = cache_guard.lock_update_manifests.take(entry_id);
-            match outcome {
+        enum LockForUpdateOutcome {
+            WaitAndRetryStep1(EventListener),
+            GoToStep3(ManifestUpdateLockGuard),
+            GoToStep4((ManifestUpdateLockGuard, ArcLocalChildManifest)),
+        }
+        let outcome = store.data.with_current_view_cache(|cache| {
+            match cache.lock_update_manifests.take(entry_id) {
                 ManifestUpdateLockTakeOutcome::Taken(update_guard) => {
                     // 2) Cache lookup for entry...
 
-                    let found = cache_guard.manifests.get(&entry_id);
+                    let found = cache.manifests.get(&entry_id);
                     if let Some(manifest) = found {
                         // Cache hit ! We go to step 4.
-                        break (update_guard, manifest.clone());
+                        LockForUpdateOutcome::GoToStep4((update_guard, manifest.clone()))
+                    } else {
+                        // The entry is not in cache, go to step 3 for a lookup in the local storage.
+                        // Note we keep the update lock: this has no impact on read operation, and
+                        // any other write operation taking the lock will have no choice but to try
+                        // to populate the cache just like we are going to do.
+                        LockForUpdateOutcome::GoToStep3(update_guard)
                     }
-                    // The entry is not in cache, go to step 3 for a lookup in the local storage.
-                    // Note we keep the update lock: this has no impact on read operation, and
-                    // any other write operation taking the lock will have no choice but to try
-                    // to populate the cache just like we are going to do.
-                    update_guard
                 }
 
                 ManifestUpdateLockTakeOutcome::NeedWait(listener) => {
-                    maybe_need_wait = Some(listener);
-                    continue;
+                    LockForUpdateOutcome::WaitAndRetryStep1(listener)
                 }
+            }
+        });
+        let update_guard = match outcome {
+            LockForUpdateOutcome::GoToStep3(update_guard) => update_guard,
+            LockForUpdateOutcome::GoToStep4((update_guard, manifest)) => {
+                break (update_guard, manifest)
+            }
+            LockForUpdateOutcome::WaitAndRetryStep1(listener) => {
+                maybe_need_wait = Some(listener);
+                continue;
             }
         };
 
@@ -223,31 +235,34 @@ impl<'a> FolderUpdater<'a> {
             }
         }
 
-        let mut storage_guard = self.store.storage.lock().await;
-        let storage = storage_guard
-            .as_mut()
-            .ok_or_else(|| UpdateFolderManifestError::Stopped)?;
-
         let update_data = UpdateManifestData {
             entry_id: manifest.base.id,
             base_version: manifest.base.version,
             need_sync: manifest.need_sync,
             encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
         };
-
         match new_child {
             None => {
-                storage.update_manifest(&update_data).await?;
+                self.store
+                    .data
+                    .with_storage(|maybe_storage| async move {
+                        let storage = maybe_storage
+                            .as_mut()
+                            .ok_or_else(|| UpdateFolderManifestError::Stopped)?;
+
+                        storage
+                            .update_manifest(&update_data)
+                            .await
+                            .map_err(UpdateFolderManifestError::Internal)
+                    })
+                    .await?;
 
                 // Finally update cache
-                let mut cache = self
-                    .store
-                    .current_view_cache
-                    .lock()
-                    .expect("Mutex is poisoned");
-                cache
-                    .manifests
-                    .insert(ArcLocalChildManifest::Folder(manifest));
+                self.store.data.with_current_view_cache(|cache| {
+                    cache
+                        .manifests
+                        .insert(ArcLocalChildManifest::Folder(manifest));
+                });
             }
 
             Some(new_child) => {
@@ -265,20 +280,27 @@ impl<'a> FolderUpdater<'a> {
                         encrypted: new_child.dump_and_encrypt(&self.store.device.local_symkey),
                     },
                 };
-                storage
-                    .update_manifests([update_data, new_child_update_data].into_iter())
+                self.store
+                    .data
+                    .with_storage(|maybe_storage| async move {
+                        let storage = maybe_storage
+                            .as_mut()
+                            .ok_or_else(|| UpdateFolderManifestError::Stopped)?;
+
+                        storage
+                            .update_manifests([update_data, new_child_update_data].into_iter())
+                            .await
+                            .map_err(UpdateFolderManifestError::Internal)
+                    })
                     .await?;
 
                 // Finally update cache
-                let mut cache = self
-                    .store
-                    .current_view_cache
-                    .lock()
-                    .expect("Mutex is poisoned");
-                cache
-                    .manifests
-                    .insert(ArcLocalChildManifest::Folder(manifest));
-                cache.manifests.insert(new_child);
+                self.store.data.with_current_view_cache(|cache| {
+                    cache
+                        .manifests
+                        .insert(ArcLocalChildManifest::Folder(manifest));
+                    cache.manifests.insert(new_child);
+                });
             }
         }
 
@@ -289,12 +311,9 @@ impl<'a> FolderUpdater<'a> {
 impl Drop for FolderUpdater<'_> {
     fn drop(&mut self) {
         if let Some(update_guard) = self.update_guard.take() {
-            self.store
-                .current_view_cache
-                .lock()
-                .expect("Mutex is poisoned")
-                .lock_update_manifests
-                .release(update_guard);
+            self.store.data.with_current_view_cache(|cache| {
+                cache.lock_update_manifests.release(update_guard);
+            });
         }
     }
 }

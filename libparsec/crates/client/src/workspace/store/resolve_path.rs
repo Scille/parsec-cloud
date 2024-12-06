@@ -128,10 +128,9 @@ async fn resolve_path_maybe_lock_for_update(
         // Most of the time we should have each entry in the path already in the cache,
         // so we want to lock the cache once and only release it in the unlikely case
         // we need to fetch from the local storage or server.
-        let cache_only_outcome = {
-            let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
-            cache_only_path_resolution(store.realm_id, &mut cache, path_parts, lock_for_update)
-        };
+        let cache_only_outcome = store.data.with_current_view_cache(|cache| {
+            cache_only_path_resolution(store.realm_id, cache, path_parts, lock_for_update)
+        });
         match cache_only_outcome {
             CacheOnlyPathResolutionOutcome::Done {
                 manifest,
@@ -422,10 +421,14 @@ pub(crate) async fn resolve_path_for_reparenting(
             DstChild,
         }
 
-        let (needed_before_resolution, who_need) = 'needed_before_resolution: {
-            let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
+        enum CacheOnlyResolutionOutcome {
+            Resolved(ResolvePathForReparenting),
+            Need((CacheOnlyPathResolutionOutcome, WhoIsInNeed)),
+        }
+
+        let outcome = store.data.with_current_view_cache(|cache| {
             let mut auto_release_guards = AutoReleaseGuards {
-                cache: &mut cache,
+                cache,
                 src_parent_guard: None,
                 src_child_guard: None,
                 dst_parent_guard: None,
@@ -461,7 +464,10 @@ pub(crate) async fn resolve_path_for_reparenting(
                 }
 
                 other_outcome => {
-                    break 'needed_before_resolution (other_outcome, WhoIsInNeed::DstParent)
+                    return Ok(CacheOnlyResolutionOutcome::Need((
+                        other_outcome,
+                        WhoIsInNeed::DstParent,
+                    )));
                 }
             };
 
@@ -494,7 +500,10 @@ pub(crate) async fn resolve_path_for_reparenting(
                 }
 
                 other_outcome => {
-                    break 'needed_before_resolution (other_outcome, WhoIsInNeed::SrcParent)
+                    return Ok(CacheOnlyResolutionOutcome::Need((
+                        other_outcome,
+                        WhoIsInNeed::SrcParent,
+                    )));
                 }
             };
 
@@ -511,10 +520,10 @@ pub(crate) async fn resolve_path_for_reparenting(
                         Some(manifest) => manifest.to_owned(),
                         // Cache miss !
                         None => {
-                            break 'needed_before_resolution (
+                            return Ok(CacheOnlyResolutionOutcome::Need((
                                 CacheOnlyPathResolutionOutcome::NeedPopulateCache(src_child_id),
                                 WhoIsInNeed::SrcChild,
-                            )
+                            )));
                         }
                     };
 
@@ -530,10 +539,10 @@ pub(crate) async fn resolve_path_for_reparenting(
                 {
                     ManifestUpdateLockTakeOutcome::Taken(lock) => Some(lock),
                     ManifestUpdateLockTakeOutcome::NeedWait(need_wait) => {
-                        break 'needed_before_resolution (
+                        return Ok(CacheOnlyResolutionOutcome::Need((
                             CacheOnlyPathResolutionOutcome::NeedWaitForTakenUpdateLock(need_wait),
                             WhoIsInNeed::SrcChild,
-                        );
+                        )));
                     }
                 };
                 auto_release_guards.src_child_guard =
@@ -555,10 +564,10 @@ pub(crate) async fn resolve_path_for_reparenting(
                         Some(manifest) => manifest.to_owned(),
                         // Cache miss !
                         None => {
-                            break 'needed_before_resolution (
+                            return Ok(CacheOnlyResolutionOutcome::Need((
                                 CacheOnlyPathResolutionOutcome::NeedPopulateCache(dst_child_id),
                                 WhoIsInNeed::DstChild,
-                            )
+                            )));
                         }
                     };
 
@@ -574,10 +583,10 @@ pub(crate) async fn resolve_path_for_reparenting(
                 {
                     ManifestUpdateLockTakeOutcome::Taken(lock) => Some(lock),
                     ManifestUpdateLockTakeOutcome::NeedWait(need_wait) => {
-                        break 'needed_before_resolution (
+                        return Ok(CacheOnlyResolutionOutcome::Need((
                             CacheOnlyPathResolutionOutcome::NeedWaitForTakenUpdateLock(need_wait),
                             WhoIsInNeed::DstChild,
-                        );
+                        )));
                     }
                 };
                 auto_release_guards.dst_child_guard =
@@ -590,25 +599,36 @@ pub(crate) async fn resolve_path_for_reparenting(
 
             // 5) All done, we defuse the auto release system to return its guards
 
-            return Ok(ResolvePathForReparenting {
-                src_parent_update_lock_guard: auto_release_guards
-                    .src_parent_guard
-                    .take()
-                    .expect("always present"),
-                src_child_update_lock_guard: auto_release_guards
-                    .src_child_guard
-                    .take()
-                    .expect("always present"),
-                dst_parent_update_lock_guard: auto_release_guards
-                    .dst_parent_guard
-                    .take()
-                    .expect("always present"),
-                dst_child_update_lock_guard: auto_release_guards.dst_parent_guard.take(),
-                src_parent_manifest,
-                src_child_manifest,
-                dst_parent_manifest,
-                dst_child_manifest,
-            });
+            Ok(CacheOnlyResolutionOutcome::Resolved(
+                ResolvePathForReparenting {
+                    src_parent_update_lock_guard: auto_release_guards
+                        .src_parent_guard
+                        .take()
+                        .expect("always present"),
+                    src_child_update_lock_guard: auto_release_guards
+                        .src_child_guard
+                        .take()
+                        .expect("always present"),
+                    dst_parent_update_lock_guard: auto_release_guards
+                        .dst_parent_guard
+                        .take()
+                        .expect("always present"),
+                    dst_child_update_lock_guard: auto_release_guards.dst_parent_guard.take(),
+                    src_parent_manifest,
+                    src_child_manifest,
+                    dst_parent_manifest,
+                    dst_child_manifest,
+                },
+            ))
+        })?;
+
+        let (needed_before_resolution, who_need) = match outcome {
+            CacheOnlyResolutionOutcome::Resolved(resolve_path_for_reparenting) => {
+                return Ok(resolve_path_for_reparenting)
+            }
+            CacheOnlyResolutionOutcome::Need((needed_before_resolution, who_need)) => {
+                (needed_before_resolution, who_need)
+            }
         };
 
         match needed_before_resolution {
@@ -899,15 +919,9 @@ pub(crate) async fn retrieve_path_from_id_and_lock_for_update(
         // Most of the time we should have each entry in the path already in the cache,
         // so we want to lock the cache once and only release it in the unlikely case
         // we need to fetch from the local storage or server.
-        let cache_only_outcome = {
-            let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
-            cache_only_retrieve_path_from_id(
-                &mut cache,
-                entry_id,
-                true,
-                last_not_found_during_populate,
-            )
-        };
+        let cache_only_outcome = store.data.with_current_view_cache(|cache| {
+            cache_only_retrieve_path_from_id(cache, entry_id, true, last_not_found_during_populate)
+        });
         match cache_only_outcome {
             CacheOnlyPathRetrievalOutcome::Done {
                 entry,
@@ -1009,15 +1023,9 @@ pub(crate) async fn retrieve_path_from_id(
         // Most of the time we should have each entry in the path already in the cache,
         // so we want to lock the cache once and only release it in the unlikely case
         // we need to fetch from the local storage or server.
-        let cache_only_outcome = {
-            let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
-            cache_only_retrieve_path_from_id(
-                &mut cache,
-                entry_id,
-                false,
-                last_not_found_during_populate,
-            )
-        };
+        let cache_only_outcome = store.data.with_current_view_cache(|cache| {
+            cache_only_retrieve_path_from_id(cache, entry_id, false, last_not_found_during_populate)
+        });
         match cache_only_outcome {
             CacheOnlyPathRetrievalOutcome::Done {
                 entry,
