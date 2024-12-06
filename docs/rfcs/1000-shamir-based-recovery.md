@@ -729,6 +729,10 @@ Invited API, we reuse the `invite_info` command:
                     {
                         "name": "shares",
                         "type": "NonZeroU8"
+                    },
+                    {
+                        "name": "revoked_on",
+                        "type": "RequiredOption<DateTime>"
                     }
                 ]
             }
