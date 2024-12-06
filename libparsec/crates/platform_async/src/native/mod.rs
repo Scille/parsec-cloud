@@ -2,6 +2,8 @@
 
 use futures::FutureExt;
 
+pub use tokio::task::{try_id as try_task_id, Id as TaskID};
+
 pub mod oneshot {
     pub use tokio::sync::oneshot::{
         channel,
