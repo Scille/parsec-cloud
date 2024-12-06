@@ -62,21 +62,25 @@ async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
                         user_id: bob.user_id,
                         human_handle: bob.human_handle.clone(),
                         shares: 2.try_into().unwrap(),
+                        revoked_on: None,
                     },
                     ShamirRecoveryRecipient {
                         user_id: mallory.user_id,
                         human_handle: mallory.human_handle.clone(),
                         shares: 1.try_into().unwrap(),
+                        revoked_on: None,
                     },
                     ShamirRecoveryRecipient {
                         user_id: mike.user_id,
                         human_handle: mike.human_handle.clone(),
                         shares: 1.try_into().unwrap(),
+                        revoked_on: None,
                     }
                 ]
             );
             p_assert_eq!(alice_ctx.threshold(), 2.try_into().unwrap());
             p_assert_eq!(alice_ctx.shares(), HashMap::new());
+            assert!(alice_ctx.is_recoverable());
             alice_ctx
         }
         _ => unreachable!(),
