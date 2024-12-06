@@ -11,20 +11,12 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
-    let Args {
-        skip_revoked,
-        device,
-        config_dir,
-        password_stdin,
-    } = args;
-    log::trace!(
-        "Listing users (confdir={}, device={}, skip_revoked={skip_revoked})",
-        config_dir.display(),
-        device.as_deref().unwrap_or("N/A")
-    );
+crate::build_main_with_client!(main, list_user);
 
-    let client = load_client(&config_dir, device, password_stdin).await?;
+pub async fn list_user(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+    let Args { skip_revoked, .. } = args;
+    log::trace!("Listing users (skip_revoked={skip_revoked})");
+
     client.poll_server_for_new_certificates().await?;
     let users = client.list_users(skip_revoked, None, None).await?;
 

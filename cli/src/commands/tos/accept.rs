@@ -1,4 +1,4 @@
-use crate::{commands::tos::list::display_tos, utils::load_client};
+use crate::{commands::tos::list::display_tos, utils::StartedClient};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = device, config_dir, password_stdin]
@@ -8,15 +8,11 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
-    let Args {
-        config_dir,
-        password_stdin,
-        device,
-        yes,
-    } = args;
+crate::build_main_with_client!(main, accept_tos);
 
-    let client = load_client(&config_dir, device, password_stdin).await?;
+pub async fn accept_tos(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+    let Args { yes, .. } = args;
+
     let tos = match client.get_tos().await {
         Ok(tos) => tos,
         Err(libparsec_client::ClientGetTosError::NoTos) => {

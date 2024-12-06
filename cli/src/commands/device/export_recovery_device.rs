@@ -14,23 +14,13 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
-    let Args {
-        output,
-        device,
-        config_dir,
-        password_stdin,
-    } = args;
-    log::trace!(
-        "Exporting recovery device at {} (confdir={}, device={})",
-        output.display(),
-        config_dir.display(),
-        device.as_deref().unwrap_or("N/A")
-    );
+crate::build_main_with_client!(main, export_recovery_device);
+
+pub async fn export_recovery_device(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+    let Args { output, .. } = args;
+    log::trace!("Exporting recovery device at {}", output.display());
 
     let mut handle = start_spinner("Saving recovery device file".into());
-
-    let client = load_client(&config_dir, device.clone(), password_stdin).await?;
 
     let now = DateTime::now();
     let (passphrase, data) = client

@@ -1,27 +1,24 @@
 use libparsec::FsPath;
 
-use crate::utils::load_client;
+use crate::utils::StartedClient;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin, workspace]
-    pub struct Rm {
+    pub struct Args {
         /// Path to remove
         path: FsPath,
     }
 );
 
-pub async fn rm(args: Rm) -> anyhow::Result<()> {
-    let Rm {
-        workspace,
-        path,
-        password_stdin,
-        device,
-        config_dir,
+crate::build_main_with_client!(main, rm);
+
+pub async fn rm(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+    let Args {
+        workspace, path, ..
     } = args;
 
-    log::trace!("rm: {workspace}:{path}", workspace = workspace, path = path);
+    log::trace!("rm: {workspace}:{path}");
 
-    let client = load_client(&config_dir, device, password_stdin).await?;
     let workspace = client.start_workspace(workspace).await?;
 
     workspace.remove_entry(path).await?;
