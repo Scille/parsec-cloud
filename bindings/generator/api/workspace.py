@@ -66,7 +66,7 @@ async def workspace_info(workspace: Handle) -> Result[StartedWorkspaceInfo, Work
     raise NotImplementedError
 
 
-class WorkspaceWatchError(ErrorVariant):
+class WorkspaceWatchEntryOneShotError(ErrorVariant):
     class Offline:
         pass
 
@@ -94,7 +94,7 @@ class WorkspaceWatchError(ErrorVariant):
 
 async def workspace_watch_entry_oneshot(
     workspace: Handle, path: FsPath
-) -> Result[VlobID, WorkspaceWatchError]:
+) -> Result[VlobID, WorkspaceWatchEntryOneShotError]:
     raise NotImplementedError
 
 

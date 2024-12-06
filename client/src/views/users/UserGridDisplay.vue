@@ -7,7 +7,7 @@
     :user="user"
     :disabled="user.isCurrent"
     :show-checkbox="someSelected"
-    @menu-click="(event, user, onFinished) => $emit('menuClick', event, user, onFinished)"
+    @menu-click="(event: Event, user: UserModel, onFinished: () => void) => $emit('menuClick', event, user, onFinished)"
     :class="{
       'current-user': user.isCurrent,
     }"

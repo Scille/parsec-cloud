@@ -5,7 +5,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use libparsec_client_connection::test_register_sequence_of_send_hooks;
+use libparsec_client_connection::{
+    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle,
+};
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -29,17 +31,7 @@ async fn ok(env: &TestbedEnv) {
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         // 1) Fetch keys bundle (required for rename)
-        {
-            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-            let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice_user_id);
-            move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice_user_id, wksp1_id),
         // 2) Rename
         {
             let new_realm_certificates = new_realm_certificates.clone();
@@ -126,17 +118,7 @@ async fn realm_not_bootstrapped_missing_initial_rename(env: &TestbedEnv) {
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         // 1) Finish the bootstrap: fetch keys bundle (required for initial rename)
-        {
-            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-            let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
-            move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
         // 2) Finish the bootstrap: initial realm rename
         {
             let new_realm_certificates = new_realm_certificates.clone();
@@ -261,6 +243,8 @@ async fn realm_not_bootstrapped_missing_initial_key_rotation(env: &TestbedEnv) {
             }
         },
         // 3) Finish the bootstrap: fetch keys bundle (required for initial rename)
+        // Cannot use `test_send_hook_realm_get_keys_bundle` helper here since we are
+        // referring to a key rotation that didn't occur in the testbed template.
         {
             let new_realm_initial_keys_bundle = new_realm_initial_keys_bundle.clone();
             let new_realm_initial_keys_bundle_access = new_realm_initial_keys_bundle_access.clone();

@@ -4,6 +4,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use libparsec_client_connection::{
     protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
+    test_send_hook_realm_get_keys_bundle,
 };
 use libparsec_platform_async::prelude::*;
 use libparsec_tests_fixtures::prelude::*;
@@ -107,19 +108,7 @@ async fn non_placeholder(
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         // 1) Fetch last workspace keys bundle to encrypt the new manifest
-        {
-            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-            let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.realm_id, wksp1_id);
-                p_assert_eq!(req.key_index, 1);
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
         // 2) `vlob_update` succeed on first try !
         move |req: authenticated_cmds::latest::vlob_update::Req| {
             p_assert_eq!(req.key_index, 1);
@@ -186,19 +175,7 @@ async fn inbound_sync_needed(env: &TestbedEnv) {
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         // 1) Fetch last workspace keys bundle to encrypt the new manifest
-        {
-            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-            let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.realm_id, wksp1_id);
-                p_assert_eq!(req.key_index, 1);
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
         // 2) `vlob_update`
         move |req: authenticated_cmds::latest::vlob_update::Req| {
             p_assert_eq!(req.key_index, 1);

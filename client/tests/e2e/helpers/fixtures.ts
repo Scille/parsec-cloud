@@ -81,7 +81,11 @@ export const msTest = base.extend<{
 
   organizationPage: async ({ connected }, use) => {
     await connected.locator('.sidebar').locator('#manageOrganization').click();
-    const sidebarItem = connected.locator('.sidebar').locator('.manage-organization').locator('.organization').locator('ion-item');
+    const sidebarItem = connected
+      .locator('.sidebar')
+      .locator('.manage-organization')
+      .locator('.list-sidebar-content')
+      .locator('.organization-title');
     await expect(sidebarItem).toHaveTheClass('item-not-selected');
     await sidebarItem.click();
     await expect(connected).toHavePageTitle('Information');
@@ -152,6 +156,7 @@ export const msTest = base.extend<{
   },
 
   clientArea: async ({ home }, use) => {
+    UserData.reset();
     await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home);
     await MockBms.mockListOrganizations(home);
@@ -180,8 +185,4 @@ export const msTest = base.extend<{
 
     await use(home);
   },
-});
-
-msTest.beforeEach(async () => {
-  UserData.reset();
 });

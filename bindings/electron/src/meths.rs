@@ -4173,6 +4173,42 @@ fn variant_client_new_device_invitation_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientNewShamirRecoveryInvitationError
+
+#[allow(dead_code)]
+fn variant_client_new_shamir_recovery_invitation_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientNewShamirRecoveryInvitationError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientNewShamirRecoveryInvitationError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientNewShamirRecoveryInvitationErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientNewShamirRecoveryInvitationError::NotAllowed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientNewShamirRecoveryInvitationErrorNotAllowed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientNewShamirRecoveryInvitationError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientNewShamirRecoveryInvitationErrorOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientNewShamirRecoveryInvitationError::UserNotFound { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientNewShamirRecoveryInvitationErrorUserNotFound")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientNewUserInvitationError
 
 #[allow(dead_code)]
@@ -8290,50 +8326,55 @@ fn variant_workspace_storage_cache_size_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// WorkspaceWatchError
+// WorkspaceWatchEntryOneShotError
 
 #[allow(dead_code)]
-fn variant_workspace_watch_error_rs_to_js<'a>(
+fn variant_workspace_watch_entry_one_shot_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::WorkspaceWatchError,
+    rs_obj: libparsec::WorkspaceWatchEntryOneShotError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::WorkspaceWatchError::EntryNotFound { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceWatchErrorEntryNotFound").or_throw(cx)?;
+        libparsec::WorkspaceWatchEntryOneShotError::EntryNotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorEntryNotFound")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceWatchError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceWatchErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::WorkspaceWatchError::InvalidCertificate { .. } => {
+        libparsec::WorkspaceWatchEntryOneShotError::Internal { .. } => {
             let js_tag =
-                JsString::try_new(cx, "WorkspaceWatchErrorInvalidCertificate").or_throw(cx)?;
+                JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceWatchError::InvalidKeysBundle { .. } => {
+        libparsec::WorkspaceWatchEntryOneShotError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorInvalidCertificate")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceWatchEntryOneShotError::InvalidKeysBundle { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorInvalidKeysBundle")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceWatchEntryOneShotError::InvalidManifest { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorInvalidManifest")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceWatchEntryOneShotError::NoRealmAccess { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorNoRealmAccess")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceWatchEntryOneShotError::Offline { .. } => {
             let js_tag =
-                JsString::try_new(cx, "WorkspaceWatchErrorInvalidKeysBundle").or_throw(cx)?;
+                JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceWatchError::InvalidManifest { .. } => {
+        libparsec::WorkspaceWatchEntryOneShotError::Stopped { .. } => {
             let js_tag =
-                JsString::try_new(cx, "WorkspaceWatchErrorInvalidManifest").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::WorkspaceWatchError::NoRealmAccess { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceWatchErrorNoRealmAccess").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::WorkspaceWatchError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceWatchErrorOffline").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::WorkspaceWatchError::Stopped { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceWatchErrorStopped").or_throw(cx)?;
+                JsString::try_new(cx, "WorkspaceWatchEntryOneShotErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -10508,6 +10549,79 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err =
                             variant_client_new_device_invitation_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_new_shamir_recovery_invitation
+fn client_new_shamir_recovery_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let claimer_user_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let send_email = {
+        let js_val = cx.argument::<JsBoolean>(2)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_new_shamir_recovery_invitation(
+                client,
+                claimer_user_id,
+                send_email,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_new_invitation_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_new_shamir_recovery_invitation_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -15915,7 +16029,8 @@ fn workspace_watch_entry_oneshot(mut cx: FunctionContext) -> JsResult<JsPromise>
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err = variant_workspace_watch_error_rs_to_js(&mut cx, err)?;
+                        let js_err =
+                            variant_workspace_watch_entry_one_shot_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -16003,6 +16118,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientListWorkspaceUsers", client_list_workspace_users)?;
     cx.export_function("clientListWorkspaces", client_list_workspaces)?;
     cx.export_function("clientNewDeviceInvitation", client_new_device_invitation)?;
+    cx.export_function(
+        "clientNewShamirRecoveryInvitation",
+        client_new_shamir_recovery_invitation,
+    )?;
     cx.export_function("clientNewUserInvitation", client_new_user_invitation)?;
     cx.export_function("clientRenameWorkspace", client_rename_workspace)?;
     cx.export_function("clientRevokeUser", client_revoke_user)?;

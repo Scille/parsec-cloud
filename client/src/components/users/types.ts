@@ -46,6 +46,7 @@ export interface UserFilterChangeEvent {
 export class UserCollection {
   users: Array<UserModel>;
   filters: UserFilterLabels;
+  _searchFilter: string;
 
   constructor() {
     this.users = [];
@@ -57,6 +58,11 @@ export class UserCollection {
       profileStandard: true,
       profileOutsider: true,
     };
+    this._searchFilter = '';
+  }
+
+  public set searchFilter(value: string) {
+    this._searchFilter = value.toLocaleLowerCase();
   }
 
   getFilters(): UserFilterLabels {
@@ -117,6 +123,12 @@ export class UserCollection {
       (!this.filters.statusRevoked && user.isRevoked()) ||
       (!this.filters.statusActive && user.isActive()) ||
       (!this.filters.statusFrozen && user.isFrozen())
+    ) {
+      return false;
+    }
+    if (
+      !user.humanHandle.label.toLocaleLowerCase().includes(this._searchFilter) &&
+      !user.humanHandle.email.toLocaleLowerCase().includes(this._searchFilter)
     ) {
       return false;
     }

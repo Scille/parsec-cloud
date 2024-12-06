@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use libparsec_client_connection::{
     protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
+    test_send_hook_realm_get_keys_bundle,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -285,19 +286,7 @@ async fn non_placeholder(
             }
         },
         // 2) Fetch workspace keys bundle to decrypt the vlob
-        {
-            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
-            let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
-            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.realm_id, wksp1_id);
-                p_assert_eq!(req.key_index, 1);
-                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    keys_bundle,
-                    keys_bundle_access,
-                }
-            }
-        },
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
     );
 
     let mut spy = wksp1_ops.event_bus.spy.start_expecting();
@@ -305,7 +294,18 @@ async fn non_placeholder(
     if matches!(&remote_modification, RemoteModification::Nothing) {
         spy.assert_no_events();
     } else {
-        spy.assert_next(|e| p_assert_matches!(e, EventWorkspaceOpsInboundSyncDone { realm_id,entry_id } if *realm_id == wksp1_id && *entry_id == wksp1_bar_txt_id));
+        let expected_parent_id = if matches!(&remote_modification, RemoteModification::ReParented) {
+            wksp1_foo_id
+        } else {
+            wksp1_id
+        };
+        spy.assert_next(|e| {
+            p_assert_matches!(e, EventWorkspaceOpsInboundSyncDone { realm_id, entry_id, parent_id }
+                if *realm_id == wksp1_id
+                && *entry_id == wksp1_bar_txt_id
+                && *parent_id == expected_parent_id
+            )
+        });
     }
 
     let bar_txt_manifest = match wksp1_ops

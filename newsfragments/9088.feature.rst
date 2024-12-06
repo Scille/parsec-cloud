@@ -1,0 +1,1 @@
+Show/hide submenu (recent files, workspaces, favorite workspaces) on sidebar

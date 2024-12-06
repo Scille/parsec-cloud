@@ -123,7 +123,7 @@
         <ion-item
           button
           lines="none"
-          class="menu-default menu-client-list-item"
+          class="button-medium menu-client-list-item"
           :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Statistics }"
           @click="goToPageClicked(ClientAreaPages.Statistics)"
         >
@@ -138,7 +138,7 @@
         <ion-item
           button
           lines="none"
-          class="sidebar-item menu-default menu-client-list-item"
+          class="button-medium menu-client-list-item"
           :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Invoices }"
           @click="goToPageClicked(ClientAreaPages.Invoices)"
         >
@@ -153,7 +153,7 @@
         <ion-item
           button
           lines="none"
-          class="menu-default menu-client-list-item"
+          class="button-medium menu-client-list-item"
           :class="{ 'current-page menu-active': currentPage === ClientAreaPages.PaymentMethods }"
           @click="goToPageClicked(ClientAreaPages.PaymentMethods)"
         >
@@ -168,7 +168,7 @@
         <ion-item
           button
           lines="none"
-          class="menu-default menu-client-list-item"
+          class="button-medium menu-client-list-item"
           :class="{ 'current-page menu-active': currentPage === ClientAreaPages.BillingDetails }"
           @click="goToPageClicked(ClientAreaPages.BillingDetails)"
         >
@@ -188,7 +188,7 @@
         <ion-item
           button
           lines="none"
-          class="menu-default menu-client-list-item"
+          class="button-medium menu-client-list-item"
           :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Contracts }"
           @click="goToPageClicked(ClientAreaPages.Contracts)"
         >
@@ -203,7 +203,7 @@
         <ion-item
           button
           lines="none"
-          class="menu-default menu-client-list-item"
+          class="button-medium menu-client-list-item"
           :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderStatistics }"
           @click="goToPageClicked(ClientAreaPages.CustomOrderStatistics)"
         >
@@ -218,7 +218,7 @@
         <ion-item
           button
           lines="none"
-          class="menu-default menu-client-list-item"
+          class="button-medium menu-client-list-item"
           :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderBillingDetails }"
           @click="goToPageClicked(ClientAreaPages.CustomOrderBillingDetails)"
         >

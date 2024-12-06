@@ -5,8 +5,12 @@
     <div
       class="resize-divider"
       ref="divider"
+      v-show="isVisible()"
     />
-    <ion-split-pane content-id="main">
+    <ion-split-pane
+      content-id="main"
+      :when="true"
+    >
       <ion-menu
         content-id="main"
         class="sidebar"
@@ -50,10 +54,10 @@
                   button
                 >
                   <ion-icon
-                    class="button-icon"
+                    class="organization-card-buttons__icon"
                     :icon="userInfo && userInfo.currentProfile === UserProfile.Admin ? cog : informationCircle"
                   />
-                  <span>
+                  <span class="organization-card-buttons__text">
                     {{
                       userInfo && userInfo.currentProfile === UserProfile.Admin
                         ? $msTranslate('SideMenu.manageOrganization')
@@ -69,10 +73,10 @@
                   @click="navigateTo(Routes.Workspaces)"
                 >
                   <ion-icon
-                    class="button-icon"
+                    class="organization-card-buttons__icon"
                     :icon="home"
                   />
-                  <span>
+                  <span class="organization-card-buttons__text">
                     {{ $msTranslate('SideMenu.goToHome') }}
                   </span>
                 </ion-text>
@@ -157,24 +161,12 @@
           >
             <!-- list of favorite workspaces -->
             <!-- show only favorites -->
-            <ion-list
-              class="list-sidebar favorites"
+            <sidebar-menu-list
               v-if="favoritesWorkspaces.length > 0"
+              :title="'SideMenu.favorites'"
+              :icon="star"
+              class="favorites"
             >
-              <ion-header
-                lines="none"
-                class="list-sidebar-header menu-default"
-              >
-                <div class="list-sidebar-header-favorites">
-                  <ion-icon
-                    class="list-sidebar-header-favorites__icon"
-                    :icon="star"
-                  />
-                  <ion-text class="list-sidebar-header-favorites__text">
-                    {{ $msTranslate('SideMenu.favorites') }}
-                  </ion-text>
-                </div>
-              </ion-header>
               <sidebar-workspace-item
                 v-for="workspace in favoritesWorkspaces"
                 :key="workspace.id"
@@ -184,31 +176,14 @@
                   openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
                 "
               />
-            </ion-list>
+            </sidebar-menu-list>
 
             <!-- list of workspaces -->
-            <ion-list class="list-sidebar workspaces">
-              <ion-header
-                lines="none"
-                class="list-sidebar-header menu-default"
-              >
-                <div class="list-sidebar-header-title">
-                  <ion-icon
-                    class="list-sidebar-header-title__icon"
-                    :icon="business"
-                  />
-                  <ion-text class="list-sidebar-header-title__text">
-                    {{ $msTranslate('SideMenu.workspaces') }}
-                  </ion-text>
-                </div>
-                <ion-icon
-                  class="list-sidebar-header__button"
-                  id="new-workspace"
-                  :icon="add"
-                  v-show="userInfo && userInfo.currentProfile !== UserProfile.Outsider"
-                  @click="createWorkspace"
-                />
-              </ion-header>
+            <sidebar-menu-list
+              :title="'SideMenu.workspaces'"
+              :icon="business"
+              class="workspaces"
+            >
               <ion-text
                 class="body list-sidebar__no-workspace"
                 v-if="workspaces.length === 0"
@@ -224,7 +199,7 @@
                   openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
                 "
               />
-            </ion-list>
+            </sidebar-menu-list>
           </div>
 
           <div
@@ -234,25 +209,11 @@
 
           <!-- last opened files -->
           <div class="file-workspaces">
-            <ion-list
-              class="list-sidebar list-file"
+            <sidebar-menu-list
+              :title="'SideMenu.recentDocuments'"
+              :icon="documentIcon"
               v-if="recentFileManager.getFiles().length > 0"
             >
-              <ion-header
-                lines="none"
-                class="list-sidebar-header menu-default"
-              >
-                <div class="list-sidebar-header-title">
-                  <ion-icon
-                    class="list-sidebar-header-title__icon"
-                    :icon="documentIcon"
-                  />
-                  <ion-text class="llist-sidebar-header-title__text">
-                    {{ $msTranslate('SideMenu.recentDocuments') }}
-                  </ion-text>
-                </div>
-              </ion-header>
-
               <sidebar-recent-file-item
                 v-for="file in recentFileManager.getFiles()"
                 :file="file"
@@ -260,76 +221,81 @@
                 @file-clicked="openRecentFile"
                 @remove-clicked="removeRecentFile"
               />
-            </ion-list>
+            </sidebar-menu-list>
           </div>
 
           <!-- manage organization -->
-          <div
+          <ion-list
             v-show="currentRouteIsOrganizationManagementRoute()"
-            class="manage-organization"
+            class="manage-organization list-sidebar"
           >
-            <ion-label class="title-h4">
-              {{
-                userInfo && userInfo.currentProfile === UserProfile.Admin
-                  ? $msTranslate('SideMenu.manageOrganization')
-                  : $msTranslate('SideMenu.organizationInfo')
-              }}
-            </ion-label>
+            <ion-header
+              lines="none"
+              class="list-sidebar-header title-h4"
+            >
+              <ion-text class="list-sidebar-header__title">
+                {{
+                  userInfo && userInfo.currentProfile === UserProfile.Admin
+                    ? $msTranslate('SideMenu.manageOrganization')
+                    : $msTranslate('SideMenu.organizationInfo')
+                }}
+              </ion-text>
+            </ion-header>
             <!-- user actions -->
-            <ion-list class="manage-organization-list users">
+            <div class="list-sidebar-content">
+              <!-- users -->
               <ion-item
-                button
                 lines="none"
-                class="sidebar-item menu-default users-title"
+                button
+                class="sidebar-item button-medium users-title"
                 :class="currentRouteIsUserRoute() ? 'item-selected' : 'item-not-selected'"
                 @click="navigateTo(Routes.Users)"
               >
-                <ion-icon
-                  :icon="people"
-                  class="sidebar-item-icon"
-                  slot="start"
-                />
-                <ion-label>{{ $msTranslate('SideMenu.users') }}</ion-label>
+                <div class="sidebar-item-manage">
+                  <ion-icon
+                    :icon="people"
+                    class="sidebar-item-icon"
+                  />
+                  <ion-text class="sidebar-item-manage__label">{{ $msTranslate('SideMenu.users') }}</ion-text>
+                </div>
               </ion-item>
-            </ion-list>
-            <!-- storage -->
-            <ion-list
-              class="manage-organization-list storage"
-              v-show="userInfo && userInfo.currentProfile === UserProfile.Admin && false"
-            >
+
+              <!-- storage -->
               <ion-item
-                button
                 lines="none"
-                class="sidebar-item storage-title menu-default"
+                button
+                class="sidebar-item button-medium storage-title"
                 :class="currentRouteIs(Routes.Storage) ? 'item-selected' : 'item-not-selected'"
                 @click="navigateTo(Routes.Storage)"
+                v-show="userInfo && userInfo.currentProfile === UserProfile.Admin && false"
               >
-                <ion-icon
-                  :icon="pieChart"
-                  class="sidebar-item-icon"
-                  slot="start"
-                />
-                <ion-label> {{ $msTranslate('SideMenu.storage') }}</ion-label>
+                <div class="sidebar-item-manage">
+                  <ion-icon
+                    :icon="pieChart"
+                    class="sidebar-item-icon"
+                  />
+                  <ion-text class="sidebar-item-manage__label">{{ $msTranslate('SideMenu.storage') }}</ion-text>
+                </div>
               </ion-item>
-            </ion-list>
-            <!-- org info -->
-            <ion-list class="manage-organization-list organization">
+
+              <!-- org info -->
               <ion-item
                 button
                 lines="none"
-                class="sidebar-item organization-title menu-default"
+                class="sidebar-item button-medium organization-title"
                 :class="currentRouteIs(Routes.Organization) ? 'item-selected' : 'item-not-selected'"
                 @click="navigateTo(Routes.Organization)"
               >
-                <ion-icon
-                  :icon="informationCircle"
-                  class="sidebar-item-icon"
-                  slot="start"
-                />
-                <ion-label>{{ $msTranslate('SideMenu.organizationInfo') }}</ion-label>
+                <div class="sidebar-item-manage">
+                  <ion-icon
+                    :icon="informationCircle"
+                    class="sidebar-item-icon"
+                  />
+                  <ion-text class="sidebar-item-manage__label">{{ $msTranslate('SideMenu.organizationInfo') }}</ion-text>
+                </div>
               </ion-item>
-            </ion-list>
-          </div>
+            </div>
+          </ion-list>
         </ion-content>
       </ion-menu>
 
@@ -339,8 +305,7 @@
 </template>
 
 <script setup lang="ts">
-import { workspaceNameValidator } from '@/common/validators';
-import { ChevronExpand, MsImage, getTextFromUser, LogoIconGradient, I18n, MsModalResult } from 'megashark-lib';
+import { ChevronExpand, MsImage, LogoIconGradient, I18n, MsModalResult } from 'megashark-lib';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData, WorkspacesPageSavedData, openWorkspaceContextMenu } from '@/components/workspaces';
 import {
@@ -371,7 +336,7 @@ import { InformationManager, InformationManagerKey } from '@/services/informatio
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { formatExpirationTime, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
-import { SidebarWorkspaceItem, SidebarRecentFileItem } from '@/components/sidebar';
+import { SidebarWorkspaceItem, SidebarRecentFileItem, SidebarMenuList } from '@/components/sidebar';
 import {
   GestureDetail,
   IonAvatar,
@@ -383,7 +348,6 @@ import {
   IonHeader,
   IonIcon,
   IonItem,
-  IonLabel,
   IonList,
   IonMenu,
   IonPage,
@@ -395,7 +359,6 @@ import {
   popoverController,
 } from '@ionic/vue';
 import {
-  add,
   home,
   business,
   chevronBack,
@@ -412,6 +375,7 @@ import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Duration } from 'luxon';
 import { recentFileManager, RecentFile } from '@/services/recentFiles';
 import { openPath } from '@/services/fileOpener';
+import { SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/sidebar-menu/utils';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
@@ -419,15 +383,18 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 let eventDistributorCbId: string | null = null;
 const divider = ref();
-const { defaultWidth, initialWidth, computedWidth } = useSidebarMenu();
+const { computedWidth: computedWidth, storedWidth: storedWidth, isVisible: isVisible } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const currentDevice = ref<AvailableDevice | null>(null);
 const favorites: Ref<WorkspaceID[]> = ref([]);
-const sidebarWidthProperty = ref(`${defaultWidth}px`);
+const sidebarWidthProperty = ref('');
 const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration | undefined>(undefined);
 const isExpired = ref(false);
 const loggedInDevices = ref<LoggedInDeviceInfo[]>([]);
+
+const MIN_WIDTH = 150;
+const MAX_WIDTH = 370;
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -438,21 +405,6 @@ const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
 async function goToWorkspace(workspaceHandle: WorkspaceHandle): Promise<void> {
   await navigateToWorkspace(workspaceHandle);
   await menuController.close();
-}
-
-async function createWorkspace(): Promise<void> {
-  const workspaceName = await getTextFromUser({
-    title: 'WorkspacesPage.CreateWorkspaceModal.pageTitle',
-    trim: true,
-    validator: workspaceNameValidator,
-    inputLabel: 'WorkspacesPage.CreateWorkspaceModal.label',
-    placeholder: 'WorkspacesPage.CreateWorkspaceModal.placeholder',
-    okButtonText: 'WorkspacesPage.CreateWorkspaceModal.create',
-  });
-
-  if (workspaceName) {
-    await navigateTo(Routes.Workspaces, { query: { workspaceName: workspaceName } });
-  }
 }
 
 async function loadAll(): Promise<void> {
@@ -495,6 +447,15 @@ onMounted(async () => {
     },
   );
 
+  const savedSidebarData = await storageManager.retrieveComponentData<SidebarSavedData>(SIDEBAR_MENU_DATA_KEY, SidebarDefaultData);
+  if (savedSidebarData.hidden) {
+    computedWidth.value = 2;
+    storedWidth.value = savedSidebarData.width;
+  } else {
+    computedWidth.value = savedSidebarData.width;
+  }
+  sidebarWidthProperty.value = `${computedWidth.value}px`;
+
   const connInfo = getConnectionInfo();
   if (connInfo) {
     isExpired.value = connInfo.isExpired;
@@ -506,7 +467,6 @@ onMounted(async () => {
     const gesture = createGesture({
       gestureName: 'resize-menu',
       el: divider.value,
-      onEnd,
       onMove,
     });
     gesture.enable();
@@ -520,10 +480,14 @@ onMounted(async () => {
   }
 });
 
-onUnmounted(() => {
+onUnmounted(async () => {
   if (eventDistributorCbId) {
     eventDistributor.removeCallback(eventDistributorCbId);
   }
+  await storageManager.storeComponentData<SidebarSavedData>(SIDEBAR_MENU_DATA_KEY, {
+    width: computedWidth.value < MIN_WIDTH ? storedWidth.value : computedWidth.value,
+    hidden: computedWidth.value < MIN_WIDTH,
+  });
   watchSidebarWidthCancel();
   setToastOffset(0);
 });
@@ -548,19 +512,13 @@ const nonFavoriteWorkspaces = computed(() => {
 });
 
 function onMove(detail: GestureDetail): void {
-  requestAnimationFrame(() => {
-    let currentWidth = initialWidth.value + detail.deltaX;
-    if (currentWidth >= 2 && currentWidth <= 500) {
-      if (currentWidth <= 150) {
-        currentWidth = 2;
-      }
-      computedWidth.value = currentWidth;
-    }
-  });
-}
-
-function onEnd(): void {
-  initialWidth.value = computedWidth.value;
+  if (detail.currentX < MIN_WIDTH) {
+    computedWidth.value = MIN_WIDTH;
+  } else if (detail.currentX > MAX_WIDTH) {
+    computedWidth.value = MAX_WIDTH;
+  } else {
+    computedWidth.value = detail.currentX;
+  }
 }
 
 async function openOrganizationChoice(event: Event): Promise<void> {
@@ -655,7 +613,7 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
     z-index: 0;
   }
 
-  .sidebar-content {
+  &-content {
     --background: transparent;
     position: relative;
     z-index: 12;
@@ -665,9 +623,7 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
   .file-workspaces {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
     padding: 0 0.75rem;
-    margin-bottom: 1rem;
   }
 }
 
@@ -678,6 +634,7 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
   flex-direction: column;
   margin: 0;
   border-radius: 0;
+  border-bottom: 1px solid var(--parsec-color-light-primary-30-opacity15);
 
   &-header {
     display: flex;
@@ -747,7 +704,6 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
     gap: 0.75rem;
     padding: 1rem 0 1.5rem;
     margin-inline: 0.75rem;
-    border-bottom: 1px solid var(--parsec-color-light-primary-30-opacity15);
 
     &__item {
       display: flex;
@@ -772,6 +728,17 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
         background: var(--parsec-color-light-primary-30-opacity15);
         cursor: default;
       }
+    }
+
+    &__icon {
+      position: absolute;
+    }
+
+    &__text {
+      margin-left: 1.4rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }
@@ -806,12 +773,6 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
   }
 }
 
-// eslint-disable-next-line vue-scoped-css/no-unused-selector
-.list-md {
-  background: none;
-  padding: 0;
-}
-
 ion-split-pane {
   --side-min-width: var(--parsec-sidebar-menu-min-width);
   --side-max-width: var(--parsec-sidebar-menu-max-width);
@@ -827,80 +788,54 @@ ion-menu {
   flex-direction: column;
   flex: 1;
   gap: 0.5rem;
-
-  &.list-file {
-    margin: 1rem 0;
-  }
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border-radius: var(--parsec-radius-8);
 
   &-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.5rem;
     transition: border 0.2s ease-in-out;
-    position: relative;
-    overflow: visible;
+    border-top: 1px solid var(--parsec-color-light-primary-30-opacity15);
+    padding: 1.5em 0 1em 0.5rem;
 
-    &-title,
-    &-favorites {
+    &__title {
       color: var(--parsec-color-light-secondary-inversed-contrast);
-      opacity: 0.6;
       display: flex;
       align-items: center;
-      padding: 0.125rem 0;
-
-      &__icon {
-        font-size: 1rem;
-        margin-right: 0.5rem;
-      }
-
-      &__text {
-        margin-right: 0.5rem;
-        position: relative;
-      }
     }
+  }
 
-    &__button {
-      user-select: none;
-      padding: 0.25rem;
-      margin-right: 0.25rem;
-      font-size: 1.25rem;
-      border-radius: var(--parsec-radius-6);
-      color: var(--parsec-color-light-primary-100);
-      background: var(--parsec-color-light-primary-30-opacity15);
-      cursor: pointer;
-      scale: 1;
-      transition: scale 0.2s ease-in-out;
-      opacity: 0.6;
-      position: relative;
-      z-index: 4;
-
-      &:hover {
-        opacity: 1;
-        scale: 1.1;
-      }
-    }
+  &-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 
   &__no-workspace {
-    color: var(--parsec-color-light-primary-30);
-    opacity: 0.3;
+    color: var(--parsec-color-light-secondary-inversed-contrast);
+    opacity: 0.5;
   }
-}
 
-.list-sidebar-divider {
-  background: var(--parsec-color-light-primary-30-opacity15);
-  display: flex;
-  justify-content: center;
-  height: 1px;
-  width: 100%;
+  &-divider {
+    background: var(--parsec-color-light-primary-30-opacity15);
+    display: flex;
+    justify-content: center;
+    height: 1px;
+    width: 100%;
+    margin-bottom: 1.5rem;
+  }
 }
 
 .sidebar-item {
   --background: none;
   border-radius: var(--parsec-radius-8);
-  border: solid 1px var(--parsec-color-light-primary-800);
   --min-height: 0;
+  --padding-start: 0.75rem;
+  --padding-end: 0.75rem;
+  --padding-bottom: 0.5rem;
+  --padding-top: 0.5rem;
 
   &:active,
   &.item-selected {
@@ -914,8 +849,24 @@ ion-menu {
     margin-inline-end: 12px;
   }
 
-  & > ion-label {
-    --color: var(--parsec-color-light-primary-100);
+  .sidebar-item-manage {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+
+    &__label {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      color: var(--parsec-color-light-secondary-premiere);
+      width: 100%;
+    }
+  }
+
+  &:hover {
+    outline: solid 1px var(--parsec-color-light-primary-30-opacity15);
+    cursor: pointer;
   }
 }
 
@@ -1032,10 +983,6 @@ ion-menu {
   .title-h4 {
     padding: 1.5em 0 1em;
     border-top: 1px solid var(--parsec-color-light-primary-30-opacity15);
-  }
-
-  &-list {
-    padding: 0;
   }
 }
 </style>

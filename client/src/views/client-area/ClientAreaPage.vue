@@ -5,6 +5,7 @@
     <div
       class="resize-divider"
       ref="divider"
+      v-show="isVisible()"
     />
     <ion-split-pane
       when="xs"
@@ -140,12 +141,12 @@ import CustomOrderProcessingPage from '@/views/client-area/dashboard/CustomOrder
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
-const { defaultWidth, initialWidth, computedWidth } = useSidebarMenu();
+const { computedWidth: computedWidth, isVisible: isVisible } = useSidebarMenu();
 const organizations = ref<Array<BmsOrganization>>([]);
 const divider = ref();
 const currentPage = ref<ClientAreaPages>(ClientAreaPages.Dashboard);
 const currentOrganization = ref<BmsOrganization>(DefaultBmsOrganization);
-const sidebarWidthProperty = ref(`${defaultWidth}px`);
+const sidebarWidthProperty = ref('');
 const loggedIn = ref(false);
 const refresh = ref(0);
 const querying = ref(true);
@@ -161,6 +162,7 @@ function setToastOffset(width: number): void {
 }
 
 onMounted(async () => {
+  sidebarWidthProperty.value = `${computedWidth.value}px`;
   querying.value = true;
   if (!BmsAccessInstance.get().isLoggedIn()) {
     loggedIn.value = await BmsAccessInstance.get().tryAutoLogin();
@@ -213,7 +215,6 @@ onMounted(async () => {
     const gesture = createGesture({
       gestureName: 'resize-menu',
       el: divider.value,
-      onEnd,
       onMove,
     });
     gesture.enable();
@@ -238,18 +239,14 @@ async function switchPage(page: ClientAreaPages): Promise<void> {
 
 function onMove(detail: GestureDetail): void {
   requestAnimationFrame(() => {
-    let currentWidth = initialWidth.value + detail.deltaX;
-    if (currentWidth >= 2 && currentWidth <= 500) {
-      if (currentWidth <= 150) {
-        currentWidth = 2;
-      }
-      computedWidth.value = currentWidth;
+    if (detail.currentX < 250) {
+      computedWidth.value = 250;
+    } else if (detail.currentX > 370) {
+      computedWidth.value = 370;
+    } else {
+      computedWidth.value = detail.currentX;
     }
   });
-}
-
-function onEnd(): void {
-  initialWidth.value = computedWidth.value;
 }
 
 async function onOrganizationSelected(organization: BmsOrganization): Promise<void> {
