@@ -1517,25 +1517,38 @@ impl ShamirRecoveryClaimFinalizeCtx {
         .await
         .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))?;
 
+        // After the device has been successfully saved, we still have to mark the invitation as completed.
+        // However, we don't want to return an error if this part fails, as the user cannot really do anything
+        // about it. Instead, we log the error and return the device.
         {
             use authenticated_cmds::latest::invite_complete::{Rep, Req};
 
-            let cmds = AuthenticatedCmds::new(
+            let cmds = match AuthenticatedCmds::new(
                 &self.config.config_dir,
                 self.new_local_device.clone(),
                 self.config.proxy.clone(),
-            )?;
-            let rep = cmds.send(Req { token: self.token }).await?;
-
-            match rep {
-                Rep::Ok => Ok(()),
-                Rep::InvitationAlreadyCompleted => Err(ClaimInProgressError::AlreadyUsed),
-                Rep::InvitationCancelled => Err(ClaimInProgressError::AlreadyUsed),
-                Rep::InvitationNotFound => Err(ClaimInProgressError::NotFound),
-                bad_rep @ (Rep::UnknownStatus { .. } | Rep::AuthorNotAllowed) => {
-                    Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+            ) {
+                Ok(cmds) => cmds,
+                Err(e) => {
+                    log::error!("Error while creating authenticated commands: {:?}", e);
+                    return Ok(available_device);
                 }
-            }?
+            };
+
+            match cmds.send(Req { token: self.token }).await {
+                Ok(Rep::Ok) => (),
+                Ok(rep) => {
+                    log::error!(
+                        "Unexpected reply while marking the invitation as completed: {:?}",
+                        rep
+                    );
+                    return Ok(available_device);
+                }
+                Err(e) => {
+                    log::error!("Error while marking the invitation as completed: {:?}", e);
+                    return Ok(available_device);
+                }
+            };
         };
 
         Ok(available_device)
