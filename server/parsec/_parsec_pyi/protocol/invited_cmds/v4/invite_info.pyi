@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import HumanHandle, UserID
+from parsec._parsec import DateTime, HumanHandle, UserID
 
 class InvitationType:
     pass
@@ -45,9 +45,13 @@ class InvitationTypeShamirRecovery(InvitationType):
     def threshold(self) -> int: ...
 
 class ShamirRecoveryRecipient:
-    def __init__(self, user_id: UserID, human_handle: HumanHandle, shares: int) -> None: ...
+    def __init__(
+        self, user_id: UserID, human_handle: HumanHandle, shares: int, revoked_on: DateTime | None
+    ) -> None: ...
     @property
     def human_handle(self) -> HumanHandle: ...
+    @property
+    def revoked_on(self) -> DateTime | None: ...
     @property
     def shares(self) -> int: ...
     @property

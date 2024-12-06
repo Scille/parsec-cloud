@@ -44,16 +44,19 @@ async def test_invited_invite_info_ok_with_shamir(shamirorg: ShamirOrgRpcClients
                     user_id=shamirorg.bob.user_id,
                     human_handle=shamirorg.bob.human_handle,
                     shares=2,
+                    revoked_on=None,
                 ),
                 invited_cmds.latest.invite_info.ShamirRecoveryRecipient(
                     user_id=shamirorg.mallory.user_id,
                     human_handle=shamirorg.mallory.human_handle,
                     shares=1,
+                    revoked_on=None,
                 ),
                 invited_cmds.latest.invite_info.ShamirRecoveryRecipient(
                     user_id=shamirorg.mike.user_id,
                     human_handle=shamirorg.mike.human_handle,
                     shares=1,
+                    revoked_on=None,
                 ),
             ],
         )

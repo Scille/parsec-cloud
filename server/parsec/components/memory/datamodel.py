@@ -271,6 +271,10 @@ class MemoryUser:
     def is_revoked(self) -> bool:
         return self.revoked_user_certificate is not None
 
+    @property
+    def revoked_on(self) -> DateTime | None:
+        return self.cooked_revoked.timestamp if self.cooked_revoked else None
+
 
 @dataclass(slots=True)
 class MemoryDevice:

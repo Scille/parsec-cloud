@@ -340,6 +340,15 @@ impl ShamirRecoveryClaimPickRecipientCtx {
         &self.claimer_human_handle
     }
 
+    pub fn is_recoverable(&self) -> bool {
+        self.recipients
+            .iter()
+            .filter(|r| r.revoked_on.is_none())
+            .map(|r| r.shares.get())
+            .sum::<u8>()
+            >= self.threshold.get()
+    }
+
     pub fn shares(&self) -> HashMap<UserID, NonZeroU8> {
         self.shares
             .iter()
