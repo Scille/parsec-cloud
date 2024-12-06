@@ -88,6 +88,7 @@ pub async fn main(shamir_setup: Args) -> anyhow::Result<()> {
     let threshold = if let Some(t) = threshold {
         t
     } else {
+        // note that this is a blocking call
         Input::<NonZeroU8>::new()
         .with_prompt(format!(
             "Choose a threshold between 1 and {}\nThe threshold is the minimum number of recipients that one must gather to recover the account",

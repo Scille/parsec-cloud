@@ -562,6 +562,7 @@ Reqwest
 rerunfailures
 reseted
 retrier
+rexpect
 Richcmp
 Rlib
 rmvb
