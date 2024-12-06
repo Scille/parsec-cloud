@@ -82,23 +82,24 @@ pub fn rep_ok() {
             }),
         ),
         (
-            // Generated from Parsec 3.1.1-a.0+dev
+            // Generated from Parsec 3.2.1-a.0+dev
             // Content:
             //   status: 'ok'
             //   type: 'SHAMIR_RECOVERY'
             //   claimer_human_handle: [ 'carl@example.com', 'carl', ]
             //   claimer_user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4c)
-            //   recipients: [ { human_handle: [ 'alice@example.com', 'alice', ], shares: 1, user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4a), }, { human_handle: [ 'bob@example.com', 'bob', ], shares: 1, user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4b), }, ]
+            //   recipients: [ { human_handle: [ 'alice@example.com', 'alice', ], revoked_on: None, shares: 1, user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4a), }, { human_handle: [ 'bob@example.com', 'bob', ], revoked_on: ext(1, 946774800000000) i.e. 2000-01-02T02:00:00Z, shares: 1, user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4b), }, ]
             //   threshold: 2
             &hex!(
                 "86a6737461747573a26f6ba474797065af5348414d49525f5245434f56455259b4636c"
                 "61696d65725f68756d616e5f68616e646c6592b06361726c406578616d706c652e636f"
                 "6da46361726caf636c61696d65725f757365725f6964d802109b68ba5cdf428ea0017f"
-                "c6bcc04d4caa726563697069656e74739283ac68756d616e5f68616e646c6592b1616c"
-                "696365406578616d706c652e636f6da5616c696365a673686172657301a7757365725f"
-                "6964d802109b68ba5cdf428ea0017fc6bcc04d4a83ac68756d616e5f68616e646c6592"
-                "af626f62406578616d706c652e636f6da3626f62a673686172657301a7757365725f69"
-                "64d802109b68ba5cdf428ea0017fc6bcc04d4ba97468726573686f6c6402"
+                "c6bcc04d4caa726563697069656e74739284ac68756d616e5f68616e646c6592b1616c"
+                "696365406578616d706c652e636f6da5616c696365aa7265766f6b65645f6f6ec0a673"
+                "686172657301a7757365725f6964d802109b68ba5cdf428ea0017fc6bcc04d4a84ac68"
+                "756d616e5f68616e646c6592af626f62406578616d706c652e636f6da3626f62aa7265"
+                "766f6b65645f6f6ed70100035d162fa2e400a673686172657301a7757365725f6964d8"
+                "02109b68ba5cdf428ea0017fc6bcc04d4ba97468726573686f6c6402"
             )[..],
             invited_cmds::invite_info::Rep::Ok(
                 invited_cmds::invite_info::InvitationType::ShamirRecovery {
@@ -109,11 +110,13 @@ pub fn rep_ok() {
                             user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                             human_handle: HumanHandle::new("alice@example.com", "alice").unwrap(),
                             shares: 1.try_into().unwrap(),
+                            revoked_on: None,
                         },
                         invited_cmds::invite_info::ShamirRecoveryRecipient {
                             user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4b").unwrap(),
                             human_handle: HumanHandle::new("bob@example.com", "bob").unwrap(),
                             shares: 1.try_into().unwrap(),
+                            revoked_on: Some("2000-1-2T01:00:00Z".parse().unwrap()),
                         },
                     ],
                     threshold: 2.try_into().unwrap(),

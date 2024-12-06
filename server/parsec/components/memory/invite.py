@@ -98,6 +98,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                 user_id=user_id,
                 human_handle=org.users[user_id].cooked.human_handle,
                 shares=shares,
+                revoked_on=org.users[user_id].revoked_on,
             )
             for user_id, shares in par_recipient_shares.items()
         ]
