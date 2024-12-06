@@ -9,7 +9,7 @@
       <!-- contextual menu -->
       <ms-action-bar id="activate-users-ms-action-bar">
         <div v-show="users.selectedCount() === 0 && isAdmin">
-          <ms-action-bar-button
+          <file-controls-button
             :icon="personAdd"
             id="button-invite-user"
             :button-label="'UsersPage.inviteUser'"
@@ -18,7 +18,7 @@
         </div>
         <!-- revoke or view common workspace -->
         <div v-show="users.selectedCount() >= 1 && isAdmin">
-          <ms-action-bar-button
+          <file-controls-button
             :icon="personRemove"
             class="danger"
             id="button-revoke-user"
@@ -27,7 +27,7 @@
           />
         </div>
         <div v-show="users.selectedCount() === 1">
-          <ms-action-bar-button
+          <file-controls-button
             :icon="informationCircle"
             id="button-common-workspaces"
             :button-label="'UsersPage.userContextMenu.actionDetails'"
@@ -125,7 +125,7 @@ import {
   NoActiveUser,
   DisplayState,
   MsActionBar,
-  MsActionBarButton,
+  FileControlsButton,
   MsGridListToggle,
   MsSearchInput,
   MsSorter,

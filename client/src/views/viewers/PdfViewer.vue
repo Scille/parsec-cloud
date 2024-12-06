@@ -16,7 +16,7 @@
       </div>
     </template>
     <template #controls>
-      <file-viewer-action-bar :actions="actions" />
+      <file-controls :actions="actions" />
     </template>
   </file-viewer-wrapper>
 </template>
@@ -26,7 +26,7 @@ import { add, remove, resize } from 'ionicons/icons';
 import { inject, onMounted, ref, Ref, shallowRef } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { FileViewerWrapper } from '@/views/viewers';
-import { FileViewerActionBar } from '@/components/viewers';
+import { FileControls } from '@/components/viewers';
 import { I18n, MsSpinner, Translatable } from 'megashark-lib';
 import * as pdfjs from 'pdfjs-dist';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';

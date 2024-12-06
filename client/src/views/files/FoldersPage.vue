@@ -8,14 +8,14 @@
     >
       <ms-action-bar id="folders-ms-action-bar">
         <div v-if="selectedFilesCount === 0">
-          <ms-action-bar-button
+          <file-controls-button
             id="button-new-folder"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.createFolder'"
             :icon="folderOpen"
             @click="createFolder()"
           />
-          <ms-action-bar-button
+          <file-controls-button
             id="button-import"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.import'"
@@ -24,41 +24,41 @@
           />
         </div>
         <div v-else-if="selectedFilesCount === 1">
-          <ms-action-bar-button
+          <file-controls-button
             id="button-rename"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.fileContextMenu.actionRename'"
             :icon="pencil"
             @click="renameEntries(getSelectedEntries())"
           />
-          <ms-action-bar-button
+          <file-controls-button
             id="button-moveto"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.fileContextMenu.actionMoveTo'"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
           />
-          <ms-action-bar-button
+          <file-controls-button
             id="button-makeacopy"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.fileContextMenu.actionMakeACopy'"
             :icon="copy"
             @click="copyEntries(getSelectedEntries())"
           />
-          <ms-action-bar-button
+          <file-controls-button
             id="button-delete"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.fileContextMenu.actionDelete'"
             :icon="trashBin"
             @click="deleteEntries(getSelectedEntries())"
           />
-          <ms-action-bar-button
+          <file-controls-button
             id="button-details"
             :button-label="'FoldersPage.fileContextMenu.actionDetails'"
             :icon="informationCircle"
             @click="showDetails(getSelectedEntries())"
           />
-          <ms-action-bar-button
+          <file-controls-button
             id="button-copy-link"
             :button-label="'FoldersPage.fileContextMenu.actionCopyLink'"
             :icon="link"
@@ -66,21 +66,21 @@
           />
         </div>
         <div v-else>
-          <ms-action-bar-button
+          <file-controls-button
             id="button-moveto"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.fileContextMenu.actionMoveTo'"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
           />
-          <ms-action-bar-button
+          <file-controls-button
             id="button-makeacopy"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.fileContextMenu.actionMakeACopy'"
             :icon="copy"
             @click="copyEntries(getSelectedEntries())"
           />
-          <ms-action-bar-button
+          <file-controls-button
             id="button-delete"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.fileContextMenu.actionDelete'"
@@ -209,7 +209,7 @@ import {
   DocumentImport,
   DisplayState,
   MsActionBar,
-  MsActionBarButton,
+  FileControlsButton,
   MsGridListToggle,
   MsSorter,
   MsSorterChangeEvent,

@@ -11,7 +11,7 @@
       />
     </template>
     <template #controls>
-      <file-viewer-action-bar :actions="actions" />
+      <file-controls :actions="actions" />
     </template>
   </file-viewer-wrapper>
 </template>
@@ -20,7 +20,7 @@
 import { MsSpinner, I18n, Translatable } from 'megashark-lib';
 import { onBeforeMount, onMounted, Ref, ref } from 'vue';
 import XLSX from 'xlsx';
-import { FileViewerActionBar } from '@/components/viewers';
+import { FileControls } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 

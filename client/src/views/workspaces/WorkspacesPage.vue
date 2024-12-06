@@ -8,7 +8,7 @@
     >
       <ms-action-bar id="workspaces-ms-action-bar">
         <!-- contextual menu -->
-        <ms-action-bar-button
+        <file-controls-button
           v-show="clientProfile != UserProfile.Outsider"
           id="button-new-workspace"
           :button-label="'WorkspacesPage.createWorkspace'"
@@ -163,7 +163,7 @@ import {
   NoWorkspace,
   DisplayState,
   MsActionBar,
-  MsActionBarButton,
+  FileControlsButton,
   MsGridListToggle,
   MsSorter,
   MsSorterChangeEvent,
