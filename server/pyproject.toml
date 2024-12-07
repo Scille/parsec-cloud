@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "parsec-cloud"
-version = "3.2.1-a.0+dev"
+version = "3.2.1-a.0.dev.20064+8ff7b4d"
 description = "Secure cloud framework"
 authors = ["Scille SAS <contact@scille.fr>"]
 license = "BUSL-1.1"

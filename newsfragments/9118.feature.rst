@@ -1,1 +1,0 @@
-Invitation token is now passed as an argument instead of an option the CLI command ``invite greet``
