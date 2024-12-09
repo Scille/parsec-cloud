@@ -53,6 +53,13 @@ impl EntryStat {
             EntryStat::Folder { id, .. } => *id,
         }
     }
+
+    pub fn parent(&self) -> VlobID {
+        match self {
+            EntryStat::File { parent, .. } => *parent,
+            EntryStat::Folder { parent, .. } => *parent,
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
