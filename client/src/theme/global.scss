@@ -108,3 +108,12 @@ ion-title {
   margin: 0.5rem 0;
   color: var(--parsec-color-light-secondary-soft-text);
 }
+
+// ion-icon specific overloads
+.flip-horizontal-ion-icon > ion-icon {
+  transform: scaleX(-1);
+}
+
+.flip-vertical-ion-icon > ion-icon {
+  transform: scaleY(-1);
+}
