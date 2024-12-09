@@ -2,20 +2,17 @@
 
 use futures::FutureExt;
 
-pub mod oneshot {
-    pub use tokio::sync::oneshot::{
-        channel,
-        error::{RecvError, TryRecvError},
-        Receiver, Sender,
-    };
-}
+pub struct Instant(std::time::Instant);
 
-pub mod watch {
-    pub use tokio::sync::watch::{
-        channel,
-        error::{RecvError, SendError},
-        Receiver, Ref, Sender,
-    };
+impl Instant {
+    #[inline(always)]
+    pub fn now() -> Instant {
+        Instant(std::time::Instant::now())
+    }
+
+    pub fn elapsed(&self) -> std::time::Duration {
+        self.0.elapsed()
+    }
 }
 
 #[inline(always)]
@@ -84,9 +81,9 @@ where
 /// On native platform however, we use a multi-threaded tokio runtime.
 ///
 /// The outcome of this is that any async function pointer must be `Send` on native
-/// by `!Send` on web...
+/// but `!Send` on web...
 /// This is "slightly annoying" given it means we would have to basically duplicate
-/// any code involve async function pointer with `#[cfg(target_arch = "wasm32")]`
+/// any code involving async function pointer with `#[cfg(target_arch = "wasm32")]`
 /// to mark `Future` vs `Future + Send + 'static`.
 ///
 /// To add insult to injury, compiler is complaining about our stuff not being `Send`
