@@ -12,20 +12,12 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
-    let Args {
-        name,
-        device,
-        config_dir,
-        password_stdin,
-    } = args;
-    log::trace!(
-        "Creating workspace {name} (confdir={}, device={})",
-        config_dir.display(),
-        device.as_deref().unwrap_or("N/A")
-    );
+crate::build_main_with_client!(main, create_workspace);
 
-    let client = load_client(&config_dir, device, password_stdin).await?;
+pub async fn create_workspace(args: Args, client: &StartedClient) -> anyhow::Result<()> {
+    let Args { name, .. } = args;
+    log::trace!("Creating workspace {name}");
+
     let mut handle = start_spinner("Creating workspace".into());
 
     let id = client.create_workspace(name).await?.simple();
