@@ -13,6 +13,7 @@
       button
       lines="full"
       :detail="false"
+      class="file-list-item"
       :class="{
         selected: entry.isSelected,
         'file-hovered': !entry.isSelected && (menuOpened || isHovered),
@@ -22,79 +23,77 @@
       @mouseleave="isHovered = false"
       ref="itemRef"
     >
-      <div class="file-list-item">
-        <div class="file-selected">
-          <!-- eslint-disable vue/no-mutating-props -->
-          <ms-checkbox
-            v-model="entry.isSelected"
-            v-show="entry.isSelected || isHovered || showCheckbox"
-            @change="$emit('selectedChange', entry, $event)"
-            @click.stop
-            @dblclick.stop
-          />
-          <!-- eslint-enable vue/no-mutating-props -->
-        </div>
-        <!-- file name -->
-        <div class="file-name">
-          <ms-image
-            :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
-            class="file-icon"
-          />
-          <ion-label class="file-name__label cell">
-            {{ entry.name }}
-          </ion-label>
-          <ion-icon
-            class="cloud-overlay"
-            :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
-            :icon="isFileSynced() ? cloudDone : cloudOffline"
-          />
-        </div>
+      <div class="file-selected">
+        <!-- eslint-disable vue/no-mutating-props -->
+        <ms-checkbox
+          v-model="entry.isSelected"
+          v-show="entry.isSelected || isHovered || showCheckbox"
+          @change="$emit('selectedChange', entry, $event)"
+          @click.stop
+          @dblclick.stop
+        />
+        <!-- eslint-enable vue/no-mutating-props -->
+      </div>
+      <!-- file name -->
+      <div class="file-name">
+        <ms-image
+          :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
+          class="file-icon"
+        />
+        <ion-label class="file-name__label cell">
+          {{ entry.name }}
+        </ion-label>
+        <ion-icon
+          class="cloud-overlay"
+          :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
+          :icon="isFileSynced() ? cloudDone : cloudOffline"
+        />
+      </div>
 
-        <!-- updated by -->
-        <!-- Can't get the information right now, maybe later -->
-        <div
-          class="file-updatedBy"
-          v-show="false"
+      <!-- updated by -->
+      <!-- Can't get the information right now, maybe later -->
+      <div
+        class="file-updatedBy"
+        v-show="false"
+      >
+        <user-avatar-name
+          :user-avatar="entry.id"
+          :user-name="entry.id"
+        />
+      </div>
+
+      <!-- last update -->
+      <div class="file-lastUpdate">
+        <ion-label class="label-last-update cell">
+          {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
+        </ion-label>
+      </div>
+
+      <!-- file size -->
+      <div class="file-size">
+        <ion-label
+          v-if="entry.isFile()"
+          class="label-size cell"
         >
-          <user-avatar-name
-            :user-avatar="entry.id"
-            :user-name="entry.id"
+          {{ $msTranslate(formatFileSize((entry as FileModel).size)) }}
+        </ion-label>
+      </div>
+
+      <!-- options -->
+      <div class="file-options ion-item-child-clickable">
+        <ion-button
+          fill="clear"
+          v-show="isHovered || menuOpened"
+          class="options-button"
+          @click.stop="onOptionsClick($event)"
+          @dblclick.stop
+        >
+          <ion-icon
+            :icon="ellipsisHorizontal"
+            slot="icon-only"
+            class="options-button__icon"
           />
-        </div>
-
-        <!-- last update -->
-        <div class="file-lastUpdate">
-          <ion-label class="label-last-update cell">
-            {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
-          </ion-label>
-        </div>
-
-        <!-- file size -->
-        <div class="file-size">
-          <ion-label
-            v-if="entry.isFile()"
-            class="label-size cell"
-          >
-            {{ $msTranslate(formatFileSize((entry as FileModel).size)) }}
-          </ion-label>
-        </div>
-
-        <!-- options -->
-        <div class="file-options ion-item-child-clickable">
-          <ion-button
-            fill="clear"
-            v-show="isHovered || menuOpened"
-            class="options-button"
-            @click.stop="onOptionsClick($event)"
-            @dblclick.stop
-          >
-            <ion-icon
-              :icon="ellipsisHorizontal"
-              slot="icon-only"
-              class="options-button__icon"
-            />
-          </ion-button>
-        </div>
+        </ion-button>
       </div>
     </ion-item>
   </file-drop-zone>

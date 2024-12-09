@@ -157,7 +157,7 @@ for (const gridMode of [false, true]) {
       await expect(entry.locator('.file-name').locator('.file-name__label')).toHaveText('My file');
     } else {
       const entry = documents.locator('.folder-container').locator('.file-card-item').nth(2);
-      await expect(entry.locator('.card-content__title')).toHaveText('My file');
+      await expect(entry.locator('.file-card__title')).toHaveText('My file');
     }
   });
 
@@ -167,12 +167,7 @@ for (const gridMode of [false, true]) {
     }
     let fileName;
     if (gridMode) {
-      fileName = await documents
-        .locator('.folder-container')
-        .locator('.file-card-item')
-        .nth(2)
-        .locator('.card-content__title')
-        .textContent();
+      fileName = await documents.locator('.folder-container').locator('.file-card-item').nth(2).locator('.file-card__title').textContent();
     } else {
       fileName = await documents
         .locator('.folder-container')

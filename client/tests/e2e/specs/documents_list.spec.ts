@@ -42,8 +42,8 @@ msTest('Check documents in grid mode', async ({ documents }) => {
   await toggleViewMode(documents);
   const entries = documents.locator('.folder-container').locator('.file-card-item');
   await expect(entries).toHaveCount(10);
-  await expect(entries.locator('.card-content__title')).toHaveText(NAME_MATCHER_ARRAY);
-  await expect(entries.locator('.card-content-last-update')).toHaveText(TIME_MATCHER_ARRAY);
+  await expect(entries.locator('.file-card__title')).toHaveText(NAME_MATCHER_ARRAY);
+  await expect(entries.locator('.file-card-last-update')).toHaveText(TIME_MATCHER_ARRAY);
 });
 
 msTest('Documents page default state in a read only workspace', async ({ documentsReadOnly }) => {

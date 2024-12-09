@@ -123,21 +123,17 @@
           v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.Grid"
           class="workspaces-container-grid list"
         >
-          <ion-item
-            class="workspaces-grid-item"
+          <workspace-card
             v-for="workspace in filteredWorkspaces"
             :key="workspace.id"
-          >
-            <workspace-card
-              :workspace="workspace"
-              :client-profile="clientProfile"
-              :is-favorite="favorites.includes(workspace.id)"
-              @click="onWorkspaceClick"
-              @favorite-click="onWorkspaceFavoriteClick"
-              @menu-click="onOpenWorkspaceContextMenu"
-              @share-click="onWorkspaceShareClick"
-            />
-          </ion-item>
+            :workspace="workspace"
+            :client-profile="clientProfile"
+            :is-favorite="favorites.includes(workspace.id)"
+            @click="onWorkspaceClick"
+            @favorite-click="onWorkspaceFavoriteClick"
+            @menu-click="onOpenWorkspaceContextMenu"
+            @share-click="onWorkspaceShareClick"
+          />
         </div>
       </div>
       <ion-fab
@@ -208,7 +204,6 @@ import {
   IonFab,
   IonFabButton,
   IonIcon,
-  IonItem,
   IonLabel,
   IonList,
   IonListHeader,
@@ -611,9 +606,5 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
   flex-wrap: wrap;
   gap: 1.5em;
   overflow-y: auto;
-}
-
-ion-item::part(native) {
-  --padding-start: 0px;
 }
 </style>
