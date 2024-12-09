@@ -5,7 +5,7 @@ mod ls;
 mod organization;
 mod rm;
 mod server;
-mod shamir_setup_create;
+mod shared_recovery;
 mod tos;
 mod user;
 mod version;
