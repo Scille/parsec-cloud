@@ -12,6 +12,7 @@
         @canplay="updateMediaData"
         @pause="updateMediaData"
         @volumechange="updateMediaData"
+        @ended="updateMediaData"
       >
         <source
           :src="src"
@@ -22,7 +23,8 @@
     <template #controls>
       <file-controls>
         <file-controls-button
-          :icon="paused ? play : pause"
+          :class="{ 'flip-horizontal-ion-icon': ended }"
+          :icon="getPlaybackIcon()"
           @click="togglePlayback"
         />
         <file-controls-button
@@ -39,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { play, pause, volumeHigh, volumeLow, volumeMedium, volumeMute, scan } from 'ionicons/icons';
+import { refresh, play, pause, volumeHigh, volumeLow, volumeMedium, volumeMute, scan } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { FileControls, FileControlsButton } from '@/components/viewers';
@@ -55,6 +57,7 @@ const src = ref('');
 const videoElement = ref();
 const paused = ref(true);
 const volume = ref(1);
+const ended = ref(false);
 
 onMounted(async () => {
   src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
@@ -75,6 +78,7 @@ function toggleFullScreen(): void {
 function updateMediaData(event: Event): void {
   volume.value = (event.target as HTMLVideoElement).volume;
   paused.value = (event.target as HTMLVideoElement).paused;
+  ended.value = (event.target as HTMLVideoElement).ended;
 }
 
 function getVolumeIcon(): string {
@@ -89,6 +93,18 @@ function getVolumeIcon(): string {
       return volumeHigh;
     default:
       return volumeMute;
+  }
+}
+
+function getPlaybackIcon(): string {
+  if (ended.value) {
+    return refresh;
+  }
+  switch (paused.value) {
+    case true:
+      return play;
+    case false:
+      return pause;
   }
 }
 </script>
