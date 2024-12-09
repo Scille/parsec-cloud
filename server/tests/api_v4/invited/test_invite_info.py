@@ -2,8 +2,8 @@
 
 import pytest
 
-from parsec._parsec import invited_cmds
-from tests.common import CoolorgRpcClients, HttpCommonErrorsTester, ShamirOrgRpcClients
+from parsec._parsec import DateTime, RevokedUserCertificate, invited_cmds
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, ShamirOrgRpcClients
 
 
 @pytest.mark.parametrize("user_or_device", ("user", "device"))
@@ -32,7 +32,25 @@ async def test_invited_invite_info_ok(user_or_device: str, coolorg: CoolorgRpcCl
             assert False, unknown
 
 
-async def test_invited_invite_info_ok_with_shamir(shamirorg: ShamirOrgRpcClients) -> None:
+async def test_invited_invite_info_ok_with_shamir(
+    shamirorg: ShamirOrgRpcClients, backend: Backend
+) -> None:
+    # Revoke Mallory first
+    now = DateTime.now()
+    certif = RevokedUserCertificate(
+        author=shamirorg.alice.device_id,
+        user_id=shamirorg.mallory.user_id,
+        timestamp=now,
+    )
+    await backend.user.revoke_user(
+        now=now,
+        organization_id=shamirorg.organization_id,
+        author=shamirorg.alice.device_id,
+        author_verify_key=shamirorg.alice.signing_key.verify_key,
+        revoked_user_certificate=certif.dump_and_sign(shamirorg.alice.signing_key),
+    )
+
+    # Check the invite info
     rep = await shamirorg.shamir_invited_alice.invite_info()
     assert rep == invited_cmds.v4.invite_info.RepOk(
         invited_cmds.v4.invite_info.InvitationTypeShamirRecovery(
@@ -50,7 +68,7 @@ async def test_invited_invite_info_ok_with_shamir(shamirorg: ShamirOrgRpcClients
                     user_id=shamirorg.mallory.user_id,
                     human_handle=shamirorg.mallory.human_handle,
                     shares=1,
-                    revoked_on=None,
+                    revoked_on=now,
                 ),
                 invited_cmds.latest.invite_info.ShamirRecoveryRecipient(
                     user_id=shamirorg.mike.user_id,
