@@ -21,10 +21,10 @@ export interface MockEntry {
 
 const FOLDER_PREFIX = 'Dir_';
 const FILE_PREFIX = 'File_';
+const EXTENSIONS = ['.mp4', '.docx', '.pdf', '.png', '.mp3', '.xlsx', '.txt', '.py'];
 
-function generateEntryName(prefix: string = '', addExtension = false): EntryName {
-  const EXTENSIONS = ['.mp4', '.docx', '.pdf', '.png', '.mp3', '.xlsx', '.txt', '.py'];
-  const ext = addExtension ? EXTENSIONS[Math.floor(Math.random() * EXTENSIONS.length)] : '';
+function generateEntryName(prefix: string = '', addExtension = false, extension = ''): EntryName {
+  const ext = addExtension && extension.length === 0 ? EXTENSIONS[Math.floor(Math.random() * EXTENSIONS.length)] : extension;
   return `${prefix}${uniqueNamesGenerator({ dictionaries: [adjectives, animals] })}${ext}`;
 }
 
@@ -39,13 +39,14 @@ interface GenerateEntryOptions {
   parentId?: string;
   prefix?: string;
   fileName?: EntryName;
+  extension?: string;
 }
 
 export async function generateFile(
   basePath: FsPath,
   opts: GenerateEntryOptions = { parentId: 'fakeId', prefix: FILE_PREFIX },
 ): Promise<MockEntry> {
-  const name = opts.fileName ?? generateEntryName(opts.prefix ?? FILE_PREFIX, true);
+  const name = opts.fileName ?? generateEntryName(opts.prefix ?? FILE_PREFIX, true, opts.extension ?? '');
   const ext = Path.getFileExtension(name);
   const createdDate = generateDate();
   const entry: MockEntry = {
@@ -129,6 +130,27 @@ export async function generateEntries(
     items.push(await generateFile(basePath, { parentId: parentId, prefix: filePrefix }));
   }
 
+  // Add folders
+  for (let i = 0; i < folderCount; i++) {
+    items.push(await generateFolder(basePath, { parentId: parentId, prefix: folderPrefix }));
+  }
+  return items;
+}
+
+export async function generateEntriesForEachFileType(
+  basePath: FsPath,
+  folderCount = 2,
+  filePrefix = FILE_PREFIX,
+  folderPrefix = FOLDER_PREFIX,
+  extensions = ['.pdf', '.mp4', '.mp3', '.png', '.docx', '.xlsx', '.py', '.txt'],
+): Promise<Array<MockEntry>> {
+  const items: Array<MockEntry> = [];
+  const parentId = crypto.randomUUID().toString();
+
+  // Add files
+  for (const ext of extensions) {
+    items.push(await generateFile(basePath, { parentId: parentId, prefix: filePrefix, extension: ext }));
+  }
   // Add folders
   for (let i = 0; i < folderCount; i++) {
     items.push(await generateFolder(basePath, { parentId: parentId, prefix: folderPrefix }));

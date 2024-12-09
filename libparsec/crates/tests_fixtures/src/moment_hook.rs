@@ -26,6 +26,14 @@ pub enum Moment {
     /// closed so that they change get flushed to database.
     /// This moment occurs in `WorkspaceOps::stop` right after the files has been closed.
     WorkspaceOpsStopAllFdsClosed,
+    /// Populating the cache from local or server is done in three steps:
+    /// 1. Local DB lookup
+    /// 2. If cache miss, server lookup
+    /// 3. If no cache miss, store the result from the server into the local DB
+    ///
+    /// This moment occurs right after the local DB lookup, which allows us to
+    /// modify the content of the local DB while the server lookup is still pending.
+    WorkspaceStorePopulateCacheFetchRemote,
 }
 
 /// Used by the test code to control the execution of the tested code.

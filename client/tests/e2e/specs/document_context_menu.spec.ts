@@ -120,7 +120,7 @@ for (const gridMode of [false, true]) {
     if (gridMode) {
       await toggleViewMode(documents);
     }
-    await documents.locator('.folder-container').click({ button: 'right' });
+    await documents.locator('.folder-container').click({ button: 'right', position: { x: 100, y: 10 } });
     await expect(documents.locator('.folder-global-context-menu')).toBeVisible();
     const popover = documents.locator('.folder-global-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(1);

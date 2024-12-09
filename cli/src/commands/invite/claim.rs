@@ -19,7 +19,6 @@ crate::clap_parser_with_shared_opts_builder!(
     pub struct Args {
         // cspell:disable-next-line
         /// Server invitation address (e.g.: parsec3://127.0.0.1:41997/Org?no_ssl=true&a=claim_shamir_recovery&p=xBA2FaaizwKy4qG5cGDFlXaL`)
-        #[arg(short, long)]
         addr: ParsecInvitationAddr,
         /// Use keyring to store the password for the device.
         #[arg(long, default_value_t, conflicts_with = "password_stdin")]

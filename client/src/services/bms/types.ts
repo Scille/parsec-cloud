@@ -5,6 +5,8 @@ import { DateTime } from 'luxon';
 
 export type BmsLang = 'en' | 'fr';
 
+export const CONNECTION_ERROR_STATUS = 0;
+
 interface BmsError {
   code: string;
   attr: string;
@@ -341,6 +343,7 @@ export {
   CustomOrderStatusResultData,
   DataType,
   DeletePaymentMethodQueryData,
+  InvoiceStatus,
   ListOrganizationsResultData,
   LoginQueryData,
   LoginResultData,

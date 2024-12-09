@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { BmsApi } from '@/services/bms/api';
+import { MockedBmsApi } from '@/services/bms/mockApi';
 import {
   AuthenticationToken,
   BmsAddress,
@@ -30,8 +31,16 @@ class BmsAccess {
   private customerInformation: PersonalInformationResultData | null = null;
   private storeCredentials: boolean = true;
   public reloadKey: number = 0;
+  private api: typeof BmsApi;
 
-  constructor() {}
+  constructor() {
+    if (import.meta.env.PARSEC_APP_BMS_USE_MOCK === 'true') {
+      console.info('Using Mocked BMS API');
+      this.api = MockedBmsApi;
+    } else {
+      this.api = BmsApi;
+    }
+  }
 
   async tryAutoLogin(): Promise<boolean> {
     this.reloadKey += 1;
@@ -43,7 +52,7 @@ class BmsAccess {
     }
 
     if (await this.ensureFreshToken()) {
-      const infoResponse = await BmsApi.getPersonalInformation(this.tokens.access);
+      const infoResponse = await this.api.getPersonalInformation(this.tokens.access);
       if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
         this.customerInformation = infoResponse.data;
         return true;
@@ -56,13 +65,13 @@ class BmsAccess {
 
   async login(email: string, password: string): Promise<{ ok: boolean; errors?: Array<BmsError> }> {
     this.reloadKey += 1;
-    const response = await BmsApi.login({ email: email, password: password });
+    const response = await this.api.login({ email: email, password: password });
     if (!response.isError && response.data && response.data.type === DataType.Login) {
       this.tokens = { access: response.data.accessToken, refresh: response.data.refreshToken };
     } else {
       return { ok: false, errors: response.errors };
     }
-    const infoResponse = await BmsApi.getPersonalInformation(this.tokens.access);
+    const infoResponse = await this.api.getPersonalInformation(this.tokens.access);
     if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
       this.customerInformation = infoResponse.data;
     } else {
@@ -102,7 +111,7 @@ class BmsAccess {
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
 
-    const response = await BmsApi.updatePersonalInformation(this.tokens.access, {
+    const response = await this.api.updatePersonalInformation(this.tokens.access, {
       userId: this.customerInformation.id,
       client: {
         firstname: data.firstname,
@@ -115,7 +124,7 @@ class BmsAccess {
     });
     if (!response.isError) {
       // Keep our local information up-to-date
-      const infoResponse = await BmsApi.getPersonalInformation(this.tokens.access);
+      const infoResponse = await this.api.getPersonalInformation(this.tokens.access);
       if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
         this.customerInformation = infoResponse.data;
       }
@@ -127,7 +136,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    const response = await BmsApi.updateEmailSendCode(this.tokens.access, {
+    const response = await this.api.updateEmailSendCode(this.tokens.access, {
       email: email,
       lang: lang,
     });
@@ -138,7 +147,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    const response = await BmsApi.updateEmail(this.tokens.access, {
+    const response = await this.api.updateEmail(this.tokens.access, {
       userId: this.customerInformation.id,
       email,
       password,
@@ -146,7 +155,7 @@ class BmsAccess {
       lang,
     });
 
-    const infoResponse = await BmsApi.getPersonalInformation(this.tokens.access);
+    const infoResponse = await this.api.getPersonalInformation(this.tokens.access);
     if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
       this.customerInformation = infoResponse.data;
     }
@@ -157,7 +166,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.updateAuthentication(this.tokens.access, {
+    return await this.api.updateAuthentication(this.tokens.access, {
       userId: this.customerInformation.id,
       password: password,
       newPassword: newPassword,
@@ -168,7 +177,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.listOrganizations(this.tokens.access, {
+    return await this.api.listOrganizations(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
     });
@@ -178,7 +187,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.getOrganizationStatus(this.tokens.access, {
+    return await this.api.getOrganizationStatus(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       organizationId: organizationId,
@@ -189,7 +198,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.getOrganizationStats(this.tokens.access, {
+    return await this.api.getOrganizationStats(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       organizationId: organizationId,
@@ -200,7 +209,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.getInvoices(this.tokens.access, {
+    return await this.api.getInvoices(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
     });
@@ -210,7 +219,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.getBillingDetails(this.tokens.access, {
+    return await this.api.getBillingDetails(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
     });
@@ -220,7 +229,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.addPaymentMethod(this.tokens.access, {
+    return await this.api.addPaymentMethod(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       paymentMethod: paymentMethod,
@@ -231,7 +240,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.setDefaultPaymentMethod(this.tokens.access, {
+    return await this.api.setDefaultPaymentMethod(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       paymentMethod: paymentMethod,
@@ -242,7 +251,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.deletePaymentMethod(this.tokens.access, {
+    return await this.api.deletePaymentMethod(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       paymentMethod: paymentMethod,
@@ -253,7 +262,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.updateBillingDetails(this.tokens.access, {
+    return await this.api.updateBillingDetails(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       address: address,
@@ -264,7 +273,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.getCustomOrderStatus(this.tokens.access, {
+    return await this.api.getCustomOrderStatus(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       organization: organization,
@@ -275,7 +284,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.getCustomOrderDetails(this.tokens.access, {
+    return await this.api.getCustomOrderDetails(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       organization: organization,
@@ -286,7 +295,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.unsubscribeOrganization(this.tokens.access, {
+    return await this.api.unsubscribeOrganization(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       organizationId: organizationId,
@@ -297,7 +306,7 @@ class BmsAccess {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await BmsApi.subscribeOrganization(this.tokens.access, {
+    return await this.api.subscribeOrganization(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       organizationId: organizationId,
@@ -344,7 +353,7 @@ class BmsAccess {
       return false;
     }
     if (this.tokenIsExpired(this.tokens.access)) {
-      const refreshResponse = await BmsApi.refreshToken(this.tokens.refresh);
+      const refreshResponse = await this.api.refreshToken(this.tokens.refresh);
       if (!refreshResponse.isError && refreshResponse.data && refreshResponse.data.type === DataType.RefreshToken) {
         this.tokens.access = refreshResponse.data.token;
       } else {

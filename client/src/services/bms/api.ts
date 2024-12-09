@@ -7,6 +7,7 @@ import {
   BmsError,
   BmsOrganization,
   BmsResponse,
+  CONNECTION_ERROR_STATUS,
   ChangePasswordQueryData,
   ClientQueryData,
   CreateOrganizationQueryData,
@@ -27,8 +28,6 @@ import { Env } from '@/services/environment';
 import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { decodeToken } from 'megashark-lib';
-
-export const CONNECTION_ERROR_STATUS = 0;
 
 class HTTPRequest {
   private _instance: AxiosInstance;
