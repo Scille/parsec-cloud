@@ -9,13 +9,20 @@
       />
     </template>
     <template #controls>
-      <file-viewer-action-bar
-        :actions="[
-          { icon: remove, handler: zoomOut },
-          { icon: resize, handler: resetZoom },
-          { icon: add, handler: zoomIn },
-        ]"
-      />
+      <file-controls>
+        <file-controls-button
+          :icon="remove"
+          @click="zoomOut"
+        />
+        <file-controls-button
+          :icon="resize"
+          @click="resetZoom"
+        />
+        <file-controls-button
+          :icon="add"
+          @click="zoomIn"
+        />
+      </file-controls>
     </template>
   </file-viewer-wrapper>
 </template>
@@ -23,7 +30,7 @@
 <script setup lang="ts">
 import { add, remove, resize } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';
-import { FileViewerActionBar } from '@/components/viewers';
+import { FileControls, FileControlsButton } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo, imageViewerUtils } from '@/views/viewers/utils';
 
