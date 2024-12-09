@@ -1,4 +1,6 @@
-use libparsec::{tmp_path, TmpPath};
+use std::sync::Arc;
+
+use libparsec::{tmp_path, EntryName, LocalDevice, TmpPath, VlobID};
 
 use crate::{
     integration_tests::bootstrap_cli_test,
@@ -72,4 +74,72 @@ async fn workspace_import_file(tmp_path: TmpPath) {
     let (name, stat) = &entries[0];
     assert_eq!(name.as_ref(), "test.txt");
     assert!(matches!(stat, libparsec::EntryStat::File { size, .. } if size == &13));
+}
+
+#[rstest::rstest]
+#[tokio::test]
+async fn issue_8941_import_file_where_inbound_and_outbound_sync_are_required(tmp_path: TmpPath) {
+    let (
+        _,
+        TestOrganization {
+            alice, other_alice, ..
+        },
+        _,
+    ) = bootstrap_cli_test(&tmp_path).await.unwrap();
+
+    // Create a workspace C with device A
+    let wid = create_workspace(alice.clone()).await;
+
+    // Refresh the workspace list for device B
+    refresh_workspace_list(other_alice).await;
+
+    // Create a file to import
+    let test_file = tmp_path.join("test.txt");
+    tokio::fs::write(&test_file, "Hello, World!").await.unwrap();
+
+    // Try to import a file with device B to workspace C
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "workspace",
+        "import",
+        "--device",
+        &alice.device_id.hex(),
+        "--workspace",
+        &wid.hex(),
+        &test_file.to_string_lossy(),
+        "/test.txt"
+    )
+    .stdout(predicates::str::is_empty());
+
+    // Try to import the file again
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "workspace",
+        "import",
+        "--device",
+        &alice.device_id.hex(),
+        "--workspace",
+        &wid.hex(),
+        &test_file.to_string_lossy(),
+        "/test.txt"
+    )
+    .stdout(predicates::str::is_empty());
+}
+
+async fn create_workspace(device: Arc<LocalDevice>) -> VlobID {
+    let client = start_client(device).await.unwrap();
+    let workspace_name = "new-workspace".parse::<EntryName>().unwrap();
+    let wid = client
+        .create_workspace(workspace_name.clone())
+        .await
+        .unwrap();
+    client.ensure_workspaces_bootstrapped().await.unwrap();
+    client.stop().await;
+    wid
+}
+
+async fn refresh_workspace_list(device: Arc<LocalDevice>) {
+    let client = start_client(device).await.unwrap();
+    client.list_workspaces().await;
+    client.stop().await;
 }

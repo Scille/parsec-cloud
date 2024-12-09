@@ -4,7 +4,7 @@ use std::{fmt::Display, ops::Deref, path::Path, sync::Arc};
 
 use libparsec::{
     internal::{Client, EventBus},
-    list_available_devices, AuthenticatedCmds, AvailableDevice, ClientConfig, DeviceAccessStrategy,
+    list_available_devices, AuthenticatedCmds, AvailableDevice, DeviceAccessStrategy,
     DeviceFileType, DeviceLabel, HumanHandle, LocalDevice, Password, ProxyConfig, SASCode,
     UserProfile,
 };
@@ -271,8 +271,21 @@ pub async fn load_client(
     Ok(client)
 }
 
+pub async fn load_client_with_config(
+    config_dir: &Path,
+    device: Option<String>,
+    password_stdin: bool,
+    config: libparsec_client::ClientConfig,
+) -> anyhow::Result<Arc<StartedClient>> {
+    let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
+    let client = start_client_with_config(device, config).await?;
+
+    Ok(client)
+}
+
 pub struct StartedClient {
-    client: Arc<Client>,
+    pub client: Arc<Client>,
+    pub event_bus: EventBus,
     _device_in_use_guard: InUseDeviceLockGuard,
 }
 
@@ -285,14 +298,23 @@ impl Deref for StartedClient {
 }
 
 pub async fn start_client(device: Arc<LocalDevice>) -> anyhow::Result<Arc<StartedClient>> {
-    let config: Arc<libparsec::internal::ClientConfig> = Arc::new(
-        ClientConfig {
-            with_monitors: false,
-            ..Default::default()
-        }
-        .into(),
-    );
+    let config = default_client_config();
 
+    start_client_with_config(device, config).await
+}
+
+pub fn default_client_config() -> libparsec_client::ClientConfig {
+    libparsec::ClientConfig {
+        with_monitors: false,
+        ..Default::default()
+    }
+    .into()
+}
+
+pub async fn start_client_with_config(
+    device: Arc<LocalDevice>,
+    config: libparsec_client::ClientConfig,
+) -> anyhow::Result<Arc<StartedClient>> {
     let device_in_use_guard = match try_lock_device_for_use(&config.config_dir, device.device_id) {
         Ok(device_in_use_guard) => device_in_use_guard,
         Err(TryLockDeviceForUseError::AlreadyInUse) => {
@@ -306,10 +328,12 @@ pub async fn start_client(device: Arc<LocalDevice>) -> anyhow::Result<Arc<Starte
         Err(TryLockDeviceForUseError::Internal(err)) => return Err(err),
     };
 
-    let client = Client::start(config, EventBus::default(), device).await?;
+    let event_bus = EventBus::default();
+    let client = Client::start(Arc::new(config), event_bus.clone(), device).await?;
 
     Ok(Arc::new(StartedClient {
         client,
+        event_bus,
         _device_in_use_guard: device_in_use_guard,
     }))
 }

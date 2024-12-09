@@ -5,12 +5,13 @@
 /// the callback takes (args: Args, client: &StartedClient) as arguments and returns anyhow::Result<()>
 #[macro_export]
 macro_rules! build_main_with_client {
-    ($fn_name:ident, $callback:expr) => {
+    ($fn_name:ident, $callback:expr, $config:expr) => {
         pub async fn $fn_name(args: Args) -> anyhow::Result<()> {
-            let client = $crate::utils::load_client(
+            let client = $crate::utils::load_client_with_config(
                 &args.config_dir,
                 args.device.clone(),
                 args.password_stdin,
+                $config,
             )
             .await?;
 
@@ -20,6 +21,14 @@ macro_rules! build_main_with_client {
 
             res
         }
+    };
+
+    ($fn_name:ident, $callback:expr) => {
+        $crate::build_main_with_client!(
+            $fn_name,
+            $callback,
+            $crate::utils::default_client_config()
+        );
     };
 }
 
