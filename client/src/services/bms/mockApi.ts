@@ -11,6 +11,7 @@ import {
   CustomOrderStatus,
   DataType,
   InvoiceStatus,
+  OrganizationQueryData,
 } from '@/services/bms/types';
 import { DateTime } from 'luxon';
 
@@ -108,7 +109,34 @@ export const MockedBmsApi = {
       },
     };
   }),
-  getOrganizationStats: createMockFunction('getOrganizationStats'),
+  getOrganizationStats: createMockFunction('getOrganizationStats', async (_token: AuthenticationToken, _query: OrganizationQueryData) => {
+    return {
+      status: 200,
+      isError: false,
+      data: {
+        type: DataType.OrganizationStats,
+        dataSize: 4200000000,
+        metadataSize: 42,
+        users: 42,
+        activeUsers: 10,
+        adminUsersDetail: {
+          active: 2,
+          revoked: 2,
+        },
+        standardUsersDetail: {
+          active: 1,
+          revoked: 6,
+        },
+        outsiderUsersDetail: {
+          active: 1010,
+          revoked: 3,
+        },
+        freeSliceSize: 42,
+        payingSliceSize: 42,
+        status: 'ok',
+      },
+    };
+  }),
   getOrganizationStatus: createMockFunction('getOrganizationStatus'),
   getInvoices: createMockFunction('getInvoices'),
   refreshToken: createMockFunction('refreshToken'),
@@ -155,11 +183,11 @@ export const MockedBmsApi = {
           amountWithTaxes: 21.0,
         },
         outsiders: {
-          quantityOrdered: 0,
+          quantityOrdered: 1000,
           amountWithTaxes: 0.0,
         },
         storage: {
-          quantityOrdered: 10,
+          quantityOrdered: 1,
           amountWithTaxes: 22.0,
         },
       },
