@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { InvitationStatus, UserProfile, WorkspaceRole } from '@/parsec';
+import { CustomOrderStatus } from '@/services/bms';
 import { Locale, Translatable } from 'megashark-lib';
 
 export function getProfileTranslationKey(profile: UserProfile): Translatable {
@@ -50,6 +51,46 @@ export function getWorkspaceRoleTranslationKey(role: WorkspaceRole | null): Work
         description: 'workspaceRoles.owner.description',
       };
     }
+  }
+}
+
+interface CustomOrderStatusTranslations {
+  title: Translatable;
+  description?: Translatable;
+}
+
+export function getCustomOrderStatusTranslationKey(status: CustomOrderStatus | undefined): CustomOrderStatusTranslations {
+  switch (status) {
+    case undefined: {
+      return {
+        title: 'clientArea.dashboard.processing.error.title',
+      };
+    }
+    case CustomOrderStatus.NothingLinked:
+      return {
+        title: 'clientArea.dashboard.processing.requestSent.title',
+        description: 'clientArea.dashboard.processing.requestSent.description',
+      };
+    case CustomOrderStatus.EstimateLinked:
+      return {
+        title: 'clientArea.dashboard.processing.estimateLinked.title',
+        description: 'clientArea.dashboard.processing.estimateLinked.description',
+      };
+    case CustomOrderStatus.InvoiceToBePaid:
+      return {
+        title: 'clientArea.dashboard.processing.invoiceToBePaid.title',
+        description: 'clientArea.dashboard.processing.invoiceToBePaid.description',
+      };
+    case CustomOrderStatus.InvoicePaid:
+      return {
+        title: 'clientArea.dashboard.processing.organizationAvailable.title',
+        description: 'clientArea.dashboard.processing.organizationAvailable.description',
+      };
+    default:
+      return {
+        title: 'clientArea.dashboard.processing.error.title',
+        description: 'clientArea.dashboard.processing.error.description',
+      };
   }
 }
 

@@ -1623,7 +1623,28 @@
                 "description": "Vous pouvez à tout moment changer votre carte bancaire.",
                 "update": "Modifier"
             },
-            "processing": "Votre commande est en cours de traitement."
+            "processing": {
+                "requestSent": {
+                    "title": "Demande envoyée",
+                    "description": "Nous traitons votre votre demande. Nous allons vous recontacter sous 4 jours ouvrés."
+                },
+                "estimateLinked": {
+                    "title": "Devis signé",
+                    "description": "Veuillez nous retourner le devis reçu par mail, signé pour recevoir la facture."
+                },
+                "invoiceToBePaid": {
+                    "title": "Facture à régler",
+                    "description": "En attente de réception du virement bancaire pour finaliser votre commande."
+                },
+                "organizationAvailable": {
+                    "title": "Organisation disponible",
+                    "description": "Notre équipe configure votre organisation. Vous recevrez un email dès que tout sera prêt."
+                },
+                "error": {
+                    "title": "Failed to retrieve the information.",
+                    "description": "An error occurred while processing your order. Please contact us."
+                }
+            }
         },
         "billingDetailsPage": {
             "placeholders": {
