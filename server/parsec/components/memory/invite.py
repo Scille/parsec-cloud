@@ -34,6 +34,7 @@ from parsec.components.invite import (
     InviteNewForDeviceBadOutcome,
     InviteNewForShamirBadOutcome,
     InviteNewForUserBadOutcome,
+    InviteShamirRecoveryRevealBadOutcome,
     NotReady,
     SendEmailBadOutcome,
     ShamirRecoveryInvitation,
@@ -97,6 +98,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                 user_id=user_id,
                 human_handle=org.users[user_id].cooked.human_handle,
                 shares=shares,
+                revoked_on=org.users[user_id].revoked_on,
             )
             for user_id, shares in par_recipient_shares.items()
         ]
@@ -567,6 +569,40 @@ class MemoryInviteComponent(BaseInviteComponent):
                 assert False, unknown
 
     @override
+    async def shamir_recovery_reveal(
+        self,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        reveal_token: InvitationToken,
+    ) -> bytes | InviteShamirRecoveryRevealBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            invitation = org.invitations[token]
+        except KeyError:
+            return InviteShamirRecoveryRevealBadOutcome.INVITATION_NOT_FOUND
+        if invitation.is_deleted:
+            return InviteShamirRecoveryRevealBadOutcome.INVITATION_DELETED
+
+        if invitation.claimer_user_id is None:
+            return InviteShamirRecoveryRevealBadOutcome.DATA_NOT_FOUND
+
+        shamir_recoveries = org.shamir_recoveries.get(invitation.claimer_user_id, [])
+        if not shamir_recoveries:
+            return InviteShamirRecoveryRevealBadOutcome.DATA_NOT_FOUND
+
+        *_, shamir_recovery = shamir_recoveries
+        if shamir_recovery.reveal_token != reveal_token:
+            return InviteShamirRecoveryRevealBadOutcome.DATA_NOT_FOUND
+
+        return shamir_recovery.ciphered_data
+
+    @override
     async def test_dump_all_invitations(
         self, organization_id: OrganizationID
     ) -> dict[UserID, list[Invitation]]:
@@ -617,13 +653,22 @@ class MemoryInviteComponent(BaseInviteComponent):
 
     # New invite transport API
 
-    def is_greeter_allowed(self, invitation: MemoryInvitation, greeter: MemoryUser) -> bool:
+    def is_greeter_allowed(
+        self, org: MemoryOrganization, invitation: MemoryInvitation, greeter: MemoryUser
+    ) -> bool:
         if invitation.type == InvitationType.DEVICE:
             return invitation.created_by_user_id == greeter.cooked.user_id
         elif invitation.type == InvitationType.USER:
             return greeter.current_profile == UserProfile.ADMIN
+        elif invitation.type == InvitationType.SHAMIR_RECOVERY:
+            assert invitation.claimer_user_id is not None
+            shamir_recoveries = org.shamir_recoveries.get(invitation.claimer_user_id)
+            if not shamir_recoveries:
+                return False
+            *_, shamir_recovery = shamir_recoveries
+            return shamir_recovery.shares.get(greeter.cooked.user_id) is not None
         else:
-            raise NotImplementedError
+            assert False, invitation.type
 
     @override
     async def greeter_start_greeting_attempt(
@@ -660,7 +705,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         if invitation.is_cancelled:
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
-        if not self.is_greeter_allowed(invitation, greeter_user):
+        if not self.is_greeter_allowed(org, invitation, greeter_user):
             return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
 
         greeting_session = invitation.get_greeting_session(greeter)
@@ -699,7 +744,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         if invitation.is_cancelled:
             return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
-        if not self.is_greeter_allowed(invitation, greeter_user):
+        if not self.is_greeter_allowed(org, invitation, greeter_user):
             return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED
 
         greeting_session = invitation.get_greeting_session(greeter)
@@ -746,7 +791,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         if invitation.is_cancelled:
             return InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
-        if not self.is_greeter_allowed(invitation, greeter_user):
+        if not self.is_greeter_allowed(org, invitation, greeter_user):
             return InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
 
         if attempt.cancelled_reason is not None:
@@ -789,7 +834,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         if invitation.is_cancelled:
             return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
-        if not self.is_greeter_allowed(invitation, greeter_user):
+        if not self.is_greeter_allowed(org, invitation, greeter_user):
             return InviteClaimerCancelGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED
 
         if attempt.cancelled_reason is not None:
@@ -840,7 +885,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         if invitation.is_cancelled:
             return InviteGreeterStepBadOutcome.INVITATION_CANCELLED
 
-        if not self.is_greeter_allowed(invitation, greeter_user):
+        if not self.is_greeter_allowed(org, invitation, greeter_user):
             return InviteGreeterStepBadOutcome.AUTHOR_NOT_ALLOWED
 
         if attempt.cancelled_reason is not None:
@@ -892,7 +937,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         if invitation.is_cancelled:
             return InviteClaimerStepBadOutcome.INVITATION_CANCELLED
 
-        if not self.is_greeter_allowed(invitation, greeter_user):
+        if not self.is_greeter_allowed(org, invitation, greeter_user):
             return InviteClaimerStepBadOutcome.GREETER_NOT_ALLOWED
 
         if attempt.cancelled_reason is not None:
@@ -948,7 +993,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteCompleteBadOutcome.INVITATION_ALREADY_COMPLETED
 
         # Only the greeter or the claimer can complete the invitation
-        if not self.is_greeter_allowed(invitation, author_user):
+        if not self.is_greeter_allowed(org, invitation, author_user):
             if not invitation.claimer_email == author_user.cooked.human_handle.email:
                 return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
 

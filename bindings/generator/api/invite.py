@@ -154,7 +154,7 @@ class ClaimInProgressError(ErrorVariant):
         pass
 
 
-class UserOrDeviceClaimInitialInfo(Variant):
+class AnyClaimRetrievedInfo(Variant):
     class User:
         handle: Handle
         claimer_email: str
@@ -171,7 +171,7 @@ async def claimer_retrieve_info(
     config: ClientConfig,
     on_event_callback: OnClientEventCallback,
     addr: ParsecInvitationAddr,
-) -> Result[UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError]:
+) -> Result[AnyClaimRetrievedInfo, ClaimerRetrieveInfoError]:
     raise NotImplementedError
 
 

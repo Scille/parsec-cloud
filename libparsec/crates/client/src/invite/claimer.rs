@@ -1,11 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::collections::HashMap;
+use std::num::NonZeroU8;
 use std::{path::PathBuf, sync::Arc};
 
 use invited_cmds::latest::invite_claimer_step;
+use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
+use libparsec_protocol::authenticated_cmds;
+use libparsec_protocol::invited_cmds::v4::invite_info::ShamirRecoveryRecipient;
 use libparsec_types::prelude::*;
 
+use crate::client::{register_new_device, RegisterNewDeviceError};
 use crate::invite::common::{Throttle, WAIT_PEER_MAX_ATTEMPTS};
 use crate::ClientConfig;
 
@@ -207,9 +213,10 @@ async fn run_claimer_step_until_ready(
 }
 
 #[derive(Debug)]
-pub enum UserOrDeviceClaimInitialCtx {
+pub enum AnyClaimRetrievedInfoCtx {
     User(UserClaimInitialCtx),
     Device(DeviceClaimInitialCtx),
+    ShamirRecovery(ShamirRecoveryClaimPickRecipientCtx),
 }
 
 /// Retrieve information for the corresponding Parsec invitation address.
@@ -221,7 +228,7 @@ pub async fn claimer_retrieve_info(
     config: Arc<ClientConfig>,
     addr: ParsecInvitationAddr,
     time_provider: Option<TimeProvider>,
-) -> Result<UserOrDeviceClaimInitialCtx, ClaimerRetrieveInfoError> {
+) -> Result<AnyClaimRetrievedInfoCtx, ClaimerRetrieveInfoError> {
     use invited_cmds::latest::invite_info::{InvitationType, Rep, Req};
     let time_provider = time_provider.unwrap_or_default();
 
@@ -238,7 +245,7 @@ pub async fn claimer_retrieve_info(
                 claimer_email,
                 greeter_user_id,
                 greeter_human_handle,
-            } => Ok(UserOrDeviceClaimInitialCtx::User(UserClaimInitialCtx::new(
+            } => Ok(AnyClaimRetrievedInfoCtx::User(UserClaimInitialCtx::new(
                 config,
                 cmds,
                 claimer_email,
@@ -249,7 +256,7 @@ pub async fn claimer_retrieve_info(
             InvitationType::Device {
                 greeter_user_id,
                 greeter_human_handle,
-            } => Ok(UserOrDeviceClaimInitialCtx::Device(
+            } => Ok(AnyClaimRetrievedInfoCtx::Device(
                 DeviceClaimInitialCtx::new(
                     config,
                     cmds,
@@ -263,17 +270,301 @@ pub async fn claimer_retrieve_info(
                 claimer_human_handle,
                 recipients,
                 threshold,
-            } => {
-                // TODO: https://github.com/Scille/parsec-cloud/issues/8841
-                Err(anyhow::anyhow!(
-                    "Shamir recovery greeting not implemented {claimer_user_id:?} {claimer_human_handle:?} {recipients:?} {threshold}"
-                )
-                .into())
-            }
+            } => Ok(AnyClaimRetrievedInfoCtx::ShamirRecovery(
+                ShamirRecoveryClaimPickRecipientCtx {
+                    config,
+                    cmds,
+                    claimer_user_id,
+                    claimer_human_handle,
+                    recipients,
+                    threshold,
+                    shares: HashMap::new(),
+                    time_provider,
+                },
+            )),
         },
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
+    }
+}
+
+// ShamirRecoveryClaimPickRecipientCtx
+
+#[derive(Debug, thiserror::Error)]
+pub enum ShamirRecoveryClaimPickRecipientError {
+    #[error("Recipient not found")]
+    RecipientNotFound,
+    #[error("Recipient already picked")]
+    RecipientAlreadyPicked,
+}
+
+#[derive(Debug)]
+pub enum ShamirRecoveryClaimMaybeRecoverDeviceCtx {
+    RecoverDevice(ShamirRecoveryClaimRecoverDeviceCtx),
+    PickRecipient(ShamirRecoveryClaimPickRecipientCtx),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ShamirRecoveryClaimAddShareError {
+    #[error(transparent)]
+    CorruptedSecret(DataError),
+}
+
+#[derive(Debug)]
+pub struct ShamirRecoveryClaimPickRecipientCtx {
+    config: Arc<ClientConfig>,
+    cmds: Arc<InvitedCmds>,
+    claimer_user_id: UserID,
+    claimer_human_handle: HumanHandle,
+    recipients: Vec<ShamirRecoveryRecipient>,
+    threshold: NonZeroU8,
+    shares: HashMap<UserID, Vec<ShamirShare>>,
+    time_provider: TimeProvider,
+}
+
+impl ShamirRecoveryClaimPickRecipientCtx {
+    pub fn recipients(&self) -> &[ShamirRecoveryRecipient] {
+        &self.recipients
+    }
+
+    pub fn threshold(&self) -> NonZeroU8 {
+        self.threshold
+    }
+
+    pub fn claimer_user_id(&self) -> &UserID {
+        &self.claimer_user_id
+    }
+
+    pub fn claimer_human_handle(&self) -> &HumanHandle {
+        &self.claimer_human_handle
+    }
+
+    pub fn is_recoverable(&self) -> bool {
+        self.recipients
+            .iter()
+            .filter(|r| r.revoked_on.is_none())
+            .map(|r| r.shares.get())
+            .sum::<u8>()
+            >= self.threshold.get()
+    }
+
+    pub fn shares(&self) -> HashMap<UserID, NonZeroU8> {
+        self.shares
+            .iter()
+            .filter_map(|(k, v)| NonZeroU8::try_from(v.len() as u8).ok().map(|x| (*k, x)))
+            .collect()
+    }
+
+    pub fn pick_recipient(
+        &self,
+        recipient_user_id: UserID,
+    ) -> Result<ShamirRecoveryClaimInitialCtx, ShamirRecoveryClaimPickRecipientError> {
+        let recipient = self
+            .recipients
+            .iter()
+            .find(|r| r.user_id == recipient_user_id)
+            .ok_or(ShamirRecoveryClaimPickRecipientError::RecipientNotFound)?;
+
+        let greeter_user_id = recipient.user_id;
+        let greeter_human_handle = recipient.human_handle.clone();
+
+        if self.shares.contains_key(&greeter_user_id) {
+            return Err(ShamirRecoveryClaimPickRecipientError::RecipientAlreadyPicked);
+        }
+
+        Ok(ShamirRecoveryClaimInitialCtx::new(
+            self.config.clone(),
+            self.cmds.clone(),
+            greeter_user_id,
+            greeter_human_handle,
+            self.time_provider.clone(),
+        ))
+    }
+
+    pub fn add_share(
+        self,
+        share_ctx: ShamirRecoveryClaimShare,
+    ) -> Result<ShamirRecoveryClaimMaybeRecoverDeviceCtx, ShamirRecoveryClaimAddShareError> {
+        let mut shares = self.shares;
+        // Note that we do not check if the share is already present
+        // This is to avoid handling an extra error that has no real value,
+        // since adding shares can be seen as an idempotent operation.
+        shares.insert(share_ctx.recipient, share_ctx.weighted_share);
+        if shares
+            .values()
+            .map(|shares| shares.len() as u64)
+            .sum::<u64>()
+            >= self.threshold.get() as u64
+        {
+            let secret = ShamirRecoverySecret::decrypt_and_load_from_shares(
+                self.threshold,
+                shares.values().flatten(),
+            )
+            .map_err(ShamirRecoveryClaimAddShareError::CorruptedSecret)?;
+            Ok(ShamirRecoveryClaimMaybeRecoverDeviceCtx::RecoverDevice(
+                ShamirRecoveryClaimRecoverDeviceCtx {
+                    config: self.config,
+                    cmds: self.cmds,
+                    claimer_user_id: self.claimer_user_id,
+                    claimer_human_handle: self.claimer_human_handle,
+                    secret,
+                    time_provider: self.time_provider,
+                },
+            ))
+        } else {
+            Ok(ShamirRecoveryClaimMaybeRecoverDeviceCtx::PickRecipient(
+                Self { shares, ..self },
+            ))
+        }
+    }
+}
+
+// ShamirRecoveryClaimRecoverDeviceCtx
+
+#[derive(Debug, thiserror::Error)]
+pub enum ShamirRecoveryClaimRecoverDeviceError {
+    #[error("Organization has expired")]
+    OrganizationExpired,
+    #[error("Organization or invitation not found")]
+    NotFound,
+    #[error("Invitation already used")]
+    AlreadyUsed,
+    #[error("Ciphered data not found")]
+    CipheredDataNotFound,
+    #[error("Corrupted ciphered data: {0}")]
+    CorruptedCipheredData(&'static str),
+    #[error("Error while registering new device: {0}")]
+    RegisterNewDeviceError(RegisterNewDeviceError),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+#[derive(Debug)]
+pub enum ShamirRecoveryClaimMaybeFinalizeCtx {
+    Offline(ShamirRecoveryClaimRecoverDeviceCtx),
+    Finalize(ShamirRecoveryClaimFinalizeCtx),
+}
+
+#[derive(Debug)]
+#[allow(dead_code)]
+pub struct ShamirRecoveryClaimRecoverDeviceCtx {
+    config: Arc<ClientConfig>,
+    cmds: Arc<InvitedCmds>,
+    claimer_user_id: UserID,
+    claimer_human_handle: HumanHandle,
+    secret: ShamirRecoverySecret,
+    time_provider: TimeProvider,
+}
+
+impl ShamirRecoveryClaimRecoverDeviceCtx {
+    pub fn claimer_user_id(&self) -> &UserID {
+        &self.claimer_user_id
+    }
+
+    pub fn claimer_human_handle(&self) -> &HumanHandle {
+        &self.claimer_human_handle
+    }
+
+    pub async fn recover_device(
+        self,
+        requested_device_label: DeviceLabel,
+    ) -> Result<ShamirRecoveryClaimMaybeFinalizeCtx, ShamirRecoveryClaimRecoverDeviceError> {
+        let ciphered_data = {
+            use invited_cmds::latest::invite_shamir_recovery_reveal::{Rep, Req};
+
+            let rep = self
+                .cmds
+                .send(Req {
+                    reveal_token: self.secret.reveal_token,
+                })
+                .await;
+
+            match rep {
+                // Results
+                // Important note: a `NoResponse`` connection error leads to a result containing the current ctx
+                // This allows the caller to retry the operation without losing the current state.
+                // On the contrary, other errors are deemed irrecoverable and are turned into a specific error type.
+                Ok(Rep::Ok { ciphered_data }) => Ok(ciphered_data),
+                Err(ConnectionError::NoResponse(_)) => {
+                    return Ok(ShamirRecoveryClaimMaybeFinalizeCtx::Offline(self))
+                }
+                // Errors
+                Ok(Rep::NotFound) => {
+                    Err(ShamirRecoveryClaimRecoverDeviceError::CipheredDataNotFound)
+                }
+                Ok(Rep::UnknownStatus { .. }) => {
+                    Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+                }
+                Err(ConnectionError::InvitationAlreadyUsedOrDeleted) => {
+                    Err(ShamirRecoveryClaimRecoverDeviceError::AlreadyUsed)
+                }
+                Err(ConnectionError::ExpiredOrganization) => {
+                    Err(ShamirRecoveryClaimRecoverDeviceError::OrganizationExpired)
+                }
+                Err(ConnectionError::InvitationNotFound) => {
+                    Err(ShamirRecoveryClaimRecoverDeviceError::NotFound)
+                }
+                Err(err) => Err(ShamirRecoveryClaimRecoverDeviceError::Internal(err.into())),
+            }?
+        };
+
+        let mut recovery_device =
+            LocalDevice::decrypt_and_load(&ciphered_data, &self.secret.data_key)
+                .map_err(ShamirRecoveryClaimRecoverDeviceError::CorruptedCipheredData)?;
+
+        // When using the tested, the recovery device organization address is set to a placeholder address.
+        // This is because the organization address is not known yet when the testbed is initialized.
+        // In this case, we replace the placeholder address with the actual organization address.
+        if cfg!(test)
+            && recovery_device
+                .organization_addr
+                .to_string()
+                .starts_with("parsec3://parsec.invalid/PlaceholderOrg")
+        {
+            recovery_device.organization_addr = ParsecOrganizationAddr::new(
+                self.cmds.addr(),
+                self.cmds.addr().organization_id().clone(),
+                recovery_device.organization_addr.root_verify_key().clone(),
+            );
+        }
+
+        let recovery_device = Arc::new(recovery_device);
+
+        let new_local_device =
+            LocalDevice::from_existing_device_for_user(&recovery_device, requested_device_label);
+
+        let recovery_cmds = AuthenticatedCmds::new(
+            &self.config.config_dir,
+            recovery_device.clone(),
+            self.config.proxy.clone(),
+        )?;
+
+        match register_new_device(
+            &recovery_cmds,
+            &new_local_device,
+            DevicePurpose::Standard,
+            &recovery_device,
+        )
+        .await
+        {
+            // Success
+            Ok(_) => Ok(()),
+            // Offline, let the caller retry the operation later
+            Err(RegisterNewDeviceError::Offline) => {
+                return Ok(ShamirRecoveryClaimMaybeFinalizeCtx::Offline(self))
+            }
+            // Unrecoverable error, propagate it
+            Err(e) => Err(ShamirRecoveryClaimRecoverDeviceError::RegisterNewDeviceError(e)),
+        }?;
+
+        Ok(ShamirRecoveryClaimMaybeFinalizeCtx::Finalize(
+            ShamirRecoveryClaimFinalizeCtx {
+                config: self.config,
+                new_local_device: Arc::new(new_local_device),
+                token: self.cmds.addr().token(),
+            },
+        ))
     }
 }
 
@@ -336,6 +627,7 @@ impl BaseClaimInitialCtx {
             return Ok(BaseClaimInProgress1Ctx {
                 config: self.config,
                 cmds: self.cmds,
+                greeter_user_id: self.greeter_user_id,
                 greeting_attempt,
                 greeter_sas,
                 claimer_sas,
@@ -532,9 +824,48 @@ impl DeviceClaimInitialCtx {
 }
 
 #[derive(Debug)]
+pub struct ShamirRecoveryClaimInitialCtx(BaseClaimInitialCtx);
+
+impl ShamirRecoveryClaimInitialCtx {
+    pub fn new(
+        config: Arc<ClientConfig>,
+        cmds: Arc<InvitedCmds>,
+        greeter_user_id: UserID,
+        greeter_human_handle: HumanHandle,
+        time_provider: TimeProvider,
+    ) -> Self {
+        Self(BaseClaimInitialCtx {
+            config,
+            cmds,
+            greeter_user_id,
+            greeter_human_handle,
+            time_provider,
+        })
+    }
+
+    pub fn greeter_user_id(&self) -> &UserID {
+        &self.0.greeter_user_id
+    }
+
+    pub fn greeter_human_handle(&self) -> &HumanHandle {
+        &self.0.greeter_human_handle
+    }
+
+    pub async fn do_wait_peer(
+        self,
+    ) -> Result<ShamirRecoveryClaimInProgress1Ctx, ClaimInProgressError> {
+        self.0
+            .do_wait_peer()
+            .await
+            .map(ShamirRecoveryClaimInProgress1Ctx)
+    }
+}
+
+#[derive(Debug)]
 struct BaseClaimInProgress1Ctx {
     config: Arc<ClientConfig>,
     cmds: Arc<InvitedCmds>,
+    greeter_user_id: UserID,
     greeting_attempt: GreetingAttemptID,
     greeter_sas: SASCode,
     claimer_sas: SASCode,
@@ -572,6 +903,7 @@ impl BaseClaimInProgress1Ctx {
         Ok(BaseClaimInProgress2Ctx {
             config: self.config,
             cmds: self.cmds,
+            greeter_user_id: self.greeter_user_id,
             greeting_attempt: self.greeting_attempt,
             claimer_sas: self.claimer_sas,
             shared_secret_key: self.shared_secret_key,
@@ -640,9 +972,43 @@ impl DeviceClaimInProgress1Ctx {
 }
 
 #[derive(Debug)]
+pub struct ShamirRecoveryClaimInProgress1Ctx(BaseClaimInProgress1Ctx);
+
+impl ShamirRecoveryClaimInProgress1Ctx {
+    pub fn greeter_sas(&self) -> &SASCode {
+        &self.0.greeter_sas
+    }
+
+    pub fn generate_greeter_sas_choices(&self, size: usize) -> Vec<SASCode> {
+        self.0.generate_greeter_sas_choices(size)
+    }
+
+    pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
+        ClaimCancellerCtx {
+            greeting_attempt: self.0.greeting_attempt,
+            cmds: self.0.cmds.clone(),
+        }
+    }
+
+    pub async fn do_deny_trust(self) -> Result<(), ClaimInProgressError> {
+        self.0.do_deny_trust().await
+    }
+
+    pub async fn do_signify_trust(
+        self,
+    ) -> Result<ShamirRecoveryClaimInProgress2Ctx, ClaimInProgressError> {
+        self.0
+            .do_signify_trust()
+            .await
+            .map(ShamirRecoveryClaimInProgress2Ctx)
+    }
+}
+
+#[derive(Debug)]
 struct BaseClaimInProgress2Ctx {
     config: Arc<ClientConfig>,
     cmds: Arc<InvitedCmds>,
+    greeter_user_id: UserID,
     greeting_attempt: GreetingAttemptID,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
@@ -666,6 +1032,7 @@ impl BaseClaimInProgress2Ctx {
         Ok(BaseClaimInProgress3Ctx {
             config: self.config,
             cmds: self.cmds,
+            greeter_user_id: self.greeter_user_id,
             greeting_attempt: self.greeting_attempt,
             shared_secret_key: self.shared_secret_key,
             time_provider: self.time_provider,
@@ -722,9 +1089,35 @@ impl DeviceClaimInProgress2Ctx {
 }
 
 #[derive(Debug)]
+pub struct ShamirRecoveryClaimInProgress2Ctx(BaseClaimInProgress2Ctx);
+
+impl ShamirRecoveryClaimInProgress2Ctx {
+    pub fn claimer_sas(&self) -> &SASCode {
+        &self.0.claimer_sas
+    }
+
+    pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
+        ClaimCancellerCtx {
+            greeting_attempt: self.0.greeting_attempt,
+            cmds: self.0.cmds.clone(),
+        }
+    }
+
+    pub async fn do_wait_peer_trust(
+        self,
+    ) -> Result<ShamirRecoveryClaimInProgress3Ctx, ClaimInProgressError> {
+        self.0
+            .do_wait_peer_trust()
+            .await
+            .map(ShamirRecoveryClaimInProgress3Ctx)
+    }
+}
+
+#[derive(Debug)]
 struct BaseClaimInProgress3Ctx {
     config: Arc<ClientConfig>,
     cmds: Arc<InvitedCmds>,
+    greeter_user_id: UserID,
     greeting_attempt: GreetingAttemptID,
     shared_secret_key: SecretKey,
     time_provider: TimeProvider,
@@ -983,6 +1376,65 @@ impl DeviceClaimInProgress3Ctx {
 }
 
 #[derive(Debug)]
+pub struct ShamirRecoveryClaimInProgress3Ctx(BaseClaimInProgress3Ctx);
+
+impl ShamirRecoveryClaimInProgress3Ctx {
+    pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
+        ClaimCancellerCtx {
+            greeting_attempt: self.0.greeting_attempt,
+            cmds: self.0.cmds.clone(),
+        }
+    }
+
+    pub async fn do_recover_share(self) -> Result<ShamirRecoveryClaimShare, ClaimInProgressError> {
+        let payload = InviteShamirRecoveryData
+            .dump_and_encrypt(&self.0.shared_secret_key)
+            .into();
+
+        let payload = self.0.do_claim(payload).await?;
+
+        let InviteShamirRecoveryConfirmation { weighted_share } =
+            match InviteShamirRecoveryConfirmation::decrypt_and_load(
+                &payload,
+                &self.0.shared_secret_key,
+            ) {
+                Ok(data) => data,
+                Err(err) => {
+                    let reason = match err {
+                        DataError::Decryption => {
+                            CancelledGreetingAttemptReason::UndecipherablePayload
+                        }
+                        DataError::BadSerialization { .. } => {
+                            CancelledGreetingAttemptReason::UndeserializablePayload
+                        }
+                        _ => CancelledGreetingAttemptReason::InconsistentPayload,
+                    };
+                    cancel_greeting_attempt_and_warn_on_error(
+                        &self.0.cmds,
+                        self.0.greeting_attempt,
+                        reason,
+                    )
+                    .await;
+                    return Err(ClaimInProgressError::CorruptedConfirmation(err));
+                }
+            };
+
+        self.0.do_acknowledge().await?;
+
+        Ok(ShamirRecoveryClaimShare {
+            recipient: self.0.greeter_user_id,
+            weighted_share,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct ShamirRecoveryClaimShare {
+    recipient: UserID,
+    weighted_share: Vec<ShamirShare>,
+}
+
+#[derive(Debug)]
 pub struct UserClaimFinalizeCtx {
     config: Arc<ClientConfig>,
     pub new_local_device: Arc<LocalDevice>,
@@ -1044,5 +1496,70 @@ impl DeviceClaimFinalizeCtx {
         )
         .await
         .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))
+    }
+}
+
+#[derive(Debug)]
+pub struct ShamirRecoveryClaimFinalizeCtx {
+    pub config: Arc<ClientConfig>,
+    pub new_local_device: Arc<LocalDevice>,
+    pub token: InvitationToken,
+}
+
+impl ShamirRecoveryClaimFinalizeCtx {
+    pub fn get_default_key_file(&self) -> PathBuf {
+        libparsec_platform_device_loader::get_default_key_file(
+            &self.config.config_dir,
+            &self.new_local_device.device_id,
+        )
+    }
+
+    pub async fn save_local_device(
+        self,
+        access: &DeviceAccessStrategy,
+    ) -> Result<AvailableDevice, anyhow::Error> {
+        let available_device = libparsec_platform_device_loader::save_device(
+            &self.config.config_dir,
+            access,
+            &self.new_local_device,
+        )
+        .await
+        .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))?;
+
+        // After the device has been successfully saved, we still have to mark the invitation as completed.
+        // However, we don't want to return an error if this part fails, as the user cannot really do anything
+        // about it. Instead, we log the error and return the device.
+        {
+            use authenticated_cmds::latest::invite_complete::{Rep, Req};
+
+            let cmds = match AuthenticatedCmds::new(
+                &self.config.config_dir,
+                self.new_local_device.clone(),
+                self.config.proxy.clone(),
+            ) {
+                Ok(cmds) => cmds,
+                Err(e) => {
+                    log::error!("Error while creating authenticated commands: {:?}", e);
+                    return Ok(available_device);
+                }
+            };
+
+            match cmds.send(Req { token: self.token }).await {
+                Ok(Rep::Ok) => (),
+                Ok(rep) => {
+                    log::error!(
+                        "Unexpected reply while marking the invitation as completed: {:?}",
+                        rep
+                    );
+                    return Ok(available_device);
+                }
+                Err(e) => {
+                    log::error!("Error while marking the invitation as completed: {:?}", e);
+                    return Ok(available_device);
+                }
+            };
+        };
+
+        Ok(available_device)
     }
 }
