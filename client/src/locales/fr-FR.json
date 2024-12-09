@@ -1531,17 +1531,17 @@
             "endingDate": "Date de fin",
             "members": {
                 "title": "Licence membre | Licences membres",
-                "admin": "Membre administrateur | Membres administrateur",
+                "admin": "Membre administrateur | Membres administrateurs",
                 "adminDescription": "Tous les accès",
                 "standard": "Membre standard | Membres standards",
-                "standardDescription": "Utilisateur classique",
                 "external": "Membre externe | Membres externes",
                 "externalDescription": "Accès limité"
             },
             "storage": {
                 "title": "Licence stockage",
                 "storage": "Stockage",
-                "stack": "par tranche de 100 Go"
+                "stack": "tranche de 100 Go",
+                "or": "soit"
             },
             "download": "Télécharger"
         },
@@ -1641,7 +1641,7 @@
         "contracts": {
             "loading": "Votre contrat arrive...",
             "title": "Contrat n°{number}",
-            "previewOrganization": "Aperçu de votre organisation",
+            "previewOrganization": "Utilisation de votre organisation",
             "noContract": "Vous n'avez pas encore de contrat.",
             "duration": "Durée",
             "from": "Depuis",
@@ -1661,13 +1661,15 @@
                 "fullAccess": "Tous les accès",
                 "allFeaturesAccess": "Accès à toutes les fonctionnalités",
                 "rightLimited": "Droits limités",
-                "onTotal": "/ {count} membres"
+                "onTotal": "/ {count} membres",
+                "errorExceed": "Vous dépassez le nombre de membres prévu dans votre contrat. Pensez à supprimer des membres."
             },
             "storage": {
                 "title": "Stockage",
                 "stack": "par tranche de 100 Go",
                 "used": "{percentage}% utilisés",
-                "onTotal": "/ {count}"
+                "onTotal": "/ {count}",
+                "errorExceed": "Vous dépassez le stockage prévu dans votre contract. Pensez à supprimer des fichiers."
             },
             "invoice": {
                 "title": "Facture",
