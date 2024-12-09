@@ -16,7 +16,26 @@
       </div>
     </template>
     <template #controls>
-      <file-viewer-action-bar :actions="actions" />
+      <file-controls>
+        <file-controls-button
+          :icon="remove"
+          @click="zoomOut"
+        />
+        <file-controls-button
+          :icon="resize"
+          @click="resetZoom"
+        />
+        <file-controls-button
+          :icon="add"
+          @click="zoomIn"
+        />
+        <file-controls-button
+          v-for="(action, key) in actions"
+          :key="key"
+          @click="action.handler"
+          :label="action.text"
+        />
+      </file-controls>
     </template>
   </file-viewer-wrapper>
 </template>
@@ -26,7 +45,7 @@ import { add, remove, resize } from 'ionicons/icons';
 import { inject, onMounted, ref, Ref, shallowRef } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { FileViewerWrapper } from '@/views/viewers';
-import { FileViewerActionBar } from '@/components/viewers';
+import { FileControls, FileControlsButton } from '@/components/viewers';
 import { I18n, MsSpinner, Translatable } from 'megashark-lib';
 import * as pdfjs from 'pdfjs-dist';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -50,11 +69,6 @@ onMounted(async () => {
   try {
     pdf.value = await pdfjs.getDocument(props.contentInfo.data).promise;
     await loadPage(1);
-    actions.value = [
-      { icon: remove, handler: zoomOut },
-      { icon: resize, handler: resetZoom },
-      { icon: add, handler: zoomIn },
-    ];
     for (let i = 1; i <= pdf.value.numPages; i++) {
       actions.value.push({ text: I18n.valueAsTranslatable(`Page ${i.toString()}`), handler: () => loadPage(i) });
     }

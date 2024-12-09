@@ -11,7 +11,14 @@
       />
     </template>
     <template #controls>
-      <file-viewer-action-bar :actions="actions" />
+      <file-controls>
+        <file-controls-button
+          v-for="(action, key) in actions"
+          :key="key"
+          @click="action.handler"
+          :label="action.text"
+        />
+      </file-controls>
     </template>
   </file-viewer-wrapper>
 </template>
@@ -20,7 +27,7 @@
 import { MsSpinner, I18n, Translatable } from 'megashark-lib';
 import { onBeforeMount, onMounted, Ref, ref } from 'vue';
 import XLSX from 'xlsx';
-import { FileViewerActionBar } from '@/components/viewers';
+import { FileControls, FileControlsButton } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 
