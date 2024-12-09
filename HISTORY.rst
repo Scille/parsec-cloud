@@ -5,6 +5,29 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.2.2-rc.0 (2024-12-09)
+-------------------------------
+
+Features
+~~~~~~~~
+
+* Allows overwriting default config & data directory during CLI command ``invite
+  claim``
+  (`#8937 <https://github.com/Scille/parsec-cloud/issues/8937>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fix infinite loop during synchronization of a workspace when importing a file
+  using the CLI command ``workspace import``
+  (`#8941 <https://github.com/Scille/parsec-cloud/issues/8941>`__)
+
+* Fix rare freeze when the folder displayed by the GUI is remotely modified.
+  (`#9002 <https://github.com/Scille/parsec-cloud/issues/9002>`__)
+
+
+
 Parsec v3.2.1 (2024-12-03)
 --------------------------
 
