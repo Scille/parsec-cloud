@@ -1351,7 +1351,7 @@
                 "invoices": "Invoices",
                 "billingMethod": "Payment method",
                 "billingDetails": "Billing details",
-                "contracts": "Contract"
+                "contract": "Contract"
             },
             "help": {
                 "title": "Do you need any help?",
@@ -1536,14 +1536,14 @@
                 "admin": "Administrator member | Administrator members",
                 "adminDescription": "Full access",
                 "standard": "Standard member | Standard members",
-                "standardDescription": "Classic use",
                 "external": "External member | External members",
                 "externalDescription": "Limited use"
             },
             "storage": {
                 "title": "License storage",
                 "storage": "Storage",
-                "stack": "per 100 GB stack"
+                "stack": "100 GB stack",
+                "or": "or"
             },
             "download": "Download"
         },
@@ -1643,7 +1643,7 @@
         "contracts": {
             "loading": "Your contract arrives",
             "title": "Contract n°{number}",
-            "previewOrganization": "Preview of your organization",
+            "previewOrganization": "Use of your organization",
             "noContract": "You don't have any contract yet",
             "duration": "Duration",
             "from": "From",
@@ -1663,13 +1663,15 @@
                 "fullAccess": "Full access",
                 "allFeaturesAccess": "Access to all features",
                 "rightLimited": "Limited rights",
-                "onTotal": "/ {count} members"
+                "onTotal": "/ {count} members",
+                "errorExceed": "You have exceeded the number of members specified in your contract. Please consider deleting members."
             },
             "storage": {
                 "title": "Storage",
                 "stack": "per 100 Go stack",
                 "used": "{percentage}% used",
-                "onTotal": "/ {count}"
+                "onTotal": "/ {count}",
+                "errorExceed": "You have exceeded the storage capacity of your contract. Remember to delete files."
             },
             "invoice": {
                 "title": "Invoices {number}",
