@@ -20,6 +20,18 @@ async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
     let mallory = env.local_device("mallory@dev1");
     let mike = env.local_device("mike@dev1");
 
+    // Revoke Mallory first
+    let alice_client = client_factory(&env.discriminant_dir, alice.clone()).await;
+    alice_client.revoke_user(mallory.user_id).await.unwrap();
+    let mallory_revoked_on = alice_client
+        .list_users(false, None, None)
+        .await
+        .unwrap()
+        .iter()
+        .find(|&u| u.id == mallory.user_id)
+        .unwrap()
+        .revoked_on;
+
     let alice_token = env
         .template
         .events
@@ -68,7 +80,7 @@ async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
                         user_id: mallory.user_id,
                         human_handle: mallory.human_handle.clone(),
                         shares: 1.try_into().unwrap(),
-                        revoked_on: None,
+                        revoked_on: mallory_revoked_on,
                     },
                     ShamirRecoveryRecipient {
                         user_id: mike.user_id,
