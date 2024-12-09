@@ -32,11 +32,11 @@ python = "~3.12.0"
 # Base requirements
 anyio = ">=3.7.1,<4.0.0"
 click = "^8.0"
-httpx = ">=0.25,<0.28"
+httpx = ">=0.25,<0.29"
 pbr = { version = ">=5.9,<7.0" }
 pydantic = "^2.7.1"
 pydantic-core = "^2.18.2"
-sentry-sdk = "2.19.0"
+sentry-sdk = "2.19.2"
 starlette = ">=0.37.2,<0.42.0"
 structlog = ">=21.5,<25.0"
 typing-extensions = "^4.11.0"
