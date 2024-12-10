@@ -26,10 +26,9 @@ async fn remove_shared_recovery_ok(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
-    .stdout(predicates::str::contains(format!(
-        "Deleted shared recovery for {}",
-        alice.user_id
-    )));
+    .stdout(predicates::str::contains(
+        "Shared recovery setup has been deleted".to_string(),
+    ));
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
