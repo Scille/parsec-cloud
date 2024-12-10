@@ -12,7 +12,8 @@ use crate::{
 
 use super::{
     cache::{
-        populate_cache_from_local_storage_or_server, PopulateCacheFromLocalStorageOrServerError,
+        populate_cache_from_local_storage, populate_cache_from_local_storage_or_server,
+        PopulateCacheFromLocalStorageError, PopulateCacheFromLocalStorageOrServerError,
     },
     per_manifest_update_lock::ManifestUpdateLockGuard,
 };
@@ -89,7 +90,10 @@ pub(super) async fn resolve_path(
 ) -> Result<(ArcLocalChildManifest, PathConfinementPoint), ResolvePathError> {
     resolve_path_maybe_lock_for_update(store, path, false)
         .await
-        .map(|(manifest, confinement_point, _)| (manifest, confinement_point))
+        .map(|(manifest, confinement_point, lock_guard)| {
+            debug_assert!(lock_guard.is_none());
+            (manifest, confinement_point)
+        })
 }
 
 async fn resolve_path_maybe_lock_for_update(
@@ -659,16 +663,38 @@ pub(crate) async fn resolve_path_for_reparenting(
     }
 }
 
-enum CacheOnlyRetrievalOutcome {
-    Done((ArcLocalChildManifest, FsPath, PathConfinementPoint)),
-    EntryNotFound,
+enum CacheOnlyPathRetrievalOutcome {
+    Done {
+        entry: RetrievePathFromIDEntry,
+        maybe_update_lock_guard: Option<ManifestUpdateLockGuard>,
+    },
     NeedPopulateCache(VlobID),
+    NeedWaitForTakenUpdateLock(EventListener),
 }
 
 fn cache_only_retrieve_path_from_id(
     cache: &mut super::CurrentViewCache,
     entry_id: VlobID,
-) -> CacheOnlyRetrievalOutcome {
+    lock_for_update: bool,
+    last_not_found_during_populate: Option<VlobID>,
+) -> CacheOnlyPathRetrievalOutcome {
+    // Note it is *vital* to return the update lock guard to the caller given
+    // it contains a lock that won't be released on drop !
+    macro_rules! maybe_take_update_lock_guard_for_entry {
+        () => {
+            if lock_for_update {
+                match cache.lock_update_manifests.take(entry_id) {
+                    ManifestUpdateLockTakeOutcome::Taken(lock) => Some(lock),
+                    ManifestUpdateLockTakeOutcome::NeedWait(need_wait) => {
+                        return CacheOnlyPathRetrievalOutcome::NeedWaitForTakenUpdateLock(need_wait)
+                    }
+                }
+            } else {
+                None
+            }
+        };
+    }
+
     // Initialize the results
     let mut parts = Vec::new();
     let mut confinement = PathConfinementPoint::NotConfined;
@@ -678,7 +704,19 @@ fn cache_only_retrieve_path_from_id(
 
     let entry_manifest = match cache.manifests.get(&entry_id) {
         Some(manifest) => manifest,
-        None => return CacheOnlyRetrievalOutcome::NeedPopulateCache(entry_id),
+        // Cache miss !
+        None => {
+            // If we already failed to populate this entry, we are done...
+            if last_not_found_during_populate == Some(entry_id) {
+                return CacheOnlyPathRetrievalOutcome::Done {
+                    entry: RetrievePathFromIDEntry::Missing,
+                    maybe_update_lock_guard: maybe_take_update_lock_guard_for_entry!(),
+                };
+            }
+
+            // ...otherwise tell the caller we need this entry to be populated !
+            return CacheOnlyPathRetrievalOutcome::NeedPopulateCache(entry_id);
+        }
     };
 
     // Initialize the loop state
@@ -690,11 +728,32 @@ fn cache_only_retrieve_path_from_id(
     while current_entry_id != root_entry_id {
         // Get the parent manifest
         let parent_manifest = match cache.manifests.get(&current_parent_id) {
+            // Happy case :)
             Some(ArcLocalChildManifest::Folder(manifest)) => manifest,
+            // A file cannot be the parent of another entry, the path is broken !
             Some(ArcLocalChildManifest::File(_)) => {
-                return CacheOnlyRetrievalOutcome::EntryNotFound
+                return CacheOnlyPathRetrievalOutcome::Done {
+                    entry: RetrievePathFromIDEntry::Unreachable {
+                        manifest: entry_manifest.to_owned(),
+                    },
+                    maybe_update_lock_guard: maybe_take_update_lock_guard_for_entry!(),
+                };
             }
-            None => return CacheOnlyRetrievalOutcome::NeedPopulateCache(current_parent_id),
+            // Cache miss !
+            None => {
+                // If we already failed to populate this parent, we are done...
+                if last_not_found_during_populate == Some(entry_id) {
+                    return CacheOnlyPathRetrievalOutcome::Done {
+                        entry: RetrievePathFromIDEntry::Unreachable {
+                            manifest: entry_manifest.to_owned(),
+                        },
+                        maybe_update_lock_guard: maybe_take_update_lock_guard_for_entry!(),
+                    };
+                }
+
+                // ...otherwise tell the caller we need this parent to be populated !
+                return CacheOnlyPathRetrievalOutcome::NeedPopulateCache(current_parent_id);
+            }
         };
 
         // Update the path result
@@ -706,8 +765,17 @@ fn cache_only_retrieve_path_from_id(
             }
         });
         match child_name {
-            None => return CacheOnlyRetrievalOutcome::EntryNotFound,
+            // Parent and child agree on the parenting relationship
             Some(child_name) => parts.push(child_name.clone()),
+            // The path is broken !
+            None => {
+                return CacheOnlyPathRetrievalOutcome::Done {
+                    entry: RetrievePathFromIDEntry::Unreachable {
+                        manifest: entry_manifest.to_owned(),
+                    },
+                    maybe_update_lock_guard: maybe_take_update_lock_guard_for_entry!(),
+                };
+            }
         }
 
         // Update the confinement point result
@@ -727,69 +795,277 @@ fn cache_only_retrieve_path_from_id(
 
         // Protect against circular paths
         if !seen.insert(current_entry_id) {
-            return CacheOnlyRetrievalOutcome::EntryNotFound;
+            return CacheOnlyPathRetrievalOutcome::Done {
+                entry: RetrievePathFromIDEntry::Unreachable {
+                    manifest: entry_manifest.to_owned(),
+                },
+                maybe_update_lock_guard: maybe_take_update_lock_guard_for_entry!(),
+            };
         }
     }
 
     // Reverse the parts to get the path
     parts.reverse();
-    CacheOnlyRetrievalOutcome::Done((
-        entry_manifest.to_owned(),
-        FsPath::from_parts(parts),
-        confinement,
-    ))
+    CacheOnlyPathRetrievalOutcome::Done {
+        entry: RetrievePathFromIDEntry::Reachable {
+            manifest: entry_manifest.to_owned(),
+            path: FsPath::from_parts(parts),
+            confinement_point: confinement,
+        },
+        maybe_update_lock_guard: maybe_take_update_lock_guard_for_entry!(),
+    }
 }
 
-/// Retrieve the path and the confinement point of a given entry ID.
-pub(crate) async fn retrieve_path_from_id(
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum RetrievePathFromIDError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Not allowed to access this realm")]
+    NoRealmAccess,
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    InvalidManifest(#[from] Box<InvalidManifestError>),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum RetrievePathFromIdAndLockForUpdateError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Not allowed to access this realm")]
+    NoRealmAccess,
+    #[error("Entry is already being updated")]
+    WouldBlock,
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    InvalidManifest(#[from] Box<InvalidManifestError>),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+#[derive(Debug)]
+pub(crate) enum RetrievePathFromIDEntry {
+    /// The entry is not present in the local storage
+    Missing,
+    /// The entry is present in the local storage, however its path is broken.
+    Unreachable { manifest: ArcLocalChildManifest },
+    /// The entry is present in the local storage and has a valid path to reach it.
+    Reachable {
+        manifest: ArcLocalChildManifest,
+        #[allow(unused)]
+        path: FsPath,
+        confinement_point: PathConfinementPoint,
+    },
+}
+
+/// Get back the local entry, resolve its path, then lock it for update.
+///
+/// This method as a peculiar behavior:
+/// - Any missing manifest needed to resolve the path will be downloaded from the server.
+/// - The entry itself will only be fetched from local data.
+///
+/// This is because this method is expected to be used to synchronize this very
+/// entry from/to the server.
+pub(crate) async fn retrieve_path_from_id_and_lock_for_update(
     store: &super::WorkspaceStore,
     entry_id: VlobID,
-) -> Result<(ArcLocalChildManifest, FsPath, PathConfinementPoint), ResolvePathError> {
+    wait: bool,
+) -> Result<
+    (RetrievePathFromIDEntry, ManifestUpdateLockGuard),
+    RetrievePathFromIdAndLockForUpdateError,
+> {
+    // In this function, not all cache misses are going to be successfully populated:
+    // - If the entry is not present in local obviously.
+    // - If a parent in the path has an invalid ID.
+    //
+    // However event in those cases we need to take the update lock guard for the entry.
+    //
+    // Hence this `last_not_found_during_populate` variable that gets provided to
+    // the cache-only retrieval function so that it knows if it should ask for a
+    // populate or just abort and return a missing/unreachable outcome.
+    let mut last_not_found_during_populate = None;
     loop {
         // Most of the time we should have each entry in the path already in the cache,
         // so we want to lock the cache once and only release it in the unlikely case
         // we need to fetch from the local storage or server.
         let cache_only_outcome = {
             let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
-            cache_only_retrieve_path_from_id(&mut cache, entry_id)
+            cache_only_retrieve_path_from_id(
+                &mut cache,
+                entry_id,
+                true,
+                last_not_found_during_populate,
+            )
         };
         match cache_only_outcome {
-            CacheOnlyRetrievalOutcome::Done((entry_manifest, path, confinement_point)) => {
-                return Ok((entry_manifest, path, confinement_point))
+            CacheOnlyPathRetrievalOutcome::Done {
+                entry,
+                maybe_update_lock_guard,
+            } => {
+                let lock_guard = maybe_update_lock_guard.expect("always present");
+                return Ok((entry, lock_guard));
             }
-            CacheOnlyRetrievalOutcome::EntryNotFound => {
-                return Err(ResolvePathError::EntryNotFound)
+
+            // We got a cache miss (entry is missing)
+            CacheOnlyPathRetrievalOutcome::NeedPopulateCache(cache_miss_entry_id)
+                if cache_miss_entry_id == entry_id =>
+            {
+                match populate_cache_from_local_storage(store, cache_miss_entry_id).await {
+                    // Happy case :)
+                    Ok(_) => (),
+                    // The entry is not in local, the idea here is to retry
+                    // `cache_only_retrieve_path_from_id` knowing this information.
+                    Err(PopulateCacheFromLocalStorageError::EntryNotFound) => {
+                        last_not_found_during_populate = Some(cache_miss_entry_id);
+                    }
+                    // Other errors
+                    Err(PopulateCacheFromLocalStorageError::Stopped) => {
+                        return Err(RetrievePathFromIdAndLockForUpdateError::Stopped)
+                    }
+                    Err(PopulateCacheFromLocalStorageError::Internal(err)) => {
+                        return Err(err.context("cannot fetch manifest").into())
+                    }
+                }
             }
+
+            // We got a cache miss (parents in the path are missing)
+            CacheOnlyPathRetrievalOutcome::NeedPopulateCache(cache_miss_entry_id) => {
+                match populate_cache_from_local_storage_or_server(store, cache_miss_entry_id).await
+                {
+                    // Happy case :)
+                    Ok(_) => (),
+                    // The entry seems to just not exist, the idea here is to retry
+                    // `cache_only_retrieve_path_from_id` knowing this information.
+                    Err(PopulateCacheFromLocalStorageOrServerError::EntryNotFound) => {
+                        last_not_found_during_populate = Some(cache_miss_entry_id);
+                    }
+                    // Other errors
+                    Err(PopulateCacheFromLocalStorageOrServerError::Offline) => {
+                        return Err(RetrievePathFromIdAndLockForUpdateError::Offline)
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::Stopped) => {
+                        return Err(RetrievePathFromIdAndLockForUpdateError::Stopped)
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::NoRealmAccess) => {
+                        return Err(RetrievePathFromIdAndLockForUpdateError::NoRealmAccess)
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::InvalidKeysBundle(err)) => {
+                        return Err(RetrievePathFromIdAndLockForUpdateError::InvalidKeysBundle(
+                            err,
+                        ))
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::InvalidCertificate(err)) => {
+                        return Err(RetrievePathFromIdAndLockForUpdateError::InvalidCertificate(
+                            err,
+                        ))
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::InvalidManifest(err)) => {
+                        return Err(RetrievePathFromIdAndLockForUpdateError::InvalidManifest(
+                            err,
+                        ))
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::Internal(err)) => {
+                        return Err(err.context("cannot fetch manifest").into())
+                    }
+                }
+            }
+
+            // The path resolution is done, but we must wait for the target entry to be available
+            // before being able to lock it for update ourself
+            CacheOnlyPathRetrievalOutcome::NeedWaitForTakenUpdateLock(need_wait) => {
+                if !wait {
+                    return Err(RetrievePathFromIdAndLockForUpdateError::WouldBlock);
+                }
+                need_wait.await;
+            }
+        }
+    }
+}
+
+pub(crate) async fn retrieve_path_from_id(
+    store: &super::WorkspaceStore,
+    entry_id: VlobID,
+) -> Result<RetrievePathFromIDEntry, RetrievePathFromIDError> {
+    // In this function, not all cache misses are going to be successfully populated:
+    // - If the entry is not present in local obviously.
+    // - If a parent in the path has an invalid ID.
+    //
+    // Hence this `last_not_found_during_populate` variable that gets provided to
+    // the cache-only retrieval function so that it knows if it should ask for a
+    // populate or just abort and return a missing/unreachable outcome.
+    let mut last_not_found_during_populate = None;
+    loop {
+        // Most of the time we should have each entry in the path already in the cache,
+        // so we want to lock the cache once and only release it in the unlikely case
+        // we need to fetch from the local storage or server.
+        let cache_only_outcome = {
+            let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
+            cache_only_retrieve_path_from_id(
+                &mut cache,
+                entry_id,
+                false,
+                last_not_found_during_populate,
+            )
+        };
+        match cache_only_outcome {
+            CacheOnlyPathRetrievalOutcome::Done {
+                entry,
+                maybe_update_lock_guard,
+            } => {
+                debug_assert!(maybe_update_lock_guard.is_none());
+                return Ok(entry);
+            }
+
             // We got a cache miss
-            CacheOnlyRetrievalOutcome::NeedPopulateCache(cache_miss_entry_id) => {
-                populate_cache_from_local_storage_or_server(store, cache_miss_entry_id)
-                    .await
-                    .map_err(|err| match err {
-                        PopulateCacheFromLocalStorageOrServerError::Offline => {
-                            ResolvePathError::Offline
-                        }
-                        PopulateCacheFromLocalStorageOrServerError::Stopped => {
-                            ResolvePathError::Stopped
-                        }
-                        PopulateCacheFromLocalStorageOrServerError::EntryNotFound => {
-                            ResolvePathError::EntryNotFound
-                        }
-                        PopulateCacheFromLocalStorageOrServerError::NoRealmAccess => {
-                            ResolvePathError::NoRealmAccess
-                        }
-                        PopulateCacheFromLocalStorageOrServerError::InvalidKeysBundle(err) => {
-                            ResolvePathError::InvalidKeysBundle(err)
-                        }
-                        PopulateCacheFromLocalStorageOrServerError::InvalidCertificate(err) => {
-                            ResolvePathError::InvalidCertificate(err)
-                        }
-                        PopulateCacheFromLocalStorageOrServerError::InvalidManifest(err) => {
-                            ResolvePathError::InvalidManifest(err)
-                        }
-                        PopulateCacheFromLocalStorageOrServerError::Internal(err) => {
-                            err.context("cannot fetch manifest").into()
-                        }
-                    })?;
+            CacheOnlyPathRetrievalOutcome::NeedPopulateCache(cache_miss_entry_id) => {
+                match populate_cache_from_local_storage_or_server(store, cache_miss_entry_id).await
+                {
+                    // Happy case :)
+                    Ok(_) => (),
+                    // The entry seems to just not exist, the idea here is to retry
+                    // `cache_only_retrieve_path_from_id` knowing this information.
+                    Err(PopulateCacheFromLocalStorageOrServerError::EntryNotFound) => {
+                        last_not_found_during_populate = Some(cache_miss_entry_id);
+                    }
+                    // Other errors
+                    Err(PopulateCacheFromLocalStorageOrServerError::Offline) => {
+                        return Err(RetrievePathFromIDError::Offline)
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::Stopped) => {
+                        return Err(RetrievePathFromIDError::Stopped)
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::NoRealmAccess) => {
+                        return Err(RetrievePathFromIDError::NoRealmAccess)
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::InvalidKeysBundle(err)) => {
+                        return Err(RetrievePathFromIDError::InvalidKeysBundle(err))
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::InvalidCertificate(err)) => {
+                        return Err(RetrievePathFromIDError::InvalidCertificate(err))
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::InvalidManifest(err)) => {
+                        return Err(RetrievePathFromIDError::InvalidManifest(err))
+                    }
+                    Err(PopulateCacheFromLocalStorageOrServerError::Internal(err)) => {
+                        return Err(err.context("cannot fetch manifest").into())
+                    }
+                }
+            }
+
+            // Unreachable since we are not locking for update
+            CacheOnlyPathRetrievalOutcome::NeedWaitForTakenUpdateLock(_) => {
+                unreachable!()
             }
         }
     }

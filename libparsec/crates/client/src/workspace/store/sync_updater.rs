@@ -17,6 +17,8 @@ use super::{
         populate_cache_from_local_storage_or_server, PopulateCacheFromLocalStorageOrServerError,
     },
     per_manifest_update_lock::ManifestUpdateLockGuard,
+    resolve_path::RetrievePathFromIdAndLockForUpdateError,
+    RetrievePathFromIDEntry,
 };
 
 pub(super) type UpdateManifestForSyncError = super::WorkspaceStoreOperationError;
@@ -27,6 +29,26 @@ pub(crate) enum ForUpdateSyncLocalOnlyError {
     Stopped,
     #[error("Entry is already being updated")]
     WouldBlock,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub(crate) enum ForUpdateSyncError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Not allowed to access this realm")]
+    NoRealmAccess,
+    #[error("Entry is already being updated")]
+    WouldBlock,
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -137,6 +159,58 @@ pub(super) async fn for_update_sync_local_only(
     };
 
     Ok((updater, manifest))
+}
+
+pub(super) async fn for_update_sync(
+    store: &super::WorkspaceStore,
+    entry_id: VlobID,
+    wait: bool,
+) -> Result<(SyncUpdater<'_>, RetrievePathFromIDEntry), ForUpdateSyncError> {
+    let (entry, update_guard) =
+        super::resolve_path::retrieve_path_from_id_and_lock_for_update(store, entry_id, wait)
+            .await
+            .map_err(|err| match err {
+                RetrievePathFromIdAndLockForUpdateError::Offline => ForUpdateSyncError::Offline,
+                RetrievePathFromIdAndLockForUpdateError::Stopped => ForUpdateSyncError::Stopped,
+                RetrievePathFromIdAndLockForUpdateError::NoRealmAccess => {
+                    ForUpdateSyncError::NoRealmAccess
+                }
+                RetrievePathFromIdAndLockForUpdateError::WouldBlock => {
+                    ForUpdateSyncError::WouldBlock
+                }
+                RetrievePathFromIdAndLockForUpdateError::InvalidKeysBundle(err) => {
+                    ForUpdateSyncError::InvalidKeysBundle(err)
+                }
+                RetrievePathFromIdAndLockForUpdateError::InvalidCertificate(err) => {
+                    ForUpdateSyncError::InvalidCertificate(err)
+                }
+                RetrievePathFromIdAndLockForUpdateError::InvalidManifest(err) => {
+                    ForUpdateSyncError::InvalidManifest(err)
+                }
+                RetrievePathFromIdAndLockForUpdateError::Internal(err) => {
+                    err.context("cannot resolve path").into()
+                }
+            })?;
+
+    // From now on we shouldn't fail given `update_guard` doesn't release the lock on drop...
+
+    let original_manifest = match &entry {
+        RetrievePathFromIDEntry::Missing => None,
+        RetrievePathFromIDEntry::Unreachable { manifest } => Some(manifest.clone()),
+        RetrievePathFromIDEntry::Reachable { manifest, .. } => Some(manifest.clone()),
+    };
+
+    let updater = SyncUpdater {
+        store,
+        update_guard: Some(update_guard),
+        original_manifest,
+        #[cfg(debug_assertions)]
+        entry_id,
+    };
+
+    // ...until this point, where `SyncUpdater`'s drop will take care of releasing the lock !
+
+    Ok((updater, entry))
 }
 
 pub(crate) struct SyncUpdater<'a> {
