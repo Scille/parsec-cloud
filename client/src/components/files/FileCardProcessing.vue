@@ -7,7 +7,7 @@
       <ion-avatar class="card-content-icons">
         <ion-icon
           class="icon-item"
-          :icon="document"
+          :icon="documentIcon"
         />
       </ion-avatar>
 
@@ -26,7 +26,7 @@
 import { EntryName, Path } from '@/parsec';
 import { CopyData, FileOperationData, FileOperationDataType, ImportData } from '@/services/fileOperationManager';
 import { IonAvatar, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
-import { document } from 'ionicons/icons';
+import { document as documentIcon } from 'ionicons/icons';
 import { MsSpinner, Translatable } from 'megashark-lib';
 import { onMounted, ref, Ref } from 'vue';
 

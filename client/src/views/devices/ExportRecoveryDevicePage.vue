@@ -18,7 +18,7 @@
           <div class="file-list">
             <div class="file-item">
               <div class="file-item__title subtitles-normal">
-                <ion-icon :icon="document" />
+                <ion-icon :icon="documentIcon" />
                 {{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryFile') }}
               </div>
               <div class="file-item__subtitle">
@@ -123,7 +123,7 @@ import { navigateTo, Routes } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { MsInformativeText, I18n, Translatable } from 'megashark-lib';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
-import { checkmarkCircle, document, download, home, key, reload } from 'ionicons/icons';
+import { checkmarkCircle, document as documentIcon, download, home, key, reload } from 'ionicons/icons';
 import { inject, onMounted, ref } from 'vue';
 
 let code = '';
