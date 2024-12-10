@@ -18,8 +18,9 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     let client = load_client(&config_dir, device, password_stdin).await?;
 
     {
-        let _spinner = start_spinner("Poll server for new certificates".into());
+        let mut spinner = start_spinner("Poll server for new certificates".into());
         client.poll_server_for_new_certificates().await?;
+        spinner.stop_with_symbol(GREEN_CHECKMARK);
     }
 
     let res = client.list_shamir_recoveries_for_others().await?;
@@ -38,16 +39,18 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                     deleted_on,
                     deleted_by,
                     ..
-                } => println!("Deleted shared recovery for {RED}{user_id}{RESET} - deleted by {deleted_by} on {deleted_on}"),
+                } => println!("• Deleted shared recovery for {RED}{user_id}{RESET} - deleted by {deleted_by} on {deleted_on}"),
                 libparsec_client::OtherShamirRecoveryInfo::SetupAllValid {
-                    user_id,..
-                } => println!("Shared recovery for {GREEN}{user_id}{RESET}"),
+                    user_id, threshold, per_recipient_shares,..
+                } => println!("Shared recovery for {GREEN}{user_id}{RESET} with threshold {threshold}\n{}", per_recipient_shares.iter().map(|(recipient, share)| {
+                    format!("\t• User {recipient} has {share} share(s)") // TODO: special case if there is only on share
+                }).join("\n")),
                 libparsec_client::OtherShamirRecoveryInfo::SetupWithRevokedRecipients {
                     user_id,
                     threshold,
                     per_recipient_shares,
                     revoked_recipients,..
-                } => println!("Shared recovery for {YELLOW}{user_id}{RESET} - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                } => println!("• Shared recovery for {YELLOW}{user_id}{RESET} - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
                     revoked = revoked_recipients.iter().join(", "),
                     revoked_len = revoked_recipients.len(),
                     total = per_recipient_shares.len()),
@@ -56,7 +59,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                     threshold,
                     per_recipient_shares,
                     revoked_recipients,..
-                } => println!("Unusable shared recovery for {RED}{user_id}{RESET} - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                } => println!("• Unusable shared recovery for {RED}{user_id}{RESET} - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
                     revoked = revoked_recipients.iter().join(", "),
                     revoked_len = revoked_recipients.len(),
                     total = per_recipient_shares.len()),

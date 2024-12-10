@@ -18,8 +18,9 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     let client = load_client(&config_dir, device, password_stdin).await?;
 
     {
-        let _spinner = start_spinner("Poll server for new certificates".into());
+        let mut spinner = start_spinner("Poll server for new certificates".into());
         client.poll_server_for_new_certificates().await?;
+        spinner.stop_with_symbol(GREEN_CHECKMARK);
     }
 
     let info = client.get_self_shamir_recovery().await?;
@@ -33,15 +34,17 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                     ..
                 } => println!("{RED}Deleted{RESET} shared recovery - deleted by {deleted_by} on {deleted_on}"),
                 libparsec_client::SelfShamirRecoveryInfo::SetupAllValid {
-                    ..
-                } => println!("Shared recovery {GREEN}set up{RESET}"),
+                    per_recipient_shares, threshold, ..
+                } => println!("Shared recovery {GREEN}set up{RESET} with threshold {threshold}\n{}", per_recipient_shares.iter().map(|(recipient, share)| {
+                    format!("• User {recipient} has {share} share(s)") // TODO: special case if there is only on share
+                }).join("\n")),
                 libparsec_client::SelfShamirRecoveryInfo::SetupWithRevokedRecipients {
                     threshold,
                     per_recipient_shares,
                     revoked_recipients,
                     ..
                 } => println!(
-                    "Shared recovery for {YELLOW}set up{RESET} - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                    "Shared recovery {YELLOW}set up{RESET} - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
                     revoked = revoked_recipients.iter().join(", "),
                     revoked_len = revoked_recipients.len(),
                     total = per_recipient_shares.len()),

@@ -3,7 +3,7 @@ use std::{collections::HashMap, num::NonZeroU8};
 use dialoguer::Input;
 use libparsec::{UserID, UserProfile};
 
-use crate::utils::{load_client, start_spinner};
+use crate::utils::{load_client, start_spinner, GREEN_CHECKMARK};
 
 // TODO: should provide the recipients and their share count as a single parameter
 //       e.g. `--recipients=foo@example.com=2,bar@example.com=3`
@@ -39,8 +39,9 @@ pub async fn main(shamir_setup: Args) -> anyhow::Result<()> {
     let client = load_client(&config_dir, device, password_stdin).await?;
 
     {
-        let _spinner = start_spinner("Poll server for new certificates".into());
+        let mut spinner = start_spinner("Poll server for new certificates".into());
         client.poll_server_for_new_certificates().await?;
+        spinner.stop_with_symbol(GREEN_CHECKMARK);
     }
 
     let mut handle = start_spinner("Creating shared recovery setup".into());
@@ -84,7 +85,8 @@ pub async fn main(shamir_setup: Args) -> anyhow::Result<()> {
             .map(|user_id| (user_id, weight))
             .collect()
     };
-
+    // we must stop the handle here to avoid messing up with the threshold choice
+    handle.stop_with_newline();
     let threshold = if let Some(t) = threshold {
         t
     } else {
@@ -95,12 +97,15 @@ pub async fn main(shamir_setup: Args) -> anyhow::Result<()> {
             per_recipient_shares.len()
         )) .interact_text()?
     };
+    let mut handle = start_spinner("Creating shared recovery setup".into());
 
     client
         .setup_shamir_recovery(per_recipient_shares, threshold)
         .await?;
 
-    handle.stop_with_message("Shared recovery setup has been created".into());
+    handle.stop_with_message(format!(
+        "{GREEN_CHECKMARK} Shared recovery setup has been created"
+    ));
 
     client.stop().await;
 
