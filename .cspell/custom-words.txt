@@ -620,6 +620,7 @@ shortid
 SignatureBytes
 signingkey
 SignKey
+signtool
 singlehtml
 slughash
 SmartCard
