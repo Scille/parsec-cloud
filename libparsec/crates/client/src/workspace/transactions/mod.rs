@@ -16,6 +16,7 @@ mod outbound_sync;
 mod read_folder;
 mod remove_entry;
 mod stat_entry;
+mod watch_entry;
 
 pub use create_file::*;
 pub use create_folder::*;
@@ -33,3 +34,4 @@ pub use outbound_sync::*;
 pub use read_folder::*;
 pub use remove_entry::*;
 pub use stat_entry::*;
+pub use watch_entry::*;

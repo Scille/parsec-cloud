@@ -28,7 +28,7 @@ async function openContextMenu(page: Page, mode: Mode): Promise<void> {
   } else {
     const wk = page.locator('.sidebar').locator('.list-sidebar.workspaces').getByRole('listitem').nth(1);
     await wk.hover();
-    await wk.locator('.workspace-option').click();
+    await wk.locator('.sidebar-item-workspace__option').click();
   }
 }
 

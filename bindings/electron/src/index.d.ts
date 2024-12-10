@@ -842,6 +842,30 @@ export type ClientNewDeviceInvitationError =
   | ClientNewDeviceInvitationErrorOffline
 
 
+// ClientNewShamirRecoveryInvitationError
+export interface ClientNewShamirRecoveryInvitationErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientNewShamirRecoveryInvitationErrorNotAllowed {
+    tag: "NotAllowed"
+    error: string
+}
+export interface ClientNewShamirRecoveryInvitationErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClientNewShamirRecoveryInvitationErrorUserNotFound {
+    tag: "UserNotFound"
+    error: string
+}
+export type ClientNewShamirRecoveryInvitationError =
+  | ClientNewShamirRecoveryInvitationErrorInternal
+  | ClientNewShamirRecoveryInvitationErrorNotAllowed
+  | ClientNewShamirRecoveryInvitationErrorOffline
+  | ClientNewShamirRecoveryInvitationErrorUserNotFound
+
+
 // ClientNewUserInvitationError
 export interface ClientNewUserInvitationErrorAlreadyMember {
     tag: "AlreadyMember"
@@ -2493,48 +2517,48 @@ export type WorkspaceStorageCacheSize =
   | WorkspaceStorageCacheSizeDefault
 
 
-// WorkspaceWatchError
-export interface WorkspaceWatchErrorEntryNotFound {
+// WorkspaceWatchEntryOneShotError
+export interface WorkspaceWatchEntryOneShotErrorEntryNotFound {
     tag: "EntryNotFound"
     error: string
 }
-export interface WorkspaceWatchErrorInternal {
+export interface WorkspaceWatchEntryOneShotErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface WorkspaceWatchErrorInvalidCertificate {
+export interface WorkspaceWatchEntryOneShotErrorInvalidCertificate {
     tag: "InvalidCertificate"
     error: string
 }
-export interface WorkspaceWatchErrorInvalidKeysBundle {
+export interface WorkspaceWatchEntryOneShotErrorInvalidKeysBundle {
     tag: "InvalidKeysBundle"
     error: string
 }
-export interface WorkspaceWatchErrorInvalidManifest {
+export interface WorkspaceWatchEntryOneShotErrorInvalidManifest {
     tag: "InvalidManifest"
     error: string
 }
-export interface WorkspaceWatchErrorNoRealmAccess {
+export interface WorkspaceWatchEntryOneShotErrorNoRealmAccess {
     tag: "NoRealmAccess"
     error: string
 }
-export interface WorkspaceWatchErrorOffline {
+export interface WorkspaceWatchEntryOneShotErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceWatchErrorStopped {
+export interface WorkspaceWatchEntryOneShotErrorStopped {
     tag: "Stopped"
     error: string
 }
-export type WorkspaceWatchError =
-  | WorkspaceWatchErrorEntryNotFound
-  | WorkspaceWatchErrorInternal
-  | WorkspaceWatchErrorInvalidCertificate
-  | WorkspaceWatchErrorInvalidKeysBundle
-  | WorkspaceWatchErrorInvalidManifest
-  | WorkspaceWatchErrorNoRealmAccess
-  | WorkspaceWatchErrorOffline
-  | WorkspaceWatchErrorStopped
+export type WorkspaceWatchEntryOneShotError =
+  | WorkspaceWatchEntryOneShotErrorEntryNotFound
+  | WorkspaceWatchEntryOneShotErrorInternal
+  | WorkspaceWatchEntryOneShotErrorInvalidCertificate
+  | WorkspaceWatchEntryOneShotErrorInvalidKeysBundle
+  | WorkspaceWatchEntryOneShotErrorInvalidManifest
+  | WorkspaceWatchEntryOneShotErrorNoRealmAccess
+  | WorkspaceWatchEntryOneShotErrorOffline
+  | WorkspaceWatchEntryOneShotErrorStopped
 
 
 export function archiveDevice(
@@ -2671,6 +2695,11 @@ export function clientNewDeviceInvitation(
     client: number,
     send_email: boolean
 ): Promise<Result<NewInvitationInfo, ClientNewDeviceInvitationError>>
+export function clientNewShamirRecoveryInvitation(
+    client: number,
+    claimer_user_id: string,
+    send_email: boolean
+): Promise<Result<NewInvitationInfo, ClientNewShamirRecoveryInvitationError>>
 export function clientNewUserInvitation(
     client: number,
     claimer_email: string,
@@ -3033,4 +3062,4 @@ export function workspaceStop(
 export function workspaceWatchEntryOneshot(
     workspace: number,
     path: string
-): Promise<Result<string, WorkspaceWatchError>>
+): Promise<Result<string, WorkspaceWatchEntryOneShotError>>

@@ -64,7 +64,6 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         .args([
             "invite",
             "greet",
-            "--token",
             &token.hex().to_string(),
             "--device",
             &alice.device_id.hex(),
@@ -81,7 +80,6 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         .args([
             "invite",
             "claim",
-            "--addr",
             invitation_addr.to_url().as_ref(),
             "--password-stdin",
         ])

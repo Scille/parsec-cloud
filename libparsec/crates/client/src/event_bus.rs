@@ -413,7 +413,7 @@ impl_events!(
     ///
     /// This event is hence used by the workspace sync monitor to be notified an outbound
     /// sync operation is needed.
-    /// This event is also used to implement `WorkspaceOps::workspace_watch_entry_oneshot`.
+    /// This event is also used to implement `WorkspaceOps::watch_entry_oneshot`.
     WorkspaceOpsOutboundSyncNeeded {
         realm_id: VlobID,
         entry_id: VlobID,
@@ -460,13 +460,14 @@ impl_events!(
     /// manifest has been fetched (and it's useless to communicate progress about
     /// this fetch step).
     ///
-    /// This event is used to implement `WorkspaceOps::workspace_watch_entry_oneshot`.
+    /// This event is used to implement `WorkspaceOps::watch_entry_oneshot`.
     WorkspaceOpsInboundSyncDone {
         realm_id: VlobID,
         entry_id: VlobID,
+        parent_id: VlobID
     },
     /// This event is fired by the workspace ops when a manifest that is watched gets
-    /// modified or local or remote (see `WorkspaceOps::workspace_watch_entry_oneshot`).
+    /// modified on local or remote (see `WorkspaceOps::watch_entry_oneshot`).
     WorkspaceWatchedEntryChanged {
         realm_id: VlobID,
         entry_id: VlobID,

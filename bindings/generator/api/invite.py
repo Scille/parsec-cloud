@@ -374,6 +374,7 @@ class ClientNewShamirRecoveryInvitationError(ErrorVariant):
 
 async def client_new_shamir_recovery_invitation(
     client: Handle,
+    claimer_user_id: UserID,
     send_email: bool,
 ) -> Result[
     NewInvitationInfo,

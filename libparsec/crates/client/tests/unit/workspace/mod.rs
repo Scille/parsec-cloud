@@ -32,6 +32,7 @@ mod resolve_path;
 mod retrieve_path_from_id;
 mod stat_entry;
 mod utils;
+mod watch_entry;
 
 #[cfg(unix)]
 mod file_transactions_stateful;

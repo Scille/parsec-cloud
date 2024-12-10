@@ -285,17 +285,28 @@ pub async fn inbound_sync(
     };
 
     let outcome =
-        merge_manifest_and_update_store(ops, updater, local_manifest, remote_manifest).await;
+        merge_manifest_and_update_store(ops, updater, local_manifest, remote_manifest).await?;
 
-    if matches!(outcome, Ok(InboundSyncOutcome::Updated)) {
-        let event = EventWorkspaceOpsInboundSyncDone {
-            realm_id: ops.realm_id,
-            entry_id,
-        };
-        ops.event_bus.send(&event);
+    match outcome {
+        InboundSyncOutcomeWithParentID::Updated { parent_id } => {
+            let event = EventWorkspaceOpsInboundSyncDone {
+                realm_id: ops.realm_id,
+                entry_id,
+                parent_id,
+            };
+            ops.event_bus.send(&event);
+            Ok(InboundSyncOutcome::Updated)
+        }
+        InboundSyncOutcomeWithParentID::NoChange => Ok(InboundSyncOutcome::NoChange),
+        InboundSyncOutcomeWithParentID::EntryIsBusy => Ok(InboundSyncOutcome::EntryIsBusy),
     }
+}
 
-    outcome
+#[derive(Debug)]
+enum InboundSyncOutcomeWithParentID {
+    Updated { parent_id: VlobID },
+    NoChange,
+    EntryIsBusy,
 }
 
 async fn merge_manifest_and_update_store(
@@ -303,13 +314,14 @@ async fn merge_manifest_and_update_store(
     updater: SyncUpdater<'_>,
     local_manifest: Option<ArcLocalChildManifest>,
     remote_manifest: ChildManifest,
-) -> Result<InboundSyncOutcome, WorkspaceSyncError> {
+) -> Result<InboundSyncOutcomeWithParentID, WorkspaceSyncError> {
     // Note merge may end up with nothing new, typically if the remote version is
     // already the one local is based on
     match (local_manifest, remote_manifest) {
         // File added remotely
         (None, ChildManifest::File(remote_manifest)) => {
             let local_manifest = Arc::new(LocalFileManifest::from_remote(remote_manifest));
+            let parent_id = local_manifest.parent;
             updater
                 .update_manifest(ArcLocalChildManifest::File(local_manifest))
                 .await
@@ -319,7 +331,7 @@ async fn merge_manifest_and_update_store(
                         err.context("cannot update manifest").into()
                     }
                 })?;
-            Ok(InboundSyncOutcome::Updated)
+            Ok(InboundSyncOutcomeWithParentID::Updated { parent_id })
         }
 
         // Folder added remotely
@@ -328,6 +340,7 @@ async fn merge_manifest_and_update_store(
                 remote_manifest,
                 &ops.config.prevent_sync_pattern,
             ));
+            let parent_id = local_manifest.parent;
             updater
                 .update_manifest(ArcLocalChildManifest::Folder(local_manifest))
                 .await
@@ -337,7 +350,7 @@ async fn merge_manifest_and_update_store(
                         err.context("cannot update manifest").into()
                     }
                 })?;
-            Ok(InboundSyncOutcome::Updated)
+            Ok(InboundSyncOutcomeWithParentID::Updated { parent_id })
         }
 
         // Folder present in both remote and local, need to merge them
@@ -355,8 +368,11 @@ async fn merge_manifest_and_update_store(
                 remote_manifest,
             );
             match merge_outcome {
-                MergeLocalFolderManifestOutcome::NoChange => Ok(InboundSyncOutcome::NoChange),
+                MergeLocalFolderManifestOutcome::NoChange => {
+                    Ok(InboundSyncOutcomeWithParentID::NoChange)
+                }
                 MergeLocalFolderManifestOutcome::Merged(merged_manifest) => {
+                    let parent_id = merged_manifest.parent;
                     updater
                         .update_manifest(ArcLocalChildManifest::Folder(merged_manifest))
                         .await
@@ -366,7 +382,7 @@ async fn merge_manifest_and_update_store(
                                 err.context("cannot update manifest").into()
                             }
                         })?;
-                    Ok(InboundSyncOutcome::Updated)
+                    Ok(InboundSyncOutcomeWithParentID::Updated { parent_id })
                 }
             }
         }
@@ -385,8 +401,11 @@ async fn merge_manifest_and_update_store(
                 remote_manifest,
             );
             match merge_outcome {
-                MergeLocalFileManifestOutcome::NoChange => Ok(InboundSyncOutcome::NoChange),
+                MergeLocalFileManifestOutcome::NoChange => {
+                    Ok(InboundSyncOutcomeWithParentID::NoChange)
+                }
                 MergeLocalFileManifestOutcome::Merged(merged_manifest) => {
+                    let parent_id = merged_manifest.parent;
                     updater
                         .update_manifest(ArcLocalChildManifest::File(Arc::new(merged_manifest)))
                         .await
@@ -396,7 +415,7 @@ async fn merge_manifest_and_update_store(
                                 err.context("cannot update manifest").into()
                             }
                         })?;
-                    Ok(InboundSyncOutcome::Updated)
+                    Ok(InboundSyncOutcomeWithParentID::Updated { parent_id })
                 }
                 MergeLocalFileManifestOutcome::Conflict(remote_manifest) => {
                     handle_conflict_and_update_store(
@@ -429,16 +448,21 @@ async fn handle_conflict_and_update_store(
     sync_updater: SyncUpdater<'_>,
     local_child_manifest: ArcLocalChildManifest,
     remote_child_manifest: ChildManifest,
-) -> Result<InboundSyncOutcome, WorkspaceSyncError> {
+) -> Result<InboundSyncOutcomeWithParentID, WorkspaceSyncError> {
     // 1) No mater what, remote changes will be used as new version for the child manifest
 
-    let merged_child_manifest = match remote_child_manifest {
-        ChildManifest::File(remote_manifest) => {
-            ArcLocalChildManifest::File(Arc::new(LocalFileManifest::from_remote(remote_manifest)))
-        }
-        ChildManifest::Folder(remote_manifest) => ArcLocalChildManifest::Folder(Arc::new(
-            LocalFolderManifest::from_remote(remote_manifest, &ops.config.prevent_sync_pattern),
-        )),
+    let (parent_id, merged_child_manifest) = match remote_child_manifest {
+        ChildManifest::File(remote_manifest) => (
+            remote_manifest.parent,
+            ArcLocalChildManifest::File(Arc::new(LocalFileManifest::from_remote(remote_manifest))),
+        ),
+        ChildManifest::Folder(remote_manifest) => (
+            remote_manifest.parent,
+            ArcLocalChildManifest::Folder(Arc::new(LocalFolderManifest::from_remote(
+                remote_manifest,
+                &ops.config.prevent_sync_pattern,
+            ))),
+        ),
     };
 
     // 2) Local changes causing the conflict are transfered to a new manifest
@@ -493,7 +517,7 @@ async fn handle_conflict_and_update_store(
                         err.context("cannot update child manifest in store").into()
                     }
                 })?;
-            return Ok(InboundSyncOutcome::Updated);
+            return Ok(InboundSyncOutcomeWithParentID::Updated { parent_id });
         }
     };
 
@@ -507,7 +531,9 @@ async fn handle_conflict_and_update_store(
         Err((sync_updater, err)) => {
             return match err {
                 // Cannot lock the parent for the moment, tell to caller to retry later
-                IntoSyncConflictUpdaterError::WouldBlock => Ok(InboundSyncOutcome::EntryIsBusy),
+                IntoSyncConflictUpdaterError::WouldBlock => {
+                    Ok(InboundSyncOutcomeWithParentID::EntryIsBusy)
+                }
 
                 // The parent is not valid, this is not supposed to occur in theory given
                 // how could we have locally modified the child in the first place then ?
@@ -525,7 +551,7 @@ async fn handle_conflict_and_update_store(
                                 err.context("cannot update child manifest in store").into()
                             }
                         })?;
-                    Ok(InboundSyncOutcome::Updated)
+                    Ok(InboundSyncOutcomeWithParentID::Updated { parent_id })
                 }
 
                 // Actual errors
@@ -573,7 +599,7 @@ async fn handle_conflict_and_update_store(
             }
         })?;
 
-    Ok(InboundSyncOutcome::Updated)
+    Ok(InboundSyncOutcomeWithParentID::Updated { parent_id })
 }
 
 fn insert_conflicting_new_child_in_parent(

@@ -17,7 +17,6 @@ async fn create_workspace(tmp_path: TmpPath) {
         "create",
         "--device",
         &alice.device_id.hex(),
-        "--name",
         "new-workspace"
     )
     .stdout(predicates::str::contains("Workspace has been created"));

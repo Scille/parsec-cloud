@@ -19,7 +19,7 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
     pub struct Args {
         /// Invitation token
-        #[arg(short, long, value_parser = InvitationToken::from_hex)]
+        #[arg(value_parser = InvitationToken::from_hex)]
         token: InvitationToken,
     }
 );

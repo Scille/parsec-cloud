@@ -21,7 +21,10 @@
           <user-status-tag
             :revoked="false"
             class="status-tag"
-            @click="users.filters.statusActive = !users.filters.statusActive"
+            @click="
+              users.filters.statusActive = !users.filters.statusActive;
+              users.unselectHiddenUsers();
+            "
           />
           <ms-checkbox
             v-model="users.filters.statusActive"
@@ -35,7 +38,10 @@
           <user-status-tag
             :revoked="true"
             class="status-tag"
-            @click="users.filters.statusRevoked = !users.filters.statusRevoked"
+            @click="
+              users.filters.statusRevoked = !users.filters.statusRevoked;
+              users.unselectHiddenUsers();
+            "
           />
           <ms-checkbox
             v-model="users.filters.statusRevoked"
@@ -50,7 +56,10 @@
             :revoked="false"
             :frozen="true"
             class="status-tag"
-            @click="users.filters.statusFrozen = !users.filters.statusFrozen"
+            @click="
+              users.filters.statusFrozen = !users.filters.statusFrozen;
+              users.unselectHiddenUsers();
+            "
           />
           <ms-checkbox
             v-model="users.filters.statusFrozen"
@@ -71,7 +80,10 @@
         >
           <ion-label
             class="body"
-            @click="users.filters.profileAdmin = !users.filters.profileAdmin"
+            @click="
+              users.filters.profileAdmin = !users.filters.profileAdmin;
+              users.unselectHiddenUsers();
+            "
           >
             {{ $msTranslate('UsersPage.filter.admin') }}
           </ion-label>
@@ -86,7 +98,10 @@
         >
           <ion-label
             class="body"
-            @click="users.filters.profileStandard = !users.filters.profileStandard"
+            @click="
+              users.filters.profileStandard = !users.filters.profileStandard;
+              users.unselectHiddenUsers();
+            "
           >
             {{ $msTranslate('UsersPage.filter.standard') }}
           </ion-label>
@@ -98,7 +113,10 @@
         <ion-item class="list-group-item ion-no-padding">
           <ion-label
             class="body"
-            @click="users.filters.profileOutsider = !users.filters.profileOutsider"
+            @click="
+              users.filters.profileOutsider = !users.filters.profileOutsider;
+              users.unselectHiddenUsers();
+            "
           >
             {{ $msTranslate('UsersPage.filter.outsider') }}
           </ion-label>

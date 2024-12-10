@@ -51,6 +51,12 @@
               }}
             </ion-text>
           </div>
+          <ms-search-input
+            :placeholder="'HomePage.organizationList.search'"
+            v-model="users.searchFilter"
+            @change="users.unselectHiddenUsers()"
+            id="search-input-users"
+          />
           <!-- prettier-ignore -->
           <user-filter
             :users="(users as UserCollection)"
@@ -121,6 +127,7 @@ import {
   MsActionBar,
   MsActionBarButton,
   MsGridListToggle,
+  MsSearchInput,
   MsSorter,
   MsSorterChangeEvent,
   Translatable,
