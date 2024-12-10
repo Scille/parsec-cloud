@@ -1021,13 +1021,22 @@ fn apply_prevent_sync_pattern_with_non_confined_remote_children_matching_future_
         lfm.remote_confinement_points,
         HashSet::from_iter([VlobID::from_hex("198762BA0C744DC0B45B2B17678C51CE").unwrap()])
     );
-    p_assert_eq!(lfm.local_confinement_points, HashSet::new());
+    p_assert_eq!(
+        lfm.local_confinement_points,
+        HashSet::from_iter([VlobID::from_hex("198762BA0C744DC0B45B2B17678C51CE").unwrap()])
+    );
     p_assert_eq!(
         lfm.children,
-        HashMap::from_iter([(
-            "file1.png".parse().unwrap(),
-            VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap(),
-        ),])
+        HashMap::from_iter([
+            (
+                "file1.png".parse().unwrap(),
+                VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap(),
+            ),
+            (
+                "file3.tmp".parse().unwrap(),
+                VlobID::from_hex("198762BA0C744DC0B45B2B17678C51CE").unwrap(),
+            ),
+        ])
     );
     p_assert_eq!(lfm.need_sync, true);
     // The last update is actually from t2.
@@ -1329,11 +1338,16 @@ fn apply_prevent_sync_pattern_with_broader_prevent_sync_pattern() {
         HashSet::from_iter([
             VlobID::from_hex("B0C37F14927244FA8550EDAECEA09E96").unwrap(),
             VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap(),
+            VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap(),
         ])
     );
     p_assert_eq!(
         lfm.children,
         HashMap::from_iter([
+            (
+                "file1.png".parse().unwrap(),
+                VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap(),
+            ),
             (
                 "fileA.mp4".parse().unwrap(),
                 VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap(),
