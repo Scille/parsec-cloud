@@ -280,8 +280,7 @@ impl<'a> SyncUpdater<'a> {
     > {
         let child_manifest = match &self.original_manifest {
             Some(manifest) => manifest,
-            // This should never happen as the caller knows a sync involving not local manifest
-            // cannot lead to a conflict !
+            // This should never happen as a conflict must involve a local manifest !
             None => {
                 let err = anyhow::anyhow!(
                     "Sync updater with no local manifest cannot lead to a conflict"
