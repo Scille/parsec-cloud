@@ -17,35 +17,28 @@
     </template>
     <template #controls>
       <file-controls>
-        <file-controls-button
-          :icon="remove"
-          @click="zoomOut"
+        <file-controls-zoom
+          @change="onChange"
+          ref="zoomControl"
         />
-        <file-controls-button
-          :icon="resize"
-          @click="resetZoom"
-        />
-        <file-controls-button
-          :icon="add"
-          @click="zoomIn"
-        />
-        <file-controls-button
-          v-for="(action, key) in actions"
-          :key="key"
-          @click="action.handler"
-          :label="action.text"
-        />
+        <file-controls-group>
+          <file-controls-button
+            v-for="(action, key) in actions"
+            :key="key"
+            @click="action.handler"
+            :label="action.text"
+          />
+        </file-controls-group>
       </file-controls>
     </template>
   </file-viewer-wrapper>
 </template>
 
 <script setup lang="ts">
-import { add, remove, resize } from 'ionicons/icons';
 import { inject, onMounted, ref, Ref, shallowRef } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { FileViewerWrapper } from '@/views/viewers';
-import { FileControls, FileControlsButton } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsGroup, FileControlsZoom } from '@/components/viewers';
 import { I18n, MsSpinner, Translatable } from 'megashark-lib';
 import * as pdfjs from 'pdfjs-dist';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -56,15 +49,16 @@ const props = defineProps<{
 
 const loading = ref(true);
 const canvas = ref();
-const defaultScale = 1.0;
-const scale = ref(defaultScale);
 const currentPage = ref(1);
 const pdf: Ref<pdfjs.PDFDocumentProxy | null> = shallowRef(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const actions: Ref<Array<{ icon?: string; text?: Translatable; handler: () => void }>> = ref([]);
+const zoomControl = ref();
+const scale = ref(1);
 
 onMounted(async () => {
   loading.value = true;
+  scale.value = zoomControl.value.getZoom() / 100;
 
   try {
     pdf.value = await pdfjs.getDocument(props.contentInfo.data).promise;
@@ -86,21 +80,8 @@ onMounted(async () => {
   loading.value = false;
 });
 
-async function zoom(factor: number): Promise<void> {
-  scale.value += factor;
-  await loadPage(currentPage.value);
-}
-
-async function zoomIn(): Promise<void> {
-  await zoom(0.2);
-}
-
-async function zoomOut(): Promise<void> {
-  await zoom(-0.2);
-}
-
-async function resetZoom(): Promise<void> {
-  scale.value = defaultScale;
+async function onChange(value: number): Promise<void> {
+  scale.value = value / 100;
   await loadPage(currentPage.value);
 }
 

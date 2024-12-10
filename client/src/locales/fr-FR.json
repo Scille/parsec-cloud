@@ -1701,6 +1701,13 @@
     "fileViewers": {
         "openWithDefault": "Ouvrir avec l'application par défaut",
         "openingFile": "Ouverture du fichier...",
-        "fileTooBig": "Le fichier est trop large pour être ouvert avec un visualiseur."
+        "fileTooBig": "Le fichier est trop large pour être ouvert avec un visualiseur.",
+        "controls": {
+            "zoom": {
+                "in": "Zoomer",
+                "out": "Dézoomer",
+                "reset": "Réinitialiser le zoom"
+            }
+        }
     }
 }
