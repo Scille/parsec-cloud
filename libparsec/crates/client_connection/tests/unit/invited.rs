@@ -177,7 +177,7 @@ register_rpc_http_hook!(
     rpc_organization_not_found_http_codes_404,
     StatusCode::from_u16(404).unwrap(),
     |err| {
-        p_assert_matches!(err, ConnectionError::InvitationNotFound);
+        p_assert_matches!(err, ConnectionError::OrganizationNotFound);
     }
 );
 register_rpc_http_hook!(

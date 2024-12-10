@@ -98,6 +98,9 @@ class ClaimerRetrieveInfoError(ErrorVariant):
     class AlreadyUsed:
         pass
 
+    class OrganizationExpired:
+        pass
+
     class Internal:
         pass
 

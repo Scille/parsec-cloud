@@ -23,6 +23,8 @@ pub enum ClaimerRetrieveInfoError {
     NotFound,
     #[error("Invitation already used")]
     AlreadyUsed,
+    #[error("Organization has expired")]
+    OrganizationExpired,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -31,6 +33,9 @@ impl From<ConnectionError> for ClaimerRetrieveInfoError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
+            ConnectionError::InvitationAlreadyUsedOrDeleted => Self::AlreadyUsed,
+            ConnectionError::ExpiredOrganization => Self::OrganizationExpired,
+            ConnectionError::BadAuthenticationInfo => Self::NotFound,
             err => Self::Internal(err.into()),
         }
     }
@@ -70,7 +75,7 @@ impl From<ConnectionError> for ClaimInProgressError {
             ConnectionError::NoResponse(_) => Self::Offline,
             ConnectionError::InvitationAlreadyUsedOrDeleted => Self::AlreadyUsed,
             ConnectionError::ExpiredOrganization => Self::OrganizationExpired,
-            ConnectionError::InvitationNotFound => Self::NotFound,
+            ConnectionError::BadAuthenticationInfo => Self::NotFound,
             err => Self::Internal(err.into()),
         }
     }
@@ -502,7 +507,7 @@ impl ShamirRecoveryClaimRecoverDeviceCtx {
                 Err(ConnectionError::ExpiredOrganization) => {
                     Err(ShamirRecoveryClaimRecoverDeviceError::OrganizationExpired)
                 }
-                Err(ConnectionError::InvitationNotFound) => {
+                Err(ConnectionError::BadAuthenticationInfo) => {
                     Err(ShamirRecoveryClaimRecoverDeviceError::NotFound)
                 }
                 Err(err) => Err(ShamirRecoveryClaimRecoverDeviceError::Internal(err.into())),

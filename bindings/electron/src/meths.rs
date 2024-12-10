@@ -3290,6 +3290,11 @@ fn variant_claimer_retrieve_info_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "ClaimerRetrieveInfoErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ClaimerRetrieveInfoError::OrganizationExpired { .. } => {
+            let js_tag = JsString::try_new(cx, "ClaimerRetrieveInfoErrorOrganizationExpired")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
     }
     Ok(js_obj)
 }

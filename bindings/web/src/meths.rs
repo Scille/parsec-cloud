@@ -3536,6 +3536,13 @@ fn variant_claimer_retrieve_info_error_rs_to_js(
                 &"ClaimerRetrieveInfoErrorOffline".into(),
             )?;
         }
+        libparsec::ClaimerRetrieveInfoError::OrganizationExpired { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimerRetrieveInfoErrorOrganizationExpired".into(),
+            )?;
+        }
     }
     Ok(js_obj)
 }

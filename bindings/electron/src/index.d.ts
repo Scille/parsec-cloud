@@ -500,11 +500,16 @@ export interface ClaimerRetrieveInfoErrorOffline {
     tag: "Offline"
     error: string
 }
+export interface ClaimerRetrieveInfoErrorOrganizationExpired {
+    tag: "OrganizationExpired"
+    error: string
+}
 export type ClaimerRetrieveInfoError =
   | ClaimerRetrieveInfoErrorAlreadyUsed
   | ClaimerRetrieveInfoErrorInternal
   | ClaimerRetrieveInfoErrorNotFound
   | ClaimerRetrieveInfoErrorOffline
+  | ClaimerRetrieveInfoErrorOrganizationExpired
 
 
 // ClientAcceptTosError
