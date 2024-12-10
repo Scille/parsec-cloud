@@ -75,15 +75,17 @@ msTest('PDF viewer', async ({ documents }) => {
   const canvasHeight = Number(await canvas.getAttribute('height'));
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
+  const zoom = bottomBar.locator('.file-controls-zoom');
+  await expect(zoom).toHaveCount(1);
   const buttons = bottomBar.locator('.file-controls-button');
   await expect(buttons).toHaveText(['', '', '', 'Page 1', 'Page 2']);
   // Zoom-
-  await buttons.nth(0).click();
+  await buttons.nth(1).click();
   expect(Number(await canvas.getAttribute('width'))).toBeLessThan(canvasWidth);
   expect(Number(await canvas.getAttribute('height'))).toBeLessThan(canvasHeight);
 
   // Restore zoom
-  await buttons.nth(1).click();
+  await buttons.nth(0).click();
   expect(Number(await canvas.getAttribute('width'))).toBe(canvasWidth);
   expect(Number(await canvas.getAttribute('height'))).toBe(canvasHeight);
 
@@ -103,10 +105,8 @@ msTest('Image viewer', async ({ documents }) => {
   const wrapper = documents.locator('.file-viewer-wrapper');
   await expect(wrapper.locator('img')).toBeVisible();
   const bottomBar = documents.locator('.file-viewer-bottombar');
-  const buttons = bottomBar.locator('.file-controls-button');
-  await expect(buttons).toHaveCount(3);
-
-  // Hard to test the zoom
+  const zoom = bottomBar.locator('.file-controls-zoom');
+  await expect(zoom).toHaveCount(1);
 });
 
 msTest('Audio viewer', async ({ documents }) => {
