@@ -47,10 +47,6 @@ pub enum ConnectionError {
     #[error("Failed to deserialize the response: {0}")]
     InvalidResponseContent(ProtocolDecodeError),
 
-    /// We failed to retrieve the invitation
-    #[error("Invalid handshake: Invitation not found")]
-    InvitationNotFound,
-
     /// We failed to retrieve Api-Version
     #[error("Api-Version header is missing")]
     MissingApiVersion,
