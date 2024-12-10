@@ -86,8 +86,10 @@ fs.writeFileSync('build/assets/publishConfig.json', JSON.stringify(publishConfig
  * @type {Partial<import('app-builder-lib').WindowsConfiguration>}
  */
 const WIN_SIGN_OPTIONS = {
-  certificateSubjectName: 'Scille',
-  certificateSha1: '9EB59B224218EE4B9C436CBD327BE60940592013',
+  signtoolOptions: {
+    certificateSubjectName: 'SCILLE',
+    certificateSha1: '5D56476E12C6DB8055CB37D8EA98E9A9D0B01091',
+  },
 };
 
 /**
