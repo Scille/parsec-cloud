@@ -1,8 +1,9 @@
 use std::{collections::HashMap, num::NonZeroU8};
 
+use dialoguer::Input;
 use libparsec::{UserID, UserProfile};
 
-use crate::utils::{start_spinner, StartedClient};
+use crate::utils::{start_spinner, StartedClient, GREEN_CHECKMARK};
 
 // TODO: should provide the recipients and their share count as a single parameter
 //       e.g. `--recipients=foo@example.com=2,bar@example.com=3`
@@ -20,8 +21,8 @@ crate::clap_parser_with_shared_opts_builder!(
         #[arg(short, long, requires = "recipients", num_args = 1..=255)]
         weights: Option<Vec<NonZeroU8>>,
         /// Threshold number of shares required to proceed with recovery.
-        #[arg(short, long)]
-        threshold: NonZeroU8,
+        #[arg(short, long, requires = "recipients")]
+        threshold: Option<NonZeroU8>,
     }
 );
 
@@ -36,8 +37,9 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
     } = args;
 
     {
-        let _spinner = start_spinner("Poll server for new certificates".into());
+        let mut spinner = start_spinner("Poll server for new certificates".into());
         client.poll_server_for_new_certificates().await?;
+        spinner.stop_with_symbol(GREEN_CHECKMARK);
     }
 
     let mut handle = start_spinner("Creating shared recovery setup".into());
@@ -81,12 +83,27 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
             .map(|user_id| (user_id, weight))
             .collect()
     };
+    // we must stop the handle here to avoid messing up with the threshold choice
+    handle.stop_with_newline();
+    let threshold = if let Some(t) = threshold {
+        t
+    } else {
+        // note that this is a blocking call
+        Input::<NonZeroU8>::new()
+        .with_prompt(format!(
+            "Choose a threshold between 1 and {}\nThe threshold is the minimum number of recipients that one must gather to recover the account",
+            per_recipient_shares.len()
+        )) .interact_text()?
+    };
+    let mut handle = start_spinner("Creating shared recovery setup".into());
 
     client
         .setup_shamir_recovery(per_recipient_shares, threshold)
         .await?;
 
-    handle.stop_with_message("Shared recovery setup has been created".into());
+    handle.stop_with_message(format!(
+        "{GREEN_CHECKMARK} Shared recovery setup has been created"
+    ));
 
     client.stop().await;
 

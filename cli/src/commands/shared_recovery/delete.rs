@@ -16,13 +16,17 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     let client = load_client(&config_dir, device, password_stdin).await?;
 
     {
-        let _spinner = start_spinner("Poll server for new certificates".into());
+        let mut spinner = start_spinner("Poll server for new certificates".into());
         client.poll_server_for_new_certificates().await?;
+        spinner.stop_with_symbol(GREEN_CHECKMARK);
     }
+    let mut handle = start_spinner("Deleting shared recovery setup".into());
 
     client.delete_shamir_recovery().await?;
 
-    println!("Deleted shared recovery for {}", client.user_id());
+    handle.stop_with_message(format!(
+        "{GREEN_CHECKMARK} Shared recovery setup has been deleted"
+    ));
 
     client.stop().await;
 
