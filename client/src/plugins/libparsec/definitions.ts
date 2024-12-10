@@ -523,6 +523,7 @@ export enum ClaimerRetrieveInfoErrorTag {
     Internal = 'ClaimerRetrieveInfoErrorInternal',
     NotFound = 'ClaimerRetrieveInfoErrorNotFound',
     Offline = 'ClaimerRetrieveInfoErrorOffline',
+    OrganizationExpired = 'ClaimerRetrieveInfoErrorOrganizationExpired',
 }
 
 export interface ClaimerRetrieveInfoErrorAlreadyUsed {
@@ -541,11 +542,16 @@ export interface ClaimerRetrieveInfoErrorOffline {
     tag: ClaimerRetrieveInfoErrorTag.Offline
     error: string
 }
+export interface ClaimerRetrieveInfoErrorOrganizationExpired {
+    tag: ClaimerRetrieveInfoErrorTag.OrganizationExpired
+    error: string
+}
 export type ClaimerRetrieveInfoError =
   | ClaimerRetrieveInfoErrorAlreadyUsed
   | ClaimerRetrieveInfoErrorInternal
   | ClaimerRetrieveInfoErrorNotFound
   | ClaimerRetrieveInfoErrorOffline
+  | ClaimerRetrieveInfoErrorOrganizationExpired
 
 // ClientAcceptTosError
 export enum ClientAcceptTosErrorTag {

@@ -114,7 +114,7 @@ impl InvitedCmds {
 
             401 => Err(ConnectionError::MissingAuthenticationInfo),
             403 => Err(ConnectionError::BadAuthenticationInfo),
-            404 => Err(ConnectionError::InvitationNotFound),
+            404 => Err(ConnectionError::OrganizationNotFound),
             406 => Err(ConnectionError::BadAcceptType),
             410 => Err(ConnectionError::InvitationAlreadyUsedOrDeleted),
             415 => Err(ConnectionError::BadContent),
