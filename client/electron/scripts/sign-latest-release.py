@@ -53,7 +53,7 @@ def get(url: str, token: str) -> urllib3.HTTPResponse:
 def get_artifact(
     base_url: str, token: str, version: None | str = None
 ) -> tuple[str, int, str, str, str]:
-    url = f"{base_url}/actions/artifacts"
+    url = f"{base_url}/actions/artifacts?per_page=100"
     artifacts = get(url, token).json()["artifacts"]  # type: ignore
     for artifact in artifacts:
         name = artifact["name"]
