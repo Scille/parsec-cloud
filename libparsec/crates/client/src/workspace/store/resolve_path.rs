@@ -126,7 +126,7 @@ async fn resolve_path_maybe_lock_for_update(
         // we need to fetch from the local storage or server.
         let cache_only_outcome = {
             let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
-            cache_only_path_resolution(store, &mut cache, path_parts, lock_for_update)
+            cache_only_path_resolution(store.realm_id, &mut cache, path_parts, lock_for_update)
         };
         match cache_only_outcome {
             CacheOnlyPathResolutionOutcome::Done {
@@ -189,7 +189,7 @@ enum CacheOnlyPathResolutionOutcome {
 }
 
 fn cache_only_path_resolution(
-    store: &super::WorkspaceStore,
+    realm_id: VlobID,
     cache: &mut super::CurrentViewCache,
     path_parts: &[EntryName],
     lock_for_update: bool,
@@ -213,7 +213,7 @@ fn cache_only_path_resolution(
                 // given it may contains a lock that won't be released on drop !
                 let maybe_update_lock_guard = if lock_for_update {
                     let id = match &last_step {
-                        StepKind::Root => store.realm_id,
+                        StepKind::Root => realm_id,
                         StepKind::Child { manifest, .. } => manifest.id(),
                     };
                     match cache.lock_update_manifests.take(id) {
@@ -431,7 +431,7 @@ pub(crate) async fn resolve_path_for_reparenting(
             // 1) Resolve the destination parent path and lock for update
 
             let dst_parent_resolution_outcome = cache_only_path_resolution(
-                store,
+                store.realm_id,
                 auto_release_guards.cache,
                 dst_parent_path_parts,
                 true,
@@ -464,7 +464,7 @@ pub(crate) async fn resolve_path_for_reparenting(
             // 2) Resolve the source parent path and lock for update
 
             let src_parent_resolution_outcome = cache_only_path_resolution(
-                store,
+                store.realm_id,
                 auto_release_guards.cache,
                 src_parent_path_parts,
                 true,
