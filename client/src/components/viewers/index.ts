@@ -2,5 +2,6 @@
 
 import FileControls from '@/components/viewers/FileControls.vue';
 import FileControlsButton from '@/components/viewers/FileControlsButton.vue';
+import FileControlsInput from '@/components/viewers/FileControlsInput.vue';
 
-export { FileControls, FileControlsButton };
+export { FileControls, FileControlsButton, FileControlsInput };
