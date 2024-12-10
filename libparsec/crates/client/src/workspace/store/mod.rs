@@ -30,9 +30,11 @@ pub(crate) use file_updater::{FileUpdater, ForUpdateFileError};
 pub(crate) use folder_updater::{FolderUpdater, ForUpdateFolderError};
 pub(crate) use manifest_access::GetManifestError;
 pub(crate) use reparent_updater::{ForUpdateReparentingError, ReparentingUpdater};
-pub(crate) use resolve_path::{PathConfinementPoint, ResolvePathError};
+pub(crate) use resolve_path::{
+    PathConfinementPoint, ResolvePathError, RetrievePathFromIDEntry, RetrievePathFromIDError,
+};
 pub(crate) use sync_updater::{
-    ForUpdateSyncLocalOnlyError, IntoSyncConflictUpdaterError, SyncUpdater,
+    ForUpdateSyncError, ForUpdateSyncLocalOnlyError, IntoSyncConflictUpdaterError, SyncUpdater,
 };
 
 use super::fetch::FetchRemoteBlockError;
@@ -214,7 +216,7 @@ impl WorkspaceStore {
     pub async fn retrieve_path_from_id(
         &self,
         entry_id: VlobID,
-    ) -> Result<(ArcLocalChildManifest, FsPath, PathConfinementPoint), ResolvePathError> {
+    ) -> Result<RetrievePathFromIDEntry, RetrievePathFromIDError> {
         resolve_path::retrieve_path_from_id(self, entry_id).await
     }
 
@@ -337,6 +339,23 @@ impl WorkspaceStore {
         entry_id: VlobID,
     ) -> Result<(SyncUpdater, Option<ArcLocalChildManifest>), ForUpdateSyncLocalOnlyError> {
         sync_updater::for_update_sync_local_only(self, entry_id).await
+    }
+
+    /// Get back the local entry, resolve its path, then lock it for update.
+    ///
+    /// This method as a peculiar behavior:
+    /// - Any missing manifest needed to resolve the path will be downloaded from the server.
+    /// - The entry itself will only be fetched from local data.
+    ///
+    /// This is because this method is expected to be used to synchronize this very
+    /// entry from/to the server.
+    #[allow(unused)] // TODO: to be used
+    pub async fn for_update_sync(
+        &self,
+        entry_id: VlobID,
+        wait: bool,
+    ) -> Result<(SyncUpdater, RetrievePathFromIDEntry), ForUpdateSyncError> {
+        sync_updater::for_update_sync(self, entry_id, wait).await
     }
 
     pub async fn resolve_path_for_update_reparenting<'a>(
