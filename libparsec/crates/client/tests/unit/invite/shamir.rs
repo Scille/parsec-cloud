@@ -8,19 +8,20 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    claimer_retrieve_info, AnyClaimRetrievedInfoCtx, ClientConfig, MountpointMountStrategy,
-    ProxyConfig, ShamirRecoveryClaimMaybeFinalizeCtx, ShamirRecoveryClaimMaybeRecoverDeviceCtx,
-    WorkspaceStorageCacheSize,
+    claimer_retrieve_info, AnyClaimRetrievedInfoCtx, ClaimerRetrieveInfoError, ClientConfig,
+    MountpointMountStrategy, ProxyConfig, ShamirRecoveryClaimMaybeFinalizeCtx,
+    ShamirRecoveryClaimMaybeRecoverDeviceCtx, WorkspaceStorageCacheSize,
 };
 
 #[parsec_test(testbed = "shamir", with_server)]
-async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
+async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let bob = env.local_device("bob@dev1");
     let mallory = env.local_device("mallory@dev1");
     let mike = env.local_device("mike@dev1");
 
     // Revoke Mallory first
+
     let alice_client = client_factory(&env.discriminant_dir, alice.clone()).await;
     alice_client.revoke_user(mallory.user_id).await.unwrap();
     let mallory_revoked_on = alice_client
@@ -31,6 +32,8 @@ async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
         .find(|&u| u.id == mallory.user_id)
         .unwrap()
         .revoked_on;
+
+    // Start the alice claimer workflow
 
     let alice_token = env
         .template
@@ -231,8 +234,6 @@ async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
     let password: Password = "P@ssw0rd.".to_string().into();
     let access = DeviceAccessStrategy::Password { key_file, password };
     let available_device = alice_finalize_ctx.save_local_device(&access).await.unwrap();
-
-    // Checks
     let expected_server_url = ParsecAddr::from(bob.organization_addr.clone())
         .to_http_url(None)
         .to_string();
@@ -251,9 +252,9 @@ async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
     );
     p_assert_eq!(available_device.server_url, expected_server_url);
     p_assert_eq!(available_device.user_id, alice.user_id);
-    // created_on and protected_on date times not checked
 
-    // Check device can be loaded
+    // Check that the new device can be loaded
+
     let reloaded_new_alice_device =
         libparsec_platform_device_loader::load_device(&env.discriminant_dir, &access)
             .await
@@ -264,5 +265,71 @@ async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
         client_factory(&env.discriminant_dir, reloaded_new_alice_device.clone()).await;
 
     // Test server connection by deleting the shamir recovery
+
     new_alice_client.delete_shamir_recovery().await.unwrap();
+}
+
+#[parsec_test(testbed = "shamir", with_server)]
+async fn shamir_invitation_does_not_exist(env: &TestbedEnv) {
+    let config = Arc::new(ClientConfig {
+        config_dir: env.discriminant_dir.clone(),
+        data_base_dir: env.discriminant_dir.clone(),
+        workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
+        proxy: ProxyConfig::default(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
+        with_monitors: false,
+        prevent_sync_pattern: PreventSyncPattern::from_regex(r"\.tmp$").unwrap(),
+    });
+
+    let addr = ParsecInvitationAddr::new(
+        env.server_addr.clone(),
+        env.organization_id.clone(),
+        libparsec_types::InvitationType::User,
+        InvitationToken::default(),
+    );
+
+    let error = claimer_retrieve_info(config, addr, None).await.unwrap_err();
+    p_assert_matches!(&error, ClaimerRetrieveInfoError::NotFound);
+}
+
+#[parsec_test(testbed = "shamir", with_server)]
+async fn shamir_invitation_has_been_deleted(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let bob = env.local_device("bob@dev1");
+
+    let config = Arc::new(ClientConfig {
+        config_dir: env.discriminant_dir.clone(),
+        data_base_dir: env.discriminant_dir.clone(),
+        workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
+        proxy: ProxyConfig::default(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
+        with_monitors: false,
+        prevent_sync_pattern: PreventSyncPattern::from_regex(r"\.tmp$").unwrap(),
+    });
+
+    let alice_token = env
+        .template
+        .events
+        .iter()
+        .find_map(|e| match e {
+            TestbedEvent::NewShamirRecoveryInvitation(event) if event.claimer == alice.user_id => {
+                Some(event.token)
+            }
+            _ => None,
+        })
+        .unwrap();
+
+    let addr = ParsecInvitationAddr::new(
+        env.server_addr.clone(),
+        env.organization_id.clone(),
+        libparsec_types::InvitationType::User,
+        alice_token,
+    );
+
+    // Bob delete the invitation
+    let bob_client = client_factory(&env.discriminant_dir, bob.clone()).await;
+    bob_client.cancel_invitation(alice_token).await.unwrap();
+
+    let error = claimer_retrieve_info(config, addr, None).await.unwrap_err();
+    p_assert_matches!(&error, ClaimerRetrieveInfoError::AlreadyUsed);
 }
