@@ -1,1 +1,1 @@
-[CLI] Add user revoke command.
+Add CLI command ``user revoke`` to revoke a user

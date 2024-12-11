@@ -3,7 +3,9 @@ pub mod revoke;
 
 #[derive(clap::Subcommand)]
 pub enum Group {
+    /// List users
     List(list::Args),
+    /// Revoke a user
     Revoke(revoke::Args),
 }
 
