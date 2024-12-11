@@ -356,7 +356,10 @@ function setupMockElectronAPI(): void {
       console.log('OpenConfigDir: Not available');
     },
     authorizeURL: (_url: string): void => {
-      console.log('AuthorizeURL: NotAvailable');
+      console.log('AuthorizeURL: Not available');
+    },
+    seeInExplorer: (_path: string): void => {
+      console.log('SeeInExplorer: Not available');
     },
   };
 }
@@ -474,6 +477,7 @@ declare global {
       pageIsInitialized: () => void;
       openConfigDir: () => void;
       authorizeURL: (url: string) => void;
+      seeInExplorer: (path: string) => void;
     };
   }
 }

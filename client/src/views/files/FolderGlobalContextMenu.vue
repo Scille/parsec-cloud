@@ -38,15 +38,27 @@
             {{ $msTranslate('FoldersPage.ImportFile.importFolderAction') }}
           </ion-label>
         </ion-item>
+
+        <ion-item
+          button
+          v-if="isDesktop()"
+          @click="onClick(FolderGlobalAction.OpenInExplorer)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon :icon="open" />
+          <ion-label class="body list-group-item__label">
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionSeeInExplorer') }}
+          </ion-label>
+        </ion-item>
       </ion-item-group>
     </ion-list>
   </ion-content>
 </template>
 
 <script setup lang="ts">
-import { WorkspaceRole } from '@/parsec';
+import { WorkspaceRole, isDesktop } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
-import { folderOpen, cloudUpload } from 'ionicons/icons';
+import { folderOpen, cloudUpload, open } from 'ionicons/icons';
 import { FolderGlobalAction } from '@/views/files/types';
 
 defineProps<{

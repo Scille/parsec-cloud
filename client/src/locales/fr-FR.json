@@ -496,7 +496,8 @@
             "actionDownload": "Télécharger",
             "actionDetails": "Détails",
             "actionCopyLink": "Copier le lien",
-            "actionDelete": "Supprimer"
+            "actionDelete": "Supprimer",
+            "actionSeeInExplorer": "Voir dans l'explorateur"
         },
         "importModal": {
             "title": "Importer vos fichiers",
@@ -524,7 +525,8 @@
             "copyFailedTooManyFiles": "Trop d'éléments à copier.",
             "copyFailedMaxRecursion": "Trop d'éléments à copier.",
             "copyFailedOneFailed": "Un ou plusieurs éléments n'ont pas pu être copiés.",
-            "copyFailedSourceDoesNotExist": "L'élément {source} n'existe pas."
+            "copyFailedSourceDoesNotExist": "L'élément {source} n'existe pas.",
+            "seeInExplorerFailed": "Impossible d'ouvrir le chemin."
         },
         "CreateFolderModal": {
             "title": "Créer un nouveau dossier",

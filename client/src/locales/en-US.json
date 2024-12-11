@@ -496,7 +496,8 @@
             "actionDownload": "Download",
             "actionDetails": "Details",
             "actionCopyLink": "Copy link",
-            "actionDelete": "Delete"
+            "actionDelete": "Delete",
+            "actionSeeInExplorer": "See in explorer"
         },
         "importModal": {
             "title": "Upload your files",
@@ -524,7 +525,8 @@
             "copyFailedTooManyFiles": "Too many entries to copy.",
             "copyFailedMaxRecursion": "Too many entries to copy.",
             "copyFailedOneFailed": "One or more entries could not be copied.",
-            "copyFailedSourceDoesNotExist": "Entry {source} does not exist."
+            "copyFailedSourceDoesNotExist": "Entry {source} does not exist.",
+            "seeInExplorerFailed": "Failed to open the path."
         },
         "CreateFolderModal": {
             "title": "Create a new folder",

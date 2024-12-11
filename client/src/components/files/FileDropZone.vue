@@ -2,6 +2,7 @@
 
 <template>
   <div
+    ref="dropZone"
     class="drop-zone"
     :class="isActive ? 'drop-zone-active' : 'drop-zone-inactive'"
     @drop.prevent="onDrop"
@@ -50,9 +51,11 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: 'filesAdded', imports: FileImportTuple[]): void;
   (e: 'dropAsReader'): void;
+  (e: 'globalMenuClick', event: Event): void;
 }>();
 
 const dragEnterCount = ref(0);
+const dropZone = ref();
 
 const isActive = computed(() => {
   return !props.disabled && !props.isReader && dragEnterCount.value > 0;
@@ -66,6 +69,10 @@ onMounted(() => {
     window.document.body.addEventListener('dragleave', preventDefaults);
     window.document.body.addEventListener('drop', preventDefaults);
   }
+  dropZone.value.addEventListener('contextmenu', (event: Event) => {
+    event.preventDefault();
+    emits('globalMenuClick', event);
+  });
 });
 
 onBeforeUnmount(() => {
@@ -76,6 +83,7 @@ onBeforeUnmount(() => {
     window.document.body.removeEventListener('dragleave', preventDefaults);
     window.document.body.removeEventListener('drop', preventDefaults);
   }
+  dropZone.value.removeEventListener('contextmenu');
 });
 
 async function onDrop(event: DragEvent): Promise<void> {

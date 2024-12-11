@@ -58,13 +58,25 @@
 
         <ion-item
           button
-          v-show="!multipleFiles && isDesktop()"
+          v-show="!multipleFiles && isFile && isDesktop()"
           @click="onClick(FileAction.Open)"
           class="ion-no-padding list-group-item"
         >
           <ion-icon :icon="open" />
           <ion-label class="body list-group-item__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.actionOpen') }}
+          </ion-label>
+        </ion-item>
+
+        <ion-item
+          button
+          v-if="!multipleFiles && isDesktop()"
+          @click="onClick(FileAction.SeeInExplorer)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon :icon="open" />
+          <ion-label class="body list-group-item__label">
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionSeeInExplorer') }}
           </ion-label>
         </ion-item>
 
@@ -139,6 +151,7 @@ import { FileAction } from '@/views/files/types';
 defineProps<{
   role: WorkspaceRole;
   multipleFiles?: boolean;
+  isFile: boolean;
 }>();
 
 async function onClick(action: FileAction): Promise<boolean> {

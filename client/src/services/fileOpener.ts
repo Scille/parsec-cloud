@@ -44,6 +44,22 @@ async function openWithSystem(
   }
 }
 
+async function showInExplorer(workspaceHandle: WorkspaceHandle, path: FsPath, informationManager: InformationManager): Promise<void> {
+  const result = await getSystemPath(workspaceHandle, path);
+
+  if (!result.ok) {
+    await informationManager.present(
+      new Information({
+        message: 'FoldersPage.errors.seeInExplorerFailed',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Modal,
+    );
+  } else {
+    window.electronAPI.seeInExplorer(result.value);
+  }
+}
+
 async function openPath(
   workspaceHandle: WorkspaceHandle,
   path: FsPath,
@@ -114,4 +130,4 @@ async function openPath(
   }
 }
 
-export { openPath };
+export { openPath, showInExplorer };

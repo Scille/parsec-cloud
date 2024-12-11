@@ -147,10 +147,10 @@
           class="no-files body-lg"
         >
           <file-drop-zone
-            ref="fileDropZoneRef"
             :current-path="currentPath"
             :show-drop-message="true"
             @files-added="startImportFiles"
+            @global-menu-click="openGlobalContextMenu"
             :is-reader="ownRole === parsec.WorkspaceRole.Reader"
           >
             <div class="no-files-content">
@@ -248,6 +248,7 @@ import {
   WorkspaceStatFolderChildrenErrorTag,
   EntryStatFile,
   EntryName,
+  isDesktop,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
@@ -271,7 +272,7 @@ import { IonContent, IonPage, IonText, modalController, popoverController } from
 import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import { EntrySyncedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
-import { openPath } from '@/services/fileOpener';
+import { openPath, showInExplorer } from '@/services/fileOpener';
 
 interface FoldersPageSavedData {
   displayState?: DisplayState;
@@ -1208,7 +1209,7 @@ async function openGlobalContextMenu(event: Event): Promise<void> {
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
-  if (!data) {
+  if (!data || !workspaceInfo.value) {
     return;
   }
   switch (data.action) {
@@ -1218,6 +1219,8 @@ async function openGlobalContextMenu(event: Event): Promise<void> {
       return await fileInputsRef.value.importFiles();
     case FolderGlobalAction.ImportFolder:
       return await fileInputsRef.value.importFolder();
+    case FolderGlobalAction.OpenInExplorer:
+      return await openPath(workspaceInfo.value.handle, currentPath.value, informationManager, { skipViewers: true });
   }
 }
 
@@ -1236,6 +1239,7 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
     componentProps: {
       role: ownRole.value,
       multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
+      isFile: entry.isFile(),
     },
   });
   await popover.present();
@@ -1259,6 +1263,7 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
     [FileAction.ShowDetails, showDetails],
     [FileAction.CopyLink, copyLink],
     [FileAction.Delete, deleteEntries],
+    [FileAction.SeeInExplorer, seeInExplorer],
   ]);
 
   const fn = actions.get(data.action);
@@ -1271,6 +1276,17 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
   }
   if (onFinished) {
     onFinished();
+  }
+}
+
+async function seeInExplorer(entries: EntryModel[]): Promise<void> {
+  if (entries.length > 1 || !workspaceInfo.value || !isDesktop()) {
+    return;
+  }
+  if (entries[0].isFile()) {
+    await showInExplorer(workspaceInfo.value.handle, entries[0].path, informationManager);
+  } else {
+    await openPath(workspaceInfo.value.handle, entries[0].path, informationManager, { skipViewers: true });
   }
 }
 
