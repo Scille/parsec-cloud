@@ -9,8 +9,9 @@ use libparsec_types::prelude::*;
 
 use crate::{
     claimer_retrieve_info, AnyClaimRetrievedInfoCtx, ClaimerRetrieveInfoError, ClientConfig,
-    MountpointMountStrategy, ProxyConfig, ShamirRecoveryClaimMaybeFinalizeCtx,
-    ShamirRecoveryClaimMaybeRecoverDeviceCtx, WorkspaceStorageCacheSize,
+    MountpointMountStrategy, ProxyConfig, ShamirRecoveryClaimAddShareError,
+    ShamirRecoveryClaimMaybeFinalizeCtx, ShamirRecoveryClaimMaybeRecoverDeviceCtx,
+    ShamirRecoveryClaimPickRecipientError, ShamirRecoveryClaimShare, WorkspaceStorageCacheSize,
 };
 
 #[parsec_test(testbed = "shamir", with_server)]
@@ -332,4 +333,407 @@ async fn shamir_invitation_has_been_deleted(env: &TestbedEnv) {
 
     let error = claimer_retrieve_info(config, addr, None).await.unwrap_err();
     p_assert_matches!(&error, ClaimerRetrieveInfoError::AlreadyUsedOrDeleted);
+}
+
+#[parsec_test(testbed = "shamir", with_server)]
+async fn unrecoverable_recovery(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let bob = env.local_device("bob@dev1");
+    let mallory = env.local_device("mallory@dev1");
+    let mike = env.local_device("mike@dev1");
+
+    // Revoke Mallory and Bob
+
+    let alice_client = client_factory(&env.discriminant_dir, alice.clone()).await;
+    alice_client.revoke_user(mallory.user_id).await.unwrap();
+    let mallory_revoked_on = alice_client
+        .list_users(false, None, None)
+        .await
+        .unwrap()
+        .iter()
+        .find(|&u| u.id == mallory.user_id)
+        .unwrap()
+        .revoked_on;
+    alice_client.revoke_user(bob.user_id).await.unwrap();
+    let bob_revoked_on = alice_client
+        .list_users(false, None, None)
+        .await
+        .unwrap()
+        .iter()
+        .find(|&u| u.id == bob.user_id)
+        .unwrap()
+        .revoked_on;
+
+    // Start the alice claimer workflow
+
+    let alice_token = env
+        .template
+        .events
+        .iter()
+        .find_map(|e| match e {
+            TestbedEvent::NewShamirRecoveryInvitation(event) if event.claimer == alice.user_id => {
+                Some(event.token)
+            }
+            _ => None,
+        })
+        .unwrap();
+
+    let addr = ParsecInvitationAddr::new(
+        env.server_addr.clone(),
+        env.organization_id.clone(),
+        libparsec_types::InvitationType::User,
+        alice_token,
+    );
+
+    let config = Arc::new(ClientConfig {
+        config_dir: env.discriminant_dir.clone(),
+        data_base_dir: env.discriminant_dir.clone(),
+        workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
+        proxy: ProxyConfig::default(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
+        with_monitors: false,
+        prevent_sync_pattern: PreventSyncPattern::from_regex(r"\.tmp$").unwrap(),
+    });
+
+    let alice_ctx = claimer_retrieve_info(config, addr, None).await.unwrap();
+    p_assert_matches!(&alice_ctx, AnyClaimRetrievedInfoCtx::ShamirRecovery(_));
+    let alice_recipient_pick_ctx = match alice_ctx {
+        AnyClaimRetrievedInfoCtx::ShamirRecovery(alice_ctx) => {
+            p_assert_eq!(*alice_ctx.claimer_user_id(), alice.user_id);
+            p_assert_eq!(*alice_ctx.claimer_human_handle(), alice.human_handle);
+            p_assert_eq!(
+                *alice_ctx.recipients(),
+                vec![
+                    ShamirRecoveryRecipient {
+                        user_id: bob.user_id,
+                        human_handle: bob.human_handle.clone(),
+                        shares: 2.try_into().unwrap(),
+                        revoked_on: bob_revoked_on,
+                    },
+                    ShamirRecoveryRecipient {
+                        user_id: mallory.user_id,
+                        human_handle: mallory.human_handle.clone(),
+                        shares: 1.try_into().unwrap(),
+                        revoked_on: mallory_revoked_on,
+                    },
+                    ShamirRecoveryRecipient {
+                        user_id: mike.user_id,
+                        human_handle: mike.human_handle.clone(),
+                        shares: 1.try_into().unwrap(),
+                        revoked_on: None,
+                    }
+                ]
+            );
+            p_assert_eq!(alice_ctx.threshold(), 2.try_into().unwrap());
+            p_assert_eq!(alice_ctx.shares(), HashMap::new());
+            assert!(!alice_ctx.is_recoverable());
+            alice_ctx
+        }
+        _ => unreachable!(),
+    };
+
+    p_assert_matches!(
+        alice_recipient_pick_ctx
+            .pick_recipient(bob.user_id)
+            .unwrap_err(),
+        ShamirRecoveryClaimPickRecipientError::RecipientRevoked
+    );
+
+    p_assert_matches!(
+        alice_recipient_pick_ctx
+            .pick_recipient(mallory.user_id)
+            .unwrap_err(),
+        ShamirRecoveryClaimPickRecipientError::RecipientRevoked
+    );
+
+    alice_recipient_pick_ctx
+        .pick_recipient(mike.user_id)
+        .unwrap();
+}
+
+#[parsec_test(testbed = "shamir", with_server)]
+async fn already_picked_recipient(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let mike = env.local_device("mike@dev1");
+
+    // Start the alice claimer workflow
+
+    let alice_token = env
+        .template
+        .events
+        .iter()
+        .find_map(|e| match e {
+            TestbedEvent::NewShamirRecoveryInvitation(event) if event.claimer == alice.user_id => {
+                Some(event.token)
+            }
+            _ => None,
+        })
+        .unwrap();
+
+    let addr = ParsecInvitationAddr::new(
+        env.server_addr.clone(),
+        env.organization_id.clone(),
+        libparsec_types::InvitationType::User,
+        alice_token,
+    );
+
+    let config = Arc::new(ClientConfig {
+        config_dir: env.discriminant_dir.clone(),
+        data_base_dir: env.discriminant_dir.clone(),
+        workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
+        proxy: ProxyConfig::default(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
+        with_monitors: false,
+        prevent_sync_pattern: PreventSyncPattern::from_regex(r"\.tmp$").unwrap(),
+    });
+
+    let alice_ctx = claimer_retrieve_info(config, addr, None).await.unwrap();
+    p_assert_matches!(&alice_ctx, AnyClaimRetrievedInfoCtx::ShamirRecovery(_));
+    let alice_recipient_pick_ctx = match alice_ctx {
+        AnyClaimRetrievedInfoCtx::ShamirRecovery(alice_ctx) => alice_ctx,
+        _ => unreachable!(),
+    };
+
+    // Start with Mike
+
+    let alice_with_mike_ctx = alice_recipient_pick_ctx
+        .pick_recipient(mike.user_id)
+        .unwrap();
+
+    let mike_client = client_factory(&env.discriminant_dir, mike.clone()).await;
+    let mike_ctx = mike_client
+        .start_shamir_recovery_invitation_greet(alice_token, alice.user_id)
+        .await
+        .unwrap();
+
+    let (first, second) = tokio::join!(alice_with_mike_ctx.do_wait_peer(), mike_ctx.do_wait_peer());
+    let alice_with_mike_ctx = first.unwrap();
+    let mike_ctx = second.unwrap();
+
+    p_assert_eq!(mike_ctx.greeter_sas(), alice_with_mike_ctx.greeter_sas());
+    assert!(alice_with_mike_ctx
+        .generate_greeter_sas_choices(4)
+        .contains(mike_ctx.greeter_sas()));
+
+    let (first, second) = tokio::join!(
+        alice_with_mike_ctx.do_signify_trust(),
+        mike_ctx.do_wait_peer_trust()
+    );
+    let alice_with_mike_ctx = first.unwrap();
+    let mike_ctx = second.unwrap();
+
+    p_assert_eq!(mike_ctx.claimer_sas(), alice_with_mike_ctx.claimer_sas());
+    assert!(mike_ctx
+        .generate_claimer_sas_choices(4)
+        .contains(alice_with_mike_ctx.claimer_sas()));
+
+    let (first, second) = tokio::join!(
+        alice_with_mike_ctx.do_wait_peer_trust(),
+        mike_ctx.do_signify_trust()
+    );
+    let alice_with_mike_ctx = first.unwrap();
+    let mike_ctx = second.unwrap();
+
+    let (first, second) = tokio::join!(
+        alice_with_mike_ctx.do_recover_share(),
+        mike_ctx.do_send_share()
+    );
+    let alice_share_ctx = first.unwrap();
+    second.unwrap();
+
+    let alice_recipient_pick_ctx =
+        match alice_recipient_pick_ctx.add_share(alice_share_ctx).unwrap() {
+            ShamirRecoveryClaimMaybeRecoverDeviceCtx::PickRecipient(ctx) => ctx,
+            _ => panic!("Expected PickRecipient context"),
+        };
+    p_assert_eq!(alice_recipient_pick_ctx.shares().len(), 1);
+
+    // Try to pick Mike again
+
+    p_assert_matches!(
+        alice_recipient_pick_ctx
+            .pick_recipient(mike.user_id)
+            .unwrap_err(),
+        ShamirRecoveryClaimPickRecipientError::RecipientAlreadyPicked
+    );
+}
+
+#[parsec_test(testbed = "shamir", with_server)]
+async fn recipient_not_found(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+
+    // Start the alice claimer workflow
+
+    let alice_token = env
+        .template
+        .events
+        .iter()
+        .find_map(|e| match e {
+            TestbedEvent::NewShamirRecoveryInvitation(event) if event.claimer == alice.user_id => {
+                Some(event.token)
+            }
+            _ => None,
+        })
+        .unwrap();
+
+    let addr = ParsecInvitationAddr::new(
+        env.server_addr.clone(),
+        env.organization_id.clone(),
+        libparsec_types::InvitationType::User,
+        alice_token,
+    );
+
+    let config = Arc::new(ClientConfig {
+        config_dir: env.discriminant_dir.clone(),
+        data_base_dir: env.discriminant_dir.clone(),
+        workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
+        proxy: ProxyConfig::default(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
+        with_monitors: false,
+        prevent_sync_pattern: PreventSyncPattern::from_regex(r"\.tmp$").unwrap(),
+    });
+
+    let alice_ctx = claimer_retrieve_info(config, addr, None).await.unwrap();
+    p_assert_matches!(&alice_ctx, AnyClaimRetrievedInfoCtx::ShamirRecovery(_));
+    let alice_recipient_pick_ctx = match alice_ctx {
+        AnyClaimRetrievedInfoCtx::ShamirRecovery(alice_ctx) => alice_ctx,
+        _ => unreachable!(),
+    };
+
+    // Pick a non existent recipient
+
+    p_assert_matches!(
+        alice_recipient_pick_ctx
+            .pick_recipient(UserID::default())
+            .unwrap_err(),
+        ShamirRecoveryClaimPickRecipientError::RecipientNotFound
+    );
+
+    // Create a share with an invalid recipient
+
+    let bad_share = ShamirRecoveryClaimShare {
+        recipient: UserID::default(),
+        weighted_share: vec![],
+    };
+
+    p_assert_matches!(
+        alice_recipient_pick_ctx.add_share(bad_share).unwrap_err(),
+        ShamirRecoveryClaimAddShareError::RecipientNotFound
+    );
+}
+
+#[parsec_test(testbed = "shamir", with_server)]
+async fn add_share_is_idempotent(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let mike = env.local_device("mike@dev1");
+
+    // Start the alice claimer workflow
+
+    let alice_token = env
+        .template
+        .events
+        .iter()
+        .find_map(|e| match e {
+            TestbedEvent::NewShamirRecoveryInvitation(event) if event.claimer == alice.user_id => {
+                Some(event.token)
+            }
+            _ => None,
+        })
+        .unwrap();
+
+    let addr = ParsecInvitationAddr::new(
+        env.server_addr.clone(),
+        env.organization_id.clone(),
+        libparsec_types::InvitationType::User,
+        alice_token,
+    );
+
+    let config = Arc::new(ClientConfig {
+        config_dir: env.discriminant_dir.clone(),
+        data_base_dir: env.discriminant_dir.clone(),
+        workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
+        proxy: ProxyConfig::default(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
+        with_monitors: false,
+        prevent_sync_pattern: PreventSyncPattern::from_regex(r"\.tmp$").unwrap(),
+    });
+
+    let alice_ctx = claimer_retrieve_info(config, addr, None).await.unwrap();
+    p_assert_matches!(&alice_ctx, AnyClaimRetrievedInfoCtx::ShamirRecovery(_));
+    let alice_recipient_pick_ctx = match alice_ctx {
+        AnyClaimRetrievedInfoCtx::ShamirRecovery(alice_ctx) => alice_ctx,
+        _ => unreachable!(),
+    };
+
+    // Start with Mike
+
+    let alice_with_mike_ctx = alice_recipient_pick_ctx
+        .pick_recipient(mike.user_id)
+        .unwrap();
+
+    let mike_client = client_factory(&env.discriminant_dir, mike.clone()).await;
+    let mike_ctx = mike_client
+        .start_shamir_recovery_invitation_greet(alice_token, alice.user_id)
+        .await
+        .unwrap();
+
+    let (first, second) = tokio::join!(alice_with_mike_ctx.do_wait_peer(), mike_ctx.do_wait_peer());
+    let alice_with_mike_ctx = first.unwrap();
+    let mike_ctx = second.unwrap();
+
+    p_assert_eq!(mike_ctx.greeter_sas(), alice_with_mike_ctx.greeter_sas());
+    assert!(alice_with_mike_ctx
+        .generate_greeter_sas_choices(4)
+        .contains(mike_ctx.greeter_sas()));
+
+    let (first, second) = tokio::join!(
+        alice_with_mike_ctx.do_signify_trust(),
+        mike_ctx.do_wait_peer_trust()
+    );
+    let alice_with_mike_ctx = first.unwrap();
+    let mike_ctx = second.unwrap();
+
+    p_assert_eq!(mike_ctx.claimer_sas(), alice_with_mike_ctx.claimer_sas());
+    assert!(mike_ctx
+        .generate_claimer_sas_choices(4)
+        .contains(alice_with_mike_ctx.claimer_sas()));
+
+    let (first, second) = tokio::join!(
+        alice_with_mike_ctx.do_wait_peer_trust(),
+        mike_ctx.do_signify_trust()
+    );
+    let alice_with_mike_ctx = first.unwrap();
+    let mike_ctx = second.unwrap();
+
+    let (first, second) = tokio::join!(
+        alice_with_mike_ctx.do_recover_share(),
+        mike_ctx.do_send_share()
+    );
+    let alice_share_ctx = first.unwrap();
+    second.unwrap();
+
+    // Copy alice share
+    let another_alice_share_ctx = ShamirRecoveryClaimShare {
+        recipient: alice_share_ctx.recipient,
+        weighted_share: alice_share_ctx.weighted_share.clone(),
+    };
+
+    // Add the share
+    let alice_recipient_pick_ctx =
+        match alice_recipient_pick_ctx.add_share(alice_share_ctx).unwrap() {
+            ShamirRecoveryClaimMaybeRecoverDeviceCtx::PickRecipient(ctx) => ctx,
+            _ => panic!("Expected PickRecipient context"),
+        };
+    p_assert_eq!(alice_recipient_pick_ctx.shares().len(), 1);
+
+    // Add the same share once again
+
+    let alice_recipient_pick_ctx = match alice_recipient_pick_ctx
+        .add_share(another_alice_share_ctx)
+        .unwrap()
+    {
+        ShamirRecoveryClaimMaybeRecoverDeviceCtx::PickRecipient(ctx) => ctx,
+        _ => panic!("Expected PickRecipient context"),
+    };
+    p_assert_eq!(alice_recipient_pick_ctx.shares().len(), 1);
 }

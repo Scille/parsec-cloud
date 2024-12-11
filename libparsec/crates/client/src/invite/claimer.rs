@@ -302,6 +302,8 @@ pub enum ShamirRecoveryClaimPickRecipientError {
     RecipientNotFound,
     #[error("Recipient already picked")]
     RecipientAlreadyPicked,
+    #[error("Recipient revoked")]
+    RecipientRevoked,
 }
 
 #[derive(Debug)]
@@ -312,6 +314,8 @@ pub enum ShamirRecoveryClaimMaybeRecoverDeviceCtx {
 
 #[derive(Debug, thiserror::Error)]
 pub enum ShamirRecoveryClaimAddShareError {
+    #[error("Recipient not found")]
+    RecipientNotFound,
     #[error(transparent)]
     CorruptedSecret(DataError),
 }
@@ -371,6 +375,10 @@ impl ShamirRecoveryClaimPickRecipientCtx {
             .find(|r| r.user_id == recipient_user_id)
             .ok_or(ShamirRecoveryClaimPickRecipientError::RecipientNotFound)?;
 
+        if recipient.revoked_on.is_some() {
+            return Err(ShamirRecoveryClaimPickRecipientError::RecipientRevoked);
+        }
+
         let greeter_user_id = recipient.user_id;
         let greeter_human_handle = recipient.human_handle.clone();
 
@@ -392,6 +400,12 @@ impl ShamirRecoveryClaimPickRecipientCtx {
         share_ctx: ShamirRecoveryClaimShare,
     ) -> Result<ShamirRecoveryClaimMaybeRecoverDeviceCtx, ShamirRecoveryClaimAddShareError> {
         let mut shares = self.shares;
+
+        self.recipients
+            .iter()
+            .find(|r| r.user_id == share_ctx.recipient)
+            .ok_or(ShamirRecoveryClaimAddShareError::RecipientNotFound)?;
+
         // Note that we do not check if the share is already present
         // This is to avoid handling an extra error that has no real value,
         // since adding shares can be seen as an idempotent operation.
@@ -1435,8 +1449,8 @@ impl ShamirRecoveryClaimInProgress3Ctx {
 
 #[derive(Debug)]
 pub struct ShamirRecoveryClaimShare {
-    recipient: UserID,
-    weighted_share: Vec<ShamirShare>,
+    pub recipient: UserID,
+    pub weighted_share: Vec<ShamirShare>,
 }
 
 #[derive(Debug)]
