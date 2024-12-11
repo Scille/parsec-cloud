@@ -1,0 +1,1 @@
+Fix handling of files containing a tilde in their name in the Windows file explorer
