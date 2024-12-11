@@ -6,7 +6,6 @@ pub use crate::certif::{
     CertifListShamirRecoveriesForOthersError as ClientListShamirRecoveriesForOthersError,
     OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
 };
-use libparsec_types::prelude::*;
 
 use super::Client;
 
@@ -22,15 +21,5 @@ pub async fn list_shamir_recoveries_for_others(
     client
         .certificates_ops
         .list_shamir_recoveries_for_others()
-        .await
-}
-
-pub async fn get_shamir_recovery_share_data(
-    client: &Client,
-    user_id: UserID,
-) -> Result<ShamirRecoveryShareData, ClientGetShamirRecoveryShareDataError> {
-    client
-        .certificates_ops
-        .get_shamir_recovery_share_data(user_id)
         .await
 }

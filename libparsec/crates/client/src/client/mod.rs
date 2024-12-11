@@ -79,7 +79,8 @@ pub use crate::invite::{
 pub use crate::workspace::WorkspaceOps;
 pub use shamir_recovery_delete::ClientDeleteShamirRecoveryError;
 pub use shamir_recovery_list::{
-    ClientGetSelfShamirRecoveryError, ClientGetShamirRecoveryShareDataError,
+    ClientGetSelfShamirRecoveryError,
+    ClientGetShamirRecoveryShareDataError as ClientStartShamirRecoveryInvitationGreetError,
     ClientListShamirRecoveriesForOthersError, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
 };
 
@@ -555,9 +556,11 @@ impl Client {
         &self,
         token: InvitationToken,
         claimer: UserID,
-    ) -> Result<ShamirRecoveryGreetInitialCtx, ClientGetShamirRecoveryShareDataError> {
-        let share_data =
-            shamir_recovery_list::get_shamir_recovery_share_data(self, claimer).await?;
+    ) -> Result<ShamirRecoveryGreetInitialCtx, ClientStartShamirRecoveryInvitationGreetError> {
+        let share_data = self
+            .certificates_ops
+            .get_shamir_recovery_share_data(claimer)
+            .await?;
         Ok(ShamirRecoveryGreetInitialCtx::new(
             self.device.clone(),
             self.cmds.clone(),
@@ -577,13 +580,6 @@ impl Client {
         &self,
     ) -> Result<Vec<OtherShamirRecoveryInfo>, ClientListShamirRecoveriesForOthersError> {
         shamir_recovery_list::list_shamir_recoveries_for_others(self).await
-    }
-
-    pub async fn get_shamir_recovery_share_data(
-        &self,
-        user_id: UserID,
-    ) -> Result<ShamirRecoveryShareData, ClientGetShamirRecoveryShareDataError> {
-        shamir_recovery_list::get_shamir_recovery_share_data(self, user_id).await
     }
 
     pub async fn setup_shamir_recovery(
