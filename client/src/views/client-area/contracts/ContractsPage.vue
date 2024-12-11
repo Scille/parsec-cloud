@@ -29,7 +29,7 @@
         <div class="contract-header">
           <div class="contract-header-title">
             <ion-text class="contract-header-title__text title-h3">
-              {{ $msTranslate('clientArea.invoicesCustomOrder.contract') }}{{ contractDetails.id }}
+              {{ $msTranslate('clientArea.invoicesCustomOrder.contract') }}{{ contractDetails.number }}
             </ion-text>
           </div>
           <div class="contract-header-invoice">
@@ -429,32 +429,38 @@ const progressWidthExternal = computed(() => {
 
 onMounted(async () => {
   querying.value = true;
-  if (isDefaultOrganization(props.organization)) {
-    const orgRep = await BmsAccessInstance.get().listOrganizations();
-    if (!orgRep.isError && orgRep.data && orgRep.data.type === DataType.ListOrganizations) {
-      organizations.value = orgRep.data.organizations;
+  try {
+    if (isDefaultOrganization(props.organization)) {
+      const orgRep = await BmsAccessInstance.get().listOrganizations();
+      if (!orgRep.isError && orgRep.data && orgRep.data.type === DataType.ListOrganizations) {
+        organizations.value = orgRep.data.organizations;
+      } else {
+        error.value = 'clientArea.contracts.errors.noOrganizations';
+      }
     } else {
-      error.value = 'clientArea.contracts.errors.noOrganizations';
+      const orgRep = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
+      if (!orgRep.isError && orgRep.data && orgRep.data.type === DataType.OrganizationStats) {
+        organizationStats.value = orgRep.data;
+      } else {
+        error.value = 'clientArea.contracts.errors.noInfo';
+        return;
+      }
+      const statusRep = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
+      if (!statusRep.isError && statusRep.data && statusRep.data.type === DataType.CustomOrderStatus) {
+        contractStatus.value = statusRep.data.status;
+      }
+      console.log(props.organization);
+      const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
+      console.log(detailsRep);
+      if (!detailsRep.isError && detailsRep.data && detailsRep.data.type === DataType.CustomOrderDetails) {
+        contractDetails.value = detailsRep.data;
+      } else {
+        error.value = 'clientArea.contracts.errors.noInfo';
+      }
     }
-  } else {
-    const orgRep = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
-    if (!orgRep.isError && orgRep.data && orgRep.data.type === DataType.OrganizationStats) {
-      organizationStats.value = orgRep.data;
-    } else {
-      error.value = 'clientArea.contracts.errors.noInfo';
-    }
-    const statusRep = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
-    if (!statusRep.isError && statusRep.data && statusRep.data.type === DataType.CustomOrderStatus) {
-      contractStatus.value = statusRep.data.status;
-    }
-    const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
-    if (!detailsRep.isError && detailsRep.data && detailsRep.data.type === DataType.CustomOrderDetails) {
-      contractDetails.value = detailsRep.data;
-    } else {
-      error.value = 'clientArea.contracts.errors.noInfo';
-    }
+  } finally {
+    querying.value = false;
   }
-  querying.value = false;
 });
 
 function getUsersPercentage(activeUsersValue: number, quantityOrderedValue: number): number {
@@ -497,7 +503,7 @@ function getStoragePercentage(): number {
   const current = organizationStats.value.dataSize + organizationStats.value.metadataSize;
 
   if (current > ordered) {
-    errorExceededStorage.value = 'clientArea.contracts.errors.storage.errorExceed';
+    errorExceededStorage.value = 'clientArea.contracts.storage.errorExceed';
   }
 
   progressWidthStorage.value = `${Math.round((current / ordered) * 100)}%`;

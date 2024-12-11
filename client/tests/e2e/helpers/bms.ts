@@ -523,62 +523,64 @@ async function mockCustomOrderDetails(
       await route.fulfill({
         status: 200,
         json: {
-          id: 'custom_order_id',
-          created: overload.created ? overload.created.toISO() : '1988-04-07T00:00:00+00:00',
-          number: 'FACT001',
-          amounts: {
-            total_excl_tax: overload.amountWithoutTaxes ? overload.amountWithoutTaxes.toString() : '42.00',
-            // x10, damn government
-            total_incl_tax: overload.amountWithTaxes ? overload.amountWithTaxes.toString() : '420.00',
-            total_remaining_due_incl_tax: overload.amountDue ? overload.amountDue.toString() : '420.00',
-          },
-          pdf_link: 'https://parsec.cloud',
-          rows: [
-            {
-              reference: 'Psc_D0_Adm_M',
-              amount_tax_inc: overload.adminAmountWithTaxes ? overload.adminAmountWithTaxes.toString() : '160.00',
+          [DEFAULT_ORGANIZATION_INFORMATION.name]: {
+            id: 'custom_order_id',
+            created: overload.created ? overload.created.toISO() : '1988-04-07T00:00:00+00:00',
+            number: 'FACT001',
+            amounts: {
+              total_excl_tax: overload.amountWithoutTaxes ? overload.amountWithoutTaxes.toString() : '42.00',
+              // x10, damn government
+              total_incl_tax: overload.amountWithTaxes ? overload.amountWithTaxes.toString() : '420.00',
+              total_remaining_due_incl_tax: overload.amountDue ? overload.amountDue.toString() : '420.00',
             },
-            {
-              reference: 'Psc_D0_Std_User_M',
-              amount_tax_inc: overload.standardAmountWithTaxes ? overload.standardAmountWithTaxes.toString() : '200.00',
-            },
-            {
-              reference: 'Psc_D0_Ext_User_M',
-              amount_tax_inc: overload.outsiderAmountWithTaxes ? overload.outsiderAmountWithTaxes.toString() : '80.00',
-            },
-            {
-              // cspell:disable-next-line
-              reference: 'Psc_Stck_100_Go_M',
-              amount_tax_inc: overload.storageAmountWithTaxes ? overload.storageAmountWithTaxes.toString() : '120.00',
-            },
-          ],
-          _embed: {
-            custom_fields: [
+            pdf_link: 'https://parsec.cloud',
+            rows: [
               {
-                value: 'parsec-saas-custom-order-start-date',
-                code: overload.licenseStart ? overload.licenseStart.toISO() : '1988-04-07T00:00:00+00:00',
+                reference: 'Psc_D0_Adm_M',
+                amount_tax_inc: overload.adminAmountWithTaxes ? overload.adminAmountWithTaxes.toString() : '160.00',
               },
               {
-                value: 'parsec-saas-custom-order-end-date',
-                code: overload.licenseStart ? overload.licenseStart.toISO() : DateTime.now().plus({ year: 1 }).toISO(),
+                reference: 'Psc_D0_Std_User_M',
+                amount_tax_inc: overload.standardAmountWithTaxes ? overload.standardAmountWithTaxes.toString() : '200.00',
               },
               {
-                value: 'parsec-saas-custom-order-admin-license-count',
-                code: overload.adminOrdered ? overload.adminOrdered.toString() : '32',
+                reference: 'Psc_D0_Ext_User_M',
+                amount_tax_inc: overload.outsiderAmountWithTaxes ? overload.outsiderAmountWithTaxes.toString() : '80.00',
               },
               {
-                value: 'parsec-saas-custom-order-outsider-license-count',
-                code: overload.outsiderOrdered ? overload.outsiderOrdered.toString() : '100',
-              },
-              {
-                value: 'parsec-saas-custom-order-standard-license-count',
-                code: overload.standardOrdered ? overload.standardOrdered.toString() : '50',
-              },
-              {
-                value: 'parsec-saas-custom-order-storage-license-count',
-                code: overload.storageOrdered ? overload.storageOrdered.toString() : '10',
+                // cspell:disable-next-line
+                reference: 'Psc_Stck_100_Go_M',
+                amount_tax_inc: overload.storageAmountWithTaxes ? overload.storageAmountWithTaxes.toString() : '120.00',
               },
             ],
+            _embed: {
+              custom_fields: [
+                {
+                  code: 'parsec-saas-custom-order-start-date',
+                  value: overload.licenseStart ? overload.licenseStart.toISO() : '1988-04-07T00:00:00+00:00',
+                },
+                {
+                  code: 'parsec-saas-custom-order-end-date',
+                  value: overload.licenseStart ? overload.licenseStart.toISO() : DateTime.now().plus({ year: 1 }).toISO(),
+                },
+                {
+                  code: 'parsec-saas-custom-order-admin-license-count',
+                  value: overload.adminOrdered ? overload.adminOrdered.toString() : '32',
+                },
+                {
+                  code: 'parsec-saas-custom-order-outsider-license-count',
+                  value: overload.outsiderOrdered ? overload.outsiderOrdered.toString() : '100',
+                },
+                {
+                  code: 'parsec-saas-custom-order-standard-license-count',
+                  value: overload.standardOrdered ? overload.standardOrdered.toString() : '50',
+                },
+                {
+                  code: 'parsec-saas-custom-order-storage-license-count',
+                  value: overload.storageOrdered ? overload.storageOrdered.toString() : '2',
+                },
+              ],
+            },
           },
         },
       });
@@ -586,9 +588,13 @@ async function mockCustomOrderDetails(
   );
 }
 
-async function mockCustomOrderStatus(page: Page, options?: MockRouteOptions): Promise<void> {
+interface MockCustomOrderStatusOverload {
+  status: 'invoice_paid' | 'nothing_linked' | 'unknown' | 'contract_ended' | 'invoice_to_be_paid' | 'estimate_linked';
+}
+
+async function mockCustomOrderStatus(page: Page, overload?: MockCustomOrderStatusOverload, options?: MockRouteOptions): Promise<void> {
   const data: { [key: string]: string } = {};
-  data[DEFAULT_ORGANIZATION_INFORMATION.name] = 'invoice_paid';
+  data[DEFAULT_ORGANIZATION_INFORMATION.name] = overload ? overload.status : 'invoice_paid';
 
   await mockRoute(
     page,
