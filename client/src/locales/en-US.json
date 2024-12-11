@@ -1628,19 +1628,19 @@
             "processing": {
                 "requestSent": {
                     "title": "Request sent",
-                    "description": "We are processing your request. We will contact you within 4 working days."
+                    "description": "Your request is being processed. We will contact you within 4 working days."
                 },
                 "estimateLinked": {
-                    "title": "Estimate pending signature",
-                    "description": "Please return the signed estimate received by e-mail to receive the invoice."
+                    "title": "Quotation signature pending",
+                    "description": "Please sign and send back the quotation received by e-mail to get your invoice."
                 },
                 "invoiceToBePaid": {
                     "title": "Invoice to be paid",
-                    "description": "Awaiting receipt of bank transfer to finalize your order."
+                    "description": "Awaiting validation for your bank transfer to finalize your order."
                 },
                 "organizationAvailable": {
                     "title": "Organization available",
-                    "description": "Our team sets up your organization. You'll receive an email as soon as everything is ready."
+                    "description": "Our team is setting up your organization. You'll receive an email as soon as everything is ready."
                 },
                 "error": {
                     "title": "Failed to retrieve the information.",
