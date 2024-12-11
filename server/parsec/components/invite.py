@@ -281,7 +281,8 @@ class InviteShamirRecoveryRevealBadOutcome(BadOutcomeEnum):
     ORGANIZATION_EXPIRED = auto()
     INVITATION_NOT_FOUND = auto()
     INVITATION_DELETED = auto()
-    DATA_NOT_FOUND = auto()
+    BAD_INVITATION_TYPE = auto()
+    BAD_REVEAL_TOKEN = auto()
 
 
 # New transport definitions
@@ -1379,8 +1380,10 @@ class BaseInviteComponent:
                 return invited_cmds.latest.invite_shamir_recovery_reveal.RepOk(
                     ciphered_data=bytes(ciphered_data)
                 )
-            case InviteShamirRecoveryRevealBadOutcome.DATA_NOT_FOUND:
-                return invited_cmds.latest.invite_shamir_recovery_reveal.RepNotFound()
+            case InviteShamirRecoveryRevealBadOutcome.BAD_INVITATION_TYPE:
+                return invited_cmds.latest.invite_shamir_recovery_reveal.RepBadInvitationType()
+            case InviteShamirRecoveryRevealBadOutcome.BAD_REVEAL_TOKEN:
+                return invited_cmds.latest.invite_shamir_recovery_reveal.RepBadRevealToken()
             case InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_EXPIRED:

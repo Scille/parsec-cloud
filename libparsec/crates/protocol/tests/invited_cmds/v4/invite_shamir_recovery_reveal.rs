@@ -5,13 +5,25 @@ use super::invited_cmds;
 use libparsec_tests_lite::{hex, p_assert_eq};
 use libparsec_types::InvitationToken;
 
-pub fn rep_not_found() {
+pub fn rep_bad_invitation_type() {
     // Generated from Parsec 3.2.1-a.0+dev
     // Content:
-    //   status: 'not_found'
-    let raw: &[u8] = hex!("81a6737461747573a96e6f745f666f756e64").as_ref();
+    //   status: 'bad_invitation_type'
+    let raw: &[u8] = hex!("81a6737461747573b36261645f696e7669746174696f6e5f74797065").as_ref();
 
-    let expected = invited_cmds::invite_shamir_recovery_reveal::Rep::NotFound;
+    let expected = invited_cmds::invite_shamir_recovery_reveal::Rep::BadInvitationType;
+    println!("***expected: {:?}", expected.dump().unwrap());
+    let data = invited_cmds::invite_shamir_recovery_reveal::Rep::load(raw).unwrap();
+    p_assert_eq!(data, expected);
+}
+
+pub fn rep_bad_reveal_token() {
+    // Generated from Parsec 3.2.1-a.0+dev
+    // Content:
+    //   status: 'bad_reveal_token'
+    let raw: &[u8] = hex!("81a6737461747573b06261645f72657665616c5f746f6b656e").as_ref();
+
+    let expected = invited_cmds::invite_shamir_recovery_reveal::Rep::BadRevealToken;
     println!("***expected: {:?}", expected.dump().unwrap());
     let data = invited_cmds::invite_shamir_recovery_reveal::Rep::load(raw).unwrap();
     p_assert_eq!(data, expected);
