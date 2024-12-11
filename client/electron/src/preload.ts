@@ -45,6 +45,9 @@ process.once('loaded', async () => {
     authorizeURL: (url: string) => {
       ipcRenderer.send(PageToWindowChannel.AuthorizeURL, url);
     },
+    seeInExplorer: (path: string) => {
+      ipcRenderer.send(PageToWindowChannel.SeeInExplorer, path);
+    },
   });
 
   try {

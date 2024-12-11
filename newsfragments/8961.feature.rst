@@ -1,0 +1,1 @@
+Added a `See in explorer` option for files and folders

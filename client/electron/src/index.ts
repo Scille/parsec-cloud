@@ -188,6 +188,10 @@ ipcMain.on(PageToWindowChannel.OpenFile, async (_event, path: string) => {
   }
 });
 
+ipcMain.on(PageToWindowChannel.SeeInExplorer, async (_event, path: string) => {
+  shell.showItemInFolder(path);
+});
+
 ipcMain.on(PageToWindowChannel.UpdateApp, async () => {
   myCapacitorApp.updateApp();
 });

@@ -14,6 +14,7 @@ export enum PageToWindowChannel {
   AuthorizeURL = 'parsec-authorized-url',
   CriticalError = 'parsec-critical-error',
   MacfuseNotInstalled = 'parsec-macfuse-not-installed',
+  SeeInExplorer = 'parsec-see-in-explorer',
 }
 
 export enum WindowToPageChannel {

@@ -4,6 +4,7 @@ enum FolderGlobalAction {
   CreateFolder,
   ImportFiles,
   ImportFolder,
+  OpenInExplorer,
 }
 
 enum FileAction {
@@ -16,6 +17,7 @@ enum FileAction {
   Download,
   ShowDetails,
   CopyLink,
+  SeeInExplorer,
 }
 
 export { FileAction, FolderGlobalAction };
