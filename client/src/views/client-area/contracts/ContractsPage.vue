@@ -10,18 +10,20 @@
     </span>
 
     <template v-if="organizationStats && contractDetails">
-      <ms-report-text
-        :theme="MsReportTheme.Error"
-        v-if="errorExceededUsers"
-      >
-        {{ $msTranslate(errorExceededUsers) }}
-      </ms-report-text>
-      <ms-report-text
-        :theme="MsReportTheme.Error"
-        v-if="errorExceededStorage"
-      >
-        {{ $msTranslate(errorExceededStorage) }}
-      </ms-report-text>
+      <div class="error-message">
+        <ms-report-text
+          :theme="MsReportTheme.Error"
+          v-if="errorExceededUsers"
+        >
+          {{ $msTranslate(errorExceededUsers) }}
+        </ms-report-text>
+        <ms-report-text
+          :theme="MsReportTheme.Error"
+          v-if="errorExceededStorage"
+        >
+          {{ $msTranslate(errorExceededStorage) }}
+        </ms-report-text>
+      </div>
       <div
         class="contract"
         v-if="contractDetails && organizationStats && !error"
@@ -29,7 +31,7 @@
         <div class="contract-header">
           <div class="contract-header-title">
             <ion-text class="contract-header-title__text title-h3">
-              {{ $msTranslate('clientArea.invoicesCustomOrder.contract') }}{{ contractDetails.id }}
+              {{ $msTranslate('clientArea.invoicesCustomOrder.contract') }}{{ contractDetails.number }}
             </ion-text>
           </div>
           <div class="contract-header-invoice">
@@ -327,7 +329,10 @@
           <!-- storage-->
           <div class="organization-storage-item">
             <ion-text class="item-title title-h4">{{ $msTranslate('clientArea.contracts.storage.title') }}</ion-text>
-            <div class="item-active">
+            <div
+              class="item-active"
+              :class="getStorageClass()"
+            >
               <ion-text class="item-active__number title-h1-xl">
                 {{ $msTranslate(formatFileSize(organizationStats.metadataSize + organizationStats.dataSize)) }}
                 <span class="item-active__label subtitles-normal">
@@ -429,32 +434,38 @@ const progressWidthExternal = computed(() => {
 
 onMounted(async () => {
   querying.value = true;
-  if (isDefaultOrganization(props.organization)) {
-    const orgRep = await BmsAccessInstance.get().listOrganizations();
-    if (!orgRep.isError && orgRep.data && orgRep.data.type === DataType.ListOrganizations) {
-      organizations.value = orgRep.data.organizations;
+  try {
+    if (isDefaultOrganization(props.organization)) {
+      const orgRep = await BmsAccessInstance.get().listOrganizations();
+      if (!orgRep.isError && orgRep.data && orgRep.data.type === DataType.ListOrganizations) {
+        organizations.value = orgRep.data.organizations;
+      } else {
+        error.value = 'clientArea.contracts.errors.noOrganizations';
+      }
     } else {
-      error.value = 'clientArea.contracts.errors.noOrganizations';
+      const orgRep = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
+      if (!orgRep.isError && orgRep.data && orgRep.data.type === DataType.OrganizationStats) {
+        organizationStats.value = orgRep.data;
+      } else {
+        error.value = 'clientArea.contracts.errors.noInfo';
+        return;
+      }
+      const statusRep = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
+      if (!statusRep.isError && statusRep.data && statusRep.data.type === DataType.CustomOrderStatus) {
+        contractStatus.value = statusRep.data.status;
+      }
+      console.log(props.organization);
+      const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
+      console.log(detailsRep);
+      if (!detailsRep.isError && detailsRep.data && detailsRep.data.type === DataType.CustomOrderDetails) {
+        contractDetails.value = detailsRep.data;
+      } else {
+        error.value = 'clientArea.contracts.errors.noInfo';
+      }
     }
-  } else {
-    const orgRep = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
-    if (!orgRep.isError && orgRep.data && orgRep.data.type === DataType.OrganizationStats) {
-      organizationStats.value = orgRep.data;
-    } else {
-      error.value = 'clientArea.contracts.errors.noInfo';
-    }
-    const statusRep = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
-    if (!statusRep.isError && statusRep.data && statusRep.data.type === DataType.CustomOrderStatus) {
-      contractStatus.value = statusRep.data.status;
-    }
-    const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
-    if (!detailsRep.isError && detailsRep.data && detailsRep.data.type === DataType.CustomOrderDetails) {
-      contractDetails.value = detailsRep.data;
-    } else {
-      error.value = 'clientArea.contracts.errors.noInfo';
-    }
+  } finally {
+    querying.value = false;
   }
-  querying.value = false;
 });
 
 function getUsersPercentage(activeUsersValue: number, quantityOrderedValue: number): number {
@@ -481,6 +492,18 @@ function getUserClass(activeUsers: number, quantityOrdered: number): string {
   }
 }
 
+function getStorageClass(): string {
+  const percentage = getStoragePercentage();
+
+  if (percentage > 100) {
+    return 'item-active--exceeded';
+  } else if (percentage > 90) {
+    return 'item-active--warning';
+  } else {
+    return '';
+  }
+}
+
 function getStorageSize(value: number): number {
   if (!value) {
     return 0;
@@ -497,7 +520,7 @@ function getStoragePercentage(): number {
   const current = organizationStats.value.dataSize + organizationStats.value.metadataSize;
 
   if (current > ordered) {
-    errorExceededStorage.value = 'clientArea.contracts.errors.storage.errorExceed';
+    errorExceededStorage.value = 'clientArea.contracts.storage.errorExceed';
   }
 
   progressWidthStorage.value = `${Math.round((current / ordered) * 100)}%`;
@@ -516,6 +539,12 @@ function getStoragePercentage(): number {
   &:has(.loading-container) {
     height: 100%;
   }
+}
+
+.error-message {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .loading-container {
@@ -727,7 +756,7 @@ function getStoragePercentage(): number {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    width: 17.2rem;
+    width: 18rem;
   }
 
   .item-active {
@@ -801,6 +830,7 @@ function getStoragePercentage(): number {
 
 // Progress bar width
 .organization-users {
+  flex-wrap: wrap;
   .progress-bar {
     height: 0.25rem;
   }

@@ -21,6 +21,7 @@ export const msTest = base.extend<{
   deviceGreetModal: Locator;
   workspaceSharingModal: Locator;
   clientArea: Page;
+  clientAreaCustomOrder: Page;
 }>({
   home: async ({ page, context }, use) => {
     page.on('console', (msg) => console.log('> ', msg.text()));
@@ -182,6 +183,29 @@ export const msTest = base.extend<{
     await orgs.nth(0).click();
     await expect(orgSwitchButton).toHaveText(DEFAULT_ORGANIZATION_INFORMATION.name);
     await expect(popover).toBeHidden();
+
+    await use(home);
+  },
+
+  clientAreaCustomOrder: async ({ home }, use) => {
+    UserData.reset();
+    await MockBms.mockLogin(home);
+    await MockBms.mockUserRoute(home, { billingSystem: 'CUSTOM_ORDER' });
+    await MockBms.mockListOrganizations(home);
+    await MockBms.mockOrganizationStats(home);
+    await MockBms.mockOrganizationStatus(home);
+    await MockBms.mockBillingDetails(home);
+    await MockBms.mockGetInvoices(home);
+    await MockBms.mockCustomOrderStatus(home);
+    await MockBms.mockCustomOrderDetails(home);
+
+    const button = home.locator('.topbar-buttons').locator('#trigger-customer-area-button');
+    await expect(button).toHaveText('Customer area');
+    await button.click();
+    await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
+    await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
+    await home.locator('.saas-login-button__item').nth(1).click();
+    await expect(home).toHaveURL(/.+\/clientArea$/);
 
     await use(home);
   },
