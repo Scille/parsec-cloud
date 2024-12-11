@@ -495,8 +495,11 @@ impl ShamirRecoveryClaimRecoverDeviceCtx {
                     return Ok(ShamirRecoveryClaimMaybeFinalizeCtx::Offline(self))
                 }
                 // Errors
-                Ok(Rep::NotFound) => {
+                Ok(Rep::BadRevealToken) => {
                     Err(ShamirRecoveryClaimRecoverDeviceError::CipheredDataNotFound)
+                }
+                Ok(Rep::BadInvitationType) => {
+                    Err(anyhow::anyhow!("Unexpected bad invitation type response").into())
                 }
                 Ok(Rep::UnknownStatus { .. }) => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())

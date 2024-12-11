@@ -23,7 +23,10 @@
                 ]
             },
             {
-                "status": "not_found"
+                "status": "bad_invitation_type"
+            },
+            {
+                "status": "bad_reveal_token"
             }
         ]
     }

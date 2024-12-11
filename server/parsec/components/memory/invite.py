@@ -589,16 +589,21 @@ class MemoryInviteComponent(BaseInviteComponent):
         if invitation.is_deleted:
             return InviteShamirRecoveryRevealBadOutcome.INVITATION_DELETED
 
-        if invitation.claimer_user_id is None:
-            return InviteShamirRecoveryRevealBadOutcome.DATA_NOT_FOUND
+        if invitation.type != InvitationType.SHAMIR_RECOVERY:
+            return InviteShamirRecoveryRevealBadOutcome.BAD_INVITATION_TYPE
+        assert invitation.claimer_user_id is not None
 
-        shamir_recoveries = org.shamir_recoveries.get(invitation.claimer_user_id, [])
+        # Failing this assert means that some data has been corrupted,
+        # since there needs to be a valid shamir setup in order to create
+        # a shamir recovery invitation
+        assert invitation.claimer_user_id in org.shamir_recoveries
+        shamir_recoveries = org.shamir_recoveries[invitation.claimer_user_id]
         if not shamir_recoveries:
-            return InviteShamirRecoveryRevealBadOutcome.DATA_NOT_FOUND
+            return InviteShamirRecoveryRevealBadOutcome.BAD_REVEAL_TOKEN
 
         *_, shamir_recovery = shamir_recoveries
         if shamir_recovery.reveal_token != reveal_token:
-            return InviteShamirRecoveryRevealBadOutcome.DATA_NOT_FOUND
+            return InviteShamirRecoveryRevealBadOutcome.BAD_REVEAL_TOKEN
 
         return shamir_recovery.ciphered_data
 
