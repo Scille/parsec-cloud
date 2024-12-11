@@ -26,7 +26,5 @@ pub async fn list_user(args: Args, client: &StartedClient) -> anyhow::Result<()>
 
     println!("User {email} has been revoked");
 
-    client.stop().await;
-
     Ok(())
 }
