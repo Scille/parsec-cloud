@@ -19,6 +19,6 @@ mod shamir_recovery_setup;
 mod share_workspace;
 mod start_workspace;
 mod tos;
-pub mod utils;
+mod utils;
 mod with_monitors;
 mod workspace_refresh_list;
