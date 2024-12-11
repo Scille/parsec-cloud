@@ -14,22 +14,22 @@ msTest('Test dashboard', async ({ clientArea }) => {
   const invoices = invoiceContainer.locator('.invoices-list-item');
   await expect(invoices).toHaveCount(3);
   await expect(invoices.nth(0).locator('.invoices-list-item__data')).toHaveText([
-    'December 2021',
+    'Dec 1, 2021',
     DEFAULT_ORGANIZATION_INFORMATION.name,
     /^\d+$/,
-    /^(paid|draft|open) Download$/,
+    /^(Paid|In progress|To pay)\s*Download$/,
   ]);
   await expect(invoices.nth(1).locator('.invoices-list-item__data')).toHaveText([
-    'November 2021',
+    'Nov 1, 2021',
     DEFAULT_ORGANIZATION_INFORMATION.name,
     /^\d+$/,
-    /^(paid|draft|open) Download$/,
+    /^(Paid|In progress|To pay)\s*Download$/,
   ]);
   await expect(invoices.nth(2).locator('.invoices-list-item__data')).toHaveText([
-    'October 2021',
+    'Oct 1, 2021',
     DEFAULT_ORGANIZATION_INFORMATION.name,
     /^\d+$/,
-    /^(paid|draft|open) Download$/,
+    /^(Paid|In progress|To pay)\s*Download$/,
   ]);
   const paymentButton = clientArea.locator('.payment-container').locator('.custom-button');
   await expect(paymentButton).toHaveText('Update');
