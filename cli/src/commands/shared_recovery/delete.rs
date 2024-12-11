@@ -1,4 +1,4 @@
-use crate::utils::*;
+use crate::{build_main_with_client, utils::*};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
@@ -6,15 +6,9 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn main(args: Args) -> anyhow::Result<()> {
-    let Args {
-        password_stdin,
-        device,
-        config_dir,
-    } = args;
+build_main_with_client!(main, delete_shared_recovery);
 
-    let client = load_client(&config_dir, device, password_stdin).await?;
-
+pub async fn delete_shared_recovery(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
     {
         let mut spinner = start_spinner("Poll server for new certificates".into());
         client.poll_server_for_new_certificates().await?;
