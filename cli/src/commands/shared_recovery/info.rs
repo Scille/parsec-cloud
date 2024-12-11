@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use itertools::Itertools;
 
 use crate::{build_main_with_client, utils::*};
@@ -18,6 +20,8 @@ pub async fn list_shared_recovery(_args: Args, client: &StartedClient) -> anyhow
     }
 
     let info = client.get_self_shamir_recovery().await?;
+    let users = client.list_users(false, None, None).await?;
+    let users: HashMap<_, _> = users.iter().map(|info| (info.id, info)).collect();
 
     match info {
                 libparsec_client::SelfShamirRecoveryInfo::Deleted {
@@ -28,7 +32,10 @@ pub async fn list_shared_recovery(_args: Args, client: &StartedClient) -> anyhow
                 libparsec_client::SelfShamirRecoveryInfo::SetupAllValid {
                     per_recipient_shares, threshold, ..
                 } => println!("Shared recovery {GREEN}set up{RESET} with threshold {threshold}\n{}", per_recipient_shares.iter().map(|(recipient, share)| {
-                    format!("• User {recipient} has {share} share(s)") // TODO: special case if there is only on share
+                    // this means that a user disappeared completely, it should not happen
+                    let user= &users.get(recipient).expect("missing recipient").human_handle;
+                    format!("\t• User {user} has {share} share(s)", // TODO: special case if there is only on share
+                )
                 }).join("\n")),
                 libparsec_client::SelfShamirRecoveryInfo::SetupWithRevokedRecipients {
                     threshold,
