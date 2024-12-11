@@ -105,7 +105,5 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
         "{GREEN_CHECKMARK} Shared recovery setup has been created"
     ));
 
-    client.stop().await;
-
     Ok(())
 }

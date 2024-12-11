@@ -9,7 +9,7 @@ mod delete;
 mod info;
 mod list;
 
-fn setup_shared_recovery(
+fn shared_recovery_create(
     alice: &Arc<LocalDevice>,
     bob: &Arc<LocalDevice>,
     toto: &Arc<LocalDevice>,
