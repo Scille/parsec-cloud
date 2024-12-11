@@ -29,7 +29,12 @@ class RepOk(Rep):
     @property
     def ciphered_data(self) -> bytes: ...
 
-class RepNotFound(Rep):
+class RepBadInvitationType(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepBadRevealToken(Rep):
     def __init__(
         self,
     ) -> None: ...
