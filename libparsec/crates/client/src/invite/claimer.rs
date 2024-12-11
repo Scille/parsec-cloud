@@ -396,11 +396,8 @@ impl ShamirRecoveryClaimPickRecipientCtx {
         // This is to avoid handling an extra error that has no real value,
         // since adding shares can be seen as an idempotent operation.
         shares.insert(share_ctx.recipient, share_ctx.weighted_share);
-        if shares
-            .values()
-            .map(|shares| shares.len() as u64)
-            .sum::<u64>()
-            >= self.threshold.get() as u64
+        if shares.values().map(|shares| shares.len()).sum::<usize>()
+            >= self.threshold.get() as usize
         {
             let secret = ShamirRecoverySecret::decrypt_and_load_from_shares(
                 self.threshold,
@@ -1537,7 +1534,7 @@ impl ShamirRecoveryClaimFinalizeCtx {
         // After the device has been successfully saved, we still have to mark the invitation as completed.
         // However, we don't want to return an error if this part fails, as the user cannot really do anything
         // about it. Instead, we log the error and return the device.
-        {
+        'mark_invitation_as_completed: {
             use authenticated_cmds::latest::invite_complete::{Rep, Req};
 
             let cmds = match AuthenticatedCmds::new(
@@ -1548,7 +1545,7 @@ impl ShamirRecoveryClaimFinalizeCtx {
                 Ok(cmds) => cmds,
                 Err(e) => {
                     log::error!("Error while creating authenticated commands: {:?}", e);
-                    return Ok(available_device);
+                    break 'mark_invitation_as_completed;
                 }
             };
 
@@ -1559,11 +1556,11 @@ impl ShamirRecoveryClaimFinalizeCtx {
                         "Unexpected reply while marking the invitation as completed: {:?}",
                         rep
                     );
-                    return Ok(available_device);
+                    break 'mark_invitation_as_completed;
                 }
                 Err(e) => {
                     log::error!("Error while marking the invitation as completed: {:?}", e);
-                    return Ok(available_device);
+                    break 'mark_invitation_as_completed;
                 }
             };
         };
