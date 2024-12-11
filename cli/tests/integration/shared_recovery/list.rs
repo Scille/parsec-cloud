@@ -37,6 +37,6 @@ async fn list_shared_recovery_ok(tmp_path: TmpPath) {
     )
     .stdout(predicates::str::contains(format!(
         "Shared recovery for {GREEN}{}{RESET}",
-        alice.user_id
+        alice.human_handle
     )));
 }
