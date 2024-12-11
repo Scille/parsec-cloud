@@ -1628,11 +1628,11 @@
             "processing": {
                 "requestSent": {
                     "title": "Demande envoyée",
-                    "description": "Nous traitons votre votre demande. Nous allons vous recontacter sous 4 jours ouvrés."
+                    "description": "Nous traitons votre demande. Nous allons vous recontacter dès que possible."
                 },
                 "estimateLinked": {
-                    "title": "Devis à signer",
-                    "description": "Veuillez signer puis nous retourner le devis reçu par mail afin de recevoir votre facture."
+                    "title": "Devis à signer (si devis reçu)",
+                    "description": "Si vous avez reçu un devis, veuillez le signer et le renvoyer par e-mail pour obtenir votre facture."
                 },
                 "invoiceToBePaid": {
                     "title": "Facture à régler",
@@ -1640,7 +1640,7 @@
                 },
                 "organizationAvailable": {
                     "title": "Organisation disponible",
-                    "description": "Notre équipe configure votre organisation. Vous recevrez un email dès que tout sera prêt."
+                    "description": "Notre équipe va bientôt valider votre organisation. Vous recevrez un email dès qu'elle sera disponible"
                 },
                 "error": {
                     "title": "Erreur lors de la récupération des informations",

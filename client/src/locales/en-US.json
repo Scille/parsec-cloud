@@ -1628,11 +1628,11 @@
             "processing": {
                 "requestSent": {
                     "title": "Request sent",
-                    "description": "Your request is being processed. We will contact you within 4 working days."
+                    "description": "Your request is being processed. We will contact you as soon as possible."
                 },
                 "estimateLinked": {
-                    "title": "Quotation signature pending",
-                    "description": "Please sign and send back the quotation received by e-mail to get your invoice."
+                    "title": "Quotation signature pending (if quotation received)",
+                    "description": "If you received a quotation, please sign and it send back by e-mail to get your invoice."
                 },
                 "invoiceToBePaid": {
                     "title": "Invoice to be paid",
@@ -1640,7 +1640,7 @@
                 },
                 "organizationAvailable": {
                     "title": "Organization available",
-                    "description": "Our team is setting up your organization. You'll receive an email as soon as everything is ready."
+                    "description": "Our team will be validate your organization shortly. You'll receive an email as soon as everything is ready."
                 },
                 "error": {
                     "title": "Failed to retrieve the information.",

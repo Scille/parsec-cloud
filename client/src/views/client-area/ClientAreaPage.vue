@@ -200,7 +200,7 @@ onMounted(async () => {
       currentPage.value = ClientAreaPages.Contracts;
       const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(currentOrganization.value);
       if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus) {
-        if (statusResp.data.status === CustomOrderStatus.NothingLinked) {
+        if (statusResp.data.status !== CustomOrderStatus.ContractEnded) {
           currentPage.value = ClientAreaPages.CustomOrderProcessing;
         }
       }

@@ -60,36 +60,39 @@ interface CustomOrderStatusTranslations {
 }
 
 export function getCustomOrderStatusTranslationKey(status: CustomOrderStatus | undefined): CustomOrderStatusTranslations {
+
+  const locale = 'clientArea.dashboard.processing';
+
   switch (status) {
     case undefined: {
       return {
-        title: 'clientArea.dashboard.processing.error.title',
+        title: `${locale}.error.title`,
       };
     }
     case CustomOrderStatus.NothingLinked:
       return {
-        title: 'clientArea.dashboard.processing.requestSent.title',
-        description: 'clientArea.dashboard.processing.requestSent.description',
+        title: `${locale}.requestSent.title`,
+        description: `${locale}.requestSent.description`,
       };
     case CustomOrderStatus.EstimateLinked:
       return {
-        title: 'clientArea.dashboard.processing.estimateLinked.title',
-        description: 'clientArea.dashboard.processing.estimateLinked.description',
+        title: `${locale}.estimateLinked.title`,
+        description: `${locale}.estimateLinked.description`,
       };
     case CustomOrderStatus.InvoiceToBePaid:
       return {
-        title: 'clientArea.dashboard.processing.invoiceToBePaid.title',
-        description: 'clientArea.dashboard.processing.invoiceToBePaid.description',
+        title: `${locale}.invoiceToBePaid.title`,
+        description: `${locale}.invoiceToBePaid.description`,
       };
     case CustomOrderStatus.InvoicePaid:
       return {
-        title: 'clientArea.dashboard.processing.organizationAvailable.title',
-        description: 'clientArea.dashboard.processing.organizationAvailable.description',
+        title: `${locale}.organizationAvailable.title`,
+        description: `${locale}.organizationAvailable.description`,
       };
     default:
       return {
-        title: 'clientArea.dashboard.processing.error.title',
-        description: 'clientArea.dashboard.processing.error.description',
+        title: `${locale}.error.title`,
+        description: `${locale}.error.description`,
       };
   }
 }
