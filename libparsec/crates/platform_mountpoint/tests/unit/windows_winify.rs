@@ -31,6 +31,18 @@ use super::{unwinify_entry_name, winify_entry_name};
     "COM1.foo".parse().unwrap(),
     "COM~31.foo".into()
 )]
+#[case::literal_tilde(
+    "foo~bar".parse().unwrap(),
+    "foo~7ebar".into()  // cspell:disable-line
+)]
+#[case::literal_double_tilde(
+    "foo~~bar".parse().unwrap(),
+    "foo~7e~7ebar".into()  // cspell:disable-line
+)]
+#[case::literal_tilde_trailing(
+    "foo~".parse().unwrap(),
+    "foo~7e".into()
+)]
 fn test_winify(#[case] name: EntryName, #[case] expected: String) {
     let winified = winify_entry_name(&name);
 
@@ -39,4 +51,13 @@ fn test_winify(#[case] name: EntryName, #[case] expected: String) {
     let unwinified = unwinify_entry_name(&winified).unwrap();
 
     p_assert_eq!(unwinified, name);
+}
+
+#[parsec_test]
+#[case::zero("foo\0bar")]
+#[case::slash("foo/bar")]
+#[case::tilde_zero("foo~\0bar")]
+#[case::tilde_slash("foo~/bar")]
+fn unwinify_forbidden_chars(#[case] bad: &str) {
+    p_assert_matches!(unwinify_entry_name(&bad), Err(EntryNameError::InvalidName));
 }
