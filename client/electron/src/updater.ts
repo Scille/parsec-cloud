@@ -317,11 +317,17 @@ function loadPublishOption(): (CustomPublishOptions & CustomGitHubOptions) | und
 }
 
 export function createAppUpdater(): AppUpdater | undefined {
-  const publishOption = loadPublishOption();
-  if (publishOption === undefined) {
+  try {
+    const publishOption = loadPublishOption();
+    if (publishOption === undefined) {
+      return undefined;
+    }
+    const updater = new AppUpdater(publishOption);
+    return updater;
+  } catch (error: any) {
+    console.error('Could not initialize the updater', error);
     return undefined;
   }
-  return new AppUpdater(publishOption);
 }
 
 export interface UpdateAvailable {
