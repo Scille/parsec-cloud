@@ -1625,7 +1625,28 @@
                 "description": "You can change your credit card at any time.",
                 "update": "Update"
             },
-            "processing": "Your order is being processed."
+            "processing": {
+                "requestSent": {
+                    "title": "Request sent",
+                    "description": "Your request is being processed. We will contact you as soon as possible."
+                },
+                "estimateLinked": {
+                    "title": "Quotation signature pending (if quotation received)",
+                    "description": "If you received a quotation, please sign and it send back by e-mail to get your invoice."
+                },
+                "invoiceToBePaid": {
+                    "title": "Invoice to be paid",
+                    "description": "Awaiting validation for your bank transfer to finalize your order."
+                },
+                "organizationAvailable": {
+                    "title": "Organization available",
+                    "description": "Our team will be validate your organization shortly. You'll receive an email as soon as everything is ready."
+                },
+                "error": {
+                    "title": "Failed to retrieve the information.",
+                    "description": "An error occurred while processing your order. Please contact us."
+                }
+            }
         },
         "billingDetailsPage": {
             "placeholders": {
