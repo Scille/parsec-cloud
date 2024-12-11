@@ -417,8 +417,8 @@ export interface ClaimInProgressErrorActiveUsersLimitReached {
     tag: "ActiveUsersLimitReached"
     error: string
 }
-export interface ClaimInProgressErrorAlreadyUsed {
-    tag: "AlreadyUsed"
+export interface ClaimInProgressErrorAlreadyUsedOrDeleted {
+    tag: "AlreadyUsedOrDeleted"
     error: string
 }
 export interface ClaimInProgressErrorCancelled {
@@ -462,7 +462,7 @@ export interface ClaimInProgressErrorPeerReset {
 }
 export type ClaimInProgressError =
   | ClaimInProgressErrorActiveUsersLimitReached
-  | ClaimInProgressErrorAlreadyUsed
+  | ClaimInProgressErrorAlreadyUsedOrDeleted
   | ClaimInProgressErrorCancelled
   | ClaimInProgressErrorCorruptedConfirmation
   | ClaimInProgressErrorGreeterNotAllowed
@@ -484,8 +484,8 @@ export type ClaimerGreeterAbortOperationError =
 
 
 // ClaimerRetrieveInfoError
-export interface ClaimerRetrieveInfoErrorAlreadyUsed {
-    tag: "AlreadyUsed"
+export interface ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted {
+    tag: "AlreadyUsedOrDeleted"
     error: string
 }
 export interface ClaimerRetrieveInfoErrorInternal {
@@ -505,7 +505,7 @@ export interface ClaimerRetrieveInfoErrorOrganizationExpired {
     error: string
 }
 export type ClaimerRetrieveInfoError =
-  | ClaimerRetrieveInfoErrorAlreadyUsed
+  | ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted
   | ClaimerRetrieveInfoErrorInternal
   | ClaimerRetrieveInfoErrorNotFound
   | ClaimerRetrieveInfoErrorOffline

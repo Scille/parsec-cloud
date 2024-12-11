@@ -433,7 +433,7 @@ export type CancelError =
 // ClaimInProgressError
 export enum ClaimInProgressErrorTag {
     ActiveUsersLimitReached = 'ClaimInProgressErrorActiveUsersLimitReached',
-    AlreadyUsed = 'ClaimInProgressErrorAlreadyUsed',
+    AlreadyUsedOrDeleted = 'ClaimInProgressErrorAlreadyUsedOrDeleted',
     Cancelled = 'ClaimInProgressErrorCancelled',
     CorruptedConfirmation = 'ClaimInProgressErrorCorruptedConfirmation',
     GreeterNotAllowed = 'ClaimInProgressErrorGreeterNotAllowed',
@@ -449,8 +449,8 @@ export interface ClaimInProgressErrorActiveUsersLimitReached {
     tag: ClaimInProgressErrorTag.ActiveUsersLimitReached
     error: string
 }
-export interface ClaimInProgressErrorAlreadyUsed {
-    tag: ClaimInProgressErrorTag.AlreadyUsed
+export interface ClaimInProgressErrorAlreadyUsedOrDeleted {
+    tag: ClaimInProgressErrorTag.AlreadyUsedOrDeleted
     error: string
 }
 export interface ClaimInProgressErrorCancelled {
@@ -494,7 +494,7 @@ export interface ClaimInProgressErrorPeerReset {
 }
 export type ClaimInProgressError =
   | ClaimInProgressErrorActiveUsersLimitReached
-  | ClaimInProgressErrorAlreadyUsed
+  | ClaimInProgressErrorAlreadyUsedOrDeleted
   | ClaimInProgressErrorCancelled
   | ClaimInProgressErrorCorruptedConfirmation
   | ClaimInProgressErrorGreeterNotAllowed
@@ -519,15 +519,15 @@ export type ClaimerGreeterAbortOperationError =
 
 // ClaimerRetrieveInfoError
 export enum ClaimerRetrieveInfoErrorTag {
-    AlreadyUsed = 'ClaimerRetrieveInfoErrorAlreadyUsed',
+    AlreadyUsedOrDeleted = 'ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted',
     Internal = 'ClaimerRetrieveInfoErrorInternal',
     NotFound = 'ClaimerRetrieveInfoErrorNotFound',
     Offline = 'ClaimerRetrieveInfoErrorOffline',
     OrganizationExpired = 'ClaimerRetrieveInfoErrorOrganizationExpired',
 }
 
-export interface ClaimerRetrieveInfoErrorAlreadyUsed {
-    tag: ClaimerRetrieveInfoErrorTag.AlreadyUsed
+export interface ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted {
+    tag: ClaimerRetrieveInfoErrorTag.AlreadyUsedOrDeleted
     error: string
 }
 export interface ClaimerRetrieveInfoErrorInternal {
@@ -547,7 +547,7 @@ export interface ClaimerRetrieveInfoErrorOrganizationExpired {
     error: string
 }
 export type ClaimerRetrieveInfoError =
-  | ClaimerRetrieveInfoErrorAlreadyUsed
+  | ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted
   | ClaimerRetrieveInfoErrorInternal
   | ClaimerRetrieveInfoErrorNotFound
   | ClaimerRetrieveInfoErrorOffline

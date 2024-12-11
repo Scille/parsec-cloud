@@ -142,8 +142,8 @@ pub enum ClaimInProgressError {
     OrganizationExpired,
     #[error("Invitation not found")]
     NotFound,
-    #[error("Invitation already used")]
-    AlreadyUsed,
+    #[error("Invitation already used or deleted")]
+    AlreadyUsedOrDeleted,
     #[error("Claim operation reset by peer")]
     PeerReset,
     #[error("Active users limit reached")]
@@ -173,8 +173,8 @@ impl From<libparsec_client::ClaimInProgressError> for ClaimInProgressError {
                 ClaimInProgressError::OrganizationExpired
             }
             libparsec_client::ClaimInProgressError::NotFound => ClaimInProgressError::NotFound,
-            libparsec_client::ClaimInProgressError::AlreadyUsed => {
-                ClaimInProgressError::AlreadyUsed
+            libparsec_client::ClaimInProgressError::AlreadyUsedOrDeleted => {
+                ClaimInProgressError::AlreadyUsedOrDeleted
             }
             libparsec_client::ClaimInProgressError::PeerReset => ClaimInProgressError::PeerReset,
             libparsec_client::ClaimInProgressError::ActiveUsersLimitReached => {

@@ -3172,8 +3172,9 @@ fn variant_claim_in_progress_error_rs_to_js<'a>(
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClaimInProgressError::AlreadyUsed { .. } => {
-            let js_tag = JsString::try_new(cx, "ClaimInProgressErrorAlreadyUsed").or_throw(cx)?;
+        libparsec::ClaimInProgressError::AlreadyUsedOrDeleted { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClaimInProgressErrorAlreadyUsedOrDeleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimInProgressError::Cancelled { .. } => {
@@ -3273,9 +3274,9 @@ fn variant_claimer_retrieve_info_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::ClaimerRetrieveInfoError::AlreadyUsed { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ClaimerRetrieveInfoErrorAlreadyUsed").or_throw(cx)?;
+        libparsec::ClaimerRetrieveInfoError::AlreadyUsedOrDeleted { .. } => {
+            let js_tag = JsString::try_new(cx, "ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimerRetrieveInfoError::Internal { .. } => {
