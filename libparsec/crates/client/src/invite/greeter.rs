@@ -680,7 +680,7 @@ impl DeviceGreetInitialCtx {
 #[derive(Debug)]
 pub struct ShamirRecoveryGreetInitialCtx {
     base: BaseGreetInitialCtx,
-    share_data: ShamirRecoveryShareData,
+    pub share_data: ShamirRecoveryShareData,
 }
 
 impl ShamirRecoveryGreetInitialCtx {
