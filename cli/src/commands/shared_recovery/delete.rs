@@ -22,7 +22,5 @@ pub async fn delete_shared_recovery(_args: Args, client: &StartedClient) -> anyh
         "{GREEN_CHECKMARK} Shared recovery setup has been deleted"
     ));
 
-    client.stop().await;
-
     Ok(())
 }

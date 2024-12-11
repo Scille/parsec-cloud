@@ -19,8 +19,6 @@ pub async fn shared_recovery_info(_args: Args, client: &StartedClient) -> anyhow
 
     let res = client.list_shamir_recoveries_for_others().await?;
 
-    client.stop().await;
-
     if res.is_empty() {
         println!("No shared recovery found");
     } else {
