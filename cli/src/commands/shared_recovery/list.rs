@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use itertools::Itertools;
 
 use crate::{build_main_with_client, utils::*};
@@ -18,6 +20,8 @@ pub async fn shared_recovery_info(_args: Args, client: &StartedClient) -> anyhow
     }
 
     let res = client.list_shamir_recoveries_for_others().await?;
+    let users = client.list_users(false, None, None).await?;
+    let users: HashMap<_, _> = users.iter().map(|info| (info.id, info)).collect();
 
     if res.is_empty() {
         println!("No shared recovery found");
@@ -34,8 +38,11 @@ pub async fn shared_recovery_info(_args: Args, client: &StartedClient) -> anyhow
                 } => println!("• Deleted shared recovery for {RED}{user_id}{RESET} - deleted by {deleted_by} on {deleted_on}"),
                 libparsec_client::OtherShamirRecoveryInfo::SetupAllValid {
                     user_id, threshold, per_recipient_shares,..
-                } => println!("Shared recovery for {GREEN}{user_id}{RESET} with threshold {threshold}\n{}", per_recipient_shares.iter().map(|(recipient, share)| {
-                    format!("\t• User {recipient} has {share} share(s)") // TODO: special case if there is only on share
+                } => println!("Shared recovery for {GREEN}{}{RESET} with threshold {threshold}\n{}", users.get(&user_id).expect("missing author").human_handle, per_recipient_shares.iter().map(|(recipient, share)| {
+                    // this means that a user disappeared completely, it should not happen
+                    let user= &users.get(recipient).expect("missing recipient").human_handle;
+                    format!("\t• User {user} has {share} share(s)", // TODO: special case if there is only on share
+                )
                 }).join("\n")),
                 libparsec_client::OtherShamirRecoveryInfo::SetupWithRevokedRecipients {
                     user_id,
