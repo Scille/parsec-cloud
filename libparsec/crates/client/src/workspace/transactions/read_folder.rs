@@ -8,7 +8,10 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{EnsureManifestExistsWithParentError, PathConfinementPoint, ResolvePathError},
+        store::{
+            EnsureManifestExistsWithParentError, PathConfinementPoint, ResolvePathError,
+            RetrievePathFromIDEntry, RetrievePathFromIDError,
+        },
         EntryStat, WorkspaceOps, WorkspaceStatEntryError,
     },
 };
@@ -226,26 +229,39 @@ pub async fn open_folder_reader_by_id(
     ops: &WorkspaceOps,
     entry_id: VlobID,
 ) -> Result<FolderReader, WorkspaceOpenFolderReaderError> {
-    let (manifest, _, confinement_point) = ops
+    let retrieval = ops
         .store
         .retrieve_path_from_id(entry_id)
         .await
         .map_err(|err| match err {
-            ResolvePathError::Offline => WorkspaceOpenFolderReaderError::Offline,
-            ResolvePathError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
-            ResolvePathError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
-            ResolvePathError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
-            ResolvePathError::InvalidKeysBundle(err) => {
+            RetrievePathFromIDError::Offline => WorkspaceOpenFolderReaderError::Offline,
+            RetrievePathFromIDError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
+            // RetrievePathFromIDError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
+            RetrievePathFromIDError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
+            RetrievePathFromIDError::InvalidKeysBundle(err) => {
                 WorkspaceOpenFolderReaderError::InvalidKeysBundle(err)
             }
-            ResolvePathError::InvalidCertificate(err) => {
+            RetrievePathFromIDError::InvalidCertificate(err) => {
                 WorkspaceOpenFolderReaderError::InvalidCertificate(err)
             }
-            ResolvePathError::InvalidManifest(err) => {
+            RetrievePathFromIDError::InvalidManifest(err) => {
                 WorkspaceOpenFolderReaderError::InvalidManifest(err)
             }
-            ResolvePathError::Internal(err) => err.context("cannot retrieve path").into(),
+            RetrievePathFromIDError::Internal(err) => err.context("cannot retrieve path").into(),
         })?;
+    let (manifest, confinement_point) = match retrieval {
+        RetrievePathFromIDEntry::Missing => {
+            return Err(WorkspaceOpenFolderReaderError::EntryNotFound)
+        }
+        RetrievePathFromIDEntry::Unreachable { manifest } => {
+            (manifest, PathConfinementPoint::NotConfined)
+        }
+        RetrievePathFromIDEntry::Reachable {
+            manifest,
+            confinement_point: confinement,
+            ..
+        } => (manifest, confinement),
+    };
 
     match manifest {
         ArcLocalChildManifest::Folder(manifest) => Ok(FolderReader {

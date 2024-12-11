@@ -180,7 +180,7 @@ pub async fn resolve_path_for_update_folder<'a>(
                 ResolvePathError::Internal(err) => err.context("cannot resolve path").into(),
             })?;
 
-    // From now on we shouldn't fail given `update_guard` doesn't release the lock on drop.
+    // From now on we shouldn't fail given `update_guard` doesn't release the lock on drop...
 
     let updater = FolderUpdater {
         store,
@@ -188,6 +188,8 @@ pub async fn resolve_path_for_update_folder<'a>(
         #[cfg(debug_assertions)]
         entry_id: manifest.id(),
     };
+
+    // ...until this point, where `FolderUpdater`'s drop will take care of releasing the lock !
 
     match manifest {
         ArcLocalChildManifest::Folder(manifest) => Ok((manifest, confinement, updater)),

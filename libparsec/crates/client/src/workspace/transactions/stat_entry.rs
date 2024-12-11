@@ -6,7 +6,10 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{GetManifestError, PathConfinementPoint, ResolvePathError},
+        store::{
+            GetManifestError, PathConfinementPoint, ResolvePathError, RetrievePathFromIDEntry,
+            RetrievePathFromIDError,
+        },
         WorkspaceOps,
     },
 };
@@ -111,27 +114,42 @@ pub(crate) async fn stat_entry_by_id(
             (manifest, known_confinement_point)
         }
         None => {
-            let (manifest, _, confinement_point) = ops
-                .store
-                .retrieve_path_from_id(entry_id)
-                .await
-                .map_err(|err| match err {
-                    ResolvePathError::Offline => WorkspaceStatEntryError::Offline,
-                    ResolvePathError::Stopped => WorkspaceStatEntryError::Stopped,
-                    ResolvePathError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
-                    ResolvePathError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
-                    ResolvePathError::InvalidKeysBundle(err) => {
-                        WorkspaceStatEntryError::InvalidKeysBundle(err)
-                    }
-                    ResolvePathError::InvalidCertificate(err) => {
-                        WorkspaceStatEntryError::InvalidCertificate(err)
-                    }
-                    ResolvePathError::InvalidManifest(err) => {
-                        WorkspaceStatEntryError::InvalidManifest(err)
-                    }
-                    ResolvePathError::Internal(err) => err.context("cannot retrieve path").into(),
-                })?;
-            (manifest, confinement_point)
+            let retrieval =
+                ops.store
+                    .retrieve_path_from_id(entry_id)
+                    .await
+                    .map_err(|err| match err {
+                        RetrievePathFromIDError::Offline => WorkspaceStatEntryError::Offline,
+                        RetrievePathFromIDError::Stopped => WorkspaceStatEntryError::Stopped,
+                        RetrievePathFromIDError::NoRealmAccess => {
+                            WorkspaceStatEntryError::NoRealmAccess
+                        }
+                        RetrievePathFromIDError::InvalidKeysBundle(err) => {
+                            WorkspaceStatEntryError::InvalidKeysBundle(err)
+                        }
+                        RetrievePathFromIDError::InvalidCertificate(err) => {
+                            WorkspaceStatEntryError::InvalidCertificate(err)
+                        }
+                        RetrievePathFromIDError::InvalidManifest(err) => {
+                            WorkspaceStatEntryError::InvalidManifest(err)
+                        }
+                        RetrievePathFromIDError::Internal(err) => {
+                            err.context("cannot retrieve path").into()
+                        }
+                    })?;
+            match retrieval {
+                RetrievePathFromIDEntry::Missing => {
+                    return Err(WorkspaceStatEntryError::EntryNotFound)
+                }
+                RetrievePathFromIDEntry::Unreachable { manifest } => {
+                    (manifest, PathConfinementPoint::NotConfined)
+                }
+                RetrievePathFromIDEntry::Reachable {
+                    manifest,
+                    confinement_point: confinement,
+                    ..
+                } => (manifest, confinement),
+            }
         }
     };
 
