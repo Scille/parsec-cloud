@@ -353,10 +353,10 @@ pub async fn list_shamir_recoveries_for_others(
 pub enum CertifGetShamirRecoveryShareDataError {
     #[error("No shamir certificate found for provided user id `{user_id}`")]
     ShamirRecoveryNotFound { user_id: UserID },
+    #[error("No shamir share certificate found for provided user id `{user_id}`")]
+    ShamirRecoveryShareNotFound { user_id: UserID },
     #[error("Shamir recovery is unusable for provided user id `{user_id}`")]
     ShamirRecoveryUnusable { user_id: UserID },
-    #[error("No verify key found for author of the share certificate `{device_id}`")]
-    VerifyKeyNotFound { device_id: DeviceID },
     #[error(transparent)]
     CorruptedShareData(DataError),
     #[error("Component has stopped")]
@@ -402,7 +402,7 @@ pub async fn get_shamir_recovery_share_data(
             let share_certificate = match share_certificate {
                 Some(share_certificate) => Ok(share_certificate),
                 None => {
-                    Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryNotFound { user_id })
+                    Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryShareNotFound { user_id })
                 }
             }?;
 
@@ -432,16 +432,12 @@ pub async fn get_shamir_recovery_share_data(
                 .await
                 .map_err(|e| match e {
                     GetCertificateError::NonExisting => {
-                        CertifGetShamirRecoveryShareDataError::VerifyKeyNotFound {
-                            device_id: share_certificate.author,
-                        }
+                        CertifGetShamirRecoveryShareDataError::Internal(anyhow::anyhow!(
+                            "Local storage of certificates seems corrupted: Shamir recovery share certificate {:?} has been validated, but its author's certificate doesn't exist", share_certificate
+                        )
+                    )
                     }
-                    GetCertificateError::ExistButTooRecent {
-                        certificate_timestamp,
-                    } => panic!(
-                        "Got a certificate that is too recent: {:?}",
-                        certificate_timestamp
-                    ),
+                    GetCertificateError::ExistButTooRecent {..} => unreachable!(),
                     GetCertificateError::Internal(_) => {
                         CertifGetShamirRecoveryShareDataError::Internal(e.into())
                     }

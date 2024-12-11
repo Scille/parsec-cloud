@@ -119,6 +119,21 @@ async fn setup_but_unusable(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "shamir")]
+async fn incorrectly_pass_self_as_user_id(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice.clone()).await;
+
+    // Use a default token since since `start_shamir_recovery_invitation_greet` does not actually
+    // perform any request to the server but simply get the share data from the local storage.
+    let token = InvitationToken::default();
+
+    p_assert_matches!(
+        client.start_shamir_recovery_invitation_greet(token, alice.user_id).await.unwrap_err(),
+        ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryShareNotFound { user_id } if user_id == alice.user_id
+    );
+}
+
+#[parsec_test(testbed = "shamir")]
 async fn stopped(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let bob = env.local_device("bob@dev1");
