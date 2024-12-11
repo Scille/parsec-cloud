@@ -95,7 +95,7 @@ class ClaimerRetrieveInfoError(ErrorVariant):
     class NotFound:
         pass
 
-    class AlreadyUsed:
+    class AlreadyUsedOrDeleted:
         pass
 
     class OrganizationExpired:
@@ -130,7 +130,7 @@ class ClaimInProgressError(ErrorVariant):
     class NotFound:
         pass
 
-    class AlreadyUsed:
+    class AlreadyUsedOrDeleted:
         pass
 
     class PeerReset:

@@ -3382,11 +3382,11 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorActiveUsersLimitReached".into(),
             )?;
         }
-        libparsec::ClaimInProgressError::AlreadyUsed { .. } => {
+        libparsec::ClaimInProgressError::AlreadyUsedOrDeleted { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClaimInProgressErrorAlreadyUsed".into(),
+                &"ClaimInProgressErrorAlreadyUsedOrDeleted".into(),
             )?;
         }
         libparsec::ClaimInProgressError::Cancelled { .. } => {
@@ -3508,11 +3508,11 @@ fn variant_claimer_retrieve_info_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::ClaimerRetrieveInfoError::AlreadyUsed { .. } => {
+        libparsec::ClaimerRetrieveInfoError::AlreadyUsedOrDeleted { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClaimerRetrieveInfoErrorAlreadyUsed".into(),
+                &"ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted".into(),
             )?;
         }
         libparsec::ClaimerRetrieveInfoError::Internal { .. } => {
