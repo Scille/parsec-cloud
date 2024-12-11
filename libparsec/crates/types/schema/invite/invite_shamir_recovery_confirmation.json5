@@ -1,0 +1,12 @@
+{
+    "label": "InviteShamirRecoveryConfirmation",
+    "type": "invite_shamir_recovery_confirmation",
+    "other_fields": [
+        {
+            // Weighted share to recover the secret key and the reveal token
+            // The number of items in the list corresponds to the weight of the share
+            "name": "weighted_share",
+            "type": "List<ShamirShare>"
+        }
+    ]
+}

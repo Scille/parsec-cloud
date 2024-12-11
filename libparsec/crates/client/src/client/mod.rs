@@ -53,7 +53,8 @@ use libparsec_platform_async::lock::Mutex as AsyncMutex;
 
 use libparsec_types::prelude::*;
 pub use recovery_device::{
-    import_recovery_device, ClientExportRecoveryDeviceError, ImportRecoveryDeviceError,
+    import_recovery_device, register_new_device, ClientExportRecoveryDeviceError,
+    ImportRecoveryDeviceError, RegisterNewDeviceError,
 };
 
 // Re-exposed for public API
@@ -72,12 +73,15 @@ pub use crate::invite::{
     InvitationEmailSentStatus, InviteListItem, ListInvitationsError as ClientListInvitationsError,
     NewDeviceInvitationError as ClientNewDeviceInvitationError,
     NewShamirRecoveryInvitationError as ClientNewShamirRecoveryInvitationError,
-    NewUserInvitationError as ClientNewUserInvitationError, UserGreetInitialCtx,
+    NewUserInvitationError as ClientNewUserInvitationError, ShamirRecoveryGreetInitialCtx,
+    UserGreetInitialCtx,
 };
 pub use crate::workspace::WorkspaceOps;
 pub use shamir_recovery_delete::ClientDeleteShamirRecoveryError;
 pub use shamir_recovery_list::{
-    ClientListShamirRecoveryError, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
+    ClientGetSelfShamirRecoveryError,
+    ClientGetShamirRecoveryShareDataError as ClientStartShamirRecoveryInvitationGreetError,
+    ClientListShamirRecoveriesForOthersError, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
 };
 
 // Should not be `Clone` given it manages underlying resources !
@@ -548,15 +552,33 @@ impl Client {
         )
     }
 
+    pub async fn start_shamir_recovery_invitation_greet(
+        &self,
+        token: InvitationToken,
+        claimer: UserID,
+    ) -> Result<ShamirRecoveryGreetInitialCtx, ClientStartShamirRecoveryInvitationGreetError> {
+        let share_data = self
+            .certificates_ops
+            .get_shamir_recovery_share_data(claimer)
+            .await?;
+        Ok(ShamirRecoveryGreetInitialCtx::new(
+            self.device.clone(),
+            self.cmds.clone(),
+            self.event_bus.clone(),
+            token,
+            share_data,
+        ))
+    }
+
     pub async fn get_self_shamir_recovery(
         &self,
-    ) -> Result<SelfShamirRecoveryInfo, ClientListShamirRecoveryError> {
+    ) -> Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError> {
         shamir_recovery_list::get_self_shamir_recovery(self).await
     }
 
     pub async fn list_shamir_recoveries_for_others(
         &self,
-    ) -> Result<Vec<OtherShamirRecoveryInfo>, ClientListShamirRecoveryError> {
+    ) -> Result<Vec<OtherShamirRecoveryInfo>, ClientListShamirRecoveriesForOthersError> {
         shamir_recovery_list::list_shamir_recoveries_for_others(self).await
     }
 
@@ -591,4 +613,4 @@ impl Client {
 #[cfg(test)]
 #[path = "../../tests/unit/client/mod.rs"]
 #[allow(clippy::unwrap_used)]
-mod tests;
+pub mod tests;

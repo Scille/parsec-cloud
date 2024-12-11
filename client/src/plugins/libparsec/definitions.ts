@@ -325,6 +325,29 @@ export type ActiveUsersLimit =
   | ActiveUsersLimitLimitedTo
   | ActiveUsersLimitNoLimit
 
+// AnyClaimRetrievedInfo
+export enum AnyClaimRetrievedInfoTag {
+    Device = 'AnyClaimRetrievedInfoDevice',
+    User = 'AnyClaimRetrievedInfoUser',
+}
+
+export interface AnyClaimRetrievedInfoDevice {
+    tag: AnyClaimRetrievedInfoTag.Device
+    handle: Handle
+    greeterUserId: UserID
+    greeterHumanHandle: HumanHandle
+}
+export interface AnyClaimRetrievedInfoUser {
+    tag: AnyClaimRetrievedInfoTag.User
+    handle: Handle
+    claimerEmail: string
+    greeterUserId: UserID
+    greeterHumanHandle: HumanHandle
+}
+export type AnyClaimRetrievedInfo =
+  | AnyClaimRetrievedInfoDevice
+  | AnyClaimRetrievedInfoUser
+
 // ArchiveDeviceError
 export enum ArchiveDeviceErrorTag {
     Internal = 'ArchiveDeviceErrorInternal',
@@ -410,7 +433,7 @@ export type CancelError =
 // ClaimInProgressError
 export enum ClaimInProgressErrorTag {
     ActiveUsersLimitReached = 'ClaimInProgressErrorActiveUsersLimitReached',
-    AlreadyUsed = 'ClaimInProgressErrorAlreadyUsed',
+    AlreadyUsedOrDeleted = 'ClaimInProgressErrorAlreadyUsedOrDeleted',
     Cancelled = 'ClaimInProgressErrorCancelled',
     CorruptedConfirmation = 'ClaimInProgressErrorCorruptedConfirmation',
     GreeterNotAllowed = 'ClaimInProgressErrorGreeterNotAllowed',
@@ -426,8 +449,8 @@ export interface ClaimInProgressErrorActiveUsersLimitReached {
     tag: ClaimInProgressErrorTag.ActiveUsersLimitReached
     error: string
 }
-export interface ClaimInProgressErrorAlreadyUsed {
-    tag: ClaimInProgressErrorTag.AlreadyUsed
+export interface ClaimInProgressErrorAlreadyUsedOrDeleted {
+    tag: ClaimInProgressErrorTag.AlreadyUsedOrDeleted
     error: string
 }
 export interface ClaimInProgressErrorCancelled {
@@ -471,7 +494,7 @@ export interface ClaimInProgressErrorPeerReset {
 }
 export type ClaimInProgressError =
   | ClaimInProgressErrorActiveUsersLimitReached
-  | ClaimInProgressErrorAlreadyUsed
+  | ClaimInProgressErrorAlreadyUsedOrDeleted
   | ClaimInProgressErrorCancelled
   | ClaimInProgressErrorCorruptedConfirmation
   | ClaimInProgressErrorGreeterNotAllowed
@@ -496,14 +519,15 @@ export type ClaimerGreeterAbortOperationError =
 
 // ClaimerRetrieveInfoError
 export enum ClaimerRetrieveInfoErrorTag {
-    AlreadyUsed = 'ClaimerRetrieveInfoErrorAlreadyUsed',
+    AlreadyUsedOrDeleted = 'ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted',
     Internal = 'ClaimerRetrieveInfoErrorInternal',
     NotFound = 'ClaimerRetrieveInfoErrorNotFound',
     Offline = 'ClaimerRetrieveInfoErrorOffline',
+    OrganizationExpired = 'ClaimerRetrieveInfoErrorOrganizationExpired',
 }
 
-export interface ClaimerRetrieveInfoErrorAlreadyUsed {
-    tag: ClaimerRetrieveInfoErrorTag.AlreadyUsed
+export interface ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted {
+    tag: ClaimerRetrieveInfoErrorTag.AlreadyUsedOrDeleted
     error: string
 }
 export interface ClaimerRetrieveInfoErrorInternal {
@@ -518,11 +542,16 @@ export interface ClaimerRetrieveInfoErrorOffline {
     tag: ClaimerRetrieveInfoErrorTag.Offline
     error: string
 }
+export interface ClaimerRetrieveInfoErrorOrganizationExpired {
+    tag: ClaimerRetrieveInfoErrorTag.OrganizationExpired
+    error: string
+}
 export type ClaimerRetrieveInfoError =
-  | ClaimerRetrieveInfoErrorAlreadyUsed
+  | ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted
   | ClaimerRetrieveInfoErrorInternal
   | ClaimerRetrieveInfoErrorNotFound
   | ClaimerRetrieveInfoErrorOffline
+  | ClaimerRetrieveInfoErrorOrganizationExpired
 
 // ClientAcceptTosError
 export enum ClientAcceptTosErrorTag {
@@ -1807,29 +1836,6 @@ export interface TestbedErrorInternal {
 export type TestbedError =
   | TestbedErrorDisabled
   | TestbedErrorInternal
-
-// UserOrDeviceClaimInitialInfo
-export enum UserOrDeviceClaimInitialInfoTag {
-    Device = 'UserOrDeviceClaimInitialInfoDevice',
-    User = 'UserOrDeviceClaimInitialInfoUser',
-}
-
-export interface UserOrDeviceClaimInitialInfoDevice {
-    tag: UserOrDeviceClaimInitialInfoTag.Device
-    handle: Handle
-    greeterUserId: UserID
-    greeterHumanHandle: HumanHandle
-}
-export interface UserOrDeviceClaimInitialInfoUser {
-    tag: UserOrDeviceClaimInitialInfoTag.User
-    handle: Handle
-    claimerEmail: string
-    greeterUserId: UserID
-    greeterHumanHandle: HumanHandle
-}
-export type UserOrDeviceClaimInitialInfo =
-  | UserOrDeviceClaimInitialInfoDevice
-  | UserOrDeviceClaimInitialInfoUser
 
 // WaitForDeviceAvailableError
 export enum WaitForDeviceAvailableErrorTag {
@@ -3127,7 +3133,7 @@ export interface LibParsecPlugin {
         config: ClientConfig,
         on_event_callback: (handle: number, event: ClientEvent) => void,
         addr: ParsecInvitationAddr
-    ): Promise<Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError>>
+    ): Promise<Result<AnyClaimRetrievedInfo, ClaimerRetrieveInfoError>>
     claimerUserFinalizeSaveLocalDevice(
         handle: Handle,
         save_strategy: DeviceSaveStrategy

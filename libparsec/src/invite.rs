@@ -142,8 +142,8 @@ pub enum ClaimInProgressError {
     OrganizationExpired,
     #[error("Invitation not found")]
     NotFound,
-    #[error("Invitation already used")]
-    AlreadyUsed,
+    #[error("Invitation already used or deleted")]
+    AlreadyUsedOrDeleted,
     #[error("Claim operation reset by peer")]
     PeerReset,
     #[error("Active users limit reached")]
@@ -173,8 +173,8 @@ impl From<libparsec_client::ClaimInProgressError> for ClaimInProgressError {
                 ClaimInProgressError::OrganizationExpired
             }
             libparsec_client::ClaimInProgressError::NotFound => ClaimInProgressError::NotFound,
-            libparsec_client::ClaimInProgressError::AlreadyUsed => {
-                ClaimInProgressError::AlreadyUsed
+            libparsec_client::ClaimInProgressError::AlreadyUsedOrDeleted => {
+                ClaimInProgressError::AlreadyUsedOrDeleted
             }
             libparsec_client::ClaimInProgressError::PeerReset => ClaimInProgressError::PeerReset,
             libparsec_client::ClaimInProgressError::ActiveUsersLimitReached => {
@@ -219,34 +219,37 @@ pub async fn claimer_retrieve_info(
     #[cfg(target_arch = "wasm32")] _on_event_callback: Arc<dyn Fn(Handle, ClientEvent)>,
 
     addr: ParsecInvitationAddr,
-) -> Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError> {
+) -> Result<AnyClaimRetrievedInfo, ClaimerRetrieveInfoError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
     // TODO
     // let events_plugged = Arc::new(OnEventCallbackPlugged::new(on_event_callback));
     let ctx = libparsec_client::claimer_retrieve_info(config, addr, None).await?;
 
     match ctx {
-        libparsec_client::UserOrDeviceClaimInitialCtx::User(ctx) => {
+        libparsec_client::AnyClaimRetrievedInfoCtx::User(ctx) => {
             let claimer_email = ctx.claimer_email.clone();
             let greeter_user_id = ctx.greeter_user_id().to_owned();
             let greeter_human_handle = ctx.greeter_human_handle().to_owned();
             let handle = register_handle(HandleItem::UserClaimInitial(ctx));
-            Ok(UserOrDeviceClaimInitialInfo::User {
+            Ok(AnyClaimRetrievedInfo::User {
                 handle,
                 claimer_email,
                 greeter_user_id,
                 greeter_human_handle,
             })
         }
-        libparsec_client::UserOrDeviceClaimInitialCtx::Device(ctx) => {
+        libparsec_client::AnyClaimRetrievedInfoCtx::Device(ctx) => {
             let greeter_user_id = ctx.greeter_user_id().to_owned();
             let greeter_human_handle = ctx.greeter_human_handle().to_owned();
             let handle = register_handle(HandleItem::DeviceClaimInitial(ctx));
-            Ok(UserOrDeviceClaimInitialInfo::Device {
+            Ok(AnyClaimRetrievedInfo::Device {
                 handle,
                 greeter_user_id,
                 greeter_human_handle,
             })
+        }
+        libparsec_client::AnyClaimRetrievedInfoCtx::ShamirRecovery(ctx) => {
+            todo!("{ctx:?}")
         }
     }
 }
@@ -328,7 +331,7 @@ pub async fn claimer_greeter_abort_operation(
     }
 }
 
-pub enum UserOrDeviceClaimInitialInfo {
+pub enum AnyClaimRetrievedInfo {
     User {
         handle: Handle,
         claimer_email: String,

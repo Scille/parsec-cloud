@@ -16,6 +16,7 @@ mod shamir_recovery_get_self;
 mod shamir_recovery_list_others;
 mod shamir_recovery_setup;
 mod share_workspace;
+mod start_shamir_recovery_invitation_greet;
 mod start_workspace;
 mod tos;
 mod utils;

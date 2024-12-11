@@ -400,7 +400,7 @@ async function startProcess(): Promise<void> {
     await modalController.dismiss(null, MsModalResult.Cancel);
     let message: Translatable = '';
     switch (retrieveResult.error.tag) {
-      case ClaimerRetrieveInfoErrorTag.AlreadyUsed:
+      case ClaimerRetrieveInfoErrorTag.AlreadyUsedOrDeleted:
         message = 'JoinOrganization.errors.tokenAlreadyUsed';
         break;
       case ClaimerRetrieveInfoErrorTag.NotFound:

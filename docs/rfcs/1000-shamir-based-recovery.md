@@ -344,12 +344,12 @@ This secret contains both:
         {
             // Minimal number of shares to retrieve to reach the quorum and compute the secret
             "name": "threshold",
-            "type": "NonZeroInteger"
+            "type": "NonZeroU8"
         },
         {
             // A recipient can have multiple shares (to have a bigger weight than others)
             "name": "per_recipient_shares",
-            "type": "Map<UserID, NonZeroInteger>"
+            "type": "Map<UserID, NonZeroU8>"
         }
     ]
 }
@@ -705,7 +705,7 @@ Invited API, we reuse the `invite_info` command:
                         "fields": [
                             {
                                 "name": "threshold",
-                                "type": "NonZeroInteger"
+                                "type": "NonZeroU8"
                             },
                             {
                                 "name": "recipients",
@@ -728,7 +728,11 @@ Invited API, we reuse the `invite_info` command:
                     },
                     {
                         "name": "shares",
-                        "type": "NonZeroInteger"
+                        "type": "NonZeroU8"
+                    },
+                    {
+                        "name": "revoked_on",
+                        "type": "RequiredOption<DateTime>"
                     }
                 ]
             }
@@ -804,18 +808,14 @@ The `invite_list` and `invite_delete` commands can also be used as-is to manage 
 
 ### 4.5 - Greeter & claimer actual secret share exchange
 
-This is done with the `invite_4_claimer/greeter_communicate` command.
-This command requires that both claimer and greeter provide a binary payload
-that is then passed to the peer.
-
-Claimer payload is empty.
+This is done with the step 7 of the greeting attempt (greeter step `SendPayload`/ claimer step `GetPayload`).
 
 Greeter payload:
 
 ```json5
 {
-    "label": "ShamirRecoveryCommunicatedData",
-    "type": "shamir_recovery_communicated_data",
+    "label": "InviteShamirRecoveryConfirmation",
+    "type": "invite_shamir_recovery_confirmation",
     "other_fields": [
         {
             // Weighted share to recover the secret key and the reveal token
@@ -865,8 +865,13 @@ The claimer gets access to `reveal_token` and `data_key`, it can then retrieve `
                         "type": "Bytes"
                     }
                 ]
+            },
+            {
+                "status": "bad_invitation_type"
+            },
+            {
+                "status": "bad_reveal_token"
             }
-            // <-------------- Other reps omitted --------->
         ]
     }
 ]
@@ -908,17 +913,17 @@ authenticated API, `organization_config`
                     {
                         "name": "shamir_recovery_min_shares",
                         // Default should be 1
-                        "type": "NonZeroInteger"
+                        "type": "NonZeroU8"
                     },
                     {
                         "name": "shamir_recovery_max_shares",
                         // `None` for no limit (the default)
-                        "type": "RequiredOption<NonZeroInteger>"
+                        "type": "RequiredOption<NonZeroU8>"
                     },
                     {
                         "name": "shamir_recovery_max_shares_per_recipient",
                         // `None` for no limit (the default)
-                        "type": "RequiredOption<NonZeroInteger>"
+                        "type": "RequiredOption<NonZeroU8>"
                     },
                     {
                         "name": "shamir_recovery_recipient_allowed_profiles",

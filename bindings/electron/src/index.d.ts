@@ -327,6 +327,25 @@ export type ActiveUsersLimit =
   | ActiveUsersLimitNoLimit
 
 
+// AnyClaimRetrievedInfo
+export interface AnyClaimRetrievedInfoDevice {
+    tag: "Device"
+    handle: number
+    greeter_user_id: string
+    greeter_human_handle: HumanHandle
+}
+export interface AnyClaimRetrievedInfoUser {
+    tag: "User"
+    handle: number
+    claimer_email: string
+    greeter_user_id: string
+    greeter_human_handle: HumanHandle
+}
+export type AnyClaimRetrievedInfo =
+  | AnyClaimRetrievedInfoDevice
+  | AnyClaimRetrievedInfoUser
+
+
 // ArchiveDeviceError
 export interface ArchiveDeviceErrorInternal {
     tag: "Internal"
@@ -398,8 +417,8 @@ export interface ClaimInProgressErrorActiveUsersLimitReached {
     tag: "ActiveUsersLimitReached"
     error: string
 }
-export interface ClaimInProgressErrorAlreadyUsed {
-    tag: "AlreadyUsed"
+export interface ClaimInProgressErrorAlreadyUsedOrDeleted {
+    tag: "AlreadyUsedOrDeleted"
     error: string
 }
 export interface ClaimInProgressErrorCancelled {
@@ -443,7 +462,7 @@ export interface ClaimInProgressErrorPeerReset {
 }
 export type ClaimInProgressError =
   | ClaimInProgressErrorActiveUsersLimitReached
-  | ClaimInProgressErrorAlreadyUsed
+  | ClaimInProgressErrorAlreadyUsedOrDeleted
   | ClaimInProgressErrorCancelled
   | ClaimInProgressErrorCorruptedConfirmation
   | ClaimInProgressErrorGreeterNotAllowed
@@ -465,8 +484,8 @@ export type ClaimerGreeterAbortOperationError =
 
 
 // ClaimerRetrieveInfoError
-export interface ClaimerRetrieveInfoErrorAlreadyUsed {
-    tag: "AlreadyUsed"
+export interface ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted {
+    tag: "AlreadyUsedOrDeleted"
     error: string
 }
 export interface ClaimerRetrieveInfoErrorInternal {
@@ -481,11 +500,16 @@ export interface ClaimerRetrieveInfoErrorOffline {
     tag: "Offline"
     error: string
 }
+export interface ClaimerRetrieveInfoErrorOrganizationExpired {
+    tag: "OrganizationExpired"
+    error: string
+}
 export type ClaimerRetrieveInfoError =
-  | ClaimerRetrieveInfoErrorAlreadyUsed
+  | ClaimerRetrieveInfoErrorAlreadyUsedOrDeleted
   | ClaimerRetrieveInfoErrorInternal
   | ClaimerRetrieveInfoErrorNotFound
   | ClaimerRetrieveInfoErrorOffline
+  | ClaimerRetrieveInfoErrorOrganizationExpired
 
 
 // ClientAcceptTosError
@@ -1531,25 +1555,6 @@ export interface TestbedErrorInternal {
 export type TestbedError =
   | TestbedErrorDisabled
   | TestbedErrorInternal
-
-
-// UserOrDeviceClaimInitialInfo
-export interface UserOrDeviceClaimInitialInfoDevice {
-    tag: "Device"
-    handle: number
-    greeter_user_id: string
-    greeter_human_handle: HumanHandle
-}
-export interface UserOrDeviceClaimInitialInfoUser {
-    tag: "User"
-    handle: number
-    claimer_email: string
-    greeter_user_id: string
-    greeter_human_handle: HumanHandle
-}
-export type UserOrDeviceClaimInitialInfo =
-  | UserOrDeviceClaimInitialInfoDevice
-  | UserOrDeviceClaimInitialInfoUser
 
 
 // WaitForDeviceAvailableError
@@ -2612,7 +2617,7 @@ export function claimerRetrieveInfo(
     config: ClientConfig,
     on_event_callback: (handle: number, event: ClientEvent) => void,
     addr: string
-): Promise<Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError>>
+): Promise<Result<AnyClaimRetrievedInfo, ClaimerRetrieveInfoError>>
 export function claimerUserFinalizeSaveLocalDevice(
     handle: number,
     save_strategy: DeviceSaveStrategy
