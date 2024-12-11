@@ -19,8 +19,6 @@ pub async fn list_shared_recovery(_args: Args, client: &StartedClient) -> anyhow
 
     let info = client.get_self_shamir_recovery().await?;
 
-    client.stop().await;
-
     match info {
                 libparsec_client::SelfShamirRecoveryInfo::Deleted {
                     deleted_on,

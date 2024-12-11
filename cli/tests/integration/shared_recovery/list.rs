@@ -1,6 +1,6 @@
 use libparsec::{tmp_path, TmpPath};
 
-use crate::integration_tests::shared_recovery::setup_shared_recovery;
+use crate::integration_tests::shared_recovery::shared_recovery_create;
 use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
 use crate::utils::*;
 
@@ -26,7 +26,7 @@ async fn list_shared_recovery_ok(tmp_path: TmpPath) {
     )
     .stdout(predicates::str::contains("No shared recovery found"));
 
-    setup_shared_recovery(&alice, &bob, &toto);
+    shared_recovery_create(&alice, &bob, &toto);
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
