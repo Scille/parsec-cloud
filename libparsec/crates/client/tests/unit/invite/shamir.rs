@@ -331,5 +331,5 @@ async fn shamir_invitation_has_been_deleted(env: &TestbedEnv) {
     bob_client.cancel_invitation(alice_token).await.unwrap();
 
     let error = claimer_retrieve_info(config, addr, None).await.unwrap_err();
-    p_assert_matches!(&error, ClaimerRetrieveInfoError::AlreadyUsed);
+    p_assert_matches!(&error, ClaimerRetrieveInfoError::AlreadyUsedOrDeleted);
 }

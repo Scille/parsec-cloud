@@ -21,8 +21,8 @@ pub enum ClaimerRetrieveInfoError {
     Offline,
     #[error("Invitation not found")]
     NotFound,
-    #[error("Invitation already used")]
-    AlreadyUsed,
+    #[error("Invitation already used or deleted")]
+    AlreadyUsedOrDeleted,
     #[error("Organization has expired")]
     OrganizationExpired,
     #[error(transparent)]
@@ -33,7 +33,7 @@ impl From<ConnectionError> for ClaimerRetrieveInfoError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
-            ConnectionError::InvitationAlreadyUsedOrDeleted => Self::AlreadyUsed,
+            ConnectionError::InvitationAlreadyUsedOrDeleted => Self::AlreadyUsedOrDeleted,
             ConnectionError::ExpiredOrganization => Self::OrganizationExpired,
             ConnectionError::BadAuthenticationInfo => Self::NotFound,
             err => Self::Internal(err.into()),
@@ -49,8 +49,8 @@ pub enum ClaimInProgressError {
     OrganizationExpired,
     #[error("Organization or invitation not found")]
     NotFound,
-    #[error("Invitation already used")]
-    AlreadyUsed,
+    #[error("Invitation already used or deleted")]
+    AlreadyUsedOrDeleted,
     #[error("Claim operation reset by peer")]
     PeerReset,
     #[error("Active users limit reached")]
@@ -73,7 +73,7 @@ impl From<ConnectionError> for ClaimInProgressError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
-            ConnectionError::InvitationAlreadyUsedOrDeleted => Self::AlreadyUsed,
+            ConnectionError::InvitationAlreadyUsedOrDeleted => Self::AlreadyUsedOrDeleted,
             ConnectionError::ExpiredOrganization => Self::OrganizationExpired,
             ConnectionError::BadAuthenticationInfo => Self::NotFound,
             err => Self::Internal(err.into()),
