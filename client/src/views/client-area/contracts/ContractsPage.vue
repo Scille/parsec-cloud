@@ -10,18 +10,20 @@
     </span>
 
     <template v-if="organizationStats && contractDetails">
-      <ms-report-text
-        :theme="MsReportTheme.Error"
-        v-if="errorExceededUsers"
-      >
-        {{ $msTranslate(errorExceededUsers) }}
-      </ms-report-text>
-      <ms-report-text
-        :theme="MsReportTheme.Error"
-        v-if="errorExceededStorage"
-      >
-        {{ $msTranslate(errorExceededStorage) }}
-      </ms-report-text>
+      <div class="error-message">
+        <ms-report-text
+          :theme="MsReportTheme.Error"
+          v-if="errorExceededUsers"
+        >
+          {{ $msTranslate(errorExceededUsers) }}
+        </ms-report-text>
+        <ms-report-text
+          :theme="MsReportTheme.Error"
+          v-if="errorExceededStorage"
+        >
+          {{ $msTranslate(errorExceededStorage) }}
+        </ms-report-text>
+      </div>
       <div
         class="contract"
         v-if="contractDetails && organizationStats && !error"
@@ -327,7 +329,10 @@
           <!-- storage-->
           <div class="organization-storage-item">
             <ion-text class="item-title title-h4">{{ $msTranslate('clientArea.contracts.storage.title') }}</ion-text>
-            <div class="item-active">
+            <div
+              class="item-active"
+              :class="getStorageClass()"
+            >
               <ion-text class="item-active__number title-h1-xl">
                 {{ $msTranslate(formatFileSize(organizationStats.metadataSize + organizationStats.dataSize)) }}
                 <span class="item-active__label subtitles-normal">
@@ -487,6 +492,18 @@ function getUserClass(activeUsers: number, quantityOrdered: number): string {
   }
 }
 
+function getStorageClass(): string {
+  const percentage = getStoragePercentage();
+
+  if (percentage > 100) {
+    return 'item-active--exceeded';
+  } else if (percentage > 90) {
+    return 'item-active--warning';
+  } else {
+    return '';
+  }
+}
+
 function getStorageSize(value: number): number {
   if (!value) {
     return 0;
@@ -522,6 +539,12 @@ function getStoragePercentage(): number {
   &:has(.loading-container) {
     height: 100%;
   }
+}
+
+.error-message {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .loading-container {
@@ -733,7 +756,7 @@ function getStoragePercentage(): number {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    width: 17.2rem;
+    width: 18rem;
   }
 
   .item-active {
@@ -807,6 +830,7 @@ function getStoragePercentage(): number {
 
 // Progress bar width
 .organization-users {
+  flex-wrap: wrap;
   .progress-bar {
     height: 0.25rem;
   }
