@@ -22,7 +22,10 @@ const WIN32_RES_NAMES: [&str; 22] = [
 static RE: OnceCell<Regex> = OnceCell::new();
 
 pub(crate) fn winify_entry_name(name: &EntryName) -> String {
-    let mut name = name.to_string();
+    // Tilde is not a reserved character but it is used to escape reserved characters
+    let ord_reserved = '~' as u8;
+    let mut name = name.as_ref().replace('~', &format!("~{ord_reserved:02x}"));
+
     let (prefix, suffix) = name.split_once('.').unwrap_or((&name, ""));
 
     if WIN32_RES_NAMES.contains(&prefix) {
@@ -57,10 +60,6 @@ pub(crate) fn unwinify_entry_name(name: &str) -> EntryNameResult<EntryName> {
         let name = re.replace_all(name, |caps: &Captures| -> String {
             (u8::from_str_radix(&caps[0][1..], 16).unwrap_or_default() as char).to_string()
         });
-
-        if name.contains('\x00') || name.contains('/') {
-            return Err(EntryNameError::InvalidName);
-        }
 
         EntryName::from_str(&name)
     } else {
