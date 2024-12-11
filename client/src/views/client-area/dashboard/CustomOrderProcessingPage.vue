@@ -2,7 +2,7 @@
 
 <template>
   <div class="client-page-processing">
-    <template v-if="!querying && !error && customOrderStatus">
+    <template v-if="!querying && !error && customOrderStatus && currentStatusStep !== CustomOrderStatusStep.Unknown">
       <div class="process-container">
         <div
           class="process-step"
@@ -46,7 +46,7 @@
     <template v-else-if="querying">
       <ms-spinner />
     </template>
-    <template v-else-if="error">
+    <template v-else-if="error || currentStatusStep === CustomOrderStatusStep.Unknown">
       <ms-report-text :theme="MsReportTheme.Error">
         {{ $msTranslate(error) }}
       </ms-report-text>
@@ -72,10 +72,11 @@ const props = defineProps<{
 }>();
 
 enum CustomOrderStatusStep {
-  NothingLinked = 0,
-  EstimateLinked = 1,
-  InvoiceToBePaid = 2,
-  InvoicePaid = 3,
+  Unknown = 0,
+  NothingLinked = 1,
+  EstimateLinked = 2,
+  InvoiceToBePaid = 3,
+  InvoicePaid = 4,
 }
 
 const currentStatusStep = ref<CustomOrderStatusStep>(CustomOrderStatusStep.NothingLinked);
@@ -122,7 +123,7 @@ onMounted(async () => {
   if (customOrderStatus.value) {
     switch (customOrderStatus.value.status) {
       case CustomOrderStatus.NothingLinked:
-        currentStatusStep.value = CustomOrderStatusStep.InvoiceToBePaid;
+        currentStatusStep.value = CustomOrderStatusStep.NothingLinked;
         break;
       case CustomOrderStatus.EstimateLinked:
         currentStatusStep.value = CustomOrderStatusStep.EstimateLinked;
@@ -133,6 +134,8 @@ onMounted(async () => {
       case CustomOrderStatus.InvoicePaid:
         currentStatusStep.value = CustomOrderStatusStep.InvoicePaid;
         break;
+      default:
+        currentStatusStep.value = CustomOrderStatusStep.Unknown;
     }
   }
 });
