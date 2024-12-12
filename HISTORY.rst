@@ -5,6 +5,17 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.2.2-rc.2 (2024-12-12)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix CLI command ``invite list`` crashing when listing more than one entry
+  (`#9176 <https://github.com/Scille/parsec-cloud/issues/9176>`__)
+
+
+
 Parsec v3.2.2-rc.1 (2024-12-10)
 -------------------------------
 
