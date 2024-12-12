@@ -83,7 +83,7 @@ const CustomOrderStatusSteps = {
 
 const steps = [
   {
-    status: CustomOrderStatus.ContractEnded,
+    status: CustomOrderStatus.NothingLinked,
     title: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked).title,
     description: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked).description,
   },
