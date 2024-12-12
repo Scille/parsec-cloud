@@ -18,8 +18,11 @@ async fn never_setup(env: &TestbedEnv) {
     let token = InvitationToken::default();
 
     p_assert_matches!(
-        client.start_shamir_recovery_invitation_greet(token, alice.user_id).await.unwrap_err(),
-        ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryNotFound { user_id } if user_id == alice.user_id
+        client
+            .start_shamir_recovery_invitation_greet(token, alice.user_id)
+            .await
+            .unwrap_err(),
+        ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryNotFound
     );
 }
 
@@ -113,8 +116,11 @@ async fn setup_but_unusable(env: &TestbedEnv) {
     let token = InvitationToken::default();
 
     p_assert_matches!(
-        client.start_shamir_recovery_invitation_greet(token, alice.user_id).await.unwrap_err(),
-        ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryUnusable { user_id } if user_id == alice.user_id
+        client
+            .start_shamir_recovery_invitation_greet(token, alice.user_id)
+            .await
+            .unwrap_err(),
+        ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryUnusable
     );
 }
 
@@ -128,8 +134,11 @@ async fn incorrectly_pass_self_as_user_id(env: &TestbedEnv) {
     let token = InvitationToken::default();
 
     p_assert_matches!(
-        client.start_shamir_recovery_invitation_greet(token, alice.user_id).await.unwrap_err(),
-        ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryShareNotFound { user_id } if user_id == alice.user_id
+        client
+            .start_shamir_recovery_invitation_greet(token, alice.user_id)
+            .await
+            .unwrap_err(),
+        ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryShareNotFound
     );
 }
 
