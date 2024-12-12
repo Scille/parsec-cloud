@@ -16,7 +16,12 @@
       v-if="!icon && image"
       :image="image"
     />
-    {{ $msTranslate(label) }}
+    <span
+      class="file-controls-button-label"
+      v-if="label"
+    >
+      {{ $msTranslate(label) }}
+    </span>
   </ion-button>
 </template>
 
@@ -38,10 +43,10 @@ defineProps<{
   margin-inline: 0px;
   margin-top: 0px;
   margin-bottom: 0px;
-  --padding-top: 0.25rem;
-  --padding-end: 0.5rem;
-  --padding-bottom: 0.25rem;
-  --padding-start: 0.5rem;
+  --padding-top: 0;
+  --padding-end: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
   height: 3em;
   width: fit-content;
   border-radius: 100%;
@@ -50,14 +55,18 @@ defineProps<{
   scale: 1;
   transition: all 0.2s ease-in-out;
 
+  &.button-disabled {
+    opacity: 0.3;
+  }
+
   &:hover {
     scale: 1.1;
     opacity: 1;
   }
 
-  &-icon {
-    margin-inline: 0em;
-    margin-right: 0.375rem;
+  &-icon,
+  &-label {
+    margin-inline: 0.625rem;
   }
 }
 </style>
