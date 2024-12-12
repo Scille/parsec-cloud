@@ -10,9 +10,9 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-build_main_with_client!(main, list_shared_recovery);
+build_main_with_client!(main, shared_recovery_info);
 
-pub async fn list_shared_recovery(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn shared_recovery_info(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
     {
         let mut spinner = start_spinner("Poll server for new certificates".into());
         client.poll_server_for_new_certificates().await?;
@@ -33,8 +33,8 @@ pub async fn list_shared_recovery(_args: Args, client: &StartedClient) -> anyhow
                     per_recipient_shares, threshold, ..
                 } => println!("Shared recovery {GREEN}set up{RESET} with threshold {threshold}\n{}", per_recipient_shares.iter().map(|(recipient, share)| {
                     // this means that a user disappeared completely, it should not happen
-                    let user= &users.get(recipient).expect("missing recipient").human_handle;
-                    format!("\t• User {user} has {share} share(s)", // TODO: special case if there is only on share
+                    let user = &users.get(recipient).expect("missing recipient").human_handle;
+                    format!("{BULLET_CHAR} User {user} has {share} share(s)", // TODO: special case if there is only one share
                 )
                 }).join("\n")),
                 libparsec_client::SelfShamirRecoveryInfo::SetupWithRevokedRecipients {

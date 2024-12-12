@@ -1,6 +1,6 @@
 use libparsec_client::Tos;
 
-use crate::utils::StartedClient;
+use crate::utils::{StartedClient, BULLET_CHAR};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
@@ -37,7 +37,7 @@ pub(super) fn display_tos(tos: &Tos) -> anyhow::Result<()> {
         tos.updated_on.to_rfc3339()
     )?;
     for (locale, url) in &tos.per_locale_urls {
-        writeln!(stdout, "- {locale}: {url}")?;
+        writeln!(stdout, "{BULLET_CHAR} {locale}: {url}")?;
     }
     Ok(())
 }
