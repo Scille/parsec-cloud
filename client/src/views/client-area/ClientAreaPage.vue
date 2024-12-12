@@ -99,7 +99,7 @@
                 :organization="currentOrganization"
               />
               <contracts-page
-                v-if="currentPage === ClientAreaPages.Contracts"
+                v-if="currentPage === ClientAreaPages.Contracts || ()"
                 :organization="currentOrganization"
                 @organization-selected="onOrganizationSelected"
               />
@@ -215,6 +215,8 @@ onMounted(async () => {
         if (statusResp.data.status !== CustomOrderStatus.ContractEnded && !statusOrganization.value.isBootstrapped) {
           currentPage.value = ClientAreaPages.CustomOrderProcessing;
         }
+      } else {
+        currentPage.value = ClientAreaPages.Contracts;
       }
     } else {
       currentPage.value = ClientAreaPages.Dashboard;
