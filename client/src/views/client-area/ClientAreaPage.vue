@@ -123,7 +123,14 @@
 import { IonPage, IonContent, IonSkeletonText, IonSplitPane, IonMenu, GestureDetail, createGesture } from '@ionic/vue';
 import ClientAreaHeader from '@/views/client-area/ClientAreaHeader.vue';
 import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
-import { BillingSystem, BmsAccessInstance, BmsOrganization, CustomOrderStatus, DataType } from '@/services/bms';
+import {
+  BillingSystem,
+  BmsAccessInstance,
+  BmsOrganization,
+  CustomOrderStatus,
+  DataType,
+  OrganizationStatusResultData,
+} from '@/services/bms';
 import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { DefaultBmsOrganization, ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import BillingDetailsPage from '@/views/client-area/billing-details/BillingDetailsPage.vue';
@@ -153,6 +160,7 @@ const sidebarWidthProperty = ref('');
 const loggedIn = ref(false);
 const refresh = ref(0);
 const querying = ref(true);
+const statusOrganization = ref<OrganizationStatusResultData | null>(null);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -199,8 +207,12 @@ onMounted(async () => {
     if (billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) {
       currentPage.value = ClientAreaPages.Contracts;
       const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(currentOrganization.value);
-      if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus) {
-        if (statusResp.data.status !== CustomOrderStatus.ContractEnded) {
+      const organizationStatusResp = await BmsAccessInstance.get().getOrganizationStatus(currentOrganization.value.bmsId);
+      if (!organizationStatusResp.isError && organizationStatusResp.data) {
+        statusOrganization.value = organizationStatusResp.data as OrganizationStatusResultData;
+      }
+      if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus && statusOrganization.value) {
+        if (statusResp.data.status !== CustomOrderStatus.ContractEnded && !statusOrganization.value.isBootstrapped) {
           currentPage.value = ClientAreaPages.CustomOrderProcessing;
         }
       }
@@ -281,8 +293,6 @@ function getTitleByPage(): Translatable {
       return 'clientArea.header.titles.customOrderStatistics';
     case ClientAreaPages.CustomOrderBillingDetails:
       return 'clientArea.header.titles.customOrderBillingDetails';
-    case ClientAreaPages.CustomOrderProcessing:
-      return 'clientArea.header.titles.customOrderProcessing';
     default:
       return '';
   }

@@ -1636,7 +1636,7 @@
                 },
                 "invoiceToBePaid": {
                     "title": "Facture à régler",
-                    "description": "Votre organisation sera disponible au réglement de la facture."
+                    "description": "Votre organisation sera disponible au règlement de la facture."
                 },
                 "organizationAvailable": {
                     "title": "Organisation disponible",
