@@ -4,4 +4,5 @@ export * from '@tests/e2e/helpers/assertions';
 export * from '@tests/e2e/helpers/bms';
 export * from '@tests/e2e/helpers/data';
 export * from '@tests/e2e/helpers/fixtures';
+export * from '@tests/e2e/helpers/mediaAssertions';
 export * from '@tests/e2e/helpers/utils';
