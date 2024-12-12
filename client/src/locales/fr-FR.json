@@ -1651,16 +1651,16 @@
                     "description": "Nous traitons votre demande. Nous allons vous recontacter dès que possible."
                 },
                 "estimateLinked": {
-                    "title": "Devis à signer (si devis reçu)",
-                    "description": "Si vous avez reçu un devis, veuillez le signer et le renvoyer par e-mail pour obtenir votre facture."
+                    "title": "Échange avec le service commercial",
+                    "description": "Vous allez être contacté par notre service commercial pour finaliser votre commande."
                 },
                 "invoiceToBePaid": {
                     "title": "Facture à régler",
-                    "description": "En attente de réception du virement bancaire pour finaliser votre commande."
+                    "description": "Votre organisation sera disponible au réglement de la facture."
                 },
                 "organizationAvailable": {
                     "title": "Organisation disponible",
-                    "description": "Notre équipe va bientôt valider votre organisation. Vous recevrez un email dès qu'elle sera disponible."
+                    "description": "Vous avez maintenant accès à votre organisation."
                 },
                 "error": {
                     "title": "Erreur lors de la récupération des informations",

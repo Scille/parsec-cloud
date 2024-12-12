@@ -1651,16 +1651,16 @@
                     "description": "Your request is being processed. We will contact you as soon as possible."
                 },
                 "estimateLinked": {
-                    "title": "Quotation signature pending (if quotation received)",
-                    "description": "If you received a quotation, please sign and it send back by e-mail to get your invoice."
+                    "title": "Exchange with the sales department",
+                    "description": "Our sales department will contact you to finalize your order."
                 },
                 "invoiceToBePaid": {
                     "title": "Invoice to be paid",
-                    "description": "Awaiting validation for your bank transfer to finalize your order."
+                    "description": "Your organization will be available upon payment of the invoice."
                 },
                 "organizationAvailable": {
                     "title": "Organization available",
-                    "description": "Our team will be validate your organization shortly. You'll receive an email as soon as everything is ready."
+                    "description": "You can now access to your organization."
                 },
                 "error": {
                     "title": "Failed to retrieve the information.",
