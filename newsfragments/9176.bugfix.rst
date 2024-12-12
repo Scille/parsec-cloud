@@ -1,0 +1,1 @@
+Fix CLI command ``invite list`` crashing when listing more than one entry
