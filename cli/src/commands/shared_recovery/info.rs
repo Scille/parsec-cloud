@@ -34,8 +34,7 @@ pub async fn shared_recovery_info(_args: Args, client: &StartedClient) -> anyhow
                 } => println!("Shared recovery {GREEN}set up{RESET} with threshold {threshold}\n{}", per_recipient_shares.iter().map(|(recipient, share)| {
                     // this means that a user disappeared completely, it should not happen
                     let user = &users.get(recipient).expect("missing recipient").human_handle;
-                    format!("{BULLET_CHAR} User {user} has {share} share(s)", // TODO: special case if there is only one share
-                )
+                    format!("{BULLET_CHAR} User {user} has {share} share(s)") // TODO: special case if there is only one share
                 }).join("\n")),
                 libparsec_client::SelfShamirRecoveryInfo::SetupWithRevokedRecipients {
                     threshold,
