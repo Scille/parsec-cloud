@@ -51,10 +51,9 @@ pub async fn device_greet(args: Args, client: &StartedClient) -> anyhow::Result<
             let ctx = step4_device(ctx).await?;
             step5_device(ctx).await
         }
-        InviteListItem::ShamirRecovery { .. } => {
-            // TODO: https://github.com/Scille/parsec-cloud/issues/8841
-            Err(anyhow::anyhow!("Shamir recovery greeting not implemented"))
-        }
+        InviteListItem::ShamirRecovery { .. } => Err(anyhow::anyhow!(
+            "Shamir recovery invitation is not supported yet"
+        )),
     }
 }
 
