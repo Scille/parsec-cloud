@@ -18,8 +18,8 @@
     @ion-blur="onFocusChanged(false)"
     @ion-focus="onFocusChanged(true)"
     @ion-input="onChange($event.detail.value || '')"
-    @keyup.enter="enterPressed($event.target.value)"
-    @keyup.esc="onFocusChanged(false)"
+    @keyup.enter="editing = false"
+    @keyup.esc="editing = false"
     :disabled="$props.disabled"
   >
     <span
@@ -51,7 +51,6 @@ const emits = defineEmits<{
   (e: 'update:modelValue', value: string): void;
   (e: 'change', value: string): void;
   (e: 'onSubmittedValue', value: string): void;
-  (e: 'onEnterKeyup', value: string): void;
   (e: 'onFocusChanged', value: boolean): void;
 }>();
 
@@ -60,9 +59,12 @@ defineExpose({
 });
 
 async function setFocus(): Promise<void> {
-  if (inputRef.value && inputRef.value.$el) {
-    await inputRef.value.$el.setFocus();
-  }
+  // Doesn't work without setTimeout for some reason
+  setTimeout(async () => {
+    if (inputRef.value && inputRef.value.$el) {
+      await inputRef.value.$el.setFocus();
+    }
+  }, 100);
 }
 
 async function onFocusChanged(focus: boolean): Promise<void> {
@@ -74,26 +76,23 @@ async function onFocusChanged(focus: boolean): Promise<void> {
   emits('onFocusChanged', focus);
 }
 
-async function enterPressed(value: string): Promise<void> {
-  editing.value = false;
-  emits('onEnterKeyup', value);
-  await onSubmittedValue(value);
-}
-
 async function onChange(value: string): Promise<void> {
   if (props.restrictChange) {
     const restrictedValue = await props.restrictChange(value);
     if (restrictedValue) {
-      emits('update:modelValue', restrictedValue);
-      emits('change', restrictedValue);
+      emitChange(restrictedValue);
     }
   } else {
-    emits('update:modelValue', value);
-    emits('change', value);
+    emitChange(value);
   }
   if (!value) {
     lostFocus.value = true;
   }
+}
+
+function emitChange(value: string): void {
+  emits('update:modelValue', value);
+  emits('change', value);
 }
 
 async function onSubmittedValue(value: string): Promise<void> {
@@ -131,7 +130,6 @@ async function onTextClick(): Promise<void> {
 
   &.text-only {
     cursor: pointer;
-    padding: 0.5rem;
   }
 
   &:hover {
