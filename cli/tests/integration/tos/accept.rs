@@ -7,6 +7,7 @@ use crate::{
     commands::tos::config::{config_tos_for_org_req, TosReq},
     integration_tests::bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD},
+    utils::BULLET_CHAR,
 };
 
 async fn config_tos(
@@ -48,11 +49,11 @@ async fn test_accept_tos(tmp_path: TmpPath) {
     .stdout(
         predicates::str::contains("Terms of Service updated on")
             .and(predicates::str::contains(format!(
-                "- fr_FR: {}",
+                "{BULLET_CHAR} fr_FR: {}",
                 tos["fr_FR"]
             )))
             .and(predicates::str::contains(format!(
-                "- en_DK: {}",
+                "{BULLET_CHAR} en_DK: {}",
                 tos["en_DK"]
             )))
             .and(predicates::str::contains(
@@ -114,11 +115,11 @@ async fn did_not_accept_tos(#[values("no", "No", "NO", "S")] reply: &str, tmp_pa
     .stdout(
         predicates::str::contains("Terms of Service updated on")
             .and(predicates::str::contains(format!(
-                "- fr_FR: {}",
+                "{BULLET_CHAR} fr_FR: {}",
                 tos["fr_FR"]
             )))
             .and(predicates::str::contains(format!(
-                "- en_DK: {}",
+                "{BULLET_CHAR} en_DK: {}",
                 tos["en_DK"]
             ))),
     )

@@ -10,9 +10,9 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-build_main_with_client!(main, shared_recovery_info);
+build_main_with_client!(main, shared_recovery_list);
 
-pub async fn shared_recovery_info(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
+pub async fn shared_recovery_list(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
     {
         let mut spinner = start_spinner("Poll server for new certificates".into());
         client.poll_server_for_new_certificates().await?;
@@ -35,13 +35,13 @@ pub async fn shared_recovery_info(_args: Args, client: &StartedClient) -> anyhow
                     deleted_on,
                     deleted_by,
                     ..
-                } => println!("• Deleted shared recovery for {RED}{user_id}{RESET} - deleted by {deleted_by} on {deleted_on}"),
+                } => println!("{BULLET_CHAR} Deleted shared recovery for {RED}{user_id}{RESET} - deleted by {deleted_by} on {deleted_on}"),
                 libparsec_client::OtherShamirRecoveryInfo::SetupAllValid {
                     user_id, threshold, per_recipient_shares,..
-                } => println!("Shared recovery for {GREEN}{}{RESET} with threshold {threshold}\n{}", users.get(&user_id).expect("missing author").human_handle, per_recipient_shares.iter().map(|(recipient, share)| {
+                } => println!("{BULLET_CHAR} Shared recovery for {GREEN}{}{RESET} with threshold {threshold}\n{}", users.get(&user_id).expect("missing author").human_handle, per_recipient_shares.iter().map(|(recipient, share)| {
                     // this means that a user disappeared completely, it should not happen
-                    let user= &users.get(recipient).expect("missing recipient").human_handle;
-                    format!("\t• User {user} has {share} share(s)", // TODO: special case if there is only on share
+                    let user = &users.get(recipient).expect("missing recipient").human_handle;
+                    format!("\t{BULLET_CHAR} User {user} has {share} share(s)", // TODO: special case if there is only one share
                 )
                 }).join("\n")),
                 libparsec_client::OtherShamirRecoveryInfo::SetupWithRevokedRecipients {
@@ -49,7 +49,7 @@ pub async fn shared_recovery_info(_args: Args, client: &StartedClient) -> anyhow
                     threshold,
                     per_recipient_shares,
                     revoked_recipients,..
-                } => println!("• Shared recovery for {YELLOW}{user_id}{RESET} - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                } => println!("{BULLET_CHAR} Shared recovery for {YELLOW}{user_id}{RESET} - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
                     revoked = revoked_recipients.iter().join(", "),
                     revoked_len = revoked_recipients.len(),
                     total = per_recipient_shares.len()),
@@ -58,7 +58,7 @@ pub async fn shared_recovery_info(_args: Args, client: &StartedClient) -> anyhow
                     threshold,
                     per_recipient_shares,
                     revoked_recipients,..
-                } => println!("• Unusable shared recovery for {RED}{user_id}{RESET} - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                } => println!("{BULLET_CHAR} Unusable shared recovery for {RED}{user_id}{RESET} - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
                     revoked = revoked_recipients.iter().join(", "),
                     revoked_len = revoked_recipients.len(),
                     total = per_recipient_shares.len()),

@@ -7,6 +7,7 @@ use crate::{
     commands::tos::config::{config_tos_for_org_req, TosReq},
     integration_tests::bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD},
+    utils::BULLET_CHAR,
 };
 
 #[rstest::rstest]
@@ -52,9 +53,11 @@ async fn list_tos_ok(tmp_path: TmpPath) {
     )
     .stdout(
         predicates::str::contains("Terms of Service updated on")
-            .and(predicates::str::contains("- fr_FR: http://example.com/tos"))
-            .and(predicates::str::contains(
-                "- en_DK: http://example.com/en/tos",
-            )),
+            .and(predicates::str::contains(format!(
+                "{BULLET_CHAR} fr_FR: http://example.com/tos"
+            )))
+            .and(predicates::str::contains(format!(
+                "{BULLET_CHAR} en_DK: http://example.com/en/tos"
+            ))),
     );
 }
