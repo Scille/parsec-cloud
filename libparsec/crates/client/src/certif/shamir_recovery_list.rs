@@ -351,12 +351,12 @@ pub async fn list_shamir_recoveries_for_others(
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifGetShamirRecoveryShareDataError {
-    #[error("No shamir certificate found for provided user id `{user_id}`")]
-    ShamirRecoveryNotFound { user_id: UserID },
-    #[error("No shamir share certificate found for provided user id `{user_id}`")]
-    ShamirRecoveryShareNotFound { user_id: UserID },
-    #[error("Shamir recovery is unusable for provided user id `{user_id}`")]
-    ShamirRecoveryUnusable { user_id: UserID },
+    #[error("No shamir certificate found for provided user id")]
+    ShamirRecoveryNotFound,
+    #[error("No shamir share certificate found for provided user id")]
+    ShamirRecoveryShareNotFound,
+    #[error("Shamir recovery is unusable for provided user id")]
+    ShamirRecoveryUnusable,
     #[error(transparent)]
     CorruptedShareData(DataError),
     #[error("Component has stopped")]
@@ -388,7 +388,7 @@ pub async fn get_shamir_recovery_share_data(
             let brief_certificate = match brief_certificate {
                 Some(brief_certificate) => Ok(brief_certificate),
                 None => {
-                    Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryNotFound { user_id })
+                    Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryNotFound)
                 }
             }?;
 
@@ -402,7 +402,7 @@ pub async fn get_shamir_recovery_share_data(
             let share_certificate = match share_certificate {
                 Some(share_certificate) => Ok(share_certificate),
                 None => {
-                    Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryShareNotFound { user_id })
+                    Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryShareNotFound)
                 }
             }?;
 
@@ -421,7 +421,7 @@ pub async fn get_shamir_recovery_share_data(
             }
             if usable_share_count < brief_certificate.threshold.get() as usize {
                 return Err(
-                    CertifGetShamirRecoveryShareDataError::ShamirRecoveryUnusable { user_id },
+                    CertifGetShamirRecoveryShareDataError::ShamirRecoveryUnusable,
                 );
             }
 
