@@ -1,9 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec::{
-    authenticated_cmds::latest::invite_list::{self, InviteListItem, InviteListRep},
-    InvitationStatus,
-};
+use libparsec::{authenticated_cmds::latest::invite_list::InviteListItem, InvitationStatus};
 
 use crate::utils::*;
 
@@ -24,23 +21,18 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         device.as_deref().unwrap_or("N/A")
     );
 
-    let (cmds, _) = load_cmds(&config_dir, device, password_stdin).await?;
+    let client = load_client(&config_dir, device, password_stdin).await?;
     let mut handle = start_spinner("Listing invitations".into());
 
-    let rep = cmds.send(invite_list::Req).await?;
+    let invitations = client.list_invitations().await?;
 
-    let invitations = match rep {
-        InviteListRep::Ok { invitations } => invitations,
-        rep => {
-            return Err(anyhow::anyhow!(
-                "Server error while listing invitations: {rep:?}"
-            ));
-        }
-    };
+    client.stop().await;
+    drop(client);
 
     if invitations.is_empty() {
         handle.stop_with_message("No invitation.".into());
     } else {
+        handle.stop_with_message(format!("{} invitations found.", invitations.len()));
         for invitation in invitations {
             let (token, status, display_type) = match invitation {
                 InviteListItem::User {
@@ -61,7 +53,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                 InvitationStatus::Finished => format!("{GREEN}finished{RESET}"),
             };
 
-            handle.stop_with_message(format!("{token}\t{display_status}\t{display_type}"))
+            println!("{token}\t{display_status}\t{display_type}");
         }
     }
 
