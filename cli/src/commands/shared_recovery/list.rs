@@ -41,8 +41,7 @@ pub async fn shared_recovery_list(_args: Args, client: &StartedClient) -> anyhow
                 } => println!("{BULLET_CHAR} Shared recovery for {GREEN}{}{RESET} with threshold {threshold}\n{}", users.get(&user_id).expect("missing author").human_handle, per_recipient_shares.iter().map(|(recipient, share)| {
                     // this means that a user disappeared completely, it should not happen
                     let user = &users.get(recipient).expect("missing recipient").human_handle;
-                    format!("\t{BULLET_CHAR} User {user} has {share} share(s)", // TODO: special case if there is only one share
-                )
+                    format!("\t{BULLET_CHAR} User {user} has {share} share(s)") // TODO: special case if there is only one share
                 }).join("\n")),
                 libparsec_client::OtherShamirRecoveryInfo::SetupWithRevokedRecipients {
                     user_id,
