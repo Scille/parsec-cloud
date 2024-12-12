@@ -118,3 +118,16 @@ export async function dragAndDropFile(page: Page, element: Locator, filePaths: A
   await element.dispatchEvent('dragenter');
   await element.dispatchEvent('drop', { dataTransfer });
 }
+
+export const Media = {
+  async getDuration(media: Locator): Promise<number> {
+    return await media.evaluate((el) => {
+      return (el as HTMLVideoElement).duration;
+    });
+  },
+  async getCurrentTime(media: Locator): Promise<number> {
+    return await media.evaluate((el) => {
+      return (el as HTMLVideoElement).currentTime;
+    });
+  },
+};
