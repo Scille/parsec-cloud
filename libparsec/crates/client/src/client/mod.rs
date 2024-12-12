@@ -613,4 +613,4 @@ impl Client {
 #[cfg(test)]
 #[path = "../../tests/unit/client/mod.rs"]
 #[allow(clippy::unwrap_used)]
-pub mod tests;
+mod tests;
