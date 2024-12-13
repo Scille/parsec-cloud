@@ -5,6 +5,18 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.2.2-rc.3 (2024-12-13)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix CLI command ``invite user`` generating a device invitation link instead of
+  a user invitation link.
+  (`#9186 <https://github.com/Scille/parsec-cloud/issues/9186>`__)
+
+
+
 Parsec v3.2.2-rc.2 (2024-12-12)
 -------------------------------
 
