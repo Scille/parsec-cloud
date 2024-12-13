@@ -16,8 +16,14 @@ use crate::{
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_user(tmp_path: TmpPath) {
-    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    let (addr, TestOrganization { alice, .. }, org_id) =
+        bootstrap_cli_test(&tmp_path).await.unwrap();
 
+    let mut addr = addr.to_url();
+    addr.path_segments_mut().unwrap().push(org_id.as_ref());
+    addr.query_pairs_mut()
+        .append_pair("a", "claim_user")
+        .append_key_only("p");
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
         "invite",
@@ -26,7 +32,9 @@ async fn invite_user(tmp_path: TmpPath) {
         &alice.device_id.hex(),
         "a@b.c"
     )
-    .stdout(predicates::str::contains("Invitation URL:"));
+    .stdout(predicates::str::contains(format!(
+        "Invitation URL: {YELLOW}{addr}"
+    )));
 }
 
 #[rstest::rstest]
