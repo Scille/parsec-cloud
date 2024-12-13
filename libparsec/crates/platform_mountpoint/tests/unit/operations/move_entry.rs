@@ -10,8 +10,6 @@ use libparsec_tests_fixtures::prelude::*;
 
 use super::utils::mount_and_test;
 
-// TODO: move is not supported yet :'(
-#[ignore]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok_file(tmp_path: TmpPath, env: &TestbedEnv) {
     mount_and_test!(
@@ -43,8 +41,6 @@ async fn ok_file(tmp_path: TmpPath, env: &TestbedEnv) {
     );
 }
 
-// TODO: move is not supported yet :'(
-#[ignore]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok_folder(tmp_path: TmpPath, env: &TestbedEnv) {
     mount_and_test!(
