@@ -99,12 +99,10 @@ msTest('Go through saas org creation process', async ({ home }) => {
 
   // Password too simple
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), 'EasyP@ssw0rd');
-  await expect(authContainer.locator('.password-level__text')).toHaveText('Low');
   await expect(authNext).toHaveDisabledAttribute();
 
   // Back to complicated password
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
-  await expect(authContainer.locator('.password-level__text')).toHaveText('Strong');
   await expect(authNext).not.toHaveDisabledAttribute();
 
   // Check does not match

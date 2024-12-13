@@ -48,9 +48,9 @@ msTest('Import recovery device', async ({ home }, testInfo: TestInfo) => {
   const authButton = container.locator('#validate-password-btn');
   await expect(authButton).toHaveText('Confirm');
   const inputs = container.locator('.choose-auth-page').locator('.choose-password').locator('ion-input');
-  await fillIonInput(inputs.nth(0), 'YouGiv3Lov3aBadName');
+  await fillIonInput(inputs.nth(0), 'YouGiv3Lov3aBadName#');
   await expect(authButton).toBeTrulyDisabled();
-  await fillIonInput(inputs.nth(1), 'YouGiv3Lov3aBadName');
+  await fillIonInput(inputs.nth(1), 'YouGiv3Lov3aBadName#');
   await expect(authButton).toBeTrulyEnabled();
   await authButton.click();
 
@@ -87,8 +87,8 @@ msTest('Import recovery device invalid recovery file', async ({ home }, testInfo
 
   const authButton = container.locator('#validate-password-btn');
   const inputs = container.locator('.choose-auth-page').locator('.choose-password').locator('ion-input');
-  await fillIonInput(inputs.nth(0), 'YouGiv3Lov3aBadName');
-  await fillIonInput(inputs.nth(1), 'YouGiv3Lov3aBadName');
+  await fillIonInput(inputs.nth(0), 'YouGiv3Lov3aBadName#');
+  await fillIonInput(inputs.nth(1), 'YouGiv3Lov3aBadName#');
   await authButton.click();
 
   await expect(home).toShowToast('Invalid recovery file.', 'Error');
@@ -118,8 +118,8 @@ msTest('Import recovery device invalid passphrase', async ({ home }, testInfo: T
 
   const authButton = container.locator('#validate-password-btn');
   const inputs = container.locator('.choose-auth-page').locator('.choose-password').locator('ion-input');
-  await fillIonInput(inputs.nth(0), 'YouGiv3Lov3aBadName');
-  await fillIonInput(inputs.nth(1), 'YouGiv3Lov3aBadName');
+  await fillIonInput(inputs.nth(0), 'YouGiv3Lov3aBadName#');
+  await fillIonInput(inputs.nth(1), 'YouGiv3Lov3aBadName#');
   await authButton.click();
 
   await expect(home).toShowToast('The secret key does not match the recovery file.', 'Error');

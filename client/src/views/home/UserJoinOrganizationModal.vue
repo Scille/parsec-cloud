@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="modal-stepper">
+  <ion-page
+    class="modal-stepper"
+    :class="UserJoinOrganizationStep[pageStep]"
+  >
     <ms-wizard-stepper
       v-if="pageStep > UserJoinOrganizationStep.WaitForHost"
       :current-index="pageStep - 2"
@@ -19,7 +22,7 @@
       <ion-button
         slot="icon-only"
         @click="cancelModal()"
-        v-if="pageStep !== UserJoinOrganizationStep.Finish && pageStep !== UserJoinOrganizationStep.GetAuthentication"
+        v-if="pageStep !== UserJoinOrganizationStep.Finish && pageStep !== UserJoinOrganizationStep.Authentication"
         class="closeBtn"
       >
         <ion-icon
@@ -115,7 +118,7 @@
         </div>
         <!-- part 5 (get password)-->
         <div
-          v-show="pageStep === UserJoinOrganizationStep.GetAuthentication"
+          v-show="pageStep === UserJoinOrganizationStep.Authentication"
           class="step"
           id="get-password"
         >
@@ -204,7 +207,7 @@ enum UserJoinOrganizationStep {
   GetHostSasCode = 2,
   ProvideGuestCode = 3,
   GetUserInfo = 4,
-  GetAuthentication = 5,
+  Authentication = 5,
   Finish = 6,
 }
 
@@ -256,7 +259,7 @@ function getTitle(step: UserJoinOrganizationStep): Title {
         subtitle: 'JoinOrganization.subtitles.getUserInfo',
       };
     }
-    case UserJoinOrganizationStep.GetAuthentication: {
+    case UserJoinOrganizationStep.Authentication: {
       return {
         title: 'JoinOrganization.titles.getAuthentication',
         subtitle: 'JoinOrganization.subtitles.getAuthentication',
@@ -319,7 +322,7 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
 function getNextButtonText(): string {
   if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
     return 'JoinOrganization.validateUserInfo';
-  } else if (pageStep.value === UserJoinOrganizationStep.GetAuthentication) {
+  } else if (pageStep.value === UserJoinOrganizationStep.Authentication) {
     return 'JoinOrganization.createDevice';
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
     return 'JoinOrganization.logIn';
@@ -334,7 +337,7 @@ const nextButtonIsVisible = computed(() => {
   return (
     (pageStep.value === UserJoinOrganizationStep.WaitForHost && !waitingForHost.value) ||
     (pageStep.value === UserJoinOrganizationStep.GetUserInfo && !waitingForHost.value) ||
-    pageStep.value === UserJoinOrganizationStep.GetAuthentication ||
+    pageStep.value === UserJoinOrganizationStep.Authentication ||
     pageStep.value === UserJoinOrganizationStep.Finish
   );
 });
@@ -345,7 +348,7 @@ const canGoForward = asyncComputed(async () => {
   }
   if (pageStep.value === UserJoinOrganizationStep.GetUserInfo && !(await userInfoPage.value.areFieldsCorrect())) {
     return false;
-  } else if (pageStep.value === UserJoinOrganizationStep.GetAuthentication) {
+  } else if (pageStep.value === UserJoinOrganizationStep.Authentication) {
     return await authChoice.value.areFieldsCorrect();
   }
   return true;
@@ -371,7 +374,7 @@ async function nextStep(): Promise<void> {
   if (!canGoForward.value) {
     return;
   }
-  if (pageStep.value === UserJoinOrganizationStep.GetAuthentication) {
+  if (pageStep.value === UserJoinOrganizationStep.Authentication) {
     const strategy = authChoice.value.getSaveStrategy();
     const result = await claimer.value.finalize(strategy);
     if (!result.ok) {

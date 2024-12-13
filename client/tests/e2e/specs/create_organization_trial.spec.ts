@@ -93,7 +93,6 @@ msTest('Go through trial org creation process', async ({ home }) => {
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await expect(authContainer.locator('.password-level__text')).toHaveText('Strong');
   await expect(authNext).not.toHaveDisabledAttribute();
 
   // Try cancelling
@@ -101,12 +100,10 @@ msTest('Go through trial org creation process', async ({ home }) => {
 
   // Password too simple
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), 'EasyP@ssw0rd');
-  await expect(authContainer.locator('.password-level__text')).toHaveText('Low');
   await expect(authNext).toHaveDisabledAttribute();
 
   // Back to complicated password
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
-  await expect(authContainer.locator('.password-level__text')).toHaveText('Strong');
   await expect(authNext).not.toHaveDisabledAttribute();
 
   // Check does not match

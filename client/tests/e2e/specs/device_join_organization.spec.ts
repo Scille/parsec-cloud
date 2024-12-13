@@ -71,6 +71,7 @@ msTest('Claim device process', async ({ home }) => {
   await fillIonInput(inputs.nth(0), 'Password23;-$aze');
   await expect(nextButton).toBeTrulyDisabled();
   await fillIonInput(inputs.nth(1), 'Password23;-$aze');
+  await nextButton.scrollIntoViewIfNeeded();
   await expect(nextButton).toBeTrulyEnabled();
   await nextButton.click();
 

@@ -92,11 +92,38 @@
   }
 }
 
-.join-organization-modal::part(content) {
-  max-width: var(--parsec-modal-width-lg);
-  position: relative;
-  display: block;
-  contain: content;
+.join-organization-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-lg);
+    position: relative;
+    display: block;
+    contain: content;
+  }
+
+  &:has(.Authentication)::part(content) {
+    max-height: var(--parsec-modal-max-height);
+  }
+
+  .Authentication {
+    max-height: var(--parsec-modal-max-height);
+    overflow: hidden;
+    display: flex;
+
+    .wizardTrue {
+      overflow-y: auto;
+      position: relative;
+
+      &::after {
+        content: '';
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3rem;
+        background: linear-gradient(0deg, var(--parsec-color-light-secondary-white) 0%, transparent 100%);
+      }
+    }
+  }
 }
 
 .create-organization-modal {

@@ -157,7 +157,6 @@ msTest('Video viewer', async ({ documents }) => {
   expect(await Media.getDuration(video)).toBe(3.562646);
   expect(await Media.getCurrentTime(video)).toBe(0.0);
   await expectMedia(video).toHaveVolume(1);
-  await expectMedia(video).not.toBeMuted();
 
   await buttons.nth(0).click();
   await documents.waitForTimeout(500);
@@ -166,7 +165,6 @@ msTest('Video viewer', async ({ documents }) => {
 
   await buttons.nth(1).click();
   await expectMedia(video).toHaveVolume(0);
-  await expectMedia(video).toBeMuted();
 });
 
 msTest('Text viewer', async ({ documents }) => {

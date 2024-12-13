@@ -52,6 +52,7 @@ msTest('Go through the join user process', async ({ home, userJoinModal }) => {
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
   await expect(nextButton).toHaveDisabledAttribute();
   await fillIonInput(passwordChoice.locator('ion-input').nth(1), 'AVeryL0ngP@ssw0rd');
+  await nextButton.scrollIntoViewIfNeeded();
   await expect(nextButton).not.toHaveDisabledAttribute();
   await nextButton.click();
   await expect(title).toHaveText('You have joined the organization Test!');
