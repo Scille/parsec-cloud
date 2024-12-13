@@ -47,7 +47,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         InviteNewUserRep::Ok { token, .. } => ParsecInvitationAddr::new(
             device.organization_addr.clone(),
             device.organization_id().clone(),
-            InvitationType::Device,
+            InvitationType::User,
             token,
         )
         .to_url(),
