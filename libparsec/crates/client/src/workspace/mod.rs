@@ -56,7 +56,8 @@ struct OpenedFileCursor {
 
 #[derive(Debug)]
 struct OpenedFile {
-    updater: FileUpdater,
+    /// If no cursor is opened in write mode, then the updater may be `None`.
+    updater: Option<FileUpdater>,
     manifest: Arc<LocalFileManifest>,
     /// The file can be opened multiple time, each one of them having it own cursor.
     cursors: Vec<OpenedFileCursor>,

@@ -93,8 +93,12 @@ pub(super) async fn force_reshape_and_flush(
 
     reshape(ops, opened_file).await?;
 
-    opened_file
+    let updater = opened_file
         .updater
+        .as_ref()
+        .expect("File is opened in write mode");
+
+    updater
         .update_file_manifest_and_continue(
             &ops.store,
             opened_file.manifest.clone(),

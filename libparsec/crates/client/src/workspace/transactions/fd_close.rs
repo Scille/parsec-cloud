@@ -86,7 +86,9 @@ pub async fn close_all_fds(ops: &WorkspaceOps) -> Result<(), WorkspaceFdCloseErr
                     // Unwrap the mutex to obtain ownership on the `OpenedFile` object...
                     let opened_file = opened_file_mutex.into_inner();
                     // ...and finally close the updater !
-                    opened_file.updater.close(&ops.store);
+                    if let Some(updater) = opened_file.updater {
+                        updater.close(&ops.store);
+                    }
                     break;
                 }
                 // The Arc is still referenced by others coroutines...
@@ -217,7 +219,9 @@ pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), Work
         };
 
         // Finally close the updater !
-        owned_opened_file.updater.close(&ops.store);
+        if let Some(updater) = owned_opened_file.updater {
+            updater.close(&ops.store);
+        }
 
         // Last step is to broadcast an event if the file has been modified.
         // Note we still broadcast the event even if the flush has failed:
