@@ -155,18 +155,21 @@ async function setupApp(): Promise<void> {
     const themeManager = new ThemeManager(config.theme);
     app.provide(ThemeManagerKey, themeManager);
 
-    // Annoying in dev mode because it prompts on page reload
-    if (!needsMocks() && (await libparsec.getPlatform()) === Platform.Web) {
-      // Only called when the user has interacted with the page
-      window.addEventListener('beforeunload', async (event: BeforeUnloadEvent) => {
-        event.preventDefault();
-        event.returnValue = true;
-      });
+    if ((await libparsec.getPlatform()) === Platform.Web) {
+      if (!needsMocks()) {
+        // Only called when the user has interacted with the page
+        window.addEventListener('beforeunload', async (event: BeforeUnloadEvent) => {
+          event.preventDefault();
+          event.returnValue = true;
+        });
 
-      window.addEventListener('unload', async (_event: Event) => {
-        // Stop the imports and properly logout on close.
-        await cleanBeforeQuitting(injectionProvider);
-      });
+        window.addEventListener('unload', async (_event: Event) => {
+          // Stop the imports and properly logout on close.
+          await cleanBeforeQuitting(injectionProvider);
+        });
+      } else {
+        Sentry.disable();
+      }
     }
 
     window.electronAPI.pageIsInitialized();
