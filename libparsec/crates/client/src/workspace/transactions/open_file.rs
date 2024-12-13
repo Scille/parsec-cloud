@@ -11,7 +11,7 @@ use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
         store::{ForUpdateFileError, ResolvePathError},
-        OpenedFile, OpenedFileCursor, ReadMode, WorkspaceOps, WriteMode,
+        FileUpdater, OpenedFile, OpenedFileCursor, ReadMode, WorkspaceOps, WriteMode,
     },
 };
 
@@ -204,18 +204,19 @@ pub async fn open_file_by_id(
         FileAlreadyOpened {
             opened_file: Arc<AsyncMutex<OpenedFile>>,
             new_cursor: OpenedFileCursor,
+            updater: Option<FileUpdater>,
         },
     }
 
     let cursor_insertion_outcome = loop {
-        let outcome = ops.store.for_update_file(entry_id, false).await;
+        let for_update_outcome = ops.store.for_update_file(entry_id, false).await;
         // /!\ From now on, `outcome` may contain a file updater requiring manual
         //     close if we encounter an error !
 
         let mut opened_files_guard = ops.opened_files.lock().expect("Mutex is poisoned");
         if !opened_files_guard.new_open_allowed {
             // File updater must be manually closed before returning error
-            if let Ok((updater, _)) = outcome {
+            if let Ok((updater, _)) = for_update_outcome {
                 updater.close(&ops.store);
             }
             return Err(WorkspaceOpenFileError::Stopped);
@@ -236,34 +237,62 @@ pub async fn open_file_by_id(
             },
         };
 
-        let cursor_insertion_outcome = match outcome {
-            // The file exists and is not currently opened
+        let cursor_insertion_outcome = match for_update_outcome {
+            // Two possibilities:
+            // - The file exists and is not currently opened.
+            // - The file exists and is currently opened, but without an updater
+            //   since it contains no write cursors.
             Ok((updater, mut manifest)) => {
                 let (removed_chunks, flush_needed) = match maybe_truncate_on_open(&mut manifest) {
                     None => (vec![], false),
                     Some(removed_chunks) => (removed_chunks, true),
                 };
-                let opened_file = Arc::new(AsyncMutex::new(OpenedFile {
-                    updater,
-                    manifest,
-                    bytes_written_since_last_flush: 0,
-                    cursors: vec![cursor],
-                    new_chunks: vec![],
-                    removed_chunks,
-                    flush_needed,
-                    modified_since_opened: flush_needed,
-                }));
-                opened_files_guard
-                    .opened_files
-                    .insert(entry_id, opened_file);
 
-                CursorInsertionOutcome::OpenedFile { file_descriptor }
+                let updater = match cursor.write_mode {
+                    WriteMode::Allowed => Some(updater),
+                    WriteMode::Denied => {
+                        // Since we are not going to update the file, we can release the updater.
+                        updater.close(&ops.store);
+                        None
+                    }
+                };
+
+                match opened_files_guard.opened_files.entry(entry_id) {
+                    std::collections::hash_map::Entry::Vacant(entry) => {
+                        let opened_file = Arc::new(AsyncMutex::new(OpenedFile {
+                            updater,
+                            manifest,
+                            bytes_written_since_last_flush: 0,
+                            cursors: vec![cursor],
+                            new_chunks: vec![],
+                            removed_chunks,
+                            flush_needed,
+                            modified_since_opened: flush_needed,
+                        }));
+                        entry.insert(opened_file);
+                        CursorInsertionOutcome::OpenedFile { file_descriptor }
+                    }
+                    std::collections::hash_map::Entry::Occupied(mut entry) => {
+                        let opened_file = entry.get_mut();
+                        // The opened file is behind an async mutex, which we cannot
+                        // take now given we already hold the `opened_files` sync mutex.
+                        // Hence we return this special outcome to delay the cursor insertion
+                        // until the `opened_files` mutex is released.
+                        CursorInsertionOutcome::FileAlreadyOpened {
+                            opened_file: opened_file.clone(),
+                            new_cursor: cursor,
+                            updater,
+                        }
+                    }
+                }
             }
 
             Err(err) => match err {
-                // The file is already opened
+                // The file is already opened, or is being reparented (as this operation
+                // occurs without opening the file).
                 ForUpdateFileError::WouldBlock => {
                     match opened_files_guard.opened_files.get_mut(&entry_id) {
+                        // The file is already opened
                         Some(opened_file) => {
                             // The opened file is behind an async mutex, which we cannot
                             // take now given we already hold the `opened_files` sync mutex.
@@ -272,10 +301,15 @@ pub async fn open_file_by_id(
                             CursorInsertionOutcome::FileAlreadyOpened {
                                 opened_file: opened_file.clone(),
                                 new_cursor: cursor,
+                                updater: None,
                             }
                         }
 
-                        // The file got closed in the meantime, retrying...
+                        // Two possibilities:
+                        // - The file is being reparented.
+                        // - The file was opened, but got closed in the meantime.
+                        //
+                        // In both cases, we should retry the operation.
                         None => {
                             continue;
                         }
@@ -325,9 +359,18 @@ pub async fn open_file_by_id(
         CursorInsertionOutcome::FileAlreadyOpened {
             opened_file,
             new_cursor,
+            updater,
         } => {
             let file_descriptor = new_cursor.file_descriptor;
             let mut opened_file_guard = opened_file.lock().await;
+            match &opened_file_guard.updater {
+                None => {
+                    opened_file_guard.updater = updater;
+                }
+                Some(_) => {
+                    assert!(updater.is_none());
+                }
+            }
             opened_file_guard.cursors.push(new_cursor);
             if let Some(removed_chunks) = maybe_truncate_on_open(&mut opened_file_guard.manifest) {
                 opened_file_guard.flush_needed = true;

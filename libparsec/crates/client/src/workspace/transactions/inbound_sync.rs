@@ -224,6 +224,25 @@ pub async fn inbound_sync(
         return Ok(InboundSyncOutcome::EntryIsBusy);
     }
 
+    // Inbound sync on a opened file is a bad idea:
+    // - It may change the content of the file, while keeping the opened file unaware.
+    // - While never done in practice, it may also change manifest type into a folder...
+    //
+    // For this reason, the file used to be locked (with `WorkspaceStore::for_update_file`)
+    // for as long as it was opened. However we had to change this in a stopgap solution
+    // as it was causing deadlocks when re-parenting an opened file :'(
+    //
+    // As a result, we must now manually check if the file is opened here.
+    macro_rules! abort_if_file_opened {
+        () => {{
+            let guard = ops.opened_files.lock().expect("Mutex is poisoned");
+            if guard.opened_files.contains_key(&entry_id) {
+                return Ok(InboundSyncOutcome::EntryIsBusy);
+            }
+        }};
+    }
+    abort_if_file_opened!();
+
     // Retrieve remote
 
     let remote_manifest = if entry_id == ops.realm_id {
@@ -273,7 +292,10 @@ pub async fn inbound_sync(
         let outcome = ops.store.for_update_sync_local_only(entry_id).await;
         match outcome {
             // Nothing to sync
-            Ok((updater, local_manifest)) => (updater, local_manifest),
+            Ok((updater, local_manifest)) => {
+                abort_if_file_opened!();
+                (updater, local_manifest)
+            }
             Err(ForUpdateSyncLocalOnlyError::WouldBlock) => {
                 return Ok(InboundSyncOutcome::EntryIsBusy)
             }
