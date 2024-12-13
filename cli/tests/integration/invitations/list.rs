@@ -6,7 +6,6 @@ use libparsec::{
 use crate::{
     integration_tests::bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    utils::{RESET, YELLOW},
 };
 
 #[rstest::rstest]
@@ -45,10 +44,11 @@ async fn list_invitations(tmp_path: TmpPath) {
         "invite",
         "list",
         "--device",
-        &alice.device_id.hex()
+        &alice.device_id.hex(),
+        "--csv"
     )
     .stdout(predicates::str::contains(format!(
-        "{}\t{YELLOW}idle{RESET}\tdevice",
+        "{},idle,device,",
         token.hex()
     )));
 }

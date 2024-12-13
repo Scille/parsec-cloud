@@ -29,7 +29,9 @@ libparsec_platform_ipc = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["default", "derive", "env"] }
 env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
+itertools = { workspace = true }
 log = { workspace = true }
+prettytable-rs = { workspace = true, features = ["csv", "win_crlf"]}
 reqwest = { workspace = true, features = ["json"] }
 rpassword = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
@@ -38,7 +40,6 @@ spinners = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 url = { workspace = true, optional = true }
 uuid = { workspace = true }
-itertools = { workspace = true }
 
 [dev-dependencies]
 libparsec = { workspace = true, features = ["cli-tests"] }

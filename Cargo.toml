@@ -162,6 +162,7 @@ pin-project-lite = { version = "0.2.15", default-features = false }
 pkg-config = { version = "0.3.31", default-features = false }
 predicates = { version = "3.1.2", default-features = false }
 pretty_assertions = { version = "1.4.1", default-features = false }
+prettytable-rs = { version = "0.10.0", default-features = false }
 proc-macro2 = { version = "1.0.92", default-features = false }
 proptest = { version = "1.5.0", default-features = false }
 proptest-state-machine = { version = "0.3.0", default-features = false }
