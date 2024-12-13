@@ -8,7 +8,6 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = addr, token]
     pub struct Args {
         /// OrganizationID
-        #[arg(short, long)]
         organization_id: OrganizationID,
     }
 );
