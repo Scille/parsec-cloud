@@ -1,0 +1,1 @@
+Rename the option ``--organization-id`` to ``--organization`` in the CLI command ``organization status``
