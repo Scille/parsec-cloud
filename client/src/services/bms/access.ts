@@ -327,13 +327,13 @@ class BmsAccess {
     await storageManagerInstance.get().clearBmsAccess();
   }
 
-  async storeAccess(): Promise<void> {
+  private async storeAccess(): Promise<void> {
     if (this.tokens) {
       await storageManagerInstance.get().storeBmsAccess({ access: this.tokens.access, refresh: this.tokens.refresh });
     }
   }
 
-  async restoreAccess(): Promise<void> {
+  private async restoreAccess(): Promise<void> {
     const bmsAccess = await storageManagerInstance.get().retrieveBmsAccess();
 
     if (bmsAccess) {
@@ -345,7 +345,7 @@ class BmsAccess {
   }
 
   isLoggedIn(): boolean {
-    return this.tokens !== null && !this.tokenIsExpired(this.tokens.access);
+    return this.tokens !== null && !this.tokenIsExpired(this.tokens.access) && this.customerInformation !== null;
   }
 
   private async ensureFreshToken(): Promise<boolean> {
