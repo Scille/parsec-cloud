@@ -5,11 +5,8 @@ use serde_json::Value;
 use libparsec::{OrganizationID, ParsecAddr};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = addr, token]
+    #[with = addr, token, organization]
     pub struct Args {
-        /// OrganizationID
-        #[arg(short, long)]
-        organization_id: OrganizationID,
     }
 );
 
@@ -34,13 +31,13 @@ pub async fn stats_organization_req(
 
 pub async fn main(args: Args) -> anyhow::Result<()> {
     let Args {
-        organization_id,
+        organization,
         token,
         addr,
     } = args;
-    log::trace!("Retrieving stats for organization {organization_id} (addr={addr})");
+    log::trace!("Retrieving stats for organization {organization} (addr={addr})");
 
-    let rep = stats_organization_req(&organization_id, &addr, &token).await?;
+    let rep = stats_organization_req(&organization, &addr, &token).await?;
 
     println!("{:#}", rep);
 

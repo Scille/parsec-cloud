@@ -35,7 +35,7 @@ async fn stats_organization(tmp_path: TmpPath) {
     crate::assert_cmd_success!(
         "organization",
         "stats",
-        "--organization-id",
+        "--organization",
         org_id.as_ref(),
         "--addr",
         &url.to_string(),
