@@ -8,7 +8,6 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
     pub struct Args {
         /// Claimer email (i.e.: The invitee)
-        #[arg(long)]
         email: String,
         /// Send email to the invitee
         #[arg(long, default_value_t)]
