@@ -1,49 +1,17 @@
 History
 =======
 
-
 .. towncrier release notes start
 
-
-Parsec v3.2.2-rc.3 (2024-12-13)
--------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Fix CLI command ``invite user`` generating a device invitation link instead of
-  a user invitation link.
-  (`#9186 <https://github.com/Scille/parsec-cloud/issues/9186>`__)
-
-
-
-Parsec v3.2.2-rc.2 (2024-12-12)
--------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Fix CLI command ``invite list`` crashing when listing more than one entry
-  (`#9176 <https://github.com/Scille/parsec-cloud/issues/9176>`__)
-
-
-
-Parsec v3.2.2-rc.1 (2024-12-10)
--------------------------------
-
-No significant changes.
-
-
-Parsec v3.2.2-rc.0 (2024-12-09)
--------------------------------
+Parsec v3.2.2 (2024-12-16)
+--------------------------
 
 Features
 ~~~~~~~~
 
-* Allows overwriting default config & data directory during CLI command ``invite
-  claim``
+* Allows overwriting default config & data directory during CLI command
+  ``invite claim``
   (`#8937 <https://github.com/Scille/parsec-cloud/issues/8937>`__)
-
 
 Bugfixes
 ~~~~~~~~
@@ -55,7 +23,12 @@ Bugfixes
 * Fix rare freeze when the folder displayed by the GUI is remotely modified.
   (`#9002 <https://github.com/Scille/parsec-cloud/issues/9002>`__)
 
+* Fix CLI command ``invite user`` generating a device invitation link instead of
+  a user invitation link.
+  (`#9186 <https://github.com/Scille/parsec-cloud/issues/9186>`__)
 
+* Fix CLI command ``invite list`` crashing when listing more than one entry
+  (`#9176 <https://github.com/Scille/parsec-cloud/issues/9176>`__)
 
 Parsec v3.2.1 (2024-12-03)
 --------------------------
