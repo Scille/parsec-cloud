@@ -12,81 +12,35 @@ use libparsec_tests_lite::prelude::*;
 
 #[rstest]
 fn serde_local_file_manifest_ok(alice: &Device) {
-    // Generated from Parsec 3.0.0-b.12+dev
+    // Generated from Parsec 3.1.1-a.0+dev
     // Content:
     //   type: 'local_file_manifest'
-    //   base: {
-    //     type: 'file_manifest',
-    //     author: ext(2, 0xde10a11cec0010000000000000000000),
-    //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
-    //     id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b),
-    //     parent: ext(2, 0x07748fbf67a646428427865fd730bf3e),
-    //     version: 42,
-    //     created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
-    //     updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
-    //     size: 700,
-    //     blocksize: 512,
-    //     blocks: [
-    //       {
-    //         id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
-    //         offset: 0,
-    //         size: 512,
-    //         digest: 0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560,
-    //       },
-    //       {
-    //         id: ext(2, 0xd7e3af6a03e1414db0f4682901e9aa4b),
-    //         offset: 512,
-    //         size: 188,
-    //         digest: 0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6,
-    //       },
-    //     ],
-    //   }
+    //   base: { type: 'file_manifest', author: ext(2, 0xde10a11cec0010000000000000000000), timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z, id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b), parent: ext(2, 0x07748fbf67a646428427865fd730bf3e), version: 42, created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z, updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z, size: 700, blocksize: 512, blocks: [ { id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f), offset: 0, size: 512, digest: 0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560, }, { id: ext(2, 0xd7e3af6a03e1414db0f4682901e9aa4b), offset: 512, size: 188, digest: 0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6, }, ], }
     //   parent: ext(2, 0x40c8fe8cd69742479f418f1a6d54ea7a)
     //   need_sync: True
     //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   last_updater: ext(2, 0xde10a11cec0010000000000000000000)
     //   size: 500
     //   blocksize: 512
-    //   blocks: [
-    //     [
-    //       {
-    //         id: ext(2, 0xad67b6b5b9ad4653bf8e2b405bb6115f),
-    //         start: 0,
-    //         stop: 250,
-    //         raw_offset: 0,
-    //         raw_size: 512,
-    //         access: { id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
-    //           offset: 0,
-    //           size: 512,
-    //           digest: 0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560,
-    //         },
-    //       },
-    //       {
-    //         id: ext(2, 0x2f99258022a94555b3109e81d34bdf97),
-    //         start: 250,
-    //         stop: 500,
-    //         raw_offset: 250,
-    //         raw_size: 250,
-    //         access: None,
-    //       },
-    //     ],
-    //   ]
-    let data = &hex!(
-    "9c71be661347b29f96b31b32976c4bce3997dbc1f6033999dc2ffd14c73c5c2e81db1f"
-    "59735067b4c7e1afc74bfa35b5395b2371e30c3b3945265ea2df504ecc82e0cfb2395e"
-    "c93cf04e92516e3c543b612dd8e42a2466fdb98505f78baeba6d5dad78ee97f25e5513"
-    "bff5bf471822e5210adb9caa4e01acdbd8b7e959d678d1815a437e33c57c431c433375"
-    "ea491c086d095beca33d74d8ba5b9ee70cd1e91259e431b486eb6b9fe8644e5d323542"
-    "f157ca168ba2809e368a1299a6f24b0e58d5704e9d5838312c0b41d012c79d7da356cb"
-    "e1ffc4b0eab584dcf48600fd0a40ef622c96fab9983040db9b17e4e14cf1a8709d1990"
-    "91624259e21e78e813f34b999a15fbc5defc68caac902a4497eec7a6acee6b1904cba2"
-    "4b845aab519deabdaa57f8b353e43ada8c32dcc1f86c2c31e64f8db4f1ed79cf0e752a"
-    "605833a2069f28e37d1a9a32ac97bbfae1b4740ee93097d4a5fb2cec89b1e84eca3380"
-    "2e04bc5a53af9b44a3ac921166aa474d6baf9b81dc9538833f25e77263553cbbc0cd24"
-    "86e0a19e70fb7effb13640e4e9e0f09c3cf568ef74f74f7ead10c8a61e566f841d9362"
-    "1ae29b363411bac33da28aa120d942ab96a12d92399e6a593e39a37056271e8355eba2"
-    "8e384f90787165215c4e5ebef6492f4af1aa7a6bdb78cc40e061a1f78e6f3e96db4cad"
-    "48f5291e3c23fd929876f1a5d064"
-    )[..];
+    //   blocks: [ [ { id: ext(2, 0xad67b6b5b9ad4653bf8e2b405bb6115f), start: 0, stop: 250, raw_offset: 0, raw_size: 512, access: { id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f), offset: 0, size: 512, digest: 0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560, }, }, { id: ext(2, 0x2f99258022a94555b3109e81d34bdf97), start: 250, stop: 500, raw_offset: 250, raw_size: 250, access: None, }, ], ]
+    let data: &[u8] = hex!(
+    "d4019b91cf39325e6ea219b896dab78722ffb0aa3370ca88ba496a25a8ed07e50a2fdc"
+    "ce369d45d56e57f633032d720cfd9c732237dacc4917de61ab0b3e17d12d8196696aa3"
+    "73861ab8f4ccf260ca0c2af034e055f83d09dade1ef8e2fe6f12bd8dbae4a92c4f35bc"
+    "9f603191006af0abdd11ad4e124e29489276420969aac1c1ca7b217ceb325ecb110058"
+    "b2db52a13feae884079e9ae27aa9c2e07d4cc83d5cb397c4c7e1b93e55ec402252ea34"
+    "57b3f19019c10d3987fa3f7f34a198b5b12d4e46086af07a99c84d01a48d3379bea81b"
+    "5ff4105313f0275d62076ec4639ebb87cff7816d4876a109be5a8ab3e968d0e8b7f6e7"
+    "14e52d5e311863b9b25997421ba375b08675af917106737ffc4f3bad0b260278f7a1ce"
+    "39575a9369dfaca0ef2179648597be8db6f9b7f548dc5e5f1c73e012dd89cfcd526fd8"
+    "5f58c941c3102f60d961df2cff36a8a1352e28ce4df1eba2f19c61f1f3e2bfff3f4334"
+    "bbfbfe98d6ea51f896e847752ad657ba8af0ec1a1c9493a40bd0b8fe1e76f1dc0cbd8c"
+    "a6d39072ee545272d2187cbf78491cd1dfae2c992ccfd8367062ed52118ab2b52f1eb3"
+    "a508532a5d294ecac029a5adeda9ce25e01df93499401107114fdd849d8556e07aa2a3"
+    "fcc6f027697be807ea0e7be4ce131340a40d090fac94c032ee5cbc2172778a0356c854"
+    "53f6a35521caa10a1eacde3e9e156e5e757ea16f5377fc0069fa5b5428"
+    )
+    .as_ref();
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
@@ -153,8 +107,8 @@ fn serde_local_file_manifest_ok(alice: &Device) {
         need_sync: true,
         size: 500,
     };
-    let manifest = LocalChildManifest::decrypt_and_load(data, &key).unwrap();
 
+    let manifest = LocalChildManifest::decrypt_and_load(data, &key).unwrap();
     p_assert_eq!(manifest, LocalChildManifest::File(expected.clone()));
 
     // Also test serialization round trip

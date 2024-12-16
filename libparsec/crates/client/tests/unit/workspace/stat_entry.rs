@@ -47,7 +47,7 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
             updated,
             base_version,
             is_placeholder,
-            need_sync,
+            need_sync,last_updater
         }
         if {
             p_assert_eq!(confinement_point, None);
@@ -58,6 +58,8 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
             p_assert_eq!(base_version, 1);
             p_assert_eq!(is_placeholder, false);
             p_assert_eq!(need_sync, false);
+
+            p_assert_eq!(last_updater, alice.device_id);
             true
         }
     );
@@ -75,7 +77,7 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
             updated,
             base_version,
             is_placeholder,
-            need_sync,
+            need_sync,last_updater
         }
         if {
             p_assert_eq!(confinement_point, None);
@@ -86,6 +88,8 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
             p_assert_eq!(base_version, 1);
             p_assert_eq!(is_placeholder, false);
             p_assert_eq!(need_sync, false);
+            p_assert_eq!(last_updater, alice.device_id);
+
             true
         }
     );
@@ -104,7 +108,7 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
             base_version,
             is_placeholder,
             need_sync,
-            size,
+            size,last_updater
         }
         if {
             p_assert_eq!(confinement_point, None);
@@ -116,6 +120,8 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
             p_assert_eq!(is_placeholder, false);
             p_assert_eq!(need_sync, false);
             p_assert_eq!(size, 11);  // Contains "hello world"
+            p_assert_eq!(last_updater, alice.device_id);
+
             true
         }
     );
@@ -206,7 +212,7 @@ async fn stat_entry_by_id(
             updated,
             base_version,
             is_placeholder,
-            need_sync,
+            need_sync,last_updater
         }
         if {
             p_assert_eq!(confinement_point, expected_confinement_point);
@@ -217,6 +223,8 @@ async fn stat_entry_by_id(
             p_assert_eq!(base_version, 1);
             p_assert_eq!(is_placeholder, false);
             p_assert_eq!(need_sync, false);
+            p_assert_eq!(last_updater, alice.device_id);
+
             true
         }
     );
@@ -235,7 +243,7 @@ async fn stat_entry_by_id(
             updated,
             base_version,
             is_placeholder,
-            need_sync,
+            need_sync, last_updater
         }
         if {
             p_assert_eq!(confinement_point, expected_confinement_point);
@@ -246,6 +254,8 @@ async fn stat_entry_by_id(
             p_assert_eq!(base_version, 1);
             p_assert_eq!(is_placeholder, false);
             p_assert_eq!(need_sync, false);
+            p_assert_eq!(last_updater, alice.device_id);
+
             true
         }
     );
@@ -264,7 +274,7 @@ async fn stat_entry_by_id(
             base_version,
             is_placeholder,
             need_sync,
-            size,
+            size,last_updater
         }
         if {
             p_assert_eq!(confinement_point, expected_confinement_point);
@@ -276,6 +286,8 @@ async fn stat_entry_by_id(
             p_assert_eq!(is_placeholder, false);
             p_assert_eq!(need_sync, false);
             p_assert_eq!(size, 11);  // Contains "hello world"
+            p_assert_eq!(last_updater, alice.device_id);
+
             true
         }
     );
@@ -319,6 +331,7 @@ async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
             base_version,
             is_placeholder,
             need_sync,
+            last_updater,
         } if {
             p_assert_eq!(confinement_point, None);
             p_assert_eq!(id, wksp1_id);
@@ -328,6 +341,8 @@ async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
             p_assert_eq!(base_version, 0);
             p_assert_eq!(is_placeholder, true);
             p_assert_eq!(need_sync, true);
+            p_assert_eq!(last_updater, alice.device_id);
+
             true
         }
     );
@@ -606,6 +621,7 @@ async fn stat_entry_on_under_modification_file(
         is_placeholder: false,
         need_sync: true,
         size: expected_size,
+        last_updater: alice.device_id,
     };
 
     p_assert_eq!(stat, expected_stat);
