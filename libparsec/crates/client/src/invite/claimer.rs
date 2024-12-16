@@ -361,7 +361,12 @@ impl ShamirRecoveryClaimPickRecipientCtx {
     pub fn shares(&self) -> HashMap<UserID, NonZeroU8> {
         self.shares
             .iter()
-            .filter_map(|(k, v)| NonZeroU8::try_from(v.len() as u8).ok().map(|x| (*k, x)))
+            .filter_map(|(k, v)| {
+                u8::try_from(v.len())
+                    .and_then(NonZeroU8::try_from)
+                    .ok()
+                    .map(|x| (*k, x))
+            })
             .collect()
     }
 
