@@ -44,7 +44,7 @@ export class StorageManager {
       confirmBeforeQuit: true,
       meteredConnection: false,
       unsyncFiles: false,
-      skipViewers: false,
+      skipViewers: true,
     };
   }
 
