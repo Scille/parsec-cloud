@@ -16,7 +16,6 @@ async fn revoke_user_ok(tmp_path: TmpPath) {
         "revoke",
         "--device",
         &alice.device_id.hex(),
-        "--email",
         toto.human_handle.email()
     )
     .stdout(predicates::str::contains(format!(
@@ -36,7 +35,6 @@ async fn revoke_user_not_found(tmp_path: TmpPath) {
         "revoke",
         "--device",
         &alice.device_id.hex(),
-        "--email",
         "not-existing@example.com"
     )
     .stderr(predicates::str::contains("Error: User not found"));
