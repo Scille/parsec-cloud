@@ -39,12 +39,14 @@ export async function getFilesFromDrop(event: DragEvent, path: FsPath): Promise<
         files.push(event.dataTransfer.files[i]);
       }
     }
-    if (entries.length || files.length) {
-      const imports: FileImportTuple[] = [];
+    const imports: FileImportTuple[] = [];
+    if (entries.length) {
       for (const entry of entries) {
         const result = await unwindEntry(path, entry);
         imports.push(...result);
       }
+      return imports;
+    } else if (files.length) {
       for (const file of files) {
         imports.push({ file: file, path: path });
       }
