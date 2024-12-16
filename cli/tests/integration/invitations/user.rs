@@ -24,7 +24,6 @@ async fn invite_user(tmp_path: TmpPath) {
         "user",
         "--device",
         &alice.device_id.hex(),
-        "--email",
         "a@b.c"
     )
     .stdout(predicates::str::contains("Invitation URL:"));
