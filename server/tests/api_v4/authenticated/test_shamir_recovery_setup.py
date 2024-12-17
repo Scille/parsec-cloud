@@ -39,10 +39,7 @@ async def test_authenticated_shamir_recovery_setup_ok(
     )
 
     expected_topics = await backend.organization.test_dump_topics(coolorg.organization_id)
-    expected_topics.shamir_recovery = {
-        coolorg.alice.user_id: dt,
-        coolorg.mallory.user_id: dt,
-    }
+    expected_topics.shamir_recovery = dt
 
     rep = await coolorg.alice.shamir_recovery_setup(
         ciphered_data=b"abc",
@@ -67,22 +64,27 @@ async def test_authenticated_shamir_recovery_setup_ok(
 async def test_authenticated_shamir_recovery_setup_isolated_from_other_users(
     xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, kind: str
 ) -> None:
-    # The chosen timestamp would be invalid for Mallory, but should be fine for Bob
-    # since Bob is not among Mallory Shamir recovery's recipients.
-    mallory_shamir_topic_timestamp = shamirorg.mallory_shamir_topic_timestamp
-    assert mallory_shamir_topic_timestamp > shamirorg.bob_shamir_topic_timestamp
+    # The chosen timestamp would be invalid for Mike, but should be fine for Alice
+    # since Alice is not among Mallory Shamir recovery's recipients.
+    # However, the shamir topic timestamp is shared among all users in order to
+    # simplify the implementation, so sharing with Alice will fail as well.
+    mallory_last_certificate_timestamp = shamirorg.mallory_brief_certificate.timestamp
 
     match kind:
         case "really_isolated":
             recipient = shamirorg.alice
-            expected_rep = authenticated_cmds.v4.shamir_recovery_setup.RepOk()
+            # This fails even though Alice is not recipient of Mallory Shamir recovery.
+            # This is because the topic timestamp is shared among all users.
+            expected_rep = authenticated_cmds.v4.shamir_recovery_setup.RepRequireGreaterTimestamp(
+                strictly_greater_than=shamirorg.shamir_topic_timestamp
+            )
         case "related_by_recipient":
             # Mike is already recipient of Mallory Shamir recovery, hence his
             # topic already contains a brief certificate with the conflicting
             # timestamp !
             recipient = shamirorg.mike
             expected_rep = authenticated_cmds.v4.shamir_recovery_setup.RepRequireGreaterTimestamp(
-                strictly_greater_than=shamirorg.mike_shamir_topic_timestamp
+                strictly_greater_than=shamirorg.shamir_topic_timestamp
             )
         case unknown:
             assert False, unknown
@@ -90,14 +92,14 @@ async def test_authenticated_shamir_recovery_setup_isolated_from_other_users(
     share = ShamirRecoveryShareCertificate(
         author=shamirorg.bob.device_id,
         user_id=shamirorg.bob.user_id,
-        timestamp=mallory_shamir_topic_timestamp,
+        timestamp=mallory_last_certificate_timestamp,
         recipient=recipient.user_id,
         ciphered_share=b"abc",
     )
     brief = ShamirRecoveryBriefCertificate(
         author=shamirorg.bob.device_id,
         user_id=shamirorg.bob.user_id,
-        timestamp=mallory_shamir_topic_timestamp,
+        timestamp=mallory_last_certificate_timestamp,
         threshold=1,
         per_recipient_shares={recipient.user_id: 2},
     )
@@ -515,7 +517,7 @@ async def test_authenticated_shamir_recovery_setup_shamir_recovery_already_exist
         shamir_recovery_share_certificates=[share.dump_and_sign(shamirorg.alice.signing_key)],
     )
     assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepShamirRecoveryAlreadyExists(
-        last_shamir_certificate_timestamp=shamirorg.alice_shamir_topic_timestamp
+        last_shamir_certificate_timestamp=shamirorg.shamir_topic_timestamp
     )
 
 
