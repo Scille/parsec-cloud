@@ -207,7 +207,7 @@ class MemoryShamirComponent(BaseShamirComponent):
 
             if setup.is_deleted:
                 return ShamirDeleteSetupAlreadyDeletedBadOutcome(
-                    last_shamir_certificate_timestamp=last_shamir_certificate_timestamp
+                    last_shamir_recovery_certificate_timestamp=last_shamir_certificate_timestamp
                 )
 
             # All checks are good, now we do the actual insertion
