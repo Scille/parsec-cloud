@@ -3,6 +3,17 @@ History
 
 .. towncrier release notes start
 
+
+Parsec v3.2.3 (2024-12-18)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix a freeze when moving a file from the Windows File Explorer
+  (`#9012 <https://github.com/Scille/parsec-cloud/issues/9012>`__)
+
+
 Parsec v3.2.2 (2024-12-16)
 --------------------------
 

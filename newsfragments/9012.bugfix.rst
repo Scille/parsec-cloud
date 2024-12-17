@@ -1,1 +1,0 @@
-Fix a freeze when moving a file from the Windows File Explorer
