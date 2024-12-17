@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections.abc import Buffer
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import override
+from typing import TypeAlias, override
 
 from asyncpg import Record
 
@@ -21,6 +21,7 @@ from parsec._parsec import (
     OrganizationID,
     UserID,
     UserProfile,
+    invited_cmds,
 )
 from parsec.components.events import EventBus
 from parsec.components.invite import (
@@ -39,9 +40,11 @@ from parsec.components.invite import (
     InviteGreeterStepBadOutcome,
     InviteListBadOutcome,
     InviteNewForDeviceBadOutcome,
+    InviteNewForShamirRecoveryBadOutcome,
     InviteNewForUserBadOutcome,
     NotReady,
     SendEmailBadOutcome,
+    ShamirRecoveryInvitation,
     UserInvitation,
 )
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
@@ -62,6 +65,8 @@ from parsec.components.user import CheckDeviceBadOutcome, GetProfileForUserUserB
 from parsec.config import BackendConfig
 from parsec.events import EventInvitation
 
+ShamirRecoveryRecipient: TypeAlias = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
+
 
 @dataclass(frozen=True)
 class InvitationInfo:
@@ -72,7 +77,8 @@ class InvitationInfo:
     created_by_device_id: DeviceID
     created_by_email: str
     created_by_label: str
-    claimer_email: str
+    claimer_email: str | None
+    shamir_recovery_setup: int | None
     created_on: DateTime
     deleted_on: DateTime | None
     deleted_reason: InvitationStatus | None
@@ -94,6 +100,7 @@ class InvitationInfo:
             created_by_email,
             created_by_label,
             claimer_email,
+            shamir_recovery_setup,
             created_on,
             deleted_on,
             deleted_reason,
@@ -110,6 +117,7 @@ class InvitationInfo:
             created_by_email=created_by_email,
             created_by_label=created_by_label,
             claimer_email=claimer_email,
+            shamir_recovery_setup=shamir_recovery_setup,
             created_on=created_on,
             deleted_on=deleted_on,
             deleted_reason=deleted_reason,
@@ -169,6 +177,35 @@ class GreetingAttemptInfo:
         )
 
 
+@dataclass
+class ShamirRecoverySetupInfo:
+    claimer_user_id: UserID
+    claimer_human_handle: HumanHandle
+    threshold: int
+    recipients: list[ShamirRecoveryRecipient]
+
+
+_q_retrieve_shamir_recovery_setup = Q(
+    """
+WITH my_locked_shamir_recovery_topic AS (
+    SELECT last_timestamp
+    FROM shamir_recovery_topic
+    INNER JOIN organization ON shamir_recovery_topic.organization = organization._id
+    WHERE organization.organization_id = $organization_id
+    FOR SHARE OF shamir_recovery_topic
+)
+
+SELECT shamir_recovery_setup._id as shamir_recovery_setup_internal_id
+FROM shamir_recovery_setup
+INNER JOIN organization ON shamir_recovery_setup.organization = organization._id
+INNER JOIN user_ ON shamir_recovery_setup.user_ = user_._id
+WHERE
+    organization.organization_id = $organization_id
+    AND user_.user_id = $user_id
+    AND deleted_on IS NULL
+"""
+)
+
 _q_retrieve_compatible_user_invitation = Q(
     f"""
 SELECT
@@ -180,6 +217,7 @@ WHERE
     AND type = $type
     AND device.user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
     AND claimer_email = $claimer_email
+    and shamir_recovery IS NULL
     AND deleted_on IS NULL
 LIMIT 1
 """
@@ -209,8 +247,58 @@ WHERE
     AND type = $type
     AND device.user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
     AND claimer_email IS NULL
+    AND shamir_recovery IS NULL
     AND deleted_on IS NULL
 LIMIT 1
+"""
+)
+
+_q_retrieve_compatible_shamir_recovery_invitation = Q(
+    f"""
+SELECT
+    token
+FROM invitation
+INNER JOIN device ON invitation.created_by = device._id
+WHERE
+    invitation.organization = { q_organization_internal_id("$organization_id") }
+    AND type = $type
+    AND device.user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+    AND claimer_email IS NULL
+    AND shamir_recovery = $shamir_recovery_setup
+    AND deleted_on IS NULL
+LIMIT 1
+"""
+)
+
+_q_retrieve_shamir_recovery_setup_info = Q(
+    """
+SELECT
+    user_.user_id as claimer_user_id,
+    human.email as claimer_email,
+    human.label as claimer_label,
+    shamir_recovery_setup.threshold,
+    shamir_recovery_setup.deleted_on
+FROM shamir_recovery_setup
+INNER JOIN user_ ON shamir_recovery_setup.user_ = user_._id
+INNER JOIN human ON human._id = user_.human
+WHERE
+    shamir_recovery_setup._id = $internal_shamir_recovery_setup_id
+"""
+)
+
+_q_retrieve_shamir_recovery_recipients = Q(
+    """
+SELECT
+    user_.user_id,
+    user_.revoked_on,
+    human.email,
+    human.label,
+    shamir_recovery_share.shares
+FROM shamir_recovery_share
+INNER JOIN user_ ON shamir_recovery_share.recipient = user_._id
+INNER JOIN human ON human._id = user_.human
+WHERE
+    shamir_recovery_share.shamir_recovery = $internal_shamir_recovery_setup_id
 """
 )
 
@@ -222,6 +310,7 @@ INSERT INTO invitation(
     token,
     type,
     claimer_email,
+    shamir_recovery,
     created_by,
     created_on
 )
@@ -230,6 +319,7 @@ VALUES (
     $token,
     $type,
     $claimer_email,
+    $shamir_recovery_setup,
     { q_device_internal_id(organization_id="$organization_id", device_id="$created_by") },
     $created_on
 )
@@ -258,6 +348,7 @@ SELECT
     human.email,
     human.label,
     invitation.claimer_email,
+    invitation.shamir_recovery,
     invitation.created_on,
     invitation.deleted_on,
     invitation.deleted_reason
@@ -281,12 +372,14 @@ SELECT
     human.email as created_by_email,
     human.label as created_by_label,
     invitation.claimer_email,
+    invitation.shamir_recovery,
     invitation.created_on,
     invitation.deleted_on,
     invitation.deleted_reason
 FROM invitation
 LEFT JOIN device ON invitation.created_by = device._id
 LEFT JOIN human ON human._id = (SELECT user_.human FROM user_ WHERE user_._id = device.user_)
+LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
 ORDER BY created_on
@@ -331,6 +424,7 @@ def make_q_info_invitation(
             human.email,
             human.label,
             invitation.claimer_email,
+            invitation.shamir_recovery,
             invitation.created_on,
             invitation.deleted_on,
             invitation.deleted_reason
@@ -622,12 +716,13 @@ async def query_retrieve_active_human_by_email(
     return None
 
 
-async def _do_new_user_or_device_invitation(
+async def _do_new_invitation(
     conn: AsyncpgConnection,
     organization_id: OrganizationID,
     author_user_id: UserID,
     author_device_id: DeviceID,
     claimer_email: str | None,
+    shamir_recovery_setup: int | None,
     created_on: DateTime,
     invitation_type: InvitationType,
     suggested_token: InvitationToken,
@@ -647,6 +742,14 @@ async def _do_new_user_or_device_invitation(
                 type=invitation_type.str,
                 user_id=author_user_id,
             )
+        case InvitationType.SHAMIR_RECOVERY:
+            assert shamir_recovery_setup is not None
+            q = _q_retrieve_compatible_shamir_recovery_invitation(
+                organization_id=organization_id.str,
+                type=invitation_type.str,
+                user_id=author_user_id,
+                shamir_recovery_setup=shamir_recovery_setup,
+            )
         case _:
             assert False, "No other invitation type for the moment"
 
@@ -665,6 +768,7 @@ async def _do_new_user_or_device_invitation(
                 type=invitation_type.str,
                 token=token.hex,
                 claimer_email=claimer_email,
+                shamir_recovery_setup=shamir_recovery_setup,
                 created_by=author_device_id,
                 created_on=created_on,
             )
@@ -745,12 +849,13 @@ class PGInviteComponent(BaseInviteComponent):
             return InviteNewForUserBadOutcome.CLAIMER_EMAIL_ALREADY_ENROLLED
 
         suggested_token = force_token or InvitationToken.new()
-        token = await _do_new_user_or_device_invitation(
+        token = await _do_new_invitation(
             conn,
             organization_id=organization_id,
             author_user_id=author_user_id,
             author_device_id=author,
             claimer_email=claimer_email,
+            shamir_recovery_setup=None,
             created_on=now,
             invitation_type=InvitationType.USER,
             suggested_token=suggested_token,
@@ -805,12 +910,13 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteNewForDeviceBadOutcome.AUTHOR_REVOKED
 
         suggested_token = force_token or InvitationToken.new()
-        token = await _do_new_user_or_device_invitation(
+        token = await _do_new_invitation(
             conn,
             organization_id=organization_id,
             author_user_id=author_user_id,
             author_device_id=author,
             claimer_email=None,
+            shamir_recovery_setup=None,
             created_on=now,
             invitation_type=InvitationType.DEVICE,
             suggested_token=suggested_token,
@@ -832,6 +938,141 @@ class PGInviteComponent(BaseInviteComponent):
         else:
             send_email_outcome = None
         return token, send_email_outcome
+
+    @override
+    @transaction
+    async def new_for_shamir_recovery(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        send_email: bool,
+        claimer_user_id: UserID,
+        # Only needed for testbed template
+        force_token: InvitationToken | None = None,
+    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case Organization() as organization:
+                pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteNewForShamirRecoveryBadOutcome.ORGANIZATION_NOT_FOUND
+        if organization.is_expired:
+            return InviteNewForShamirRecoveryBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return InviteNewForShamirRecoveryBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return InviteNewForShamirRecoveryBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
+                return InviteNewForShamirRecoveryBadOutcome.AUTHOR_REVOKED
+
+        # Check that the claimer exists
+        claimer_human_handle = await _human_handle_from_user_id(
+            conn, organization_id=organization_id, user_id=claimer_user_id
+        )
+        if not claimer_human_handle:
+            return InviteNewForShamirRecoveryBadOutcome.USER_NOT_FOUND
+
+        row = await conn.fetchrow(
+            *_q_retrieve_shamir_recovery_setup(
+                organization_id=organization_id.str,
+                user_id=claimer_user_id,
+            )
+        )
+        if row is None:
+            return InviteNewForShamirRecoveryBadOutcome.AUTHOR_NOT_ALLOWED
+        match row["shamir_recovery_setup_internal_id"]:
+            case int() as shamir_recovery_setup:
+                pass
+            case unknown:
+                assert False, repr(unknown)
+
+        shamir_recovery_setup_info = await self._get_shamir_recovery_info(
+            conn, internal_shamir_recovery_setup_id=shamir_recovery_setup
+        )
+        # Already checked in `_q_retrieve_shamir_recovery_setup`
+        assert shamir_recovery_setup_info is not None
+        if not any(
+            author_user_id == recipient.user_id
+            for recipient in shamir_recovery_setup_info.recipients
+        ):
+            return InviteNewForShamirRecoveryBadOutcome.AUTHOR_NOT_ALLOWED
+
+        suggested_token = force_token or InvitationToken.new()
+        token = await _do_new_invitation(
+            conn,
+            organization_id=organization_id,
+            author_user_id=author_user_id,
+            author_device_id=author,
+            claimer_email=None,
+            shamir_recovery_setup=shamir_recovery_setup,
+            created_on=now,
+            invitation_type=InvitationType.SHAMIR_RECOVERY,
+            suggested_token=suggested_token,
+        )
+
+        if send_email:
+            author_human_handle = await _human_handle_from_user_id(
+                conn, organization_id=organization_id, user_id=author_user_id
+            )
+            if not author_human_handle:
+                assert (
+                    False
+                )  # TODO: Need a specific SendEmailBadOutcome or InviteNewForUserBadOutcome
+
+            send_email_outcome = await self._send_shamir_recovery_invitation_email(
+                organization_id=organization_id,
+                email=claimer_human_handle.email,
+                token=token,
+                greeter_human_handle=author_human_handle,
+            )
+        else:
+            send_email_outcome = None
+
+        return token, send_email_outcome
+
+    async def _get_shamir_recovery_info(
+        self, conn: AsyncpgConnection, internal_shamir_recovery_setup_id: int
+    ) -> ShamirRecoverySetupInfo | None:
+        row = await conn.fetchrow(
+            *_q_retrieve_shamir_recovery_setup_info(
+                internal_shamir_recovery_setup_id=internal_shamir_recovery_setup_id
+            )
+        )
+        assert row is not None
+
+        if row["deleted_on"] is not None:
+            return None
+
+        claimer_user_id = UserID.from_hex(row["claimer_user_id"])
+        claimer_human_handle = HumanHandle(email=row["claimer_email"], label=row["claimer_label"])
+        threshold = row["threshold"]
+
+        rows = await conn.fetch(
+            *_q_retrieve_shamir_recovery_recipients(
+                internal_shamir_recovery_setup_id=internal_shamir_recovery_setup_id
+            )
+        )
+        recipients = [
+            ShamirRecoveryRecipient(
+                user_id=UserID.from_hex(row["user_id"]),
+                human_handle=HumanHandle(email=row["email"], label=row["label"]),
+                shares=row["shares"],
+                revoked_on=row["revoked_on"],
+            )
+            for row in rows
+        ]
+
+        return ShamirRecoverySetupInfo(
+            claimer_user_id=claimer_user_id,
+            claimer_human_handle=claimer_human_handle,
+            threshold=threshold,
+            recipients=recipients,
+        )
 
     @override
     @transaction
@@ -915,12 +1156,13 @@ class PGInviteComponent(BaseInviteComponent):
         invitations = []
         for (
             token_str,
-            type,
+            type_str,
             created_by_user_id_str,
             created_by_device_id_str,
             created_by_email,
             created_by_label,
             claimer_email,
+            internal_shamir_recovery_setup_id,
             created_on,
             deleted_on,
             deleted_reason,
@@ -939,7 +1181,7 @@ class PGInviteComponent(BaseInviteComponent):
                 status = InvitationStatus.IDLE
 
             invitation: Invitation
-            if type == InvitationType.USER.str:
+            if type_str == InvitationType.USER.str:
                 invitation = UserInvitation(
                     created_by_user_id=created_by_user_id,
                     created_by_device_id=created_by_device_id,
@@ -949,7 +1191,7 @@ class PGInviteComponent(BaseInviteComponent):
                     created_on=created_on,
                     status=status,
                 )
-            else:  # Device
+            elif type_str == InvitationType.DEVICE.str:
                 invitation = DeviceInvitation(
                     created_by_user_id=created_by_user_id,
                     created_by_device_id=created_by_device_id,
@@ -958,6 +1200,36 @@ class PGInviteComponent(BaseInviteComponent):
                     created_on=created_on,
                     status=status,
                 )
+            elif type_str == InvitationType.SHAMIR_RECOVERY.str:
+                shamir_recovery_info = await self._get_shamir_recovery_info(
+                    conn, internal_shamir_recovery_setup_id
+                )
+
+                # There is no corresponding setup for this invitation, ignore it
+                if shamir_recovery_info is None:
+                    continue
+
+                # The author is not part of the recipients
+                if not any(
+                    recipient.user_id == author_user_id
+                    for recipient in shamir_recovery_info.recipients
+                ):
+                    continue
+
+                invitation = ShamirRecoveryInvitation(
+                    created_by_user_id=created_by_user_id,
+                    created_by_device_id=created_by_device_id,
+                    created_by_human_handle=greeter_human_handle,
+                    token=token,
+                    created_on=created_on,
+                    status=status,
+                    claimer_user_id=shamir_recovery_info.claimer_user_id,
+                    claimer_human_handle=shamir_recovery_info.claimer_human_handle,
+                    threshold=shamir_recovery_info.threshold,
+                    recipients=shamir_recovery_info.recipients,
+                )
+            else:
+                assert False, type_str
             invitations.append(invitation)
         return invitations
 
@@ -984,6 +1256,7 @@ class PGInviteComponent(BaseInviteComponent):
             email=invitation_info.created_by_email, label=invitation_info.created_by_label
         )
         if invitation_info.type == InvitationType.USER:
+            assert invitation_info.claimer_email is not None
             return UserInvitation(
                 created_by_user_id=invitation_info.created_by_user_id,
                 created_by_device_id=invitation_info.created_by_device_id,
@@ -993,7 +1266,7 @@ class PGInviteComponent(BaseInviteComponent):
                 created_on=invitation_info.created_on,
                 status=InvitationStatus.READY,
             )
-        else:  # Device
+        elif invitation_info.type == InvitationType.DEVICE:
             return DeviceInvitation(
                 created_by_user_id=invitation_info.created_by_user_id,
                 created_by_device_id=invitation_info.created_by_device_id,
@@ -1002,6 +1275,30 @@ class PGInviteComponent(BaseInviteComponent):
                 created_on=invitation_info.created_on,
                 status=InvitationStatus.READY,
             )
+        elif invitation_info.type == InvitationType.SHAMIR_RECOVERY:
+            assert invitation_info.shamir_recovery_setup is not None
+            shamir_recovery_invitation = await self._get_shamir_recovery_info(
+                conn, invitation_info.shamir_recovery_setup
+            )
+            if shamir_recovery_invitation is None:
+                # TODO: The invitation is not actually deleted, but the corresponding setup has
+                # been deleted. This is a bit misleading, we should find a way to differentiate
+                # between the two cases.
+                return InviteAsInvitedInfoBadOutcome.INVITATION_DELETED
+            return ShamirRecoveryInvitation(
+                created_by_user_id=invitation_info.created_by_user_id,
+                created_by_device_id=invitation_info.created_by_device_id,
+                created_by_human_handle=greeter_human_handle,
+                token=token,
+                created_on=invitation_info.created_on,
+                status=InvitationStatus.READY,
+                claimer_user_id=shamir_recovery_invitation.claimer_user_id,
+                claimer_human_handle=shamir_recovery_invitation.claimer_human_handle,
+                threshold=shamir_recovery_invitation.threshold,
+                recipients=shamir_recovery_invitation.recipients,
+            )
+        else:
+            assert False, invitation_info.type
 
     @override
     @transaction
@@ -1015,7 +1312,7 @@ class PGInviteComponent(BaseInviteComponent):
     async def test_dump_all_invitations(
         self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> dict[UserID, list[Invitation]]:
-        per_user_invitations = {}
+        per_user_invitations: dict[UserID, list[Invitation]] = {}
         invitations_with_claimer_online = self._claimers_ready[organization_id]
 
         # Loop over rows
@@ -1028,6 +1325,7 @@ class PGInviteComponent(BaseInviteComponent):
             created_by_email,
             created_by_label,
             claimer_email,
+            shamir_recovery,
             created_on,
             deleted_on,
             deleted_reason,
@@ -1071,13 +1369,32 @@ class PGInviteComponent(BaseInviteComponent):
                             token=token,
                         )
                     )
+                case InvitationType.SHAMIR_RECOVERY:
+                    shamir_recovery_info = await self._get_shamir_recovery_info(
+                        conn, shamir_recovery
+                    )
+                    if shamir_recovery_info is None:
+                        continue
+                    current_user_invitations.append(
+                        ShamirRecoveryInvitation(
+                            created_on=created_on,
+                            status=status,
+                            created_by_user_id=created_by_user_id,
+                            created_by_device_id=created_by_device_id,
+                            created_by_human_handle=created_by_human_handle,
+                            token=token,
+                            claimer_human_handle=shamir_recovery_info.claimer_human_handle,
+                            claimer_user_id=shamir_recovery_info.claimer_user_id,
+                            threshold=shamir_recovery_info.threshold,
+                            recipients=shamir_recovery_info.recipients,
+                        )
+                    )
                 case unknown:
                     assert False, unknown
 
         return per_user_invitations
 
     # New invite transport API
-    # TODO: Remove the old API once the new one is fully functional
 
     # Helpers
 
@@ -1194,8 +1511,10 @@ class PGInviteComponent(BaseInviteComponent):
             return invitation_info.created_by_user_id == greeter_id
         elif invitation_info.type == InvitationType.USER:
             return greeter_profile == UserProfile.ADMIN
-        else:
+        elif invitation_info.type == InvitationType.SHAMIR_RECOVERY:
             raise NotImplementedError
+        else:
+            assert False, invitation_info.type
 
     async def get_invitation(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken

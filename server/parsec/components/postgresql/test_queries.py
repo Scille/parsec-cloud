@@ -302,6 +302,64 @@ new_profiles AS (
     WHERE user_.organization = { q_organization_internal_id("$source_id") }
     RETURNING _id
 ),
+new_shamir_recovery_setups AS (
+    INSERT INTO shamir_recovery_setup (
+        organization,
+        user_,
+        brief_certificate,
+        reveal_token,
+        threshold,
+        shares,
+        ciphered_data,
+        created_on,
+        deleted_on,
+        deletion_certificate
+    )
+    SELECT
+        (select * from new_organization_ids),
+        (
+            SELECT _id FROM new_users
+            WHERE user_id = { q_user(_id="shamir_recovery_setup.user_", select="user_id") }
+        ),
+        brief_certificate,
+        reveal_token,
+        threshold,
+        shares,
+        ciphered_data,
+        created_on,
+        deleted_on,
+        deletion_certificate
+    FROM shamir_recovery_setup
+    WHERE organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id, reveal_token
+),
+new_shamir_recovery_shares AS (
+    INSERT INTO shamir_recovery_share (
+        organization,
+        shamir_recovery,
+        recipient,
+        share_certificate,
+        shares
+    )
+    SELECT
+        (select * from new_organization_ids),
+        (
+            SELECT _id FROM new_shamir_recovery_setups
+            WHERE reveal_token = (
+                SELECT reveal_token FROM shamir_recovery_setup
+                WHERE shamir_recovery_setup._id = shamir_recovery_share.shamir_recovery
+            )
+        ),
+        (
+            SELECT _id FROM new_users
+            WHERE user_id = { q_user(_id="shamir_recovery_share.recipient", select="user_id") }
+        ),
+        share_certificate,
+        shares
+    FROM shamir_recovery_share
+    WHERE organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id
+),
 new_invitations AS (
     INSERT INTO invitation (
         organization,
@@ -311,7 +369,8 @@ new_invitations AS (
         claimer_email,
         created_on,
         deleted_on,
-        deleted_reason
+        deleted_reason,
+        shamir_recovery
     )
     SELECT
         (select * from new_organization_ids),
@@ -324,7 +383,14 @@ new_invitations AS (
         claimer_email,
         created_on,
         deleted_on,
-        deleted_reason
+        deleted_reason,
+        (
+            SELECT _id FROM new_shamir_recovery_setups
+            WHERE reveal_token = (
+                SELECT reveal_token FROM shamir_recovery_setup
+                WHERE shamir_recovery_setup._id = invitation.shamir_recovery
+            )
+        )
     FROM invitation
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id, token
@@ -686,64 +752,6 @@ new_greeting_steps AS (
         claimer_data
     FROM greeting_step
     INNER JOIN greeting_attempt ON greeting_attempt._id = greeting_step.greeting_attempt
-    WHERE organization = { q_organization_internal_id("$source_id") }
-    RETURNING _id
-),
-new_shamir_recovery_setups AS (
-    INSERT INTO shamir_recovery_setup (
-        organization,
-        user_,
-        brief_certificate,
-        reveal_token,
-        threshold,
-        shares,
-        ciphered_data,
-        created_on,
-        deleted_on,
-        deletion_certificate
-    )
-    SELECT
-        (select * from new_organization_ids),
-        (
-            SELECT _id FROM new_users
-            WHERE user_id = { q_user(_id="shamir_recovery_setup.user_", select="user_id") }
-        ),
-        brief_certificate,
-        reveal_token,
-        threshold,
-        shares,
-        ciphered_data,
-        created_on,
-        deleted_on,
-        deletion_certificate
-    FROM shamir_recovery_setup
-    WHERE organization = { q_organization_internal_id("$source_id") }
-    RETURNING _id, reveal_token
-),
-new_shamir_recovery_shares AS (
-    INSERT INTO shamir_recovery_share (
-        organization,
-        shamir_recovery,
-        recipient,
-        share_certificate,
-        shares
-    )
-    SELECT
-        (select * from new_organization_ids),
-        (
-            SELECT _id FROM new_shamir_recovery_setups
-            WHERE reveal_token = (
-                SELECT reveal_token FROM shamir_recovery_setup
-                WHERE shamir_recovery_setup._id = shamir_recovery_share.shamir_recovery
-            )
-        ),
-        (
-            SELECT _id FROM new_users
-            WHERE user_id = { q_user(_id="shamir_recovery_share.recipient", select="user_id") }
-        ),
-        share_certificate,
-        shares
-    FROM shamir_recovery_share
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id
 )
