@@ -22,7 +22,6 @@ async def test_invited_invite_shamir_recovery_reveal_bad_reveal_token(
 
 async def test_invited_invite_shamir_recovery_reveal_bad_invitation_type(
     coolorg: CoolorgRpcClients,
-    skip_if_postgresql: None,
 ) -> None:
     token = InvitationToken.new()
 
