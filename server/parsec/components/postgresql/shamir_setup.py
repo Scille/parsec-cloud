@@ -369,17 +369,21 @@ async def setup(
         case unknown:
             assert False, repr(unknown)
 
-    for recipient_internal_id, (recipient_id, (share_certificate, _)) in zip(
-        recipient_internal_ids, cooked_shares.items()
-    ):
-        await conn.fetchrow(
-            *_q_insert_shamir_recovery_share(
+    def arg_gen():
+        for recipient_internal_id, (recipient_id, (share_certificate, _)) in zip(
+            recipient_internal_ids, cooked_shares.items()
+        ):
+            yield _q_insert_shamir_recovery_share.arg_only(
                 organization_internal_id=organization_internal_id,
                 shamir_recovery_setup_internal_id=shamir_recovery_setup_internal_id,
                 recipient_internal_id=recipient_internal_id,
                 share_certificate=share_certificate,
                 shares=cooked_brief.per_recipient_shares[recipient_id],
             )
-        )
+
+    await conn.executemany(
+        _q_insert_shamir_recovery_share.sql,
+        arg_gen(),
+    )
 
     return cooked_brief
