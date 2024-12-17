@@ -109,7 +109,7 @@ class MemoryShamirComponent(BaseShamirComponent):
                 # The user had already setup a shamir recovery... but it might be deleted
                 if not previous_shamir_setup.is_deleted:
                     return ShamirSetupAlreadyExistsBadOutcome(
-                        last_shamir_certificate_timestamp=last_shamir_certificate_timestamp
+                        last_shamir_recovery_certificate_timestamp=last_shamir_certificate_timestamp
                     )
 
             # Ensure we are not breaking causality by adding a newer timestamp.

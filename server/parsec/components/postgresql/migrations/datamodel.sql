@@ -165,13 +165,23 @@ CREATE TABLE shamir_recovery_setup (
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
 
     brief_certificate BYTEA NOT NULL,
-    reveal_token UUID NOT NULL,
+    reveal_token VARCHAR(32) NOT NULL,
     threshold INTEGER NOT NULL,
     shares INTEGER NOT NULL,
     ciphered_data BYTEA,
 
+    -- Added in migration 0007
+    created_on TIMESTAMPTZ NOT NULL,
+    deleted_on TIMESTAMPTZ,
+    deletion_certificate BYTEA,
+
     UNIQUE (organization, reveal_token)
 );
+
+
+-- Makes sure that there is only one active setup per user
+CREATE UNIQUE INDEX unique_active_setup ON shamir_recovery_setup (user_)
+WHERE deleted_on IS NULL;
 
 
 CREATE TABLE shamir_recovery_share (
