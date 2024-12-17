@@ -4,7 +4,10 @@ use libparsec_types::prelude::*;
 
 use crate::TestbedEventNewDevice;
 
-use super::{TestbedEvent, TestbedEventBootstrapOrganization, TestbedEventNewUser};
+use super::{
+    TestbedEvent, TestbedEventBootstrapOrganization, TestbedEventNewSequesterService,
+    TestbedEventNewUser,
+};
 
 pub(super) fn user_id_from_device_id(events: &[TestbedEvent], device: DeviceID) -> UserID {
     events
@@ -29,7 +32,6 @@ pub(super) fn user_id_from_device_id(events: &[TestbedEvent], device: DeviceID) 
 }
 
 /// Return the first device of each non-revoked user.
-#[allow(unused)]
 pub(super) fn non_revoked_users(
     events: &[TestbedEvent],
 ) -> impl Iterator<Item = (UserID, DeviceID)> + '_ {
@@ -152,7 +154,6 @@ pub(super) fn non_revoked_realm_owners(
 }
 
 /// Return the first device of each non-revoked user having access to the given realm.
-#[allow(unused)]
 pub(super) fn non_revoked_realm_members(
     events: &[TestbedEvent],
     realm: VlobID,
@@ -171,7 +172,28 @@ pub(super) fn non_revoked_realm_members(
     })
 }
 
-#[allow(unused)]
+pub(super) fn non_revoked_sequester_services(
+    events: &[TestbedEvent],
+) -> Option<impl Iterator<Item = &TestbedEventNewSequesterService> + '_> {
+    assert_organization_bootstrapped(events)
+        .sequester_authority
+        .as_ref()?;
+
+    Some(events.iter().enumerate().filter_map(move |(i, e)| match e {
+        TestbedEvent::NewSequesterService(service) => {
+            let revoked = events.iter().skip(i).any(
+                |e| matches!(e, TestbedEvent::RevokeSequesterService(x) if x.id == service.id),
+            );
+            if revoked {
+                None
+            } else {
+                Some(service)
+            }
+        }
+        _ => None,
+    }))
+}
+
 pub(super) fn realm_keys(
     events: &[TestbedEvent],
     realm: VlobID,

@@ -35,7 +35,6 @@ async def create_vlob(
                 key_index=1,
                 timestamp=dt,
                 blob=v1_blob,
-                sequester_blob=None,
             )
         else:
             outcome = await backend.vlob.update(
@@ -47,7 +46,6 @@ async def create_vlob(
                 version=version,
                 timestamp=dt,
                 blob=v1_blob,
-                sequester_blob=None,
             )
         assert outcome is None, outcome
         dt = dt.add(days=1)
@@ -236,7 +234,6 @@ async def test_authenticated_vlob_read_batch_http_common_errors(
         key_index=1,
         blob=v1_blob,
         timestamp=v1_timestamp,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 

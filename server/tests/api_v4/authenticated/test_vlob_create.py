@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from unittest.mock import ANY
+import asyncio
+from unittest.mock import ANY, Mock
 
 import pytest
 
@@ -10,16 +11,21 @@ from parsec._parsec import (
     RealmKeyRotationCertificate,
     RealmRole,
     SecretKeyAlgorithm,
-    SequesterServiceID,
     VlobID,
     authenticated_cmds,
     testbed,
+)
+from parsec.components.sequester import (
+    RejectedBySequesterService,
+    SequesterServiceType,
+    SequesterServiceUnavailable,
 )
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    SequesteredOrgRpcClients,
     get_last_realm_certificate_timestamp,
     wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
@@ -95,7 +101,6 @@ async def test_authenticated_vlob_create_ok(
             key_index=key_index,
             timestamp=timestamp,
             blob=blob,
-            sequester_blob=None,
         )
         assert rep == authenticated_cmds.v4.vlob_create.RepOk()
 
@@ -189,7 +194,6 @@ async def test_authenticated_vlob_create_author_not_allowed(
         key_index=key_index,
         timestamp=now,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepAuthorNotAllowed()
 
@@ -255,7 +259,6 @@ async def test_authenticated_vlob_create_bad_key_index(
         key_index=bad_key_index,
         timestamp=t1,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepBadKeyIndex(
         last_realm_certificate_timestamp=wksp1_last_certificate_timestamp
@@ -278,7 +281,6 @@ async def test_authenticated_vlob_create_realm_not_found(
         key_index=1,
         timestamp=DateTime.now(),
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepRealmNotFound()
 
@@ -301,7 +303,6 @@ async def test_authenticated_vlob_create_vlob_already_exists(
         key_index=1,
         blob=b"<block content 1>",
         timestamp=t0,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -313,7 +314,6 @@ async def test_authenticated_vlob_create_vlob_already_exists(
         key_index=1,
         timestamp=DateTime.now(),
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepVlobAlreadyExists()
 
@@ -322,44 +322,98 @@ async def test_authenticated_vlob_create_vlob_already_exists(
     assert dump == initial_dump
 
 
-async def test_authenticated_vlob_create_organization_not_sequestered(
-    coolorg: CoolorgRpcClients, backend: Backend
+async def test_authenticated_vlob_create_rejected_by_sequester_service(
+    sequestered_org: SequesteredOrgRpcClients,
+    backend: Backend,
+    monkeypatch: pytest.MonkeyPatch,
+    with_postgresql: bool,
 ) -> None:
-    initial_dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
-    rep = await coolorg.alice.vlob_create(
-        realm_id=coolorg.wksp1_id,
+    if with_postgresql:
+        pytest.xfail("TODO: Webhook sequester service not implemented yet in PostgreSQL")
+
+    outcome = await backend.sequester.update_config_for_service(
+        organization_id=sequestered_org.organization_id,
+        service_id=sequestered_org.sequester_service_2_id,
+        config=(SequesterServiceType.WEBHOOK, "https://parsec.invalid/webhook"),
+    )
+    assert outcome is None
+
+    future = asyncio.Future()
+    future.set_result(
+        RejectedBySequesterService(
+            service_id=sequestered_org.sequester_service_2_id, reason="Refused"
+        )
+    )
+    _mocked_sequester_service_on_vlob_create_or_update = Mock(side_effect=[future])
+    monkeypatch.setattr(
+        "parsec.webhooks.WebhooksComponent.sequester_service_on_vlob_create_or_update",
+        _mocked_sequester_service_on_vlob_create_or_update,
+    )
+
+    initial_dump = await backend.vlob.test_dump_vlobs(
+        organization_id=sequestered_org.organization_id
+    )
+
+    rep = await sequestered_org.alice.vlob_create(
+        realm_id=sequestered_org.wksp1_id,
         vlob_id=VlobID.new(),
-        key_index=1,
+        key_index=3,
         timestamp=DateTime.now(),
         blob=b"<block content>",
-        sequester_blob={SequesterServiceID.new(): b"<dummy>"},
     )
-    assert rep == authenticated_cmds.v4.vlob_create.RepOrganizationNotSequestered()
+    assert rep == authenticated_cmds.v4.vlob_create.RepRejectedBySequesterService(
+        service_id=sequestered_org.sequester_service_2_id, reason="Refused"
+    )
 
     # Ensure no changes were made
-    dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
+    dump = await backend.vlob.test_dump_vlobs(organization_id=sequestered_org.organization_id)
     assert dump == initial_dump
 
 
-@pytest.mark.skip(reason="TODO: missing test sequester")
-async def test_authenticated_vlob_create_sequester_inconsistency(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
-    raise Exception("Not implemented")
-
-
-@pytest.mark.skip(reason="TODO: missing test sequester")
-async def test_authenticated_vlob_create_rejected_by_sequester_service(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
-    raise Exception("Not implemented")
-
-
-@pytest.mark.skip(reason="TODO: missing test sequester")
 async def test_authenticated_vlob_create_sequester_service_unavailable(
-    coolorg: CoolorgRpcClients, backend: Backend
+    sequestered_org: SequesteredOrgRpcClients,
+    backend: Backend,
+    monkeypatch: pytest.MonkeyPatch,
+    with_postgresql: bool,
 ) -> None:
-    raise Exception("Not implemented")
+    if with_postgresql:
+        pytest.xfail("TODO: Webhook sequester service not implemented yet in PostgreSQL")
+
+    outcome = await backend.sequester.update_config_for_service(
+        organization_id=sequestered_org.organization_id,
+        service_id=sequestered_org.sequester_service_2_id,
+        config=(SequesterServiceType.WEBHOOK, "https://parsec.invalid/webhook"),
+    )
+    assert outcome is None
+
+    future = asyncio.Future()
+    future.set_result(
+        SequesterServiceUnavailable(service_id=sequestered_org.sequester_service_2_id)
+    )
+    _mocked_sequester_service_on_vlob_create_or_update = Mock(side_effect=[future])
+    monkeypatch.setattr(
+        "parsec.webhooks.WebhooksComponent.sequester_service_on_vlob_create_or_update",
+        _mocked_sequester_service_on_vlob_create_or_update,
+    )
+
+    initial_dump = await backend.vlob.test_dump_vlobs(
+        organization_id=sequestered_org.organization_id
+    )
+
+    rep = await sequestered_org.alice.vlob_create(
+        realm_id=sequestered_org.wksp1_id,
+        vlob_id=VlobID.new(),
+        key_index=3,
+        timestamp=DateTime.now(),
+        blob=b"<block content>",
+    )
+    assert rep == authenticated_cmds.v4.vlob_create.RepSequesterServiceUnavailable(
+        service_id=sequestered_org.sequester_service_2_id
+    )
+
+    # Ensure no changes were made
+    dump = await backend.vlob.test_dump_vlobs(organization_id=sequestered_org.organization_id)
+    assert dump == initial_dump
 
 
 async def test_authenticated_vlob_create_timestamp_out_of_ballpark(
@@ -373,7 +427,6 @@ async def test_authenticated_vlob_create_timestamp_out_of_ballpark(
         key_index=1,
         timestamp=t0,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert isinstance(rep, authenticated_cmds.v4.vlob_create.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
@@ -436,7 +489,6 @@ async def test_authenticated_vlob_create_require_greater_timestamp(
         key_index=2,
         timestamp=same_or_previous_timestamp,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp
@@ -467,7 +519,6 @@ async def test_authenticated_vlob_create_max_blob_size(
             key_index=1,
             timestamp=timestamp,
             blob=a_big_blob,
-            sequester_blob=None,
         )
         assert rep == authenticated_cmds.v4.vlob_create.RepOk()
 
@@ -502,7 +553,6 @@ async def test_authenticated_vlob_create_http_common_errors(
             key_index=1,
             timestamp=DateTime.now(),
             blob=b"<dummy>",
-            sequester_blob=None,
         )
 
     await authenticated_http_common_errors_tester(do)

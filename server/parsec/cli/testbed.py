@@ -299,7 +299,7 @@ async def testbed_backend_factory(
 )
 # Add --log-level/--log-format/--log-file
 @logging_config_options(default_log_level="INFO")
-# Add --debug
+# Add --debug & --version
 @debug_config_options
 def testbed_cmd(
     host: str,
