@@ -26,6 +26,7 @@ async fn info_shared_recovery_ok(tmp_path: TmpPath) {
     .stdout(predicates::str::contains(format!(
         "Shared recovery {RED}never setup{RESET}"
     )));
+
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
         "shared-recovery",
