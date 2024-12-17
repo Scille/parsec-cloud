@@ -237,14 +237,14 @@ CREATE TABLE invitation (
     type INVITATION_TYPE NOT NULL,
 
     created_by INTEGER REFERENCES device (_id) NOT NULL,
-    -- Required for when type=USER
+    -- Required when type=USER
     claimer_email VARCHAR(255),
 
     created_on TIMESTAMPTZ NOT NULL,
     deleted_on TIMESTAMPTZ,
     deleted_reason INVITATION_DELETED_REASON,
 
-    -- Required for when type=SHAMIR_RECOVERY
+    -- Required when type=SHAMIR_RECOVERY
     shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id),
 
     UNIQUE (organization, token)
