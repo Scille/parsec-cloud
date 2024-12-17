@@ -7,6 +7,11 @@ name = "libparsec_platform_mountpoint"
 publish.workspace = true
 repository.workspace = true
 version.workspace = true
+autoexamples = false
+
+[[example]]
+name = "minimal_mountpoint"
+path = "examples/minimal.rs"
 
 [lints]
 workspace = true
