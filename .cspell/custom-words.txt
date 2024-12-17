@@ -1,4 +1,5 @@
 aapt
+autoexamples
 ABCDEFGHJKLMNPQRSTUVWXYZ
 ABNF
 aconnect
