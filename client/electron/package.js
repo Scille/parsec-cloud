@@ -87,8 +87,8 @@ fs.writeFileSync('build/assets/publishConfig.json', JSON.stringify(publishConfig
  */
 const WIN_SIGN_OPTIONS = {
   signtoolOptions: {
-    certificateSubjectName: 'SCILLE',
-    certificateSha1: '5D56476E12C6DB8055CB37D8EA98E9A9D0B01091',
+    certificateSubjectName: 'Scille',
+    certificateSha1: '4505A81975EF724601813DF296AB74A07ECFA991',
   },
 };
 
