@@ -586,20 +586,8 @@ class ShamirOrgRpcClients:
         return self._shares_certificates_for("mallory")
 
     @property
-    def alice_shamir_topic_timestamp(self) -> DateTime:
-        return self._last_shamir_topic_timestamp_for("alice")
-
-    @property
-    def bob_shamir_topic_timestamp(self) -> DateTime:
-        return self._last_shamir_topic_timestamp_for("bob")
-
-    @property
-    def mallory_shamir_topic_timestamp(self) -> DateTime:
-        return self._last_shamir_topic_timestamp_for("mallory")
-
-    @property
-    def mike_shamir_topic_timestamp(self) -> DateTime:
-        return self._last_shamir_topic_timestamp_for("mike")
+    def shamir_topic_timestamp(self) -> DateTime:
+        return self._last_shamir_topic_timestamp()
 
     @property
     def alice_shamir_reveal_token(self) -> InvitationToken:
@@ -633,21 +621,16 @@ class ShamirOrgRpcClients:
     def mike_shamir_ciphered_data(self) -> bytes:
         return self._shamir_ciphered_data_for("mike")
 
-    def _last_shamir_topic_timestamp_for(self, user: str) -> DateTime:
-        user_id = UserID.test_from_nickname(user)
+    def _last_shamir_topic_timestamp(self) -> DateTime:
         for event in reversed(self.testbed_template.events):
             match event:
-                case (
-                    tb.TestbedEventNewShamirRecovery() as e
-                ) if e.user_id == user_id or user_id in e.per_recipient_shares:
+                case tb.TestbedEventNewShamirRecovery() as e:
                     return e.timestamp
-                case (
-                    tb.TestbedEventDeleteShamirRecovery() as e
-                ) if e.setup_to_delete_user_id == user_id or user_id in e.share_recipients:
+                case tb.TestbedEventDeleteShamirRecovery() as e:
                     return e.timestamp
                 case _:
                     pass
-        raise RuntimeError(f"No shamir topic is empty for user `{user}` !")
+        raise RuntimeError("Shamir topic is empty !")
 
     def _brief_certificate_for(self, user: str) -> ShamirRecoveryBriefCertificate:
         user_id = UserID.test_from_nickname(user)
