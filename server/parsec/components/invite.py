@@ -244,7 +244,7 @@ class InviteNewForDeviceBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
 
 
-class InviteNewForShamirBadOutcome(BadOutcomeEnum):
+class InviteNewForShamirRecoveryBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     AUTHOR_NOT_FOUND = auto()
@@ -711,7 +711,7 @@ class BaseInviteComponent:
         claimer_user_id: UserID,
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForShamirBadOutcome:
+    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
         raise NotImplementedError
 
     async def cancel(
@@ -849,17 +849,17 @@ class BaseInviteComponent:
                 email_sent = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.SERVER_UNAVAILABLE
             case (InvitationToken() as token, SendEmailBadOutcome.RECIPIENT_REFUSED):
                 email_sent = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.RECIPIENT_REFUSED
-            case InviteNewForShamirBadOutcome.AUTHOR_NOT_ALLOWED:
+            case InviteNewForShamirRecoveryBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.invite_new_shamir_recovery.RepAuthorNotAllowed()
-            case InviteNewForShamirBadOutcome.USER_NOT_FOUND:
+            case InviteNewForShamirRecoveryBadOutcome.USER_NOT_FOUND:
                 return authenticated_cmds.latest.invite_new_shamir_recovery.RepUserNotFound()
-            case InviteNewForShamirBadOutcome.ORGANIZATION_NOT_FOUND:
+            case InviteNewForShamirRecoveryBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
-            case InviteNewForShamirBadOutcome.ORGANIZATION_EXPIRED:
+            case InviteNewForShamirRecoveryBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
-            case InviteNewForShamirBadOutcome.AUTHOR_NOT_FOUND:
+            case InviteNewForShamirRecoveryBadOutcome.AUTHOR_NOT_FOUND:
                 client_ctx.author_not_found_abort()
-            case InviteNewForShamirBadOutcome.AUTHOR_REVOKED:
+            case InviteNewForShamirRecoveryBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
 
         return authenticated_cmds.latest.invite_new_shamir_recovery.RepOk(
