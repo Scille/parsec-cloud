@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+import asyncio
+from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -10,7 +12,9 @@ from parsec._parsec import (
     OrganizationID,
     SequesterServiceID,
     VlobID,
+    ParsecAddr,
 )
+from parsec.backend import Backend, backend_factory
 from parsec.cli.options import blockstore_server_options, db_server_options, debug_config_options
 from parsec.cli.utils import cli_exception_handler, operation
 from parsec.components.blockstore import blockstore_factory
@@ -18,7 +22,8 @@ from parsec.components.postgresql.sequester_export import RealmExporter
 from parsec.components.sequester import (
     SequesterServiceType,
 )
-from parsec.config import BaseBlockStoreConfig
+from parsec.realm_export import export_realm
+from parsec.config import BackendConfig, BaseBlockStoreConfig, BaseDatabaseConfig, SmtpEmailConfig
 
 SERVICE_TYPE_CHOICES: dict[str, SequesterServiceType] = {
     service.value: service for service in SequesterServiceType
@@ -29,13 +34,13 @@ SERVICE_TYPE_CHOICES: dict[str, SequesterServiceType] = {
 @click.option("--service-label", type=str, help="New service name", required=True)
 @click.option(
     "--service-public-key",
-    help="The service encryption public key used to encrypt data to the sequester service",
+    help="File containing the service encryption public key used to encrypt data to the sequester service",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
     required=True,
 )
 @click.option(
     "--authority-private-key",
-    help="The private authority key use. Used to sign the encryption key.",
+    help="File containing the private authority key use. Used to sign the encryption key.",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
     required=True,
 )
@@ -106,13 +111,13 @@ def import_service_certificate(
 @click.command(short_help="Register a new sequester service")
 @click.option(
     "--service-public-key",
-    help="The service encryption public key used to encrypt data to the sequester service",
+    help="File containing the service encryption public key used to encrypt data to the sequester service",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
     required=True,
 )
 @click.option(
     "--authority-private-key",
-    help="The private authority key use. Used to sign the encryption key.",
+    help="File containing the private authority key use. Used to sign the encryption key.",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
     required=True,
 )
@@ -242,7 +247,7 @@ def extract_realm_export(
 
 
 async def _export_realm(
-    db_config: BackendDbConfig,
+    # db_config: BackendDbConfig,
     blockstore_config: BaseBlockStoreConfig,
     organization_id: OrganizationID,
     realm_id: VlobID,
@@ -338,7 +343,68 @@ async def _export_realm(
                         bar.update(blocks_exported_count)
 
 
-@click.command(short_help="Export a realm to consult it with a sequester service key")
+@asynccontextmanager
+async def start_backend(
+    db_config: BaseDatabaseConfig,
+    blockstore_config: BaseBlockStoreConfig,
+    debug: bool,
+):
+    class CliBackendConfig(BackendConfig):
+        @property
+        def administration_token(self) -> str:
+            raise RuntimeError("")
+        @property
+        def email_config(self) -> SmtpEmailConfig:
+            raise RuntimeError("")
+        @property
+        def server_addr(self) -> ParsecAddr:
+            raise RuntimeError("")
+
+    config = CliBackendConfig(
+        debug=debug,
+        db_config=db_config,
+        blockstore_config=blockstore_config,
+        administration_token=None, # type: ignore
+        email_config=None,  # type: ignore
+        server_addr=None,  # type: ignore
+    )
+
+    async with backend_factory(config=config) as backend:
+        yield backend
+
+
+async def _export_realm(
+    db_config: BaseDatabaseConfig,
+    blockstore_config: BaseBlockStoreConfig,
+    debug: bool,
+    organization_id: OrganizationID,
+    realm_id: VlobID,
+    output: Path,
+):
+    if output.is_dir():
+        # Output is pointing to a directory, use a default name for the database extract
+        output_db_path = output / f"parsec-sequester-export-realm-{realm_id.hex}.sqlite"
+    else:
+        output_db_path = output
+
+    output_db_display = click.style(str(output_db_path), fg="green")
+    if output.exists():
+        click.echo(
+            f"File {output_db_display} already exists, continue the extract from where it was left"
+        )
+    else:
+        click.echo(f"Creating {output_db_display}")
+
+    click.echo(
+        f"Use { click.style('^C', fg='yellow') } to stop the export,"
+        " progress won't be lost when restarting the command"
+    )
+
+    async with start_backend(db_config=db_config, blockstore_config=blockstore_config, debug=debug) as backend:
+        info = await backend.realm.export_do_base_info(organization_id=organization_id, realm_id=realm_id)
+
+
+@click.command(short_help="Export the content of a realm in order to consult it with a sequester service key")
 @click.option("--organization", type=OrganizationID, required=True)
 @click.option("--realm", type=VlobID.from_hex, required=True)
 @click.option("--output", type=Path, required=True)
@@ -349,13 +415,21 @@ async def _export_realm(
 def export_realm(
     organization: OrganizationID,
     realm: VlobID,
-    service: SequesterServiceID,
     output: Path,
-    db: str,
-    db_max_connections: int,
+    db: BaseDatabaseConfig,
     db_min_connections: int,
+    db_max_connections: int,
     blockstore: BaseBlockStoreConfig,
     debug: bool,
 ) -> None:
     with cli_exception_handler(debug):
-        raise NotImplementedError
+        asyncio.run(
+            _export_realm(
+                debug=debug,
+                db_config=db,
+                blockstore_config=blockstore,
+                organization_id=organization,
+                realm_id=realm,
+                output=output,
+            )
+        )

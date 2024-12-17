@@ -34,7 +34,7 @@ class RealmExporterOutputDbError(RealmExporterError):
 
 # Considering vlob to be a couple of Ko in size, 100k items means under 1Go of data per batch
 VLOB_EXPORT_BATCH_SIZE = 100_000
-# Block metada are really small (< 100 bytes)
+# Block metadata are really small (< 100 bytes)
 BLOCK_METADATA_EXPORT_BATCH_SIZE = 1_000_000
 
 

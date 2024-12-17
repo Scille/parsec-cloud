@@ -366,11 +366,6 @@ def run_cmd(
     debug: bool,
     dev: bool,
 ) -> None:
-    # Set min and max connections
-    if isinstance(db, PostgreSQLDatabaseConfig):
-        db.min_connections = db_min_connections
-        db.max_connections = db_max_connections
-
     # Start a local server
 
     with cli_exception_handler(debug):

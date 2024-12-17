@@ -360,7 +360,7 @@ class RealmExportDoBaseInfo:
     #   the serial type in PostgreSQL give no guarantee on avoiding hole when e.g. a
     #   transaction is rolled back).
     #
-    # So the idea here is to use this primary key from PostgreSQL as primary in
+    # So the idea here is to re-use this primary key from PostgreSQL as primary key in
     # our SQLite export. This way we end up with the rows in the correct historical
     # order, and also easily know if the export is complete (i.e. if the upper
     # bound is part of the export).
@@ -373,6 +373,7 @@ class RealmExportDoBaseInfo:
 
 class RealmExportDoBaseInfoBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
+    SEQUESTER_DISABLED = auto()
     REALM_NOT_FOUND = auto()
 
 

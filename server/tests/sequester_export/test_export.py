@@ -7,18 +7,18 @@ from parsec._parsec import (
     DateTime,
 )
 from parsec.realm_export import export_realm
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, SequesteredOrgRpcClients
 
 
 async def test_export_ok(
-    coolorg: CoolorgRpcClients, backend: Backend, tmp_path: Path
+    sequestered_org: SequesteredOrgRpcClients, backend: Backend, tmp_path: Path,
 ):
     output_db_path = tmp_path / "output.sqlite"
 
     await export_realm(
         backend=backend,
-        organization_id=coolorg.organization_id,
-        realm_id=coolorg.wksp1_id,
+        organization_id=sequestered_org.organization_id,
+        realm_id=sequestered_org.wksp1_id,
         output_db_path=output_db_path,
         snapshot_timestamp=DateTime.now(),
         on_progress=lambda x: None,
@@ -49,3 +49,20 @@ async def test_export_ok(
 #         on_progress=lambda x: None,
 #     )
 
+
+async def test_export_non_sequestered_org(
+    coolorg: CoolorgRpcClients, backend: Backend, tmp_path: Path
+):
+    output_db_path = tmp_path / "output.sqlite"
+
+    await export_realm(
+        backend=backend,
+        organization_id=coolorg.organization_id,
+        realm_id=coolorg.wksp1_id,
+        output_db_path=output_db_path,
+        snapshot_timestamp=DateTime.now(),
+        on_progress=lambda x: None,
+    )
+
+    assert output_db_path.is_file()
+    con = sqlite3.connect(output_db_path)
