@@ -32,7 +32,7 @@ from parsec.components.invite import (
     InviteGreeterStepBadOutcome,
     InviteListBadOutcome,
     InviteNewForDeviceBadOutcome,
-    InviteNewForShamirBadOutcome,
+    InviteNewForShamirRecoveryBadOutcome,
     InviteNewForUserBadOutcome,
     InviteShamirRecoveryRevealBadOutcome,
     NotReady,
@@ -297,13 +297,13 @@ class MemoryInviteComponent(BaseInviteComponent):
         claimer_user_id: UserID,
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
-    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForShamirBadOutcome:
+    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForShamirRecoveryBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
-            return InviteNewForShamirBadOutcome.ORGANIZATION_NOT_FOUND
+            return InviteNewForShamirRecoveryBadOutcome.ORGANIZATION_NOT_FOUND
         if org.is_expired:
-            return InviteNewForShamirBadOutcome.ORGANIZATION_EXPIRED
+            return InviteNewForShamirRecoveryBadOutcome.ORGANIZATION_EXPIRED
 
         async with (
             org.topics_lock(read=["common"]),
@@ -312,20 +312,20 @@ class MemoryInviteComponent(BaseInviteComponent):
             try:
                 author_device = org.devices[author]
             except KeyError:
-                return InviteNewForShamirBadOutcome.AUTHOR_NOT_FOUND
+                return InviteNewForShamirRecoveryBadOutcome.AUTHOR_NOT_FOUND
             author_user_id = author_device.cooked.user_id
 
             try:
                 author_user = org.users[author_user_id]
             except KeyError:
-                return InviteNewForShamirBadOutcome.AUTHOR_NOT_FOUND
+                return InviteNewForShamirRecoveryBadOutcome.AUTHOR_NOT_FOUND
             if author_user.is_revoked:
-                return InviteNewForShamirBadOutcome.AUTHOR_REVOKED
+                return InviteNewForShamirRecoveryBadOutcome.AUTHOR_REVOKED
 
             # Check that the claimer exists
             claimer = org.users.get(claimer_user_id)
             if claimer is None:
-                return InviteNewForShamirBadOutcome.USER_NOT_FOUND
+                return InviteNewForShamirRecoveryBadOutcome.USER_NOT_FOUND
             claimer_human_handle = claimer.cooked.human_handle
 
             # Check that a non-deleted shamir setup exists
@@ -338,11 +338,11 @@ class MemoryInviteComponent(BaseInviteComponent):
             if last_shamir_recovery is None or last_shamir_recovery.is_deleted:
                 # Since the author only knows about a shamir recovery if they are part of it,
                 # we don't have a specific error for the case where the shamir setup doesn't exist
-                return InviteNewForShamirBadOutcome.AUTHOR_NOT_ALLOWED
+                return InviteNewForShamirRecoveryBadOutcome.AUTHOR_NOT_ALLOWED
 
             # Author is not part of the recipients
             if author_user_id not in last_shamir_recovery.shares:
-                return InviteNewForShamirBadOutcome.AUTHOR_NOT_ALLOWED
+                return InviteNewForShamirRecoveryBadOutcome.AUTHOR_NOT_ALLOWED
 
             for invitation in org.invitations.values():
                 if (
