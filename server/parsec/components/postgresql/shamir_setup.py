@@ -82,6 +82,7 @@ my_user AS (
 
 my_last_shamir_recovery AS (
     SELECT
+        shamir_recovery_setup._id,
         shamir_recovery_setup.created_on,
         shamir_recovery_setup.deleted_on
     FROM shamir_recovery_setup
@@ -99,6 +100,7 @@ SELECT
     (SELECT user_id FROM my_user) AS author_user_id,
     (SELECT _id FROM my_user) AS author_user_internal_id,
     (SELECT last_timestamp FROM my_locked_common_topic) AS last_common_certificate_timestamp,
+    (SELECT _id FROM my_last_shamir_recovery) AS last_shamir_recovery_setup_internal_id,
     (SELECT created_on FROM my_last_shamir_recovery) AS last_shamir_recovery_setup_created_on,
     (SELECT deleted_on FROM my_last_shamir_recovery) AS last_shamir_recovery_setup_deleted_on,
     (SELECT last_timestamp FROM my_locked_shamir_recovery_topic) AS last_shamir_recovery_certificate_timestamp
