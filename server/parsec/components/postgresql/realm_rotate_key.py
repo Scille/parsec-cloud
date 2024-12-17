@@ -221,14 +221,13 @@ async def realm_rotate_key(
 
     def arg_gen():
         for user_id, access in per_participant_keys_bundle_access.items():
-            x = _q_insert_keys_bundle_access.arg_only(
+            yield _q_insert_keys_bundle_access.arg_only(
                 organization_internal_id=db_common.organization_internal_id,
                 realm_internal_id=db_realm.realm_internal_id,
                 user_id=user_id,
                 realm_keys_bundle_internal_id=keys_bundle_internal_id,
                 access=access,
             )
-            yield x
 
     await conn.executemany(
         _q_insert_keys_bundle_access.sql,
