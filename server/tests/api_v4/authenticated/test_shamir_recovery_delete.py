@@ -24,7 +24,7 @@ from tests.common import (
     ),
 )
 async def test_authenticated_shamir_recovery_delete_ok(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend, kind: str
+    shamirorg: ShamirOrgRpcClients, backend: Backend, kind: str
 ) -> None:
     dt = DateTime.now()
 
@@ -65,7 +65,7 @@ async def test_authenticated_shamir_recovery_delete_ok(
     ),
 )
 async def test_authenticated_shamir_recovery_delete_invalid_certificate_corrupted(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend, kind: str
+    shamirorg: ShamirOrgRpcClients, backend: Backend, kind: str
 ) -> None:
     dt = DateTime.now()
 
@@ -93,7 +93,7 @@ async def test_authenticated_shamir_recovery_delete_invalid_certificate_corrupte
 
 
 async def test_authenticated_shamir_recovery_delete_invalid_certificate_user_id_must_be_self(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend
+    shamirorg: ShamirOrgRpcClients, backend: Backend
 ) -> None:
     dt = DateTime.now()
 
@@ -117,7 +117,7 @@ async def test_authenticated_shamir_recovery_delete_invalid_certificate_user_id_
 
 
 async def test_authenticated_shamir_recovery_delete_shamir_recovery_not_found(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend
+    shamirorg: ShamirOrgRpcClients, backend: Backend
 ) -> None:
     dt = DateTime.now()
 
@@ -149,7 +149,7 @@ async def test_authenticated_shamir_recovery_delete_shamir_recovery_not_found(
     ),
 )
 async def test_authenticated_shamir_recovery_delete_recipients_mismatch(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend, kind: str
+    shamirorg: ShamirOrgRpcClients, backend: Backend, kind: str
 ) -> None:
     dt = DateTime.now()
 
@@ -188,7 +188,7 @@ async def test_authenticated_shamir_recovery_delete_recipients_mismatch(
 
 
 async def test_authenticated_shamir_recovery_delete_shamir_recovery_already_deleted(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend
+    shamirorg: ShamirOrgRpcClients, backend: Backend
 ) -> None:
     dt = DateTime.now()
 
@@ -215,7 +215,6 @@ async def test_authenticated_shamir_recovery_delete_shamir_recovery_already_dele
 
 
 async def test_authenticated_shamir_recovery_delete_timestamp_out_of_ballpark(
-    xfail_if_postgresql: None,
     shamirorg: ShamirOrgRpcClients,
 ) -> None:
     t0 = DateTime.now().subtract(seconds=3600)
@@ -241,7 +240,7 @@ async def test_authenticated_shamir_recovery_delete_timestamp_out_of_ballpark(
 @pytest.mark.parametrize("kind", ("from_recipient", "from_author", "newer_common_certificate"))
 @pytest.mark.usefixtures("ballpark_always_ok")
 async def test_authenticated_shamir_recovery_delete_require_greater_timestamp(
-    xfail_if_postgresql: None, backend: Backend, shamirorg: ShamirOrgRpcClients, kind: str
+    backend: Backend, shamirorg: ShamirOrgRpcClients, kind: str
 ) -> None:
     match kind:
         case "from_author":
