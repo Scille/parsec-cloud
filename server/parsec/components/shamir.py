@@ -48,7 +48,7 @@ class ShamirSetupStoreBadOutcome(BadOutcomeEnum):
 
 @dataclass(slots=True)
 class ShamirSetupAlreadyExistsBadOutcome(BadOutcome):
-    last_shamir_certificate_timestamp: DateTime
+    last_shamir_recovery_certificate_timestamp: DateTime
 
 
 @dataclass(slots=True)
@@ -192,7 +192,7 @@ class BaseShamirComponent:
             case ShamirSetupAlreadyExistsBadOutcome() as error:
                 return (
                     authenticated_cmds.latest.shamir_recovery_setup.RepShamirRecoveryAlreadyExists(
-                        error.last_shamir_certificate_timestamp
+                        error.last_shamir_recovery_certificate_timestamp
                     )
                 )
             case ShamirSetupStoreBadOutcome.RECIPIENT_NOT_FOUND:
