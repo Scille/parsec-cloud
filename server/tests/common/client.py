@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import AsyncContextManager, AsyncGenerator, AsyncIterator
 
 import pytest
-from httpx import AsyncClient, Response
+from httpx import ASGITransport, AsyncClient, Response
 from httpx_sse import EventSource, ServerSentEvent, aconnect_sse
 
 from parsec._parsec import (
@@ -40,7 +40,7 @@ from tests.common.rpc import (
 
 @pytest.fixture
 async def client(app: AsgiApp) -> AsyncGenerator[AsyncClient, None]:
-    async with AsyncClient(app=app) as client:
+    async with AsyncClient(transport=ASGITransport(app=app)) as client:
         yield client
 
 
@@ -377,7 +377,7 @@ class CoolorgRpcClients:
 
 @pytest.fixture
 async def coolorg(app: AsgiApp, testbed: TestbedBackend) -> AsyncGenerator[CoolorgRpcClients, None]:
-    async with AsyncClient(app=app) as raw_client:
+    async with AsyncClient(transport=ASGITransport(app=app)) as raw_client:
         organization_id, _, template_content = await testbed.new_organization("coolorg")
         yield CoolorgRpcClients(
             raw_client=raw_client,
@@ -450,7 +450,7 @@ class MinimalorgRpcClients:
 async def minimalorg(
     app: AsgiApp, testbed: TestbedBackend
 ) -> AsyncGenerator[MinimalorgRpcClients, None]:
-    async with AsyncClient(app=app) as raw_client:
+    async with AsyncClient(transport=ASGITransport(app=app)) as raw_client:
         organization_id, _, template_content = await testbed.new_organization("minimal")
         yield MinimalorgRpcClients(
             raw_client=raw_client,
@@ -713,7 +713,7 @@ class ShamirOrgRpcClients:
 async def shamirorg(
     app: AsgiApp, testbed: TestbedBackend, skip_if_postgresql: None
 ) -> AsyncGenerator[ShamirOrgRpcClients, None]:
-    async with AsyncClient(app=app) as raw_client:
+    async with AsyncClient(transport=ASGITransport(app=app)) as raw_client:
         organization_id, _, template_content = await testbed.new_organization("shamir")
         yield ShamirOrgRpcClients(
             raw_client=raw_client,
