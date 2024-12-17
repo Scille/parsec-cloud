@@ -569,7 +569,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             )
             # Modify placeholder instead of replacing it given it is referenced in the nested specs
             placeholder.__dict__ = variant.__dict__
-            placeholder.__class__ = variant.__class__
+            placeholder.__class__ = variant.__class__  # type: ignore[assignment]
             variants.append(placeholder)  # type: ignore[arg-type]
 
         elif isclass(item) and issubclass(item, Structure):
@@ -587,15 +587,16 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             )
             # Modify placeholder instead of replacing it given it is referenced in the nested specs
             placeholder.__dict__ = struct.__dict__
-            placeholder.__class__ = struct.__class__
+            placeholder.__class__ = struct.__class__  # type: ignore[assignment]
             structs.append(placeholder)  # type: ignore[arg-type]
+
         elif isclass(item) and issubclass(item, Enum):
             placeholder = TYPES_DB[item]
             annotations = getattr(item, "__annotations__", {})
             members = sorted([attr for attr in dir(item) if not attr.startswith("_")])
             enum = EnumSpec(member_names=members, name=item.__name__)
             placeholder.__dict__ = enum.__dict__
-            placeholder.__class__ = enum.__class__
+            placeholder.__class__ = enum.__class__  # type: ignore[assignment]
             enums.append(placeholder)  # type: ignore[arg-type]
 
     # Make sure all types have a unique name, this is not strictly required but it is very convenient when testing type in the template
