@@ -6,7 +6,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::{assert_ls_with_id, workspace_ops_factory};
-use crate::workspace::{MoveEntryMode, WorkspaceMoveEntryError};
+use crate::workspace::{MoveEntryMode, OpenOptions, WorkspaceMoveEntryError};
 use std::sync::Arc;
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -324,4 +324,87 @@ async fn no_replace_but_dst_exists(env: &TestbedEnv) {
         .await
         .unwrap_err();
     p_assert_matches!(err, WorkspaceMoveEntryError::DestinationExists { entry_id } if entry_id == wksp1_bar_txt_id);
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn ok_opened_file(
+    #[values("rename_same_parent", "move_same_parent", "move_different_parent")] kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+    let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
+    let wksp1_foo_egg_txt_id: VlobID = *env.template.get_stuff("wksp1_foo_egg_txt_id");
+    let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
+    let fd = ops
+        .open_file("/bar.txt".parse().unwrap(), OpenOptions::read_write())
+        .await
+        .unwrap();
+
+    match kind {
+        "rename_same_parent" => {
+            ops.rename_entry_by_id(
+                wksp1_id,
+                "bar.txt".parse().unwrap(),
+                "bar2.txt".parse().unwrap(),
+                MoveEntryMode::NoReplace,
+            )
+            .await
+            .unwrap();
+
+            assert_ls_with_id!(
+                ops,
+                "/",
+                [("bar2.txt", wksp1_bar_txt_id), ("foo", wksp1_foo_id)]
+            )
+            .await;
+        }
+
+        "move_same_parent" => {
+            ops.move_entry(
+                "/bar.txt".parse().unwrap(),
+                "/bar2.txt".parse().unwrap(),
+                MoveEntryMode::NoReplace,
+            )
+            .await
+            .unwrap();
+
+            assert_ls_with_id!(
+                ops,
+                "/",
+                [("bar2.txt", wksp1_bar_txt_id), ("foo", wksp1_foo_id)]
+            )
+            .await;
+        }
+
+        "move_different_parent" => {
+            ops.move_entry(
+                "/bar.txt".parse().unwrap(),
+                "/foo/bar2.txt".parse().unwrap(),
+                MoveEntryMode::NoReplace,
+            )
+            .await
+            .unwrap();
+
+            assert_ls_with_id!(ops, "/", [("foo", wksp1_foo_id)]).await;
+            assert_ls_with_id!(
+                ops,
+                "/foo",
+                [
+                    ("egg.txt", wksp1_foo_egg_txt_id),
+                    ("spam", wksp1_foo_spam_id),
+                    ("bar2.txt", wksp1_bar_txt_id)
+                ]
+            )
+            .await;
+        }
+
+        unknown => panic!("Unknown kind: {}", unknown),
+    }
+
+    ops.fd_close(fd).await.unwrap();
 }
