@@ -170,7 +170,7 @@ if __name__ == "__main__":
             # we care about !
             caller_frame = traceback.extract_stack()[-3]
             # Ignore queries that are not part of the file we care about
-            if Path(caller_frame.filename).absolute() not in allowed_py_files:
+            if Path(caller_frame.filename).resolve().absolute() not in allowed_py_files:
                 return
             file = f"{caller_frame.filename}:{caller_frame.lineno}"
 
@@ -204,7 +204,9 @@ if __name__ == "__main__":
                     print(f"{PINK}============= End Fixed =================={NO_COLOR}")
 
         allowed_py_files = [
-            file for file in get_files(".py", args.files) if file.is_relative_to(SERVER_SQL_DIR)
+            file.resolve().absolute()
+            for file in get_files(".py", args.files)
+            if file.is_relative_to(SERVER_SQL_DIR)
         ]
         if allowed_py_files:
             lint_sql_mod = ModuleType("__parsec_lint_sql")
