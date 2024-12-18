@@ -59,14 +59,24 @@ async def test_authenticated_invite_new_device_ok_already_exist(
 ) -> None:
     t1 = DateTime.now()
 
-    outcome = await backend.invite.new_for_device(
-        now=t1,
-        organization_id=minimalorg.organization_id,
-        author=minimalorg.alice.device_id,
-        send_email=False,
-    )
-    assert isinstance(outcome, tuple)
-    (invitation_token, _) = outcome
+    with backend.event_bus.spy() as spy:
+        outcome = await backend.invite.new_for_device(
+            now=t1,
+            organization_id=minimalorg.organization_id,
+            author=minimalorg.alice.device_id,
+            send_email=False,
+        )
+        assert isinstance(outcome, tuple)
+        (invitation_token, _) = outcome
+
+        await spy.wait_event_occurred(
+            EventInvitation(
+                organization_id=minimalorg.organization_id,
+                greeter=minimalorg.alice.user_id,
+                token=invitation_token,
+                status=InvitationStatus.IDLE,
+            )
+        )
 
     expected_invitations = await backend.invite.test_dump_all_invitations(
         minimalorg.organization_id
