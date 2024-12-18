@@ -464,6 +464,10 @@ def get_release_branch(version: Version) -> str:
     return f"releases/{version.major}.{version.minor}"
 
 
+def get_release_tag(release_version: Version) -> str:
+    return f"v{release_version}"
+
+
 def ensure_working_in_a_clean_git_repo() -> None:
     stdout = run_git("status", "--porcelain", "--untracked-files=no")
     if stdout.strip():
@@ -781,7 +785,7 @@ def build_main(args: argparse.Namespace) -> None:
             )
 
         release_branch = get_release_branch(release_version)
-        tag = "v" + str(release_version)
+        tag = get_release_tag(release_version)
 
     print(f"Release version to build: {COLOR_GREEN}{release_version}{COLOR_END}")
     print(f"Release branch: {COLOR_GREEN}{release_branch}{COLOR_END}")
@@ -823,7 +827,6 @@ def build_main(args: argparse.Namespace) -> None:
         )
 
     push_release(tag, release_branch, yes, force_push=args.nightly, skip_tag=skip_tag)
-
 
 def check_main(args: argparse.Namespace) -> None:
     version: Version = args.version or get_version_from_code()
@@ -934,17 +937,17 @@ def acknowledge_main(args: argparse.Namespace) -> None:
 
     ensure_working_in_a_clean_git_repo()
 
-    release_branch = args.base or get_release_branch(version)
+    release_tag = args.base or get_release_tag(version)
     acknowledge_branch: str = f"acknowledges/{version}"
 
     print(
         f"Will create a Pull-Request to acknowledge the release {COLOR_GREEN}{version}{COLOR_END}"
     )
     print(
-        f"{COLOR_DIM}Will use {release_branch} as base ref when creating the branch {acknowledge_branch}{COLOR_END}"
+        f"{COLOR_DIM}Will use {release_tag} as base ref when creating the branch {acknowledge_branch}{COLOR_END}"
     )
 
-    print(run_git("switch", "--create", acknowledge_branch, release_branch))
+    print(run_git("switch", "--create", acknowledge_branch, release_tag))
     print(run_git("push", "--set-upstream", "origin", acknowledge_branch))
 
     run_cmd(
