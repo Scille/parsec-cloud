@@ -7,6 +7,7 @@ import {
   BmsOrganization,
   BmsResponse,
   ClientQueryData,
+  CreateCustomOrderRequestQueryData,
   CustomOrderQueryData,
   CustomOrderStatus,
   DataType,
@@ -196,4 +197,19 @@ export const MockedBmsApi = {
   unsubscribeOrganization: createMockFunction('unsubscribeOrganization'),
   subscribeOrganization: createMockFunction('subscribeOrganization'),
   updateEmailSendCode: createMockFunction('updateEmailSendCode'),
+  createCustomOrderRequest: createMockFunction(
+    'createCustomOrderRequest',
+    async (_token: AuthenticationToken, _query: CreateCustomOrderRequestQueryData) => {
+      return {
+        status: 204,
+        isError: false,
+      };
+    },
+    async (_token: AuthenticationToken, _query: CreateCustomOrderRequestQueryData) => {
+      return {
+        status: 401,
+        isError: true,
+      };
+    },
+  ),
 };

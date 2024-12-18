@@ -165,6 +165,7 @@ export const msTest = base.extend<{
     await MockBms.mockOrganizationStatus(home);
     await MockBms.mockBillingDetails(home);
     await MockBms.mockGetInvoices(home);
+    await MockBms.mockCreateCustomOrderRequest(home);
 
     const button = home.locator('.topbar-buttons').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');
@@ -198,6 +199,7 @@ export const msTest = base.extend<{
     await MockBms.mockGetInvoices(home);
     await MockBms.mockCustomOrderStatus(home);
     await MockBms.mockCustomOrderDetails(home);
+    await MockBms.mockCreateCustomOrderRequest(home);
 
     const button = home.locator('.topbar-buttons').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');

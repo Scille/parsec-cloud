@@ -313,6 +313,31 @@ class BmsAccess {
     });
   }
 
+  async createCustomOrderRequest(data: {
+    needs: string;
+    adminUsers: number;
+    standardUsers: number;
+    outsiderUsers: number;
+    storage: number;
+    formula?: string;
+    organizationName?: string;
+  }): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+
+    const response = await this.api.createCustomOrderRequest(this.tokens.access, {
+      describedNeeds: data.needs,
+      adminUsers: data.adminUsers,
+      standardUsers: data.standardUsers,
+      outsiderUsers: data.outsiderUsers,
+      storage: data.storage,
+      formula: data.formula,
+      organizationName: data.organizationName,
+    });
+    return response;
+  }
+
   async rememberCredentials(): Promise<void> {
     this.storeCredentials = true;
     await this.storeAccess();
