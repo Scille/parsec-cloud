@@ -833,10 +833,8 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
 
 
 async def test_authenticated_certificate_get_ok_shamir_certificates(
-    backend: Backend, coolorg: CoolorgRpcClients, with_postgresql: bool
+    backend: Backend, coolorg: CoolorgRpcClients
 ) -> None:
-    if with_postgresql:
-        pytest.skip("TODO: postgre not implemented yet")
     a_long_time_ago = DateTime.now()
 
     # No shamir certificate at first
