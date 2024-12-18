@@ -187,14 +187,14 @@ class MemoryInviteComponent(BaseInviteComponent):
                     created_on=now,
                 )
 
-                await self._event_bus.send(
-                    EventInvitation(
-                        organization_id=organization_id,
-                        token=token,
-                        greeter=author_user_id,
-                        status=InvitationStatus.IDLE,
-                    )
+            await self._event_bus.send(
+                EventInvitation(
+                    organization_id=organization_id,
+                    token=token,
+                    greeter=author_user_id,
+                    status=InvitationStatus.IDLE,
                 )
+            )
 
             if send_email:
                 send_email_outcome = await self._send_user_invitation_email(
@@ -267,14 +267,14 @@ class MemoryInviteComponent(BaseInviteComponent):
                     created_on=now,
                 )
 
-                await self._event_bus.send(
-                    EventInvitation(
-                        organization_id=organization_id,
-                        token=token,
-                        greeter=author_user_id,
-                        status=InvitationStatus.IDLE,
-                    )
+            await self._event_bus.send(
+                EventInvitation(
+                    organization_id=organization_id,
+                    token=token,
+                    greeter=author_user_id,
+                    status=InvitationStatus.IDLE,
                 )
+            )
 
             if send_email:
                 send_email_outcome = await self._send_device_invitation_email(
@@ -369,14 +369,14 @@ class MemoryInviteComponent(BaseInviteComponent):
                     claimer_user_id=claimer_user_id,
                 )
 
-                await self._event_bus.send(
-                    EventInvitation(
-                        organization_id=organization_id,
-                        token=token,
-                        greeter=author_user_id,
-                        status=InvitationStatus.IDLE,
-                    )
+            await self._event_bus.send(
+                EventInvitation(
+                    organization_id=organization_id,
+                    token=token,
+                    greeter=author_user_id,
+                    status=InvitationStatus.IDLE,
                 )
+            )
 
             if send_email:
                 send_email_outcome = await self._send_shamir_recovery_invitation_email(
