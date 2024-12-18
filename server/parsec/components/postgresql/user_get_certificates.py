@@ -181,6 +181,92 @@ my_all_certificates AS (
 
     UNION ALL
 
+    -- Shamir recovery certificates for ourself
+
+    (
+        SELECT
+            'shamir_recovery' AS topic,
+            NULL::TEXT AS discriminant,
+            0,
+            created_on,
+            brief_certificate
+        FROM shamir_recovery_setup
+        WHERE organization = $organization_internal_id
+        AND user_ = $user_internal_id
+        AND COALESCE(created_on > $shamir_recovery_after, TRUE)
+    )
+
+    UNION ALL
+
+    (
+        SELECT
+            'shamir_recovery' AS topic,
+            NULL::TEXT AS discriminant,
+            0,
+            deleted_on,
+            deletion_certificate
+        FROM shamir_recovery_setup
+        WHERE organization = $organization_internal_id
+        AND user_ = $user_internal_id
+        AND deleted_on IS NOT NULL
+        AND deletion_certificate IS NOT NULL
+        AND COALESCE(deleted_on > $shamir_recovery_after, TRUE)
+    )
+
+    UNION ALL
+
+    -- Shamir recovery certificates for others
+
+    (
+        SELECT
+            'shamir_recovery' AS topic,
+            NULL::TEXT AS discriminant,
+            0,
+            created_on,
+            brief_certificate
+        FROM shamir_recovery_setup
+        INNER JOIN shamir_recovery_share ON shamir_recovery_setup._id = shamir_recovery_share.shamir_recovery
+        WHERE shamir_recovery_setup.organization = $organization_internal_id
+        AND recipient = $user_internal_id
+        AND COALESCE(created_on > $shamir_recovery_after, TRUE)
+    )
+
+    UNION ALL
+
+    (
+        SELECT
+            'shamir_recovery' AS topic,
+            NULL::TEXT AS discriminant,
+            0,
+            deleted_on,
+            deletion_certificate
+        FROM shamir_recovery_setup
+        INNER JOIN shamir_recovery_share ON shamir_recovery_setup._id = shamir_recovery_share.shamir_recovery
+        WHERE shamir_recovery_setup.organization = $organization_internal_id
+        AND recipient = $user_internal_id
+        AND deleted_on IS NOT NULL
+        AND deletion_certificate IS NOT NULL
+        AND COALESCE(deleted_on > $shamir_recovery_after, TRUE)
+    )
+
+    UNION ALL
+
+    (
+        SELECT
+            'shamir_recovery' AS topic,
+            NULL::TEXT AS discriminant,
+            1, -- This must come after the corresponding brief certificate
+            created_on,
+            share_certificate
+        FROM shamir_recovery_setup
+        INNER JOIN shamir_recovery_share ON shamir_recovery_setup._id = shamir_recovery_share.shamir_recovery
+        WHERE shamir_recovery_setup.organization = $organization_internal_id
+        AND recipient = $user_internal_id
+        AND COALESCE(created_on > $shamir_recovery_after, TRUE)
+    )
+
+    UNION ALL
+
     -- Common must be fetch last given other topics depend on it.
     (
         SELECT
@@ -213,9 +299,6 @@ async def user_get_certificates(
     shamir_recovery_after: DateTime | None,
     realm_after: dict[VlobID, DateTime],
 ) -> CertificatesBundle | UserGetCertificatesAsUserBadOutcome:
-    # TODO
-    assert shamir_recovery_after is None, "Shamir recovery not implemented yet"
-
     match await auth_no_lock(conn, organization_id, author):
         case AuthNoLockData() as db_auth:
             need_redacted = db_auth.user_current_profile == UserProfile.OUTSIDER
@@ -235,6 +318,7 @@ async def user_get_certificates(
             user_internal_id=db_auth.user_internal_id,
             common_after=common_after,
             sequester_after=sequester_after,
+            shamir_recovery_after=shamir_recovery_after,
             realm_after_ids=realm_after.keys(),
             realm_after_timestamps=realm_after.values(),
         )
@@ -273,6 +357,9 @@ async def user_get_certificates(
                     realm_items[realm_id].append(certificate)
                 except KeyError:
                     realm_items[realm_id] = [certificate]
+            case "shamir_recovery":
+                assert discriminant is None, row
+                shamir_recovery_certificates.append(certificate)
             case _:
                 assert False, row
 
