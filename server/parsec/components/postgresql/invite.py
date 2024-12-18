@@ -42,6 +42,7 @@ from parsec.components.invite import (
     InviteNewForDeviceBadOutcome,
     InviteNewForShamirRecoveryBadOutcome,
     InviteNewForUserBadOutcome,
+    InviteShamirRecoveryRevealBadOutcome,
     NotReady,
     SendEmailBadOutcome,
     ShamirRecoveryInvitation,
@@ -199,12 +200,25 @@ SELECT shamir_recovery_setup._id as shamir_recovery_setup_internal_id
 FROM shamir_recovery_setup
 INNER JOIN organization ON shamir_recovery_setup.organization = organization._id
 INNER JOIN user_ ON shamir_recovery_setup.user_ = user_._id
-WHERE
-    organization.organization_id = $organization_id
-    AND user_.user_id = $user_id
-    AND deleted_on IS NULL
+WHERE organization.organization_id = $organization_id
+AND user_.user_id = $user_id
+AND deleted_on IS NULL
 """
 )
+
+_q_retrieve_shamir_recovery_ciphered_data = Q(
+    """
+SELECT
+    ciphered_data,
+    reveal_token,
+    deleted_on
+FROM shamir_recovery_setup
+INNER JOIN organization ON shamir_recovery_setup.organization = organization._id
+WHERE organization.organization_id = $organization_id
+AND shamir_recovery_setup._id = $shamir_recovery_setup_internal_id
+"""
+)
+
 
 _q_retrieve_compatible_user_invitation = Q(
     f"""
@@ -1306,6 +1320,65 @@ class PGInviteComponent(BaseInviteComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:
         return await self._info_as_invited(conn, organization_id, token)
+
+    @override
+    @transaction
+    async def shamir_recovery_reveal(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        reveal_token: InvitationToken,
+    ) -> bytes | InviteShamirRecoveryRevealBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case Organization() as organization:
+                pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_NOT_FOUND
+
+        if organization.is_expired:
+            return InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_EXPIRED
+
+        invitation_info = await self.get_invitation(conn, organization_id, token)
+        if not invitation_info:
+            return InviteShamirRecoveryRevealBadOutcome.INVITATION_NOT_FOUND
+
+        if invitation_info.deleted_on:
+            return InviteShamirRecoveryRevealBadOutcome.INVITATION_DELETED
+
+        if invitation_info.type != InvitationType.SHAMIR_RECOVERY:
+            return InviteShamirRecoveryRevealBadOutcome.BAD_INVITATION_TYPE
+
+        row = await conn.fetchrow(
+            *_q_retrieve_shamir_recovery_ciphered_data(
+                organization_id=organization_id.str,
+                shamir_recovery_setup_internal_id=invitation_info.shamir_recovery_setup,
+            )
+        )
+        assert row is not None
+
+        match row["reveal_token"]:
+            case str() as reveal_token_str:
+                expected_reveal_token = InvitationToken.from_hex(reveal_token_str)
+            case unknown:
+                assert False, repr(unknown)
+
+        match row["deleted_on"]:
+            case DateTime() | None as deleted_on:
+                pass
+            case unknown:
+                assert False, repr(unknown)
+
+        match row["ciphered_data"]:
+            case Buffer() as ciphered_data:
+                pass
+            case unknown:
+                assert False, repr(unknown)
+
+        if deleted_on is not None or reveal_token != expected_reveal_token:
+            return InviteShamirRecoveryRevealBadOutcome.BAD_REVEAL_TOKEN
+
+        return bytes(ciphered_data)
 
     @override
     @transaction
