@@ -609,6 +609,14 @@ async function mockCustomOrderStatus(page: Page, overload?: MockCustomOrderStatu
   );
 }
 
+async function mockCreateCustomOrderRequest(page: Page, options?: MockRouteOptions): Promise<void> {
+  await mockRoute(page, '**/custom_order_requests', options, async (route) => {
+    await route.fulfill({
+      status: 204,
+    });
+  });
+}
+
 export const MockBms = {
   mockLogin,
   mockUserRoute,
@@ -627,4 +635,5 @@ export const MockBms = {
   mockCustomOrderStatus,
   mockCustomOrderDetails,
   mockUpdateEmailSendCode,
+  mockCreateCustomOrderRequest,
 };

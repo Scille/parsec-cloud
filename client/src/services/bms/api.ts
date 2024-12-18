@@ -10,6 +10,7 @@ import {
   CONNECTION_ERROR_STATUS,
   ChangePasswordQueryData,
   ClientQueryData,
+  CreateCustomOrderRequestQueryData,
   CreateOrganizationQueryData,
   CustomOrderQueryData,
   DataType,
@@ -654,6 +655,50 @@ async function refreshToken(refreshToken: AuthenticationToken): Promise<BmsRespo
   });
 }
 
+async function createCustomOrderRequest(token: AuthenticationToken, query: CreateCustomOrderRequestQueryData): Promise<BmsResponse> {
+  return await wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().post(
+      '/custom_order_requests',
+      {
+        firstname: 'IGNORED',
+        lastname: 'IGNORED',
+        email: 'IGNORED@IGNORED.IG',
+        password: 'ThisP@ssw0rd1sIGN0ReD#',
+        address: {
+          line1: 'IGNORED',
+          city: 'IGNORED',
+          // eslint-disable-next-line camelcase
+          postal_code: '00000',
+          country: 'IGNORED',
+        },
+        // eslint-disable-next-line camelcase
+        described_need: query.describedNeeds,
+        phone: '+33600000000',
+        // eslint-disable-next-line camelcase
+        admin_users: query.adminUsers,
+        // eslint-disable-next-line camelcase
+        standard_users: query.standardUsers,
+        // eslint-disable-next-line camelcase
+        outsider_users: query.outsiderUsers,
+        storage: query.storage,
+        formula: query.formula,
+        // eslint-disable-next-line camelcase
+        organization_name: query.organizationName,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 204,
+        timeout: 10000,
+      },
+    );
+    return {
+      type: DataType.CreateCustomOrderRequest,
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
 export const BmsApi = {
   login,
   getPersonalInformation,
@@ -677,4 +722,5 @@ export const BmsApi = {
   unsubscribeOrganization,
   subscribeOrganization,
   updateEmailSendCode,
+  createCustomOrderRequest,
 };

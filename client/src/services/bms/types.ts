@@ -40,6 +40,7 @@ enum DataType {
   UnsubscribeOrganization = 'unsubscribe-organization',
   CustomOrderStatus = 'custom-order-status',
   CustomOrderDetails = 'custom-order-details',
+  CreateCustomOrderRequest = 'create-custom-order-request',
 }
 
 enum PaymentMethod {
@@ -322,6 +323,16 @@ interface CustomOrderQueryData extends ClientQueryData {
   organization: BmsOrganization;
 }
 
+interface CreateCustomOrderRequestQueryData {
+  describedNeeds: string;
+  adminUsers: number;
+  standardUsers: number;
+  outsiderUsers: number;
+  storage: number;
+  formula?: string;
+  organizationName?: string;
+}
+
 export {
   AddPaymentMethodQueryData,
   AuthenticationToken,
@@ -336,6 +347,7 @@ export {
   BmsResponse,
   ChangePasswordQueryData,
   ClientQueryData,
+  CreateCustomOrderRequestQueryData,
   CreateOrganizationQueryData,
   CustomOrderDetailsResultData,
   CustomOrderQueryData,
