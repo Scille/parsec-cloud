@@ -117,7 +117,14 @@ async def test_authenticated_invite_new_shamir_recovery_ok_already_exist(
         )
         assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepOk)
         assert rep.token == shamirorg.shamir_invited_alice.token
-        assert not spy.events
+        await spy.wait_event_occurred(
+            EventInvitation(
+                organization_id=shamirorg.organization_id,
+                greeter=shamirorg.bob.user_id,
+                token=rep.token,
+                status=InvitationStatus.IDLE,
+            )
+        )
 
     assert (
         await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
