@@ -356,6 +356,13 @@ impl ShamirRecoveryClaimPickRecipientCtx {
         self.shamir_recovery_created_on
     }
 
+    pub fn yet_to_contact_recipients(&self) -> Vec<&ShamirRecoveryRecipient> {
+        self.recipients
+            .iter()
+            .filter(|r| !self.shares.contains_key(&r.user_id))
+            .collect()
+    }
+
     pub fn is_recoverable(&self) -> bool {
         self.recipients
             .iter()

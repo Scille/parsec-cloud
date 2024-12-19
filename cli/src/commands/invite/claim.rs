@@ -2,6 +2,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
+use anyhow::anyhow;
 use libparsec::{
     internal::{
         claimer_retrieve_info, AnyClaimRetrievedInfoCtx, DeviceClaimFinalizeCtx,
@@ -20,7 +21,7 @@ use libparsec_client::{
 };
 
 use crate::utils::*;
-use dialoguer::Select;
+use dialoguer::{Input, Select};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, data_dir, password_stdin]
@@ -78,10 +79,10 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             save_device(ctx, save_mode).await
         }
         AnyClaimRetrievedInfoCtx::ShamirRecovery(ctx) => {
-            let mut maybe_pick_ctx = Some(ctx);
-            loop {
-                let pick_ctx = maybe_pick_ctx.ok_or(anyhow::anyhow!("todo"))?;
-                let ctx = step05_shamir(&pick_ctx)?;
+            let mut pick_ctx = ctx;
+
+            let mut device_ctx = loop {
+                let ctx = shamir_pick_recipient(&pick_ctx)?;
                 let ctx = step1_shamir(ctx).await?;
                 let ctx = step2_shamir(ctx).await?;
                 let ctx = step3_shamir(ctx).await?;
@@ -91,42 +92,41 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                     ShamirRecoveryClaimMaybeRecoverDeviceCtx::RecoverDevice(
                         shamir_recovery_claim_recover_device_ctx,
                     ) => {
-                        maybe_pick_ctx = None;
-                        let ctx = step5_shamir(shamir_recovery_claim_recover_device_ctx).await?;
-
-                        match ctx {
-                            ShamirRecoveryClaimMaybeFinalizeCtx::Offline(..) => {
-                                let retry = Select::new()
-                                    .with_prompt("Unable to join server, do you want to retry")
-                                    .items(&["yes", "no"])
-                                    .interact()?;
-
-                                if retry == 0 {
-                                    continue;
-                                } else {
-                                    break;
-                                }
-                            }
-                            // happy path
-                            ShamirRecoveryClaimMaybeFinalizeCtx::Finalize(
-                                shamir_recovery_claim_finalize_ctx,
-                            ) => {
-                                let key_file =
-                                    shamir_recovery_claim_finalize_ctx.get_default_key_file();
-                                let access_strategy = get_access_strategy(key_file, save_mode)?;
-                                shamir_recovery_claim_finalize_ctx
-                                    .save_local_device(&access_strategy)
-                                    .await?;
-                                break;
-                            }
-                        }
+                        break shamir_recovery_claim_recover_device_ctx;
                     }
                     // need more shares
                     ShamirRecoveryClaimMaybeRecoverDeviceCtx::PickRecipient(
                         shamir_recovery_claim_pick_recipient_ctx,
-                    ) => maybe_pick_ctx = Some(shamir_recovery_claim_pick_recipient_ctx),
+                    ) => pick_ctx = shamir_recovery_claim_pick_recipient_ctx,
                 }
-            }
+            };
+
+            let final_ctx = loop {
+                let ctx = step5_shamir(device_ctx).await?;
+                match ctx {
+                    ShamirRecoveryClaimMaybeFinalizeCtx::Offline(ctx) => {
+                        let retry = Select::new()
+                            .with_prompt("Unable to join server, do you want to retry ?")
+                            .items(&["yes", "no"])
+                            .interact()?;
+
+                        if retry == 0 {
+                            device_ctx = ctx;
+                            continue;
+                        } else {
+                            return Err(anyhow!("Server offline, try again later."));
+                        }
+                    }
+                    ShamirRecoveryClaimMaybeFinalizeCtx::Finalize(
+                        shamir_recovery_claim_finalize_ctx,
+                    ) => {
+                        break shamir_recovery_claim_finalize_ctx;
+                    }
+                }
+            };
+            let key_file = final_ctx.get_default_key_file();
+            let access_strategy = get_access_strategy(key_file, save_mode)?;
+            final_ctx.save_local_device(&access_strategy).await?;
 
             Ok(())
         }
@@ -148,13 +148,13 @@ async fn step0(
 }
 
 /// Step 0.5: choose recipient
-fn step05_shamir(
+fn shamir_pick_recipient(
     ctx: &ShamirRecoveryClaimPickRecipientCtx,
 ) -> anyhow::Result<ShamirRecoveryClaimInitialCtx> {
-    let recipients = ctx.recipients();
+    let recipients = ctx.yet_to_contact_recipients();
     let human_recipients: Vec<_> = recipients.iter().map(|r| r.human_handle.clone()).collect();
     let selection = Select::new()
-        .with_prompt("Choose a person to contact first")
+        .with_prompt("Choose a person to contact now")
         .items(&human_recipients)
         .interact()?;
     Ok(ctx.pick_recipient(recipients[selection].user_id)?)
@@ -246,18 +246,17 @@ async fn step2_device(ctx: DeviceClaimInProgress1Ctx) -> anyhow::Result<DeviceCl
 async fn step2_shamir(
     ctx: ShamirRecoveryClaimInProgress1Ctx,
 ) -> anyhow::Result<ShamirRecoveryClaimInProgress2Ctx> {
-    let mut input = String::new();
     let sas_codes = ctx.generate_greeter_sas_choices(3);
 
-    for (i, sas_code) in sas_codes.iter().enumerate() {
-        println!(" {i} - {YELLOW}{sas_code}{RESET}")
+    let selected_sas = Select::new()
+        .items(&sas_codes)
+        .with_prompt("Select code provided by greeter")
+        .interact()?;
+    if &sas_codes[selected_sas] != ctx.greeter_sas() {
+        Err(anyhow!("Invalid SAS code"))
+    } else {
+        Ok(ctx.do_signify_trust().await?)
     }
-
-    println!("Select code provided by greeter (0, 1, 2)");
-
-    choose_sas_code(&mut input, &sas_codes, ctx.greeter_sas())?;
-
-    Ok(ctx.do_signify_trust().await?)
 }
 
 /// Step 3: wait peer trust
@@ -356,8 +355,7 @@ async fn step4_shamir(
 async fn step5_shamir(
     ctx: ShamirRecoveryClaimRecoverDeviceCtx,
 ) -> anyhow::Result<ShamirRecoveryClaimMaybeFinalizeCtx> {
-    let mut input = String::new();
-    let device_label = choose_device_label(&mut input)?;
+    let device_label = Input::new().with_prompt("Enter device label").interact()?;
 
     let mut handle = start_spinner("Waiting for greeter".into());
 
