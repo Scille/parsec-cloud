@@ -9,6 +9,7 @@ from parsec._parsec import (
     GreetingAttemptID,
     PrivateKey,
     PublicKey,
+    ShamirRecoveryDeletionCertificate,
     UserProfile,
     authenticated_cmds,
     invited_cmds,
@@ -21,6 +22,7 @@ from tests.common import (
     bob_becomes_admin,
     bob_becomes_admin_and_changes_alice,
 )
+from tests.common.client import ShamirOrgRpcClients
 
 
 @pytest.fixture
@@ -261,6 +263,36 @@ async def test_authenticated_invite_greeter_step_not_ready(
         greeting_attempt=greeting_attempt, greeter_step=greeter_step
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepNotReady()
+
+
+async def test_authenticated_invite_greeter_step_with_deleted_shamir(
+    shamirorg: ShamirOrgRpcClients,
+) -> None:
+    rep = await shamirorg.bob.invite_greeter_start_greeting_attempt(
+        token=shamirorg.shamir_invited_alice.token,
+    )
+    assert isinstance(rep, authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepOk)
+    greeting_attempt = rep.greeting_attempt
+
+    # Delete Alice shamir recovery
+    dt = DateTime.now()
+    author = shamirorg.alice
+    brief = shamirorg.alice_brief_certificate
+    deletion = ShamirRecoveryDeletionCertificate(
+        author=author.device_id,
+        timestamp=dt,
+        setup_to_delete_timestamp=brief.timestamp,
+        setup_to_delete_user_id=brief.user_id,
+        share_recipients=set(brief.per_recipient_shares.keys()),
+    ).dump_and_sign(author.signing_key)
+    rep = await shamirorg.alice.shamir_recovery_delete(deletion)
+    assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepOk()
+
+    rep = await shamirorg.bob.invite_greeter_step(
+        greeting_attempt=greeting_attempt,
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber3GetNonce(),
+    )
+    assert rep == authenticated_cmds.v4.invite_greeter_step.RepInvitationCancelled()
 
 
 async def test_authenticated_invite_greeter_step_http_common_errors(
