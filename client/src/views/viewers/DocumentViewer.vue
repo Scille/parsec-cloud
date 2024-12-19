@@ -47,4 +47,16 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.document-content {
+  height: 100%;
+  overflow-y: auto;
+
+  .page {
+    background: white;
+    padding: 5em;
+    margin: 1em;
+    border-radius: 1em;
+  }
+}
+</style>
