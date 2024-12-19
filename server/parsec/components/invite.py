@@ -90,6 +90,7 @@ class ShamirRecoveryInvitation:
     claimer_human_handle: HumanHandle
     threshold: int
     recipients: list[ShamirRecoveryRecipient]
+    shamir_recovery_is_deleted: bool
 
 
 Invitation = UserInvitation | DeviceInvitation | ShamirRecoveryInvitation
