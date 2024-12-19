@@ -14,15 +14,18 @@ from parsec._parsec import (
     RealmRole,
     RealmRoleCertificate,
     RevokedUserCertificate,
+    ShamirRecoveryDeletionCertificate,
     SigningKey,
     SigningKeyAlgorithm,
     UserID,
     UserProfile,
     UserUpdateCertificate,
     VlobID,
+    authenticated_cmds,
 )
 from parsec.components.user import UserInfo
 from tests.common import Backend, CoolorgRpcClients, RpcTransportError
+from tests.common.client import ShamirOrgRpcClients
 
 
 @pytest.fixture(params=("common_certificate", "realm_certificate", "shamir_certificate", "vlob"))
@@ -774,3 +777,40 @@ def generate_realm_role_certificate(
         user_id=user_id,
         role=role,
     )
+
+
+@pytest.fixture
+async def invited_greeting_with_deleted_shamir_tester(
+    request: pytest.FixtureRequest, shamirorg: ShamirOrgRpcClients, backend: Backend
+) -> AsyncGenerator[HttpCommonErrorsTester, None]:
+    tester_called = False
+
+    async def _invited_http_common_errors_tester(do: HttpCommonErrorsTesterDoCallback):
+        nonlocal tester_called
+        tester_called = True
+
+        # Delete Alice shamir recovery
+        dt = DateTime.now()
+        author = shamirorg.alice
+        brief = shamirorg.alice_brief_certificate
+        deletion = ShamirRecoveryDeletionCertificate(
+            author=author.device_id,
+            timestamp=dt,
+            setup_to_delete_timestamp=brief.timestamp,
+            setup_to_delete_user_id=brief.user_id,
+            share_recipients=set(brief.per_recipient_shares.keys()),
+        ).dump_and_sign(author.signing_key)
+        rep = await shamirorg.alice.shamir_recovery_delete(deletion)
+        assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepOk()
+
+        # Start greeting attempt
+        INVITATION_ALREADY_USED_OR_DELETED = 410
+        with pytest.raises(RpcTransportError) as ctx:
+            await do()
+        assert (
+            ctx.value.rep.status_code == INVITATION_ALREADY_USED_OR_DELETED
+        ), ctx.value.rep.status_code
+
+    yield _invited_http_common_errors_tester
+
+    assert tester_called
