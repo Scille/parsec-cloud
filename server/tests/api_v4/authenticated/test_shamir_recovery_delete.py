@@ -24,7 +24,7 @@ from tests.common import (
     ),
 )
 async def test_authenticated_shamir_recovery_delete_ok(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend, kind: str
+    shamirorg: ShamirOrgRpcClients, backend: Backend, kind: str
 ) -> None:
     dt = DateTime.now()
 
@@ -32,16 +32,9 @@ async def test_authenticated_shamir_recovery_delete_ok(
         case "single_recipient":
             author = shamirorg.mallory
             brief = shamirorg.mallory_brief_certificate
-            impacted_shamir_topics = [shamirorg.mallory.user_id, shamirorg.mike.user_id]
         case "multiple_recipients":
             author = shamirorg.alice
             brief = shamirorg.alice_brief_certificate
-            impacted_shamir_topics = [
-                shamirorg.alice.user_id,
-                shamirorg.bob.user_id,
-                shamirorg.mallory.user_id,
-                shamirorg.mike.user_id,
-            ]
         case unknown:
             assert False, unknown
 
@@ -55,9 +48,7 @@ async def test_authenticated_shamir_recovery_delete_ok(
     raw_deletion = deletion.dump_and_sign(author.signing_key)
 
     expected_topics = await backend.organization.test_dump_topics(shamirorg.organization_id)
-    # Mallory's shamir recovery is only shared with Mike
-    for user_id in impacted_shamir_topics:
-        expected_topics.shamir_recovery[user_id] = dt
+    expected_topics.shamir_recovery = dt
 
     rep = await author.shamir_recovery_delete(shamir_recovery_deletion_certificate=raw_deletion)
     assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepOk()
@@ -74,7 +65,7 @@ async def test_authenticated_shamir_recovery_delete_ok(
     ),
 )
 async def test_authenticated_shamir_recovery_delete_invalid_certificate_corrupted(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend, kind: str
+    shamirorg: ShamirOrgRpcClients, backend: Backend, kind: str
 ) -> None:
     dt = DateTime.now()
 
@@ -102,7 +93,7 @@ async def test_authenticated_shamir_recovery_delete_invalid_certificate_corrupte
 
 
 async def test_authenticated_shamir_recovery_delete_invalid_certificate_user_id_must_be_self(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend
+    shamirorg: ShamirOrgRpcClients, backend: Backend
 ) -> None:
     dt = DateTime.now()
 
@@ -126,7 +117,7 @@ async def test_authenticated_shamir_recovery_delete_invalid_certificate_user_id_
 
 
 async def test_authenticated_shamir_recovery_delete_shamir_recovery_not_found(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend
+    shamirorg: ShamirOrgRpcClients, backend: Backend
 ) -> None:
     dt = DateTime.now()
 
@@ -158,7 +149,7 @@ async def test_authenticated_shamir_recovery_delete_shamir_recovery_not_found(
     ),
 )
 async def test_authenticated_shamir_recovery_delete_recipients_mismatch(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend, kind: str
+    shamirorg: ShamirOrgRpcClients, backend: Backend, kind: str
 ) -> None:
     dt = DateTime.now()
 
@@ -197,7 +188,7 @@ async def test_authenticated_shamir_recovery_delete_recipients_mismatch(
 
 
 async def test_authenticated_shamir_recovery_delete_shamir_recovery_already_deleted(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend
+    shamirorg: ShamirOrgRpcClients, backend: Backend
 ) -> None:
     dt = DateTime.now()
 
@@ -216,7 +207,7 @@ async def test_authenticated_shamir_recovery_delete_shamir_recovery_already_dele
         shamir_recovery_deletion_certificate=raw_deletion
     )
     assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepShamirRecoveryAlreadyDeleted(
-        last_shamir_certificate_timestamp=shamirorg.bob_shamir_topic_timestamp
+        last_shamir_certificate_timestamp=shamirorg.shamir_topic_timestamp
     )
 
     topics = await backend.organization.test_dump_topics(shamirorg.organization_id)
@@ -224,7 +215,6 @@ async def test_authenticated_shamir_recovery_delete_shamir_recovery_already_dele
 
 
 async def test_authenticated_shamir_recovery_delete_timestamp_out_of_ballpark(
-    xfail_if_postgresql: None,
     shamirorg: ShamirOrgRpcClients,
 ) -> None:
     t0 = DateTime.now().subtract(seconds=3600)
@@ -250,7 +240,7 @@ async def test_authenticated_shamir_recovery_delete_timestamp_out_of_ballpark(
 @pytest.mark.parametrize("kind", ("from_recipient", "from_author", "newer_common_certificate"))
 @pytest.mark.usefixtures("ballpark_always_ok")
 async def test_authenticated_shamir_recovery_delete_require_greater_timestamp(
-    xfail_if_postgresql: None, backend: Backend, shamirorg: ShamirOrgRpcClients, kind: str
+    backend: Backend, shamirorg: ShamirOrgRpcClients, kind: str
 ) -> None:
     match kind:
         case "from_author":
@@ -259,7 +249,7 @@ async def test_authenticated_shamir_recovery_delete_require_greater_timestamp(
             author = shamirorg.mallory
             brief = shamirorg.mallory_brief_certificate
             older_timestamp = shamirorg.mallory_brief_certificate.timestamp
-            expected_strictly_greater_than = shamirorg.mallory_shamir_topic_timestamp
+            expected_strictly_greater_than = shamirorg.shamir_topic_timestamp
         case "from_recipient":
             # Alice setups her shamir recovery first, so her shamir topic
             # timestamp correspond to Bob's deleted shamir recovery where
@@ -273,7 +263,7 @@ async def test_authenticated_shamir_recovery_delete_require_greater_timestamp(
             # constitutes the lower bound since this setup involves Mallory & Mike
             # that are also recipient of Alice's recovery shamir setup that we
             # want to delete here.
-            expected_strictly_greater_than = shamirorg.mallory_shamir_topic_timestamp
+            expected_strictly_greater_than = shamirorg.shamir_topic_timestamp
         case "newer_common_certificate":
             dt = DateTime.now()
             certif = RevokedUserCertificate(
