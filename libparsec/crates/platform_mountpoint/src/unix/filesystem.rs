@@ -414,7 +414,7 @@ impl fuser::Filesystem for Filesystem {
         // Also, the total size of a workspace is not limited
         // For the moment let's settle on 0 MB used for 1 TB available
         reply.statfs(
-            2 * 1024u64.pow(2), // 2 MBlocks is 1 TB
+            0,                  // 0 for no block used
             2 * 1024u64.pow(2), // 2 MBlocks is 1 TB
             2 * 1024u64.pow(2), // 2 MBlocks is 1 TB
             0,
