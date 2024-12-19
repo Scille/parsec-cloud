@@ -57,7 +57,9 @@ WITH shamir_recovery_topic_update AS (
 
 UPDATE shamir_recovery_setup SET
     deleted_on = $deleted_on,
-    deletion_certificate = $deletion_certificate
+    deletion_certificate = $deletion_certificate,
+    -- Remove the ciphered data, the device keys should now be unrecoverable
+    ciphered_data = NULL
 WHERE organization = $organization_internal_id
 AND _id = $shamir_recovery_setup_internal_id
 -- Sanity check
