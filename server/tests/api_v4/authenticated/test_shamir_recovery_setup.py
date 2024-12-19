@@ -20,7 +20,7 @@ from tests.common import (
 
 
 async def test_authenticated_shamir_recovery_setup_ok(
-    coolorg: CoolorgRpcClients, backend: Backend, xfail_if_postgresql: None
+    coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     dt = DateTime.now()
     share = ShamirRecoveryShareCertificate(
@@ -39,10 +39,7 @@ async def test_authenticated_shamir_recovery_setup_ok(
     )
 
     expected_topics = await backend.organization.test_dump_topics(coolorg.organization_id)
-    expected_topics.shamir_recovery = {
-        coolorg.alice.user_id: dt,
-        coolorg.mallory.user_id: dt,
-    }
+    expected_topics.shamir_recovery = dt
 
     rep = await coolorg.alice.shamir_recovery_setup(
         ciphered_data=b"abc",
@@ -64,25 +61,30 @@ async def test_authenticated_shamir_recovery_setup_ok(
     ),
 )
 @pytest.mark.usefixtures("ballpark_always_ok")
-async def test_authenticated_shamir_recovery_setup_isolated_from_other_users(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, kind: str
+async def test_authenticated_shamir_recovery_setup_not_isolated_from_other_users(
+    shamirorg: ShamirOrgRpcClients, kind: str
 ) -> None:
-    # The chosen timestamp would be invalid for Mallory, but should be fine for Bob
-    # since Bob is not among Mallory Shamir recovery's recipients.
-    mallory_shamir_topic_timestamp = shamirorg.mallory_shamir_topic_timestamp
-    assert mallory_shamir_topic_timestamp > shamirorg.bob_shamir_topic_timestamp
+    # The chosen timestamp would be invalid for Mike, but should be fine for Alice
+    # since Alice is not among Mallory Shamir recovery's recipients.
+    # However, the shamir topic timestamp is shared among all users in order to
+    # simplify the implementation, so sharing with Alice will fail as well.
+    mallory_last_certificate_timestamp = shamirorg.mallory_brief_certificate.timestamp
 
     match kind:
         case "really_isolated":
             recipient = shamirorg.alice
-            expected_rep = authenticated_cmds.v4.shamir_recovery_setup.RepOk()
+            # This fails even though Alice is not recipient of Mallory Shamir recovery.
+            # This is because the topic timestamp is shared among all users.
+            expected_rep = authenticated_cmds.v4.shamir_recovery_setup.RepRequireGreaterTimestamp(
+                strictly_greater_than=shamirorg.shamir_topic_timestamp
+            )
         case "related_by_recipient":
             # Mike is already recipient of Mallory Shamir recovery, hence his
             # topic already contains a brief certificate with the conflicting
             # timestamp !
             recipient = shamirorg.mike
             expected_rep = authenticated_cmds.v4.shamir_recovery_setup.RepRequireGreaterTimestamp(
-                strictly_greater_than=shamirorg.mike_shamir_topic_timestamp
+                strictly_greater_than=shamirorg.shamir_topic_timestamp
             )
         case unknown:
             assert False, unknown
@@ -90,14 +92,14 @@ async def test_authenticated_shamir_recovery_setup_isolated_from_other_users(
     share = ShamirRecoveryShareCertificate(
         author=shamirorg.bob.device_id,
         user_id=shamirorg.bob.user_id,
-        timestamp=mallory_shamir_topic_timestamp,
+        timestamp=mallory_last_certificate_timestamp,
         recipient=recipient.user_id,
         ciphered_share=b"abc",
     )
     brief = ShamirRecoveryBriefCertificate(
         author=shamirorg.bob.device_id,
         user_id=shamirorg.bob.user_id,
-        timestamp=mallory_shamir_topic_timestamp,
+        timestamp=mallory_last_certificate_timestamp,
         threshold=1,
         per_recipient_shares={recipient.user_id: 2},
     )
@@ -119,7 +121,7 @@ async def test_authenticated_shamir_recovery_setup_isolated_from_other_users(
     ),
 )
 async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_corrupted(
-    xfail_if_postgresql: None, coolorg: CoolorgRpcClients, kind: str
+    coolorg: CoolorgRpcClients, kind: str
 ) -> None:
     dt = DateTime.now()
     brief = ShamirRecoveryBriefCertificate(
@@ -160,7 +162,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_cor
     ),
 )
 async def test_authenticated_shamir_recovery_setup_invalid_certificate_brief_corrupted(
-    xfail_if_postgresql: None, coolorg: CoolorgRpcClients, kind: str
+    coolorg: CoolorgRpcClients, kind: str
 ) -> None:
     dt = DateTime.now()
     match kind:
@@ -195,7 +197,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_brief_cor
 
 
 async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_recipient_not_in_brief(
-    xfail_if_postgresql: None, coolorg: CoolorgRpcClients
+    coolorg: CoolorgRpcClients,
 ) -> None:
     dt = DateTime.now()
     share = ShamirRecoveryShareCertificate(
@@ -226,7 +228,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_rec
 
 
 async def test_authenticated_shamir_recovery_setup_invalid_certificate_duplicate_share_for_recipient(
-    xfail_if_postgresql: None, coolorg: CoolorgRpcClients
+    coolorg: CoolorgRpcClients,
 ) -> None:
     dt = DateTime.now()
     share = ShamirRecoveryShareCertificate(
@@ -268,7 +270,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_duplicate
 
 
 async def test_authenticated_shamir_recovery_setup_invalid_certificate_author_included_as_recipient(
-    xfail_if_postgresql: None, coolorg: CoolorgRpcClients
+    coolorg: CoolorgRpcClients,
 ) -> None:
     dt = DateTime.now()
     share = ShamirRecoveryShareCertificate(
@@ -299,7 +301,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_author_in
 
 
 async def test_authenticated_shamir_recovery_setup_invalid_certificate_missing_share_for_recipient(
-    xfail_if_postgresql: None, coolorg: CoolorgRpcClients
+    coolorg: CoolorgRpcClients,
 ) -> None:
     dt = DateTime.now()
     share = ShamirRecoveryShareCertificate(
@@ -330,7 +332,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_missing_s
 
 
 async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_inconsistent_timestamp(
-    xfail_if_postgresql: None, coolorg: CoolorgRpcClients
+    coolorg: CoolorgRpcClients,
 ) -> None:
     share = ShamirRecoveryShareCertificate(
         author=coolorg.alice.device_id,
@@ -360,7 +362,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_inc
 
 
 async def test_authenticated_shamir_recovery_setup_invalid_certificate_user_id_must_be_self(
-    xfail_if_postgresql: None, coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     dt = DateTime.now()
     share = ShamirRecoveryShareCertificate(
@@ -395,7 +397,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_user_id_m
 
 
 async def test_authenticated_shamir_recovery_setup_recipient_not_found(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend
+    shamirorg: ShamirOrgRpcClients, backend: Backend
 ) -> None:
     dummy_user_id = UserID.new()
 
@@ -430,7 +432,7 @@ async def test_authenticated_shamir_recovery_setup_recipient_not_found(
 
 
 async def test_authenticated_shamir_recovery_setup_revoked_recipient(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, backend: Backend
+    shamirorg: ShamirOrgRpcClients, backend: Backend
 ) -> None:
     # Revoke Bob...
 
@@ -485,7 +487,7 @@ async def test_authenticated_shamir_recovery_setup_revoked_recipient(
 
 
 async def test_authenticated_shamir_recovery_setup_shamir_recovery_already_exists(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients
+    shamirorg: ShamirOrgRpcClients,
 ) -> None:
     # Setup previous shamir
     dt = DateTime.now()
@@ -515,12 +517,12 @@ async def test_authenticated_shamir_recovery_setup_shamir_recovery_already_exist
         shamir_recovery_share_certificates=[share.dump_and_sign(shamirorg.alice.signing_key)],
     )
     assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepShamirRecoveryAlreadyExists(
-        last_shamir_certificate_timestamp=shamirorg.alice_shamir_topic_timestamp
+        last_shamir_certificate_timestamp=shamirorg.shamir_topic_timestamp
     )
 
 
 async def test_authenticated_shamir_recovery_setup_timestamp_out_of_ballpark(
-    xfail_if_postgresql: None, coolorg: CoolorgRpcClients, timestamp_out_of_ballpark: DateTime
+    coolorg: CoolorgRpcClients, timestamp_out_of_ballpark: DateTime
 ) -> None:
     share = ShamirRecoveryShareCertificate(
         author=coolorg.alice.device_id,
@@ -552,7 +554,7 @@ async def test_authenticated_shamir_recovery_setup_timestamp_out_of_ballpark(
 @pytest.mark.parametrize("kind", ("from_recipient", "from_author"))
 @pytest.mark.usefixtures("ballpark_always_ok")
 async def test_authenticated_shamir_recovery_setup_require_greater_timestamp(
-    xfail_if_postgresql: None, shamirorg: ShamirOrgRpcClients, kind: str
+    shamirorg: ShamirOrgRpcClients, kind: str
 ) -> None:
     match kind:
         case "from_recipient":

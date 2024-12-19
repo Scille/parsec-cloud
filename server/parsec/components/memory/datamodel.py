@@ -64,7 +64,7 @@ TopicAndDiscriminant = (
     Literal["common"]
     | Literal["sequester"]
     | tuple[Literal["realm"], VlobID]
-    | tuple[Literal["shamir_recovery"], UserID]
+    | Literal["shamir_recovery"]
     # Not an actual topic, but it is convenient to implement advisory lock this
     # way since in practice it works similarly.
     | tuple[Literal["__advisory_lock"], AdvisoryLock]
@@ -297,8 +297,10 @@ class MemoryInvitation:
 
     # Required for when type=USER
     claimer_email: str | None
+
     # Required for when type=SHAMIR_RECOVERY
     claimer_user_id: UserID | None
+    shamir_recovery_index: int | None
 
     created_on: DateTime
     deleted_on: DateTime | None = None

@@ -2,11 +2,14 @@
 
 
 from parsec._parsec import (
+    DateTime,
     GreetingAttemptID,
     InvitationToken,
+    ShamirRecoveryDeletionCertificate,
     authenticated_cmds,
 )
 from tests.common import CoolorgRpcClients, HttpCommonErrorsTester
+from tests.common.client import ShamirOrgRpcClients
 
 Response = authenticated_cmds.v4.invite_greeter_start_greeting_attempt.Rep | None
 
@@ -82,6 +85,44 @@ async def test_authenticated_invite_greeter_start_greeting_attempt_author_not_al
     )
 
     assert rep == authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepAuthorNotAllowed()
+
+
+async def test_authenticated_invite_greeter_start_greeting_attempt_author_not_allowed_with_shamir(
+    shamirorg: ShamirOrgRpcClients,
+) -> None:
+    rep = await shamirorg.mike.invite_new_shamir_recovery(
+        shamirorg.mallory.user_id, send_email=False
+    )
+    assert isinstance(rep, authenticated_cmds.latest.invite_new_shamir_recovery.RepOk)
+    rep = await shamirorg.bob.invite_greeter_start_greeting_attempt(
+        token=rep.token,
+    )
+    assert rep == authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepAuthorNotAllowed()
+
+
+async def test_authenticated_invite_greeter_start_greeting_attempt_with_deleted_shamir(
+    shamirorg: ShamirOrgRpcClients,
+) -> None:
+    # Delete Alice shamir recovery
+    dt = DateTime.now()
+    author = shamirorg.alice
+    brief = shamirorg.alice_brief_certificate
+    deletion = ShamirRecoveryDeletionCertificate(
+        author=author.device_id,
+        timestamp=dt,
+        setup_to_delete_timestamp=brief.timestamp,
+        setup_to_delete_user_id=brief.user_id,
+        share_recipients=set(brief.per_recipient_shares.keys()),
+    ).dump_and_sign(author.signing_key)
+    rep = await shamirorg.alice.shamir_recovery_delete(deletion)
+    assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepOk()
+
+    rep = await shamirorg.bob.invite_greeter_start_greeting_attempt(
+        token=shamirorg.shamir_invited_alice.token,
+    )
+    assert (
+        rep == authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepInvitationCancelled()
+    )
 
 
 async def test_authenticated_invite_greeter_start_greeting_attempt_http_common_errors(
