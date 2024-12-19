@@ -57,10 +57,8 @@ impl Mountpoint {
                 fuser::MountOption::CUSTOM(format!("volname={workspace_name}")),
                 fuser::MountOption::DefaultPermissions,
                 fuser::MountOption::NoSuid,
+                #[cfg(not(target_os = "macos"))]
                 fuser::MountOption::Async,
-                #[cfg(not(skip_fuse_atime_option))]
-                fuser::MountOption::Atime,
-                #[cfg(skip_fuse_atime_option)]
                 fuser::MountOption::NoAtime,
                 fuser::MountOption::Exec,
                 // TODO: Should detect and re-mount when the workspace switched between read-only and read-write
