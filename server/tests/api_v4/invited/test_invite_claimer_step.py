@@ -23,6 +23,7 @@ from tests.common import (
     HttpCommonErrorsTester,
     bob_becomes_admin_and_changes_alice,
 )
+from tests.common.client import ShamirOrgRpcClients
 
 
 @pytest.fixture
@@ -259,12 +260,33 @@ async def test_invited_invite_claimer_step_not_ready(
     assert rep == invited_cmds.v4.invite_claimer_step.RepNotReady()
 
 
+async def test_invited_invite_claimer_step_with_shamir_deleted(
+    shamirorg: ShamirOrgRpcClients,
+    invited_greeting_with_deleted_shamir_tester: HttpCommonErrorsTester,
+) -> None:
+    rep = await shamirorg.shamir_invited_alice.invite_claimer_start_greeting_attempt(
+        greeter=shamirorg.bob.user_id,
+    )
+    assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
+
+    async def do():
+        await shamirorg.shamir_invited_alice.invite_claimer_step(
+            greeting_attempt=rep.greeting_attempt,
+            claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber2GetNonce(),
+        )
+
+    await invited_greeting_with_deleted_shamir_tester(do)
+
+
 async def test_invited_invite_claimer_step_http_common_errors(
     coolorg: CoolorgRpcClients,
     greeting_attempt: GreetingAttemptID,
     invited_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:
     async def do():
-        await coolorg.invited_alice_dev3.invite_info()
+        await coolorg.invited_alice_dev3.invite_claimer_step(
+            greeting_attempt=greeting_attempt,
+            claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber2GetNonce(),
+        )
 
     await invited_http_common_errors_tester(do)

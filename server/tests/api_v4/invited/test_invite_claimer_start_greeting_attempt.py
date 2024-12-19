@@ -5,7 +5,6 @@ from parsec._parsec import (
     DateTime,
     GreetingAttemptID,
     RevokedUserCertificate,
-    ShamirRecoveryDeletionCertificate,
     UserID,
     UserProfile,
     UserUpdateCertificate,
@@ -13,7 +12,7 @@ from parsec._parsec import (
     invited_cmds,
 )
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
-from tests.common.client import RpcTransportError, ShamirOrgRpcClients
+from tests.common.client import ShamirOrgRpcClients
 
 
 async def test_invited_invite_claimer_start_greeting_attempt_ok(
@@ -102,31 +101,16 @@ async def test_invited_invite_claimer_start_greeting_attempt_greeter_revoked(
     assert rep == invited_cmds.v4.invite_claimer_start_greeting_attempt.RepGreeterRevoked()
 
 
-async def test_invited_invite_claimer_start_greeting_attempt_greeter_with_shamir_deleted(
+async def test_invited_invite_claimer_start_greeting_attempt_with_shamir_deleted(
     shamirorg: ShamirOrgRpcClients,
+    invited_greeting_with_deleted_shamir_tester: HttpCommonErrorsTester,
 ) -> None:
-    # Delete Alice shamir recovery
-    dt = DateTime.now()
-    author = shamirorg.alice
-    brief = shamirorg.alice_brief_certificate
-    deletion = ShamirRecoveryDeletionCertificate(
-        author=author.device_id,
-        timestamp=dt,
-        setup_to_delete_timestamp=brief.timestamp,
-        setup_to_delete_user_id=brief.user_id,
-        share_recipients=set(brief.per_recipient_shares.keys()),
-    ).dump_and_sign(author.signing_key)
-    rep = await shamirorg.alice.shamir_recovery_delete(deletion)
-    assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepOk()
-
-    # Start greeting attempt
-    INVITATION_ALREADY_USED_OR_DELETED = 410
-    try:
-        rep = await shamirorg.shamir_invited_alice.invite_claimer_start_greeting_attempt(
+    async def do():
+        await shamirorg.shamir_invited_alice.invite_claimer_start_greeting_attempt(
             greeter=shamirorg.bob.user_id,
         )
-    except RpcTransportError as err:
-        assert err.rep.status_code == INVITATION_ALREADY_USED_OR_DELETED, err
+
+    await invited_greeting_with_deleted_shamir_tester(do)
 
 
 async def test_invited_invite_claimer_start_greeting_attempt_http_common_errors(
