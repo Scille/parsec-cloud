@@ -16,7 +16,7 @@ use std::{
 };
 
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_platform_async::{lock::Mutex as AsyncMutex, try_task_id, TaskID};
+use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_platform_storage::workspace::{UpdateManifestData, WorkspaceStorage};
 use libparsec_types::prelude::*;
 
@@ -124,6 +124,8 @@ mod data {
     //!   lock is acquired at a time for any given task.
 
     use super::*;
+    #[cfg(debug_assertions)]
+    use libparsec_platform_async::{try_task_id, TaskID};
 
     /*
      * WorkspaceStoreData
@@ -221,6 +223,7 @@ mod data {
         Storage,
     }
 
+    #[cfg(debug_assertions)]
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     enum RunningFutureID {
         /// The future is being executed as a task (i.e. `tokio::spawn(<my_future>)`).
@@ -235,6 +238,7 @@ mod data {
         lock_tracking: &'a Mutex<Vec<(RunningFutureID, DataLock)>>,
     }
 
+    #[cfg(debug_assertions)]
     impl<'a> DataLockTrackerGuard<'a> {
         fn register(
             lock_tracking: &'a Mutex<Vec<(RunningFutureID, DataLock)>>,
