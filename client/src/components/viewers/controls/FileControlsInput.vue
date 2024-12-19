@@ -6,6 +6,7 @@
     class="file-controls-input text-only"
     @click="onTextClick"
   >
+    {{ $msTranslate(prefix) }}
     {{ modelValue }}
     {{ $msTranslate(suffix) }}
   </span>
@@ -22,6 +23,12 @@
     @keyup.esc="editing = false"
     :disabled="$props.disabled"
   >
+    <span
+      class="file-controls-input-prefix"
+      slot="start"
+    >
+      {{ $msTranslate(prefix) }}
+    </span>
     <span
       class="file-controls-input-suffix"
       slot="end"
@@ -44,6 +51,7 @@ const props = defineProps<{
   modelValue: string;
   disabled?: boolean;
   restrictChange?: (value: string) => Promise<string>;
+  prefix?: Translatable;
   suffix?: Translatable;
 }>();
 
@@ -134,6 +142,10 @@ async function onTextClick(): Promise<void> {
 
   &:hover {
     opacity: 1;
+  }
+
+  &-prefix {
+    margin-inline-end: 0.25rem;
   }
 
   &-suffix {
