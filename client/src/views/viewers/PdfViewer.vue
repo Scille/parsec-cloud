@@ -21,14 +21,12 @@
           @change="onChange"
           ref="zoomControl"
         />
-        <file-controls-group>
-          <file-controls-button
-            v-for="(action, key) in actions"
-            :key="key"
-            @click="action.handler"
-            :label="action.text"
-          />
-        </file-controls-group>
+        <file-controls-pagination
+          v-if="pdf"
+          :length="pdf.numPages"
+          @change="loadPage"
+          ref="pagination"
+        />
       </file-controls>
     </template>
   </file-viewer-wrapper>
@@ -38,7 +36,7 @@
 import { inject, onMounted, ref, Ref, shallowRef } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { FileViewerWrapper } from '@/views/viewers';
-import { FileControls, FileControlsButton, FileControlsGroup, FileControlsZoom } from '@/components/viewers';
+import { FileControls, FileControlsPagination, FileControlsZoom } from '@/components/viewers';
 import { I18n, MsSpinner, Translatable } from 'megashark-lib';
 import * as pdfjs from 'pdfjs-dist';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';

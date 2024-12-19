@@ -29,10 +29,34 @@ const htmlContent = ref('');
 
 onMounted(async () => {
   loading.value = true;
-  const result = await mammoth.convertToHtml({ arrayBuffer: props.contentInfo.data.buffer });
+  const result = await mammoth.convertToHtml({
+    arrayBuffer: props.contentInfo.data.buffer,
+  }, {
+    styleMap: [
+      "br[type='page'] => hr.page-break",
+    ],
+  });
+  const pattern = '<hr class=\"page-break\" />';
+  const pages = result.value.split(pattern);
+  pages.map((page, index) => {
+    pages[index] = `<div class="page">${page}</div>`;
+  });
+  result.value = pages.join(pattern);
   htmlContent.value = result.value;
   loading.value = false;
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.document-content {
+  height: 100%;
+  overflow-y: auto;
+
+  .page {
+    background: white;
+    padding: 5em;
+    margin: 1em;
+    border-radius: 1em;
+  }
+}
+</style>
