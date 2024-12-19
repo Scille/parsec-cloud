@@ -220,6 +220,16 @@ AND shamir_recovery_setup._id = $shamir_recovery_setup_internal_id
 )
 
 
+_q_is_greeter_in_recipients = Q(
+    """
+SELECT shamir_recovery_share._id
+FROM shamir_recovery_share
+INNER JOIN user_ ON shamir_recovery_share.recipient = user_._id
+WHERE shamir_recovery_share.shamir_recovery = $shamir_recovery_setup_internal_id
+AND user_.user_id = $greeter_id
+"""
+)
+
 _q_retrieve_compatible_user_invitation = Q(
     f"""
 SELECT
@@ -1080,6 +1090,7 @@ class PGInviteComponent(BaseInviteComponent):
             )
             for row in rows
         ]
+        recipients.sort(key=lambda x: x.human_handle.label)
 
         return ShamirRecoverySetupInfo(
             claimer_user_id=claimer_user_id,
@@ -1574,8 +1585,9 @@ class PGInviteComponent(BaseInviteComponent):
             assert is_active
             return greeting_attempt_id
 
-    def is_greeter_allowed(
+    async def is_greeter_allowed(
         self,
+        conn: AsyncpgConnection,
         invitation_info: InvitationInfo,
         greeter_id: UserID,
         greeter_profile: UserProfile,
@@ -1585,7 +1597,13 @@ class PGInviteComponent(BaseInviteComponent):
         elif invitation_info.type == InvitationType.USER:
             return greeter_profile == UserProfile.ADMIN
         elif invitation_info.type == InvitationType.SHAMIR_RECOVERY:
-            raise NotImplementedError
+            row = await conn.fetchrow(
+                *_q_is_greeter_in_recipients(
+                    shamir_recovery_setup_internal_id=invitation_info.shamir_recovery_setup,
+                    greeter_id=greeter_id,
+                )
+            )
+            return row is not None
         else:
             assert False, invitation_info.type
 
@@ -1782,7 +1800,7 @@ class PGInviteComponent(BaseInviteComponent):
         if invitation_info.is_cancelled():
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
-        if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
+        if not await self.is_greeter_allowed(conn, invitation_info, greeter, greeter_profile):
             return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
 
         greeter_attempt_id = await self.new_attempt(
@@ -1829,7 +1847,7 @@ class PGInviteComponent(BaseInviteComponent):
         if invitation_info.is_cancelled():
             return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
-        if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
+        if not await self.is_greeter_allowed(conn, invitation_info, greeter, greeter_profile):
             return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED
 
         greeter_attempt_id = await self.new_attempt(
@@ -1888,7 +1906,7 @@ class PGInviteComponent(BaseInviteComponent):
         )
         if greeting_attempt_info is None or greeting_attempt_info.greeter != greeter:
             return InviteGreeterCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
-        if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
+        if not await self.is_greeter_allowed(conn, invitation_info, greeter, greeter_profile):
             return InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
 
         if (cancelled_info := greeting_attempt_info.cancelled_info()) is not None:
@@ -1947,8 +1965,8 @@ class PGInviteComponent(BaseInviteComponent):
             case GetProfileForUserUserBadOutcome.USER_REVOKED:
                 return InviteClaimerCancelGreetingAttemptBadOutcome.GREETER_REVOKED
 
-        if not self.is_greeter_allowed(
-            invitation_info, greeting_attempt_info.greeter, greeter_profile
+        if not await self.is_greeter_allowed(
+            conn, invitation_info, greeting_attempt_info.greeter, greeter_profile
         ):
             return InviteClaimerCancelGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED
 
@@ -2008,7 +2026,7 @@ class PGInviteComponent(BaseInviteComponent):
         )
         if greeting_attempt_info is None or greeting_attempt_info.greeter != greeter:
             return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
-        if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
+        if not await self.is_greeter_allowed(conn, invitation_info, greeter, greeter_profile):
             return InviteGreeterStepBadOutcome.AUTHOR_NOT_ALLOWED
 
         if (cancelled_info := greeting_attempt_info.cancelled_info()) is not None:
@@ -2076,8 +2094,8 @@ class PGInviteComponent(BaseInviteComponent):
             case GetProfileForUserUserBadOutcome.USER_REVOKED:
                 return InviteClaimerStepBadOutcome.GREETER_REVOKED
 
-        if not self.is_greeter_allowed(
-            invitation_info, greeting_attempt_info.greeter, greeter_profile
+        if not await self.is_greeter_allowed(
+            conn, invitation_info, greeting_attempt_info.greeter, greeter_profile
         ):
             return InviteClaimerStepBadOutcome.GREETER_NOT_ALLOWED
 
@@ -2141,7 +2159,9 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteCompleteBadOutcome.AUTHOR_NOT_FOUND
 
         # Only the greeter or the claimer can complete the invitation
-        if not self.is_greeter_allowed(invitation_info, author_user_id, current_profile):
+        if not await self.is_greeter_allowed(
+            conn, invitation_info, author_user_id, current_profile
+        ):
             if not invitation_info.claimer_email == author_info.human_handle.email:
                 return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
 
