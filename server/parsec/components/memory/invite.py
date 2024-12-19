@@ -52,6 +52,18 @@ from parsec.components.memory.datamodel import (
 from parsec.events import EventInvitation
 
 
+def is_invitation_cancelled(org: MemoryOrganization, invitation: MemoryInvitation) -> bool:
+    if invitation.is_cancelled:
+        return True
+    if invitation.type == InvitationType.SHAMIR_RECOVERY:
+        assert invitation.claimer_user_id is not None
+        assert invitation.shamir_recovery_index is not None
+        shamir_recoveries = org.shamir_recoveries[invitation.claimer_user_id]
+        shamir_recovery = shamir_recoveries[invitation.shamir_recovery_index]
+        return shamir_recovery.is_deleted
+    return False
+
+
 class MemoryInviteComponent(BaseInviteComponent):
     def __init__(
         self,
@@ -79,17 +91,15 @@ class MemoryInviteComponent(BaseInviteComponent):
 
     def _get_shamir_recovery_invitation(
         self, org: MemoryOrganization, invitation: MemoryInvitation
-    ) -> ShamirRecoveryInvitation | None:
+    ) -> ShamirRecoveryInvitation:
         assert invitation.claimer_user_id is not None
 
         assert invitation.shamir_recovery_index is not None
         claimer_shamir_recoveries = org.shamir_recoveries[invitation.claimer_user_id]
-        last_shamir_recovery = claimer_shamir_recoveries[invitation.shamir_recovery_index]
-        if last_shamir_recovery.is_deleted:
-            return None
+        shamir_recovery = claimer_shamir_recoveries[invitation.shamir_recovery_index]
 
-        threshold = last_shamir_recovery.cooked_brief.threshold
-        par_recipient_shares = last_shamir_recovery.cooked_brief.per_recipient_shares
+        threshold = shamir_recovery.cooked_brief.threshold
+        par_recipient_shares = shamir_recovery.cooked_brief.per_recipient_shares
         recipients = [
             ShamirRecoveryRecipient(
                 user_id=user_id,
@@ -103,6 +113,11 @@ class MemoryInviteComponent(BaseInviteComponent):
         status = self._get_invitation_status(org.organization_id, invitation)
         created_by_human_handle = org.users[invitation.created_by_user_id].cooked.human_handle
         claimer_human_handle = org.users[invitation.claimer_user_id].cooked.human_handle
+
+        # Mark active invitations as CANCELLED if the shamir recovery is deleted
+        if status in (InvitationStatus.IDLE, InvitationStatus.READY) and shamir_recovery.is_deleted:
+            status = InvitationStatus.CANCELLED
+
         return ShamirRecoveryInvitation(
             token=invitation.token,
             created_on=invitation.created_on,
@@ -114,6 +129,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             claimer_human_handle=claimer_human_handle,
             threshold=threshold,
             recipients=recipients,
+            shamir_recovery_is_deleted=shamir_recovery.is_deleted,
         )
 
     @override
@@ -500,9 +516,6 @@ class MemoryInviteComponent(BaseInviteComponent):
                     shamir_recovery_invitation = self._get_shamir_recovery_invitation(
                         org, invitation
                     )
-                    # There is no corresponding setup for this invitation, ignore it
-                    if shamir_recovery_invitation is None:
-                        continue
                     # The author is not part of the recipients
                     if not any(
                         recipient.user_id == author_user_id
@@ -560,10 +573,8 @@ class MemoryInviteComponent(BaseInviteComponent):
                 )
             case InvitationType.SHAMIR_RECOVERY:
                 shamir_recovery_invitation = self._get_shamir_recovery_invitation(org, invitation)
-                if shamir_recovery_invitation is None:
-                    # TODO: The invitation is not actually deleted, but the corresponding setup has
-                    # been deleted. This is a bit misleading, we should find a way to differentiate
-                    # between the two cases.
+                # Treat deleted shamir recovery as deleted invitation
+                if shamir_recovery_invitation.shamir_recovery_is_deleted:
                     return InviteAsInvitedInfoBadOutcome.INVITATION_DELETED
                 return shamir_recovery_invitation
             case unknown:
@@ -650,8 +661,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     shamir_recovery_invitation = self._get_shamir_recovery_invitation(
                         org, invitation
                     )
-                    if shamir_recovery_invitation is not None:
-                        current_user_invitations.append(shamir_recovery_invitation)
+                    current_user_invitations.append(shamir_recovery_invitation)
                 case unknown:
                     assert False, unknown
 
@@ -707,7 +717,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
         if invitation.is_completed:
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
-        if invitation.is_cancelled:
+        if is_invitation_cancelled(org, invitation):
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
         if not self.is_greeter_allowed(org, invitation, greeter_user):
@@ -746,7 +756,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
         if invitation.is_completed:
             return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
-        if invitation.is_cancelled:
+        if is_invitation_cancelled(org, invitation):
             return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
         if not self.is_greeter_allowed(org, invitation, greeter_user):
@@ -793,7 +803,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         if invitation.is_completed:
             return InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED
-        if invitation.is_cancelled:
+        if is_invitation_cancelled(org, invitation):
             return InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
         if not self.is_greeter_allowed(org, invitation, greeter_user):
@@ -836,7 +846,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         if invitation.is_completed:
             return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED
-        if invitation.is_cancelled:
+        if is_invitation_cancelled(org, invitation):
             return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
         if not self.is_greeter_allowed(org, invitation, greeter_user):
@@ -887,7 +897,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         if invitation.is_completed:
             return InviteGreeterStepBadOutcome.INVITATION_COMPLETED
-        if invitation.is_cancelled:
+        if is_invitation_cancelled(org, invitation):
             return InviteGreeterStepBadOutcome.INVITATION_CANCELLED
 
         if not self.is_greeter_allowed(org, invitation, greeter_user):
@@ -939,7 +949,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         if invitation.is_completed:
             return InviteClaimerStepBadOutcome.INVITATION_COMPLETED
-        if invitation.is_cancelled:
+        if is_invitation_cancelled(org, invitation):
             return InviteClaimerStepBadOutcome.INVITATION_CANCELLED
 
         if not self.is_greeter_allowed(org, invitation, greeter_user):
@@ -992,7 +1002,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             invitation = org.invitations[token]
         except KeyError:
             return InviteCompleteBadOutcome.INVITATION_NOT_FOUND
-        if invitation.is_cancelled:
+        if is_invitation_cancelled(org, invitation):
             return InviteCompleteBadOutcome.INVITATION_CANCELLED
         if invitation.is_completed:
             return InviteCompleteBadOutcome.INVITATION_ALREADY_COMPLETED
