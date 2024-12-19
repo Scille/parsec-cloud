@@ -9,51 +9,52 @@
       selected: entry.isSelected,
       'file-hovered': !entry.isSelected && (menuOpened || isHovered),
     }"
+    class="file-list-item"
     @dblclick="$emit('click', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     ref="itemRef"
   >
-    <div class="file-list-item">
-      <div class="file-selected">
-        <!-- eslint-disable vue/no-mutating-props -->
-        <ms-checkbox
-          v-model="entry.isSelected"
-          v-show="entry.isSelected || isHovered || showCheckbox"
-          @change="$emit('selectedChange', entry, $event)"
-          @click.stop
-          @dblclick.stop
-        />
-        <!-- eslint-enable vue/no-mutating-props -->
-      </div>
-      <!-- file name -->
-      <div class="file-name">
-        <ms-image
-          :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
-          class="file-icon"
-        />
-        <ion-label class="file-name__label cell">
-          {{ entry.name }}
-        </ion-label>
-      </div>
-
-      <!-- last update -->
-      <div class="file-lastUpdate">
-        <ion-label class="label-last-update cell">
-          {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
-        </ion-label>
-      </div>
-
-      <!-- file size -->
-      <div class="file-size">
-        <ion-label
-          v-if="entry.isFile()"
-          class="label-size cell"
-        >
-          {{ $msTranslate(formatFileSize((entry as WorkspaceHistoryFileModel).size)) }}
-        </ion-label>
-      </div>
+    <div class="file-selected">
+      <!-- eslint-disable vue/no-mutating-props -->
+      <ms-checkbox
+        v-model="entry.isSelected"
+        v-show="entry.isSelected || isHovered || showCheckbox"
+        @change="$emit('selectedChange', entry, $event)"
+        @click.stop
+        @dblclick.stop
+      />
+      <!-- eslint-enable vue/no-mutating-props -->
     </div>
+    <!-- file name -->
+    <div class="file-name">
+      <ms-image
+        :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
+        class="file-icon"
+      />
+      <ion-label class="file-name__label cell">
+        {{ entry.name }}
+      </ion-label>
+    </div>
+
+    <!-- last update -->
+    <div class="file-lastUpdate">
+      <ion-label class="label-last-update cell">
+        {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
+      </ion-label>
+    </div>
+
+    <!-- file size -->
+    <div class="file-size">
+      <ion-label
+        v-if="entry.isFile()"
+        class="label-size cell"
+      >
+        {{ $msTranslate(formatFileSize((entry as WorkspaceHistoryFileModel).size)) }}
+      </ion-label>
+    </div>
+
+    <div class="label-space" />
   </ion-item>
 </template>
 
