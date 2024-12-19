@@ -2,6 +2,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
+use anyhow::anyhow;
 use libparsec::{
     internal::{
         claimer_retrieve_info, AnyClaimRetrievedInfoCtx, DeviceClaimFinalizeCtx,
@@ -11,8 +12,16 @@ use libparsec::{
     },
     ClientConfig, DeviceAccessStrategy, ParsecInvitationAddr,
 };
+use libparsec_client::{
+    ShamirRecoveryClaimInProgress1Ctx, ShamirRecoveryClaimInProgress2Ctx,
+    ShamirRecoveryClaimInProgress3Ctx, ShamirRecoveryClaimInitialCtx,
+    ShamirRecoveryClaimMaybeFinalizeCtx, ShamirRecoveryClaimMaybeRecoverDeviceCtx,
+    ShamirRecoveryClaimPickRecipientCtx, ShamirRecoveryClaimRecoverDeviceCtx,
+    ShamirRecoveryClaimShare,
+};
 
 use crate::utils::*;
+use dialoguer::{Input, Select};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, data_dir, password_stdin]
@@ -69,9 +78,59 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             let ctx = step4_device(ctx).await?;
             save_device(ctx, save_mode).await
         }
-        AnyClaimRetrievedInfoCtx::ShamirRecovery(_) => Err(anyhow::anyhow!(
-            "Shamir recovery invitation is not supported yet"
-        )),
+        AnyClaimRetrievedInfoCtx::ShamirRecovery(ctx) => {
+            let mut maybe_pick_ctx = Some(ctx);
+            loop {
+                let pick_ctx = maybe_pick_ctx.ok_or(anyhow::anyhow!("todo"))?;
+                let ctx = step05_shamir(&pick_ctx)?;
+                let ctx = step1_shamir(ctx).await?;
+                let ctx = step2_shamir(ctx).await?;
+                let ctx = step3_shamir(ctx).await?;
+                let share_ctx = step4_shamir(ctx).await?;
+                let maybe = pick_ctx.add_share(share_ctx)?;
+                match maybe {
+                    ShamirRecoveryClaimMaybeRecoverDeviceCtx::RecoverDevice(
+                        shamir_recovery_claim_recover_device_ctx,
+                    ) => {
+                        maybe_pick_ctx = None;
+                        let ctx = step5_shamir(shamir_recovery_claim_recover_device_ctx).await?;
+
+                        match ctx {
+                            ShamirRecoveryClaimMaybeFinalizeCtx::Offline(..) => {
+                                let retry = Select::new()
+                                    .with_prompt("Unable to join server, do you want to retry")
+                                    .items(&["yes", "no"])
+                                    .interact()?;
+
+                                if retry == 0 {
+                                    continue;
+                                } else {
+                                    break;
+                                }
+                            }
+                            // happy path
+                            ShamirRecoveryClaimMaybeFinalizeCtx::Finalize(
+                                shamir_recovery_claim_finalize_ctx,
+                            ) => {
+                                let key_file =
+                                    shamir_recovery_claim_finalize_ctx.get_default_key_file();
+                                let access_strategy = get_access_strategy(key_file, save_mode)?;
+                                shamir_recovery_claim_finalize_ctx
+                                    .save_local_device(&access_strategy)
+                                    .await?;
+                                break;
+                            }
+                        }
+                    }
+                    // need more shares
+                    ShamirRecoveryClaimMaybeRecoverDeviceCtx::PickRecipient(
+                        shamir_recovery_claim_pick_recipient_ctx,
+                    ) => maybe_pick_ctx = Some(shamir_recovery_claim_pick_recipient_ctx),
+                }
+            }
+
+            Ok(())
+        }
     }
 }
 
@@ -87,6 +146,19 @@ async fn step0(
     handle.stop_with_newline();
 
     Ok(ctx)
+}
+
+/// Step 0.5: choose recipient
+fn step05_shamir(
+    ctx: &ShamirRecoveryClaimPickRecipientCtx,
+) -> anyhow::Result<ShamirRecoveryClaimInitialCtx> {
+    let recipients = ctx.recipients();
+    let human_recipients: Vec<_> = recipients.iter().map(|r| r.human_handle.clone()).collect();
+    let selection = Select::new()
+        .with_prompt("Choose a person to contact first")
+        .items(&human_recipients)
+        .interact()?;
+    Ok(ctx.pick_recipient(recipients[selection].user_id)?)
 }
 
 /// Step 1: wait peer
@@ -107,6 +179,24 @@ async fn step1_user(ctx: UserClaimInitialCtx) -> anyhow::Result<UserClaimInProgr
 
 /// Step 1: wait peer
 async fn step1_device(ctx: DeviceClaimInitialCtx) -> anyhow::Result<DeviceClaimInProgress1Ctx> {
+    println!(
+        "Invitation greeter: {YELLOW}{}{RESET}",
+        ctx.greeter_human_handle()
+    );
+
+    let mut handle = start_spinner("Waiting the greeter to start the invitation procedure".into());
+
+    let ctx = ctx.do_wait_peer().await?;
+
+    handle.stop_with_newline();
+
+    Ok(ctx)
+}
+
+/// Step 1: wait peer
+async fn step1_shamir(
+    ctx: ShamirRecoveryClaimInitialCtx,
+) -> anyhow::Result<ShamirRecoveryClaimInProgress1Ctx> {
     println!(
         "Invitation greeter: {YELLOW}{}{RESET}",
         ctx.greeter_human_handle()
@@ -153,8 +243,43 @@ async fn step2_device(ctx: DeviceClaimInProgress1Ctx) -> anyhow::Result<DeviceCl
     Ok(ctx.do_signify_trust().await?)
 }
 
+/// Step 2: signify trust
+async fn step2_shamir(
+    ctx: ShamirRecoveryClaimInProgress1Ctx,
+) -> anyhow::Result<ShamirRecoveryClaimInProgress2Ctx> {
+    let sas_codes = ctx.generate_greeter_sas_choices(3);
+
+    let selected_sas = Select::new()
+        .items(&sas_codes)
+        .with_prompt("Select code provided by greeter")
+        .interact()?;
+    if &sas_codes[selected_sas] != ctx.greeter_sas() {
+        Err(anyhow!("Invalid SAS code"))
+    } else {
+        Ok(ctx.do_signify_trust().await?)
+    }
+}
+
 /// Step 3: wait peer trust
 async fn step3_user(ctx: UserClaimInProgress2Ctx) -> anyhow::Result<UserClaimInProgress3Ctx> {
+    println!(
+        "Code to provide to greeter: {YELLOW}{}{RESET}",
+        ctx.claimer_sas()
+    );
+
+    let mut handle = start_spinner("Waiting for greeter".into());
+
+    let ctx = ctx.do_wait_peer_trust().await?;
+
+    handle.stop_with_newline();
+
+    Ok(ctx)
+}
+
+/// Step 3: wait peer trust
+async fn step3_shamir(
+    ctx: ShamirRecoveryClaimInProgress2Ctx,
+) -> anyhow::Result<ShamirRecoveryClaimInProgress3Ctx> {
     println!(
         "Code to provide to greeter: {YELLOW}{}{RESET}",
         ctx.claimer_sas()
@@ -208,6 +333,34 @@ async fn step4_device(ctx: DeviceClaimInProgress3Ctx) -> anyhow::Result<DeviceCl
     let mut handle = start_spinner("Waiting for greeter".into());
 
     let ctx = ctx.do_claim_device(device_label).await?;
+
+    handle.stop_with_newline();
+
+    Ok(ctx)
+}
+
+/// Step 4: retrieve device
+async fn step4_shamir(
+    ctx: ShamirRecoveryClaimInProgress3Ctx,
+) -> anyhow::Result<ShamirRecoveryClaimShare> {
+    let mut handle = start_spinner("Waiting for greeter".into());
+
+    let ctx = ctx.do_recover_share().await?;
+
+    handle.stop_with_newline();
+
+    Ok(ctx)
+}
+
+/// Step 5: recover device
+async fn step5_shamir(
+    ctx: ShamirRecoveryClaimRecoverDeviceCtx,
+) -> anyhow::Result<ShamirRecoveryClaimMaybeFinalizeCtx> {
+    let device_label = Input::new().with_prompt("Enter device label").interact()?;
+
+    let mut handle = start_spinner("Waiting for greeter".into());
+
+    let ctx = ctx.recover_device(device_label).await?;
 
     handle.stop_with_newline();
 
