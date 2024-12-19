@@ -297,8 +297,10 @@ class MemoryInvitation:
 
     # Required for when type=USER
     claimer_email: str | None
+
     # Required for when type=SHAMIR_RECOVERY
     claimer_user_id: UserID | None
+    shamir_recovery_index: int | None
 
     created_on: DateTime
     deleted_on: DateTime | None = None
