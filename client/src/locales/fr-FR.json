@@ -1714,6 +1714,9 @@
                 "in": "Zoomer",
                 "out": "Dézoomer",
                 "reset": "Réinitialiser le zoom"
+            },
+            "pagination": {
+                "page": "Page"
             }
         }
     }

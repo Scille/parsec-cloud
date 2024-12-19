@@ -75,11 +75,18 @@ msTest('PDF viewer', async ({ documents }) => {
   const canvasHeight = Number(await canvas.getAttribute('height'));
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
+  const buttons = bottomBar.locator('.file-controls-button');
+  await expect(buttons).toHaveText(['', '', '']);
+
+  // Pagination
+  const pagination = bottomBar.locator('.file-controls-pagination');
+  await expect(pagination).toHaveCount(1);
+  const input = pagination.locator('.file-controls-input');
+  await expect(input).toHaveText('Page 1 / 2');
+
+  // Zoom-
   const zoom = bottomBar.locator('.file-controls-zoom');
   await expect(zoom).toHaveCount(1);
-  const buttons = bottomBar.locator('.file-controls-button');
-  await expect(buttons).toHaveText(['', '', '', 'Page 1', 'Page 2']);
-  // Zoom-
   await buttons.nth(1).click();
   expect(Number(await canvas.getAttribute('width'))).toBeLessThan(canvasWidth);
   expect(Number(await canvas.getAttribute('height'))).toBeLessThan(canvasHeight);
