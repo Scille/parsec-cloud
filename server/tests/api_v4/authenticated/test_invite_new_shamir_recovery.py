@@ -66,6 +66,7 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
                     revoked_on=None,
                 ),
             ],
+            shamir_recovery_is_deleted=False,
         )
     ]
     assert (
@@ -197,6 +198,7 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
                     revoked_on=None,
                 ),
             ],
+            shamir_recovery_is_deleted=False,
         )
     ]
     assert (
