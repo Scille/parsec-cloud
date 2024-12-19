@@ -102,6 +102,7 @@ class InvitationInfo:
             created_by_label,
             claimer_email,
             shamir_recovery_setup,
+            shamir_recovery_setup_deleted_on,
             created_on,
             deleted_on,
             deleted_reason,
@@ -109,6 +110,12 @@ class InvitationInfo:
         deleted_reason = (
             InvitationStatus.from_str(deleted_reason) if deleted_reason is not None else None
         )
+
+        # Treat active invitation to a deleted shamir recovery as cancelled
+        if shamir_recovery_setup_deleted_on and not deleted_on:
+            deleted_on = shamir_recovery_setup_deleted_on
+            deleted_reason = InvitationStatus.CANCELLED
+
         return cls(
             internal_id=invitation_internal_id,
             token=InvitationToken.from_hex(token),
@@ -184,6 +191,7 @@ class ShamirRecoverySetupInfo:
     claimer_human_handle: HumanHandle
     threshold: int
     recipients: list[ShamirRecoveryRecipient]
+    deleted_on: DateTime | None
 
 
 _q_retrieve_shamir_recovery_setup = Q(
@@ -449,6 +457,7 @@ def make_q_info_invitation(
             human.label,
             invitation.claimer_email,
             invitation.shamir_recovery,
+            shamir_recovery_setup.deleted_on,
             invitation.created_on,
             invitation.deleted_on,
             invitation.deleted_reason
@@ -456,6 +465,7 @@ def make_q_info_invitation(
         INNER JOIN selected_invitation ON invitation._id = selected_invitation.invitation_internal_id
         INNER JOIN device ON invitation.created_by = device._id
         INNER JOIN human ON human._id = (SELECT user_.human FROM user_ WHERE user_._id = device.user_)
+        LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
         """)
 
 
@@ -1018,8 +1028,6 @@ class PGInviteComponent(BaseInviteComponent):
         shamir_recovery_setup_info = await self._get_shamir_recovery_info(
             conn, internal_shamir_recovery_setup_id=shamir_recovery_setup
         )
-        # Already checked in `_q_retrieve_shamir_recovery_setup`
-        assert shamir_recovery_setup_info is not None
         if not any(
             author_user_id == recipient.user_id
             for recipient in shamir_recovery_setup_info.recipients
@@ -1061,7 +1069,7 @@ class PGInviteComponent(BaseInviteComponent):
 
     async def _get_shamir_recovery_info(
         self, conn: AsyncpgConnection, internal_shamir_recovery_setup_id: int
-    ) -> ShamirRecoverySetupInfo | None:
+    ) -> ShamirRecoverySetupInfo:
         row = await conn.fetchrow(
             *_q_retrieve_shamir_recovery_setup_info(
                 internal_shamir_recovery_setup_id=internal_shamir_recovery_setup_id
@@ -1069,12 +1077,29 @@ class PGInviteComponent(BaseInviteComponent):
         )
         assert row is not None
 
-        if row["deleted_on"] is not None:
-            return None
+        match row["claimer_user_id"]:
+            case str() as raw_claimer_user_id:
+                claimer_user_id = UserID.from_hex(raw_claimer_user_id)
+            case unknown:
+                assert False, repr(unknown)
 
-        claimer_user_id = UserID.from_hex(row["claimer_user_id"])
-        claimer_human_handle = HumanHandle(email=row["claimer_email"], label=row["claimer_label"])
-        threshold = row["threshold"]
+        match (row["claimer_email"], row["claimer_label"]):
+            case (str() as raw_claimer_email, str() as raw_claimer_label):
+                claimer_human_handle = HumanHandle(email=raw_claimer_email, label=raw_claimer_label)
+            case unknown:
+                assert False, repr(unknown)
+
+        match row["threshold"]:
+            case int() as threshold:
+                pass
+            case unknown:
+                assert False, repr(unknown)
+
+        match row["deleted_on"]:
+            case DateTime() | None as deleted_on:
+                pass
+            case unknown:
+                assert False, repr(unknown)
 
         rows = await conn.fetch(
             *_q_retrieve_shamir_recovery_recipients(
@@ -1097,6 +1122,7 @@ class PGInviteComponent(BaseInviteComponent):
             claimer_human_handle=claimer_human_handle,
             threshold=threshold,
             recipients=recipients,
+            deleted_on=deleted_on,
         )
 
     @override
@@ -1230,10 +1256,6 @@ class PGInviteComponent(BaseInviteComponent):
                     conn, internal_shamir_recovery_setup_id
                 )
 
-                # There is no corresponding setup for this invitation, ignore it
-                if shamir_recovery_info is None:
-                    continue
-
                 # The author is not part of the recipients
                 if not any(
                     recipient.user_id == author_user_id
@@ -1252,6 +1274,7 @@ class PGInviteComponent(BaseInviteComponent):
                     claimer_human_handle=shamir_recovery_info.claimer_human_handle,
                     threshold=shamir_recovery_info.threshold,
                     recipients=shamir_recovery_info.recipients,
+                    shamir_recovery_is_deleted=shamir_recovery_info.deleted_on is not None,
                 )
             else:
                 assert False, type_str
@@ -1305,11 +1328,6 @@ class PGInviteComponent(BaseInviteComponent):
             shamir_recovery_invitation = await self._get_shamir_recovery_info(
                 conn, invitation_info.shamir_recovery_setup
             )
-            if shamir_recovery_invitation is None:
-                # TODO: The invitation is not actually deleted, but the corresponding setup has
-                # been deleted. This is a bit misleading, we should find a way to differentiate
-                # between the two cases.
-                return InviteAsInvitedInfoBadOutcome.INVITATION_DELETED
             return ShamirRecoveryInvitation(
                 created_by_user_id=invitation_info.created_by_user_id,
                 created_by_device_id=invitation_info.created_by_device_id,
@@ -1321,6 +1339,7 @@ class PGInviteComponent(BaseInviteComponent):
                 claimer_human_handle=shamir_recovery_invitation.claimer_human_handle,
                 threshold=shamir_recovery_invitation.threshold,
                 recipients=shamir_recovery_invitation.recipients,
+                shamir_recovery_is_deleted=shamir_recovery_invitation.deleted_on is not None,
             )
         else:
             assert False, invitation_info.type
@@ -1457,8 +1476,6 @@ class PGInviteComponent(BaseInviteComponent):
                     shamir_recovery_info = await self._get_shamir_recovery_info(
                         conn, shamir_recovery
                     )
-                    if shamir_recovery_info is None:
-                        continue
                     current_user_invitations.append(
                         ShamirRecoveryInvitation(
                             created_on=created_on,
@@ -1471,6 +1488,7 @@ class PGInviteComponent(BaseInviteComponent):
                             claimer_user_id=shamir_recovery_info.claimer_user_id,
                             threshold=shamir_recovery_info.threshold,
                             recipients=shamir_recovery_info.recipients,
+                            shamir_recovery_is_deleted=shamir_recovery_info.deleted_on is not None,
                         )
                     )
                 case unknown:
