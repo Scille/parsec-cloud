@@ -82,13 +82,10 @@ class MemoryInviteComponent(BaseInviteComponent):
     ) -> ShamirRecoveryInvitation | None:
         assert invitation.claimer_user_id is not None
 
+        assert invitation.shamir_recovery_index is not None
         claimer_shamir_recoveries = org.shamir_recoveries[invitation.claimer_user_id]
-        try:
-            # All but the last shamir recovery are deleted
-            last_shamir_recovery = claimer_shamir_recoveries[-1]
-        except IndexError:
-            last_shamir_recovery = None
-        if last_shamir_recovery is None or last_shamir_recovery.is_deleted:
+        last_shamir_recovery = claimer_shamir_recoveries[invitation.shamir_recovery_index]
+        if last_shamir_recovery.is_deleted:
             return None
 
         threshold = last_shamir_recovery.cooked_brief.threshold
@@ -184,6 +181,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     created_by_device_id=author,
                     claimer_email=claimer_email,
                     claimer_user_id=None,
+                    shamir_recovery_index=None,
                     created_on=now,
                 )
 
@@ -264,6 +262,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     created_by_device_id=author,
                     claimer_user_id=author_user_id,
                     claimer_email=None,
+                    shamir_recovery_index=None,
                     created_on=now,
                 )
 
@@ -330,9 +329,10 @@ class MemoryInviteComponent(BaseInviteComponent):
 
             # Check that a non-deleted shamir setup exists
             claimer_shamir_recoveries = org.shamir_recoveries[claimer_user_id]
+            last_shamir_recovery_index = len(claimer_shamir_recoveries) - 1
             try:
                 # All but the last shamir recovery are deleted
-                last_shamir_recovery = claimer_shamir_recoveries[-1]
+                last_shamir_recovery = claimer_shamir_recoveries[last_shamir_recovery_index]
             except IndexError:
                 last_shamir_recovery = None
             if last_shamir_recovery is None or last_shamir_recovery.is_deleted:
@@ -367,6 +367,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     claimer_email=claimer_human_handle.email,
                     created_on=now,
                     claimer_user_id=claimer_user_id,
+                    shamir_recovery_index=last_shamir_recovery_index,
                 )
 
             await self._event_bus.send(
@@ -667,10 +668,9 @@ class MemoryInviteComponent(BaseInviteComponent):
             return greeter.current_profile == UserProfile.ADMIN
         elif invitation.type == InvitationType.SHAMIR_RECOVERY:
             assert invitation.claimer_user_id is not None
-            shamir_recoveries = org.shamir_recoveries.get(invitation.claimer_user_id)
-            if not shamir_recoveries:
-                return False
-            *_, shamir_recovery = shamir_recoveries
+            assert invitation.shamir_recovery_index is not None
+            shamir_recoveries = org.shamir_recoveries[invitation.claimer_user_id]
+            shamir_recovery = shamir_recoveries[invitation.shamir_recovery_index]
             return shamir_recovery.shares.get(greeter.cooked.user_id) is not None
         else:
             assert False, invitation.type
