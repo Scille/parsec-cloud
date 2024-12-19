@@ -11,7 +11,10 @@ use libparsec::{
     },
     InvitationToken,
 };
-use libparsec_client::Client;
+use libparsec_client::{
+    Client, ShamirRecoveryGreetInProgress1Ctx, ShamirRecoveryGreetInProgress2Ctx,
+    ShamirRecoveryGreetInProgress3Ctx, ShamirRecoveryGreetInitialCtx,
+};
 
 use crate::utils::*;
 
@@ -45,15 +48,26 @@ pub async fn device_greet(args: Args, client: &StartedClient) -> anyhow::Result<
         InviteListItem::Device { token, .. } => {
             let ctx = client.start_device_invitation_greet(token);
 
-            let ctx = step1_device(ctx).await?;
+            let ctx: DeviceGreetInProgress1Ctx = step1_device(ctx).await?;
             let ctx = step2_device(ctx).await?;
             let ctx = step3_device(ctx).await?;
             let ctx = step4_device(ctx).await?;
             step5_device(ctx).await
         }
-        InviteListItem::ShamirRecovery { .. } => Err(anyhow::anyhow!(
-            "Shamir recovery invitation is not supported yet"
-        )),
+        InviteListItem::ShamirRecovery {
+            token,
+            claimer_user_id,
+            ..
+        } => {
+            let ctx = client
+                .start_shamir_recovery_invitation_greet(token, claimer_user_id)
+                .await?;
+
+            let ctx = step1_shamir(ctx).await?;
+            let ctx = step2_shamir(ctx).await?;
+            let ctx = step3_shamir(ctx).await?;
+            step4_shamir(ctx).await
+        }
     }
 }
 
@@ -102,6 +116,19 @@ async fn step1_device(ctx: DeviceGreetInitialCtx) -> anyhow::Result<DeviceGreetI
     Ok(ctx)
 }
 
+/// Step 1: wait peer
+async fn step1_shamir(
+    ctx: ShamirRecoveryGreetInitialCtx,
+) -> anyhow::Result<ShamirRecoveryGreetInProgress1Ctx> {
+    let mut handle = start_spinner("Waiting for claimer".into());
+
+    let ctx = ctx.do_wait_peer().await?;
+
+    handle.stop_with_newline();
+
+    Ok(ctx)
+}
+
 /// Step 2: wait peer trust
 async fn step2_user(ctx: UserGreetInProgress1Ctx) -> anyhow::Result<UserGreetInProgress2Ctx> {
     println!(
@@ -120,6 +147,24 @@ async fn step2_user(ctx: UserGreetInProgress1Ctx) -> anyhow::Result<UserGreetInP
 
 /// Step 2: wait peer trust
 async fn step2_device(ctx: DeviceGreetInProgress1Ctx) -> anyhow::Result<DeviceGreetInProgress2Ctx> {
+    println!(
+        "Code to provide to claimer: {YELLOW}{}{RESET}",
+        ctx.greeter_sas()
+    );
+
+    let mut handle = start_spinner("Waiting for claimer".into());
+
+    let ctx = ctx.do_wait_peer_trust().await?;
+
+    handle.stop_with_newline();
+
+    Ok(ctx)
+}
+
+/// Step 2: wait peer trust
+async fn step2_shamir(
+    ctx: ShamirRecoveryGreetInProgress1Ctx,
+) -> anyhow::Result<ShamirRecoveryGreetInProgress2Ctx> {
     println!(
         "Code to provide to claimer: {YELLOW}{}{RESET}",
         ctx.greeter_sas()
@@ -164,6 +209,23 @@ async fn step3_device(ctx: DeviceGreetInProgress2Ctx) -> anyhow::Result<DeviceGr
     Ok(ctx.do_signify_trust().await?)
 }
 
+/// Step 3: signify trust
+async fn step3_shamir(
+    ctx: ShamirRecoveryGreetInProgress2Ctx,
+) -> anyhow::Result<ShamirRecoveryGreetInProgress3Ctx> {
+    let mut input = String::new();
+    let sas_codes = ctx.generate_claimer_sas_choices(3);
+    for (i, sas_code) in sas_codes.iter().enumerate() {
+        println!(" {i} - {YELLOW}{sas_code}{RESET}")
+    }
+
+    println!("Select code provided by claimer (0, 1, 2)");
+
+    choose_sas_code(&mut input, &sas_codes, ctx.claimer_sas())?;
+
+    Ok(ctx.do_signify_trust().await?)
+}
+
 /// Step 4: get claim requests
 async fn step4_user(ctx: UserGreetInProgress3Ctx) -> anyhow::Result<UserGreetInProgress4Ctx> {
     Ok(ctx.do_get_claim_requests().await?)
@@ -172,6 +234,11 @@ async fn step4_user(ctx: UserGreetInProgress3Ctx) -> anyhow::Result<UserGreetInP
 /// Step 4: get claim requests
 async fn step4_device(ctx: DeviceGreetInProgress3Ctx) -> anyhow::Result<DeviceGreetInProgress4Ctx> {
     Ok(ctx.do_get_claim_requests().await?)
+}
+
+/// Step 4: send shares
+async fn step4_shamir(ctx: ShamirRecoveryGreetInProgress3Ctx) -> anyhow::Result<()> {
+    Ok(ctx.do_send_share().await?)
 }
 
 /// Step 5: create new user
