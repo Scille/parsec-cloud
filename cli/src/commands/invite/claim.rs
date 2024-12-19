@@ -2,6 +2,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
+use anyhow::anyhow;
 use libparsec::{
     internal::{
         claimer_retrieve_info, AnyClaimRetrievedInfoCtx, DeviceClaimFinalizeCtx,
@@ -20,7 +21,7 @@ use libparsec_client::{
 };
 
 use crate::utils::*;
-use dialoguer::Select;
+use dialoguer::{Input, Select};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, data_dir, password_stdin]
@@ -246,18 +247,17 @@ async fn step2_device(ctx: DeviceClaimInProgress1Ctx) -> anyhow::Result<DeviceCl
 async fn step2_shamir(
     ctx: ShamirRecoveryClaimInProgress1Ctx,
 ) -> anyhow::Result<ShamirRecoveryClaimInProgress2Ctx> {
-    let mut input = String::new();
     let sas_codes = ctx.generate_greeter_sas_choices(3);
 
-    for (i, sas_code) in sas_codes.iter().enumerate() {
-        println!(" {i} - {YELLOW}{sas_code}{RESET}")
+    let selected_sas = Select::new()
+        .items(&sas_codes)
+        .with_prompt("Select code provided by greeter")
+        .interact()?;
+    if &sas_codes[selected_sas] != ctx.greeter_sas() {
+        Err(anyhow!("Invalid SAS code"))
+    } else {
+        Ok(ctx.do_signify_trust().await?)
     }
-
-    println!("Select code provided by greeter (0, 1, 2)");
-
-    choose_sas_code(&mut input, &sas_codes, ctx.greeter_sas())?;
-
-    Ok(ctx.do_signify_trust().await?)
 }
 
 /// Step 3: wait peer trust
@@ -356,8 +356,7 @@ async fn step4_shamir(
 async fn step5_shamir(
     ctx: ShamirRecoveryClaimRecoverDeviceCtx,
 ) -> anyhow::Result<ShamirRecoveryClaimMaybeFinalizeCtx> {
-    let mut input = String::new();
-    let device_label = choose_device_label(&mut input)?;
+    let device_label = Input::new().with_prompt("Enter device label").interact()?;
 
     let mut handle = start_spinner("Waiting for greeter".into());
 
