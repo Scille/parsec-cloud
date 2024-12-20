@@ -410,6 +410,10 @@ impl fuser::Filesystem for Filesystem {
     fn statfs(&mut self, _req: &fuser::Request<'_>, ino: u64, reply: fuser::ReplyStatfs) {
         log::debug!("[FUSE] statfs(ino: {:#x?})", ino);
 
+        let (inode_used, inode_remaining) = {
+            let guard = self.inodes.lock().expect("mutex is poisoned");
+            guard.usage()
+        };
         // We have currently no way of easily getting the size of workspace
         // Also, the total size of a workspace is not limited
         // For the moment let's settle on 0 MB used for 1 TB available
@@ -417,8 +421,8 @@ impl fuser::Filesystem for Filesystem {
             0,                  // 0 for no block used
             2 * 1024u64.pow(2), // 2 MBlocks is 1 TB
             2 * 1024u64.pow(2), // 2 MBlocks is 1 TB
-            0,
-            0,
+            inode_used as u64,
+            inode_remaining as u64,
             512 * 1024, // 512 KB, i.e the default block size
             255,        // 255 bytes as maximum length for filenames
             512 * 1024, // 512 KB, i.e the default block size
