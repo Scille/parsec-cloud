@@ -11,7 +11,6 @@
         @playing="updateMediaData"
         @canplay="updateMediaData"
         @pause="updateMediaData"
-        @volumechange="updateMediaData"
         @ended="updateMediaData"
       >
         <source
@@ -27,10 +26,7 @@
           :icon="getPlaybackIcon()"
           @click="togglePlayback"
         />
-        <file-controls-button
-          :icon="getVolumeIcon()"
-          @click="toggleVolume"
-        />
+        <file-controls-volume @on-volume-change="updateVolume" />
         <file-controls-button
           :icon="scan"
           @click="toggleFullScreen"
@@ -41,22 +37,19 @@
 </template>
 
 <script setup lang="ts">
-import { refresh, play, pause, volumeHigh, volumeLow, volumeMedium, volumeMute, scan } from 'ionicons/icons';
+import { refresh, play, pause, scan } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
-import { FileControls, FileControlsButton } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsVolume } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
 }>();
 
-const VOLUME_LEVELS = [0, 0.25, 0.5, 1];
-
 const src = ref('');
 const videoElement = ref();
 const paused = ref(true);
-const volume = ref(1);
 const ended = ref(false);
 
 onMounted(async () => {
@@ -67,8 +60,8 @@ function togglePlayback(): void {
   videoElement.value.paused ? videoElement.value.play() : videoElement.value.pause();
 }
 
-function toggleVolume(): void {
-  videoElement.value.volume = VOLUME_LEVELS[(VOLUME_LEVELS.indexOf(videoElement.value.volume) + 1) % VOLUME_LEVELS.length];
+function updateVolume(value: number): void {
+  videoElement.value.volume = value;
 }
 
 function toggleFullScreen(): void {
@@ -76,24 +69,8 @@ function toggleFullScreen(): void {
 }
 
 function updateMediaData(event: Event): void {
-  volume.value = (event.target as HTMLVideoElement).volume;
   paused.value = (event.target as HTMLVideoElement).paused;
   ended.value = (event.target as HTMLVideoElement).ended;
-}
-
-function getVolumeIcon(): string {
-  switch (volume.value) {
-    case 0:
-      return volumeMute;
-    case 0.25:
-      return volumeLow;
-    case 0.5:
-      return volumeMedium;
-    case 1:
-      return volumeHigh;
-    default:
-      return volumeMute;
-  }
 }
 
 function getPlaybackIcon(): string {

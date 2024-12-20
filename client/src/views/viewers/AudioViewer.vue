@@ -16,20 +16,17 @@
         @ended="updateMediaData"
       />
     </template>
-    <!-- Disabled till we add an illustration in the viewer -->
-    <!-- <template #controls>
+    <template #controls>
       <file-controls>
-        <file-controls-button
+        <!-- Disabled till we add an illustration in the viewer -->
+        <!-- <file-controls-button
           :class="{'flip-horizontal-ion-icon': ended}"
           :icon="getPlaybackIcon()"
           @click="togglePlayback"
-        />
-        <file-controls-button
-          :icon="getVolumeIcon()"
-          @click="toggleVolume"
-        />
+        /> -->
+        <file-controls-volume @on-volume-change="updateVolume" />
       </file-controls>
-    </template> -->
+    </template>
   </file-viewer-wrapper>
 </template>
 
@@ -38,17 +35,15 @@
 import { onMounted, ref } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
+import { FileControls, FileControlsVolume } from '@/components/viewers';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
 }>();
 
-// const VOLUME_LEVELS = [0, 0.25, 0.5, 1];
-
 const src = ref('');
 const audioElement = ref();
 const paused = ref(true);
-const volume = ref(1);
 const ended = ref(false);
 
 onMounted(async () => {
@@ -59,30 +54,14 @@ onMounted(async () => {
 //   audioElement.value.paused ? audioElement.value.play() : audioElement.value.pause();
 // }
 
-// function toggleVolume(): void {
-//   audioElement.value.volume = VOLUME_LEVELS[(VOLUME_LEVELS.indexOf(audioElement.value.volume) + 1) % VOLUME_LEVELS.length];
-// }
-
 function updateMediaData(event: Event): void {
-  volume.value = (event.target as HTMLAudioElement).volume;
   paused.value = (event.target as HTMLAudioElement).paused;
   ended.value = (event.target as HTMLAudioElement).ended;
 }
 
-// function getVolumeIcon(): string {
-//   switch (volume.value) {
-//     case 0:
-//       return volumeMute;
-//     case 0.25:
-//       return volumeLow;
-//     case 0.5:
-//       return volumeMedium;
-//     case 1:
-//       return volumeHigh;
-//     default:
-//       return volumeMute;
-//   }
-// }
+function updateVolume(value: number): void {
+  audioElement.value.volume = value;
+}
 
 // function getPlaybackIcon(): string {
 //   if (ended.value) {
