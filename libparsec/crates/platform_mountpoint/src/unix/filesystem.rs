@@ -310,7 +310,7 @@ impl fuser::Filesystem for Filesystem {
         name: &std::ffi::OsStr,
         reply: fuser::ReplyEntry,
     ) {
-        log::debug!("[FUSE] lookup(parent: {:#x?}, name: {:?})", parent, name);
+        log::debug!("[FUSE] lookup(parent: {parent:#x?}, name: {name:?})");
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEntry);
 
         let uid = req.uid();
@@ -416,7 +416,7 @@ impl fuser::Filesystem for Filesystem {
         _fh: Option<u64>,
         reply: fuser::ReplyAttr,
     ) {
-        log::debug!("[FUSE] getattr(ino: {:#x?})", ino);
+        log::debug!("[FUSE] getattr(ino: {ino:#x?}, _fh: {_fh:#x?})");
         let reply = reply_on_drop_guard!(reply, fuser::ReplyAttr);
 
         let uid = req.uid();
@@ -808,12 +808,7 @@ impl fuser::Filesystem for Filesystem {
         flags: i32,
         reply: fuser::ReplyCreate,
     ) {
-        log::debug!(
-            "[FUSE] create(parent: {:#x?}, name: {:?}, flags: {:#x?})",
-            parent,
-            name,
-            flags
-        );
+        log::debug!("[FUSE] create(parent: {parent:#x?}, name: {name:?}, flags: {flags:#x?}, _mode: {_mode:o}, _umask: {_umask:o})",);
         let reply = reply_on_drop_guard!(reply, fuser::ReplyCreate);
 
         let uid = req.uid();
@@ -951,15 +946,8 @@ impl fuser::Filesystem for Filesystem {
         reply: fuser::ReplyAttr,
     ) {
         log::debug!(
-            "[FUSE] setattr(ino: {:#x?}, mode: {:?}, uid: {:?}, \
-            gid: {:?}, size: {:?}, fh: {:?}, flags: {:?})",
-            ino,
-            mode,
-            uid,
-            gid,
-            size,
-            fh,
-            flags
+            "[FUSE] setattr(ino: {ino:#x?}, mode: {mode:x?}, uid: {uid:?}, \
+            gid: {gid:?}, size: {size:?}, fh: {fh:?}, flags: {flags:x?})",
         );
         let reply = reply_on_drop_guard!(reply, fuser::ReplyAttr);
         let uid = req.uid();
