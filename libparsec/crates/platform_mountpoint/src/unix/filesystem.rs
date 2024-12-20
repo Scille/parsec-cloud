@@ -32,6 +32,8 @@ const TTL: std::time::Duration = std::time::Duration::ZERO;
 /// same time.
 const GENERATION: u64 = 0;
 const BLOCK_SIZE: u64 = 512;
+/// Default permissions for files and folders.
+/// Equivalent to `chmod` flags `all=,u=rwx`.
 const PERMISSIONS: u16 = 0o700;
 
 fn os_name_to_entry_name(name: &OsStr) -> EntryNameResult<EntryName> {
@@ -49,7 +51,7 @@ fn file_stat_to_file_attr(stat: FileStat, inode: Inode, uid: u32, gid: u32) -> f
         blocks: (stat.size + BLOCK_SIZE - 1) / BLOCK_SIZE,
         atime: updated,
         mtime: updated,
-        ctime: created,
+        ctime: updated,
         crtime: created,
         kind: fuser::FileType::RegularFile,
         perm: PERMISSIONS,
@@ -78,7 +80,7 @@ fn entry_stat_to_file_attr(stat: EntryStat, inode: Inode, uid: u32, gid: u32) ->
                 blocks: (size + BLOCK_SIZE - 1) / BLOCK_SIZE,
                 atime: updated,
                 mtime: updated,
-                ctime: created,
+                ctime: updated,
                 crtime: created,
                 kind: fuser::FileType::RegularFile,
                 perm: PERMISSIONS,
