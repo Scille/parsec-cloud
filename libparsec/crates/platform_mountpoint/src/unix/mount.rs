@@ -44,10 +44,17 @@ impl Mountpoint {
                 }
             };
 
-            let (workspace_name, _) = ops.get_current_name_and_self_role();
+            let (workspace_name, role) = ops.get_current_name_and_self_role();
             let (mountpoint_path, initial_st_dev) =
                 create_suitable_mountpoint_dir(mountpoint_base_dir, &workspace_name)
                     .context("cannot create mountpoint dir")?;
+
+            let filesystem_rw_ro = match role {
+                RealmRole::Reader => fuser::MountOption::RO,
+                RealmRole::Owner | RealmRole::Manager | RealmRole::Contributor => {
+                    fuser::MountOption::RW
+                }
+            };
 
             let filesystem =
                 super::filesystem::Filesystem::new(ops, tokio::runtime::Handle::current());
@@ -63,7 +70,7 @@ impl Mountpoint {
                 #[cfg(skip_fuse_atime_option)]
                 fuser::MountOption::NoAtime,
                 fuser::MountOption::Exec,
-                fuser::MountOption::RW,
+                filesystem_rw_ro,
                 fuser::MountOption::NoDev,
             ];
 
