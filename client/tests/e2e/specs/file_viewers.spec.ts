@@ -135,6 +135,7 @@ msTest('Video viewer', async ({ documents }) => {
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
   const buttons = bottomBar.locator('.file-controls-button');
+  const volumeSlider = bottomBar.locator('.slider');
   const wrapper = documents.locator('.file-viewer-wrapper');
   const video = wrapper.locator('video');
 
@@ -163,8 +164,15 @@ msTest('Video viewer', async ({ documents }) => {
   await buttons.nth(0).click();
   expect(await Media.getCurrentTime(video)).toBeGreaterThan(0.1);
 
+  expect(volumeSlider).not.toBeVisible();
+  await buttons.nth(1).hover();
+  expect(volumeSlider).toBeVisible();
+  await volumeSlider.click();
+  await expectMedia(video).toHaveVolume(0.49);
   await buttons.nth(1).click();
   await expectMedia(video).toHaveVolume(0);
+  await buttons.nth(1).click();
+  await expectMedia(video).toHaveVolume(0.49);
 });
 
 msTest('Text viewer', async ({ documents }) => {
