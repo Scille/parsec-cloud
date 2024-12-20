@@ -10,6 +10,10 @@ async function openFileType(documentsPage: Page, type: 'xlsx' | 'docx' | 'png' |
     const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
     if (entryName.endsWith(`.${type}`)) {
       await entry.dblclick();
+      await expect(documentsPage.locator('.ms-spinner-modal')).toBeVisible();
+      await expect(documentsPage.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+      await expect(documentsPage.locator('.ms-spinner-modal')).toBeHidden();
+      await expect(documentsPage).toBeViewerPage();
       return;
     }
   }
@@ -20,7 +24,7 @@ msTest('Documents page default state', async ({ documents }) => {
 
   await entries.nth(2).dblclick();
   await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
-  await documents.waitForTimeout(500);
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toBeViewerPage();
   await expect(documents).toHavePageTitle('File viewer');
@@ -29,7 +33,6 @@ msTest('Documents page default state', async ({ documents }) => {
 
 msTest('Spreadsheet viewer', async ({ documents }) => {
   await openFileType(documents, 'xlsx');
-  await documents.waitForTimeout(500);
   await expect(documents).toBeViewerPage();
   await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.xlsx$/);
@@ -44,7 +47,6 @@ msTest('Spreadsheet viewer', async ({ documents }) => {
 
 msTest('Document viewer', async ({ documents }) => {
   await openFileType(documents, 'docx');
-  await documents.waitForTimeout(500);
   await expect(documents).toBeViewerPage();
   await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.docx$/);
@@ -65,7 +67,6 @@ msTest('Document viewer', async ({ documents }) => {
 
 msTest('PDF viewer', async ({ documents }) => {
   await openFileType(documents, 'pdf');
-  await documents.waitForTimeout(500);
   await expect(documents).toBeViewerPage();
   await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.pdf$/);
@@ -97,7 +98,6 @@ msTest('PDF viewer', async ({ documents }) => {
 
 msTest('Image viewer', async ({ documents }) => {
   await openFileType(documents, 'png');
-  await documents.waitForTimeout(500);
   await expect(documents).toBeViewerPage();
   await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.png$/);
@@ -111,7 +111,6 @@ msTest('Image viewer', async ({ documents }) => {
 
 msTest('Audio viewer', async ({ documents }) => {
   await openFileType(documents, 'mp3');
-  await documents.waitForTimeout(500);
   await expect(documents).toBeViewerPage();
   await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.mp3$/);
@@ -128,7 +127,6 @@ msTest('Audio viewer', async ({ documents }) => {
 
 msTest('Video viewer', async ({ documents }) => {
   await openFileType(documents, 'mp4');
-  await documents.waitForTimeout(500);
   await expect(documents).toBeViewerPage();
   await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.mp4$/);
@@ -169,7 +167,6 @@ msTest('Video viewer', async ({ documents }) => {
 
 msTest('Text viewer', async ({ documents }) => {
   await openFileType(documents, 'py');
-  await documents.waitForTimeout(500);
   await expect(documents).toBeViewerPage();
   await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.py$/);

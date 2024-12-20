@@ -51,6 +51,8 @@ export const msTest = base.extend<{
     await home.locator('#password-input').locator('input').fill('P@ssw0rd.');
     await expect(home.locator('.login-button')).toBeEnabled();
     await home.locator('.login-button').click();
+    await expect(home.locator('.loading-container')).toBeVisible();
+    await expect(home).toHaveURL(/\/loading\??.*$/);
     await expect(home.locator('#connected-header')).toContainText('My workspaces');
     await expect(home).toBeWorkspacePage();
 
