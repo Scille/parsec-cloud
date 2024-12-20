@@ -1351,7 +1351,8 @@
                 "invoices": "Invoices",
                 "billingMethod": "Payment method",
                 "billingDetails": "Billing details",
-                "contract": "Contract"
+                "contract": "Contract",
+                "orders": "Orders"
             },
             "help": {
                 "title": "Do you need any help?",
@@ -1374,7 +1375,8 @@
                 "customOrderBillingDetails": "Billing details",
                 "customOrderInvoices": "Invoices",
                 "customOrderStatistics": "Statistics",
-                "customOrderProcessing": "Order tracking"
+                "customOrderProcessing": "Order tracking",
+                "orders": "Orders"
             },
             "preferences": "Preferences"
         },
@@ -1689,6 +1691,39 @@
                 "payment": "Payment: ",
                 "price": "€{count}",
                 "download": "Download"
+            }
+        },
+        "orders": {
+            "new": {
+                "title": "You need to create a new organization?",
+                "button": "New request"
+            },
+            "request": {
+                "title": "Request a new on-premise contract",
+                "subtitle": "Would you like to take out a new contract to create an organization? Please specify the desired configuration.",
+                "submit": "Send the request",
+                "userNeeds": {
+                    "label": "How many people would use Parsec?",
+                    "choices": {
+                        "50": "Less than 50 people",
+                        "100": "From 50 to 100 people",
+                        "300": "From 100 to 300 people",
+                        "more": "More than 300 people"
+                    }
+                },
+                "storageNeeds": {
+                    "label": "How much storage do you need?",
+                    "choices": {
+                        "100": "Less than 100 GB",
+                        "500": "From 100 GB to 500 GB",
+                        "1000": "From 500 GB to 1 TB",
+                        "more": "More than 1 TB"
+                    }
+                },
+                "description": {
+                    "label": "Describe your needs",
+                    "placeholder": "Tell us more about your needs, expectations, and constraints..."
+                }
             }
         }
     },

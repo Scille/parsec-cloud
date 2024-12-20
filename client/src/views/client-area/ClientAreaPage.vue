@@ -103,6 +103,11 @@
                 :organization="currentOrganization"
                 @organization-selected="onOrganizationSelected"
               />
+              <orders-page
+                v-if="currentPage === ClientAreaPages.Orders"
+                :organization="currentOrganization"
+                @organization-selected="onOrganizationSelected"
+              />
               <custom-order-billing-details-page
                 v-if="currentPage === ClientAreaPages.CustomOrderBillingDetails"
                 :organization="currentOrganization"
@@ -132,6 +137,7 @@ import PersonalDataPage from '@/views/client-area/personal-data/PersonalDataPage
 import StatisticsPage from '@/views/client-area/statistics/StatisticsPage.vue';
 import CustomOrderBillingDetailsPage from '@/views/client-area/billing-details/CustomOrderBillingDetailsPage.vue';
 import CustomOrderStatisticsPage from '@/views/client-area/statistics/CustomOrderStatisticsPage.vue';
+import OrdersPage from '@/views/client-area/orders/OrdersPage.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { Translatable } from 'megashark-lib';
 import { ClientAreaQuery, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
@@ -278,6 +284,8 @@ function getTitleByPage(): Translatable {
       return 'clientArea.header.titles.customOrderStatistics';
     case ClientAreaPages.CustomOrderBillingDetails:
       return 'clientArea.header.titles.customOrderBillingDetails';
+    case ClientAreaPages.Orders:
+      return 'clientArea.header.titles.orders';
     default:
       return '';
   }

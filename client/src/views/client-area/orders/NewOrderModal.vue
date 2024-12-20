@@ -1,0 +1,145 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
+<template>
+  <ion-page class="modal">
+    <ms-modal
+      :title="'clientArea.orders.request.title'"
+      :subtitle="'clientArea.orders.request.subtitle'"
+      :close-button="{ visible: true }"
+      :confirm-button="{
+        label: 'clientArea.orders.request.submit',
+        disabled: isFormValid(),
+        onClick: submit,
+      }"
+    >
+      <div class="new-order-modal-container">
+        <div class="summary-request">
+          <div class="form">
+            <div class="form-item-content">
+              <ion-text
+                id="label"
+                class="form-label"
+              >
+                {{ $msTranslate('clientArea.orders.request.userNeeds.label') }}
+              </ion-text>
+              <ms-dropdown
+                :options="userOptions"
+                :default-option-key="userNeeds"
+                @change="userNeeds = $event.option.key"
+                ref="userNeedsDropdown"
+                alignment="start"
+              />
+            </div>
+            <div class="form-item-content">
+              <ion-text
+                id="label"
+                class="form-label"
+              >
+                {{ $msTranslate('clientArea.orders.request.storageNeeds.label') }}
+              </ion-text>
+              <ms-dropdown
+                :options="storageOptions"
+                :default-option-key="storageNeeds"
+                @change="storageNeeds = $event.option.key"
+                ref="storageNeedsDropdown"
+                alignment="start"
+              />
+            </div>
+            <div class="form-item-content">
+              <ion-text
+                id="label"
+                class="form-label"
+              >
+                {{ $msTranslate('clientArea.orders.request.storageNeeds.label') }}
+              </ion-text>
+              <ms-textarea
+                class="form-input form-field"
+                v-model="description"
+                mode="ios"
+                placeholder="clientArea.orders.request.description.placeholder"
+                :cols="80"
+                :rows="8"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </ms-modal>
+  </ion-page>
+</template>
+
+<script setup lang="ts">
+import { MsDropdown, MsOptions, MsModal, MsTextarea, MsModalResult } from 'megashark-lib';
+import { IonPage, IonText, modalController } from '@ionic/vue';
+import { ref } from 'vue';
+
+const userOptions: MsOptions = new MsOptions([
+  {
+    key: 50,
+    label: 'clientArea.orders.request.userNeeds.choices.50',
+  },
+  {
+    key: 100,
+    label: 'clientArea.orders.request.userNeeds.choices.100',
+  },
+  {
+    key: 300,
+    label: 'clientArea.orders.request.userNeeds.choices.300',
+  },
+  {
+    key: 9999,
+    label: 'clientArea.orders.request.userNeeds.choices.more',
+  },
+]);
+
+const storageOptions: MsOptions = new MsOptions([
+  {
+    key: 100,
+    label: 'clientArea.orders.request.storageNeeds.choices.100',
+  },
+  {
+    key: 500,
+    label: 'clientArea.orders.request.storageNeeds.choices.500',
+  },
+  {
+    key: 1000,
+    label: 'clientArea.orders.request.storageNeeds.choices.1000',
+  },
+  {
+    key: 9999,
+    label: 'clientArea.orders.request.storageNeeds.choices.more',
+  },
+]);
+
+const userNeeds = ref<number>(50);
+const storageNeeds = ref<number>(100);
+const userNeedsDropdown = ref();
+const storageNeedsDropdown = ref();
+const description = ref<string>('');
+
+function isFormValid(): boolean {
+  return userNeeds.value !== undefined && storageNeeds.value !== undefined && description.value.length > 0;
+}
+
+async function submit(): Promise<boolean> {
+  if (!isFormValid()) {
+    return false;
+  }
+
+  return await modalController.dismiss(null, MsModalResult.Confirm);
+}
+</script>
+
+<style scoped lang="scss">
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+</style>
