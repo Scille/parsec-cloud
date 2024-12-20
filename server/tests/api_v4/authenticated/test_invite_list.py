@@ -4,6 +4,7 @@
 from parsec._parsec import (
     DateTime,
     InvitationStatus,
+    ShamirRecoveryDeletionCertificate,
     authenticated_cmds,
 )
 from tests.common import (
@@ -123,6 +124,46 @@ async def test_authenticated_invite_list_ok(
     rep = await minimalorg.alice.invite_list()
     assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
     assert rep.invitations == expected_invitations
+
+
+async def test_authenticated_invite_list_with_deleted_shamir(
+    shamirorg: ShamirOrgRpcClients,
+) -> None:
+    # Get invitations
+    rep = await shamirorg.bob.invite_list()
+    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    (previous_invitation,) = rep.invitations
+    assert isinstance(
+        previous_invitation, authenticated_cmds.v4.invite_list.InviteListItemShamirRecovery
+    )
+
+    # Delete Alice shamir recovery
+    dt = DateTime.now()
+    author = shamirorg.alice
+    brief = shamirorg.alice_brief_certificate
+    deletion = ShamirRecoveryDeletionCertificate(
+        author=author.device_id,
+        timestamp=dt,
+        setup_to_delete_timestamp=brief.timestamp,
+        setup_to_delete_user_id=brief.user_id,
+        share_recipients=set(brief.per_recipient_shares.keys()),
+    ).dump_and_sign(author.signing_key)
+    rep = await shamirorg.alice.shamir_recovery_delete(deletion)
+    assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepOk()
+
+    # Expected invitation
+    expected = authenticated_cmds.latest.invite_list.InviteListItemShamirRecovery(
+        token=previous_invitation.token,
+        created_on=previous_invitation.created_on,
+        claimer_user_id=previous_invitation.claimer_user_id,
+        status=InvitationStatus.CANCELLED,
+    )
+
+    # Check invitations
+    rep = await shamirorg.bob.invite_list()
+    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    (invitation,) = rep.invitations
+    assert invitation == expected
 
 
 async def test_authenticated_invite_list_http_common_errors(
