@@ -20,8 +20,10 @@ import TOSModal from '@/views/organizations/TOSModal.vue';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { MsModalResult, openSpinnerModal } from 'megashark-lib';
 import { DateTime } from 'luxon';
+import { StorageManagerKey, StorageManager } from '@/services/storageManager';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
 let injections: Injections;
 const initialized = ref(false);
 const modalOpened = ref(false);
@@ -110,6 +112,20 @@ async function logout(): Promise<void> {
   if (!handle) {
     window.electronAPI.log('error', 'No handle found when trying to log out');
   } else {
+    const connInfo = getConnectionInfo(handle);
+
+    if (connInfo) {
+      const storedDeviceDataDict = await storageManager.retrieveDevicesData();
+      if (!storedDeviceDataDict[connInfo.device.deviceId]) {
+        storedDeviceDataDict[connInfo.device.deviceId] = {
+          lastLogin: DateTime.now(),
+        };
+      } else {
+        storedDeviceDataDict[connInfo.device.deviceId].lastLogin = DateTime.now();
+      }
+      await storageManager.storeDevicesData(storedDeviceDataDict);
+    }
+
     // Cleaning the injections will automatically cancel the imports
     await injectionProvider.clean(handle);
     const logoutResult = await parsecLogout();
@@ -117,6 +133,7 @@ async function logout(): Promise<void> {
       window.electronAPI.log('error', `Error when logging out: ${JSON.stringify(logoutResult.error)}`);
     }
   }
+
   await modal.dismiss();
   await navigateTo(Routes.Home, { replace: true, skipHandle: true });
 }
