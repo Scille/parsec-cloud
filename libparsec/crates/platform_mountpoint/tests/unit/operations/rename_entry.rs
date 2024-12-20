@@ -7,6 +7,7 @@ use libparsec_client::{
     Client,
 };
 use libparsec_tests_fixtures::prelude::*;
+use libparsec_types::prelude::*;
 
 use super::utils::mount_and_test;
 
@@ -109,6 +110,42 @@ async fn dst_parent_exists_as_file(tmp_path: TmpPath, env: &TestbedEnv) {
                     err
                 );
             }
+        }
+    );
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn read_only_realm(tmp_path: TmpPath, env: &TestbedEnv) {
+    env.customize(|builder| {
+        // Share workspace with a new user Bob so that Alice is able to become a reader...
+        let wksp1_id: VlobID = *builder.get_stuff("wksp1_id");
+        builder.new_user("bob");
+        builder.share_realm(wksp1_id, "bob", Some(RealmRole::Owner));
+        builder.share_realm(wksp1_id, "alice", Some(RealmRole::Reader));
+        // ...on top of that, Alice's client must be aware of the change
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+        builder
+            .user_storage_local_update("alice@dev1")
+            .update_local_workspaces_with_fetched_certificates();
+    })
+    .await;
+    mount_and_test!(
+        env,
+        &tmp_path,
+        |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
+            let src = mountpoint_path.join("bar.txt");
+            let dst = mountpoint_path.join("bar2.txt");
+
+            let err = tokio::fs::rename(&src, &dst).await.unwrap_err();
+            #[cfg(not(target_os = "windows"))]
+            p_assert_eq!(err.raw_os_error(), Some(libc::EROFS), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_WRITE_PROTECT as i32),
+                "{}",
+                err
+            );
         }
     );
 }
