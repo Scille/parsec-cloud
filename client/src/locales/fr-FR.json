@@ -1351,7 +1351,8 @@
                 "invoices": "Factures",
                 "billingMethod": "Méthode de paiement",
                 "billingDetails": "Coordonnées de facturation",
-                "contract": "Contrat"
+                "contract": "Contrat",
+                "orders": "Commandes"
             },
             "help": {
                 "title": "Vous avez besoin d'aide ?",
@@ -1374,7 +1375,8 @@
                 "customOrderBillingDetails": "Coordonnées de facturation",
                 "customOrderInvoices": "Factures",
                 "customOrderStatistics": "Statistiques",
-                "customOrderProcessing": "Suivi de commande"
+                "customOrderProcessing": "Suivi de commande",
+                "orders": "Commandes"
             },
             "preferences": "Préférences"
         },
@@ -1689,6 +1691,39 @@
                 "payment": "Paiement : ",
                 "price": "{count} €",
                 "download": "Télécharger"
+            }
+        },
+        "orders": {
+            "new": {
+                "title": "Vous avez besoin de créer une nouvelle organisation ?",
+                "button": "Nouvelle demande"
+            },
+            "request": {
+                "title": "Demande d'un contrat sur-mesure",
+                "subtitle": "Vous souhaitez souscrire à un nouveau contrat pour créer une organisation ? Veuillez nous préciser la configuration souhaitée.",
+                "submit": "Envoyer la demande",
+                "userNeeds": {
+                    "label": "Combien de personnes utiliseraient Parsec ?",
+                    "choices": {
+                        "50": "Moins de 50 personnes",
+                        "100": "De 50 à 100 personnes",
+                        "300": "De 100 à 300 personnes",
+                        "more": "Plus de 300 personnes"
+                    }
+                },
+                "storageNeeds": {
+                    "label": "Quel volume de données vous est nécessaire ?",
+                    "choices": {
+                        "100": "Moins de 100 Go",
+                        "500": "De 100 Go à 500 Go",
+                        "1000": "De 500 Go à 1 To",
+                        "more": "Plus de 1 To"
+                    }
+                },
+                "description": {
+                    "label": "Décrire vos besoins",
+                    "placeholder": "Dites-nous en plus sur vos besoins, vos attentes et vos contraintes..."
+                }
             }
         }
     },

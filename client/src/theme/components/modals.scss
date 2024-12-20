@@ -329,3 +329,9 @@
     max-width: var(--parsec-modal-width-lg);
   }
 }
+
+.new-order-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+  }
+}
