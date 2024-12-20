@@ -219,7 +219,7 @@ async fn read_only_realm(tmp_path: TmpPath, env: &TestbedEnv) {
             let path = mountpoint_path.join("bar.txt");
             let err = tokio::fs::remove_file(&path).await.unwrap_err();
             #[cfg(not(target_os = "windows"))]
-            p_assert_matches!(err.kind(), std::io::ErrorKind::PermissionDenied);
+            p_assert_eq!(err.raw_os_error(), Some(libc::EROFS), "{}", err);
             #[cfg(target_os = "windows")]
             p_assert_eq!(
                 err.raw_os_error(),

@@ -4,15 +4,39 @@ use std::{io::Write, path::PathBuf, sync::Arc};
 
 use libparsec_client::{workspace::WorkspaceOps, Client};
 use libparsec_tests_fixtures::prelude::*;
+use libparsec_types::prelude::*;
 
 use super::utils::mount_and_test;
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn file(
-    #[values("default", "just_created", "just_modified", "just_moved")] kind: &'static str,
+    #[values(
+        "default",
+        "just_created",
+        "just_modified",
+        "just_moved",
+        "read_only_workspace"
+    )]
+    kind: &'static str,
     tmp_path: TmpPath,
     env: &TestbedEnv,
 ) {
+    if kind == "read_only_workspace" {
+        env.customize(|builder| {
+            // Share workspace with a new user Bob so that Alice is able to become a reader...
+            let wksp1_id: VlobID = *builder.get_stuff("wksp1_id");
+            builder.new_user("bob");
+            builder.share_realm(wksp1_id, "bob", Some(RealmRole::Owner));
+            builder.share_realm(wksp1_id, "alice", Some(RealmRole::Reader));
+            // ...on top of that, Alice's client must be aware of the change
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .user_storage_local_update("alice@dev1")
+                .update_local_workspaces_with_fetched_certificates();
+        })
+        .await;
+    }
+
     mount_and_test!(
         env,
         &tmp_path,
@@ -24,7 +48,7 @@ async fn file(
             // (true story).
             tokio::task::spawn_blocking(move || {
                 let (file_path, expected_size) = match kind {
-                    "default" => {
+                    "default" | "read_only_workspace" => {
                         let path = mountpoint_path.join("bar.txt");
                         (path, 11)
                     }

@@ -9,7 +9,31 @@ use libparsec_types::prelude::*;
 use super::utils::{mount_and_test, os_ls};
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
+async fn ok(
+    #[values("default", "read_only_workspace")] kind: &str,
+    tmp_path: TmpPath,
+    env: &TestbedEnv,
+) {
+    match kind {
+        "default" => (),
+        "read_only_workspace" => {
+            env.customize(|builder| {
+                // Share workspace with a new user Bob so that Alice is able to become a reader...
+                let wksp1_id: VlobID = *builder.get_stuff("wksp1_id");
+                builder.new_user("bob");
+                builder.share_realm(wksp1_id, "bob", Some(RealmRole::Owner));
+                builder.share_realm(wksp1_id, "alice", Some(RealmRole::Reader));
+                // ...on top of that, Alice's client must be aware of the change
+                builder.certificates_storage_fetch_certificates("alice@dev1");
+                builder
+                    .user_storage_local_update("alice@dev1")
+                    .update_local_workspaces_with_fetched_certificates();
+            })
+            .await;
+        }
+        unknown => panic!("Unknown kind: {}", unknown),
+    }
+
     mount_and_test!(
         env,
         &tmp_path,

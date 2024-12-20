@@ -44,7 +44,7 @@ impl Mountpoint {
                 }
             };
 
-            let (workspace_name, _) = ops.get_current_name_and_self_role();
+            let (workspace_name, self_role) = ops.get_current_name_and_self_role();
             let (mountpoint_path, initial_st_dev) =
                 create_suitable_mountpoint_dir(mountpoint_base_dir, &workspace_name)
                     .context("cannot create mountpoint dir")?;
@@ -63,7 +63,12 @@ impl Mountpoint {
                 #[cfg(skip_fuse_atime_option)]
                 fuser::MountOption::NoAtime,
                 fuser::MountOption::Exec,
-                fuser::MountOption::RW,
+                // TODO: Should detect and re-mount when the workspace switched between read-only and read-write
+                if self_role.can_write() {
+                    fuser::MountOption::RW
+                } else {
+                    fuser::MountOption::RO
+                },
                 fuser::MountOption::NoDev,
             ];
 

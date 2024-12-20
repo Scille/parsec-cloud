@@ -306,8 +306,11 @@ async fn read_only_realm(
     #[values(
         "open_for_read",
         "open_for_write",
+        "open_for_write_truncate",
+        "open_for_append",
         "open_for_read_write",
-        "create_open"
+        "create_append",
+        "create_new_write"
     )]
     kind: &str,
     tmp_path: TmpPath,
@@ -344,8 +347,11 @@ async fn read_only_realm(
         let (should_succeed, name) = match kind {
             "open_for_read" => { open_options.read(true); (true, "bar.txt") },
             "open_for_write" => { open_options.write(true); (false, "bar.txt") },
+            "open_for_write_truncate" => { open_options.write(true).truncate(true); (false, "bar.txt") },
+            "open_for_append" => { open_options.append(true); (false, "bar.txt") },
             "open_for_read_write" => { open_options.read(true).write(true); (false, "bar.txt") },
-            "create_open" => { open_options.write(true).create(true); (false, "new.txt") },
+            "create_append" => { open_options.append(true).create(true); (false, "new.txt") },
+            "create_new_write" => { open_options.write(true).create_new(true); (false, "new.txt") },
             unknown => panic!("Unknown kind: {}", unknown),
         };
 
@@ -362,9 +368,8 @@ async fn read_only_realm(
             outcome.unwrap();
         } else {
             let err = outcome.unwrap_err();
-            // TODO: change error to be closer to
             #[cfg(not(target_os = "windows"))]
-            p_assert_matches!(err.kind(), std::io::ErrorKind::PermissionDenied);
+            p_assert_eq!(err.raw_os_error(), Some(libc::EROFS), "{}", err);
             #[cfg(target_os = "windows")]
             p_assert_eq!(
                 err.raw_os_error(),
