@@ -66,32 +66,7 @@ fn file_stat_to_file_attr(stat: FileStat, inode: Inode, uid: u32, gid: u32) -> f
 
 fn entry_stat_to_file_attr(stat: EntryStat, inode: Inode, uid: u32, gid: u32) -> fuser::FileAttr {
     match stat {
-        EntryStat::File {
-            created,
-            updated,
-            size,
-            ..
-        } => {
-            let created: std::time::SystemTime = created.into();
-            let updated: std::time::SystemTime = updated.into();
-            fuser::FileAttr {
-                ino: inode,
-                size,
-                blocks: (size + BLOCK_SIZE - 1) / BLOCK_SIZE,
-                atime: updated,
-                mtime: updated,
-                ctime: updated,
-                crtime: created,
-                kind: fuser::FileType::RegularFile,
-                perm: PERMISSIONS,
-                nlink: 1,
-                uid,
-                gid,
-                rdev: 0,
-                blksize: BLOCK_SIZE as u32,
-                flags: 0,
-            }
-        }
+        EntryStat::File { base, .. } => file_stat_to_file_attr(base, inode, uid, gid),
 
         EntryStat::Folder {
             created, updated, ..

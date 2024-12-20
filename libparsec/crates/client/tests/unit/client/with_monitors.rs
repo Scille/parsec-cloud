@@ -89,7 +89,7 @@ async fn multi_devices(env: &TestbedEnv) {
             .into_iter()
             .map(|(name, stat)| {
                 let id = match stat {
-                    EntryStat::File { id, .. } => id,
+                    EntryStat::File { base, .. } => base.id,
                     EntryStat::Folder { id, .. } => id,
                 };
                 (name, id)
