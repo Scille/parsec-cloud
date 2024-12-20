@@ -190,7 +190,10 @@ macro_rules! reply_on_drop_guard {
                     // Already replied
                     None => (),
                     // Not replied time to do it with ourself !
-                    Some(reply) => reply.error(libc::EIO),
+                    Some(reply) => {
+                        log::error!("Reply not sent, sending generic error");
+                        reply.error(libc::EIO)
+                    }
                 }
             }
         }
