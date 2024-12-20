@@ -66,8 +66,8 @@ function createMockFunction(functionName: string, mockSuccess?: MockFunction, mo
 }
 
 function getMockParameters(functionName: string): MockParameters {
-  const mockFunctionsVariable: string = import.meta.env.PARSEC_APP_BMS_MOCKED_FUNCTIONS;
-  const failFunctionsVariable: string = import.meta.env.PARSEC_APP_BMS_FAIL_FUNCTIONS;
+  const mockFunctionsVariable: string = import.meta.env.PARSEC_APP_BMS_MOCKED_FUNCTIONS ?? '';
+  const failFunctionsVariable: string = import.meta.env.PARSEC_APP_BMS_FAIL_FUNCTIONS ?? '';
   const mockedFunctions = mockFunctionsVariable.split(';');
   const failFunctions = failFunctionsVariable.split(';');
 
