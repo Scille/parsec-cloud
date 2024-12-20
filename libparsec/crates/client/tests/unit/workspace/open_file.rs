@@ -11,7 +11,8 @@ use libparsec_types::prelude::*;
 use super::utils::{assert_ls, ls, workspace_ops_factory};
 use crate::{
     workspace::{
-        EntryStat, OpenOptions, WorkspaceFdReadError, WorkspaceFdWriteError, WorkspaceOpenFileError,
+        EntryStat, FileStat, OpenOptions, WorkspaceFdReadError, WorkspaceFdWriteError,
+        WorkspaceOpenFileError,
     },
     EventWorkspaceOpsOutboundSyncNeeded,
 };
@@ -201,7 +202,7 @@ async fn open_with_create(#[values(true, false)] file_already_exists: bool, env:
             .await
             .unwrap();
         let new_file_id = match stat {
-            EntryStat::File { id, .. } => id,
+            EntryStat::File { base, .. } => base.id,
             EntryStat::Folder { .. } => unreachable!(),
         };
         spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
@@ -261,7 +262,7 @@ async fn open_with_create_new(#[values(true, false)] file_already_exists: bool, 
             .await
             .unwrap();
         let new_file_id = match stat {
-            EntryStat::File { id, .. } => id,
+            EntryStat::File { base, .. } => base.id,
             EntryStat::Folder { .. } => unreachable!(),
         };
         spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
@@ -305,10 +306,14 @@ async fn open_with_truncate(env: &TestbedEnv) {
 
     match ops.stat_entry_by_id(wksp1_bar_txt_id).await.unwrap() {
         EntryStat::File {
-            base_version,
-            is_placeholder,
-            need_sync,
-            size,
+            base:
+                FileStat {
+                    base_version,
+                    is_placeholder,
+                    need_sync,
+                    size,
+                    ..
+                },
             ..
         } => {
             p_assert_eq!(need_sync, true);

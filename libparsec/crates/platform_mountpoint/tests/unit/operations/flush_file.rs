@@ -54,7 +54,7 @@ async fn ok(
                 .stat_entry(&"/bar.txt".parse().unwrap())
                 .await
                 .unwrap();
-            p_assert_matches!(stat, EntryStat::File { size, .. } if size == expected_size);
+            p_assert_matches!(stat, EntryStat::File { base, .. } if base.size == expected_size);
 
             // File descriptor must be kept so that the file is not closed before we do the stat
             tokio::task::spawn_blocking(move || {

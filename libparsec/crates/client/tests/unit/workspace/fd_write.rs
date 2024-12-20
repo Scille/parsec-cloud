@@ -215,7 +215,7 @@ async fn write_zero(
 
     let spy = ops.event_bus.spy.start_expecting();
     let size = match ops.stat_entry_by_id(wksp1_bar_txt_id).await.unwrap() {
-        EntryStat::File { size, .. } => size,
+        EntryStat::File { base, .. } => base.size,
         EntryStat::Folder { .. } => unreachable!(),
     };
 
@@ -302,7 +302,7 @@ async fn write_data(
 
     let mut spy = ops.event_bus.spy.start_expecting();
     let size = match ops.stat_entry_by_id(wksp1_bar_txt_id).await.unwrap() {
-        EntryStat::File { size, .. } => size,
+        EntryStat::File { base, .. } => base.size,
         EntryStat::Folder { .. } => unreachable!(),
     };
 

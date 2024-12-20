@@ -4,7 +4,9 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
-use crate::workspace::{store::PathConfinementPoint, EntryStat, OpenOptions, WorkspaceOps};
+use crate::workspace::{
+    store::PathConfinementPoint, EntryStat, FileStat, OpenOptions, WorkspaceOps,
+};
 
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) {
@@ -97,14 +99,16 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
         info,
         EntryStat::File{
             confinement_point,
-            id,
             parent,
-            created,
-            updated,
-            base_version,
-            is_placeholder,
-            need_sync,
-            size,
+            base: FileStat {
+                id,
+                created,
+                updated,
+                base_version,
+                is_placeholder,
+                need_sync,
+                size,
+            }
         }
         if {
             p_assert_eq!(confinement_point, None);
@@ -257,14 +261,17 @@ async fn stat_entry_by_id(
         info,
         EntryStat::File{
             confinement_point,
-            id,
             parent,
-            created,
-            updated,
-            base_version,
-            is_placeholder,
-            need_sync,
-            size,
+            base: FileStat {
+
+                id,
+                created,
+                updated,
+                base_version,
+                is_placeholder,
+                need_sync,
+                size,
+            }
         }
         if {
             p_assert_eq!(confinement_point, expected_confinement_point);
@@ -384,11 +391,15 @@ async fn stat_entry_on_confined_entry(
         info,
         EntryStat::File{
             confinement_point,
-            id,
             parent,
-            base_version,
-            is_placeholder,
-            need_sync,
+            base: FileStat {
+
+                id,
+                base_version,
+                is_placeholder,
+                need_sync,
+                ..
+            },
             ..
         }
         if {
@@ -408,11 +419,15 @@ async fn stat_entry_on_confined_entry(
         info,
         EntryStat::File{
             confinement_point,
-            id,
             parent,
-            base_version,
-            is_placeholder,
-            need_sync,
+            base: FileStat {
+
+                id,
+                base_version,
+                is_placeholder,
+                need_sync,
+                ..
+            },
             ..
         }
         if {
@@ -444,11 +459,15 @@ async fn stat_entry_on_confined_entry(
         info,
         EntryStat::File{
             confinement_point,
-            id,
             parent,
-            base_version,
-            is_placeholder,
-            need_sync,
+            base: FileStat {
+                id,
+                base_version,
+                is_placeholder,
+                need_sync,
+                ..
+
+            },
             ..
         }
         if {
@@ -468,11 +487,15 @@ async fn stat_entry_on_confined_entry(
         info,
         EntryStat::File{
             confinement_point,
-            id,
             parent,
-            base_version,
-            is_placeholder,
-            need_sync,
+            base:FileStat {
+
+                id,
+                base_version,
+                is_placeholder,
+                need_sync,
+                ..
+            },
             ..
         }
         if {
@@ -504,11 +527,15 @@ async fn stat_entry_on_confined_entry(
         info,
         EntryStat::File{
             confinement_point,
-            id,
             parent,
-            base_version,
-            is_placeholder,
-            need_sync,
+            base: FileStat {
+
+                id,
+                base_version,
+                is_placeholder,
+                need_sync,
+                ..
+            },
             ..
         }
         if {
@@ -528,11 +555,15 @@ async fn stat_entry_on_confined_entry(
         info,
         EntryStat::File{
             confinement_point,
-            id,
             parent,
-            base_version,
-            is_placeholder,
-            need_sync,
+            base: FileStat {
+
+                id,
+                base_version,
+                is_placeholder,
+                need_sync,
+                ..
+            },
             ..
         }
         if {
@@ -598,14 +629,16 @@ async fn stat_entry_on_under_modification_file(
 
     let expected_stat = EntryStat::File {
         confinement_point: None,
-        id: wksp1_bar_txt_id,
         parent: wksp1_id,
-        created: "2000-01-07T00:00:00Z".parse().unwrap(),
-        updated: "2020-01-01T00:00:00Z".parse().unwrap(),
-        base_version: 1,
-        is_placeholder: false,
-        need_sync: true,
-        size: expected_size,
+        base: FileStat {
+            id: wksp1_bar_txt_id,
+            created: "2000-01-07T00:00:00Z".parse().unwrap(),
+            updated: "2020-01-01T00:00:00Z".parse().unwrap(),
+            base_version: 1,
+            is_placeholder: false,
+            need_sync: true,
+            size: expected_size,
+        },
     };
 
     p_assert_eq!(stat, expected_stat);

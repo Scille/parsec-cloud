@@ -225,7 +225,7 @@ async fn remove_file_with_local_changes(
     );
     p_assert_matches!(
         ops.stat_entry_by_id(wksp1_foo_egg_txt_id).await.unwrap(),
-        EntryStat::File { need_sync, .. } if !need_sync
+        EntryStat::File { base, .. } if !base.need_sync
     );
     p_assert_matches!(
         ops.store

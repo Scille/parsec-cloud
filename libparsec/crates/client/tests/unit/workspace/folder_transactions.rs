@@ -7,7 +7,7 @@ use libparsec_types::prelude::*;
 
 use super::utils::{ls, workspace_ops_factory, workspace_ops_with_prevent_sync_pattern_factory};
 use crate::{
-    workspace::{EntryStat, MoveEntryMode},
+    workspace::{EntryStat, FileStat, MoveEntryMode},
     EventWorkspaceOpsOutboundSyncNeeded, WorkspaceOps,
 };
 
@@ -560,9 +560,8 @@ fn check_stat_with_caller(
         (
             EntryType::File,
             EntryStat::File {
-                id,
-                need_sync,
                 confinement_point,
+                base: FileStat { id, need_sync, .. },
                 ..
             },
         )

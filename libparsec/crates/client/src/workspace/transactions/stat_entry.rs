@@ -7,6 +7,7 @@ use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
         store::{GetManifestError, PathConfinementPoint, ResolvePathError},
+        transactions::fd_stat::FileStat,
         WorkspaceOps,
     },
 };
@@ -18,14 +19,8 @@ pub enum EntryStat {
         /// manifest that contains a child with a confined name in the path leading
         /// to our entry.
         confinement_point: Option<VlobID>,
-        id: VlobID,
         parent: VlobID,
-        created: DateTime,
-        updated: DateTime,
-        base_version: VersionInt,
-        is_placeholder: bool,
-        need_sync: bool,
-        size: SizeInt,
+        base: FileStat,
     },
     // Here Folder can also be the root of the workspace (i.e. WorkspaceManifest)
     Folder {
@@ -46,7 +41,7 @@ pub enum EntryStat {
 impl EntryStat {
     pub fn id(&self) -> VlobID {
         match self {
-            EntryStat::File { id, .. } => *id,
+            EntryStat::File { base, .. } => base.id,
             EntryStat::Folder { id, .. } => *id,
         }
     }
@@ -173,14 +168,16 @@ pub(crate) async fn stat_entry_by_id(
 
             EntryStat::File {
                 confinement_point: confinement_point.into(),
-                id: manifest.base.id,
                 parent: manifest.parent,
-                created: manifest.base.created,
-                updated: manifest.updated,
-                base_version: manifest.base.version,
-                is_placeholder: manifest.base.version == 0,
-                need_sync: manifest.need_sync,
-                size: manifest.size,
+                base: FileStat {
+                    id: manifest.base.id,
+                    created: manifest.base.created,
+                    updated: manifest.updated,
+                    base_version: manifest.base.version,
+                    is_placeholder: manifest.base.version == 0,
+                    need_sync: manifest.need_sync,
+                    size: manifest.size,
+                },
             }
         }
     };
@@ -244,14 +241,16 @@ pub(crate) async fn stat_entry(
 
             EntryStat::File {
                 confinement_point: confinement_point.into(),
-                id: manifest.base.id,
                 parent: manifest.parent,
-                created: manifest.base.created,
-                updated: manifest.updated,
-                base_version: manifest.base.version,
-                is_placeholder: manifest.base.version == 0,
-                need_sync: manifest.need_sync,
-                size: manifest.size,
+                base: FileStat {
+                    id: manifest.base.id,
+                    created: manifest.base.created,
+                    updated: manifest.updated,
+                    base_version: manifest.base.version,
+                    is_placeholder: manifest.base.version == 0,
+                    need_sync: manifest.need_sync,
+                    size: manifest.size,
+                },
             }
         }
     };

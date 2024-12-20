@@ -73,7 +73,7 @@ async fn workspace_import_file(tmp_path: TmpPath) {
     assert_eq!(entries.len(), 1);
     let (name, stat) = &entries[0];
     assert_eq!(name.as_ref(), "test.txt");
-    assert!(matches!(stat, libparsec::EntryStat::File { size, .. } if size == &13));
+    assert!(matches!(stat, libparsec::EntryStat::File { base, .. } if base.size == 13));
 }
 
 #[rstest::rstest]

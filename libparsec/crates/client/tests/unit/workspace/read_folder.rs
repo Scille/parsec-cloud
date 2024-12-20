@@ -8,7 +8,7 @@ use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
 use crate::workspace::{
-    transactions::FolderReaderStatNextOutcome, EntryStat, MoveEntryMode, OpenOptions,
+    transactions::FolderReaderStatNextOutcome, EntryStat, FileStat, MoveEntryMode, OpenOptions,
 };
 
 fn expect_entry(stat: FolderReaderStatNextOutcome<'_>) -> (&EntryName, EntryStat) {
@@ -43,14 +43,16 @@ async fn ok_with_local_cache(#[values(true, false)] target_is_root: bool, env: &
                 "bar.txt".parse().unwrap(),
                 EntryStat::File {
                     confinement_point: None,
-                    id: wksp1_bar_txt_id,
                     parent: wksp1_id,
-                    created: "2000-01-07T00:00:00Z".parse().unwrap(),
-                    updated: "2000-01-07T00:00:00Z".parse().unwrap(),
-                    base_version: 1,
-                    is_placeholder: false,
-                    need_sync: false,
-                    size: 11,
+                    base: FileStat {
+                        id: wksp1_bar_txt_id,
+                        created: "2000-01-07T00:00:00Z".parse().unwrap(),
+                        updated: "2000-01-07T00:00:00Z".parse().unwrap(),
+                        base_version: 1,
+                        is_placeholder: false,
+                        need_sync: false,
+                        size: 11,
+                    },
                 },
             ),
             (
@@ -76,14 +78,16 @@ async fn ok_with_local_cache(#[values(true, false)] target_is_root: bool, env: &
                 "egg.txt".parse().unwrap(),
                 EntryStat::File {
                     confinement_point: None,
-                    id: wksp1_foo_egg_txt_id,
                     parent: wksp1_foo_id,
-                    created: "2000-01-09T00:00:00Z".parse().unwrap(),
-                    updated: "2000-01-09T00:00:00Z".parse().unwrap(),
-                    base_version: 1,
-                    is_placeholder: false,
-                    need_sync: false,
-                    size: 0,
+                    base: FileStat {
+                        id: wksp1_foo_egg_txt_id,
+                        created: "2000-01-09T00:00:00Z".parse().unwrap(),
+                        updated: "2000-01-09T00:00:00Z".parse().unwrap(),
+                        base_version: 1,
+                        is_placeholder: false,
+                        need_sync: false,
+                        size: 0,
+                    },
                 },
             ),
             (
@@ -192,14 +196,16 @@ async fn ok_no_local_cache(#[values(true, false)] target_is_root: bool, env: &Te
                 "bar.txt".parse().unwrap(),
                 EntryStat::File {
                     confinement_point: None,
-                    id: wksp1_bar_txt_id,
                     parent: wksp1_id,
-                    created: "2000-01-07T00:00:00Z".parse().unwrap(),
-                    updated: "2000-01-07T00:00:00Z".parse().unwrap(),
-                    base_version: 1,
-                    is_placeholder: false,
-                    need_sync: false,
-                    size: 11,
+                    base: FileStat {
+                        id: wksp1_bar_txt_id,
+                        created: "2000-01-07T00:00:00Z".parse().unwrap(),
+                        updated: "2000-01-07T00:00:00Z".parse().unwrap(),
+                        base_version: 1,
+                        is_placeholder: false,
+                        need_sync: false,
+                        size: 11,
+                    },
                 },
             ),
             (
@@ -225,14 +231,16 @@ async fn ok_no_local_cache(#[values(true, false)] target_is_root: bool, env: &Te
                 "egg.txt".parse().unwrap(),
                 EntryStat::File {
                     confinement_point: None,
-                    id: wksp1_foo_egg_txt_id,
                     parent: wksp1_foo_id,
-                    created: "2000-01-09T00:00:00Z".parse().unwrap(),
-                    updated: "2000-01-09T00:00:00Z".parse().unwrap(),
-                    base_version: 1,
-                    is_placeholder: false,
-                    need_sync: false,
-                    size: 0,
+                    base: FileStat {
+                        id: wksp1_foo_egg_txt_id,
+                        created: "2000-01-09T00:00:00Z".parse().unwrap(),
+                        updated: "2000-01-09T00:00:00Z".parse().unwrap(),
+                        base_version: 1,
+                        is_placeholder: false,
+                        need_sync: false,
+                        size: 0,
+                    },
                 },
             ),
             (
@@ -427,14 +435,16 @@ async fn read_folder_with_confined_entries(
             "egg.txt.tmp".parse().unwrap(),
             EntryStat::File {
                 confinement_point: expected_egg_txt_confinement_point,
-                id: wksp1_foo_egg_txt_id,
                 parent: wksp1_foo_id,
-                created: "2000-01-09T00:00:00Z".parse().unwrap(),
-                updated: "2000-01-09T00:00:00Z".parse().unwrap(),
-                base_version: 1,
-                is_placeholder: false,
-                need_sync: false,
-                size: 0,
+                base: FileStat {
+                    id: wksp1_foo_egg_txt_id,
+                    created: "2000-01-09T00:00:00Z".parse().unwrap(),
+                    updated: "2000-01-09T00:00:00Z".parse().unwrap(),
+                    base_version: 1,
+                    is_placeholder: false,
+                    need_sync: false,
+                    size: 0,
+                },
             },
         ),
         (
@@ -564,14 +574,16 @@ async fn read_folder_containing_under_modification_file(
             "bar.txt".parse().unwrap(),
             EntryStat::File {
                 confinement_point: None,
-                id: wksp1_bar_txt_id,
                 parent: wksp1_id,
-                created: "2000-01-07T00:00:00Z".parse().unwrap(),
-                updated: "2020-01-01T00:00:00Z".parse().unwrap(),
-                base_version: 1,
-                is_placeholder: false,
-                need_sync: true,
-                size: expected_size,
+                base: FileStat {
+                    id: wksp1_bar_txt_id,
+                    created: "2000-01-07T00:00:00Z".parse().unwrap(),
+                    updated: "2020-01-01T00:00:00Z".parse().unwrap(),
+                    base_version: 1,
+                    is_placeholder: false,
+                    need_sync: true,
+                    size: expected_size,
+                },
             },
         ),
         (

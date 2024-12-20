@@ -4767,18 +4767,6 @@ fn variant_entry_stat_js_to_rs<'a>(
                     }
                 }
             };
-            let id = {
-                let js_val: Handle<JsString> = obj.get(cx, "id")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
-                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
             let parent = {
                 let js_val: Handle<JsString> = obj.get(cx, "parent")?;
                 {
@@ -4791,74 +4779,14 @@ fn variant_entry_stat_js_to_rs<'a>(
                     }
                 }
             };
-            let created = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "created")?;
-                {
-                    let v = js_val.value(cx);
-                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                            .map_err(|_| "Out-of-bound datetime")
-                    };
-                    match custom_from_rs_f64(v) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let updated = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "updated")?;
-                {
-                    let v = js_val.value(cx);
-                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                            .map_err(|_| "Out-of-bound datetime")
-                    };
-                    match custom_from_rs_f64(v) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let base_version = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "baseVersion")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        cx.throw_type_error("Not an u32 number")?
-                    }
-                    let v = v as u32;
-                    v
-                }
-            };
-            let is_placeholder = {
-                let js_val: Handle<JsBoolean> = obj.get(cx, "isPlaceholder")?;
-                js_val.value(cx)
-            };
-            let need_sync = {
-                let js_val: Handle<JsBoolean> = obj.get(cx, "needSync")?;
-                js_val.value(cx)
-            };
-            let size = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        cx.throw_type_error("Not an u64 number")?
-                    }
-                    let v = v as u64;
-                    v
-                }
+            let base = {
+                let js_val: Handle<JsObject> = obj.get(cx, "base")?;
+                struct_file_stat_js_to_rs(cx, js_val)?
             };
             Ok(libparsec::EntryStat::File {
                 confinement_point,
-                id,
                 parent,
-                created,
-                updated,
-                base_version,
-                is_placeholder,
-                need_sync,
-                size,
+                base,
             })
         }
         "EntryStatFolder" => {
@@ -4978,14 +4906,8 @@ fn variant_entry_stat_rs_to_js<'a>(
     match rs_obj {
         libparsec::EntryStat::File {
             confinement_point,
-            id,
             parent,
-            created,
-            updated,
-            base_version,
-            is_placeholder,
-            need_sync,
-            size,
+            base,
             ..
         } => {
             let js_tag = JsString::try_new(cx, "EntryStatFile").or_throw(cx)?;
@@ -5004,16 +4926,6 @@ fn variant_entry_stat_rs_to_js<'a>(
                 None => JsNull::new(cx).as_value(cx),
             };
             js_obj.set(cx, "confinementPoint", js_confinement_point)?;
-            let js_id = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(id) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "id", js_id)?;
             let js_parent = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
@@ -5024,34 +4936,8 @@ fn variant_entry_stat_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "parent", js_parent)?;
-            let js_created = JsNumber::new(cx, {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                match custom_to_rs_f64(created) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            });
-            js_obj.set(cx, "created", js_created)?;
-            let js_updated = JsNumber::new(cx, {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                match custom_to_rs_f64(updated) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            });
-            js_obj.set(cx, "updated", js_updated)?;
-            let js_base_version = JsNumber::new(cx, base_version as f64);
-            js_obj.set(cx, "baseVersion", js_base_version)?;
-            let js_is_placeholder = JsBoolean::new(cx, is_placeholder);
-            js_obj.set(cx, "isPlaceholder", js_is_placeholder)?;
-            let js_need_sync = JsBoolean::new(cx, need_sync);
-            js_obj.set(cx, "needSync", js_need_sync)?;
-            let js_size = JsNumber::new(cx, size as f64);
-            js_obj.set(cx, "size", js_size)?;
+            let js_base = struct_file_stat_rs_to_js(cx, base)?;
+            js_obj.set(cx, "base", js_base)?;
         }
         libparsec::EntryStat::Folder {
             confinement_point,
