@@ -2,6 +2,11 @@
 
 -------------------------------------------------------
 --  Migration
+--
+-- Update shamir recovery setup table to allow for deletion.
+-- The reveal token is now a string instead of an UUID, similar to the invitation token.
+-- Use the same unique index trick as the greeting attempt to ensure that there is only
+-- one active recovery setup per user.
 -------------------------------------------------------
 
 
