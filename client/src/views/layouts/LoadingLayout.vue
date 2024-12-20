@@ -26,7 +26,7 @@ import { onMounted } from 'vue';
 onMounted(async () => {
   // When trying to switch from one connected org to another,
   // we have trouble remounting the components because the
-  // url doesn't change enough according to vue-router (/1 to /2 for exemple),
+  // url doesn't change enough according to vue-router (/1 to /2 for example),
   // which means it doesn't remount a new component and instead insists on re-using
   // an existing one. This is a pain for us as we don't want to add a watch
   // in every component.
