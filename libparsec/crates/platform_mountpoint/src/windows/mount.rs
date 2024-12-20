@@ -41,7 +41,7 @@ impl Mountpoint {
         winfsp_wrs::init()
             .map_err(|err| anyhow::anyhow!("Cannot load the WinFSP DLL: error {}", err))?;
 
-        let (workspace_name, _) = ops.get_current_name_and_self_role();
+        let (workspace_name, self_role) = ops.get_current_name_and_self_role();
 
         let mountpoint_path = match &ops.config().mountpoint_mount_strategy {
             MountpointMountStrategy::Directory { base_dir } => {
@@ -78,7 +78,7 @@ impl Mountpoint {
                 .set_reparse_point_access_check(false)
                 .set_named_streams(false)
                 // TODO: Should detect and re-mount when the workspace switched between read-only and read-write
-                // .set_read_only_volume(...)
+                .set_read_only_volume(!self_role.can_write())
                 .set_post_cleanup_when_modified_only(true)
                 .set_device_control(false)
                 .set_file_system_name(FILE_SYSTEM_NAME)
