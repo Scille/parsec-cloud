@@ -19,11 +19,12 @@ import { IonicVue, isPlatform, modalController, popoverController } from '@ionic
 /* Theme variables */
 import '@/theme/global.scss';
 
+import { availableDeviceMatchesServer } from '@/common/device';
 import { bootstrapLinkValidator, claimLinkValidator, fileLinkValidator } from '@/common/validators';
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
 import { getLoggedInDevices, getOrganizationHandle, isElectron, listAvailableDevices, logout, needsMocks, parseFileLink } from '@/parsec';
-import { Platform, libparsec } from '@/plugins/libparsec';
+import { AvailableDevice, Platform, libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 import { Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
@@ -436,8 +437,22 @@ async function handleFileLink(link: string, informationManager: InformationManag
   } else {
     // Check if we have a device with the org
     const devices = await listAvailableDevices();
-    // Always matching the first one, nothing else we can do.
-    const matchingDevice = devices.find((d) => d.organizationId === linkData.organizationId);
+    let matchingDevice: AvailableDevice | undefined;
+    for (const device of devices) {
+      // Pre-matching on org id only, in case we don't find a server match. This could happen
+      // with different DNS, IP addresses instead of hostname, ...
+      if (device.organizationId === linkData.organizationId && !matchingDevice) {
+        matchingDevice = device;
+      }
+      if (
+        (await availableDeviceMatchesServer(device, { hostname: linkData.hostname, port: linkData.port })) &&
+        device.organizationId === linkData.organizationId
+      ) {
+        matchingDevice = device;
+        // Full match takes priority, we can break out the loop
+        break;
+      }
+    }
     if (!matchingDevice) {
       await informationManager.present(
         new Information({
