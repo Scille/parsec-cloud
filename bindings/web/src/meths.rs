@@ -5239,21 +5239,6 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                     )
                 }
             };
-            let id = {
-                let js_val = Reflect::get(&obj, &"id".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
-                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
-            };
             let parent = {
                 let js_val = Reflect::get(&obj, &"parent".into())?;
                 js_val
@@ -5269,80 +5254,14 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                     })
                     .map_err(|_| TypeError::new("Not a valid VlobID"))?
             };
-            let created = {
-                let js_val = Reflect::get(&obj, &"created".into())?;
-                {
-                    let v = js_val.dyn_into::<Number>()?.value_of();
-                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                            .map_err(|_| "Out-of-bound datetime")
-                    };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
-                    v
-                }
-            };
-            let updated = {
-                let js_val = Reflect::get(&obj, &"updated".into())?;
-                {
-                    let v = js_val.dyn_into::<Number>()?.value_of();
-                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
-                            .map_err(|_| "Out-of-bound datetime")
-                    };
-                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
-                    v
-                }
-            };
-            let base_version = {
-                let js_val = Reflect::get(&obj, &"baseVersion".into())?;
-                {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
-                    }
-                    v as u32
-                }
-            };
-            let is_placeholder = {
-                let js_val = Reflect::get(&obj, &"isPlaceholder".into())?;
-                js_val
-                    .dyn_into::<Boolean>()
-                    .map_err(|_| TypeError::new("Not a boolean"))?
-                    .value_of()
-            };
-            let need_sync = {
-                let js_val = Reflect::get(&obj, &"needSync".into())?;
-                js_val
-                    .dyn_into::<Boolean>()
-                    .map_err(|_| TypeError::new("Not a boolean"))?
-                    .value_of()
-            };
-            let size = {
-                let js_val = Reflect::get(&obj, &"size".into())?;
-                {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
-                    }
-                    v as u64
-                }
+            let base = {
+                let js_val = Reflect::get(&obj, &"base".into())?;
+                struct_file_stat_js_to_rs(js_val)?
             };
             Ok(libparsec::EntryStat::File {
                 confinement_point,
-                id,
                 parent,
-                created,
-                updated,
-                base_version,
-                is_placeholder,
-                need_sync,
-                size,
+                base,
             })
         }
         "EntryStatFolder" => {
@@ -5471,14 +5390,8 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
     match rs_obj {
         libparsec::EntryStat::File {
             confinement_point,
-            id,
             parent,
-            created,
-            updated,
-            base_version,
-            is_placeholder,
-            need_sync,
-            size,
+            base,
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"EntryStatFile".into())?;
@@ -5495,16 +5408,6 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                 None => JsValue::NULL,
             };
             Reflect::set(&js_obj, &"confinementPoint".into(), &js_confinement_point)?;
-            let js_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(id) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"id".into(), &js_id)?;
             let js_parent = JsValue::from_str({
                 let custom_to_rs_string =
                     |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
@@ -5515,36 +5418,8 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                 .as_ref()
             });
             Reflect::set(&js_obj, &"parent".into(), &js_parent)?;
-            let js_created = {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                let v = match custom_to_rs_f64(created) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                };
-                JsValue::from(v)
-            };
-            Reflect::set(&js_obj, &"created".into(), &js_created)?;
-            let js_updated = {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                let v = match custom_to_rs_f64(updated) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                };
-                JsValue::from(v)
-            };
-            Reflect::set(&js_obj, &"updated".into(), &js_updated)?;
-            let js_base_version = JsValue::from(base_version);
-            Reflect::set(&js_obj, &"baseVersion".into(), &js_base_version)?;
-            let js_is_placeholder = is_placeholder.into();
-            Reflect::set(&js_obj, &"isPlaceholder".into(), &js_is_placeholder)?;
-            let js_need_sync = need_sync.into();
-            Reflect::set(&js_obj, &"needSync".into(), &js_need_sync)?;
-            let js_size = JsValue::from(size);
-            Reflect::set(&js_obj, &"size".into(), &js_size)?;
+            let js_base = struct_file_stat_rs_to_js(base)?;
+            Reflect::set(&js_obj, &"base".into(), &js_base)?;
         }
         libparsec::EntryStat::Folder {
             confinement_point,

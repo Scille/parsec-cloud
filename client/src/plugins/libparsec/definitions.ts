@@ -1323,14 +1323,8 @@ export enum EntryStatTag {
 export interface EntryStatFile {
     tag: EntryStatTag.File
     confinementPoint: VlobID | null
-    id: VlobID
     parent: VlobID
-    created: DateTime
-    updated: DateTime
-    baseVersion: VersionInt
-    isPlaceholder: boolean
-    needSync: boolean
-    size: SizeInt
+    base: FileStat
 }
 export interface EntryStatFolder {
     tag: EntryStatTag.Folder

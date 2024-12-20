@@ -1129,14 +1129,8 @@ export type DeviceSaveStrategy =
 export interface EntryStatFile {
     tag: "File"
     confinement_point: string | null
-    id: string
     parent: string
-    created: number
-    updated: number
-    base_version: number
-    is_placeholder: boolean
-    need_sync: boolean
-    size: number
+    base: FileStat
 }
 export interface EntryStatFolder {
     tag: "Folder"

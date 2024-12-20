@@ -93,6 +93,7 @@ impl InodesManager {
             index as Inode
         };
 
+        log::trace!("Give inode {inode} to {path}");
         self.opened.insert(path, (Counter::default(), inode));
         inode
     }
@@ -110,6 +111,7 @@ impl InodesManager {
             if counter.is_zero() {
                 self.opened.remove(path);
                 self.paths_store.stack_unused_inodes.push(inode);
+                log::trace!("Free inode {inode} associated with {path}");
             }
         }
     }
@@ -147,5 +149,13 @@ impl InodesManager {
                 }
             })
             .collect();
+    }
+
+    /// Return the number of used and remaining inodes
+    #[must_use]
+    pub(super) fn usage(&self) -> (usize, usize) {
+        let used = self.opened.len();
+        let remaining = Inode::MAX as usize - used;
+        (used, remaining)
     }
 }
