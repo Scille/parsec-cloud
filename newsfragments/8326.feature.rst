@@ -1,1 +1,0 @@
-Added a batch workspace sharing option to assign a chosen workspace role to several organization members at once.
