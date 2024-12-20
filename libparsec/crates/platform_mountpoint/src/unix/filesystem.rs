@@ -453,9 +453,18 @@ impl fuser::Filesystem for Filesystem {
                     .manual()
                     .attr(&TTL, &entry_stat_to_file_attr(stat, ino, uid, gid)),
                 Err(err) => match err {
-                    WorkspaceStatEntryError::EntryNotFound => reply.manual().error(libc::ENOENT),
-                    WorkspaceStatEntryError::Offline => reply.manual().error(libc::EHOSTUNREACH),
-                    WorkspaceStatEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
+                    WorkspaceStatEntryError::EntryNotFound => {
+                        log::trace!("Entry not found for path: {:?}", path);
+                        reply.manual().error(libc::ENOENT)
+                    }
+                    WorkspaceStatEntryError::Offline => {
+                        log::warn!("Workspace is offline");
+                        reply.manual().error(libc::EHOSTUNREACH)
+                    }
+                    WorkspaceStatEntryError::NoRealmAccess => {
+                        log::trace!("Cannot access realm");
+                        reply.manual().error(libc::EPERM)
+                    }
                     WorkspaceStatEntryError::Stopped
                     | WorkspaceStatEntryError::InvalidKeysBundle(_)
                     | WorkspaceStatEntryError::InvalidCertificate(_)
