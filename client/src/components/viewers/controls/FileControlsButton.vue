@@ -54,6 +54,9 @@ defineProps<{
   opacity: 0.6;
   scale: 1;
   transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &.button-disabled {
     opacity: 0.3;
