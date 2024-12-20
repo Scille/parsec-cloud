@@ -93,6 +93,7 @@ impl InodesManager {
             index as Inode
         };
 
+        log::trace!("Give inode {inode} to {path}");
         self.opened.insert(path, (Counter::default(), inode));
         inode
     }
@@ -110,6 +111,7 @@ impl InodesManager {
             if counter.is_zero() {
                 self.opened.remove(path);
                 self.paths_store.stack_unused_inodes.push(inode);
+                log::trace!("Free inode {inode} associated with {path}");
             }
         }
     }
