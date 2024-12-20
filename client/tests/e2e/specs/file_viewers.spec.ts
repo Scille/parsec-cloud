@@ -123,7 +123,19 @@ msTest('Audio viewer', async ({ documents }) => {
 
   await expectMedia(audio).toHaveDuration(7.967347);
   await expectMedia(audio).toHaveCurrentTime(0.0);
-  await expectMedia(audio).toHaveVolume(1);
+
+  // Volume control
+  const volumeButton = bottomBar.locator('.file-controls-button');
+  const volumeSlider = bottomBar.locator('.slider');
+  expect(volumeSlider).not.toBeVisible();
+  await volumeButton.hover();
+  expect(volumeSlider).toBeVisible();
+  await volumeSlider.click();
+  await expectMedia(audio).toHaveVolume(0.49);
+  await volumeButton.click();
+  await expectMedia(audio).toHaveVolume(0);
+  await volumeButton.click();
+  await expectMedia(audio).toHaveVolume(0.49);
 });
 
 msTest('Video viewer', async ({ documents }) => {
@@ -164,6 +176,7 @@ msTest('Video viewer', async ({ documents }) => {
   await buttons.nth(0).click();
   expect(await Media.getCurrentTime(video)).toBeGreaterThan(0.1);
 
+  // Volume control
   expect(volumeSlider).not.toBeVisible();
   await buttons.nth(1).hover();
   expect(volumeSlider).toBeVisible();
