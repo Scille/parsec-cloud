@@ -148,4 +148,12 @@ impl InodesManager {
             })
             .collect();
     }
+
+    /// Return the number of used and remaining inodes
+    #[must_use]
+    pub(super) fn usage(&self) -> (usize, usize) {
+        let used = self.opened.len();
+        let remaining = Inode::MAX as usize - used;
+        (used, remaining)
+    }
 }
