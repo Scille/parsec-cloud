@@ -21,7 +21,7 @@ async fn write_then_flush(env: &TestbedEnv) {
     // 1) Open the file and do the write & flush
 
     let initial_size = match ops.stat_entry_by_id(wksp1_bar_txt_id).await.unwrap() {
-        EntryStat::File { size, .. } => size,
+        EntryStat::File { base, .. } => base.size,
         EntryStat::Folder { .. } => unreachable!(),
     };
 
@@ -44,7 +44,7 @@ async fn write_then_flush(env: &TestbedEnv) {
 
     // Flush makes metadata visible
     let size = match ops.stat_entry_by_id(wksp1_bar_txt_id).await.unwrap() {
-        EntryStat::File { size, .. } => size,
+        EntryStat::File { base, .. } => base.size,
         EntryStat::Folder { .. } => unreachable!(),
     };
     p_assert_eq!(size, initial_size + 3);
