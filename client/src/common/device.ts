@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Platform } from '@/parsec';
+import { AvailableDevice, OrganizationID, ParsedParsecAddrTag, parseParsecAddr, Platform } from '@/parsec';
 import { I18n } from 'megashark-lib';
 
 export function getDefaultDeviceName(): string {
@@ -18,4 +18,29 @@ export function getDefaultDeviceName(): string {
     default:
       return I18n.translate('common.deviceTypes.unknown');
   }
+}
+
+export async function availableDeviceMatchesServer(
+  device: AvailableDevice,
+  serverInfo: { hostname: string; port?: number; organization?: OrganizationID },
+): Promise<boolean> {
+  const deviceAddr = device.serverUrl.replace('http://', 'parsec3://').replace('https://', 'parsec3://');
+  const parseResult = await parseParsecAddr(deviceAddr);
+  if (!parseResult.ok) {
+    return false;
+  }
+  if (serverInfo.hostname !== parseResult.value.hostname) {
+    return false;
+  }
+  if (serverInfo.port !== undefined && serverInfo.port !== parseResult.value.port) {
+    return false;
+  }
+  if (
+    serverInfo.organization &&
+    parseResult.value.tag !== ParsedParsecAddrTag.Server &&
+    parseResult.value.organizationId !== serverInfo.organization
+  ) {
+    return false;
+  }
+  return true;
 }
