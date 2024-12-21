@@ -273,6 +273,7 @@ pub async fn claimer_retrieve_info(
             InvitationType::ShamirRecovery {
                 claimer_user_id,
                 claimer_human_handle,
+                shamir_recovery_created_on,
                 recipients,
                 threshold,
             } => Ok(AnyClaimRetrievedInfoCtx::ShamirRecovery(
@@ -281,6 +282,7 @@ pub async fn claimer_retrieve_info(
                     cmds,
                     claimer_user_id,
                     claimer_human_handle,
+                    shamir_recovery_created_on,
                     recipients,
                     threshold,
                     shares: HashMap::new(),
@@ -326,6 +328,7 @@ pub struct ShamirRecoveryClaimPickRecipientCtx {
     cmds: Arc<InvitedCmds>,
     claimer_user_id: UserID,
     claimer_human_handle: HumanHandle,
+    shamir_recovery_created_on: DateTime,
     recipients: Vec<ShamirRecoveryRecipient>,
     threshold: NonZeroU8,
     shares: HashMap<UserID, Vec<ShamirShare>>,
@@ -347,6 +350,10 @@ impl ShamirRecoveryClaimPickRecipientCtx {
 
     pub fn claimer_human_handle(&self) -> &HumanHandle {
         &self.claimer_human_handle
+    }
+
+    pub fn shamir_recovery_created_on(&self) -> DateTime {
+        self.shamir_recovery_created_on
     }
 
     pub fn is_recoverable(&self) -> bool {
