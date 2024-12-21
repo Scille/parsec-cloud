@@ -30,7 +30,19 @@ async def test_authenticated_invite_list_ok_with_shamir_recovery(
         )
     ]
 
+    rep = await shamirorg.alice.invite_list()
+    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    assert rep.invitations == []
+
     rep = await shamirorg.bob.invite_list()
+    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    assert rep.invitations == expected_invitations
+
+    rep = await shamirorg.mike.invite_list()
+    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    assert rep.invitations == expected_invitations
+
+    rep = await shamirorg.mallory.invite_list()
     assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
     assert rep.invitations == expected_invitations
 
