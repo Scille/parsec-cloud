@@ -1623,6 +1623,7 @@ export interface InviteListItemShamirRecovery {
     token: InvitationToken
     createdOn: DateTime
     claimerUserId: UserID
+    shamirRecoveryCreatedOn: DateTime
     status: InvitationStatus
 }
 export interface InviteListItemUser {

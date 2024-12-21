@@ -25,6 +25,7 @@ async def test_authenticated_invite_list_ok_with_shamir_recovery(
             created_on=shamirorg.shamir_invited_alice.event.created_on,
             status=InvitationStatus.IDLE,
             claimer_user_id=shamirorg.alice.user_id,
+            shamir_recovery_created_on=shamirorg.alice_brief_certificate.timestamp,
             token=shamirorg.shamir_invited_alice.token,
         )
     ]
@@ -156,6 +157,7 @@ async def test_authenticated_invite_list_with_deleted_shamir(
         token=previous_invitation.token,
         created_on=previous_invitation.created_on,
         claimer_user_id=previous_invitation.claimer_user_id,
+        shamir_recovery_created_on=previous_invitation.shamir_recovery_created_on,
         status=InvitationStatus.CANCELLED,
     )
 
