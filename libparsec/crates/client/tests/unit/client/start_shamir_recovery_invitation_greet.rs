@@ -7,97 +7,102 @@ use crate::{ClientStartShamirRecoveryInvitationGreetError, ShamirRecoveryGreetIn
 
 use super::utils::client_factory;
 
-#[parsec_test(testbed = "coolorg")]
-async fn never_setup(env: &TestbedEnv) {
+fn get_alice_token(env: &TestbedEnv) -> InvitationToken {
     let alice = env.local_device("alice@dev1");
-    let bob = env.local_device("bob@dev1");
-    let client = client_factory(&env.discriminant_dir, bob).await;
-
-    // Use a default token since since `start_shamir_recovery_invitation_greet` does not actually
-    // perform any request to the server but simply get the share data from the local storage.
-    let token = InvitationToken::default();
-
-    p_assert_matches!(
-        client
-            .start_shamir_recovery_invitation_greet(token, alice.user_id)
-            .await
-            .unwrap_err(),
-        ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryNotFound
-    );
+    env.template
+        .events
+        .iter()
+        .find_map(|e| match e {
+            TestbedEvent::NewShamirRecoveryInvitation(event) if event.claimer == alice.user_id => {
+                Some(event.token)
+            }
+            _ => None,
+        })
+        .unwrap()
 }
 
-#[parsec_test(testbed = "shamir")]
+#[parsec_test(testbed = "shamir", with_server)]
 async fn setup_all_valid_while_never_deleted(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let bob = env.local_device("bob@dev1");
     let client = client_factory(&env.discriminant_dir, bob).await;
-
-    // Use a default token since since `start_shamir_recovery_invitation_greet` does not actually
-    // perform any request to the server but simply get the share data from the local storage.
-    let token = InvitationToken::default();
+    let token = get_alice_token(env);
 
     p_assert_matches!(
-        client.start_shamir_recovery_invitation_greet(token, alice.user_id).await.unwrap(),
+        client.start_shamir_recovery_invitation_greet(token).await.unwrap(),
         ShamirRecoveryGreetInitialCtx{share_data: ShamirRecoveryShareData { author, .. }, ..} if author == alice.device_id
     );
 }
 
-#[parsec_test(testbed = "shamir")]
-async fn setup_all_valid_while_previously_deleted(env: &TestbedEnv) {
-    env.customize(|builder| {
-        let setup_timestamp = builder
-            .new_shamir_recovery(
-                "bob",
-                3,
-                [
-                    ("alice".parse().unwrap(), 2.try_into().unwrap()),
-                    ("mike".parse().unwrap(), 1.try_into().unwrap()),
-                ],
-                "bob@dev2",
-            )
-            .map(|e| e.timestamp);
-        builder.certificates_storage_fetch_certificates("bob@dev1");
-        setup_timestamp
-    })
-    .await;
+#[parsec_test(testbed = "shamir", with_server)]
+async fn setup_all_valid_while_previously_deleted(
+    #[values("prefetch", "no_prefetch")] kind: &str,
+    env: &TestbedEnv,
+) {
+    let token = env
+        .customize(|builder| {
+            builder
+                .new_shamir_recovery(
+                    "bob",
+                    3,
+                    [
+                        ("alice".parse().unwrap(), 2.try_into().unwrap()),
+                        ("mike".parse().unwrap(), 1.try_into().unwrap()),
+                    ],
+                    "bob@dev2",
+                )
+                .map(|e| e.timestamp);
+            match kind {
+                "prefetch" => {
+                    builder.certificates_storage_fetch_certificates("bob@dev1");
+                }
+                "no_prefetch" => {}
+                _ => unreachable!(),
+            }
+            let new_invitation = builder.new_shamir_recovery_invitation("bob");
+            new_invitation.get_event().token
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
     let bob = env.local_device("bob@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;
 
-    // Use a default token since since `start_shamir_recovery_invitation_greet` does not actually
-    // perform any request to the server but simply get the share data from the local storage.
-    let token = InvitationToken::default();
-
     p_assert_matches!(
-        client.start_shamir_recovery_invitation_greet(token, bob.user_id).await.unwrap(),
+        client.start_shamir_recovery_invitation_greet(token).await.unwrap(),
         ShamirRecoveryGreetInitialCtx{share_data: ShamirRecoveryShareData { author, .. }, ..} if author == bob.device_id
     );
 }
 
-#[parsec_test(testbed = "shamir")]
-async fn setup_with_revoked_recipients(env: &TestbedEnv) {
+#[parsec_test(testbed = "shamir", with_server)]
+async fn setup_with_revoked_recipients(
+    #[values("prefetch", "no_prefetch")] kind: &str,
+    env: &TestbedEnv,
+) {
     env.customize(|builder| {
         builder.revoke_user("bob"); // Bob has 2 shares
                                     // Threshold is 2, and Mallory & Mike remain with 1 share each
-        builder.certificates_storage_fetch_certificates("mike@dev1");
+        match kind {
+            "prefetch" => {
+                builder.certificates_storage_fetch_certificates("mike@dev1");
+            }
+            "no_prefetch" => {}
+            _ => unreachable!(),
+        }
     })
     .await;
 
     let alice = env.local_device("alice@dev1");
     let mike = env.local_device("mike@dev1");
     let client = client_factory(&env.discriminant_dir, mike).await;
-
-    // Use a default token since since `start_shamir_recovery_invitation_greet` does not actually
-    // perform any request to the server but simply get the share data from the local storage.
-    let token = InvitationToken::default();
+    let token = get_alice_token(env);
 
     p_assert_matches!(
-        client.start_shamir_recovery_invitation_greet(token, alice.user_id).await.unwrap(),
+        client.start_shamir_recovery_invitation_greet(token).await.unwrap(),
         ShamirRecoveryGreetInitialCtx{share_data: ShamirRecoveryShareData { author, .. }, ..} if author == alice.device_id
     );
 }
 
-#[parsec_test(testbed = "shamir")]
+#[parsec_test(testbed = "shamir", with_server)]
 async fn setup_but_unusable(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.revoke_user("bob"); // Bob has 2 shares
@@ -107,56 +112,65 @@ async fn setup_but_unusable(env: &TestbedEnv) {
     })
     .await;
 
-    let alice = env.local_device("alice@dev1");
     let mike = env.local_device("mike@dev1");
     let client = client_factory(&env.discriminant_dir, mike).await;
-
-    // Use a default token since since `start_shamir_recovery_invitation_greet` does not actually
-    // perform any request to the server but simply get the share data from the local storage.
-    let token = InvitationToken::default();
+    let token = get_alice_token(env);
 
     p_assert_matches!(
         client
-            .start_shamir_recovery_invitation_greet(token, alice.user_id)
+            .start_shamir_recovery_invitation_greet(token)
             .await
             .unwrap_err(),
         ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryUnusable
     );
 }
 
-#[parsec_test(testbed = "shamir")]
-async fn incorrectly_pass_self_as_user_id(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
-    let client = client_factory(&env.discriminant_dir, alice.clone()).await;
+#[parsec_test(testbed = "shamir", with_server)]
+async fn setup_deleted(env: &TestbedEnv) {
+    env.customize(|builder| {
+        builder.delete_shamir_recovery("alice");
+        builder.certificates_storage_fetch_certificates("bob@dev1");
+    })
+    .await;
 
-    // Use a default token since since `start_shamir_recovery_invitation_greet` does not actually
-    // perform any request to the server but simply get the share data from the local storage.
-    let token = InvitationToken::default();
+    let bob = env.local_device("bob@dev1");
+    let client = client_factory(&env.discriminant_dir, bob).await;
+    let token = get_alice_token(env);
 
     p_assert_matches!(
         client
-            .start_shamir_recovery_invitation_greet(token, alice.user_id)
+            .start_shamir_recovery_invitation_greet(token)
             .await
             .unwrap_err(),
-        ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryShareNotFound
+        ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryDeleted
     );
 }
 
-#[parsec_test(testbed = "shamir")]
-async fn stopped(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
+#[parsec_test(testbed = "shamir", with_server)]
+async fn invitation_not_found(env: &TestbedEnv) {
     let bob = env.local_device("bob@dev1");
-    let client = client_factory(&env.discriminant_dir, alice).await;
-
-    client.certificates_ops.stop().await.unwrap();
-
-    // Use a default token since since `start_shamir_recovery_invitation_greet` does not actually
-    // perform any request to the server but simply get the share data from the local storage.
-    let token = InvitationToken::default();
+    let client = client_factory(&env.discriminant_dir, bob).await;
 
     p_assert_matches!(
         client
-            .start_shamir_recovery_invitation_greet(token, bob.user_id)
+            .start_shamir_recovery_invitation_greet(InvitationToken::default())
+            .await
+            .unwrap_err(),
+        ClientStartShamirRecoveryInvitationGreetError::InvitationNotFound
+    );
+}
+
+#[parsec_test(testbed = "shamir", with_server)]
+async fn stopped(env: &TestbedEnv) {
+    let bob = env.local_device("bob@dev1");
+    let client = client_factory(&env.discriminant_dir, bob).await;
+    let token = get_alice_token(env);
+
+    client.certificates_ops.stop().await.unwrap();
+
+    p_assert_matches!(
+        client
+            .start_shamir_recovery_invitation_greet(token)
             .await
             .unwrap_err(),
         ClientStartShamirRecoveryInvitationGreetError::Stopped
