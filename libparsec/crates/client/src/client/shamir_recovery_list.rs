@@ -2,7 +2,6 @@
 
 pub use crate::certif::{
     CertifGetSelfShamirRecoveryError as ClientGetSelfShamirRecoveryError,
-    CertifGetShamirRecoveryShareDataError as ClientGetShamirRecoveryShareDataError,
     CertifListShamirRecoveriesForOthersError as ClientListShamirRecoveriesForOthersError,
     OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
 };
