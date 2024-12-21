@@ -90,6 +90,9 @@ impl From<CertifGetShamirRecoveryShareDataError> for ClientStartShamirRecoveryIn
             CertifGetShamirRecoveryShareDataError::InvalidCertificate(e) => {
                 ClientStartShamirRecoveryInvitationGreetError::InvalidCertificate(e)
             }
+            CertifGetShamirRecoveryShareDataError::InvalidRequirements => {
+                ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryNotFound
+            }
             CertifGetShamirRecoveryShareDataError::Internal(e) => {
                 ClientStartShamirRecoveryInvitationGreetError::Internal(e)
             }
