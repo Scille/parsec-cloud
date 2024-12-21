@@ -979,6 +979,7 @@ class BaseInviteComponent:
                     invited_cmds.latest.invite_info.InvitationTypeShamirRecovery(
                         claimer_user_id=invitation.claimer_user_id,
                         claimer_human_handle=invitation.claimer_human_handle,
+                        shamir_recovery_created_on=invitation.shamir_recovery_created_on,
                         threshold=invitation.threshold,
                         recipients=invitation.recipients,
                     )

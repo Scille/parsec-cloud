@@ -76,6 +76,10 @@
                                 "type": "HumanHandle"
                             },
                             {
+                                "name": "shamir_recovery_created_on",
+                                "type": "DateTime"
+                            },
+                            {
                                 "name": "threshold",
                                 "type": "NonZeroU8"
                             },
