@@ -382,8 +382,8 @@ SELECT
     invitation._id AS invitation_internal_id,
     invitation.token,
     invitation.type,
-    { q_user(_id=q_device(_id="invitation.created_by", select="user_"), select="user_id") } as created_by_user_id,
-    { q_device(_id="invitation.created_by", select="device_id") } as created_by_device_id,
+    user_.user_id AS created_by_user_id,
+    device.device_id AS created_by_device_id,
     human.email,
     human.label,
     invitation.claimer_email,
@@ -394,11 +394,12 @@ SELECT
     invitation.deleted_reason
 FROM invitation
 LEFT JOIN device ON invitation.created_by = device._id
-LEFT JOIN human ON human._id = (SELECT user_.human FROM user_ WHERE user_._id = device.user_)
+LEFT JOIN user_ ON device.user_ = user_._id
+LEFT JOIN human ON human._id = user_.human
 LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
-    AND device.user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+    AND (user_.user_id = $user_id or invitation.type = 'SHAMIR_RECOVERY')
 ORDER BY created_on
 """
 )
@@ -409,7 +410,7 @@ SELECT
     invitation._id AS invitation_internal_id,
     invitation.token,
     invitation.type,
-    { q_user(_id="device.user_", select="user_id") } as created_by_user_id,
+    user_.user_id AS created_by_user_id,
     device.device_id as created_by_device_id,
     human.email as created_by_email,
     human.label as created_by_label,
@@ -421,7 +422,8 @@ SELECT
     invitation.deleted_reason
 FROM invitation
 LEFT JOIN device ON invitation.created_by = device._id
-LEFT JOIN human ON human._id = (SELECT user_.human FROM user_ WHERE user_._id = device.user_)
+LEFT JOIN user_ ON device.user_ = user_._id
+LEFT JOIN human ON human._id = user_.human
 LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
