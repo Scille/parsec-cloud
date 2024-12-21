@@ -56,6 +56,7 @@ async def test_invited_invite_info_ok_with_shamir(
         invited_cmds.v4.invite_info.InvitationTypeShamirRecovery(
             claimer_user_id=shamirorg.alice.user_id,
             claimer_human_handle=shamirorg.alice.human_handle,
+            shamir_recovery_created_on=shamirorg.alice_brief_certificate.timestamp,
             threshold=2,
             recipients=[
                 invited_cmds.latest.invite_info.ShamirRecoveryRecipient(
