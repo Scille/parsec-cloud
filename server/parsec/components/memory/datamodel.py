@@ -620,6 +620,10 @@ class MemoryShamirRecovery:
     shamir_recovery_deletion_certificate: bytes | None = None
 
     @property
+    def deleted_on(self) -> DateTime | None:
+        return self.cooked_deletion.timestamp if self.cooked_deletion else None
+
+    @property
     def is_deleted(self) -> bool:
         return self.shamir_recovery_deletion_certificate is not None
 

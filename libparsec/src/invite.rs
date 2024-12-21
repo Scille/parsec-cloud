@@ -818,6 +818,7 @@ pub enum InviteListItem {
         token: InvitationToken,
         created_on: DateTime,
         claimer_user_id: UserID,
+        shamir_recovery_created_on: DateTime,
         status: InvitationStatus,
     },
 }
@@ -878,6 +879,7 @@ pub async fn client_list_invitations(
                 status,
                 token,
                 claimer_user_id,
+                shamir_recovery_created_on,
             } => {
                 let addr = ParsecInvitationAddr::new(
                     client.organization_addr(),
@@ -891,6 +893,7 @@ pub async fn client_list_invitations(
                     status,
                     token,
                     claimer_user_id,
+                    shamir_recovery_created_on,
                 }
             }
         })
