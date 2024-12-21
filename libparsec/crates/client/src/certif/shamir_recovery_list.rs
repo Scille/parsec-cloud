@@ -367,6 +367,8 @@ pub enum CertifGetShamirRecoveryShareDataError {
     Stopped,
     #[error(transparent)]
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error("Invalid requirements for reading certificates")]
+    InvalidRequirements,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -379,6 +381,7 @@ impl From<CertifForReadWithRequirementsError> for CertifGetShamirRecoveryShareDa
             CertifForReadWithRequirementsError::InvalidCertificate(err) => {
                 Self::InvalidCertificate(err)
             }
+            CertifForReadWithRequirementsError::InvalidRequirements => Self::InvalidRequirements,
             CertifForReadWithRequirementsError::Internal(err) => err.into(),
         }
     }

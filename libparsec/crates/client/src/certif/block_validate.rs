@@ -146,6 +146,11 @@ pub(super) async fn validate_block(
             CertifForReadWithRequirementsError::InvalidCertificate(err) => {
                 CertifValidateBlockError::InvalidCertificate(err)
             }
+            CertifForReadWithRequirementsError::InvalidRequirements => {
+                CertifValidateBlockError::Internal(anyhow::anyhow!(
+                    "Unexpected invalid requirements"
+                ))
+            }
             CertifForReadWithRequirementsError::Internal(err) => err.into(),
         })?
 }
