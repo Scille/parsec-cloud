@@ -2,7 +2,6 @@ use libparsec::{tmp_path, TmpPath};
 
 use crate::integration_tests::bootstrap_cli_test;
 use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
-use rexpect::session::spawn;
 
 #[rstest::rstest]
 #[tokio::test]
@@ -88,8 +87,10 @@ async fn create_shared_recovery_inexistent_email(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn create_shared_recovery_default(tmp_path: TmpPath) {
+    use assert_cmd::cargo::CommandCargoExt;
+
     let (_, TestOrganization { bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
-    let mut cmd = assert_cmd::Command::cargo_bin("parsec-cli").unwrap();
+    let mut cmd = std::process::Command::cargo_bin("parsec-cli").unwrap();
     cmd.args([
         "shared-recovery",
         "create",
@@ -97,17 +98,23 @@ async fn create_shared_recovery_default(tmp_path: TmpPath) {
         &bob.device_id.hex(),
     ]);
 
-    let program = cmd.get_program().to_str().unwrap().to_string();
-    let program = cmd
-        .get_args()
-        .fold(program, |acc, s| format!("{acc} {s:?}"));
-
-    let mut p = spawn(&dbg!(program), Some(1000)).unwrap();
+    let mut p = rexpect::spawn_with_options(
+        cmd,
+        rexpect::reader::Options {
+            timeout_ms: Some(1500),
+            strip_ansi_escape_codes: true,
+        },
+    )
+    .unwrap();
 
     p.exp_string("Enter password for the device:").unwrap();
     p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
 
-    p.exp_regex(".*The threshold is the minimum number of recipients that one must gather to recover the account:.*").unwrap();
+    // Wait for the intermediate spinners to make rexpect wait a bunch to prevent timeout when waiting for the "threshold" prompt
+    p.exp_regex(".*Poll server for new certificates.*").unwrap();
+    p.exp_regex(".*Creating shared recovery setup.*").unwrap();
+
+    p.exp_regex(".*The threshold is the minimum number of recipients that one must gather to recover the account.*").unwrap();
     p.send_line("1").unwrap();
     p.exp_regex(".*Shared recovery setup has been created.*")
         .unwrap();
