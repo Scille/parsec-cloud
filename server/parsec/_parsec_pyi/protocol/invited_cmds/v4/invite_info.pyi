@@ -32,6 +32,7 @@ class InvitationTypeShamirRecovery(InvitationType):
         self,
         claimer_user_id: UserID,
         claimer_human_handle: HumanHandle,
+        shamir_recovery_created_on: DateTime,
         threshold: int,
         recipients: list[ShamirRecoveryRecipient],
     ) -> None: ...
@@ -41,6 +42,8 @@ class InvitationTypeShamirRecovery(InvitationType):
     def claimer_user_id(self) -> UserID: ...
     @property
     def recipients(self) -> list[ShamirRecoveryRecipient]: ...
+    @property
+    def shamir_recovery_created_on(self) -> DateTime: ...
     @property
     def threshold(self) -> int: ...
 

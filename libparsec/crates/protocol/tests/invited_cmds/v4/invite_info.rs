@@ -89,9 +89,10 @@ pub fn rep_ok() {
             //   claimer_human_handle: [ 'carl@example.com', 'carl', ]
             //   claimer_user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4c)
             //   recipients: [ { human_handle: [ 'alice@example.com', 'alice', ], revoked_on: None, shares: 1, user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4a), }, { human_handle: [ 'bob@example.com', 'bob', ], revoked_on: ext(1, 946774800000000) i.e. 2000-01-02T02:00:00Z, shares: 1, user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4b), }, ]
+            //   shamir_recovery_created_on: ext(1, 946688400000000) i.e. 2000-01-01T02:00:00Z
             //   threshold: 2
             &hex!(
-                "86a6737461747573a26f6ba474797065af5348414d49525f5245434f56455259b4636c"
+                "87a6737461747573a26f6ba474797065af5348414d49525f5245434f56455259b4636c"
                 "61696d65725f68756d616e5f68616e646c6592b06361726c406578616d706c652e636f"
                 "6da46361726caf636c61696d65725f757365725f6964d802109b68ba5cdf428ea0017f"
                 "c6bcc04d4caa726563697069656e74739284ac68756d616e5f68616e646c6592b1616c"
@@ -99,12 +100,14 @@ pub fn rep_ok() {
                 "686172657301a7757365725f6964d802109b68ba5cdf428ea0017fc6bcc04d4a84ac68"
                 "756d616e5f68616e646c6592af626f62406578616d706c652e636f6da3626f62aa7265"
                 "766f6b65645f6f6ed70100035d162fa2e400a673686172657301a7757365725f6964d8"
-                "02109b68ba5cdf428ea0017fc6bcc04d4ba97468726573686f6c6402"
+                "02109b68ba5cdf428ea0017fc6bcc04d4bba7368616d69725f7265636f766572795f63"
+                "7265617465645f6f6ed70100035d0211cb8400a97468726573686f6c6402"
             )[..],
             invited_cmds::invite_info::Rep::Ok(
                 invited_cmds::invite_info::InvitationType::ShamirRecovery {
                     claimer_user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4c").unwrap(),
                     claimer_human_handle: HumanHandle::new("carl@example.com", "carl").unwrap(),
+                    shamir_recovery_created_on: "2000-1-1T01:00:00Z".parse().unwrap(),
                     recipients: vec![
                         invited_cmds::invite_info::ShamirRecoveryRecipient {
                             user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
