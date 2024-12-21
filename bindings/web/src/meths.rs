@@ -6317,6 +6317,18 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                     })
                     .map_err(|_| TypeError::new("Not a valid UserID"))?
             };
+            let shamir_recovery_created_on = {
+                let js_val = Reflect::get(&obj, &"shamirRecoveryCreatedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
             let status = {
                 let js_val = Reflect::get(&obj, &"status".into())?;
                 {
@@ -6333,6 +6345,7 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                 token,
                 created_on,
                 claimer_user_id,
+                shamir_recovery_created_on,
                 status,
             })
         }
@@ -6469,6 +6482,7 @@ fn variant_invite_list_item_rs_to_js(
             token,
             created_on,
             claimer_user_id,
+            shamir_recovery_created_on,
             status,
             ..
         } => {
@@ -6520,6 +6534,21 @@ fn variant_invite_list_item_rs_to_js(
                 .as_ref()
             });
             Reflect::set(&js_obj, &"claimerUserId".into(), &js_claimer_user_id)?;
+            let js_shamir_recovery_created_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(shamir_recovery_created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(
+                &js_obj,
+                &"shamirRecoveryCreatedOn".into(),
+                &js_shamir_recovery_created_on,
+            )?;
             let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
         }
