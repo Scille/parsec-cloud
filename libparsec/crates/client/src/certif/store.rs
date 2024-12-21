@@ -101,6 +101,8 @@ pub enum CertifForReadWithRequirementsError {
     Stopped,
     #[error(transparent)]
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error("Invalid requirements")]
+    InvalidRequirements,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -333,82 +335,79 @@ impl CertificatesStore {
         let cb_access = Mutex::new(Some(cb));
         let cb_access = &cb_access;
 
-        loop {
-            let outcome = self
-                .for_read(|store: &mut CertificatesStoreReadGuard| async move {
-                    // Make sure we have all the needed certificates
+        // Factorize the code in a closure to retry the operation after a server poll
+        let try_with_requirements = || {
+            self.for_read(|store: &mut CertificatesStoreReadGuard| async move {
+                // Make sure we have all the needed certificates
 
-                    let last_stored_timestamps = store
-                        .get_last_timestamps()
-                        .await
-                        .map_err(CertifForReadWithRequirementsError::Internal)?;
-                    if !last_stored_timestamps.is_up_to_date(needed_timestamps) {
-                        return Result::<
-                            ForReadOutcome<T, E>,
-                            CertifForReadWithRequirementsError,
-                        >::Ok(
-                            ForReadOutcome::StoredTimestampOutdated
-                        );
-                    }
+                let last_stored_timestamps = store
+                    .get_last_timestamps()
+                    .await
+                    .map_err(CertifForReadWithRequirementsError::Internal)?;
+                if !last_stored_timestamps.is_up_to_date(needed_timestamps) {
+                    return Result::<ForReadOutcome<T, E>, CertifForReadWithRequirementsError>::Ok(
+                        ForReadOutcome::StoredTimestampOutdated,
+                    );
+                }
 
-                    // Requirements are met, do the actual operation
+                // Requirements are met, do the actual operation
 
-                    let cb = {
-                        let mut cb_access_guard = cb_access.lock().expect("Mutex is poisoned");
-                        cb_access_guard.take().expect("Callback is accessed once")
-                    };
-                    let res = cb(store).await;
+                let cb = {
+                    let mut cb_access_guard = cb_access.lock().expect("Mutex is poisoned");
+                    cb_access_guard.take().expect("Callback is accessed once")
+                };
+                let res = cb(store).await;
 
-                    Result::<ForReadOutcome<T, E>, CertifForReadWithRequirementsError>::Ok(
-                        ForReadOutcome::Done(res),
-                    )
-                })
+                Result::<ForReadOutcome<T, E>, CertifForReadWithRequirementsError>::Ok(
+                    ForReadOutcome::Done(res),
+                )
+            })
+        };
+
+        // Try to lock for read and run the callback
+        match try_with_requirements().await.map_err(|e| match e {
+            CertifStoreError::Stopped => CertifForReadWithRequirementsError::Stopped,
+            CertifStoreError::Internal(err) => err.context("Cannot lock storage for read").into(),
+        })?? {
+            // If the requirement were met, we are done
+            ForReadOutcome::Done(res) => return Ok(res),
+            // If the requirements were not met, we need to poll the server
+            ForReadOutcome::StoredTimestampOutdated => {}
+        }
+
+        // We were lacking some certificates, do a server poll and retry
+        self.for_write(|store| async move {
+            super::poll::poll_server_for_new_certificates(ops, store, Some(needed_timestamps))
                 .await
                 .map_err(|e| match e {
-                    CertifStoreError::Stopped => CertifForReadWithRequirementsError::Stopped,
-                    CertifStoreError::Internal(err) => {
-                        err.context("Cannot lock storage for read").into()
+                    CertifPollServerError::Offline => CertifForReadWithRequirementsError::Offline,
+                    CertifPollServerError::Stopped => CertifForReadWithRequirementsError::Stopped,
+                    CertifPollServerError::InvalidCertificate(err) => {
+                        CertifForReadWithRequirementsError::InvalidCertificate(err)
                     }
-                })??;
+                    CertifPollServerError::Internal(err) => err
+                        .context("Cannot poll server for new certificates")
+                        .into(),
+                })?;
 
-            match outcome {
-                ForReadOutcome::StoredTimestampOutdated => {
-                    // We were lacking some certificates, do a server poll and retry
-                    self.for_write(|store| async move {
-                        super::poll::poll_server_for_new_certificates(
-                            ops,
-                            store,
-                            Some(needed_timestamps),
-                        )
-                        .await
-                        .map_err(|e| match e {
-                            CertifPollServerError::Offline => {
-                                CertifForReadWithRequirementsError::Offline
-                            }
-                            CertifPollServerError::Stopped => {
-                                CertifForReadWithRequirementsError::Stopped
-                            }
-                            CertifPollServerError::InvalidCertificate(err) => {
-                                CertifForReadWithRequirementsError::InvalidCertificate(err)
-                            }
-                            CertifPollServerError::Internal(err) => err
-                                .context("Cannot poll server for new certificates")
-                                .into(),
-                        })?;
+            Result::<(), CertifForReadWithRequirementsError>::Ok(())
+        })
+        .await
+        .map_err(|e| match e {
+            CertifStoreError::Stopped => CertifForReadWithRequirementsError::Stopped,
+            CertifStoreError::Internal(err) => err.context("Cannot lock storage for write").into(),
+        })??;
 
-                        Result::<(), CertifForReadWithRequirementsError>::Ok(())
-                    })
-                    .await
-                    .map_err(|e| match e {
-                        CertifStoreError::Stopped => CertifForReadWithRequirementsError::Stopped,
-                        CertifStoreError::Internal(err) => {
-                            err.context("Cannot lock storage for write").into()
-                        }
-                    })??;
-
-                    continue;
-                }
-                ForReadOutcome::Done(res) => return Ok(res),
+        // Retry the operation now that we have the requirements
+        match try_with_requirements().await.map_err(|e| match e {
+            CertifStoreError::Stopped => CertifForReadWithRequirementsError::Stopped,
+            CertifStoreError::Internal(err) => err.context("Cannot lock storage for read").into(),
+        })?? {
+            // If the requirement were met, we are done
+            ForReadOutcome::Done(res) => Ok(res),
+            // If the requirements were not met, the requirements were invalid in the first place
+            ForReadOutcome::StoredTimestampOutdated => {
+                Err(CertifForReadWithRequirementsError::InvalidRequirements)
             }
         }
     }
