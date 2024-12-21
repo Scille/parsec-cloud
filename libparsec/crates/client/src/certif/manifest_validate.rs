@@ -160,6 +160,11 @@ pub(super) async fn validate_user_manifest(
             CertifForReadWithRequirementsError::InvalidCertificate(err) => {
                 CertifValidateManifestError::InvalidCertificate(err)
             }
+            CertifForReadWithRequirementsError::InvalidRequirements => {
+                CertifValidateManifestError::Internal(anyhow::anyhow!(
+                    "Unexpected invalid requirements"
+                ))
+            }
             CertifForReadWithRequirementsError::Internal(err) => err.into(),
         })?
 }
@@ -269,6 +274,11 @@ pub(super) async fn validate_workspace_manifest(
             CertifForReadWithRequirementsError::InvalidCertificate(err) => {
                 CertifValidateManifestError::InvalidCertificate(err)
             }
+            CertifForReadWithRequirementsError::InvalidRequirements => {
+                CertifValidateManifestError::Internal(anyhow::anyhow!(
+                    "Unexpected invalid requirements"
+                ))
+            }
             CertifForReadWithRequirementsError::Internal(err) => err.into(),
         })?
 }
@@ -376,6 +386,11 @@ pub(super) async fn validate_child_manifest(
             CertifForReadWithRequirementsError::Stopped => CertifValidateManifestError::Stopped,
             CertifForReadWithRequirementsError::InvalidCertificate(err) => {
                 CertifValidateManifestError::InvalidCertificate(err)
+            }
+            CertifForReadWithRequirementsError::InvalidRequirements => {
+                CertifValidateManifestError::Internal(anyhow::anyhow!(
+                    "Unexpected invalid requirements"
+                ))
             }
             CertifForReadWithRequirementsError::Internal(err) => err.into(),
         })?
