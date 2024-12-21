@@ -195,6 +195,7 @@ class ShamirRecoverySetupInfo:
     claimer_human_handle: HumanHandle
     threshold: int
     recipients: list[ShamirRecoveryRecipient]
+    created_on: DateTime
     deleted_on: DateTime | None
 
 
@@ -313,6 +314,7 @@ SELECT
     human.email as claimer_email,
     human.label as claimer_label,
     shamir_recovery_setup.threshold,
+    shamir_recovery_setup.created_on,
     shamir_recovery_setup.deleted_on
 FROM shamir_recovery_setup
 INNER JOIN user_ ON shamir_recovery_setup.user_ = user_._id
@@ -1104,6 +1106,12 @@ class PGInviteComponent(BaseInviteComponent):
             case unknown:
                 assert False, repr(unknown)
 
+        match row["created_on"]:
+            case DateTime() as created_on:
+                pass
+            case unknown:
+                assert False, repr(unknown)
+
         match row["deleted_on"]:
             case DateTime() | None as deleted_on:
                 pass
@@ -1131,6 +1139,7 @@ class PGInviteComponent(BaseInviteComponent):
             claimer_human_handle=claimer_human_handle,
             threshold=threshold,
             recipients=recipients,
+            created_on=created_on,
             deleted_on=deleted_on,
         )
 
@@ -1271,7 +1280,8 @@ class PGInviteComponent(BaseInviteComponent):
                         claimer_human_handle=shamir_recovery_info.claimer_human_handle,
                         threshold=shamir_recovery_info.threshold,
                         recipients=shamir_recovery_info.recipients,
-                        shamir_recovery_is_deleted=shamir_recovery_info.deleted_on is not None,
+                        shamir_recovery_created_on=shamir_recovery_info.created_on,
+                        shamir_recovery_deleted_on=shamir_recovery_info.deleted_on,
                     )
                 case unknown:
                     assert False, unknown
@@ -1323,7 +1333,7 @@ class PGInviteComponent(BaseInviteComponent):
             )
         elif invitation_info.type == InvitationType.SHAMIR_RECOVERY:
             assert invitation_info.shamir_recovery_setup is not None
-            shamir_recovery_invitation = await self._get_shamir_recovery_info(
+            shamir_recovery_info = await self._get_shamir_recovery_info(
                 conn, invitation_info.shamir_recovery_setup
             )
             return ShamirRecoveryInvitation(
@@ -1333,11 +1343,12 @@ class PGInviteComponent(BaseInviteComponent):
                 token=token,
                 created_on=invitation_info.created_on,
                 status=InvitationStatus.READY,
-                claimer_user_id=shamir_recovery_invitation.claimer_user_id,
-                claimer_human_handle=shamir_recovery_invitation.claimer_human_handle,
-                threshold=shamir_recovery_invitation.threshold,
-                recipients=shamir_recovery_invitation.recipients,
-                shamir_recovery_is_deleted=shamir_recovery_invitation.deleted_on is not None,
+                claimer_user_id=shamir_recovery_info.claimer_user_id,
+                claimer_human_handle=shamir_recovery_info.claimer_human_handle,
+                threshold=shamir_recovery_info.threshold,
+                recipients=shamir_recovery_info.recipients,
+                shamir_recovery_created_on=shamir_recovery_info.created_on,
+                shamir_recovery_deleted_on=shamir_recovery_info.deleted_on,
             )
         else:
             assert False, invitation_info.type
@@ -1475,7 +1486,8 @@ class PGInviteComponent(BaseInviteComponent):
                             claimer_user_id=shamir_recovery_info.claimer_user_id,
                             threshold=shamir_recovery_info.threshold,
                             recipients=shamir_recovery_info.recipients,
-                            shamir_recovery_is_deleted=shamir_recovery_info.deleted_on is not None,
+                            shamir_recovery_created_on=shamir_recovery_info.created_on,
+                            shamir_recovery_deleted_on=shamir_recovery_info.deleted_on,
                         )
                     )
                 case unknown:

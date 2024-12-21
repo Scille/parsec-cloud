@@ -129,7 +129,8 @@ class MemoryInviteComponent(BaseInviteComponent):
             claimer_human_handle=claimer_human_handle,
             threshold=threshold,
             recipients=recipients,
-            shamir_recovery_is_deleted=shamir_recovery.is_deleted,
+            shamir_recovery_created_on=shamir_recovery.cooked_brief.timestamp,
+            shamir_recovery_deleted_on=shamir_recovery.deleted_on,
         )
 
     @override
