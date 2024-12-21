@@ -6,12 +6,12 @@ use std::{
     sync::Arc,
 };
 
-use libparsec_platform_storage::certificates::{GetCertificateError, UpTo};
+use libparsec_platform_storage::certificates::{GetCertificateError, PerTopicLastTimestamps, UpTo};
 use libparsec_types::prelude::*;
 
 use super::{
-    store::{CertifStoreError, LastShamirRecovery},
-    CertificateOps,
+    store::{CertifForReadWithRequirementsError, CertifStoreError, LastShamirRecovery},
+    CertificateOps, InvalidCertificateError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -351,25 +351,35 @@ pub async fn list_shamir_recoveries_for_others(
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifGetShamirRecoveryShareDataError {
-    #[error("No shamir certificate found for provided user id")]
-    ShamirRecoveryNotFound,
-    #[error("No shamir share certificate found for provided user id")]
-    ShamirRecoveryShareNotFound,
-    #[error("Shamir recovery is unusable for provided user id")]
+    #[error("Shamir recovery brief certificate not found")]
+    ShamirRecoveryBriefCertificateNotFound,
+    #[error("Shamir recovery share certificate not found")]
+    ShamirRecoveryShareCertificateNotFound,
+    #[error("Shamir recovery has been deleted")]
+    ShamirRecoveryDeleted,
+    #[error("Shamir recovery is unusable due to revoked recipients")]
     ShamirRecoveryUnusable,
     #[error(transparent)]
     CorruptedShareData(DataError),
+    #[error("Cannot reach the server")]
+    Offline,
     #[error("Component has stopped")]
     Stopped,
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
 
-impl From<CertifStoreError> for CertifGetShamirRecoveryShareDataError {
-    fn from(value: CertifStoreError) -> Self {
+impl From<CertifForReadWithRequirementsError> for CertifGetShamirRecoveryShareDataError {
+    fn from(value: CertifForReadWithRequirementsError) -> Self {
         match value {
-            CertifStoreError::Stopped => Self::Stopped,
-            CertifStoreError::Internal(err) => err.into(),
+            CertifForReadWithRequirementsError::Offline => Self::Offline,
+            CertifForReadWithRequirementsError::Stopped => Self::Stopped,
+            CertifForReadWithRequirementsError::InvalidCertificate(err) => {
+                Self::InvalidCertificate(err)
+            }
+            CertifForReadWithRequirementsError::Internal(err) => err.into(),
         }
     }
 }
@@ -377,18 +387,34 @@ impl From<CertifStoreError> for CertifGetShamirRecoveryShareDataError {
 pub async fn get_shamir_recovery_share_data(
     ops: &CertificateOps,
     user_id: UserID,
+    shamir_recovery_created_on: DateTime,
 ) -> Result<ShamirRecoveryShareData, CertifGetShamirRecoveryShareDataError> {
+    let needed_timestamps = PerTopicLastTimestamps::new_for_shamir(shamir_recovery_created_on);
     ops.store
-        .for_read(|store| async move {
-            // 1. Retrieve the last shamir recovery brief and share certificate
+        .for_read_with_requirements(ops, &needed_timestamps, |store| async move {
+
+            // 1. Check that the corresponding shamir recovery has not been deleted
+
+            let deletions = store
+                .get_shamir_recovery_deletions(UpTo::Current)
+                .await?;
+            let maybe_deletion = deletions.iter().find(|deletion| {
+                deletion.setup_to_delete_user_id == user_id
+                    && deletion.setup_to_delete_timestamp == shamir_recovery_created_on
+            });
+            if maybe_deletion.is_some() {
+                return Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryDeleted);
+            }
+
+            // 2. Retrieve the brief and share certificates
 
             let brief_certificate = store
                 .get_last_shamir_recovery_brief_certificate_for_author(UpTo::Current, &user_id)
                 .await?;
             let brief_certificate = match brief_certificate {
-                Some(brief_certificate) => Ok(brief_certificate),
-                None => {
-                    Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryNotFound)
+                Some(brief_certificate) if brief_certificate.timestamp == shamir_recovery_created_on => Ok(brief_certificate),
+                _ => {
+                    Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryBriefCertificateNotFound)
                 }
             }?;
 
@@ -400,13 +426,13 @@ pub async fn get_shamir_recovery_share_data(
                 )
                 .await?;
             let share_certificate = match share_certificate {
-                Some(share_certificate) => Ok(share_certificate),
-                None => {
-                    Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryShareNotFound)
+                Some(share_certificate) if share_certificate.timestamp == shamir_recovery_created_on => Ok(share_certificate),
+                _ => {
+                    Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryShareCertificateNotFound)
                 }
             }?;
 
-            // 2. Detect if the shamir recovery is usable
+            // 3. Detect if the shamir recovery is usable
 
             let mut usable_share_count = 0;
             for (&recipient_user_id, &recipient_share_count) in
@@ -425,7 +451,7 @@ pub async fn get_shamir_recovery_share_data(
                 );
             }
 
-            // 3. Retrieve the verify key of the author of the share certificate
+            // 4. Retrieve the verify key of the author of the share certificate
 
             let author_verify_key = store
                 .get_device_verify_key(UpTo::Current, share_certificate.author)
@@ -443,7 +469,7 @@ pub async fn get_shamir_recovery_share_data(
                     }
                 })?;
 
-            // 4. Decrypt the share data
+            // 5. Decrypt the share data
 
             ShamirRecoveryShareData::decrypt_verify_and_load_for(
                 &share_certificate.ciphered_share,
