@@ -66,7 +66,8 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
                     revoked_on=None,
                 ),
             ],
-            shamir_recovery_is_deleted=False,
+            shamir_recovery_created_on=shamirorg.mallory_brief_certificate.timestamp,
+            shamir_recovery_deleted_on=None,
         )
     ]
     assert (
@@ -198,7 +199,8 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
                     revoked_on=None,
                 ),
             ],
-            shamir_recovery_is_deleted=False,
+            shamir_recovery_created_on=shamirorg.mallory_brief_certificate.timestamp,
+            shamir_recovery_deleted_on=None,
         )
     ]
     assert (

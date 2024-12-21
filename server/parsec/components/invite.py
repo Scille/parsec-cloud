@@ -90,7 +90,12 @@ class ShamirRecoveryInvitation:
     claimer_human_handle: HumanHandle
     threshold: int
     recipients: list[ShamirRecoveryRecipient]
-    shamir_recovery_is_deleted: bool
+    shamir_recovery_created_on: DateTime
+    shamir_recovery_deleted_on: None | DateTime
+
+    @property
+    def shamir_recovery_is_deleted(self) -> bool:
+        return self.shamir_recovery_deleted_on is not None
 
 
 Invitation = UserInvitation | DeviceInvitation | ShamirRecoveryInvitation
@@ -940,6 +945,7 @@ class BaseInviteComponent:
                         created_on=invitation.created_on,
                         status=invitation.status,
                         claimer_user_id=invitation.claimer_user_id,
+                        shamir_recovery_created_on=invitation.shamir_recovery_created_on,
                     )
             cooked_invitations.append(cooked)
 

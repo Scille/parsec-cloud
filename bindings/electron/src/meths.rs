@@ -5709,6 +5709,20 @@ fn variant_invite_list_item_js_to_rs<'a>(
                     }
                 }
             };
+            let shamir_recovery_created_on = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "shamirRecoveryCreatedOn")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
             let status = {
                 let js_val: Handle<JsString> = obj.get(cx, "status")?;
                 {
@@ -5721,6 +5735,7 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 token,
                 created_on,
                 claimer_user_id,
+                shamir_recovery_created_on,
                 status,
             })
         }
@@ -5845,6 +5860,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
             token,
             created_on,
             claimer_user_id,
+            shamir_recovery_created_on,
             status,
             ..
         } => {
@@ -5892,6 +5908,16 @@ fn variant_invite_list_item_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "claimerUserId", js_claimer_user_id)?;
+            let js_shamir_recovery_created_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(shamir_recovery_created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "shamirRecoveryCreatedOn", js_shamir_recovery_created_on)?;
             let js_status =
                 JsString::try_new(cx, enum_invitation_status_rs_to_js(status)).or_throw(cx)?;
             js_obj.set(cx, "status", js_status)?;
