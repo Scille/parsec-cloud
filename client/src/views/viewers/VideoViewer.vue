@@ -5,20 +5,31 @@
     <template #viewer>
       <video
         class="video"
-        v-if="src.length"
+        v-if="src.length && !error"
         ref="videoElement"
         @play="updateMediaData"
         @playing="updateMediaData"
-        @canplay="updateMediaData"
+        @canplay="
+          updateMediaData($event);
+          onReady($event);
+        "
         @pause="updateMediaData"
         @volumechange="updateMediaData"
         @ended="updateMediaData"
+        @error="onError"
       >
         <source
           :src="src"
           :type="contentInfo.mimeType"
         />
       </video>
+      <ms-spinner v-if="loading" />
+      <ms-report-text
+        :theme="MsReportTheme.Error"
+        v-if="error"
+      >
+        {{ $msTranslate(error) }}
+      </ms-report-text>
     </template>
     <template #controls>
       <file-controls>
@@ -42,10 +53,11 @@
 
 <script setup lang="ts">
 import { refresh, play, pause, volumeHigh, volumeLow, volumeMedium, volumeMute, scan } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
+import { onMounted, Ref, ref } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { FileControls, FileControlsButton } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
+import { MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -54,25 +66,43 @@ const props = defineProps<{
 const VOLUME_LEVELS = [0, 0.25, 0.5, 1];
 
 const src = ref('');
-const videoElement = ref();
+const videoElement: Ref<HTMLVideoElement | undefined> = ref(undefined);
 const paused = ref(true);
 const volume = ref(1);
 const ended = ref(false);
+const error = ref('');
+const loading = ref(true);
 
 onMounted(async () => {
+  loading.value = true;
   src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
 });
 
-function togglePlayback(): void {
-  videoElement.value.paused ? videoElement.value.play() : videoElement.value.pause();
+async function onError(_event: Event): Promise<void> {
+  loading.value = false;
+  error.value = 'fileViewers.mediaNotSupported';
+}
+
+async function onReady(_event: Event): Promise<void> {
+  loading.value = false;
+}
+
+async function togglePlayback(): Promise<void> {
+  if (!videoElement.value) {
+    return;
+  }
+  videoElement.value.paused ? await videoElement.value.play() : await videoElement.value.pause();
 }
 
 function toggleVolume(): void {
+  if (!videoElement.value) {
+    return;
+  }
   videoElement.value.volume = VOLUME_LEVELS[(VOLUME_LEVELS.indexOf(videoElement.value.volume) + 1) % VOLUME_LEVELS.length];
 }
 
-function toggleFullScreen(): void {
-  videoElement.value?.requestFullscreen();
+async function toggleFullScreen(): Promise<void> {
+  await videoElement.value?.requestFullscreen();
 }
 
 function updateMediaData(event: Event): void {

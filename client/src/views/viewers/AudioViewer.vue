@@ -5,16 +5,27 @@
     <template #viewer>
       <audio
         controls
-        v-if="src.length"
+        v-if="src.length && !error"
         ref="audioElement"
         :src="src"
         @play="updateMediaData"
         @playing="updateMediaData"
-        @canplay="updateMediaData"
+        @canplay="
+          updateMediaData($event);
+          onReady($event);
+        "
         @pause="updateMediaData"
         @volumechange="updateMediaData"
         @ended="updateMediaData"
+        @error="onError"
       />
+      <ms-spinner v-if="loading" />
+      <ms-report-text
+        :theme="MsReportTheme.Error"
+        v-if="error"
+      >
+        {{ $msTranslate(error) }}
+      </ms-report-text>
     </template>
     <!-- Disabled till we add an illustration in the viewer -->
     <!-- <template #controls>
@@ -35,9 +46,10 @@
 
 <script setup lang="ts">
 // import { refresh, play, pause, volumeHigh, volumeLow, volumeMedium, volumeMute } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
+import { onMounted, Ref, ref } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
+import { MsReportText, MsReportTheme, MsSpinner } from 'megashark-lib';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -46,14 +58,26 @@ const props = defineProps<{
 // const VOLUME_LEVELS = [0, 0.25, 0.5, 1];
 
 const src = ref('');
-const audioElement = ref();
+const loading = ref(true);
+const error = ref('');
+const audioElement: Ref<HTMLAudioElement | undefined> = ref(undefined);
 const paused = ref(true);
 const volume = ref(1);
 const ended = ref(false);
 
 onMounted(async () => {
+  loading.value = true;
   src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
 });
+
+async function onError(_event: Event): Promise<void> {
+  loading.value = false;
+  error.value = 'fileViewers.mediaNotSupported';
+}
+
+async function onReady(_event: Event): Promise<void> {
+  loading.value = false;
+}
 
 // function togglePlayback(): void {
 //   audioElement.value.paused ? audioElement.value.play() : audioElement.value.pause();

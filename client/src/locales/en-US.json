@@ -1709,6 +1709,7 @@
         "openWithDefault": "Open with default application",
         "openingFile": "Opening file...",
         "fileTooBig": "File is too big to be opened using a viewer.",
+        "mediaNotSupported": "This media cannot be played.",
         "controls": {
             "zoom": {
                 "in": "Zoom in",
