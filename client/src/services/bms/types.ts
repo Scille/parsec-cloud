@@ -325,9 +325,9 @@ interface CustomOrderQueryData extends ClientQueryData {
 
 interface CreateCustomOrderRequestQueryData {
   describedNeeds: string;
-  adminUsers: number;
+  adminUsers?: number;
   standardUsers: number;
-  outsiderUsers: number;
+  outsiderUsers?: number;
   storage: number;
   formula?: string;
   organizationName?: string;

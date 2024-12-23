@@ -1723,7 +1723,9 @@
                 "description": {
                     "label": "Describe your needs",
                     "placeholder": "Tell us more about your needs, expectations, and constraints..."
-                }
+                },
+                "connectionFailure": "Failed to contact the server.",
+                "serverFailure": "The server refused the request."
             }
         }
     },
