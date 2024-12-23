@@ -273,6 +273,7 @@ pub async fn claimer_retrieve_info(
             InvitationType::ShamirRecovery {
                 claimer_user_id,
                 claimer_human_handle,
+                shamir_recovery_created_on,
                 recipients,
                 threshold,
             } => Ok(AnyClaimRetrievedInfoCtx::ShamirRecovery(
@@ -281,6 +282,7 @@ pub async fn claimer_retrieve_info(
                     cmds,
                     claimer_user_id,
                     claimer_human_handle,
+                    shamir_recovery_created_on,
                     recipients,
                     threshold,
                     shares: HashMap::new(),
@@ -326,6 +328,7 @@ pub struct ShamirRecoveryClaimPickRecipientCtx {
     cmds: Arc<InvitedCmds>,
     claimer_user_id: UserID,
     claimer_human_handle: HumanHandle,
+    shamir_recovery_created_on: DateTime,
     recipients: Vec<ShamirRecoveryRecipient>,
     threshold: NonZeroU8,
     shares: HashMap<UserID, Vec<ShamirShare>>,
@@ -349,6 +352,10 @@ impl ShamirRecoveryClaimPickRecipientCtx {
         &self.claimer_human_handle
     }
 
+    pub fn shamir_recovery_created_on(&self) -> DateTime {
+        self.shamir_recovery_created_on
+    }
+
     pub fn is_recoverable(&self) -> bool {
         self.recipients
             .iter()
@@ -361,7 +368,12 @@ impl ShamirRecoveryClaimPickRecipientCtx {
     pub fn shares(&self) -> HashMap<UserID, NonZeroU8> {
         self.shares
             .iter()
-            .filter_map(|(k, v)| NonZeroU8::try_from(v.len() as u8).ok().map(|x| (*k, x)))
+            .filter_map(|(k, v)| {
+                u8::try_from(v.len())
+                    .and_then(NonZeroU8::try_from)
+                    .ok()
+                    .map(|x| (*k, x))
+            })
             .collect()
     }
 

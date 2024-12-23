@@ -20,6 +20,7 @@ from tests.common import (
     HttpCommonErrorsTester,
     bob_becomes_admin_and_changes_alice,
 )
+from tests.common.client import ShamirOrgRpcClients
 
 
 @pytest.fixture
@@ -177,6 +178,24 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_a
             origin=GreeterOrClaimer.CLAIMER,
         )
     )
+
+
+async def test_invited_invite_claimer_cancel_greeting_attempt_with_shamir_deleted(
+    shamirorg: ShamirOrgRpcClients,
+    invited_greeting_with_deleted_shamir_tester: HttpCommonErrorsTester,
+) -> None:
+    rep = await shamirorg.shamir_invited_alice.invite_claimer_start_greeting_attempt(
+        greeter=shamirorg.bob.user_id,
+    )
+    assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
+
+    async def do():
+        await shamirorg.shamir_invited_alice.invite_claimer_cancel_greeting_attempt(
+            greeting_attempt=rep.greeting_attempt,
+            reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+        )
+
+    await invited_greeting_with_deleted_shamir_tester(do)
 
 
 async def test_invited_invite_claimer_cancel_greeting_attempt_http_common_errors(

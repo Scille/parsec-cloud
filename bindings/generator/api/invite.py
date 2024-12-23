@@ -426,6 +426,7 @@ class InviteListItem(Variant):
         token: InvitationToken
         created_on: DateTime
         claimer_user_id: UserID
+        shamir_recovery_created_on: DateTime
         status: InvitationStatus
 
 

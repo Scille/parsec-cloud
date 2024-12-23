@@ -66,6 +66,8 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
                     revoked_on=None,
                 ),
             ],
+            shamir_recovery_created_on=shamirorg.mallory_brief_certificate.timestamp,
+            shamir_recovery_deleted_on=None,
         )
     ]
     assert (
@@ -117,7 +119,14 @@ async def test_authenticated_invite_new_shamir_recovery_ok_already_exist(
         )
         assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepOk)
         assert rep.token == shamirorg.shamir_invited_alice.token
-        assert not spy.events
+        await spy.wait_event_occurred(
+            EventInvitation(
+                organization_id=shamirorg.organization_id,
+                greeter=shamirorg.bob.user_id,
+                token=rep.token,
+                status=InvitationStatus.IDLE,
+            )
+        )
 
     assert (
         await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
@@ -190,6 +199,8 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
                     revoked_on=None,
                 ),
             ],
+            shamir_recovery_created_on=shamirorg.mallory_brief_certificate.timestamp,
+            shamir_recovery_deleted_on=None,
         )
     ]
     assert (

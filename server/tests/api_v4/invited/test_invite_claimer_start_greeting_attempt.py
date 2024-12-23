@@ -12,6 +12,7 @@ from parsec._parsec import (
     invited_cmds,
 )
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
+from tests.common.client import ShamirOrgRpcClients
 
 
 async def test_invited_invite_claimer_start_greeting_attempt_ok(
@@ -53,6 +54,21 @@ async def test_invited_invite_claimer_start_greeting_attempt_greeter_not_allowed
 
     assert rep == invited_cmds.v4.invite_claimer_start_greeting_attempt.RepGreeterNotAllowed()
 
+    rep = await coolorg.invited_zack.invite_claimer_start_greeting_attempt(
+        greeter=coolorg.bob.user_id,
+    )
+
+    assert rep == invited_cmds.v4.invite_claimer_start_greeting_attempt.RepGreeterNotAllowed()
+
+
+async def test_invited_invite_claimer_start_greeting_attempt_greeter_not_allowed_with_shamir(
+    shamirorg: ShamirOrgRpcClients,
+) -> None:
+    rep = await shamirorg.shamir_invited_alice.invite_claimer_start_greeting_attempt(
+        greeter=shamirorg.alice.user_id,
+    )
+    assert rep == invited_cmds.v4.invite_claimer_start_greeting_attempt.RepGreeterNotAllowed()
+
 
 async def test_invited_invite_claimer_start_greeting_attempt_greeter_revoked(
     coolorg: CoolorgRpcClients,
@@ -83,6 +99,18 @@ async def test_invited_invite_claimer_start_greeting_attempt_greeter_revoked(
     )
 
     assert rep == invited_cmds.v4.invite_claimer_start_greeting_attempt.RepGreeterRevoked()
+
+
+async def test_invited_invite_claimer_start_greeting_attempt_with_shamir_deleted(
+    shamirorg: ShamirOrgRpcClients,
+    invited_greeting_with_deleted_shamir_tester: HttpCommonErrorsTester,
+) -> None:
+    async def do():
+        await shamirorg.shamir_invited_alice.invite_claimer_start_greeting_attempt(
+            greeter=shamirorg.bob.user_id,
+        )
+
+    await invited_greeting_with_deleted_shamir_tester(do)
 
 
 async def test_invited_invite_claimer_start_greeting_attempt_http_common_errors(

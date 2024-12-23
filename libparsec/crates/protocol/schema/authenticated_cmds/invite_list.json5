@@ -79,6 +79,10 @@
                                 "type": "UserID"
                             },
                             {
+                                "name": "shamir_recovery_created_on",
+                                "type": "DateTime"
+                            },
+                            {
                                 "name": "status",
                                 "type": "InvitationStatus"
                             }

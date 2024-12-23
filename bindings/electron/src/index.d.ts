@@ -1379,6 +1379,7 @@ export interface InviteListItemShamirRecovery {
     token: string
     created_on: number
     claimer_user_id: string
+    shamir_recovery_created_on: number
     status: InvitationStatus
 }
 export interface InviteListItemUser {
