@@ -21,22 +21,35 @@
 
 <script setup lang="ts">
 import { I18n } from 'megashark-lib';
-import { ref } from 'vue';
+import { onUnmounted, ref, watch } from 'vue';
 import { FileControlsGroup, FileControlsInput } from '@/components/viewers';
 
 const props = defineProps<{
   length: number;
+  page?: number;
 }>();
 
 const emits = defineEmits<{
   (e: 'change', value: number): void;
+  (e: 'update:page', value: number): void;
 }>();
 
 defineExpose({
   getCurrentPage,
 });
 
+const inputRef = ref();
 const currentPage = ref('1');
+
+const pageWatchCancel = watch(
+  () => props.page,
+  (value) => {
+    if (value === undefined || value === null || value < 1 || value > props.length || inputRef.value.isEditing()) {
+      return;
+    }
+    currentPage.value = value.toString();
+  },
+);
 
 function getCurrentPage(): number {
   return Number(currentPage.value);
@@ -69,6 +82,10 @@ async function validatePageNumber(value: string): Promise<string> {
   }
   return value;
 }
+
+onUnmounted(() => {
+  pageWatchCancel();
+});
 </script>
 
 <style scoped lang="scss">

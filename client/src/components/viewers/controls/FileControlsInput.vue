@@ -64,6 +64,7 @@ const emits = defineEmits<{
 
 defineExpose({
   setFocus,
+  isEditing,
 });
 
 async function setFocus(): Promise<void> {
@@ -110,6 +111,10 @@ async function onSubmittedValue(value: string): Promise<void> {
 async function onTextClick(): Promise<void> {
   editing.value = true;
   await setFocus();
+}
+
+function isEditing(): boolean {
+  return editing.value;
 }
 </script>
 

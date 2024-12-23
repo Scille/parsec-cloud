@@ -1,23 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Page } from '@playwright/test';
-import { Media, expect, expectMedia, msTest } from '@tests/e2e/helpers';
-
-async function openFileType(documentsPage: Page, type: 'xlsx' | 'docx' | 'png' | 'pdf' | 'mp3' | 'mp4' | 'txt' | 'py'): Promise<void> {
-  const entries = documentsPage.locator('.folder-container').locator('.file-list-item');
-
-  for (const entry of await entries.all()) {
-    const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
-    if (entryName.endsWith(`.${type}`)) {
-      await entry.dblclick();
-      await expect(documentsPage.locator('.ms-spinner-modal')).toBeVisible();
-      await expect(documentsPage.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
-      await expect(documentsPage.locator('.ms-spinner-modal')).toBeHidden();
-      await expect(documentsPage).toBeViewerPage();
-      return;
-    }
-  }
-}
+import { Media, expect, expectMedia, msTest, openFileType } from '@tests/e2e/helpers';
 
 msTest('Documents page default state', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
@@ -43,26 +26,6 @@ msTest('Spreadsheet viewer', async ({ documents }) => {
   // Switch to second sheet
   await bottomBar.locator('.file-controls-button').nth(1).click();
   await expect(wrapper.locator('.spreadsheet-content').locator('td')).toHaveText(['E', '5', 'F', '6', 'G', '7', 'H', '8']);
-});
-
-msTest('Document viewer', async ({ documents }) => {
-  await openFileType(documents, 'docx');
-  await expect(documents).toBeViewerPage();
-  await expect(documents).toHavePageTitle('File viewer');
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.docx$/);
-  const bottomBar = documents.locator('.file-viewer-bottombar');
-  await expect(bottomBar).toBeEmpty();
-  const wrapper = documents.locator('.file-viewer-wrapper');
-  await expect(wrapper.locator('.document-content').locator('p')).toHaveText([
-    'Title',
-    '',
-    'BOLD',
-    'Italic',
-    'Underline',
-    'RED',
-    'parsec.cloud',
-  ]);
-  await expect(wrapper.locator('.document-content').locator('h2')).toHaveText('Subtitle');
 });
 
 msTest('PDF viewer', async ({ documents }) => {

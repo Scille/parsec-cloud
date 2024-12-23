@@ -1764,6 +1764,9 @@
         "pdf": {
             "loadDocumentError": "Could not load this PDF document.",
             "loadPageError": "Could not load this page."
+        },
+        "document": {
+            "loadDocumentError": "Could not load this document."
         }
     }
 }

@@ -1,23 +1,44 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <file-viewer-wrapper>
+  <file-viewer-wrapper :error="error">
     <template #viewer>
       <ms-spinner v-show="loading" />
       <div
+        class="document-container"
+        @scroll="onScroll"
+        ref="documentContainer"
         v-show="!loading"
-        class="document-content"
-        v-html="htmlContent"
-      />
+      >
+        <div
+          class="document-content"
+          ref="documentContent"
+        />
+      </div>
+    </template>
+    <template #controls>
+      <file-controls v-show="!loading">
+        <file-controls-zoom
+          @change="onZoomLevelChange"
+          ref="zoomControl"
+        />
+        <file-controls-pagination
+          v-if="pages.length > 1"
+          :length="pages.length"
+          @change="onPaginationChange"
+          :page="currentPage"
+        />
+      </file-controls>
     </template>
   </file-viewer-wrapper>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, nextTick } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
-import mammoth from 'mammoth';
+import { FileControls, FileControlsPagination, FileControlsZoom } from '@/components/viewers';
+import { renderAsync } from 'docx-preview';
 import { MsSpinner } from 'megashark-lib';
 
 const props = defineProps<{
@@ -25,14 +46,91 @@ const props = defineProps<{
 }>();
 
 const loading = ref(true);
-const htmlContent = ref('');
+const documentContainer = ref();
+const documentContent = ref();
+const pages = ref<HTMLElement[]>([]);
+const zoomControl = ref();
+const zoomLevel = ref(1);
+const currentPage = ref(1);
+const error = ref('');
 
 onMounted(async () => {
-  loading.value = true;
-  const result = await mammoth.convertToHtml({ arrayBuffer: props.contentInfo.data.buffer });
-  htmlContent.value = result.value;
-  loading.value = false;
+  try {
+    loading.value = true;
+    await renderAsync(props.contentInfo.data.buffer, documentContent.value, undefined, {
+      ignoreLastRenderedPageBreak: false,
+      className: 'docx-page',
+    });
+
+    // recommended way to get all pages by the library developer
+    pages.value = Array.from(documentContent.value.querySelectorAll('section.docx-page'));
+    loading.value = false;
+  } catch (e: any) {
+    window.electronAPI.log('error', `Failed to load docx file: ${e}`);
+    error.value = 'fileViewers.document.loadDocumentError';
+    loading.value = false;
+  }
 });
+
+function onZoomLevelChange(value: number): void {
+  zoomLevel.value = value / 100;
+}
+
+async function onPaginationChange(pageIndex: number): Promise<void> {
+  if (!pages.value || pageIndex <= 0 || pageIndex > pages.value.length) {
+    return;
+  }
+
+  const targetPage = pages.value?.at(pageIndex - 1);
+  if (targetPage) {
+    await nextTick();
+    targetPage.scrollIntoView({ behavior: 'smooth' });
+  }
+  currentPage.value = pageIndex;
+}
+
+function onScroll(): void {
+  if (!pages.value) {
+    return;
+  }
+
+  const documentContainerRect = documentContainer.value.getBoundingClientRect();
+  let currentPageIndex = -1;
+  // minDistance is initialized to Infinity to ensure that any distance will be less than it
+  let minDistance = Infinity;
+
+  for (const [pIndex, page] of pages.value.entries()) {
+    const pageRect = page.getBoundingClientRect();
+    // here we calculate the distance between the top of the page and the top of the document content
+    const distance = Math.abs(pageRect.top - documentContainerRect.top);
+    // if the distance is less than the minimum distance, we update the minimum distance and the current page index
+    if (distance < minDistance) {
+      minDistance = distance;
+      currentPageIndex = pIndex;
+    } else {
+      // if the distance is greater than the minimum distance, we break the loop
+      break;
+    }
+  }
+  if (currentPageIndex >= 0) {
+    currentPage.value = currentPageIndex + 1;
+  }
+}
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.document-container {
+  background-color: grey;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.document-content {
+  transform: scale(v-bind(zoomLevel));
+  transform-origin: top left;
+  width: fit-content;
+  margin: auto;
+  height: 100%;
+}
+</style>

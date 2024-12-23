@@ -2,17 +2,43 @@
 
 <template>
   <!-- file-viewer wrapper -->
-  <div class="file-viewer-wrapper">
+  <div
+    class="file-viewer-wrapper"
+    v-if="!error"
+  >
     <slot name="viewer" />
   </div>
 
+  <!-- file-viewer error -->
+  <div
+    class="file-viewer-error"
+    v-if="error"
+  >
+    <ms-report-text
+      class="document-error"
+      :theme="MsReportTheme.Error"
+      v-if="error"
+    >
+      {{ $msTranslate(error) }}
+    </ms-report-text>
+  </div>
+
   <!-- file-viewer bottombar -->
-  <div class="file-viewer-bottombar">
+  <div
+    class="file-viewer-bottombar"
+    v-if="!error"
+  >
     <slot name="controls" />
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { MsReportTheme, MsReportText } from 'megashark-lib';
+
+defineProps<{
+  error?: string;
+}>();
+</script>
 
 <style scoped lang="scss">
 .file-viewer-wrapper {
@@ -24,6 +50,13 @@
   justify-content: center;
   align-items: center;
   overflow: hidden;
+}
+
+.file-viewer-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 }
 
 .file-viewer-bottombar {
