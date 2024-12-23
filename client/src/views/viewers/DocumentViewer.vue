@@ -4,11 +4,6 @@
   <file-viewer-wrapper>
     <template #viewer>
       <ms-spinner v-show="loading" />
-      <!-- <div
-        v-show="!loading"
-        class="document-content"
-        v-html="htmlContent"
-      /> -->
       <div
         v-show="!loading"
         class="document-content"
@@ -22,8 +17,7 @@
 import { ref, onMounted } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
-import mammoth from 'mammoth';
-import { parseAsync, renderAsync, renderDocument } from 'docx-preview';
+import { renderAsync } from 'docx-preview';
 import { MsSpinner } from 'megashark-lib';
 
 const props = defineProps<{
@@ -31,17 +25,22 @@ const props = defineProps<{
 }>();
 
 const loading = ref(true);
-const htmlContent = ref('');
 const documentContent = ref();
 
 onMounted(async () => {
   loading.value = true;
-  console.log(parseAsync(props.contentInfo.data.buffer));
-  const result = await mammoth.convertToHtml({ arrayBuffer: props.contentInfo.data.buffer });
-  const result2 = await renderAsync(props.contentInfo.data.buffer, documentContent.value);
-  htmlContent.value = result.value;
+  await renderAsync(props.contentInfo.data.buffer, documentContent.value, undefined, {
+    ignoreLastRenderedPageBreak: false,
+  });
   loading.value = false;
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.document-content {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+}
+</style>
