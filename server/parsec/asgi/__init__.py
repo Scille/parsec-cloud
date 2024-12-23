@@ -127,6 +127,8 @@ async def serve_parsec_asgi_app(
         server_header=False,
         headers=[("Server", server_header)],
         log_level="info",
+        # Remove default log config to inherit instead the one we set in `parsec.logging`
+        log_config=None,
         ssl_keyfile=ssl_keyfile,
         ssl_certfile=ssl_certfile,
         workers=workers,
