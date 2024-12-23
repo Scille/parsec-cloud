@@ -1696,7 +1696,8 @@
         "orders": {
             "new": {
                 "title": "You need to create a new organization?",
-                "button": "New request"
+                "button": "New request",
+                "sent": "Your request has been sent."
             },
             "request": {
                 "title": "Request a new on-premise contract",
@@ -1724,8 +1725,8 @@
                     "label": "Describe your needs",
                     "placeholder": "Tell us more about your needs, expectations, and constraints..."
                 },
-                "connectionFailure": "Failed to contact the server.",
-                "serverFailure": "The server refused the request."
+                "connectionFailure": "An error occured (Failed to contact the server).",
+                "serverFailure": "An error occured (server request refused."
             }
         }
     },

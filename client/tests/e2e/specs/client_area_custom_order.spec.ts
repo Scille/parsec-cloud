@@ -9,6 +9,7 @@ msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
   const pages = [
     { button: 'Contract', title: 'Contract', url: 'contracts' },
     { button: 'Statistics', title: 'Statistics', url: 'custom-order-statistics' },
+    { button: 'Orders', title: 'Orders', url: 'orders' },
     { button: 'Billing details', title: 'Billing details', url: 'custom-order-billing-details' },
   ];
 
