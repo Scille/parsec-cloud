@@ -315,9 +315,9 @@ class BmsAccess {
 
   async createCustomOrderRequest(data: {
     needs: string;
-    adminUsers: number;
+    adminUsers?: number;
     standardUsers: number;
-    outsiderUsers: number;
+    outsiderUsers?: number;
     storage: number;
     formula?: string;
     organizationName?: string;

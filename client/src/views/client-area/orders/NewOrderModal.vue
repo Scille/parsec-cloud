@@ -3,12 +3,12 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="'clientArea.orders.request.title'"
-      :subtitle="'clientArea.orders.request.subtitle'"
+      title="clientArea.orders.request.title"
+      subtitle="clientArea.orders.request.subtitle"
       :close-button="{ visible: true }"
       :confirm-button="{
         label: 'clientArea.orders.request.submit',
-        disabled: isFormValid(),
+        disabled: !isFormValid,
         onClick: submit,
       }"
     >
@@ -26,7 +26,6 @@
                 :options="userOptions"
                 :default-option-key="userNeeds"
                 @change="userNeeds = $event.option.key"
-                ref="userNeedsDropdown"
                 alignment="start"
               />
             </div>
@@ -41,7 +40,6 @@
                 :options="storageOptions"
                 :default-option-key="storageNeeds"
                 @change="storageNeeds = $event.option.key"
-                ref="storageNeedsDropdown"
                 alignment="start"
               />
             </div>
@@ -62,6 +60,12 @@
               />
             </div>
           </div>
+          <ms-report-text
+            :theme="MsReportTheme.Error"
+            v-if="error"
+          >
+            {{ $msTranslate(error) }}
+          </ms-report-text>
         </div>
       </div>
     </ms-modal>
@@ -69,9 +73,10 @@
 </template>
 
 <script setup lang="ts">
-import { MsDropdown, MsOptions, MsModal, MsTextarea, MsModalResult } from 'megashark-lib';
+import { MsDropdown, MsOptions, MsModal, MsTextarea, MsModalResult, MsReportTheme, MsReportText } from 'megashark-lib';
 import { IonPage, IonText, modalController } from '@ionic/vue';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { BmsAccessInstance, CONNECTION_ERROR_STATUS } from '@/services/bms';
 
 const userOptions: MsOptions = new MsOptions([
   {
@@ -113,16 +118,30 @@ const storageOptions: MsOptions = new MsOptions([
 
 const userNeeds = ref<number>(50);
 const storageNeeds = ref<number>(100);
-const userNeedsDropdown = ref();
-const storageNeedsDropdown = ref();
 const description = ref<string>('');
+const error = ref('');
 
-function isFormValid(): boolean {
-  return userNeeds.value !== undefined && storageNeeds.value !== undefined && description.value.length > 0;
-}
+const isFormValid = computed(() => {
+  return description.value.length > 0;
+});
 
 async function submit(): Promise<boolean> {
-  if (!isFormValid()) {
+  if (!isFormValid.value) {
+    return false;
+  }
+
+  const response = await BmsAccessInstance.get().createCustomOrderRequest({
+    standardUsers: userNeeds.value,
+    storage: storageNeeds.value,
+    needs: description.value,
+  });
+
+  if (response.isError) {
+    if (response.status === CONNECTION_ERROR_STATUS) {
+      error.value = 'clientArea.orders.request.connectionFailure';
+    } else {
+      error.value = 'clientArea.orders.request.serverFailure';
+    }
     return false;
   }
 
