@@ -52,34 +52,35 @@ const TEXTS = new Map<string, string>([
   ['py', 'text/x-python'],
 ]);
 
-async function detectFileContentTypeFromBuffer(buffer: Uint8Array): Promise<DetectedFileType> {
+async function detectFileContentTypeFromBuffer(buffer: Uint8Array, fileExt?: string): Promise<DetectedFileType> {
   const result = await fileTypeFromBuffer(buffer);
 
   if (!result) {
-    return { type: FileContentType.Unknown, extension: '', mimeType: 'application/octet-stream' };
+    return { type: FileContentType.Unknown, extension: fileExt ?? '', mimeType: 'application/octet-stream' };
   }
 
   if (IMAGES.includes(result.mime)) {
-    return { type: FileContentType.Image, extension: result.ext, mimeType: result.mime };
+    return { type: FileContentType.Image, extension: fileExt ?? result.ext, mimeType: result.mime };
   }
   if (SPREADSHEETS.includes(result.mime)) {
-    return { type: FileContentType.Spreadsheet, extension: result.ext, mimeType: result.mime };
+    return { type: FileContentType.Spreadsheet, extension: fileExt ?? result.ext, mimeType: result.mime };
   }
-  if (DOCUMENTS.includes(result.mime)) {
-    return { type: FileContentType.Document, extension: result.ext, mimeType: result.mime };
+  console.log(result.mime, result.ext);
+  if (DOCUMENTS.includes(result.mime) || (result.mime === 'application/zip' && fileExt === 'docx')) {
+    return { type: FileContentType.Document, extension: fileExt ?? result.ext, mimeType: result.mime };
   }
   if (PDF_DOCUMENTS.includes(result.mime)) {
-    return { type: FileContentType.PdfDocument, extension: result.ext, mimeType: result.mime };
+    return { type: FileContentType.PdfDocument, extension: fileExt ?? result.ext, mimeType: result.mime };
   }
   if (AUDIOS.includes(result.mime)) {
-    return { type: FileContentType.Audio, extension: result.ext, mimeType: result.mime };
+    return { type: FileContentType.Audio, extension: fileExt ?? result.ext, mimeType: result.mime };
   }
   if (VIDEOS.includes(result.mime)) {
-    return { type: FileContentType.Video, extension: result.ext, mimeType: result.mime };
+    return { type: FileContentType.Video, extension: fileExt ?? result.ext, mimeType: result.mime };
   }
   console.log(`Unhandled mimetype ${result.mime}`);
 
-  return { type: FileContentType.Unknown, extension: result.ext, mimeType: result.mime };
+  return { type: FileContentType.Unknown, extension: fileExt ?? result.ext, mimeType: result.mime };
 }
 
 async function detectFileContentType(workspaceHandle: WorkspaceHandle, path: FsPath, at?: DateTime): Promise<DetectedFileType | undefined> {
@@ -117,7 +118,7 @@ async function detectFileContentType(workspaceHandle: WorkspaceHandle, path: FsP
       return;
     }
     const buffer = new Uint8Array(readResult.value);
-    return await detectFileContentTypeFromBuffer(buffer);
+    return await detectFileContentTypeFromBuffer(buffer, ext);
   } finally {
     if (fd) {
       if (at) {

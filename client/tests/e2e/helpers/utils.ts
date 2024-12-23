@@ -131,3 +131,23 @@ export const Media = {
     });
   },
 };
+
+// eslint-disable-next-line
+export async function openFileType(
+  documentsPage: Page,
+  type: 'xlsx' | 'docx' | 'png' | 'pdf' | 'mp3' | 'mp4' | 'txt' | 'py',
+): Promise<void> {
+  const entries = documentsPage.locator('.folder-container').locator('.file-list-item');
+
+  for (const entry of await entries.all()) {
+    const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
+    if (entryName.endsWith(`.${type}`)) {
+      await entry.dblclick();
+      await expect(documentsPage.locator('.ms-spinner-modal')).toBeVisible();
+      await expect(documentsPage.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+      await expect(documentsPage.locator('.ms-spinner-modal')).toBeHidden();
+      await expect(documentsPage).toBeViewerPage();
+      return;
+    }
+  }
+}
