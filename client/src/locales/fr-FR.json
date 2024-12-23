@@ -1852,6 +1852,10 @@
                 },
                 "connectionFailure": "Un problème est survenu (connexion au serveur impossible).",
                 "serverFailure": "Un problème est survenu (requête serveur refusée)."
+            },
+            "progress": {
+                "orderNumber": "Commande n°{number}",
+                "noOrder": "Vous n'avez pas de commande en cours."
             }
         }
     },
