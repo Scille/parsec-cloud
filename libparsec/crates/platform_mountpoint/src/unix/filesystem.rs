@@ -517,7 +517,7 @@ impl fuser::Filesystem for Filesystem {
                     }
                     WorkspaceCreateFolderError::Offline => reply.manual().error(libc::EHOSTUNREACH),
                     WorkspaceCreateFolderError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                    WorkspaceCreateFolderError::ReadOnlyRealm => reply.manual().error(libc::EPERM),
+                    WorkspaceCreateFolderError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                     WorkspaceCreateFolderError::Stopped
                     | WorkspaceCreateFolderError::InvalidKeysBundle(_)
                     | WorkspaceCreateFolderError::InvalidCertificate(_)
@@ -573,7 +573,7 @@ impl fuser::Filesystem for Filesystem {
                         reply.manual().error(libc::EPERM)
                     }
                     WorkspaceRemoveEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                    WorkspaceRemoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EPERM),
+                    WorkspaceRemoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                     WorkspaceRemoveEntryError::Stopped
                     | WorkspaceRemoveEntryError::InvalidKeysBundle(_)
                     | WorkspaceRemoveEntryError::InvalidCertificate(_)
@@ -631,7 +631,7 @@ impl fuser::Filesystem for Filesystem {
                         reply.manual().error(libc::EPERM)
                     }
                     WorkspaceRemoveEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                    WorkspaceRemoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EPERM),
+                    WorkspaceRemoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                     WorkspaceRemoveEntryError::Stopped
                     | WorkspaceRemoveEntryError::InvalidKeysBundle(_)
                     | WorkspaceRemoveEntryError::InvalidCertificate(_)
@@ -733,7 +733,7 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceMoveEntryError::CannotMoveRoot => reply.manual().error(libc::EPERM),
                     WorkspaceMoveEntryError::Offline => reply.manual().error(libc::EHOSTUNREACH),
                     WorkspaceMoveEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                    WorkspaceMoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EPERM),
+                    WorkspaceMoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                     WorkspaceMoveEntryError::Stopped
                     | WorkspaceMoveEntryError::InvalidKeysBundle(_)
                     | WorkspaceMoveEntryError::InvalidCertificate(_)
@@ -805,7 +805,7 @@ impl fuser::Filesystem for Filesystem {
                             reply.manual().error(libc::EISDIR)
                         }
                         WorkspaceOpenFileError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                        WorkspaceOpenFileError::ReadOnlyRealm => reply.manual().error(libc::EPERM),
+                        WorkspaceOpenFileError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                         WorkspaceOpenFileError::Stopped
                         | WorkspaceOpenFileError::InvalidKeysBundle(_)
                         | WorkspaceOpenFileError::InvalidCertificate(_)
@@ -917,7 +917,7 @@ impl fuser::Filesystem for Filesystem {
                             reply.manual().error(libc::EISDIR)
                         }
                         WorkspaceOpenFileError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                        WorkspaceOpenFileError::ReadOnlyRealm => reply.manual().error(libc::EPERM),
+                        WorkspaceOpenFileError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                         WorkspaceOpenFileError::Stopped
                         | WorkspaceOpenFileError::InvalidKeysBundle(_)
                         | WorkspaceOpenFileError::InvalidCertificate(_)
@@ -1069,7 +1069,7 @@ impl fuser::Filesystem for Filesystem {
                                     reply.manual().error(libc::EPERM)
                                 }
                                 WorkspaceOpenFileError::ReadOnlyRealm => {
-                                    reply.manual().error(libc::EPERM)
+                                    reply.manual().error(libc::EROFS)
                                 }
                                 WorkspaceOpenFileError::Stopped
                                 | WorkspaceOpenFileError::InvalidKeysBundle(_)
