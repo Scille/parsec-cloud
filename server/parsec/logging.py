@@ -226,7 +226,7 @@ def _structlog_to_sentry_processor(
         sentry_sdk.capture_event(sentry_event)
 
     # Info & Warning log levels
-    if level_number >= logging.INFO:
+    elif level_number >= logging.INFO:
         # Breadcrumbs do not generate an issue. Instead, they are recorded
         # by Sentry until an event/error occurs, then they are added to
         # the issue as contextual information (useful for debugging!).
