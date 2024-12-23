@@ -34,7 +34,7 @@ from parsec.config import (
     S3BlockStoreConfig,
     SWIFTBlockStoreConfig,
 )
-from parsec.logging import configure_logging, enable_sentry_logging
+from parsec.logging import LogFormat, configure_logging, enable_sentry_logging
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -59,8 +59,8 @@ def logging_config_options(
         @click.option(
             "--log-format",
             "-f",
-            type=click.Choice(("CONSOLE", "JSON"), case_sensitive=False),
-            default="CONSOLE",
+            type=click.Choice([x.name for x in LogFormat], case_sensitive=False),
+            default=LogFormat.CONSOLE.name,
             show_default=True,
             envvar="PARSEC_LOG_FORMAT",
             show_envvar=True,
@@ -96,12 +96,15 @@ def logging_config_options(
                     yield cast(TextIO, click.open_file(filename=log_file, mode="w"))
 
             parsed_log_level = LogLevel[log_level.upper()]
+            parsed_log_format = LogFormat[log_format.upper()]
             kwargs["log_level"] = parsed_log_level
-            kwargs["log_format"] = log_format
+            kwargs["log_format"] = parsed_log_format
             kwargs["log_file"] = log_file
 
             with open_log_file() as fd:
-                configure_logging(log_level=parsed_log_level, log_format=log_format, log_stream=fd)
+                configure_logging(
+                    log_level=parsed_log_level, log_format=parsed_log_format, log_stream=fd
+                )
 
                 return fn(*args, **kwargs)
 
