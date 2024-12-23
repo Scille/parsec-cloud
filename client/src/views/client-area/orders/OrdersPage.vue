@@ -26,6 +26,8 @@ import { IonText, IonButton, modalController } from '@ionic/vue';
 import { BmsAccessInstance, BmsOrganization, CustomOrderDetailsResultData, DataType } from '@/services/bms';
 import NewOrderModal from '@/views/client-area/orders/NewOrderModal.vue';
 import { ref, onMounted } from 'vue';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { MsModalResult } from 'megashark-lib';
 
 const error = ref<string>('');
 const querying = ref(true);
@@ -37,12 +39,23 @@ async function openNewOrderModal(): Promise<void> {
     cssClass: 'new-order-modal',
   });
   await modal.present();
-  await modal.onWillDismiss();
+  const { role } = await modal.onDidDismiss();
+  await modal.dismiss();
+  if (role === MsModalResult.Confirm) {
+    await props.informationManager.present(
+      new Information({
+        message: 'clientArea.orders.new.sent',
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+  }
   await modal.dismiss();
 }
 
 const props = defineProps<{
   organization: BmsOrganization;
+  informationManager: InformationManager;
 }>();
 
 onMounted(async () => {

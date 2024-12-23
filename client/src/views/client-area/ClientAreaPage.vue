@@ -107,6 +107,7 @@
                 v-if="currentPage === ClientAreaPages.Orders"
                 :organization="currentOrganization"
                 @organization-selected="onOrganizationSelected"
+                :information-manager="informationManager"
               />
               <custom-order-billing-details-page
                 v-if="currentPage === ClientAreaPages.CustomOrderBillingDetails"

@@ -1696,7 +1696,8 @@
         "orders": {
             "new": {
                 "title": "Vous avez besoin de créer une nouvelle organisation ?",
-                "button": "Nouvelle demande"
+                "button": "Nouvelle demande",
+                "sent": "Votre demande a bien été envoyée."
             },
             "request": {
                 "title": "Demande d'un contrat sur-mesure",
@@ -1724,8 +1725,8 @@
                     "label": "Décrire vos besoins",
                     "placeholder": "Dites-nous en plus sur vos besoins, vos attentes et vos contraintes..."
                 },
-                "connectionFailure": "Impossible de contacter le serveur.",
-                "serverFailure": "Le serveur a refuse la requête."
+                "connectionFailure": "Un problème est survenu (connexion au serveur impossible).",
+                "serverFailure": "Un problème est survenu (requête serveur refusée)."
             }
         }
     },
