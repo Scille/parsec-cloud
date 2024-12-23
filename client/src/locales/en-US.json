@@ -1351,7 +1351,8 @@
                 "invoices": "Invoices",
                 "billingMethod": "Payment method",
                 "billingDetails": "Billing details",
-                "contract": "Contract"
+                "contract": "Contract",
+                "orders": "Orders"
             },
             "help": {
                 "title": "Do you need any help?",
@@ -1374,7 +1375,8 @@
                 "customOrderBillingDetails": "Billing details",
                 "customOrderInvoices": "Invoices",
                 "customOrderStatistics": "Statistics",
-                "customOrderProcessing": "Order tracking"
+                "customOrderProcessing": "Order tracking",
+                "orders": "Orders"
             },
             "preferences": "Preferences"
         },
@@ -1692,6 +1694,10 @@
             }
         },
         "orders": {
+            "new": {
+                "title": "You need to create a new organization?",
+                "button": "New request"
+            },
             "request": {
                 "title": "Request a new on-premise contract",
                 "subtitle": "Would you like to take out a new contract to create an organization? Please specify the desired configuration.",
@@ -1718,6 +1724,10 @@
                     "label": "Describe your needs",
                     "placeholder": "Tell us more about your needs, expectations, and constraints..."
                 }
+            },
+            "progress": {
+                "orderNumber": "Order n°{number}",
+                "noOrder": "You don't have any order yet"
             }
         }
     },

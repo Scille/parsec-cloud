@@ -12,6 +12,7 @@ export enum ClientAreaPages {
   PaymentMethods = 'payment-methods',
   PersonalData = 'personal-data',
   Statistics = 'statistics',
+  Orders = 'orders',
   CustomOrderStatistics = 'custom-order-statistics',
   CustomOrderProcessing = 'custom-order-processing',
 }

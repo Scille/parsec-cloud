@@ -1351,7 +1351,8 @@
                 "invoices": "Factures",
                 "billingMethod": "Méthode de paiement",
                 "billingDetails": "Coordonnées de facturation",
-                "contract": "Contrat"
+                "contract": "Contrat",
+                "orders": "Commandes"
             },
             "help": {
                 "title": "Vous avez besoin d'aide ?",
@@ -1374,7 +1375,8 @@
                 "customOrderBillingDetails": "Coordonnées de facturation",
                 "customOrderInvoices": "Factures",
                 "customOrderStatistics": "Statistiques",
-                "customOrderProcessing": "Suivi de commande"
+                "customOrderProcessing": "Suivi de commande",
+                "orders": "Commandes"
             },
             "preferences": "Préférences"
         },
@@ -1692,6 +1694,10 @@
             }
         },
         "orders": {
+            "new": {
+                "title": "Vous avez besoin de créer une nouvelle organisation ?",
+                "button": "Nouvelle demande"
+            },
             "request": {
                 "title": "Demande de nouveau contrat sur-mesure",
                 "subtitle": "Vous souhaitez souscrire à un nouveau contrat pour créer une organisation ? Veuillez nous préciser la configuration souhaitée.",
@@ -1718,6 +1724,10 @@
                     "label": "Décrire vos besoins",
                     "placeholder": "Dites-nous en plus sur vos besoins, vos attentes et vos contraintes..."
                 }
+            },
+            "progress": {
+                "orderNumber": "Commande n°{number}",
+                "noOrder": "Vous n'avez pas de commande en cours."
             }
         }
     },
