@@ -111,7 +111,7 @@ async function setupApp(): Promise<void> {
   await initViewers();
 
   // We get the app element
-  const appElem = document.getElementById('app');
+  const appElem = window.document.getElementById('app');
   if (!appElem) {
     throw Error('Cannot retrieve #app');
   }

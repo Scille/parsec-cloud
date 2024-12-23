@@ -158,7 +158,7 @@ const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
 });
 
 function setToastOffset(width: number): void {
-  document.documentElement.style.setProperty('--ms-toast-offset', `${width}px`);
+  window.document.documentElement.style.setProperty('--ms-toast-offset', `${width}px`);
 }
 
 onMounted(async () => {
