@@ -1798,6 +1798,10 @@
                 },
                 "connectionFailure": "An error occured (Failed to contact the server).",
                 "serverFailure": "An error occured (server request refused."
+            },
+            "progress": {
+                "orderNumber": "Order n°{number}",
+                "noOrder": "You don't have any order yet"
             }
         }
     },

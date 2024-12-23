@@ -370,10 +370,6 @@ async function onLoginClicked(): Promise<void> {
         height: 2.5rem;
         border-radius: var(--parsec-radius-6);
         border: 1px solid transparent;
-
-        &:hover {
-          border: 1px solid var(--parsec-color-light-secondary-contrast);
-        }
       }
 
       .skeleton-login-button {
