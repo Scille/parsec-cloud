@@ -240,10 +240,12 @@ class SseAPiEventsListenBadOutcome(BadOutcomeEnum):
     ORGANIZATION_EXPIRED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
+    STOPPED = auto()
 
 
 class BaseEventsComponent:
     def __init__(self, config: BackendConfig, event_bus: EventBus):
+        self._stopped = False
         self._event_bus = event_bus
         # Key is `id(client_ctx)`
         self._registered_clients: dict[int, RegisteredClient] = {}
@@ -255,6 +257,18 @@ class BaseEventsComponent:
         self._event_bus.connect(self._on_event)
         # Note we don't have a `__del__` to disconnect from the event bus: the lifetime
         # of this component is basically equivalent of the one of the event bus anyway
+
+    def stop(self) -> None:
+        """
+        Close all listening SSE clients and refuse any new one.
+
+        This is needed to allow graceful shutdown of the ASGI server, since otherwise
+        the server will wait pointlessly for the SSE connection to finish until the graceful
+        timeout is reached.
+        """
+        self._stopped = True
+        for client in self._registered_clients.values():
+            client.cancel_scope.cancel()
 
     def _on_event(self, event: Event) -> None:
         match event:
@@ -394,6 +408,13 @@ class BaseEventsComponent:
             profile=user_profile,
             cancel_scope=cancel_scope,
         )
+
+        # Note it is vital that there in no await between the check of `self._stopped`
+        # and the registration of the client !
+        # Otherwise the registration may occur after `BaseEventsComponent.stop()` has
+        # been called.
+        if self._stopped:
+            return SseAPiEventsListenBadOutcome.STOPPED
         self._registered_clients[id(client_ctx)] = registered
 
         # Finally populate the event channel with the event that have been missed
