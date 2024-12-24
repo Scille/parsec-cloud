@@ -12,6 +12,7 @@ import {
   CustomOrderInvoicesResultData,
   CustomOrderQueryData,
   CustomOrderRequestStatus,
+  CustomOrderRequestStatus,
   CustomOrderStatus,
   DataType,
   InvoiceStatus,
