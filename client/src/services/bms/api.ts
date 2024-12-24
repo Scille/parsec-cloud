@@ -692,9 +692,36 @@ async function createCustomOrderRequest(token: AuthenticationToken, query: Creat
       },
     );
     return {
-      type: DataType.CreateCustomOrderRequest,
       status: axiosResponse.status,
       isError: false,
+    };
+  });
+}
+
+async function getCustomOrderRequests(token: AuthenticationToken): Promise<BmsResponse> {
+  return wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().get('/custom_order_requests', {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status === 200,
+    });
+
+    return {
+      status: axiosResponse.status,
+      isError: false,
+      data: {
+        type: DataType.GetCustomOrderRequests,
+        requests: axiosResponse.data.requests.map((req: any) => {
+          return {
+            id: req.id,
+            describedNeeds: req.described_need,
+            users: req.standard_users,
+            storage: req.storage,
+            status: req.status,
+            comment: req.comment,
+            orderDate: DateTime.fromISO(axiosResponse.data.created_at),
+          };
+        }),
+      },
     };
   });
 }
@@ -723,4 +750,5 @@ export const BmsApi = {
   subscribeOrganization,
   updateEmailSendCode,
   createCustomOrderRequest,
+  getCustomOrderRequests,
 };
