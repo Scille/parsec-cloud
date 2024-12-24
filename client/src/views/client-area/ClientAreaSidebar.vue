@@ -214,6 +214,20 @@
           {{ $msTranslate('clientArea.sidebar.menu.stats') }}
         </ion-item>
 
+        <ion-item
+          button
+          lines="none"
+          class="button-medium menu-client-list-item"
+          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Orders }"
+          @click="goToPageClicked(ClientAreaPages.Orders)"
+        >
+          <ion-icon
+            class="menu-client-list-item__icon"
+            :icon="cube"
+          />
+          {{ $msTranslate('clientArea.sidebar.menu.orders') }}
+        </ion-item>
+
         <!-- billing -->
         <ion-item
           button
@@ -287,7 +301,7 @@
 
 <script setup lang="ts">
 import { askQuestion, Answer, ChevronExpand, MsImage, MsModalResult, MsInformationTooltip } from 'megashark-lib';
-import { arrowForward, card, chatbubbleEllipses, home, logOut, podium, grid, idCard, newspaper, add } from 'ionicons/icons';
+import { arrowForward, card, chatbubbleEllipses, home, logOut, podium, grid, idCard, newspaper, add, cube } from 'ionicons/icons';
 import {
   BmsAccessInstance,
   BmsOrganization,
