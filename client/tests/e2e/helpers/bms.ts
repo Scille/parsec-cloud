@@ -617,6 +617,37 @@ async function mockCreateCustomOrderRequest(page: Page, options?: MockRouteOptio
   });
 }
 
+async function mockGetCustomOrderRequests(page: Page, options?: MockRouteOptions): Promise<void> {
+  await mockRoute(page, '**/custom_order_requests', options, async (route) => {
+    await route.fulfill({
+      status: 200,
+      json: {
+        requests: [
+          {
+            id: 'YY-00001',
+            described_need: 'I need a hero!',
+            standard_users: 300,
+            storage: 1000,
+            status: 'STANDBY',
+            comment: "I'm holding out for a hero 'till the end of the night",
+            created_at: '1988-04-07T00:00:00+00:00',
+          },
+          {
+            id: 'YY-00002',
+            described_need: 'I need your love!',
+            standard_users: 9999,
+            storage: 9999,
+            parsec_id: 'Boston',
+            status: 'FINISHED',
+            comment: 'I want you every way',
+            created_at: '1990-03-30T00:00:00+00:00',
+          },
+        ],
+      },
+    });
+  });
+}
+
 export const MockBms = {
   mockLogin,
   mockUserRoute,
@@ -636,4 +667,5 @@ export const MockBms = {
   mockCustomOrderDetails,
   mockUpdateEmailSendCode,
   mockCreateCustomOrderRequest,
+  mockGetCustomOrderRequests,
 };
