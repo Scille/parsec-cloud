@@ -94,8 +94,7 @@ class Server(uvicorn.Server):
         if self._should_exit:
             app = cast(AsgiApp, self.config.app)
             backend = cast(Backend, app.state.backend)
-            for client in backend.events._registered_clients.values():
-                client.cancel_scope.cancel()
+            backend.events.stop()
 
 
 async def serve_parsec_asgi_app(
