@@ -9,6 +9,7 @@ import {
   ClientQueryData,
   CreateCustomOrderRequestQueryData,
   CustomOrderQueryData,
+  CustomOrderRequestStatus,
   CustomOrderStatus,
   DataType,
   InvoiceStatus,
@@ -206,6 +207,62 @@ export const MockedBmsApi = {
       };
     },
     async (_token: AuthenticationToken, _query: CreateCustomOrderRequestQueryData) => {
+      return {
+        status: 401,
+        isError: true,
+      };
+    },
+  ),
+  getCustomOrderRequests: createMockFunction(
+    'getCustomOrderRequests',
+    async (_token: AuthenticationToken) => {
+      return {
+        status: 200,
+        isError: false,
+        type: DataType.GetCustomOrderRequests,
+        requests: [
+          {
+            id: 'XX-1',
+            describedNeeds: 'I wanna rock!',
+            users: 50,
+            storage: 1000,
+            status: CustomOrderRequestStatus.Processing,
+            comment: 'Turn it down you say, nut all I got to say to you is time and time again I say no (no), no no, no no, no.',
+            orderDate: DateTime.now().minus({ months: 2 }),
+          },
+          {
+            id: 'XX-2',
+            describedNeeds: 'I want to hold your hand',
+            users: 50,
+            storage: 1000,
+            organizationId: 'The Beatles',
+            status: CustomOrderRequestStatus.Received,
+            comment: "I think you'll understand",
+            orderDate: DateTime.now().minus({ days: 4 }),
+          },
+          {
+            id: 'XX-3',
+            describedNeeds: 'I want to break free!',
+            users: 300,
+            storage: 9999,
+            organizationId: 'Queen',
+            status: CustomOrderRequestStatus.Finished,
+            comment: "I've fallen in love",
+            orderDate: DateTime.now().minus({ months: 6 }),
+          },
+          {
+            id: 'XX-4',
+            describedNeeds: 'I want you to want me',
+            users: 9999,
+            storage: 100,
+            status: CustomOrderRequestStatus.Cancelled,
+            comment: 'I need you to need me',
+            orderDate: DateTime.now().minus({ days: 6 }),
+          },
+        ],
+      };
+    },
+    async (_token: AuthenticationToken) => {
       return {
         status: 401,
         isError: true,
