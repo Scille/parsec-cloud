@@ -930,6 +930,11 @@ class StreamingResponseMiddleware(StreamingResponse):
                         api_version=self.settled_api_version,
                         **self.headers,
                     )
+                case SseAPiEventsListenBadOutcome.STOPPED:
+                    # Listening to events in not possible since the server is stopping.
+                    # This is because otherwise the ASGI server would wait pointlessly
+                    # for our task to stop until the gracious shutdown timeout is reached.
+                    raise HTTPException(status_code=503)
 
 
 @rpc_router.post("/authenticated/{raw_organization_id}/tos")
