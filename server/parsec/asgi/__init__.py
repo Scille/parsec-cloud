@@ -127,6 +127,8 @@ async def serve_parsec_asgi_app(
         server_header=False,
         headers=[("Server", server_header)],
         log_level="info",
+        # Remove default log config to inherit instead the one we set in `parsec.logging`
+        log_config=None,
         ssl_keyfile=ssl_keyfile,
         ssl_certfile=ssl_certfile,
         workers=workers,
@@ -146,10 +148,6 @@ async def serve_parsec_asgi_app(
         # Force a shutdown after 10 seconds, in case of a graceful shutdown failure
         # See the `Server` docstring for more information
         timeout_graceful_shutdown=10,
-        # TODO: configure access log format:
-        # Timestamp is added by the log processor configured in `parsec.logging`,
-        # here we configure peer address + req line + rep status + rep body size + time
-        # (e.g. "GET 88.0.12.52:54160 /foo 1.1 404 823o 12343ms")
     )
     server = Server(config)
 
