@@ -86,8 +86,10 @@ fs.writeFileSync('build/assets/publishConfig.json', JSON.stringify(publishConfig
  * @type {Partial<import('app-builder-lib').WindowsConfiguration>}
  */
 const WIN_SIGN_OPTIONS = {
-  certificateSubjectName: 'Scille',
-  certificateSha1: '9EB59B224218EE4B9C436CBD327BE60940592013',
+  signtoolOptions: {
+    certificateSubjectName: 'SCILLE',
+    certificateSha1: '5D56476E12C6DB8055CB37D8EA98E9A9D0B01091',
+  },
 };
 
 /**
@@ -124,7 +126,7 @@ const options = {
   appId: 'ParsecCloud.Parsec.Parsec.3',
   productName: 'Parsec',
   artifactName: UNSIGNED_ARTIFACT_NAME,
-  buildVersion: '3.2.1-a.0+dev',
+  buildVersion: '3.2.3-a.0+dev',
   protocols: {
     name: 'Parsec-v3',
     schemes: [PARSEC_SCHEME],

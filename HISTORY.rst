@@ -1,8 +1,45 @@
 History
 =======
 
-
 .. towncrier release notes start
+
+Parsec v3.2.2 (2024-12-16)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Allows overwriting default config & data directory during CLI command
+  ``invite claim``
+  (`#8937 <https://github.com/Scille/parsec-cloud/issues/8937>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Fix infinite loop during synchronization of a workspace when importing a file
+  using the CLI command ``workspace import``
+  (`#8941 <https://github.com/Scille/parsec-cloud/issues/8941>`__)
+
+* Fix rare freeze when the folder displayed by the GUI is remotely modified.
+  (`#9002 <https://github.com/Scille/parsec-cloud/issues/9002>`__)
+
+* Fix CLI command ``invite user`` generating a device invitation link instead of
+  a user invitation link.
+  (`#9186 <https://github.com/Scille/parsec-cloud/issues/9186>`__)
+
+* Fix CLI command ``invite list`` crashing when listing more than one entry
+  (`#9176 <https://github.com/Scille/parsec-cloud/issues/9176>`__)
+
+Parsec v3.2.1 (2024-12-03)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix the server shutdown hanging indefinitely while a client is connected
+  through SSE.
+  (`#9099 <https://github.com/Scille/parsec-cloud/issues/9099>`__)
+
 
 
 Parsec v3.2.0 (2024-11-22)
