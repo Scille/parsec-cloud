@@ -469,3 +469,11 @@ pub fn parsec_addr_from_http_url(url: &str) -> ParsecAddr {
     };
     ParsecAddr::from_any(&url).expect("Invalid testbed url")
 }
+
+pub fn client_config_without_monitors_running() -> libparsec_client::ClientConfig {
+    libparsec::ClientConfig {
+        with_monitors: false,
+        ..Default::default()
+    }
+    .into()
+}

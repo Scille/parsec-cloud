@@ -1,16 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::path::PathBuf;
-
 use libparsec::{DateTime, DeviceLabel};
 
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = client_opts]
     pub struct Args {
         /// Path where to save recovery device data
-        output: PathBuf,
+        output: std::path::PathBuf,
     }
 );
 

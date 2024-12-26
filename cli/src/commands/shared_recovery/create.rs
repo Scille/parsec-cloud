@@ -8,7 +8,7 @@ use crate::utils::{start_spinner, StartedClient, GREEN_CHECKMARK};
 // TODO: should provide the recipients and their share count as a single parameter
 //       e.g. `--recipients=foo@example.com=2,bar@example.com=3`
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = client_opts]
     pub struct Args {
         /// Share recipients, if missing organization's admins will be used instead
         /// Author must not be included as recipient.

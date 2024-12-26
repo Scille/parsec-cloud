@@ -7,7 +7,7 @@ use tokio::io::AsyncReadExt;
 use crate::utils::StartedClient;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin, workspace]
+    #[with = client_opts, workspace]
     pub struct Args {
         /// Local file to copy
         pub(crate) src: PathBuf,
@@ -16,15 +16,15 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-crate::build_main_with_client!(
-    main,
-    workspace_import,
+crate::build_main_with_client!(main, workspace_import, |args: &Args| {
     libparsec::ClientConfig {
         with_monitors: true,
+        config_dir: args.config_dir.clone(),
+        data_base_dir: args.data_dir.clone(),
         ..Default::default()
     }
     .into()
-);
+});
 
 pub async fn workspace_import(args: Args, client: &StartedClient) -> anyhow::Result<()> {
     let Args {

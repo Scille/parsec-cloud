@@ -2,8 +2,10 @@ use libparsec::{tmp_path, RealmRole, TmpPath};
 
 use crate::{
     integration_tests::bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    utils::start_client,
+    testenv_utils::{
+        client_config_without_monitors_running, TestOrganization, DEFAULT_DEVICE_PASSWORD,
+    },
+    utils::start_client_with_config,
 };
 
 #[rstest::rstest]
@@ -21,7 +23,9 @@ async fn create_workspace(tmp_path: TmpPath) {
     )
     .stdout(predicates::str::contains("Workspace has been created"));
 
-    let client = start_client(alice).await.unwrap();
+    let client = start_client_with_config(alice, client_config_without_monitors_running())
+        .await
+        .unwrap();
 
     let workspaces = client.list_workspaces().await;
 

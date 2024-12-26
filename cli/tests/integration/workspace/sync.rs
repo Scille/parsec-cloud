@@ -4,8 +4,10 @@ use libparsec::{internal::Client, tmp_path, EntryName, EntryStat, LocalDevice, T
 
 use crate::{
     integration_tests::bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    utils::{start_client, StartedClient},
+    testenv_utils::{
+        client_config_without_monitors_running, TestOrganization, DEFAULT_DEVICE_PASSWORD,
+    },
+    utils::{start_client_with_config, StartedClient},
 };
 
 struct Setup {
@@ -16,7 +18,9 @@ struct Setup {
 
 async fn setup_workspace(alice: Arc<LocalDevice>, bob: Arc<LocalDevice>) -> Setup {
     log::debug!("Create a workspace for alice");
-    let alice_client = start_client(alice).await.unwrap();
+    let alice_client = start_client_with_config(alice, client_config_without_monitors_running())
+        .await
+        .unwrap();
 
     let wid = alice_client
         .create_workspace("new-workspace".parse().unwrap())
@@ -32,7 +36,9 @@ async fn setup_workspace(alice: Arc<LocalDevice>, bob: Arc<LocalDevice>) -> Setu
         .unwrap();
 
     log::debug!("Ensure bob has access to the workspace");
-    let bob_client = start_client(bob).await.unwrap();
+    let bob_client = start_client_with_config(bob, client_config_without_monitors_running())
+        .await
+        .unwrap();
     bob_client.poll_server_for_new_certificates().await.unwrap();
     bob_client.refresh_workspaces_list().await.unwrap();
     let bob_wksp_list = bob_client.list_workspaces().await;
@@ -166,6 +172,9 @@ async fn workspace_sync_bob_need_to_sync(tmp_path: TmpPath) {
         &workspace_id.hex()
     );
 
-    let bob_client = start_client(bob.clone()).await.unwrap();
+    let bob_client =
+        start_client_with_config(bob.clone(), client_config_without_monitors_running())
+            .await
+            .unwrap();
     assert!(find_foo_file(&bob_client, workspace_id).await.is_some());
 }

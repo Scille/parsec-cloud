@@ -2,8 +2,10 @@ use libparsec::{tmp_path, DeviceLabel, TmpPath};
 
 use crate::{
     integration_tests::bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    utils::start_client,
+    testenv_utils::{
+        client_config_without_monitors_running, TestOrganization, DEFAULT_DEVICE_PASSWORD,
+    },
+    utils::start_client_with_config,
 };
 
 #[rstest::rstest]
@@ -13,7 +15,9 @@ async fn import_recovery_device(tmp_path: TmpPath) {
 
     let input = tmp_path.join("recovery_device");
 
-    let client = start_client(alice).await.unwrap();
+    let client = start_client_with_config(alice, client_config_without_monitors_running())
+        .await
+        .unwrap();
 
     let (passphrase, data) = client
         .export_recovery_device(DeviceLabel::try_from("recovery".to_string().as_str()).unwrap())

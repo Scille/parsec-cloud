@@ -4,8 +4,10 @@ use libparsec::{tmp_path, EntryName, LocalDevice, TmpPath, VlobID};
 
 use crate::{
     integration_tests::bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    utils::start_client,
+    testenv_utils::{
+        client_config_without_monitors_running, TestOrganization, DEFAULT_DEVICE_PASSWORD,
+    },
+    utils::start_client_with_config,
 };
 
 #[rstest::rstest]
@@ -14,7 +16,10 @@ async fn workspace_import_file(tmp_path: TmpPath) {
     let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     let wid = {
-        let alice_client = start_client(alice.clone()).await.unwrap();
+        let alice_client =
+            start_client_with_config(alice.clone(), client_config_without_monitors_running())
+                .await
+                .unwrap();
 
         // Create the workspace used to copy the file to
         let wid = alice_client
@@ -50,7 +55,10 @@ async fn workspace_import_file(tmp_path: TmpPath) {
     )
     .stdout(predicates::str::is_empty());
 
-    let bob_client = start_client(bob.clone()).await.unwrap();
+    let bob_client =
+        start_client_with_config(bob.clone(), client_config_without_monitors_running())
+            .await
+            .unwrap();
     bob_client.poll_server_for_new_certificates().await.unwrap();
     bob_client.refresh_workspaces_list().await.unwrap();
     let workspace = bob_client.start_workspace(wid).await.unwrap();
@@ -127,7 +135,9 @@ async fn issue_8941_import_file_where_inbound_and_outbound_sync_are_required(tmp
 }
 
 async fn create_workspace(device: Arc<LocalDevice>) -> VlobID {
-    let client = start_client(device).await.unwrap();
+    let client = start_client_with_config(device, client_config_without_monitors_running())
+        .await
+        .unwrap();
     let workspace_name = "new-workspace".parse::<EntryName>().unwrap();
     let wid = client
         .create_workspace(workspace_name.clone())
@@ -139,7 +149,9 @@ async fn create_workspace(device: Arc<LocalDevice>) -> VlobID {
 }
 
 async fn refresh_workspace_list(device: Arc<LocalDevice>) {
-    let client = start_client(device).await.unwrap();
+    let client = start_client_with_config(device, client_config_without_monitors_running())
+        .await
+        .unwrap();
     client.list_workspaces().await;
     client.stop().await;
 }

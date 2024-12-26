@@ -5,7 +5,7 @@ use libparsec::{RealmRole, UserID};
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, workspace, password_stdin]
+    #[with = client_opts, workspace]
     pub struct Args {
         /// The user ID to share the workspace with
         #[arg(short, long, value_parser = UserID::from_hex)]

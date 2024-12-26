@@ -1,7 +1,7 @@
 use crate::{build_main_with_client, utils::*};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = client_opts]
     pub struct Args {
     }
 );

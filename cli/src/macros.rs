@@ -8,10 +8,9 @@ macro_rules! build_main_with_client {
     ($fn_name:ident, $callback:expr, $config:expr) => {
         pub async fn $fn_name(args: Args) -> anyhow::Result<()> {
             let client = $crate::utils::load_client_with_config(
-                &args.config_dir,
                 args.device.clone(),
                 args.password_stdin,
-                $config,
+                $config(&args),
             )
             .await?;
 
@@ -27,7 +26,15 @@ macro_rules! build_main_with_client {
         $crate::build_main_with_client!(
             $fn_name,
             $callback,
-            $crate::utils::default_client_config()
+            |args: &Args| -> libparsec_client::ClientConfig {
+                libparsec::ClientConfig {
+                    with_monitors: false,
+                    config_dir: args.config_dir.clone(),
+                    data_base_dir: args.data_dir.clone(),
+                    ..Default::default()
+                }
+                .into()
+            }
         );
     };
 }
@@ -67,6 +74,28 @@ macro_rules! build_main_with_client {
 /// ```
 #[macro_export]
 macro_rules! clap_parser_with_shared_opts_builder {
+    // Set of options for commands interacting with a Parsec "Clien"
+    (
+        #[with = client_opts $(,$modifier:ident)*]
+        $(#[$struct_attr:meta])*
+        $visibility:vis struct $name:ident {
+            $(
+                $(#[$field_attr:meta])*
+                $field_vis:vis $field:ident: $field_type:ty,
+            )*
+        }
+    ) => {
+        $crate::clap_parser_with_shared_opts_builder!(
+            #[with = config_dir, data_dir, device, password_stdin $(,$modifier)*]
+            $(#[$struct_attr])*
+            $visibility struct $name {
+                $(
+                    $(#[$field_attr])*
+                    $field_vis $field: $field_type,
+                )*
+            }
+        );
+    };
     // Config dir option
     (
         #[with = config_dir $(,$modifier:ident)*]
@@ -83,7 +112,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Parsec config directory"]
-                #[arg(short, long, default_value_os_t = libparsec::get_default_config_dir(), env = $crate::utils::PARSEC_CONFIG_DIR)]
+                #[arg(long, default_value_os_t = libparsec::get_default_config_dir(), env = $crate::utils::PARSEC_CONFIG_DIR)]
                 pub(crate) config_dir: std::path::PathBuf,
                 $(
                     $(#[$field_attr])*
@@ -108,7 +137,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Parsec data directory"]
-                #[arg(short, long, default_value_os_t = libparsec::get_default_data_base_dir(), env = $crate::utils::PARSEC_DATA_DIR)]
+                #[arg(long, default_value_os_t = libparsec::get_default_data_base_dir(), env = $crate::utils::PARSEC_DATA_DIR)]
                 pub(crate) data_dir: std::path::PathBuf,
                 $(
                     $(#[$field_attr])*
@@ -133,7 +162,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Device ID"]
-                #[arg(short, long, env = "PARSEC_DEVICE_ID")]
+                #[arg(long, env = "PARSEC_DEVICE_ID")]
                 pub(crate) device: Option<String>,
                 $(
                     $(#[$field_attr])*
@@ -158,7 +187,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Workspace ID"]
-                #[arg(short, long, env = "PARSEC_WORKSPACE_ID", value_parser = libparsec::VlobID::from_hex)]
+                #[arg(long, env = "PARSEC_WORKSPACE_ID", value_parser = libparsec::VlobID::from_hex)]
                 pub(crate) workspace: libparsec::VlobID,
                 $(
                     $(#[$field_attr])*
@@ -183,7 +212,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Organization ID"]
-                #[arg(short, long, env = "PARSEC_ORGANIZATION_ID")]
+                #[arg(long, env = "PARSEC_ORGANIZATION_ID")]
                 pub(crate) organization: libparsec::OrganizationID,
                 $(
                     $(#[$field_attr])*
@@ -234,7 +263,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Server address (e.g: parsec3://127.0.0.1:6770?no_ssl=true)"]
-                #[arg(short, long, env = "PARSEC_SERVER_ADDR")]
+                #[arg(long, env = "PARSEC_SERVER_ADDR")]
                 pub(crate) addr: libparsec::ParsecAddr,
                 $(
                     $(#[$field_attr])*
@@ -259,7 +288,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             $(#[$struct_attr])*
             $visibility struct $name {
                 #[doc = "Administration token"]
-                #[arg(short, long, env = "PARSEC_ADMINISTRATION_TOKEN")]
+                #[arg(long, env = "PARSEC_ADMINISTRATION_TOKEN")]
                 pub(crate) token: String,
                 $(
                     $(#[$field_attr])*

@@ -5,8 +5,10 @@ use libparsec::{tmp_path, ClientGetTosError, TmpPath};
 use crate::{
     commands::tos::config::{config_tos_for_org_req, TosReq},
     integration_tests::bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_ADMINISTRATION_TOKEN},
-    utils::start_client,
+    testenv_utils::{
+        client_config_without_monitors_running, TestOrganization, DEFAULT_ADMINISTRATION_TOKEN,
+    },
+    utils::start_client_with_config,
 };
 
 #[rstest::rstest]
@@ -29,7 +31,9 @@ async fn test_set_tos_from_arg(tmp_path: TmpPath) {
     )
     .stdout(predicates::str::is_empty());
 
-    let client = start_client(alice).await.unwrap();
+    let client = start_client_with_config(alice, client_config_without_monitors_running())
+        .await
+        .unwrap();
 
     let tos = client.get_tos().await.unwrap();
 
@@ -71,7 +75,9 @@ async fn test_set_tos_from_file(tmp_path: TmpPath) {
     )
     .stdout(predicates::str::is_empty());
 
-    let client = start_client(alice).await.unwrap();
+    let client = start_client_with_config(alice, client_config_without_monitors_running())
+        .await
+        .unwrap();
 
     let tos = client.get_tos().await.unwrap();
 
@@ -93,7 +99,9 @@ async fn test_remove_tos(tmp_path: TmpPath) {
     .await
     .unwrap();
 
-    let client = start_client(alice).await.unwrap();
+    let client = start_client_with_config(alice, client_config_without_monitors_running())
+        .await
+        .unwrap();
     let tos = client.get_tos().await.unwrap();
 
     assert!(!tos.per_locale_urls.is_empty());

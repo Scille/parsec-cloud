@@ -2,8 +2,10 @@ use libparsec::{tmp_path, RealmRole, TmpPath};
 
 use crate::{
     integration_tests::bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    utils::start_client,
+    testenv_utils::{
+        client_config_without_monitors_running, TestOrganization, DEFAULT_DEVICE_PASSWORD,
+    },
+    utils::start_client_with_config,
 };
 
 #[rstest::rstest]
@@ -13,7 +15,10 @@ async fn share_workspace(tmp_path: TmpPath) {
 
     let wid = {
         log::debug!("Create a workspace for alice");
-        let alice_client = start_client(alice.clone()).await.unwrap();
+        let alice_client =
+            start_client_with_config(alice.clone(), client_config_without_monitors_running())
+                .await
+                .unwrap();
 
         let wid = alice_client
             .create_workspace("new-workspace".parse().unwrap())
@@ -50,7 +55,9 @@ async fn share_workspace(tmp_path: TmpPath) {
     .stdout(predicates::str::contains("Workspace has been shared"));
 
     log::debug!("Check if bob has been added to the workspace as a contributor");
-    let bob_client = start_client(bob).await.unwrap();
+    let bob_client = start_client_with_config(bob, client_config_without_monitors_running())
+        .await
+        .unwrap();
 
     bob_client.poll_server_for_new_certificates().await.unwrap();
     bob_client.refresh_workspaces_list().await.unwrap();
