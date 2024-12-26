@@ -260,24 +260,12 @@ pub async fn load_cmds(
     Ok((cmds, device))
 }
 
-pub async fn load_client(
-    config_dir: &Path,
-    device: Option<String>,
-    password_stdin: bool,
-) -> anyhow::Result<Arc<StartedClient>> {
-    let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
-    let client = start_client(device).await?;
-
-    Ok(client)
-}
-
 pub async fn load_client_with_config(
-    config_dir: &Path,
     device: Option<String>,
     password_stdin: bool,
     config: libparsec_client::ClientConfig,
 ) -> anyhow::Result<Arc<StartedClient>> {
-    let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
+    let device = load_and_unlock_device(&config.config_dir, device, password_stdin).await?;
     let client = start_client_with_config(device, config).await?;
 
     Ok(client)
@@ -295,20 +283,6 @@ impl Deref for StartedClient {
     fn deref(&self) -> &Self::Target {
         &self.client
     }
-}
-
-pub async fn start_client(device: Arc<LocalDevice>) -> anyhow::Result<Arc<StartedClient>> {
-    let config = default_client_config();
-
-    start_client_with_config(device, config).await
-}
-
-pub fn default_client_config() -> libparsec_client::ClientConfig {
-    libparsec::ClientConfig {
-        with_monitors: false,
-        ..Default::default()
-    }
-    .into()
 }
 
 pub async fn start_client_with_config(

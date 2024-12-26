@@ -3,7 +3,7 @@ use libparsec_client::Tos;
 use crate::utils::{StartedClient, BULLET_CHAR};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = client_opts]
     pub struct Args {
     }
 );

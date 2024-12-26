@@ -1,7 +1,7 @@
 use crate::{commands::tos::list::display_tos, utils::StartedClient};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = device, config_dir, password_stdin]
+    #[with = client_opts]
     pub struct Args {
         #[arg(long)]
         yes: bool,
