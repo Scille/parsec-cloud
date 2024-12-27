@@ -10,7 +10,6 @@ import {
   CreateCustomOrderRequestQueryData,
   CustomOrderQueryData,
   CustomOrderRequestStatus,
-  CustomOrderRequestStatus,
   CustomOrderStatus,
   DataType,
   InvoiceStatus,

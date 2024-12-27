@@ -1697,7 +1697,13 @@
             "new": {
                 "title": "Vous avez besoin de créer une nouvelle organisation ?",
                 "button": "Nouvelle demande",
-                "sent": "Votre demande a bien été envoyée."
+                "sent": "Votre demande a bien été envoyée.",
+                "details": "Détails de la demande",
+                "date": "Date de la demande",
+                "membersNeed": "Nombre de membres",
+                "dataNeeded": "Volume de données",
+                "startDate": "Date de début",
+                "endDate": "Date de fin"
             },
             "request": {
                 "title": "Demande d'un contrat sur-mesure",
@@ -1731,6 +1737,15 @@
             "progress": {
                 "orderNumber": "Commande n°{number}",
                 "noOrder": "Vous n'avez pas de commande en cours."
+            },
+            "passed": {
+                "header": {
+                    "orderNumber": "Numéro de commande",
+                    "period": "Période",
+                    "members": "Nombre de membres",
+                    "storage": "Volume de données",
+                    "status": "Statut"
+                }
             }
         }
     },

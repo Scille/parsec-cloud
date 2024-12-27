@@ -18,7 +18,19 @@
     </div>
 
     <!-- condition à ajouter v-if="orderInProgress" -->
-    <order-in-progress />
+    <template v-if="contractRequests && !error">
+      <order-in-progress
+        v-for="order in contractRequests.requests"
+        :key="order.id"
+        :request="order"
+        :organization="organization"
+      />
+    </template>
+    <template v-else>
+      <ion-text class="body-lg no-orders">
+        {{ $msTranslate(error) }}
+      </ion-text>
+    </template>
 
     <div class="orders-done">
       <ion-text class="orders-done__title title-h3">
@@ -29,19 +41,19 @@
         <!-- row header -->
         <ion-list class="orders-done-header-list ion-no-padding">
           <ion-item class="orders-done-header-list-item orders-number">
-            <ion-text class="menu-active">{{ $msTranslate('Numéro de commande') }}</ion-text>
+            <ion-text class="menu-active">{{ $msTranslate('clientArea.orders.passed.header.orderNumber') }}</ion-text>
           </ion-item>
           <ion-item class="orders-done-header-list-item orders-date">
-            <ion-text class="menu-active">{{ $msTranslate('Période') }}</ion-text>
+            <ion-text class="menu-active">{{ $msTranslate('clientArea.orders.passed.header.period') }}</ion-text>
           </ion-item>
           <ion-item class="orders-done-header-list-item orders-members">
-            <ion-text class="menu-active">{{ $msTranslate('Nombre de membres') }}</ion-text>
+            <ion-text class="menu-active">{{ $msTranslate('clientArea.orders.passed.header.members') }}</ion-text>
           </ion-item>
           <ion-item class="orders-done-header-list-item orders-storage">
-            <ion-text class="menu-active">{{ $msTranslate('Stockage') }}</ion-text>
+            <ion-text class="menu-active">{{ $msTranslate('clientArea.orders.passed.header.storage') }}</ion-text>
           </ion-item>
           <ion-item class="orders-done-header-list-item orders-status">
-            <ion-text class="menu-active">{{ $msTranslate('Statut') }}</ion-text>
+            <ion-text class="menu-active">{{ $msTranslate('clientArea.orders.passed.header.status') }}</ion-text>
           </ion-item>
         </ion-list>
 
@@ -127,23 +139,26 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonIcon, IonButton, IonSkeletonText, modalController } from '@ionic/vue';
+import { IonText, IonList, IonItem, IonIcon, IonButton, IonSkeletonText, modalController } from '@ionic/vue';
 import { arrowForward } from 'ionicons/icons';
 import {
   BmsAccessInstance,
   BmsOrganization,
   CustomOrderStatus,
+  CustomOrderRequestStatus,
   CustomOrderDetailsResultData,
+  GetCustomOrderRequestsResultData,
   DataType,
-  OrganizationStatsResultData,
 } from '@/services/bms';
 import NewOrderModal from '@/views/client-area/orders/NewOrderModal.vue';
 import OrderInProgress from '@/components/client-area/OrderInProgress.vue';
 import { ref, onMounted } from 'vue';
+import { MockedBmsApi } from '@/services/bms/mockApi';
 
 const error = ref<string>('');
 const querying = ref(true);
 const contractDetails = ref<CustomOrderDetailsResultData | undefined>(undefined);
+const contractRequests = ref<GetCustomOrderRequestsResultData | undefined>(undefined);
 
 async function openNewOrderModal(): Promise<void> {
   const modal = await modalController.create({
@@ -161,14 +176,24 @@ const props = defineProps<{
 
 onMounted(async () => {
   querying.value = true;
-  console.log(props.organization);
+
   const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
-  console.log(detailsRep);
+  const requestsRep = await MockedBmsApi.getCustomOrderRequests();
+
   if (!detailsRep.isError && detailsRep.data && detailsRep.data.type === DataType.CustomOrderDetails) {
     contractDetails.value = detailsRep.data;
   } else {
     error.value = 'clientArea.contracts.errors.noInfo';
   }
+
+  console.log(requestsRep);
+  if (!requestsRep.isError && requestsRep.data && requestsRep.data.type === DataType.GetCustomOrderRequests) {
+    contractRequests.value = requestsRep.data;
+    contractRequests.value.requests = requestsRep.data.requests;
+  } else {
+    error.value = 'clientArea.contracts.errors.noInfo';
+  }
+
   querying.value = false;
 });
 </script>
