@@ -440,17 +440,19 @@ class BaseEventsComponent:
             outcome = await self._register_client(
                 client_ctx=client_ctx, last_event_id=last_event_id, cancel_scope=cancel_scope
             )
+            match outcome:
+                case (initial_organization_config_event, channel_receiver, registered_client):
+                    pass
+                case SseAPiEventsListenBadOutcome() as error:
+                    yield error
+                    return
+
             try:
-                match outcome:
-                    case (initial_organization_config_event, channel_receiver, registered_client):
-                        # Make sure to close the sender when leaving this scope
-                        # This way, the receiver gets notified with an `anyio.EndOfStream`
-                        with registered_client.channel_sender:
-                            yield (initial_organization_config_event, channel_receiver)
-                    case SseAPiEventsListenBadOutcome() as error:
-                        yield error
+                # Make sure to close the sender when leaving this scope
+                # This way, the receiver gets notified with an `anyio.EndOfStream`
+                with registered_client.channel_sender:
+                    yield (initial_organization_config_event, channel_receiver)
             finally:
-                if not isinstance(outcome, SseAPiEventsListenBadOutcome):
-                    # It's vital to unregister the client here given the memory location of the
-                    # client (and hence the id resulting of it) will most likely be re-used !
-                    self._registered_clients.pop(id(client_ctx))
+                # It's vital to unregister the client here given the memory location of the
+                # client (and hence the id resulting of it) will most likely be re-used !
+                self._registered_clients.pop(id(client_ctx))
