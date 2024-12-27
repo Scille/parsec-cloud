@@ -43,3 +43,4 @@ npm-debug.log*
 /playwright-report/
 /playwright/.cache/
 .env.playwright
+.env.development.local
