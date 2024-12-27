@@ -1726,35 +1726,43 @@
             "step": {
                 "requestSent": {
                     "title": "Request sent",
-                    "description": "Your request is being processed. We will contact you as soon as possible."
+                    "description": "Your request is being processed. We will contact you as soon as possible.",
+                    "tag": "Sent"
                 },
                 "processing": {
                     "title": "Exchange with the sales department",
-                    "description": "Our sales department will contact you to finalize your order."
+                    "description": "Our sales department will contact you to finalize your order.",
+                    "tag": "Waiting to be processed"
                 },
-                "validate": {
+                "confirmed": {
                     "title": "Order confirmed",
-                    "description": "Your order is confirmed, you will receive an invoice soon."
+                    "description": "Your order is confirmed, you will receive an invoice soon.",
+                    "tag": "Confirmed"
                 },
                 "invoiceToBePaid": {
                     "title": "Invoice to be paid",
-                    "description": "Your organization will be available upon payment of the invoice."
+                    "description": "Your organization will be available upon payment of the invoice.",
+                    "tag": "Waiting for payment"
                 },
                 "organizationAvailable": {
                     "title": "Organization available",
-                    "description": "You can now access to your organization."
+                    "description": "You can now access to your organization.",
+                    "tag": "Available"
                 },
                 "standby": {
                     "title": "Order in standby",
-                    "description": "Your order has been put on hold, please contact us for more information."
+                    "description": "Your order has been put on hold, please contact us for more information.",
+                    "tag": "Standby"
                 },
                 "cancel": {
                     "title": "Order cancelled",
-                    "description": "Your order has been cancelled, please contact us for more information."
+                    "description": "Your order has been cancelled, please contact us for more information.",
+                    "tag": "Cancelled"
                 },
                 "error": {
                     "title": "Failed to retrieve the information.",
-                    "description": "An error occurred while processing your order. Please contact us."
+                    "description": "An error occurred while processing your order. Please contact us.",
+                    "tag": "Error"
                 }
             },
             "error": "Failed to retrieve the information"
@@ -1820,10 +1828,18 @@
             }
         },
         "orders": {
+            "loading": "Your orders are loading...",
             "new": {
                 "title": "You need to create a new organization?",
                 "button": "New request",
-                "sent": "Your request has been sent."
+                "sent": "Your request has been sent.",
+                "details": "Order details",
+                "date": "Date",
+                "usersNeed": "Amount of users",
+                "dataNeeded": "Amount of data",
+                "startDate": "Starting date",
+                "endDate": "Ending date",
+                "comment": "Comment"
             },
             "request": {
                 "title": "Request a new on-premise contract",
@@ -1857,6 +1873,30 @@
             "progress": {
                 "orderNumber": "Order n°{number}",
                 "noOrder": "You don't have any order yet"
+            },
+            "passed": {
+                "title": "Orders placed",
+                "header": {
+                    "orderNumber": "Order number",
+                    "period": "Period",
+                    "users": "Users number",
+                    "storage": "Storage",
+                    "status": "Status"
+                }
+            },
+            "quantityOrdered": {
+                "administrator": "{count} administrator | {count} administrators",
+                "standard": "{count} member | {count} members",
+                "outsider": "{count} external | {count} externals"
+            },
+            "invoiceToBePaid": {
+                "title": "Amount to be paid",
+                "description": "The invoice must be paid by bank transfer.",
+                "price": "€{amount}",
+                "paid": "Amount paid",
+                "waiting": "Waiting",
+                "download": "Download",
+                "extend": "Extend contract"
             }
         }
     },
