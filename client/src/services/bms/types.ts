@@ -183,12 +183,12 @@ interface GetCustomOrderRequestsResultData {
   requests: {
     id: string;
     describedNeeds: string;
-    users: number;
-    storage: number;
+    users: string;
+    storage: string;
     status: CustomOrderRequestStatus;
     comment: string;
     orderDate: DateTime;
-  };
+  }[];
 }
 
 interface BmsAddress {
@@ -379,6 +379,7 @@ export {
   CustomOrderStatusResultData,
   DataType,
   DeletePaymentMethodQueryData,
+  GetCustomOrderRequestsResultData,
   InvoiceStatus,
   ListOrganizationsResultData,
   LoginQueryData,
