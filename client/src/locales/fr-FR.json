@@ -1726,35 +1726,43 @@
             "step": {
                 "requestSent": {
                     "title": "Demande envoyée",
-                    "description": "Nous traitons votre demande. Nous allons vous recontacter dès que possible."
+                    "description": "Nous traitons votre demande. Nous allons vous recontacter dès que possible.",
+                    "tag": "Envoyée"
                 },
                 "processing": {
                     "title": "Échange avec le service commercial",
-                    "description": "Vous allez être contacté par notre service commercial pour finaliser votre commande."
+                    "description": "Vous allez être contacté par notre service commercial pour finaliser votre commande.",
+                    "tag": "En attente de traitement"
                 },
-                "validate": {
+                "confirmed": {
                     "title": "Commande confirmée",
-                    "description": "Votre commande a été confirmée, vous allez bientôt recevoir votre contrat."
+                    "description": "Votre commande a été confirmée, vous allez bientôt recevoir votre contrat.",
+                    "tag": "Confirmée"
                 },
                 "invoiceToBePaid": {
                     "title": "Facture à régler",
-                    "description": "Votre organisation sera disponible au règlement de la facture."
+                    "description": "Votre organisation sera disponible au règlement de la facture.",
+                    "tag": "En attente de paiement"
                 },
                 "organizationAvailable": {
                     "title": "Organisation disponible",
-                    "description": "Vous avez maintenant accès à votre organisation."
+                    "description": "Vous avez maintenant accès à votre organisation.",
+                    "tag": "Disponible"
                 },
                 "standby": {
                     "title": "Commande suspendue",
-                    "description": "Votre commande a été suspendue, veuillez nous recontacter si vous avez des questions."
+                    "description": "Votre commande a été suspendue, veuillez nous recontacter si vous avez des questions.",
+                    "tag": "Suspendue"
                 },
                 "cancel": {
                     "title": "Commande annulée",
-                    "description": "Votre commande a été annulée, veuillez nous recontacter si vous avez des questions."
+                    "description": "Votre commande a été annulée, veuillez nous recontacter si vous avez des questions.",
+                    "tag": "Annulée"
                 },
                 "error": {
                     "title": "Erreur lors de la récupération des informations",
-                    "description": "Une erreur est survenue. Veuillez nous contacter."
+                    "description": "Une erreur est survenue. Veuillez nous contacter.",
+                    "tag": "Erreur"
                 }
             }
         },
@@ -1818,10 +1826,18 @@
             }
         },
         "orders": {
+            "loading": "Vos commandes arrivent...",
             "new": {
                 "title": "Vous avez besoin de créer une nouvelle organisation ?",
                 "button": "Nouvelle demande",
-                "sent": "Votre demande a bien été envoyée."
+                "sent": "Votre demande a bien été envoyée.",
+                "details": "Détails de la demande",
+                "date": "Date de la demande",
+                "usersNeed": "Nombre d'utilisateurs",
+                "dataNeeded": "Volume de données",
+                "startDate": "Date de début",
+                "endDate": "Date de fin",
+                "comment": "Commentaire"
             },
             "request": {
                 "title": "Demande d'un contrat sur-mesure",
@@ -1855,6 +1871,30 @@
             "progress": {
                 "orderNumber": "Commande n°{number}",
                 "noOrder": "Vous n'avez pas de commande en cours."
+            },
+            "passed": {
+                "title": "Commande terminée",
+                "header": {
+                    "orderNumber": "Numéro de commande",
+                    "period": "Période",
+                    "users": "Nombre d'utilisateurs",
+                    "storage": "Volume de données",
+                    "status": "Statut"
+                }
+            },
+            "quantityOrdered": {
+                "administrator": "{count} administrateur | {count} administrateurs",
+                "standard": "{count} membre | {count} membres",
+                "outsider": "{count} externe | {count} externes"
+            },
+            "invoiceToBePaid": {
+                "title": "À régler par virement",
+                "description": "La facture est à payer par virement bancaire.",
+                "price": "{amount} €",
+                "paid": "Montant payé",
+                "waiting": "En attente",
+                "download": "Télécharger",
+                "extend": "Prolonger le contrat"
             }
         }
     },

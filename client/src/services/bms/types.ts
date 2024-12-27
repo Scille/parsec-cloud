@@ -42,7 +42,6 @@ enum DataType {
   CustomOrderDetails = 'custom-order-details',
   CreateCustomOrderRequest = 'create-custom-order-request',
   GetCustomOrderRequests = 'get-custom-order-requests',
-  GetCustomOrderRequests = 'get-custom-order-requests',
   CustomOrderInvoices = 'custom-order-invoices',
 }
 
@@ -127,8 +126,7 @@ interface OrganizationStatsResultData {
   outsiderUsersDetail: UserPerProfileDetails;
   freeSliceSize: number;
   payingSliceSize: number;
-  // Add more status
-  status: 'ok';
+  status: CustomOrderStatus;
 }
 
 interface OrganizationStatusResultData {
