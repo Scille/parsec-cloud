@@ -182,7 +182,7 @@ INSERT INTO shamir_recovery_share (
 )
 
 
-async def setup(
+async def shamir_setup(
     conn: AsyncpgConnection,
     now: DateTime,
     organization_id: OrganizationID,

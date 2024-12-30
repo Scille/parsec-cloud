@@ -114,7 +114,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         created_by_human_handle = org.users[invitation.created_by_user_id].cooked.human_handle
         claimer_human_handle = org.users[invitation.claimer_user_id].cooked.human_handle
 
-        # Mark active invitations as CANCELLED if the shamir recovery is deleted
+        # Consider an active invitation as CANCELLED if the corresponding shamir recovery is deleted
         if status in (InvitationStatus.IDLE, InvitationStatus.READY) and shamir_recovery.is_deleted:
             status = InvitationStatus.CANCELLED
 

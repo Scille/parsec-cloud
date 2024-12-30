@@ -13,8 +13,8 @@ from parsec._parsec import (
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
-from parsec.components.postgresql.shamir_delete import delete
-from parsec.components.postgresql.shamir_setup import setup
+from parsec.components.postgresql.shamir_delete import shamir_delete
+from parsec.components.postgresql.shamir_setup import shamir_setup
 from parsec.components.postgresql.utils import transaction
 from parsec.components.shamir import (
     BaseShamirComponent,
@@ -55,7 +55,7 @@ class PGShamirComponent(BaseShamirComponent):
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
-        return await setup(
+        return await shamir_setup(
             conn,
             now,
             organization_id,
@@ -85,7 +85,7 @@ class PGShamirComponent(BaseShamirComponent):
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
-        return await delete(
+        return await shamir_delete(
             conn,
             now,
             organization_id,

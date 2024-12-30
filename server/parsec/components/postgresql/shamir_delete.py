@@ -69,7 +69,7 @@ RETURNING TRUE
 )
 
 
-async def delete(
+async def shamir_delete(
     conn: AsyncpgConnection,
     now: DateTime,
     organization_id: OrganizationID,

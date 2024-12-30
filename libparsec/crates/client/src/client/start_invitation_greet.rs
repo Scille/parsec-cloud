@@ -34,7 +34,7 @@ pub fn start_device_invitation_greet(
 pub enum ClientStartShamirRecoveryInvitationGreetError {
     #[error("Invitation not found")]
     InvitationNotFound,
-    #[error("No corresponding shamir certificates found")]
+    #[error("Shamir recovery not found, no shamir certificates found")]
     ShamirRecoveryNotFound,
     #[error("Shamir recovery has been deleted")]
     ShamirRecoveryDeleted,

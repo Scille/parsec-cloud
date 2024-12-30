@@ -181,7 +181,7 @@ my_all_certificates AS (
 
     UNION ALL
 
-    -- Shamir recovery certificates for ourself
+    -- Shamir recovery brief & deletion certificates for the user
 
     (
         SELECT
@@ -215,7 +215,7 @@ my_all_certificates AS (
 
     UNION ALL
 
-    -- Shamir recovery certificates for others
+    -- Shamir recovery brief, share & deletion certificates where the user is part of the recipients
 
     (
         SELECT
