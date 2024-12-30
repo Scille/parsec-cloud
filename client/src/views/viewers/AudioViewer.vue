@@ -14,16 +14,20 @@
         @pause="updateMediaData"
         @volumechange="updateMediaData"
         @ended="updateMediaData"
+        @timeupdate="onTimeUpdate"
       />
     </template>
     <template #controls>
+      <file-controls-flux
+        v-model="progress"
+        :length="length"
+      />
       <file-controls>
-        <!-- Disabled till we add an illustration in the viewer -->
-        <!-- <file-controls-button
-          :class="{'flip-horizontal-ion-icon': ended}"
+        <file-controls-button
+          :class="{ 'flip-horizontal-ion-icon': ended }"
           :icon="getPlaybackIcon()"
           @click="togglePlayback"
-        /> -->
+        />
         <file-controls-volume @on-volume-change="updateVolume" />
       </file-controls>
     </template>
@@ -31,49 +35,80 @@
 </template>
 
 <script setup lang="ts">
-// import { refresh, play, pause, volumeHigh, volumeLow, volumeMedium, volumeMute } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
-import { FileControls, FileControlsVolume } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsFlux, FileControlsVolume } from '@/components/viewers';
+import { SliderState } from 'megashark-lib';
+import { refresh, play, pause } from 'ionicons/icons';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
 }>();
 
 const src = ref('');
-const audioElement = ref();
-const paused = ref(true);
+const audioElement = ref<HTMLAudioElement>();
+const length = ref(0);
+const volume = ref(1);
 const ended = ref(false);
+const progress = ref<SliderState>({ progress: 0, paused: true });
+
+const cancelProgressWatch = watch(
+  () => progress.value,
+  () => {
+    if (audioElement.value) {
+      audioElement.value.currentTime = progress.value.progress / 100;
+      if (audioElement.value.paused !== progress.value.paused) {
+        togglePlayback();
+      }
+    }
+  },
+);
 
 onMounted(async () => {
   src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
 });
 
-// function togglePlayback(): void {
-//   audioElement.value.paused ? audioElement.value.play() : audioElement.value.pause();
-// }
+onUnmounted(() => {
+  cancelProgressWatch();
+});
+
+function onTimeUpdate(): void {
+  if (!progress.value.paused && audioElement.value?.currentTime !== undefined) {
+    progress.value.progress = audioElement.value?.currentTime * 100;
+  }
+}
+
+function togglePlayback(): void {
+  audioElement.value?.paused ? audioElement.value?.play() : audioElement.value?.pause();
+}
 
 function updateMediaData(event: Event): void {
-  paused.value = (event.target as HTMLAudioElement).paused;
+  volume.value = (event.target as HTMLAudioElement).volume;
+  length.value = (event.target as HTMLVideoElement).duration * 100;
+  progress.value.progress = (event.target as HTMLVideoElement).currentTime * 100;
+  progress.value.paused = (event.target as HTMLVideoElement).paused;
   ended.value = (event.target as HTMLAudioElement).ended;
 }
 
 function updateVolume(value: number): void {
-  audioElement.value.volume = value;
+  if (audioElement.value) {
+    audioElement.value.volume = value;
+  }
 }
 
-// function getPlaybackIcon(): string {
-//   if (ended.value) {
-//     return refresh;
-//   }
-//   switch (paused.value) {
-//     case true:
-//       return play;
-//     case false:
-//       return pause;
-//   }
-// }
+function getPlaybackIcon(): string {
+  if (ended.value) {
+    return refresh;
+  }
+  switch (progress.value.paused) {
+    case true:
+      return play;
+    case false:
+      return pause;
+  }
+  return play;
+}
 </script>
 
 <style scoped lang="scss"></style>

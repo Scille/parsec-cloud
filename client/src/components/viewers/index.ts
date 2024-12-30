@@ -2,6 +2,7 @@
 
 import FileControls from '@/components/viewers/controls/FileControls.vue';
 import FileControlsButton from '@/components/viewers/controls/FileControlsButton.vue';
+import FileControlsFlux from '@/components/viewers/controls/FileControlsFlux.vue';
 import FileControlsGroup from '@/components/viewers/controls/FileControlsGroup.vue';
 import FileControlsInput from '@/components/viewers/controls/FileControlsInput.vue';
 import FileControlsPagination from '@/components/viewers/controls/FileControlsPagination.vue';
@@ -11,6 +12,7 @@ import FileControlsZoom from '@/components/viewers/controls/FileControlsZoom.vue
 export {
   FileControls,
   FileControlsButton,
+  FileControlsFlux,
   FileControlsGroup,
   FileControlsInput,
   FileControlsPagination,

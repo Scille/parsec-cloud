@@ -123,23 +123,33 @@ msTest('Audio viewer', async ({ documents }) => {
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.mp3$/);
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
-  await expect(bottomBar).toBeEmpty();
+  const buttons = bottomBar.locator('.file-controls-button');
   const wrapper = documents.locator('.file-viewer-wrapper');
   const audio = wrapper.locator('audio');
+  const fluxBar = bottomBar.locator('.slider').nth(0);
+  const volumeSlider = bottomBar.locator('.slider').nth(1);
 
   await expectMedia(audio).toHaveDuration(7.967347);
   await expectMedia(audio).toHaveCurrentTime(0.0);
 
   // Volume control
-  const volumeButton = bottomBar.locator('.file-controls-button');
-  const volumeSlider = bottomBar.locator('.slider');
+  const volumeButton = buttons.nth(1);
   await expectMedia(audio).toHaveVolume(1);
   await volumeSlider.click();
-  await expectMedia(audio).toHaveVolume(0.49);
+  await expectMedia(audio).toHaveVolume(0.48);
   await volumeButton.click();
   await expectMedia(audio).toHaveVolume(0);
   await volumeButton.click();
-  await expectMedia(audio).toHaveVolume(0.49);
+  await expectMedia(audio).toHaveVolume(0.48);
+
+  // Stream control
+  await buttons.nth(0).click();
+  await documents.waitForTimeout(500);
+  await buttons.nth(0).click();
+  expect(await Media.getCurrentTime(audio)).toBeGreaterThan(0.1);
+
+  await fluxBar.click();
+  await expectMedia(audio).toHaveCurrentTime(3.98);
 });
 
 msTest('Video viewer', async ({ documents }) => {
@@ -150,9 +160,10 @@ msTest('Video viewer', async ({ documents }) => {
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
   const buttons = bottomBar.locator('.file-controls-button');
-  const volumeSlider = bottomBar.locator('.slider');
   const wrapper = documents.locator('.file-viewer-wrapper');
   const video = wrapper.locator('video');
+  const fluxBar = bottomBar.locator('.slider').nth(0);
+  const volumeSlider = bottomBar.locator('.slider').nth(1);
 
   await expect(buttons).toHaveCount(3);
 
@@ -187,6 +198,10 @@ msTest('Video viewer', async ({ documents }) => {
   await expectMedia(video).toHaveVolume(0);
   await buttons.nth(1).click();
   await expectMedia(video).toHaveVolume(0.49);
+
+  // Stream control
+  await fluxBar.click();
+  await expectMedia(video).toHaveCurrentTime(1.77);
 });
 
 msTest('Text viewer', async ({ documents }) => {
