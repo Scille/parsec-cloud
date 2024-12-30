@@ -12,6 +12,7 @@
         @canplay="updateMediaData"
         @pause="updateMediaData"
         @ended="updateMediaData"
+        @timeupdate="onTimeUpdate"
       >
         <source
           :src="src"
@@ -20,6 +21,10 @@
       </video>
     </template>
     <template #controls>
+      <file-controls-flux
+        v-model="progress"
+        :length="length"
+      />
       <file-controls>
         <file-controls-button
           :class="{ 'flip-horizontal-ion-icon': ended }"
@@ -38,30 +43,59 @@
 
 <script setup lang="ts">
 import { refresh, play, pause, scan } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
-import { FileControls, FileControlsButton, FileControlsVolume } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsFlux, FileControlsVolume } from '@/components/viewers';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
+import { SliderState } from 'megashark-lib';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
 }>();
 
 const src = ref('');
-const videoElement = ref();
-const paused = ref(true);
+const videoElement = ref<HTMLVideoElement>();
+const length = ref(0);
+const volume = ref(1);
 const ended = ref(false);
+const progress = ref<SliderState>({ progress: 0, paused: true });
+
+const cancelProgressWatch = watch(
+  () => progress.value,
+  () => {
+    if (videoElement.value) {
+      videoElement.value.currentTime = progress.value.progress / 100;
+      if (videoElement.value.paused !== progress.value.paused) {
+        togglePlayback();
+      }
+    }
+  },
+);
 
 onMounted(async () => {
   src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
 });
 
+onUnmounted(() => {
+  cancelProgressWatch();
+});
+
+function onTimeUpdate(): void {
+  if (!progress.value.paused && videoElement.value && videoElement.value.currentTime !== undefined) {
+    progress.value.progress = videoElement.value.currentTime * 100;
+  }
+}
+
 function togglePlayback(): void {
-  videoElement.value.paused ? videoElement.value.play() : videoElement.value.pause();
+  if (videoElement.value) {
+    videoElement.value.paused ? videoElement.value.play() : videoElement.value.pause();
+  }
 }
 
 function updateVolume(value: number): void {
-  videoElement.value.volume = value;
+  if (videoElement.value) {
+    videoElement.value.volume = value;
+  }
 }
 
 function toggleFullScreen(): void {
@@ -69,20 +103,24 @@ function toggleFullScreen(): void {
 }
 
 function updateMediaData(event: Event): void {
-  paused.value = (event.target as HTMLVideoElement).paused;
+  volume.value = (event.target as HTMLVideoElement).volume;
   ended.value = (event.target as HTMLVideoElement).ended;
+  length.value = (event.target as HTMLVideoElement).duration * 100;
+  progress.value.progress = (event.target as HTMLVideoElement).currentTime * 100;
+  progress.value.paused = (event.target as HTMLVideoElement).paused;
 }
 
 function getPlaybackIcon(): string {
   if (ended.value) {
     return refresh;
   }
-  switch (paused.value) {
+  switch (progress.value.paused) {
     case true:
       return play;
     case false:
       return pause;
   }
+  return play;
 }
 </script>
 
