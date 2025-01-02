@@ -27,6 +27,7 @@
           @change="loadPage"
           ref="pagination"
         />
+        <file-controls-fullscreen @click="toggleFullScreen" />
       </file-controls>
     </template>
   </file-viewer-wrapper>
@@ -36,7 +37,7 @@
 import { inject, onMounted, ref, Ref, shallowRef } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { FileViewerWrapper } from '@/views/viewers';
-import { FileControls, FileControlsPagination, FileControlsZoom } from '@/components/viewers';
+import { FileControls, FileControlsPagination, FileControlsFullscreen, FileControlsZoom } from '@/components/viewers';
 import { I18n, MsSpinner, Translatable } from 'megashark-lib';
 import * as pdfjs from 'pdfjs-dist';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -120,6 +121,10 @@ async function loadPage(pageIndex: number): Promise<void> {
   }
 
   loading.value = false;
+}
+
+async function toggleFullScreen(): Promise<void> {
+  await canvas.value?.requestFullscreen();
 }
 </script>
 

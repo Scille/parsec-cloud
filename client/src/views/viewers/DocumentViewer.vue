@@ -5,10 +5,16 @@
     <template #viewer>
       <ms-spinner v-show="loading" />
       <div
+        ref="document"
         v-show="!loading"
         class="document-content"
         v-html="htmlContent"
       />
+    </template>
+    <template #controls>
+      <file-controls>
+        <file-controls-fullscreen @click="toggleFullScreen" />
+      </file-controls>
     </template>
   </file-viewer-wrapper>
 </template>
@@ -17,6 +23,7 @@
 import { ref, onMounted } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
+import { FileControls, FileControlsFullscreen } from '@/components/viewers';
 import mammoth from 'mammoth';
 import { MsSpinner } from 'megashark-lib';
 
@@ -26,6 +33,7 @@ const props = defineProps<{
 
 const loading = ref(true);
 const htmlContent = ref('');
+const document = ref();
 
 onMounted(async () => {
   loading.value = true;
@@ -33,6 +41,10 @@ onMounted(async () => {
   htmlContent.value = result.value;
   loading.value = false;
 });
+
+async function toggleFullScreen(): Promise<void> {
+  await document.value?.requestFullscreen();
+}
 </script>
 
 <style scoped lang="scss"></style>

@@ -5,6 +5,7 @@
     <template #viewer>
       <ms-spinner v-show="loading" />
       <div
+        ref="spreadsheet"
         v-show="!loading"
         class="spreadsheet-content"
         v-html="htmlContent"
@@ -18,6 +19,7 @@
           @click="action.handler"
           :label="action.text"
         />
+        <file-controls-fullscreen @click="toggleFullScreen" />
       </file-controls>
     </template>
   </file-viewer-wrapper>
@@ -27,7 +29,7 @@
 import { MsSpinner, I18n, Translatable } from 'megashark-lib';
 import { onBeforeMount, onMounted, Ref, ref } from 'vue';
 import XLSX from 'xlsx';
-import { FileControls, FileControlsButton } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsFullscreen } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 
@@ -42,6 +44,7 @@ const currentPage = ref('');
 const loading = ref(true);
 let worker: Worker | null = null;
 const actions: Ref<Array<{ icon?: string; text?: Translatable; handler: () => void }>> = ref([]);
+const spreadsheet = ref();
 
 onMounted(async () => {
   workbook = XLSX.read(props.contentInfo.data, { type: 'array' });
@@ -82,6 +85,10 @@ async function switchToPage(page: string): Promise<void> {
     worker = null;
   };
   worker.postMessage(ws);
+}
+
+async function toggleFullScreen(): Promise<void> {
+  await spreadsheet.value.requestFullscreen();
 }
 </script>
 

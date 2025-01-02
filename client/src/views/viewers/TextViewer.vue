@@ -1,17 +1,27 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
-    ref="container"
-    class="text-container"
-  />
+  <file-viewer-wrapper>
+    <template #viewer>
+      <div
+        ref="container"
+        class="text-container"
+      />
+    </template>
+    <template #controls>
+      <file-controls>
+        <file-controls-fullscreen @click="toggleFullScreen" />
+      </file-controls>
+    </template>
+  </file-viewer-wrapper>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import * as monaco from 'monaco-editor';
 import { FileContentInfo } from '@/views/viewers/utils';
-
+import { FileViewerWrapper } from '@/views/viewers';
+import { FileControls, FileControlsFullscreen } from '@/components/viewers';
 const props = defineProps<{
   contentInfo: FileContentInfo;
 }>();
@@ -36,6 +46,10 @@ function getLanguage(): string | undefined {
     ['rs', 'rust'],
   ]);
   return langs.get(props.contentInfo.extension);
+}
+
+async function toggleFullScreen(): Promise<void> {
+  await container.value?.requestFullscreen();
 }
 </script>
 

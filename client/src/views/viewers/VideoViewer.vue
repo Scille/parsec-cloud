@@ -27,20 +27,17 @@
           @click="togglePlayback"
         />
         <file-controls-volume @on-volume-change="updateVolume" />
-        <file-controls-button
-          :icon="scan"
-          @click="toggleFullScreen"
-        />
+        <file-controls-fullscreen @click="toggleFullScreen" />
       </file-controls>
     </template>
   </file-viewer-wrapper>
 </template>
 
 <script setup lang="ts">
-import { refresh, play, pause, scan } from 'ionicons/icons';
+import { refresh, play, pause } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
-import { FileControls, FileControlsButton, FileControlsVolume } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsFullscreen, FileControlsVolume } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 
 const props = defineProps<{
@@ -64,8 +61,8 @@ function updateVolume(value: number): void {
   videoElement.value.volume = value;
 }
 
-function toggleFullScreen(): void {
-  videoElement.value?.requestFullscreen();
+async function toggleFullScreen(): Promise<void> {
+  await videoElement.value?.requestFullscreen();
 }
 
 function updateMediaData(event: Event): void {

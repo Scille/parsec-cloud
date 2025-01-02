@@ -5,6 +5,7 @@
     <template #viewer>
       <img
         v-if="src.length"
+        ref="imgElement"
         :src="src"
       />
     </template>
@@ -14,6 +15,7 @@
           @change="onChange"
           ref="zoomControl"
         />
+        <file-controls-fullscreen @click="toggleFullScreen" />
       </file-controls>
     </template>
   </file-viewer-wrapper>
@@ -21,7 +23,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { FileControls, FileControlsZoom } from '@/components/viewers';
+import { FileControls, FileControlsFullscreen, FileControlsZoom } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 
@@ -32,6 +34,7 @@ const props = defineProps<{
 const src = ref('');
 const zoomControl = ref();
 const zoomLevel = ref(1);
+const imgElement = ref();
 
 onMounted(async () => {
   src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
@@ -40,6 +43,10 @@ onMounted(async () => {
 
 function onChange(value: number): void {
   zoomLevel.value = value / 100;
+}
+
+async function toggleFullScreen(): Promise<void> {
+  await imgElement.value?.requestFullscreen();
 }
 </script>
 
