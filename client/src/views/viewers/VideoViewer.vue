@@ -33,8 +33,8 @@
         />
         <file-controls-volume @on-volume-change="updateVolume" />
         <file-controls-button
-          :icon="scan"
           @click="toggleFullScreen"
+          :icon="scan"
         />
       </file-controls>
     </template>
@@ -98,8 +98,8 @@ function updateVolume(value: number): void {
   }
 }
 
-function toggleFullScreen(): void {
-  videoElement.value?.requestFullscreen();
+async function toggleFullScreen(): Promise<void> {
+  await videoElement.value?.requestFullscreen();
 }
 
 function updateMediaData(event: Event): void {

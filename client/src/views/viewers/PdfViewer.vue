@@ -13,6 +13,7 @@
       <div
         class="pdf-container"
         v-if="pdf"
+        ref="pdfRef"
       >
         <ms-spinner v-show="loading" />
         <canvas
@@ -25,7 +26,7 @@
     <template #controls>
       <file-controls v-show="pdf">
         <file-controls-zoom
-          @change="onChange"
+          @change="onZoomLevelChange"
           ref="zoomControl"
         />
         <file-controls-pagination
@@ -33,6 +34,10 @@
           :length="pdf.numPages"
           @change="loadPage"
           ref="pagination"
+        />
+        <file-controls-button
+          @click="toggleFullScreen"
+          :icon="scan"
         />
       </file-controls>
     </template>
@@ -43,9 +48,10 @@
 import { onMounted, ref, Ref, shallowRef } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { FileViewerWrapper } from '@/views/viewers';
-import { FileControls, FileControlsPagination, FileControlsZoom } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/viewers';
 import { I18n, MsSpinner, Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
 import * as pdfjs from 'pdfjs-dist';
+import { scan } from 'ionicons/icons';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -54,6 +60,7 @@ const props = defineProps<{
 const loading = ref(true);
 const error = ref('');
 const canvas = ref();
+const pdfRef = ref();
 const currentPage = ref(1);
 const pdf: Ref<pdfjs.PDFDocumentProxy | null> = shallowRef(null);
 const actions: Ref<Array<{ icon?: string; text?: Translatable; handler: () => void }>> = ref([]);
@@ -78,7 +85,7 @@ onMounted(async () => {
   }
 });
 
-async function onChange(value: number): Promise<void> {
+async function onZoomLevelChange(value: number): Promise<void> {
   scale.value = value / 100;
   await loadPage(currentPage.value);
 }
@@ -116,6 +123,14 @@ async function loadPage(pageIndex: number): Promise<void> {
     loading.value = false;
   }
 }
+
+async function toggleFullScreen(): Promise<void> {
+  if (pdfRef.value?.fullscreenElement) {
+    await pdfRef.value?.exitFullscreen();
+    return;
+  }
+  await pdfRef.value?.requestFullscreen();
+}
 </script>
 
 <style scoped lang="scss">
@@ -127,6 +142,12 @@ async function loadPage(pageIndex: number): Promise<void> {
 
   & * {
     transition: all 0.3s ease-in-out;
+  }
+
+  &:fullscreen {
+    align-items: center;
+    height: 100%;
+    background: var(--parsec-color-light-secondary-background);
   }
 }
 
