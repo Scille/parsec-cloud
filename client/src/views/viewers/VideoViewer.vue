@@ -26,9 +26,9 @@
         :length="length"
       />
       <file-controls>
-        <file-controls-button
-          :class="{ 'flip-horizontal-ion-icon': ended }"
-          :icon="getPlaybackIcon()"
+        <file-controls-playback
+          :paused="progress.paused"
+          :ended="ended"
           @click="togglePlayback"
         />
         <file-controls-volume @on-volume-change="updateVolume" />
@@ -42,9 +42,9 @@
 </template>
 
 <script setup lang="ts">
-import { refresh, play, pause, scan } from 'ionicons/icons';
+import { scan } from 'ionicons/icons';
 import { FileContentInfo } from '@/views/viewers/utils';
-import { FileControls, FileControlsButton, FileControlsFlux, FileControlsVolume } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsFlux, FileControlsPlayback, FileControlsVolume } from '@/components/viewers';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { SliderState } from 'megashark-lib';
@@ -108,19 +108,6 @@ function updateMediaData(event: Event): void {
   length.value = (event.target as HTMLVideoElement).duration * 100;
   progress.value.progress = (event.target as HTMLVideoElement).currentTime * 100;
   progress.value.paused = (event.target as HTMLVideoElement).paused;
-}
-
-function getPlaybackIcon(): string {
-  if (ended.value) {
-    return refresh;
-  }
-  switch (progress.value.paused) {
-    case true:
-      return play;
-    case false:
-      return pause;
-  }
-  return play;
 }
 </script>
 
