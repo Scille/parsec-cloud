@@ -12,6 +12,7 @@
       </ms-report-text>
       <ms-spinner v-show="loading" />
       <div
+        ref="spreadsheet"
         v-show="!loading"
         class="spreadsheet-content"
         v-html="htmlContent"
@@ -25,6 +26,10 @@
           @click="action.handler"
           :label="action.text"
         />
+        <file-controls-button
+          @click="toggleFullScreen"
+          :icon="scan"
+        />
       </file-controls>
     </template>
   </file-viewer-wrapper>
@@ -37,6 +42,7 @@ import XLSX from 'xlsx';
 import { FileControls, FileControlsButton } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
+import { scan } from 'ionicons/icons';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -50,6 +56,7 @@ const loading = ref(true);
 const error = ref('');
 let worker: Worker | null = null;
 const actions: Ref<Array<{ icon?: string; text?: Translatable; handler: () => void }>> = ref([]);
+const spreadsheet = ref();
 
 onMounted(async () => {
   try {
@@ -99,6 +106,10 @@ async function switchToPage(page: string): Promise<void> {
   };
   worker.postMessage(ws);
 }
+
+async function toggleFullScreen(): Promise<void> {
+  await spreadsheet.value.requestFullscreen();
+}
 </script>
 
 <style scoped lang="scss">
@@ -117,6 +128,13 @@ async function switchToPage(page: string): Promise<void> {
         border: 1px solid black;
       }
     }
+  }
+
+  &:fullscreen {
+    padding: 5rem;
+    align-items: center;
+    height: 100%;
+    background: var(--parsec-color-light-secondary-background);
   }
 }
 

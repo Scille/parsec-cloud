@@ -20,7 +20,7 @@ msTest('Spreadsheet viewer', async ({ documents }) => {
   await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.xlsx$/);
   const bottomBar = documents.locator('.file-viewer-bottombar');
-  await expect(bottomBar.locator('.file-controls-button')).toHaveText(['Sheet1', 'Sheet2']);
+  await expect(bottomBar.locator('.file-controls-button')).toContainText(['Sheet1', 'Sheet2']);
   const wrapper = documents.locator('.file-viewer-wrapper');
   await expect(wrapper.locator('.spreadsheet-content').locator('td')).toHaveText(['A', '1', 'B', '2', 'C', '3', 'D', '4']);
   // Switch to second sheet
@@ -40,7 +40,7 @@ msTest('PDF viewer', async ({ documents }) => {
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
   const buttons = bottomBar.locator('.file-controls-button');
-  await expect(buttons).toHaveText(['', '', '']);
+  await expect(buttons).toHaveText(['', '', '', '']);
 
   // Pagination
   const pagination = bottomBar.locator('.file-controls-pagination');
