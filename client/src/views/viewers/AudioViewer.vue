@@ -23,9 +23,9 @@
         :length="length"
       />
       <file-controls>
-        <file-controls-button
-          :class="{ 'flip-horizontal-ion-icon': ended }"
-          :icon="getPlaybackIcon()"
+        <file-controls-playback
+          :paused="progress.paused"
+          :ended="ended"
           @click="togglePlayback"
         />
         <file-controls-volume @on-volume-change="updateVolume" />
@@ -38,9 +38,8 @@
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
-import { FileControls, FileControlsButton, FileControlsFlux, FileControlsVolume } from '@/components/viewers';
+import { FileControls, FileControlsFlux, FileControlsPlayback, FileControlsVolume } from '@/components/viewers';
 import { SliderState } from 'megashark-lib';
-import { refresh, play, pause } from 'ionicons/icons';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -80,7 +79,9 @@ function onTimeUpdate(): void {
 }
 
 function togglePlayback(): void {
-  audioElement.value?.paused ? audioElement.value?.play() : audioElement.value?.pause();
+  if (audioElement.value) {
+    audioElement.value.paused ? audioElement.value.play() : audioElement.value.pause();
+  }
 }
 
 function updateMediaData(event: Event): void {
@@ -95,19 +96,6 @@ function updateVolume(value: number): void {
   if (audioElement.value) {
     audioElement.value.volume = value;
   }
-}
-
-function getPlaybackIcon(): string {
-  if (ended.value) {
-    return refresh;
-  }
-  switch (progress.value.paused) {
-    case true:
-      return play;
-    case false:
-      return pause;
-  }
-  return play;
 }
 </script>
 

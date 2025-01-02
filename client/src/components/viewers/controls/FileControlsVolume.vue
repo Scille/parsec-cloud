@@ -69,7 +69,7 @@ function getVolumeIcon(): string {
   display: flex;
 
   &-slider {
-    margin-right: 0.5rem;
+    margin-right: 1rem;
     opacity: 1;
     width: 5rem;
     display: flex;
