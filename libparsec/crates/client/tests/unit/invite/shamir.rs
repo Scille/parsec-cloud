@@ -110,7 +110,7 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
 
     let mike_client = client_factory(&env.discriminant_dir, mike.clone()).await;
     let mike_ctx = mike_client
-        .start_shamir_recovery_invitation_greet(alice_token, alice.user_id)
+        .start_shamir_recovery_invitation_greet(alice_token)
         .await
         .unwrap();
 
@@ -164,7 +164,7 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
 
     let bob_client = client_factory(&env.discriminant_dir, bob.clone()).await;
     let bob_ctx = bob_client
-        .start_shamir_recovery_invitation_greet(alice_token, alice.user_id)
+        .start_shamir_recovery_invitation_greet(alice_token)
         .await
         .unwrap();
 
@@ -502,7 +502,7 @@ async fn already_picked_recipient(env: &TestbedEnv) {
 
     let mike_client = client_factory(&env.discriminant_dir, mike.clone()).await;
     let mike_ctx = mike_client
-        .start_shamir_recovery_invitation_greet(alice_token, alice.user_id)
+        .start_shamir_recovery_invitation_greet(alice_token)
         .await
         .unwrap();
 
@@ -673,7 +673,7 @@ async fn add_share_is_idempotent(env: &TestbedEnv) {
 
     let mike_client = client_factory(&env.discriminant_dir, mike.clone()).await;
     let mike_ctx = mike_client
-        .start_shamir_recovery_invitation_greet(alice_token, alice.user_id)
+        .start_shamir_recovery_invitation_greet(alice_token)
         .await
         .unwrap();
 

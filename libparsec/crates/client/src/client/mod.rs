@@ -7,6 +7,7 @@ mod recovery_device;
 mod shamir_recovery_delete;
 mod shamir_recovery_list;
 mod shamir_recovery_setup;
+mod start_invitation_greet;
 mod tos;
 mod user_revoke;
 mod workspace_bootstrap;
@@ -27,6 +28,7 @@ use std::{
 
 pub use self::{
     list_frozen_users::ClientListFrozenUsersError,
+    start_invitation_greet::ClientStartShamirRecoveryInvitationGreetError,
     tos::{ClientAcceptTosError, ClientGetTosError, Tos},
     workspace_bootstrap::ClientEnsureWorkspacesBootstrappedError,
     workspace_create::ClientCreateWorkspaceError,
@@ -79,9 +81,8 @@ pub use crate::invite::{
 pub use crate::workspace::WorkspaceOps;
 pub use shamir_recovery_delete::ClientDeleteShamirRecoveryError;
 pub use shamir_recovery_list::{
-    ClientGetSelfShamirRecoveryError,
-    ClientGetShamirRecoveryShareDataError as ClientStartShamirRecoveryInvitationGreetError,
-    ClientListShamirRecoveriesForOthersError, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
+    ClientGetSelfShamirRecoveryError, ClientListShamirRecoveriesForOthersError,
+    OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
 };
 
 // Should not be `Clone` given it manages underlying resources !
@@ -535,39 +536,18 @@ impl Client {
     }
 
     pub fn start_user_invitation_greet(&self, token: InvitationToken) -> UserGreetInitialCtx {
-        UserGreetInitialCtx::new(
-            self.device.clone(),
-            self.cmds.clone(),
-            self.event_bus.clone(),
-            token,
-        )
+        start_invitation_greet::start_user_invitation_greet(self, token)
     }
 
     pub fn start_device_invitation_greet(&self, token: InvitationToken) -> DeviceGreetInitialCtx {
-        DeviceGreetInitialCtx::new(
-            self.device.clone(),
-            self.cmds.clone(),
-            self.event_bus.clone(),
-            token,
-        )
+        start_invitation_greet::start_device_invitation_greet(self, token)
     }
 
     pub async fn start_shamir_recovery_invitation_greet(
         &self,
         token: InvitationToken,
-        claimer: UserID,
     ) -> Result<ShamirRecoveryGreetInitialCtx, ClientStartShamirRecoveryInvitationGreetError> {
-        let share_data = self
-            .certificates_ops
-            .get_shamir_recovery_share_data(claimer)
-            .await?;
-        Ok(ShamirRecoveryGreetInitialCtx::new(
-            self.device.clone(),
-            self.cmds.clone(),
-            self.event_bus.clone(),
-            token,
-            share_data,
-        ))
+        start_invitation_greet::start_shamir_recovery_invitation_greet(self, token).await
     }
 
     pub async fn get_self_shamir_recovery(

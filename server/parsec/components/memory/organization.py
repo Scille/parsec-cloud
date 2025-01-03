@@ -411,11 +411,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 for k, v in org.per_topic_last_timestamp.items()
                 if isinstance(k, tuple) and k[0] == "realm"
             },
-            shamir_recovery={
-                k[1]: v
-                for k, v in org.per_topic_last_timestamp.items()
-                if isinstance(k, tuple) and k[0] == "shamir_recovery"
-            },
+            shamir_recovery=org.per_topic_last_timestamp.get("shamir_recovery"),
         )
 
     @override

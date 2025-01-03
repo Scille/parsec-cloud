@@ -114,6 +114,7 @@ pub fn rep_ok() {
     //       type: 'SHAMIR_RECOVERY',
     //       claimer_user_id: ext(2, 0xa11cec00100000000000000000000000),
     //       created_on: ext(1, 946774800000000) i.e. 2000-01-02T02:00:00Z,
+    //       created_on: ext(1, 946688400000000) i.e. 2000-01-02T01:00:00Z,
     //       status: 'IDLE',
     //       token: 0xd864b93ded264aae9ae583fd3d40c45a,
     //     },
@@ -124,10 +125,11 @@ pub fn rep_ok() {
     "65617465645f6f6ed70100035d162fa2e400a6737461747573a449444c45a5746f6b65"
     "6ec410d864b93ded264aae9ae583fd3d40c45a84a474797065a6444556494345aa6372"
     "65617465645f6f6ed70100035d162fa2e400a6737461747573a449444c45a5746f6b65"
-    "6ec410d864b93ded264aae9ae583fd3d40c45a85a474797065af5348414d49525f5245"
+    "6ec410d864b93ded264aae9ae583fd3d40c45a86a474797065af5348414d49525f5245"
     "434f56455259af636c61696d65725f757365725f6964d802a11cec0010000000000000"
-    "0000000000aa637265617465645f6f6ed70100035d162fa2e400a6737461747573a449"
-    "444c45a5746f6b656ec410d864b93ded264aae9ae583fd3d40c45a"
+    "0000000000aa637265617465645f6f6ed70100035d162fa2e400ba7368616d69725f72"
+    "65636f766572795f637265617465645f6f6ed70100035d0211cb8400a6737461747573"
+    "a449444c45a5746f6b656ec410d864b93ded264aae9ae583fd3d40c45a"
     )
     .as_ref();
 
@@ -148,13 +150,14 @@ pub fn rep_ok() {
                 token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 claimer_user_id: "alice".parse().unwrap(),
+                shamir_recovery_created_on: "2000-1-1T01:00:00Z".parse().unwrap(),
                 status: InvitationStatus::Idle,
             },
         ],
     };
 
-    let data = authenticated_cmds::invite_list::Rep::load(raw).unwrap();
     println!("***expected: {:?}", expected.dump().unwrap());
+    let data = authenticated_cmds::invite_list::Rep::load(raw).unwrap();
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip

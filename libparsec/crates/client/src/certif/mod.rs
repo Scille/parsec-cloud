@@ -627,8 +627,14 @@ impl CertificateOps {
     pub async fn get_shamir_recovery_share_data(
         &self,
         user_id: UserID,
+        shamir_recovery_created_on: DateTime,
     ) -> Result<ShamirRecoveryShareData, CertifGetShamirRecoveryShareDataError> {
-        shamir_recovery_list::get_shamir_recovery_share_data(self, user_id).await
+        shamir_recovery_list::get_shamir_recovery_share_data(
+            self,
+            user_id,
+            shamir_recovery_created_on,
+        )
+        .await
     }
 
     pub async fn setup_shamir_recovery(
