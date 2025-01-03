@@ -1760,6 +1760,10 @@
         "spreadsheet": {
             "loadSheetError": "This sheet could not be loaded.",
             "loadDocumentError": "Could not load this document."
+        },
+        "pdf": {
+            "loadDocumentError": "Could not load this PDF document.",
+            "loadPageError": "Could not load this page."
         }
     }
 }

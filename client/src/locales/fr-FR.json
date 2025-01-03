@@ -1760,6 +1760,10 @@
         "spreadsheet": {
             "loadSheetError": "Impossible de charger cette feuille.",
             "loadDocumentError": "Impossible de charger ce document."
+        },
+        "pdf": {
+            "loadDocumentError": "Impossible de charger ce document.",
+            "loadPageError": "Impossible de charger cette page."
         }
     }
 }
