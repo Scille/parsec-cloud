@@ -3,6 +3,13 @@
 <template>
   <file-viewer-wrapper>
     <template #viewer>
+      <ms-report-text
+        class="spreadsheet-error"
+        :theme="MsReportTheme.Error"
+        v-if="error"
+      >
+        {{ $msTranslate(error) }}
+      </ms-report-text>
       <ms-spinner v-show="loading" />
       <div
         v-show="!loading"
@@ -11,7 +18,7 @@
       />
     </template>
     <template #controls>
-      <file-controls>
+      <file-controls v-show="!loading && workbook">
         <file-controls-button
           v-for="(action, key) in actions"
           :key="key"
@@ -24,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsSpinner, I18n, Translatable } from 'megashark-lib';
+import { MsSpinner, I18n, Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
 import { onBeforeMount, onMounted, Ref, ref } from 'vue';
 import XLSX from 'xlsx';
 import { FileControls, FileControlsButton } from '@/components/viewers';
@@ -40,16 +47,22 @@ const htmlContent = ref('');
 const pages = ref<Array<string>>([]);
 const currentPage = ref('');
 const loading = ref(true);
+const error = ref('');
 let worker: Worker | null = null;
 const actions: Ref<Array<{ icon?: string; text?: Translatable; handler: () => void }>> = ref([]);
 
 onMounted(async () => {
-  workbook = XLSX.read(props.contentInfo.data, { type: 'array' });
-  pages.value = workbook.SheetNames;
-  await switchToPage(workbook.SheetNames[0]);
-  for (const page of pages.value) {
-    console.log(page);
-    actions.value.push({ text: I18n.valueAsTranslatable(page), handler: () => switchToPage(page) });
+  try {
+    workbook = XLSX.read(props.contentInfo.data, { type: 'array' });
+    pages.value = workbook.SheetNames;
+    await switchToPage(workbook.SheetNames[0]);
+    for (const page of pages.value) {
+      actions.value.push({ text: I18n.valueAsTranslatable(page), handler: () => switchToPage(page) });
+    }
+  } catch (e: any) {
+    window.electronAPI.log('error', `Failed to load spreadsheet document: ${e}`);
+    error.value = 'fileViewers.spreadsheet.loadDocumentError';
+    loading.value = false;
   }
 });
 
@@ -65,10 +78,13 @@ async function switchToPage(page: string): Promise<void> {
   }
   const ws = workbook.Sheets[page];
   if (!ws) {
-    window.electronAPI.log('error', 'Spreadsheet page not found');
+    error.value = 'fileViewers.spreadsheet.loadSheetError';
+    currentPage.value = '';
+    htmlContent.value = '';
     return;
   }
   loading.value = true;
+  error.value = '';
 
   if (worker) {
     worker.terminate();
@@ -102,5 +118,9 @@ async function switchToPage(page: string): Promise<void> {
       }
     }
   }
+}
+
+.spreadsheet-error {
+  width: 100%;
 }
 </style>
