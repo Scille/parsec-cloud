@@ -1756,6 +1756,10 @@
             "pagination": {
                 "page": "Page"
             }
+        },
+        "spreadsheet": {
+            "loadSheetError": "This sheet could not be loaded.",
+            "loadDocumentError": "Could not load this document."
         }
     }
 }
