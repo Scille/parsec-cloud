@@ -41,6 +41,7 @@ enum DataType {
   CustomOrderStatus = 'custom-order-status',
   CustomOrderDetails = 'custom-order-details',
   CreateCustomOrderRequest = 'create-custom-order-request',
+  GetCustomOrderRequests = 'get-custom-order-requests',
 }
 
 enum PaymentMethod {
@@ -62,6 +63,14 @@ enum CustomOrderStatus {
   EstimateLinked = 'estimate_linked',
   InvoiceToBePaid = 'invoice_to_be_paid',
   InvoicePaid = 'invoice_paid',
+}
+
+enum CustomOrderRequestStatus {
+  Received = 'RECEIVED',
+  Processing = 'PROCESSING',
+  Standby = 'STANDBY',
+  Finished = 'FINISHED',
+  Cancelled = 'CANCELLED',
 }
 
 type AuthenticationToken = string;
@@ -169,6 +178,19 @@ interface RefreshTokenResultData {
   token: AuthenticationToken;
 }
 
+interface GetCustomOrderRequestsResultData {
+  type: DataType.GetCustomOrderRequests;
+  requests: {
+    id: string;
+    describedNeeds: string;
+    users: string;
+    storage: string;
+    status: CustomOrderRequestStatus;
+    comment: string;
+    orderDate: DateTime;
+  }[];
+}
+
 interface BmsAddress {
   line1: string;
   line2?: string;
@@ -215,7 +237,8 @@ type ResultData =
   | RefreshTokenResultData
   | BillingDetailsResultData
   | CustomOrderStatusResultData
-  | CustomOrderDetailsResultData;
+  | CustomOrderDetailsResultData
+  | GetCustomOrderRequestsResultData;
 
 // Misc data
 interface BmsOrganization {
@@ -351,10 +374,12 @@ export {
   CreateOrganizationQueryData,
   CustomOrderDetailsResultData,
   CustomOrderQueryData,
+  CustomOrderRequestStatus,
   CustomOrderStatus,
   CustomOrderStatusResultData,
   DataType,
   DeletePaymentMethodQueryData,
+  GetCustomOrderRequestsResultData,
   InvoiceStatus,
   ListOrganizationsResultData,
   LoginQueryData,
