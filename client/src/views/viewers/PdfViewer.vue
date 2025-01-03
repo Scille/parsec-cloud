@@ -6,6 +6,7 @@
       <div
         class="pdf-container"
         v-if="pdf"
+        ref="pdfRef"
       >
         <ms-spinner v-show="loading" />
         <canvas
@@ -18,7 +19,7 @@
     <template #controls>
       <file-controls>
         <file-controls-zoom
-          @change="onChange"
+          @change="onZoomLevelChange"
           ref="zoomControl"
         />
         <file-controls-pagination
@@ -48,12 +49,14 @@ const props = defineProps<{
 
 const loading = ref(true);
 const canvas = ref();
+const pdfRef = ref();
 const currentPage = ref(1);
 const pdf: Ref<pdfjs.PDFDocumentProxy | null> = shallowRef(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const actions: Ref<Array<{ icon?: string; text?: Translatable; handler: () => void }>> = ref([]);
 const zoomControl = ref();
 const scale = ref(1);
+const preFullscreenScale = ref(1);
 
 onMounted(async () => {
   loading.value = true;
@@ -79,8 +82,9 @@ onMounted(async () => {
   loading.value = false;
 });
 
-async function onChange(value: number): Promise<void> {
+async function onZoomLevelChange(value: number): Promise<void> {
   scale.value = value / 100;
+  preFullscreenScale.value = scale.value;
   await loadPage(currentPage.value);
 }
 
@@ -124,7 +128,11 @@ async function loadPage(pageIndex: number): Promise<void> {
 }
 
 async function toggleFullScreen(): Promise<void> {
-  await canvas.value?.requestFullscreen();
+  if (pdfRef.value?.fullscreenElement) {
+    await pdfRef.value?.exitFullscreen();
+    return;
+  }
+  await pdfRef.value?.requestFullscreen();
 }
 </script>
 
@@ -137,6 +145,12 @@ async function toggleFullScreen(): Promise<void> {
 
   & * {
     transition: all 0.3s ease-in-out;
+  }
+
+  &:fullscreen {
+    align-items: center;
+    height: 100%;
+    background: var(--parsec-color-light-secondary-background);
   }
 }
 </style>
