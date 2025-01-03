@@ -13,7 +13,7 @@ pub enum DataError {
     #[error("Invalid encryption")]
     Decryption,
 
-    #[error("Invalid serialization: format {} step {step}", match .format { Some(format) => format!("{}", format), None => "<unknown>".to_string() })]
+    #[error("Invalid serialization: format {} step <{step}>", match .format { Some(format) => format!("{}", format), None => "<unknown>".to_string() })]
     BadSerialization {
         format: Option<u8>,
         step: &'static str,
