@@ -57,6 +57,40 @@ for (const workspace of workspaces) {
       await expect(workspaceInfo.locator('.shared-group').locator('.person-avatar')).toHaveCount(workspace.sharedWith.length);
       await expect(workspaceInfo.locator('.shared-group').locator('.person-avatar')).toHaveText(workspace.sharedWith);
     }
+    const workspaceRole = workspaceCard.locator('.card-bottom');
+    await expect(workspaceRole.locator('.card-bottom__role')).toHaveText(/^(Reader|Manager|Owner|Contributor)$/);
+    const role = await workspaceRole.locator('.card-bottom__role').textContent();
+    const icons = workspaceRole.locator('.card-bottom__icons').locator('ion-icon');
+    await expect(icons).toHaveCount(3);
+
+    switch (role) {
+      case 'Reader': {
+        await expect(icons.nth(0)).toHaveTheClass('icon-disabled');
+        await expect(icons.nth(1)).toHaveTheClass('icon-disabled');
+        await expect(icons.nth(2)).not.toHaveTheClass('icon-disabled');
+        break;
+      }
+      case 'Manager': {
+        await expect(icons.nth(0)).not.toHaveTheClass('icon-disabled');
+        await expect(icons.nth(1)).not.toHaveTheClass('icon-disabled');
+        await expect(icons.nth(2)).not.toHaveTheClass('icon-disabled');
+        break;
+      }
+      case 'Contributor': {
+        await expect(icons.nth(0)).toHaveTheClass('icon-disabled');
+        await expect(icons.nth(1)).not.toHaveTheClass('icon-disabled');
+        await expect(icons.nth(2)).not.toHaveTheClass('icon-disabled');
+        break;
+      }
+      case 'Owner': {
+        await expect(icons.nth(0)).not.toHaveTheClass('icon-disabled');
+        await expect(icons.nth(1)).not.toHaveTheClass('icon-disabled');
+        await expect(icons.nth(2)).not.toHaveTheClass('icon-disabled');
+        break;
+      }
+      default:
+        break;
+    }
   });
 }
 

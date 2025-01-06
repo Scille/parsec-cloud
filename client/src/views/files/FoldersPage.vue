@@ -89,6 +89,11 @@
           />
         </div>
         <div class="right-side">
+          <workspace-tag-role
+            :role="ownRole"
+            class="workspace-tag-role"
+          />
+
           <div class="counter">
             <ion-text
               class="body"
@@ -273,6 +278,7 @@ import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin 
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import { EntrySyncedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
+import { WorkspaceTagRole } from '@/components/workspaces';
 
 interface FoldersPageSavedData {
   displayState?: DisplayState;
@@ -1305,6 +1311,12 @@ async function onDropAsReader(): Promise<void> {
 <style scoped lang="scss">
 .folder-container div:not(.no-files-content) {
   height: 100%;
+}
+
+.workspace-tag-role {
+  background: var(--parsec-color-light-secondary-white);
+  padding: 0.25rem;
+  border-radius: var(--parsec-radius-32);
 }
 
 .no-files {

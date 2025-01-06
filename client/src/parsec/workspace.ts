@@ -120,7 +120,7 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
       {
         id: '2',
         currentName: 'The Copper Coronet',
-        currentSelfRole: WorkspaceRole.Manager,
+        currentSelfRole: WorkspaceRole.Contributor,
         size: 3_489_534_274,
         lastUpdated: DateTime.now(),
         availableOffline: false,
