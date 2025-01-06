@@ -557,6 +557,10 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
   transition: all 100ms ease-in-out;
 }
 
+ion-split-pane {
+  background: var(--parsec-color-light-secondary-inversed-contrast);
+}
+
 .resize-divider {
   width: 0.25rem;
   height: 100%;

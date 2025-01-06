@@ -1697,7 +1697,13 @@
             "new": {
                 "title": "You need to create a new organization?",
                 "button": "New request",
-                "sent": "Your request has been sent."
+                "sent": "Your request has been sent.",
+                "details": "Order details",
+                "date": "Date",
+                "membersNeed": "Amount of members",
+                "dataNeeded": "Amount of data",
+                "startDate": "Starting date",
+                "endDate": "Ending date"
             },
             "request": {
                 "title": "Request a new on-premise contract",
@@ -1727,6 +1733,19 @@
                 },
                 "connectionFailure": "An error occured (Failed to contact the server).",
                 "serverFailure": "An error occured (server request refused."
+            },
+            "progress": {
+                "orderNumber": "Order n°{number}",
+                "noOrder": "You don't have any order yet"
+            },
+            "passed": {
+                "header": {
+                    "orderNumber": "Order number",
+                    "period": "Period",
+                    "members": "Members number",
+                    "storage": "Storage",
+                    "status": "Status"
+                }
             }
         }
     },

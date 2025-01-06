@@ -380,6 +380,7 @@ export {
   CustomOrderStatusResultData,
   DataType,
   DeletePaymentMethodQueryData,
+  GetCustomOrderRequestsResultData,
   InvoiceStatus,
   ListOrganizationsResultData,
   LoginQueryData,
