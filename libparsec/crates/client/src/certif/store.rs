@@ -318,25 +318,23 @@ impl CertificatesStore {
     ///
     /// This is typically useful when validation data received from the server (as
     /// the server provides us with the certificates requirements to do the validation).
-    pub async fn for_read_with_requirements<T, E, Fut>(
+    pub async fn for_read_with_requirements<C, T, E, Fut>(
         &self,
         ops: &CertificateOps,
         needed_timestamps: &PerTopicLastTimestamps,
-        cb: impl FnOnce(&'static mut CertificatesStoreReadGuard) -> Fut,
+        cb: C,
     ) -> Result<Result<T, E>, CertifForReadWithRequirementsError>
     where
+        C: FnOnce(&'static mut CertificatesStoreReadGuard) -> Fut,
         Fut: std::future::Future<Output = Result<T, E>>,
     {
-        enum ForReadOutcome<T1, E1> {
-            StoredTimestampOutdated,
+        enum ForReadOutcome<C, T1, E1> {
+            StoredTimestampOutdated(C),
             Done(Result<T1, E1>),
         }
 
-        let cb_access = Mutex::new(Some(cb));
-        let cb_access = &cb_access;
-
         // Factorize the code in a closure to retry the operation after a server poll
-        let try_with_requirements = || {
+        let try_with_requirements = |cb| {
             self.for_read(|store: &mut CertificatesStoreReadGuard| async move {
                 // Make sure we have all the needed certificates
 
@@ -345,35 +343,30 @@ impl CertificatesStore {
                     .await
                     .map_err(CertifForReadWithRequirementsError::Internal)?;
                 if !last_stored_timestamps.is_up_to_date(needed_timestamps) {
-                    return Result::<ForReadOutcome<T, E>, CertifForReadWithRequirementsError>::Ok(
-                        ForReadOutcome::StoredTimestampOutdated,
+                    return Result::<ForReadOutcome<C, T, E>, CertifForReadWithRequirementsError>::Ok(
+                        ForReadOutcome::StoredTimestampOutdated(cb),
                     );
                 }
 
                 // Requirements are met, do the actual operation
-
-                let cb = {
-                    let mut cb_access_guard = cb_access.lock().expect("Mutex is poisoned");
-                    cb_access_guard.take().expect("Callback is accessed once")
-                };
                 let res = cb(store).await;
 
-                Result::<ForReadOutcome<T, E>, CertifForReadWithRequirementsError>::Ok(
+                Result::<ForReadOutcome<C, T, E>, CertifForReadWithRequirementsError>::Ok(
                     ForReadOutcome::Done(res),
                 )
             })
         };
 
         // Try to lock for read and run the callback
-        match try_with_requirements().await.map_err(|e| match e {
+        let cb = match try_with_requirements(cb).await.map_err(|e| match e {
             CertifStoreError::Stopped => CertifForReadWithRequirementsError::Stopped,
             CertifStoreError::Internal(err) => err.context("Cannot lock storage for read").into(),
         })?? {
             // If the requirement were met, we are done
             ForReadOutcome::Done(res) => return Ok(res),
             // If the requirements were not met, we need to poll the server
-            ForReadOutcome::StoredTimestampOutdated => {}
-        }
+            ForReadOutcome::StoredTimestampOutdated(cb) => cb,
+        };
 
         // We were lacking some certificates, do a server poll and retry
         self.for_write(|store| async move {
@@ -399,14 +392,14 @@ impl CertificatesStore {
         })??;
 
         // Retry the operation now that we have the requirements
-        match try_with_requirements().await.map_err(|e| match e {
+        match try_with_requirements(cb).await.map_err(|e| match e {
             CertifStoreError::Stopped => CertifForReadWithRequirementsError::Stopped,
             CertifStoreError::Internal(err) => err.context("Cannot lock storage for read").into(),
         })?? {
             // If the requirement were met, we are done
             ForReadOutcome::Done(res) => Ok(res),
             // If the requirements were not met, the requirements were invalid in the first place
-            ForReadOutcome::StoredTimestampOutdated => {
+            ForReadOutcome::StoredTimestampOutdated(_) => {
                 Err(CertifForReadWithRequirementsError::InvalidRequirements)
             }
         }
