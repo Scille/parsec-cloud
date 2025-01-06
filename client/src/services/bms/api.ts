@@ -323,7 +323,7 @@ async function getInvoices(token: AuthenticationToken, query: ClientQueryData): 
             pdfLink: invoice.pdf,
             start: DateTime.fromISO(invoice.period_start, { zone: 'utc' }),
             end: DateTime.fromISO(invoice.period_end, { zone: 'utc' }),
-            total: invoice.total,
+            total: invoice.total / 100.0,
             status: invoice.status,
             organizationId: invoice.organization,
             number: invoice.number,

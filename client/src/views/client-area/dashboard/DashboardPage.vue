@@ -111,7 +111,7 @@
                   {{ $msTranslate(formatTimeSince(invoice.start, '--', 'short')) }}
                 </ion-text>
                 <ion-text class="invoices-list-item__data invoices-organization body">{{ invoice.organizationId }}</ion-text>
-                <ion-text class="invoices-list-item__data invoices-amount body">{{ invoice.total }}</ion-text>
+                <ion-text class="invoices-list-item__data invoices-amount body">{{ $msFormatCurrency(invoice.total) }}</ion-text>
                 <ion-text class="invoices-list-item__data invoices-status">
                   <span
                     class="badge-status body-sm"

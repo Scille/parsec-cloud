@@ -454,9 +454,7 @@ onMounted(async () => {
       if (!statusRep.isError && statusRep.data && statusRep.data.type === DataType.CustomOrderStatus) {
         contractStatus.value = statusRep.data.status;
       }
-      console.log(props.organization);
       const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
-      console.log(detailsRep);
       if (!detailsRep.isError && detailsRep.data && detailsRep.data.type === DataType.CustomOrderDetails) {
         contractDetails.value = detailsRep.data;
       } else {

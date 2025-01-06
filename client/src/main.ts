@@ -82,6 +82,10 @@ async function setupApp(): Promise<void> {
         'fr-FR': appFrFR,
         'en-US': appEnUS,
       },
+      currencies: {
+        'fr-FR': 'EUR',
+        'en-US': 'EUR',
+      },
     },
     stripeConfig: {
       publishableKey: Env.getStripeApiKey().key,

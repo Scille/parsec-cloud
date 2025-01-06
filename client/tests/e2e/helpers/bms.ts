@@ -302,7 +302,7 @@ async function mockGetInvoices(page: Page, overload: MockGetInvoicesOverload = {
             pdf: `https://fake/pdfs/${year}-${month}.pdf`,
             period_start: DateTime.fromObject({ year: year, month: month }).toFormat('yyyy-LL-dd'),
             period_end: DateTime.fromObject({ year: year, month: month }).endOf('month').toFormat('yyyy-LL-dd'),
-            total: Math.round(Math.random() * 1000),
+            total: Math.round(Math.random() * 1000000),
             status: ['paid', 'draft', 'open'][Math.floor(Math.random() * 3)],
             organization: DEFAULT_ORGANIZATION_INFORMATION.name,
             number: `${year}-${month}`,

@@ -18,7 +18,7 @@ msTest('List the invoices', async ({ clientArea }) => {
     'Dec 2021',
     '2021-12',
     DEFAULT_ORGANIZATION_INFORMATION.name,
-    /^\d+$/,
+    /^€[\d.,]+$/,
     /^(Paid|In progress|To pay)\s*Download$/,
   ]);
   const yearFilterButton = clientArea.locator('.invoices-header-filter').locator('.invoices-header-filter-button').nth(0);
