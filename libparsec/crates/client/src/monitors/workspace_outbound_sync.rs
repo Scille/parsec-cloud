@@ -241,7 +241,7 @@ fn task_future_factory(
             let to_sleep = match due_time {
                 None => {
                     log::debug!("Workspace {realm_id}: sleeping forever");
-                    Duration::max_value()
+                    Duration::MAX
                 }
                 Some(due_time) => {
                     let duration = due_time - device.now();
