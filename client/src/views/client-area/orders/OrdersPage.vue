@@ -23,7 +23,7 @@
         v-for="order in contractRequests.requests"
         :key="order.id"
         :request="order"
-        :organization="organization"
+        :organization="order.organizationId"
       />
     </template>
     <template v-else>
@@ -57,43 +57,37 @@
           </ion-item>
         </ion-list>
 
-        <ion-list class="orders-done-list ion-no-padding">
+        <!-- <ion-list class="orders-done-list ion-no-padding">
           <ion-item
             class="orders-done-list-item ion-no-padding"
-            v-for="order in 4"
-            :key="order"
+            v-for="previousOrder in previousOrders"
+            :key="previousOrder.id"
           >
             <ion-text class="orders-done-list-item__data orders-number subtitles-normal">
               {{ $msTranslate('1234567') }}
             </ion-text>
             <ion-text class="orders-done-list-item__data orders-date subtitles-normal">
-              {{ $msTranslate('17 Nov. 2024') }}
+              {{ previousOrder.orderDate }}
               <ion-icon
                 class="orders-done-list-item__icon"
                 :icon="arrowForward"
               />
               {{ $msTranslate('28 Fév. 2024') }}
             </ion-text>
-            <ion-text class="orders-done-list-item__data orders-members subtitles-normal">{{ $msTranslate('XXX membres') }}</ion-text>
-            <ion-text class="orders-done-list-item__data orders-storage subtitles-normal">{{ $msTranslate('350 Go') }}</ion-text>
+            <ion-text class="orders-done-list-item__data orders-members subtitles-normal">{{ previousOrder.users }}</ion-text>
+            <ion-text class="orders-done-list-item__data orders-storage subtitles-normal">{{ previousOrder.storage }}</ion-text>
             <ion-text class="orders-done-list-item__data orders-status">
               <span class="badge-status body-sm">
                 {{ $msTranslate('Terminée') }}
               </span>
             </ion-text>
           </ion-item>
-        </ion-list>
+        </ion-list> -->
       </div>
     </div>
 
     <!-- orders -->
     <template v-if="!querying">
-      <!-- v-if="orders.length > 0" -->
-      <div
-        class="orders-container"
-      >
-        <p>commande supérieur à 0 titre</p>
-      </div>
       <!-- skeleton orders -->
       <div
         class="skeleton"
@@ -124,17 +118,11 @@
     </template>
 
     <!-- no orders -->
-    <template v-if="!querying && !error">
+    <!-- <template v-if="!querying && !error">
       <ion-text class="body-lg no-orders">
-        {{ $msTranslate('clientArea.orders.noInvoice') }}
+        {{ $msTranslate('clientArea.orders.noOrders') }}
       </ion-text>
-    </template>
-    <span
-      v-show="error"
-      class="form-error body"
-    >
-      {{ $msTranslate(error) }}
-    </span>
+    </template> -->
   </div>
 </template>
 
@@ -144,7 +132,6 @@ import { arrowForward } from 'ionicons/icons';
 import {
   BmsAccessInstance,
   BmsOrganization,
-  CustomOrderStatus,
   CustomOrderRequestStatus,
   CustomOrderDetailsResultData,
   GetCustomOrderRequestsResultData,
@@ -177,19 +164,19 @@ const props = defineProps<{
 onMounted(async () => {
   querying.value = true;
 
-  const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
-  const requestsRep = await MockedBmsApi.getCustomOrderRequests();
+  const orderRequestsRep = await MockedBmsApi.getCustomOrderRequests();
+  const orderDetailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
 
-  if (!detailsRep.isError && detailsRep.data && detailsRep.data.type === DataType.CustomOrderDetails) {
-    contractDetails.value = detailsRep.data;
+  if (!orderRequestsRep.isError && orderRequestsRep.data && orderRequestsRep.data.type === DataType.GetCustomOrderRequests) {
+    contractRequests.value = orderRequestsRep.data;
+    contractRequests.value.requests = orderRequestsRep.data.requests;
   } else {
     error.value = 'clientArea.contracts.errors.noInfo';
   }
 
-  console.log(requestsRep);
-  if (!requestsRep.isError && requestsRep.data && requestsRep.data.type === DataType.GetCustomOrderRequests) {
-    contractRequests.value = requestsRep.data;
-    contractRequests.value.requests = requestsRep.data.requests;
+  if (!orderDetailsRep.isError && orderDetailsRep.data && orderDetailsRep.data.type === DataType.CustomOrderDetails) {
+    contractDetails.value = orderDetailsRep.data;
+    console.log('orderDetailsRep: ', orderDetailsRep);
   } else {
     error.value = 'clientArea.contracts.errors.noInfo';
   }

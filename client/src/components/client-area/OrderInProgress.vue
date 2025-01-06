@@ -6,7 +6,10 @@
     @click="toggleOpen"
   >
     <!-- order header -->
-    <div class="order-header">
+    <div
+      class="order-header"
+      v-if="customOrderRequestStatus"
+    >
       <ion-text class="order-header__title title-h3">
         {{
           $msTranslate({
@@ -16,7 +19,7 @@
         }}
         <span
           class="order-tag button-small"
-          :class="getStatusClass(customOrderRequestStatus)"
+          :class="getStatusClass(customOrderRequestStatus ,customOrderStatus)"
         >
           {{ orderStepInfo.tag }}
         </span>
@@ -31,7 +34,7 @@
 
     <!-- order details -->
     <div
-      v-if="open"
+      v-if="open && contractDetails"
       class="order-content"
     >
       <div class="order-content-details">
@@ -44,14 +47,14 @@
               <ion-icon :icon="people" />
               {{ $msTranslate('clientArea.orders.new.membersNeed') }}
             </ion-text>
-            <ion-text class="details-list-item__data subtitles-normal">{{ request.users }}</ion-text>
+            <ion-text class="details-list-item__data subtitles-normal">{{ getUserOptions(request.users) }}</ion-text>
           </div>
           <div class="details-list-item">
             <ion-text class="details-list-item__title body-lg">
               <ion-icon :icon="pieChart" />
               {{ $msTranslate('clientArea.orders.new.dataNeeded') }}
             </ion-text>
-            <ion-text class="details-list-item__data subtitles-normal">{{ request.storage }}</ion-text>
+            <ion-text class="details-list-item__data subtitles-normal">{{ getStorageOptions(request.storage) }}</ion-text>
           </div>
         </div>
 
@@ -65,13 +68,13 @@
               class="details-list-item__data subtitles-normal"
               v-if="organization"
             >
-              {{ $msTranslate('-') }}
+              {{ $msTranslate(I18n.formatDate(contractDetails.created, 'short')) }}
             </ion-text>
             <ion-text
               class="details-list-item__data subtitles-normal"
               v-else
             >
-              {{ request.orderDate }}
+              {{ $msTranslate('-') }}
             </ion-text>
           </div>
           <div class="details-list-item">
@@ -79,8 +82,17 @@
               <ion-icon :icon="time" />
               {{ $msTranslate('clientArea.orders.new.endDate') }}
             </ion-text>
-            <ion-text class="details-list-item__data subtitles-normal">
-              {{ request.orderDate }}
+            <ion-text
+              class="details-list-item__data subtitles-normal"
+              v-if="organization"
+            >
+              {{ $msTranslate(I18n.formatDate(contractDetails.dueDate, 'short')) }}
+            </ion-text>
+            <ion-text
+              class="details-list-item__data subtitles-normal"
+              v-else
+            >
+              {{ $msTranslate('-') }}
             </ion-text>
           </div>
         </div>
@@ -99,6 +111,8 @@ import { IonText, IonIcon } from '@ionic/vue';
 import { people, pieChart, time } from 'ionicons/icons';
 import {
   CustomOrderRequestStatus,
+  CustomOrderDetailsResultData,
+  GetCustomOrderRequestsResultData,
   BmsOrganization,
   CustomOrderStatus,
   BmsAccessInstance,
@@ -112,11 +126,41 @@ import { MockedBmsApi } from '@/services/bms/mockApi';
 
 const error = ref<string>('');
 const querying = ref(true);
-// Status BMS
+const contractRequests = ref<GetCustomOrderRequestsResultData | undefined>(undefined);
 const customOrderRequestStatus = ref<CustomOrderRequestStatus>(CustomOrderRequestStatus.Received);
-// Status Sellsy
+const contractDetails = ref<CustomOrderDetailsResultData | undefined>(undefined);
 const customOrderStatus = ref<CustomOrderStatus>(CustomOrderStatus.Unknown);
 const open = ref(false);
+
+function getUserOptions(user: number): Translatable {
+  switch (user) {
+    case 50:
+      return 'clientArea.orders.request.userNeeds.choices.50';
+    case 100:
+      return 'clientArea.orders.request.userNeeds.choices.100';
+    case 300:
+      return 'clientArea.orders.request.userNeeds.choices.300';
+    case 9999:
+      return 'clientArea.orders.request.userNeeds.choices.more';
+    default:
+      return '';
+  }
+}
+
+function getStorageOptions(storage: number): Translatable {
+  switch (storage) {
+    case 100:
+      return 'clientArea.orders.request.storageNeeds.choices.100';
+    case 500:
+      return 'clientArea.orders.request.storageNeeds.choices.500';
+    case 1000:
+      return 'clientArea.orders.request.storageNeeds.choices.1000';
+    case 9999:
+      return 'clientArea.orders.request.storageNeeds.choices.more';
+    default:
+      return '';
+  }
+}
 
 const props = defineProps<{
   request: CustomOrderRequest;
@@ -145,22 +189,30 @@ onMounted(async () => {
     return;
   }
 
-  const orgStatusResponse = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
-  const requestsRep = await MockedBmsApi.getCustomOrderRequests();
+  const orderRequestsRep = await MockedBmsApi.getCustomOrderRequests();
+  if (!orderRequestsRep.isError && orderRequestsRep.data && orderRequestsRep.data.type === DataType.GetCustomOrderRequests) {
+    contractRequests.value = orderRequestsRep.data;
 
-  if (!orgStatusResponse.isError && orgStatusResponse.data && orgStatusResponse.data.type === DataType.CustomOrderStatus) {
-    customOrderStatus.value = orgStatusResponse.data.status;
-  } else {
-    error.value = 'clientArea.dashboard.processing.error.title';
-  }
-
-  if (!requestsRep.isError && requestsRep.data && requestsRep.data.type === DataType.GetCustomOrderRequests) {
-    const request = requestsRep.data.requests.find((req) => req.id === props.request.id);
+    const request = orderRequestsRep.data.requests.find((req) => req.id === props.request.id);
+    console.log('request', request);
     if (request) {
       customOrderRequestStatus.value = request.status;
     }
   } else {
     error.value = 'clientArea.dashboard.processing.error.title';
+  }
+
+  const orderDetailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
+  if (!orderDetailsRep.isError && orderDetailsRep.data && orderDetailsRep.data.type === DataType.CustomOrderDetails) {
+    contractDetails.value = orderDetailsRep.data;
+  } else {
+    error.value = 'clientArea.contracts.errors.noInfo';
+  }
+  const orderDetailsStatus = await MockedBmsApi.getCustomOrderStatus();
+  if (!orderDetailsStatus.isError && orderDetailsStatus.data && orderDetailsStatus.data.type === DataType.CustomOrderStatus) {
+    customOrderStatus.value = orderDetailsStatus.data.status;
+  } else {
+    error.value = 'clientArea.contracts.errors.noInfo';
   }
 
   querying.value = false;
@@ -233,27 +285,28 @@ const orderStepInfo = computed<RequestStatusStep>(() => {
   };
 });
 
-function getStatusClass (status: CustomOrderRequestStatus): string | undefined {
-  switch (status) {
+function getStatusClass (statusBms?: CustomOrderRequestStatus | undefined,
+  statusSellsy?:CustomOrderStatus | undefined): string | undefined {
+  switch (statusBms) {
     case CustomOrderRequestStatus.Received :
       return 'order-tag-received';
     case CustomOrderRequestStatus.Processing:
       return 'order-tag-processing';
-    case CustomOrderRequestStatus.Finished:
-      if (CustomOrderStatus.NothingLinked) {
-        return 'order-tag-finished';
-      }
-      if (CustomOrderStatus.EstimateLinked || CustomOrderStatus.InvoiceToBePaid) {
-        return 'order-tag-finished';
-      }
-      if (CustomOrderStatus.InvoicePaid) {
-        return 'order-tag-available';
-      }
-      break;
     case CustomOrderRequestStatus.Standby:
       return 'order-tag-standby';
     case CustomOrderRequestStatus.Cancelled:
       return 'order-tag-cancelled';
+    case CustomOrderRequestStatus.Finished:
+      if (statusSellsy === CustomOrderStatus.NothingLinked) {
+        return 'order-tag-finished';
+      }
+      if (statusSellsy === CustomOrderStatus.EstimateLinked || statusSellsy === CustomOrderStatus.InvoiceToBePaid) {
+        return 'order-tag-finished';
+      }
+      if (statusSellsy === CustomOrderStatus.InvoicePaid) {
+        return 'order-tag-available';
+      }
+      break;
     default:
       return '';
   }
