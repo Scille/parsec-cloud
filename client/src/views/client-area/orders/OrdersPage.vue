@@ -61,7 +61,6 @@ const props = defineProps<{
 onMounted(async () => {
   querying.value = true;
   const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
-  console.log(detailsRep);
   if (!detailsRep.isError && detailsRep.data && detailsRep.data.type === DataType.CustomOrderDetails) {
     contractDetails.value = detailsRep.data;
   } else {

@@ -58,7 +58,7 @@
         <ion-text class="invoices-year-content-list-item__data invoices-number body">{{ invoice.number }}</ion-text>
         <ion-text class="invoices-year-content-list-item__data invoices-organization body">{{ invoice.organizationId }}</ion-text>
         <ion-text class="invoices-year-content-list-item__data invoices-amount body">
-          {{ invoice.total }}
+          {{ $msFormatCurrency(invoice.total) }}
         </ion-text>
         <ion-text class="invoices-year-content-list-item__data invoices-status">
           <span
