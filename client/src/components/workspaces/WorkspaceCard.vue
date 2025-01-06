@@ -79,6 +79,27 @@
         </ion-label>
       </div>
     </div>
+    <div class="card-bottom">
+      <workspace-tag-role
+        class="card-bottom__role"
+        :role="workspace.currentSelfRole"
+      />
+      <div class="card-bottom__icons">
+        <ion-icon
+          :icon="personAdd"
+          :class="{
+            'icon-disabled': workspace.currentSelfRole === WorkspaceRole.Reader || workspace.currentSelfRole === WorkspaceRole.Contributor,
+          }"
+        />
+        <ion-icon
+          :icon="cloudUpload"
+          :class="{
+            'icon-disabled': workspace.currentSelfRole === WorkspaceRole.Reader,
+          }"
+        />
+        <ion-icon :icon="eye" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -86,10 +107,11 @@
 import { formatTimeSince } from 'megashark-lib';
 import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
-import { UserProfile, WorkspaceInfo } from '@/parsec';
+import { UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
 import { IonAvatar, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
-import { business, cloudDone, cloudOffline, ellipsisHorizontal, star, time } from 'ionicons/icons';
+import { business, cloudDone, cloudOffline, ellipsisHorizontal, star, time, cloudUpload, personAdd, eye } from 'ionicons/icons';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { WorkspaceTagRole } from '@/components/workspaces';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
@@ -134,9 +156,11 @@ async function onOptionsClick(event: Event): Promise<void> {
   user-select: none;
   border-radius: var(--parsec-radius-12);
   width: 16rem;
+  overflow: hidden;
 
   &:hover {
     background-color: var(--parsec-color-light-primary-30);
+    border-color: var(--parsec-color-light-primary-100);
   }
 }
 
@@ -177,6 +201,7 @@ async function onOptionsClick(event: Event): Promise<void> {
     }
   }
 }
+
 .workspace-card {
   padding: 2rem 1em 1em;
   width: 100%;
@@ -198,10 +223,10 @@ async function onOptionsClick(event: Event): Promise<void> {
     .cloud-overlay {
       position: absolute;
       font-size: 1.25rem;
-      bottom: -10px;
-      left: 54%;
-      padding: 2px;
-      background: white;
+      bottom: -11px;
+      left: 53%;
+      padding: 0.25rem;
+      background: var(--parsec-color-light-secondary-background);
       border-radius: 50%;
     }
 
@@ -234,6 +259,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   padding: 0.625rem 0 0;
   align-items: center;
   color: var(--parsec-color-light-secondary-grey);
+  height: 2rem;
 
   .not-shared-label {
     color: var(--parsec-color-light-secondary-grey);
@@ -264,5 +290,25 @@ async function onOptionsClick(event: Event): Promise<void> {
 .workspace-card__title::part(native),
 .workspace-info::part(native) {
   background-color: var(--parsec-color-light-secondary-background);
+}
+
+.card-bottom {
+  background-color: var(--parsec-color-light-secondary-white);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem 0.5rem 0.5rem;
+
+  &__icons {
+    color: var(--parsec-color-light-secondary-hard-grey);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.25rem;
+
+    .icon-disabled {
+      opacity: 0.3;
+    }
+  }
 }
 </style>

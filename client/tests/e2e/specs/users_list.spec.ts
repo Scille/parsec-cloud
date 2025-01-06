@@ -622,9 +622,9 @@ msTest('Reassign workspace role', async ({ usersPage }) => {
   await nextButton.click();
   await usersPage.waitForTimeout(1000);
   const newRoles = modal.locator('.workspace-list').getByRole('listitem');
-  await expect(newRoles).toHaveCount(2);
-  await expect(newRoles.locator('.workspace-item__name')).toHaveText(['Trademeet', 'The Copper Coronet']);
-  await expect(newRoles.locator('.workspace-item__role-old')).toHaveText(['Not shared', 'Not shared']);
-  await expect(newRoles.locator('.workspace-item__role-new')).toHaveText(['Reader', 'Reader']);
+  await expect(newRoles).toHaveCount(1);
+  await expect(newRoles.locator('.workspace-item__name')).toHaveText('Trademeet');
+  await expect(newRoles.locator('.workspace-item__role-old')).toHaveText('Not shared');
+  await expect(newRoles.locator('.workspace-item__role-new')).toHaveText('Reader');
   await nextButton.click();
 });

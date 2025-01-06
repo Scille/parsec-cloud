@@ -49,6 +49,7 @@ msTest('Check documents in grid mode', async ({ documents }) => {
 msTest('Documents page default state in a read only workspace', async ({ documentsReadOnly }) => {
   const actionBar = documentsReadOnly.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(0);
+  await expect(actionBar.locator('.right-side').locator('.label-role')).toHaveText('Reader');
   await expect(actionBar.locator('.counter')).toHaveText('10 items', { useInnerText: true });
   await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
   await expect(actionBar.locator('#grid-view')).not.toHaveDisabledAttribute();

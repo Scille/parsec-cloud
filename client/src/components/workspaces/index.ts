@@ -8,4 +8,7 @@ export {
   workspaceShareClick,
 } from '@/components/workspaces/utils';
 
+import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
+
 export type { WorkspacesPageSavedData } from '@/components/workspaces/utils';
+export { WorkspaceTagRole };
