@@ -379,7 +379,8 @@ WHERE
 _q_list_invitations = Q(
     f"""
 SELECT
-    invitation._id AS invitation_internal_id,
+    -- Use DISTINCT to avoid duplicates due to multiple shamir_recovery_share rows
+    DISTINCT invitation._id AS invitation_internal_id,
     invitation.token,
     invitation.type,
     user_.user_id AS created_by_user_id,
@@ -397,9 +398,16 @@ LEFT JOIN device ON invitation.created_by = device._id
 LEFT JOIN user_ ON device.user_ = user_._id
 LEFT JOIN human ON human._id = user_.human
 LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
+LEFT JOIN shamir_recovery_share ON shamir_recovery_share.shamir_recovery = shamir_recovery_setup._id
+LEFT JOIN user_ AS recipient_user_ ON shamir_recovery_share.recipient = recipient_user_._id
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
-    AND (user_.user_id = $user_id or invitation.type = 'SHAMIR_RECOVERY')
+    -- Different invitation types have different filtering rules
+    AND (
+        (invitation.type = 'USER' AND user_.user_id = $user_id)
+        OR (invitation.type = 'DEVICE' AND user_.user_id = $user_id)
+        OR (invitation.type = 'SHAMIR_RECOVERY' AND recipient_user_.user_id = $user_id)
+    )
 ORDER BY created_on
 """
 )
@@ -1263,13 +1271,6 @@ class PGInviteComponent(BaseInviteComponent):
                     shamir_recovery_info = await self._get_shamir_recovery_info(
                         conn, invitation_info.shamir_recovery_setup
                     )
-
-                    # The author is not part of the recipients
-                    if not any(
-                        recipient.user_id == author_user_id
-                        for recipient in shamir_recovery_info.recipients
-                    ):
-                        continue
 
                     invitation = ShamirRecoveryInvitation(
                         created_by_user_id=invitation_info.created_by_user_id,

@@ -107,7 +107,7 @@ SELECT
     SETVAL(PG_GET_SERIAL_SEQUENCE('block_data', '_id'), 23000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('common_topic', '_id'), 24000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('sequester_topic', '_id'), 25000),
-    SETVAL(PG_GET_SERIAL_SEQUENCE('shamir_recovery_topic', '_id'), 2600),
+    SETVAL(PG_GET_SERIAL_SEQUENCE('shamir_recovery_topic', '_id'), 26000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_topic', '_id'), 27000)
 ;
 """
