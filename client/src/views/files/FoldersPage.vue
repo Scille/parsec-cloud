@@ -479,7 +479,8 @@ onMounted(async () => {
   }
   callbackId = await fileOperationManager.registerCallback(onFileOperationState);
   currentPath.value = getDocumentPath();
-  await listFolder();
+  const query = getCurrentRouteQuery();
+  await listFolder({ selectFile: query.selectFile });
 });
 
 onUnmounted(async () => {
