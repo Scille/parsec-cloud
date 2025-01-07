@@ -1,0 +1,1 @@
+Properly formats the amount of money due when displaying invoices
