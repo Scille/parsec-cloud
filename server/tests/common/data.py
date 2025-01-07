@@ -24,8 +24,7 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.components.user import UserInfo
-from tests.common import Backend, CoolorgRpcClients, RpcTransportError
-from tests.common.client import ShamirOrgRpcClients
+from tests.common import Backend, CoolorgRpcClients, RpcTransportError, ShamirOrgRpcClients
 
 
 @pytest.fixture(params=("common_certificate", "realm_certificate", "shamir_certificate", "vlob"))

@@ -52,7 +52,7 @@ from parsec.components.memory.datamodel import (
 from parsec.events import EventInvitation
 
 
-def is_invitation_cancelled(org: MemoryOrganization, invitation: MemoryInvitation) -> bool:
+def _is_invitation_cancelled(org: MemoryOrganization, invitation: MemoryInvitation) -> bool:
     if invitation.is_cancelled:
         return True
     if invitation.type == InvitationType.SHAMIR_RECOVERY:
@@ -718,7 +718,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
         if invitation.is_completed:
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
-        if is_invitation_cancelled(org, invitation):
+        if _is_invitation_cancelled(org, invitation):
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
         if not self.is_greeter_allowed(org, invitation, greeter_user):
@@ -757,7 +757,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
         if invitation.is_completed:
             return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
-        if is_invitation_cancelled(org, invitation):
+        if _is_invitation_cancelled(org, invitation):
             return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
         if not self.is_greeter_allowed(org, invitation, greeter_user):
@@ -804,7 +804,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         if invitation.is_completed:
             return InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED
-        if is_invitation_cancelled(org, invitation):
+        if _is_invitation_cancelled(org, invitation):
             return InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
         if not self.is_greeter_allowed(org, invitation, greeter_user):
@@ -847,7 +847,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         if invitation.is_completed:
             return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED
-        if is_invitation_cancelled(org, invitation):
+        if _is_invitation_cancelled(org, invitation):
             return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
         if not self.is_greeter_allowed(org, invitation, greeter_user):
@@ -898,7 +898,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         if invitation.is_completed:
             return InviteGreeterStepBadOutcome.INVITATION_COMPLETED
-        if is_invitation_cancelled(org, invitation):
+        if _is_invitation_cancelled(org, invitation):
             return InviteGreeterStepBadOutcome.INVITATION_CANCELLED
 
         if not self.is_greeter_allowed(org, invitation, greeter_user):
@@ -950,7 +950,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         if invitation.is_completed:
             return InviteClaimerStepBadOutcome.INVITATION_COMPLETED
-        if is_invitation_cancelled(org, invitation):
+        if _is_invitation_cancelled(org, invitation):
             return InviteClaimerStepBadOutcome.INVITATION_CANCELLED
 
         if not self.is_greeter_allowed(org, invitation, greeter_user):
@@ -1003,7 +1003,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             invitation = org.invitations[token]
         except KeyError:
             return InviteCompleteBadOutcome.INVITATION_NOT_FOUND
-        if is_invitation_cancelled(org, invitation):
+        if _is_invitation_cancelled(org, invitation):
             return InviteCompleteBadOutcome.INVITATION_CANCELLED
         if invitation.is_completed:
             return InviteCompleteBadOutcome.INVITATION_ALREADY_COMPLETED

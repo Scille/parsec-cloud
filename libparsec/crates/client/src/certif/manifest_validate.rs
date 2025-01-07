@@ -161,6 +161,8 @@ pub(super) async fn validate_user_manifest(
                 CertifValidateManifestError::InvalidCertificate(err)
             }
             CertifForReadWithRequirementsError::InvalidRequirements => {
+                // This shouldn't occur since `needed_realm_certificate_timestamp` is provided by the server along with the vlob to validate
+                // (and the server is expected to only provide us with valid requirements !).
                 CertifValidateManifestError::Internal(anyhow::anyhow!(
                     "Unexpected invalid requirements"
                 ))
@@ -275,6 +277,8 @@ pub(super) async fn validate_workspace_manifest(
                 CertifValidateManifestError::InvalidCertificate(err)
             }
             CertifForReadWithRequirementsError::InvalidRequirements => {
+                // This shouldn't occur since `needed_realm_certificate_timestamp` is provided by the server along with the vlob to validate
+                // (and the server is expected to only provide us with valid requirements !).
                 CertifValidateManifestError::Internal(anyhow::anyhow!(
                     "Unexpected invalid requirements"
                 ))
@@ -388,6 +392,8 @@ pub(super) async fn validate_child_manifest(
                 CertifValidateManifestError::InvalidCertificate(err)
             }
             CertifForReadWithRequirementsError::InvalidRequirements => {
+                // This shouldn't occur since `needed_realm_certificate_timestamp` is provided by the server along with the vlob to validate
+                // (and the server is expected to only provide us with valid requirements !).
                 CertifValidateManifestError::Internal(anyhow::anyhow!(
                     "Unexpected invalid requirements"
                 ))

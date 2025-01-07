@@ -12,6 +12,7 @@ fn get_alice_token(env: &TestbedEnv) -> InvitationToken {
     env.template
         .events
         .iter()
+        .rev()
         .find_map(|e| match e {
             TestbedEvent::NewShamirRecoveryInvitation(event) if event.claimer == alice.user_id => {
                 Some(event.token)

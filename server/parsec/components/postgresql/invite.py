@@ -79,7 +79,7 @@ class InvitationInfo:
     created_by_email: str
     created_by_label: str
     claimer_email: str | None
-    shamir_recovery_setup: int | None
+    shamir_recovery_setup_internal_id: int | None
     created_on: DateTime
     deleted_on: DateTime | None
     deleted_reason: InvitationStatus | None
@@ -129,7 +129,7 @@ class InvitationInfo:
             created_by_email=created_by_email,
             created_by_label=created_by_label,
             claimer_email=claimer_email,
-            shamir_recovery_setup=shamir_recovery_setup,
+            shamir_recovery_setup_internal_id=shamir_recovery_setup,
             created_on=created_on,
             deleted_on=deleted_on,
             deleted_reason=deleted_reason,
@@ -1267,9 +1267,9 @@ class PGInviteComponent(BaseInviteComponent):
                         status=status,
                     )
                 case InvitationType.SHAMIR_RECOVERY:
-                    assert invitation_info.shamir_recovery_setup is not None
+                    assert invitation_info.shamir_recovery_setup_internal_id is not None
                     shamir_recovery_info = await self._get_shamir_recovery_info(
-                        conn, invitation_info.shamir_recovery_setup
+                        conn, invitation_info.shamir_recovery_setup_internal_id
                     )
 
                     invitation = ShamirRecoveryInvitation(
@@ -1335,9 +1335,9 @@ class PGInviteComponent(BaseInviteComponent):
                 status=InvitationStatus.READY,
             )
         elif invitation_info.type == InvitationType.SHAMIR_RECOVERY:
-            assert invitation_info.shamir_recovery_setup is not None
+            assert invitation_info.shamir_recovery_setup_internal_id is not None
             shamir_recovery_info = await self._get_shamir_recovery_info(
-                conn, invitation_info.shamir_recovery_setup
+                conn, invitation_info.shamir_recovery_setup_internal_id
             )
             return ShamirRecoveryInvitation(
                 created_by_user_id=invitation_info.created_by_user_id,
@@ -1394,7 +1394,7 @@ class PGInviteComponent(BaseInviteComponent):
         row = await conn.fetchrow(
             *_q_retrieve_shamir_recovery_ciphered_data(
                 organization_id=organization_id.str,
-                shamir_recovery_setup_internal_id=invitation_info.shamir_recovery_setup,
+                shamir_recovery_setup_internal_id=invitation_info.shamir_recovery_setup_internal_id,
             )
         )
         assert row is not None
@@ -1473,9 +1473,9 @@ class PGInviteComponent(BaseInviteComponent):
                         )
                     )
                 case InvitationType.SHAMIR_RECOVERY:
-                    assert invitation_info.shamir_recovery_setup is not None
+                    assert invitation_info.shamir_recovery_setup_internal_id is not None
                     shamir_recovery_info = await self._get_shamir_recovery_info(
-                        conn, invitation_info.shamir_recovery_setup
+                        conn, invitation_info.shamir_recovery_setup_internal_id
                     )
                     current_user_invitations.append(
                         ShamirRecoveryInvitation(
@@ -1619,7 +1619,7 @@ class PGInviteComponent(BaseInviteComponent):
         elif invitation_info.type == InvitationType.SHAMIR_RECOVERY:
             row = await conn.fetchrow(
                 *_q_is_greeter_in_recipients(
-                    shamir_recovery_setup_internal_id=invitation_info.shamir_recovery_setup,
+                    shamir_recovery_setup_internal_id=invitation_info.shamir_recovery_setup_internal_id,
                     greeter_id=greeter_id,
                 )
             )

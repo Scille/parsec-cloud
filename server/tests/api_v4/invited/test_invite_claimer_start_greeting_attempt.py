@@ -11,8 +11,7 @@ from parsec._parsec import (
     authenticated_cmds,
     invited_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
-from tests.common.client import ShamirOrgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, ShamirOrgRpcClients
 
 
 async def test_invited_invite_claimer_start_greeting_attempt_ok(

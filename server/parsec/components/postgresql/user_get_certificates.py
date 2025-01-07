@@ -181,44 +181,10 @@ my_all_certificates AS (
 
     UNION ALL
 
-    -- Shamir recovery brief & deletion certificates for the user
+    -- Shamir recovery brief certificates
 
     (
-        SELECT
-            'shamir_recovery' AS topic,
-            NULL::TEXT AS discriminant,
-            0,
-            created_on,
-            brief_certificate
-        FROM shamir_recovery_setup
-        WHERE organization = $organization_internal_id
-        AND user_ = $user_internal_id
-        AND COALESCE(created_on > $shamir_recovery_after, TRUE)
-    )
-
-    UNION ALL
-
-    (
-        SELECT
-            'shamir_recovery' AS topic,
-            NULL::TEXT AS discriminant,
-            0,
-            deleted_on,
-            deletion_certificate
-        FROM shamir_recovery_setup
-        WHERE organization = $organization_internal_id
-        AND user_ = $user_internal_id
-        AND deleted_on IS NOT NULL
-        AND deletion_certificate IS NOT NULL
-        AND COALESCE(deleted_on > $shamir_recovery_after, TRUE)
-    )
-
-    UNION ALL
-
-    -- Shamir recovery brief, share & deletion certificates where the user is part of the recipients
-
-    (
-        SELECT
+        SELECT DISTINCT ON (shamir_recovery_setup._id)
             'shamir_recovery' AS topic,
             NULL::TEXT AS discriminant,
             0,
@@ -227,14 +193,16 @@ my_all_certificates AS (
         FROM shamir_recovery_setup
         INNER JOIN shamir_recovery_share ON shamir_recovery_setup._id = shamir_recovery_share.shamir_recovery
         WHERE shamir_recovery_setup.organization = $organization_internal_id
-        AND recipient = $user_internal_id
+        AND (user_ = $user_internal_id OR recipient = $user_internal_id)
         AND COALESCE(created_on > $shamir_recovery_after, TRUE)
     )
 
     UNION ALL
 
+    -- Shamir recovery deletion certificates
+
     (
-        SELECT
+        SELECT DISTINCT ON (shamir_recovery_setup._id)
             'shamir_recovery' AS topic,
             NULL::TEXT AS discriminant,
             0,
@@ -243,13 +211,15 @@ my_all_certificates AS (
         FROM shamir_recovery_setup
         INNER JOIN shamir_recovery_share ON shamir_recovery_setup._id = shamir_recovery_share.shamir_recovery
         WHERE shamir_recovery_setup.organization = $organization_internal_id
-        AND recipient = $user_internal_id
+        AND (user_ = $user_internal_id OR recipient = $user_internal_id)
         AND deleted_on IS NOT NULL
         AND deletion_certificate IS NOT NULL
         AND COALESCE(deleted_on > $shamir_recovery_after, TRUE)
     )
 
     UNION ALL
+
+    -- Shamir recovery share certificates
 
     (
         SELECT

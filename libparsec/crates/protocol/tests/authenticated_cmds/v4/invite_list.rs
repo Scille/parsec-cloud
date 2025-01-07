@@ -114,7 +114,7 @@ pub fn rep_ok() {
     //       type: 'SHAMIR_RECOVERY',
     //       claimer_user_id: ext(2, 0xa11cec00100000000000000000000000),
     //       created_on: ext(1, 946774800000000) i.e. 2000-01-02T02:00:00Z,
-    //       created_on: ext(1, 946688400000000) i.e. 2000-01-02T01:00:00Z,
+    //       shamir_recovery_created_on: ext(1, 946688400000000) i.e. 2000-01-02T01:00:00Z,
     //       status: 'IDLE',
     //       token: 0xd864b93ded264aae9ae583fd3d40c45a,
     //     },
