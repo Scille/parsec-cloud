@@ -8,8 +8,7 @@ from parsec._parsec import (
     ShamirRecoveryDeletionCertificate,
     authenticated_cmds,
 )
-from tests.common import CoolorgRpcClients, HttpCommonErrorsTester
-from tests.common.client import ShamirOrgRpcClients
+from tests.common import CoolorgRpcClients, HttpCommonErrorsTester, ShamirOrgRpcClients
 
 Response = authenticated_cmds.v4.invite_greeter_start_greeting_attempt.Rep | None
 

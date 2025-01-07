@@ -416,6 +416,9 @@ pub async fn get_shamir_recovery_share_data(
                 .await?;
             let brief_certificate = match brief_certificate {
                 Some(brief_certificate) if brief_certificate.timestamp == shamir_recovery_created_on => Ok(brief_certificate),
+                // Only the last shamir recovery setup is meant to be active.
+                // If the provided timestamp doesn't match the last setup, then it either corresponds to a deleted setup or a non-existing one.
+                // But since we already checked for deletions, we can safely assume it's the latter.
                 _ => {
                     Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryBriefCertificateNotFound)
                 }
@@ -430,6 +433,9 @@ pub async fn get_shamir_recovery_share_data(
                 .await?;
             let share_certificate = match share_certificate {
                 Some(share_certificate) if share_certificate.timestamp == shamir_recovery_created_on => Ok(share_certificate),
+                // A similar check has been performed for the brief certificate, but we do it once more for the share certificate.
+                // This is justified in the case where the corresponding shamir recovery setup is for the current device.
+                // In this case, we will find a brief certificate but no share certificate.
                 _ => {
                     Err(CertifGetShamirRecoveryShareDataError::ShamirRecoveryShareCertificateNotFound)
                 }

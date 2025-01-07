@@ -87,7 +87,7 @@ class MemoryShamirComponent(BaseShamirComponent):
 
         async with org.topics_lock(read=["common"], write=["shamir_recovery"]) as (
             common_topic_last_timestamp,
-            last_shamir_certificate_timestamp,
+            shamir_topic_last_timestamp,
         ):
             # Ensure all recipients exist and are not revoked
             for share_recipient in cooked_shares.keys():
@@ -109,14 +109,14 @@ class MemoryShamirComponent(BaseShamirComponent):
                 # The user had already setup a shamir recovery... but it might be deleted
                 if not previous_shamir_setup.is_deleted:
                     return ShamirSetupAlreadyExistsBadOutcome(
-                        last_shamir_recovery_certificate_timestamp=last_shamir_certificate_timestamp
+                        last_shamir_recovery_certificate_timestamp=shamir_topic_last_timestamp
                     )
 
             # Ensure we are not breaking causality by adding a newer timestamp.
 
             last_certificate = max(
                 common_topic_last_timestamp,
-                last_shamir_certificate_timestamp,
+                shamir_topic_last_timestamp,
             )
             if last_certificate >= cooked_brief.timestamp:
                 return RequireGreaterTimestamp(strictly_greater_than=last_certificate)

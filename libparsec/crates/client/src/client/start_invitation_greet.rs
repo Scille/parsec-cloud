@@ -91,7 +91,11 @@ impl From<CertifGetShamirRecoveryShareDataError> for ClientStartShamirRecoveryIn
                 ClientStartShamirRecoveryInvitationGreetError::InvalidCertificate(e)
             }
             CertifGetShamirRecoveryShareDataError::InvalidRequirements => {
-                ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryNotFound
+                // This shouldn't occur since the requirements timestamp is provided by the server along with the invitation list
+                // (and the server is expected to only provide us with valid requirements !).
+                ClientStartShamirRecoveryInvitationGreetError::Internal(anyhow::anyhow!(
+                    "Unexpected invalid requirements"
+                ))
             }
             CertifGetShamirRecoveryShareDataError::Internal(e) => {
                 ClientStartShamirRecoveryInvitationGreetError::Internal(e)

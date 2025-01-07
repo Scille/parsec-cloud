@@ -294,6 +294,7 @@ async def shamir_setup(
         )
 
     # 2) Validate the shamir certificates
+
     match shamir_setup_validate(
         now,
         author,
@@ -308,8 +309,9 @@ async def shamir_setup(
             return error
 
     # 3) Check the recipients
-    recipient_internal_ids = []
-    for recipient_id in cooked_shares:
+
+    share_args = []
+    for recipient_id, (share_certificate, _) in cooked_shares.items():
         row = await conn.fetchrow(
             *_q_check_recipient(
                 organization_internal_id=organization_internal_id,
@@ -331,7 +333,8 @@ async def shamir_setup(
 
         match row["recipient_internal_id"]:
             case int() as recipient_internal_id:
-                recipient_internal_ids.append(recipient_internal_id)
+                number_of_shares = cooked_brief.per_recipient_shares[recipient_id]
+                share_args.append((recipient_internal_id, share_certificate, number_of_shares))
             case unknown:
                 assert False, repr(unknown)
 
@@ -372,15 +375,13 @@ async def shamir_setup(
             assert False, repr(unknown)
 
     def arg_gen():
-        for recipient_internal_id, (recipient_id, (share_certificate, _)) in zip(
-            recipient_internal_ids, cooked_shares.items()
-        ):
+        for recipient_internal_id, share_certificate, number_of_shares in share_args:
             yield _q_insert_shamir_recovery_share.arg_only(
                 organization_internal_id=organization_internal_id,
                 shamir_recovery_setup_internal_id=shamir_recovery_setup_internal_id,
                 recipient_internal_id=recipient_internal_id,
                 share_certificate=share_certificate,
-                shares=cooked_brief.per_recipient_shares[recipient_id],
+                shares=number_of_shares,
             )
 
     await conn.executemany(

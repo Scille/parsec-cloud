@@ -147,6 +147,8 @@ pub(super) async fn validate_block(
                 CertifValidateBlockError::InvalidCertificate(err)
             }
             CertifForReadWithRequirementsError::InvalidRequirements => {
+                // This shouldn't occur since `needed_realm_certificate_timestamp` is provided by the server along with the block to validate
+                // (and the server is expected to only provide us with valid requirements !).
                 CertifValidateBlockError::Internal(anyhow::anyhow!(
                     "Unexpected invalid requirements"
                 ))

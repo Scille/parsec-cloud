@@ -18,9 +18,9 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    ShamirOrgRpcClients,
     bob_becomes_admin_and_changes_alice,
 )
-from tests.common.client import ShamirOrgRpcClients
 
 
 @pytest.fixture

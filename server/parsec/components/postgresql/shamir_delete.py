@@ -226,7 +226,7 @@ async def shamir_delete(
 
     # 5) Mark the shamir recovery setup as deleted
 
-    row = await conn.fetchrow(
+    success = await conn.fetchval(
         *_q_mark_shamir_recovery_setup_as_deleted(
             organization_internal_id=organization_internal_id,
             shamir_recovery_setup_internal_id=shamir_recovery_setup_internal_id,
@@ -236,6 +236,6 @@ async def shamir_delete(
     )
 
     # Check that the update is successful
-    assert row is not None
+    assert success is True, success
 
     return cooked_deletion

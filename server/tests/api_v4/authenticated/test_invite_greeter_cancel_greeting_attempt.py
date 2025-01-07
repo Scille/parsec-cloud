@@ -17,10 +17,10 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    ShamirOrgRpcClients,
     bob_becomes_admin,
     bob_becomes_admin_and_changes_alice,
 )
-from tests.common.client import ShamirOrgRpcClients
 
 Response = authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.Rep | None
 
