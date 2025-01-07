@@ -291,6 +291,9 @@ TestbedEvent = (
     | TestbedEventNewDevice
     | TestbedEventUpdateUserProfile
     | TestbedEventRevokeUser
+    | TestbedEventNewUserInvitation
+    | TestbedEventNewDeviceInvitation
+    | TestbedEventNewShamirRecoveryInvitation
     | TestbedEventNewRealm
     | TestbedEventShareRealm
     | TestbedEventRenameRealm
@@ -299,6 +302,7 @@ TestbedEvent = (
     | TestbedEventNewShamirRecovery
     | TestbedEventDeleteShamirRecovery
     | TestbedEventCreateOrUpdateOpaqueVlob
+    | TestbedEventCreateBlock
     | TestbedEventCreateOpaqueBlock
     | TestbedEventFreezeUser
     | TestbedEventUpdateOrganization
