@@ -46,6 +46,7 @@
           <div>
             <file-list-item
               v-for="folder in folders.getEntries()"
+              ref="folderItemsRef"
               :key="folder.id"
               :entry="folder"
               :show-checkbox="someSelected"
@@ -58,6 +59,7 @@
             />
             <file-list-item
               v-for="file in files.getEntries()"
+              ref="fileItemsRef"
               :key="file.id"
               :entry="file"
               :show-checkbox="someSelected"
@@ -107,8 +109,14 @@ const emits = defineEmits<{
   (e: 'dropAsReader'): void;
 }>();
 
+defineExpose({
+  scrollToSelected,
+});
+
 const fileDropZoneRef = ref();
 const containerRef = ref();
+const folderItemsRef = ref<Array<typeof FileListItem>>();
+const fileItemsRef = ref<Array<typeof FileListItem>>();
 
 const allSelected = computed(() => {
   const selectedCount = props.files.selectedCount() + props.folders.selectedCount();
@@ -140,6 +148,31 @@ function onFilesAdded(imports: FileImportTuple[]): void {
 async function selectAll(selected: boolean): Promise<void> {
   props.files.selectAll(selected);
   props.folders.selectAll(selected);
+}
+
+async function scrollToSelected(): Promise<void> {
+  let selectedItem: any = undefined;
+
+  console.log('[LIST] Scroll to selected');
+
+  for (const item of folderItemsRef.value ?? []) {
+    if (item.props.entry.isSelected) {
+      selectedItem = item;
+      break;
+    }
+  }
+  if (!selectedItem) {
+    for (const item of fileItemsRef.value ?? []) {
+      if (item.props.entry.isSelected) {
+        selectedItem = item;
+        break;
+      }
+    }
+  }
+  console.log('[LIST]', selectedItem);
+  if (selectedItem) {
+    selectedItem.$el.scrollIntoView({ block: 'nearest' });
+  }
 }
 </script>
 

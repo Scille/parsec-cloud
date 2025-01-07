@@ -16,6 +16,7 @@
       <div class="folders-container-grid">
         <file-card
           class="folder-grid-item"
+          ref="folderItemsRef"
           v-for="folder in folders.getEntries()"
           :key="folder.id"
           :entry="folder"
@@ -28,6 +29,7 @@
         />
         <file-card
           class="folder-grid-item"
+          ref="fileItemsRef"
           v-for="file in files.getEntries()"
           :key="file.id"
           :entry="file"
@@ -68,6 +70,8 @@ const props = defineProps<{
 
 const fileDropZoneRef = ref();
 const containerRef = ref();
+const fileItemsRef = ref<Array<typeof FileCard>>();
+const folderItemsRef = ref<Array<typeof FileCard>>();
 
 const emits = defineEmits<{
   (e: 'click', entry: EntryModel, event: Event): void;
@@ -76,6 +80,10 @@ const emits = defineEmits<{
   (e: 'filesAdded', imports: FileImportTuple[]): void;
   (e: 'dropAsReader'): void;
 }>();
+
+defineExpose({
+  scrollToSelected,
+});
 
 onMounted(async () => {
   containerRef.value.addEventListener('contextmenu', (event: Event) => {
@@ -95,6 +103,31 @@ function onFilesAdded(imports: FileImportTuple[]): void {
 
 function hasSelected(): boolean {
   return props.files.hasSelected() || props.folders.hasSelected();
+}
+
+async function scrollToSelected(): Promise<void> {
+  let selectedItem: typeof FileCard | undefined = undefined;
+
+  console.log('[GRID] Scroll to selected');
+
+  for (const item of folderItemsRef.value ?? []) {
+    if (item.props.entry.isSelected) {
+      selectedItem = item;
+      break;
+    }
+  }
+  if (!selectedItem) {
+    for (const item of fileItemsRef.value ?? []) {
+      if (item.props.entry.isSelected) {
+        selectedItem = item;
+        break;
+      }
+    }
+  }
+  console.log('[GRID]', selectedItem);
+  if (selectedItem) {
+    selectedItem.$el.scrollIntoView({ block: 'nearest' });
+  }
 }
 </script>
 
