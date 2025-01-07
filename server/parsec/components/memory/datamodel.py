@@ -8,7 +8,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from itertools import chain
-from typing import AsyncIterator, Iterable, Literal
+from typing import AsyncIterator, Iterable, Iterator, Literal
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -47,6 +47,23 @@ from parsec._parsec import (
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
 from parsec.components.sequester import SequesterServiceType
+
+type CommonTopicCertificate = (
+    UserCertificate
+    | DeviceCertificate
+    | UserUpdateCertificate
+    | SequesterServiceCertificate
+    | RevokedUserCertificate
+)
+type SequesterTopicCertificate = (
+    SequesterAuthorityCertificate | SequesterServiceCertificate | SequesterRevokedServiceCertificate
+)
+type RealmTopicCertificate = (
+    RealmRoleCertificate
+    | RealmKeyRotationCertificate
+    | RealmNameCertificate
+    | RealmArchivingCertificate
+)
 
 
 class AdvisoryLock(Enum):
@@ -227,6 +244,181 @@ class MemoryOrganization:
     @property
     def is_bootstrapped(self) -> bool:
         return self.bootstrapped_on is not None
+
+    def ordered_common_certificates(
+        self, redacted: bool = False
+    ) -> Iterator[tuple[DateTime, bytes, CommonTopicCertificate]]:
+        """
+        Return all common certificates ordered by timestamp.
+        """
+        # Certificates must be returned ordered by timestamp, however there is a trick
+        # for the common certificates: when a new user is created, the corresponding
+        # user and device certificates have the same timestamp, but we must return
+        # the user certificate first (given device references the user).
+        # So to achieve this we use a tuple (timestamp, priority, certificate) where
+        # only the first two field should be used for sorting (the priority field
+        # handling the case where user and device have the same timestamp).
+
+        common_certificates_unordered: list[
+            tuple[DateTime, int, bytes, CommonTopicCertificate]
+        ] = []
+        for user in self.users.values():
+            if redacted:
+                common_certificates_unordered.append(
+                    (user.cooked.timestamp, 0, user.redacted_user_certificate, user.cooked)
+                )
+            else:
+                common_certificates_unordered.append(
+                    (user.cooked.timestamp, 0, user.user_certificate, user.cooked)
+                )
+
+            if user.is_revoked:
+                assert user.cooked_revoked is not None
+                assert user.revoked_user_certificate is not None
+                common_certificates_unordered.append(
+                    (
+                        user.cooked_revoked.timestamp,
+                        1,
+                        user.revoked_user_certificate,
+                        user.cooked_revoked,
+                    )
+                )
+
+            for update in user.profile_updates:
+                common_certificates_unordered.append(
+                    (update.cooked.timestamp, 1, update.user_update_certificate, update.cooked)
+                )
+
+        for device in self.devices.values():
+            if redacted:
+                common_certificates_unordered.append(
+                    (device.cooked.timestamp, 1, device.redacted_device_certificate, device.cooked)
+                )
+            else:
+                common_certificates_unordered.append(
+                    (device.cooked.timestamp, 1, device.device_certificate, device.cooked)
+                )
+
+        for ts, _, raw, cooked in sorted(common_certificates_unordered, key=lambda x: (x[0], x[1])):
+            yield (ts, raw, cooked)
+
+    def ordered_sequester_certificates(
+        self,
+    ) -> Iterator[tuple[DateTime, bytes, SequesterTopicCertificate]]:
+        """
+        Return all sequester certificates ordered by timestamp.
+        """
+        if self.sequester_authority_certificate is None:
+            return
+
+        assert self.cooked_sequester_authority is not None
+        assert self.sequester_services is not None
+
+        yield (
+            self.cooked_sequester_authority.timestamp,
+            self.sequester_authority_certificate,
+            self.cooked_sequester_authority,
+        )
+
+        sequester_services_unordered: list[tuple[DateTime, bytes, SequesterTopicCertificate]] = []
+        for service in self.sequester_services.values():
+            sequester_services_unordered.append(
+                (service.cooked.timestamp, service.sequester_service_certificate, service.cooked)
+            )
+            if service.cooked_revoked:
+                assert service.sequester_revoked_service_certificate is not None
+                sequester_services_unordered.append(
+                    (
+                        service.cooked_revoked.timestamp,
+                        service.sequester_revoked_service_certificate,
+                        service.cooked_revoked,
+                    )
+                )
+
+        yield from sorted(sequester_services_unordered, key=lambda x: x[0])
+
+    def ordered_realm_certificates(
+        self, realm_id: VlobID
+    ) -> Iterator[tuple[DateTime, bytes, RealmTopicCertificate]]:
+        """
+        Return all realm certificates ordered by timestamp.
+        """
+        realm = self.realms[realm_id]
+
+        # Collect all the certificates related to the realm
+        realm_certificates_unordered = []
+        realm_certificates_unordered += [
+            (role.cooked.timestamp, role.realm_role_certificate, role.cooked)
+            for role in realm.roles
+        ]
+        realm_certificates_unordered += [
+            (role.cooked.timestamp, role.realm_key_rotation_certificate, role.cooked)
+            for role in realm.key_rotations
+        ]
+        realm_certificates_unordered += [
+            (role.cooked.timestamp, role.realm_name_certificate, role.cooked)
+            for role in realm.renames
+        ]
+        # TODO: support archiving here !
+
+        yield from sorted(realm_certificates_unordered, key=lambda x: x[0])
+
+    def simulate_postgresql_block_table(self) -> Iterable[tuple[int, MemoryBlock]]:
+        """
+        Simulate the PostgreSQL table the blocks are supposed to be stored into.
+
+        This is useful for the realm export feature, since it relies on the table
+        sequential primary key to determine which row should be exported.
+
+        This returns a list of blocks with their sequential primary key.
+        """
+
+        # Here we simulate the sequential primary key of the blocks table in PostgreSQL:
+        # - Blocks are stored in a dict, in Python a dict is guaranteed to be ordered
+        #   according to insertion order.
+        # - We never remove blocks from the dict.
+        # - From the above two points, we can reliably use the index of the block in the
+        #   dict as the primary key.
+
+        # PostgreSQL sequential index starts at 1, however here we skip a bunch of
+        # indexes as a poor man's way to simulate the fact there can be holes in the
+        # indexes (e.g. when a transaction is rolled back).
+        # This should be enough to detect typical improper use of the primary key as
+        # a list offset.
+        return enumerate(self.blocks.values(), start=100)
+
+    def simulate_postgresql_vlob_atom_table(self) -> Iterable[tuple[int, MemoryVlobAtom]]:
+        """
+        Simulate the PostgreSQL table the vlob atoms are supposed to be stored into.
+
+        This is useful for the realm export feature, since it relies on the table
+        sequential primary key to determine which row should be exported.
+
+        This returns a list of vlob atoms with their sequential primary key.
+        """
+
+        # Simulating the sequential primary key of the vlobs table in PostgreSQL is a bit
+        # more tricky than for blocks: we cannot directly rely on the dict since it itself
+        # contains a list of vlob atoms (i.e. a vlob is composed of multiple versions
+        # called atoms).
+        # So we first hove to re-create a list of all vlob atoms across all realms,
+        # sort them by creation date, which is basically equivalent of what the vlobs
+        # table in PostgreSQL is.
+
+        all_vlob_atoms = []
+        for vlob in self.vlobs.values():
+            for vlob_atom in vlob:
+                all_vlob_atoms.append(vlob_atom)
+
+        # Note we also order by vlob ID to ensure a stable order in case of same creation date
+        all_vlob_atoms.sort(key=lambda vlob_atom: (vlob_atom.created_on, vlob_atom.vlob_id))
+
+        # PostgreSQL sequential index starts at 1, however here we skip a bunch of
+        # indexes as a poor man's way to simulate the fact there can be holes in the
+        # indexes (e.g. when a transaction is rolled back).
+        # This should be enough to detect typical improper use of the primary key as
+        # a list offset.
+        return enumerate(all_vlob_atoms, start=200)
 
 
 @dataclass(slots=True)
