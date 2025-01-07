@@ -11,11 +11,13 @@
   >
     <div
       class="scroll"
+      ref="containerScroll"
       @contextmenu="onContextMenu"
     >
       <div class="folders-container-grid">
         <file-card
           class="folder-grid-item"
+          ref="folderItemsRef"
           v-for="folder in folders.getEntries()"
           :key="folder.id"
           :entry="folder"
@@ -28,6 +30,7 @@
         />
         <file-card
           class="folder-grid-item"
+          ref="fileItemsRef"
           v-for="file in files.getEntries()"
           :key="file.id"
           :entry="file"
@@ -67,6 +70,9 @@ const props = defineProps<{
 }>();
 
 const fileDropZoneRef = ref();
+const containerScroll = ref();
+const fileItemsRef = ref<Array<typeof FileCard>>();
+const folderItemsRef = ref<Array<typeof FileCard>>();
 
 const emits = defineEmits<{
   (e: 'click', entry: EntryModel, event: Event): void;
@@ -80,6 +86,9 @@ async function onContextMenu(event: Event): Promise<void> {
   event.preventDefault();
   emits('globalMenuClick', event);
 }
+defineExpose({
+  scrollToSelected,
+});
 
 function onFilesAdded(imports: FileImportTuple[]): void {
   fileDropZoneRef.value.reset();
@@ -88,6 +97,33 @@ function onFilesAdded(imports: FileImportTuple[]): void {
 
 function hasSelected(): boolean {
   return props.files.hasSelected() || props.folders.hasSelected();
+}
+
+async function scrollToSelected(): Promise<void> {
+  let selectedItem: typeof FileCard | undefined = undefined;
+
+  for (const item of folderItemsRef.value ?? []) {
+    if (item.props.entry.isSelected) {
+      selectedItem = item;
+      break;
+    }
+  }
+  if (!selectedItem) {
+    for (const item of fileItemsRef.value ?? []) {
+      if (item.props.entry.isSelected) {
+        selectedItem = item;
+        break;
+      }
+    }
+  }
+  // Don't know how to handle it better.
+  // If the component has been created recently, `selectedItem.offsetTop` doesn't have the
+  // correct value yet.
+  setTimeout(() => {
+    if (selectedItem) {
+      containerScroll.value.scrollTo({ top: selectedItem.$el.offsetTop, behavior: 'smooth' });
+    }
+  }, 500);
 }
 </script>
 
