@@ -724,6 +724,172 @@ async def shamirorg(
         await testbed.drop_organization(organization_id)
 
 
+@dataclass(slots=True)
+class WorkspaceHistoryOrgRpcClients:
+    """
+    WorkspaceHistory contains:
+    - 3 users: `alice` (admin), `bob` (regular) and `mallory` (regular)
+    - 3 devices: `alice@dev1`, `bob@dev1` and `mallory@dev1` (every device has its local
+      storage up-to-date regarding the certificates)
+    - On 2001-01-01, Alice creates and bootstraps workspace `wksp1`
+    - On 2001-01-02, Alice uploads workspace manifest in v1 (empty)
+    - On 2001-01-03T01:00:00, Alice uploads file manifest `bar.txt` in v1 (containing "Hello v1")
+    - On 2001-01-03T02:00:00, Alice uploads folder manifest `foo` in v1 (empty)
+    - On 2001-01-03T03:00:00, Alice uploads workspace manifest in v2 (containing `foo` and `bar.txt`)
+    - On 2001-01-04, Alice gives Bob access to the workspace (as OWNER)
+    - On 2001-01-05, Alice gives Mallory access to the workspace (as CONTRIBUTOR)
+    - On 2001-01-06, Bob removes access to the workspace from Alice
+    - On 2001-01-07, Mallory uploads file manifest `bar.txt` in v2 (containing "Hello v2 world", stored on 2 blocks)
+    - On 2001-01-08T01:00:00, Mallory uploads folder manifest `foo` in v2 (containing `spam` and `egg.txt`)
+    - On 2001-01-08T02:00:00, Mallory uploads file manifest `foo/egg.txt` in v1 (empty file)
+    - On 2001-01-08T03:00:00, Mallory uploads folder manifest `foo/spam` in v1 (empty)
+    - On 2001-01-09, Bob uploads workspace manifest in v3 with renames `foo`->`foo2` and `bar.txt`->`bar2.txt`
+    - On 2001-01-10, Bob uploads file manifest `bar.txt` (now named `bar2.txt`) in v3 with content "Hello v3"
+    - On 2001-01-11, Bob uploads file manifest `foo/egg.txt` in v2 with content "v2"
+    - On 2001-01-12, Bob uploads folder manifest `foo` (now named `foo2`) in v3 with rename `egg.txt`->`egg2.txt` and removed `spam`
+    - On 2001-01-30, Bob gives back access to the workspace to Alice (as READER)
+
+    In the end we have the following per-entry history:
+      - `/`
+        - 2001-01-02: v1 from Alice, content: []
+        - 2001-01-03T03:00:00: v2 from Alice, content: ["foo", "bar.txt"]
+        - 2001-01-09: v3 from Bob, content: ["foo2", "bar2.txt"]
+    - `bar.txt`:
+      - 2001-01-03T01:00:00: v1 from Alice, content: "Hello v1"
+      - 2001-01-07: v2 from Alice, content: "Hello v2 world"
+      - 2001-01-10: v3 from Bob, content "Hello v3"
+    - `foo`:
+      - 2001-01-03T02:00:00: v1 from Alice, content: []
+      - 2001-01-08T01:00:00: v2 from Mallory, content ["spam", "egg.txt"],
+        with children not existing themselves yet !
+      - 2001-01-12: v3 from Bob, content ["egg2.txt"]
+    - `foo/egg.txt`:
+      - 2001-01-08T02:00:00: v1 from Mallory, content ""
+      - 2001-01-11: v2 from Bob, content "v2"
+    - `foo/spam`:
+      - 2001-01-08T03:00:00: v1 from Mallory, content: []
+
+    See `libparsec/crates/testbed/src/templates/workspace_history.rs` for it actual definition.
+    """
+
+    raw_client: AsyncClient
+    testbed_template: tb.TestbedTemplateContent
+    organization_id: OrganizationID
+    _anonymous: AnonymousRpcClient | None = None
+    _alice: AuthenticatedRpcClient | None = None
+    _bob: AuthenticatedRpcClient | None = None
+
+    @property
+    def anonymous(self) -> AnonymousRpcClient:
+        self._anonymous = self._anonymous or AnonymousRpcClient(
+            self.raw_client, self.organization_id
+        )
+        return self._anonymous
+
+    @property
+    def wksp1_id(self) -> VlobID:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventNewRealm):
+                return event.realm_id
+        assert False
+
+    @property
+    def alice(self) -> AuthenticatedRpcClient:
+        if self._alice:
+            return self._alice
+        self._alice = self._init_for("alice")
+        return self._alice
+
+    @property
+    def bob(self) -> AuthenticatedRpcClient:
+        if self._bob:
+            return self._bob
+        self._bob = self._init_for("bob")
+        return self._bob
+
+    @property
+    def root_signing_key(self) -> SigningKey:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventBootstrapOrganization):
+                return event.root_signing_key
+        raise RuntimeError("Organization bootstrap event not found !")
+
+    @property
+    def root_verify_key(self) -> VerifyKey:
+        return self.root_signing_key.verify_key
+
+    def key_bundle(self, realm_id: VlobID, key_index: int) -> bytes:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventRotateKeyRealm):
+                if event.realm == realm_id and event.key_index == key_index:
+                    return event.keys_bundle
+        raise RuntimeError(
+            f"Key bundle for realm `{realm_id}` and key index `{key_index}` not found !"
+        )
+
+    def key_bundle_access(self, realm_id: VlobID, key_index: int, user_id: UserID) -> bytes:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventShareRealm):
+                if (
+                    event.realm == realm_id
+                    and event.key_index == key_index
+                    and event.user == user_id
+                    and event.recipient_keys_bundle_access
+                ):
+                    return event.recipient_keys_bundle_access
+            elif isinstance(event, tb.TestbedEventRotateKeyRealm):
+                if event.realm == realm_id and event.key_index == key_index:
+                    try:
+                        return event.per_participant_keys_bundle_access[user_id]
+                    except KeyError:
+                        pass
+        raise RuntimeError(
+            f"Key bundle for realm `{realm_id}` and key index `{key_index}` not found !"
+        )
+
+    def _init_for(self, user: str) -> AuthenticatedRpcClient:
+        user_id = UserID.test_from_nickname(user)
+        for event in self.testbed_template.events:
+            if (
+                isinstance(event, tb.TestbedEventBootstrapOrganization)
+                and event.first_user_id == user_id
+            ):
+                return AuthenticatedRpcClient(
+                    self.raw_client,
+                    self.organization_id,
+                    user_id=event.first_user_id,
+                    device_id=event.first_user_first_device_id,
+                    signing_key=event.first_user_first_device_signing_key,
+                    event=event,
+                )
+            elif isinstance(event, tb.TestbedEventNewUser) and event.user_id == user_id:
+                return AuthenticatedRpcClient(
+                    self.raw_client,
+                    self.organization_id,
+                    user_id=event.user_id,
+                    device_id=event.first_device_id,
+                    signing_key=event.first_device_signing_key,
+                    event=event,
+                )
+        else:
+            raise RuntimeError(f"`{user}` user creation event not found !")
+
+
+@pytest.fixture
+async def workspace_history_org(
+    app: AsgiApp, testbed: TestbedBackend
+) -> AsyncGenerator[WorkspaceHistoryOrgRpcClients, None]:
+    async with AsyncClient(transport=ASGITransport(app=app)) as raw_client:
+        organization_id, _, template_content = await testbed.new_organization("workspace_history")
+        yield WorkspaceHistoryOrgRpcClients(
+            raw_client=raw_client,
+            organization_id=organization_id,
+            testbed_template=template_content,
+        )
+
+        await testbed.drop_organization(organization_id)
+
+
 def get_last_realm_certificate_timestamp(
     testbed_template: tb.TestbedTemplateContent, realm_id: VlobID
 ) -> DateTime:

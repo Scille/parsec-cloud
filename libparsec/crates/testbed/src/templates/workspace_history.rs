@@ -48,6 +48,10 @@ use crate::TestbedTemplate;
 /// - `foo/spam`:
 ///   - 2001-01-08T03:00:00: v1 from Mallory, content: []
 pub(crate) fn generate() -> Arc<TestbedTemplate> {
+    // If you change something here:
+    // - Update this function's docstring
+    // - Update `server/tests/common/client.py::WorkspaceHistoryOrgRpcClients`s docstring
+
     let mut builder = TestbedTemplate::from_builder("workspace_history");
 
     // `Hello vX` is 8 bytes long, so we can store is on a single block
