@@ -89,11 +89,26 @@ export async function switchOrganization(handle: ConnectionHandle | null, backup
   if (!handle) {
     await navigateTo(Routes.Home, { skipHandle: true, replace: true });
   } else {
-    const backup = routesBackup.find((bk) => bk.handle === handle);
-    if (!backup) {
+    const backupIndex = routesBackup.findIndex((bk) => bk.handle === handle);
+    // Don't have any backup, just navigate to home
+    if (backupIndex === -1) {
       window.electronAPI.log('error', 'Trying to switch to an organization for which we have no backup information');
       return;
     }
-    await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(backup) } });
+    const backup = routesBackup[backupIndex];
+    try {
+      await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(backup) } });
+    } catch (e: any) {
+      // We encounter an error, probably the base64 serialization, we remove the backup and log in to the default page
+      window.electronAPI.log('error', `Error when switching organization, using default logged in page: ${e}`);
+      routesBackup.splice(backupIndex, 1);
+      await navigateTo(Routes.Loading, {
+        replace: true,
+        skipHandle: true,
+        query: {
+          loginInfo: Base64.fromObject({ handle: backup.handle, data: { route: Routes.Workspaces, params: { handle: backup.handle } } }),
+        },
+      });
+    }
   }
 }

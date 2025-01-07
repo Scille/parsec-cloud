@@ -50,7 +50,7 @@
         "axios": "^1.7.4",
         "file-type": "^19.6.0",
         "luxon": "^3.4.4",
-        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#dadbcb5a858d0e7cc78b02fb993b39a23ec3fba5",
+        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#3e8d49c48c492f50830311731a54704f65b86397",
         "mammoth": "^1.8.0",
         "monaco-editor": "^0.52.0",
         "pdfjs-dist": "^4.8.69",
