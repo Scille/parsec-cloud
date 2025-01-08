@@ -181,8 +181,15 @@
           class="step final-step"
         >
           <device-card
-            :label="greeter.requestedDeviceLabel"
+            :device="{
+              deviceLabel: greeter.requestedDeviceLabel,
+              createdOn: DateTime.now(),
+              id: '',
+              purpose: DevicePurpose.Standard,
+              createdBy: null,
+            }"
             :is-current="false"
+            :show-id="false"
           />
         </div>
       </div>
@@ -223,7 +230,7 @@ import LogoIconGradient from '@/assets/images/logo-icon-gradient.svg';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
-import { DeviceGreet, GreetInProgressErrorTag, CancelledGreetingAttemptReason } from '@/parsec';
+import { DeviceGreet, GreetInProgressErrorTag, CancelledGreetingAttemptReason, DevicePurpose } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import {
   Answer,
@@ -252,6 +259,7 @@ import { checkmarkCircle, close, copy } from 'ionicons/icons';
 import QRCodeVue3 from 'qrcode-vue3';
 import { computed, onMounted, ref } from 'vue';
 import { MsSpinner } from 'megashark-lib';
+import { DateTime } from 'luxon';
 
 enum GreetDeviceStep {
   WaitForGuest = 1,

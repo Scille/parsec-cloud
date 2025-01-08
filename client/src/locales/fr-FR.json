@@ -693,7 +693,8 @@
             "android": "Android",
             "unknown": "Inconnu"
         },
-        "sortBy": "Trier par :"
+        "sortBy": "Trier par :",
+        "technicalId": "ID technique :"
     },
     "SideMenu": {
         "workspaces": "Espaces de travail",

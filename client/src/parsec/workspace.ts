@@ -305,7 +305,7 @@ export async function getWorkspaceSharing(
     if (workspaceId === '1' || workspaceId === '2') {
       value.push([
         {
-          id: 'id1',
+          id: '0123456789abcdef012345689abcdef',
           // cspell:disable-next-line
           humanHandle: { label: 'Korgan Bloodaxe', email: 'korgan@gmail.com' },
           profile: UserProfile.Standard,
@@ -316,7 +316,7 @@ export async function getWorkspaceSharing(
     if (workspaceId === '2') {
       value.push([
         {
-          id: 'id2',
+          id: '123456789abcdef012345689abcdef0',
           // cspell:disable-next-line
           humanHandle: { label: 'Cernd', email: 'cernd@gmail.com' },
           profile: UserProfile.Admin,
@@ -339,7 +339,7 @@ export async function getWorkspaceSharing(
     if (includeAllUsers) {
       value.push([
         {
-          id: 'id3',
+          id: '23456789abcdef012345689abcdef01',
           // cspell:disable-next-line
           humanHandle: { label: 'Jaheira', email: 'jaheira@gmail.com' },
           profile: UserProfile.Outsider,

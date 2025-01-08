@@ -7,6 +7,7 @@ msTest('Check devices list', async ({ myProfilePage }) => {
   const devices = myProfilePage.locator('#devices-list').getByRole('listitem');
   await expect(devices.locator('.device-name')).toHaveText([/^device\d$/, /^device\d$/]);
   await expect(devices.locator('.join-date')).toHaveText(['Joined: Today', 'Joined: Today']);
+  await expect(devices.locator('.label-id')).toHaveText([/^Technical ID: device\d$/, /^Technical ID: device\d$/]);
   await expect(devices.nth(0).locator('.badge')).toBeVisible();
   await expect(devices.nth(1).locator('.badge')).toBeHidden();
 });
