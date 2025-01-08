@@ -1312,47 +1312,48 @@ class PGInviteComponent(BaseInviteComponent):
         greeter_human_handle = HumanHandle(
             email=invitation_info.created_by_email, label=invitation_info.created_by_label
         )
-        if invitation_info.type == InvitationType.USER:
-            assert invitation_info.claimer_email is not None
-            return UserInvitation(
-                created_by_user_id=invitation_info.created_by_user_id,
-                created_by_device_id=invitation_info.created_by_device_id,
-                created_by_human_handle=greeter_human_handle,
-                claimer_email=invitation_info.claimer_email,
-                token=token,
-                created_on=invitation_info.created_on,
-                status=InvitationStatus.READY,
-            )
-        elif invitation_info.type == InvitationType.DEVICE:
-            return DeviceInvitation(
-                created_by_user_id=invitation_info.created_by_user_id,
-                created_by_device_id=invitation_info.created_by_device_id,
-                created_by_human_handle=greeter_human_handle,
-                token=token,
-                created_on=invitation_info.created_on,
-                status=InvitationStatus.READY,
-            )
-        elif invitation_info.type == InvitationType.SHAMIR_RECOVERY:
-            assert invitation_info.shamir_recovery_setup_internal_id is not None
-            shamir_recovery_info = await self._get_shamir_recovery_info(
-                conn, invitation_info.shamir_recovery_setup_internal_id
-            )
-            return ShamirRecoveryInvitation(
-                created_by_user_id=invitation_info.created_by_user_id,
-                created_by_device_id=invitation_info.created_by_device_id,
-                created_by_human_handle=greeter_human_handle,
-                token=token,
-                created_on=invitation_info.created_on,
-                status=InvitationStatus.READY,
-                claimer_user_id=shamir_recovery_info.claimer_user_id,
-                claimer_human_handle=shamir_recovery_info.claimer_human_handle,
-                threshold=shamir_recovery_info.threshold,
-                recipients=shamir_recovery_info.recipients,
-                shamir_recovery_created_on=shamir_recovery_info.created_on,
-                shamir_recovery_deleted_on=shamir_recovery_info.deleted_on,
-            )
-        else:
-            assert False, invitation_info.type
+        match invitation_info.type:
+            case InvitationType.USER:
+                assert invitation_info.claimer_email is not None
+                return UserInvitation(
+                    created_by_user_id=invitation_info.created_by_user_id,
+                    created_by_device_id=invitation_info.created_by_device_id,
+                    created_by_human_handle=greeter_human_handle,
+                    claimer_email=invitation_info.claimer_email,
+                    token=token,
+                    created_on=invitation_info.created_on,
+                    status=InvitationStatus.READY,
+                )
+            case InvitationType.DEVICE:
+                return DeviceInvitation(
+                    created_by_user_id=invitation_info.created_by_user_id,
+                    created_by_device_id=invitation_info.created_by_device_id,
+                    created_by_human_handle=greeter_human_handle,
+                    token=token,
+                    created_on=invitation_info.created_on,
+                    status=InvitationStatus.READY,
+                )
+            case InvitationType.SHAMIR_RECOVERY:
+                assert invitation_info.shamir_recovery_setup_internal_id is not None
+                shamir_recovery_info = await self._get_shamir_recovery_info(
+                    conn, invitation_info.shamir_recovery_setup_internal_id
+                )
+                return ShamirRecoveryInvitation(
+                    created_by_user_id=invitation_info.created_by_user_id,
+                    created_by_device_id=invitation_info.created_by_device_id,
+                    created_by_human_handle=greeter_human_handle,
+                    token=token,
+                    created_on=invitation_info.created_on,
+                    status=InvitationStatus.READY,
+                    claimer_user_id=shamir_recovery_info.claimer_user_id,
+                    claimer_human_handle=shamir_recovery_info.claimer_human_handle,
+                    threshold=shamir_recovery_info.threshold,
+                    recipients=shamir_recovery_info.recipients,
+                    shamir_recovery_created_on=shamir_recovery_info.created_on,
+                    shamir_recovery_deleted_on=shamir_recovery_info.deleted_on,
+                )
+            case unknown:
+                assert False, unknown
 
     @override
     @transaction
