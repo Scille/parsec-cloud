@@ -260,13 +260,13 @@ const isVisible = ref(true);
         color: var(--parsec-color-light-secondary-text);
 
         &.paid {
-          background: var(--parsec-color-light-info-100);
-          color: var(--parsec-color-light-info-700);
+          background: var(--parsec-color-light-success-100);
+          color: var(--parsec-color-light-success-700);
         }
 
         &.open {
-          background: var(--parsec-color-tags-orange100);
-          color: var(--parsec-color-tags-orange500);
+          background: var(--parsec-color-light-info-100);
+          color: var(--parsec-color-light-info-700);
         }
       }
 
