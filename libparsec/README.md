@@ -85,7 +85,7 @@ Here, "testing" refers to two use-cases:
 2. Running the application with test feature (e.g. we want to run the GUI with an
    dummy organization already configured for quick testing purpose)
 
-- `testbed`:
+- `testbed`: Defines common organization templates to prevent code duplication in tests.
 - `tests_macros`: Defines the `#[parsec_test]` macro that is used to decorate each
   test function. Among other things, this macro conveniently handles setting up
   Tokio context (so that our test can be an asynchronous function) and the testbed

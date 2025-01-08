@@ -1,5 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-
+#![doc = include_str!("../README.md")]
 // This lib provide helpers that are used for testing purpose.
 // To simplify the writing of those helpers, we use the same rule for when writing tests.
 #![allow(clippy::unwrap_used)]
