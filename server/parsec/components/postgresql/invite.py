@@ -201,14 +201,12 @@ class ShamirRecoverySetupInfo:
 
 _q_retrieve_shamir_recovery_setup = Q(
     """
-WITH my_locked_shamir_recovery_topic AS (
-    SELECT last_timestamp
-    FROM shamir_recovery_topic
-    INNER JOIN organization ON shamir_recovery_topic.organization = organization._id
-    WHERE organization.organization_id = $organization_id
-    FOR SHARE OF shamir_recovery_topic
-)
-
+-- We do not lock the shamir topic in read here.
+-- This is because topic locking is usually reserved to operations that needs to accept or reject
+-- consistent timestamped data from the users, such as certificates or vlobs. Here, only the invitations
+-- gets updated, which do not have to remain consistent with other timestamped data.
+-- Less lock means less ways to mess up the ordering and create a hard-to-debug deadlock,
+-- so we simply accept that our checks might be slightly outdated when the invitation is written.
 SELECT shamir_recovery_setup._id as shamir_recovery_setup_internal_id
 FROM shamir_recovery_setup
 INNER JOIN organization ON shamir_recovery_setup.organization = organization._id
