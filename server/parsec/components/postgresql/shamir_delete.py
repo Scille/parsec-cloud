@@ -15,7 +15,13 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.components.postgresql import AsyncpgConnection
-from parsec.components.postgresql.shamir_setup import _q_lock_common_and_shamir_topic
+from parsec.components.postgresql.queries import (
+    AuthAndLockCommonOnlyBadOutcome,
+    AuthAndLockCommonOnlyData,
+    LockShamirData,
+    auth_and_lock_common_read,
+    lock_shamir_write,
+)
 from parsec.components.postgresql.utils import Q
 from parsec.components.shamir import (
     ShamirDeleteSetupAlreadyDeletedBadOutcome,
@@ -87,91 +93,31 @@ async def shamir_delete(
     # 1) Query the database to get all info about org/device/user
     #    and lock the common and shamir topics
 
-    row = await conn.fetchrow(
-        *_q_lock_common_and_shamir_topic(
-            organization_id=organization_id.str,
-            device_id=author,
-        )
-    )
-    assert row is not None
-
-    # 1.1) Check organization
-
-    match row["organization_internal_id"]:
-        case int() as organization_internal_id:
+    match await auth_and_lock_common_read(conn, organization_id, author):
+        case AuthAndLockCommonOnlyData(
+            organization_internal_id=organization_internal_id,
+            user_id=author_user_id,
+            user_internal_id=author_user_internal_id,
+            last_common_certificate_timestamp=last_common_certificate_timestamp,
+        ):
             pass
-        case None:
+        case AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_NOT_FOUND:
             return ShamirDeleteStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
-
-    match row["organization_is_expired"]:
-        case False:
-            pass
-        case True:
+        case AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_EXPIRED:
             return ShamirDeleteStoreBadOutcome.ORGANIZATION_EXPIRED
-        case unknown:
-            assert False, repr(unknown)
-
-    # 1.2) Check device & user
-
-    match row["author_user_internal_id"]:
-        case int() as author_user_internal_id:
-            pass
-        case None:
+        case AuthAndLockCommonOnlyBadOutcome.AUTHOR_NOT_FOUND:
             return ShamirDeleteStoreBadOutcome.AUTHOR_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
-
-    match row["author_user_id"]:
-        case str() as raw_author_user_id:
-            author_user_id = UserID.from_hex(raw_author_user_id)
-        case None:
-            assert False, "Device exists but user does not"
-        case unknown:
-            assert False, repr(unknown)
-
-    match row["user_is_revoked"]:
-        case False:
-            pass
-        case True:
+        case AuthAndLockCommonOnlyBadOutcome.AUTHOR_REVOKED:
             return ShamirDeleteStoreBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
 
-    # 1.3) Check common and shamir topics
-
-    match row["last_common_certificate_timestamp"]:
-        case DateTime() as last_common_certificate_timestamp:
+    match await lock_shamir_write(conn, organization_internal_id, author_user_internal_id):
+        case LockShamirData(
+            last_shamir_recovery_certificate_timestamp=last_shamir_recovery_certificate_timestamp,
+            last_shamir_recovery_setup_internal_id=last_shamir_recovery_setup_internal_id,
+            last_shamir_recovery_setup_created_on=last_shamir_recovery_setup_created_on,
+            last_shamir_recovery_setup_deleted_on=last_shamir_recovery_setup_deleted_on,
+        ):
             pass
-        case unknown:
-            assert False, repr(unknown)
-
-    match row["last_shamir_recovery_certificate_timestamp"]:
-        case DateTime() | None as last_shamir_recovery_certificate_timestamp:
-            pass
-        case unknown:
-            assert False, repr(unknown)
-
-    # 1.4) Check previous shamir setup
-
-    match row["last_shamir_recovery_setup_internal_id"]:
-        case int() | None as shamir_recovery_setup_internal_id:
-            pass
-        case unknown:
-            assert False, repr(unknown)
-
-    match row["last_shamir_recovery_setup_created_on"]:
-        case DateTime() | None as last_shamir_recovery_setup_created_on:
-            pass
-        case unknown:
-            assert False, repr(unknown)
-
-    match row["last_shamir_recovery_setup_deleted_on"]:
-        case DateTime() | None as last_shamir_recovery_setup_deleted_on:
-            pass
-        case unknown:
-            assert False, repr(unknown)
 
     # 2) Validate the deletion certificate
 
@@ -209,7 +155,7 @@ async def shamir_delete(
         )
 
     # This is guaranteed by the previous checks
-    assert shamir_recovery_setup_internal_id is not None
+    assert last_shamir_recovery_setup_internal_id is not None
 
     # 4) Ensure we are not breaking causality by adding a newer timestamp
 
@@ -229,7 +175,7 @@ async def shamir_delete(
     success = await conn.fetchval(
         *_q_mark_shamir_recovery_setup_as_deleted(
             organization_internal_id=organization_internal_id,
-            shamir_recovery_setup_internal_id=shamir_recovery_setup_internal_id,
+            shamir_recovery_setup_internal_id=last_shamir_recovery_setup_internal_id,
             deleted_on=cooked_deletion.timestamp,
             deletion_certificate=shamir_recovery_deletion_certificate,
         )
