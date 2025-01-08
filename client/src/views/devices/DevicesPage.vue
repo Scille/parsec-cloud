@@ -36,9 +36,9 @@
             v-show="!device.isRecovery"
           >
             <device-card
-              :label="device.deviceLabel"
-              :date="device.createdOn"
+              :device="device"
               :is-current="device.isCurrent"
+              :show-id="true"
             />
           </ion-item>
         </ion-list>

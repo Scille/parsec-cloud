@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import DeviceCard from '@/components/devices/DeviceCard.vue';
+import { DevicePurpose } from '@/parsec';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
@@ -22,9 +23,15 @@ describe('Device Card', () => {
       // more info: https://test-utils.vuejs.org/api/#isVisible
       attachTo: document.body,
       props: {
-        label: 'My Device',
+        device: {
+          deviceLabel: 'My Device',
+          id: 'somedeviceid',
+          purpose: DevicePurpose.Standard,
+          createdOn: DateTime.now(),
+          createdBy: null,
+        },
+        showId: false,
         isCurrent: true,
-        date: DateTime.now(),
       },
       global: {
         provide: getDefaultProvideConfig(),
@@ -43,9 +50,15 @@ describe('Device Card', () => {
       // more info: https://test-utils.vuejs.org/api/#isVisible
       attachTo: document.body,
       props: {
-        label: 'My Other Device',
+        device: {
+          deviceLabel: 'My Device',
+          id: 'somedeviceid',
+          purpose: DevicePurpose.Standard,
+          createdOn: DateTime.now(),
+          createdBy: null,
+        },
+        showId: false,
         isCurrent: false,
-        date: DateTime.now(),
       },
       global: {
         provide: getDefaultProvideConfig(),

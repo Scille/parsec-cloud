@@ -60,8 +60,8 @@
             </ion-text>
           </div>
         </div>
+        <technical-id :id="user.id" />
       </div>
-
       <ion-list class="workspace">
         <ion-text class="subtitles-sm workspace-title">
           {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.commonWorkspaces') }}
@@ -111,6 +111,7 @@ import { Information, InformationLevel, InformationManager, PresentationMode } f
 import { IonCard, IonCardContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { business, personAdd, personRemove } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
+import { TechnicalId } from '@/components/misc';
 
 const sharedWorkspaces: Ref<Array<SharedWithInfo>> = ref([]);
 

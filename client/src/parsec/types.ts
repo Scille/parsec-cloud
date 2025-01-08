@@ -106,6 +106,7 @@ export type {
   DeviceGreetInProgress3Info,
   DeviceGreetInProgress4Info,
   DeviceGreetInitialInfo,
+  DeviceID,
   DeviceInfo,
   InviteListItemDevice as DeviceInvitation,
   DeviceLabel,

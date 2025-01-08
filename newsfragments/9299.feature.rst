@@ -1,0 +1,1 @@
+Displays the technical identifiers of users, devices and files

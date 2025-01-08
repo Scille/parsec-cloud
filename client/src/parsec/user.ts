@@ -57,7 +57,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         isActive: (): boolean => true,
       },
       {
-        id: 'id1',
+        id: '0123456789abcdef012345689abcdef',
         // cspell:disable-next-line
         humanHandle: { label: 'Cernd', email: 'cernd@gmail.com' },
         currentProfile: UserProfile.Standard,
@@ -70,7 +70,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         isActive: (): boolean => true,
       },
       {
-        id: 'id2',
+        id: '123456789abcdef012345689abcdef0',
         // cspell:disable-next-line
         humanHandle: { label: 'Jaheira', email: 'jaheira@gmail.com' },
         currentProfile: UserProfile.Admin,
@@ -83,7 +83,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         isActive: (): boolean => true,
       },
       {
-        id: 'id3',
+        id: '23456789abcdef012345689abcdef01',
         // cspell:disable-next-line
         humanHandle: { label: 'Karl Hungus', email: 'karlhungus@gmail.com' },
         currentProfile: UserProfile.Outsider,
@@ -96,7 +96,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         isActive: (): boolean => false,
       },
       {
-        id: 'id4',
+        id: '3456789abcdef012345689abcdef012',
         // cspell:disable-next-line
         humanHandle: { label: 'Patches', email: 'patches@yahoo.fr' },
         currentProfile: UserProfile.Standard,
@@ -112,7 +112,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
     if (!skipRevoked) {
       value.push(
         {
-          id: 'id5',
+          id: '456789abcdef012345689abcdef0123',
           // cspell:disable-next-line
           humanHandle: { label: 'Arthas Menethil', email: 'arthasmenethil@gmail.com' },
           currentProfile: UserProfile.Admin,
@@ -125,7 +125,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
           isActive: (): boolean => false,
         },
         {
-          id: 'id6',
+          id: '56789abcdef012345689abcdef01234',
           // cspell:disable-next-line
           humanHandle: { label: 'Gaia', email: 'gaia@gmail.com' },
           currentProfile: UserProfile.Outsider,
@@ -138,7 +138,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
           isActive: (): boolean => false,
         },
         {
-          id: 'id7',
+          id: '6789abcdef012345689abcdef012345',
           // cspell:disable-next-line
           humanHandle: { label: 'Valygar Corthala', email: 'val@gmail.com' },
           currentProfile: UserProfile.Standard,

@@ -30,35 +30,38 @@
           </div>
         </div>
 
-        <div class="file-info-details">
-          <!-- Created -->
-          <div class="file-info-details-item">
-            <ion-label class="file-info-details-item__title subtitles-sm">
-              {{ $msTranslate('FileDetails.stats.created') }}
-            </ion-label>
-            <ion-text class="file-info-details-item__value body">
-              {{ $msTranslate(I18n.formatDate(entry.created, 'short')) }}
-            </ion-text>
+        <div class="file-info-details-content">
+          <div class="file-info-details">
+            <!-- Created -->
+            <div class="file-info-details-item">
+              <ion-label class="file-info-details-item__title subtitles-sm">
+                {{ $msTranslate('FileDetails.stats.created') }}
+              </ion-label>
+              <ion-text class="file-info-details-item__value body">
+                {{ $msTranslate(I18n.formatDate(entry.created, 'short')) }}
+              </ion-text>
+            </div>
+            <!-- Size (only for files) -->
+            <div
+              class="file-info-details-item"
+              v-if="entry.isFile()"
+            >
+              <ion-label class="file-info-details-item__title subtitles-sm">
+                {{ $msTranslate('FileDetails.stats.size') }}
+              </ion-label>
+              <span class="file-info-details-item__value body">{{ $msTranslate(formatFileSize((entry as EntryStatFile).size)) }}</span>
+            </div>
+            <!-- Version -->
+            <div class="file-info-details-item">
+              <ion-label class="file-info-details-item__title subtitles-sm">
+                {{ $msTranslate('FileDetails.stats.version') }}
+              </ion-label>
+              <ion-text class="file-info-details-item__value body">
+                {{ entry.baseVersion }}
+              </ion-text>
+            </div>
           </div>
-          <!-- Size (only for files) -->
-          <div
-            class="file-info-details-item"
-            v-if="entry.isFile()"
-          >
-            <ion-label class="file-info-details-item__title subtitles-sm">
-              {{ $msTranslate('FileDetails.stats.size') }}
-            </ion-label>
-            <span class="file-info-details-item__value body">{{ $msTranslate(formatFileSize((entry as EntryStatFile).size)) }}</span>
-          </div>
-          <!-- Version -->
-          <div class="file-info-details-item">
-            <ion-label class="file-info-details-item__title subtitles-sm">
-              {{ $msTranslate('FileDetails.stats.version') }}
-            </ion-label>
-            <ion-text class="file-info-details-item__value body">
-              {{ entry.baseVersion }}
-            </ion-text>
-          </div>
+          <technical-id :id="entry.id" />
         </div>
 
         <!-- Path -->
@@ -109,6 +112,7 @@ import { EntryStat, EntryStatFile, getSystemPath, WorkspaceHandle } from '@/pars
 import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, copy } from 'ionicons/icons';
 import { defineProps, ref } from 'vue';
+import { TechnicalId } from '@/components/misc';
 
 enum CopyStatus {
   NotCopied,
@@ -160,6 +164,7 @@ async function copyPath(): Promise<void> {
   gap: 2rem;
   --background-color: var(--parsec-color-light-secondary-premiere);
   --color: var(--parsec-color-light-primary-600);
+  margin-top: 1.5rem;
 }
 
 .file-info {
@@ -211,6 +216,12 @@ async function copyPath(): Promise<void> {
     display: flex;
     border-radius: var(--parsec-radius-6);
     background: var(--parsec-color-light-secondary-background);
+
+    &-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
 
     &-item {
       display: flex;
