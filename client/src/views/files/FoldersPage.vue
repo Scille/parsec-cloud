@@ -164,6 +164,7 @@
         <div v-else-if="!querying">
           <div v-if="displayView === DisplayState.List">
             <file-list-display
+              ref="fileListDisplayRef"
               :files="files"
               :folders="folders"
               :operations-in-progress="fileOperationsCurrentDir"
@@ -178,6 +179,7 @@
           </div>
           <div v-if="displayView === DisplayState.Grid">
             <file-grid-display
+              ref="fileGridDisplayRef"
               :files="files"
               :folders="folders"
               :operations-in-progress="fileOperationsCurrentDir"
@@ -270,7 +272,7 @@ import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { FileDetailsModal, FileContextMenu, FileAction, FolderGlobalContextMenu, FolderGlobalAction } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
-import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick } from 'vue';
 import { EntrySyncedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 
@@ -339,6 +341,8 @@ const workspaceInfo: Ref<parsec.StartedWorkspaceInfo | null> = ref(null);
 // Init at true to avoid blinking while we're mounting the component
 // but we're not loading the files yet.
 const querying = ref(true);
+const fileListDisplayRef = ref<typeof FileListDisplay>();
+const fileGridDisplayRef = ref<typeof FileGridDisplay>();
 
 const fileInputsRef = ref();
 let eventCbId: string | null = null;
@@ -807,6 +811,16 @@ async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boole
     );
   }
   querying.value = false;
+  if (options && options.selectFile) {
+    // ref are not set if querying is true, so after querying as been set to false, we force an update
+    await nextTick();
+    console.log(fileListDisplayRef.value, fileGridDisplayRef.value);
+    if (fileListDisplayRef.value) {
+      await fileListDisplayRef.value.scrollToSelected();
+    } else if (fileGridDisplayRef.value) {
+      await fileGridDisplayRef.value.scrollToSelected();
+    }
+  }
 }
 
 async function onEntryClick(entry: EntryModel, _event: Event): Promise<void> {
