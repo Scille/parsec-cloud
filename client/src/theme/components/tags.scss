@@ -2,46 +2,21 @@
 
 /* **** Parsec tags **** */
 
-.label-role {
-  .owner {
-    border: 1px solid var(--parsec-color-tags-blue500);
-    color: var(--parsec-color-tags-blue500);
-    background: none;
-  }
-
-  .manager {
-    border: 1px solid var(--parsec-color-tags-indigo500);
-    color: var(--parsec-color-tags-indigo500);
-    background: none;
-  }
-
-  .contributor {
-    border: 1px solid var(--parsec-color-tags-green500);
-    color: var(--parsec-color-tags-green500);
-    background: none;
-  }
-
-  .reader {
-    border: 1px solid var(--parsec-color-tags-orange500);
-    color: var(--parsec-color-tags-orange500);
-    background: none;
-  }
-}
-
 .profile {
   pointer-events: none;
+
   .admin {
-    background-color: var(--parsec-color-tags-indigo100);
-    color: var(--parsec-color-tags-indigo500);
+    background-color: var(--parsec-color-tags-indigo-50);
+    color: var(--parsec-color-tags-indigo-700);
   }
 
   .standard {
-    background-color: var(--parsec-color-tags-green100);
-    color: var(--parsec-color-tags-green500);
+    background-color: var(--parsec-color-tags-blue-50);
+    color: var(--parsec-color-tags-blue-700);
   }
 
   .outsider {
-    background-color: var(--parsec-color-tags-orange100);
-    color: var(--parsec-color-tags-orange500);
+    background-color: var(--parsec-color-tags-orange-50);
+    color: var(--parsec-color-tags-orange-700);
   }
 }
