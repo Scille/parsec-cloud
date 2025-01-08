@@ -7,7 +7,6 @@ from parsec._parsec import (
     InvitationToken,
     OrganizationID,
     ShamirRecoveryBriefCertificate,
-    UserID,
     VerifyKey,
 )
 from parsec.ballpark import (
@@ -16,6 +15,13 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.queries import (
+    AuthAndLockCommonOnlyBadOutcome,
+    AuthAndLockCommonOnlyData,
+    LockShamirData,
+    auth_and_lock_common_read,
+    lock_shamir_write,
+)
 from parsec.components.postgresql.utils import (
     Q,
 )
@@ -26,87 +32,6 @@ from parsec.components.shamir import (
     ShamirSetupValidateBadOutcome,
     shamir_setup_validate,
 )
-
-_q_lock_common_and_shamir_topic = Q(
-    """
-WITH my_organization AS (
-    SELECT
-        _id,
-        is_expired
-    FROM organization
-    WHERE
-        organization_id = $organization_id
-        -- Only consider bootstrapped organizations
-        AND root_verify_key IS NOT NULL
-    LIMIT 1
-),
-
-
--- Common topic lock must occur ASAP
-my_locked_common_topic AS (
-    SELECT last_timestamp
-    FROM common_topic
-    WHERE organization = (SELECT _id FROM my_organization)
-    LIMIT 1
-    FOR SHARE
-),
-
--- Common shamir recovery lock must occur ASAP, after common topic lock
-my_locked_shamir_recovery_topic AS (
-    SELECT last_timestamp
-    FROM shamir_recovery_topic
-    WHERE organization = (SELECT _id FROM my_organization)
-    LIMIT 1
-    FOR SHARE
-),
-
-my_device AS (
-    SELECT
-        device._id,
-        device.user_
-    FROM device
-    INNER JOIN my_organization ON device.organization = my_organization._id
-    WHERE device.device_id = $device_id
-    LIMIT 1
-),
-
-my_user AS (
-    SELECT
-        user_._id,
-        user_.user_id,
-        (user_.revoked_on IS NOT NULL) AS revoked
-    FROM user_
-    INNER JOIN my_device ON user_._id = my_device.user_
-    LIMIT 1
-),
-
-my_last_shamir_recovery AS (
-    SELECT
-        shamir_recovery_setup._id,
-        shamir_recovery_setup.created_on,
-        shamir_recovery_setup.deleted_on
-    FROM shamir_recovery_setup
-    INNER JOIN my_user ON shamir_recovery_setup.user_ = my_user._id
-    INNER JOIN my_organization ON shamir_recovery_setup.organization = my_organization._id
-    ORDER BY shamir_recovery_setup.created_on DESC
-    LIMIT 1
-)
-
-SELECT
-    (SELECT _id FROM my_organization) AS organization_internal_id,
-    (SELECT is_expired FROM my_organization) AS organization_is_expired,
-    (SELECT _id FROM my_device) AS device_internal_id,
-    (SELECT revoked FROM my_user) AS user_is_revoked,
-    (SELECT user_id FROM my_user) AS author_user_id,
-    (SELECT _id FROM my_user) AS author_user_internal_id,
-    (SELECT last_timestamp FROM my_locked_common_topic) AS last_common_certificate_timestamp,
-    (SELECT _id FROM my_last_shamir_recovery) AS last_shamir_recovery_setup_internal_id,
-    (SELECT created_on FROM my_last_shamir_recovery) AS last_shamir_recovery_setup_created_on,
-    (SELECT deleted_on FROM my_last_shamir_recovery) AS last_shamir_recovery_setup_deleted_on,
-    (SELECT last_timestamp FROM my_locked_shamir_recovery_topic) AS last_shamir_recovery_certificate_timestamp
-"""
-)
-
 
 _q_check_recipient = Q(
     """
@@ -204,85 +129,30 @@ async def shamir_setup(
     # 1) Query the database to get all info about org/device/user
     #    and lock the common and shamir topics
 
-    row = await conn.fetchrow(
-        *_q_lock_common_and_shamir_topic(
-            organization_id=organization_id.str,
-            device_id=author,
-        )
-    )
-    assert row is not None
-
-    # 1.1) Check organization
-
-    match row["organization_internal_id"]:
-        case int() as organization_internal_id:
+    match await auth_and_lock_common_read(conn, organization_id, author):
+        case AuthAndLockCommonOnlyData(
+            organization_internal_id=organization_internal_id,
+            user_id=author_user_id,
+            user_internal_id=author_user_internal_id,
+            last_common_certificate_timestamp=last_common_certificate_timestamp,
+        ):
             pass
-        case None:
+        case AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_NOT_FOUND:
             return ShamirSetupStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
-
-    match row["organization_is_expired"]:
-        case False:
-            pass
-        case True:
+        case AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_EXPIRED:
             return ShamirSetupStoreBadOutcome.ORGANIZATION_EXPIRED
-        case unknown:
-            assert False, repr(unknown)
-
-    # 1.2) Check device & user
-
-    match row["author_user_internal_id"]:
-        case int() as author_user_internal_id:
-            pass
-        case None:
+        case AuthAndLockCommonOnlyBadOutcome.AUTHOR_NOT_FOUND:
             return ShamirSetupStoreBadOutcome.AUTHOR_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
-
-    match row["author_user_id"]:
-        case str() as raw_author_user_id:
-            author_user_id = UserID.from_hex(raw_author_user_id)
-        case None:
-            assert False, "Device exists but user does not"
-        case unknown:
-            assert False, repr(unknown)
-
-    match row["user_is_revoked"]:
-        case False:
-            pass
-        case True:
+        case AuthAndLockCommonOnlyBadOutcome.AUTHOR_REVOKED:
             return ShamirSetupStoreBadOutcome.AUTHOR_REVOKED
-        case unknown:
-            assert False, repr(unknown)
 
-    # 1.3) Check common and shamir topics
-
-    match row["last_common_certificate_timestamp"]:
-        case DateTime() as last_common_certificate_timestamp:
+    match await lock_shamir_write(conn, organization_internal_id, author_user_internal_id):
+        case LockShamirData(
+            last_shamir_recovery_certificate_timestamp=last_shamir_recovery_certificate_timestamp,
+            last_shamir_recovery_setup_created_on=last_shamir_recovery_setup_created_on,
+            last_shamir_recovery_setup_deleted_on=last_shamir_recovery_setup_deleted_on,
+        ):
             pass
-        case unknown:
-            assert False, repr(unknown)
-
-    match row["last_shamir_recovery_certificate_timestamp"]:
-        case DateTime() | None as last_shamir_recovery_certificate_timestamp:
-            pass
-        case unknown:
-            assert False, repr(unknown)
-
-    # 1.4) Check previous shamir setup
-
-    match row["last_shamir_recovery_setup_created_on"]:
-        case DateTime() | None as last_shamir_recovery_setup_created_on:
-            pass
-        case unknown:
-            assert False, repr(unknown)
-
-    match row["last_shamir_recovery_setup_deleted_on"]:
-        case DateTime() | None as last_shamir_recovery_setup_deleted_on:
-            pass
-        case unknown:
-            assert False, repr(unknown)
 
     if (
         last_shamir_recovery_setup_created_on is not None
