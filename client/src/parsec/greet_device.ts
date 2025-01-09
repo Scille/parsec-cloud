@@ -11,9 +11,9 @@ import {
   DeviceGreetInitialInfo,
   DeviceLabel,
   GreetInProgressError,
-  InvitationEmailSentStatus,
   NewInvitationInfo,
   Result,
+  createDeviceInvitation,
 } from '@/parsec';
 import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, wait } from '@/parsec/internals';
@@ -73,30 +73,19 @@ export class DeviceGreet {
     }
   }
 
-  async createInvitation(sendEmail = true): Promise<Result<NewInvitationInfo, ClientNewDeviceInvitationError>> {
-    const clientHandle = getParsecHandle();
+  setInvitationInformation(invitationLink: string, token: string): void {
+    this.invitationLink = invitationLink;
+    this.token = token;
+  }
 
-    if (clientHandle !== null && !needsMocks()) {
-      const result = await libparsec.clientNewDeviceInvitation(clientHandle, sendEmail);
-      if (result.ok) {
-        this.invitationLink = result.value.addr;
-        this.token = result.value.token;
-      }
-      return result;
-    } else {
-      // cspell:disable-next-line
-      this.invitationLink = 'parsec3://example.parsec.cloud/Org?a=claim_device&p=xBj1p7vXl_j1tzTjrx5pzbXV7XTbx_Xnnb0';
-      // cspell:disable-next-line
-      this.token = '9ae715f49bc0468eac211e1028f15529';
-      return {
-        ok: true,
-        value: {
-          addr: this.invitationLink,
-          token: this.token,
-          emailSentStatus: InvitationEmailSentStatus.Success,
-        },
-      };
+  async createInvitation(sendEmail = true): Promise<Result<NewInvitationInfo, ClientNewDeviceInvitationError>> {
+    const result = await createDeviceInvitation(sendEmail);
+
+    if (result.ok) {
+      this.invitationLink = result.value.addr;
+      this.token = result.value.token;
     }
+    return result;
   }
 
   async sendEmail(): Promise<boolean> {

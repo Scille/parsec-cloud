@@ -1,0 +1,1 @@
+Fixes a bug when trying to greet a new device while offline

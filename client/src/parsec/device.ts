@@ -5,20 +5,25 @@ import { getClientConfig, wait } from '@/parsec/internals';
 import { getClientInfo } from '@/parsec/login';
 import { getParsecHandle } from '@/parsec/routing';
 import {
+  ArchiveDeviceError,
+  AvailableDevice,
   ClientExportRecoveryDeviceError,
   ClientListUserDevicesError,
   ClientListUserDevicesErrorTag,
+  ClientNewDeviceInvitationError,
   DeviceFileType,
   DeviceInfo,
   DevicePurpose,
   DeviceSaveStrategy,
   ImportRecoveryDeviceError,
   ImportRecoveryDeviceErrorTag,
+  InvitationEmailSentStatus,
+  NewInvitationInfo,
   OwnDeviceInfo,
   Result,
   UserID,
 } from '@/parsec/types';
-import { ArchiveDeviceError, AvailableDevice, libparsec } from '@/plugins/libparsec';
+import { libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 const RECOVERY_DEVICE_PREFIX = 'recovery';
@@ -175,4 +180,24 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
 
 export async function archiveDevice(device: AvailableDevice): Promise<Result<null, ArchiveDeviceError>> {
   return await libparsec.archiveDevice(device.keyFilePath);
+}
+
+export async function createDeviceInvitation(sendEmail: boolean): Promise<Result<NewInvitationInfo, ClientNewDeviceInvitationError>> {
+  const clientHandle = getParsecHandle();
+
+  if (clientHandle !== null && !needsMocks()) {
+    const result = await libparsec.clientNewDeviceInvitation(clientHandle, sendEmail);
+    return result;
+  } else {
+    return {
+      ok: true,
+      value: {
+        // cspell:disable-next-line
+        addr: 'parsec3://example.parsec.cloud/Org?a=claim_device&p=xBj1p7vXl_j1tzTjrx5pzbXV7XTbx_Xnnb0',
+        // cspell:disable-next-line
+        token: '9ae715f49bc0468eac211e1028f15529',
+        emailSentStatus: InvitationEmailSentStatus.Success,
+      },
+    };
+  }
 }
