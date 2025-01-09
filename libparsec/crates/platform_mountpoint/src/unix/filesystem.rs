@@ -332,7 +332,7 @@ impl fuser::Filesystem for Filesystem {
             let path = {
                 let inodes_guard = inodes.lock().expect("mutex is poisoned");
                 let parent_path = inodes_guard.get_path_or_panic(parent);
-                parent_path.join(name)
+                parent_path.join(name.clone())
             };
 
             let outcome = {
@@ -356,7 +356,10 @@ impl fuser::Filesystem for Filesystem {
                 }
             };
 
-            match outcome {
+            match outcome
+                .inspect(|stat| log::debug!("lookup({parent}, {name:?}) => {stat:?}"))
+                .inspect_err(|e| log::warn!("lookup({parent}, {name:?}) result in error: {e:?}"))
+            {
                 Ok(stat) => {
                     let mut inodes_guard = inodes.lock().expect("mutex is poisoned");
                     let inode = inodes_guard.insert_path(path);
