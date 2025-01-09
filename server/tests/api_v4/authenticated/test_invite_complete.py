@@ -6,6 +6,7 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    ShamirOrgRpcClients,
     bob_becomes_admin_and_changes_alice,
 )
 
@@ -15,6 +16,12 @@ async def test_authenticated_invite_complete_ok(coolorg: CoolorgRpcClients) -> N
     assert rep == authenticated_cmds.v4.invite_complete.RepOk()
 
     rep = await coolorg.alice.invite_complete(coolorg.invited_alice_dev3.token)
+    assert rep == authenticated_cmds.v4.invite_complete.RepOk()
+
+
+async def test_authenticated_invite_complete_ok_with_shamir(shamirorg: ShamirOrgRpcClients) -> None:
+    # For shamir recovery invitations, Alice can complete her own invitation
+    rep = await shamirorg.alice.invite_complete(shamirorg.shamir_invited_alice.token)
     assert rep == authenticated_cmds.v4.invite_complete.RepOk()
 
 
