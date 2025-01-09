@@ -298,7 +298,7 @@ WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     AND type = $type
     AND device.user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
-    AND claimer_email IS NULL
+    AND claimer_email IS NOT NULL
     AND shamir_recovery = $shamir_recovery_setup
     AND deleted_on IS NULL
 LIMIT 1
@@ -1059,7 +1059,7 @@ class PGInviteComponent(BaseInviteComponent):
             organization_id=organization_id,
             author_user_id=author_user_id,
             author_device_id=author,
-            claimer_email=None,
+            claimer_email=claimer_human_handle.email,
             shamir_recovery_setup=shamir_recovery_setup,
             created_on=now,
             invitation_type=InvitationType.SHAMIR_RECOVERY,
@@ -2181,7 +2181,7 @@ class PGInviteComponent(BaseInviteComponent):
         if not await self.is_greeter_allowed(
             conn, invitation_info, author_user_id, current_profile
         ):
-            if not invitation_info.claimer_email == author_info.human_handle.email:
+            if invitation_info.claimer_email != author_info.human_handle.email:
                 return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
 
         await conn.execute(

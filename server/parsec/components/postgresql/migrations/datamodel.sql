@@ -237,7 +237,7 @@ CREATE TABLE invitation (
     type INVITATION_TYPE NOT NULL,
 
     created_by INTEGER REFERENCES device (_id) NOT NULL,
-    -- Required when type=USER
+    -- Required when type=USER or type=SHAMIR_RECOVERY
     claimer_email VARCHAR(255),
 
     created_on TIMESTAMPTZ NOT NULL,
