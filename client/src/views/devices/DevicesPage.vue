@@ -131,7 +131,7 @@
 <script setup lang="ts">
 import { Answer, askQuestion, MsImage, MsModalResult, PasswordLock } from 'megashark-lib';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
-import { OwnDeviceInfo, listOwnDevices } from '@/parsec';
+import { OwnDeviceInfo, createDeviceInvitation, listOwnDevices } from '@/parsec';
 import { Routes, navigateTo, watchRoute, getCurrentRouteName } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
@@ -191,12 +191,26 @@ async function refreshDevicesList(): Promise<void> {
 }
 
 async function onAddDeviceClick(): Promise<void> {
+  const result = await createDeviceInvitation(false);
+  if (!result.ok) {
+    informationManager.present(
+      new Information({
+        message: 'DevicesPage.greet.errors.startFailed',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
+  }
+
   const modal = await modalController.create({
     component: GreetDeviceModal,
     canDismiss: true,
     cssClass: 'greet-organization-modal',
     componentProps: {
       informationManager: informationManager,
+      invitationLink: result.value.addr,
+      token: result.value.token,
     },
   });
   await modal.present();

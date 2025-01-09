@@ -263,6 +263,8 @@ enum GreetDeviceStep {
 
 const props = defineProps<{
   informationManager: InformationManager;
+  invitationLink: string;
+  token: string;
 }>();
 
 const pageStep = ref(GreetDeviceStep.WaitForGuest);
@@ -570,7 +572,7 @@ async function sendEmail(): Promise<void> {
 }
 
 onMounted(async () => {
-  await greeter.value.createInvitation(false);
+  greeter.value.setInvitationInformation(props.invitationLink, props.token);
   await startProcess();
 });
 </script>
