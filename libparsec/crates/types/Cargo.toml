@@ -49,7 +49,7 @@ flate2 = { workspace = true }
 fnmatch-regex = { workspace = true }
 hex-literal = { workspace = true, optional = true }
 rstest = { workspace = true, optional = true }
-sharks = { workspace = true }
+blahaj = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 chrono = { workspace = true, features = ["wasmbind"] }

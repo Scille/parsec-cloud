@@ -48,8 +48,8 @@ impl ShamirRecoverySecret {
     ) -> Vec<ShamirShare> {
         let secret = self.dump();
 
-        let sharks = sharks::Sharks(threshold.get());
-        sharks
+        let blahaj = blahaj::Sharks(threshold.get());
+        blahaj
             .dealer(&secret)
             .map(ShamirShare)
             // Note, unlike what Sharks's documentation claims, at most
@@ -64,9 +64,9 @@ impl ShamirRecoverySecret {
         T: IntoIterator<Item = &'a ShamirShare>,
         T::IntoIter: Iterator<Item = &'a ShamirShare>,
     {
-        let sharks = sharks::Sharks(threshold.get());
+        let blahaj = blahaj::Sharks(threshold.get());
         let shares = shares.into_iter().map(|x| &x.0);
-        let secret = sharks.recover(shares).map_err(|_| DataError::Decryption)?;
+        let secret = blahaj.recover(shares).map_err(|_| DataError::Decryption)?;
 
         Self::load(&secret)
     }
@@ -157,7 +157,7 @@ impl ShamirRecoveryShareData {
 
 #[derive(Clone, Deserialize)]
 #[serde(try_from = "&Bytes")]
-pub struct ShamirShare(sharks::Share);
+pub struct ShamirShare(blahaj::Share);
 
 impl_key_debug!(ShamirShare);
 
@@ -166,7 +166,7 @@ impl ShamirShare {
         Vec::from(&self.0)
     }
     pub fn load(raw: &[u8]) -> CryptoResult<Self> {
-        let share = sharks::Share::try_from(raw).map_err(|_| CryptoError::KeySize {
+        let share = blahaj::Share::try_from(raw).map_err(|_| CryptoError::KeySize {
             expected: 2,
             got: raw.len(),
         })?;
