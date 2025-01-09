@@ -61,14 +61,8 @@ pub async fn device_greet(args: Args, client: &StartedClient) -> anyhow::Result<
             let ctx = step4_device(ctx).await?;
             step5_device(ctx).await
         }
-        InviteListItem::ShamirRecovery {
-            token,
-            claimer_user_id,
-            ..
-        } => {
-            let ctx = client
-                .start_shamir_recovery_invitation_greet(token, claimer_user_id)
-                .await?;
+        InviteListItem::ShamirRecovery { token, .. } => {
+            let ctx = client.start_shamir_recovery_invitation_greet(token).await?;
 
             let ctx = step1_shamir(ctx).await?;
             let ctx = step2_shamir(ctx).await?;
@@ -97,7 +91,7 @@ async fn step0(
         None => return Err(anyhow::anyhow!("Invitation not found")),
     };
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(invitation)
 }
@@ -132,7 +126,7 @@ async fn step1_shamir(
 
     let ctx = ctx.do_wait_peer().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -182,7 +176,7 @@ async fn step2_shamir(
 
     let ctx = ctx.do_wait_peer_trust().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -223,6 +217,7 @@ async fn step3_shamir(
 ) -> anyhow::Result<ShamirRecoveryGreetInProgress3Ctx> {
     let sas_codes = ctx.generate_claimer_sas_choices(3);
     let selected_sas = Select::new()
+        .default(0)
         .items(&sas_codes)
         .with_prompt("Select code provided by claimer")
         .interact()?;

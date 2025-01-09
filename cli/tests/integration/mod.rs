@@ -16,10 +16,15 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::utils::*;
+use libparsec::LocalDevice;
 use libparsec::{
     ClientConfig, OrganizationID, ParsecAddr, TmpPath, PARSEC_BASE_CONFIG_DIR,
     PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
 };
+use std::sync::Arc;
+
+use crate::testenv_utils::DEFAULT_DEVICE_PASSWORD;
 
 use crate::testenv_utils::{
     initialize_test_organization, new_environment, parsec_addr_from_http_url, TestOrganization,
@@ -139,4 +144,71 @@ macro_rules! assert_cmd_failure {
             .assert()
             .failure()
     }
+}
+
+/// For Alice, with Bob and Toto as recipients
+fn shared_recovery_create(
+    alice: &Arc<LocalDevice>,
+    bob: &Arc<LocalDevice>,
+    toto: Option<&Arc<LocalDevice>>,
+) {
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "shared-recovery",
+        "info",
+        "--device",
+        &alice.device_id.hex()
+    )
+    .stdout(predicates::str::contains(format!(
+        "Shared recovery {RED}never setup{RESET}"
+    )));
+
+    if let Some(toto) = toto {
+        crate::assert_cmd_success!(
+            with_password = DEFAULT_DEVICE_PASSWORD,
+            "shared-recovery",
+            "create",
+            "--device",
+            &alice.device_id.hex(),
+            "--recipients",
+            &bob.human_handle.email(),
+            &toto.human_handle.email(),
+            "--weights",
+            "1",
+            "1",
+            "--threshold",
+            "1"
+        )
+        .stdout(predicates::str::contains(
+            "Shared recovery setup has been created",
+        ));
+    } else {
+        crate::assert_cmd_success!(
+            with_password = DEFAULT_DEVICE_PASSWORD,
+            "shared-recovery",
+            "create",
+            "--device",
+            &alice.device_id.hex(),
+            "--recipients",
+            &bob.human_handle.email(),
+            "--weights",
+            "1",
+            "--threshold",
+            "1"
+        )
+        .stdout(predicates::str::contains(
+            "Shared recovery setup has been created",
+        ));
+    }
+
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "shared-recovery",
+        "info",
+        "--device",
+        &alice.device_id.hex()
+    )
+    .stdout(predicates::str::contains(format!(
+        "Shared recovery {GREEN}set up{RESET}"
+    )));
 }
