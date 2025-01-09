@@ -106,14 +106,17 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                 match ctx {
                     ShamirRecoveryClaimMaybeFinalizeCtx::Offline(ctx) => {
                         let retry = Select::new()
+                            .default(0)
                             .with_prompt("Unable to join server, do you want to retry ?")
                             .items(&["yes", "no"])
                             .interact()?;
 
                         if retry == 0 {
+                            // yes
                             device_ctx = ctx;
                             continue;
                         } else {
+                            // no
                             return Err(anyhow!("Server offline, try again later."));
                         }
                     }
@@ -151,9 +154,10 @@ async fn step0(
 fn shamir_pick_recipient(
     ctx: &ShamirRecoveryClaimPickRecipientCtx,
 ) -> anyhow::Result<ShamirRecoveryClaimInitialCtx> {
-    let recipients = ctx.yet_to_contact_recipients();
-    let human_recipients: Vec<_> = recipients.iter().map(|r| r.human_handle.clone()).collect();
+    let recipients = ctx.recipients_without_a_share();
+    let human_recipients: Vec<&_> = recipients.iter().map(|r| &r.human_handle).collect();
     let selection = Select::new()
+        .default(0)
         .with_prompt("Choose a person to contact now")
         .items(&human_recipients)
         .interact()?;
@@ -201,11 +205,14 @@ async fn step1_shamir(
         ctx.greeter_human_handle()
     );
 
-    let mut handle = start_spinner("Waiting the greeter to start the invitation procedure".into());
+    let mut handle = start_spinner(format!(
+        "Waiting the greeter {} to start the invitation procedure",
+        ctx.greeter_human_handle()
+    ));
 
     let ctx = ctx.do_wait_peer().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -249,6 +256,7 @@ async fn step2_shamir(
     let sas_codes = ctx.generate_greeter_sas_choices(3);
 
     let selected_sas = Select::new()
+        .default(0)
         .items(&sas_codes)
         .with_prompt("Select code provided by greeter")
         .interact()?;
@@ -288,7 +296,7 @@ async fn step3_shamir(
 
     let ctx = ctx.do_wait_peer_trust().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -346,7 +354,7 @@ async fn step4_shamir(
 
     let ctx = ctx.do_recover_share().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -357,11 +365,11 @@ async fn step5_shamir(
 ) -> anyhow::Result<ShamirRecoveryClaimMaybeFinalizeCtx> {
     let device_label = Input::new().with_prompt("Enter device label").interact()?;
 
-    let mut handle = start_spinner("Waiting for greeter".into());
+    let mut handle = start_spinner("Recovering device".into());
 
     let ctx = ctx.recover_device(device_label).await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }

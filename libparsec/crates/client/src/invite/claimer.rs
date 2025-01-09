@@ -356,7 +356,7 @@ impl ShamirRecoveryClaimPickRecipientCtx {
         self.shamir_recovery_created_on
     }
 
-    pub fn yet_to_contact_recipients(&self) -> Vec<&ShamirRecoveryRecipient> {
+    pub fn recipients_without_a_share(&self) -> Vec<&ShamirRecoveryRecipient> {
         self.recipients
             .iter()
             .filter(|r| !self.shares.contains_key(&r.user_id))

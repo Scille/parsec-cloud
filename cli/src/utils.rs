@@ -24,7 +24,7 @@ pub const GREEN: &str = "\x1B[92m";
 pub const RED: &str = "\x1B[91m";
 pub const RESET: &str = "\x1B[39m";
 pub const YELLOW: &str = "\x1B[33m";
-pub const GREEN_CHECKMARK: &str = "\x1B[92m🗸\x1B[39m";
+pub const GREEN_CHECKMARK: &str = "\x1B[92m✔\x1B[39m";
 pub const BULLET_CHAR: &str = "•";
 
 pub fn format_devices(
