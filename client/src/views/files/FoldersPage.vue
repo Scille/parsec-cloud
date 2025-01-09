@@ -1317,6 +1317,7 @@ async function onDropAsReader(): Promise<void> {
   background: var(--parsec-color-light-secondary-white);
   padding: 0.25rem;
   border-radius: var(--parsec-radius-32);
+  border: 1px solid var(--parsec-color-light-secondary-disabled);
 }
 
 .no-files {
