@@ -12,6 +12,7 @@ on:
       - nightly
   schedule:
     - cron: 30 22 * * * # At 22:30
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -22,22 +23,22 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NIGHTLY_RELEASE: ${{ (github.event_name == 'schedule' || github.ref == 'refs/tags/nightly') && 'true' || 'false' }}
+  NIGHTLY_RELEASE: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/tags/nightly') && 'true' || 'false' }}
 
 jobs:
   scheduled-nightly-build:
-    if: github.event_name == 'schedule'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/_releaser_nightly_build.yml
 
   version:
     needs: scheduled-nightly-build
     # Always run the job if `scheduled-nightly-build` job is skipped otherwise only if `scheduled-nightly-build` job was successful.
-    if: github.event_name != 'schedule' && always() || success()
+    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && always() || success()
     uses: ./.github/workflows/_parse_version.yml
     with:
       version: >-
         ${{
-          (github.event_name == 'schedule' && needs.scheduled-nightly-build.outputs.version_full) ||
+          ((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && needs.scheduled-nightly-build.outputs.version_full) ||
           (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && github.ref_name != 'nightly' && github.ref_name) ||
           ''
         }}
@@ -61,7 +62,7 @@ jobs:
       version: ${{ needs.version.outputs.full }}
       version_patch_run_id: ${{ github.run_id }}
       commit_sha: ${{ needs.version.outputs.commit_sha }}
-      nightly_build: ${{ github.event_name == 'schedule' || github.ref == 'refs/tags/nightly' }}
+      nightly_build: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/tags/nightly' }}
     secrets:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       MACOS_CI_KEYCHAIN_PASSWD: ${{ secrets.MACOS_CI_KEYCHAIN_PASSWD }}
@@ -220,11 +221,11 @@ jobs:
         working-directory: parsec-cloud
 
       - name: Create release
-        if: github.event_name == 'schedule' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
         uses: softprops/action-gh-release@7b4da11513bf3f43f9999e90eabced41ab8bb048 # pin v2.2.0
         with:
           draft: ${{ env.NIGHTLY_RELEASE != 'true' }}
-          tag_name: ${{ github.event_name == 'schedule' && 'nightly' || github.ref }}
+          tag_name: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'nightly' || github.ref }}
           body: ${{ steps.summary.outputs.output }}
           prerelease: ${{ needs.version.outputs.pre != '' || needs.version.outputs.dev != '' || needs.version.outputs.local != '' }}
           name: ${{ env.NIGHTLY_RELEASE == 'true' && 'Nightly release' || format('Release v{0}', needs.version.outputs.full) }}
@@ -253,7 +254,7 @@ jobs:
     # Only publish after release if the release is for a nightly build.
     # We only do that for nightly because we do not create the github release as draft for nightlies to limit the need to human interventions.
     if: >-
-      (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/tags/nightly'))
+      (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/tags/nightly'))
       && needs.releaser.result == 'success'
       && always()
     uses: ./.github/workflows/publish.yml
@@ -261,8 +262,8 @@ jobs:
       contents: read
       id-token: write
     with:
-      release_tag: ${{ github.event_name == 'schedule' && 'nightly' || github.ref_name }}
-      nightly: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' || github.ref == 'refs/tags/nightly' }}
+      release_tag: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'nightly' || github.ref_name }}
+      nightly: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref == 'refs/tags/nightly' }}
     secrets:
       SNAPCRAFT_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
       PYPI_CREDENTIALS: ${{ secrets.PYPI_CREDENTIALS }}
