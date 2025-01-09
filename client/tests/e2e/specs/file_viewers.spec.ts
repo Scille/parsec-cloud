@@ -77,7 +77,7 @@ msTest('PDF viewer', async ({ documents }) => {
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
   const buttons = bottomBar.locator('.file-controls-button');
-  await expect(buttons).toHaveText(['', '', '']);
+  await expect(buttons).toHaveText(['', '', '', '']);
 
   // Pagination
   const pagination = bottomBar.locator('.file-controls-pagination');
