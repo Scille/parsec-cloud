@@ -332,7 +332,7 @@ impl fuser::Filesystem for Filesystem {
             let path = {
                 let inodes_guard = inodes.lock().expect("mutex is poisoned");
                 let parent_path = inodes_guard.get_path_or_panic(parent);
-                parent_path.join(name)
+                parent_path.join(name.clone())
             };
 
             let outcome = {
@@ -356,7 +356,10 @@ impl fuser::Filesystem for Filesystem {
                 }
             };
 
-            match outcome {
+            match outcome
+                .inspect(|stat| log::debug!("lookup({parent}, {name:?}) => {stat:?}"))
+                .inspect_err(|e| log::warn!("lookup({parent}, {name:?}) result in error: {e:?}"))
+            {
                 Ok(stat) => {
                     let mut inodes_guard = inodes.lock().expect("mutex is poisoned");
                     let inode = inodes_guard.insert_path(path);
@@ -428,7 +431,12 @@ impl fuser::Filesystem for Filesystem {
             .get_path_or_panic(ino);
         let ops = self.ops.clone();
         self.tokio_handle.spawn(async move {
-            match ops.stat_entry(&path).await {
+            match ops
+                .stat_entry(&path)
+                .await
+                .inspect(|stat| log::debug!("getattr({ino}, {_fh:?}) => {stat:?}"))
+                .inspect_err(|e| log::warn!("getattr({ino}, {_fh:?}) result in error: {e:?}"))
+            {
                 Ok(stat) => reply
                     .manual()
                     .attr(&TTL, &entry_stat_to_file_attr(stat, ino, uid, gid)),
