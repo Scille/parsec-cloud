@@ -21,7 +21,7 @@ libparsec_protocol = { workspace = true }
 
 paste = { workspace = true }
 log = { workspace = true }
-sharks = { workspace = true }
+blahaj = { workspace = true }
 
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }
