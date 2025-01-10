@@ -27,6 +27,7 @@ from .common import (
     Ref,
     Enum,
     EnumItemUnit,
+    NonZeroU8,
 )
 from .invite import DeviceSaveStrategy, AvailableDevice
 from .config import ClientConfig
@@ -541,4 +542,76 @@ class ClientListFrozenUsersError(ErrorVariant):
 async def client_list_frozen_users(
     client_handle: Handle,
 ) -> Result[list[UserID], ClientListFrozenUsersError]:
+    raise NotImplementedError
+
+
+class ClientSetupShamirRecoveryError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Stopped:
+        pass
+
+    class Offline:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
+
+    class ThresholdBiggerThanSumOfShares:
+        pass
+
+    class TooManyShares:
+        pass
+
+    class AuthorAmongRecipients:
+        pass
+
+    class RecipientNotFound:
+        pass
+
+    class RecipientRevoked:
+        pass
+
+    class ShamirRecoveryAlreadyExists:
+        pass
+
+
+async def client_setup_shamir_recovery(
+    client_handle: Handle,
+    per_recipient_shares: dict[UserID, NonZeroU8],
+    threshold: NonZeroU8,
+) -> Result[None, ClientSetupShamirRecoveryError]:
+    raise NotImplementedError
+
+
+class ClientDeleteShamirRecoveryError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Stopped:
+        pass
+
+    class Offline:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
+
+
+async def client_delete_shamir_recovery(
+    client_handle: Handle,
+) -> Result[None, ClientDeleteShamirRecoveryError]:
     raise NotImplementedError

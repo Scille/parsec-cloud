@@ -3697,6 +3697,95 @@ fn variant_client_create_workspace_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientDeleteShamirRecoveryError
+
+#[allow(dead_code)]
+fn variant_client_delete_shamir_recovery_error_rs_to_js(
+    rs_obj: libparsec::ClientDeleteShamirRecoveryError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientDeleteShamirRecoveryError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientDeleteShamirRecoveryErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientDeleteShamirRecoveryError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientDeleteShamirRecoveryErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::ClientDeleteShamirRecoveryError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientDeleteShamirRecoveryErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientDeleteShamirRecoveryError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientDeleteShamirRecoveryErrorStopped".into(),
+            )?;
+        }
+        libparsec::ClientDeleteShamirRecoveryError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark".into(),
+            )?;
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientEvent
 
 #[allow(dead_code)]
@@ -4988,6 +5077,137 @@ fn variant_client_revoke_user_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientRevokeUserErrorUserNotFound".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientSetupShamirRecoveryError
+
+#[allow(dead_code)]
+fn variant_client_setup_shamir_recovery_error_rs_to_js(
+    rs_obj: libparsec::ClientSetupShamirRecoveryError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientSetupShamirRecoveryError::AuthorAmongRecipients { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSetupShamirRecoveryErrorAuthorAmongRecipients".into(),
+            )?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSetupShamirRecoveryErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSetupShamirRecoveryErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSetupShamirRecoveryErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::RecipientNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSetupShamirRecoveryErrorRecipientNotFound".into(),
+            )?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::RecipientRevoked { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSetupShamirRecoveryErrorRecipientRevoked".into(),
+            )?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::ShamirRecoveryAlreadyExists { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSetupShamirRecoveryErrorShamirRecoveryAlreadyExists".into(),
+            )?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSetupShamirRecoveryErrorStopped".into(),
+            )?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::ThresholdBiggerThanSumOfShares { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSetupShamirRecoveryErrorThresholdBiggerThanSumOfShares".into(),
+            )?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSetupShamirRecoveryErrorTimestampOutOfBallpark".into(),
+            )?;
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::TooManyShares { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientSetupShamirRecoveryErrorTooManyShares".into(),
             )?;
         }
     }
@@ -10289,6 +10509,34 @@ pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
     })
 }
 
+// client_delete_shamir_recovery
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientDeleteShamirRecovery(client_handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_delete_shamir_recovery(client_handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_delete_shamir_recovery_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // client_export_recovery_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -10794,6 +11042,119 @@ pub fn clientRevokeUser(client: u32, user: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_revoke_user_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_setup_shamir_recovery
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientSetupShamirRecovery(
+    client_handle: u32,
+    per_recipient_shares: Object,
+    threshold: u8,
+) -> Promise {
+    future_to_promise(async move {
+        let per_recipient_shares = {
+            let js_map = per_recipient_shares;
+            let mut d = std::collections::HashMap::with_capacity(
+                Reflect::get(&js_map, &"size".into())?
+                    .dyn_into::<Number>()?
+                    .value_of() as usize,
+            );
+
+            let js_keys = Reflect::get(&js_map, &"keys".into())?
+                .dyn_into::<Function>()?
+                .call0(&js_map)?;
+            let js_values = Reflect::get(&js_map, &"values".into())?
+                .dyn_into::<Function>()?
+                .call0(&js_map)?;
+
+            let js_literal_next = "next".into();
+            let js_keys_next_cb =
+                Reflect::get(&js_keys, &js_literal_next)?.dyn_into::<Function>()?;
+            let js_values_next_cb =
+                Reflect::get(&js_values, &js_literal_next)?.dyn_into::<Function>()?;
+
+            let js_literal_done = "done".into();
+            let js_literal_value = "value".into();
+            loop {
+                let next_js_key = js_keys_next_cb.call0(&js_keys)?;
+                let next_js_value = js_values_next_cb.call0(&js_values)?;
+
+                let keys_done = Reflect::get(&next_js_key, &js_literal_done)?
+                    .dyn_into::<Boolean>()?
+                    .value_of();
+                let values_done = Reflect::get(&next_js_value, &js_literal_done)?
+                    .dyn_into::<Boolean>()?
+                    .value_of();
+                match (keys_done, values_done) {
+                    (true, true) => break,
+                    (false, false) => (),
+                    _ => unreachable!(),
+                }
+
+                let js_key =
+                    Reflect::get(&next_js_key, &js_literal_value)?.dyn_into::<JsString>()?;
+                let js_value =
+                    Reflect::get(&next_js_value, &js_literal_value)?.dyn_into::<JsString>()?;
+
+                let rs_key = js_key
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                let rs_value = {
+                    let v = js_value
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                    }
+                    v as u8
+                };
+
+                d.insert(rs_key, rs_value);
+            }
+            d
+        };
+
+        let threshold = {
+            let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+            };
+            custom_from_rs_u8(threshold).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret =
+            libparsec::client_setup_shamir_recovery(client_handle, per_recipient_shares, threshold)
+                .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_setup_shamir_recovery_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

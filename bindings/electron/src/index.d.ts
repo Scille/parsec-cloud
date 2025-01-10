@@ -598,6 +598,39 @@ export type ClientCreateWorkspaceError =
   | ClientCreateWorkspaceErrorStopped
 
 
+// ClientDeleteShamirRecoveryError
+export interface ClientDeleteShamirRecoveryErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientDeleteShamirRecoveryErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ClientDeleteShamirRecoveryErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClientDeleteShamirRecoveryErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export interface ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export type ClientDeleteShamirRecoveryError =
+  | ClientDeleteShamirRecoveryErrorInternal
+  | ClientDeleteShamirRecoveryErrorInvalidCertificate
+  | ClientDeleteShamirRecoveryErrorOffline
+  | ClientDeleteShamirRecoveryErrorStopped
+  | ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark
+
+
 // ClientEvent
 export interface ClientEventExpiredOrganization {
     tag: "ExpiredOrganization"
@@ -1024,6 +1057,69 @@ export type ClientRevokeUserError =
   | ClientRevokeUserErrorTimestampOutOfBallpark
   | ClientRevokeUserErrorUserIsSelf
   | ClientRevokeUserErrorUserNotFound
+
+
+// ClientSetupShamirRecoveryError
+export interface ClientSetupShamirRecoveryErrorAuthorAmongRecipients {
+    tag: "AuthorAmongRecipients"
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorRecipientNotFound {
+    tag: "RecipientNotFound"
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorRecipientRevoked {
+    tag: "RecipientRevoked"
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorShamirRecoveryAlreadyExists {
+    tag: "ShamirRecoveryAlreadyExists"
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorThresholdBiggerThanSumOfShares {
+    tag: "ThresholdBiggerThanSumOfShares"
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export interface ClientSetupShamirRecoveryErrorTooManyShares {
+    tag: "TooManyShares"
+    error: string
+}
+export type ClientSetupShamirRecoveryError =
+  | ClientSetupShamirRecoveryErrorAuthorAmongRecipients
+  | ClientSetupShamirRecoveryErrorInternal
+  | ClientSetupShamirRecoveryErrorInvalidCertificate
+  | ClientSetupShamirRecoveryErrorOffline
+  | ClientSetupShamirRecoveryErrorRecipientNotFound
+  | ClientSetupShamirRecoveryErrorRecipientRevoked
+  | ClientSetupShamirRecoveryErrorShamirRecoveryAlreadyExists
+  | ClientSetupShamirRecoveryErrorStopped
+  | ClientSetupShamirRecoveryErrorThresholdBiggerThanSumOfShares
+  | ClientSetupShamirRecoveryErrorTimestampOutOfBallpark
+  | ClientSetupShamirRecoveryErrorTooManyShares
 
 
 // ClientShareWorkspaceError
@@ -2662,6 +2758,9 @@ export function clientCreateWorkspace(
     client: number,
     name: string
 ): Promise<Result<string, ClientCreateWorkspaceError>>
+export function clientDeleteShamirRecovery(
+    client_handle: number
+): Promise<Result<null, ClientDeleteShamirRecoveryError>>
 export function clientExportRecoveryDevice(
     client_handle: number,
     device_label: string
@@ -2720,6 +2819,11 @@ export function clientRevokeUser(
     client: number,
     user: string
 ): Promise<Result<null, ClientRevokeUserError>>
+export function clientSetupShamirRecovery(
+    client_handle: number,
+    per_recipient_shares: Map<string, number>,
+    threshold: number
+): Promise<Result<null, ClientSetupShamirRecoveryError>>
 export function clientShareWorkspace(
     client: number,
     realm_id: string,

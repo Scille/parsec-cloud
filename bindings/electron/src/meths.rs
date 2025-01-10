@@ -3425,6 +3425,85 @@ fn variant_client_create_workspace_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientDeleteShamirRecoveryError
+
+#[allow(dead_code)]
+fn variant_client_delete_shamir_recovery_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientDeleteShamirRecoveryError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientDeleteShamirRecoveryError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientDeleteShamirRecoveryErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientDeleteShamirRecoveryError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientDeleteShamirRecoveryErrorInvalidCertificate")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientDeleteShamirRecoveryError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientDeleteShamirRecoveryErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientDeleteShamirRecoveryError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientDeleteShamirRecoveryErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientDeleteShamirRecoveryError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientEarlyOffset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientLateOffset",
+                js_ballpark_client_late_offset,
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientEvent
 
 #[allow(dead_code)]
@@ -4550,6 +4629,122 @@ fn variant_client_revoke_user_error_rs_to_js<'a>(
         }
         libparsec::ClientRevokeUserError::UserNotFound { .. } => {
             let js_tag = JsString::try_new(cx, "ClientRevokeUserErrorUserNotFound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientSetupShamirRecoveryError
+
+#[allow(dead_code)]
+fn variant_client_setup_shamir_recovery_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientSetupShamirRecoveryError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientSetupShamirRecoveryError::AuthorAmongRecipients { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientSetupShamirRecoveryErrorAuthorAmongRecipients")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientSetupShamirRecoveryErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientSetupShamirRecoveryErrorInvalidCertificate")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientSetupShamirRecoveryErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::RecipientNotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientSetupShamirRecoveryErrorRecipientNotFound")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::RecipientRevoked { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientSetupShamirRecoveryErrorRecipientRevoked")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::ShamirRecoveryAlreadyExists { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientSetupShamirRecoveryErrorShamirRecoveryAlreadyExists",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientSetupShamirRecoveryErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::ThresholdBiggerThanSumOfShares { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientSetupShamirRecoveryErrorThresholdBiggerThanSumOfShares",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientSetupShamirRecoveryErrorTimestampOutOfBallpark")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientEarlyOffset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientLateOffset",
+                js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ClientSetupShamirRecoveryError::TooManyShares { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientSetupShamirRecoveryErrorTooManyShares")
+                .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -9899,6 +10094,61 @@ fn client_create_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_delete_shamir_recovery
+fn client_delete_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client_handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_delete_shamir_recovery(client_handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_delete_shamir_recovery_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_export_recovery_device
 fn client_export_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -10856,6 +11106,148 @@ fn client_revoke_user(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_client_revoke_user_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_setup_shamir_recovery
+fn client_setup_shamir_recovery(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client_handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let per_recipient_shares = {
+        let js_val = cx.argument::<JsObject>(1)?;
+        {
+            let mut d = std::collections::HashMap::with_capacity(
+                js_val
+                    .get::<JsNumber, _, _>(&mut cx, "size")?
+                    .value(&mut cx) as usize,
+            );
+
+            let js_keys = js_val
+                .call_method_with(&mut cx, "keys")?
+                .apply::<JsObject, _>(&mut cx)?;
+            let js_values = js_val
+                .call_method_with(&mut cx, "values")?
+                .apply::<JsObject, _>(&mut cx)?;
+            let js_keys_next_cb = js_keys.call_method_with(&mut cx, "next")?;
+            let js_values_next_cb = js_values.call_method_with(&mut cx, "next")?;
+
+            loop {
+                let next_js_key = js_keys_next_cb.apply::<JsObject, _>(&mut cx)?;
+                let next_js_value = js_values_next_cb.apply::<JsObject, _>(&mut cx)?;
+
+                let keys_done = next_js_key
+                    .get::<JsBoolean, _, _>(&mut cx, "done")?
+                    .value(&mut cx);
+                let values_done = next_js_value
+                    .get::<JsBoolean, _, _>(&mut cx, "done")?
+                    .value(&mut cx);
+                match (keys_done, values_done) {
+                    (true, true) => break,
+                    (false, false) => (),
+                    _ => unreachable!(),
+                }
+
+                let js_key = next_js_key.get::<JsString, _, _>(&mut cx, "value")?;
+                let js_value = next_js_value.get::<JsNumber, _, _>(&mut cx, "value")?;
+
+                let key = {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_key.value(&mut cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                };
+                let value = {
+                    let v = js_value.value(&mut cx);
+                    if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                        cx.throw_type_error("Not an u8 number")?
+                    }
+                    let v = v as u8;
+                    let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                        std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_u8(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                };
+                d.insert(key, value);
+            }
+            d
+        }
+    };
+    let threshold = {
+        let js_val = cx.argument::<JsNumber>(2)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                cx.throw_type_error("Not an u8 number")?
+            }
+            let v = v as u8;
+            let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_u8(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_setup_shamir_recovery(
+                client_handle,
+                per_recipient_shares,
+                threshold,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_setup_shamir_recovery_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -16137,6 +16529,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientCancelInvitation", client_cancel_invitation)?;
     cx.export_function("clientChangeAuthentication", client_change_authentication)?;
     cx.export_function("clientCreateWorkspace", client_create_workspace)?;
+    cx.export_function("clientDeleteShamirRecovery", client_delete_shamir_recovery)?;
     cx.export_function("clientExportRecoveryDevice", client_export_recovery_device)?;
     cx.export_function("clientGetTos", client_get_tos)?;
     cx.export_function("clientGetUserDevice", client_get_user_device)?;
@@ -16155,6 +16548,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("clientNewUserInvitation", client_new_user_invitation)?;
     cx.export_function("clientRenameWorkspace", client_rename_workspace)?;
     cx.export_function("clientRevokeUser", client_revoke_user)?;
+    cx.export_function("clientSetupShamirRecovery", client_setup_shamir_recovery)?;
     cx.export_function("clientShareWorkspace", client_share_workspace)?;
     cx.export_function("clientStart", client_start)?;
     cx.export_function(

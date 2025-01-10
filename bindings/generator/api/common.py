@@ -84,6 +84,11 @@ class F64BasedType:
     pass
 
 
+# Types that should be converted into f64 on js side, but from u8 on rs side
+class U8BasedType(int):
+    pass
+
+
 # Types that should be converted into f64 on js side, but from i32 on rs side
 class I32BasedType:
     pass
@@ -111,6 +116,14 @@ class CustomConversionType:
 #
 # Common types
 #
+
+
+class U8(U8BasedType):
+    pass
+
+
+class NonZeroU8(U8BasedType):
+    custom_from_rs_u8 = "|x: u8| -> Result<std::num::NonZeroU8, _> { std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string()) }"
 
 
 class I32(I32BasedType):
