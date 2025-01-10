@@ -357,18 +357,15 @@ impl fuser::Filesystem for Filesystem {
             };
 
             match outcome
+                .map(|stat| {
+                    let mut inodes_guard = inodes.lock().expect("mutex is poisoned");
+                    let inode = inodes_guard.insert_path(path);
+                    entry_stat_to_file_attr(stat, inode, uid, gid)
+                })
                 .inspect(|stat| log::debug!("lookup({parent}, {name:?}) => {stat:?}"))
                 .inspect_err(|e| log::warn!("lookup({parent}, {name:?}) result in error: {e:?}"))
             {
-                Ok(stat) => {
-                    let mut inodes_guard = inodes.lock().expect("mutex is poisoned");
-                    let inode = inodes_guard.insert_path(path);
-                    reply.manual().entry(
-                        &TTL,
-                        &entry_stat_to_file_attr(stat, inode, uid, gid),
-                        GENERATION,
-                    )
-                }
+                Ok(stat) => reply.manual().entry(&TTL, &stat, GENERATION),
                 Err(err) => match err {
                     WorkspaceStatEntryError::EntryNotFound => reply.manual().error(libc::ENOENT),
                     WorkspaceStatEntryError::Offline => reply.manual().error(libc::EHOSTUNREACH),
