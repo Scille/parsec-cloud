@@ -1745,6 +1745,7 @@
     },
     "fileViewers": {
         "openWithDefault": "Open with default application",
+        "details": "Details",
         "openingFile": "Opening file...",
         "fileTooBig": "File is too big to be opened using a viewer.",
         "controls": {
