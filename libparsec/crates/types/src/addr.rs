@@ -146,7 +146,19 @@ impl FromStr for ParsecUrlAsHTTPScheme {
         // http vs https is important as it changes the default port for parsing !
         let http_scheme = if use_ssl { "https" } else { "http" };
         let url_as_http = match parsed.scheme() {
-            PARSEC_SCHEME => url.replacen(PARSEC_SCHEME, http_scheme, 1),
+            // It is vital to do the replace on the parsed URL, this is because
+            // the URL parser strips invalid characters (i.e. \n, \t,
+            // trailing/leading spaces, etc.).
+            //
+            // see https://url.spec.whatwg.org/#concept-basic-url-parser
+            //
+            // For instance, considering the input url starting with `par\nsec3://`:
+            // - Parsing is successful.
+            // - `parsed.scheme()` returns `parsec3`.
+            // - `parsed.as_str()` returns `parsec3://...`.
+            // - If we do the replace on `url`, `par\nsec3` will not be matched,
+            //   typically leading to a panic later on in `BaseParsecAddr::_from_url`.
+            PARSEC_SCHEME => parsed.as_str().replacen(PARSEC_SCHEME, http_scheme, 1),
             _ => {
                 return Err(AddrError::InvalidUrlScheme {
                     expected: PARSEC_SCHEME,

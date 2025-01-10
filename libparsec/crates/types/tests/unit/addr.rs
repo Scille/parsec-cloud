@@ -266,6 +266,29 @@ fn good_addr_with_port(testbed: &dyn Testbed) {
     testbed.assert_addr_ok(&url);
 }
 
+// By specification, URL parser knowns how to handle common noise in the input
+// (i.e. leading/trailing whitespaces & C0 control chars, tabs, newlines).
+//
+// see https://url.spec.whatwg.org/#concept-basic-url-parser
+#[apply(all_addr)]
+fn good_addr_with_noise_trimmed_by_url_parser(testbed: &dyn Testbed) {
+    let expected_url = testbed.url();
+    let url = {
+        // Add noise to the url, those should be stripped by the url parser
+        let mut url = String::with_capacity(expected_url.len() * 2);
+        for (i, c) in expected_url.chars().enumerate() {
+            url.push(c);
+            if i % 2 == 0 {
+                url.push('\t');
+            } else {
+                url.push('\n');
+            }
+        }
+        format!(" {url} ")
+    };
+    testbed.assert_addr_ok_with_expected(&url, &expected_url);
+}
+
 #[apply(all_addr)]
 fn addr_with_bad_port(testbed: &dyn Testbed, #[values("NaN", "999999")] bad_port: &str) {
     let url = testbed
@@ -275,7 +298,10 @@ fn addr_with_bad_port(testbed: &dyn Testbed, #[values("NaN", "999999")] bad_port
 }
 
 #[apply(all_addr)]
-fn addr_with_bad_scheme(testbed: &dyn Testbed, #[values("xxx", "http", "https")] bad_scheme: &str) {
+fn addr_with_bad_scheme(
+    testbed: &dyn Testbed,
+    #[values("xxx", "http", "https", "parsec4", "parsec", "parsec3x")] bad_scheme: &str,
+) {
     let url = testbed.url().replacen(PARSEC_SCHEME, bad_scheme, 1);
     testbed.assert_addr_err(
         &url,
