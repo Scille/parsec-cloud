@@ -1,14 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{path::Path, sync::Arc};
+use std::{collections::HashMap, num::NonZeroU8, path::Path, sync::Arc};
 
 use libparsec_client::ServerConfig;
 pub use libparsec_client::{
-    ClientAcceptTosError, ClientCreateWorkspaceError, ClientGetCurrentSelfProfileError,
-    ClientGetTosError, ClientGetUserDeviceError, ClientListFrozenUsersError,
-    ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
-    ClientRenameWorkspaceError, ClientRevokeUserError, ClientShareWorkspaceError, DeviceInfo, Tos,
-    UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
+    ClientAcceptTosError, ClientCreateWorkspaceError, ClientDeleteShamirRecoveryError,
+    ClientGetCurrentSelfProfileError, ClientGetTosError, ClientGetUserDeviceError,
+    ClientListFrozenUsersError, ClientListUserDevicesError, ClientListUsersError,
+    ClientListWorkspaceUsersError, ClientRenameWorkspaceError, ClientRevokeUserError,
+    ClientSetupShamirRecoveryError, ClientShareWorkspaceError, DeviceInfo, Tos, UserInfo,
+    WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_platform_device_loader::ChangeAuthentificationError;
@@ -537,4 +538,32 @@ pub async fn client_share_workspace(
     let client = borrow_client(client)?;
 
     client.share_workspace(realm_id, recipient, role).await
+}
+
+/*
+ * Setup shamir recovery
+ */
+
+pub async fn client_setup_shamir_recovery(
+    client: Handle,
+    per_recipient_shares: HashMap<UserID, NonZeroU8>,
+    threshold: NonZeroU8,
+) -> Result<(), ClientSetupShamirRecoveryError> {
+    let client = borrow_client(client)?;
+
+    client
+        .setup_shamir_recovery(per_recipient_shares, threshold)
+        .await
+}
+
+/*
+ * Delete shamir recovery
+ */
+
+pub async fn client_delete_shamir_recovery(
+    client: Handle,
+) -> Result<(), ClientDeleteShamirRecoveryError> {
+    let client = borrow_client(client)?;
+
+    client.delete_shamir_recovery().await
 }

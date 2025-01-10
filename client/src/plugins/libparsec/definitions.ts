@@ -88,6 +88,8 @@ export type SASCode = string
 export type UserID = string
 export type VlobID = string
 export type SequesterVerifyKeyDer = Uint8Array
+export type NonZeroU8 = number
+export type U8 = number
 export type I32 = number
 export type CacheSize = number
 export type FileDescriptor = number
@@ -661,6 +663,46 @@ export type ClientCreateWorkspaceError =
   | ClientCreateWorkspaceErrorInternal
   | ClientCreateWorkspaceErrorStopped
 
+// ClientDeleteShamirRecoveryError
+export enum ClientDeleteShamirRecoveryErrorTag {
+    Internal = 'ClientDeleteShamirRecoveryErrorInternal',
+    InvalidCertificate = 'ClientDeleteShamirRecoveryErrorInvalidCertificate',
+    Offline = 'ClientDeleteShamirRecoveryErrorOffline',
+    Stopped = 'ClientDeleteShamirRecoveryErrorStopped',
+    TimestampOutOfBallpark = 'ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark',
+}
+
+export interface ClientDeleteShamirRecoveryErrorInternal {
+    tag: ClientDeleteShamirRecoveryErrorTag.Internal
+    error: string
+}
+export interface ClientDeleteShamirRecoveryErrorInvalidCertificate {
+    tag: ClientDeleteShamirRecoveryErrorTag.InvalidCertificate
+    error: string
+}
+export interface ClientDeleteShamirRecoveryErrorOffline {
+    tag: ClientDeleteShamirRecoveryErrorTag.Offline
+    error: string
+}
+export interface ClientDeleteShamirRecoveryErrorStopped {
+    tag: ClientDeleteShamirRecoveryErrorTag.Stopped
+    error: string
+}
+export interface ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark {
+    tag: ClientDeleteShamirRecoveryErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export type ClientDeleteShamirRecoveryError =
+  | ClientDeleteShamirRecoveryErrorInternal
+  | ClientDeleteShamirRecoveryErrorInvalidCertificate
+  | ClientDeleteShamirRecoveryErrorOffline
+  | ClientDeleteShamirRecoveryErrorStopped
+  | ClientDeleteShamirRecoveryErrorTimestampOutOfBallpark
+
 // ClientEvent
 export enum ClientEventTag {
     ExpiredOrganization = 'ClientEventExpiredOrganization',
@@ -1189,6 +1231,82 @@ export type ClientRevokeUserError =
   | ClientRevokeUserErrorTimestampOutOfBallpark
   | ClientRevokeUserErrorUserIsSelf
   | ClientRevokeUserErrorUserNotFound
+
+// ClientSetupShamirRecoveryError
+export enum ClientSetupShamirRecoveryErrorTag {
+    AuthorAmongRecipients = 'ClientSetupShamirRecoveryErrorAuthorAmongRecipients',
+    Internal = 'ClientSetupShamirRecoveryErrorInternal',
+    InvalidCertificate = 'ClientSetupShamirRecoveryErrorInvalidCertificate',
+    Offline = 'ClientSetupShamirRecoveryErrorOffline',
+    RecipientNotFound = 'ClientSetupShamirRecoveryErrorRecipientNotFound',
+    RecipientRevoked = 'ClientSetupShamirRecoveryErrorRecipientRevoked',
+    ShamirRecoveryAlreadyExists = 'ClientSetupShamirRecoveryErrorShamirRecoveryAlreadyExists',
+    Stopped = 'ClientSetupShamirRecoveryErrorStopped',
+    ThresholdBiggerThanSumOfShares = 'ClientSetupShamirRecoveryErrorThresholdBiggerThanSumOfShares',
+    TimestampOutOfBallpark = 'ClientSetupShamirRecoveryErrorTimestampOutOfBallpark',
+    TooManyShares = 'ClientSetupShamirRecoveryErrorTooManyShares',
+}
+
+export interface ClientSetupShamirRecoveryErrorAuthorAmongRecipients {
+    tag: ClientSetupShamirRecoveryErrorTag.AuthorAmongRecipients
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorInternal {
+    tag: ClientSetupShamirRecoveryErrorTag.Internal
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorInvalidCertificate {
+    tag: ClientSetupShamirRecoveryErrorTag.InvalidCertificate
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorOffline {
+    tag: ClientSetupShamirRecoveryErrorTag.Offline
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorRecipientNotFound {
+    tag: ClientSetupShamirRecoveryErrorTag.RecipientNotFound
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorRecipientRevoked {
+    tag: ClientSetupShamirRecoveryErrorTag.RecipientRevoked
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorShamirRecoveryAlreadyExists {
+    tag: ClientSetupShamirRecoveryErrorTag.ShamirRecoveryAlreadyExists
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorStopped {
+    tag: ClientSetupShamirRecoveryErrorTag.Stopped
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorThresholdBiggerThanSumOfShares {
+    tag: ClientSetupShamirRecoveryErrorTag.ThresholdBiggerThanSumOfShares
+    error: string
+}
+export interface ClientSetupShamirRecoveryErrorTimestampOutOfBallpark {
+    tag: ClientSetupShamirRecoveryErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export interface ClientSetupShamirRecoveryErrorTooManyShares {
+    tag: ClientSetupShamirRecoveryErrorTag.TooManyShares
+    error: string
+}
+export type ClientSetupShamirRecoveryError =
+  | ClientSetupShamirRecoveryErrorAuthorAmongRecipients
+  | ClientSetupShamirRecoveryErrorInternal
+  | ClientSetupShamirRecoveryErrorInvalidCertificate
+  | ClientSetupShamirRecoveryErrorOffline
+  | ClientSetupShamirRecoveryErrorRecipientNotFound
+  | ClientSetupShamirRecoveryErrorRecipientRevoked
+  | ClientSetupShamirRecoveryErrorShamirRecoveryAlreadyExists
+  | ClientSetupShamirRecoveryErrorStopped
+  | ClientSetupShamirRecoveryErrorThresholdBiggerThanSumOfShares
+  | ClientSetupShamirRecoveryErrorTimestampOutOfBallpark
+  | ClientSetupShamirRecoveryErrorTooManyShares
 
 // ClientShareWorkspaceError
 export enum ClientShareWorkspaceErrorTag {
@@ -3178,6 +3296,9 @@ export interface LibParsecPlugin {
         client: Handle,
         name: EntryName
     ): Promise<Result<VlobID, ClientCreateWorkspaceError>>
+    clientDeleteShamirRecovery(
+        client_handle: Handle
+    ): Promise<Result<null, ClientDeleteShamirRecoveryError>>
     clientExportRecoveryDevice(
         client_handle: Handle,
         device_label: DeviceLabel
@@ -3236,6 +3357,11 @@ export interface LibParsecPlugin {
         client: Handle,
         user: UserID
     ): Promise<Result<null, ClientRevokeUserError>>
+    clientSetupShamirRecovery(
+        client_handle: Handle,
+        per_recipient_shares: Map<UserID, NonZeroU8>,
+        threshold: NonZeroU8
+    ): Promise<Result<null, ClientSetupShamirRecoveryError>>
     clientShareWorkspace(
         client: Handle,
         realm_id: VlobID,

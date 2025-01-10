@@ -24,6 +24,7 @@ META_TYPES = [
     "StrBasedType",
     "BytesBasedType",
     "F64BasedType",
+    "U8BasedType",
     "I32BasedType",
     "U32BasedType",
     "I64BasedType",
@@ -51,6 +52,9 @@ class BytesBasedType(bytes): ...
 
 
 class F64BasedType(float): ...
+
+
+class U8BasedType(int): ...
 
 
 class I32BasedType(int): ...
@@ -243,6 +247,13 @@ class BaseTypeInUse:
                 custom_to_rs_f64=getattr(param, "custom_to_rs_f64", None),
             )
 
+        elif isinstance(param, type) and issubclass(param, U8BasedType):
+            return U8BasedTypeInUse(
+                name=param.__name__,
+                custom_from_rs_u8=getattr(param, "custom_from_rs_u8", None),
+                custom_to_rs_u8=getattr(param, "custom_to_rs_u8", None),
+            )
+
         elif isinstance(param, type) and issubclass(param, I32BasedType):
             return I32BasedTypeInUse(
                 name=param.__name__,
@@ -392,6 +403,17 @@ class F64BasedTypeInUse(BaseTypeInUse):
 
 
 @dataclass
+class U8BasedTypeInUse(BaseTypeInUse):
+    kind = "u8_based"
+    name: str
+    # If set, custom_from_rs_u8/custom_to_rs_u8 contains a Rust closure snippet
+    # `fn (u8) -> Result<X, AsRef<str>>`
+    custom_from_rs_u8: str | None = None
+    # `fn (&X) -> Result<u8, AsRef<str>>`
+    custom_to_rs_u8: str | None = None
+
+
+@dataclass
 class I32BasedTypeInUse(BaseTypeInUse):
     kind = "i32_based"
     name: str
@@ -466,6 +488,7 @@ class ApiSpecs:
     str_based_types: List[BasedTypeSpec]
     bytes_based_types: List[BasedTypeSpec]
     f64_based_types: List[BasedTypeSpec]
+    u8_based_types: List[BasedTypeSpec]
     i32_based_types: List[BasedTypeSpec]
     u32_based_types: List[BasedTypeSpec]
     i64_based_types: List[BasedTypeSpec]
@@ -648,6 +671,11 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
             BasedTypeSpec(item.__name__, getattr(item, "custom_ts_type_declaration", None))
             for item in api_items.values()
             if isinstance(item, type) and issubclass(item, F64BasedType)
+        ),
+        u8_based_types=sorted_by_name(
+            BasedTypeSpec(item.__name__, getattr(item, "custom_ts_type_declaration", None))
+            for item in api_items.values()
+            if isinstance(item, type) and issubclass(item, U8BasedType)
         ),
         i32_based_types=sorted_by_name(
             BasedTypeSpec(item.__name__, getattr(item, "custom_ts_type_declaration", None))
