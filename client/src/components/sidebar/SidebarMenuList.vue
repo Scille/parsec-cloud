@@ -6,7 +6,7 @@
       lines="none"
       class="list-sidebar-header title-h5"
       :class="isContentVisible ? 'open' : 'close'"
-      @click="isContentVisible = !isContentVisible"
+      @click="setContentVisible(!isContentVisible)"
     >
       <div class="list-sidebar-header-title">
         <ion-icon
@@ -43,6 +43,22 @@ defineProps<{
   title: Translatable;
   icon: string;
 }>();
+
+defineExpose({
+  isContentVisible,
+  setContentVisible,
+});
+
+const emits = defineEmits<{
+  (event: 'visibilityChanged', visibility: boolean): void;
+}>();
+
+function setContentVisible(visible: boolean, blockEvent = false): void {
+  isContentVisible.value = visible;
+  if (!blockEvent) {
+    emits('visibilityChanged', isContentVisible.value);
+  }
+}
 </script>
 
 <style scoped lang="scss">
