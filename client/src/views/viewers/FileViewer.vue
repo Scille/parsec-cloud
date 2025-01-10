@@ -29,6 +29,13 @@
                 <ion-icon :icon="open" />
                 {{ $msTranslate('fileViewers.openWithDefault') }}
               </ion-button>
+              <ion-button
+                class="file-viewer-topbar-buttons__item"
+                @click="showDetails"
+              >
+                <ion-icon :icon="informationCircle" />
+                {{ $msTranslate('fileViewers.details') }}
+              </ion-button>
             </ion-buttons>
           </div>
 
@@ -59,8 +66,8 @@ import {
   readHistoryFile,
   closeHistoryFile,
 } from '@/parsec';
-import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons } from '@ionic/vue';
-import { open } from 'ionicons/icons';
+import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
+import { informationCircle, open } from 'ionicons/icons';
 import { Base64, MsSpinner, MsImage } from 'megashark-lib';
 import { ref, Ref, type Component, inject, onMounted, shallowRef } from 'vue';
 import { ImageViewer, VideoViewer, SpreadsheetViewer, DocumentViewer, AudioViewer, TextViewer, PdfViewer } from '@/views/viewers';
@@ -71,6 +78,7 @@ import { FileContentInfo } from '@/views/viewers/utils';
 import { Env } from '@/services/environment';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
+import { FileDetailsModal } from '@/views/files';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const viewerComponent: Ref<Component | null> = shallowRef(null);
@@ -226,6 +234,33 @@ async function openWithSystem(path: FsPath): Promise<void> {
     );
   } else {
     window.electronAPI.openFile(result.value);
+  }
+}
+
+async function showDetails(): Promise<void> {
+  const workspaceHandle = getWorkspaceHandle();
+  if (workspaceHandle) {
+    const entry = await entryStat(workspaceHandle, getDocumentPath());
+    if (!entry.ok) {
+      await informationManager.present(
+        new Information({
+          message: 'FoldersPage.open.fileFailed',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+      return;
+    }
+    const modal = await modalController.create({
+      component: FileDetailsModal,
+      cssClass: 'file-details-modal',
+      componentProps: {
+        entry: entry.value,
+        workspaceHandle: workspaceHandle,
+      },
+    });
+    await modal.present();
+    await modal.onWillDismiss();
   }
 }
 
