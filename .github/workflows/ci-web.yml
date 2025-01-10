@@ -56,12 +56,19 @@ jobs:
         timeout-minutes: 2
 
       - name: Install dependencies
+        shell: bash -o pipefail -ex {0}
         run: |
           # Execute 'npm install' until success,
-          # This is done that way because sometime some CDN response with 503
+          # This is done that way because sometime some CDN respond with 503
           until npm install --ignore-scripts; do
             echo "Failed install, retrying ...";
           done
+          # Failed if package-lock.json was modified
+          # This is done to ensure the lock file is up-to-date
+          test -z "$(git status --porcelain package-lock.json)"
+          # Prune dependencies present in `node_modules/` not listed in `package-lock.json`
+          # Likely older dependencies unlisted but still present in the cache
+          npm prune
         working-directory: client
         timeout-minutes: 5
 
