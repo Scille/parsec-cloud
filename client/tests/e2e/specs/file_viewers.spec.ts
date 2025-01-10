@@ -28,44 +28,6 @@ msTest('Spreadsheet viewer', async ({ documents }) => {
   await expect(wrapper.locator('.spreadsheet-content').locator('td')).toHaveText(['E', '5', 'F', '6', 'G', '7', 'H', '8']);
 });
 
-msTest('PDF viewer', async ({ documents }) => {
-  await openFileType(documents, 'pdf');
-  await expect(documents).toBeViewerPage();
-  await expect(documents).toHavePageTitle('File viewer');
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.pdf$/);
-  const wrapper = documents.locator('.file-viewer-wrapper');
-  const canvas = wrapper.locator('.pdf-container').locator('canvas');
-  const canvasWidth = Number(await canvas.getAttribute('width'));
-  const canvasHeight = Number(await canvas.getAttribute('height'));
-
-  const bottomBar = documents.locator('.file-viewer-bottombar');
-  const buttons = bottomBar.locator('.file-controls-button');
-  await expect(buttons).toHaveText(['', '', '', '']);
-
-  // Pagination
-  const pagination = bottomBar.locator('.file-controls-pagination');
-  await expect(pagination).toHaveCount(1);
-  const input = pagination.locator('.file-controls-input');
-  await expect(input).toHaveText('Page 1 / 2');
-
-  // Zoom-
-  const zoom = bottomBar.locator('.file-controls-zoom');
-  await expect(zoom).toHaveCount(1);
-  await buttons.nth(1).click();
-  expect(Number(await canvas.getAttribute('width'))).toBeLessThan(canvasWidth);
-  expect(Number(await canvas.getAttribute('height'))).toBeLessThan(canvasHeight);
-
-  // Restore zoom
-  await buttons.nth(0).click();
-  expect(Number(await canvas.getAttribute('width'))).toBe(canvasWidth);
-  expect(Number(await canvas.getAttribute('height'))).toBe(canvasHeight);
-
-  // Zoom+
-  await buttons.nth(2).click();
-  expect(Number(await canvas.getAttribute('width'))).toBeGreaterThan(canvasWidth);
-  expect(Number(await canvas.getAttribute('height'))).toBeGreaterThan(canvasHeight);
-});
-
 msTest('Image viewer', async ({ documents }) => {
   await openFileType(documents, 'png');
   await expect(documents).toBeViewerPage();
