@@ -162,10 +162,12 @@
             <!-- list of favorite workspaces -->
             <!-- show only favorites -->
             <sidebar-menu-list
-              v-if="favoritesWorkspaces.length > 0"
-              :title="'SideMenu.favorites'"
+              v-show="favoritesWorkspaces.length > 0"
+              title="SideMenu.favorites"
               :icon="star"
               class="favorites"
+              ref="favoritesMenu"
+              @visibility-changed="onFavoritesMenuVisibilityChanged"
             >
               <sidebar-workspace-item
                 v-for="workspace in favoritesWorkspaces"
@@ -180,9 +182,11 @@
 
             <!-- list of workspaces -->
             <sidebar-menu-list
-              :title="'SideMenu.workspaces'"
+              title="SideMenu.workspaces"
               :icon="business"
               class="workspaces"
+              ref="workspacesMenu"
+              @visibility-changed="onWorkspacesMenuVisibilityChanged"
             >
               <ion-text
                 class="body list-sidebar__no-workspace"
@@ -392,14 +396,32 @@ const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration | undefined>(undefined);
 const isExpired = ref(false);
 const loggedInDevices = ref<LoggedInDeviceInfo[]>([]);
+const favoritesMenu = ref<typeof SidebarMenuList>();
+const workspacesMenu = ref<typeof SidebarMenuList>();
+let timeoutId: number | undefined = undefined;
 
 const MIN_WIDTH = 150;
 const MAX_WIDTH = 370;
 
-const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
+const watchSidebarWidthCancel = watch(computedWidth, async (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
   // set toast offset
   setToastOffset(value);
+
+  if (timeoutId !== undefined) {
+    clearTimeout(timeoutId);
+  }
+  timeoutId = window.setTimeout(async () => {
+    await storageManager.updateComponentData<SidebarSavedData>(
+      SIDEBAR_MENU_DATA_KEY,
+      {
+        width: value < MIN_WIDTH ? storedWidth.value : computedWidth.value,
+        hidden: value < MIN_WIDTH,
+      },
+      SidebarDefaultData,
+    );
+    timeoutId = undefined;
+  }, 2000);
 });
 
 async function goToWorkspace(workspaceHandle: WorkspaceHandle): Promise<void> {
@@ -455,6 +477,10 @@ onMounted(async () => {
     computedWidth.value = savedSidebarData.width;
   }
   sidebarWidthProperty.value = `${computedWidth.value}px`;
+  if (workspacesMenu.value && favoritesMenu.value) {
+    workspacesMenu.value.setContentVisible(savedSidebarData.workspacesVisible, true);
+    favoritesMenu.value.setContentVisible(savedSidebarData.favoritesVisible, true);
+  }
 
   const connInfo = getConnectionInfo();
   if (connInfo) {
@@ -484,10 +510,11 @@ onUnmounted(async () => {
   if (eventDistributorCbId) {
     eventDistributor.removeCallback(eventDistributorCbId);
   }
-  await storageManager.storeComponentData<SidebarSavedData>(SIDEBAR_MENU_DATA_KEY, {
-    width: computedWidth.value < MIN_WIDTH ? storedWidth.value : computedWidth.value,
-    hidden: computedWidth.value < MIN_WIDTH,
-  });
+  // Clear it. Worst case, some things will not be saved, but it's better
+  // than to risk accessing something no longer available.
+  if (timeoutId !== undefined) {
+    clearTimeout(timeoutId);
+  }
   watchSidebarWidthCancel();
   setToastOffset(0);
 });
@@ -549,6 +576,26 @@ async function openRecentFile(file: RecentFile): Promise<void> {
 
 async function removeRecentFile(file: RecentFile): Promise<void> {
   recentFileManager.removeFile(file);
+}
+
+async function onWorkspacesMenuVisibilityChanged(visible: boolean): Promise<void> {
+  await storageManager.updateComponentData<SidebarSavedData>(
+    SIDEBAR_MENU_DATA_KEY,
+    {
+      workspacesVisible: visible,
+    },
+    SidebarDefaultData,
+  );
+}
+
+async function onFavoritesMenuVisibilityChanged(visible: boolean): Promise<void> {
+  await storageManager.updateComponentData<SidebarSavedData>(
+    SIDEBAR_MENU_DATA_KEY,
+    {
+      favoritesVisible: visible,
+    },
+    SidebarDefaultData,
+  );
 }
 </script>
 
