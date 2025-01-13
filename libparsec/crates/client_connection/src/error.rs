@@ -117,19 +117,9 @@ impl From<ProtocolEncodeError> for ConnectionError {
 }
 
 pub(crate) fn unsupported_api_version_from_headers(
+    api_version: ApiVersion,
     headers: &reqwest::header::HeaderMap,
 ) -> ConnectionError {
-    let api_version = match headers.get("Api-Version") {
-        Some(api_version) => {
-            let api_version = api_version.to_str().unwrap_or_default();
-            match api_version.try_into() {
-                Ok(api_version) => api_version,
-                Err(_) => return ConnectionError::WrongApiVersion(api_version.into()),
-            }
-        }
-        None => return ConnectionError::MissingApiVersion,
-    };
-
     match headers.get("Supported-Api-Versions") {
         Some(supported_api_versions) => ConnectionError::UnsupportedApiVersion {
             api_version,

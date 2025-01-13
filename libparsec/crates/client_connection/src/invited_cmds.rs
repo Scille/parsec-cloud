@@ -119,7 +119,7 @@ impl InvitedCmds {
             410 => Err(ConnectionError::InvitationAlreadyUsedOrDeleted),
             415 => Err(ConnectionError::BadContent),
             422 => Err(crate::error::unsupported_api_version_from_headers(
-                resp.headers(),
+                *api_version, resp.headers(),
             )),
             460 => Err(ConnectionError::ExpiredOrganization),
             // No 461/462/463: no user here
