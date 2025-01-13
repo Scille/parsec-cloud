@@ -216,7 +216,9 @@
             <sidebar-menu-list
               :title="'SideMenu.recentDocuments'"
               :icon="documentIcon"
-              v-if="recentFileManager.getFiles().length > 0"
+              v-show="recentFileManager.getFiles().length > 0"
+              ref="recentFilesMenu"
+              @visibility-changed="onRecentFilesMenuVisibilityChanged"
             >
               <sidebar-recent-file-item
                 v-for="file in recentFileManager.getFiles()"
@@ -325,6 +327,7 @@ import {
   getConnectionInfo,
   getLoggedInDevices,
   LoggedInDeviceInfo,
+  needsMocks,
 } from '@/parsec';
 import {
   Routes,
@@ -380,6 +383,7 @@ import { Duration } from 'luxon';
 import { recentFileManager, RecentFile } from '@/services/recentFiles';
 import { openPath } from '@/services/fileOpener';
 import { SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/sidebar-menu/utils';
+import { FileContentType } from '@/common/fileTypes';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
@@ -398,6 +402,7 @@ const isExpired = ref(false);
 const loggedInDevices = ref<LoggedInDeviceInfo[]>([]);
 const favoritesMenu = ref<typeof SidebarMenuList>();
 const workspacesMenu = ref<typeof SidebarMenuList>();
+const recentFilesMenu = ref<typeof SidebarMenuList>();
 let timeoutId: number | undefined = undefined;
 
 const MIN_WIDTH = 150;
@@ -477,9 +482,10 @@ onMounted(async () => {
     computedWidth.value = savedSidebarData.width;
   }
   sidebarWidthProperty.value = `${computedWidth.value}px`;
-  if (workspacesMenu.value && favoritesMenu.value) {
+  if (workspacesMenu.value && favoritesMenu.value && recentFilesMenu.value) {
     workspacesMenu.value.setContentVisible(savedSidebarData.workspacesVisible, true);
     favoritesMenu.value.setContentVisible(savedSidebarData.favoritesVisible, true);
+    recentFilesMenu.value.setContentVisible(savedSidebarData.recentFilesVisible, true);
   }
 
   const connInfo = getConnectionInfo();
@@ -503,6 +509,33 @@ onMounted(async () => {
     if (isTrialOrg.value) {
       expirationDuration.value = getDurationBeforeExpiration(currentDevice.value.createdOn);
     }
+  }
+
+  // Adds fake files by default in dev mode
+  // to make sure we keep the feature in mind
+  if (needsMocks()) {
+    recentFileManager.addFile({
+      entryId: crypto.randomUUID().toString(),
+      workspaceHandle: 1337,
+      path: '/a/b/File_Fake image.png',
+      name: 'File_Fake image.png',
+      contentType: {
+        type: FileContentType.Image,
+        extension: 'png',
+        mimeType: 'image/png',
+      },
+    });
+    recentFileManager.addFile({
+      entryId: crypto.randomUUID().toString(),
+      workspaceHandle: 1337,
+      path: '/a/b/File_Fake PDF document.pdf',
+      name: 'File_Fake PDF document.pdf',
+      contentType: {
+        type: FileContentType.PdfDocument,
+        extension: 'pdf',
+        mimeType: 'application/pdf',
+      },
+    });
   }
 });
 
@@ -593,6 +626,16 @@ async function onFavoritesMenuVisibilityChanged(visible: boolean): Promise<void>
     SIDEBAR_MENU_DATA_KEY,
     {
       favoritesVisible: visible,
+    },
+    SidebarDefaultData,
+  );
+}
+
+async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<void> {
+  await storageManager.updateComponentData<SidebarSavedData>(
+    SIDEBAR_MENU_DATA_KEY,
+    {
+      recentFilesVisible: visible,
     },
     SidebarDefaultData,
   );

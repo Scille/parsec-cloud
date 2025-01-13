@@ -10,6 +10,7 @@
     >
       <div class="list-sidebar-header-title">
         <ion-icon
+          v-if="icon"
           class="list-sidebar-header-title__icon"
           :icon="icon"
         />
@@ -19,7 +20,7 @@
       </div>
       <ion-icon
         class="list-sidebar-toggle-icon"
-        :icon="isContentVisible ? remove : add"
+        :icon="isContentVisible ? chevronDown : chevronForward"
       />
     </ion-header>
     <div
@@ -35,13 +36,13 @@
 import { IonList, IonHeader, IonIcon, IonText } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
 import { ref } from 'vue';
-import { add, remove } from 'ionicons/icons';
+import { chevronDown, chevronForward } from 'ionicons/icons';
 
 const isContentVisible = ref(true);
 
 defineProps<{
   title: Translatable;
-  icon: string;
+  icon?: string;
 }>();
 
 defineExpose({
