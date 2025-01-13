@@ -108,7 +108,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@a86da1a3cb51967612c80d6dc98c5cac03a73025 # pin v2.47.7
+      - uses: taiki-e/install-action@c87777c3160ce0cfd8fc286df47224d2449cb76b # pin v2.47.11
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -125,7 +125,7 @@ jobs:
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=client/dist/Parsec-SBOM-Web.spdx.json .
 
-      - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # pin v4.5.0
+      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # pin v4.6.0
         with:
           name: webapp
           path: client/dist/
@@ -211,14 +211,14 @@ jobs:
           mv -v parsec_*_*.snap Parsec_${{ steps.version.outputs.full }}_linux_$ARCH.snap
 
       # Install syft
-      - uses: taiki-e/install-action@a86da1a3cb51967612c80d6dc98c5cac03a73025 # pin v2.47.7
+      - uses: taiki-e/install-action@c87777c3160ce0cfd8fc286df47224d2449cb76b # pin v2.47.11
         with:
           tool: syft@0.84.0
 
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Electron-linux-snap.spdx.json .
 
-      - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # pin v4.5.0
+      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # pin v4.6.0
         with:
           name: linux-snap-${{ runner.arch }}-electron
           path: |
@@ -404,7 +404,7 @@ jobs:
         timeout-minutes: 1
 
       # Install syft
-      - uses: taiki-e/install-action@a86da1a3cb51967612c80d6dc98c5cac03a73025 # pin v2.47.7
+      - uses: taiki-e/install-action@c87777c3160ce0cfd8fc286df47224d2449cb76b # pin v2.47.11
         with:
           tool: syft@0.84.0
 
@@ -441,7 +441,7 @@ jobs:
           grep -q -e "${{ steps.build-info.outputs.app_file }}" "${{ steps.build-info.outputs.latest_file }}"
         working-directory: client/electron/dist
 
-      - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # pin v4.5.0
+      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # pin v4.6.0
         with:
           name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron
           path: |
@@ -452,7 +452,7 @@ jobs:
           if-no-files-found: error
         timeout-minutes: 10
 
-      - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # pin v4.5.0
+      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # pin v4.6.0
         if: matrix.platform == 'windows'
         with:
           name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron-pre-built
