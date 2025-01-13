@@ -14,6 +14,8 @@ Result<{{ render_type(t.ok) }}, {{ render_type(t.err) }}>
 Map<{{ render_type(t.key) }}, {{ render_type(t.value) }}>
 {%- elif t.kind == "list" -%}
 Array<{{ render_type(t.elem) }}>
+{%- elif t.kind == "set" -%}
+Array<{{ render_type(t.elem) }}>
 {%- elif t.kind == "tuple" -%}
 [
     {%- for value in t.values -%}

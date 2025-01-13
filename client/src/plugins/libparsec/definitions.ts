@@ -862,6 +862,24 @@ export type ClientExportRecoveryDeviceError =
   | ClientExportRecoveryDeviceErrorStopped
   | ClientExportRecoveryDeviceErrorTimestampOutOfBallpark
 
+// ClientGetSelfShamirRecoveryError
+export enum ClientGetSelfShamirRecoveryErrorTag {
+    Internal = 'ClientGetSelfShamirRecoveryErrorInternal',
+    Stopped = 'ClientGetSelfShamirRecoveryErrorStopped',
+}
+
+export interface ClientGetSelfShamirRecoveryErrorInternal {
+    tag: ClientGetSelfShamirRecoveryErrorTag.Internal
+    error: string
+}
+export interface ClientGetSelfShamirRecoveryErrorStopped {
+    tag: ClientGetSelfShamirRecoveryErrorTag.Stopped
+    error: string
+}
+export type ClientGetSelfShamirRecoveryError =
+  | ClientGetSelfShamirRecoveryErrorInternal
+  | ClientGetSelfShamirRecoveryErrorStopped
+
 // ClientGetTosError
 export enum ClientGetTosErrorTag {
     Internal = 'ClientGetTosErrorInternal',
@@ -951,6 +969,24 @@ export type ClientListFrozenUsersError =
   | ClientListFrozenUsersErrorAuthorNotAllowed
   | ClientListFrozenUsersErrorInternal
   | ClientListFrozenUsersErrorOffline
+
+// ClientListShamirRecoveriesForOthersError
+export enum ClientListShamirRecoveriesForOthersErrorTag {
+    Internal = 'ClientListShamirRecoveriesForOthersErrorInternal',
+    Stopped = 'ClientListShamirRecoveriesForOthersErrorStopped',
+}
+
+export interface ClientListShamirRecoveriesForOthersErrorInternal {
+    tag: ClientListShamirRecoveriesForOthersErrorTag.Internal
+    error: string
+}
+export interface ClientListShamirRecoveriesForOthersErrorStopped {
+    tag: ClientListShamirRecoveriesForOthersErrorTag.Stopped
+    error: string
+}
+export type ClientListShamirRecoveriesForOthersError =
+  | ClientListShamirRecoveriesForOthersErrorInternal
+  | ClientListShamirRecoveriesForOthersErrorStopped
 
 // ClientListUserDevicesError
 export enum ClientListUserDevicesErrorTag {
@@ -1842,6 +1878,56 @@ export type MoveEntryMode =
   | MoveEntryModeExchange
   | MoveEntryModeNoReplace
 
+// OtherShamirRecoveryInfo
+export enum OtherShamirRecoveryInfoTag {
+    Deleted = 'OtherShamirRecoveryInfoDeleted',
+    SetupAllValid = 'OtherShamirRecoveryInfoSetupAllValid',
+    SetupButUnusable = 'OtherShamirRecoveryInfoSetupButUnusable',
+    SetupWithRevokedRecipients = 'OtherShamirRecoveryInfoSetupWithRevokedRecipients',
+}
+
+export interface OtherShamirRecoveryInfoDeleted {
+    tag: OtherShamirRecoveryInfoTag.Deleted
+    userId: UserID
+    createdOn: DateTime
+    createdBy: DeviceID
+    threshold: NonZeroU8
+    perRecipientShares: Map<UserID, NonZeroU8>
+    deletedOn: DateTime
+    deletedBy: DeviceID
+}
+export interface OtherShamirRecoveryInfoSetupAllValid {
+    tag: OtherShamirRecoveryInfoTag.SetupAllValid
+    userId: UserID
+    createdOn: DateTime
+    createdBy: DeviceID
+    threshold: NonZeroU8
+    perRecipientShares: Map<UserID, NonZeroU8>
+}
+export interface OtherShamirRecoveryInfoSetupButUnusable {
+    tag: OtherShamirRecoveryInfoTag.SetupButUnusable
+    userId: UserID
+    createdOn: DateTime
+    createdBy: DeviceID
+    threshold: NonZeroU8
+    perRecipientShares: Map<UserID, NonZeroU8>
+    revokedRecipients: Array<UserID>
+}
+export interface OtherShamirRecoveryInfoSetupWithRevokedRecipients {
+    tag: OtherShamirRecoveryInfoTag.SetupWithRevokedRecipients
+    userId: UserID
+    createdOn: DateTime
+    createdBy: DeviceID
+    threshold: NonZeroU8
+    perRecipientShares: Map<UserID, NonZeroU8>
+    revokedRecipients: Array<UserID>
+}
+export type OtherShamirRecoveryInfo =
+  | OtherShamirRecoveryInfoDeleted
+  | OtherShamirRecoveryInfoSetupAllValid
+  | OtherShamirRecoveryInfoSetupButUnusable
+  | OtherShamirRecoveryInfoSetupWithRevokedRecipients
+
 // ParseParsecAddrError
 export enum ParseParsecAddrErrorTag {
     InvalidUrl = 'ParseParsecAddrErrorInvalidUrl',
@@ -1937,6 +2023,57 @@ export type ParsedParsecAddr =
   | ParsedParsecAddrPkiEnrollment
   | ParsedParsecAddrServer
   | ParsedParsecAddrWorkspacePath
+
+// SelfShamirRecoveryInfo
+export enum SelfShamirRecoveryInfoTag {
+    Deleted = 'SelfShamirRecoveryInfoDeleted',
+    NeverSetup = 'SelfShamirRecoveryInfoNeverSetup',
+    SetupAllValid = 'SelfShamirRecoveryInfoSetupAllValid',
+    SetupButUnusable = 'SelfShamirRecoveryInfoSetupButUnusable',
+    SetupWithRevokedRecipients = 'SelfShamirRecoveryInfoSetupWithRevokedRecipients',
+}
+
+export interface SelfShamirRecoveryInfoDeleted {
+    tag: SelfShamirRecoveryInfoTag.Deleted
+    createdOn: DateTime
+    createdBy: DeviceID
+    threshold: NonZeroU8
+    perRecipientShares: Map<UserID, NonZeroU8>
+    deletedOn: DateTime
+    deletedBy: DeviceID
+}
+export interface SelfShamirRecoveryInfoNeverSetup {
+    tag: SelfShamirRecoveryInfoTag.NeverSetup
+}
+export interface SelfShamirRecoveryInfoSetupAllValid {
+    tag: SelfShamirRecoveryInfoTag.SetupAllValid
+    createdOn: DateTime
+    createdBy: DeviceID
+    threshold: NonZeroU8
+    perRecipientShares: Map<UserID, NonZeroU8>
+}
+export interface SelfShamirRecoveryInfoSetupButUnusable {
+    tag: SelfShamirRecoveryInfoTag.SetupButUnusable
+    createdOn: DateTime
+    createdBy: DeviceID
+    threshold: NonZeroU8
+    perRecipientShares: Map<UserID, NonZeroU8>
+    revokedRecipients: Array<UserID>
+}
+export interface SelfShamirRecoveryInfoSetupWithRevokedRecipients {
+    tag: SelfShamirRecoveryInfoTag.SetupWithRevokedRecipients
+    createdOn: DateTime
+    createdBy: DeviceID
+    threshold: NonZeroU8
+    perRecipientShares: Map<UserID, NonZeroU8>
+    revokedRecipients: Array<UserID>
+}
+export type SelfShamirRecoveryInfo =
+  | SelfShamirRecoveryInfoDeleted
+  | SelfShamirRecoveryInfoNeverSetup
+  | SelfShamirRecoveryInfoSetupAllValid
+  | SelfShamirRecoveryInfoSetupButUnusable
+  | SelfShamirRecoveryInfoSetupWithRevokedRecipients
 
 // TestbedError
 export enum TestbedErrorTag {
@@ -3303,6 +3440,9 @@ export interface LibParsecPlugin {
         client_handle: Handle,
         device_label: DeviceLabel
     ): Promise<Result<[string, Uint8Array], ClientExportRecoveryDeviceError>>
+    clientGetSelfShamirRecovery(
+        client_handle: Handle
+    ): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>
     clientGetTos(
         client: Handle
     ): Promise<Result<Tos, ClientGetTosError>>
@@ -3319,6 +3459,9 @@ export interface LibParsecPlugin {
     clientListInvitations(
         client: Handle
     ): Promise<Result<Array<InviteListItem>, ListInvitationsError>>
+    clientListShamirRecoveriesForOthers(
+        client_handle: Handle
+    ): Promise<Result<Array<OtherShamirRecoveryInfo>, ClientListShamirRecoveriesForOthersError>>
     clientListUserDevices(
         client: Handle,
         user: UserID

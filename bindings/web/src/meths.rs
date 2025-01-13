@@ -818,7 +818,8 @@ fn struct_device_claim_finalize_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::DeviceClaimFinalizeInfo { handle })
@@ -850,7 +851,8 @@ fn struct_device_claim_in_progress1_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let greeter_sas = {
@@ -942,7 +944,8 @@ fn struct_device_claim_in_progress2_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let claimer_sas = {
@@ -994,7 +997,8 @@ fn struct_device_claim_in_progress3_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::DeviceClaimInProgress3Info { handle })
@@ -1026,7 +1030,8 @@ fn struct_device_greet_in_progress1_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let greeter_sas = {
@@ -1078,7 +1083,8 @@ fn struct_device_greet_in_progress2_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let claimer_sas = {
@@ -1170,7 +1176,8 @@ fn struct_device_greet_in_progress3_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::DeviceGreetInProgress3Info { handle })
@@ -1202,7 +1209,8 @@ fn struct_device_greet_in_progress4_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let requested_device_label = {
@@ -1258,7 +1266,8 @@ fn struct_device_greet_initial_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::DeviceGreetInitialInfo { handle })
@@ -1458,7 +1467,8 @@ fn struct_file_stat_js_to_rs(obj: JsValue) -> Result<libparsec::FileStat, JsValu
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let is_placeholder = {
@@ -1485,7 +1495,8 @@ fn struct_file_stat_js_to_rs(obj: JsValue) -> Result<libparsec::FileStat, JsValu
             if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u64 number")));
             }
-            v as u64
+            let v = v as u64;
+            v
         }
     };
     Ok(libparsec::FileStat {
@@ -1802,7 +1813,8 @@ fn struct_started_workspace_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let id = {
@@ -1865,7 +1877,8 @@ fn struct_started_workspace_info_js_to_rs(
                             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
                             }
-                            v as u32
+                            let v = v as u32;
+                            v
                         }
                     },
                     {
@@ -2053,7 +2066,8 @@ fn struct_user_claim_finalize_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::UserClaimFinalizeInfo { handle })
@@ -2085,7 +2099,8 @@ fn struct_user_claim_in_progress1_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let greeter_sas = {
@@ -2177,7 +2192,8 @@ fn struct_user_claim_in_progress2_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let claimer_sas = {
@@ -2229,7 +2245,8 @@ fn struct_user_claim_in_progress3_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::UserClaimInProgress3Info { handle })
@@ -2261,7 +2278,8 @@ fn struct_user_greet_in_progress1_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let greeter_sas = {
@@ -2313,7 +2331,8 @@ fn struct_user_greet_in_progress2_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let claimer_sas = {
@@ -2405,7 +2424,8 @@ fn struct_user_greet_in_progress3_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::UserGreetInProgress3Info { handle })
@@ -2437,7 +2457,8 @@ fn struct_user_greet_in_progress4_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let requested_human_handle = {
@@ -2504,7 +2525,8 @@ fn struct_user_greet_initial_info_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::UserGreetInitialInfo { handle })
@@ -2761,7 +2783,8 @@ fn struct_workspace_history_file_stat_js_to_rs(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u32 number")));
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let size = {
@@ -2774,7 +2797,8 @@ fn struct_workspace_history_file_stat_js_to_rs(
             if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
                 return Err(JsValue::from(TypeError::new("Not an u64 number")));
             }
-            v as u64
+            let v = v as u64;
+            v
         }
     };
     Ok(libparsec::WorkspaceHistoryFileStat {
@@ -3024,7 +3048,8 @@ fn variant_active_users_limit_js_to_rs(
                     if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u64 number")));
                     }
-                    v as u64
+                    let v = v as u64;
+                    v
                 }
             };
             Ok(libparsec::ActiveUsersLimit::LimitedTo(x1))
@@ -3076,7 +3101,8 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let greeter_user_id = {
@@ -3115,7 +3141,8 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let claimer_email = {
@@ -4037,7 +4064,8 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                     if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u64 number")));
                     }
-                    v as u64
+                    let v = v as u64;
+                    v
                 }
             };
             let block_index = {
@@ -4050,7 +4078,8 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                     if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u64 number")));
                     }
-                    v as u64
+                    let v = v as u64;
+                    v
                 }
             };
             let blocksize = {
@@ -4063,7 +4092,8 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                     if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u64 number")));
                     }
-                    v as u64
+                    let v = v as u64;
+                    v
                 }
             };
             Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncProgress {
@@ -4549,6 +4579,34 @@ fn variant_client_export_recovery_device_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientGetSelfShamirRecoveryError
+
+#[allow(dead_code)]
+fn variant_client_get_self_shamir_recovery_error_rs_to_js(
+    rs_obj: libparsec::ClientGetSelfShamirRecoveryError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientGetSelfShamirRecoveryError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetSelfShamirRecoveryErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientGetSelfShamirRecoveryError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetSelfShamirRecoveryErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientGetTosError
 
 #[allow(dead_code)]
@@ -4656,6 +4714,34 @@ fn variant_client_list_frozen_users_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientListFrozenUsersErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientListShamirRecoveriesForOthersError
+
+#[allow(dead_code)]
+fn variant_client_list_shamir_recoveries_for_others_error_rs_to_js(
+    rs_obj: libparsec::ClientListShamirRecoveriesForOthersError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientListShamirRecoveriesForOthersError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListShamirRecoveriesForOthersErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientListShamirRecoveriesForOthersError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListShamirRecoveriesForOthersErrorStopped".into(),
             )?;
         }
     }
@@ -5780,7 +5866,8 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let is_placeholder = {
@@ -5807,7 +5894,8 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                     if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u64 number")));
                     }
-                    v as u64
+                    let v = v as u64;
+                    v
                 }
             };
             Ok(libparsec::EntryStat::File {
@@ -5910,7 +5998,8 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let is_placeholder = {
@@ -7001,6 +7090,1045 @@ fn variant_move_entry_mode_rs_to_js(rs_obj: libparsec::MoveEntryMode) -> Result<
     Ok(js_obj)
 }
 
+// OtherShamirRecoveryInfo
+
+#[allow(dead_code)]
+fn variant_other_shamir_recovery_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::OtherShamirRecoveryInfo, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "OtherShamirRecoveryInfoDeleted" => {
+            let user_id = {
+                let js_val = Reflect::get(&obj, &"userId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+            };
+            let created_on = {
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let created_by = {
+                let js_val = Reflect::get(&obj, &"createdBy".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
+            let threshold = {
+                let js_val = Reflect::get(&obj, &"threshold".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                    }
+                    let v = v as u8;
+                    let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                        std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_u8(v) {
+                        Ok(val) => val,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                }
+            };
+            let per_recipient_shares = {
+                let js_val = Reflect::get(&obj, &"perRecipientShares".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Map>()
+                        .map_err(|_| TypeError::new("Not a Map"))?;
+                    let mut converted =
+                        std::collections::HashMap::with_capacity(js_val.size() as usize);
+                    let js_keys = js_val.keys();
+                    let js_values = js_val.values();
+                    loop {
+                        let next_js_key = js_keys.next()?;
+                        let next_js_value = js_values.next()?;
+                        if next_js_key.done() {
+                            assert!(next_js_value.done());
+                            break;
+                        }
+                        assert!(!next_js_value.done());
+
+                        let js_key = next_js_key.value();
+                        let js_value = next_js_value.value();
+
+                        let key = js_key
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::UserID, _> {
+                                        libparsec::UserID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                        let value = {
+                            let v = js_value
+                                .dyn_into::<Number>()
+                                .map_err(|_| TypeError::new("Not a number"))?
+                                .value_of();
+                            if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                                return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                            }
+                            let v = v as u8;
+                            let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                                std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_u8(v) {
+                                Ok(val) => val,
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                }
+                            }
+                        };
+                        converted.insert(key, value);
+                    }
+                    converted
+                }
+            };
+            let deleted_on = {
+                let js_val = Reflect::get(&obj, &"deletedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let deleted_by = {
+                let js_val = Reflect::get(&obj, &"deletedBy".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
+            Ok(libparsec::OtherShamirRecoveryInfo::Deleted {
+                user_id,
+                created_on,
+                created_by,
+                threshold,
+                per_recipient_shares,
+                deleted_on,
+                deleted_by,
+            })
+        }
+        "OtherShamirRecoveryInfoSetupAllValid" => {
+            let user_id = {
+                let js_val = Reflect::get(&obj, &"userId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+            };
+            let created_on = {
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let created_by = {
+                let js_val = Reflect::get(&obj, &"createdBy".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
+            let threshold = {
+                let js_val = Reflect::get(&obj, &"threshold".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                    }
+                    let v = v as u8;
+                    let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                        std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_u8(v) {
+                        Ok(val) => val,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                }
+            };
+            let per_recipient_shares = {
+                let js_val = Reflect::get(&obj, &"perRecipientShares".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Map>()
+                        .map_err(|_| TypeError::new("Not a Map"))?;
+                    let mut converted =
+                        std::collections::HashMap::with_capacity(js_val.size() as usize);
+                    let js_keys = js_val.keys();
+                    let js_values = js_val.values();
+                    loop {
+                        let next_js_key = js_keys.next()?;
+                        let next_js_value = js_values.next()?;
+                        if next_js_key.done() {
+                            assert!(next_js_value.done());
+                            break;
+                        }
+                        assert!(!next_js_value.done());
+
+                        let js_key = next_js_key.value();
+                        let js_value = next_js_value.value();
+
+                        let key = js_key
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::UserID, _> {
+                                        libparsec::UserID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                        let value = {
+                            let v = js_value
+                                .dyn_into::<Number>()
+                                .map_err(|_| TypeError::new("Not a number"))?
+                                .value_of();
+                            if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                                return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                            }
+                            let v = v as u8;
+                            let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                                std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_u8(v) {
+                                Ok(val) => val,
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                }
+                            }
+                        };
+                        converted.insert(key, value);
+                    }
+                    converted
+                }
+            };
+            Ok(libparsec::OtherShamirRecoveryInfo::SetupAllValid {
+                user_id,
+                created_on,
+                created_by,
+                threshold,
+                per_recipient_shares,
+            })
+        }
+        "OtherShamirRecoveryInfoSetupButUnusable" => {
+            let user_id = {
+                let js_val = Reflect::get(&obj, &"userId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+            };
+            let created_on = {
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let created_by = {
+                let js_val = Reflect::get(&obj, &"createdBy".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
+            let threshold = {
+                let js_val = Reflect::get(&obj, &"threshold".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                    }
+                    let v = v as u8;
+                    let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                        std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_u8(v) {
+                        Ok(val) => val,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                }
+            };
+            let per_recipient_shares = {
+                let js_val = Reflect::get(&obj, &"perRecipientShares".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Map>()
+                        .map_err(|_| TypeError::new("Not a Map"))?;
+                    let mut converted =
+                        std::collections::HashMap::with_capacity(js_val.size() as usize);
+                    let js_keys = js_val.keys();
+                    let js_values = js_val.values();
+                    loop {
+                        let next_js_key = js_keys.next()?;
+                        let next_js_value = js_values.next()?;
+                        if next_js_key.done() {
+                            assert!(next_js_value.done());
+                            break;
+                        }
+                        assert!(!next_js_value.done());
+
+                        let js_key = next_js_key.value();
+                        let js_value = next_js_value.value();
+
+                        let key = js_key
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::UserID, _> {
+                                        libparsec::UserID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                        let value = {
+                            let v = js_value
+                                .dyn_into::<Number>()
+                                .map_err(|_| TypeError::new("Not a number"))?
+                                .value_of();
+                            if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                                return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                            }
+                            let v = v as u8;
+                            let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                                std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_u8(v) {
+                                Ok(val) => val,
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                }
+                            }
+                        };
+                        converted.insert(key, value);
+                    }
+                    converted
+                }
+            };
+            let revoked_recipients = {
+                let js_val = Reflect::get(&obj, &"revokedRecipients".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Array>()
+                        .map_err(|_| TypeError::new("Not an array"))?;
+                    let mut converted = Vec::with_capacity(js_val.length() as usize);
+                    for x in js_val.iter() {
+                        let x_converted = x
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::UserID, _> {
+                                        libparsec::UserID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                        converted.push(x_converted);
+                    }
+                    converted.into_iter().collect()
+                }
+            };
+            Ok(libparsec::OtherShamirRecoveryInfo::SetupButUnusable {
+                user_id,
+                created_on,
+                created_by,
+                threshold,
+                per_recipient_shares,
+                revoked_recipients,
+            })
+        }
+        "OtherShamirRecoveryInfoSetupWithRevokedRecipients" => {
+            let user_id = {
+                let js_val = Reflect::get(&obj, &"userId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+            };
+            let created_on = {
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let created_by = {
+                let js_val = Reflect::get(&obj, &"createdBy".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
+            let threshold = {
+                let js_val = Reflect::get(&obj, &"threshold".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                    }
+                    let v = v as u8;
+                    let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                        std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_u8(v) {
+                        Ok(val) => val,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                }
+            };
+            let per_recipient_shares = {
+                let js_val = Reflect::get(&obj, &"perRecipientShares".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Map>()
+                        .map_err(|_| TypeError::new("Not a Map"))?;
+                    let mut converted =
+                        std::collections::HashMap::with_capacity(js_val.size() as usize);
+                    let js_keys = js_val.keys();
+                    let js_values = js_val.values();
+                    loop {
+                        let next_js_key = js_keys.next()?;
+                        let next_js_value = js_values.next()?;
+                        if next_js_key.done() {
+                            assert!(next_js_value.done());
+                            break;
+                        }
+                        assert!(!next_js_value.done());
+
+                        let js_key = next_js_key.value();
+                        let js_value = next_js_value.value();
+
+                        let key = js_key
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::UserID, _> {
+                                        libparsec::UserID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                        let value = {
+                            let v = js_value
+                                .dyn_into::<Number>()
+                                .map_err(|_| TypeError::new("Not a number"))?
+                                .value_of();
+                            if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                                return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                            }
+                            let v = v as u8;
+                            let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                                std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_u8(v) {
+                                Ok(val) => val,
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                }
+                            }
+                        };
+                        converted.insert(key, value);
+                    }
+                    converted
+                }
+            };
+            let revoked_recipients = {
+                let js_val = Reflect::get(&obj, &"revokedRecipients".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Array>()
+                        .map_err(|_| TypeError::new("Not an array"))?;
+                    let mut converted = Vec::with_capacity(js_val.length() as usize);
+                    for x in js_val.iter() {
+                        let x_converted = x
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::UserID, _> {
+                                        libparsec::UserID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                        converted.push(x_converted);
+                    }
+                    converted.into_iter().collect()
+                }
+            };
+            Ok(
+                libparsec::OtherShamirRecoveryInfo::SetupWithRevokedRecipients {
+                    user_id,
+                    created_on,
+                    created_by,
+                    threshold,
+                    per_recipient_shares,
+                    revoked_recipients,
+                },
+            )
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a OtherShamirRecoveryInfo",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_other_shamir_recovery_info_rs_to_js(
+    rs_obj: libparsec::OtherShamirRecoveryInfo,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::OtherShamirRecoveryInfo::Deleted {
+            user_id,
+            created_on,
+            created_by,
+            threshold,
+            per_recipient_shares,
+            deleted_on,
+            deleted_by,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OtherShamirRecoveryInfoDeleted".into(),
+            )?;
+            let js_user_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+            let js_created_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+            let js_created_by = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(created_by) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
+            let js_threshold = {
+                let custom_to_rs_u8 =
+                    |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                let v = match custom_to_rs_u8(threshold) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"threshold".into(), &js_threshold)?;
+            let js_per_recipient_shares = {
+                let js_map = Map::new();
+                for (key, value) in per_recipient_shares.into_iter() {
+                    let js_key = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(key) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    let js_value = {
+                        let custom_to_rs_u8 =
+                            |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                        let v = match custom_to_rs_u8(value) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        };
+                        JsValue::from(v)
+                    };
+                    js_map.set(&js_key, &js_value);
+                }
+                js_map.into()
+            };
+            Reflect::set(
+                &js_obj,
+                &"perRecipientShares".into(),
+                &js_per_recipient_shares,
+            )?;
+            let js_deleted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(deleted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"deletedOn".into(), &js_deleted_on)?;
+            let js_deleted_by = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(deleted_by) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"deletedBy".into(), &js_deleted_by)?;
+        }
+        libparsec::OtherShamirRecoveryInfo::SetupAllValid {
+            user_id,
+            created_on,
+            created_by,
+            threshold,
+            per_recipient_shares,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OtherShamirRecoveryInfoSetupAllValid".into(),
+            )?;
+            let js_user_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+            let js_created_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+            let js_created_by = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(created_by) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
+            let js_threshold = {
+                let custom_to_rs_u8 =
+                    |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                let v = match custom_to_rs_u8(threshold) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"threshold".into(), &js_threshold)?;
+            let js_per_recipient_shares = {
+                let js_map = Map::new();
+                for (key, value) in per_recipient_shares.into_iter() {
+                    let js_key = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(key) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    let js_value = {
+                        let custom_to_rs_u8 =
+                            |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                        let v = match custom_to_rs_u8(value) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        };
+                        JsValue::from(v)
+                    };
+                    js_map.set(&js_key, &js_value);
+                }
+                js_map.into()
+            };
+            Reflect::set(
+                &js_obj,
+                &"perRecipientShares".into(),
+                &js_per_recipient_shares,
+            )?;
+        }
+        libparsec::OtherShamirRecoveryInfo::SetupButUnusable {
+            user_id,
+            created_on,
+            created_by,
+            threshold,
+            per_recipient_shares,
+            revoked_recipients,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OtherShamirRecoveryInfoSetupButUnusable".into(),
+            )?;
+            let js_user_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+            let js_created_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+            let js_created_by = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(created_by) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
+            let js_threshold = {
+                let custom_to_rs_u8 =
+                    |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                let v = match custom_to_rs_u8(threshold) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"threshold".into(), &js_threshold)?;
+            let js_per_recipient_shares = {
+                let js_map = Map::new();
+                for (key, value) in per_recipient_shares.into_iter() {
+                    let js_key = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(key) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    let js_value = {
+                        let custom_to_rs_u8 =
+                            |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                        let v = match custom_to_rs_u8(value) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        };
+                        JsValue::from(v)
+                    };
+                    js_map.set(&js_key, &js_value);
+                }
+                js_map.into()
+            };
+            Reflect::set(
+                &js_obj,
+                &"perRecipientShares".into(),
+                &js_per_recipient_shares,
+            )?;
+            let js_revoked_recipients = {
+                // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                let js_array = Array::new_with_length(revoked_recipients.len() as u32);
+                for (i, elem) in revoked_recipients.into_iter().enumerate() {
+                    let js_elem = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(elem) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    js_array.set(i as u32, js_elem);
+                }
+                js_array.into()
+            };
+            Reflect::set(&js_obj, &"revokedRecipients".into(), &js_revoked_recipients)?;
+        }
+        libparsec::OtherShamirRecoveryInfo::SetupWithRevokedRecipients {
+            user_id,
+            created_on,
+            created_by,
+            threshold,
+            per_recipient_shares,
+            revoked_recipients,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"OtherShamirRecoveryInfoSetupWithRevokedRecipients".into(),
+            )?;
+            let js_user_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+            let js_created_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+            let js_created_by = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(created_by) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
+            let js_threshold = {
+                let custom_to_rs_u8 =
+                    |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                let v = match custom_to_rs_u8(threshold) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"threshold".into(), &js_threshold)?;
+            let js_per_recipient_shares = {
+                let js_map = Map::new();
+                for (key, value) in per_recipient_shares.into_iter() {
+                    let js_key = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(key) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    let js_value = {
+                        let custom_to_rs_u8 =
+                            |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                        let v = match custom_to_rs_u8(value) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        };
+                        JsValue::from(v)
+                    };
+                    js_map.set(&js_key, &js_value);
+                }
+                js_map.into()
+            };
+            Reflect::set(
+                &js_obj,
+                &"perRecipientShares".into(),
+                &js_per_recipient_shares,
+            )?;
+            let js_revoked_recipients = {
+                // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                let js_array = Array::new_with_length(revoked_recipients.len() as u32);
+                for (i, elem) in revoked_recipients.into_iter().enumerate() {
+                    let js_elem = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(elem) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    js_array.set(i as u32, js_elem);
+                }
+                js_array.into()
+            };
+            Reflect::set(&js_obj, &"revokedRecipients".into(), &js_revoked_recipients)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ParseParsecAddrError
 
 #[allow(dead_code)]
@@ -7052,7 +8180,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -7122,7 +8251,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -7192,7 +8322,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -7262,7 +8393,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -7314,7 +8446,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -7381,7 +8514,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -7433,7 +8567,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -7468,7 +8603,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -7519,7 +8655,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u64 number")));
                     }
-                    v as u64
+                    let v = v as u64;
+                    v
                 }
             };
             let encrypted_path = {
@@ -7767,6 +8904,945 @@ fn variant_parsed_parsec_addr_rs_to_js(
             Reflect::set(&js_obj, &"keyIndex".into(), &js_key_index)?;
             let js_encrypted_path = JsValue::from(Uint8Array::from(encrypted_path.as_ref()));
             Reflect::set(&js_obj, &"encryptedPath".into(), &js_encrypted_path)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// SelfShamirRecoveryInfo
+
+#[allow(dead_code)]
+fn variant_self_shamir_recovery_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::SelfShamirRecoveryInfo, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "SelfShamirRecoveryInfoDeleted" => {
+            let created_on = {
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let created_by = {
+                let js_val = Reflect::get(&obj, &"createdBy".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
+            let threshold = {
+                let js_val = Reflect::get(&obj, &"threshold".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                    }
+                    let v = v as u8;
+                    let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                        std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_u8(v) {
+                        Ok(val) => val,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                }
+            };
+            let per_recipient_shares = {
+                let js_val = Reflect::get(&obj, &"perRecipientShares".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Map>()
+                        .map_err(|_| TypeError::new("Not a Map"))?;
+                    let mut converted =
+                        std::collections::HashMap::with_capacity(js_val.size() as usize);
+                    let js_keys = js_val.keys();
+                    let js_values = js_val.values();
+                    loop {
+                        let next_js_key = js_keys.next()?;
+                        let next_js_value = js_values.next()?;
+                        if next_js_key.done() {
+                            assert!(next_js_value.done());
+                            break;
+                        }
+                        assert!(!next_js_value.done());
+
+                        let js_key = next_js_key.value();
+                        let js_value = next_js_value.value();
+
+                        let key = js_key
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::UserID, _> {
+                                        libparsec::UserID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                        let value = {
+                            let v = js_value
+                                .dyn_into::<Number>()
+                                .map_err(|_| TypeError::new("Not a number"))?
+                                .value_of();
+                            if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                                return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                            }
+                            let v = v as u8;
+                            let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                                std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_u8(v) {
+                                Ok(val) => val,
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                }
+                            }
+                        };
+                        converted.insert(key, value);
+                    }
+                    converted
+                }
+            };
+            let deleted_on = {
+                let js_val = Reflect::get(&obj, &"deletedOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let deleted_by = {
+                let js_val = Reflect::get(&obj, &"deletedBy".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
+            Ok(libparsec::SelfShamirRecoveryInfo::Deleted {
+                created_on,
+                created_by,
+                threshold,
+                per_recipient_shares,
+                deleted_on,
+                deleted_by,
+            })
+        }
+        "SelfShamirRecoveryInfoNeverSetup" => Ok(libparsec::SelfShamirRecoveryInfo::NeverSetup {}),
+        "SelfShamirRecoveryInfoSetupAllValid" => {
+            let created_on = {
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let created_by = {
+                let js_val = Reflect::get(&obj, &"createdBy".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
+            let threshold = {
+                let js_val = Reflect::get(&obj, &"threshold".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                    }
+                    let v = v as u8;
+                    let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                        std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_u8(v) {
+                        Ok(val) => val,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                }
+            };
+            let per_recipient_shares = {
+                let js_val = Reflect::get(&obj, &"perRecipientShares".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Map>()
+                        .map_err(|_| TypeError::new("Not a Map"))?;
+                    let mut converted =
+                        std::collections::HashMap::with_capacity(js_val.size() as usize);
+                    let js_keys = js_val.keys();
+                    let js_values = js_val.values();
+                    loop {
+                        let next_js_key = js_keys.next()?;
+                        let next_js_value = js_values.next()?;
+                        if next_js_key.done() {
+                            assert!(next_js_value.done());
+                            break;
+                        }
+                        assert!(!next_js_value.done());
+
+                        let js_key = next_js_key.value();
+                        let js_value = next_js_value.value();
+
+                        let key = js_key
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::UserID, _> {
+                                        libparsec::UserID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                        let value = {
+                            let v = js_value
+                                .dyn_into::<Number>()
+                                .map_err(|_| TypeError::new("Not a number"))?
+                                .value_of();
+                            if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                                return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                            }
+                            let v = v as u8;
+                            let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                                std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_u8(v) {
+                                Ok(val) => val,
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                }
+                            }
+                        };
+                        converted.insert(key, value);
+                    }
+                    converted
+                }
+            };
+            Ok(libparsec::SelfShamirRecoveryInfo::SetupAllValid {
+                created_on,
+                created_by,
+                threshold,
+                per_recipient_shares,
+            })
+        }
+        "SelfShamirRecoveryInfoSetupButUnusable" => {
+            let created_on = {
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let created_by = {
+                let js_val = Reflect::get(&obj, &"createdBy".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
+            let threshold = {
+                let js_val = Reflect::get(&obj, &"threshold".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                    }
+                    let v = v as u8;
+                    let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                        std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_u8(v) {
+                        Ok(val) => val,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                }
+            };
+            let per_recipient_shares = {
+                let js_val = Reflect::get(&obj, &"perRecipientShares".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Map>()
+                        .map_err(|_| TypeError::new("Not a Map"))?;
+                    let mut converted =
+                        std::collections::HashMap::with_capacity(js_val.size() as usize);
+                    let js_keys = js_val.keys();
+                    let js_values = js_val.values();
+                    loop {
+                        let next_js_key = js_keys.next()?;
+                        let next_js_value = js_values.next()?;
+                        if next_js_key.done() {
+                            assert!(next_js_value.done());
+                            break;
+                        }
+                        assert!(!next_js_value.done());
+
+                        let js_key = next_js_key.value();
+                        let js_value = next_js_value.value();
+
+                        let key = js_key
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::UserID, _> {
+                                        libparsec::UserID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                        let value = {
+                            let v = js_value
+                                .dyn_into::<Number>()
+                                .map_err(|_| TypeError::new("Not a number"))?
+                                .value_of();
+                            if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                                return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                            }
+                            let v = v as u8;
+                            let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                                std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_u8(v) {
+                                Ok(val) => val,
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                }
+                            }
+                        };
+                        converted.insert(key, value);
+                    }
+                    converted
+                }
+            };
+            let revoked_recipients = {
+                let js_val = Reflect::get(&obj, &"revokedRecipients".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Array>()
+                        .map_err(|_| TypeError::new("Not an array"))?;
+                    let mut converted = Vec::with_capacity(js_val.length() as usize);
+                    for x in js_val.iter() {
+                        let x_converted = x
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::UserID, _> {
+                                        libparsec::UserID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                        converted.push(x_converted);
+                    }
+                    converted.into_iter().collect()
+                }
+            };
+            Ok(libparsec::SelfShamirRecoveryInfo::SetupButUnusable {
+                created_on,
+                created_by,
+                threshold,
+                per_recipient_shares,
+                revoked_recipients,
+            })
+        }
+        "SelfShamirRecoveryInfoSetupWithRevokedRecipients" => {
+            let created_on = {
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let created_by = {
+                let js_val = Reflect::get(&obj, &"createdBy".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
+            let threshold = {
+                let js_val = Reflect::get(&obj, &"threshold".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                    }
+                    let v = v as u8;
+                    let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                        std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_u8(v) {
+                        Ok(val) => val,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                }
+            };
+            let per_recipient_shares = {
+                let js_val = Reflect::get(&obj, &"perRecipientShares".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Map>()
+                        .map_err(|_| TypeError::new("Not a Map"))?;
+                    let mut converted =
+                        std::collections::HashMap::with_capacity(js_val.size() as usize);
+                    let js_keys = js_val.keys();
+                    let js_values = js_val.values();
+                    loop {
+                        let next_js_key = js_keys.next()?;
+                        let next_js_value = js_values.next()?;
+                        if next_js_key.done() {
+                            assert!(next_js_value.done());
+                            break;
+                        }
+                        assert!(!next_js_value.done());
+
+                        let js_key = next_js_key.value();
+                        let js_value = next_js_value.value();
+
+                        let key = js_key
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::UserID, _> {
+                                        libparsec::UserID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                        let value = {
+                            let v = js_value
+                                .dyn_into::<Number>()
+                                .map_err(|_| TypeError::new("Not a number"))?
+                                .value_of();
+                            if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                                return Err(JsValue::from(TypeError::new("Not an u8 number")));
+                            }
+                            let v = v as u8;
+                            let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                                std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_u8(v) {
+                                Ok(val) => val,
+                                Err(err) => {
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                }
+                            }
+                        };
+                        converted.insert(key, value);
+                    }
+                    converted
+                }
+            };
+            let revoked_recipients = {
+                let js_val = Reflect::get(&obj, &"revokedRecipients".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Array>()
+                        .map_err(|_| TypeError::new("Not an array"))?;
+                    let mut converted = Vec::with_capacity(js_val.length() as usize);
+                    for x in js_val.iter() {
+                        let x_converted = x
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string =
+                                    |s: String| -> Result<libparsec::UserID, _> {
+                                        libparsec::UserID::from_hex(s.as_str())
+                                            .map_err(|e| e.to_string())
+                                    };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid UserID"))?;
+                        converted.push(x_converted);
+                    }
+                    converted.into_iter().collect()
+                }
+            };
+            Ok(
+                libparsec::SelfShamirRecoveryInfo::SetupWithRevokedRecipients {
+                    created_on,
+                    created_by,
+                    threshold,
+                    per_recipient_shares,
+                    revoked_recipients,
+                },
+            )
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a SelfShamirRecoveryInfo",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_self_shamir_recovery_info_rs_to_js(
+    rs_obj: libparsec::SelfShamirRecoveryInfo,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::SelfShamirRecoveryInfo::Deleted {
+            created_on,
+            created_by,
+            threshold,
+            per_recipient_shares,
+            deleted_on,
+            deleted_by,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SelfShamirRecoveryInfoDeleted".into(),
+            )?;
+            let js_created_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+            let js_created_by = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(created_by) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
+            let js_threshold = {
+                let custom_to_rs_u8 =
+                    |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                let v = match custom_to_rs_u8(threshold) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"threshold".into(), &js_threshold)?;
+            let js_per_recipient_shares = {
+                let js_map = Map::new();
+                for (key, value) in per_recipient_shares.into_iter() {
+                    let js_key = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(key) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    let js_value = {
+                        let custom_to_rs_u8 =
+                            |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                        let v = match custom_to_rs_u8(value) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        };
+                        JsValue::from(v)
+                    };
+                    js_map.set(&js_key, &js_value);
+                }
+                js_map.into()
+            };
+            Reflect::set(
+                &js_obj,
+                &"perRecipientShares".into(),
+                &js_per_recipient_shares,
+            )?;
+            let js_deleted_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(deleted_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"deletedOn".into(), &js_deleted_on)?;
+            let js_deleted_by = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(deleted_by) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"deletedBy".into(), &js_deleted_by)?;
+        }
+        libparsec::SelfShamirRecoveryInfo::NeverSetup { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SelfShamirRecoveryInfoNeverSetup".into(),
+            )?;
+        }
+        libparsec::SelfShamirRecoveryInfo::SetupAllValid {
+            created_on,
+            created_by,
+            threshold,
+            per_recipient_shares,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SelfShamirRecoveryInfoSetupAllValid".into(),
+            )?;
+            let js_created_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+            let js_created_by = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(created_by) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
+            let js_threshold = {
+                let custom_to_rs_u8 =
+                    |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                let v = match custom_to_rs_u8(threshold) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"threshold".into(), &js_threshold)?;
+            let js_per_recipient_shares = {
+                let js_map = Map::new();
+                for (key, value) in per_recipient_shares.into_iter() {
+                    let js_key = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(key) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    let js_value = {
+                        let custom_to_rs_u8 =
+                            |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                        let v = match custom_to_rs_u8(value) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        };
+                        JsValue::from(v)
+                    };
+                    js_map.set(&js_key, &js_value);
+                }
+                js_map.into()
+            };
+            Reflect::set(
+                &js_obj,
+                &"perRecipientShares".into(),
+                &js_per_recipient_shares,
+            )?;
+        }
+        libparsec::SelfShamirRecoveryInfo::SetupButUnusable {
+            created_on,
+            created_by,
+            threshold,
+            per_recipient_shares,
+            revoked_recipients,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SelfShamirRecoveryInfoSetupButUnusable".into(),
+            )?;
+            let js_created_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+            let js_created_by = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(created_by) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
+            let js_threshold = {
+                let custom_to_rs_u8 =
+                    |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                let v = match custom_to_rs_u8(threshold) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"threshold".into(), &js_threshold)?;
+            let js_per_recipient_shares = {
+                let js_map = Map::new();
+                for (key, value) in per_recipient_shares.into_iter() {
+                    let js_key = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(key) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    let js_value = {
+                        let custom_to_rs_u8 =
+                            |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                        let v = match custom_to_rs_u8(value) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        };
+                        JsValue::from(v)
+                    };
+                    js_map.set(&js_key, &js_value);
+                }
+                js_map.into()
+            };
+            Reflect::set(
+                &js_obj,
+                &"perRecipientShares".into(),
+                &js_per_recipient_shares,
+            )?;
+            let js_revoked_recipients = {
+                // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                let js_array = Array::new_with_length(revoked_recipients.len() as u32);
+                for (i, elem) in revoked_recipients.into_iter().enumerate() {
+                    let js_elem = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(elem) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    js_array.set(i as u32, js_elem);
+                }
+                js_array.into()
+            };
+            Reflect::set(&js_obj, &"revokedRecipients".into(), &js_revoked_recipients)?;
+        }
+        libparsec::SelfShamirRecoveryInfo::SetupWithRevokedRecipients {
+            created_on,
+            created_by,
+            threshold,
+            per_recipient_shares,
+            revoked_recipients,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"SelfShamirRecoveryInfoSetupWithRevokedRecipients".into(),
+            )?;
+            let js_created_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+            let js_created_by = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(created_by) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
+            let js_threshold = {
+                let custom_to_rs_u8 =
+                    |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                let v = match custom_to_rs_u8(threshold) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"threshold".into(), &js_threshold)?;
+            let js_per_recipient_shares = {
+                let js_map = Map::new();
+                for (key, value) in per_recipient_shares.into_iter() {
+                    let js_key = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(key) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    let js_value = {
+                        let custom_to_rs_u8 =
+                            |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                        let v = match custom_to_rs_u8(value) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        };
+                        JsValue::from(v)
+                    };
+                    js_map.set(&js_key, &js_value);
+                }
+                js_map.into()
+            };
+            Reflect::set(
+                &js_obj,
+                &"perRecipientShares".into(),
+                &js_per_recipient_shares,
+            )?;
+            let js_revoked_recipients = {
+                // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                let js_array = Array::new_with_length(revoked_recipients.len() as u32);
+                for (i, elem) in revoked_recipients.into_iter().enumerate() {
+                    let js_elem = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(elem) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    js_array.set(i as u32, js_elem);
+                }
+                js_array.into()
+            };
+            Reflect::set(&js_obj, &"revokedRecipients".into(), &js_revoked_recipients)?;
         }
     }
     Ok(js_obj)
@@ -8454,7 +10530,8 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let size = {
@@ -8467,7 +10544,8 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                     if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u64 number")));
                     }
-                    v as u64
+                    let v = v as u64;
+                    v
                 }
             };
             Ok(libparsec::WorkspaceHistoryEntryStat::File {
@@ -8544,7 +10622,8 @@ fn variant_workspace_history_entry_stat_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             Ok(libparsec::WorkspaceHistoryEntryStat::Folder {
@@ -9643,7 +11722,8 @@ fn variant_workspace_storage_cache_size_js_to_rs(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u32 number")));
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             Ok(libparsec::WorkspaceStorageCacheSize::Custom { size })
@@ -10576,6 +12656,31 @@ pub fn clientExportRecoveryDevice(client_handle: u32, device_label: String) -> P
     })
 }
 
+// client_get_self_shamir_recovery
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientGetSelfShamirRecovery(client_handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_get_self_shamir_recovery(client_handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = variant_self_shamir_recovery_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_get_self_shamir_recovery_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // client_get_tos
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -10736,6 +12841,39 @@ pub fn clientListInvitations(client: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_list_invitations_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_list_shamir_recoveries_for_others
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientListShamirRecoveriesForOthers(client_handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_list_shamir_recoveries_for_others(client_handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = variant_other_shamir_recovery_info_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_list_shamir_recoveries_for_others_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -11122,7 +13260,14 @@ pub fn clientSetupShamirRecovery(
                     if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
                         return Err(JsValue::from(TypeError::new("Not an u8 number")));
                     }
-                    v as u8
+                    let v = v as u8;
+                    let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                        std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_u8(v) {
+                        Ok(val) => val,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
                 };
 
                 d.insert(rs_key, rs_value);
