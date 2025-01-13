@@ -168,7 +168,7 @@ impl AuthenticatedCmds {
             // No 410: no invitation here
             415 => Err(ConnectionError::BadContent),
             422 => Err(crate::error::unsupported_api_version_from_headers(
-                resp.headers(),
+                *api_version, resp.headers(),
             )),
             460 => Err(ConnectionError::ExpiredOrganization),
             461 => Err(ConnectionError::RevokedUser),
@@ -257,6 +257,7 @@ impl AuthenticatedCmds {
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
+        let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
         let request_builder = self.sse_request_builder::<T>(last_event_id.as_deref());
 
         #[cfg(feature = "test-with-testbed")]
@@ -277,7 +278,7 @@ impl AuthenticatedCmds {
             415 => return Err(ConnectionError::BadContent),
             // TODO: cannot  access the response headers here...
             422 => return Err(crate::error::unsupported_api_version_from_headers(
-                response.headers(),
+                *api_version, response.headers(),
             )),
             460 => return Err(ConnectionError::ExpiredOrganization),
             461 => return Err(ConnectionError::RevokedUser),
