@@ -84,7 +84,7 @@ async fn step0(
 
     let ctx = claimer_retrieve_info(Arc::new(config.into()), addr, None).await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -100,7 +100,7 @@ async fn step1_user(ctx: UserClaimInitialCtx) -> anyhow::Result<UserClaimInProgr
 
     let ctx = ctx.do_wait_peer().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -116,7 +116,7 @@ async fn step1_device(ctx: DeviceClaimInitialCtx) -> anyhow::Result<DeviceClaimI
 
     let ctx = ctx.do_wait_peer().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -164,7 +164,7 @@ async fn step3_user(ctx: UserClaimInProgress2Ctx) -> anyhow::Result<UserClaimInP
 
     let ctx = ctx.do_wait_peer_trust().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -180,7 +180,7 @@ async fn step3_device(ctx: DeviceClaimInProgress2Ctx) -> anyhow::Result<DeviceCl
 
     let ctx = ctx.do_wait_peer_trust().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -195,7 +195,7 @@ async fn step4_user(ctx: UserClaimInProgress3Ctx) -> anyhow::Result<UserClaimFin
 
     let ctx = ctx.do_claim_user(device_label, human_handle).await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -209,7 +209,7 @@ async fn step4_device(ctx: DeviceClaimInProgress3Ctx) -> anyhow::Result<DeviceCl
 
     let ctx = ctx.do_claim_device(device_label).await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -237,14 +237,14 @@ async fn save_user(ctx: UserClaimFinalizeCtx, save_mode: SaveMode) -> anyhow::Re
     let key_file = ctx.get_default_key_file();
     let access = get_access_strategy(key_file, save_mode)?;
 
-    println!(
+    let mut handle = start_spinner(format!(
         "Saving device at: {YELLOW}{}{RESET}",
         access.key_file().display()
-    );
+    ));
 
     ctx.save_local_device(&access).await?;
 
-    println!("Saved");
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(())
 }
@@ -252,15 +252,14 @@ async fn save_user(ctx: UserClaimFinalizeCtx, save_mode: SaveMode) -> anyhow::Re
 async fn save_device(ctx: DeviceClaimFinalizeCtx, save_mode: SaveMode) -> anyhow::Result<()> {
     let key_file = ctx.get_default_key_file();
     let access = get_access_strategy(key_file, save_mode)?;
-
-    println!(
+    let mut handle = start_spinner(format!(
         "Saving device at: {YELLOW}{}{RESET}",
         access.key_file().display()
-    );
+    ));
 
     ctx.save_local_device(&access).await?;
 
-    println!("Saved");
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(())
 }
