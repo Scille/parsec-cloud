@@ -5,10 +5,10 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::{
-    test_register_low_level_send_hook, AnonymousCmds, ConnectionError, HeaderMap, HeaderValue,
-    ProxyConfig, ResponseMock, StatusCode,
+    test_register_low_level_send_hook, AnonymousCmds, ConnectionError, HeaderMap, HeaderName,
+    HeaderValue, ProxyConfig, ResponseMock, StatusCode,
 };
-use libparsec_protocol::anonymous_cmds::latest as anonymous_cmds;
+use libparsec_protocol::{anonymous_cmds::latest as anonymous_cmds, API_LATEST_VERSION};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -77,7 +77,7 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
 // Must use a macro to generate the parametrized tests here given `test_register_low_level_send_hook`
 // only accept a static closure (i.e. `fn`, not `FnMut`).
 macro_rules! register_rpc_http_hook {
-    ($test_name: ident, $response_status_code: expr, $assert_err_cb: expr) => {
+    ($test_name: ident, $response_status_code: expr, $assert_err_cb: expr $(, $header_key:literal : $header_value:expr)* $(,)?) => {
         #[parsec_test(testbed = "minimal")]
         async fn $test_name(env: &TestbedEnv) {
             let addr = ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr::new(
@@ -90,9 +90,18 @@ macro_rules! register_rpc_http_hook {
             test_register_low_level_send_hook(
                 &env.discriminant_dir,
                 move |_request_builder| async {
+                    let header_map = HeaderMap::from_iter(
+                        [
+                            $({
+                                let header_key: HeaderName = $header_key.try_into().unwrap();
+                                let header_value: HeaderValue = $header_value.try_into().unwrap();
+                                (header_key, header_value)
+                            },)*
+                        ]
+                    );
                     Ok(ResponseMock::Mocked((
                         $response_status_code,
-                        HeaderMap::new(),
+                        header_map,
                         "".into(),
                     )))
                 },
@@ -133,8 +142,16 @@ register_rpc_http_hook!(
     rpc_unsupported_api_version_http_codes_422,
     StatusCode::from_u16(422).unwrap(),
     |err| {
-        p_assert_matches!(err, ConnectionError::MissingApiVersion);
+        p_assert_matches!(err, ConnectionError::MissingSupportedApiVersions);
     }
+);
+register_rpc_http_hook!(
+    rpc_unsupported_api_version_http_codes_422_with_supported_api_versions,
+    StatusCode::from_u16(422).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::UnsupportedApiVersion { api_version, supported_api_versions } if api_version == *API_LATEST_VERSION && supported_api_versions == vec![(5,1).into(), (6,0).into()]);
+    },
+    "Supported-Api-Versions": "5.1;6.0"
 );
 register_rpc_http_hook!(
     rpc_expired_organization_http_codes_460,
