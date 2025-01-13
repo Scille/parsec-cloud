@@ -14,6 +14,8 @@
 JsObject
 {%- elif type.kind == "list" -%}
 JsArray
+{%- elif type.kind == "set" -%}
+JsArray
 {%- elif type.kind == "tuple" -%}
 JsArray
 {%- elif type.kind == "optional" -%}
@@ -47,6 +49,8 @@ JsString
 {%- macro maybe_ref(js_val, type) -%}
 {%- if type.kind == "ref" and type.elem.kind == "list" -%}
 {{ js_val }}.as_slice()
+{%- elif type.kind == "ref" and type.elem.kind == "set" -%}
+{{ js_val }}.as_ref()
 {%- elif type.kind == "optional" and type.elem.kind == "ref" -%}
 {{ js_val }}.as_ref()
 {%- elif type.kind == "ref" -%}
@@ -103,6 +107,16 @@ JsString
         v.push({{ render_downcasted_js_to_rs("js_item", type.elem, mut_cx_ref) }});
     }
     v
+}
+{%- elif type.kind == "set" -%}
+{
+    let size = {{ js_val }}.len({{ mut_cx_ref }});
+    let mut v = Vec::with_capacity(size as usize);
+    for i in 0..size {
+        let js_item: Handle<{{ ts_type(type.elem) }}> = {{ js_val }}.get({{ mut_cx_ref }}, i)?;
+        v.push({{ render_downcasted_js_to_rs("js_item", type.elem, mut_cx_ref) }});
+    }
+    v.into_iter().collect()
 }
 {%- elif type.kind == "tuple" -%}
 (
@@ -349,6 +363,16 @@ std::sync::Arc::new(
     js_map
 }
 {%- elif type.kind == "list" -%}
+{
+    // JsArray::new allocates with `undefined` value, that's why we `set` value
+    let js_array = JsArray::new({{ mut_cx_ref }}, {{ rs_value }}.len());
+    for (i, elem) in {{ rs_value }}.into_iter().enumerate() {
+        let js_elem = {{ render_rs_to_js("elem", type.elem, mut_cx_ref) }};
+        js_array.set({{ mut_cx_ref }}, i as u32, js_elem)?;
+    }
+    js_array
+}
+{%- elif type.kind == "set" -%}
 {
     // JsArray::new allocates with `undefined` value, that's why we `set` value
     let js_array = JsArray::new({{ mut_cx_ref }}, {{ rs_value }}.len());

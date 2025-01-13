@@ -763,6 +763,20 @@ export type ClientExportRecoveryDeviceError =
   | ClientExportRecoveryDeviceErrorTimestampOutOfBallpark
 
 
+// ClientGetSelfShamirRecoveryError
+export interface ClientGetSelfShamirRecoveryErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientGetSelfShamirRecoveryErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type ClientGetSelfShamirRecoveryError =
+  | ClientGetSelfShamirRecoveryErrorInternal
+  | ClientGetSelfShamirRecoveryErrorStopped
+
+
 // ClientGetTosError
 export interface ClientGetTosErrorInternal {
     tag: "Internal"
@@ -832,6 +846,20 @@ export type ClientListFrozenUsersError =
   | ClientListFrozenUsersErrorAuthorNotAllowed
   | ClientListFrozenUsersErrorInternal
   | ClientListFrozenUsersErrorOffline
+
+
+// ClientListShamirRecoveriesForOthersError
+export interface ClientListShamirRecoveriesForOthersErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientListShamirRecoveriesForOthersErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type ClientListShamirRecoveriesForOthersError =
+  | ClientListShamirRecoveriesForOthersErrorInternal
+  | ClientListShamirRecoveriesForOthersErrorStopped
 
 
 // ClientListUserDevicesError
@@ -1557,6 +1585,50 @@ export type MoveEntryMode =
   | MoveEntryModeNoReplace
 
 
+// OtherShamirRecoveryInfo
+export interface OtherShamirRecoveryInfoDeleted {
+    tag: "Deleted"
+    user_id: string
+    created_on: number
+    created_by: string
+    threshold: number
+    per_recipient_shares: Map<string, number>
+    deleted_on: number
+    deleted_by: string
+}
+export interface OtherShamirRecoveryInfoSetupAllValid {
+    tag: "SetupAllValid"
+    user_id: string
+    created_on: number
+    created_by: string
+    threshold: number
+    per_recipient_shares: Map<string, number>
+}
+export interface OtherShamirRecoveryInfoSetupButUnusable {
+    tag: "SetupButUnusable"
+    user_id: string
+    created_on: number
+    created_by: string
+    threshold: number
+    per_recipient_shares: Map<string, number>
+    revoked_recipients: Array<string>
+}
+export interface OtherShamirRecoveryInfoSetupWithRevokedRecipients {
+    tag: "SetupWithRevokedRecipients"
+    user_id: string
+    created_on: number
+    created_by: string
+    threshold: number
+    per_recipient_shares: Map<string, number>
+    revoked_recipients: Array<string>
+}
+export type OtherShamirRecoveryInfo =
+  | OtherShamirRecoveryInfoDeleted
+  | OtherShamirRecoveryInfoSetupAllValid
+  | OtherShamirRecoveryInfoSetupButUnusable
+  | OtherShamirRecoveryInfoSetupWithRevokedRecipients
+
+
 // ParseParsecAddrError
 export interface ParseParsecAddrErrorInvalidUrl {
     tag: "InvalidUrl"
@@ -1638,6 +1710,50 @@ export type ParsedParsecAddr =
   | ParsedParsecAddrPkiEnrollment
   | ParsedParsecAddrServer
   | ParsedParsecAddrWorkspacePath
+
+
+// SelfShamirRecoveryInfo
+export interface SelfShamirRecoveryInfoDeleted {
+    tag: "Deleted"
+    created_on: number
+    created_by: string
+    threshold: number
+    per_recipient_shares: Map<string, number>
+    deleted_on: number
+    deleted_by: string
+}
+export interface SelfShamirRecoveryInfoNeverSetup {
+    tag: "NeverSetup"
+}
+export interface SelfShamirRecoveryInfoSetupAllValid {
+    tag: "SetupAllValid"
+    created_on: number
+    created_by: string
+    threshold: number
+    per_recipient_shares: Map<string, number>
+}
+export interface SelfShamirRecoveryInfoSetupButUnusable {
+    tag: "SetupButUnusable"
+    created_on: number
+    created_by: string
+    threshold: number
+    per_recipient_shares: Map<string, number>
+    revoked_recipients: Array<string>
+}
+export interface SelfShamirRecoveryInfoSetupWithRevokedRecipients {
+    tag: "SetupWithRevokedRecipients"
+    created_on: number
+    created_by: string
+    threshold: number
+    per_recipient_shares: Map<string, number>
+    revoked_recipients: Array<string>
+}
+export type SelfShamirRecoveryInfo =
+  | SelfShamirRecoveryInfoDeleted
+  | SelfShamirRecoveryInfoNeverSetup
+  | SelfShamirRecoveryInfoSetupAllValid
+  | SelfShamirRecoveryInfoSetupButUnusable
+  | SelfShamirRecoveryInfoSetupWithRevokedRecipients
 
 
 // TestbedError
@@ -2765,6 +2881,9 @@ export function clientExportRecoveryDevice(
     client_handle: number,
     device_label: string
 ): Promise<Result<[string, Uint8Array], ClientExportRecoveryDeviceError>>
+export function clientGetSelfShamirRecovery(
+    client_handle: number
+): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>
 export function clientGetTos(
     client: number
 ): Promise<Result<Tos, ClientGetTosError>>
@@ -2781,6 +2900,9 @@ export function clientListFrozenUsers(
 export function clientListInvitations(
     client: number
 ): Promise<Result<Array<InviteListItem>, ListInvitationsError>>
+export function clientListShamirRecoveriesForOthers(
+    client_handle: number
+): Promise<Result<Array<OtherShamirRecoveryInfo>, ClientListShamirRecoveriesForOthersError>>
 export function clientListUserDevices(
     client: number,
     user: string

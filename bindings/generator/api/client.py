@@ -615,3 +615,98 @@ async def client_delete_shamir_recovery(
     client_handle: Handle,
 ) -> Result[None, ClientDeleteShamirRecoveryError]:
     raise NotImplementedError
+
+
+class SelfShamirRecoveryInfo(Variant):
+    class NeverSetup:
+        pass
+
+    class Deleted:
+        created_on: DateTime
+        created_by: DeviceID
+        threshold: NonZeroU8
+        per_recipient_shares: dict[UserID, NonZeroU8]
+        deleted_on: DateTime
+        deleted_by: DeviceID
+
+    class SetupAllValid:
+        created_on: DateTime
+        created_by: DeviceID
+        threshold: NonZeroU8
+        per_recipient_shares: dict[UserID, NonZeroU8]
+
+    class SetupWithRevokedRecipients:
+        created_on: DateTime
+        created_by: DeviceID
+        threshold: NonZeroU8
+        per_recipient_shares: dict[UserID, NonZeroU8]
+        revoked_recipients: set[UserID]
+
+    class SetupButUnusable:
+        created_on: DateTime
+        created_by: DeviceID
+        threshold: NonZeroU8
+        per_recipient_shares: dict[UserID, NonZeroU8]
+        revoked_recipients: set[UserID]
+
+
+class ClientGetSelfShamirRecoveryError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Stopped:
+        pass
+
+
+async def client_get_self_shamir_recovery(
+    client_handle: Handle,
+) -> Result[SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError]:
+    raise NotImplementedError
+
+
+class OtherShamirRecoveryInfo(Variant):
+    class Deleted:
+        user_id: UserID
+        created_on: DateTime
+        created_by: DeviceID
+        threshold: NonZeroU8
+        per_recipient_shares: dict[UserID, NonZeroU8]
+        deleted_on: DateTime
+        deleted_by: DeviceID
+
+    class SetupAllValid:
+        user_id: UserID
+        created_on: DateTime
+        created_by: DeviceID
+        threshold: NonZeroU8
+        per_recipient_shares: dict[UserID, NonZeroU8]
+
+    class SetupWithRevokedRecipients:
+        user_id: UserID
+        created_on: DateTime
+        created_by: DeviceID
+        threshold: NonZeroU8
+        per_recipient_shares: dict[UserID, NonZeroU8]
+        revoked_recipients: set[UserID]
+
+    class SetupButUnusable:
+        user_id: UserID
+        created_on: DateTime
+        created_by: DeviceID
+        threshold: NonZeroU8
+        per_recipient_shares: dict[UserID, NonZeroU8]
+        revoked_recipients: set[UserID]
+
+
+class ClientListShamirRecoveriesForOthersError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Stopped:
+        pass
+
+
+async def client_list_shamir_recoveries_for_others(
+    client_handle: Handle,
+) -> Result[list[OtherShamirRecoveryInfo], ClientListShamirRecoveriesForOthersError]:
+    raise NotImplementedError

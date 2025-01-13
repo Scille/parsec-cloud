@@ -5,11 +5,12 @@ use std::{collections::HashMap, num::NonZeroU8, path::Path, sync::Arc};
 use libparsec_client::ServerConfig;
 pub use libparsec_client::{
     ClientAcceptTosError, ClientCreateWorkspaceError, ClientDeleteShamirRecoveryError,
-    ClientGetCurrentSelfProfileError, ClientGetTosError, ClientGetUserDeviceError,
-    ClientListFrozenUsersError, ClientListUserDevicesError, ClientListUsersError,
-    ClientListWorkspaceUsersError, ClientRenameWorkspaceError, ClientRevokeUserError,
-    ClientSetupShamirRecoveryError, ClientShareWorkspaceError, DeviceInfo, Tos, UserInfo,
-    WorkspaceInfo, WorkspaceUserAccessInfo,
+    ClientGetCurrentSelfProfileError, ClientGetSelfShamirRecoveryError, ClientGetTosError,
+    ClientGetUserDeviceError, ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
+    ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
+    ClientRenameWorkspaceError, ClientRevokeUserError, ClientSetupShamirRecoveryError,
+    ClientShareWorkspaceError, DeviceInfo, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo, Tos,
+    UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_platform_device_loader::ChangeAuthentificationError;
@@ -566,4 +567,28 @@ pub async fn client_delete_shamir_recovery(
     let client = borrow_client(client)?;
 
     client.delete_shamir_recovery().await
+}
+
+/*
+ * Get self shamir recovery
+ */
+
+pub async fn client_get_self_shamir_recovery(
+    client: Handle,
+) -> Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError> {
+    let client = borrow_client(client)?;
+
+    client.get_self_shamir_recovery().await
+}
+
+/*
+ * List shamir recoveries for others
+ */
+
+pub async fn client_list_shamir_recoveries_for_others(
+    client: Handle,
+) -> Result<Vec<OtherShamirRecoveryInfo>, ClientListShamirRecoveriesForOthersError> {
+    let client = borrow_client(client)?;
+
+    client.list_shamir_recoveries_for_others().await
 }

@@ -10,7 +10,7 @@ from importlib import import_module
 from inspect import isclass, iscoroutinefunction, isfunction, signature
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Iterable, List, Tuple, TypeVar, Union, get_args, Dict
+from typing import Any, Callable, Iterable, List, Set, Tuple, TypeVar, Union, get_args, Dict
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
@@ -193,6 +193,10 @@ class BaseTypeInUse:
             assert len(args) == 1
             return ListTypeInUse(BaseTypeInUse.parse(args[0]))
 
+        elif origin in (set, Set):
+            assert len(args) == 1
+            return SetTypeInUse(BaseTypeInUse.parse(args[0]))
+
         elif origin in (dict, Dict):
             assert len(args) == 2
             return DictTypeInUse(
@@ -311,6 +315,12 @@ class DictTypeInUse(BaseTypeInUse):
 @dataclass
 class ListTypeInUse(BaseTypeInUse):
     kind = "list"
+    elem: BaseTypeInUse
+
+
+@dataclass
+class SetTypeInUse(BaseTypeInUse):
+    kind = "set"
     elem: BaseTypeInUse
 
 
