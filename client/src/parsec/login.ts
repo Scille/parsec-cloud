@@ -190,7 +190,7 @@ export async function login(
         if (connInfo) {
           connInfo.shouldAcceptTos = true;
         }
-        distributor.dispatchEvent(Events.TOSAcceptRequired, undefined, 2000);
+        distributor.dispatchEvent(Events.TOSAcceptRequired, undefined, { delay: 2000 });
         break;
       case ClientEventTag.InvitationChanged:
         distributor.dispatchEvent(Events.InvitationUpdated, {
@@ -200,7 +200,7 @@ export async function login(
         break;
       case ClientEventTag.IncompatibleServer:
         window.electronAPI.log('warn', `IncompatibleServerEvent: ${JSON.stringify(event)}`);
-        distributor.dispatchEvent(Events.IncompatibleServer, { reason: event.detail });
+        distributor.dispatchEvent(Events.IncompatibleServer, { reason: event.detail }, { delay: 5000 });
         break;
       case ClientEventTag.RevokedSelfUser:
         eventDistributor.dispatchEvent(Events.ClientRevoked);
@@ -218,7 +218,7 @@ export async function login(
         eventDistributor.dispatchEvent(Events.WorkspaceUpdated);
         break;
       case ClientEventTag.WorkspaceWatchedEntryChanged:
-        eventDistributor.dispatchEvent(Events.EntryUpdated, undefined, 1000);
+        eventDistributor.dispatchEvent(Events.EntryUpdated, undefined, { aggregateTime: 1000 });
         break;
       case ClientEventTag.WorkspaceOpsInboundSyncDone:
         eventDistributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'inbound' });
