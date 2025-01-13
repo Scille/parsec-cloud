@@ -84,7 +84,7 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
             .collect()
     };
     // we must stop the handle here to avoid messing up with the threshold choice
-    handle.stop_with_newline();
+    handle.stop_with_symbol("..."); // not green check mark because it's not finished
     let threshold = if let Some(t) = threshold {
         t
     } else {
