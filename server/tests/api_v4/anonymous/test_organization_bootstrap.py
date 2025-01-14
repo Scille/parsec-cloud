@@ -109,18 +109,18 @@ async def test_anonymous_organization_bootstrap_ok(
     config = await backend_bootstrap_config(organization_id)
 
     # 1) To do the bootstrap we need certificates, so steal them from another organization
-    _, _, coolorg_content = await testbed.get_template("coolorg")
-    bootstrap_event = coolorg_content.events[0]
+    if config.sequestered:
+        _, _, testbed_template_content = await testbed.get_template("coolorg")
+    else:
+        _, _, testbed_template_content = await testbed.get_template("sequestered")
+    bootstrap_event = testbed_template_content.events[0]
     assert isinstance(bootstrap_event, tb.TestbedEventBootstrapOrganization)
     user_certificate = bootstrap_event.first_user_raw_certificate
     redacted_user_certificate = bootstrap_event.first_user_raw_redacted_certificate
     device_certificate = bootstrap_event.first_user_first_device_raw_certificate
     redacted_device_certificate = bootstrap_event.first_user_first_device_raw_redacted_certificate
     root_verify_key = bootstrap_event.root_signing_key.verify_key
-    if config.sequestered:
-        pytest.xfail(reason="TODO: no sequestered template so far !")
-    else:
-        sequester_authority_certificate = None
+    sequester_authority_certificate = bootstrap_event.sequester_authority_raw_certificate
     if config.spontaneous:
         backend.config.organization_initial_active_users_limit = ActiveUsersLimit.limited_to(3)
         backend.config.organization_initial_user_profile_outsider_allowed = False
@@ -190,8 +190,11 @@ async def test_anonymous_organization_bootstrap_invalid_certificate(
     config = await backend_bootstrap_config(organization_id)
 
     # 1) To do the bootstrap we need certificates, so steal them from another organization
-    _, _, coolorg_content = await testbed.get_template("coolorg")
-    bootstrap_event = coolorg_content.events[0]
+    if config.sequestered:
+        _, _, testbed_template_content = await testbed.get_template("coolorg")
+    else:
+        _, _, testbed_template_content = await testbed.get_template("sequestered")
+    bootstrap_event = testbed_template_content.events[0]
     assert isinstance(bootstrap_event, tb.TestbedEventBootstrapOrganization)
     user_certificate = override_certif_data.user or bootstrap_event.first_user_raw_certificate
     redacted_user_certificate = (
@@ -208,10 +211,7 @@ async def test_anonymous_organization_bootstrap_invalid_certificate(
     if override_certif_data.sequester:
         sequester_authority_certificate = override_certif_data.sequester
     else:
-        if config.sequestered:
-            pytest.xfail(reason="TODO: no sequestered template so far !")
-        else:
-            sequester_authority_certificate = None
+        sequester_authority_certificate = bootstrap_event.sequester_authority_raw_certificate
 
     rep = await anonymous_client.organization_bootstrap(
         bootstrap_token=config.bootstrap_token,
@@ -237,18 +237,18 @@ async def test_anonymous_organization_bootstrap_organization_already_bootstrappe
     config = await backend_bootstrap_config(organization_id)
 
     # 1) To do the bootstrap we need certificates, so steal them from another organization
-    _, _, coolorg_content = await testbed.get_template("coolorg")
-    bootstrap_event = coolorg_content.events[0]
+    if config.sequestered:
+        _, _, testbed_template_content = await testbed.get_template("coolorg")
+    else:
+        _, _, testbed_template_content = await testbed.get_template("sequestered")
+    bootstrap_event = testbed_template_content.events[0]
     assert isinstance(bootstrap_event, tb.TestbedEventBootstrapOrganization)
     user_certificate = bootstrap_event.first_user_raw_certificate
     redacted_user_certificate = bootstrap_event.first_user_raw_redacted_certificate
     device_certificate = bootstrap_event.first_user_first_device_raw_certificate
     redacted_device_certificate = bootstrap_event.first_user_first_device_raw_redacted_certificate
     root_verify_key = bootstrap_event.root_signing_key.verify_key
-    if config.sequestered:
-        pytest.xfail(reason="TODO: no sequestered template so far !")
-    else:
-        sequester_authority_certificate = None
+    sequester_authority_certificate = bootstrap_event.sequester_authority_raw_certificate
 
     rep = await anonymous_client.organization_bootstrap(
         bootstrap_token=config.bootstrap_token,
@@ -286,18 +286,18 @@ async def test_anonymous_organization_bootstrap_invalid_bootstrap_token(
     config = await backend_bootstrap_config(organization_id)
 
     # 1) To do the bootstrap we need certificates, so steal them from another organization
-    _, _, coolorg_content = await testbed.get_template("coolorg")
-    bootstrap_event = coolorg_content.events[0]
+    if config.sequestered:
+        _, _, testbed_template_content = await testbed.get_template("coolorg")
+    else:
+        _, _, testbed_template_content = await testbed.get_template("sequestered")
+    bootstrap_event = testbed_template_content.events[0]
     assert isinstance(bootstrap_event, tb.TestbedEventBootstrapOrganization)
     user_certificate = bootstrap_event.first_user_raw_certificate
     redacted_user_certificate = bootstrap_event.first_user_raw_redacted_certificate
     device_certificate = bootstrap_event.first_user_first_device_raw_certificate
     redacted_device_certificate = bootstrap_event.first_user_first_device_raw_redacted_certificate
     root_verify_key = bootstrap_event.root_signing_key.verify_key
-    if config.sequestered:
-        pytest.xfail(reason="TODO: no sequestered template so far !")
-    else:
-        sequester_authority_certificate = None
+    sequester_authority_certificate = bootstrap_event.sequester_authority_raw_certificate
 
     rep = await anonymous_client.organization_bootstrap(
         bootstrap_token=BootstrapToken.new(),
