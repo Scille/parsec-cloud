@@ -37,7 +37,5 @@ pub async fn list_user(args: Args, client: &StartedClient) -> anyhow::Result<()>
         }
     }
 
-    client.stop().await;
-
     Ok(())
 }
