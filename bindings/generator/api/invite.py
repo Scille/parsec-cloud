@@ -16,6 +16,7 @@ from .common import (
     HumanHandle,
     InvitationStatus,
     InvitationToken,
+    NonZeroU8,
     Result,
     SASCode,
     SequesterVerifyKeyDer,
@@ -157,6 +158,13 @@ class ClaimInProgressError(ErrorVariant):
         pass
 
 
+class ShamirRecoveryRecipient(Structure):
+    user_id: UserID
+    human_handle: HumanHandle
+    revoked_on: Optional[DateTime]
+    shares: NonZeroU8
+
+
 class AnyClaimRetrievedInfo(Variant):
     class User:
         handle: Handle
@@ -169,12 +177,48 @@ class AnyClaimRetrievedInfo(Variant):
         greeter_user_id: UserID
         greeter_human_handle: HumanHandle
 
+    class ShamirRecovery:
+        handle: Handle
+        claimer_user_id: UserID
+        claimer_human_handle: HumanHandle
+        shamir_recovery_created_on: DateTime
+        recipients: list[ShamirRecoveryRecipient]
+        threshold: NonZeroU8
+        is_recoverable: bool
+
 
 async def claimer_retrieve_info(
     config: ClientConfig,
     on_event_callback: OnClientEventCallback,
     addr: ParsecInvitationAddr,
 ) -> Result[AnyClaimRetrievedInfo, ClaimerRetrieveInfoError]:
+    raise NotImplementedError
+
+
+class ShamirRecoveryClaimInitialInfo(Structure):
+    handle: Handle
+    greeter_user_id: UserID
+    greeter_human_handle: HumanHandle
+
+
+class ShamirRecoveryClaimPickRecipientError(ErrorVariant):
+    class RecipientNotFound:
+        pass
+
+    class RecipientAlreadyPicked:
+        pass
+
+    class RecipientRevoked:
+        pass
+
+    class Internal:
+        pass
+
+
+def claimer_shamir_recovery_pick_recipient(
+    handle: Handle,
+    recipient_user_id: UserID,
+) -> Result[ShamirRecoveryClaimInitialInfo, ShamirRecoveryClaimPickRecipientError]:
     raise NotImplementedError
 
 
@@ -185,6 +229,12 @@ class UserClaimInProgress1Info(Structure):
 
 
 class DeviceClaimInProgress1Info(Structure):
+    handle: Handle
+    greeter_sas: SASCode
+    greeter_sas_choices: list[SASCode]
+
+
+class ShamirRecoveryClaimInProgress1Info(Structure):
     handle: Handle
     greeter_sas: SASCode
     greeter_sas_choices: list[SASCode]
@@ -204,6 +254,13 @@ async def claimer_device_initial_do_wait_peer(
     raise NotImplementedError
 
 
+async def claimer_shamir_recovery_initial_do_wait_peer(
+    canceller: Handle,
+    handle: Handle,
+) -> Result[ShamirRecoveryClaimInProgress1Info, ClaimInProgressError]:
+    raise NotImplementedError
+
+
 async def claimer_user_in_progress_1_do_deny_trust(
     canceller: Handle, handle: Handle
 ) -> Result[None, ClaimInProgressError]:
@@ -216,12 +273,23 @@ async def claimer_device_in_progress_1_do_deny_trust(
     raise NotImplementedError
 
 
+async def claimer_shamir_recovery_in_progress_1_do_deny_trust(
+    canceller: Handle, handle: Handle
+) -> Result[None, ClaimInProgressError]:
+    raise NotImplementedError
+
+
 class UserClaimInProgress2Info(Structure):
     handle: Handle
     claimer_sas: SASCode
 
 
 class DeviceClaimInProgress2Info(Structure):
+    handle: Handle
+    claimer_sas: SASCode
+
+
+class ShamirRecoveryClaimInProgress2Info(Structure):
     handle: Handle
     claimer_sas: SASCode
 
@@ -240,11 +308,22 @@ async def claimer_device_in_progress_1_do_signify_trust(
     raise NotImplementedError
 
 
+async def claimer_shamir_recovery_in_progress_1_do_signify_trust(
+    canceller: Handle,
+    handle: Handle,
+) -> Result[ShamirRecoveryClaimInProgress2Info, ClaimInProgressError]:
+    raise NotImplementedError
+
+
 class UserClaimInProgress3Info(Structure):
     handle: Handle
 
 
 class DeviceClaimInProgress3Info(Structure):
+    handle: Handle
+
+
+class ShamirRecoveryClaimInProgress3Info(Structure):
     handle: Handle
 
 
@@ -262,11 +341,22 @@ async def claimer_device_in_progress_2_do_wait_peer_trust(
     raise NotImplementedError
 
 
+async def claimer_shamir_recovery_in_progress_2_do_wait_peer_trust(
+    canceller: Handle,
+    handle: Handle,
+) -> Result[ShamirRecoveryClaimInProgress3Info, ClaimInProgressError]:
+    raise NotImplementedError
+
+
 class UserClaimFinalizeInfo(Structure):
     handle: Handle
 
 
 class DeviceClaimFinalizeInfo(Structure):
+    handle: Handle
+
+
+class ShamirRecoveryClaimShareInfo(Structure):
     handle: Handle
 
 
@@ -287,6 +377,86 @@ async def claimer_device_in_progress_3_do_claim(
     raise NotImplementedError
 
 
+async def claimer_shamir_recovery_in_progress_3_do_claim(
+    canceller: Handle,
+    handle: Handle,
+) -> Result[ShamirRecoveryClaimShareInfo, ClaimInProgressError]:
+    raise NotImplementedError
+
+
+class ShamirRecoveryClaimMaybeRecoverDeviceInfo(Variant):
+    class PickRecipient:
+        handle: Handle
+        claimer_user_id: UserID
+        claimer_human_handle: HumanHandle
+        shamir_recovery_created_on: DateTime
+        recipients: list[ShamirRecoveryRecipient]
+        threshold: NonZeroU8
+        recovered_shares: dict[UserID, NonZeroU8]
+        is_recoverable: bool
+
+    class RecoverDevice:
+        handle: Handle
+        claimer_user_id: UserID
+        claimer_human_handle: HumanHandle
+
+
+class ShamirRecoveryClaimAddShareError(ErrorVariant):
+    class RecipientNotFound:
+        pass
+
+    class CorruptedSecret:
+        pass
+
+    class Internal:
+        pass
+
+
+def claimer_shamir_recovery_add_share(
+    recipient_pick_handle: Handle,
+    share_handle: Handle,
+) -> Result[ShamirRecoveryClaimMaybeRecoverDeviceInfo, ShamirRecoveryClaimAddShareError]:
+    raise NotImplementedError
+
+
+class ShamirRecoveryClaimMaybeFinalizeInfo(Variant):
+    class Offline:
+        handle: Handle
+
+    class Finalize:
+        handle: Handle
+
+
+class ShamirRecoveryClaimRecoverDeviceError(ErrorVariant):
+    class OrganizationExpired:
+        pass
+
+    class NotFound:
+        pass
+
+    class AlreadyUsed:
+        pass
+
+    class CipheredDataNotFound:
+        pass
+
+    class CorruptedCipheredData:
+        pass
+
+    class RegisterNewDeviceError:
+        pass
+
+    class Internal:
+        pass
+
+
+async def claimer_shamir_recovery_recover_device(
+    handle: Handle,
+    requested_device_label: DeviceLabel,
+) -> Result[ShamirRecoveryClaimMaybeFinalizeInfo, ShamirRecoveryClaimRecoverDeviceError]:
+    raise NotImplementedError
+
+
 async def claimer_user_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
@@ -295,6 +465,13 @@ async def claimer_user_finalize_save_local_device(
 
 
 async def claimer_device_finalize_save_local_device(
+    handle: Handle,
+    save_strategy: DeviceSaveStrategy,
+) -> Result[AvailableDevice, ClaimInProgressError]:
+    raise NotImplementedError
+
+
+async def claimer_shamir_recovery_finalize_save_local_device(
     handle: Handle,
     save_strategy: DeviceSaveStrategy,
 ) -> Result[AvailableDevice, ClaimInProgressError]:

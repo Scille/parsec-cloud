@@ -209,6 +209,36 @@ export interface ServerConfig {
 }
 
 
+export interface ShamirRecoveryClaimInProgress1Info {
+    handle: number
+    greeterSas: string
+    greeterSasChoices: Array<string>
+}
+
+
+export interface ShamirRecoveryClaimInProgress2Info {
+    handle: number
+    claimerSas: string
+}
+
+
+export interface ShamirRecoveryClaimInProgress3Info {
+    handle: number
+}
+
+
+export interface ShamirRecoveryClaimInitialInfo {
+    handle: number
+    greeterUserId: string
+    greeterHumanHandle: HumanHandle
+}
+
+
+export interface ShamirRecoveryClaimShareInfo {
+    handle: number
+}
+
+
 export interface ShamirRecoveryGreetInProgress1Info {
     handle: number
     greeterSas: string
@@ -229,6 +259,14 @@ export interface ShamirRecoveryGreetInProgress3Info {
 
 export interface ShamirRecoveryGreetInitialInfo {
     handle: number
+}
+
+
+export interface ShamirRecoveryRecipient {
+    userId: string
+    humanHandle: HumanHandle
+    revokedOn: number | null
+    shares: number
 }
 
 
@@ -357,6 +395,16 @@ export interface AnyClaimRetrievedInfoDevice {
     greeter_user_id: string
     greeter_human_handle: HumanHandle
 }
+export interface AnyClaimRetrievedInfoShamirRecovery {
+    tag: "ShamirRecovery"
+    handle: number
+    claimer_user_id: string
+    claimer_human_handle: HumanHandle
+    shamir_recovery_created_on: number
+    recipients: Array<ShamirRecoveryRecipient>
+    threshold: number
+    is_recoverable: boolean
+}
 export interface AnyClaimRetrievedInfoUser {
     tag: "User"
     handle: number
@@ -366,6 +414,7 @@ export interface AnyClaimRetrievedInfoUser {
 }
 export type AnyClaimRetrievedInfo =
   | AnyClaimRetrievedInfoDevice
+  | AnyClaimRetrievedInfoShamirRecovery
   | AnyClaimRetrievedInfoUser
 
 
@@ -1828,6 +1877,125 @@ export type SelfShamirRecoveryInfo =
   | SelfShamirRecoveryInfoSetupWithRevokedRecipients
 
 
+// ShamirRecoveryClaimAddShareError
+export interface ShamirRecoveryClaimAddShareErrorCorruptedSecret {
+    tag: "CorruptedSecret"
+    error: string
+}
+export interface ShamirRecoveryClaimAddShareErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ShamirRecoveryClaimAddShareErrorRecipientNotFound {
+    tag: "RecipientNotFound"
+    error: string
+}
+export type ShamirRecoveryClaimAddShareError =
+  | ShamirRecoveryClaimAddShareErrorCorruptedSecret
+  | ShamirRecoveryClaimAddShareErrorInternal
+  | ShamirRecoveryClaimAddShareErrorRecipientNotFound
+
+
+// ShamirRecoveryClaimMaybeFinalizeInfo
+export interface ShamirRecoveryClaimMaybeFinalizeInfoFinalize {
+    tag: "Finalize"
+    handle: number
+}
+export interface ShamirRecoveryClaimMaybeFinalizeInfoOffline {
+    tag: "Offline"
+    handle: number
+}
+export type ShamirRecoveryClaimMaybeFinalizeInfo =
+  | ShamirRecoveryClaimMaybeFinalizeInfoFinalize
+  | ShamirRecoveryClaimMaybeFinalizeInfoOffline
+
+
+// ShamirRecoveryClaimMaybeRecoverDeviceInfo
+export interface ShamirRecoveryClaimMaybeRecoverDeviceInfoPickRecipient {
+    tag: "PickRecipient"
+    handle: number
+    claimer_user_id: string
+    claimer_human_handle: HumanHandle
+    shamir_recovery_created_on: number
+    recipients: Array<ShamirRecoveryRecipient>
+    threshold: number
+    recovered_shares: Map<string, number>
+    is_recoverable: boolean
+}
+export interface ShamirRecoveryClaimMaybeRecoverDeviceInfoRecoverDevice {
+    tag: "RecoverDevice"
+    handle: number
+    claimer_user_id: string
+    claimer_human_handle: HumanHandle
+}
+export type ShamirRecoveryClaimMaybeRecoverDeviceInfo =
+  | ShamirRecoveryClaimMaybeRecoverDeviceInfoPickRecipient
+  | ShamirRecoveryClaimMaybeRecoverDeviceInfoRecoverDevice
+
+
+// ShamirRecoveryClaimPickRecipientError
+export interface ShamirRecoveryClaimPickRecipientErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ShamirRecoveryClaimPickRecipientErrorRecipientAlreadyPicked {
+    tag: "RecipientAlreadyPicked"
+    error: string
+}
+export interface ShamirRecoveryClaimPickRecipientErrorRecipientNotFound {
+    tag: "RecipientNotFound"
+    error: string
+}
+export interface ShamirRecoveryClaimPickRecipientErrorRecipientRevoked {
+    tag: "RecipientRevoked"
+    error: string
+}
+export type ShamirRecoveryClaimPickRecipientError =
+  | ShamirRecoveryClaimPickRecipientErrorInternal
+  | ShamirRecoveryClaimPickRecipientErrorRecipientAlreadyPicked
+  | ShamirRecoveryClaimPickRecipientErrorRecipientNotFound
+  | ShamirRecoveryClaimPickRecipientErrorRecipientRevoked
+
+
+// ShamirRecoveryClaimRecoverDeviceError
+export interface ShamirRecoveryClaimRecoverDeviceErrorAlreadyUsed {
+    tag: "AlreadyUsed"
+    error: string
+}
+export interface ShamirRecoveryClaimRecoverDeviceErrorCipheredDataNotFound {
+    tag: "CipheredDataNotFound"
+    error: string
+}
+export interface ShamirRecoveryClaimRecoverDeviceErrorCorruptedCipheredData {
+    tag: "CorruptedCipheredData"
+    error: string
+}
+export interface ShamirRecoveryClaimRecoverDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ShamirRecoveryClaimRecoverDeviceErrorNotFound {
+    tag: "NotFound"
+    error: string
+}
+export interface ShamirRecoveryClaimRecoverDeviceErrorOrganizationExpired {
+    tag: "OrganizationExpired"
+    error: string
+}
+export interface ShamirRecoveryClaimRecoverDeviceErrorRegisterNewDeviceError {
+    tag: "RegisterNewDeviceError"
+    error: string
+}
+export type ShamirRecoveryClaimRecoverDeviceError =
+  | ShamirRecoveryClaimRecoverDeviceErrorAlreadyUsed
+  | ShamirRecoveryClaimRecoverDeviceErrorCipheredDataNotFound
+  | ShamirRecoveryClaimRecoverDeviceErrorCorruptedCipheredData
+  | ShamirRecoveryClaimRecoverDeviceErrorInternal
+  | ShamirRecoveryClaimRecoverDeviceErrorNotFound
+  | ShamirRecoveryClaimRecoverDeviceErrorOrganizationExpired
+  | ShamirRecoveryClaimRecoverDeviceErrorRegisterNewDeviceError
+
+
 // TestbedError
 export interface TestbedErrorDisabled {
     tag: "Disabled"
@@ -2903,6 +3071,42 @@ export function claimerRetrieveInfo(
     on_event_callback: (handle: number, event: ClientEvent) => void,
     addr: string
 ): Promise<Result<AnyClaimRetrievedInfo, ClaimerRetrieveInfoError>>
+export function claimerShamirRecoveryAddShare(
+    recipient_pick_handle: number,
+    share_handle: number
+): Promise<Result<ShamirRecoveryClaimMaybeRecoverDeviceInfo, ShamirRecoveryClaimAddShareError>>
+export function claimerShamirRecoveryFinalizeSaveLocalDevice(
+    handle: number,
+    save_strategy: DeviceSaveStrategy
+): Promise<Result<AvailableDevice, ClaimInProgressError>>
+export function claimerShamirRecoveryInProgress1DoDenyTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<null, ClaimInProgressError>>
+export function claimerShamirRecoveryInProgress1DoSignifyTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<ShamirRecoveryClaimInProgress2Info, ClaimInProgressError>>
+export function claimerShamirRecoveryInProgress2DoWaitPeerTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<ShamirRecoveryClaimInProgress3Info, ClaimInProgressError>>
+export function claimerShamirRecoveryInProgress3DoClaim(
+    canceller: number,
+    handle: number
+): Promise<Result<ShamirRecoveryClaimShareInfo, ClaimInProgressError>>
+export function claimerShamirRecoveryInitialDoWaitPeer(
+    canceller: number,
+    handle: number
+): Promise<Result<ShamirRecoveryClaimInProgress1Info, ClaimInProgressError>>
+export function claimerShamirRecoveryPickRecipient(
+    handle: number,
+    recipient_user_id: string
+): Promise<Result<ShamirRecoveryClaimInitialInfo, ShamirRecoveryClaimPickRecipientError>>
+export function claimerShamirRecoveryRecoverDevice(
+    handle: number,
+    requested_device_label: string
+): Promise<Result<ShamirRecoveryClaimMaybeFinalizeInfo, ShamirRecoveryClaimRecoverDeviceError>>
 export function claimerUserFinalizeSaveLocalDevice(
     handle: number,
     save_strategy: DeviceSaveStrategy

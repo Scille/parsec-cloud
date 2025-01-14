@@ -220,6 +220,31 @@ export interface ServerConfig {
     activeUsersLimit: ActiveUsersLimit
 }
 
+export interface ShamirRecoveryClaimInProgress1Info {
+    handle: Handle
+    greeterSas: SASCode
+    greeterSasChoices: Array<SASCode>
+}
+
+export interface ShamirRecoveryClaimInProgress2Info {
+    handle: Handle
+    claimerSas: SASCode
+}
+
+export interface ShamirRecoveryClaimInProgress3Info {
+    handle: Handle
+}
+
+export interface ShamirRecoveryClaimInitialInfo {
+    handle: Handle
+    greeterUserId: UserID
+    greeterHumanHandle: HumanHandle
+}
+
+export interface ShamirRecoveryClaimShareInfo {
+    handle: Handle
+}
+
 export interface ShamirRecoveryGreetInProgress1Info {
     handle: Handle
     greeterSas: SASCode
@@ -237,6 +262,13 @@ export interface ShamirRecoveryGreetInProgress3Info {
 
 export interface ShamirRecoveryGreetInitialInfo {
     handle: Handle
+}
+
+export interface ShamirRecoveryRecipient {
+    userId: UserID
+    humanHandle: HumanHandle
+    revokedOn: DateTime | null
+    shares: NonZeroU8
 }
 
 export interface StartedWorkspaceInfo {
@@ -349,6 +381,7 @@ export type ActiveUsersLimit =
 // AnyClaimRetrievedInfo
 export enum AnyClaimRetrievedInfoTag {
     Device = 'AnyClaimRetrievedInfoDevice',
+    ShamirRecovery = 'AnyClaimRetrievedInfoShamirRecovery',
     User = 'AnyClaimRetrievedInfoUser',
 }
 
@@ -357,6 +390,16 @@ export interface AnyClaimRetrievedInfoDevice {
     handle: Handle
     greeterUserId: UserID
     greeterHumanHandle: HumanHandle
+}
+export interface AnyClaimRetrievedInfoShamirRecovery {
+    tag: AnyClaimRetrievedInfoTag.ShamirRecovery
+    handle: Handle
+    claimerUserId: UserID
+    claimerHumanHandle: HumanHandle
+    shamirRecoveryCreatedOn: DateTime
+    recipients: Array<ShamirRecoveryRecipient>
+    threshold: NonZeroU8
+    isRecoverable: boolean
 }
 export interface AnyClaimRetrievedInfoUser {
     tag: AnyClaimRetrievedInfoTag.User
@@ -367,6 +410,7 @@ export interface AnyClaimRetrievedInfoUser {
 }
 export type AnyClaimRetrievedInfo =
   | AnyClaimRetrievedInfoDevice
+  | AnyClaimRetrievedInfoShamirRecovery
   | AnyClaimRetrievedInfoUser
 
 // ArchiveDeviceError
@@ -2154,6 +2198,153 @@ export type SelfShamirRecoveryInfo =
   | SelfShamirRecoveryInfoSetupButUnusable
   | SelfShamirRecoveryInfoSetupWithRevokedRecipients
 
+// ShamirRecoveryClaimAddShareError
+export enum ShamirRecoveryClaimAddShareErrorTag {
+    CorruptedSecret = 'ShamirRecoveryClaimAddShareErrorCorruptedSecret',
+    Internal = 'ShamirRecoveryClaimAddShareErrorInternal',
+    RecipientNotFound = 'ShamirRecoveryClaimAddShareErrorRecipientNotFound',
+}
+
+export interface ShamirRecoveryClaimAddShareErrorCorruptedSecret {
+    tag: ShamirRecoveryClaimAddShareErrorTag.CorruptedSecret
+    error: string
+}
+export interface ShamirRecoveryClaimAddShareErrorInternal {
+    tag: ShamirRecoveryClaimAddShareErrorTag.Internal
+    error: string
+}
+export interface ShamirRecoveryClaimAddShareErrorRecipientNotFound {
+    tag: ShamirRecoveryClaimAddShareErrorTag.RecipientNotFound
+    error: string
+}
+export type ShamirRecoveryClaimAddShareError =
+  | ShamirRecoveryClaimAddShareErrorCorruptedSecret
+  | ShamirRecoveryClaimAddShareErrorInternal
+  | ShamirRecoveryClaimAddShareErrorRecipientNotFound
+
+// ShamirRecoveryClaimMaybeFinalizeInfo
+export enum ShamirRecoveryClaimMaybeFinalizeInfoTag {
+    Finalize = 'ShamirRecoveryClaimMaybeFinalizeInfoFinalize',
+    Offline = 'ShamirRecoveryClaimMaybeFinalizeInfoOffline',
+}
+
+export interface ShamirRecoveryClaimMaybeFinalizeInfoFinalize {
+    tag: ShamirRecoveryClaimMaybeFinalizeInfoTag.Finalize
+    handle: Handle
+}
+export interface ShamirRecoveryClaimMaybeFinalizeInfoOffline {
+    tag: ShamirRecoveryClaimMaybeFinalizeInfoTag.Offline
+    handle: Handle
+}
+export type ShamirRecoveryClaimMaybeFinalizeInfo =
+  | ShamirRecoveryClaimMaybeFinalizeInfoFinalize
+  | ShamirRecoveryClaimMaybeFinalizeInfoOffline
+
+// ShamirRecoveryClaimMaybeRecoverDeviceInfo
+export enum ShamirRecoveryClaimMaybeRecoverDeviceInfoTag {
+    PickRecipient = 'ShamirRecoveryClaimMaybeRecoverDeviceInfoPickRecipient',
+    RecoverDevice = 'ShamirRecoveryClaimMaybeRecoverDeviceInfoRecoverDevice',
+}
+
+export interface ShamirRecoveryClaimMaybeRecoverDeviceInfoPickRecipient {
+    tag: ShamirRecoveryClaimMaybeRecoverDeviceInfoTag.PickRecipient
+    handle: Handle
+    claimerUserId: UserID
+    claimerHumanHandle: HumanHandle
+    shamirRecoveryCreatedOn: DateTime
+    recipients: Array<ShamirRecoveryRecipient>
+    threshold: NonZeroU8
+    recoveredShares: Map<UserID, NonZeroU8>
+    isRecoverable: boolean
+}
+export interface ShamirRecoveryClaimMaybeRecoverDeviceInfoRecoverDevice {
+    tag: ShamirRecoveryClaimMaybeRecoverDeviceInfoTag.RecoverDevice
+    handle: Handle
+    claimerUserId: UserID
+    claimerHumanHandle: HumanHandle
+}
+export type ShamirRecoveryClaimMaybeRecoverDeviceInfo =
+  | ShamirRecoveryClaimMaybeRecoverDeviceInfoPickRecipient
+  | ShamirRecoveryClaimMaybeRecoverDeviceInfoRecoverDevice
+
+// ShamirRecoveryClaimPickRecipientError
+export enum ShamirRecoveryClaimPickRecipientErrorTag {
+    Internal = 'ShamirRecoveryClaimPickRecipientErrorInternal',
+    RecipientAlreadyPicked = 'ShamirRecoveryClaimPickRecipientErrorRecipientAlreadyPicked',
+    RecipientNotFound = 'ShamirRecoveryClaimPickRecipientErrorRecipientNotFound',
+    RecipientRevoked = 'ShamirRecoveryClaimPickRecipientErrorRecipientRevoked',
+}
+
+export interface ShamirRecoveryClaimPickRecipientErrorInternal {
+    tag: ShamirRecoveryClaimPickRecipientErrorTag.Internal
+    error: string
+}
+export interface ShamirRecoveryClaimPickRecipientErrorRecipientAlreadyPicked {
+    tag: ShamirRecoveryClaimPickRecipientErrorTag.RecipientAlreadyPicked
+    error: string
+}
+export interface ShamirRecoveryClaimPickRecipientErrorRecipientNotFound {
+    tag: ShamirRecoveryClaimPickRecipientErrorTag.RecipientNotFound
+    error: string
+}
+export interface ShamirRecoveryClaimPickRecipientErrorRecipientRevoked {
+    tag: ShamirRecoveryClaimPickRecipientErrorTag.RecipientRevoked
+    error: string
+}
+export type ShamirRecoveryClaimPickRecipientError =
+  | ShamirRecoveryClaimPickRecipientErrorInternal
+  | ShamirRecoveryClaimPickRecipientErrorRecipientAlreadyPicked
+  | ShamirRecoveryClaimPickRecipientErrorRecipientNotFound
+  | ShamirRecoveryClaimPickRecipientErrorRecipientRevoked
+
+// ShamirRecoveryClaimRecoverDeviceError
+export enum ShamirRecoveryClaimRecoverDeviceErrorTag {
+    AlreadyUsed = 'ShamirRecoveryClaimRecoverDeviceErrorAlreadyUsed',
+    CipheredDataNotFound = 'ShamirRecoveryClaimRecoverDeviceErrorCipheredDataNotFound',
+    CorruptedCipheredData = 'ShamirRecoveryClaimRecoverDeviceErrorCorruptedCipheredData',
+    Internal = 'ShamirRecoveryClaimRecoverDeviceErrorInternal',
+    NotFound = 'ShamirRecoveryClaimRecoverDeviceErrorNotFound',
+    OrganizationExpired = 'ShamirRecoveryClaimRecoverDeviceErrorOrganizationExpired',
+    RegisterNewDeviceError = 'ShamirRecoveryClaimRecoverDeviceErrorRegisterNewDeviceError',
+}
+
+export interface ShamirRecoveryClaimRecoverDeviceErrorAlreadyUsed {
+    tag: ShamirRecoveryClaimRecoverDeviceErrorTag.AlreadyUsed
+    error: string
+}
+export interface ShamirRecoveryClaimRecoverDeviceErrorCipheredDataNotFound {
+    tag: ShamirRecoveryClaimRecoverDeviceErrorTag.CipheredDataNotFound
+    error: string
+}
+export interface ShamirRecoveryClaimRecoverDeviceErrorCorruptedCipheredData {
+    tag: ShamirRecoveryClaimRecoverDeviceErrorTag.CorruptedCipheredData
+    error: string
+}
+export interface ShamirRecoveryClaimRecoverDeviceErrorInternal {
+    tag: ShamirRecoveryClaimRecoverDeviceErrorTag.Internal
+    error: string
+}
+export interface ShamirRecoveryClaimRecoverDeviceErrorNotFound {
+    tag: ShamirRecoveryClaimRecoverDeviceErrorTag.NotFound
+    error: string
+}
+export interface ShamirRecoveryClaimRecoverDeviceErrorOrganizationExpired {
+    tag: ShamirRecoveryClaimRecoverDeviceErrorTag.OrganizationExpired
+    error: string
+}
+export interface ShamirRecoveryClaimRecoverDeviceErrorRegisterNewDeviceError {
+    tag: ShamirRecoveryClaimRecoverDeviceErrorTag.RegisterNewDeviceError
+    error: string
+}
+export type ShamirRecoveryClaimRecoverDeviceError =
+  | ShamirRecoveryClaimRecoverDeviceErrorAlreadyUsed
+  | ShamirRecoveryClaimRecoverDeviceErrorCipheredDataNotFound
+  | ShamirRecoveryClaimRecoverDeviceErrorCorruptedCipheredData
+  | ShamirRecoveryClaimRecoverDeviceErrorInternal
+  | ShamirRecoveryClaimRecoverDeviceErrorNotFound
+  | ShamirRecoveryClaimRecoverDeviceErrorOrganizationExpired
+  | ShamirRecoveryClaimRecoverDeviceErrorRegisterNewDeviceError
+
 // TestbedError
 export enum TestbedErrorTag {
     Disabled = 'TestbedErrorDisabled',
@@ -3469,6 +3660,42 @@ export interface LibParsecPlugin {
         on_event_callback: (handle: number, event: ClientEvent) => void,
         addr: ParsecInvitationAddr
     ): Promise<Result<AnyClaimRetrievedInfo, ClaimerRetrieveInfoError>>
+    claimerShamirRecoveryAddShare(
+        recipient_pick_handle: Handle,
+        share_handle: Handle
+    ): Promise<Result<ShamirRecoveryClaimMaybeRecoverDeviceInfo, ShamirRecoveryClaimAddShareError>>
+    claimerShamirRecoveryFinalizeSaveLocalDevice(
+        handle: Handle,
+        save_strategy: DeviceSaveStrategy
+    ): Promise<Result<AvailableDevice, ClaimInProgressError>>
+    claimerShamirRecoveryInProgress1DoDenyTrust(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<null, ClaimInProgressError>>
+    claimerShamirRecoveryInProgress1DoSignifyTrust(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<ShamirRecoveryClaimInProgress2Info, ClaimInProgressError>>
+    claimerShamirRecoveryInProgress2DoWaitPeerTrust(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<ShamirRecoveryClaimInProgress3Info, ClaimInProgressError>>
+    claimerShamirRecoveryInProgress3DoClaim(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<ShamirRecoveryClaimShareInfo, ClaimInProgressError>>
+    claimerShamirRecoveryInitialDoWaitPeer(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<ShamirRecoveryClaimInProgress1Info, ClaimInProgressError>>
+    claimerShamirRecoveryPickRecipient(
+        handle: Handle,
+        recipient_user_id: UserID
+    ): Promise<Result<ShamirRecoveryClaimInitialInfo, ShamirRecoveryClaimPickRecipientError>>
+    claimerShamirRecoveryRecoverDevice(
+        handle: Handle,
+        requested_device_label: DeviceLabel
+    ): Promise<Result<ShamirRecoveryClaimMaybeFinalizeInfo, ShamirRecoveryClaimRecoverDeviceError>>
     claimerUserFinalizeSaveLocalDevice(
         handle: Handle,
         save_strategy: DeviceSaveStrategy

@@ -306,6 +306,8 @@ pub enum ShamirRecoveryClaimPickRecipientError {
     RecipientAlreadyPicked,
     #[error("Recipient revoked")]
     RecipientRevoked,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
 }
 
 #[derive(Debug)]
@@ -320,6 +322,8 @@ pub enum ShamirRecoveryClaimAddShareError {
     RecipientNotFound,
     #[error(transparent)]
     CorruptedSecret(DataError),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
 }
 
 #[derive(Debug)]
