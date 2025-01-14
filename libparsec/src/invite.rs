@@ -5,7 +5,7 @@ use std::sync::Arc;
 pub use libparsec_client::{
     ClientCancelInvitationError, ClientNewDeviceInvitationError,
     ClientNewShamirRecoveryInvitationError, ClientNewUserInvitationError,
-    InvitationEmailSentStatus, ListInvitationsError,
+    ClientStartShamirRecoveryInvitationGreetError, InvitationEmailSentStatus, ListInvitationsError,
 };
 pub use libparsec_types::prelude::*;
 
@@ -940,6 +940,22 @@ pub async fn client_start_device_invitation_greet(
     Ok(DeviceGreetInitialInfo { handle })
 }
 
+pub async fn client_start_shamir_recovery_invitation_greet(
+    client: Handle,
+    token: InvitationToken,
+) -> Result<ShamirRecoveryGreetInitialInfo, ClientStartShamirRecoveryInvitationGreetError> {
+    let client = borrow_from_handle(client, |x| match x {
+        HandleItem::Client { client, .. } => Some(client.clone()),
+        _ => None,
+    })?;
+
+    let ctx = client.start_shamir_recovery_invitation_greet(token).await?;
+
+    let handle = register_handle(HandleItem::ShamirRecoveryGreetInitial(ctx));
+
+    Ok(ShamirRecoveryGreetInitialInfo { handle })
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum GreetInProgressError {
     #[error("Cannot reach the server")]
@@ -1053,6 +1069,10 @@ pub struct DeviceGreetInitialInfo {
     pub handle: Handle,
 }
 
+pub struct ShamirRecoveryGreetInitialInfo {
+    pub handle: Handle,
+}
+
 pub async fn greeter_user_initial_do_wait_peer(
     canceller: Handle,
     handle: Handle,
@@ -1109,12 +1129,45 @@ pub async fn greeter_device_initial_do_wait_peer(
     )
 }
 
+pub async fn greeter_shamir_recovery_initial_do_wait_peer(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<ShamirRecoveryGreetInProgress1Info, GreetInProgressError> {
+    let work = async {
+        let ctx = take_and_close_handle(handle, |x| match x {
+            HandleItem::ShamirRecoveryGreetInitial(ctx) => Ok(ctx),
+            invalid => Err(invalid),
+        })?;
+
+        let ctx = ctx.do_wait_peer().await?;
+        let greeter_sas = ctx.greeter_sas().to_owned();
+
+        let new_handle = register_handle(HandleItem::ShamirRecoveryGreetInProgress1(ctx));
+
+        Ok(ShamirRecoveryGreetInProgress1Info {
+            handle: new_handle,
+            greeter_sas,
+        })
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => Err(GreetInProgressError::Cancelled),
+    )
+}
+
 pub struct UserGreetInProgress1Info {
     pub handle: Handle,
     pub greeter_sas: SASCode,
 }
 
 pub struct DeviceGreetInProgress1Info {
+    pub handle: Handle,
+    pub greeter_sas: SASCode,
+}
+
+pub struct ShamirRecoveryGreetInProgress1Info {
     pub handle: Handle,
     pub greeter_sas: SASCode,
 }
@@ -1187,6 +1240,40 @@ pub async fn greeter_device_in_progress_1_do_wait_peer_trust(
     )
 }
 
+pub async fn greeter_shamir_recovery_in_progress_1_do_wait_peer_trust(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<ShamirRecoveryGreetInProgress2Info, GreetInProgressError> {
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::ShamirRecoveryGreetInProgress1(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
+
+    let work = async {
+        let ctx = ctx.do_wait_peer_trust().await?;
+        let claimer_sas = ctx.claimer_sas().to_owned();
+        let claimer_sas_choices = ctx.generate_claimer_sas_choices(4);
+
+        let new_handle = register_handle(HandleItem::ShamirRecoveryGreetInProgress2(ctx));
+
+        Ok(ShamirRecoveryGreetInProgress2Info {
+            handle: new_handle,
+            claimer_sas,
+            claimer_sas_choices,
+        })
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => {
+            canceller_ctx.cancel_and_warn_on_error().await;
+            Err(GreetInProgressError::Cancelled)
+        },
+    )
+}
+
 pub async fn greeter_user_in_progress_2_do_deny_trust(
     canceller: Handle,
     handle: Handle,
@@ -1229,6 +1316,27 @@ pub async fn greeter_device_in_progress_2_do_deny_trust(
     )
 }
 
+pub async fn greeter_shamir_recovery_in_progress_2_do_deny_trust(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<(), GreetInProgressError> {
+    let work = async {
+        let ctx = take_and_close_handle(handle, |x| match x {
+            HandleItem::ShamirRecoveryGreetInProgress2(ctx) => Ok(ctx),
+            invalid => Err(invalid),
+        })?;
+
+        ctx.do_deny_trust().await?;
+        Ok(())
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => Err(GreetInProgressError::Cancelled),
+    )
+}
+
 pub struct UserGreetInProgress2Info {
     pub handle: Handle,
     pub claimer_sas: SASCode,
@@ -1236,6 +1344,12 @@ pub struct UserGreetInProgress2Info {
 }
 
 pub struct DeviceGreetInProgress2Info {
+    pub handle: Handle,
+    pub claimer_sas: SASCode,
+    pub claimer_sas_choices: Vec<SASCode>,
+}
+
+pub struct ShamirRecoveryGreetInProgress2Info {
     pub handle: Handle,
     pub claimer_sas: SASCode,
     pub claimer_sas_choices: Vec<SASCode>,
@@ -1297,11 +1411,43 @@ pub async fn greeter_device_in_progress_2_do_signify_trust(
     )
 }
 
+pub async fn greeter_shamir_recovery_in_progress_2_do_signify_trust(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<ShamirRecoveryGreetInProgress3Info, GreetInProgressError> {
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::ShamirRecoveryGreetInProgress2(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
+
+    let work = async {
+        let ctx = ctx.do_signify_trust().await?;
+
+        let new_handle = register_handle(HandleItem::ShamirRecoveryGreetInProgress3(ctx));
+
+        Ok(ShamirRecoveryGreetInProgress3Info { handle: new_handle })
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => {
+            canceller_ctx.cancel_and_warn_on_error().await;
+            Err(GreetInProgressError::Cancelled)
+        },
+    )
+}
+
 pub struct UserGreetInProgress3Info {
     pub handle: Handle,
 }
 
 pub struct DeviceGreetInProgress3Info {
+    pub handle: Handle,
+}
+
+pub struct ShamirRecoveryGreetInProgress3Info {
     pub handle: Handle,
 }
 
@@ -1359,6 +1505,31 @@ pub async fn greeter_device_in_progress_3_do_get_claim_requests(
             handle: new_handle,
             requested_device_label,
         })
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => {
+            canceller_ctx.cancel_and_warn_on_error().await;
+            Err(GreetInProgressError::Cancelled)
+        },
+    )
+}
+
+pub async fn greeter_shamir_recovery_in_progress_3_do_get_claim_requests(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<(), GreetInProgressError> {
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::ShamirRecoveryGreetInProgress3(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
+
+    let work = async {
+        ctx.do_send_share().await?;
+        Ok(())
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;

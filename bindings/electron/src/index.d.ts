@@ -209,6 +209,29 @@ export interface ServerConfig {
 }
 
 
+export interface ShamirRecoveryGreetInProgress1Info {
+    handle: number
+    greeterSas: string
+}
+
+
+export interface ShamirRecoveryGreetInProgress2Info {
+    handle: number
+    claimerSas: string
+    claimerSasChoices: Array<string>
+}
+
+
+export interface ShamirRecoveryGreetInProgress3Info {
+    handle: number
+}
+
+
+export interface ShamirRecoveryGreetInitialInfo {
+    handle: number
+}
+
+
 export interface StartedWorkspaceInfo {
     client: number
     id: string
@@ -1254,6 +1277,55 @@ export interface ClientStartInvitationGreetErrorInternal {
 }
 export type ClientStartInvitationGreetError =
   | ClientStartInvitationGreetErrorInternal
+
+
+// ClientStartShamirRecoveryInvitationGreetError
+export interface ClientStartShamirRecoveryInvitationGreetErrorCorruptedShareData {
+    tag: "CorruptedShareData"
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorInvitationNotFound {
+    tag: "InvitationNotFound"
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryDeleted {
+    tag: "ShamirRecoveryDeleted"
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryNotFound {
+    tag: "ShamirRecoveryNotFound"
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryUnusable {
+    tag: "ShamirRecoveryUnusable"
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type ClientStartShamirRecoveryInvitationGreetError =
+  | ClientStartShamirRecoveryInvitationGreetErrorCorruptedShareData
+  | ClientStartShamirRecoveryInvitationGreetErrorInternal
+  | ClientStartShamirRecoveryInvitationGreetErrorInvalidCertificate
+  | ClientStartShamirRecoveryInvitationGreetErrorInvitationNotFound
+  | ClientStartShamirRecoveryInvitationGreetErrorOffline
+  | ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryDeleted
+  | ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryNotFound
+  | ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryUnusable
+  | ClientStartShamirRecoveryInvitationGreetErrorStopped
 
 
 // ClientStartWorkspaceError
@@ -2961,6 +3033,10 @@ export function clientStartDeviceInvitationGreet(
     client: number,
     token: string
 ): Promise<Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError>>
+export function clientStartShamirRecoveryInvitationGreet(
+    client: number,
+    token: string
+): Promise<Result<ShamirRecoveryGreetInitialInfo, ClientStartShamirRecoveryInvitationGreetError>>
 export function clientStartUserInvitationGreet(
     client: number,
     token: string
@@ -3005,6 +3081,26 @@ export function greeterDeviceInitialDoWaitPeer(
     canceller: number,
     handle: number
 ): Promise<Result<DeviceGreetInProgress1Info, GreetInProgressError>>
+export function greeterShamirRecoveryInProgress1DoWaitPeerTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<ShamirRecoveryGreetInProgress2Info, GreetInProgressError>>
+export function greeterShamirRecoveryInProgress2DoDenyTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<null, GreetInProgressError>>
+export function greeterShamirRecoveryInProgress2DoSignifyTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<ShamirRecoveryGreetInProgress3Info, GreetInProgressError>>
+export function greeterShamirRecoveryInProgress3DoGetClaimRequests(
+    canceller: number,
+    handle: number
+): Promise<Result<null, GreetInProgressError>>
+export function greeterShamirRecoveryInitialDoWaitPeer(
+    canceller: number,
+    handle: number
+): Promise<Result<ShamirRecoveryGreetInProgress1Info, GreetInProgressError>>
 export function greeterUserInProgress1DoWaitPeerTrust(
     canceller: number,
     handle: number

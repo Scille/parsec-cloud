@@ -55,12 +55,20 @@ pub(crate) enum HandleItem {
 
     UserGreetInitial(libparsec_client::UserGreetInitialCtx),
     DeviceGreetInitial(libparsec_client::DeviceGreetInitialCtx),
+    ShamirRecoveryGreetInitial(libparsec_client::ShamirRecoveryGreetInitialCtx),
+
     UserGreetInProgress1(libparsec_client::UserGreetInProgress1Ctx),
     DeviceGreetInProgress1(libparsec_client::DeviceGreetInProgress1Ctx),
+    ShamirRecoveryGreetInProgress1(libparsec_client::ShamirRecoveryGreetInProgress1Ctx),
+
     UserGreetInProgress2(libparsec_client::UserGreetInProgress2Ctx),
     DeviceGreetInProgress2(libparsec_client::DeviceGreetInProgress2Ctx),
+    ShamirRecoveryGreetInProgress2(libparsec_client::ShamirRecoveryGreetInProgress2Ctx),
+
     UserGreetInProgress3(libparsec_client::UserGreetInProgress3Ctx),
     DeviceGreetInProgress3(libparsec_client::DeviceGreetInProgress3Ctx),
+    ShamirRecoveryGreetInProgress3(libparsec_client::ShamirRecoveryGreetInProgress3Ctx),
+
     UserGreetInProgress4(libparsec_client::UserGreetInProgress4Ctx),
     DeviceGreetInProgress4(libparsec_client::DeviceGreetInProgress4Ctx),
 

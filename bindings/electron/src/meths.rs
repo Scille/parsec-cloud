@@ -1674,6 +1674,199 @@ fn struct_server_config_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ShamirRecoveryGreetInProgress1Info
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_in_progress1_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ShamirRecoveryGreetInProgress1Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let greeter_sas = {
+        let js_val: Handle<JsString> = obj.get(cx, "greeterSas")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    Ok(libparsec::ShamirRecoveryGreetInProgress1Info {
+        handle,
+        greeter_sas,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_in_progress1_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryGreetInProgress1Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    let js_greeter_sas = JsString::try_new(cx, rs_obj.greeter_sas).or_throw(cx)?;
+    js_obj.set(cx, "greeterSas", js_greeter_sas)?;
+    Ok(js_obj)
+}
+
+// ShamirRecoveryGreetInProgress2Info
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_in_progress2_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ShamirRecoveryGreetInProgress2Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let claimer_sas = {
+        let js_val: Handle<JsString> = obj.get(cx, "claimerSas")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let claimer_sas_choices = {
+        let js_val: Handle<JsArray> = obj.get(cx, "claimerSasChoices")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsString> = js_val.get(cx, i)?;
+                v.push({
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_item.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                });
+            }
+            v
+        }
+    };
+    Ok(libparsec::ShamirRecoveryGreetInProgress2Info {
+        handle,
+        claimer_sas,
+        claimer_sas_choices,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_in_progress2_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryGreetInProgress2Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    let js_claimer_sas = JsString::try_new(cx, rs_obj.claimer_sas).or_throw(cx)?;
+    js_obj.set(cx, "claimerSas", js_claimer_sas)?;
+    let js_claimer_sas_choices = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.claimer_sas_choices.len());
+        for (i, elem) in rs_obj.claimer_sas_choices.into_iter().enumerate() {
+            let js_elem = JsString::try_new(cx, elem).or_throw(cx)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "claimerSasChoices", js_claimer_sas_choices)?;
+    Ok(js_obj)
+}
+
+// ShamirRecoveryGreetInProgress3Info
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_in_progress3_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ShamirRecoveryGreetInProgress3Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    Ok(libparsec::ShamirRecoveryGreetInProgress3Info { handle })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_in_progress3_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryGreetInProgress3Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    Ok(js_obj)
+}
+
+// ShamirRecoveryGreetInitialInfo
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_initial_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ShamirRecoveryGreetInitialInfo> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    Ok(libparsec::ShamirRecoveryGreetInitialInfo { handle })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_initial_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryGreetInitialInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    Ok(js_obj)
+}
+
 // StartedWorkspaceInfo
 
 #[allow(dead_code)]
@@ -4965,6 +5158,93 @@ fn variant_client_start_invitation_greet_error_rs_to_js<'a>(
         libparsec::ClientStartInvitationGreetError::Internal { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClientStartInvitationGreetErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientStartShamirRecoveryInvitationGreetError
+
+#[allow(dead_code)]
+fn variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientStartShamirRecoveryInvitationGreetError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::CorruptedShareData { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientStartShamirRecoveryInvitationGreetErrorCorruptedShareData",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientStartShamirRecoveryInvitationGreetErrorInternal")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientStartShamirRecoveryInvitationGreetErrorInvalidCertificate",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::InvitationNotFound { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientStartShamirRecoveryInvitationGreetErrorInvitationNotFound",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientStartShamirRecoveryInvitationGreetErrorOffline")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryDeleted {
+            ..
+        } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryDeleted",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryNotFound {
+            ..
+        } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryNotFound",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryUnusable {
+            ..
+        } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryUnusable",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientStartShamirRecoveryInvitationGreetErrorStopped")
+                    .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -13560,6 +13840,72 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
     Ok(promise)
 }
 
+// client_start_shamir_recovery_invitation_greet
+fn client_start_shamir_recovery_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let token = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
+                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_start_shamir_recovery_invitation_greet(client, token).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value =
+                            struct_shamir_recovery_greet_initial_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js(
+                                &mut cx, err,
+                            )?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_start_user_invitation_greet
 fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -14188,6 +14534,342 @@ fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = struct_device_greet_in_progress1_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_shamir_recovery_in_progress_1_do_wait_peer_trust
+fn greeter_shamir_recovery_in_progress_1_do_wait_peer_trust(
+    mut cx: FunctionContext,
+) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::greeter_shamir_recovery_in_progress_1_do_wait_peer_trust(
+                canceller, handle,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value =
+                            struct_shamir_recovery_greet_in_progress2_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_shamir_recovery_in_progress_2_do_deny_trust
+fn greeter_shamir_recovery_in_progress_2_do_deny_trust(
+    mut cx: FunctionContext,
+) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::greeter_shamir_recovery_in_progress_2_do_deny_trust(canceller, handle)
+                    .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_shamir_recovery_in_progress_2_do_signify_trust
+fn greeter_shamir_recovery_in_progress_2_do_signify_trust(
+    mut cx: FunctionContext,
+) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::greeter_shamir_recovery_in_progress_2_do_signify_trust(
+                canceller, handle,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value =
+                            struct_shamir_recovery_greet_in_progress3_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_shamir_recovery_in_progress_3_do_get_claim_requests
+fn greeter_shamir_recovery_in_progress_3_do_get_claim_requests(
+    mut cx: FunctionContext,
+) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::greeter_shamir_recovery_in_progress_3_do_get_claim_requests(
+                canceller, handle,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// greeter_shamir_recovery_initial_do_wait_peer
+fn greeter_shamir_recovery_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::greeter_shamir_recovery_initial_do_wait_peer(canceller, handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value =
+                            struct_shamir_recovery_greet_in_progress1_info_rs_to_js(&mut cx, ok)?;
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -18618,6 +19300,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         client_start_device_invitation_greet,
     )?;
     cx.export_function(
+        "clientStartShamirRecoveryInvitationGreet",
+        client_start_shamir_recovery_invitation_greet,
+    )?;
+    cx.export_function(
         "clientStartUserInvitationGreet",
         client_start_user_invitation_greet,
     )?;
@@ -18653,6 +19339,26 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function(
         "greeterDeviceInitialDoWaitPeer",
         greeter_device_initial_do_wait_peer,
+    )?;
+    cx.export_function(
+        "greeterShamirRecoveryInProgress1DoWaitPeerTrust",
+        greeter_shamir_recovery_in_progress_1_do_wait_peer_trust,
+    )?;
+    cx.export_function(
+        "greeterShamirRecoveryInProgress2DoDenyTrust",
+        greeter_shamir_recovery_in_progress_2_do_deny_trust,
+    )?;
+    cx.export_function(
+        "greeterShamirRecoveryInProgress2DoSignifyTrust",
+        greeter_shamir_recovery_in_progress_2_do_signify_trust,
+    )?;
+    cx.export_function(
+        "greeterShamirRecoveryInProgress3DoGetClaimRequests",
+        greeter_shamir_recovery_in_progress_3_do_get_claim_requests,
+    )?;
+    cx.export_function(
+        "greeterShamirRecoveryInitialDoWaitPeer",
+        greeter_shamir_recovery_initial_do_wait_peer,
     )?;
     cx.export_function(
         "greeterUserInProgress1DoWaitPeerTrust",
