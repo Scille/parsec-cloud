@@ -21,7 +21,17 @@ from typing import (
 import anyio
 import click
 
-from parsec._parsec import DateTime
+from parsec._parsec import DateTime, ParsecAddr
+from parsec.backend import Backend, backend_factory
+from parsec.config import (
+    BackendConfig,
+    BaseBlockStoreConfig,
+    BaseDatabaseConfig,
+    SmtpEmailConfig,
+)
+from parsec.logging import get_logger
+
+logger = get_logger()
 
 
 class SchemesInternalType(TypedDict):
@@ -252,3 +262,64 @@ class ParsecDateTimeClickType(click.ParamType):
         py_datetime = py_datetime.replace(tzinfo=datetime.timezone.utc)
 
         return DateTime.from_timestamp_micros(int(py_datetime.timestamp() * 1_000_000))
+
+
+@asynccontextmanager
+async def start_backend(
+    db_config: BaseDatabaseConfig,
+    blockstore_config: BaseBlockStoreConfig,
+    debug: bool,
+    populate_with_template: str | None = None,
+):
+    """
+    Start backend for
+    """
+
+    class CliBackendConfig(BackendConfig):
+        __slots__ = ()
+
+        @property
+        def administration_token(self) -> str:  # type: ignore[reportIncompatibleVariableOverride]
+            assert False, "Unused configuration"
+
+        @property
+        def email_config(self) -> SmtpEmailConfig:  # type: ignore[reportIncompatibleVariableOverride]
+            assert False, "Unused configuration"
+
+        @property
+        def server_addr(self) -> ParsecAddr:  # type: ignore[reportIncompatibleVariableOverride]
+            assert False, "Unused configuration"
+
+    config = BackendConfig(
+        debug=debug,
+        db_config=db_config,
+        blockstore_config=blockstore_config,
+        administration_token=None,  # type: ignore
+        email_config=None,  # type: ignore
+        server_addr=None,  # type: ignore
+    )
+    # Cannot directly initialize a `CliBackendConfig` since its
+    # `administration_token`/`email_config`/`server_addr` fields have not setter.
+    #
+    # Also note that swapping the class of an existing instance is totally fine
+    # as long as both classes have the same fields.
+    config.__class__ = CliBackendConfig
+
+    async with backend_factory(config=config) as backend:
+        if populate_with_template is not None:
+            await _populate_backend(backend, populate_with_template)
+
+        yield backend
+
+
+async def _populate_backend(backend: Backend, testbed_template: str) -> None:
+    from parsec._parsec import testbed
+
+    template_content = testbed.test_get_testbed_template(testbed_template)
+    if template_content is None:
+        raise RuntimeError(f"Testbed template `{testbed_template}` not found")
+
+    organization_id = await backend.test_load_template(template_content)
+    logger.warning(
+        f"Populating backend with testbed template `{testbed_template}` as organization `{organization_id}`"
+    )
