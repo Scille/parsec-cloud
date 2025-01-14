@@ -220,6 +220,25 @@ export interface ServerConfig {
     activeUsersLimit: ActiveUsersLimit
 }
 
+export interface ShamirRecoveryGreetInProgress1Info {
+    handle: Handle
+    greeterSas: SASCode
+}
+
+export interface ShamirRecoveryGreetInProgress2Info {
+    handle: Handle
+    claimerSas: SASCode
+    claimerSasChoices: Array<SASCode>
+}
+
+export interface ShamirRecoveryGreetInProgress3Info {
+    handle: Handle
+}
+
+export interface ShamirRecoveryGreetInitialInfo {
+    handle: Handle
+}
+
 export interface StartedWorkspaceInfo {
     client: Handle
     id: VlobID
@@ -1473,6 +1492,66 @@ export interface ClientStartInvitationGreetErrorInternal {
 }
 export type ClientStartInvitationGreetError =
   | ClientStartInvitationGreetErrorInternal
+
+// ClientStartShamirRecoveryInvitationGreetError
+export enum ClientStartShamirRecoveryInvitationGreetErrorTag {
+    CorruptedShareData = 'ClientStartShamirRecoveryInvitationGreetErrorCorruptedShareData',
+    Internal = 'ClientStartShamirRecoveryInvitationGreetErrorInternal',
+    InvalidCertificate = 'ClientStartShamirRecoveryInvitationGreetErrorInvalidCertificate',
+    InvitationNotFound = 'ClientStartShamirRecoveryInvitationGreetErrorInvitationNotFound',
+    Offline = 'ClientStartShamirRecoveryInvitationGreetErrorOffline',
+    ShamirRecoveryDeleted = 'ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryDeleted',
+    ShamirRecoveryNotFound = 'ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryNotFound',
+    ShamirRecoveryUnusable = 'ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryUnusable',
+    Stopped = 'ClientStartShamirRecoveryInvitationGreetErrorStopped',
+}
+
+export interface ClientStartShamirRecoveryInvitationGreetErrorCorruptedShareData {
+    tag: ClientStartShamirRecoveryInvitationGreetErrorTag.CorruptedShareData
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorInternal {
+    tag: ClientStartShamirRecoveryInvitationGreetErrorTag.Internal
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorInvalidCertificate {
+    tag: ClientStartShamirRecoveryInvitationGreetErrorTag.InvalidCertificate
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorInvitationNotFound {
+    tag: ClientStartShamirRecoveryInvitationGreetErrorTag.InvitationNotFound
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorOffline {
+    tag: ClientStartShamirRecoveryInvitationGreetErrorTag.Offline
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryDeleted {
+    tag: ClientStartShamirRecoveryInvitationGreetErrorTag.ShamirRecoveryDeleted
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryNotFound {
+    tag: ClientStartShamirRecoveryInvitationGreetErrorTag.ShamirRecoveryNotFound
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryUnusable {
+    tag: ClientStartShamirRecoveryInvitationGreetErrorTag.ShamirRecoveryUnusable
+    error: string
+}
+export interface ClientStartShamirRecoveryInvitationGreetErrorStopped {
+    tag: ClientStartShamirRecoveryInvitationGreetErrorTag.Stopped
+    error: string
+}
+export type ClientStartShamirRecoveryInvitationGreetError =
+  | ClientStartShamirRecoveryInvitationGreetErrorCorruptedShareData
+  | ClientStartShamirRecoveryInvitationGreetErrorInternal
+  | ClientStartShamirRecoveryInvitationGreetErrorInvalidCertificate
+  | ClientStartShamirRecoveryInvitationGreetErrorInvitationNotFound
+  | ClientStartShamirRecoveryInvitationGreetErrorOffline
+  | ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryDeleted
+  | ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryNotFound
+  | ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryUnusable
+  | ClientStartShamirRecoveryInvitationGreetErrorStopped
 
 // ClientStartWorkspaceError
 export enum ClientStartWorkspaceErrorTag {
@@ -3520,6 +3599,10 @@ export interface LibParsecPlugin {
         client: Handle,
         token: InvitationToken
     ): Promise<Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError>>
+    clientStartShamirRecoveryInvitationGreet(
+        client: Handle,
+        token: InvitationToken
+    ): Promise<Result<ShamirRecoveryGreetInitialInfo, ClientStartShamirRecoveryInvitationGreetError>>
     clientStartUserInvitationGreet(
         client: Handle,
         token: InvitationToken
@@ -3564,6 +3647,26 @@ export interface LibParsecPlugin {
         canceller: Handle,
         handle: Handle
     ): Promise<Result<DeviceGreetInProgress1Info, GreetInProgressError>>
+    greeterShamirRecoveryInProgress1DoWaitPeerTrust(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<ShamirRecoveryGreetInProgress2Info, GreetInProgressError>>
+    greeterShamirRecoveryInProgress2DoDenyTrust(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<null, GreetInProgressError>>
+    greeterShamirRecoveryInProgress2DoSignifyTrust(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<ShamirRecoveryGreetInProgress3Info, GreetInProgressError>>
+    greeterShamirRecoveryInProgress3DoGetClaimRequests(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<null, GreetInProgressError>>
+    greeterShamirRecoveryInitialDoWaitPeer(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<ShamirRecoveryGreetInProgress1Info, GreetInProgressError>>
     greeterUserInProgress1DoWaitPeerTrust(
         canceller: Handle,
         handle: Handle

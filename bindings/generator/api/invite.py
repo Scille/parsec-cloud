@@ -452,7 +452,40 @@ class DeviceGreetInitialInfo(Structure):
     handle: Handle
 
 
+class ShamirRecoveryGreetInitialInfo(Structure):
+    handle: Handle
+
+
 class ClientStartInvitationGreetError(ErrorVariant):
+    class Internal:
+        pass
+
+
+class ClientStartShamirRecoveryInvitationGreetError(ErrorVariant):
+    class InvitationNotFound:
+        pass
+
+    class ShamirRecoveryNotFound:
+        pass
+
+    class ShamirRecoveryDeleted:
+        pass
+
+    class ShamirRecoveryUnusable:
+        pass
+
+    class CorruptedShareData:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
     class Internal:
         pass
 
@@ -466,6 +499,12 @@ async def client_start_user_invitation_greet(
 async def client_start_device_invitation_greet(
     client: Handle, token: InvitationToken
 ) -> Result[DeviceGreetInitialInfo, ClientStartInvitationGreetError]:
+    raise NotImplementedError
+
+
+async def client_start_shamir_recovery_invitation_greet(
+    client: Handle, token: InvitationToken
+) -> Result[ShamirRecoveryGreetInitialInfo, ClientStartShamirRecoveryInvitationGreetError]:
     raise NotImplementedError
 
 
@@ -534,6 +573,11 @@ class DeviceGreetInProgress1Info(Structure):
     greeter_sas: SASCode
 
 
+class ShamirRecoveryGreetInProgress1Info(Structure):
+    handle: Handle
+    greeter_sas: SASCode
+
+
 async def greeter_user_initial_do_wait_peer(
     canceller: Handle, handle: Handle
 ) -> Result[UserGreetInProgress1Info, GreetInProgressError]:
@@ -546,6 +590,12 @@ async def greeter_device_initial_do_wait_peer(
     raise NotImplementedError
 
 
+async def greeter_shamir_recovery_initial_do_wait_peer(
+    canceller: Handle, handle: Handle
+) -> Result[ShamirRecoveryGreetInProgress1Info, GreetInProgressError]:
+    raise NotImplementedError
+
+
 class UserGreetInProgress2Info(Structure):
     handle: Handle
     claimer_sas: SASCode
@@ -553,6 +603,12 @@ class UserGreetInProgress2Info(Structure):
 
 
 class DeviceGreetInProgress2Info(Structure):
+    handle: Handle
+    claimer_sas: SASCode
+    claimer_sas_choices: list[SASCode]
+
+
+class ShamirRecoveryGreetInProgress2Info(Structure):
     handle: Handle
     claimer_sas: SASCode
     claimer_sas_choices: list[SASCode]
@@ -570,6 +626,12 @@ async def greeter_device_in_progress_1_do_wait_peer_trust(
     raise NotImplementedError
 
 
+async def greeter_shamir_recovery_in_progress_1_do_wait_peer_trust(
+    canceller: Handle, handle: Handle
+) -> Result[ShamirRecoveryGreetInProgress2Info, GreetInProgressError]:
+    raise NotImplementedError
+
+
 async def greeter_user_in_progress_2_do_deny_trust(
     canceller: Handle, handle: Handle
 ) -> Result[None, GreetInProgressError]:
@@ -577,6 +639,12 @@ async def greeter_user_in_progress_2_do_deny_trust(
 
 
 async def greeter_device_in_progress_2_do_deny_trust(
+    canceller: Handle, handle: Handle
+) -> Result[None, GreetInProgressError]:
+    raise NotImplementedError
+
+
+async def greeter_shamir_recovery_in_progress_2_do_deny_trust(
     canceller: Handle, handle: Handle
 ) -> Result[None, GreetInProgressError]:
     raise NotImplementedError
@@ -590,6 +658,10 @@ class DeviceGreetInProgress3Info(Structure):
     handle: Handle
 
 
+class ShamirRecoveryGreetInProgress3Info(Structure):
+    handle: Handle
+
+
 async def greeter_user_in_progress_2_do_signify_trust(
     canceller: Handle, handle: Handle
 ) -> Result[UserGreetInProgress3Info, GreetInProgressError]:
@@ -599,6 +671,12 @@ async def greeter_user_in_progress_2_do_signify_trust(
 async def greeter_device_in_progress_2_do_signify_trust(
     canceller: Handle, handle: Handle
 ) -> Result[DeviceGreetInProgress3Info, GreetInProgressError]:
+    raise NotImplementedError
+
+
+async def greeter_shamir_recovery_in_progress_2_do_signify_trust(
+    canceller: Handle, handle: Handle
+) -> Result[ShamirRecoveryGreetInProgress3Info, GreetInProgressError]:
     raise NotImplementedError
 
 
@@ -622,6 +700,12 @@ async def greeter_user_in_progress_3_do_get_claim_requests(
 async def greeter_device_in_progress_3_do_get_claim_requests(
     canceller: Handle, handle: Handle
 ) -> Result[DeviceGreetInProgress4Info, GreetInProgressError]:
+    raise NotImplementedError
+
+
+async def greeter_shamir_recovery_in_progress_3_do_get_claim_requests(
+    canceller: Handle, handle: Handle
+) -> Result[None, GreetInProgressError]:
     raise NotImplementedError
 
 

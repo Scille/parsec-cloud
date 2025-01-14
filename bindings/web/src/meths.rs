@@ -1797,6 +1797,218 @@ fn struct_server_config_rs_to_js(rs_obj: libparsec::ServerConfig) -> Result<JsVa
     Ok(js_obj)
 }
 
+// ShamirRecoveryGreetInProgress1Info
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_in_progress1_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::ShamirRecoveryGreetInProgress1Info, JsValue> {
+    let handle = {
+        let js_val = Reflect::get(&obj, &"handle".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let greeter_sas = {
+        let js_val = Reflect::get(&obj, &"greeterSas".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+    };
+    Ok(libparsec::ShamirRecoveryGreetInProgress1Info {
+        handle,
+        greeter_sas,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_in_progress1_info_rs_to_js(
+    rs_obj: libparsec::ShamirRecoveryGreetInProgress1Info,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_handle = JsValue::from(rs_obj.handle);
+    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    let js_greeter_sas = JsValue::from_str(rs_obj.greeter_sas.as_ref());
+    Reflect::set(&js_obj, &"greeterSas".into(), &js_greeter_sas)?;
+    Ok(js_obj)
+}
+
+// ShamirRecoveryGreetInProgress2Info
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_in_progress2_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::ShamirRecoveryGreetInProgress2Info, JsValue> {
+    let handle = {
+        let js_val = Reflect::get(&obj, &"handle".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let claimer_sas = {
+        let js_val = Reflect::get(&obj, &"claimerSas".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid SASCode"))?
+    };
+    let claimer_sas_choices = {
+        let js_val = Reflect::get(&obj, &"claimerSasChoices".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = x
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid SASCode"))?;
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    Ok(libparsec::ShamirRecoveryGreetInProgress2Info {
+        handle,
+        claimer_sas,
+        claimer_sas_choices,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_in_progress2_info_rs_to_js(
+    rs_obj: libparsec::ShamirRecoveryGreetInProgress2Info,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_handle = JsValue::from(rs_obj.handle);
+    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    let js_claimer_sas = JsValue::from_str(rs_obj.claimer_sas.as_ref());
+    Reflect::set(&js_obj, &"claimerSas".into(), &js_claimer_sas)?;
+    let js_claimer_sas_choices = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.claimer_sas_choices.len() as u32);
+        for (i, elem) in rs_obj.claimer_sas_choices.into_iter().enumerate() {
+            let js_elem = JsValue::from_str(elem.as_ref());
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(
+        &js_obj,
+        &"claimerSasChoices".into(),
+        &js_claimer_sas_choices,
+    )?;
+    Ok(js_obj)
+}
+
+// ShamirRecoveryGreetInProgress3Info
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_in_progress3_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::ShamirRecoveryGreetInProgress3Info, JsValue> {
+    let handle = {
+        let js_val = Reflect::get(&obj, &"handle".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    Ok(libparsec::ShamirRecoveryGreetInProgress3Info { handle })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_in_progress3_info_rs_to_js(
+    rs_obj: libparsec::ShamirRecoveryGreetInProgress3Info,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_handle = JsValue::from(rs_obj.handle);
+    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    Ok(js_obj)
+}
+
+// ShamirRecoveryGreetInitialInfo
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_initial_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::ShamirRecoveryGreetInitialInfo, JsValue> {
+    let handle = {
+        let js_val = Reflect::get(&obj, &"handle".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    Ok(libparsec::ShamirRecoveryGreetInitialInfo { handle })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_greet_initial_info_rs_to_js(
+    rs_obj: libparsec::ShamirRecoveryGreetInitialInfo,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_handle = JsValue::from(rs_obj.handle);
+    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    Ok(js_obj)
+}
+
 // StartedWorkspaceInfo
 
 #[allow(dead_code)]
@@ -5498,6 +5710,89 @@ fn variant_client_start_invitation_greet_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientStartInvitationGreetErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientStartShamirRecoveryInvitationGreetError
+
+#[allow(dead_code)]
+fn variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js(
+    rs_obj: libparsec::ClientStartShamirRecoveryInvitationGreetError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::CorruptedShareData { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartShamirRecoveryInvitationGreetErrorCorruptedShareData".into(),
+            )?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartShamirRecoveryInvitationGreetErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartShamirRecoveryInvitationGreetErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::InvitationNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartShamirRecoveryInvitationGreetErrorInvitationNotFound".into(),
+            )?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartShamirRecoveryInvitationGreetErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryDeleted {
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryDeleted".into(),
+            )?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryNotFound {
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryNotFound".into(),
+            )?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::ShamirRecoveryUnusable {
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartShamirRecoveryInvitationGreetErrorShamirRecoveryUnusable".into(),
+            )?;
+        }
+        libparsec::ClientStartShamirRecoveryInvitationGreetError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartShamirRecoveryInvitationGreetErrorStopped".into(),
             )?;
         }
     }
@@ -13435,6 +13730,38 @@ pub fn clientStartDeviceInvitationGreet(client: u32, token: String) -> Promise {
     })
 }
 
+// client_start_shamir_recovery_invitation_greet
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientStartShamirRecoveryInvitationGreet(client: u32, token: String) -> Promise {
+    future_to_promise(async move {
+        let token = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
+                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::client_start_shamir_recovery_invitation_greet(client, token).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_shamir_recovery_greet_initial_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err =
+                    variant_client_start_shamir_recovery_invitation_greet_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // client_start_user_invitation_greet
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -13754,6 +14081,145 @@ pub fn greeterDeviceInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = struct_device_greet_in_progress1_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// greeter_shamir_recovery_in_progress_1_do_wait_peer_trust
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn greeterShamirRecoveryInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret =
+            libparsec::greeter_shamir_recovery_in_progress_1_do_wait_peer_trust(canceller, handle)
+                .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_shamir_recovery_greet_in_progress2_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// greeter_shamir_recovery_in_progress_2_do_deny_trust
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn greeterShamirRecoveryInProgress2DoDenyTrust(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret =
+            libparsec::greeter_shamir_recovery_in_progress_2_do_deny_trust(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// greeter_shamir_recovery_in_progress_2_do_signify_trust
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn greeterShamirRecoveryInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret =
+            libparsec::greeter_shamir_recovery_in_progress_2_do_signify_trust(canceller, handle)
+                .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_shamir_recovery_greet_in_progress3_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// greeter_shamir_recovery_in_progress_3_do_get_claim_requests
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn greeterShamirRecoveryInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::greeter_shamir_recovery_in_progress_3_do_get_claim_requests(
+            canceller, handle,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// greeter_shamir_recovery_initial_do_wait_peer
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn greeterShamirRecoveryInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::greeter_shamir_recovery_initial_do_wait_peer(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_shamir_recovery_greet_in_progress1_info_rs_to_js(value)?;
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
