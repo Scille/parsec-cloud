@@ -95,7 +95,7 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
                 ]
             );
             p_assert_eq!(alice_ctx.threshold(), 2.try_into().unwrap());
-            p_assert_eq!(alice_ctx.shares(), HashMap::new());
+            p_assert_eq!(alice_ctx.retrieved_shares(), HashMap::new());
             assert!(alice_ctx.is_recoverable());
             alice_ctx
         }
@@ -154,7 +154,7 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
             ShamirRecoveryClaimMaybeRecoverDeviceCtx::PickRecipient(ctx) => ctx,
             _ => panic!("Expected PickRecipient context"),
         };
-    p_assert_eq!(alice_recipient_pick_ctx.shares().len(), 1);
+    p_assert_eq!(alice_recipient_pick_ctx.retrieved_shares().len(), 1);
 
     // Continue with Bob
 
@@ -425,7 +425,7 @@ async fn unrecoverable_recovery(env: &TestbedEnv) {
                 ]
             );
             p_assert_eq!(alice_ctx.threshold(), 2.try_into().unwrap());
-            p_assert_eq!(alice_ctx.shares(), HashMap::new());
+            p_assert_eq!(alice_ctx.retrieved_shares(), HashMap::new());
             assert!(!alice_ctx.is_recoverable());
             alice_ctx
         }
@@ -546,7 +546,7 @@ async fn already_picked_recipient(env: &TestbedEnv) {
             ShamirRecoveryClaimMaybeRecoverDeviceCtx::PickRecipient(ctx) => ctx,
             _ => panic!("Expected PickRecipient context"),
         };
-    p_assert_eq!(alice_recipient_pick_ctx.shares().len(), 1);
+    p_assert_eq!(alice_recipient_pick_ctx.retrieved_shares().len(), 1);
 
     // Try to pick Mike again
 
@@ -724,7 +724,7 @@ async fn add_share_is_idempotent(env: &TestbedEnv) {
             ShamirRecoveryClaimMaybeRecoverDeviceCtx::PickRecipient(ctx) => ctx,
             _ => panic!("Expected PickRecipient context"),
         };
-    p_assert_eq!(alice_recipient_pick_ctx.shares().len(), 1);
+    p_assert_eq!(alice_recipient_pick_ctx.retrieved_shares().len(), 1);
 
     // Add the same share once again
 
@@ -735,5 +735,5 @@ async fn add_share_is_idempotent(env: &TestbedEnv) {
         ShamirRecoveryClaimMaybeRecoverDeviceCtx::PickRecipient(ctx) => ctx,
         _ => panic!("Expected PickRecipient context"),
     };
-    p_assert_eq!(alice_recipient_pick_ctx.shares().len(), 1);
+    p_assert_eq!(alice_recipient_pick_ctx.retrieved_shares().len(), 1);
 }
