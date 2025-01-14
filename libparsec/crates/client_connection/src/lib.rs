@@ -21,7 +21,7 @@ pub use invited_cmds::InvitedCmds;
 pub use testbed::{
     test_register_low_level_send_hook, test_register_low_level_send_hook_default,
     test_register_low_level_send_hook_multicall, test_register_send_hook, Bytes, HeaderMap,
-    HeaderValue, ResponseMock, StatusCode,
+    HeaderName, HeaderValue, ResponseMock, StatusCode,
 };
 // Re-expose
 pub use libparsec_platform_http_proxy::ProxyConfig;

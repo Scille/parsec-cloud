@@ -47,10 +47,6 @@ pub enum ConnectionError {
     #[error("Failed to deserialize the response: {0}")]
     InvalidResponseContent(ProtocolDecodeError),
 
-    /// We failed to retrieve Api-Version
-    #[error("Api-Version header is missing")]
-    MissingApiVersion,
-
     /// We failed to retrieve Supported-Api-Versions
     #[error("Supported-Api-Versions header is missing")]
     MissingSupportedApiVersions,
@@ -113,19 +109,9 @@ impl From<ProtocolEncodeError> for ConnectionError {
 }
 
 pub(crate) fn unsupported_api_version_from_headers(
+    api_version: ApiVersion,
     headers: &reqwest::header::HeaderMap,
 ) -> ConnectionError {
-    let api_version = match headers.get("Api-Version") {
-        Some(api_version) => {
-            let api_version = api_version.to_str().unwrap_or_default();
-            match api_version.try_into() {
-                Ok(api_version) => api_version,
-                Err(_) => return ConnectionError::WrongApiVersion(api_version.into()),
-            }
-        }
-        None => return ConnectionError::MissingApiVersion,
-    };
-
     match headers.get("Supported-Api-Versions") {
         Some(supported_api_versions) => ConnectionError::UnsupportedApiVersion {
             api_version,

@@ -208,9 +208,9 @@
         "passwordChoice": "Password",
         "acceptTOS": {
             "label": "By using Parsec, I accept the ",
-            "tos": "Terms and Conditions ",
+            "tos": "Terms and Conditions",
             "tosLink": "https://parsec.cloud/gtcs-parsec/",
-            "and": "and ",
+            "and": " and ",
             "privacyPolicy": "Privacy Policy",
             "privacyPolicyLink": "https://parsec.cloud/en/politique-de-confidentialite/",
             "update": {

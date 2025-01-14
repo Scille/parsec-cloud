@@ -218,7 +218,6 @@ fn handle_sse_error(
         | ConnectionError::BadContent
         | ConnectionError::InvalidResponseStatus(_)
         | ConnectionError::InvalidResponseContent(_)
-        | ConnectionError::MissingApiVersion
         | ConnectionError::MissingSupportedApiVersions
         | ConnectionError::FrozenUser
         | ConnectionError::AuthenticationTokenExpired

@@ -113,7 +113,10 @@ def cli_running(cmd: str, wait_for: str | None = None, env: dict[str, str] = {})
 
     finally:
         print(f"**************************** TERM to {p.pid} ({_short_cmd(cmd)})")
-        p.terminate()
+        # Use SIGKILL to ensure we skip the gracious shutdown entirely (otherwise
+        # any pending connection remaining from the test would lead to wait until
+        # the graceful shutdown timeouts).
+        p.kill()
         p.wait()
         print(p.live_stdout.read())
         print(p.live_stderr.read())

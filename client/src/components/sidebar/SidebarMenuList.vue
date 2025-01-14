@@ -6,10 +6,11 @@
       lines="none"
       class="list-sidebar-header title-h5"
       :class="isContentVisible ? 'open' : 'close'"
-      @click="setContentVisible(!isContentVisible)"
+      @click="emits('update:isContentVisible', !isContentVisible)"
     >
       <div class="list-sidebar-header-title">
         <ion-icon
+          v-if="icon"
           class="list-sidebar-header-title__icon"
           :icon="icon"
         />
@@ -19,7 +20,7 @@
       </div>
       <ion-icon
         class="list-sidebar-toggle-icon"
-        :icon="isContentVisible ? remove : add"
+        :icon="isContentVisible ? chevronDown : chevronForward"
       />
     </ion-header>
     <div
@@ -34,31 +35,17 @@
 <script setup lang="ts">
 import { IonList, IonHeader, IonIcon, IonText } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
-import { ref } from 'vue';
-import { add, remove } from 'ionicons/icons';
-
-const isContentVisible = ref(true);
+import { chevronDown, chevronForward } from 'ionicons/icons';
 
 defineProps<{
   title: Translatable;
-  icon: string;
+  icon?: string;
+  isContentVisible: boolean;
 }>();
-
-defineExpose({
-  isContentVisible,
-  setContentVisible,
-});
 
 const emits = defineEmits<{
-  (event: 'visibilityChanged', visibility: boolean): void;
+  (event: 'update:isContentVisible', visibility: boolean): void;
 }>();
-
-function setContentVisible(visible: boolean, blockEvent = false): void {
-  isContentVisible.value = visible;
-  if (!blockEvent) {
-    emits('visibilityChanged', isContentVisible.value);
-  }
-}
 </script>
 
 <style scoped lang="scss">
@@ -66,9 +53,7 @@ function setContentVisible(visible: boolean, blockEvent = false): void {
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: 0.5rem;
   margin-bottom: 1rem;
-  padding: 0.5rem;
   border-radius: var(--parsec-radius-8);
 
   &.list-file {
@@ -80,11 +65,14 @@ function setContentVisible(visible: boolean, blockEvent = false): void {
     align-items: center;
     justify-content: space-between;
     transition: border 0.2s ease-in-out;
+    border-radius: var(--parsec-radius-6);
+    padding: 0.25rem 0.5rem;
     opacity: 0.8;
     cursor: pointer;
 
     &:hover {
       opacity: 1;
+      background: var(--parsec-color-light-primary-30-opacity15);
     }
 
     &.open {
@@ -107,18 +95,12 @@ function setContentVisible(visible: boolean, blockEvent = false): void {
         user-select: none;
       }
     }
-
-    &:active {
-      .list-sidebar-toggle-icon {
-        scale: 0.85;
-      }
-    }
   }
 
   &-toggle-icon {
     user-select: none;
     padding: 0.125rem;
-    font-size: 1.25rem;
+    font-size: 1rem;
     border-radius: var(--parsec-radius-6);
     color: var(--parsec-color-light-secondary-inversed-contrast);
   }

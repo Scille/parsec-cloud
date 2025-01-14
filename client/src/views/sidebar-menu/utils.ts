@@ -5,6 +5,7 @@ export interface SidebarSavedData {
   hidden?: boolean;
   workspacesVisible?: boolean;
   favoritesVisible?: boolean;
+  recentFilesVisible?: boolean;
 }
 
 export const SIDEBAR_MENU_DATA_KEY = 'SidebarMenu';
@@ -14,4 +15,5 @@ export const SidebarDefaultData: Required<SidebarSavedData> = {
   hidden: false,
   workspacesVisible: true,
   favoritesVisible: true,
+  recentFilesVisible: true,
 };

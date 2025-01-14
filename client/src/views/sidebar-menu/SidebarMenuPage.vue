@@ -166,8 +166,8 @@
               title="SideMenu.favorites"
               :icon="star"
               class="favorites"
-              ref="favoritesMenu"
-              @visibility-changed="onFavoritesMenuVisibilityChanged"
+              v-model:is-content-visible="favoritesMenuVisible"
+              @update:is-content-visible="onFavoritesMenuVisibilityChanged"
             >
               <sidebar-workspace-item
                 v-for="workspace in favoritesWorkspaces"
@@ -185,8 +185,8 @@
               title="SideMenu.workspaces"
               :icon="business"
               class="workspaces"
-              ref="workspacesMenu"
-              @visibility-changed="onWorkspacesMenuVisibilityChanged"
+              v-model:is-content-visible="workspacesMenuVisible"
+              @update:is-content-visible="onWorkspacesMenuVisibilityChanged"
             >
               <ion-text
                 class="body list-sidebar__no-workspace"
@@ -208,15 +208,20 @@
 
           <div
             class="list-sidebar-divider"
-            v-if="recentFileManager.getFiles().length > 0"
+            v-if="recentFileManager.getFiles().length > 0 && !currentRouteIsOrganizationManagementRoute()"
           />
 
           <!-- last opened files -->
-          <div class="file-workspaces">
+          <div
+            class="file-workspaces"
+            v-if="!currentRouteIsOrganizationManagementRoute()"
+          >
             <sidebar-menu-list
-              :title="'SideMenu.recentDocuments'"
+              title="SideMenu.recentDocuments"
               :icon="documentIcon"
-              v-if="recentFileManager.getFiles().length > 0"
+              v-show="recentFileManager.getFiles().length > 0"
+              v-model:is-content-visible="recentFilesMenuVisible"
+              @update:is-content-visible="onRecentFilesMenuVisibilityChanged"
             >
               <sidebar-recent-file-item
                 v-for="file in recentFileManager.getFiles()"
@@ -251,14 +256,14 @@
               <ion-item
                 lines="none"
                 button
-                class="sidebar-item button-medium users-title"
+                class="sidebar-item-manage button-medium users-title"
                 :class="currentRouteIsUserRoute() ? 'item-selected' : 'item-not-selected'"
                 @click="navigateTo(Routes.Users)"
               >
-                <div class="sidebar-item-manage">
+                <div class="sidebar-item-manage-content">
                   <ion-icon
                     :icon="people"
-                    class="sidebar-item-icon"
+                    class="sidebar-item-manage__icon"
                   />
                   <ion-text class="sidebar-item-manage__label">{{ $msTranslate('SideMenu.users') }}</ion-text>
                 </div>
@@ -268,15 +273,15 @@
               <ion-item
                 lines="none"
                 button
-                class="sidebar-item button-medium storage-title"
+                class="sidebar-item-manage button-medium storage-title"
                 :class="currentRouteIs(Routes.Storage) ? 'item-selected' : 'item-not-selected'"
                 @click="navigateTo(Routes.Storage)"
                 v-show="userInfo && userInfo.currentProfile === UserProfile.Admin && false"
               >
-                <div class="sidebar-item-manage">
+                <div class="sidebar-item-manage-content">
                   <ion-icon
                     :icon="pieChart"
-                    class="sidebar-item-icon"
+                    class="sidebar-item-manage__icon"
                   />
                   <ion-text class="sidebar-item-manage__label">{{ $msTranslate('SideMenu.storage') }}</ion-text>
                 </div>
@@ -286,14 +291,14 @@
               <ion-item
                 button
                 lines="none"
-                class="sidebar-item button-medium organization-title"
+                class="sidebar-item-manage button-medium organization-title"
                 :class="currentRouteIs(Routes.Organization) ? 'item-selected' : 'item-not-selected'"
                 @click="navigateTo(Routes.Organization)"
               >
-                <div class="sidebar-item-manage">
+                <div class="sidebar-item-manage-content">
                   <ion-icon
                     :icon="informationCircle"
-                    class="sidebar-item-icon"
+                    class="sidebar-item-manage__icon"
                   />
                   <ion-text class="sidebar-item-manage__label">{{ $msTranslate('SideMenu.organizationInfo') }}</ion-text>
                 </div>
@@ -325,6 +330,7 @@ import {
   getConnectionInfo,
   getLoggedInDevices,
   LoggedInDeviceInfo,
+  needsMocks,
 } from '@/parsec';
 import {
   Routes,
@@ -380,6 +386,7 @@ import { Duration } from 'luxon';
 import { recentFileManager, RecentFile } from '@/services/recentFiles';
 import { openPath } from '@/services/fileOpener';
 import { SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/sidebar-menu/utils';
+import { FileContentType } from '@/common/fileTypes';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
@@ -396,8 +403,9 @@ const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration | undefined>(undefined);
 const isExpired = ref(false);
 const loggedInDevices = ref<LoggedInDeviceInfo[]>([]);
-const favoritesMenu = ref<typeof SidebarMenuList>();
-const workspacesMenu = ref<typeof SidebarMenuList>();
+const favoritesMenuVisible = ref(true);
+const workspacesMenuVisible = ref(true);
+const recentFilesMenuVisible = ref(true);
 let timeoutId: number | undefined = undefined;
 
 const MIN_WIDTH = 150;
@@ -470,6 +478,7 @@ onMounted(async () => {
   );
 
   const savedSidebarData = await storageManager.retrieveComponentData<SidebarSavedData>(SIDEBAR_MENU_DATA_KEY, SidebarDefaultData);
+
   if (savedSidebarData.hidden) {
     computedWidth.value = 2;
     storedWidth.value = savedSidebarData.width;
@@ -477,10 +486,9 @@ onMounted(async () => {
     computedWidth.value = savedSidebarData.width;
   }
   sidebarWidthProperty.value = `${computedWidth.value}px`;
-  if (workspacesMenu.value && favoritesMenu.value) {
-    workspacesMenu.value.setContentVisible(savedSidebarData.workspacesVisible, true);
-    favoritesMenu.value.setContentVisible(savedSidebarData.favoritesVisible, true);
-  }
+  workspacesMenuVisible.value = savedSidebarData.workspacesVisible ?? true;
+  favoritesMenuVisible.value = savedSidebarData.favoritesVisible ?? true;
+  recentFilesMenuVisible.value = savedSidebarData.recentFilesVisible ?? true;
 
   const connInfo = getConnectionInfo();
   if (connInfo) {
@@ -503,6 +511,33 @@ onMounted(async () => {
     if (isTrialOrg.value) {
       expirationDuration.value = getDurationBeforeExpiration(currentDevice.value.createdOn);
     }
+  }
+
+  // Adds fake files by default in dev mode
+  // to make sure we keep the feature in mind
+  if (needsMocks()) {
+    recentFileManager.addFile({
+      entryId: crypto.randomUUID().toString(),
+      workspaceHandle: 1337,
+      path: '/a/b/File_Fake image.png',
+      name: 'File_Fake image.png',
+      contentType: {
+        type: FileContentType.Image,
+        extension: 'png',
+        mimeType: 'image/png',
+      },
+    });
+    recentFileManager.addFile({
+      entryId: crypto.randomUUID().toString(),
+      workspaceHandle: 1337,
+      path: '/a/b/File_Fake PDF document.pdf',
+      name: 'File_Fake PDF document.pdf',
+      contentType: {
+        type: FileContentType.PdfDocument,
+        extension: 'pdf',
+        mimeType: 'application/pdf',
+      },
+    });
   }
 });
 
@@ -597,6 +632,16 @@ async function onFavoritesMenuVisibilityChanged(visible: boolean): Promise<void>
     SidebarDefaultData,
   );
 }
+
+async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<void> {
+  await storageManager.updateComponentData<SidebarSavedData>(
+    SIDEBAR_MENU_DATA_KEY,
+    {
+      recentFilesVisible: visible,
+    },
+    SidebarDefaultData,
+  );
+}
 </script>
 
 <style lang="scss" scoped>
@@ -642,7 +687,7 @@ async function onFavoritesMenuVisibilityChanged(visible: boolean): Promise<void>
   user-select: initial;
 
   &::part(container) {
-    padding: 0.5rem;
+    padding-top: 1.5rem;
     display: flex;
     gap: 1.5rem;
   }
@@ -689,7 +734,7 @@ async function onFavoritesMenuVisibilityChanged(visible: boolean): Promise<void>
     border-radius: var(--parsec-radius-8);
     box-shadow: none;
     align-items: center;
-    margin-top: 0.75rem;
+    margin: 0 0.5rem;
     padding: 0.5rem 1rem;
     gap: 0.5em;
     position: relative;
@@ -750,7 +795,7 @@ async function onFavoritesMenuVisibilityChanged(visible: boolean): Promise<void>
     user-select: none;
     gap: 0.75rem;
     padding: 1rem 0 1.5rem;
-    margin-inline: 0.75rem;
+    margin-inline: 0.5rem;
 
     &__item {
       display: flex;
@@ -831,14 +876,6 @@ ion-menu {
 }
 
 .list-sidebar {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  border-radius: var(--parsec-radius-8);
-
   &-header {
     display: flex;
     align-items: center;
@@ -875,44 +912,46 @@ ion-menu {
   }
 }
 
-.sidebar-item {
+// eslint-disable-next-line vue-scoped-css/no-unused-selector
+.sidebar-item-manage {
   --background: none;
   border-radius: var(--parsec-radius-8);
+  border: solid 1px transparent;
   --min-height: 0;
   --padding-start: 0.75rem;
   --padding-end: 0.75rem;
   --padding-bottom: 0.5rem;
   --padding-top: 0.5rem;
 
+  &-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
   &:active,
   &.item-selected {
     --background: var(--parsec-color-light-primary-30-opacity15);
   }
 
-  &-icon {
+  &__icon {
     color: var(--parsec-color-light-primary-100);
     font-size: 1.25em;
     margin: 0;
     margin-inline-end: 12px;
   }
 
-  .sidebar-item-manage {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  &__label {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    color: var(--parsec-color-light-secondary-premiere);
     width: 100%;
-
-    &__label {
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-      color: var(--parsec-color-light-secondary-premiere);
-      width: 100%;
-    }
   }
 
   &:hover {
-    outline: solid 1px var(--parsec-color-light-primary-30-opacity15);
+    border-color: var(--parsec-color-light-primary-30-opacity15);
     cursor: pointer;
   }
 }

@@ -55,6 +55,7 @@ onBeforeUnmount(async () => {
 .sidebar-item {
   --background: none;
   border-radius: var(--parsec-radius-8);
+  border: solid 1px transparent;
   --min-height: 0;
   --padding-start: 0.75rem;
   --padding-end: 0.75rem;
@@ -93,7 +94,7 @@ onBeforeUnmount(async () => {
   }
 
   &:hover {
-    outline: solid 1px var(--parsec-color-light-primary-30-opacity15);
+    border-color: var(--parsec-color-light-primary-30-opacity15);
     cursor: pointer;
 
     .sidebar-item-workspace__option {

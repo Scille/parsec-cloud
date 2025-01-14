@@ -155,7 +155,7 @@ class Backend:
         await self.organization.test_drop_organization(id)
 
     async def test_load_template(self, template: TestbedTemplateContent) -> OrganizationID:
-        org_id = OrganizationID(f"{template.id.capitalize()}OrgTemplate")
+        org_id = OrganizationID(f"{template.id.title().replace("_", "")}OrgTemplate")
         match await self.organization.create(
             now=DateTime(1970, 1, 1), id=org_id, force_bootstrap_token=TEST_BOOTSTRAP_TOKEN
         ):
