@@ -51,10 +51,6 @@ pub enum ConnectionError {
     #[error("Invalid handshake: Invitation not found")]
     InvitationNotFound,
 
-    /// We failed to retrieve Api-Version
-    #[error("Api-Version header is missing")]
-    MissingApiVersion,
-
     /// We failed to retrieve Supported-Api-Versions
     #[error("Supported-Api-Versions header is missing")]
     MissingSupportedApiVersions,
