@@ -42,6 +42,7 @@ autouse
 backpressure
 BADTOKEN
 Baka
+Bardock
 beafy
 BindGen
 Bitwarden
