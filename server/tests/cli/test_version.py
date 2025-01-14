@@ -13,14 +13,10 @@ from parsec.cli import cli
     (
         ["--version"],
         ["run", "--version"],
-        ["sequester", "--version"],
-        ["sequester", "list_services", "--version"],
     ),
     ids=[
         "root",
         "run",
-        "sequester",
-        "sequester_list_services",
     ],
 )
 def test_version(args: list[str]) -> None:
