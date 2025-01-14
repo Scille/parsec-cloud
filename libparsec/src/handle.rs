@@ -72,16 +72,29 @@ pub(crate) enum HandleItem {
     UserGreetInProgress4(libparsec_client::UserGreetInProgress4Ctx),
     DeviceGreetInProgress4(libparsec_client::DeviceGreetInProgress4Ctx),
 
+    ShamirRecoveryClaimPickRecipient(libparsec_client::ShamirRecoveryClaimPickRecipientCtx),
+    ShamirRecoveryClaimShare(libparsec_client::ShamirRecoveryClaimShare),
+    ShamirRecoveryClaimRecoverDevice(libparsec_client::ShamirRecoveryClaimRecoverDeviceCtx),
+
     UserClaimInitial(libparsec_client::UserClaimInitialCtx),
     DeviceClaimInitial(libparsec_client::DeviceClaimInitialCtx),
+    ShamirRecoveryClaimInitial(libparsec_client::ShamirRecoveryClaimInitialCtx),
+
     UserClaimInProgress1(libparsec_client::UserClaimInProgress1Ctx),
     DeviceClaimInProgress1(libparsec_client::DeviceClaimInProgress1Ctx),
+    ShamirRecoveryClaimInProgress1(libparsec_client::ShamirRecoveryClaimInProgress1Ctx),
+
     UserClaimInProgress2(libparsec_client::UserClaimInProgress2Ctx),
     DeviceClaimInProgress2(libparsec_client::DeviceClaimInProgress2Ctx),
+    ShamirRecoveryClaimInProgress2(libparsec_client::ShamirRecoveryClaimInProgress2Ctx),
+
     UserClaimInProgress3(libparsec_client::UserClaimInProgress3Ctx),
     DeviceClaimInProgress3(libparsec_client::DeviceClaimInProgress3Ctx),
+    ShamirRecoveryClaimInProgress3(libparsec_client::ShamirRecoveryClaimInProgress3Ctx),
+
     UserClaimFinalize(libparsec_client::UserClaimFinalizeCtx),
     DeviceClaimFinalize(libparsec_client::DeviceClaimFinalizeCtx),
+    ShamirRecoveryClaimFinalize(libparsec_client::ShamirRecoveryClaimFinalizeCtx),
 }
 
 /// Store the resources in a vector with index as handle, as it is simple and fast.

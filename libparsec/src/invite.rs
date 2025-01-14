@@ -1,12 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{collections::HashMap, num::NonZeroU8, sync::Arc};
 
 pub use libparsec_client::{
     ClientCancelInvitationError, ClientNewDeviceInvitationError,
     ClientNewShamirRecoveryInvitationError, ClientNewUserInvitationError,
     ClientStartShamirRecoveryInvitationGreetError, InvitationEmailSentStatus, ListInvitationsError,
 };
+pub use libparsec_client::{
+    ShamirRecoveryClaimAddShareError, ShamirRecoveryClaimPickRecipientError,
+    ShamirRecoveryClaimRecoverDeviceError,
+};
+pub use libparsec_protocol::invited_cmds::latest::invite_info::ShamirRecoveryRecipient;
 pub use libparsec_types::prelude::*;
 
 use crate::{
@@ -249,7 +254,22 @@ pub async fn claimer_retrieve_info(
             })
         }
         libparsec_client::AnyClaimRetrievedInfoCtx::ShamirRecovery(ctx) => {
-            todo!("{ctx:?}")
+            let claimer_user_id = ctx.claimer_user_id().to_owned();
+            let claimer_human_handle = ctx.claimer_human_handle().to_owned();
+            let shamir_recovery_created_on = ctx.shamir_recovery_created_on().to_owned();
+            let recipients = ctx.recipients().to_owned();
+            let threshold = ctx.threshold().to_owned();
+            let is_recoverable = ctx.is_recoverable();
+            let handle = register_handle(HandleItem::ShamirRecoveryClaimPickRecipient(ctx));
+            Ok(AnyClaimRetrievedInfo::ShamirRecovery {
+                handle,
+                claimer_user_id,
+                claimer_human_handle,
+                shamir_recovery_created_on,
+                recipients,
+                threshold,
+                is_recoverable,
+            })
         }
     }
 }
@@ -269,6 +289,10 @@ pub async fn claimer_greeter_abort_operation(
     handle: Handle,
 ) -> Result<(), ClaimerGreeterAbortOperationError> {
     let result = take_and_close_handle(handle, |x| match x {
+        HandleItem::ShamirRecoveryClaimPickRecipient(_) => Ok(None),
+        HandleItem::ShamirRecoveryClaimShare(_) => Ok(None),
+        HandleItem::ShamirRecoveryClaimRecoverDevice(_) => Ok(None),
+        HandleItem::ShamirRecoveryClaimInitial(_) => Ok(None),
         HandleItem::UserClaimInitial(_) => Ok(None),
         HandleItem::DeviceClaimInitial(_) => Ok(None),
         HandleItem::UserClaimInProgress1(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
@@ -277,40 +301,60 @@ pub async fn claimer_greeter_abort_operation(
         HandleItem::DeviceClaimInProgress1(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
             x.canceller_ctx(),
         ))),
+        HandleItem::ShamirRecoveryClaimInProgress1(x) => Ok(Some(
+            EitherCancellerCtx::ClaimCancellerCtx(x.canceller_ctx()),
+        )),
         HandleItem::UserClaimInProgress2(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
             x.canceller_ctx(),
         ))),
         HandleItem::DeviceClaimInProgress2(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
             x.canceller_ctx(),
         ))),
+        HandleItem::ShamirRecoveryClaimInProgress2(x) => Ok(Some(
+            EitherCancellerCtx::ClaimCancellerCtx(x.canceller_ctx()),
+        )),
         HandleItem::UserClaimInProgress3(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
             x.canceller_ctx(),
         ))),
         HandleItem::DeviceClaimInProgress3(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
             x.canceller_ctx(),
         ))),
+        HandleItem::ShamirRecoveryClaimInProgress3(x) => Ok(Some(
+            EitherCancellerCtx::ClaimCancellerCtx(x.canceller_ctx()),
+        )),
         HandleItem::UserClaimFinalize(_) => Ok(None),
         HandleItem::DeviceClaimFinalize(_) => Ok(None),
+        HandleItem::ShamirRecoveryClaimFinalize(_) => Ok(None),
         HandleItem::UserGreetInitial(_) => Ok(None),
         HandleItem::DeviceGreetInitial(_) => Ok(None),
+        HandleItem::ShamirRecoveryGreetInitial(_) => Ok(None),
         HandleItem::UserGreetInProgress1(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
             x.canceller_ctx(),
         ))),
         HandleItem::DeviceGreetInProgress1(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
             x.canceller_ctx(),
         ))),
+        HandleItem::ShamirRecoveryGreetInProgress1(x) => Ok(Some(
+            EitherCancellerCtx::GreetCancellerCtx(x.canceller_ctx()),
+        )),
         HandleItem::UserGreetInProgress2(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
             x.canceller_ctx(),
         ))),
         HandleItem::DeviceGreetInProgress2(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
             x.canceller_ctx(),
         ))),
+        HandleItem::ShamirRecoveryGreetInProgress2(x) => Ok(Some(
+            EitherCancellerCtx::GreetCancellerCtx(x.canceller_ctx()),
+        )),
         HandleItem::UserGreetInProgress3(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
             x.canceller_ctx(),
         ))),
         HandleItem::DeviceGreetInProgress3(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
             x.canceller_ctx(),
         ))),
+        HandleItem::ShamirRecoveryGreetInProgress3(x) => Ok(Some(
+            EitherCancellerCtx::GreetCancellerCtx(x.canceller_ctx()),
+        )),
         HandleItem::UserGreetInProgress4(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
             x.canceller_ctx(),
         ))),
@@ -343,6 +387,40 @@ pub enum AnyClaimRetrievedInfo {
         greeter_user_id: UserID,
         greeter_human_handle: HumanHandle,
     },
+    ShamirRecovery {
+        handle: Handle,
+        claimer_user_id: UserID,
+        claimer_human_handle: HumanHandle,
+        shamir_recovery_created_on: DateTime,
+        recipients: Vec<ShamirRecoveryRecipient>,
+        threshold: NonZeroU8,
+        is_recoverable: bool,
+    },
+}
+
+pub struct ShamirRecoveryClaimInitialInfo {
+    pub handle: Handle,
+    pub greeter_user_id: UserID,
+    pub greeter_human_handle: HumanHandle,
+}
+
+pub fn claimer_shamir_recovery_pick_recipient(
+    handle: Handle,
+    recipient: UserID,
+) -> Result<ShamirRecoveryClaimInitialInfo, ShamirRecoveryClaimPickRecipientError> {
+    let ctx = borrow_from_handle(handle, |x| match x {
+        HandleItem::ShamirRecoveryClaimPickRecipient(ctx) => Some(ctx.pick_recipient(recipient)),
+        _ => None,
+    })??;
+    let greeter_user_id = ctx.greeter_user_id().to_owned();
+    let greeter_human_handle = ctx.greeter_human_handle().to_owned();
+    let new_handle = register_handle(HandleItem::ShamirRecoveryClaimInitial(ctx));
+
+    Ok(ShamirRecoveryClaimInitialInfo {
+        handle: new_handle,
+        greeter_user_id,
+        greeter_human_handle,
+    })
 }
 
 pub async fn claimer_user_initial_do_wait_peer(
@@ -405,6 +483,36 @@ pub async fn claimer_device_initial_do_wait_peer(
     )
 }
 
+pub async fn claimer_shamir_recovery_initial_do_wait_peer(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<ShamirRecoveryClaimInProgress1Info, ClaimInProgressError> {
+    let work = async {
+        let ctx = take_and_close_handle(handle, |x| match x {
+            HandleItem::ShamirRecoveryClaimInitial(ctx) => Ok(ctx),
+            invalid => Err(invalid),
+        })?;
+
+        let ctx = ctx.do_wait_peer().await?;
+        let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
+        let greeter_sas = ctx.greeter_sas().to_owned();
+
+        let new_handle = register_handle(HandleItem::ShamirRecoveryClaimInProgress1(ctx));
+
+        Ok(ShamirRecoveryClaimInProgress1Info {
+            handle: new_handle,
+            greeter_sas,
+            greeter_sas_choices,
+        })
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+    )
+}
+
 pub async fn claimer_user_in_progress_1_do_deny_trust(
     canceller: Handle,
     handle: Handle,
@@ -447,12 +555,38 @@ pub async fn claimer_device_in_progress_1_do_deny_trust(
     )
 }
 
+pub async fn claimer_shamir_recovery_in_progress_1_do_deny_trust(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<(), ClaimInProgressError> {
+    let work = async {
+        let ctx = take_and_close_handle(handle, |x| match x {
+            HandleItem::ShamirRecoveryClaimInProgress1(ctx) => Ok(ctx),
+            invalid => Err(invalid),
+        })?;
+
+        ctx.do_deny_trust().await?;
+        Ok(())
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+    )
+}
+
 pub struct UserClaimInProgress1Info {
     pub handle: Handle,
     pub greeter_sas: SASCode,
     pub greeter_sas_choices: Vec<SASCode>,
 }
 pub struct DeviceClaimInProgress1Info {
+    pub handle: Handle,
+    pub greeter_sas: SASCode,
+    pub greeter_sas_choices: Vec<SASCode>,
+}
+pub struct ShamirRecoveryClaimInProgress1Info {
     pub handle: Handle,
     pub greeter_sas: SASCode,
     pub greeter_sas_choices: Vec<SASCode>,
@@ -522,11 +656,47 @@ pub async fn claimer_device_in_progress_1_do_signify_trust(
     )
 }
 
+pub async fn claimer_shamir_recovery_in_progress_1_do_signify_trust(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<ShamirRecoveryClaimInProgress2Info, ClaimInProgressError> {
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::ShamirRecoveryClaimInProgress1(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
+
+    let work = async {
+        let ctx = ctx.do_signify_trust().await?;
+        let claimer_sas = ctx.claimer_sas().to_owned();
+
+        let new_handle = register_handle(HandleItem::ShamirRecoveryClaimInProgress2(ctx));
+
+        Ok(ShamirRecoveryClaimInProgress2Info {
+            handle: new_handle,
+            claimer_sas,
+        })
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => {
+            canceller_ctx.cancel_and_warn_on_error().await;
+            Err(ClaimInProgressError::Cancelled)
+        },
+    )
+}
+
 pub struct UserClaimInProgress2Info {
     pub handle: Handle,
     pub claimer_sas: SASCode,
 }
 pub struct DeviceClaimInProgress2Info {
+    pub handle: Handle,
+    pub claimer_sas: SASCode,
+}
+pub struct ShamirRecoveryClaimInProgress2Info {
     pub handle: Handle,
     pub claimer_sas: SASCode,
 }
@@ -587,10 +757,41 @@ pub async fn claimer_device_in_progress_2_do_wait_peer_trust(
     )
 }
 
+pub async fn claimer_shamir_recovery_in_progress_2_do_wait_peer_trust(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<ShamirRecoveryClaimInProgress3Info, ClaimInProgressError> {
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::ShamirRecoveryClaimInProgress2(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
+
+    let work = async {
+        let ctx = ctx.do_wait_peer_trust().await?;
+
+        let new_handle = register_handle(HandleItem::ShamirRecoveryClaimInProgress3(ctx));
+
+        Ok(ShamirRecoveryClaimInProgress3Info { handle: new_handle })
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => {
+            canceller_ctx.cancel_and_warn_on_error().await;
+            Err(ClaimInProgressError::Cancelled)
+        },
+    )
+}
+
 pub struct UserClaimInProgress3Info {
     pub handle: Handle,
 }
 pub struct DeviceClaimInProgress3Info {
+    pub handle: Handle,
+}
+pub struct ShamirRecoveryClaimInProgress3Info {
     pub handle: Handle,
 }
 
@@ -655,11 +856,134 @@ pub async fn claimer_device_in_progress_3_do_claim(
     )
 }
 
+pub async fn claimer_shamir_recovery_in_progress_3_do_claim(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<ShamirRecoveryClaimShareInfo, ClaimInProgressError> {
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::ShamirRecoveryClaimInProgress3(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
+
+    let work = async {
+        let ctx = ctx.do_recover_share().await?;
+
+        let new_handle = register_handle(HandleItem::ShamirRecoveryClaimShare(ctx));
+
+        Ok(ShamirRecoveryClaimShareInfo { handle: new_handle })
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => {
+            canceller_ctx.cancel_and_warn_on_error().await;
+            Err(ClaimInProgressError::Cancelled)
+        },
+    )
+}
+
 pub struct UserClaimFinalizeInfo {
     pub handle: Handle,
 }
 pub struct DeviceClaimFinalizeInfo {
     pub handle: Handle,
+}
+
+pub struct ShamirRecoveryClaimShareInfo {
+    pub handle: Handle,
+}
+
+pub enum ShamirRecoveryClaimMaybeRecoverDeviceInfo {
+    PickRecipient {
+        handle: Handle,
+        claimer_user_id: UserID,
+        claimer_human_handle: HumanHandle,
+        shamir_recovery_created_on: DateTime,
+        recipients: Vec<ShamirRecoveryRecipient>,
+        threshold: NonZeroU8,
+        recovered_shares: HashMap<UserID, NonZeroU8>,
+        is_recoverable: bool,
+    },
+    RecoverDevice {
+        handle: Handle,
+        claimer_user_id: UserID,
+        claimer_human_handle: HumanHandle,
+    },
+}
+
+pub enum ShamirRecoveryClaimMaybeFinalizeInfo {
+    Offline { handle: Handle },
+    Finalize { handle: Handle },
+}
+
+pub fn claimer_shamir_recovery_add_share(
+    pick_recipient_handle: Handle,
+    share_handle: Handle,
+) -> Result<ShamirRecoveryClaimMaybeRecoverDeviceInfo, ShamirRecoveryClaimAddShareError> {
+    let ctx = take_and_close_handle(pick_recipient_handle, |x| match x {
+        HandleItem::ShamirRecoveryClaimPickRecipient(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let share = take_and_close_handle(share_handle, |x| match x {
+        HandleItem::ShamirRecoveryClaimShare(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+
+    match ctx.add_share(share)? {
+        libparsec_client::ShamirRecoveryClaimMaybeRecoverDeviceCtx::PickRecipient(ctx) => {
+            let claimer_user_id = ctx.claimer_user_id().to_owned();
+            let claimer_human_handle = ctx.claimer_human_handle().to_owned();
+            let shamir_recovery_created_on = ctx.shamir_recovery_created_on().to_owned();
+            let recipients = ctx.recipients().to_owned();
+            let threshold = ctx.threshold().to_owned();
+            let recovered_shares = ctx.shares().to_owned();
+            let is_recoverable = ctx.is_recoverable();
+            let new_handle = register_handle(HandleItem::ShamirRecoveryClaimPickRecipient(ctx));
+            Ok(ShamirRecoveryClaimMaybeRecoverDeviceInfo::PickRecipient {
+                handle: new_handle,
+                claimer_user_id,
+                claimer_human_handle,
+                shamir_recovery_created_on,
+                recipients,
+                threshold,
+                recovered_shares,
+                is_recoverable,
+            })
+        }
+        libparsec_client::ShamirRecoveryClaimMaybeRecoverDeviceCtx::RecoverDevice(ctx) => {
+            let claimer_user_id = ctx.claimer_user_id().to_owned();
+            let claimer_human_handle = ctx.claimer_human_handle().to_owned();
+            let new_handle = register_handle(HandleItem::ShamirRecoveryClaimRecoverDevice(ctx));
+            Ok(ShamirRecoveryClaimMaybeRecoverDeviceInfo::RecoverDevice {
+                handle: new_handle,
+                claimer_user_id,
+                claimer_human_handle,
+            })
+        }
+    }
+}
+
+pub async fn claimer_shamir_recovery_recover_device(
+    handle: Handle,
+    requested_device_label: DeviceLabel,
+) -> Result<ShamirRecoveryClaimMaybeFinalizeInfo, ShamirRecoveryClaimRecoverDeviceError> {
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::ShamirRecoveryClaimRecoverDevice(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+
+    match ctx.recover_device(requested_device_label).await? {
+        libparsec_client::ShamirRecoveryClaimMaybeFinalizeCtx::Offline(ctx) => {
+            let new_handle = register_handle(HandleItem::ShamirRecoveryClaimRecoverDevice(ctx));
+            Ok(ShamirRecoveryClaimMaybeFinalizeInfo::Offline { handle: new_handle })
+        }
+        libparsec_client::ShamirRecoveryClaimMaybeFinalizeCtx::Finalize(ctx) => {
+            let new_handle = register_handle(HandleItem::ShamirRecoveryClaimFinalize(ctx));
+            Ok(ShamirRecoveryClaimMaybeFinalizeInfo::Finalize { handle: new_handle })
+        }
+    }
 }
 
 pub async fn claimer_user_finalize_save_local_device(
@@ -687,6 +1011,25 @@ pub async fn claimer_device_finalize_save_local_device(
 ) -> Result<AvailableDevice, ClaimInProgressError> {
     let ctx = take_and_close_handle(handle, |x| match x {
         HandleItem::DeviceClaimFinalize(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+
+    let access = {
+        let key_file = ctx.get_default_key_file();
+        save_strategy.into_access(key_file)
+    };
+
+    let available_device = ctx.save_local_device(&access).await?;
+
+    Ok(available_device)
+}
+
+pub async fn claimer_shamir_recovery_finalize_save_local_device(
+    handle: Handle,
+    save_strategy: DeviceSaveStrategy,
+) -> Result<AvailableDevice, ClaimInProgressError> {
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::ShamirRecoveryClaimFinalize(ctx) => Ok(ctx),
         invalid => Err(invalid),
     })?;
 

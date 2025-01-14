@@ -1674,6 +1674,263 @@ fn struct_server_config_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ShamirRecoveryClaimInProgress1Info
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_claim_in_progress1_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ShamirRecoveryClaimInProgress1Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let greeter_sas = {
+        let js_val: Handle<JsString> = obj.get(cx, "greeterSas")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let greeter_sas_choices = {
+        let js_val: Handle<JsArray> = obj.get(cx, "greeterSasChoices")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsString> = js_val.get(cx, i)?;
+                v.push({
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_item.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                });
+            }
+            v
+        }
+    };
+    Ok(libparsec::ShamirRecoveryClaimInProgress1Info {
+        handle,
+        greeter_sas,
+        greeter_sas_choices,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_claim_in_progress1_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryClaimInProgress1Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    let js_greeter_sas = JsString::try_new(cx, rs_obj.greeter_sas).or_throw(cx)?;
+    js_obj.set(cx, "greeterSas", js_greeter_sas)?;
+    let js_greeter_sas_choices = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.greeter_sas_choices.len());
+        for (i, elem) in rs_obj.greeter_sas_choices.into_iter().enumerate() {
+            let js_elem = JsString::try_new(cx, elem).or_throw(cx)?;
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "greeterSasChoices", js_greeter_sas_choices)?;
+    Ok(js_obj)
+}
+
+// ShamirRecoveryClaimInProgress2Info
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_claim_in_progress2_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ShamirRecoveryClaimInProgress2Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let claimer_sas = {
+        let js_val: Handle<JsString> = obj.get(cx, "claimerSas")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    Ok(libparsec::ShamirRecoveryClaimInProgress2Info {
+        handle,
+        claimer_sas,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_claim_in_progress2_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryClaimInProgress2Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    let js_claimer_sas = JsString::try_new(cx, rs_obj.claimer_sas).or_throw(cx)?;
+    js_obj.set(cx, "claimerSas", js_claimer_sas)?;
+    Ok(js_obj)
+}
+
+// ShamirRecoveryClaimInProgress3Info
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_claim_in_progress3_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ShamirRecoveryClaimInProgress3Info> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    Ok(libparsec::ShamirRecoveryClaimInProgress3Info { handle })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_claim_in_progress3_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryClaimInProgress3Info,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    Ok(js_obj)
+}
+
+// ShamirRecoveryClaimInitialInfo
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_claim_initial_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ShamirRecoveryClaimInitialInfo> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let greeter_user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let greeter_human_handle = {
+        let js_val: Handle<JsObject> = obj.get(cx, "greeterHumanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::ShamirRecoveryClaimInitialInfo {
+        handle,
+        greeter_user_id,
+        greeter_human_handle,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_claim_initial_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryClaimInitialInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    let js_greeter_user_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.greeter_user_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
+    let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.greeter_human_handle)?;
+    js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
+    Ok(js_obj)
+}
+
+// ShamirRecoveryClaimShareInfo
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_claim_share_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ShamirRecoveryClaimShareInfo> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    Ok(libparsec::ShamirRecoveryClaimShareInfo { handle })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_claim_share_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryClaimShareInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    Ok(js_obj)
+}
+
 // ShamirRecoveryGreetInProgress1Info
 
 #[allow(dead_code)]
@@ -1864,6 +2121,118 @@ fn struct_shamir_recovery_greet_initial_info_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
     js_obj.set(cx, "handle", js_handle)?;
+    Ok(js_obj)
+}
+
+// ShamirRecoveryRecipient
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_recipient_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ShamirRecoveryRecipient> {
+    let user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let human_handle = {
+        let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
+    };
+    let revoked_on = {
+        let js_val: Handle<JsValue> = obj.get(cx, "revokedOn")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsNumber, _>(cx)?;
+                Some({
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+            }
+        }
+    };
+    let shares = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "shares")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                cx.throw_type_error("Not an u8 number")?
+            }
+            let v = v as u8;
+            let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_u8(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    Ok(libparsec::ShamirRecoveryRecipient {
+        user_id,
+        human_handle,
+        revoked_on,
+        shares,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_shamir_recovery_recipient_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryRecipient,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_user_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "userId", js_user_id)?;
+    let js_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.human_handle)?;
+    js_obj.set(cx, "humanHandle", js_human_handle)?;
+    let js_revoked_on = match rs_obj.revoked_on {
+        Some(elem) => JsNumber::new(cx, {
+            let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+            };
+            match custom_to_rs_f64(elem) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        })
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "revokedOn", js_revoked_on)?;
+    let js_shares = JsNumber::new(cx, {
+        let custom_to_rs_u8 = |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+        match custom_to_rs_u8(rs_obj.shares) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    } as f64);
+    js_obj.set(cx, "shares", js_shares)?;
     Ok(js_obj)
 }
 
@@ -3117,6 +3486,91 @@ fn variant_any_claim_retrieved_info_js_to_rs<'a>(
                 greeter_human_handle,
             })
         }
+        "AnyClaimRetrievedInfoShamirRecovery" => {
+            let handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let claimer_user_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "claimerUserId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let claimer_human_handle = {
+                let js_val: Handle<JsObject> = obj.get(cx, "claimerHumanHandle")?;
+                struct_human_handle_js_to_rs(cx, js_val)?
+            };
+            let shamir_recovery_created_on = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "shamirRecoveryCreatedOn")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let recipients = {
+                let js_val: Handle<JsArray> = obj.get(cx, "recipients")?;
+                {
+                    let size = js_val.len(cx);
+                    let mut v = Vec::with_capacity(size as usize);
+                    for i in 0..size {
+                        let js_item: Handle<JsObject> = js_val.get(cx, i)?;
+                        v.push(struct_shamir_recovery_recipient_js_to_rs(cx, js_item)?);
+                    }
+                    v
+                }
+            };
+            let threshold = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "threshold")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                        cx.throw_type_error("Not an u8 number")?
+                    }
+                    let v = v as u8;
+                    let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                        std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_u8(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let is_recoverable = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "isRecoverable")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::AnyClaimRetrievedInfo::ShamirRecovery {
+                handle,
+                claimer_user_id,
+                claimer_human_handle,
+                shamir_recovery_created_on,
+                recipients,
+                threshold,
+                is_recoverable,
+            })
+        }
         "AnyClaimRetrievedInfoUser" => {
             let handle = {
                 let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
@@ -3189,6 +3643,65 @@ fn variant_any_claim_retrieved_info_rs_to_js<'a>(
             js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
             let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, greeter_human_handle)?;
             js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
+        }
+        libparsec::AnyClaimRetrievedInfo::ShamirRecovery {
+            handle,
+            claimer_user_id,
+            claimer_human_handle,
+            shamir_recovery_created_on,
+            recipients,
+            threshold,
+            is_recoverable,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "AnyClaimRetrievedInfoShamirRecovery").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_handle = JsNumber::new(cx, handle as f64);
+            js_obj.set(cx, "handle", js_handle)?;
+            let js_claimer_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(claimer_user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "claimerUserId", js_claimer_user_id)?;
+            let js_claimer_human_handle = struct_human_handle_rs_to_js(cx, claimer_human_handle)?;
+            js_obj.set(cx, "claimerHumanHandle", js_claimer_human_handle)?;
+            let js_shamir_recovery_created_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(shamir_recovery_created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "shamirRecoveryCreatedOn", js_shamir_recovery_created_on)?;
+            let js_recipients = {
+                // JsArray::new allocates with `undefined` value, that's why we `set` value
+                let js_array = JsArray::new(cx, recipients.len());
+                for (i, elem) in recipients.into_iter().enumerate() {
+                    let js_elem = struct_shamir_recovery_recipient_rs_to_js(cx, elem)?;
+                    js_array.set(cx, i as u32, js_elem)?;
+                }
+                js_array
+            };
+            js_obj.set(cx, "recipients", js_recipients)?;
+            let js_threshold = JsNumber::new(cx, {
+                let custom_to_rs_u8 =
+                    |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                match custom_to_rs_u8(threshold) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            } as f64);
+            js_obj.set(cx, "threshold", js_threshold)?;
+            let js_is_recoverable = JsBoolean::new(cx, is_recoverable);
+            js_obj.set(cx, "isRecoverable", js_is_recoverable)?;
         }
         libparsec::AnyClaimRetrievedInfo::User {
             handle,
@@ -9190,6 +9703,531 @@ fn variant_self_shamir_recovery_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ShamirRecoveryClaimAddShareError
+
+#[allow(dead_code)]
+fn variant_shamir_recovery_claim_add_share_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryClaimAddShareError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ShamirRecoveryClaimAddShareError::CorruptedSecret { .. } => {
+            let js_tag = JsString::try_new(cx, "ShamirRecoveryClaimAddShareErrorCorruptedSecret")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ShamirRecoveryClaimAddShareError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ShamirRecoveryClaimAddShareErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ShamirRecoveryClaimAddShareError::RecipientNotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "ShamirRecoveryClaimAddShareErrorRecipientNotFound")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ShamirRecoveryClaimMaybeFinalizeInfo
+
+#[allow(dead_code)]
+fn variant_shamir_recovery_claim_maybe_finalize_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ShamirRecoveryClaimMaybeFinalizeInfo> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "ShamirRecoveryClaimMaybeFinalizeInfoFinalize" => {
+            let handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            Ok(libparsec::ShamirRecoveryClaimMaybeFinalizeInfo::Finalize { handle })
+        }
+        "ShamirRecoveryClaimMaybeFinalizeInfoOffline" => {
+            let handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            Ok(libparsec::ShamirRecoveryClaimMaybeFinalizeInfo::Offline { handle })
+        }
+        _ => cx.throw_type_error("Object is not a ShamirRecoveryClaimMaybeFinalizeInfo"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_shamir_recovery_claim_maybe_finalize_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryClaimMaybeFinalizeInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::ShamirRecoveryClaimMaybeFinalizeInfo::Finalize { handle, .. } => {
+            let js_tag = JsString::try_new(cx, "ShamirRecoveryClaimMaybeFinalizeInfoFinalize")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_handle = JsNumber::new(cx, handle as f64);
+            js_obj.set(cx, "handle", js_handle)?;
+        }
+        libparsec::ShamirRecoveryClaimMaybeFinalizeInfo::Offline { handle, .. } => {
+            let js_tag = JsString::try_new(cx, "ShamirRecoveryClaimMaybeFinalizeInfoOffline")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_handle = JsNumber::new(cx, handle as f64);
+            js_obj.set(cx, "handle", js_handle)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ShamirRecoveryClaimMaybeRecoverDeviceInfo
+
+#[allow(dead_code)]
+fn variant_shamir_recovery_claim_maybe_recover_device_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ShamirRecoveryClaimMaybeRecoverDeviceInfo> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "ShamirRecoveryClaimMaybeRecoverDeviceInfoPickRecipient" => {
+            let handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let claimer_user_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "claimerUserId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let claimer_human_handle = {
+                let js_val: Handle<JsObject> = obj.get(cx, "claimerHumanHandle")?;
+                struct_human_handle_js_to_rs(cx, js_val)?
+            };
+            let shamir_recovery_created_on = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "shamirRecoveryCreatedOn")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let recipients = {
+                let js_val: Handle<JsArray> = obj.get(cx, "recipients")?;
+                {
+                    let size = js_val.len(cx);
+                    let mut v = Vec::with_capacity(size as usize);
+                    for i in 0..size {
+                        let js_item: Handle<JsObject> = js_val.get(cx, i)?;
+                        v.push(struct_shamir_recovery_recipient_js_to_rs(cx, js_item)?);
+                    }
+                    v
+                }
+            };
+            let threshold = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "threshold")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                        cx.throw_type_error("Not an u8 number")?
+                    }
+                    let v = v as u8;
+                    let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                        std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_u8(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let recovered_shares = {
+                let js_val: Handle<JsObject> = obj.get(cx, "recoveredShares")?;
+                {
+                    let mut d = std::collections::HashMap::with_capacity(
+                        js_val.get::<JsNumber, _, _>(cx, "size")?.value(cx) as usize,
+                    );
+
+                    let js_keys = js_val
+                        .call_method_with(cx, "keys")?
+                        .apply::<JsObject, _>(cx)?;
+                    let js_values = js_val
+                        .call_method_with(cx, "values")?
+                        .apply::<JsObject, _>(cx)?;
+                    let js_keys_next_cb = js_keys.call_method_with(cx, "next")?;
+                    let js_values_next_cb = js_values.call_method_with(cx, "next")?;
+
+                    loop {
+                        let next_js_key = js_keys_next_cb.apply::<JsObject, _>(cx)?;
+                        let next_js_value = js_values_next_cb.apply::<JsObject, _>(cx)?;
+
+                        let keys_done = next_js_key.get::<JsBoolean, _, _>(cx, "done")?.value(cx);
+                        let values_done =
+                            next_js_value.get::<JsBoolean, _, _>(cx, "done")?.value(cx);
+                        match (keys_done, values_done) {
+                            (true, true) => break,
+                            (false, false) => (),
+                            _ => unreachable!(),
+                        }
+
+                        let js_key = next_js_key.get::<JsString, _, _>(cx, "value")?;
+                        let js_value = next_js_value.get::<JsNumber, _, _>(cx, "value")?;
+
+                        let key = {
+                            let custom_from_rs_string =
+                                |s: String| -> Result<libparsec::UserID, _> {
+                                    libparsec::UserID::from_hex(s.as_str())
+                                        .map_err(|e| e.to_string())
+                                };
+                            match custom_from_rs_string(js_key.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        };
+                        let value = {
+                            let v = js_value.value(cx);
+                            if v < (u8::MIN as f64) || (u8::MAX as f64) < v {
+                                cx.throw_type_error("Not an u8 number")?
+                            }
+                            let v = v as u8;
+                            let custom_from_rs_u8 = |x: u8| -> Result<std::num::NonZeroU8, _> {
+                                std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string())
+                            };
+                            match custom_from_rs_u8(v) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        };
+                        d.insert(key, value);
+                    }
+                    d
+                }
+            };
+            let is_recoverable = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "isRecoverable")?;
+                js_val.value(cx)
+            };
+            Ok(
+                libparsec::ShamirRecoveryClaimMaybeRecoverDeviceInfo::PickRecipient {
+                    handle,
+                    claimer_user_id,
+                    claimer_human_handle,
+                    shamir_recovery_created_on,
+                    recipients,
+                    threshold,
+                    recovered_shares,
+                    is_recoverable,
+                },
+            )
+        }
+        "ShamirRecoveryClaimMaybeRecoverDeviceInfoRecoverDevice" => {
+            let handle = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let claimer_user_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "claimerUserId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let claimer_human_handle = {
+                let js_val: Handle<JsObject> = obj.get(cx, "claimerHumanHandle")?;
+                struct_human_handle_js_to_rs(cx, js_val)?
+            };
+            Ok(
+                libparsec::ShamirRecoveryClaimMaybeRecoverDeviceInfo::RecoverDevice {
+                    handle,
+                    claimer_user_id,
+                    claimer_human_handle,
+                },
+            )
+        }
+        _ => cx.throw_type_error("Object is not a ShamirRecoveryClaimMaybeRecoverDeviceInfo"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryClaimMaybeRecoverDeviceInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::ShamirRecoveryClaimMaybeRecoverDeviceInfo::PickRecipient {
+            handle,
+            claimer_user_id,
+            claimer_human_handle,
+            shamir_recovery_created_on,
+            recipients,
+            threshold,
+            recovered_shares,
+            is_recoverable,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ShamirRecoveryClaimMaybeRecoverDeviceInfoPickRecipient")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_handle = JsNumber::new(cx, handle as f64);
+            js_obj.set(cx, "handle", js_handle)?;
+            let js_claimer_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(claimer_user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "claimerUserId", js_claimer_user_id)?;
+            let js_claimer_human_handle = struct_human_handle_rs_to_js(cx, claimer_human_handle)?;
+            js_obj.set(cx, "claimerHumanHandle", js_claimer_human_handle)?;
+            let js_shamir_recovery_created_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(shamir_recovery_created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "shamirRecoveryCreatedOn", js_shamir_recovery_created_on)?;
+            let js_recipients = {
+                // JsArray::new allocates with `undefined` value, that's why we `set` value
+                let js_array = JsArray::new(cx, recipients.len());
+                for (i, elem) in recipients.into_iter().enumerate() {
+                    let js_elem = struct_shamir_recovery_recipient_rs_to_js(cx, elem)?;
+                    js_array.set(cx, i as u32, js_elem)?;
+                }
+                js_array
+            };
+            js_obj.set(cx, "recipients", js_recipients)?;
+            let js_threshold = JsNumber::new(cx, {
+                let custom_to_rs_u8 =
+                    |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                match custom_to_rs_u8(threshold) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            } as f64);
+            js_obj.set(cx, "threshold", js_threshold)?;
+            let js_recovered_shares = {
+                let new_map_code = (cx).string("new Map()");
+                let js_map =
+                    neon::reflect::eval(cx, new_map_code)?.downcast_or_throw::<JsObject, _>(cx)?;
+                for (key, value) in recovered_shares.into_iter() {
+                    let js_key = JsString::try_new(cx, {
+                        let custom_to_rs_string =
+                            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(key) {
+                            Ok(ok) => ok,
+                            Err(err) => return cx.throw_type_error(err),
+                        }
+                    })
+                    .or_throw(cx)?;
+                    let js_value = JsNumber::new(cx, {
+                        let custom_to_rs_u8 =
+                            |x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) };
+                        match custom_to_rs_u8(value) {
+                            Ok(ok) => ok,
+                            Err(err) => return cx.throw_type_error(err),
+                        }
+                    } as f64);
+                    js_map
+                        .call_method_with(cx, "set")?
+                        .arg(js_key)
+                        .arg(js_value)
+                        .exec(cx)?;
+                }
+                js_map
+            };
+            js_obj.set(cx, "recoveredShares", js_recovered_shares)?;
+            let js_is_recoverable = JsBoolean::new(cx, is_recoverable);
+            js_obj.set(cx, "isRecoverable", js_is_recoverable)?;
+        }
+        libparsec::ShamirRecoveryClaimMaybeRecoverDeviceInfo::RecoverDevice {
+            handle,
+            claimer_user_id,
+            claimer_human_handle,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ShamirRecoveryClaimMaybeRecoverDeviceInfoRecoverDevice")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_handle = JsNumber::new(cx, handle as f64);
+            js_obj.set(cx, "handle", js_handle)?;
+            let js_claimer_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(claimer_user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "claimerUserId", js_claimer_user_id)?;
+            let js_claimer_human_handle = struct_human_handle_rs_to_js(cx, claimer_human_handle)?;
+            js_obj.set(cx, "claimerHumanHandle", js_claimer_human_handle)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ShamirRecoveryClaimPickRecipientError
+
+#[allow(dead_code)]
+fn variant_shamir_recovery_claim_pick_recipient_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryClaimPickRecipientError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ShamirRecoveryClaimPickRecipientError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ShamirRecoveryClaimPickRecipientErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ShamirRecoveryClaimPickRecipientError::RecipientAlreadyPicked { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ShamirRecoveryClaimPickRecipientErrorRecipientAlreadyPicked",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ShamirRecoveryClaimPickRecipientError::RecipientNotFound { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ShamirRecoveryClaimPickRecipientErrorRecipientNotFound")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ShamirRecoveryClaimPickRecipientError::RecipientRevoked { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ShamirRecoveryClaimPickRecipientErrorRecipientRevoked")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ShamirRecoveryClaimRecoverDeviceError
+
+#[allow(dead_code)]
+fn variant_shamir_recovery_claim_recover_device_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ShamirRecoveryClaimRecoverDeviceError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ShamirRecoveryClaimRecoverDeviceError::AlreadyUsed { .. } => {
+            let js_tag = JsString::try_new(cx, "ShamirRecoveryClaimRecoverDeviceErrorAlreadyUsed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ShamirRecoveryClaimRecoverDeviceError::CipheredDataNotFound { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ShamirRecoveryClaimRecoverDeviceErrorCipheredDataNotFound",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ShamirRecoveryClaimRecoverDeviceError::CorruptedCipheredData { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ShamirRecoveryClaimRecoverDeviceErrorCorruptedCipheredData",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ShamirRecoveryClaimRecoverDeviceError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ShamirRecoveryClaimRecoverDeviceErrorInternal")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ShamirRecoveryClaimRecoverDeviceError::NotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "ShamirRecoveryClaimRecoverDeviceErrorNotFound")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ShamirRecoveryClaimRecoverDeviceError::OrganizationExpired { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ShamirRecoveryClaimRecoverDeviceErrorOrganizationExpired",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ShamirRecoveryClaimRecoverDeviceError::RegisterNewDeviceError { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ShamirRecoveryClaimRecoverDeviceErrorRegisterNewDeviceError",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // TestbedError
 
 #[allow(dead_code)]
@@ -11652,6 +12690,563 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_claimer_retrieve_info_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// claimer_shamir_recovery_add_share
+fn claimer_shamir_recovery_add_share(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let recipient_pick_handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let share_handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let ret = libparsec::claimer_shamir_recovery_add_share(recipient_pick_handle, share_handle);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value =
+                variant_shamir_recovery_claim_maybe_recover_device_info_rs_to_js(&mut cx, ok)?;
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_shamir_recovery_claim_add_share_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// claimer_shamir_recovery_finalize_save_local_device
+fn claimer_shamir_recovery_finalize_save_local_device(
+    mut cx: FunctionContext,
+) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let save_strategy = {
+        let js_val = cx.argument::<JsObject>(1)?;
+        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::claimer_shamir_recovery_finalize_save_local_device(
+                handle,
+                save_strategy,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_available_device_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// claimer_shamir_recovery_in_progress_1_do_deny_trust
+fn claimer_shamir_recovery_in_progress_1_do_deny_trust(
+    mut cx: FunctionContext,
+) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::claimer_shamir_recovery_in_progress_1_do_deny_trust(canceller, handle)
+                    .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// claimer_shamir_recovery_in_progress_1_do_signify_trust
+fn claimer_shamir_recovery_in_progress_1_do_signify_trust(
+    mut cx: FunctionContext,
+) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::claimer_shamir_recovery_in_progress_1_do_signify_trust(
+                canceller, handle,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value =
+                            struct_shamir_recovery_claim_in_progress2_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// claimer_shamir_recovery_in_progress_2_do_wait_peer_trust
+fn claimer_shamir_recovery_in_progress_2_do_wait_peer_trust(
+    mut cx: FunctionContext,
+) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::claimer_shamir_recovery_in_progress_2_do_wait_peer_trust(
+                canceller, handle,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value =
+                            struct_shamir_recovery_claim_in_progress3_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// claimer_shamir_recovery_in_progress_3_do_claim
+fn claimer_shamir_recovery_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::claimer_shamir_recovery_in_progress_3_do_claim(canceller, handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value =
+                            struct_shamir_recovery_claim_share_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// claimer_shamir_recovery_initial_do_wait_peer
+fn claimer_shamir_recovery_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::claimer_shamir_recovery_initial_do_wait_peer(canceller, handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value =
+                            struct_shamir_recovery_claim_in_progress1_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// claimer_shamir_recovery_pick_recipient
+fn claimer_shamir_recovery_pick_recipient(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let recipient_user_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let ret = libparsec::claimer_shamir_recovery_pick_recipient(handle, recipient_user_id);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = struct_shamir_recovery_claim_initial_info_rs_to_js(&mut cx, ok)?;
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_shamir_recovery_claim_pick_recipient_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// claimer_shamir_recovery_recover_device
+fn claimer_shamir_recovery_recover_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let requested_device_label = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret =
+                libparsec::claimer_shamir_recovery_recover_device(handle, requested_device_label)
+                    .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = variant_shamir_recovery_claim_maybe_finalize_info_rs_to_js(
+                            &mut cx, ok,
+                        )?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_shamir_recovery_claim_recover_device_error_rs_to_js(
+                            &mut cx, err,
+                        )?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -19237,6 +20832,42 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         claimer_greeter_abort_operation,
     )?;
     cx.export_function("claimerRetrieveInfo", claimer_retrieve_info)?;
+    cx.export_function(
+        "claimerShamirRecoveryAddShare",
+        claimer_shamir_recovery_add_share,
+    )?;
+    cx.export_function(
+        "claimerShamirRecoveryFinalizeSaveLocalDevice",
+        claimer_shamir_recovery_finalize_save_local_device,
+    )?;
+    cx.export_function(
+        "claimerShamirRecoveryInProgress1DoDenyTrust",
+        claimer_shamir_recovery_in_progress_1_do_deny_trust,
+    )?;
+    cx.export_function(
+        "claimerShamirRecoveryInProgress1DoSignifyTrust",
+        claimer_shamir_recovery_in_progress_1_do_signify_trust,
+    )?;
+    cx.export_function(
+        "claimerShamirRecoveryInProgress2DoWaitPeerTrust",
+        claimer_shamir_recovery_in_progress_2_do_wait_peer_trust,
+    )?;
+    cx.export_function(
+        "claimerShamirRecoveryInProgress3DoClaim",
+        claimer_shamir_recovery_in_progress_3_do_claim,
+    )?;
+    cx.export_function(
+        "claimerShamirRecoveryInitialDoWaitPeer",
+        claimer_shamir_recovery_initial_do_wait_peer,
+    )?;
+    cx.export_function(
+        "claimerShamirRecoveryPickRecipient",
+        claimer_shamir_recovery_pick_recipient,
+    )?;
+    cx.export_function(
+        "claimerShamirRecoveryRecoverDevice",
+        claimer_shamir_recovery_recover_device,
+    )?;
     cx.export_function(
         "claimerUserFinalizeSaveLocalDevice",
         claimer_user_finalize_save_local_device,
