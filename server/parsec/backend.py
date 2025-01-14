@@ -23,7 +23,6 @@ from parsec._parsec import (
     UserUpdateCertificate,
     VerifyKey,
 )
-from parsec._version import __version__ as server_version
 from parsec.api import collect_apis
 from parsec.components.auth import BaseAuthComponent
 from parsec.components.block import BaseBlockComponent
@@ -62,10 +61,6 @@ logger = get_logger()
 
 @asynccontextmanager
 async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None]:
-    # Log the server version and the backend configuration
-    logger.info("Parsec version", version=server_version)
-    logger.info("Backend configuration", **config.logging_kwargs())
-
     if config.db_config.is_mocked():
         components_factory = mocked_components_factory
     else:
