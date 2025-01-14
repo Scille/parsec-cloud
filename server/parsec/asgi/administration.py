@@ -11,13 +11,15 @@ from typing import (
     Any,
     Awaitable,
     Callable,
+    Literal,
+    Union,
     cast,
 )
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -25,6 +27,8 @@ from parsec._parsec import (
     DateTime,
     OrganizationID,
     ParsecOrganizationBootstrapAddr,
+    SequesterRevokedServiceCertificate,
+    SequesterServiceCertificate,
     UserID,
     UserProfile,
 )
@@ -39,18 +43,28 @@ from parsec.components.organization import (
     TosUrl,
 )
 from parsec.components.sequester import (
+    RequireGreaterTimestamp,
+    SequesterCreateServiceStoreBadOutcome,
+    SequesterCreateServiceValidateBadOutcome,
     SequesterGetOrganizationServicesBadOutcome,
+    SequesterRevokeServiceStoreBadOutcome,
+    SequesterRevokeServiceValidateBadOutcome,
+    SequesterServiceConfig,
+    SequesterServiceType,
+    SequesterUpdateConfigForServiceStoreBadOutcome,
     WebhookSequesterService,
 )
 from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListUsersBadOutcome
 from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
 from parsec.logging import get_logger
-from parsec.types import Unset, UnsetType
+from parsec.types import Base64Bytes, SequesterServiceIDField, Unset, UnsetType
 
 if TYPE_CHECKING:
     from parsec.backend import Backend
 
+
 logger = get_logger()
+
 
 administration_router = APIRouter()
 security = HTTPBearer()
@@ -568,4 +582,174 @@ async def administration_organization_sequester_services(
         content={
             "services": cooked_services,
         },
+    )
+
+
+class SequesterServiceConfigInStorage(BaseModel):
+    model_config = ConfigDict(strict=True)
+    type: Literal["storage"]
+
+    @property
+    def cooked(self) -> SequesterServiceConfig:
+        return SequesterServiceType.STORAGE
+
+
+class SequesterServiceConfigInWebhook(BaseModel):
+    model_config = ConfigDict(strict=True)
+    type: Literal["webhook"]
+    webhook_url: str
+
+    @property
+    def cooked(self) -> SequesterServiceConfig:
+        return (SequesterServiceType.WEBHOOK, self.webhook_url)
+
+
+SequesterServiceConfigField = Annotated[
+    Union[SequesterServiceConfigInStorage, SequesterServiceConfigInWebhook],
+    Field(
+        discriminator="type",
+    ),
+]
+
+
+class SequesterServiceCreateIn(BaseModel):
+    model_config = ConfigDict(strict=True)
+    service_certificate: Base64Bytes
+    config: SequesterServiceConfigField
+
+
+@administration_router.post(
+    "/administration/organizations/{raw_organization_id}/sequester/services"
+)
+@log_request
+async def administration_organization_sequester_service_create(
+    raw_organization_id: str,
+    body: SequesterServiceCreateIn,
+    auth: Annotated[None, Depends(check_administration_auth)],
+    request: Request,
+) -> Response:
+    backend: Backend = request.app.state.backend
+
+    organization_id = parse_organization_id_or_die(raw_organization_id)
+
+    outcome = await backend.sequester.create_service(
+        now=DateTime.now(),
+        organization_id=organization_id,
+        service_certificate=body.service_certificate,
+        config=body.config.cooked,
+    )
+    match outcome:
+        case SequesterServiceCertificate():
+            pass
+        case SequesterCreateServiceValidateBadOutcome.INVALID_CERTIFICATE:
+            raise HTTPException(status_code=400, detail="Invalid certificate")
+        case SequesterCreateServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND:
+            raise HTTPException(status_code=404, detail="Organization not found")
+        case SequesterCreateServiceStoreBadOutcome.SEQUESTER_DISABLED:
+            raise HTTPException(status_code=400, detail="Sequester disabled")
+        case SequesterCreateServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_EXISTS:
+            raise HTTPException(status_code=400, detail="Sequester service already exists")
+        case RequireGreaterTimestamp() as error:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "msg": "Require greater timestamp",
+                    "strictly_greater_than": error.strictly_greater_than.to_rfc3339(),
+                },
+            )
+
+    return JSONResponse(
+        status_code=200,
+        content={},
+    )
+
+
+class SequesterServiceRevokeIn(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
+    revoked_service_certificate: Base64Bytes
+
+
+@administration_router.post(
+    "/administration/organizations/{raw_organization_id}/sequester/services/revoke"
+)
+@log_request
+async def administration_organization_sequester_service_revoke(
+    raw_organization_id: str,
+    body: SequesterServiceRevokeIn,
+    auth: Annotated[None, Depends(check_administration_auth)],
+    request: Request,
+) -> Response:
+    backend: Backend = request.app.state.backend
+
+    organization_id = parse_organization_id_or_die(raw_organization_id)
+
+    outcome = await backend.sequester.revoke_service(
+        now=DateTime.now(),
+        organization_id=organization_id,
+        revoked_service_certificate=body.revoked_service_certificate,
+    )
+    match outcome:
+        case SequesterRevokedServiceCertificate():
+            pass
+        case SequesterRevokeServiceValidateBadOutcome.INVALID_CERTIFICATE:
+            raise HTTPException(status_code=400, detail="Invalid certificate")
+        case SequesterRevokeServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND:
+            raise HTTPException(status_code=404, detail="Organization not found")
+        case SequesterRevokeServiceStoreBadOutcome.SEQUESTER_DISABLED:
+            raise HTTPException(status_code=400, detail="Sequester disabled")
+        case SequesterRevokeServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_REVOKED:
+            raise HTTPException(status_code=400, detail="Sequester service already revoked")
+        case SequesterRevokeServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND:
+            raise HTTPException(status_code=404, detail="Sequester service not found")
+        case RequireGreaterTimestamp() as error:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "msg": "Require greater timestamp",
+                    "strictly_greater_than": error.strictly_greater_than.to_rfc3339(),
+                },
+            )
+
+    return JSONResponse(
+        status_code=200,
+        content={},
+    )
+
+
+class SequesterServiceUpdateConfigIn(BaseModel):
+    model_config = ConfigDict(strict=True)
+    service_id: SequesterServiceIDField
+    config: SequesterServiceConfigField
+
+
+@administration_router.put(
+    "/administration/organizations/{raw_organization_id}/sequester/services/config"
+)
+@log_request
+async def administration_organization_sequester_service_update_config(
+    raw_organization_id: str,
+    body: SequesterServiceUpdateConfigIn,
+    auth: Annotated[None, Depends(check_administration_auth)],
+    request: Request,
+) -> Response:
+    backend: Backend = request.app.state.backend
+
+    organization_id = parse_organization_id_or_die(raw_organization_id)
+
+    outcome = await backend.sequester.update_config_for_service(
+        organization_id=organization_id,
+        service_id=body.service_id,
+        config=body.config.cooked,
+    )
+    match outcome:
+        case None:
+            pass
+        case SequesterUpdateConfigForServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND:
+            raise HTTPException(status_code=404, detail="Organization not found")
+        case SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND:
+            raise HTTPException(status_code=404, detail="Sequester service not found")
+
+    return JSONResponse(
+        status_code=200,
+        content={},
     )
