@@ -692,7 +692,15 @@ class MemoryUserComponent(BaseUserComponent):
                 devices=[
                     d.cooked.device_id for d in org.devices.values() if d.cooked.user_id == user_id
                 ],
-                current_profile=user.current_profile,
+                profile_updates=[
+                    # Initial profile
+                    (user.cooked.timestamp, user.cooked.profile),
+                    # Subsequent profile updates
+                    *(
+                        (update.cooked.timestamp, update.cooked.new_profile)
+                        for update in user.profile_updates
+                    ),
+                ],
                 created_on=user.cooked.timestamp,
                 revoked_on=user.cooked_revoked.timestamp
                 if user.cooked_revoked is not None
