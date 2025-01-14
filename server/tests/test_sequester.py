@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Awaitable, Protocol
 from unittest.mock import ANY
 
 import pytest
@@ -30,22 +29,6 @@ from parsec.components.sequester import (
 )
 from parsec.events import EventSequesterCertificate
 from tests.common import Backend, MinimalorgRpcClients, SequesteredOrgRpcClients
-
-
-class DoCreateServiceFunc(Protocol):
-    def __call__(
-        self,
-        now: DateTime,
-        organization_id: OrganizationID,
-        service_certificate: bytes,
-    ) -> Awaitable[
-        (
-            SequesterServiceCertificate
-            | SequesterCreateServiceValidateBadOutcome
-            | SequesterCreateServiceStoreBadOutcome
-            | RequireGreaterTimestamp
-        )
-    ]: ...
 
 
 @pytest.mark.parametrize("kind", ("storage", "webhook"))
