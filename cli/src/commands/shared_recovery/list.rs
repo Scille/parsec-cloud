@@ -13,11 +13,7 @@ crate::clap_parser_with_shared_opts_builder!(
 build_main_with_client!(main, shared_recovery_list);
 
 pub async fn shared_recovery_list(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
-    {
-        let mut spinner = start_spinner("Poll server for new certificates".into());
-        client.poll_server_for_new_certificates().await?;
-        spinner.stop_with_symbol(GREEN_CHECKMARK);
-    }
+    poll_server_for_new_certificates(client).await?;
 
     let res = client.list_shamir_recoveries_for_others().await?;
     let users = client.list_users(false, None, None).await?;

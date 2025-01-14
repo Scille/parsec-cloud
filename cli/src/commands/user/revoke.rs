@@ -16,7 +16,7 @@ crate::build_main_with_client!(main, revoke_user);
 
 pub async fn revoke_user(args: Args, client: &StartedClient) -> anyhow::Result<()> {
     let Args { email, .. } = args;
-    client.poll_server_for_new_certificates().await?;
+    poll_server_for_new_certificates(client).await?;
     let users = client.list_users(true, None, None).await?;
     let to_revoke = users
         .iter()
