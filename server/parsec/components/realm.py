@@ -6,6 +6,7 @@ from enum import auto
 from typing import TypeAlias
 
 from parsec._parsec import (
+    BlockID,
     DateTime,
     DeviceID,
     OrganizationID,
@@ -324,6 +325,117 @@ class RealmDumpRealmsGrantedRolesBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
 
 
+type RealmExportBatchOffsetMarker = int
+
+
+@dataclass(slots=True)
+class RealmExportDoBaseInfo:
+    root_verify_key: VerifyKey
+
+    # Offset marker is basically the internal primary key of the vlobs & blocks in
+    # the PostgreSQL database:
+    # - The primary key is a serial integer that is strictly growing (i.e. the older
+    #   the row the lower the ID).
+    # - The table contains multiple realms, so the IDs are not growing continuously (also
+    #   the serial type in PostgreSQL gives no guarantee on avoiding hole when e.g. a
+    #   transaction is rolled back).
+    #
+    # So the idea here is to re-use this primary key from PostgreSQL as primary key in
+    # our SQLite export. This way we end up with the rows in the correct historical
+    # order, and also easily know if the export is complete (i.e. if the upper
+    # bound is part of the export).
+    vlob_offset_marker_upper_bound: int
+    block_offset_marker_upper_bound: int
+
+    # Total amount of data to be exported, useful for progress bar
+    vlobs_total_bytes: int
+    blocks_total_bytes: int
+
+    # Since certificates provide strong guarantee on their timestamp, it's more
+    # convenient to use them as markers for the export than their PostgreSQL
+    # primary key (this is especially true since certificates are currently
+    # stored scattered across multiple tables, so multiples certificates can
+    # end up with the same primary key !).
+    common_certificate_timestamp_upper_bound: DateTime
+    realm_certificate_timestamp_upper_bound: DateTime
+    # It is possible to export a non-sequestered organization, in which case
+    # there is no sequester certificate at all.
+    sequester_certificate_timestamp_upper_bound: DateTime | None
+
+
+class RealmExportDoBaseInfoBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+    REALM_DIDNT_EXIST_AT_SNAPSHOT_TIMESTAMP = auto()
+
+
+@dataclass(slots=True)
+class RealmExportCertificates:
+    common_certificates: list[bytes]
+    sequester_certificates: list[bytes]
+    realm_certificates: list[bytes]
+
+
+class RealmExportDoCertificatesBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class RealmExportVlobsBatchItem:
+    sequential_id: int
+    vlob_id: VlobID
+    version: int
+    key_index: int
+    blob: bytes
+    size: int
+    author: DeviceID
+    timestamp: DateTime
+
+
+@dataclass(slots=True)
+class RealmExportVlobsBatch:
+    items: list[RealmExportVlobsBatchItem]
+
+    @property
+    def batch_offset_marker(self) -> RealmExportBatchOffsetMarker:
+        try:
+            return self.items[-1].sequential_id
+        except IndexError:
+            return 0
+
+
+class RealmExportDoVlobsBatchBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class RealmExportBlocksMetadataBatchItem:
+    sequential_id: int
+    block_id: BlockID
+    author: DeviceID
+    key_index: int
+    size: int
+
+
+@dataclass(slots=True)
+class RealmExportBlocksMetadataBatch:
+    items: list[RealmExportBlocksMetadataBatchItem]
+
+    @property
+    def batch_offset_marker(self) -> RealmExportBatchOffsetMarker:
+        try:
+            return self.items[-1].sequential_id
+        except IndexError:
+            return 0
+
+
+class RealmExportDoBlocksBatchMetadataBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
 class BaseRealmComponent:
     def __init__(self, webhooks: WebhooksComponent):
         self.webhooks = webhooks
@@ -447,6 +559,42 @@ class BaseRealmComponent:
     async def dump_realms_granted_roles(
         self, organization_id: OrganizationID
     ) -> list[RealmGrantedRole] | RealmDumpRealmsGrantedRolesBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_base_info(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        snapshot_timestamp: DateTime,
+    ) -> RealmExportDoBaseInfo | RealmExportDoBaseInfoBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_certificates(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        common_certificate_timestamp_upper_bound: DateTime,
+        realm_certificate_timestamp_upper_bound: DateTime,
+        sequester_certificate_timestamp_upper_bound: DateTime | None,
+    ) -> RealmExportCertificates | RealmExportDoCertificatesBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_vlobs_batch(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmExportBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmExportVlobsBatch | RealmExportDoVlobsBatchBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_blocks_metadata_batch(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmExportBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmExportBlocksMetadataBatch | RealmExportDoBlocksBatchMetadataBadOutcome:
         raise NotImplementedError
 
     #
