@@ -10,6 +10,7 @@ from typing import Any
 import click
 
 from parsec._parsec import ActiveUsersLimit, ParsecAddr
+from parsec._version import __version__ as server_version
 from parsec.asgi import app as parsec_app
 from parsec.asgi import serve_parsec_asgi_app
 from parsec.backend import backend_factory
@@ -473,6 +474,10 @@ async def _run_backend(
     retry_policy: RetryPolicy,
     app_config: BackendConfig,
 ) -> None:
+    # Log the server version and the backend configuration
+    logger.info("Parsec version", version=server_version)
+    logger.info("Backend configuration", **app_config.logging_kwargs())
+
     # Loop over connection attempts
     while True:
         try:
