@@ -208,9 +208,9 @@
         "passwordChoice": "Mot de passe",
         "acceptTOS": {
             "label": "En utilisant Parsec, j'accepte les",
-            "tos": "Conditions Générales de Vente et d'Utilisation ",
+            "tos": "Conditions Générales de Vente et d'Utilisation",
             "tosLink": "https://parsec.cloud/cgvu-parsec/",
-            "and": "et la ",
+            "and": " et la ",
             "privacyPolicy": "Politique de Confidentialité",
             "privacyPolicyLink": "https://parsec.cloud/fr/politique-de-confidentialite/",
             "update": {

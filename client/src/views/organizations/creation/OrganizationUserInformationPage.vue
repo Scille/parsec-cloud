@@ -144,6 +144,10 @@ async function onFieldUpdated(): Promise<void> {
 
   a {
     color: var(--parsec-color-light-primary-500);
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 </style>
