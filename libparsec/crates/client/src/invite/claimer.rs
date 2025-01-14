@@ -285,7 +285,7 @@ pub async fn claimer_retrieve_info(
                     shamir_recovery_created_on,
                     recipients,
                     threshold,
-                    shares: HashMap::new(),
+                    retrieved_shares: HashMap::new(),
                     time_provider,
                 },
             )),
@@ -335,7 +335,7 @@ pub struct ShamirRecoveryClaimPickRecipientCtx {
     shamir_recovery_created_on: DateTime,
     recipients: Vec<ShamirRecoveryRecipient>,
     threshold: NonZeroU8,
-    shares: HashMap<UserID, Vec<ShamirShare>>,
+    retrieved_shares: HashMap<UserID, Vec<ShamirShare>>,
     time_provider: TimeProvider,
 }
 
@@ -363,7 +363,7 @@ impl ShamirRecoveryClaimPickRecipientCtx {
     pub fn recipients_without_a_share(&self) -> Vec<&ShamirRecoveryRecipient> {
         self.recipients
             .iter()
-            .filter(|r| !self.shares.contains_key(&r.user_id))
+            .filter(|r| !self.retrieved_shares.contains_key(&r.user_id))
             .collect()
     }
 
@@ -376,8 +376,8 @@ impl ShamirRecoveryClaimPickRecipientCtx {
             >= self.threshold.get()
     }
 
-    pub fn shares(&self) -> HashMap<UserID, NonZeroU8> {
-        self.shares
+    pub fn retrieved_shares(&self) -> HashMap<UserID, NonZeroU8> {
+        self.retrieved_shares
             .iter()
             .filter_map(|(k, v)| {
                 u8::try_from(v.len())
@@ -405,7 +405,7 @@ impl ShamirRecoveryClaimPickRecipientCtx {
         let greeter_user_id = recipient.user_id;
         let greeter_human_handle = recipient.human_handle.clone();
 
-        if self.shares.contains_key(&greeter_user_id) {
+        if self.retrieved_shares.contains_key(&greeter_user_id) {
             return Err(ShamirRecoveryClaimPickRecipientError::RecipientAlreadyPicked);
         }
 
@@ -422,7 +422,7 @@ impl ShamirRecoveryClaimPickRecipientCtx {
         self,
         share_ctx: ShamirRecoveryClaimShare,
     ) -> Result<ShamirRecoveryClaimMaybeRecoverDeviceCtx, ShamirRecoveryClaimAddShareError> {
-        let mut shares = self.shares;
+        let mut retrieved_shares = self.retrieved_shares;
 
         self.recipients
             .iter()
@@ -432,13 +432,16 @@ impl ShamirRecoveryClaimPickRecipientCtx {
         // Note that we do not check if the share is already present
         // This is to avoid handling an extra error that has no real value,
         // since adding shares can be seen as an idempotent operation.
-        shares.insert(share_ctx.recipient, share_ctx.weighted_share);
-        if shares.values().map(|shares| shares.len()).sum::<usize>()
+        retrieved_shares.insert(share_ctx.recipient, share_ctx.weighted_share);
+        if retrieved_shares
+            .values()
+            .map(|shares| shares.len())
+            .sum::<usize>()
             >= self.threshold.get() as usize
         {
             let secret = ShamirRecoverySecret::decrypt_and_load_from_shares(
                 self.threshold,
-                shares.values().flatten(),
+                retrieved_shares.values().flatten(),
             )
             .map_err(ShamirRecoveryClaimAddShareError::CorruptedSecret)?;
             Ok(ShamirRecoveryClaimMaybeRecoverDeviceCtx::RecoverDevice(
@@ -453,7 +456,10 @@ impl ShamirRecoveryClaimPickRecipientCtx {
             ))
         } else {
             Ok(ShamirRecoveryClaimMaybeRecoverDeviceCtx::PickRecipient(
-                Self { shares, ..self },
+                Self {
+                    retrieved_shares,
+                    ..self
+                },
             ))
         }
     }

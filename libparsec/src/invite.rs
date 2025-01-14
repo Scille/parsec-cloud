@@ -938,7 +938,7 @@ pub fn claimer_shamir_recovery_add_share(
             let shamir_recovery_created_on = ctx.shamir_recovery_created_on().to_owned();
             let recipients = ctx.recipients().to_owned();
             let threshold = ctx.threshold().to_owned();
-            let recovered_shares = ctx.shares().to_owned();
+            let recovered_shares = ctx.retrieved_shares().to_owned();
             let is_recoverable = ctx.is_recoverable();
             let new_handle = register_handle(HandleItem::ShamirRecoveryClaimPickRecipient(ctx));
             Ok(ShamirRecoveryClaimMaybeRecoverDeviceInfo::PickRecipient {
