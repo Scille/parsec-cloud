@@ -35,7 +35,7 @@ async def test_bad_method(
     client: httpx.AsyncClient, backend: Backend, sequestered_org: SequesteredOrgRpcClients
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{sequestered_org.organization_id.str}/sequester/services"
-    response = await client.post(
+    response = await client.patch(
         url,
         headers={"Authorization": f"Bearer {backend.config.administration_token}"},
     )
