@@ -429,6 +429,13 @@ pub fn choose_user_profile(input: &mut String) -> anyhow::Result<UserProfile> {
     }
 }
 
+pub async fn poll_server_for_new_certificates(client: &StartedClient) -> anyhow::Result<()> {
+    let mut spinner = start_spinner("Poll server for new certificates".into());
+    client.poll_server_for_new_certificates().await?;
+    spinner.stop_with_symbol(GREEN_CHECKMARK);
+    Ok(())
+}
+
 pub enum ReadPasswordFrom {
     Stdin,
     Tty { prompt: &'static str },

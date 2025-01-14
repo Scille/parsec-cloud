@@ -17,7 +17,7 @@ pub async fn list_user(args: Args, client: &StartedClient) -> anyhow::Result<()>
     let Args { skip_revoked, .. } = args;
     log::trace!("Listing users (skip_revoked={skip_revoked})");
 
-    client.poll_server_for_new_certificates().await?;
+    poll_server_for_new_certificates(client).await?;
     let users = client.list_users(skip_revoked, None, None).await?;
 
     if users.is_empty() {

@@ -12,7 +12,7 @@ crate::build_main_with_client!(main, list_workspace);
 pub async fn list_workspace(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
     log::trace!("Listing workspaces");
 
-    client.poll_server_for_new_certificates().await?;
+    poll_server_for_new_certificates(client).await?;
     client.refresh_workspaces_list().await?;
     let workspaces = client.list_workspaces().await;
 

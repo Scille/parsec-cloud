@@ -3,7 +3,9 @@ use std::{collections::HashMap, num::NonZeroU8};
 use dialoguer::Input;
 use libparsec::{UserID, UserProfile};
 
-use crate::utils::{start_spinner, StartedClient, GREEN_CHECKMARK};
+use crate::utils::{
+    poll_server_for_new_certificates, start_spinner, StartedClient, GREEN_CHECKMARK,
+};
 
 // TODO: should provide the recipients and their share count as a single parameter
 //       e.g. `--recipients=foo@example.com=2,bar@example.com=3`
@@ -36,11 +38,7 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
         ..
     } = args;
 
-    {
-        let mut spinner = start_spinner("Poll server for new certificates".into());
-        client.poll_server_for_new_certificates().await?;
-        spinner.stop_with_symbol(GREEN_CHECKMARK);
-    }
+    poll_server_for_new_certificates(client).await?;
 
     let mut handle = start_spinner("Creating shared recovery setup".into());
     let users = client.list_users(true, None, None).await?;
