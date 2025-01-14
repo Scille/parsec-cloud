@@ -11,7 +11,7 @@ use std::{
 
 pub use bytes::Bytes;
 pub use reqwest::{
-    header::{HeaderMap, HeaderValue},
+    header::{HeaderMap, HeaderName, HeaderValue},
     Error as RequestError, StatusCode,
 };
 use reqwest::{RequestBuilder, Response};
