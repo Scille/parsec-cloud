@@ -34,6 +34,17 @@ from parsec.components.realm import (
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
     RealmDumpRealmsGrantedRolesBadOutcome,
+    RealmExportBatchOffsetMarker,
+    RealmExportBlocksMetadataBatch,
+    RealmExportBlocksMetadataBatchItem,
+    RealmExportCertificates,
+    RealmExportDoBaseInfo,
+    RealmExportDoBaseInfoBadOutcome,
+    RealmExportDoBlocksBatchMetadataBadOutcome,
+    RealmExportDoCertificatesBadOutcome,
+    RealmExportDoVlobsBatchBadOutcome,
+    RealmExportVlobsBatch,
+    RealmExportVlobsBatchItem,
     RealmGetCurrentRealmsForUserBadOutcome,
     RealmGetKeysBundleBadOutcome,
     RealmGrantedRole,
@@ -770,3 +781,209 @@ class MemoryRealmComponent(BaseRealmComponent):
                 )
 
         return granted_roles
+
+    @override
+    async def export_do_base_info(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        snapshot_timestamp: DateTime,
+    ) -> RealmExportDoBaseInfo | RealmExportDoBaseInfoBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmExportDoBaseInfoBadOutcome.ORGANIZATION_NOT_FOUND
+
+        if not org.is_bootstrapped:
+            return RealmExportDoBaseInfoBadOutcome.ORGANIZATION_NOT_FOUND
+
+        root_verify_key = org.root_verify_key
+        assert root_verify_key is not None
+
+        if realm_id not in org.realms:
+            return RealmExportDoBaseInfoBadOutcome.REALM_NOT_FOUND
+
+        vlob_offset_marker_upper_bound = 0
+        vlobs_total_bytes = 0
+        for sequential_row_id, row in org.simulate_postgresql_vlob_atom_table():
+            if row.created_on > snapshot_timestamp:
+                break
+            if row.realm_id == realm_id:
+                vlob_offset_marker_upper_bound = sequential_row_id
+                vlobs_total_bytes += len(row.blob)
+
+        blocks_total_bytes = 0
+        block_offset_marker_upper_bound = 0
+        for sequential_row_id, row in org.simulate_postgresql_block_table():
+            if row.created_on > snapshot_timestamp:
+                break
+            if row.realm_id == realm_id:
+                block_offset_marker_upper_bound = sequential_row_id
+                blocks_total_bytes += row.block_size
+
+        common_certificate_timestamp_upper_bound = None
+        for ts, _, _ in org.ordered_common_certificates():
+            if ts > snapshot_timestamp:
+                break
+            common_certificate_timestamp_upper_bound = ts
+        # The organization has been bootstrapped, there *must* be some common certificates
+        assert common_certificate_timestamp_upper_bound is not None
+
+        realm_certificate_timestamp_upper_bound = None
+        for ts, _, _ in org.ordered_realm_certificates(realm_id):
+            if ts > snapshot_timestamp:
+                break
+            realm_certificate_timestamp_upper_bound = ts
+        if realm_certificate_timestamp_upper_bound is None:
+            return RealmExportDoBaseInfoBadOutcome.REALM_DIDNT_EXIST_AT_SNAPSHOT_TIMESTAMP
+
+        sequester_certificate_timestamp_upper_bound = None
+        for ts, _, _ in org.ordered_sequester_certificates():
+            if ts > snapshot_timestamp:
+                break
+            sequester_certificate_timestamp_upper_bound = ts
+        # It is possible to export a non-sequestered organization, in which case
+        # there is no sequester certificate at all.
+
+        return RealmExportDoBaseInfo(
+            root_verify_key=root_verify_key,
+            vlob_offset_marker_upper_bound=vlob_offset_marker_upper_bound,
+            block_offset_marker_upper_bound=block_offset_marker_upper_bound,
+            blocks_total_bytes=blocks_total_bytes,
+            vlobs_total_bytes=vlobs_total_bytes,
+            common_certificate_timestamp_upper_bound=common_certificate_timestamp_upper_bound,
+            realm_certificate_timestamp_upper_bound=realm_certificate_timestamp_upper_bound,
+            sequester_certificate_timestamp_upper_bound=sequester_certificate_timestamp_upper_bound,
+        )
+
+    @override
+    async def export_do_certificates(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        common_certificate_timestamp_upper_bound: DateTime,
+        realm_certificate_timestamp_upper_bound: DateTime,
+        sequester_certificate_timestamp_upper_bound: DateTime | None,
+    ) -> RealmExportCertificates | RealmExportDoCertificatesBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmExportDoCertificatesBadOutcome.ORGANIZATION_NOT_FOUND
+
+        if realm_id not in org.realms:
+            return RealmExportDoCertificatesBadOutcome.REALM_NOT_FOUND
+
+        common_certificates = []
+        for ts, raw, _ in org.ordered_common_certificates():
+            if ts > common_certificate_timestamp_upper_bound:
+                break
+            common_certificates.append(raw)
+        # The organization has been bootstrapped, there *must* some common certificates
+        assert common_certificates
+
+        realm_certificates = []
+        for ts, raw, _ in org.ordered_realm_certificates(realm_id):
+            if ts > realm_certificate_timestamp_upper_bound:
+                break
+            realm_certificates.append(raw)
+        # The realm existence has already been checked, there *must* some realm certificates
+        assert realm_certificates
+
+        sequester_certificates = []
+        if sequester_certificate_timestamp_upper_bound is not None:
+            for ts, raw, _ in org.ordered_sequester_certificates():
+                if ts > sequester_certificate_timestamp_upper_bound:
+                    break
+                sequester_certificates.append(raw)
+
+        return RealmExportCertificates(
+            common_certificates=common_certificates,
+            sequester_certificates=sequester_certificates,
+            realm_certificates=realm_certificates,
+        )
+
+    @override
+    async def export_do_vlobs_batch(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmExportBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmExportVlobsBatch | RealmExportDoVlobsBatchBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmExportDoVlobsBatchBadOutcome.ORGANIZATION_NOT_FOUND
+
+        if realm_id not in org.realms:
+            return RealmExportDoVlobsBatchBadOutcome.REALM_NOT_FOUND
+
+        items = []
+        for sequential_row_id, row in org.simulate_postgresql_vlob_atom_table():
+            # Skip already processed rows
+            if sequential_row_id <= batch_offset_marker:
+                continue
+
+            if row.realm_id != realm_id:
+                continue
+
+            items.append(
+                RealmExportVlobsBatchItem(
+                    sequential_id=sequential_row_id,
+                    vlob_id=row.vlob_id,
+                    version=row.version,
+                    key_index=row.key_index,
+                    blob=row.blob,
+                    size=len(row.blob),
+                    author=row.author,
+                    timestamp=row.created_on,
+                )
+            )
+
+            if len(items) >= batch_size:
+                break
+
+        return RealmExportVlobsBatch(
+            items=items,
+        )
+
+    async def export_do_blocks_metadata_batch(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmExportBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmExportBlocksMetadataBatch | RealmExportDoBlocksBatchMetadataBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmExportDoBlocksBatchMetadataBadOutcome.ORGANIZATION_NOT_FOUND
+
+        if realm_id not in org.realms:
+            return RealmExportDoBlocksBatchMetadataBadOutcome.REALM_NOT_FOUND
+
+        items: list[RealmExportBlocksMetadataBatchItem] = []
+        for sequential_row_id, row in org.simulate_postgresql_block_table():
+            # Skip already processed rows
+            if sequential_row_id <= batch_offset_marker:
+                continue
+
+            if row.realm_id != realm_id:
+                continue
+
+            items.append(
+                RealmExportBlocksMetadataBatchItem(
+                    sequential_id=sequential_row_id,
+                    block_id=row.block_id,
+                    author=row.author,
+                    key_index=row.key_index,
+                    size=row.block_size,
+                )
+            )
+
+            if len(items) >= batch_size:
+                break
+
+        return RealmExportBlocksMetadataBatch(
+            items=items,
+        )
