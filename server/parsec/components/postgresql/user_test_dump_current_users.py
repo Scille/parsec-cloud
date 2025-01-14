@@ -19,20 +19,18 @@ from parsec.components.user import (
 
 _q_get_organization_users = Q(
     f"""
-SELECT DISTINCT ON(user_._id)
+SELECT
     user_.user_id,
     user_.frozen,
     user_.created_on,
     user_.revoked_on,
-    COALESCE(profile.profile, user_.initial_profile) AS current_profile,
+    user_.initial_profile,
     human.email AS human_email,
     human.label AS human_label
 FROM user_
-LEFT JOIN profile ON user_._id = profile.user_
 INNER JOIN human ON human._id = user_.human
 WHERE
     user_.organization = { q_organization_internal_id("$organization_id") }
-ORDER BY user_._id, profile.certified_on DESC
 """
 )
 
@@ -46,6 +44,21 @@ FROM device
 INNER JOIN user_ ON user_._id = device.user_
 WHERE
     device.organization = { q_organization_internal_id("$organization_id") }
+ORDER BY device.created_on
+"""
+)
+
+_q_get_organization_profile_updates = Q(
+    f"""
+SELECT
+    user_.user_id,
+    profile.profile,
+    profile.certified_on
+FROM profile
+LEFT JOIN user_ ON user_._id = profile.user_
+WHERE
+    user_.organization = { q_organization_internal_id("$organization_id") }
+ORDER BY profile.certified_on
 """
 )
 
@@ -64,11 +77,31 @@ async def user_test_dump_current_users(
             created_on=row["created_on"],
             revoked_on=row["revoked_on"],
             devices=[],
-            current_profile=UserProfile.from_str(row["current_profile"]),
+            profile_updates=[(row["created_on"], UserProfile.from_str(row["initial_profile"]))],
         )
+
     rows = await conn.fetch(*_q_get_organization_devices(organization_id=organization_id.str))
-    for row in sorted(rows, key=lambda row: row["created_on"]):
+    for row in rows:
         user_id = UserID.from_hex(row["user_id"])
         device_id = DeviceID.from_hex(row["device_id"])
-        items[user_id].devices.append(device_id)
+        try:
+            user = items[user_id]
+        except KeyError:
+            # A concurrent operation may have created a new user we don't know about
+            continue
+        user.devices.append(device_id)
+
+    rows = await conn.fetch(
+        *_q_get_organization_profile_updates(organization_id=organization_id.str)
+    )
+    for row in rows:
+        user_id = UserID.from_hex(row["user_id"])
+        profile = UserProfile.from_str(row["profile"])
+        try:
+            user = items[user_id]
+        except KeyError:
+            # A concurrent operation may have created a new user we don't know about
+            continue
+        user.profile_updates.append((row["certified_on"], profile))
+
     return items

@@ -126,7 +126,7 @@ async def test_authenticated_user_create_ok(
     expected_dump[NEW_MIKE_USER_ID] = UserDump(
         user_id=NEW_MIKE_USER_ID,
         devices=[NEW_MIKE_DEVICE_ID],
-        current_profile=UserProfile.STANDARD,
+        profile_updates=[(t1, UserProfile.STANDARD)],
         created_on=t1,
         human_handle=NEW_MIKE_HUMAN_HANDLE,
         revoked_on=None,
