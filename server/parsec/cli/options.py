@@ -182,6 +182,57 @@ DEFAULT_DB_MIN_CONNECTIONS = 5
 DEFAULT_DB_MAX_CONNECTIONS = 7
 
 
+def _parse_db_param(value: str) -> BaseDatabaseConfig:
+    if value.upper() == "MOCKED":
+        return MockedDatabaseConfig()
+    elif value.startswith("postgresql://") or value.startswith("postgres://"):
+        return PostgreSQLDatabaseConfig(url=value, min_connections=5, max_connections=7)
+    else:
+        raise click.BadParameter(f"Invalid db type `{value}`")
+
+
+def _get_db_min_max_connections_from_raw(opts: Any) -> tuple[int, int] | None:
+    raw_db_min_connections = opts.get("db_min_connections", DEFAULT_DB_MIN_CONNECTIONS)
+    try:
+        db_min_connections = int(raw_db_min_connections)
+    except (TypeError, ValueError):
+        return None
+
+    raw_db_max_connections = opts.get("db_max_connections", DEFAULT_DB_MAX_CONNECTIONS)
+    try:
+        db_max_connections = int(raw_db_max_connections)
+    except (TypeError, ValueError):
+        return None
+
+    return db_min_connections, db_max_connections
+
+
+class DbConfigOption(click.Option):
+    """
+    DB connection configuration also take into account the min / max connections
+    constraints that are passed as separated options.
+    """
+
+    def handle_parse_result(
+        self, ctx: click.Context, opts: Any, args: list[str]
+    ) -> tuple[Any, list[str]]:
+        value, args = super().handle_parse_result(ctx, opts, args)
+        assert isinstance(value, BaseDatabaseConfig)
+
+        # Given we hook into Click's option parsing, we cannot access the final0
+        # parsed value for other options. So instead we have to parse them ourselves !
+        match _get_db_min_max_connections_from_raw(opts):
+            case (db_min_connections, db_max_connections):
+                value.set_min_max_connections(db_min_connections, db_max_connections)
+            case None:
+                # Provided DB min/max connections options are invalid, we don't
+                # need to do anything then: Click is going to terminate the process
+                # as soon as it parse the faulty value.
+                pass
+
+        return value, args
+
+
 class DBMaxConnectionsOption(click.Option):
     """
     DB max connection must be superior to min connection, this is was is
@@ -194,20 +245,20 @@ class DBMaxConnectionsOption(click.Option):
         value, args = super().handle_parse_result(ctx, opts, args)
         assert isinstance(value, int)
 
-        # We get the raw data for `db_min_connections` here, so we have to
-        # parse it ourselves
-        raw_db_min_connections = opts.get("db_min_connections", DEFAULT_DB_MIN_CONNECTIONS)
-        try:
-            db_min_connections = int(raw_db_min_connections)
-        except (TypeError, ValueError):
-            # Invalid user-provided data, our min vs max check is useless now since
-            # Click is going to return an error as soon as it parse the min value.
-            return value, args
+        # Given we hook into Click's option parsing, we cannot access the final0
+        # parsed value for other options. So instead we have to parse them ourselves !
+        match _get_db_min_max_connections_from_raw(opts):
+            case (db_min_connections, _):
+                if db_min_connections > value:
+                    raise click.BadParameter(
+                        "'--db-max-connections' must be greater than '--db-min-connections'"
+                    )
 
-        if db_min_connections > value:
-            raise click.BadParameter(
-                "'--db-max-connections' must be greater than '--db-min-connections'"
-            )
+            case None:
+                # Provided DB min/max connections options are invalid, we don't
+                # need to do anything then: Click is going to terminate the process
+                # as soon as it parse the faulty value.
+                pass
 
         return value, args
 
@@ -220,6 +271,7 @@ def db_server_options(fn: Callable[Q, T]) -> Callable[Q, T]:
     decorators = [
         click.option(
             "--db",
+            cls=DbConfigOption,
             required=True,
             envvar="PARSEC_DB",
             show_envvar=True,
@@ -251,21 +303,13 @@ Allowed values:
             show_default=True,
             envvar="PARSEC_DB_MAX_CONNECTIONS",
             show_envvar=True,
+            type=int,
             help="Maximum number of connections to the database if using PostgreSQL",
         ),
     ]
     for decorator in decorators:
         fn = decorator(fn)
     return fn
-
-
-def _parse_db_param(value: str) -> BaseDatabaseConfig:
-    if value.upper() == "MOCKED":
-        return MockedDatabaseConfig()
-    elif value.startswith("postgresql://") or value.startswith("postgres://"):
-        return PostgreSQLDatabaseConfig(url=value, min_connections=5, max_connections=7)
-    else:
-        raise click.BadParameter(f"Invalid db type `{value}`")
 
 
 # Blockstore option
