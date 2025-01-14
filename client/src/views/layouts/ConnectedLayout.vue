@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts" setup>
-import { getConnectionInfo, getTOS, needsMocks, logout as parsecLogout, acceptTOS, mockLoggedInDevice } from '@/parsec';
+import { getConnectionInfo, getTOS, needsMocks, logout as parsecLogout, acceptTOS, mockLoggedInDevice, WorkspaceRole } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
@@ -21,6 +21,8 @@ import useUploadMenu from '@/services/fileUploadMenu';
 import { MsModalResult, openSpinnerModal } from 'megashark-lib';
 import { DateTime } from 'luxon';
 import { StorageManagerKey, StorageManager } from '@/services/storageManager';
+import { recentDocumentManager } from '@/services/recentDocuments';
+import { FileContentType } from '@/common/fileTypes';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -64,6 +66,10 @@ onMounted(async () => {
     },
   );
 
+  recentDocumentManager.resetHistory();
+  await recentDocumentManager.loadFromStorage(storageManager, handle);
+  await mockRecentDocuments();
+
   initialized.value = true;
 
   const connInfo = getConnectionInfo();
@@ -103,6 +109,48 @@ async function tryOpeningTOSModal(): Promise<void> {
   }
 }
 
+async function mockRecentDocuments(): Promise<void> {
+  // Adds fake files and workspace by default in dev mode
+  // to make sure we keep the feature in mind
+  if (needsMocks()) {
+    recentDocumentManager.addFile({
+      entryId: crypto.randomUUID().toString(),
+      workspaceHandle: 1337,
+      path: '/a/b/File_Fake image.png',
+      name: 'File_Fake image.png',
+      contentType: {
+        type: FileContentType.Image,
+        extension: 'png',
+        mimeType: 'image/png',
+      },
+    });
+    recentDocumentManager.addFile({
+      entryId: crypto.randomUUID().toString(),
+      workspaceHandle: 1337,
+      path: '/a/b/File_Fake PDF document.pdf',
+      name: 'File_Fake PDF document.pdf',
+      contentType: {
+        type: FileContentType.PdfDocument,
+        extension: 'pdf',
+        mimeType: 'application/pdf',
+      },
+    });
+    recentDocumentManager.addWorkspace({
+      id: '1',
+      currentName: 'Trademeet',
+      currentSelfRole: WorkspaceRole.Owner,
+      size: 934_583,
+      lastUpdated: DateTime.now().minus(2000),
+      availableOffline: false,
+      isStarted: false,
+      isBootstrapped: false,
+      sharing: [],
+      mountpoints: [[1, '/home/a']],
+      handle: 1,
+    });
+  }
+}
+
 async function logout(): Promise<void> {
   const modal = await openSpinnerModal('HomePage.topbar.logoutWait');
   const menuCtrls = useUploadMenu();
@@ -133,6 +181,7 @@ async function logout(): Promise<void> {
       window.electronAPI.log('error', `Error when logging out: ${JSON.stringify(logoutResult.error)}`);
     }
   }
+  recentDocumentManager.resetHistory();
 
   await modal.dismiss();
   await navigateTo(Routes.Home, { replace: true, skipHandle: true });

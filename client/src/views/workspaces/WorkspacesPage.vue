@@ -213,6 +213,7 @@ import {
 } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { recentDocumentManager } from '@/services/recentDocuments';
 
 enum SortWorkspaceBy {
   Name = 'name',
@@ -384,6 +385,9 @@ async function handleFileLink(fileLink: ParsecWorkspacePathAddr): Promise<boolea
     path = await Path.parent(path);
   }
 
+  recentDocumentManager.addWorkspace(workspace);
+  await recentDocumentManager.saveToStorage(storageManager);
+
   await navigateToWorkspace(workspace.handle, path, selectFile, true);
   return true;
 }
@@ -420,6 +424,14 @@ async function refreshWorkspacesList(): Promise<void> {
       }
     }
     workspaceList.value = result.value;
+    const recentWorkspaces = recentDocumentManager.getWorkspaces();
+    // If a workspace is listed in recent workspaces but not present in the list, remove it
+    for (const recentWorkspace of recentWorkspaces) {
+      if (workspaceList.value.find((wk) => wk.id === recentWorkspace.id) === undefined) {
+        recentDocumentManager.removeWorkspace(recentWorkspace);
+      }
+    }
+    await recentDocumentManager.saveToStorage(storageManager);
   } else {
     informationManager.present(
       new Information({
@@ -505,6 +517,8 @@ async function openCreateWorkspaceModal(): Promise<void> {
 }
 
 async function onWorkspaceClick(workspace: WorkspaceInfo): Promise<void> {
+  recentDocumentManager.addWorkspace(workspace);
+  await recentDocumentManager.saveToStorage(storageManager);
   await navigateToWorkspace(workspace.handle);
 }
 

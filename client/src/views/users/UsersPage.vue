@@ -156,7 +156,7 @@ import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { informationCircle, personAdd, personRemove } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref, toRaw } from 'vue';
 import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 
@@ -186,7 +186,7 @@ interface UsersPageSavedData {
 async function storeComponentData(): Promise<void> {
   await storageManager.storeComponentData<UsersPageSavedData>(USERS_PAGE_DATA_KEY, {
     displayState: displayView.value,
-    filters: users.value.getFilters(),
+    filters: toRaw(users.value.getFilters()),
     sortProperty: currentSortProperty.value,
     sortAscending: currentSortOrder.value,
   });
@@ -198,6 +198,7 @@ async function restoreComponentData(): Promise<void> {
     filters: {
       statusActive: true,
       statusRevoked: true,
+      statusFrozen: true,
       profileAdmin: true,
       profileStandard: true,
       profileOutsider: true,

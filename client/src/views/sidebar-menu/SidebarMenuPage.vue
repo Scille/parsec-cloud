@@ -16,7 +16,7 @@
         class="sidebar"
       >
         <ion-header class="sidebar-header">
-          <div v-show="!currentRouteIsOrganizationManagementRoute()">
+          <div v-show="!isManagement()">
             <!-- active organization -->
             <ion-card class="organization-card">
               <ion-card-header
@@ -85,7 +85,7 @@
             <!-- end of active organization -->
           </div>
 
-          <div v-show="currentRouteIsOrganizationManagementRoute()">
+          <div v-show="isManagement()">
             <div
               class="back-organization"
               @click="navigateTo(Routes.Workspaces)"
@@ -154,9 +154,14 @@
             </ion-button>
           </div>
 
+          <div
+            class="list-sidebar-divider"
+            v-if="!isManagement() && (recentDocumentManager.getWorkspaces().length > 0 || favoritesWorkspaces.length > 0)"
+          />
+
           <!-- workspaces -->
           <div
-            v-show="!currentRouteIsOrganizationManagementRoute()"
+            v-show="!isManagement()"
             class="organization-workspaces"
           >
             <!-- list of favorite workspaces -->
@@ -182,7 +187,8 @@
 
             <!-- list of workspaces -->
             <sidebar-menu-list
-              title="SideMenu.workspaces"
+              v-if="recentDocumentManager.getWorkspaces().length > 0"
+              title="SideMenu.recentWorkspaces"
               :icon="business"
               class="workspaces"
               v-model:is-content-visible="workspacesMenuVisible"
@@ -195,7 +201,7 @@
                 {{ $msTranslate('SideMenu.noWorkspace') }}
               </ion-text>
               <sidebar-workspace-item
-                v-for="workspace in nonFavoriteWorkspaces"
+                v-for="workspace in recentDocumentManager.getWorkspaces()"
                 :workspace="workspace"
                 :key="workspace.id"
                 @workspace-clicked="goToWorkspace"
@@ -208,7 +214,7 @@
 
           <div
             class="list-sidebar-divider"
-            v-if="recentFileManager.getFiles().length > 0 && !currentRouteIsOrganizationManagementRoute()"
+            v-if="recentDocumentManager.getFiles().length > 0 && !currentRouteIsOrganizationManagementRoute()"
           />
 
           <!-- last opened files -->
@@ -219,12 +225,12 @@
             <sidebar-menu-list
               title="SideMenu.recentDocuments"
               :icon="documentIcon"
-              v-show="recentFileManager.getFiles().length > 0"
+              v-show="recentDocumentManager.getFiles().length > 0"
               v-model:is-content-visible="recentFilesMenuVisible"
               @update:is-content-visible="onRecentFilesMenuVisibilityChanged"
             >
               <sidebar-recent-file-item
-                v-for="file in recentFileManager.getFiles()"
+                v-for="file in recentDocumentManager.getFiles()"
                 :file="file"
                 :key="file.entryId"
                 @file-clicked="openRecentFile"
@@ -321,7 +327,6 @@ import {
   AvailableDevice,
   ClientInfo,
   UserProfile,
-  WorkspaceHandle,
   WorkspaceID,
   WorkspaceInfo,
   getCurrentAvailableDevice,
@@ -330,7 +335,6 @@ import {
   getConnectionInfo,
   getLoggedInDevices,
   LoggedInDeviceInfo,
-  needsMocks,
 } from '@/parsec';
 import {
   Routes,
@@ -383,10 +387,9 @@ import {
 } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Duration } from 'luxon';
-import { recentFileManager, RecentFile } from '@/services/recentFiles';
+import { recentDocumentManager, RecentFile } from '@/services/recentDocuments';
 import { openPath } from '@/services/fileOpener';
 import { SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/sidebar-menu/utils';
-import { FileContentType } from '@/common/fileTypes';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
@@ -432,8 +435,13 @@ const watchSidebarWidthCancel = watch(computedWidth, async (value: number) => {
   }, 2000);
 });
 
-async function goToWorkspace(workspaceHandle: WorkspaceHandle): Promise<void> {
-  await navigateToWorkspace(workspaceHandle);
+const isManagement = currentRouteIsOrganizationManagementRoute;
+
+async function goToWorkspace(workspace: WorkspaceInfo): Promise<void> {
+  recentDocumentManager.addWorkspace(workspace);
+  await recentDocumentManager.saveToStorage(storageManager);
+
+  await navigateToWorkspace(workspace.handle);
   await menuController.close();
 }
 
@@ -512,33 +520,6 @@ onMounted(async () => {
       expirationDuration.value = getDurationBeforeExpiration(currentDevice.value.createdOn);
     }
   }
-
-  // Adds fake files by default in dev mode
-  // to make sure we keep the feature in mind
-  if (needsMocks()) {
-    recentFileManager.addFile({
-      entryId: crypto.randomUUID().toString(),
-      workspaceHandle: 1337,
-      path: '/a/b/File_Fake image.png',
-      name: 'File_Fake image.png',
-      contentType: {
-        type: FileContentType.Image,
-        extension: 'png',
-        mimeType: 'image/png',
-      },
-    });
-    recentFileManager.addFile({
-      entryId: crypto.randomUUID().toString(),
-      workspaceHandle: 1337,
-      path: '/a/b/File_Fake PDF document.pdf',
-      name: 'File_Fake PDF document.pdf',
-      contentType: {
-        type: FileContentType.PdfDocument,
-        extension: 'pdf',
-        mimeType: 'application/pdf',
-      },
-    });
-  }
 });
 
 onUnmounted(async () => {
@@ -567,10 +548,6 @@ const favoritesWorkspaces = computed(() => {
       }
       return 0;
     });
-});
-
-const nonFavoriteWorkspaces = computed(() => {
-  return workspaces.value.filter((workspace: WorkspaceInfo) => !favorites.value.includes(workspace.id));
 });
 
 function onMove(detail: GestureDetail): void {
@@ -610,7 +587,7 @@ async function openRecentFile(file: RecentFile): Promise<void> {
 }
 
 async function removeRecentFile(file: RecentFile): Promise<void> {
-  recentFileManager.removeFile(file);
+  recentDocumentManager.removeFile(file);
 }
 
 async function onWorkspacesMenuVisibilityChanged(visible: boolean): Promise<void> {
@@ -726,7 +703,6 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   flex-direction: column;
   margin: 0;
   border-radius: 0;
-  border-bottom: 1px solid var(--parsec-color-light-primary-30-opacity15);
 
   &-header {
     display: flex;
@@ -794,7 +770,7 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     flex-direction: column;
     user-select: none;
     gap: 0.75rem;
-    padding: 1rem 0 1.5rem;
+    padding: 1rem 0 0;
     margin-inline: 0.5rem;
 
     &__item {
