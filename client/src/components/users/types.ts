@@ -72,6 +72,7 @@ export class UserCollection {
   setFilters(filters: UserFilterLabels): void {
     this.filters.statusActive = filters.statusActive;
     this.filters.statusRevoked = filters.statusRevoked;
+    this.filters.statusFrozen = filters.statusFrozen;
     this.filters.profileAdmin = filters.profileAdmin;
     this.filters.profileStandard = filters.profileStandard;
     this.filters.profileOutsider = filters.profileOutsider;

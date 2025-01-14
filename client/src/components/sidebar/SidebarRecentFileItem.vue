@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import { IonItem, IonText, IonIcon } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { RecentFile } from '@/services/recentFiles';
+import { RecentFile } from '@/services/recentDocuments';
 
 defineProps<{
   file: RecentFile;

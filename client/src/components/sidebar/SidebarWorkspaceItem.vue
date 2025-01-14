@@ -4,7 +4,7 @@
   <ion-item
     lines="none"
     button
-    @click="$emit('workspaceClicked', workspace.handle)"
+    @click="$emit('workspaceClicked', workspace)"
     :class="currentRouteIsWorkspaceRoute(workspace.handle) ? 'item-selected' : 'item-not-selected'"
     class="sidebar-item button-medium ion-no-padding"
     ref="itemRef"
@@ -23,7 +23,7 @@
 
 <script setup lang="ts">
 import { IonItem, IonText, IonIcon } from '@ionic/vue';
-import { WorkspaceInfo, WorkspaceHandle } from '@/parsec';
+import { WorkspaceInfo } from '@/parsec';
 import { ellipsisHorizontal } from 'ionicons/icons';
 import { currentRouteIsWorkspaceRoute } from '@/router';
 import { onMounted, onBeforeUnmount, ref } from 'vue';
@@ -33,7 +33,7 @@ defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'workspaceClicked', handle: WorkspaceHandle): void;
+  (e: 'workspaceClicked', workspace: WorkspaceInfo): void;
   (e: 'contextMenuRequested', event: Event): void;
 }>();
 

@@ -99,7 +99,7 @@ export class StorageManager {
 
   async storeComponentData<Type>(componentKey: string, data: Type): Promise<void> {
     const key = `${StorageManager.STORED_COMPONENT_PREFIX}_${componentKey}`;
-    await this.internalStore.set(key, JSON.stringify(data));
+    await this.internalStore.set(key, data);
   }
 
   async updateComponentData<Type>(componentKey: string, newData: Type, defaultValues: Required<Type>): Promise<void> {
@@ -114,7 +114,7 @@ export class StorageManager {
       }
     }
     try {
-      await this.internalStore.set(key, JSON.stringify(data));
+      await this.internalStore.set(key, data);
     } catch (error) {
       console.log(`Failed to serialize ${componentKey}: ${error}`);
     }
@@ -125,7 +125,7 @@ export class StorageManager {
     const data = await this.internalStore.get(key);
 
     try {
-      const parsedData = JSON.parse(data) || {};
+      const parsedData = data || {};
       for (const element in defaultValues) {
         if (!(element in parsedData)) {
           parsedData[element] = defaultValues[element];
@@ -134,6 +134,7 @@ export class StorageManager {
       return parsedData;
     } catch (error) {
       console.log(`Failed to deserialize ${componentKey}: ${error}`);
+      await this.internalStore.set(key, {});
     }
     return defaultValues;
   }

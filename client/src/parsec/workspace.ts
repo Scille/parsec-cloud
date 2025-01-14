@@ -68,8 +68,12 @@ export async function initializeWorkspace(
   return startedWorkspaceResult;
 }
 
-export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
-  const handle = getParsecHandle();
+export async function listWorkspaces(
+  handle: ConnectionHandle | null = null,
+): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
+  if (!handle) {
+    handle = getParsecHandle();
+  }
 
   if (handle !== null && !needsMocks()) {
     const result = await libparsec.clientListWorkspaces(handle);

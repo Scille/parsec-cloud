@@ -26,7 +26,9 @@ async function openContextMenu(page: Page, mode: Mode): Promise<void> {
     const wk = page.locator('.workspaces-container').locator('.workspace-list-item').nth(1);
     await wk.locator('.workspace-options').click();
   } else {
-    const wk = page.locator('.sidebar').locator('.list-sidebar.workspaces').getByRole('listitem').nth(1);
+    const sidebar = page.locator('.sidebar');
+    const a = sidebar.locator('.organization-workspaces').locator('.workspaces');
+    const wk = a.locator('.list-sidebar-content').locator('.sidebar-item-workspace').nth(0);
     await wk.hover();
     await wk.locator('.sidebar-item-workspace__option').click();
   }
@@ -79,7 +81,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
       const wk = connected.locator('.workspaces-container').locator('.workspace-list-item').nth(1);
       await wk.click({ button: 'right' });
     } else {
-      const wk = connected.locator('.sidebar').locator('.list-sidebar.workspaces').getByRole('listitem').nth(1);
+      const wk = connected.locator('.sidebar').locator('.list-sidebar.workspaces').getByRole('listitem').nth(0);
       await wk.click({ button: 'right' });
     }
 
@@ -107,7 +109,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
       await toggleViewMode(connected);
       await connected.locator('.workspaces-container').locator('.workspace-list-item').nth(1).click();
     } else {
-      await connected.locator('.sidebar').locator('.list-sidebar.workspaces').getByRole('listitem').nth(1).click();
+      await connected.locator('.sidebar').locator('.list-sidebar.workspaces').getByRole('listitem').nth(0).click();
     }
     await expect(connected).toHaveHeader(['Trademeet'], true, true);
   });

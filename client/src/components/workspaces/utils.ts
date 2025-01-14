@@ -21,6 +21,7 @@ import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/Worksp
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
 import { Clipboard, DisplayState, Translatable, getTextFromUser } from 'megashark-lib';
+import { toRaw } from 'vue';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -102,7 +103,7 @@ export async function toggleFavorite(
   }
   await storageManager.updateComponentData<WorkspacesPageSavedData>(
     WORKSPACES_PAGE_DATA_KEY,
-    { favoriteList: favorites },
+    { favoriteList: toRaw(favorites) },
     WorkspaceDefaultData,
   );
   eventDistributor.dispatchEvent(Events.WorkspaceFavorite);

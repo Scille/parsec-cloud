@@ -4,7 +4,7 @@ import { detectFileContentType, FileContentType } from '@/common/fileTypes';
 import { entryStat, EntryStat, entryStatAt, FsPath, getSystemPath, isDesktop, WorkspaceHandle, WorkspaceHistoryEntryStat } from '@/parsec';
 import { navigateTo, Routes } from '@/router';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { recentFileManager } from '@/services/recentFiles';
+import { recentDocumentManager } from '@/services/recentDocuments';
 import { DateTime } from 'luxon';
 import { Base64, openSpinnerModal } from 'megashark-lib';
 
@@ -21,7 +21,7 @@ async function openWithSystem(
   informationManager: InformationManager,
 ): Promise<void> {
   if (entry.isFile()) {
-    recentFileManager.addFile({
+    recentDocumentManager.addFile({
       entryId: entry.id,
       path: entry.path,
       workspaceHandle: workspaceHandle,
@@ -113,7 +113,7 @@ async function openPath(
         return;
       }
 
-      recentFileManager.addFile({
+      recentDocumentManager.addFile({
         entryId: entry.id,
         path: entry.path,
         workspaceHandle: workspaceHandle,

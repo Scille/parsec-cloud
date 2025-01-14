@@ -698,6 +698,7 @@
     },
     "SideMenu": {
         "workspaces": "Espaces de travail",
+        "recentWorkspaces": "Espaces récents",
         "favorites": "Favoris",
         "noWorkspace": "Aucun espace de travail",
         "users": "Utilisateurs",
