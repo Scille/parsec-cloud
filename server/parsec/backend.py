@@ -61,10 +61,11 @@ logger = get_logger()
 
 
 @asynccontextmanager
-async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None]:
+async def backend_factory(config: BackendConfig, verbose: bool) -> AsyncGenerator[Backend, None]:
     # Log the server version and the backend configuration
-    logger.info("Parsec version", version=server_version)
-    logger.info("Backend configuration", **config.logging_kwargs())
+    if verbose:
+        logger.info("Parsec version", version=server_version)
+        logger.info("Backend configuration", **config.logging_kwargs())
 
     if config.db_config.is_mocked():
         components_factory = mocked_components_factory

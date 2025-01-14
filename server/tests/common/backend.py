@@ -65,7 +65,7 @@ async def backend(
 
     async def _run_backend():
         nonlocal backend
-        async with backend_factory(config=backend_config) as backend:
+        async with backend_factory(config=backend_config, verbose=False) as backend:
             started.set()
             try:
                 await should_stop.wait()

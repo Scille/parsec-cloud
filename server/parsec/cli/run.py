@@ -480,7 +480,7 @@ async def _run_backend(
             retry_policy.new_attempt()
 
             # Run the backend app (and connect to the database)
-            async with backend_factory(config=app_config) as backend:
+            async with backend_factory(config=app_config, verbose=True) as backend:
                 # Connection is successful, reset the retry policy
                 retry_policy.success()
 

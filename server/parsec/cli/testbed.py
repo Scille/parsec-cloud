@@ -247,7 +247,7 @@ async def testbed_backend_factory(
         administration_token="s3cr3t",
         organization_spontaneous_bootstrap=True,
     )
-    async with backend_factory(config=config) as backend:
+    async with backend_factory(config=config, verbose=True) as backend:
         yield TestbedBackend(backend=backend)
 
 
