@@ -30,7 +30,5 @@ pub async fn list_workspace(_args: Args, client: &StartedClient) -> anyhow::Resu
         }
     }
 
-    client.stop().await;
-
     Ok(())
 }
