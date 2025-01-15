@@ -438,33 +438,11 @@ impl fuser::Filesystem for Filesystem {
             .get_path_or_panic(ino);
         let ops = self.ops.clone();
         self.tokio_handle.spawn(async move {
-            match ops
-                .stat_entry(&path)
-                .await
-                .map(|stat| entry_stat_to_file_attr(stat, ino, uid, gid))
-                .inspect(|stat| log::debug!("getattr({ino}, {_fh:?}) => {stat:?}"))
-                .inspect_err(|e| log::warn!("getattr({ino}, {_fh:?}) result in error: {e:?}"))
-            {
+            let res = getattr_from_path(&ops, path, ino, uid, gid).await;
+
+            match res {
                 Ok(stat) => reply.manual().attr(&TTL, &stat),
-                Err(err) => match err {
-                    WorkspaceStatEntryError::EntryNotFound => {
-                        log::trace!("Entry not found for path: {:?}", path);
-                        reply.manual().error(libc::ENOENT)
-                    }
-                    WorkspaceStatEntryError::Offline => {
-                        log::warn!("Workspace is offline");
-                        reply.manual().error(libc::EHOSTUNREACH)
-                    }
-                    WorkspaceStatEntryError::NoRealmAccess => {
-                        log::trace!("Cannot access realm");
-                        reply.manual().error(libc::EPERM)
-                    }
-                    WorkspaceStatEntryError::Stopped
-                    | WorkspaceStatEntryError::InvalidKeysBundle(_)
-                    | WorkspaceStatEntryError::InvalidCertificate(_)
-                    | WorkspaceStatEntryError::InvalidManifest(_)
-                    | WorkspaceStatEntryError::Internal(_) => reply.manual().error(libc::EIO),
-                },
+                Err(errno) => reply.manual().error(errno),
             }
         });
     }
@@ -1026,6 +1004,7 @@ impl fuser::Filesystem for Filesystem {
 
                 return;
             } else {
+                // FIXME: Currently I'm only returning the file attributes without truncating the file
                 // Truncate file by path
 
                 let path = {
@@ -1114,7 +1093,23 @@ impl fuser::Filesystem for Filesystem {
 
         // TODO: support atime/utime change ?
 
-        reply.manual().error(libc::ENOSYS);
+        // Nothing to set, just return the file attr
+
+        let path = {
+            let inodes_guard = self.inodes.lock().expect("mutex is poisoned");
+            inodes_guard.get_path_or_panic(ino)
+        };
+
+        let ops = self.ops.clone();
+
+        self.tokio_handle.spawn(async move {
+            let res = getattr_from_path(&ops, path, ino, uid, gid).await;
+
+            match res {
+                Ok(attr) => reply.manual().attr(&TTL, &attr),
+                Err(errno) => reply.manual().error(errno),
+            }
+        });
     }
 
     fn read(
@@ -1636,4 +1631,41 @@ impl fuser::Filesystem for Filesystem {
 
     // TODO: Fuser exposes a `copy_file_range` method for FUSE >= 7.28. This
     //       would speed up file copy a lot by reusing the same blocks !
+}
+
+async fn getattr_from_path(
+    ops: &WorkspaceOps,
+    path: FsPath,
+    ino: u64,
+    uid: u32,
+    gid: u32,
+) -> Result<fuser::FileAttr, i32> {
+    match ops
+        .stat_entry(&path)
+        .await
+        .map(|stat| entry_stat_to_file_attr(stat, ino, uid, gid))
+        .inspect(|stat| log::debug!("File stat for {ino}: {stat:?}"))
+        .inspect_err(|e| log::warn!("File stat for {ino} result in error: {e:?}"))
+    {
+        Ok(stat) => Ok(stat),
+        Err(err) => match err {
+            WorkspaceStatEntryError::EntryNotFound => {
+                log::trace!("Entry not found for path: {:?}", path);
+                Err(libc::ENOENT)
+            }
+            WorkspaceStatEntryError::Offline => {
+                log::warn!("Workspace is offline");
+                Err(libc::EHOSTUNREACH)
+            }
+            WorkspaceStatEntryError::NoRealmAccess => {
+                log::trace!("Cannot access realm");
+                Err(libc::EPERM)
+            }
+            WorkspaceStatEntryError::Stopped
+            | WorkspaceStatEntryError::InvalidKeysBundle(_)
+            | WorkspaceStatEntryError::InvalidCertificate(_)
+            | WorkspaceStatEntryError::InvalidManifest(_)
+            | WorkspaceStatEntryError::Internal(_) => Err(libc::EIO),
+        },
+    }
 }
