@@ -26,7 +26,7 @@ use crate::{self as libparsec_types, DataResult, DateTime, DeviceID, VlobID};
 pub use file::{
     ChunkView, ChunkViewGetBlockAccessError, ChunkViewPromoteAsBlockError, LocalFileManifest,
 };
-pub use folder::LocalFolderManifest;
+pub use folder::{LocalFolderManifest, UnconfinedLocalFolderManifest};
 use serde::Deserialize;
 pub use user::{CertificateBasedInfoOrigin, LocalUserManifest, LocalUserManifestWorkspaceEntry};
 
