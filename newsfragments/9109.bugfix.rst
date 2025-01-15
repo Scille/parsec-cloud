@@ -1,1 +1,1 @@
-[CLI] Stop spinners with check mark.
+Stop spinners with check mark.

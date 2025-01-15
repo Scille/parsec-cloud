@@ -1,1 +1,0 @@
-The CLI command ``invite shared-recovery`` now take the email as an argument instead of an option
