@@ -417,8 +417,8 @@
             "actionShare": "Partage et rôles",
             "actionDetails": "Détails",
             "actionCopyLink": "Copier le lien",
-            "actionAddFavorite": "Ajouter aux favoris",
-            "actionRemoveFavorite": "Retirer des favoris"
+            "actionAddFavorite": "Épingler",
+            "actionRemoveFavorite": "Désépingler"
         },
         "CreateWorkspaceModal": {
             "pageTitle": "Créer un nouvel espace de travail",
@@ -699,7 +699,7 @@
     "SideMenu": {
         "workspaces": "Espaces de travail",
         "recentWorkspaces": "Espaces récents",
-        "favorites": "Favoris",
+        "favorites": "Épinglés",
         "noWorkspace": "Aucun espace de travail",
         "users": "Utilisateurs",
         "storage": "Stockage",

@@ -45,7 +45,7 @@ const MENU = [
   },
   {
     title: 'Miscellaneous',
-    actions: ['Add to favorites'],
+    actions: ['Pin'],
   },
 ];
 
@@ -146,6 +146,8 @@ for (const mode of ['grid', 'list', 'sidebar']) {
   });
 
   msTest(`Toggle workspace favorite ${mode}`, async ({ connected }) => {
+    const favorites = connected.locator('.sidebar').locator('.favorites');
+    await expect(favorites).toBeHidden();
     await openContextMenu(connected, mode as Mode);
     const popover = connected.locator('.workspace-context-menu');
     await popover.getByRole('listitem').nth(7).click();
@@ -158,6 +160,9 @@ for (const mode of ['grid', 'list', 'sidebar']) {
       await expect(wk.locator('.workspace-name')).toHaveText('Trademeet');
     }
     await expect(wk.locator('.workspace-favorite-icon')).toHaveTheClass('workspace-favorite-icon__on');
+    await expect(favorites).toBeVisible();
+    await expect(favorites.locator('.list-sidebar-header')).toHaveText('Pinned');
+    await expect(favorites.getByRole('listitem').nth(0)).toHaveText('Trademeet');
   });
 
   msTest(`Open workspace sharing ${mode}`, async ({ connected }) => {

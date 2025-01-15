@@ -99,6 +99,7 @@ class RecentDocumentManager {
   addWorkspace(workspace: RecentWorkspace): void {
     const index = this.workspaces.value.findIndex((item) => item.id === workspace.id);
     if (index !== -1) {
+      this._arrayMove(this.workspaces.value, index, 0);
     } else if (this.workspaces.value.unshift(workspace) > WORKSPACE_HISTORY_SIZE) {
       this.workspaces.value.pop();
     }
