@@ -864,7 +864,7 @@ impl fuser::Filesystem for Filesystem {
                 let inodes_guard = inodes.lock().expect("mutex is poisoned");
                 inodes_guard.get_path_or_panic(parent)
             };
-            let path = parent_path.into_child(name);
+            let path = parent_path.into_child(name.clone());
 
             let options = {
                 let mut options = OpenOptions {
@@ -947,14 +947,12 @@ impl fuser::Filesystem for Filesystem {
                     };
                 }
             };
+            let stat = file_stat_to_file_attr(stat, inode, uid, gid);
 
-            reply.manual().created(
-                &TTL,
-                &file_stat_to_file_attr(stat, inode, uid, gid),
-                GENERATION,
-                fd.0.into(),
-                open_flags,
-            );
+            log::trace!("create({parent}, {name:?}) => {stat:?}");
+            reply
+                .manual()
+                .created(&TTL, &stat, GENERATION, fd.0.into(), open_flags);
         });
     }
 
@@ -1103,9 +1101,9 @@ impl fuser::Filesystem for Filesystem {
                         }
                     }
 
-                    reply
-                        .manual()
-                        .attr(&TTL, &file_stat_to_file_attr(stat, ino, uid, gid));
+                    let stat = file_stat_to_file_attr(stat, ino, uid, gid);
+                    log::trace!("setattr({ino:#x?}, ..) => {stat:?}");
+                    reply.manual().attr(&TTL, &stat);
                 });
 
                 return;
@@ -1147,6 +1145,10 @@ impl fuser::Filesystem for Filesystem {
             let offset = u64::try_from(offset).expect("Offset is negative");
             match ops.fd_read(fd, offset, size as u64, &mut buf).await {
                 Ok(_) => {
+                    log::trace!(
+                        "read({ino}, offset: {offset}, size: {size}): Read {rsize} bytes",
+                        rsize = buf.len()
+                    );
                     reply.manual().data(&buf);
                 }
                 Err(err) => match err {
@@ -1195,6 +1197,10 @@ impl fuser::Filesystem for Filesystem {
             let offset = u64::try_from(offset).expect("Offset is negative");
             match ops.fd_write(fd, offset, &data).await {
                 Ok(written) => {
+                    log::trace!(
+                        "write({ino}, offset: {offset}, size: {size}): Written {written} bytes",
+                        size = data.len()
+                    );
                     reply.manual().written(written as u32);
                 }
                 Err(err) => match err {
