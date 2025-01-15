@@ -1775,6 +1775,7 @@
         },
         "document": {
             "loadDocumentError": "Impossible de charger ce document."
-        }
+        },
+        "fontLabel": "{number}"
     }
 }
