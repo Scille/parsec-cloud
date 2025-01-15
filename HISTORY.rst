@@ -4,6 +4,34 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.2.4 (2025-01-21)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix missing error message in Windows Explorer when trying to delete a file in
+  a read-only mountpoint.
+  (`#9382 <https://github.com/Scille/parsec-cloud/issues/9382>`__)
+
+* Fix wrong error showed in Windows File Explorer when moving a file to a
+  destination where its name already exists.
+  (`#9226 <https://github.com/Scille/parsec-cloud/issues/9226>`__)
+
+* Fix an issue when modifying a file using TextEdit on macOS
+  (`#8991 <https://github.com/Scille/parsec-cloud/issues/8991>`__)
+
+* Fix an issue when creating a new file from the mountpoint on macOS
+  (`#8976 <https://github.com/Scille/parsec-cloud/issues/8976>`__)
+
+* Fix a panic when copying a file using the mountpoint on macOS
+  (`#9173 <https://github.com/Scille/parsec-cloud/issues/9173>`__)
+
+* Improve mountpoint behavior for read-only workspace on Linux & Windows.
+  (`#9197 <https://github.com/Scille/parsec-cloud/issues/9197>`__)
+
+
+
 Parsec v3.2.3 (2024-12-18)
 --------------------------
 
