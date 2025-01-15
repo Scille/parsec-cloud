@@ -1,0 +1,1 @@
+Fix an issue when creating a new file from the mountpoint on macOS
