@@ -20,7 +20,9 @@ msTest('Sidebar in workspaces page', async ({ connected }) => {
 
   await expect(sidebar.locator('.file-workspaces')).toBeVisible();
   await expect(sidebar.locator('.favorites')).toBeHidden();
-  await expect(sidebar.locator('.workspaces')).toBeHidden();
+  await expect(sidebar.locator('.workspaces')).toBeVisible();
+  await expect(sidebar.locator('.workspaces').locator('.list-sidebar-header')).toHaveText('Recent workspaces');
+  await expect(sidebar.locator('.workspaces').getByRole('listitem').nth(0)).toHaveText('Trademeet');
 
   await expect(sidebar.locator('.manage-organization')).toBeHidden();
 });

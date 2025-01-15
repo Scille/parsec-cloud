@@ -194,12 +194,6 @@
               v-model:is-content-visible="workspacesMenuVisible"
               @update:is-content-visible="onWorkspacesMenuVisibilityChanged"
             >
-              <ion-text
-                class="body list-sidebar__no-workspace"
-                v-if="workspaces.length === 0"
-              >
-                {{ $msTranslate('SideMenu.noWorkspace') }}
-              </ion-text>
               <sidebar-workspace-item
                 v-for="workspace in recentDocumentManager.getWorkspaces()"
                 :workspace="workspace"
@@ -210,6 +204,18 @@
                 "
               />
             </sidebar-menu-list>
+            <div
+              class="current-workspace"
+              v-if="!workspacesMenuVisible && currentWorkspace"
+            >
+              <sidebar-workspace-item
+                :workspace="currentWorkspace"
+                @workspace-click="goToWorkspace"
+                @context-menu-requested="
+                  openWorkspaceContextMenu($event, currentWorkspace, favorites, eventDistributor, informationManager, storageManager, true)
+                "
+              />
+            </div>
           </div>
 
           <div
@@ -341,6 +347,7 @@ import {
   currentRouteIs,
   currentRouteIsOrganizationManagementRoute,
   currentRouteIsUserRoute,
+  currentRouteIsWorkspaceRoute,
   navigateTo,
   navigateToWorkspace,
   switchOrganization,
@@ -436,6 +443,15 @@ const watchSidebarWidthCancel = watch(computedWidth, async (value: number) => {
 });
 
 const isManagement = currentRouteIsOrganizationManagementRoute;
+
+const currentWorkspace = computed(() => {
+  for (const wk of recentDocumentManager.getWorkspaces()) {
+    if (currentRouteIsWorkspaceRoute(wk.handle)) {
+      return wk;
+    }
+  }
+  return undefined;
+});
 
 async function goToWorkspace(workspace: WorkspaceInfo): Promise<void> {
   recentDocumentManager.addWorkspace(workspace);
@@ -811,6 +827,10 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   }
 }
 
+.current-workspace {
+  margin-bottom: 1rem;
+}
+
 .back-organization {
   display: flex;
   align-items: center;
@@ -871,11 +891,6 @@ ion-menu {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-  }
-
-  &__no-workspace {
-    color: var(--parsec-color-light-secondary-inversed-contrast);
-    opacity: 0.5;
   }
 
   &-divider {
