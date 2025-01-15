@@ -1,1 +1,0 @@
-Improve mountpoint behavior for read-only workspace on Linux & Windows.

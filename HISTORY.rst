@@ -4,6 +4,17 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.2.4-rc.1 (2025-01-15)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Improve mountpoint behavior for read-only workspace on Linux & Windows.
+  (`#9197 <https://github.com/Scille/parsec-cloud/issues/9197>`__)
+
+
+
 Parsec v3.2.3 (2024-12-18)
 --------------------------
 
