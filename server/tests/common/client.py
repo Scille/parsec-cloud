@@ -15,6 +15,9 @@ from parsec._parsec import (
     HumanHandle,
     InvitationToken,
     OrganizationID,
+    SequesterServiceID,
+    SequesterSigningKeyDer,
+    SequesterVerifyKeyDer,
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryDeletionCertificate,
     ShamirRecoveryShareCertificate,
@@ -699,6 +702,184 @@ async def shamirorg(
     async with AsyncClient(transport=ASGITransport(app=app)) as raw_client:
         organization_id, _, template_content = await testbed.new_organization("shamir")
         yield ShamirOrgRpcClients(
+            raw_client=raw_client,
+            organization_id=organization_id,
+            testbed_template=template_content,
+        )
+
+        await testbed.drop_organization(organization_id)
+
+
+@dataclass(slots=True)
+class SequesteredOrgRpcClients:
+    """
+    Sequestered org contains:
+    - A sequestered organization obviously !
+    - 2 sequester services: `sequester_service_1` (revoked) and `sequester_service_2` (active)
+    - 2 users: `alice` (admin) and `bob` (regular)
+    - 2 devices: `alice@dev1` and `bob@dev1` (both device has its local storage
+      up-to-date regarding the certificates)
+    - 1 workspace `wksp1` shared between alice (owner) and bob (reader) containing a file `bar.txt`
+
+    The timeline regarding workspace and sequester services is as follows:
+    - Alice creates and bootstraps workspace `wksp1`
+    - Alice shares `wksp1` with Bob
+    - Alice uploads file manifest `bar.txt` in v1 (containing "Hello v1")
+    - Alice uploads workspace manifest in v1 (containing `bar.txt`)
+    - `sequester_service_1` is created
+    - Alice upload workspace manifest in v2 with renames `/bar.txt` -> `/bar2.txt`
+    - Alice does a key rotation on `wksp1` (key index becomes 2)
+    - Alice uploads file manifest `bar.txt` in v2 (containing "Hello v2")
+    - `sequester_service_1` is revoked
+    - Alice does a key rotation on `wksp1` (key index becomes 3)
+    - `sequester_service_2` is created
+    - Alice upload workspace manifest in v3 with renames `/bar.txt` -> `/bar3.txt`
+
+    See `libparsec/crates/testbed/src/templates/sequestered.rs` for it actual definition.
+    """
+
+    raw_client: AsyncClient
+    testbed_template: tb.TestbedTemplateContent
+    organization_id: OrganizationID
+    _anonymous: AnonymousRpcClient | None = None
+    _alice: AuthenticatedRpcClient | None = None
+    _bob: AuthenticatedRpcClient | None = None
+
+    @property
+    def anonymous(self) -> AnonymousRpcClient:
+        self._anonymous = self._anonymous or AnonymousRpcClient(
+            self.raw_client, self.organization_id
+        )
+        return self._anonymous
+
+    @property
+    def wksp1_id(self) -> VlobID:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventNewRealm):
+                return event.realm_id
+        assert False
+
+    @property
+    def alice(self) -> AuthenticatedRpcClient:
+        if self._alice:
+            return self._alice
+        self._alice = self._init_for("alice")
+        return self._alice
+
+    @property
+    def bob(self) -> AuthenticatedRpcClient:
+        if self._bob:
+            return self._bob
+        self._bob = self._init_for("bob")
+        return self._bob
+
+    @property
+    def root_signing_key(self) -> SigningKey:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventBootstrapOrganization):
+                return event.root_signing_key
+        raise RuntimeError("Organization bootstrap event not found !")
+
+    @property
+    def root_verify_key(self) -> VerifyKey:
+        return self.root_signing_key.verify_key
+
+    @property
+    def sequester_authority_signing_key(self) -> SequesterSigningKeyDer:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventBootstrapOrganization):
+                assert event.sequester_authority_signing_key is not None
+                return event.sequester_authority_signing_key
+        raise RuntimeError("Organization bootstrap event not found !")
+
+    @property
+    def sequester_authority_verify_key(self) -> SequesterVerifyKeyDer:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventBootstrapOrganization):
+                assert event.sequester_authority_verify_key is not None
+                return event.sequester_authority_verify_key
+        raise RuntimeError("Organization bootstrap event not found !")
+
+    @property
+    def sequester_service_1_id(self) -> SequesterServiceID:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventNewSequesterService):
+                if event.label == "Sequester Service 1":
+                    return event.id
+        raise RuntimeError("Sequester service 1 creation event not found !")
+
+    @property
+    def sequester_service_2_id(self) -> SequesterServiceID:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventNewSequesterService):
+                if event.label == "Sequester Service 2":
+                    return event.id
+        raise RuntimeError("Sequester service 2 creation event not found !")
+
+    def key_bundle(self, realm_id: VlobID, key_index: int) -> bytes:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventRotateKeyRealm):
+                if event.realm == realm_id and event.key_index == key_index:
+                    return event.keys_bundle
+        raise RuntimeError(
+            f"Key bundle for realm `{realm_id}` and key index `{key_index}` not found !"
+        )
+
+    def key_bundle_access(self, realm_id: VlobID, key_index: int, user_id: UserID) -> bytes:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventShareRealm):
+                if (
+                    event.realm == realm_id
+                    and event.key_index == key_index
+                    and event.user == user_id
+                    and event.recipient_keys_bundle_access
+                ):
+                    return event.recipient_keys_bundle_access
+            elif isinstance(event, tb.TestbedEventRotateKeyRealm):
+                if event.realm == realm_id and event.key_index == key_index:
+                    try:
+                        return event.per_participant_keys_bundle_access[user_id]
+                    except KeyError:
+                        pass
+        raise RuntimeError(
+            f"Key bundle for realm `{realm_id}` and key index `{key_index}` not found !"
+        )
+
+    def _init_for(self, user: str) -> AuthenticatedRpcClient:
+        user_id = UserID.test_from_nickname(user)
+        for event in self.testbed_template.events:
+            if (
+                isinstance(event, tb.TestbedEventBootstrapOrganization)
+                and event.first_user_id == user_id
+            ):
+                return AuthenticatedRpcClient(
+                    self.raw_client,
+                    self.organization_id,
+                    user_id=event.first_user_id,
+                    device_id=event.first_user_first_device_id,
+                    signing_key=event.first_user_first_device_signing_key,
+                    event=event,
+                )
+            elif isinstance(event, tb.TestbedEventNewUser) and event.user_id == user_id:
+                return AuthenticatedRpcClient(
+                    self.raw_client,
+                    self.organization_id,
+                    user_id=event.user_id,
+                    device_id=event.first_device_id,
+                    signing_key=event.first_device_signing_key,
+                    event=event,
+                )
+        else:
+            raise RuntimeError(f"`{user}` user creation event not found !")
+
+
+@pytest.fixture
+async def sequestered_org(
+    app: AsgiApp, testbed: TestbedBackend
+) -> AsyncGenerator[SequesteredOrgRpcClients, None]:
+    async with AsyncClient(transport=ASGITransport(app=app)) as raw_client:
+        organization_id, _, template_content = await testbed.new_organization("sequestered")
+        yield SequesteredOrgRpcClients(
             raw_client=raw_client,
             organization_id=organization_id,
             testbed_template=template_content,

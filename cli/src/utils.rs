@@ -322,7 +322,7 @@ pub async fn start_client_with_config(
                 start_spinner("Device already used by another process, waiting...".into());
             let device_in_use_guard =
                 lock_device_for_use(&config.config_dir, device.device_id).await?;
-            handle.stop_with_newline();
+            handle.stop_with_message(format!("{GREEN_CHECKMARK} Device accessed"));
             device_in_use_guard
         }
         Err(TryLockDeviceForUseError::Internal(err)) => return Err(err),

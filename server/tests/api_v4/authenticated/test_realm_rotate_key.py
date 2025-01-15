@@ -1,5 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import asyncio
+from unittest.mock import Mock
+
 import pytest
 
 from parsec._parsec import (
@@ -11,10 +14,16 @@ from parsec._parsec import (
     RealmRoleCertificate,
     SecretKey,
     SecretKeyAlgorithm,
+    SequesterServiceID,
     VlobID,
     authenticated_cmds,
 )
 from parsec.components.realm import KeysBundle
+from parsec.components.sequester import (
+    RejectedBySequesterService,
+    SequesterServiceType,
+    SequesterServiceUnavailable,
+)
 from parsec.events import EventRealmCertificate
 from tests.common import (
     Backend,
@@ -24,6 +33,7 @@ from tests.common import (
     wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
+from tests.common.client import SequesteredOrgRpcClients
 
 
 def wksp1_key_rotation_certificate(
@@ -94,6 +104,7 @@ async def test_authenticated_realm_rotate_key_ok(
             per_participant_keys_bundle_access={
                 user_id: f"<{user_id} keys bundle access>".encode() for user_id in participants
             },
+            per_sequester_service_keys_bundle_access=None,
             keys_bundle=b"<keys bundle>",
         )
         assert rep == authenticated_cmds.v4.realm_rotate_key.RepOk()
@@ -123,6 +134,46 @@ async def test_authenticated_realm_rotate_key_ok(
 
     topics = await backend.organization.test_dump_topics(coolorg.organization_id)
     assert topics == expected_topics
+
+
+async def test_authenticated_realm_rotate_key_ok_sequestered(
+    sequestered_org: SequesteredOrgRpcClients,
+    backend: Backend,
+) -> None:
+    certif = RealmKeyRotationCertificate(
+        author=sequestered_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=sequestered_org.wksp1_id,
+        key_index=4,
+        encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
+        hash_algorithm=HashAlgorithm.SHA256,
+        key_canary=SecretKey.generate().encrypt(b""),
+    )
+
+    with backend.event_bus.spy() as spy:
+        rep = await sequestered_org.alice.realm_rotate_key(
+            realm_key_rotation_certificate=certif.dump_and_sign(sequestered_org.alice.signing_key),
+            per_participant_keys_bundle_access={
+                user_id: f"<{user_id} keys bundle access>".encode()
+                for user_id in [sequestered_org.alice.user_id, sequestered_org.bob.user_id]
+            },
+            per_sequester_service_keys_bundle_access={
+                sequestered_org.sequester_service_2_id: b"<sequester 2 keys bundle access>",
+            },
+            keys_bundle=b"<keys bundle>",
+        )
+        assert rep == authenticated_cmds.v4.realm_rotate_key.RepOk()
+        await spy.wait_event_occurred(
+            EventRealmCertificate(
+                organization_id=sequestered_org.organization_id,
+                timestamp=certif.timestamp,
+                realm_id=certif.realm_id,
+                user_id=sequestered_org.alice.user_id,
+                role_removed=False,
+            )
+        )
+
+    # TODO: Check the database correctly contains the sequester service's keys bundle access
 
 
 @pytest.mark.parametrize(
@@ -200,6 +251,7 @@ async def test_authenticated_realm_rotate_key_author_not_allowed(
     rep = await author.realm_rotate_key(
         realm_key_rotation_certificate=certif.dump_and_sign(author.signing_key),
         per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepAuthorNotAllowed()
@@ -219,6 +271,7 @@ async def test_authenticated_realm_rotate_key_realm_not_found(
             coolorg.alice.user_id: b"<alice keys bundle access>",
             coolorg.bob.user_id: b"<bob keys bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepRealmNotFound()
@@ -280,6 +333,7 @@ async def test_authenticated_realm_rotate_key_bad_key_index(
         per_participant_keys_bundle_access={
             user_id: b"<keys bundle access>" for user_id in participants
         },
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepBadKeyIndex(
@@ -309,9 +363,12 @@ async def test_authenticated_realm_rotate_key_participant_mismatch(
     rep = await coolorg.alice.realm_rotate_key(
         realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepParticipantMismatch()
+    assert rep == authenticated_cmds.v4.realm_rotate_key.RepParticipantMismatch(
+        last_realm_certificate_timestamp=DateTime(2000, 1, 12)
+    )
 
 
 @pytest.mark.parametrize("kind", ("dummy_data", "bad_author"))
@@ -335,6 +392,7 @@ async def test_authenticated_realm_rotate_key_invalid_certificate(
             coolorg.alice.user_id: b"<alice keys bundle access>",
             coolorg.bob.user_id: b"<bob keys bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepInvalidCertificate()
@@ -352,6 +410,7 @@ async def test_authenticated_realm_rotate_key_timestamp_out_of_ballpark(
         per_participant_keys_bundle_access={
             coolorg.alice.user_id: "<alice keys bundle access>".encode()
         },
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
     assert isinstance(rep, authenticated_cmds.v4.realm_rotate_key.RepTimestampOutOfBallpark)
@@ -384,6 +443,7 @@ async def test_authenticated_realm_rotate_key_require_greater_timestamp(
             coolorg.alice.user_id: b"<alice keys bundle access>",
             coolorg.bob.user_id: b"<bob keys bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         realm_key_rotation_certificate=RealmKeyRotationCertificate(
             author=coolorg.alice.device_id,
             timestamp=last_certificate_timestamp,
@@ -407,6 +467,7 @@ async def test_authenticated_realm_rotate_key_require_greater_timestamp(
             coolorg.alice.user_id: "<alice keys bundle access>".encode(),
             coolorg.bob.user_id: b"<bob keys bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepRequireGreaterTimestamp(
@@ -426,7 +487,192 @@ async def test_authenticated_realm_rotate_key_http_common_errors(
                 user_id: f"<{user_id} keys bundle access>".encode()
                 for user_id in [coolorg.alice.user_id, coolorg.bob.user_id]
             },
+            per_sequester_service_keys_bundle_access=None,
             keys_bundle=b"<keys bundle>",
         )
 
     await authenticated_http_common_errors_tester(do)
+
+
+async def test_authenticated_realm_rotate_key_organization_not_sequestered(
+    coolorg: CoolorgRpcClients,
+) -> None:
+    certif = wksp1_key_rotation_certificate(coolorg)
+    rep = await coolorg.alice.realm_rotate_key(
+        realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+        per_participant_keys_bundle_access={
+            user_id: f"<{user_id} keys bundle access>".encode()
+            for user_id in [coolorg.alice.user_id, coolorg.bob.user_id]
+        },
+        per_sequester_service_keys_bundle_access={
+            SequesterServiceID.new(): b"<sequester 1 keys bundle access>"
+        },
+        keys_bundle=b"<keys bundle>",
+    )
+    assert rep == authenticated_cmds.v4.realm_rotate_key.RepOrganizationNotSequestered()
+
+
+@pytest.mark.parametrize("kind", ("revoked_service", "unknown_service", "missing_service"))
+async def test_authenticated_realm_rotate_key_sequester_service_mismatch(
+    sequestered_org: SequesteredOrgRpcClients, kind: str
+) -> None:
+    match kind:
+        case "revoked_service":
+            per_sequester_service_keys_bundle_access = {
+                sequestered_org.sequester_service_1_id: b"<sequester 1 keys bundle access>",
+                sequestered_org.sequester_service_2_id: b"<sequester 2 keys bundle access>",
+            }
+        case "unknown_service":
+            per_sequester_service_keys_bundle_access = {
+                sequestered_org.sequester_service_2_id: b"<sequester 2 keys bundle access>",
+                SequesterServiceID.new(): b"<dummy sequester keys bundle access>",
+            }
+        case "missing_service":
+            per_sequester_service_keys_bundle_access = {}
+        case unknown:
+            assert False, unknown
+
+    certif = RealmKeyRotationCertificate(
+        author=sequestered_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=sequestered_org.wksp1_id,
+        key_index=4,
+        encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
+        hash_algorithm=HashAlgorithm.SHA256,
+        key_canary=SecretKey.generate().encrypt(b""),
+    )
+
+    rep = await sequestered_org.alice.realm_rotate_key(
+        realm_key_rotation_certificate=certif.dump_and_sign(sequestered_org.alice.signing_key),
+        per_participant_keys_bundle_access={
+            user_id: f"<{user_id} keys bundle access>".encode()
+            for user_id in [sequestered_org.alice.user_id, sequestered_org.bob.user_id]
+        },
+        per_sequester_service_keys_bundle_access=per_sequester_service_keys_bundle_access,
+        keys_bundle=b"<keys bundle>",
+    )
+    assert rep == authenticated_cmds.v4.realm_rotate_key.RepSequesterServiceMismatch(
+        last_sequester_certificate_timestamp=DateTime(2000, 1, 18)
+    )
+
+
+async def test_authenticated_realm_rotate_key_rejected_by_sequester_service(
+    sequestered_org: SequesteredOrgRpcClients,
+    backend: Backend,
+    monkeypatch: pytest.MonkeyPatch,
+    with_postgresql: bool,
+) -> None:
+    if with_postgresql:
+        pytest.xfail("TODO: Webhook sequester service not implemented yet in PostgreSQL")
+
+    outcome = await backend.sequester.update_config_for_service(
+        organization_id=sequestered_org.organization_id,
+        service_id=sequestered_org.sequester_service_2_id,
+        config=(SequesterServiceType.WEBHOOK, "https://parsec.invalid/webhook"),
+    )
+    assert outcome is None
+
+    future = asyncio.Future()
+    future.set_result(
+        RejectedBySequesterService(
+            service_id=sequestered_org.sequester_service_2_id, reason="Not in the mood"
+        )
+    )
+    _mocked_sequester_service_on_realm_rotate_key = Mock(side_effect=[future])
+    monkeypatch.setattr(
+        "parsec.webhooks.WebhooksComponent.sequester_service_on_realm_rotate_key",
+        _mocked_sequester_service_on_realm_rotate_key,
+    )
+
+    initial_dump = await backend.vlob.test_dump_vlobs(
+        organization_id=sequestered_org.organization_id
+    )
+
+    certif = RealmKeyRotationCertificate(
+        author=sequestered_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=sequestered_org.wksp1_id,
+        key_index=4,
+        encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
+        hash_algorithm=HashAlgorithm.SHA256,
+        key_canary=SecretKey.generate().encrypt(b""),
+    )
+
+    rep = await sequestered_org.alice.realm_rotate_key(
+        realm_key_rotation_certificate=certif.dump_and_sign(sequestered_org.alice.signing_key),
+        per_participant_keys_bundle_access={
+            user_id: f"<{user_id} keys bundle access>".encode()
+            for user_id in [sequestered_org.alice.user_id, sequestered_org.bob.user_id]
+        },
+        per_sequester_service_keys_bundle_access={
+            sequestered_org.sequester_service_2_id: b"<sequester 2 keys bundle access>",
+        },
+        keys_bundle=b"<keys bundle>",
+    )
+    assert rep == authenticated_cmds.v4.realm_rotate_key.RepRejectedBySequesterService(
+        service_id=sequestered_org.sequester_service_2_id, reason="Not in the mood"
+    )
+
+    # Ensure no changes were made
+    dump = await backend.vlob.test_dump_vlobs(organization_id=sequestered_org.organization_id)
+    assert dump == initial_dump
+
+
+async def test_authenticated_realm_rotate_key_sequester_service_unavailable(
+    sequestered_org: SequesteredOrgRpcClients,
+    backend: Backend,
+    monkeypatch: pytest.MonkeyPatch,
+    with_postgresql: bool,
+) -> None:
+    if with_postgresql:
+        pytest.xfail("TODO: Webhook sequester service not implemented yet in PostgreSQL")
+
+    outcome = await backend.sequester.update_config_for_service(
+        organization_id=sequestered_org.organization_id,
+        service_id=sequestered_org.sequester_service_2_id,
+        config=(SequesterServiceType.WEBHOOK, "https://parsec.invalid/webhook"),
+    )
+    assert outcome is None
+
+    future = asyncio.Future()
+    future.set_result(
+        SequesterServiceUnavailable(service_id=sequestered_org.sequester_service_2_id)
+    )
+    _mocked_sequester_service_on_realm_rotate_key = Mock(side_effect=[future])
+    monkeypatch.setattr(
+        "parsec.webhooks.WebhooksComponent.sequester_service_on_realm_rotate_key",
+        _mocked_sequester_service_on_realm_rotate_key,
+    )
+
+    initial_dump = await backend.vlob.test_dump_vlobs(
+        organization_id=sequestered_org.organization_id
+    )
+
+    certif = RealmKeyRotationCertificate(
+        author=sequestered_org.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=sequestered_org.wksp1_id,
+        key_index=4,
+        encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
+        hash_algorithm=HashAlgorithm.SHA256,
+        key_canary=SecretKey.generate().encrypt(b""),
+    )
+
+    rep = await sequestered_org.alice.realm_rotate_key(
+        realm_key_rotation_certificate=certif.dump_and_sign(sequestered_org.alice.signing_key),
+        per_participant_keys_bundle_access={
+            user_id: f"<{user_id} keys bundle access>".encode()
+            for user_id in [sequestered_org.alice.user_id, sequestered_org.bob.user_id]
+        },
+        per_sequester_service_keys_bundle_access={
+            sequestered_org.sequester_service_2_id: b"<sequester 2 keys bundle access>",
+        },
+        keys_bundle=b"<keys bundle>",
+    )
+    assert rep == authenticated_cmds.v4.realm_rotate_key.RepSequesterServiceUnavailable(
+        service_id=sequestered_org.sequester_service_2_id
+    )
+
+    # Ensure no changes were made
+    dump = await backend.vlob.test_dump_vlobs(organization_id=sequestered_org.organization_id)
+    assert dump == initial_dump

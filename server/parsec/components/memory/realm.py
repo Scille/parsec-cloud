@@ -10,6 +10,7 @@ from parsec._parsec import (
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRoleCertificate,
+    SequesterServiceID,
     UserID,
     UserProfile,
     VerifyKey,
@@ -29,6 +30,7 @@ from parsec.components.realm import (
     BaseRealmComponent,
     CertificateBasedActionIdempotentOutcome,
     KeysBundle,
+    ParticipantMismatch,
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
     RealmDumpRealmsGrantedRolesBadOutcome,
@@ -46,17 +48,25 @@ from parsec.components.realm import (
     RealmStats,
     RealmUnshareStoreBadOutcome,
     RealmUnshareValidateBadOutcome,
+    RejectedBySequesterService,
+    SequesterServiceMismatch,
+    SequesterServiceUnavailable,
     realm_create_validate,
     realm_rename_validate,
     realm_rotate_key_validate,
     realm_share_validate,
     realm_unshare_validate,
 )
+from parsec.components.sequester import SequesterServiceType
 from parsec.events import EventRealmCertificate
+from parsec.webhooks import WebhooksComponent
 
 
 class MemoryRealmComponent(BaseRealmComponent):
-    def __init__(self, data: MemoryDatamodel, event_bus: EventBus) -> None:
+    def __init__(
+        self, data: MemoryDatamodel, event_bus: EventBus, webhooks: WebhooksComponent
+    ) -> None:
+        super().__init__(webhooks)
         self._data = data
         self._event_bus = event_bus
 
@@ -506,6 +516,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
         keys_bundle: bytes,
+        # Sequester is a special case, so gives it a default version to simplify tests
+        per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         RealmKeyRotationCertificate
         | BadKeyIndex
@@ -513,6 +525,10 @@ class MemoryRealmComponent(BaseRealmComponent):
         | TimestampOutOfBallpark
         | RealmRotateKeyStoreBadOutcome
         | RequireGreaterTimestamp
+        | ParticipantMismatch
+        | SequesterServiceMismatch
+        | SequesterServiceUnavailable
+        | RejectedBySequesterService
     ):
         try:
             org = self._data.organizations[organization_id]
@@ -551,7 +567,10 @@ class MemoryRealmComponent(BaseRealmComponent):
 
             realm_topic = ("realm", certif.realm_id)
 
-            async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
+            async with org.topics_lock(read=["sequester"], write=[realm_topic]) as (
+                sequester_topic_last_timestamp,
+                realm_topic_last_timestamp,
+            ):
                 if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
                     return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -567,7 +586,57 @@ class MemoryRealmComponent(BaseRealmComponent):
                         participants.add(role.cooked.user_id)
 
                 if per_participant_keys_bundle_access.keys() != participants:
-                    return RealmRotateKeyStoreBadOutcome.PARTICIPANT_MISMATCH
+                    return ParticipantMismatch(
+                        last_realm_certificate_timestamp=realm_topic_last_timestamp
+                    )
+
+                if org.is_sequestered:
+                    assert org.sequester_services is not None
+                    if per_sequester_service_keys_bundle_access is None:
+                        return SequesterServiceMismatch(
+                            last_sequester_certificate_timestamp=sequester_topic_last_timestamp
+                        )
+
+                    active_services_ids = {
+                        service.cooked.service_id for service in org.active_sequester_services()
+                    }
+                    provided_services_ids = (
+                        per_sequester_service_keys_bundle_access.keys()
+                        if per_sequester_service_keys_bundle_access
+                        else set()
+                    )
+                    if active_services_ids != provided_services_ids:
+                        return SequesterServiceMismatch(
+                            last_sequester_certificate_timestamp=sequester_topic_last_timestamp
+                        )
+                    for service in org.active_sequester_services():
+                        if service.service_type == SequesterServiceType.WEBHOOK:
+                            assert service.webhook_url is not None
+
+                            keys_bundle_access = per_sequester_service_keys_bundle_access[
+                                service.cooked.service_id
+                            ]
+                            match await self.webhooks.sequester_service_on_realm_rotate_key(
+                                webhook_url=service.webhook_url,
+                                service_id=service.cooked.service_id,
+                                organization_id=organization_id,
+                                keys_bundle=keys_bundle,
+                                keys_bundle_access=keys_bundle_access,
+                                author=certif.author,
+                                timestamp=certif.timestamp,
+                                realm_id=certif.realm_id,
+                                key_index=certif.key_index,
+                                encryption_algorithm=certif.encryption_algorithm,
+                                hash_algorithm=certif.hash_algorithm,
+                                key_canary=certif.key_canary,
+                            ):
+                                case None:
+                                    pass
+                                case error:
+                                    return error
+
+                elif per_sequester_service_keys_bundle_access is not None:
+                    return RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_SEQUESTERED
 
                 # Ensure we are not breaking causality by adding a newer timestamp.
 
@@ -584,6 +653,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         cooked=certif,
                         realm_key_rotation_certificate=realm_key_rotation_certificate,
                         per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+                        per_sequester_service_keys_bundle_access=per_sequester_service_keys_bundle_access,
                         keys_bundle=keys_bundle,
                     )
                 )

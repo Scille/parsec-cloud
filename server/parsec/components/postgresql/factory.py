@@ -17,6 +17,7 @@ from parsec.components.postgresql.invite import PGInviteComponent
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.ping import PGPingComponent
 from parsec.components.postgresql.realm import PGRealmComponent
+from parsec.components.postgresql.sequester import PGSequesterComponent
 from parsec.components.postgresql.shamir import PGShamirComponent
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.vlob import PGVlobComponent
@@ -49,8 +50,8 @@ async def components_factory(
                 auth = PGAuthComponent(pool=pool, event_bus=event_bus, config=config)
                 invite = PGInviteComponent(pool=pool, event_bus=event_bus, config=config)
                 user = PGUserComponent(pool=pool, event_bus=event_bus)
-                vlob = PGVlobComponent(pool=pool, event_bus=event_bus)
-                realm = PGRealmComponent(pool=pool, event_bus=event_bus)
+                vlob = PGVlobComponent(pool=pool, event_bus=event_bus, webhooks=webhooks)
+                realm = PGRealmComponent(pool=pool, event_bus=event_bus, webhooks=webhooks)
                 blockstore = blockstore_factory(
                     config=config.blockstore_config, postgresql_pool=pool
                 )
@@ -58,7 +59,7 @@ async def components_factory(
                 shamir = PGShamirComponent(pool=pool)
 
                 pki = None
-                sequester = None
+                sequester = PGSequesterComponent(pool=pool, event_bus=event_bus)
 
                 components = {
                     "event_bus": event_bus,

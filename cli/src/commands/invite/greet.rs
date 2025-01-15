@@ -102,7 +102,7 @@ async fn step1_user(ctx: UserGreetInitialCtx) -> anyhow::Result<UserGreetInProgr
 
     let ctx = ctx.do_wait_peer().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -113,7 +113,7 @@ async fn step1_device(ctx: DeviceGreetInitialCtx) -> anyhow::Result<DeviceGreetI
 
     let ctx = ctx.do_wait_peer().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -142,7 +142,7 @@ async fn step2_user(ctx: UserGreetInProgress1Ctx) -> anyhow::Result<UserGreetInP
 
     let ctx = ctx.do_wait_peer_trust().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -158,7 +158,7 @@ async fn step2_device(ctx: DeviceGreetInProgress1Ctx) -> anyhow::Result<DeviceGr
 
     let ctx = ctx.do_wait_peer_trust().await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
 }
@@ -258,7 +258,7 @@ async fn step5_user(ctx: UserGreetInProgress4Ctx) -> anyhow::Result<()> {
     ctx.do_create_new_user(device_label, human_handle, profile)
         .await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(())
 }
@@ -272,7 +272,7 @@ async fn step5_device(ctx: DeviceGreetInProgress4Ctx) -> anyhow::Result<()> {
 
     ctx.do_create_new_device(device_label).await?;
 
-    handle.stop_with_newline();
+    handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(())
 }

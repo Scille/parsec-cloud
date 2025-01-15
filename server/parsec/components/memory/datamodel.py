@@ -219,6 +219,10 @@ class MemoryOrganization:
     def is_sequestered(self) -> bool:
         return self.sequester_authority_certificate is not None
 
+    def active_sequester_services(self) -> Iterable[MemorySequesterService]:
+        services = self.sequester_services.values() if self.sequester_services else ()
+        return (service for service in services if not service.is_revoked)
+
     @property
     def is_bootstrapped(self) -> bool:
         return self.bootstrapped_on is not None
@@ -540,6 +544,10 @@ class MemoryRealmKeyRotation:
     realm_key_rotation_certificate: bytes = field(repr=False)
     per_participant_keys_bundle_access: dict[UserID, bytes] = field(repr=False)
     keys_bundle: bytes = field(repr=False)
+    # None for non-sequestered organization
+    per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None = field(
+        repr=False
+    )
 
 
 @dataclass(slots=True)
@@ -578,8 +586,6 @@ class MemoryVlobAtom:
     blob: bytes = field(repr=False)
     author: DeviceID
     created_on: DateTime
-    # None for non-sequestered organization
-    blob_for_storage_sequester_services: dict[SequesterServiceID, bytes] | None = field(repr=False)
     # None if not deleted
     deleted_on: DateTime | None = None
 

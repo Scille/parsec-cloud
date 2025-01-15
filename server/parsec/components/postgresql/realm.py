@@ -11,6 +11,7 @@ from parsec._parsec import (
     RealmNameCertificate,
     RealmRole,
     RealmRoleCertificate,
+    SequesterServiceID,
     UserID,
     VerifyKey,
     VlobID,
@@ -36,6 +37,7 @@ from parsec.components.realm import (
     BaseRealmComponent,
     CertificateBasedActionIdempotentOutcome,
     KeysBundle,
+    ParticipantMismatch,
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
     RealmGetCurrentRealmsForUserBadOutcome,
@@ -48,12 +50,16 @@ from parsec.components.realm import (
     RealmShareValidateBadOutcome,
     RealmUnshareStoreBadOutcome,
     RealmUnshareValidateBadOutcome,
+    RejectedBySequesterService,
+    SequesterServiceMismatch,
+    SequesterServiceUnavailable,
 )
+from parsec.webhooks import WebhooksComponent
 
 
 class PGRealmComponent(BaseRealmComponent):
-    def __init__(self, pool: AsyncpgPool, event_bus: EventBus):
-        super().__init__()
+    def __init__(self, pool: AsyncpgPool, event_bus: EventBus, webhooks: WebhooksComponent):
+        super().__init__(webhooks)
         self.pool = pool
         self.event_bus = event_bus
 
@@ -189,6 +195,8 @@ class PGRealmComponent(BaseRealmComponent):
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
         keys_bundle: bytes,
+        # Sequester is a special case, so gives it a default version to simplify tests
+        per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         RealmKeyRotationCertificate
         | BadKeyIndex
@@ -196,6 +204,10 @@ class PGRealmComponent(BaseRealmComponent):
         | TimestampOutOfBallpark
         | RealmRotateKeyStoreBadOutcome
         | RequireGreaterTimestamp
+        | ParticipantMismatch
+        | SequesterServiceMismatch
+        | SequesterServiceUnavailable
+        | RejectedBySequesterService
     ):
         return await realm_rotate_key(
             self.event_bus,
@@ -207,6 +219,7 @@ class PGRealmComponent(BaseRealmComponent):
             realm_key_rotation_certificate,
             per_participant_keys_bundle_access,
             keys_bundle,
+            per_sequester_service_keys_bundle_access,
         )
 
     @override

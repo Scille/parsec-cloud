@@ -8,6 +8,7 @@ from parsec.components.postgresql.utils import (
     q_invitation,
     q_organization_internal_id,
     q_realm,
+    q_sequester_service,
     q_user,
 )
 
@@ -16,6 +17,11 @@ q_test_drop_organization = Q(
 WITH deleted_organizations AS (
     DELETE FROM organization
     WHERE organization_id = $organization_id
+    RETURNING _id
+),
+deleted_sequester_service AS (
+    DELETE FROM sequester_service
+    WHERE organization in (select * from deleted_organizations)
     RETURNING _id
 ),
 deleted_human AS (
@@ -71,6 +77,11 @@ deleted_realm_keys_bundle AS (
 deleted_realm_keys_bundle_access AS (
     DELETE FROM realm_keys_bundle_access
     WHERE realm in (select * from deleted_realms)
+    RETURNING _id
+),
+deleted_realm_sequester_keys_bundle_access AS (
+    DELETE FROM realm_sequester_keys_bundle_access
+    WHERE realm_keys_bundle in (select * from deleted_realm_keys_bundle)
     RETURNING _id
 ),
 deleted_realm_names AS (
@@ -173,6 +184,34 @@ WITH new_organization_ids AS (
     FROM organization
     WHERE organization_id = $source_id
     RETURNING _id
+),
+new_sequester_services AS (
+    INSERT INTO sequester_service (
+        organization,
+        service_id,
+        service_certificate,
+        service_label,
+        created_on,
+        disabled_on,
+        webhook_url,
+        service_type,
+        revoked_on,
+        sequester_revoked_service_certificate
+    )
+    SELECT
+        (select * from new_organization_ids),
+        service_id,
+        service_certificate,
+        service_label,
+        created_on,
+        disabled_on,
+        webhook_url,
+        service_type,
+        revoked_on,
+        sequester_revoked_service_certificate
+    FROM sequester_service
+    WHERE organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id, service_id
 ),
 new_human_ids AS (
     INSERT INTO human (
@@ -561,6 +600,39 @@ new_realm_keys_bundle_access AS (
         access
     FROM realm_keys_bundle_access
     INNER JOIN realm ON realm._id = realm_keys_bundle_access.realm
+    WHERE realm.organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id
+),
+new_realm_sequester_keys_bundle_access AS (
+    INSERT INTO realm_sequester_keys_bundle_access (
+        realm,
+        sequester_service,
+        realm_keys_bundle,
+        access
+    )
+    SELECT
+        (
+            SELECT _id FROM new_realms
+            WHERE realm_id = { q_realm(_id="realm_sequester_keys_bundle_access.realm", select="realm_id") }
+        ),
+        (
+            SELECT _id FROM new_sequester_services
+            WHERE service_id = { q_sequester_service(_id="realm_sequester_keys_bundle_access.sequester_service", select="service_id") }
+        ),
+        (
+            SELECT _id FROM new_realm_keys_bundle
+            WHERE realm = (
+                SELECT _id FROM new_realms
+                WHERE realm_id = { q_realm(_id="realm_sequester_keys_bundle_access.realm", select="realm_id") }
+            )
+            AND key_index = (
+                SELECT key_index FROM realm_keys_bundle
+                WHERE _id = realm_keys_bundle
+            )
+        ),
+        access
+    FROM realm_sequester_keys_bundle_access
+    INNER JOIN realm ON realm._id = realm_sequester_keys_bundle_access.realm
     WHERE realm.organization = { q_organization_internal_id("$source_id") }
     RETURNING _id
 ),

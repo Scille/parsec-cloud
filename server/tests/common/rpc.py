@@ -287,11 +287,13 @@ class BaseAuthenticatedRpcClient:
         self,
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
+        per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None,
         keys_bundle: bytes,
     ) -> authenticated_cmds.latest.realm_rotate_key.Rep:
         req = authenticated_cmds.latest.realm_rotate_key.Req(
             realm_key_rotation_certificate=realm_key_rotation_certificate,
             per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+            per_sequester_service_keys_bundle_access=per_sequester_service_keys_bundle_access,
             keys_bundle=keys_bundle,
         )
         raw_rep = await self._do_request(req.dump(), "authenticated")
@@ -377,21 +379,10 @@ class BaseAuthenticatedRpcClient:
         return authenticated_cmds.latest.user_update.Rep.load(raw_rep)
 
     async def vlob_create(
-        self,
-        realm_id: VlobID,
-        vlob_id: VlobID,
-        key_index: int,
-        timestamp: DateTime,
-        blob: bytes,
-        sequester_blob: dict[SequesterServiceID, bytes] | None,
+        self, realm_id: VlobID, vlob_id: VlobID, key_index: int, timestamp: DateTime, blob: bytes
     ) -> authenticated_cmds.latest.vlob_create.Rep:
         req = authenticated_cmds.latest.vlob_create.Req(
-            realm_id=realm_id,
-            vlob_id=vlob_id,
-            key_index=key_index,
-            timestamp=timestamp,
-            blob=blob,
-            sequester_blob=sequester_blob,
+            realm_id=realm_id, vlob_id=vlob_id, key_index=key_index, timestamp=timestamp, blob=blob
         )
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.vlob_create.Rep.load(raw_rep)
@@ -420,21 +411,10 @@ class BaseAuthenticatedRpcClient:
         return authenticated_cmds.latest.vlob_read_versions.Rep.load(raw_rep)
 
     async def vlob_update(
-        self,
-        vlob_id: VlobID,
-        key_index: int,
-        timestamp: DateTime,
-        version: int,
-        blob: bytes,
-        sequester_blob: dict[SequesterServiceID, bytes] | None,
+        self, vlob_id: VlobID, key_index: int, timestamp: DateTime, version: int, blob: bytes
     ) -> authenticated_cmds.latest.vlob_update.Rep:
         req = authenticated_cmds.latest.vlob_update.Req(
-            vlob_id=vlob_id,
-            key_index=key_index,
-            timestamp=timestamp,
-            version=version,
-            blob=blob,
-            sequester_blob=sequester_blob,
+            vlob_id=vlob_id, key_index=key_index, timestamp=timestamp, version=version, blob=blob
         )
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.vlob_update.Rep.load(raw_rep)

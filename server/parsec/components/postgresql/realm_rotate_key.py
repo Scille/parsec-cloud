@@ -7,6 +7,7 @@ from parsec._parsec import (
     OrganizationID,
     RealmKeyRotationCertificate,
     RealmRole,
+    SequesterServiceID,
     UserID,
     VerifyKey,
 )
@@ -23,15 +24,19 @@ from parsec.components.postgresql.queries import (
 )
 from parsec.components.postgresql.utils import (
     Q,
+    q_sequester_service_internal_id,
     q_user,
     q_user_internal_id,
 )
 from parsec.components.realm import (
     BadKeyIndex,
+    ParticipantMismatch,
     RealmRotateKeyStoreBadOutcome,
     RealmRotateKeyValidateBadOutcome,
+    SequesterServiceMismatch,
     realm_rotate_key_validate,
 )
+from parsec.components.sequester import RejectedBySequesterService, SequesterServiceUnavailable
 from parsec.events import EventRealmCertificate
 
 _q_get_realm_current_participants = Q(
@@ -48,6 +53,51 @@ WITH per_user_last_role AS (
 SELECT user_id FROM per_user_last_role WHERE role IS NOT NULL
 """
 )
+
+
+_q_lock_sequester_read_and_get_active_services = Q("""
+-- Sequester topic read lock
+WITH my_locked_sequester_topic AS (
+    SELECT last_timestamp
+    FROM sequester_topic
+    WHERE
+        organization = $organization_internal_id
+    LIMIT 1
+    FOR SHARE
+),
+my_active_sequester_services AS (
+    SELECT
+        _id,
+        service_id,
+        webhook_url
+    FROM sequester_service
+    WHERE
+        organization = $organization_internal_id
+        AND revoked_on IS NULL
+)
+
+SELECT
+    -- First row only: sequester topic info column
+    last_timestamp AS last_sequester_certificate_timestamp,
+
+    -- Non-first rows only: service info columns
+    NULL AS service_internal_id,
+    NULL AS service_id,
+    NULL AS service_webhook_url
+FROM my_locked_sequester_topic
+
+UNION ALL -- Using UNION ALL is import to avoid sorting !
+
+SELECT
+    -- First row only: sequester topic info column
+    NULL,
+
+    -- Non-first rows only: service info columns
+    _id,
+    service_id,
+    webhook_url
+FROM my_active_sequester_services
+""")
 
 
 _q_insert_keys_bundle = Q(
@@ -96,7 +146,7 @@ SELECT
 )
 
 
-_q_insert_keys_bundle_access = Q(
+_q_insert_participants_keys_bundle_access = Q(
     f"""
 INSERT INTO realm_keys_bundle_access (
     realm,
@@ -106,6 +156,23 @@ INSERT INTO realm_keys_bundle_access (
 ) VALUES (
     $realm_internal_id,
     { q_user_internal_id(organization="$organization_internal_id", user_id="$user_id") },
+    $realm_keys_bundle_internal_id,
+    $access
+)
+"""
+)
+
+
+_q_insert_sequester_services_keys_bundle_access = Q(
+    f"""
+INSERT INTO realm_sequester_keys_bundle_access (
+    realm,
+    sequester_service,
+    realm_keys_bundle,
+    access
+) VALUES (
+    $realm_internal_id,
+    { q_sequester_service_internal_id(organization="$organization_internal_id", service_id="$service_id") },
     $realm_keys_bundle_internal_id,
     $access
 )
@@ -123,6 +190,7 @@ async def realm_rotate_key(
     realm_key_rotation_certificate: bytes,
     per_participant_keys_bundle_access: dict[UserID, bytes],
     keys_bundle: bytes,
+    per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None,
 ) -> (
     RealmKeyRotationCertificate
     | BadKeyIndex
@@ -130,6 +198,10 @@ async def realm_rotate_key(
     | TimestampOutOfBallpark
     | RealmRotateKeyStoreBadOutcome
     | RequireGreaterTimestamp
+    | ParticipantMismatch
+    | SequesterServiceMismatch
+    | SequesterServiceUnavailable
+    | RejectedBySequesterService
 ):
     match await auth_and_lock_common_read(conn, organization_id, author):
         case AuthAndLockCommonOnlyData() as db_common:
@@ -190,7 +262,64 @@ async def realm_rotate_key(
     )
     participants = {UserID.from_hex(row["user_id"]) for row in rows}
     if per_participant_keys_bundle_access.keys() != participants:
-        return RealmRotateKeyStoreBadOutcome.PARTICIPANT_MISMATCH
+        return ParticipantMismatch(
+            last_realm_certificate_timestamp=db_realm.last_realm_certificate_timestamp
+        )
+
+    if not db_common.organization_is_sequestered:
+        if per_sequester_service_keys_bundle_access is not None:
+            return RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_SEQUESTERED
+
+    else:
+        # Organization is sequestered
+
+        rows = await conn.fetch(
+            *_q_lock_sequester_read_and_get_active_services(
+                organization_internal_id=db_common.organization_internal_id,
+            )
+        )
+
+        # First row is always present and provide info about the sequester topic
+        first_row = rows[0]
+        match first_row["last_sequester_certificate_timestamp"]:
+            case DateTime() as last_sequester_certificate_timestamp:
+                pass
+            case unknown:
+                assert False, repr(unknown)
+
+        # Then following rows are services
+        sequester_services = {}
+        for row in rows[1:]:
+            match row["service_id"]:
+                case str() as raw_service_id:
+                    service_id = SequesterServiceID.from_hex(raw_service_id)
+                case unknown:
+                    assert False, repr(unknown)
+
+            match row["service_webhook_url"]:
+                case None | str() as service_webhook_url:
+                    pass
+                case unknown:
+                    assert False, repr(unknown)
+
+            sequester_services[service_id] = service_webhook_url
+
+        if (
+            per_sequester_service_keys_bundle_access is None
+            or per_sequester_service_keys_bundle_access.keys() != sequester_services.keys()
+        ):
+            return SequesterServiceMismatch(
+                last_sequester_certificate_timestamp=last_sequester_certificate_timestamp,
+            )
+
+        # TODO: Webhook sequester service are complexe to implement since they do HTTP requests.
+        #       However we shouldn't keep the connection to PostgreSQL while doing those HTTP
+        #       request to avoid famine.
+        has_webhook_services = any(
+            service_webhook_url is not None for service_webhook_url in sequester_services.values()
+        )
+        if has_webhook_services:
+            raise NotImplementedError("Webhook sequester services are not supported yet !")
 
     # All checks are good, now we do the actual insertion
 
@@ -221,7 +350,7 @@ async def realm_rotate_key(
 
     def arg_gen():
         for user_id, access in per_participant_keys_bundle_access.items():
-            yield _q_insert_keys_bundle_access.arg_only(
+            yield _q_insert_participants_keys_bundle_access.arg_only(
                 organization_internal_id=db_common.organization_internal_id,
                 realm_internal_id=db_realm.realm_internal_id,
                 user_id=user_id,
@@ -230,9 +359,27 @@ async def realm_rotate_key(
             )
 
     await conn.executemany(
-        _q_insert_keys_bundle_access.sql,
+        _q_insert_participants_keys_bundle_access.sql,
         arg_gen(),
     )
+
+    if per_sequester_service_keys_bundle_access:
+
+        def arg_gen():
+            for service_id, access in per_sequester_service_keys_bundle_access.items():
+                x = _q_insert_sequester_services_keys_bundle_access.arg_only(
+                    organization_internal_id=db_common.organization_internal_id,
+                    realm_internal_id=db_realm.realm_internal_id,
+                    service_id=service_id,
+                    realm_keys_bundle_internal_id=keys_bundle_internal_id,
+                    access=access,
+                )
+                yield x
+
+        await conn.executemany(
+            _q_insert_sequester_services_keys_bundle_access.sql,
+            arg_gen(),
+        )
 
     await event_bus.send(
         EventRealmCertificate(
