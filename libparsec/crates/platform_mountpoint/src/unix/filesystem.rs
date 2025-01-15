@@ -390,18 +390,25 @@ impl fuser::Filesystem for Filesystem {
 
     fn statfs(&mut self, _req: &fuser::Request<'_>, ino: u64, reply: fuser::ReplyStatfs) {
         log::debug!("[FUSE] statfs(ino: {:#x?})", ino);
+        // 2 MBlocks is 1 TB
+        const BLOCK_AVAILABLE: u64 = 2 * 1024u64.pow(2);
 
         let (inode_used, inode_remaining) = {
             let guard = self.inodes.lock().expect("mutex is poisoned");
             guard.usage()
         };
+        // We currently do not provide a dynamic value for the used block.
+        // We set the value to 0 for no block used
+        let block_used = 0;
+
+        log::trace!("Statfs {{ inode: Inode {{ used: {inode_used}, remaining: {inode_remaining} }}, block: {{ used: {block_used}, available: {BLOCK_AVAILABLE}, size: {BLOCK_SIZE} }} }}");
         // We have currently no way of easily getting the size of workspace
         // Also, the total size of a workspace is not limited
         // For the moment let's settle on 0 MB used for 1 TB available
         reply.statfs(
-            0,                  // 0 for no block used
-            2 * 1024u64.pow(2), // 2 MBlocks is 1 TB
-            2 * 1024u64.pow(2), // 2 MBlocks is 1 TB
+            block_used,
+            BLOCK_AVAILABLE - block_used,
+            BLOCK_AVAILABLE,
             inode_used as u64,
             inode_remaining as u64,
             BLOCK_SIZE as u32,
