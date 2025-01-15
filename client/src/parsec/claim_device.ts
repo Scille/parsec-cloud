@@ -83,6 +83,9 @@ export class DeviceClaim {
       const clientConfig = getClientConfig();
       const result = await libparsec.claimerRetrieveInfo(clientConfig, eventCallback, invitationLink);
       if (result.ok) {
+        if (result.value.tag !== AnyClaimRetrievedInfoTag.Device) {
+          throw Error('Unexpected tag');
+        }
         this.handle = result.value.handle;
         this.greeter = result.value.greeterHumanHandle;
       }
