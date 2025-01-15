@@ -1,1 +1,0 @@
-Fix an issue when modifying a file using TextEdit on macOS
