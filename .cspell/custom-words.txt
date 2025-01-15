@@ -194,6 +194,7 @@ Freepik
 freethreaded
 FRFX
 fromjson
+frsize
 fsyncdir
 fusepy
 fusermount
