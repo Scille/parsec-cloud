@@ -31,7 +31,8 @@ const TTL: std::time::Duration = std::time::Duration::ZERO;
 /// must assign a new, previously unused generation number to the inode at the
 /// same time.
 const GENERATION: u64 = 0;
-const BLOCK_SIZE: u64 = 512;
+/// The default block size, set to 512 KB.
+const BLOCK_SIZE: u64 = 512 * 1024;
 /// Default permissions for files and folders.
 /// Equivalent to `chmod` flags `all=,u=rwx`.
 const PERMISSIONS: u16 = 0o700;
@@ -403,9 +404,11 @@ impl fuser::Filesystem for Filesystem {
             2 * 1024u64.pow(2), // 2 MBlocks is 1 TB
             inode_used as u64,
             inode_remaining as u64,
-            512 * 1024, // 512 KB, i.e the default block size
-            255,        // 255 bytes as maximum length for filenames
-            512 * 1024, // 512 KB, i.e the default block size
+            BLOCK_SIZE as u32,
+            255, // 255 bytes as maximum length for filenames
+            // Fragment size (frsize) is set to the same size of block size
+            // (bsize) since we do not handle elements smallar
+            BLOCK_SIZE as u32,
         )
     }
 
