@@ -1,0 +1,1 @@
+Port the shared recovery feature (based on the Shamir algorithm) and expose it through the CLI.

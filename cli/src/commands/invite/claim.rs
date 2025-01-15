@@ -155,7 +155,21 @@ fn shamir_pick_recipient(
     ctx: &ShamirRecoveryClaimPickRecipientCtx,
 ) -> anyhow::Result<ShamirRecoveryClaimInitialCtx> {
     let recipients = ctx.recipients_without_a_share();
-    let human_recipients: Vec<&_> = recipients.iter().map(|r| &r.human_handle).collect();
+    let human_recipients: Vec<_> = recipients
+        .iter()
+        .map(|r| format!("{} - {} share(s)", r.human_handle, r.shares))
+        .collect();
+    if ctx.retrieved_shares().is_empty() {
+        println!("{} shares needed for recovery", ctx.threshold());
+    } else {
+        println!(
+            "Out of {} shares needed for recovery, {} were retrieved.",
+            ctx.threshold(),
+            ctx.retrieved_shares()
+                .iter()
+                .fold(0_u8, |acc, (_, s)| acc + u8::from(*s))
+        );
+    }
     let selection = Select::new()
         .default(0)
         .with_prompt("Choose a person to contact now")
@@ -346,7 +360,7 @@ async fn step4_device(ctx: DeviceClaimInProgress3Ctx) -> anyhow::Result<DeviceCl
     Ok(ctx)
 }
 
-/// Step 4: retrieve device
+/// Step 4: retrieve share
 async fn step4_shamir(
     ctx: ShamirRecoveryClaimInProgress3Ctx,
 ) -> anyhow::Result<ShamirRecoveryClaimShare> {
