@@ -16,12 +16,13 @@
         class="sidebar"
       >
         <ion-header class="sidebar-header">
-          <div v-show="!isManagement()">
+          <div>
             <!-- active organization -->
             <ion-card class="organization-card">
               <ion-card-header
                 class="organization-card-header organization-card-header-desktop"
                 @click="openOrganizationChoice($event)"
+                v-show="!isManagement()"
               >
                 <ion-avatar class="organization-avatar body-lg">
                   <span v-if="!isTrialOrg">{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
@@ -42,6 +43,21 @@
                 />
               </ion-card-header>
 
+              <div v-show="isManagement()">
+                <div
+                  class="back-organization"
+                  @click="navigateTo(Routes.Workspaces)"
+                >
+                  <ion-button
+                    fill="clear"
+                    class="back-button"
+                  >
+                    <ion-icon :icon="chevronBack" />
+                    {{ $msTranslate('SideMenu.back') }}
+                  </ion-button>
+                </div>
+              </div>
+
               <div
                 class="organization-card-buttons"
                 v-if="userInfo"
@@ -49,6 +65,7 @@
                 <ion-text
                   @click="navigateTo(Routes.Users)"
                   class="organization-card-buttons__item button-medium"
+                  :class="currentRouteIsOrganizationManagementRoute() ? 'active' : ''"
                   id="manageOrganization"
                   v-show="userInfo.currentProfile != UserProfile.Outsider"
                   button
@@ -83,21 +100,6 @@
               </div>
             </ion-card>
             <!-- end of active organization -->
-          </div>
-
-          <div v-show="isManagement()">
-            <div
-              class="back-organization"
-              @click="navigateTo(Routes.Workspaces)"
-            >
-              <ion-button
-                fill="clear"
-                class="back-button"
-              >
-                <ion-icon :icon="chevronBack" />
-                {{ $msTranslate('SideMenu.back') }}
-              </ion-button>
-            </div>
           </div>
 
           <!-- frozen organization -->
