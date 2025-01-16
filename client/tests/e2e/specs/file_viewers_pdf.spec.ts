@@ -3,6 +3,12 @@
 import { Locator } from '@playwright/test';
 import { expect, msTest, openFileType } from '@tests/e2e/helpers';
 
+const enum CanvasStates {
+  Rendered = 'rendered',
+  Failed = 'failed',
+  Blank = 'blank',
+}
+
 msTest('PDF viewer: content', async ({ documents }) => {
   await openFileType(documents, 'pdf');
   await expect(documents).toBeViewerPage();
@@ -11,7 +17,7 @@ msTest('PDF viewer: content', async ({ documents }) => {
 
   const wrapper = documents.locator('.file-viewer-wrapper');
   const pages = wrapper.locator('.pdf-container').locator('canvas');
-  await expect(pages).toHaveCount(3);
+  await expect(pages).toHaveCount(4);
 });
 
 msTest('PDF viewer: pagination', async ({ documents }) => {
@@ -25,7 +31,7 @@ msTest('PDF viewer: pagination', async ({ documents }) => {
   const paginationElement = pagination.locator('.file-controls-input');
 
   async function expectPage(pageNumber: number): Promise<void> {
-    await expect(paginationElement).toHaveText(`Page ${pageNumber} / 3`);
+    await expect(paginationElement).toHaveText(`Page ${pageNumber} / 4`);
     for (const [index, page] of (await pages.all()).entries()) {
       index === pageNumber - 1 ? await expect(page).toBeInViewport() : await expect(page).not.toBeInViewport();
     }
@@ -92,27 +98,38 @@ msTest('PDF viewer: scroll', async ({ documents }) => {
   const firstPage = pages.nth(0);
   const secondPage = pages.nth(1);
   const thirdPage = pages.nth(2);
+  const fourthPage = pages.nth(3);
 
   const pagination = bottomBar.locator('.file-controls-pagination');
   const paginationElement = pagination.locator('.file-controls-input');
+
+  await fourthPage.scrollIntoViewIfNeeded();
+  await expect(firstPage).not.toBeInViewport();
+  await expect(secondPage).not.toBeInViewport();
+  await expect(thirdPage).toBeInViewport(); // the last page is an error canvas, leaving space for the previous one
+  await expect(fourthPage).toBeInViewport();
+  await expect(paginationElement).toHaveText('Page 4 / 4');
 
   await thirdPage.scrollIntoViewIfNeeded();
   await expect(firstPage).not.toBeInViewport();
   await expect(secondPage).not.toBeInViewport();
   await expect(thirdPage).toBeInViewport();
-  await expect(paginationElement).toHaveText('Page 3 / 3');
+  await expect(fourthPage).not.toBeInViewport();
+  await expect(paginationElement).toHaveText('Page 4 / 4');
 
   await secondPage.scrollIntoViewIfNeeded();
   await expect(firstPage).not.toBeInViewport();
   await expect(secondPage).toBeInViewport();
   await expect(thirdPage).not.toBeInViewport();
-  await expect(paginationElement).toHaveText('Page 2 / 3');
+  await expect(fourthPage).not.toBeInViewport();
+  await expect(paginationElement).toHaveText('Page 2 / 4');
 
   await firstPage.scrollIntoViewIfNeeded();
   await expect(firstPage).toBeInViewport();
   await expect(secondPage).not.toBeInViewport();
   await expect(thirdPage).not.toBeInViewport();
-  await expect(paginationElement).toHaveText('Page 1 / 3');
+  await expect(fourthPage).not.toBeInViewport();
+  await expect(paginationElement).toHaveText('Page 1 / 4');
 });
 
 msTest('PDF viewer: zoom', async ({ documents }) => {
@@ -133,8 +150,10 @@ msTest('PDF viewer: zoom', async ({ documents }) => {
 
   async function expectZoomLevel(expectedZoomLevel: number): Promise<void> {
     for (const page of await canvas.all()) {
-      await expect(page).toHaveCSS('width', `${Math.floor((initialWidth * expectedZoomLevel) / 100)}px`);
-      await expect(page).toHaveCSS('height', `${Math.floor((initialHeight * expectedZoomLevel) / 100)}px`);
+      if ((await page.getAttribute('data-canvas-state')) !== CanvasStates.Failed) {
+        await expect(page).toHaveCSS('width', `${Math.floor((initialWidth * expectedZoomLevel) / 100)}px`);
+        await expect(page).toHaveCSS('height', `${Math.floor((initialHeight * expectedZoomLevel) / 100)}px`);
+      }
     }
   }
 
@@ -198,42 +217,67 @@ msTest('PDF viewer: progressive loading', async ({ documents }) => {
   const firstPage = pages.nth(0);
   const secondPage = pages.nth(1);
   const thirdPage = pages.nth(2);
-  await expect(pages).toHaveCount(3);
+  const fourthPage = pages.nth(3);
+  await expect(pages).toHaveCount(4);
 
-  async function expectPageToBeRendered(page: Locator, rendered: boolean): Promise<void> {
-    rendered ? await expect(page).toHaveAttribute('data-rendered') : await expect(page).not.toHaveAttribute('data-rendered');
+  async function expectCanvasStateToBe(page: Locator, state: CanvasStates): Promise<void> {
+    switch (state) {
+      case CanvasStates.Rendered:
+        await expect(page).toHaveAttribute('data-canvas-state', CanvasStates.Rendered);
+        break;
+      case CanvasStates.Failed:
+        await expect(page).toHaveAttribute('data-canvas-state', CanvasStates.Failed);
+        break;
+      case CanvasStates.Blank:
+        await expect(page).not.toHaveAttribute('data-canvas-state');
+        break;
+    }
   }
-  await expectPageToBeRendered(firstPage, true);
-  await expectPageToBeRendered(secondPage, false);
-  await expectPageToBeRendered(thirdPage, false);
+  await expectCanvasStateToBe(firstPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(secondPage, CanvasStates.Blank);
+  await expectCanvasStateToBe(thirdPage, CanvasStates.Blank);
+  await expectCanvasStateToBe(fourthPage, CanvasStates.Failed);
 
   await secondPage.scrollIntoViewIfNeeded();
-  await expectPageToBeRendered(firstPage, true);
-  await expectPageToBeRendered(secondPage, true);
-  await expectPageToBeRendered(thirdPage, false);
+  await expectCanvasStateToBe(firstPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(secondPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(thirdPage, CanvasStates.Blank);
+  await expectCanvasStateToBe(fourthPage, CanvasStates.Failed);
 
   await thirdPage.scrollIntoViewIfNeeded();
-  await expectPageToBeRendered(firstPage, true);
-  await expectPageToBeRendered(secondPage, true);
-  await expectPageToBeRendered(thirdPage, true);
+  await expectCanvasStateToBe(firstPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(secondPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(thirdPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(fourthPage, CanvasStates.Failed);
 
+  await fourthPage.scrollIntoViewIfNeeded();
+  await expectCanvasStateToBe(firstPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(secondPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(thirdPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(fourthPage, CanvasStates.Failed);
+
+  await secondPage.scrollIntoViewIfNeeded();
+  await documents.waitForTimeout(500); // wait for the scroll animation to be done
   await zoomIn.click(); // zoom in to force re-rendering
-  await expectPageToBeRendered(firstPage, false);
-  await expectPageToBeRendered(secondPage, false);
-  await expectPageToBeRendered(thirdPage, true);
+  await expectCanvasStateToBe(firstPage, CanvasStates.Blank);
+  await expectCanvasStateToBe(secondPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(thirdPage, CanvasStates.Blank);
+  await expectCanvasStateToBe(fourthPage, CanvasStates.Failed);
 
   await pagination.click();
   await paginationElement.locator('input').fill('1');
   await paginationElement.locator('input').press('Enter');
-  await expectPageToBeRendered(firstPage, true);
-  await expectPageToBeRendered(secondPage, true);
-  await expectPageToBeRendered(thirdPage, true);
+  await expectCanvasStateToBe(firstPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(secondPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(thirdPage, CanvasStates.Blank);
+  await expectCanvasStateToBe(fourthPage, CanvasStates.Failed);
 
   await documents.waitForTimeout(500); // wait for the scroll animation to be done
   await zoomReset.click(); // reset zoom to force re-rendering
-  await expectPageToBeRendered(firstPage, true);
-  await expectPageToBeRendered(secondPage, false);
-  await expectPageToBeRendered(thirdPage, false);
+  await expectCanvasStateToBe(firstPage, CanvasStates.Rendered);
+  await expectCanvasStateToBe(secondPage, CanvasStates.Blank);
+  await expectCanvasStateToBe(thirdPage, CanvasStates.Blank);
+  await expectCanvasStateToBe(fourthPage, CanvasStates.Failed);
 });
 
 msTest('PDF viewer: fullscreen', async ({ documents }) => {

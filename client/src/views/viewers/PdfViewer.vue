@@ -57,6 +57,7 @@ import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZ
 import { MsSpinner, MsReportText, MsReportTheme, I18n } from 'megashark-lib';
 import * as pdfjs from 'pdfjs-dist';
 import { scan } from 'ionicons/icons';
+import { needsMocks } from '@/parsec';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -71,6 +72,11 @@ const zoomControl = ref();
 const scale = ref(1);
 const canvas = ref<HTMLCanvasElement[]>([]);
 const isRendering = ref(false);
+const enum CanvasStates {
+  Rendered = 'rendered',
+  Failed = 'failed',
+}
+const CanvasStateAttribute = 'data-canvas-state';
 
 onMounted(async () => {
   loading.value = true;
@@ -95,7 +101,11 @@ function isInViewport(canvasElement: HTMLCanvasElement): boolean {
 }
 
 function isCanvasRendered(canvasElement: HTMLCanvasElement): boolean {
-  return canvasElement.getAttribute('data-rendered') !== null;
+  return canvasElement.getAttribute(CanvasStateAttribute) === CanvasStates.Rendered;
+}
+
+function isCanvasOnError(canvasElement: HTMLCanvasElement): boolean {
+  return canvasElement.getAttribute(CanvasStateAttribute) === CanvasStates.Failed;
 }
 
 async function loadPage(pageIndex: number): Promise<void> {
@@ -108,52 +118,63 @@ async function loadPage(pageIndex: number): Promise<void> {
 
   try {
     const page = await pdf.value.getPage(pageIndex);
+    if (needsMocks() && pageIndex === 4) {
+      throw new Error('Failed to load page');
+    }
 
     const canvasElement = canvas.value.at(pageIndex - 1);
     if (!canvasElement) {
-      loading.value = false;
       return;
     }
-
-    const outputScale = window.devicePixelRatio || 1;
     const viewport = page.getViewport({ scale: scale.value });
-    canvasElement.width = viewport.width * outputScale;
-    canvasElement.height = viewport.height * outputScale;
-    canvasElement.style.width = `${Math.floor(viewport.width)}px`;
-    canvasElement.style.height = `${Math.floor(viewport.height)}px`;
-
-    canvasElement.removeAttribute('data-rendered');
+    drawBlankCanvas(canvasElement, viewport);
   } catch (e: any) {
     const canvasElement = canvas.value.at(pageIndex - 1);
     if (!canvasElement) {
-      loading.value = false;
       return;
     }
-    canvasElement.width = 300;
-    canvasElement.height = 60;
-    canvasElement.style.width = '300px';
-    canvasElement.style.height = '60px';
-    canvasElement.classList.add('error');
-    const context = canvasElement.getContext('2d', { willReadFrequently: true });
-    if (context) {
-      const errorMessage = I18n.translate('fileViewers.pdf.loadPageError');
-      context.font = '14px "Albert Sans"';
-
-      // Calculate the width and height of the text
-      const textMetrics = context.measureText(errorMessage);
-      const textWidth = textMetrics.width;
-      const textHeight = 14; // Approximate height based on font size
-
-      // Calculate the position to center the text
-      const x = (canvasElement.width - textWidth) / 2;
-      const y = (canvasElement.height + textHeight) / 2;
-
-      // Draw the text
-      context.fillText(errorMessage, x, y);
-    }
-    window.electronAPI.log('error', `Failed to open PDF page: ${e}`);
+    drawErrorCanvas(canvasElement);
+    window.electronAPI.log('error', `Failed to load PDF page: ${e}`);
   } finally {
     loading.value = false;
+  }
+}
+
+function drawBlankCanvas(canvasElement: HTMLCanvasElement, viewport: pdfjs.PageViewport): void {
+  const outputScale = window.devicePixelRatio || 1;
+  canvasElement.width = viewport.width * outputScale;
+  canvasElement.height = viewport.height * outputScale;
+  canvasElement.style.width = `${Math.floor(viewport.width)}px`;
+  canvasElement.style.height = `${Math.floor(viewport.height)}px`;
+
+  canvasElement.removeAttribute(CanvasStateAttribute);
+  canvasElement.classList.remove('error');
+}
+
+function drawErrorCanvas(canvasElement: HTMLCanvasElement): void {
+  canvasElement.width = 300;
+  canvasElement.height = 60;
+  canvasElement.style.width = '300px';
+  canvasElement.style.height = '60px';
+  canvasElement.setAttribute(CanvasStateAttribute, CanvasStates.Failed);
+  canvasElement.classList.add('error');
+
+  const context = canvasElement.getContext('2d', { willReadFrequently: true });
+  if (context) {
+    const errorMessage = I18n.translate('fileViewers.pdf.loadPageError');
+    context.font = '14px "Albert Sans"';
+
+    // Calculate the width and height of the text
+    const textMetrics = context.measureText(errorMessage);
+    const textWidth = textMetrics.width;
+    const textHeight = 14; // Approximate height based on font size
+
+    // Calculate the position to center the text
+    const x = (canvasElement.width - textWidth) / 2;
+    const y = (canvasElement.height + textHeight) / 2;
+
+    // Draw the text
+    context.fillText(errorMessage, x, y);
   }
 }
 
@@ -168,29 +189,40 @@ async function loadPages(): Promise<void> {
 }
 
 async function renderPage(pageNumber: number): Promise<void> {
-  const page = await pdf.value!.getPage(pageNumber);
-  if (!page || isRendering.value) {
-    return;
-  }
-
   const canvasElement = canvas.value.at(pageNumber - 1);
-  if (!canvasElement || isCanvasRendered(canvasElement)) {
+  if (isRendering.value || !canvasElement || isCanvasRendered(canvasElement) || isCanvasOnError(canvasElement)) {
     return;
   }
 
   isRendering.value = true;
 
-  const outputScale = window.devicePixelRatio || 1;
-  const context = canvasElement.getContext('2d', { willReadFrequently: true });
-  const renderContext = {
-    canvasContext: context!,
-    transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined,
-    viewport: page.getViewport({ scale: scale.value }),
-  };
+  try {
+    const page = await pdf.value!.getPage(pageNumber);
+    if (!page) {
+      return;
+    }
 
-  await page.render(renderContext).promise;
-  isRendering.value = false;
-  canvasElement.setAttribute('data-rendered', '');
+    const viewport = page.getViewport({ scale: scale.value });
+    const outputScale = window.devicePixelRatio || 1;
+    const context = canvasElement.getContext('2d', { willReadFrequently: true });
+    const renderContext = {
+      canvasContext: context!,
+      transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : undefined,
+      viewport: viewport,
+    };
+
+    await page.render(renderContext).promise;
+    canvasElement.setAttribute(CanvasStateAttribute, CanvasStates.Rendered);
+  } catch (e: any) {
+    const canvasElement = canvas.value.at(pageNumber - 1);
+    if (!canvasElement) {
+      return;
+    }
+    drawErrorCanvas(canvasElement);
+    window.electronAPI.log('error', `Failed to render PDF page: ${e}`);
+  } finally {
+    isRendering.value = false;
+  }
 }
 
 async function onZoomLevelChange(value: number): Promise<void> {
