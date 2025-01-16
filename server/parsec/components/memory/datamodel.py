@@ -118,7 +118,6 @@ class MemoryOrganization:
     greeting_attempts: dict[GreetingAttemptID, MemoryGreetingAttempt] = field(default_factory=dict)
     pki_enrollments: dict[EnrollmentID, MemoryPkiEnrollment] = field(default_factory=dict)
     realms: dict[VlobID, MemoryRealm] = field(default_factory=dict)
-    vlobs: dict[VlobID, list[MemoryVlobAtom]] = field(default_factory=dict)
     blocks: dict[BlockID, MemoryBlock] = field(default_factory=dict)
     block_store: dict[BlockID, bytes] = field(default_factory=dict, repr=False)
     # The user id is the author of the shamir recovery
@@ -405,10 +404,11 @@ class MemoryOrganization:
         # sort them by creation date, which is basically equivalent of what the vlobs
         # table in PostgreSQL is.
 
-        all_vlob_atoms = []
-        for vlob in self.vlobs.values():
-            for vlob_atom in vlob:
-                all_vlob_atoms.append(vlob_atom)
+        all_vlob_atoms: list[MemoryVlobAtom] = []
+        for realm in self.realms.values():
+            for vlob in realm.vlobs.values():
+                for vlob_atom in vlob:
+                    all_vlob_atoms.append(vlob_atom)
 
         # Note we also order by vlob ID to ensure a stable order in case of same creation date
         all_vlob_atoms.sort(key=lambda vlob_atom: (vlob_atom.created_on, vlob_atom.vlob_id))
@@ -709,6 +709,7 @@ class MemoryRealm:
     renames: list[MemoryRealmRename] = field(default_factory=list)
     archivings: list[MemoryRealmArchiving] = field(default_factory=list)
     last_vlob_timestamp: DateTime | None = None
+    vlobs: dict[VlobID, list[MemoryVlobAtom]] = field(default_factory=dict)
 
     def get_current_role_for(self, user_id: UserID) -> RealmRole | None:
         for role in reversed(self.roles):

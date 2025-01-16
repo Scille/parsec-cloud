@@ -305,6 +305,7 @@ async def insert_full_data(
         DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        realm_id=coolorg.wksp1_id,
         vlob_id=blob1,
         key_index=2,
         version=2,

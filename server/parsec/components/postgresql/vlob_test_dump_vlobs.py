@@ -33,21 +33,28 @@ WHERE organization_id = $organization_id
 
 async def vlob_test_dump_vlobs(
     conn: AsyncpgConnection, organization_id: OrganizationID
-) -> dict[VlobID, list[tuple[DeviceID, DateTime, VlobID, bytes]]]:
+) -> dict[VlobID, dict[VlobID, list[tuple[DeviceID, DateTime, bytes]]]]:
     rows = await conn.fetch(*_q_dump_vlobs(organization_id=organization_id.str))
-    result: dict[VlobID, list[tuple[DeviceID, DateTime, VlobID, bytes]]] = {}
+    realms: dict[VlobID, dict[VlobID, list[tuple[DeviceID, DateTime, bytes]]]] = {}
     for row in rows:
         vlob_id = VlobID.from_hex(row["vlob_id"])
         realm_id = VlobID.from_hex(row["realm_id"])
         author = DeviceID.from_hex(row["author"])
-        if vlob_id not in result:
-            result[vlob_id] = []
-        result[vlob_id].append(
-            (
-                author,
-                row["created_on"],
-                realm_id,
-                row["blob"],
-            )
+
+        try:
+            realm = realms[realm_id]
+        except KeyError:
+            realm = realms[realm_id] = {}
+
+        item = (
+            author,
+            row["created_on"],
+            row["blob"],
         )
-    return result
+
+        try:
+            realm[vlob_id].append(item)
+        except KeyError:
+            realm[vlob_id] = [item]
+
+    return realms
