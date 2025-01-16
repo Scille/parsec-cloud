@@ -8,7 +8,7 @@ use invited_cmds::latest::invite_claimer_step;
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
 use libparsec_protocol::authenticated_cmds;
-use libparsec_protocol::invited_cmds::v4::invite_info::ShamirRecoveryRecipient;
+use libparsec_protocol::invited_cmds::latest::invite_info::ShamirRecoveryRecipient;
 use libparsec_types::prelude::*;
 
 use crate::client::{register_new_device, RegisterNewDeviceError};

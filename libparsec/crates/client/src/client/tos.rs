@@ -42,15 +42,15 @@ pub async fn get_tos(client_ops: &Client) -> Result<Tos, ClientGetTosError> {
     let request = tos_cmds::latest::tos_get::Req;
     let rep = client_ops.cmds.send(request).await?;
     match rep {
-        tos_cmds::v4::tos_get::Rep::Ok {
+        tos_cmds::latest::tos_get::Rep::Ok {
             updated_on,
             per_locale_urls,
         } => Ok(Tos {
             per_locale_urls,
             updated_on,
         }),
-        tos_cmds::v4::tos_get::Rep::NoTos => Err(ClientGetTosError::NoTos),
-        tos_cmds::v4::tos_get::Rep::UnknownStatus { unknown_status, .. } => {
+        tos_cmds::latest::tos_get::Rep::NoTos => Err(ClientGetTosError::NoTos),
+        tos_cmds::latest::tos_get::Rep::UnknownStatus { unknown_status, .. } => {
             Err(ClientGetTosError::Internal(anyhow::anyhow!(
                 "Unknown error status `{}` from server",
                 unknown_status
@@ -88,7 +88,7 @@ pub async fn accept_tos(
     let request = tos_cmds::latest::tos_accept::Req { tos_updated_on };
     let rep = client_ops.cmds.send(request).await?;
     match rep {
-        tos_cmds::v4::tos_accept::Rep::Ok => {
+        tos_cmds::latest::tos_accept::Rep::Ok => {
             // If TOS acceptance was required, it most likely means the connection
             // monitor is currently polling the server from time to time in order to
             // detect when the TOS have been accepted.
@@ -96,9 +96,9 @@ pub async fn accept_tos(
             client_ops.event_bus.send(&EventShouldRetryConnectionNow);
             Ok(())
         }
-        tos_cmds::v4::tos_accept::Rep::TosMismatch => Err(ClientAcceptTosError::TosMismatch),
-        tos_cmds::v4::tos_accept::Rep::NoTos => Err(ClientAcceptTosError::NoTos),
-        tos_cmds::v4::tos_accept::Rep::UnknownStatus { unknown_status, .. } => {
+        tos_cmds::latest::tos_accept::Rep::TosMismatch => Err(ClientAcceptTosError::TosMismatch),
+        tos_cmds::latest::tos_accept::Rep::NoTos => Err(ClientAcceptTosError::NoTos),
+        tos_cmds::latest::tos_accept::Rep::UnknownStatus { unknown_status, .. } => {
             Err(ClientAcceptTosError::Internal(anyhow::anyhow!(
                 "Unknown error status `{}` from server",
                 unknown_status

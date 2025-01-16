@@ -3,7 +3,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use super::utils::client_factory;
-use libparsec_protocol::invited_cmds::v4::invite_info::ShamirRecoveryRecipient;
+use libparsec_protocol::invited_cmds::latest::invite_info::ShamirRecoveryRecipient;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 

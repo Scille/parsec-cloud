@@ -6,7 +6,7 @@ use std::{
 };
 
 use libparsec::{
-    authenticated_cmds::{latest::device_create, v4::user_create},
+    authenticated_cmds::{latest::device_create, latest::user_create},
     AuthenticatedCmds, Bytes, CertificateSignerOwned, ClientConfig, DateTime, DeviceAccessStrategy,
     DeviceCertificate, DeviceID, DeviceLabel, DevicePurpose, HumanHandle, LocalDevice,
     MaybeRedacted, OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey,
