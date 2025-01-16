@@ -8,13 +8,21 @@ from parsec._parsec import DateTime, SequesterServiceID, VlobID
 
 class Req:
     def __init__(
-        self, vlob_id: VlobID, key_index: int, timestamp: DateTime, version: int, blob: bytes
+        self,
+        realm_id: VlobID,
+        vlob_id: VlobID,
+        key_index: int,
+        timestamp: DateTime,
+        version: int,
+        blob: bytes,
     ) -> None: ...
     def dump(self) -> bytes: ...
     @property
     def blob(self) -> bytes: ...
     @property
     def key_index(self) -> int: ...
+    @property
+    def realm_id(self) -> VlobID: ...
     @property
     def timestamp(self) -> DateTime: ...
     @property
@@ -48,6 +56,11 @@ class RepBadKeyIndex(Rep):
     def __init__(self, last_realm_certificate_timestamp: DateTime) -> None: ...
     @property
     def last_realm_certificate_timestamp(self) -> DateTime: ...
+
+class RepRealmNotFound(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
 
 class RepVlobNotFound(Rep):
     def __init__(
