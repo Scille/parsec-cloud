@@ -6,7 +6,7 @@ from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 async def test_invited_ping_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
     rep = await coolorg.invited_zack.ping(ping="hello")
-    assert rep == invited_cmds.v4.ping.RepOk(pong="hello")
+    assert rep == invited_cmds.latest.ping.RepOk(pong="hello")
 
 
 async def test_invited_ping_http_common_errors(

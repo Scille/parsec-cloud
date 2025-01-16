@@ -33,7 +33,7 @@ Example:
 ```shell
 $ cargo nextest run -p libparsec_protocol 2>&1 | python ./misc/test_expected_payload_cooker.py
 
-================== libparsec_protocol::serialization anonymous_cmds::v4::organization_bootstrap_rep_timestamp_out_of_ballpark ==================
+================== libparsec_protocol::serialization anonymous_cmds::latest::organization_bootstrap_rep_timestamp_out_of_ballpark ==================
 
     // Generated from Parsec v3.0.0-b.11+dev
     "85a6737461747573b974696d657374616d705f6f75745f6f665f62616c6c7061726bbc"

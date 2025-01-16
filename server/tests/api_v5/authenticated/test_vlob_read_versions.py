@@ -144,7 +144,7 @@ async def test_authenticated_vlob_read_versions_ok(
         # Omit vlob 1 v2, ask for vlob 2 v2 which doesn't exist and a dummy vlob ID
         items=[(vlob1_id, 1), (vlob2_id, 1), (vlob2_id, 2), (vlob1_id, 3), (VlobID.new(), 1)],
     )
-    assert rep == authenticated_cmds.v4.vlob_read_versions.RepOk(
+    assert rep == authenticated_cmds.latest.vlob_read_versions.RepOk(
         items=[
             (
                 vlob1_id,
@@ -181,7 +181,7 @@ async def test_authenticated_vlob_read_versions_realm_not_found(
 ) -> None:
     bad_realm_id = VlobID.new()
     rep = await coolorg.alice.vlob_read_versions(realm_id=bad_realm_id, items=[(VlobID.new(), 1)])
-    assert rep == authenticated_cmds.v4.vlob_read_versions.RepRealmNotFound()
+    assert rep == authenticated_cmds.latest.vlob_read_versions.RepRealmNotFound()
 
 
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
@@ -204,7 +204,7 @@ async def test_authenticated_vlob_read_versions_author_not_allowed(
             assert False, unknown
 
     rep = await author.vlob_read_versions(realm_id=coolorg.wksp1_id, items=[(VlobID.new(), 1)])
-    assert rep == authenticated_cmds.v4.vlob_read_versions.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.vlob_read_versions.RepAuthorNotAllowed()
 
 
 async def test_authenticated_vlob_read_versions_too_many_elements(
@@ -215,7 +215,7 @@ async def test_authenticated_vlob_read_versions_too_many_elements(
         realm_id=coolorg.wksp1_id,
         items=too_many_items,
     )
-    assert rep == authenticated_cmds.v4.vlob_read_versions.RepTooManyElements()
+    assert rep == authenticated_cmds.latest.vlob_read_versions.RepTooManyElements()
 
 
 async def test_authenticated_vlob_read_versions_http_common_errors(

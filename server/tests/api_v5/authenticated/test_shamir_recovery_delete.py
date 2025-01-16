@@ -51,7 +51,7 @@ async def test_authenticated_shamir_recovery_delete_ok(
     expected_topics.shamir_recovery = dt
 
     rep = await author.shamir_recovery_delete(shamir_recovery_deletion_certificate=raw_deletion)
-    assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepOk()
+    assert rep == authenticated_cmds.latest.shamir_recovery_delete.RepOk()
 
     topics = await backend.organization.test_dump_topics(shamirorg.organization_id)
     assert topics == expected_topics
@@ -86,7 +86,7 @@ async def test_authenticated_shamir_recovery_delete_invalid_certificate_corrupte
     expected_topics = await backend.organization.test_dump_topics(shamirorg.organization_id)
 
     rep = await shamirorg.alice.shamir_recovery_delete(shamir_recovery_deletion_certificate=certif)
-    assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepInvalidCertificateCorrupted()
+    assert rep == authenticated_cmds.latest.shamir_recovery_delete.RepInvalidCertificateCorrupted()
 
     topics = await backend.organization.test_dump_topics(shamirorg.organization_id)
     assert topics == expected_topics
@@ -109,7 +109,8 @@ async def test_authenticated_shamir_recovery_delete_invalid_certificate_user_id_
 
     rep = await shamirorg.alice.shamir_recovery_delete(shamir_recovery_deletion_certificate=certif)
     assert (
-        rep == authenticated_cmds.v4.shamir_recovery_delete.RepInvalidCertificateUserIdMustBeSelf()
+        rep
+        == authenticated_cmds.latest.shamir_recovery_delete.RepInvalidCertificateUserIdMustBeSelf()
     )
 
     topics = await backend.organization.test_dump_topics(shamirorg.organization_id)
@@ -135,7 +136,7 @@ async def test_authenticated_shamir_recovery_delete_shamir_recovery_not_found(
     rep = await shamirorg.alice.shamir_recovery_delete(
         shamir_recovery_deletion_certificate=raw_deletion
     )
-    assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepShamirRecoveryNotFound()
+    assert rep == authenticated_cmds.latest.shamir_recovery_delete.RepShamirRecoveryNotFound()
 
     topics = await backend.organization.test_dump_topics(shamirorg.organization_id)
     assert topics == expected_topics
@@ -181,7 +182,7 @@ async def test_authenticated_shamir_recovery_delete_recipients_mismatch(
     expected_topics = await backend.organization.test_dump_topics(shamirorg.organization_id)
 
     rep = await author.shamir_recovery_delete(shamir_recovery_deletion_certificate=raw_deletion)
-    assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepRecipientsMismatch()
+    assert rep == authenticated_cmds.latest.shamir_recovery_delete.RepRecipientsMismatch()
 
     topics = await backend.organization.test_dump_topics(shamirorg.organization_id)
     assert topics == expected_topics
@@ -206,7 +207,7 @@ async def test_authenticated_shamir_recovery_delete_shamir_recovery_already_dele
     rep = await shamirorg.bob.shamir_recovery_delete(
         shamir_recovery_deletion_certificate=raw_deletion
     )
-    assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepShamirRecoveryAlreadyDeleted(
+    assert rep == authenticated_cmds.latest.shamir_recovery_delete.RepShamirRecoveryAlreadyDeleted(
         last_shamir_certificate_timestamp=shamirorg.shamir_topic_timestamp
     )
 
@@ -231,7 +232,9 @@ async def test_authenticated_shamir_recovery_delete_timestamp_out_of_ballpark(
     rep = await shamirorg.alice.shamir_recovery_delete(
         shamir_recovery_deletion_certificate=raw_deletion
     )
-    assert isinstance(rep, authenticated_cmds.v4.shamir_recovery_delete.RepTimestampOutOfBallpark)
+    assert isinstance(
+        rep, authenticated_cmds.latest.shamir_recovery_delete.RepTimestampOutOfBallpark
+    )
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == t0
@@ -296,7 +299,7 @@ async def test_authenticated_shamir_recovery_delete_require_greater_timestamp(
     raw_deletion = deletion.dump_and_sign(author.signing_key)
 
     rep = await author.shamir_recovery_delete(shamir_recovery_deletion_certificate=raw_deletion)
-    assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.latest.shamir_recovery_delete.RepRequireGreaterTimestamp(
         strictly_greater_than=expected_strictly_greater_than
     )
 

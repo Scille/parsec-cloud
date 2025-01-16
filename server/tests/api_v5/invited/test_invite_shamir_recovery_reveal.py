@@ -9,7 +9,9 @@ async def test_invited_invite_shamir_recovery_reveal_ok(shamirorg: ShamirOrgRpcC
     token = shamirorg.alice_shamir_reveal_token
     ciphered_data = shamirorg.alice_shamir_ciphered_data
     rep = await shamirorg.shamir_invited_alice.invite_shamir_recovery_reveal(reveal_token=token)
-    assert rep == invited_cmds.v4.invite_shamir_recovery_reveal.RepOk(ciphered_data=ciphered_data)
+    assert rep == invited_cmds.latest.invite_shamir_recovery_reveal.RepOk(
+        ciphered_data=ciphered_data
+    )
 
 
 async def test_invited_invite_shamir_recovery_reveal_bad_reveal_token(
@@ -17,7 +19,7 @@ async def test_invited_invite_shamir_recovery_reveal_bad_reveal_token(
 ) -> None:
     token = InvitationToken.new()
     rep = await shamirorg.shamir_invited_alice.invite_shamir_recovery_reveal(token)
-    assert rep == invited_cmds.v4.invite_shamir_recovery_reveal.RepBadRevealToken()
+    assert rep == invited_cmds.latest.invite_shamir_recovery_reveal.RepBadRevealToken()
 
 
 async def test_invited_invite_shamir_recovery_reveal_bad_invitation_type(
@@ -26,10 +28,10 @@ async def test_invited_invite_shamir_recovery_reveal_bad_invitation_type(
     token = InvitationToken.new()
 
     rep = await coolorg.invited_zack.invite_shamir_recovery_reveal(token)
-    assert rep == invited_cmds.v4.invite_shamir_recovery_reveal.RepBadInvitationType()
+    assert rep == invited_cmds.latest.invite_shamir_recovery_reveal.RepBadInvitationType()
 
     rep = await coolorg.invited_alice_dev3.invite_shamir_recovery_reveal(token)
-    assert rep == invited_cmds.v4.invite_shamir_recovery_reveal.RepBadInvitationType()
+    assert rep == invited_cmds.latest.invite_shamir_recovery_reveal.RepBadInvitationType()
 
 
 async def test_invited_invite_shamir_recovery_reveal_http_common_errors(

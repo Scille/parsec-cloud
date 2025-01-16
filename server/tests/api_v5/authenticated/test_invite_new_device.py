@@ -22,10 +22,10 @@ async def test_authenticated_invite_new_device_ok_new(
         rep = await minimalorg.alice.invite_new_device(
             send_email=send_email,
         )
-        assert isinstance(rep, authenticated_cmds.v4.invite_new_device.RepOk)
+        assert isinstance(rep, authenticated_cmds.latest.invite_new_device.RepOk)
         assert (
             rep.email_sent
-            == authenticated_cmds.v4.invite_new_device.InvitationEmailSentStatus.SUCCESS
+            == authenticated_cmds.latest.invite_new_device.InvitationEmailSentStatus.SUCCESS
         )
         invitation_token = rep.token
 
@@ -86,7 +86,7 @@ async def test_authenticated_invite_new_device_ok_already_exist(
         rep = await minimalorg.alice.invite_new_device(
             send_email=False,
         )
-        assert isinstance(rep, authenticated_cmds.v4.invite_new_device.RepOk)
+        assert isinstance(rep, authenticated_cmds.latest.invite_new_device.RepOk)
         assert rep.token == invitation_token
 
         await spy.wait_event_occurred(
@@ -129,16 +129,16 @@ async def test_authenticated_invite_new_device_send_email_bad_outcome(
 
     with backend.event_bus.spy() as spy:
         rep = await minimalorg.alice.invite_new_device(send_email=True)
-        assert isinstance(rep, authenticated_cmds.v4.invite_new_device.RepOk)
+        assert isinstance(rep, authenticated_cmds.latest.invite_new_device.RepOk)
         invitation_token = rep.token
 
         match bad_outcome:
             case SendEmailBadOutcome.BAD_SMTP_CONFIG:
-                expected_email_sent_status = authenticated_cmds.v4.invite_new_device.InvitationEmailSentStatus.SERVER_UNAVAILABLE
+                expected_email_sent_status = authenticated_cmds.latest.invite_new_device.InvitationEmailSentStatus.SERVER_UNAVAILABLE
             case SendEmailBadOutcome.RECIPIENT_REFUSED:
-                expected_email_sent_status = authenticated_cmds.v4.invite_new_device.InvitationEmailSentStatus.RECIPIENT_REFUSED
+                expected_email_sent_status = authenticated_cmds.latest.invite_new_device.InvitationEmailSentStatus.RECIPIENT_REFUSED
             case SendEmailBadOutcome.SERVER_UNAVAILABLE:
-                expected_email_sent_status = authenticated_cmds.v4.invite_new_device.InvitationEmailSentStatus.SERVER_UNAVAILABLE
+                expected_email_sent_status = authenticated_cmds.latest.invite_new_device.InvitationEmailSentStatus.SERVER_UNAVAILABLE
         assert rep.email_sent == expected_email_sent_status
 
         await spy.wait_event_occurred(

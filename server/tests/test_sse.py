@@ -70,8 +70,8 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
 
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -83,8 +83,8 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
 
         # Only recent event could be received
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventPinged(ping="recent_event")
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventPinged(ping="recent_event")
         )
 
 
@@ -97,8 +97,8 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
     async with minimalorg.alice.events_listen() as alice_sse:
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -142,8 +142,8 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
 
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -151,8 +151,8 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
 
         # Backend still send new events without processing `Last-Event-ID`
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventPinged(ping="recent_event")
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventPinged(ping="recent_event")
         )
 
 
@@ -259,14 +259,14 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
         rep = await coolorg.alice.user_revoke(
             revoke_certif.dump_and_sign(coolorg.alice.signing_key)
         )
-        assert rep == authenticated_cmds.v4.user_revoke.RepOk()
+        assert rep == authenticated_cmds.latest.user_revoke.RepOk()
 
         await send_ping("after-revocation")
 
         # Bob still receives the ServerConfig event
         event = await bob_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -274,14 +274,14 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
 
         # And the events sent before the revocation
         event = await bob_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventPinged(ping="before-revocation")
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventPinged(ping="before-revocation")
         )
 
         # Then Bob receives a notification that he was revoked
         event = await bob_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventCommonCertificate(timestamp=now)
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventCommonCertificate(timestamp=now)
         )
 
         # And then the connection is closed
@@ -313,8 +313,8 @@ async def test_close_on_organization_tos_updated(
 
         # Bob still receives the ServerConfig event
         event = await bob_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -322,8 +322,8 @@ async def test_close_on_organization_tos_updated(
 
         # And the events sent before the tos-update
         event = await bob_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventPinged(ping="before-tos-update")
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventPinged(ping="before-tos-update")
         )
 
         # And then the connection is closed

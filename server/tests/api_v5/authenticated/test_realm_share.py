@@ -134,7 +134,7 @@ async def test_authenticated_realm_share_ok(
             # Keys bundle access is not readable by the server, so we can put anything here
             recipient_keys_bundle_access=b"<mallory keys bundle access>",
         )
-        assert rep == authenticated_cmds.v4.realm_share.RepOk()
+        assert rep == authenticated_cmds.latest.realm_share.RepOk()
         await spy.wait_event_occurred(
             EventRealmCertificate(
                 organization_id=coolorg.organization_id,
@@ -188,7 +188,7 @@ async def test_authenticated_realm_share_role_already_granted(
         # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<bob keys bundle access>",
     )
-    assert rep == authenticated_cmds.v4.realm_share.RepRoleAlreadyGranted(
+    assert rep == authenticated_cmds.latest.realm_share.RepRoleAlreadyGranted(
         last_realm_certificate_timestamp=get_last_realm_certificate_timestamp(
             coolorg.testbed_template, coolorg.wksp1_id
         )
@@ -238,7 +238,7 @@ async def test_authenticated_realm_share_invalid_certificate(
         # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<bob keys bundle access>",
     )
-    assert rep == authenticated_cmds.v4.realm_share.RepInvalidCertificate()
+    assert rep == authenticated_cmds.latest.realm_share.RepInvalidCertificate()
 
 
 @pytest.mark.parametrize(
@@ -335,7 +335,7 @@ async def test_authenticated_realm_share_key_bad_key_index(
         # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<mallory keys bundle access>",
     )
-    assert rep == authenticated_cmds.v4.realm_share.RepBadKeyIndex(
+    assert rep == authenticated_cmds.latest.realm_share.RepBadKeyIndex(
         last_realm_certificate_timestamp=wksp_last_certificate_timestamp
     )
 
@@ -371,7 +371,7 @@ async def test_authenticated_realm_share_recipient_revoked(
         # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<mallory keys bundle access>",
     )
-    assert rep == authenticated_cmds.v4.realm_share.RepRecipientRevoked()
+    assert rep == authenticated_cmds.latest.realm_share.RepRecipientRevoked()
 
 
 async def test_authenticated_realm_share_bad_key_index(
@@ -388,7 +388,7 @@ async def test_authenticated_realm_share_bad_key_index(
         # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<mallory keys bundle access>",
     )
-    assert rep == authenticated_cmds.v4.realm_share.RepBadKeyIndex(
+    assert rep == authenticated_cmds.latest.realm_share.RepBadKeyIndex(
         last_realm_certificate_timestamp=get_last_realm_certificate_timestamp(
             coolorg.testbed_template, coolorg.wksp1_id
         )
@@ -548,7 +548,7 @@ async def test_authenticated_realm_share_author_not_allowed(
         # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<recipient keys bundle access>",
     )
-    assert rep == authenticated_cmds.v4.realm_share.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.realm_share.RepAuthorNotAllowed()
 
 
 async def test_authenticated_realm_share_realm_not_found(
@@ -567,7 +567,7 @@ async def test_authenticated_realm_share_realm_not_found(
         # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<mallory keys bundle access>",
     )
-    assert rep == authenticated_cmds.v4.realm_share.RepRealmNotFound()
+    assert rep == authenticated_cmds.latest.realm_share.RepRealmNotFound()
 
 
 async def test_authenticated_realm_share_recipient_not_found(
@@ -585,7 +585,7 @@ async def test_authenticated_realm_share_recipient_not_found(
         # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<mallory keys bundle access>",
     )
-    assert rep == authenticated_cmds.v4.realm_share.RepRecipientNotFound()
+    assert rep == authenticated_cmds.latest.realm_share.RepRecipientNotFound()
 
 
 @pytest.mark.parametrize("role", (RealmRole.MANAGER, RealmRole.OWNER))
@@ -600,7 +600,7 @@ async def test_authenticated_realm_share_role_incompatible_with_outsider(
         # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<mallory keys bundle access>",
     )
-    assert rep == authenticated_cmds.v4.realm_share.RepRoleIncompatibleWithOutsider()
+    assert rep == authenticated_cmds.latest.realm_share.RepRoleIncompatibleWithOutsider()
 
 
 async def test_authenticated_realm_share_timestamp_out_of_ballpark(
@@ -619,7 +619,7 @@ async def test_authenticated_realm_share_timestamp_out_of_ballpark(
         # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<mallory keys bundle access>",
     )
-    assert isinstance(rep, authenticated_cmds.v4.realm_share.RepTimestampOutOfBallpark)
+    assert isinstance(rep, authenticated_cmds.latest.realm_share.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == timestamp_out_of_ballpark
@@ -680,7 +680,7 @@ async def test_authenticated_realm_share_require_greater_timestamp(
         # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<alice keys bundle access>",
     )
-    assert rep == authenticated_cmds.v4.realm_share.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.latest.realm_share.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
 

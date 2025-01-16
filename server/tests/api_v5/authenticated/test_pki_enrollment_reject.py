@@ -52,7 +52,7 @@ async def test_authenticated_pki_enrollment_reject_ok(
     enrollment_id: EnrollmentID,
 ) -> None:
     rep = await coolorg.alice.pki_enrollment_reject(enrollment_id=enrollment_id)
-    assert rep == authenticated_cmds.v4.pki_enrollment_reject.RepOk()
+    assert rep == authenticated_cmds.latest.pki_enrollment_reject.RepOk()
 
 
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
@@ -73,7 +73,7 @@ async def test_authenticated_pki_enrollment_reject_author_not_allowed(
             assert False, unknown
 
     rep = await author.pki_enrollment_reject(enrollment_id=enrollment_id)
-    assert rep == authenticated_cmds.v4.pki_enrollment_reject.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.pki_enrollment_reject.RepAuthorNotAllowed()
 
 
 async def test_authenticated_pki_enrollment_reject_enrollment_no_longer_available(
@@ -90,14 +90,14 @@ async def test_authenticated_pki_enrollment_reject_enrollment_no_longer_availabl
     assert outcome is None
 
     rep = await coolorg.alice.pki_enrollment_reject(enrollment_id=enrollment_id)
-    assert rep == authenticated_cmds.v4.pki_enrollment_reject.RepEnrollmentNoLongerAvailable()
+    assert rep == authenticated_cmds.latest.pki_enrollment_reject.RepEnrollmentNoLongerAvailable()
 
 
 async def test_authenticated_pki_enrollment_reject_enrollment_not_found(
     coolorg: CoolorgRpcClients,
 ) -> None:
     rep = await coolorg.alice.pki_enrollment_reject(enrollment_id=EnrollmentID.new())
-    assert rep == authenticated_cmds.v4.pki_enrollment_reject.RepEnrollmentNotFound()
+    assert rep == authenticated_cmds.latest.pki_enrollment_reject.RepEnrollmentNotFound()
 
 
 async def test_authenticated_pki_enrollment_reject_http_common_errors(

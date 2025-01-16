@@ -51,7 +51,7 @@ async def test_authenticated_pki_enrollment_list_ok(
             assert outcome is None
 
             expected_enrollments = [
-                authenticated_cmds.v4.pki_enrollment_list.PkiEnrollmentListItem(
+                authenticated_cmds.latest.pki_enrollment_list.PkiEnrollmentListItem(
                     enrollment_id=enrollment_id,
                     submit_payload=submit_payload,
                     submit_payload_signature=b"<philip submit payload signature>",
@@ -64,7 +64,9 @@ async def test_authenticated_pki_enrollment_list_ok(
             assert False, unknown
 
     rep = await coolorg.alice.pki_enrollment_list()
-    assert rep == authenticated_cmds.v4.pki_enrollment_list.RepOk(enrollments=expected_enrollments)
+    assert rep == authenticated_cmds.latest.pki_enrollment_list.RepOk(
+        enrollments=expected_enrollments
+    )
 
 
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
@@ -85,7 +87,7 @@ async def test_authenticated_pki_enrollment_list_author_not_allowed(
             assert False, unknown
 
     rep = await author.pki_enrollment_list()
-    assert rep == authenticated_cmds.v4.pki_enrollment_list.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.pki_enrollment_list.RepAuthorNotAllowed()
 
 
 async def test_authenticated_pki_enrollment_list_http_common_errors(

@@ -22,7 +22,7 @@ from tests.common import (
     bob_becomes_admin_and_changes_alice,
 )
 
-Response = authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.Rep | None
+Response = authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.Rep | None
 
 
 @pytest.fixture
@@ -65,7 +65,7 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_ok(
         greeting_attempt=greeting_attempt,
         reason=reason,
     )
-    assert rep == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepOk()
+    assert rep == authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepOk()
 
 
 async def test_authenticated_invite_greeter_cancel_greeting_attempt_author_not_allowed(
@@ -80,7 +80,10 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_author_not_a
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
 
-    assert rep == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepAuthorNotAllowed()
+    assert (
+        rep
+        == authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepAuthorNotAllowed()
+    )
 
 
 async def test_authenticated_invite_greeter_cancel_greeting_attempt_invitation_cancelled(
@@ -93,7 +96,8 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_invitation_c
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
     assert (
-        rep == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepInvitationCancelled()
+        rep
+        == authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepInvitationCancelled()
     )
 
 
@@ -108,7 +112,8 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_invitation_c
     )
 
     assert (
-        rep == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepInvitationCompleted()
+        rep
+        == authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepInvitationCompleted()
     )
 
 
@@ -121,7 +126,7 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_att
     )
     assert (
         rep
-        == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptNotFound()
+        == authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptNotFound()
     )
 
     # Make Bob an admin
@@ -134,7 +139,7 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_att
     )
     assert (
         rep
-        == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptNotFound()
+        == authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptNotFound()
     )
 
 
@@ -144,7 +149,7 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_att
     rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
         greeter=coolorg.alice.user_id,
     )
-    assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
+    assert isinstance(rep, invited_cmds.latest.invite_claimer_start_greeting_attempt.RepOk)
 
     rep = await coolorg.alice.invite_greeter_cancel_greeting_attempt(
         greeting_attempt=rep.greeting_attempt,
@@ -153,7 +158,7 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_att
 
     assert (
         rep
-        == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptNotJoined()
+        == authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptNotJoined()
     )
 
 
@@ -172,7 +177,7 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_att
         greeting_attempt=greeting_attempt,
         reason=reason,
     )
-    assert rep == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepOk()
+    assert rep == authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepOk()
 
     # Cancel again
     rep = await coolorg.alice.invite_greeter_cancel_greeting_attempt(
@@ -182,11 +187,11 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_att
 
     assert isinstance(
         rep,
-        authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled,
+        authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled,
     )
     assert (
         rep
-        == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled(
+        == authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled(
             timestamp=rep.timestamp,
             reason=reason,
             origin=GreeterOrClaimer.GREETER,
@@ -200,7 +205,7 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_with_deleted
     rep = await shamirorg.bob.invite_greeter_start_greeting_attempt(
         token=shamirorg.shamir_invited_alice.token,
     )
-    assert isinstance(rep, authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.invite_greeter_start_greeting_attempt.RepOk)
     greeting_attempt = rep.greeting_attempt
 
     # Delete Alice shamir recovery
@@ -215,14 +220,15 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_with_deleted
         share_recipients=set(brief.per_recipient_shares.keys()),
     ).dump_and_sign(author.signing_key)
     rep = await shamirorg.alice.shamir_recovery_delete(deletion)
-    assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepOk()
+    assert rep == authenticated_cmds.latest.shamir_recovery_delete.RepOk()
 
     rep = await shamirorg.bob.invite_greeter_cancel_greeting_attempt(
         greeting_attempt=greeting_attempt,
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
     assert (
-        rep == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepInvitationCancelled()
+        rep
+        == authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepInvitationCancelled()
     )
 
 

@@ -38,7 +38,7 @@ async def test_authenticated_realm_create_ok(
         rep = await coolorg.alice.realm_create(
             realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
         )
-        assert rep == authenticated_cmds.v4.realm_create.RepOk()
+        assert rep == authenticated_cmds.latest.realm_create.RepOk()
         await spy.wait_event_occurred(
             EventRealmCertificate(
                 organization_id=coolorg.organization_id,
@@ -62,7 +62,7 @@ async def test_authenticated_realm_create_realm_already_exists(
     rep = await coolorg.alice.realm_create(
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
-    assert rep == authenticated_cmds.v4.realm_create.RepRealmAlreadyExists(
+    assert rep == authenticated_cmds.latest.realm_create.RepRealmAlreadyExists(
         last_realm_certificate_timestamp=get_last_realm_certificate_timestamp(
             testbed_template=coolorg.testbed_template,
             realm_id=coolorg.wksp1_id,
@@ -98,7 +98,7 @@ async def test_authenticated_realm_create_invalid_certificate(
             assert False, unknown
 
     rep = await coolorg.alice.realm_create(realm_role_certificate=certif)
-    assert rep == authenticated_cmds.v4.realm_create.RepInvalidCertificate()
+    assert rep == authenticated_cmds.latest.realm_create.RepInvalidCertificate()
 
 
 async def test_authenticated_realm_create_timestamp_out_of_ballpark(
@@ -115,7 +115,7 @@ async def test_authenticated_realm_create_timestamp_out_of_ballpark(
     rep = await coolorg.alice.realm_create(
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
-    assert isinstance(rep, authenticated_cmds.v4.realm_create.RepTimestampOutOfBallpark)
+    assert isinstance(rep, authenticated_cmds.latest.realm_create.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == timestamp_out_of_ballpark
@@ -177,7 +177,7 @@ async def test_authenticated_realm_create_isolated_from_other_realms(
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
 
-    assert rep == authenticated_cmds.v4.realm_create.RepOk()
+    assert rep == authenticated_cmds.latest.realm_create.RepOk()
 
 
 @pytest.mark.parametrize(
@@ -219,7 +219,7 @@ async def test_authenticated_realm_create_require_greater_timestamp(
     rep = await coolorg.alice.realm_create(
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
-    assert rep == authenticated_cmds.v4.realm_create.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.latest.realm_create.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp
     )
 

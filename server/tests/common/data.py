@@ -800,7 +800,7 @@ async def invited_greeting_with_deleted_shamir_tester(
             share_recipients=set(brief.per_recipient_shares.keys()),
         ).dump_and_sign(author.signing_key)
         rep = await shamirorg.alice.shamir_recovery_delete(deletion)
-        assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepOk()
+        assert rep == authenticated_cmds.latest.shamir_recovery_delete.RepOk()
 
         # Start greeting attempt
         INVITATION_ALREADY_USED_OR_DELETED = 410

@@ -117,7 +117,7 @@ async def test_authenticated_vlob_update_ok(
             blob=v2_blob,
             timestamp=v2_timestamp,
         )
-        assert rep == authenticated_cmds.v4.vlob_update.RepOk()
+        assert rep == authenticated_cmds.latest.vlob_update.RepOk()
 
         await spy.wait_event_occurred(
             EventVlob(
@@ -253,7 +253,7 @@ async def test_authenticated_vlob_update_author_not_allowed(
         version=2,
         blob=b"<block content>",
     )
-    assert rep == authenticated_cmds.v4.vlob_update.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.vlob_update.RepAuthorNotAllowed()
 
     # Ensure no changes were made
     dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
@@ -331,7 +331,7 @@ async def test_authenticated_vlob_update_bad_key_index(
         version=2,
         blob=b"<block content>",
     )
-    assert rep == authenticated_cmds.v4.vlob_update.RepBadKeyIndex(
+    assert rep == authenticated_cmds.latest.vlob_update.RepBadKeyIndex(
         last_realm_certificate_timestamp=wksp1_last_certificate_timestamp
     )
 
@@ -348,7 +348,7 @@ async def test_authenticated_vlob_update_vlob_not_found(coolorg: CoolorgRpcClien
         version=2,
         blob=b"<block content>",
     )
-    assert rep == authenticated_cmds.v4.vlob_update.RepVlobNotFound()
+    assert rep == authenticated_cmds.latest.vlob_update.RepVlobNotFound()
 
 
 @pytest.mark.parametrize(
@@ -390,7 +390,7 @@ async def test_authenticated_vlob_update_bad_vlob_version(
         version=bad_version,
         blob=b"<block content>",
     )
-    assert rep == authenticated_cmds.v4.vlob_update.RepBadVlobVersion()
+    assert rep == authenticated_cmds.latest.vlob_update.RepBadVlobVersion()
 
     # Ensure no changes were made
     dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
@@ -434,7 +434,7 @@ async def test_authenticated_vlob_update_rejected_by_sequester_service(
         timestamp=DateTime.now(),
         blob=b"<block content>",
     )
-    assert rep == authenticated_cmds.v4.vlob_update.RepRejectedBySequesterService(
+    assert rep == authenticated_cmds.latest.vlob_update.RepRejectedBySequesterService(
         service_id=sequestered_org.sequester_service_2_id, reason=None
     )
 
@@ -480,7 +480,7 @@ async def test_authenticated_vlob_update_sequester_service_unavailable(
         timestamp=DateTime.now(),
         blob=b"<block content>",
     )
-    assert rep == authenticated_cmds.v4.vlob_update.RepSequesterServiceUnavailable(
+    assert rep == authenticated_cmds.latest.vlob_update.RepSequesterServiceUnavailable(
         service_id=sequestered_org.sequester_service_2_id
     )
 
@@ -501,7 +501,7 @@ async def test_authenticated_vlob_update_timestamp_out_of_ballpark(
         timestamp=t0,
         blob=b"<block content>",
     )
-    assert isinstance(rep, authenticated_cmds.v4.vlob_update.RepTimestampOutOfBallpark)
+    assert isinstance(rep, authenticated_cmds.latest.vlob_update.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == t0
@@ -563,7 +563,7 @@ async def test_authenticated_vlob_update_require_greater_timestamp(
         version=2,
         blob=b"<updated block content>",
     )
-    assert rep == authenticated_cmds.v4.vlob_update.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.latest.vlob_update.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp
     )
 
@@ -606,7 +606,7 @@ async def test_authenticated_vlob_update_max_blob_size(
             version=2,
             blob=v2_blob,
         )
-        assert rep == authenticated_cmds.v4.vlob_update.RepOk()
+        assert rep == authenticated_cmds.latest.vlob_update.RepOk()
 
         await spy.wait_event_occurred(
             EventVlob(

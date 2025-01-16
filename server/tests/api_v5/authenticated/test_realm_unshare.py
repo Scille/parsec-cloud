@@ -120,7 +120,7 @@ async def test_authenticated_realm_unshare_ok(
         rep = await author.realm_unshare(
             realm_role_certificate=certif.dump_and_sign(author.signing_key)
         )
-        assert rep == authenticated_cmds.v4.realm_unshare.RepOk()
+        assert rep == authenticated_cmds.latest.realm_unshare.RepOk()
         await spy.wait_event_occurred(
             EventRealmCertificate(
                 organization_id=coolorg.organization_id,
@@ -281,7 +281,7 @@ async def test_authenticated_realm_unshare_author_not_allowed(
     rep = await author.realm_unshare(
         realm_role_certificate=certif.dump_and_sign(author.signing_key),
     )
-    assert rep == authenticated_cmds.v4.realm_unshare.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.realm_unshare.RepAuthorNotAllowed()
 
 
 async def test_authenticated_realm_unshare_realm_not_found(
@@ -294,7 +294,7 @@ async def test_authenticated_realm_unshare_realm_not_found(
     rep = await coolorg.alice.realm_unshare(
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
     )
-    assert rep == authenticated_cmds.v4.realm_unshare.RepRealmNotFound()
+    assert rep == authenticated_cmds.latest.realm_unshare.RepRealmNotFound()
 
 
 async def test_authenticated_realm_unshare_recipient_not_found(
@@ -307,7 +307,7 @@ async def test_authenticated_realm_unshare_recipient_not_found(
     rep = await coolorg.alice.realm_unshare(
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
     )
-    assert rep == authenticated_cmds.v4.realm_unshare.RepRecipientNotFound()
+    assert rep == authenticated_cmds.latest.realm_unshare.RepRecipientNotFound()
 
 
 async def test_authenticated_realm_unshare_recipient_already_unshared(
@@ -331,7 +331,7 @@ async def test_authenticated_realm_unshare_recipient_already_unshared(
     rep = await coolorg.alice.realm_unshare(
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
     )
-    assert rep == authenticated_cmds.v4.realm_unshare.RepRecipientAlreadyUnshared(
+    assert rep == authenticated_cmds.latest.realm_unshare.RepRecipientAlreadyUnshared(
         last_realm_certificate_timestamp=last_realm_certificate_timestamp
     )
 
@@ -374,7 +374,7 @@ async def test_authenticated_realm_unshare_invalid_certificate(
     rep = await coolorg.alice.realm_unshare(
         realm_role_certificate=certif,
     )
-    assert rep == authenticated_cmds.v4.realm_unshare.RepInvalidCertificate()
+    assert rep == authenticated_cmds.latest.realm_unshare.RepInvalidCertificate()
 
 
 async def test_authenticated_realm_unshare_timestamp_out_of_ballpark(
@@ -387,7 +387,7 @@ async def test_authenticated_realm_unshare_timestamp_out_of_ballpark(
     rep = await coolorg.alice.realm_unshare(
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
     )
-    assert isinstance(rep, authenticated_cmds.v4.realm_unshare.RepTimestampOutOfBallpark)
+    assert isinstance(rep, authenticated_cmds.latest.realm_unshare.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == timestamp_out_of_ballpark
@@ -445,7 +445,7 @@ async def test_authenticated_realm_unshare_require_greater_timestamp(
     rep = await coolorg.bob.realm_unshare(
         realm_role_certificate=certif.dump_and_sign(coolorg.bob.signing_key),
     )
-    assert rep == authenticated_cmds.v4.realm_unshare.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.latest.realm_unshare.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
 

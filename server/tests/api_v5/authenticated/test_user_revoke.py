@@ -197,7 +197,7 @@ async def test_authenticated_user_revoke_ok(
         rep = await coolorg.alice.user_revoke(
             revoked_user_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
         )
-        assert rep == authenticated_cmds.v4.user_revoke.RepOk()
+        assert rep == authenticated_cmds.latest.user_revoke.RepOk()
 
         await spy.wait_event_occurred(
             EventUserRevokedOrFrozen(
@@ -236,7 +236,7 @@ async def test_disconnect_sse(
         rep = await coolorg.alice.user_revoke(
             revoked_user_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
         )
-        assert rep == authenticated_cmds.v4.user_revoke.RepOk()
+        assert rep == authenticated_cmds.latest.user_revoke.RepOk()
 
         # 3) Hence Bob gets disconnected...
 
@@ -299,7 +299,7 @@ async def test_authenticated_user_revoke_author_not_allowed(
     rep = await author.user_revoke(
         revoked_user_certificate=certif.dump_and_sign(coolorg.bob.signing_key)
     )
-    assert rep == authenticated_cmds.v4.user_revoke.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.user_revoke.RepAuthorNotAllowed()
 
 
 async def test_authenticated_user_revoke_user_not_found(coolorg: CoolorgRpcClients) -> None:
@@ -312,7 +312,7 @@ async def test_authenticated_user_revoke_user_not_found(coolorg: CoolorgRpcClien
     rep = await coolorg.alice.user_revoke(
         revoked_user_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
-    assert rep == authenticated_cmds.v4.user_revoke.RepUserNotFound()
+    assert rep == authenticated_cmds.latest.user_revoke.RepUserNotFound()
 
 
 async def test_authenticated_user_revoke_user_already_revoked(
@@ -344,7 +344,7 @@ async def test_authenticated_user_revoke_user_already_revoked(
     rep = await coolorg.alice.user_revoke(
         revoked_user_certificate=certif2.dump_and_sign(coolorg.alice.signing_key)
     )
-    assert rep == authenticated_cmds.v4.user_revoke.RepUserAlreadyRevoked(
+    assert rep == authenticated_cmds.latest.user_revoke.RepUserAlreadyRevoked(
         last_common_certificate_timestamp=t1
     )
 
@@ -382,7 +382,7 @@ async def test_authenticated_user_revoke_invalid_certificate(
             assert False, unknown
 
     rep = await coolorg.alice.user_revoke(revoked_user_certificate=certif)
-    assert rep == authenticated_cmds.v4.user_revoke.RepInvalidCertificate()
+    assert rep == authenticated_cmds.latest.user_revoke.RepInvalidCertificate()
 
 
 async def test_authenticated_user_revoke_timestamp_out_of_ballpark(
@@ -396,7 +396,7 @@ async def test_authenticated_user_revoke_timestamp_out_of_ballpark(
     ).dump_and_sign(coolorg.alice.signing_key)
 
     rep = await coolorg.alice.user_revoke(revoked_user_certificate=certif)
-    assert isinstance(rep, authenticated_cmds.v4.user_revoke.RepTimestampOutOfBallpark)
+    assert isinstance(rep, authenticated_cmds.latest.user_revoke.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == t0
@@ -447,7 +447,7 @@ async def test_authenticated_user_revoke_require_greater_timestamp(
     ).dump_and_sign(coolorg.bob.signing_key)
 
     rep = await coolorg.bob.user_revoke(revoked_user_certificate=certif)
-    assert rep == authenticated_cmds.v4.user_revoke.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.latest.user_revoke.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
 

@@ -61,7 +61,7 @@ async def existing_enrollment(coolorg: CoolorgRpcClients, submit_payload: bytes)
         submit_payload_signature=submit_payload_signature,
         submit_payload=submit_payload,
     )
-    assert isinstance(rep, anonymous_cmds.v4.pki_enrollment_submit.RepOk)
+    assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
 
     return Enrollment(
         enrollment_id=enrollment_id,
@@ -84,7 +84,7 @@ async def test_anonymous_pki_enrollment_submit_ok(
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload=submit_payload,
     )
-    assert isinstance(rep, anonymous_cmds.v4.pki_enrollment_submit.RepOk)
+    assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
 
 
 async def test_anonymous_pki_enrollment_submit_ok_with_force(
@@ -98,7 +98,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_force(
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload=submit_payload,
     )
-    assert isinstance(rep, anonymous_cmds.v4.pki_enrollment_submit.RepOk)
+    assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
 
 
 async def test_anonymous_pki_enrollment_submit_ok_with_email_from_revoked_user(
@@ -127,7 +127,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_email_from_revoked_user(
         submit_payload_signature=b"<bob submit payload signature>",
         submit_payload=submit_payload,
     )
-    assert isinstance(rep, anonymous_cmds.v4.pki_enrollment_submit.RepOk)
+    assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
 
 
 async def test_anonymous_pki_enrollment_submit_ok_with_cancelled_enrollment(
@@ -152,7 +152,7 @@ async def test_anonymous_pki_enrollment_submit_ok_with_cancelled_enrollment(
         submit_payload_signature=existing_enrollment.submit_payload_signature,
         submit_payload=existing_enrollment.submit_payload,
     )
-    assert isinstance(rep, anonymous_cmds.v4.pki_enrollment_submit.RepOk)
+    assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepOk)
 
 
 async def test_anonymous_pki_enrollment_submit_x509_certificate_already_submitted(
@@ -168,7 +168,7 @@ async def test_anonymous_pki_enrollment_submit_x509_certificate_already_submitte
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload=submit_payload,
     )
-    assert rep == anonymous_cmds.v4.pki_enrollment_submit.RepX509CertificateAlreadySubmitted(
+    assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepX509CertificateAlreadySubmitted(
         submitted_on=existing_enrollment.submitted_on
     )
 
@@ -199,7 +199,7 @@ async def test_anonymous_pki_enrollment_submit_enrollment_id_already_used(
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload=submit_payload,
     )
-    assert rep == anonymous_cmds.v4.pki_enrollment_submit.RepEnrollmentIdAlreadyUsed()
+    assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepEnrollmentIdAlreadyUsed()
 
 
 async def test_anonymous_pki_enrollment_submit_email_already_enrolled(
@@ -214,7 +214,7 @@ async def test_anonymous_pki_enrollment_submit_email_already_enrolled(
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload=submit_payload,
     )
-    assert rep == anonymous_cmds.v4.pki_enrollment_submit.RepEmailAlreadyEnrolled()
+    assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepEmailAlreadyEnrolled()
 
 
 async def test_anonymous_pki_enrollment_submit_already_enrolled(
@@ -302,7 +302,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload=submit_payload,
     )
-    assert rep == anonymous_cmds.v4.pki_enrollment_submit.RepAlreadyEnrolled()
+    assert rep == anonymous_cmds.latest.pki_enrollment_submit.RepAlreadyEnrolled()
 
 
 async def test_anonymous_pki_enrollment_submit_invalid_payload_data(
@@ -316,7 +316,7 @@ async def test_anonymous_pki_enrollment_submit_invalid_payload_data(
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload=b"<dummy data>",
     )
-    assert isinstance(rep, anonymous_cmds.v4.pki_enrollment_submit.RepInvalidPayloadData)
+    assert isinstance(rep, anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayloadData)
 
 
 async def test_anonymous_pki_enrollment_submit_http_common_errors(

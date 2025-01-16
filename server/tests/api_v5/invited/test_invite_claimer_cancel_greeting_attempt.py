@@ -50,7 +50,7 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_ok(
         greeting_attempt=greeting_attempt,
         reason=reason,
     )
-    assert rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepOk()
+    assert rep == invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepOk()
 
 
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_not_allowed(
@@ -59,7 +59,7 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_not_allowe
     rep = await coolorg.invited_zack.invite_claimer_start_greeting_attempt(
         greeter=coolorg.alice.user_id,
     )
-    assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
+    assert isinstance(rep, invited_cmds.latest.invite_claimer_start_greeting_attempt.RepOk)
     greeting_attempt = rep.greeting_attempt
 
     await bob_becomes_admin_and_changes_alice(
@@ -72,7 +72,7 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_not_allowe
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
 
-    assert rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreeterNotAllowed()
+    assert rep == invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepGreeterNotAllowed()
 
 
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_revoked(
@@ -86,7 +86,7 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_revoked(
         timestamp=DateTime.now(),
     ).dump_and_sign(coolorg.alice.signing_key)
     rep = await coolorg.alice.user_update(certif)
-    assert rep == authenticated_cmds.v4.user_update.RepOk()
+    assert rep == authenticated_cmds.latest.user_update.RepOk()
 
     # Revoke Alice
     now = DateTime.now()
@@ -96,13 +96,13 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_revoked(
         user_id=coolorg.alice.user_id,
     ).dump_and_sign(coolorg.bob.signing_key)
     rep = await coolorg.bob.user_revoke(certif)
-    assert rep == authenticated_cmds.v4.user_revoke.RepOk()
+    assert rep == authenticated_cmds.latest.user_revoke.RepOk()
 
     rep = await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
         greeting_attempt=greeting_attempt,
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
-    assert rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreeterRevoked()
+    assert rep == invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepGreeterRevoked()
 
 
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_not_found(
@@ -113,7 +113,8 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_n
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
     assert (
-        rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptNotFound()
+        rep
+        == invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptNotFound()
     )
 
     # Zack uses Alice greeting attempt
@@ -122,7 +123,8 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_n
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
     assert (
-        rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptNotFound()
+        rep
+        == invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptNotFound()
     )
 
 
@@ -132,7 +134,7 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_n
     rep = await coolorg.alice.invite_greeter_start_greeting_attempt(
         token=coolorg.invited_alice_dev3.token,
     )
-    assert isinstance(rep, authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.invite_greeter_start_greeting_attempt.RepOk)
 
     rep = await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
         greeting_attempt=rep.greeting_attempt,
@@ -140,7 +142,8 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_n
     )
 
     assert (
-        rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptNotJoined()
+        rep
+        == invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptNotJoined()
     )
 
 
@@ -159,7 +162,7 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_a
         greeting_attempt=greeting_attempt,
         reason=reason,
     )
-    assert rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepOk()
+    assert rep == invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepOk()
 
     # Cancel again
     rep = await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
@@ -168,11 +171,11 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_a
     )
     assert isinstance(
         rep,
-        invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled,
+        invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled,
     )
     assert (
         rep
-        == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled(
+        == invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled(
             timestamp=rep.timestamp,
             reason=reason,
             origin=GreeterOrClaimer.CLAIMER,
@@ -187,7 +190,7 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_with_shamir_delete
     rep = await shamirorg.shamir_invited_alice.invite_claimer_start_greeting_attempt(
         greeter=shamirorg.bob.user_id,
     )
-    assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
+    assert isinstance(rep, invited_cmds.latest.invite_claimer_start_greeting_attempt.RepOk)
 
     async def do():
         await shamirorg.shamir_invited_alice.invite_claimer_cancel_greeting_attempt(

@@ -31,10 +31,10 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
             send_email=send_email,
             claimer_user_id=shamirorg.mallory.user_id,
         )
-        assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepOk)
+        assert isinstance(rep, authenticated_cmds.latest.invite_new_shamir_recovery.RepOk)
         assert (
             rep.email_sent
-            == authenticated_cmds.v4.invite_new_shamir_recovery.InvitationEmailSentStatus.SUCCESS
+            == authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.SUCCESS
         )
         invitation_token = rep.token
 
@@ -85,14 +85,14 @@ async def test_authenticated_invite_new_shamir_recovery_author_not_allowed(
         send_email=send_email,
         claimer_user_id=shamirorg.alice.user_id,
     )
-    assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepAuthorNotAllowed)
+    assert isinstance(rep, authenticated_cmds.latest.invite_new_shamir_recovery.RepAuthorNotAllowed)
 
     # No shamir setup have been created
     rep = await shamirorg.alice.invite_new_shamir_recovery(
         send_email=send_email,
         claimer_user_id=shamirorg.mike.user_id,
     )
-    assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepAuthorNotAllowed)
+    assert isinstance(rep, authenticated_cmds.latest.invite_new_shamir_recovery.RepAuthorNotAllowed)
 
 
 @pytest.mark.parametrize("send_email", (False, True))
@@ -104,7 +104,7 @@ async def test_authenticated_invite_new_shamir_recovery_user_not_found(
         send_email=send_email,
         claimer_user_id=UserID.new(),
     )
-    assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepUserNotFound)
+    assert isinstance(rep, authenticated_cmds.latest.invite_new_shamir_recovery.RepUserNotFound)
 
 
 async def test_authenticated_invite_new_shamir_recovery_ok_already_exist(
@@ -117,7 +117,7 @@ async def test_authenticated_invite_new_shamir_recovery_ok_already_exist(
             send_email=False,
             claimer_user_id=shamirorg.alice.user_id,
         )
-        assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepOk)
+        assert isinstance(rep, authenticated_cmds.latest.invite_new_shamir_recovery.RepOk)
         assert rep.token == shamirorg.shamir_invited_alice.token
         await spy.wait_event_occurred(
             EventInvitation(
@@ -159,16 +159,16 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
         rep = await shamirorg.mike.invite_new_shamir_recovery(
             send_email=True, claimer_user_id=shamirorg.mallory.user_id
         )
-        assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepOk)
+        assert isinstance(rep, authenticated_cmds.latest.invite_new_shamir_recovery.RepOk)
         invitation_token = rep.token
 
         match bad_outcome:
             case SendEmailBadOutcome.BAD_SMTP_CONFIG:
-                expected_email_sent_status = authenticated_cmds.v4.invite_new_shamir_recovery.InvitationEmailSentStatus.SERVER_UNAVAILABLE
+                expected_email_sent_status = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.SERVER_UNAVAILABLE
             case SendEmailBadOutcome.RECIPIENT_REFUSED:
-                expected_email_sent_status = authenticated_cmds.v4.invite_new_shamir_recovery.InvitationEmailSentStatus.RECIPIENT_REFUSED
+                expected_email_sent_status = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.RECIPIENT_REFUSED
             case SendEmailBadOutcome.SERVER_UNAVAILABLE:
-                expected_email_sent_status = authenticated_cmds.v4.invite_new_shamir_recovery.InvitationEmailSentStatus.SERVER_UNAVAILABLE
+                expected_email_sent_status = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.SERVER_UNAVAILABLE
         assert rep.email_sent == expected_email_sent_status
 
         await spy.wait_event_occurred(

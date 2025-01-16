@@ -29,7 +29,7 @@ async def test_authenticated_realm_get_keys_bundle_ok(coolorg: CoolorgRpcClients
     expected_key_bundle_access = coolorg.key_bundle_access(
         coolorg.wksp1_id, 1, coolorg.alice.user_id
     )
-    assert rep == authenticated_cmds.v4.realm_get_keys_bundle.RepOk(
+    assert rep == authenticated_cmds.latest.realm_get_keys_bundle.RepOk(
         keys_bundle=expected_key_bundle,
         keys_bundle_access=expected_key_bundle_access,
     )
@@ -93,7 +93,7 @@ async def test_authenticated_realm_get_keys_bundle_access_not_available_for_auth
         realm_id=coolorg.wksp1_id,
         key_index=1,
     )
-    assert rep == authenticated_cmds.v4.realm_get_keys_bundle.RepAccessNotAvailableForAuthor()
+    assert rep == authenticated_cmds.latest.realm_get_keys_bundle.RepAccessNotAvailableForAuthor()
 
 
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
@@ -117,7 +117,7 @@ async def test_authenticated_realm_get_keys_bundle_author_not_allowed(
         realm_id=coolorg.wksp1_id,
         key_index=1,
     )
-    assert rep == authenticated_cmds.v4.realm_get_keys_bundle.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.realm_get_keys_bundle.RepAuthorNotAllowed()
 
 
 async def test_authenticated_realm_get_keys_bundle_bad_key_index(
@@ -127,7 +127,7 @@ async def test_authenticated_realm_get_keys_bundle_bad_key_index(
         realm_id=coolorg.wksp1_id,
         key_index=10,
     )
-    assert rep == authenticated_cmds.v4.realm_get_keys_bundle.RepBadKeyIndex()
+    assert rep == authenticated_cmds.latest.realm_get_keys_bundle.RepBadKeyIndex()
 
 
 async def test_authenticated_realm_get_keys_bundle_http_common_errors(

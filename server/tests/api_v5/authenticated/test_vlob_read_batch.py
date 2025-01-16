@@ -135,7 +135,7 @@ async def test_authenticated_vlob_read_batch_ok(
         rep = await author.vlob_read_batch(
             realm_id=coolorg.wksp1_id, vlobs=[vlob1_id, vlob2_id], at=dt1
         )
-        assert rep == authenticated_cmds.v4.vlob_read_batch.RepOk(
+        assert rep == authenticated_cmds.latest.vlob_read_batch.RepOk(
             items=[
                 (
                     vlob1_id,
@@ -154,7 +154,7 @@ async def test_authenticated_vlob_read_batch_ok(
         rep = await author.vlob_read_batch(
             realm_id=coolorg.wksp1_id, vlobs=[vlob1_id, vlob2_id], at=None
         )
-        assert rep == authenticated_cmds.v4.vlob_read_batch.RepOk(
+        assert rep == authenticated_cmds.latest.vlob_read_batch.RepOk(
             items=[
                 (
                     vlob1_id,
@@ -196,7 +196,7 @@ async def test_authenticated_vlob_read_batch_author_not_allowed(
             assert False, unknown
 
     rep = await author.vlob_read_batch(realm_id=coolorg.wksp1_id, vlobs=[VlobID.new()], at=None)
-    assert rep == authenticated_cmds.v4.vlob_read_batch.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.vlob_read_batch.RepAuthorNotAllowed()
 
 
 async def test_authenticated_vlob_read_batch_realm_not_found(
@@ -204,7 +204,7 @@ async def test_authenticated_vlob_read_batch_realm_not_found(
 ) -> None:
     bad_realm_id = VlobID.new()
     rep = await coolorg.alice.vlob_read_batch(realm_id=bad_realm_id, vlobs=[VlobID.new()], at=None)
-    assert rep == authenticated_cmds.v4.vlob_read_batch.RepRealmNotFound()
+    assert rep == authenticated_cmds.latest.vlob_read_batch.RepRealmNotFound()
 
 
 async def test_authenticated_vlob_read_batch_too_many_elements(
@@ -214,7 +214,7 @@ async def test_authenticated_vlob_read_batch_too_many_elements(
     rep = await coolorg.alice.vlob_read_batch(
         realm_id=coolorg.wksp1_id, vlobs=too_many_vlobs, at=None
     )
-    assert rep == authenticated_cmds.v4.vlob_read_batch.RepTooManyElements()
+    assert rep == authenticated_cmds.latest.vlob_read_batch.RepTooManyElements()
 
 
 async def test_authenticated_vlob_read_batch_http_common_errors(

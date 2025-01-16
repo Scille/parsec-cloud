@@ -51,7 +51,7 @@ ALICE_USER_ID = UserID.test_from_nickname("alice")
         # (never actually dispatched, and instead always sent once as first SSE event).
         pytest.param(
             functools.partial(events.EventPinged, ping="ping"),
-            authenticated_cmds.v4.events_listen.APIEventPinged(ping="ping"),
+            authenticated_cmds.latest.events_listen.APIEventPinged(ping="ping"),
             id="ping",
         ),
         pytest.param(
@@ -61,7 +61,7 @@ ALICE_USER_ID = UserID.test_from_nickname("alice")
                 greeter=ALICE_USER_ID,
                 status=InvitationStatus.READY,
             ),
-            authenticated_cmds.v4.events_listen.APIEventInvitation(
+            authenticated_cmds.latest.events_listen.APIEventInvitation(
                 token=INVITATION_TOKEN,
                 invitation_status=InvitationStatus.READY,
             ),
@@ -69,17 +69,19 @@ ALICE_USER_ID = UserID.test_from_nickname("alice")
         ),
         pytest.param(
             functools.partial(events.EventPkiEnrollment, enrollment_id=ENROLLMENT_ID),
-            authenticated_cmds.v4.events_listen.APIEventPkiEnrollment(),
+            authenticated_cmds.latest.events_listen.APIEventPkiEnrollment(),
             id="pki_enrollment",
         ),
         pytest.param(
             functools.partial(events.EventCommonCertificate, timestamp=TIMESTAMP),
-            authenticated_cmds.v4.events_listen.APIEventCommonCertificate(timestamp=TIMESTAMP),
+            authenticated_cmds.latest.events_listen.APIEventCommonCertificate(timestamp=TIMESTAMP),
             id="common_certificate",
         ),
         pytest.param(
             functools.partial(events.EventSequesterCertificate, timestamp=TIMESTAMP),
-            authenticated_cmds.v4.events_listen.APIEventSequesterCertificate(timestamp=TIMESTAMP),
+            authenticated_cmds.latest.events_listen.APIEventSequesterCertificate(
+                timestamp=TIMESTAMP
+            ),
             id="sequester_certificate",
         ),
         pytest.param(
@@ -93,7 +95,7 @@ ALICE_USER_ID = UserID.test_from_nickname("alice")
                     UserID.test_from_nickname("mallory"),
                 ),
             ),
-            authenticated_cmds.v4.events_listen.APIEventShamirRecoveryCertificate(
+            authenticated_cmds.latest.events_listen.APIEventShamirRecoveryCertificate(
                 timestamp=TIMESTAMP
             ),
             id="shamir_recovery_certificate",
@@ -106,7 +108,7 @@ ALICE_USER_ID = UserID.test_from_nickname("alice")
                 user_id=ALICE_USER_ID,
                 role_removed=False,
             ),
-            authenticated_cmds.v4.events_listen.APIEventRealmCertificate(
+            authenticated_cmds.latest.events_listen.APIEventRealmCertificate(
                 timestamp=TIMESTAMP, realm_id=VLOB_ID
             ),
             id="realm_certificate",
@@ -123,7 +125,7 @@ ALICE_USER_ID = UserID.test_from_nickname("alice")
                 last_realm_certificate_timestamp=TIMESTAMP,
             ),
             functools.partial(
-                authenticated_cmds.v4.events_listen.APIEventVlob,
+                authenticated_cmds.latest.events_listen.APIEventVlob,
                 vlob_id=VLOB_ID,
                 author=DEVICE_ID,
                 timestamp=TIMESTAMP,
@@ -138,15 +140,15 @@ ALICE_USER_ID = UserID.test_from_nickname("alice")
 )
 async def test_authenticated_events_listen_ok(
     gen_event: GenerateEvent,
-    expected: authenticated_cmds.v4.events_listen.APIEvent,
+    expected: authenticated_cmds.latest.events_listen.APIEvent,
     coolorg: CoolorgRpcClients,
     backend: Backend,
 ) -> None:
     async with coolorg.alice.events_listen() as alice_sse:
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -163,7 +165,7 @@ async def test_authenticated_events_listen_ok(
 
         await backend.event_bus.send(event)
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(expected)
+        assert event == authenticated_cmds.latest.events_listen.RepOk(expected)
 
 
 async def test_receive_server_config_as_first_event(
@@ -171,8 +173,8 @@ async def test_receive_server_config_as_first_event(
 ) -> None:
     async with minimalorg.alice.events_listen() as alice_sse:
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -201,16 +203,16 @@ async def test_user_not_receive_event_before_listen(
 
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
         )
 
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventPinged(ping="event2")
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventPinged(ping="event2")
         )
 
 
@@ -239,8 +241,8 @@ async def test_conn_closed_on_bad_outcome(
     async with minimalorg.alice.events_listen() as alice_sse:
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -282,8 +284,8 @@ async def test_self_vlob_events_skipped(
     async with coolorg.alice.events_listen() as alice_sse:
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -308,8 +310,8 @@ async def test_self_vlob_events_skipped(
         await send_vlob_event(coolorg.bob.device_id, VLOB_ID)
 
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventVlob(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventVlob(
                 realm_id=coolorg.wksp1_id,
                 author=coolorg.bob.device_id,
                 timestamp=TIMESTAMP,
@@ -329,8 +331,8 @@ async def test_self_certificate_events_provided(
     async with minimalorg.alice.events_listen() as alice_sse:
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -369,22 +371,24 @@ async def test_self_certificate_events_provided(
         )
 
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventCommonCertificate(timestamp=TIMESTAMP),
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventCommonCertificate(timestamp=TIMESTAMP),
         )
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventSequesterCertificate(timestamp=TIMESTAMP),
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventSequesterCertificate(
+                timestamp=TIMESTAMP
+            ),
         )
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventShamirRecoveryCertificate(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventShamirRecoveryCertificate(
                 timestamp=TIMESTAMP
             )
         )
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventRealmCertificate(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventRealmCertificate(
                 timestamp=TIMESTAMP, realm_id=VLOB_ID
             )
         )
@@ -397,8 +401,8 @@ async def test_receive_event_of_newly_shared_realm(
     async with minimalorg.alice.events_listen() as alice_sse:
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -487,8 +491,8 @@ async def test_receive_event_of_newly_shared_realm(
 
         async def receive_realm_certificate_event():
             event = await alice_sse.next_event()
-            assert event == authenticated_cmds.v4.events_listen.RepOk(
-                authenticated_cmds.v4.events_listen.APIEventRealmCertificate(
+            assert event == authenticated_cmds.latest.events_listen.RepOk(
+                authenticated_cmds.latest.events_listen.APIEventRealmCertificate(
                     realm_id=VLOB_ID,
                     timestamp=TIMESTAMP,
                 )
@@ -496,8 +500,8 @@ async def test_receive_event_of_newly_shared_realm(
 
         async def receive_vlob_event(version):
             event = await alice_sse.next_event()
-            assert event == authenticated_cmds.v4.events_listen.RepOk(
-                authenticated_cmds.v4.events_listen.APIEventVlob(
+            assert event == authenticated_cmds.latest.events_listen.RepOk(
+                authenticated_cmds.latest.events_listen.APIEventVlob(
                     realm_id=VLOB_ID,
                     author=OTHER_DEVICE_ID,
                     timestamp=TIMESTAMP,
@@ -518,8 +522,8 @@ async def test_receive_event_of_newly_shared_realm(
         await receive_realm_certificate_event()
 
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventCommonCertificate(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventCommonCertificate(
                 timestamp=TIMESTAMP,
             )
         )
@@ -540,32 +544,32 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
 
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
         )
 
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventPinged(ping="event1")
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventPinged(ping="event1")
         )
 
         event2_id = (await anext(raw_source)).id
 
         for ping in ("event3", "event4"):
             event = await alice_sse.next_event()
-            assert event == authenticated_cmds.v4.events_listen.RepOk(
-                authenticated_cmds.v4.events_listen.APIEventPinged(ping=ping)
+            assert event == authenticated_cmds.latest.events_listen.RepOk(
+                authenticated_cmds.latest.events_listen.APIEventPinged(ping=ping)
             )
 
     # 3. Now ask for events *after* the second EventPinged
     async with minimalorg.alice.events_listen(last_event_id=event2_id) as alice_sse:
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
-        assert event == authenticated_cmds.v4.events_listen.RepOk(
-            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+        assert event == authenticated_cmds.latest.events_listen.RepOk(
+            authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -574,8 +578,8 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
         # 4. Only the last two EventPinged should be obtained
         for ping in ("event3", "event4"):
             event = await alice_sse.next_event()
-            assert event == authenticated_cmds.v4.events_listen.RepOk(
-                authenticated_cmds.v4.events_listen.APIEventPinged(ping=ping)
+            assert event == authenticated_cmds.latest.events_listen.RepOk(
+                authenticated_cmds.latest.events_listen.APIEventPinged(ping=ping)
             )
 
 

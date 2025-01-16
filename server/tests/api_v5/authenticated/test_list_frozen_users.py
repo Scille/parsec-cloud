@@ -9,7 +9,7 @@ async def test_authenticated_list_frozen_users_ok(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     rep = await coolorg.alice.list_frozen_users()
-    assert rep == authenticated_cmds.v4.list_frozen_users.RepOk(frozen_users=[])
+    assert rep == authenticated_cmds.latest.list_frozen_users.RepOk(frozen_users=[])
 
     outcome = await backend.user.freeze_user(
         organization_id=coolorg.organization_id,
@@ -20,7 +20,7 @@ async def test_authenticated_list_frozen_users_ok(
     assert isinstance(outcome, UserInfo)
 
     rep = await coolorg.alice.list_frozen_users()
-    assert rep == authenticated_cmds.v4.list_frozen_users.RepOk(
+    assert rep == authenticated_cmds.latest.list_frozen_users.RepOk(
         frozen_users=[coolorg.mallory.user_id]
     )
 
@@ -30,7 +30,7 @@ async def test_authenticated_list_frozen_users_author_not_allowed(
 ) -> None:
     pass
     rep = await coolorg.mallory.list_frozen_users()  # mallory is an outsider
-    assert rep == authenticated_cmds.v4.list_frozen_users.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.list_frozen_users.RepAuthorNotAllowed()
 
 
 async def test_authenticated_list_frozen_users_http_common_errors(

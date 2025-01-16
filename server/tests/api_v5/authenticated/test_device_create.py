@@ -82,7 +82,7 @@ async def test_authenticated_device_create_ok(
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        assert rep == authenticated_cmds.v4.device_create.RepOk()
+        assert rep == authenticated_cmds.latest.device_create.RepOk()
 
         await spy.wait_event_occurred(
             EventCommonCertificate(
@@ -105,7 +105,7 @@ async def test_authenticated_device_create_ok(
         signing_key=NEW_ALICE_SIGNING_KEY,
     )
     rep = await alice2_rpc.ping(ping="hello")
-    assert rep == authenticated_cmds.v4.ping.RepOk(pong="hello")
+    assert rep == authenticated_cmds.latest.ping.RepOk(pong="hello")
 
 
 @pytest.mark.parametrize(
@@ -177,7 +177,7 @@ async def test_authenticated_device_create_invalid_certificate(
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert rep == authenticated_cmds.v4.device_create.RepInvalidCertificate()
+    assert rep == authenticated_cmds.latest.device_create.RepInvalidCertificate()
 
 
 @pytest.mark.parametrize("kind", ("same_user", "different_user"))
@@ -202,7 +202,7 @@ async def test_authenticated_device_create_device_already_exists(
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert rep == authenticated_cmds.v4.device_create.RepDeviceAlreadyExists()
+    assert rep == authenticated_cmds.latest.device_create.RepDeviceAlreadyExists()
 
 
 async def test_authenticated_device_create_timestamp_out_of_ballpark(
@@ -217,7 +217,7 @@ async def test_authenticated_device_create_timestamp_out_of_ballpark(
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert isinstance(rep, authenticated_cmds.v4.device_create.RepTimestampOutOfBallpark)
+    assert isinstance(rep, authenticated_cmds.latest.device_create.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == t0
@@ -262,7 +262,7 @@ async def test_authenticated_device_create_require_greater_timestamp(
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert rep == authenticated_cmds.v4.device_create.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.latest.device_create.RepRequireGreaterTimestamp(
         strictly_greater_than=t1
     )
 
