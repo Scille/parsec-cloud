@@ -36,7 +36,6 @@ from parsec.components.realm import (
     RealmDumpRealmsGrantedRolesBadOutcome,
     RealmGetCurrentRealmsForUserBadOutcome,
     RealmGetKeysBundleBadOutcome,
-    RealmGetStatsAsUserBadOutcome,
     RealmGrantedRole,
     RealmRenameStoreBadOutcome,
     RealmRenameValidateBadOutcome,
@@ -45,7 +44,6 @@ from parsec.components.realm import (
     RealmRotateKeyValidateBadOutcome,
     RealmShareStoreBadOutcome,
     RealmShareValidateBadOutcome,
-    RealmStats,
     RealmUnshareStoreBadOutcome,
     RealmUnshareValidateBadOutcome,
     RejectedBySequesterService,
@@ -726,51 +724,6 @@ class MemoryRealmComponent(BaseRealmComponent):
             key_index=key_rotation.cooked.key_index,
             keys_bundle_access=keys_bundle_access,
             keys_bundle=key_rotation.keys_bundle,
-        )
-
-    @override
-    async def get_stats(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID
-    ) -> RealmStats | RealmGetStatsAsUserBadOutcome:
-        try:
-            org = self._data.organizations[organization_id]
-        except KeyError:
-            return RealmGetStatsAsUserBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
-            return RealmGetStatsAsUserBadOutcome.ORGANIZATION_EXPIRED
-
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return RealmGetStatsAsUserBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
-
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return RealmGetStatsAsUserBadOutcome.AUTHOR_REVOKED
-
-        try:
-            realm = org.realms[realm_id]
-        except KeyError:
-            return RealmGetStatsAsUserBadOutcome.REALM_NOT_FOUND
-
-        if realm.get_current_role_for(author_user_id) is None:
-            return RealmGetStatsAsUserBadOutcome.AUTHOR_NOT_ALLOWED
-
-        block_size = 0
-        vlob_size = 0
-
-        for vlob in org.vlobs.values():
-            for vlob_atom in vlob:
-                vlob_size += len(vlob_atom.blob)
-
-        for block in org.blocks.values():
-            if block.realm_id == realm_id:
-                block_size += block.block_size
-
-        return RealmStats(
-            blocks_size=block_size,
-            vlobs_size=vlob_size,
         )
 
     @override
