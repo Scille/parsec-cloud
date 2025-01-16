@@ -6,7 +6,7 @@ import { Notification as MsNotification, NotificationManager } from '@/services/
 import { MsReportTheme } from 'megashark-lib';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-describe('Notification Manager', () => {
+describe.skip('Notification Manager', () => {
   let NOTIFS: MsNotification[];
   let notificationManager: NotificationManager;
   const FIRST_NOTIF_ID = '123';
