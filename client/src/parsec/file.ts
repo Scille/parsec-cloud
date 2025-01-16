@@ -311,7 +311,7 @@ export async function readFile(
   fd: FileDescriptor,
   offset: number,
   size: number,
-): Promise<Result<ArrayBuffer, WorkspaceFdReadError>> {
+): Promise<Result<Uint8Array, WorkspaceFdReadError>> {
   if (!needsMocks()) {
     return await libparsec.workspaceFdRead(workspaceHandle, fd, offset, size);
   } else {
@@ -325,29 +325,29 @@ export async function readFile(
 
     switch (ext) {
       case 'xlsx':
-        console.log('Using XLSX content');
-        return { ok: true, value: MockFiles.XLSX };
+        offset === 0 && console.log('Using XLSX content');
+        return { ok: true, value: MockFiles.XLSX.slice(offset, offset + size) };
       case 'png':
-        console.log('Using PNG content');
-        return { ok: true, value: MockFiles.PNG };
+        offset === 0 && console.log('Using PNG content');
+        return { ok: true, value: MockFiles.PNG.slice(offset, offset + size) };
       case 'docx':
-        console.log('Using DOCX content');
-        return { ok: true, value: MockFiles.DOCX };
+        offset === 0 && console.log('Using DOCX content');
+        return { ok: true, value: MockFiles.DOCX.slice(offset, offset + size) };
       case 'txt':
-        console.log('Using TXT content');
-        return { ok: true, value: MockFiles.TXT };
+        offset === 0 && console.log('Using TXT content');
+        return { ok: true, value: MockFiles.TXT.slice(offset, offset + size) };
       case 'py':
-        console.log('Using PY content');
-        return { ok: true, value: MockFiles.PY };
+        offset === 0 && console.log('Using PY content');
+        return { ok: true, value: MockFiles.PY.slice(offset, offset + size) };
       case 'pdf':
-        console.log('Using PDF content');
-        return { ok: true, value: MockFiles.PDF };
+        offset === 0 && console.log('Using PDF content');
+        return { ok: true, value: MockFiles.PDF.slice(offset, offset + size) };
       case 'mp3':
-        console.log('Using MP3 content');
-        return { ok: true, value: MockFiles.MP3 };
+        offset === 0 && console.log('Using MP3 content');
+        return { ok: true, value: MockFiles.MP3.slice(offset, offset + size) };
       case 'mp4':
-        console.log('Using MP4 content');
-        return { ok: true, value: MockFiles.MP4 };
+        offset === 0 && console.log('Using MP4 content');
+        return { ok: true, value: MockFiles.MP4.slice(offset, offset + size) };
     }
     console.log('Using default file content');
     return {
