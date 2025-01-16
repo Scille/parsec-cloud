@@ -30,7 +30,7 @@ async def test_authenticated_user_update_ok(coolorg: CoolorgRpcClients, backend:
     )
 
     expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
-    expected_dump[coolorg.bob.user_id].current_profile = UserProfile.ADMIN
+    expected_dump[coolorg.bob.user_id].profile_updates.append((now, UserProfile.ADMIN))
 
     expected_topics = await backend.organization.test_dump_topics(coolorg.organization_id)
     expected_topics.common = certif.timestamp
