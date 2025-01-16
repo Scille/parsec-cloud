@@ -176,17 +176,19 @@ onMounted(async () => {
     }
     loaded.value = true;
   } catch (e: any) {
-    window.electronAPI.log('error', `Can't view the file: ${JSON.stringify(e)}`);
+    window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
     informationManager.present(
       new Information({
-        message: 'GENERIC FAILED TO VIEW THE FILE',
+        message: 'fileViewers.genericError',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
     );
     contentInfo.value = null;
     viewerComponent.value = null;
-    await navigateTo(Routes.Documents, { query: { workspaceHandle: workspaceHandle, documentPath: path } });
+    if (!(await openWithSystem(path))) {
+      await navigateTo(Routes.Documents, { query: { workspaceHandle: workspaceHandle, documentPath: await Path.parent(path) } });
+    }
   } finally {
     if (!atDateTime.value) {
       await closeFile(workspaceHandle, fd);
@@ -215,11 +217,15 @@ async function getComponent(fileInfo: DetectedFileType): Promise<Component | und
   }
 }
 
-async function openWithSystem(path: FsPath): Promise<void> {
+async function openWithSystem(path: FsPath): Promise<boolean> {
+  if (!isDesktop()) {
+    return false;
+  }
+
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
-    return;
+    return false;
   }
 
   const result = await getSystemPath(workspaceHandle, path);
@@ -232,8 +238,10 @@ async function openWithSystem(path: FsPath): Promise<void> {
       }),
       PresentationMode.Modal,
     );
+    return false;
   } else {
     window.electronAPI.openFile(result.value);
+    return true;
   }
 }
 

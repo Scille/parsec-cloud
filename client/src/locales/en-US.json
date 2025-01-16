@@ -1750,6 +1750,7 @@
         "details": "Details",
         "openingFile": "Opening file...",
         "fileTooBig": "File is too big to be opened using a viewer.",
+        "genericError": "Failed to open the file.",
         "controls": {
             "zoom": {
                 "in": "Zoom in",

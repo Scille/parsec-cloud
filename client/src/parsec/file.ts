@@ -124,7 +124,7 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
   let entry: MockEntry;
 
   if (path !== '/' && fileName.startsWith('File_')) {
-    entry = await generateFile(path, { parentId: `${MOCK_FILE_ID}`, fileName: fileName });
+    entry = await generateFile(await Path.parent(path), { parentId: `${MOCK_FILE_ID}`, fileName: fileName });
   } else {
     entry = await generateFolder(path, { parentId: `${MOCK_FILE_ID}`, fileName: fileName });
   }
