@@ -704,6 +704,7 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     --background: transparent;
     position: relative;
     z-index: 12;
+    border-top: 1px solid var(--parsec-color-light-primary-30-opacity15);
   }
 
   .organization-workspaces,
@@ -725,21 +726,22 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   &-header {
     display: flex;
     flex-direction: row;
-    border-radius: var(--parsec-radius-8);
+    border-radius: var(--parsec-radius-12);
     box-shadow: none;
     align-items: center;
     margin: 0 0.5rem;
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
     gap: 0.5em;
     position: relative;
     z-index: 2;
+    border: 1px solid transparent;
 
     &-desktop:hover {
       cursor: pointer;
-      background: var(--parsec-color-light-primary-30-opacity15);
+      border-color: var(--parsec-color-light-primary-30-opacity15);
     }
 
-    .organization-avatar {
+    &-desktop .organization-avatar {
       background-color: var(--parsec-color-light-secondary-premiere);
       color: var(--parsec-color-light-primary-600);
       width: 2rem;
@@ -838,7 +840,8 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   align-items: center;
   user-select: none;
   align-self: stretch;
-  padding: 1rem;
+  padding: 0.625rem 1rem;
+  border: 1px solid transparent;
   color: var(--parsec-color-light-secondary-inversed-contrast);
   gap: 1rem;
 
@@ -879,7 +882,6 @@ ion-menu {
     align-items: center;
     justify-content: space-between;
     transition: border 0.2s ease-in-out;
-    border-top: 1px solid var(--parsec-color-light-primary-30-opacity15);
     padding: 1.5em 0 1em 0.5rem;
 
     &__title {
@@ -1061,7 +1063,6 @@ ion-menu {
 
   .title-h4 {
     padding: 1.5em 0 1em;
-    border-top: 1px solid var(--parsec-color-light-primary-30-opacity15);
   }
 }
 </style>
