@@ -827,9 +827,9 @@ register_rpc_http_hook!(
     rpc_unsupported_api_version_http_codes_422_with_supported_api_versions,
     StatusCode::from_u16(422).unwrap(),
     |err| {
-        p_assert_matches!(err, ConnectionError::UnsupportedApiVersion { api_version, supported_api_versions } if api_version == *API_LATEST_VERSION && supported_api_versions == vec![(5,1).into(), (6,0).into()]);
+        p_assert_matches!(err, ConnectionError::UnsupportedApiVersion { api_version, supported_api_versions } if api_version == *API_LATEST_VERSION && supported_api_versions == vec![(8,1).into(), (9,0).into()]);
     },
-    "Supported-Api-Versions": "5.1;6.0"
+    "Supported-Api-Versions": "8.1;9.0"
 );
 register_rpc_http_hook!(
     rpc_expired_organization_http_codes_460,
@@ -981,9 +981,9 @@ register_rpc_http_hook!(
     sse_unsupported_api_version_http_codes_422_with_supported_api_versions,
     StatusCode::from_u16(422).unwrap(),
     |err| {
-        p_assert_matches!(err, ConnectionError::UnsupportedApiVersion { api_version, supported_api_versions } if api_version == *API_LATEST_VERSION && supported_api_versions == vec![(5,1).into(), (6,0).into()]);
+        p_assert_matches!(err, ConnectionError::UnsupportedApiVersion { api_version, supported_api_versions } if api_version == *API_LATEST_VERSION && supported_api_versions == vec![(8,1).into(), (9,0).into()]);
     },
-    "Supported-Api-Versions": "5.1;6.0"
+    "Supported-Api-Versions": "8.1;9.0"
 );
 register_sse_http_hook!(
     sse_expired_organization_http_codes_460,
