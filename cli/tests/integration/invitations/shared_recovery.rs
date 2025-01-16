@@ -8,27 +8,9 @@ use rexpect::{session::PtySession, spawn};
 
 use crate::{
     integration_tests::{bootstrap_cli_test, shared_recovery_create},
+    match_sas_code,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
-
-macro_rules! match_sas_code {
-    ($locked:ident, $sas_code:ident) => {
-        $locked.read_line().unwrap(); //empty line
-        let first = dbg!($locked.read_line().unwrap());
-        let second = dbg!($locked.read_line().unwrap());
-        let third = dbg!($locked.read_line().unwrap());
-
-        if $sas_code == first[first.len() - 4..] {
-            $locked.send_line("").unwrap();
-        } else if $sas_code == second[second.len() - 4..] {
-            $locked.send_line("j").unwrap();
-        } else if $sas_code == third[third.len() - 4..] {
-            $locked.send_line("jj").unwrap();
-        } else {
-            panic!("no corresponding sas code available")
-        }
-    };
-}
 
 #[rstest::rstest]
 #[tokio::test]

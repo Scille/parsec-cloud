@@ -13,11 +13,7 @@ crate::build_main_with_client!(main, list_invite);
 
 pub async fn list_invite(_args: Args, client: &StartedClient) -> anyhow::Result<()> {
     log::trace!("Listing invitations");
-    {
-        let mut spinner = start_spinner("Poll server for new certificates".into());
-        client.poll_server_for_new_certificates().await?;
-        spinner.stop_with_symbol(GREEN_CHECKMARK);
-    }
+    poll_server_for_new_certificates(client).await?;
 
     let mut handle = start_spinner("Listing invitations".into());
 
