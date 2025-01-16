@@ -14,7 +14,11 @@ use libparsec_types::prelude::*;
 // - v4.1 (Parsec 3.2+):
 //   * Add `ShamirRecovery` variants to `invite_list` and `invite_info`
 //   * Add `invite_new_shamir_recovery` command
-// v5 (Parsec 3.3+): TODO
+// v5 (Parsec 3.3+):
+// - v5.0 (Parsec 3.3+):
+//   * Incompatible handling of sequester in `vlob_create` and `vlob_update`
+//   * Incompatible changes to `invite_info` to allow for multiple greeters during a user invitation
+//   * Support for Shamir recovery commands, invitation and greeting procedure
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
     revision: 3,
