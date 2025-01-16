@@ -14,6 +14,7 @@ use libparsec_types::prelude::*;
 // - v4.1 (Parsec 3.2+):
 //   * Add `ShamirRecovery` variants to `invite_list` and `invite_info`
 //   * Add `invite_new_shamir_recovery` command
+// v5 (Parsec 3.3+): TODO
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
     revision: 3,
@@ -30,7 +31,11 @@ pub const API_V4_VERSION: &ApiVersion = &ApiVersion {
     version: 4,
     revision: 1,
 };
-pub const API_LATEST_VERSION: &ApiVersion = API_V4_VERSION;
+pub const API_V5_VERSION: &ApiVersion = &ApiVersion {
+    version: 5,
+    revision: 0,
+};
+pub const API_LATEST_VERSION: &ApiVersion = API_V5_VERSION;
 
 pub const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 
@@ -40,6 +45,7 @@ pub const fn api_version_major_to_full(major_version: u32) -> &'static ApiVersio
         2 => API_V2_VERSION,
         3 => API_V3_VERSION,
         4 => API_V4_VERSION,
+        5 => API_V5_VERSION,
         _ => panic!("Unknown major version"),
     }
 }
