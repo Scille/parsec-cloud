@@ -1187,9 +1187,9 @@ dependencies = [
 
 [[package]]
 name = "fuser"
-version = "0.15.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e469ac6d2cdfaeb56c5ede4dc00d8a24a4267d5eab9ab365ee783179087ab2e3"
+checksum = "53274f494609e77794b627b1a3cddfe45d675a6b2e9ba9c0fdc8d8eee2184369"
 dependencies = [
  "libc",
  "log",
