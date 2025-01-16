@@ -12,22 +12,25 @@ use super::authenticated_cmds;
 // Request
 
 pub fn req() {
-    // Generated from Parsec v3.0.0-b.11+dev
+    // Generated from Parsec 3.2.4-a.0+dev
     // Content:
-    //   timestamp: ext(1, 946774800.0)
-    //   version: 8
-    //   blob: hex!("666f6f626172")
-    //   cmd: "vlob_update"
+    //   cmd: 'vlob_update'
+    //   realm_id: ext(2, 0x1d3353157d7d4e95ad2fdea7b3bd19c5)
+    //   vlob_id: ext(2, 0x2b5f314728134a12863da1ce49c112f6)
     //   key_index: 8
-    //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
+    //   timestamp: ext(1, 946774800000000) i.e. 2000-01-02T02:00:00Z
+    //   version: 8
+    //   blob: 0x666f6f626172
     let raw: &[u8] = hex!(
-        "87a3636d64ab766c6f625f757064617465a7766c6f625f6964d8022b5f314728134a12"
-        "863da1ce49c112f6a96b65795f696e64657808a974696d657374616d70d70100035d16"
-        "2fa2e400a776657273696f6e08a4626c6f62c406666f6f626172ae7365717565737465"
-        "725f626c6f62c0"
+        "87a3636d64ab766c6f625f757064617465a87265616c6d5f6964d8021d3353157d7d4e"
+        "95ad2fdea7b3bd19c5a7766c6f625f6964d8022b5f314728134a12863da1ce49c112f6"
+        "a96b65795f696e64657808a974696d657374616d70d70100035d162fa2e400a7766572"
+        "73696f6e08a4626c6f62c406666f6f626172"
     )
     .as_ref();
+
     let expected = authenticated_cmds::vlob_update::Req {
+        realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         key_index: 8,
         vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
         timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
@@ -82,6 +85,26 @@ pub fn rep_author_not_allowed() {
     let raw = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564");
 
     let expected = authenticated_cmds::vlob_update::Rep::AuthorNotAllowed;
+
+    let data = authenticated_cmds::vlob_update::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::vlob_update::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
+
+pub fn rep_realm_not_found() {
+    // Generated from Parsec 3.2.4-a.0+dev
+    // Content:
+    //   status: 'realm_not_found'
+    let raw = hex!("81a6737461747573af7265616c6d5f6e6f745f666f756e64");
+
+    let expected = authenticated_cmds::vlob_update::Rep::RealmNotFound;
 
     let data = authenticated_cmds::vlob_update::Rep::load(&raw).unwrap();
 

@@ -121,7 +121,10 @@ async def test_authenticated_vlob_create_ok(
     dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
     assert dump == {
         **initial_dump,
-        vlob_id: [(author.device_id, ANY, realm_id, blob)],
+        realm_id: {
+            **initial_dump[realm_id],
+            vlob_id: [(author.device_id, ANY, blob)],
+        },
     }
 
 
@@ -539,7 +542,10 @@ async def test_authenticated_vlob_create_max_blob_size(
     dump = await backend.vlob.test_dump_vlobs(organization_id=organization_id)
     assert dump == {
         **initial_dump,
-        vlob_id: [(author, ANY, realm_id, a_big_blob)],
+        realm_id: {
+            **initial_dump[realm_id],
+            vlob_id: [(author, ANY, a_big_blob)],
+        },
     }
 
 
