@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { I18n } from 'megashark-lib';
-import { onUnmounted, ref, watch } from 'vue';
+import { onUnmounted, ref, watch, computed } from 'vue';
 import { FileControlsGroup, FileControlsInput } from '@/components/viewers';
 
 const props = defineProps<{
@@ -40,6 +40,9 @@ defineExpose({
 
 const inputRef = ref();
 const currentPage = ref('1');
+const inputLengthStyle = computed(() => {
+  return `${5 + props.length.toString().length * 1}rem`;
+});
 
 const pageWatchCancel = watch(
   () => props.page,
@@ -90,6 +93,6 @@ onUnmounted(() => {
 
 <style scoped lang="scss">
 .page-number-input {
-  width: 6rem;
+  width: v-bind(inputLengthStyle);
 }
 </style>
