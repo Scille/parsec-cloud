@@ -1,6 +1,8 @@
 [
     {
-        "major_versions": [4],
+        "major_versions": [
+            5
+        ],
         "req": {
             "cmd": "realm_rotate_key",
             "fields": [

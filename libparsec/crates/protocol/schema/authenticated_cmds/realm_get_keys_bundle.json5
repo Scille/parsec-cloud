@@ -1,6 +1,8 @@
 [
     {
-        "major_versions": [4],
+        "major_versions": [
+            5
+        ],
         "req": {
             "cmd": "realm_get_keys_bundle",
             "fields": [
