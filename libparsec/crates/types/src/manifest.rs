@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{collections::HashMap, num::NonZeroU64, ops::Deref};
+use std::{collections::HashMap, num::NonZeroU64, ops::Deref, sync::Arc};
 
 use serde::{Deserialize, Serialize};
 use serde_with::*;
@@ -341,8 +341,9 @@ impl FileManifest {
     ///
     /// Note about this method being private:
     /// This structure represents immutable data (as it is created once, signed, and never updated).
-    /// Hence this `check_data_integrity` is only used as sanity check right before serialization
-    /// and not exposed publicly.
+    /// Hence this `check_data_integrity` is only used:
+    /// - As a sanity check when the manifest is created (i.e. in `FileManifest::new`).
+    /// - During deserialization (i.e. in `FileManifest::verify_and_load`).
     fn check_data_integrity(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.id == self.parent {
@@ -564,8 +565,42 @@ impl UserManifest {
 }
 
 /*
- * ChildManifest
+ * ArcChildManifest & ChildManifest
  */
+
+#[derive(Debug, Clone)]
+pub enum ArcChildManifest {
+    File(Arc<FileManifest>),
+    Folder(Arc<FolderManifest>),
+}
+
+impl ArcChildManifest {
+    pub fn id(&self) -> VlobID {
+        match self {
+            ArcChildManifest::File(m) => m.id,
+            ArcChildManifest::Folder(m) => m.id,
+        }
+    }
+
+    pub fn parent(&self) -> VlobID {
+        match self {
+            ArcChildManifest::File(m) => m.parent,
+            ArcChildManifest::Folder(m) => m.parent,
+        }
+    }
+}
+
+impl From<Arc<FileManifest>> for ArcChildManifest {
+    fn from(value: Arc<FileManifest>) -> Self {
+        Self::File(value)
+    }
+}
+
+impl From<Arc<FolderManifest>> for ArcChildManifest {
+    fn from(value: Arc<FolderManifest>) -> Self {
+        Self::Folder(value)
+    }
+}
 
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
