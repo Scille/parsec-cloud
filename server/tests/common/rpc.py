@@ -411,10 +411,21 @@ class BaseAuthenticatedRpcClient:
         return authenticated_cmds.latest.vlob_read_versions.Rep.load(raw_rep)
 
     async def vlob_update(
-        self, vlob_id: VlobID, key_index: int, timestamp: DateTime, version: int, blob: bytes
+        self,
+        realm_id: VlobID,
+        vlob_id: VlobID,
+        key_index: int,
+        timestamp: DateTime,
+        version: int,
+        blob: bytes,
     ) -> authenticated_cmds.latest.vlob_update.Rep:
         req = authenticated_cmds.latest.vlob_update.Req(
-            vlob_id=vlob_id, key_index=key_index, timestamp=timestamp, version=version, blob=blob
+            realm_id=realm_id,
+            vlob_id=vlob_id,
+            key_index=key_index,
+            timestamp=timestamp,
+            version=version,
+            blob=blob,
         )
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.vlob_update.Rep.load(raw_rep)
