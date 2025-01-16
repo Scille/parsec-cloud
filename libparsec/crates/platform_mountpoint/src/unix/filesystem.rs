@@ -31,7 +31,10 @@ const TTL: std::time::Duration = std::time::Duration::ZERO;
 /// must assign a new, previously unused generation number to the inode at the
 /// same time.
 const GENERATION: u64 = 0;
-const BLOCK_SIZE: u64 = 512;
+/// The default block size, set to 512 KB.
+const BLOCK_SIZE: u64 = 512 * 1024;
+/// Default permissions for files and folders.
+/// Equivalent to `chmod` flags `all=,u=rwx`.
 const PERMISSIONS: u16 = 0o700;
 
 fn os_name_to_entry_name(name: &OsStr) -> EntryNameResult<EntryName> {
@@ -49,7 +52,7 @@ fn file_stat_to_file_attr(stat: FileStat, inode: Inode, uid: u32, gid: u32) -> f
         blocks: (stat.size + BLOCK_SIZE - 1) / BLOCK_SIZE,
         atime: updated,
         mtime: updated,
-        ctime: created,
+        ctime: updated,
         crtime: created,
         kind: fuser::FileType::RegularFile,
         perm: PERMISSIONS,
@@ -64,32 +67,7 @@ fn file_stat_to_file_attr(stat: FileStat, inode: Inode, uid: u32, gid: u32) -> f
 
 fn entry_stat_to_file_attr(stat: EntryStat, inode: Inode, uid: u32, gid: u32) -> fuser::FileAttr {
     match stat {
-        EntryStat::File {
-            created,
-            updated,
-            size,
-            ..
-        } => {
-            let created: std::time::SystemTime = created.into();
-            let updated: std::time::SystemTime = updated.into();
-            fuser::FileAttr {
-                ino: inode,
-                size,
-                blocks: (size + BLOCK_SIZE - 1) / BLOCK_SIZE,
-                atime: updated,
-                mtime: updated,
-                ctime: created,
-                crtime: created,
-                kind: fuser::FileType::RegularFile,
-                perm: PERMISSIONS,
-                nlink: 1,
-                uid,
-                gid,
-                rdev: 0,
-                blksize: BLOCK_SIZE as u32,
-                flags: 0,
-            }
-        }
+        EntryStat::File { base, .. } => file_stat_to_file_attr(base, inode, uid, gid),
 
         EntryStat::Folder {
             created, updated, ..
@@ -188,7 +166,10 @@ macro_rules! reply_on_drop_guard {
                     // Already replied
                     None => (),
                     // Not replied time to do it with ourself !
-                    Some(reply) => reply.error(libc::EIO),
+                    Some(reply) => {
+                        log::error!("Reply not sent, sending generic error");
+                        reply.error(libc::EIO)
+                    }
                 }
             }
         }
@@ -330,7 +311,7 @@ impl fuser::Filesystem for Filesystem {
         name: &std::ffi::OsStr,
         reply: fuser::ReplyEntry,
     ) {
-        log::debug!("[FUSE] lookup(parent: {:#x?}, name: {:?})", parent, name);
+        log::debug!("[FUSE] lookup(parent: {parent:#x?}, name: {name:?})");
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEntry);
 
         let uid = req.uid();
@@ -352,7 +333,7 @@ impl fuser::Filesystem for Filesystem {
             let path = {
                 let inodes_guard = inodes.lock().expect("mutex is poisoned");
                 let parent_path = inodes_guard.get_path_or_panic(parent);
-                parent_path.join(name)
+                parent_path.join(name.clone())
             };
 
             let outcome = {
@@ -376,16 +357,16 @@ impl fuser::Filesystem for Filesystem {
                 }
             };
 
-            match outcome {
-                Ok(stat) => {
+            match outcome
+                .map(|stat| {
                     let mut inodes_guard = inodes.lock().expect("mutex is poisoned");
                     let inode = inodes_guard.insert_path(path);
-                    reply.manual().entry(
-                        &TTL,
-                        &entry_stat_to_file_attr(stat, inode, uid, gid),
-                        GENERATION,
-                    )
-                }
+                    entry_stat_to_file_attr(stat, inode, uid, gid)
+                })
+                .inspect(|stat| log::debug!("lookup({parent}, {name:?}) => {stat:?}"))
+                .inspect_err(|e| log::warn!("lookup({parent}, {name:?}) result in error: {e:?}"))
+            {
+                Ok(stat) => reply.manual().entry(&TTL, &stat, GENERATION),
                 Err(err) => match err {
                     WorkspaceStatEntryError::EntryNotFound => reply.manual().error(libc::ENOENT),
                     WorkspaceStatEntryError::Offline => reply.manual().error(libc::EHOSTUNREACH),
@@ -409,19 +390,32 @@ impl fuser::Filesystem for Filesystem {
 
     fn statfs(&mut self, _req: &fuser::Request<'_>, ino: u64, reply: fuser::ReplyStatfs) {
         log::debug!("[FUSE] statfs(ino: {:#x?})", ino);
+        // 2 MBlocks is 1 TB
+        const BLOCK_AVAILABLE: u64 = 2 * 1024u64.pow(2);
 
+        let (inode_used, inode_remaining) = {
+            let guard = self.inodes.lock().expect("mutex is poisoned");
+            guard.usage()
+        };
+        // We currently do not provide a dynamic value for the used block.
+        // We set the value to 0 for no block used
+        let block_used = 0;
+
+        log::trace!("Statfs {{ inode: Inode {{ used: {inode_used}, remaining: {inode_remaining} }}, block: {{ used: {block_used}, available: {BLOCK_AVAILABLE}, size: {BLOCK_SIZE} }} }}");
         // We have currently no way of easily getting the size of workspace
         // Also, the total size of a workspace is not limited
         // For the moment let's settle on 0 MB used for 1 TB available
         reply.statfs(
-            2 * 1024u64.pow(2), // 2 MBlocks is 1 TB
-            2 * 1024u64.pow(2), // 2 MBlocks is 1 TB
-            2 * 1024u64.pow(2), // 2 MBlocks is 1 TB
-            0,
-            0,
-            512 * 1024, // 512 KB, i.e the default block size
-            255,        // 255 bytes as maximum length for filenames
-            512 * 1024, // 512 KB, i.e the default block size
+            block_used,
+            BLOCK_AVAILABLE - block_used,
+            BLOCK_AVAILABLE,
+            inode_used as u64,
+            inode_remaining as u64,
+            BLOCK_SIZE as u32,
+            255, // 255 bytes as maximum length for filenames
+            // Fragment size (frsize) is set to the same size of block size
+            // (bsize) since we do not handle elements smallar
+            BLOCK_SIZE as u32,
         )
     }
 
@@ -432,7 +426,7 @@ impl fuser::Filesystem for Filesystem {
         _fh: Option<u64>,
         reply: fuser::ReplyAttr,
     ) {
-        log::debug!("[FUSE] getattr(ino: {:#x?})", ino);
+        log::debug!("[FUSE] getattr(ino: {ino:#x?}, _fh: {_fh:#x?})");
         let reply = reply_on_drop_guard!(reply, fuser::ReplyAttr);
 
         let uid = req.uid();
@@ -444,20 +438,11 @@ impl fuser::Filesystem for Filesystem {
             .get_path_or_panic(ino);
         let ops = self.ops.clone();
         self.tokio_handle.spawn(async move {
-            match ops.stat_entry(&path).await {
-                Ok(stat) => reply
-                    .manual()
-                    .attr(&TTL, &entry_stat_to_file_attr(stat, ino, uid, gid)),
-                Err(err) => match err {
-                    WorkspaceStatEntryError::EntryNotFound => reply.manual().error(libc::ENOENT),
-                    WorkspaceStatEntryError::Offline => reply.manual().error(libc::EHOSTUNREACH),
-                    WorkspaceStatEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                    WorkspaceStatEntryError::Stopped
-                    | WorkspaceStatEntryError::InvalidKeysBundle(_)
-                    | WorkspaceStatEntryError::InvalidCertificate(_)
-                    | WorkspaceStatEntryError::InvalidManifest(_)
-                    | WorkspaceStatEntryError::Internal(_) => reply.manual().error(libc::EIO),
-                },
+            let res = getattr_from_path(&ops, path, ino, uid, gid).await;
+
+            match res {
+                Ok(stat) => reply.manual().attr(&TTL, &stat),
+                Err(errno) => reply.manual().error(errno),
             }
         });
     }
@@ -833,12 +818,7 @@ impl fuser::Filesystem for Filesystem {
         flags: i32,
         reply: fuser::ReplyCreate,
     ) {
-        log::debug!(
-            "[FUSE] create(parent: {:#x?}, name: {:?}, flags: {:#x?})",
-            parent,
-            name,
-            flags
-        );
+        log::debug!("[FUSE] create(parent: {parent:#x?}, name: {name:?}, flags: {flags:#x?}, _mode: {_mode:o}, _umask: {_umask:o})",);
         let reply = reply_on_drop_guard!(reply, fuser::ReplyCreate);
 
         let uid = req.uid();
@@ -862,7 +842,7 @@ impl fuser::Filesystem for Filesystem {
                 let inodes_guard = inodes.lock().expect("mutex is poisoned");
                 inodes_guard.get_path_or_panic(parent)
             };
-            let path = parent_path.into_child(name);
+            let path = parent_path.into_child(name.clone());
 
             let options = {
                 let mut options = OpenOptions {
@@ -945,14 +925,12 @@ impl fuser::Filesystem for Filesystem {
                     };
                 }
             };
+            let stat = file_stat_to_file_attr(stat, inode, uid, gid);
 
-            reply.manual().created(
-                &TTL,
-                &file_stat_to_file_attr(stat, inode, uid, gid),
-                GENERATION,
-                fd.0.into(),
-                open_flags,
-            );
+            log::trace!("create({parent}, {name:?}) => {stat:?}");
+            reply
+                .manual()
+                .created(&TTL, &stat, GENERATION, fd.0.into(), open_flags);
         });
     }
 
@@ -976,15 +954,8 @@ impl fuser::Filesystem for Filesystem {
         reply: fuser::ReplyAttr,
     ) {
         log::debug!(
-            "[FUSE] setattr(ino: {:#x?}, mode: {:?}, uid: {:?}, \
-            gid: {:?}, size: {:?}, fh: {:?}, flags: {:?})",
-            ino,
-            mode,
-            uid,
-            gid,
-            size,
-            fh,
-            flags
+            "[FUSE] setattr(ino: {ino:#x?}, mode: {mode:x?}, uid: {uid:?}, \
+            gid: {gid:?}, size: {size:?}, fh: {fh:?}, flags: {flags:x?})",
         );
         let reply = reply_on_drop_guard!(reply, fuser::ReplyAttr);
         let uid = req.uid();
@@ -1033,6 +1004,7 @@ impl fuser::Filesystem for Filesystem {
 
                 return;
             } else {
+                // FIXME: Currently I'm only returning the file attributes without truncating the file
                 // Truncate file by path
 
                 let path = {
@@ -1108,9 +1080,9 @@ impl fuser::Filesystem for Filesystem {
                         }
                     }
 
-                    reply
-                        .manual()
-                        .attr(&TTL, &file_stat_to_file_attr(stat, ino, uid, gid));
+                    let stat = file_stat_to_file_attr(stat, ino, uid, gid);
+                    log::trace!("setattr({ino:#x?}, ..) => {stat:?}");
+                    reply.manual().attr(&TTL, &stat);
                 });
 
                 return;
@@ -1121,7 +1093,23 @@ impl fuser::Filesystem for Filesystem {
 
         // TODO: support atime/utime change ?
 
-        reply.manual().error(libc::ENOSYS);
+        // Nothing to set, just return the file attr
+
+        let path = {
+            let inodes_guard = self.inodes.lock().expect("mutex is poisoned");
+            inodes_guard.get_path_or_panic(ino)
+        };
+
+        let ops = self.ops.clone();
+
+        self.tokio_handle.spawn(async move {
+            let res = getattr_from_path(&ops, path, ino, uid, gid).await;
+
+            match res {
+                Ok(attr) => reply.manual().attr(&TTL, &attr),
+                Err(errno) => reply.manual().error(errno),
+            }
+        });
     }
 
     fn read(
@@ -1152,6 +1140,10 @@ impl fuser::Filesystem for Filesystem {
             let offset = u64::try_from(offset).expect("Offset is negative");
             match ops.fd_read(fd, offset, size as u64, &mut buf).await {
                 Ok(_) => {
+                    log::trace!(
+                        "read({ino}, offset: {offset}, size: {size}): Read {rsize} bytes",
+                        rsize = buf.len()
+                    );
                     reply.manual().data(&buf);
                 }
                 Err(err) => match err {
@@ -1200,6 +1192,10 @@ impl fuser::Filesystem for Filesystem {
             let offset = u64::try_from(offset).expect("Offset is negative");
             match ops.fd_write(fd, offset, &data).await {
                 Ok(written) => {
+                    log::trace!(
+                        "write({ino}, offset: {offset}, size: {size}): Written {written} bytes",
+                        size = data.len()
+                    );
                     reply.manual().written(written as u32);
                 }
                 Err(err) => match err {
@@ -1635,4 +1631,41 @@ impl fuser::Filesystem for Filesystem {
 
     // TODO: Fuser exposes a `copy_file_range` method for FUSE >= 7.28. This
     //       would speed up file copy a lot by reusing the same blocks !
+}
+
+async fn getattr_from_path(
+    ops: &WorkspaceOps,
+    path: FsPath,
+    ino: u64,
+    uid: u32,
+    gid: u32,
+) -> Result<fuser::FileAttr, i32> {
+    match ops
+        .stat_entry(&path)
+        .await
+        .map(|stat| entry_stat_to_file_attr(stat, ino, uid, gid))
+        .inspect(|stat| log::debug!("File stat for {ino}: {stat:?}"))
+        .inspect_err(|e| log::warn!("File stat for {ino} result in error: {e:?}"))
+    {
+        Ok(stat) => Ok(stat),
+        Err(err) => match err {
+            WorkspaceStatEntryError::EntryNotFound => {
+                log::trace!("Entry not found for path: {:?}", path);
+                Err(libc::ENOENT)
+            }
+            WorkspaceStatEntryError::Offline => {
+                log::warn!("Workspace is offline");
+                Err(libc::EHOSTUNREACH)
+            }
+            WorkspaceStatEntryError::NoRealmAccess => {
+                log::trace!("Cannot access realm");
+                Err(libc::EPERM)
+            }
+            WorkspaceStatEntryError::Stopped
+            | WorkspaceStatEntryError::InvalidKeysBundle(_)
+            | WorkspaceStatEntryError::InvalidCertificate(_)
+            | WorkspaceStatEntryError::InvalidManifest(_)
+            | WorkspaceStatEntryError::Internal(_) => Err(libc::EIO),
+        },
+    }
 }

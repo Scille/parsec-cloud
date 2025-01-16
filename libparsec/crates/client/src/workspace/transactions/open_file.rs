@@ -118,7 +118,7 @@ pub async fn open_file(
             }
             // Special case if the file doesn't exist but we are allowed to create it
             Err(ResolvePathError::EntryNotFound) if options.create || options.create_new => {
-                let outcome = super::create_file(ops, path).await;
+                let outcome = super::create_file(ops, path.clone()).await;
                 outcome.or_else(|err| match err {
                     // Concurrent operation has created the file in the meantime
                     WorkspaceCreateFileError::EntryExists { entry_id } => Ok(entry_id),
@@ -175,7 +175,9 @@ pub async fn open_file(
         }
     };
 
-    open_file_by_id(ops, entry_id, options).await
+    open_file_by_id(ops, entry_id, options)
+        .await
+        .inspect(|(fd, _)| log::trace!("Opened file {path} wit fd {fd:?}"))
 }
 
 pub async fn open_file_by_id(
