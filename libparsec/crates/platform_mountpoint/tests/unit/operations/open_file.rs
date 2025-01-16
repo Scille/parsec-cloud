@@ -151,6 +151,7 @@ async fn no_create_and_not_found(tmp_path: TmpPath, env: &TestbedEnv) {
                             is_placeholder: false,
                             need_sync: false,
                             size: 0,
+                            last_updater: "alice@dev1".parse().unwrap(),
                         }))
                     } else {
                         // Fallback to real lookup
