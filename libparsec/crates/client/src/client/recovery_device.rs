@@ -7,7 +7,7 @@ use libparsec_platform_device_loader::{
     get_default_key_file, save_device, PlatformImportRecoveryDeviceError, SaveDeviceError,
 };
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
-use libparsec_protocol::authenticated_cmds::v4::device_create;
+use libparsec_protocol::authenticated_cmds::latest::device_create;
 use libparsec_types::prelude::*;
 
 use crate::{

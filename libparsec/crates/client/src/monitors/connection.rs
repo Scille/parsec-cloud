@@ -42,7 +42,7 @@ use libparsec_platform_async::{
     channel, pretend_future_is_send_on_web, select2_biased, stream::StreamExt,
 };
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
-use libparsec_protocol::authenticated_cmds::v4::events_listen::{APIEvent, Rep, Req};
+use libparsec_protocol::authenticated_cmds::latest::events_listen::{APIEvent, Rep, Req};
 
 use crate::event_bus::*;
 
