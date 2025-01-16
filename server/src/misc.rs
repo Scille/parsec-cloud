@@ -89,6 +89,13 @@ impl ApiVersion {
     }
 
     #[classattr]
+    #[pyo3(name = "API_V5_VERSION")]
+    fn api_v5_version() -> Self {
+        const API_V5_VERSION: ApiVersion = ApiVersion(*libparsec_protocol::API_V5_VERSION);
+        API_V5_VERSION
+    }
+
+    #[classattr]
     #[pyo3(name = "API_LATEST_VERSION")]
     fn api_version_number() -> Self {
         const API_LATEST_VERSION: ApiVersion = ApiVersion(*libparsec_protocol::API_LATEST_VERSION);

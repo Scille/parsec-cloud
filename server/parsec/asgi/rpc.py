@@ -100,7 +100,7 @@ class LoggedRep:
 
 CONTENT_TYPE_MSGPACK = "application/msgpack"
 ACCEPT_TYPE_SSE = "text/event-stream"
-SUPPORTED_API_VERSIONS = (ApiVersion.API_V4_VERSION,)
+SUPPORTED_API_VERSIONS = (ApiVersion.API_LATEST_VERSION,)
 # Max size for HTTP body, 1Mo seems plenty given our API never upload big chunk of data
 # (biggest request should be the `block_create` command with typically ~512Ko of data)
 MAX_CONTENT_LENGTH = 1 * 1024**2
