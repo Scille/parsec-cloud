@@ -64,7 +64,7 @@ macro_rules! impl_local_manifest_load {
 pub(super) use impl_local_manifest_load;
 
 /*
- * LocalChildManifest
+ * ArcLocalChildManifest & LocalChildManifest
  */
 
 #[derive(Debug, Clone)]
