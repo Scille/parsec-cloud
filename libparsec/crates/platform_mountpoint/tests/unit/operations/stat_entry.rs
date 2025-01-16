@@ -47,15 +47,23 @@ async fn file(
             // close has returned, so being fast here helps detecting concurrency issues
             // (true story).
             tokio::task::spawn_blocking(move || {
-                let (file_path, expected_size) = match kind {
+                let (file_path, expected_size, permission) = match kind {
                     "default" | "read_only_workspace" => {
                         let path = mountpoint_path.join("bar.txt");
-                        (path, 11)
+                        (
+                            path,
+                            11,
+                            if kind == "read_only_workspace" {
+                                0o500
+                            } else {
+                                0o700
+                            },
+                        )
                     }
                     "just_created" => {
                         let path = mountpoint_path.join("xxx.txt");
                         std::fs::File::create(&path).unwrap();
-                        (path, 0)
+                        (path, 0, 0o700)
                     }
                     "just_modified" => {
                         let path = mountpoint_path.join("bar.txt");
@@ -65,18 +73,40 @@ async fn file(
                             .open(&path)
                             .unwrap();
                         fd.write_all(b"a").unwrap();
-                        (path, 1)
+                        (path, 1, 0o700)
                     }
                     "just_moved" => {
                         let path = mountpoint_path.join("xxx.txt");
                         std::fs::rename(mountpoint_path.join("bar.txt"), &path).unwrap();
-                        (path, 11)
+                        (path, 11, 0o700)
                     }
                     unknown => panic!("Unknown kind: {}", unknown),
                 };
                 let stat = std::fs::metadata(file_path).unwrap();
                 assert!(stat.is_file());
                 p_assert_eq!(stat.len(), expected_size);
+
+                #[cfg(not(target_family = "unix"))]
+                let _ = permission;
+                #[cfg(target_family = "unix")]
+                {
+                    use std::os::unix::fs::MetadataExt;
+                    const BLK_SIZE: u64 = 512;
+
+                    // SAFETY: getuid is safe to call
+                    let current_uid = unsafe { libc::getuid() };
+                    // SAFETY: getgid is safe to call
+                    let current_gid = unsafe { libc::getgid() };
+
+                    assert_eq!(stat.mode() & 0o700, permission);
+                    assert_eq!(stat.uid(), current_uid);
+                    assert_eq!(stat.gid(), current_gid);
+                    assert_eq!(stat.nlink(), 1); // We do not handle file link so the file will have a
+                                                 // single link
+                    assert_eq!(stat.blocks(), expected_size.div_ceil(BLK_SIZE));
+                    assert_eq!(stat.blksize(), 512 * 1024); // Value of blocksize that we define during the
+                                                            // filesystem impl
+                }
             })
             .await
             .unwrap();
@@ -116,6 +146,26 @@ async fn folder(
                 };
                 let stat = std::fs::metadata(folder_path).unwrap();
                 assert!(stat.is_dir());
+
+                #[cfg(target_family = "unix")]
+                {
+                    use std::os::unix::fs::MetadataExt;
+
+                    // SAFETY: getuid is safe to call
+                    let current_uid = unsafe { libc::getuid() };
+                    // SAFETY: getgid is safe to call
+                    let current_gid = unsafe { libc::getgid() };
+
+                    assert_eq!(stat.mode() & 0o700, 0o700);
+                    assert_eq!(stat.uid(), current_uid);
+                    assert_eq!(stat.gid(), current_gid);
+                    assert_eq!(stat.nlink(), 1); // We do not handle file link so the file will have a
+                                                 // single link
+                    assert_eq!(stat.size(), 0); // A dir does not have a size
+                    assert_eq!(stat.blocks(), 0); // no size mean no block used
+                    assert_eq!(stat.blksize(), 512 * 1024); // Value of blocksize that we define during the
+                                                            // filesystem impl
+                }
             })
             .await
             .unwrap();
