@@ -177,7 +177,7 @@ rpassword = { version = "7.3.1", default-features = false }
 rsa = { version = "0.8.2", default-features = false }
 rstest = { version = "0.18.2", default-features = false }
 rstest_reuse = { version = "0.6.0", default-features = false }
-ruzstd = { version = "0.7.2", default-features = true }
+ruzstd = { version = "0.7.3", default-features = true }
 sentry = { version = "0.34.0", default-features = false }
 sentry-log = { version = "0.34.0", default-features = false }
 serde = { version = "1.0.214", default-features = false }
