@@ -30,6 +30,7 @@
           @click="toggleFullScreen"
           :icon="scan"
         />
+        <file-controls-zoom @change="onZoomLevelChange" />
       </file-controls>
     </template>
   </file-viewer-wrapper>
@@ -39,7 +40,7 @@
 import { MsSpinner, I18n, Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
 import { onBeforeMount, onMounted, Ref, ref } from 'vue';
 import XLSX from 'xlsx';
-import { FileControls, FileControlsButton } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsZoom } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { scan } from 'ionicons/icons';
@@ -109,6 +110,21 @@ async function switchToPage(page: string): Promise<void> {
 
 async function toggleFullScreen(): Promise<void> {
   await spreadsheet.value.requestFullscreen();
+}
+
+function onZoomLevelChange(value: number): void {
+  const wscols = [
+    { wpx: value },
+    { wpx: value },
+    { wpx: value },
+    { wpx: value },
+  ];
+
+  if (workbook) {
+    console.log(workbook.Sheets, workbook.Sheets[currentPage.value]);
+
+    (workbook.Sheets[currentPage.value])['!cols'] = wscols;
+  }
 }
 </script>
 
