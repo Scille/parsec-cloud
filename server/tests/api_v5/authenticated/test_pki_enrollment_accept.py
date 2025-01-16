@@ -20,7 +20,7 @@ from parsec._parsec import (
     UserProfile,
     authenticated_cmds,
 )
-from tests.api_v4.authenticated.test_user_create import (
+from tests.api_v5.authenticated.test_user_create import (
     NEW_MIKE_DEVICE_ID,
     NEW_MIKE_DEVICE_LABEL,
     NEW_MIKE_HUMAN_HANDLE,
@@ -129,7 +129,7 @@ async def test_authenticated_pki_enrollment_accept_ok(
     rep = await coolorg.alice.pki_enrollment_accept(
         **generate_accept_params(coolorg, enrollment_id)
     )
-    assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepOk()
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepOk()
 
 
 async def test_authenticated_pki_enrollment_accept_active_users_limit_reached(
@@ -146,7 +146,7 @@ async def test_authenticated_pki_enrollment_accept_active_users_limit_reached(
     rep = await coolorg.alice.pki_enrollment_accept(
         **generate_accept_params(coolorg, enrollment_id)
     )
-    assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepActiveUsersLimitReached()
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepActiveUsersLimitReached()
 
 
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
@@ -170,7 +170,7 @@ async def test_authenticated_pki_enrollment_accept_author_not_allowed(
             assert False, unknown
 
     rep = await author.pki_enrollment_accept(**generate_accept_params(coolorg, enrollment_id))
-    assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepAuthorNotAllowed()
 
 
 async def test_authenticated_pki_enrollment_accept_enrollment_no_longer_available(
@@ -189,7 +189,7 @@ async def test_authenticated_pki_enrollment_accept_enrollment_no_longer_availabl
     rep = await coolorg.alice.pki_enrollment_accept(
         **generate_accept_params(coolorg, enrollment_id)
     )
-    assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepEnrollmentNoLongerAvailable()
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepEnrollmentNoLongerAvailable()
 
 
 async def test_authenticated_pki_enrollment_accept_enrollment_not_found(
@@ -198,7 +198,7 @@ async def test_authenticated_pki_enrollment_accept_enrollment_not_found(
     rep = await coolorg.alice.pki_enrollment_accept(
         **generate_accept_params(coolorg, EnrollmentID.new())
     )
-    assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepEnrollmentNotFound()
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepEnrollmentNotFound()
 
 
 async def test_authenticated_pki_enrollment_accept_human_handle_already_taken(
@@ -208,7 +208,7 @@ async def test_authenticated_pki_enrollment_accept_human_handle_already_taken(
     rep = await coolorg.alice.pki_enrollment_accept(
         **generate_accept_params(coolorg, enrollment_id, human_handle=coolorg.bob.human_handle)
     )
-    assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepHumanHandleAlreadyTaken()
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepHumanHandleAlreadyTaken()
 
 
 async def test_authenticated_pki_enrollment_accept_invalid_certificate(
@@ -218,7 +218,7 @@ async def test_authenticated_pki_enrollment_accept_invalid_certificate(
     params = generate_accept_params(coolorg, enrollment_id)
     params["user_certificate"] = b"<dummy>"
     rep = await coolorg.alice.pki_enrollment_accept(**params)
-    assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepInvalidCertificate()
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidCertificate()
 
 
 async def test_authenticated_pki_enrollment_accept_invalid_payload_data(
@@ -228,7 +228,7 @@ async def test_authenticated_pki_enrollment_accept_invalid_payload_data(
     params = generate_accept_params(coolorg, enrollment_id)
     params["accept_payload"] = b"<dummy>"
     rep = await coolorg.alice.pki_enrollment_accept(**params)
-    assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepInvalidPayloadData()
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayloadData()
 
 
 async def test_authenticated_pki_enrollment_accept_timestamp_out_of_ballpark(
@@ -239,7 +239,9 @@ async def test_authenticated_pki_enrollment_accept_timestamp_out_of_ballpark(
     rep = await coolorg.alice.pki_enrollment_accept(
         **generate_accept_params(coolorg, enrollment_id, now=timestamp_out_of_ballpark)
     )
-    assert isinstance(rep, authenticated_cmds.v4.pki_enrollment_accept.RepTimestampOutOfBallpark)
+    assert isinstance(
+        rep, authenticated_cmds.latest.pki_enrollment_accept.RepTimestampOutOfBallpark
+    )
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == timestamp_out_of_ballpark
@@ -252,7 +254,7 @@ async def test_authenticated_pki_enrollment_accept_user_already_exists(
     rep = await coolorg.alice.pki_enrollment_accept(
         **generate_accept_params(coolorg, enrollment_id, user_id=coolorg.bob.user_id)
     )
-    assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepUserAlreadyExists()
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepUserAlreadyExists()
 
 
 @pytest.mark.parametrize("kind", ("same_timestamp", "previous_timestamp"))
@@ -293,7 +295,7 @@ async def test_authenticated_pki_enrollment_accept_require_greater_timestamp(
     rep = await coolorg.alice.pki_enrollment_accept(
         **generate_accept_params(coolorg, enrollment_id, now=accepted_timestamp)
     )
-    assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.latest.pki_enrollment_accept.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
 

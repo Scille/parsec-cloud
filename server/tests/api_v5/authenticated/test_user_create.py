@@ -141,7 +141,7 @@ async def test_authenticated_user_create_ok(
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        assert rep == authenticated_cmds.v4.user_create.RepOk()
+        assert rep == authenticated_cmds.latest.user_create.RepOk()
 
         await spy.wait_event_occurred(
             EventCommonCertificate(
@@ -164,7 +164,7 @@ async def test_authenticated_user_create_ok(
         signing_key=NEW_MIKE_SIGNING_KEY,
     )
     rep = await alice2_rpc.ping(ping="hello")
-    assert rep == authenticated_cmds.v4.ping.RepOk(pong="hello")
+    assert rep == authenticated_cmds.latest.ping.RepOk(pong="hello")
 
 
 @pytest.mark.parametrize("kind", ("as_outsider", "as_standard", "no_longer_allowed"))
@@ -201,7 +201,7 @@ async def test_authenticated_user_create_author_not_allowed(
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert rep == authenticated_cmds.v4.user_create.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.user_create.RepAuthorNotAllowed()
 
 
 async def test_authenticated_user_create_active_users_limit_reached(
@@ -227,7 +227,7 @@ async def test_authenticated_user_create_active_users_limit_reached(
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert rep == authenticated_cmds.v4.user_create.RepActiveUsersLimitReached()
+    assert rep == authenticated_cmds.latest.user_create.RepActiveUsersLimitReached()
 
 
 @pytest.mark.parametrize(
@@ -348,7 +348,7 @@ async def test_authenticated_user_create_invalid_certificate(
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert rep == authenticated_cmds.v4.user_create.RepInvalidCertificate()
+    assert rep == authenticated_cmds.latest.user_create.RepInvalidCertificate()
 
 
 @pytest.mark.parametrize(
@@ -385,7 +385,7 @@ async def test_authenticated_user_create_user_already_exists(
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert rep == authenticated_cmds.v4.user_create.RepUserAlreadyExists()
+    assert rep == authenticated_cmds.latest.user_create.RepUserAlreadyExists()
 
 
 async def test_authenticated_user_create_human_handle_already_taken(
@@ -404,7 +404,7 @@ async def test_authenticated_user_create_human_handle_already_taken(
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert rep == authenticated_cmds.v4.user_create.RepHumanHandleAlreadyTaken()
+    assert rep == authenticated_cmds.latest.user_create.RepHumanHandleAlreadyTaken()
 
 
 async def test_authenticated_user_create_timestamp_out_of_ballpark(
@@ -424,7 +424,7 @@ async def test_authenticated_user_create_timestamp_out_of_ballpark(
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert isinstance(rep, authenticated_cmds.v4.user_create.RepTimestampOutOfBallpark)
+    assert isinstance(rep, authenticated_cmds.latest.user_create.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == t0
@@ -474,7 +474,7 @@ async def test_authenticated_user_create_require_greater_timestamp(
         device_certificate=device_certificate,
         redacted_device_certificate=redacted_device_certificate,
     )
-    assert rep == authenticated_cmds.v4.user_create.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.latest.user_create.RepRequireGreaterTimestamp(
         strictly_greater_than=t1
     )
 

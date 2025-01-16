@@ -14,7 +14,7 @@ from parsec._parsec import (
     UserProfile,
     anonymous_cmds,
 )
-from tests.api_v4.authenticated.test_user_create import (
+from tests.api_v5.authenticated.test_user_create import (
     NEW_MIKE_DEVICE_ID,
     NEW_MIKE_DEVICE_LABEL,
     NEW_MIKE_HUMAN_HANDLE,
@@ -50,8 +50,10 @@ async def test_anonymous_pki_enrollment_info_ok(
 
     match kind:
         case "submitted":
-            expected_unit = anonymous_cmds.v4.pki_enrollment_info.PkiEnrollmentInfoStatusSubmitted(
-                submitted_on=submitted_on
+            expected_unit = (
+                anonymous_cmds.latest.pki_enrollment_info.PkiEnrollmentInfoStatusSubmitted(
+                    submitted_on=submitted_on
+                )
             )
 
         case "accepted":
@@ -89,12 +91,14 @@ async def test_anonymous_pki_enrollment_info_ok(
             )
             assert isinstance(outcome, tuple)
 
-            expected_unit = anonymous_cmds.v4.pki_enrollment_info.PkiEnrollmentInfoStatusAccepted(
-                submitted_on=submitted_on,
-                accepted_on=accepted_on,
-                accepter_der_x509_certificate=b"<alice der x509 certificate>",
-                accept_payload_signature=b"<alice accept payload signature>",
-                accept_payload=accept_payload,
+            expected_unit = (
+                anonymous_cmds.latest.pki_enrollment_info.PkiEnrollmentInfoStatusAccepted(
+                    submitted_on=submitted_on,
+                    accepted_on=accepted_on,
+                    accepter_der_x509_certificate=b"<alice der x509 certificate>",
+                    accept_payload_signature=b"<alice accept payload signature>",
+                    accept_payload=accept_payload,
+                )
             )
 
         case "cancelled":
@@ -120,9 +124,11 @@ async def test_anonymous_pki_enrollment_info_ok(
             )
             assert outcome is None
 
-            expected_unit = anonymous_cmds.v4.pki_enrollment_info.PkiEnrollmentInfoStatusCancelled(
-                submitted_on=submitted_on,
-                cancelled_on=cancelled_on,
+            expected_unit = (
+                anonymous_cmds.latest.pki_enrollment_info.PkiEnrollmentInfoStatusCancelled(
+                    submitted_on=submitted_on,
+                    cancelled_on=cancelled_on,
+                )
             )
 
         case "rejected":
@@ -136,26 +142,28 @@ async def test_anonymous_pki_enrollment_info_ok(
             )
             assert outcome is None
 
-            expected_unit = anonymous_cmds.v4.pki_enrollment_info.PkiEnrollmentInfoStatusRejected(
-                submitted_on=submitted_on,
-                rejected_on=rejected_on,
+            expected_unit = (
+                anonymous_cmds.latest.pki_enrollment_info.PkiEnrollmentInfoStatusRejected(
+                    submitted_on=submitted_on,
+                    rejected_on=rejected_on,
+                )
             )
 
         case unknown:
             assert False, unknown
 
     rep = await coolorg.anonymous.pki_enrollment_info(enrollment_id=enrollment_id)
-    assert rep == anonymous_cmds.v4.pki_enrollment_info.RepOk(unit=expected_unit)
+    assert rep == anonymous_cmds.latest.pki_enrollment_info.RepOk(unit=expected_unit)
 
     rep = await coolorg.anonymous.pki_enrollment_info(enrollment_id=enrollment_id)
-    assert rep == anonymous_cmds.v4.pki_enrollment_info.RepOk(unit=expected_unit)
+    assert rep == anonymous_cmds.latest.pki_enrollment_info.RepOk(unit=expected_unit)
 
 
 async def test_anonymous_pki_enrollment_info_enrollment_not_found(
     coolorg: CoolorgRpcClients,
 ) -> None:
     rep = await coolorg.anonymous.pki_enrollment_info(enrollment_id=EnrollmentID.new())
-    assert rep == anonymous_cmds.v4.pki_enrollment_info.RepEnrollmentNotFound()
+    assert rep == anonymous_cmds.latest.pki_enrollment_info.RepEnrollmentNotFound()
 
 
 async def test_anonymous_pki_enrollment_info_http_common_errors(

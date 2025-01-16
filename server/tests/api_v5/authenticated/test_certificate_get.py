@@ -333,7 +333,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     rep = await user_client.certificate_get(
         common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.common_certificates == expected_common_certificates
 
     # 2) Get all certificates (with a after timestamp too far in the past)
@@ -341,7 +341,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     rep = await user_client.certificate_get(
         common_after=t0, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.common_certificates == expected_common_certificates
 
     # 3) Get a subset of the certificates
@@ -349,7 +349,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     rep = await user_client.certificate_get(
         common_after=t1, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.common_certificates == expected_common_certificates[2:]
 
     # 4) Get a subset of the certificates (no new certificates at all)
@@ -357,7 +357,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     rep = await user_client.certificate_get(
         common_after=t6, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.common_certificates == []
 
 
@@ -382,7 +382,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
     rep = await coolorg.alice.certificate_get(
         common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert wksp2_id not in rep.realm_certificates
     assert wksp3_id not in rep.realm_certificates
     initial_realm_certificates = rep.realm_certificates
@@ -514,7 +514,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
     rep = await coolorg.alice.certificate_get(
         common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.realm_certificates == {
         **initial_realm_certificates,
         wksp2_id: [c for _, c in wksp2_certificates],
@@ -529,7 +529,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         shamir_recovery_after=None,
         realm_after={wksp2_id: t0},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.realm_certificates == {
         **initial_realm_certificates,
         wksp2_id: [c for _, c in wksp2_certificates],
@@ -544,7 +544,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         shamir_recovery_after=None,
         realm_after={wksp2_id: t3},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.realm_certificates == {
         **initial_realm_certificates,
         wksp2_id: [c for _, c in wksp2_certificates][2:],  # Skip two certificate
@@ -559,7 +559,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         shamir_recovery_after=None,
         realm_after={wksp2_id: t6},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.realm_certificates == {
         **initial_realm_certificates,
         # Wksp2 is omitted as there is no certificates to return
@@ -575,7 +575,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         shamir_recovery_after=None,
         realm_after={},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.realm_certificates[wksp2_id] == [c for _, c in wksp2_certificates]
 
 
@@ -588,7 +588,7 @@ async def test_authenticated_certificate_get_ok_realm_after_unshare(
         shamir_recovery_after=None,
         realm_after={},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
 
     expected_realm_certifs = rep.realm_certificates
 
@@ -612,7 +612,7 @@ async def test_authenticated_certificate_get_ok_realm_after_unshare(
         shamir_recovery_after=None,
         realm_after={},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.realm_certificates == expected_realm_certifs
 
     # ...until the realm is re-shared with him !
@@ -629,7 +629,7 @@ async def test_authenticated_certificate_get_ok_realm_after_unshare(
         shamir_recovery_after=None,
         realm_after={},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.realm_certificates == expected_realm_certifs
 
 
@@ -642,7 +642,7 @@ async def test_authenticated_certificate_get_ok_not_part_of_realm(
         shamir_recovery_after=None,
         realm_after={coolorg.wksp1_id: DateTime.from_timestamp_seconds(0)},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
 
     assert rep.realm_certificates == {}
 
@@ -662,7 +662,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
     rep = await coolorg.alice.certificate_get(
         common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     wksp1_certificates = rep.realm_certificates[coolorg.wksp1_id]
 
     # At first Mallory is not part of wksp1
@@ -776,7 +776,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
     rep = await coolorg.mallory.certificate_get(
         common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.realm_certificates[coolorg.wksp1_id] == wksp1_certificates[:-1]
 
     # Same thing when passing an after parameter
@@ -787,7 +787,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
         shamir_recovery_after=None,
         realm_after={coolorg.wksp1_id: t2},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.realm_certificates[coolorg.wksp1_id] == wksp1_certificates[-2:-1]
 
     rep = await coolorg.mallory.certificate_get(
@@ -796,7 +796,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
         shamir_recovery_after=None,
         realm_after={coolorg.wksp1_id: t3},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert coolorg.wksp1_id not in rep.realm_certificates
 
     # Now re-share with Mallory...
@@ -828,7 +828,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
     rep = await coolorg.mallory.certificate_get(
         common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.realm_certificates[coolorg.wksp1_id] == wksp1_certificates
 
 
@@ -844,7 +844,7 @@ async def test_authenticated_certificate_get_ok_shamir_certificates(
         shamir_recovery_after=None,
         realm_after={},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.shamir_recovery_certificates == []
 
     # 1) Setup usual shamir
@@ -895,7 +895,7 @@ async def test_authenticated_certificate_get_ok_shamir_certificates(
         realm_after={},
     )
     assert rep1 == rep2
-    assert isinstance(rep1, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep1, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep1.shamir_recovery_certificates == [raw_brief]
 
     # No new shamir
@@ -905,7 +905,7 @@ async def test_authenticated_certificate_get_ok_shamir_certificates(
         shamir_recovery_after=brief.timestamp,
         realm_after={},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.shamir_recovery_certificates == []
 
     # 1.2) From Mallory's (=share recipient) point of view
@@ -916,7 +916,7 @@ async def test_authenticated_certificate_get_ok_shamir_certificates(
         shamir_recovery_after=a_long_time_ago,
         realm_after={},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.shamir_recovery_certificates == [raw_brief, raw_share]
 
     # 1.3) From Bob's (=not involved) point of view
@@ -927,7 +927,7 @@ async def test_authenticated_certificate_get_ok_shamir_certificates(
         shamir_recovery_after=a_long_time_ago,
         realm_after={},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.shamir_recovery_certificates == []
 
     # 2) Now do the deletion
@@ -960,7 +960,7 @@ async def test_authenticated_certificate_get_ok_shamir_certificates(
         shamir_recovery_after=None,
         realm_after={},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.shamir_recovery_certificates == [raw_brief, raw_deletion]
 
     rep = await coolorg.alice.certificate_get(
@@ -969,7 +969,7 @@ async def test_authenticated_certificate_get_ok_shamir_certificates(
         shamir_recovery_after=brief.timestamp,
         realm_after={},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.shamir_recovery_certificates == [raw_deletion]
 
     # 2.2) From Mallory's (=share recipient) point of view
@@ -980,7 +980,7 @@ async def test_authenticated_certificate_get_ok_shamir_certificates(
         shamir_recovery_after=None,
         realm_after={},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.shamir_recovery_certificates == [raw_brief, raw_share, raw_deletion]
 
     # 2.3) From Bob's (=not involved) point of view
@@ -991,7 +991,7 @@ async def test_authenticated_certificate_get_ok_shamir_certificates(
         shamir_recovery_after=None,
         realm_after={},
     )
-    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.shamir_recovery_certificates == []
 
 

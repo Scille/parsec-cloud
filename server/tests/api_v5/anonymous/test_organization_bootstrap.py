@@ -137,7 +137,7 @@ async def test_anonymous_organization_bootstrap_ok(
         sequester_authority_certificate=sequester_authority_certificate,
     )
 
-    assert rep == anonymous_cmds.v4.organization_bootstrap.RepOk()
+    assert rep == anonymous_cmds.latest.organization_bootstrap.RepOk()
 
     # Ensure the default config has been used to configure the organization
     # when spontaneously created.
@@ -223,7 +223,7 @@ async def test_anonymous_organization_bootstrap_invalid_certificate(
         sequester_authority_certificate=sequester_authority_certificate,
     )
 
-    assert rep == anonymous_cmds.v4.organization_bootstrap.RepInvalidCertificate()
+    assert rep == anonymous_cmds.latest.organization_bootstrap.RepInvalidCertificate()
 
 
 @pytest.mark.usefixtures("ballpark_always_ok")
@@ -260,7 +260,7 @@ async def test_anonymous_organization_bootstrap_organization_already_bootstrappe
         sequester_authority_certificate=sequester_authority_certificate,
     )
 
-    assert rep == anonymous_cmds.v4.organization_bootstrap.RepOk()
+    assert rep == anonymous_cmds.latest.organization_bootstrap.RepOk()
 
     rep = await anonymous_client.organization_bootstrap(
         bootstrap_token=config.bootstrap_token,
@@ -272,7 +272,7 @@ async def test_anonymous_organization_bootstrap_organization_already_bootstrappe
         sequester_authority_certificate=sequester_authority_certificate,
     )
 
-    assert rep == anonymous_cmds.v4.organization_bootstrap.RepOrganizationAlreadyBootstrapped()
+    assert rep == anonymous_cmds.latest.organization_bootstrap.RepOrganizationAlreadyBootstrapped()
 
 
 @pytest.mark.usefixtures("ballpark_always_ok")
@@ -309,7 +309,7 @@ async def test_anonymous_organization_bootstrap_invalid_bootstrap_token(
         sequester_authority_certificate=sequester_authority_certificate,
     )
 
-    assert rep == anonymous_cmds.v4.organization_bootstrap.RepInvalidBootstrapToken()
+    assert rep == anonymous_cmds.latest.organization_bootstrap.RepInvalidBootstrapToken()
 
 
 @pytest.mark.parametrize(
@@ -415,7 +415,7 @@ async def test_anonymous_organization_bootstrap_timestamp_out_of_ballpark(
         else None,
     )
 
-    assert isinstance(rep, anonymous_cmds.v4.organization_bootstrap.RepTimestampOutOfBallpark)
+    assert isinstance(rep, anonymous_cmds.latest.organization_bootstrap.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == BALLPARK_CLIENT_EARLY_OFFSET
     assert rep.ballpark_client_late_offset == BALLPARK_CLIENT_LATE_OFFSET
     assert rep.client_timestamp == late

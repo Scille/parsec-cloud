@@ -39,7 +39,7 @@ async def test_authenticated_user_update_ok(coolorg: CoolorgRpcClients, backend:
         rep = await coolorg.alice.user_update(
             user_update_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
         )
-        assert rep == authenticated_cmds.v4.user_update.RepOk()
+        assert rep == authenticated_cmds.latest.user_update.RepOk()
 
         await spy.wait_event_occurred(
             EventUserUpdated(
@@ -97,7 +97,7 @@ async def test_authenticated_user_update_author_not_allowed(
             assert False, unknown
 
     rep = await author.user_update(user_update_certificate=certif.dump_and_sign(author.signing_key))
-    assert rep == authenticated_cmds.v4.user_update.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.user_update.RepAuthorNotAllowed()
 
 
 async def test_authenticated_user_update_user_not_found(coolorg: CoolorgRpcClients) -> None:
@@ -112,7 +112,7 @@ async def test_authenticated_user_update_user_not_found(coolorg: CoolorgRpcClien
     rep = await coolorg.alice.user_update(
         user_update_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
-    assert rep == authenticated_cmds.v4.user_update.RepUserNotFound()
+    assert rep == authenticated_cmds.latest.user_update.RepUserNotFound()
 
 
 async def test_authenticated_user_update_user_revoked(
@@ -150,7 +150,7 @@ async def test_authenticated_user_update_user_revoked(
     rep = await coolorg.alice.user_update(
         user_update_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
-    assert rep == authenticated_cmds.v4.user_update.RepUserRevoked()
+    assert rep == authenticated_cmds.latest.user_update.RepUserRevoked()
 
 
 async def test_authenticated_user_update_user_no_changes(coolorg: CoolorgRpcClients) -> None:
@@ -165,7 +165,7 @@ async def test_authenticated_user_update_user_no_changes(coolorg: CoolorgRpcClie
     rep = await coolorg.alice.user_update(
         user_update_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
-    assert rep == authenticated_cmds.v4.user_update.RepUserNoChanges()
+    assert rep == authenticated_cmds.latest.user_update.RepUserNoChanges()
 
 
 @pytest.mark.parametrize(
@@ -210,7 +210,7 @@ async def test_authenticated_user_update_invalid_certificate(
             raise Exception(f"Test not implemented for kind: {kind}")
 
     rep = await coolorg.alice.user_update(user_update_certificate=certif)
-    assert rep == authenticated_cmds.v4.user_update.RepInvalidCertificate()
+    assert rep == authenticated_cmds.latest.user_update.RepInvalidCertificate()
 
 
 async def test_authenticated_user_update_timestamp_out_of_ballpark(
@@ -228,7 +228,7 @@ async def test_authenticated_user_update_timestamp_out_of_ballpark(
         user_update_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
 
-    assert isinstance(rep, authenticated_cmds.v4.user_update.RepTimestampOutOfBallpark)
+    assert isinstance(rep, authenticated_cmds.latest.user_update.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == t0
@@ -274,7 +274,7 @@ async def test_authenticated_user_update_require_greater_timestamp(
     ).dump_and_sign(coolorg.alice.signing_key)
 
     rep = await coolorg.alice.user_update(user_update_certificate=new_certif)
-    assert rep == authenticated_cmds.v4.user_update.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.latest.user_update.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
 

@@ -25,10 +25,10 @@ async def test_authenticated_invite_new_user_ok_new(
             claimer_email="new@example.invalid",
             send_email=send_email,
         )
-        assert isinstance(rep, authenticated_cmds.v4.invite_new_user.RepOk)
+        assert isinstance(rep, authenticated_cmds.latest.invite_new_user.RepOk)
         assert (
             rep.email_sent
-            == authenticated_cmds.v4.invite_new_user.InvitationEmailSentStatus.SUCCESS
+            == authenticated_cmds.latest.invite_new_user.InvitationEmailSentStatus.SUCCESS
         )
         invitation_token = rep.token
 
@@ -94,7 +94,7 @@ async def test_authenticated_invite_new_user_ok_already_exist(
             claimer_email="new@example.invalid",
             send_email=False,
         )
-        assert isinstance(rep, authenticated_cmds.v4.invite_new_user.RepOk)
+        assert isinstance(rep, authenticated_cmds.latest.invite_new_user.RepOk)
         assert rep.token == invitation_token
 
         await spy.wait_event_occurred(
@@ -133,7 +133,7 @@ async def test_authenticated_invite_new_user_author_not_allowed(
         claimer_email="new@example.invalid",
         send_email=False,
     )
-    assert rep == authenticated_cmds.v4.invite_new_user.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.invite_new_user.RepAuthorNotAllowed()
 
 
 async def test_authenticated_invite_new_user_claimer_email_already_enrolled(
@@ -143,7 +143,7 @@ async def test_authenticated_invite_new_user_claimer_email_already_enrolled(
         claimer_email=coolorg.bob.human_handle.email,
         send_email=False,
     )
-    assert rep == authenticated_cmds.v4.invite_new_user.RepClaimerEmailAlreadyEnrolled()
+    assert rep == authenticated_cmds.latest.invite_new_user.RepClaimerEmailAlreadyEnrolled()
 
 
 @pytest.mark.parametrize(
@@ -170,16 +170,16 @@ async def test_authenticated_invite_new_user_send_email_bad_outcome(
             claimer_email="new@example.invalid",
             send_email=True,
         )
-        assert isinstance(rep, authenticated_cmds.v4.invite_new_user.RepOk)
+        assert isinstance(rep, authenticated_cmds.latest.invite_new_user.RepOk)
         invitation_token = rep.token
 
         match bad_outcome:
             case SendEmailBadOutcome.BAD_SMTP_CONFIG:
-                expected_email_sent_status = authenticated_cmds.v4.invite_new_user.InvitationEmailSentStatus.SERVER_UNAVAILABLE
+                expected_email_sent_status = authenticated_cmds.latest.invite_new_user.InvitationEmailSentStatus.SERVER_UNAVAILABLE
             case SendEmailBadOutcome.RECIPIENT_REFUSED:
-                expected_email_sent_status = authenticated_cmds.v4.invite_new_user.InvitationEmailSentStatus.RECIPIENT_REFUSED
+                expected_email_sent_status = authenticated_cmds.latest.invite_new_user.InvitationEmailSentStatus.RECIPIENT_REFUSED
             case SendEmailBadOutcome.SERVER_UNAVAILABLE:
-                expected_email_sent_status = authenticated_cmds.v4.invite_new_user.InvitationEmailSentStatus.SERVER_UNAVAILABLE
+                expected_email_sent_status = authenticated_cmds.latest.invite_new_user.InvitationEmailSentStatus.SERVER_UNAVAILABLE
         assert rep.email_sent == expected_email_sent_status
 
         await spy.wait_event_occurred(

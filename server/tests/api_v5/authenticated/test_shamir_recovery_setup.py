@@ -47,7 +47,7 @@ async def test_authenticated_shamir_recovery_setup_ok(
         shamir_recovery_brief_certificate=brief.dump_and_sign(coolorg.alice.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(coolorg.alice.signing_key)],
     )
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepOk()
+    assert rep == authenticated_cmds.latest.shamir_recovery_setup.RepOk()
 
     topics = await backend.organization.test_dump_topics(coolorg.organization_id)
     assert topics == expected_topics
@@ -75,16 +75,20 @@ async def test_authenticated_shamir_recovery_setup_not_isolated_from_other_users
             recipient = shamirorg.alice
             # This fails even though Alice is not recipient of Mallory Shamir recovery.
             # This is because the topic timestamp is shared among all users.
-            expected_rep = authenticated_cmds.v4.shamir_recovery_setup.RepRequireGreaterTimestamp(
-                strictly_greater_than=shamirorg.shamir_topic_timestamp
+            expected_rep = (
+                authenticated_cmds.latest.shamir_recovery_setup.RepRequireGreaterTimestamp(
+                    strictly_greater_than=shamirorg.shamir_topic_timestamp
+                )
             )
         case "related_by_recipient":
             # Mike is already recipient of Mallory Shamir recovery, hence his
             # topic already contains a brief certificate with the conflicting
             # timestamp !
             recipient = shamirorg.mike
-            expected_rep = authenticated_cmds.v4.shamir_recovery_setup.RepRequireGreaterTimestamp(
-                strictly_greater_than=shamirorg.shamir_topic_timestamp
+            expected_rep = (
+                authenticated_cmds.latest.shamir_recovery_setup.RepRequireGreaterTimestamp(
+                    strictly_greater_than=shamirorg.shamir_topic_timestamp
+                )
             )
         case unknown:
             assert False, unknown
@@ -151,7 +155,9 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_cor
         shamir_recovery_brief_certificate=brief,
         shamir_recovery_share_certificates=[share],
     )
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepInvalidCertificateShareCorrupted()
+    assert (
+        rep == authenticated_cmds.latest.shamir_recovery_setup.RepInvalidCertificateShareCorrupted()
+    )
 
 
 @pytest.mark.parametrize(
@@ -193,7 +199,9 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_brief_cor
         shamir_recovery_brief_certificate=brief,
         shamir_recovery_share_certificates=[share],
     )
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepInvalidCertificateBriefCorrupted()
+    assert (
+        rep == authenticated_cmds.latest.shamir_recovery_setup.RepInvalidCertificateBriefCorrupted()
+    )
 
 
 async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_recipient_not_in_brief(
@@ -223,7 +231,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_rec
     )
     assert (
         rep
-        == authenticated_cmds.v4.shamir_recovery_setup.RepInvalidCertificateShareRecipientNotInBrief()
+        == authenticated_cmds.latest.shamir_recovery_setup.RepInvalidCertificateShareRecipientNotInBrief()
     )
 
 
@@ -265,7 +273,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_duplicate
     )
     assert (
         rep
-        == authenticated_cmds.v4.shamir_recovery_setup.RepInvalidCertificateDuplicateShareForRecipient()
+        == authenticated_cmds.latest.shamir_recovery_setup.RepInvalidCertificateDuplicateShareForRecipient()
     )
 
 
@@ -296,7 +304,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_author_in
     )
     assert (
         rep
-        == authenticated_cmds.v4.shamir_recovery_setup.RepInvalidCertificateAuthorIncludedAsRecipient()
+        == authenticated_cmds.latest.shamir_recovery_setup.RepInvalidCertificateAuthorIncludedAsRecipient()
     )
 
 
@@ -327,7 +335,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_missing_s
     )
     assert (
         rep
-        == authenticated_cmds.v4.shamir_recovery_setup.RepInvalidCertificateMissingShareForRecipient()
+        == authenticated_cmds.latest.shamir_recovery_setup.RepInvalidCertificateMissingShareForRecipient()
     )
 
 
@@ -357,7 +365,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_share_inc
     )
     assert (
         rep
-        == authenticated_cmds.v4.shamir_recovery_setup.RepInvalidCertificateShareInconsistentTimestamp()
+        == authenticated_cmds.latest.shamir_recovery_setup.RepInvalidCertificateShareInconsistentTimestamp()
     )
 
 
@@ -389,7 +397,8 @@ async def test_authenticated_shamir_recovery_setup_invalid_certificate_user_id_m
         shamir_recovery_share_certificates=[share.dump_and_sign(coolorg.alice.signing_key)],
     )
     assert (
-        rep == authenticated_cmds.v4.shamir_recovery_setup.RepInvalidCertificateUserIdMustBeSelf()
+        rep
+        == authenticated_cmds.latest.shamir_recovery_setup.RepInvalidCertificateUserIdMustBeSelf()
     )
 
     topics = await backend.organization.test_dump_topics(coolorg.organization_id)
@@ -425,7 +434,7 @@ async def test_authenticated_shamir_recovery_setup_recipient_not_found(
         shamir_recovery_brief_certificate=brief.dump_and_sign(shamirorg.mike.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(shamirorg.mike.signing_key)],
     )
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepRecipientNotFound()
+    assert rep == authenticated_cmds.latest.shamir_recovery_setup.RepRecipientNotFound()
 
     topics = await backend.organization.test_dump_topics(shamirorg.organization_id)
     assert topics == expected_topics
@@ -478,7 +487,7 @@ async def test_authenticated_shamir_recovery_setup_revoked_recipient(
         shamir_recovery_brief_certificate=brief.dump_and_sign(shamirorg.mike.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(shamirorg.mike.signing_key)],
     )
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepRevokedRecipient(
+    assert rep == authenticated_cmds.latest.shamir_recovery_setup.RepRevokedRecipient(
         last_common_certificate_timestamp=t0
     )
 
@@ -516,7 +525,7 @@ async def test_authenticated_shamir_recovery_setup_shamir_recovery_already_exist
         shamir_recovery_brief_certificate=brief.dump_and_sign(shamirorg.alice.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(shamirorg.alice.signing_key)],
     )
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepShamirRecoveryAlreadyExists(
+    assert rep == authenticated_cmds.latest.shamir_recovery_setup.RepShamirRecoveryAlreadyExists(
         last_shamir_certificate_timestamp=shamirorg.shamir_topic_timestamp
     )
 
@@ -545,7 +554,9 @@ async def test_authenticated_shamir_recovery_setup_timestamp_out_of_ballpark(
         shamir_recovery_brief_certificate=brief.dump_and_sign(coolorg.alice.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(coolorg.alice.signing_key)],
     )
-    assert isinstance(rep, authenticated_cmds.v4.shamir_recovery_setup.RepTimestampOutOfBallpark)
+    assert isinstance(
+        rep, authenticated_cmds.latest.shamir_recovery_setup.RepTimestampOutOfBallpark
+    )
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == timestamp_out_of_ballpark
@@ -591,7 +602,9 @@ async def test_authenticated_shamir_recovery_setup_require_greater_timestamp(
         shamir_recovery_brief_certificate=brief.dump_and_sign(author.signing_key),
         shamir_recovery_share_certificates=[share.dump_and_sign(author.signing_key)],
     )
-    assert isinstance(rep, authenticated_cmds.v4.shamir_recovery_setup.RepRequireGreaterTimestamp)
+    assert isinstance(
+        rep, authenticated_cmds.latest.shamir_recovery_setup.RepRequireGreaterTimestamp
+    )
 
 
 async def test_authenticated_shamir_recovery_setup_http_common_errors(

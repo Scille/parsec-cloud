@@ -90,7 +90,7 @@ async def test_authenticated_vlob_poll_changes_ok(
 
     # Coolorg's wksp1 comes with already a vlob present (i.e. v1 of the workspace manifest)
     rep = await coolorg.alice.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=0)
-    assert isinstance(rep, authenticated_cmds.v4.vlob_poll_changes.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.vlob_poll_changes.RepOk)
     assert rep.current_checkpoint == 1
     checkpoint1_changes = rep.changes
 
@@ -119,7 +119,7 @@ async def test_authenticated_vlob_poll_changes_ok(
     )
 
     rep = await author.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=0)
-    assert rep == authenticated_cmds.v4.vlob_poll_changes.RepOk(
+    assert rep == authenticated_cmds.latest.vlob_poll_changes.RepOk(
         current_checkpoint=6,
         changes=[
             *checkpoint1_changes,
@@ -130,7 +130,7 @@ async def test_authenticated_vlob_poll_changes_ok(
     )
 
     rep = await author.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=3)
-    assert rep == authenticated_cmds.v4.vlob_poll_changes.RepOk(
+    assert rep == authenticated_cmds.latest.vlob_poll_changes.RepOk(
         current_checkpoint=6,
         changes=[
             (vlob2_id, 3),
@@ -139,7 +139,9 @@ async def test_authenticated_vlob_poll_changes_ok(
     )
 
     rep = await author.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=6)
-    assert rep == authenticated_cmds.v4.vlob_poll_changes.RepOk(current_checkpoint=6, changes=[])
+    assert rep == authenticated_cmds.latest.vlob_poll_changes.RepOk(
+        current_checkpoint=6, changes=[]
+    )
 
 
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
@@ -160,7 +162,7 @@ async def test_authenticated_vlob_poll_changes_author_not_allowed(
             assert False, unknown
 
     rep = await author.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=0)
-    assert rep == authenticated_cmds.v4.vlob_poll_changes.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.vlob_poll_changes.RepAuthorNotAllowed()
 
 
 async def test_authenticated_vlob_poll_changes_realm_not_found(
@@ -168,7 +170,7 @@ async def test_authenticated_vlob_poll_changes_realm_not_found(
 ) -> None:
     bad_realm_id = VlobID.new()
     rep = await coolorg.alice.vlob_poll_changes(realm_id=bad_realm_id, last_checkpoint=0)
-    assert rep == authenticated_cmds.v4.vlob_poll_changes.RepRealmNotFound()
+    assert rep == authenticated_cmds.latest.vlob_poll_changes.RepRealmNotFound()
 
 
 async def test_authenticated_vlob_poll_changes_http_common_errors(

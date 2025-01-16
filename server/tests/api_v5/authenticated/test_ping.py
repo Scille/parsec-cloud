@@ -8,7 +8,7 @@ from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, Min
 async def test_authenticated_ping_ok(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
     with backend.event_bus.spy() as spy:
         rep = await minimalorg.alice.ping(ping="hello")
-        assert rep == authenticated_cmds.v4.ping.RepOk(pong="hello")
+        assert rep == authenticated_cmds.latest.ping.RepOk(pong="hello")
         await spy.wait_event_occurred(
             EventPinged(
                 organization_id=minimalorg.organization_id,

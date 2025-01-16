@@ -91,7 +91,7 @@ async def test_authenticated_realm_rename_ok_subsequent_rename(
             realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
             initial_name_or_fail=False,
         )
-        assert rep == authenticated_cmds.v4.realm_rename.RepOk()
+        assert rep == authenticated_cmds.latest.realm_rename.RepOk()
         await spy.wait_event_occurred(
             EventRealmCertificate(
                 organization_id=coolorg.organization_id,
@@ -152,7 +152,7 @@ async def test_authenticated_realm_rename_ok_initial_rename(
             realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
             initial_name_or_fail=True,
         )
-        assert rep == authenticated_cmds.v4.realm_rename.RepOk()
+        assert rep == authenticated_cmds.latest.realm_rename.RepOk()
         await spy.wait_event_occurred(
             EventRealmCertificate(
                 organization_id=coolorg.organization_id,
@@ -175,7 +175,7 @@ async def test_authenticated_realm_rename_initial_name_already_exists(
         realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=True,
     )
-    assert rep == authenticated_cmds.v4.realm_rename.RepInitialNameAlreadyExists(
+    assert rep == authenticated_cmds.latest.realm_rename.RepInitialNameAlreadyExists(
         last_realm_certificate_timestamp=get_last_realm_certificate_timestamp(
             coolorg.testbed_template, coolorg.wksp1_id
         )
@@ -244,7 +244,7 @@ async def test_authenticated_realm_rename_author_not_allowed(
         realm_name_certificate=certif.dump_and_sign(author.signing_key),
         initial_name_or_fail=False,
     )
-    assert rep == authenticated_cmds.v4.realm_rename.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.realm_rename.RepAuthorNotAllowed()
 
 
 async def test_authenticated_realm_rename_realm_not_found(
@@ -256,7 +256,7 @@ async def test_authenticated_realm_rename_realm_not_found(
         realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=False,
     )
-    assert rep == authenticated_cmds.v4.realm_rename.RepRealmNotFound()
+    assert rep == authenticated_cmds.latest.realm_rename.RepRealmNotFound()
 
 
 @pytest.mark.parametrize(
@@ -332,7 +332,7 @@ async def test_authenticated_realm_rename_bad_key_index(
         realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=False,
     )
-    assert rep == authenticated_cmds.v4.realm_rename.RepBadKeyIndex(
+    assert rep == authenticated_cmds.latest.realm_rename.RepBadKeyIndex(
         last_realm_certificate_timestamp=wksp_last_certificate_timestamp
     )
 
@@ -359,7 +359,7 @@ async def test_authenticated_realm_rename_invalid_certificate(
         realm_name_certificate=certif,
         initial_name_or_fail=False,
     )
-    assert rep == authenticated_cmds.v4.realm_rename.RepInvalidCertificate()
+    assert rep == authenticated_cmds.latest.realm_rename.RepInvalidCertificate()
 
 
 @pytest.mark.parametrize(
@@ -405,7 +405,7 @@ async def test_authenticated_realm_rename_require_greater_timestamp(
         realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=False,
     )
-    assert rep == authenticated_cmds.v4.realm_rename.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.latest.realm_rename.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp
     )
 
@@ -419,7 +419,7 @@ async def test_authenticated_realm_rename_timestamp_out_of_ballpark(
         realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=True,
     )
-    assert isinstance(rep, authenticated_cmds.v4.realm_rename.RepTimestampOutOfBallpark)
+    assert isinstance(rep, authenticated_cmds.latest.realm_rename.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == timestamp_out_of_ballpark

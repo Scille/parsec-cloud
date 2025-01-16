@@ -72,7 +72,7 @@ async def test_authenticated_block_create_ok(
     rep = await author.block_create(
         block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
     )
-    assert rep == authenticated_cmds.v4.block_create.RepOk()
+    assert rep == authenticated_cmds.latest.block_create.RepOk()
 
     content = await backend.block.read(
         organization_id=coolorg.organization_id,
@@ -104,7 +104,7 @@ async def test_authenticated_block_create_bad_key_index(
         block_id=block_id, realm_id=coolorg.wksp1_id, key_index=42, block=block
     )
 
-    assert rep == authenticated_cmds.v4.block_create.RepBadKeyIndex(
+    assert rep == authenticated_cmds.latest.block_create.RepBadKeyIndex(
         last_realm_certificate_timestamp=wksp1_last_certificate_timestamp,
     )
 
@@ -119,7 +119,7 @@ async def test_authenticated_block_create_realm_not_found(
     rep = await coolorg.alice.block_create(
         block_id=block_id, realm_id=VlobID.new(), key_index=1, block=block
     )
-    assert rep == authenticated_cmds.v4.block_create.RepRealmNotFound()
+    assert rep == authenticated_cmds.latest.block_create.RepRealmNotFound()
 
     # Block should not exist
     # This check is not strictly needed since the block existence
@@ -157,7 +157,7 @@ async def test_authenticated_block_create_block_already_exists(
     rep = await coolorg.alice.block_create(
         block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
     )
-    assert rep == authenticated_cmds.v4.block_create.RepBlockAlreadyExists()
+    assert rep == authenticated_cmds.latest.block_create.RepBlockAlreadyExists()
 
     dump = await backend.block.test_dump_blocks(coolorg.organization_id)
     assert dump == expected_dump  # No changes!
@@ -191,7 +191,7 @@ async def test_authenticated_block_create_author_not_allowed(
     rep = await author.block_create(
         block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
     )
-    assert rep == authenticated_cmds.v4.block_create.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.block_create.RepAuthorNotAllowed()
 
     dump = await backend.block.test_dump_blocks(coolorg.organization_id)
     assert dump == expected_dump  # No changes!
@@ -216,7 +216,7 @@ async def test_authenticated_block_create_store_unavailable(
     rep = await coolorg.alice.block_create(
         block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
     )
-    assert rep == authenticated_cmds.v4.block_create.RepStoreUnavailable()
+    assert rep == authenticated_cmds.latest.block_create.RepStoreUnavailable()
 
     # Block should not exist
     # This check is not strictly needed since the block existence

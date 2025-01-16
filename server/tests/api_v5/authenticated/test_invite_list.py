@@ -21,7 +21,7 @@ async def test_authenticated_invite_list_ok_with_shamir_recovery(
     backend: Backend,
 ) -> None:
     expected_invitations = [
-        authenticated_cmds.v4.invite_list.InviteListItemShamirRecovery(
+        authenticated_cmds.latest.invite_list.InviteListItemShamirRecovery(
             created_on=shamirorg.shamir_invited_alice.event.created_on,
             status=InvitationStatus.IDLE,
             claimer_user_id=shamirorg.alice.user_id,
@@ -31,19 +31,19 @@ async def test_authenticated_invite_list_ok_with_shamir_recovery(
     ]
 
     rep = await shamirorg.alice.invite_list()
-    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.invite_list.RepOk)
     assert rep.invitations == []
 
     rep = await shamirorg.bob.invite_list()
-    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.invite_list.RepOk)
     assert rep.invitations == expected_invitations
 
     rep = await shamirorg.mike.invite_list()
-    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.invite_list.RepOk)
     assert rep.invitations == expected_invitations
 
     rep = await shamirorg.mallory.invite_list()
-    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.invite_list.RepOk)
     assert rep.invitations == expected_invitations
 
 
@@ -62,7 +62,7 @@ async def test_authenticated_invite_list_ok(
     )
     assert isinstance(outcome, tuple)
     expected_invitations.append(
-        authenticated_cmds.v4.invite_list.InviteListItemDevice(
+        authenticated_cmds.latest.invite_list.InviteListItemDevice(
             created_on=t1,
             status=InvitationStatus.IDLE,
             token=outcome[0],
@@ -80,7 +80,7 @@ async def test_authenticated_invite_list_ok(
     )
     assert isinstance(outcome, tuple)
     expected_invitations.append(
-        authenticated_cmds.v4.invite_list.InviteListItemUser(
+        authenticated_cmds.latest.invite_list.InviteListItemUser(
             created_on=t2,
             status=InvitationStatus.IDLE,
             claimer_email="zack@example.invalid",
@@ -99,7 +99,7 @@ async def test_authenticated_invite_list_ok(
     # )
     # assert isinstance(outcome, tuple)
     # expected_invitations.append(
-    #     authenticated_cmds.v4.invite_list.InviteListItemUser(
+    #     authenticated_cmds.latest.invite_list.InviteListItemUser(
     #         created_on=t3,
     #         status=InvitationStatus.READY,
     #         claimer_email="zack@example.invalid",
@@ -126,7 +126,7 @@ async def test_authenticated_invite_list_ok(
         token=outcome[0],
     )
     expected_invitations.append(
-        authenticated_cmds.v4.invite_list.InviteListItemUser(
+        authenticated_cmds.latest.invite_list.InviteListItemUser(
             created_on=t4,
             status=InvitationStatus.CANCELLED,
             claimer_email="deleted@example.invalid",
@@ -135,7 +135,7 @@ async def test_authenticated_invite_list_ok(
     )
 
     rep = await minimalorg.alice.invite_list()
-    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.invite_list.RepOk)
     assert rep.invitations == expected_invitations
 
 
@@ -144,10 +144,10 @@ async def test_authenticated_invite_list_with_deleted_shamir(
 ) -> None:
     # Get invitations
     rep = await shamirorg.bob.invite_list()
-    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.invite_list.RepOk)
     (previous_invitation,) = rep.invitations
     assert isinstance(
-        previous_invitation, authenticated_cmds.v4.invite_list.InviteListItemShamirRecovery
+        previous_invitation, authenticated_cmds.latest.invite_list.InviteListItemShamirRecovery
     )
 
     # Delete Alice shamir recovery
@@ -162,7 +162,7 @@ async def test_authenticated_invite_list_with_deleted_shamir(
         share_recipients=set(brief.per_recipient_shares.keys()),
     ).dump_and_sign(author.signing_key)
     rep = await shamirorg.alice.shamir_recovery_delete(deletion)
-    assert rep == authenticated_cmds.v4.shamir_recovery_delete.RepOk()
+    assert rep == authenticated_cmds.latest.shamir_recovery_delete.RepOk()
 
     # Expected invitation
     expected = authenticated_cmds.latest.invite_list.InviteListItemShamirRecovery(
@@ -175,7 +175,7 @@ async def test_authenticated_invite_list_with_deleted_shamir(
 
     # Check invitations
     rep = await shamirorg.bob.invite_list()
-    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    assert isinstance(rep, authenticated_cmds.latest.invite_list.RepOk)
     (invitation,) = rep.invitations
     assert invitation == expected
 

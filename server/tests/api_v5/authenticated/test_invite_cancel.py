@@ -7,13 +7,13 @@ from tests.common import CoolorgRpcClients, HttpCommonErrorsTester
 async def test_authenticated_invite_cancel_ok(coolorg: CoolorgRpcClients) -> None:
     rep = await coolorg.alice.invite_cancel(coolorg.invited_alice_dev3.token)
 
-    assert rep == authenticated_cmds.v4.invite_cancel.RepOk()
+    assert rep == authenticated_cmds.latest.invite_cancel.RepOk()
 
 
 async def test_authenticated_invite_cancel_invitation_not_found(coolorg: CoolorgRpcClients) -> None:
     rep = await coolorg.alice.invite_cancel(InvitationToken.new())
 
-    assert rep == authenticated_cmds.v4.invite_cancel.RepInvitationNotFound()
+    assert rep == authenticated_cmds.latest.invite_cancel.RepInvitationNotFound()
 
 
 async def test_authenticated_invite_cancel_invitation_already_deleted(
@@ -23,7 +23,7 @@ async def test_authenticated_invite_cancel_invitation_already_deleted(
 
     rep = await coolorg.alice.invite_cancel(coolorg.invited_alice_dev3.token)
 
-    assert rep == authenticated_cmds.v4.invite_cancel.RepInvitationAlreadyDeleted()
+    assert rep == authenticated_cmds.latest.invite_cancel.RepInvitationAlreadyDeleted()
 
 
 async def test_authenticated_invite_cancel_http_common_errors(

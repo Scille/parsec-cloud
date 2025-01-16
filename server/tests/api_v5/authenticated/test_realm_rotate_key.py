@@ -107,7 +107,7 @@ async def test_authenticated_realm_rotate_key_ok(
             per_sequester_service_keys_bundle_access=None,
             keys_bundle=b"<keys bundle>",
         )
-        assert rep == authenticated_cmds.v4.realm_rotate_key.RepOk()
+        assert rep == authenticated_cmds.latest.realm_rotate_key.RepOk()
         await spy.wait_event_occurred(
             EventRealmCertificate(
                 organization_id=coolorg.organization_id,
@@ -162,7 +162,7 @@ async def test_authenticated_realm_rotate_key_ok_sequestered(
             },
             keys_bundle=b"<keys bundle>",
         )
-        assert rep == authenticated_cmds.v4.realm_rotate_key.RepOk()
+        assert rep == authenticated_cmds.latest.realm_rotate_key.RepOk()
         await spy.wait_event_occurred(
             EventRealmCertificate(
                 organization_id=sequestered_org.organization_id,
@@ -254,7 +254,7 @@ async def test_authenticated_realm_rotate_key_author_not_allowed(
         per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.realm_rotate_key.RepAuthorNotAllowed()
 
 
 async def test_authenticated_realm_rotate_key_realm_not_found(
@@ -274,7 +274,7 @@ async def test_authenticated_realm_rotate_key_realm_not_found(
         per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepRealmNotFound()
+    assert rep == authenticated_cmds.latest.realm_rotate_key.RepRealmNotFound()
 
 
 @pytest.mark.parametrize("initial_key_rotation", (False, True))
@@ -336,7 +336,7 @@ async def test_authenticated_realm_rotate_key_bad_key_index(
         per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepBadKeyIndex(
+    assert rep == authenticated_cmds.latest.realm_rotate_key.RepBadKeyIndex(
         last_realm_certificate_timestamp=wksp_last_certificate_timestamp
     )
 
@@ -366,7 +366,7 @@ async def test_authenticated_realm_rotate_key_participant_mismatch(
         per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepParticipantMismatch(
+    assert rep == authenticated_cmds.latest.realm_rotate_key.RepParticipantMismatch(
         last_realm_certificate_timestamp=DateTime(2000, 1, 12)
     )
 
@@ -395,7 +395,7 @@ async def test_authenticated_realm_rotate_key_invalid_certificate(
         per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepInvalidCertificate()
+    assert rep == authenticated_cmds.latest.realm_rotate_key.RepInvalidCertificate()
 
 
 async def test_authenticated_realm_rotate_key_timestamp_out_of_ballpark(
@@ -413,7 +413,7 @@ async def test_authenticated_realm_rotate_key_timestamp_out_of_ballpark(
         per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
-    assert isinstance(rep, authenticated_cmds.v4.realm_rotate_key.RepTimestampOutOfBallpark)
+    assert isinstance(rep, authenticated_cmds.latest.realm_rotate_key.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == timestamp_out_of_ballpark
@@ -470,7 +470,7 @@ async def test_authenticated_realm_rotate_key_require_greater_timestamp(
         per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.latest.realm_rotate_key.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp
     )
 
@@ -509,7 +509,7 @@ async def test_authenticated_realm_rotate_key_organization_not_sequestered(
         },
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepOrganizationNotSequestered()
+    assert rep == authenticated_cmds.latest.realm_rotate_key.RepOrganizationNotSequestered()
 
 
 @pytest.mark.parametrize("kind", ("revoked_service", "unknown_service", "missing_service"))
@@ -551,7 +551,7 @@ async def test_authenticated_realm_rotate_key_sequester_service_mismatch(
         per_sequester_service_keys_bundle_access=per_sequester_service_keys_bundle_access,
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepSequesterServiceMismatch(
+    assert rep == authenticated_cmds.latest.realm_rotate_key.RepSequesterServiceMismatch(
         last_sequester_certificate_timestamp=DateTime(2000, 1, 18)
     )
 
@@ -609,7 +609,7 @@ async def test_authenticated_realm_rotate_key_rejected_by_sequester_service(
         },
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepRejectedBySequesterService(
+    assert rep == authenticated_cmds.latest.realm_rotate_key.RepRejectedBySequesterService(
         service_id=sequestered_org.sequester_service_2_id, reason="Not in the mood"
     )
 
@@ -669,7 +669,7 @@ async def test_authenticated_realm_rotate_key_sequester_service_unavailable(
         },
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepSequesterServiceUnavailable(
+    assert rep == authenticated_cmds.latest.realm_rotate_key.RepSequesterServiceUnavailable(
         service_id=sequestered_org.sequester_service_2_id
     )
 

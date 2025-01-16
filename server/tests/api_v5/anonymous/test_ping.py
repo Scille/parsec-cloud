@@ -6,7 +6,7 @@ from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, Min
 
 async def test_anonymous_ping_ok(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
     rep = await minimalorg.anonymous.ping(ping="hello")
-    assert rep == anonymous_cmds.v4.ping.RepOk(pong="hello")
+    assert rep == anonymous_cmds.latest.ping.RepOk(pong="hello")
 
 
 async def test_anonymous_ping_http_common_errors(

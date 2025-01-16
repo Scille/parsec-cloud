@@ -77,7 +77,7 @@ async def test_authenticated_block_read_ok(
     )
 
     rep = await author.block_read(block_id)
-    assert rep == authenticated_cmds.v4.block_read.RepOk(
+    assert rep == authenticated_cmds.latest.block_read.RepOk(
         block=block,
         key_index=1,
         needed_realm_certificate_timestamp=last_realm_certificate_timestamp,
@@ -90,7 +90,7 @@ async def test_authenticated_block_read_block_not_found(
     block_id = BlockID.new()
 
     rep = await coolorg.alice.block_read(block_id)
-    assert rep == authenticated_cmds.v4.block_read.RepBlockNotFound()
+    assert rep == authenticated_cmds.latest.block_read.RepBlockNotFound()
 
 
 @pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
@@ -124,7 +124,7 @@ async def test_authenticated_block_read_author_not_allowed(
             assert False, unknown
 
     rep = await author.block_read(block_id)
-    assert rep == authenticated_cmds.v4.block_read.RepAuthorNotAllowed()
+    assert rep == authenticated_cmds.latest.block_read.RepAuthorNotAllowed()
 
 
 @pytest.mark.parametrize("kind", ("store_unavailable", "block_not_found"))
@@ -161,7 +161,7 @@ async def test_authenticated_block_read_store_unavailable(
     )
 
     rep = await coolorg.alice.block_read(block_id)
-    assert rep == authenticated_cmds.v4.block_read.RepStoreUnavailable()
+    assert rep == authenticated_cmds.latest.block_read.RepStoreUnavailable()
 
 
 async def test_authenticated_block_read_http_common_errors(

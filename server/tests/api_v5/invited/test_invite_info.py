@@ -11,8 +11,8 @@ async def test_invited_invite_info_ok(user_or_device: str, coolorg: CoolorgRpcCl
     match user_or_device:
         case "user":
             rep = await coolorg.invited_zack.invite_info()
-            assert rep == invited_cmds.v4.invite_info.RepOk(
-                invited_cmds.v4.invite_info.InvitationTypeUser(
+            assert rep == invited_cmds.latest.invite_info.RepOk(
+                invited_cmds.latest.invite_info.InvitationTypeUser(
                     claimer_email=coolorg.invited_zack.claimer_email,
                     greeter_user_id=coolorg.alice.user_id,
                     greeter_human_handle=coolorg.alice.human_handle,
@@ -21,8 +21,8 @@ async def test_invited_invite_info_ok(user_or_device: str, coolorg: CoolorgRpcCl
 
         case "device":
             rep = await coolorg.invited_alice_dev3.invite_info()
-            assert rep == invited_cmds.v4.invite_info.RepOk(
-                invited_cmds.v4.invite_info.InvitationTypeDevice(
+            assert rep == invited_cmds.latest.invite_info.RepOk(
+                invited_cmds.latest.invite_info.InvitationTypeDevice(
                     greeter_user_id=coolorg.alice.user_id,
                     greeter_human_handle=coolorg.alice.human_handle,
                 )
@@ -52,8 +52,8 @@ async def test_invited_invite_info_ok_with_shamir(
 
     # Check the invite info
     rep = await shamirorg.shamir_invited_alice.invite_info()
-    assert rep == invited_cmds.v4.invite_info.RepOk(
-        invited_cmds.v4.invite_info.InvitationTypeShamirRecovery(
+    assert rep == invited_cmds.latest.invite_info.RepOk(
+        invited_cmds.latest.invite_info.InvitationTypeShamirRecovery(
             claimer_user_id=shamirorg.alice.user_id,
             claimer_human_handle=shamirorg.alice.human_handle,
             shamir_recovery_created_on=shamirorg.alice_brief_certificate.timestamp,
