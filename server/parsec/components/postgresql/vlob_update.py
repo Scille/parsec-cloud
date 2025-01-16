@@ -50,30 +50,14 @@ my_locked_common_topic AS (
     FOR SHARE
 ),
 
-my_last_vlob_atom AS (
-    SELECT
-        realm,
-        version
-    FROM vlob_atom
-    WHERE
-        vlob_id = $vlob_id
-        AND (
-            SELECT realm.organization
-            FROM realm
-            WHERE realm._id = vlob_atom.realm
-            LIMIT 1
-        ) = (SELECT my_organization._id FROM my_organization)
-    ORDER BY version DESC
-    LIMIT 1
-),
-
 my_realm AS (
     SELECT
         realm._id,
-        realm.realm_id,
         key_index
     FROM realm
-    WHERE _id = (SELECT my_last_vlob_atom.realm FROM my_last_vlob_atom)
+    WHERE
+        organization = (SELECT _id FROM my_organization)
+        AND realm_id = $realm_id
     LIMIT 1
 ),
 
@@ -81,11 +65,19 @@ my_realm AS (
 my_locked_realm_topic AS (
     SELECT last_timestamp
     FROM realm_topic
-    WHERE
-        organization = (SELECT _id FROM my_organization)
-        AND realm = (SELECT _id FROM my_realm)
+    WHERE realm = (SELECT _id FROM my_realm)
     LIMIT 1
     FOR SHARE
+),
+
+my_last_vlob_atom AS (
+    SELECT version
+    FROM vlob_atom
+    WHERE
+        realm = (SELECT _id FROM my_realm)
+        AND vlob_id = $vlob_id
+    ORDER BY version DESC
+    LIMIT 1
 ),
 
 my_device AS (
@@ -117,7 +109,6 @@ SELECT
     (SELECT last_timestamp FROM my_locked_common_topic) AS last_common_certificate_timestamp,
     (SELECT last_timestamp FROM my_locked_realm_topic) AS last_realm_certificate_timestamp,
     (SELECT _id FROM my_realm) AS realm_internal_id,
-    (SELECT realm_id FROM my_realm) AS realm_id,
     (SELECT key_index FROM my_realm) AS realm_key_index,
     COALESCE(
         (
@@ -142,6 +133,7 @@ async def vlob_update(
     now: DateTime,
     organization_id: OrganizationID,
     author: DeviceID,
+    realm_id: VlobID,
     vlob_id: VlobID,
     key_index: int,
     version: int,
@@ -163,6 +155,7 @@ async def vlob_update(
         *_q_update_fetch_data_and_lock_topics(
             organization_id=organization_id.str,
             device_id=author,
+            realm_id=realm_id,
             vlob_id=vlob_id,
         )
     )
@@ -222,23 +215,16 @@ async def vlob_update(
         case unknown:
             assert False, repr(unknown)
 
-    # Since vlob exists, its corresponding realm (and related topic) must also exist
-
     match row["last_realm_certificate_timestamp"]:
         case DateTime() as last_realm_certificate_timestamp:
             pass
         case None:
-            return VlobUpdateBadOutcome.VLOB_NOT_FOUND
+            return VlobUpdateBadOutcome.REALM_NOT_FOUND
         case unknown:
             assert False, repr(unknown)
 
     # 1.4) Check realm
-
-    match row["realm_id"]:
-        case str() as raw_realm_id:
-            realm_id = VlobID.from_hex(raw_realm_id)
-        case unknown:
-            assert False, repr(unknown)
+    # (Note since realm's topic exists, the realm itself must also exist)
 
     match row["realm_internal_id"]:
         case int() as realm_internal_id:
@@ -274,6 +260,8 @@ async def vlob_update(
         case int() as vlob_current_version:
             if version != vlob_current_version + 1:
                 return VlobUpdateBadOutcome.BAD_VLOB_VERSION
+        case None:
+            return VlobUpdateBadOutcome.VLOB_NOT_FOUND
         case unknown:
             assert False, repr(unknown)
 

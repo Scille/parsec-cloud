@@ -161,6 +161,7 @@ async fn upload_manifest(
         } else {
             use authenticated_cmds::latest::vlob_update::{Rep, Req};
             let req = Req {
+                realm_id: ops.device.user_realm_id,
                 vlob_id: ops.device.user_realm_id,
                 version: to_sync_um.version,
                 key_index: 0,
@@ -203,6 +204,8 @@ async fn upload_manifest(
                 bad_rep @ (
                     // A user realm is never shared, and hence it initial owner cannot lose access to it
                     Rep::AuthorNotAllowed
+                    // `outbound_sync_inner` ensures the realm is created before calling us
+                    | Rep::RealmNotFound
                     // The vlob must exists since we are at version > 1
                     | Rep::VlobNotFound
                     // The user realm is never supposed to do key rotation

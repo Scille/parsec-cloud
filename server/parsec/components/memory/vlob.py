@@ -114,7 +114,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             if len(realm.key_rotations) != key_index:
                 return BadKeyIndex(last_realm_certificate_timestamp=realm_topic_last_timestamp)
 
-            if vlob_id in org.vlobs:
+            if vlob_id in realm.vlobs:
                 return VlobCreateBadOutcome.VLOB_ALREADY_EXISTS
 
             maybe_error = timestamps_in_the_ballpark(timestamp, now)
@@ -160,7 +160,6 @@ class MemoryVlobComponent(BaseVlobComponent):
                     realm.last_vlob_timestamp = max(previous_last_vlob_timestamp, timestamp)
 
             vlob_atom = MemoryVlobAtom(
-                realm_id=realm_id,
                 vlob_id=vlob_id,
                 key_index=key_index,
                 version=1,
@@ -168,7 +167,7 @@ class MemoryVlobComponent(BaseVlobComponent):
                 author=author,
                 created_on=timestamp,
             )
-            org.vlobs[vlob_id] = [vlob_atom]
+            realm.vlobs[vlob_id] = [vlob_atom]
             realm_change_checkpoint = len(realm.vlob_updates) + 1
             realm.vlob_updates.append(
                 MemoryRealmVlobUpdate(
@@ -196,6 +195,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        realm_id: VlobID,
         vlob_id: VlobID,
         key_index: int,
         version: int,
@@ -229,10 +229,14 @@ class MemoryVlobComponent(BaseVlobComponent):
                 return VlobUpdateBadOutcome.AUTHOR_REVOKED
 
             try:
-                vlobs = org.vlobs[vlob_id]
+                realm = org.realms[realm_id]
+            except KeyError:
+                return VlobUpdateBadOutcome.REALM_NOT_FOUND
+
+            try:
+                vlobs = realm.vlobs[vlob_id]
             except KeyError:
                 return VlobUpdateBadOutcome.VLOB_NOT_FOUND
-            realm_id = vlobs[0].realm_id
 
             async with org.topics_lock(read=[("realm", realm_id)]) as (realm_topic_last_timestamp,):
                 realm = org.realms[realm_id]
@@ -298,7 +302,6 @@ class MemoryVlobComponent(BaseVlobComponent):
 
                 version = len(vlobs) + 1
                 vlob_atom = MemoryVlobAtom(
-                    realm_id=realm.realm_id,
                     vlob_id=vlob_id,
                     key_index=key_index,
                     version=version,
@@ -376,7 +379,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         output = []
         for vlob_id, version in items:
             try:
-                vlob = org.vlobs[vlob_id]
+                vlob = realm.vlobs[vlob_id]
             except KeyError:
                 # An unkown vlob ID was provided
                 continue
@@ -454,7 +457,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         output = []
         for vlob_id in vlobs:
             try:
-                vlob = org.vlobs[vlob_id]
+                vlob = realm.vlobs[vlob_id]
             except KeyError:
                 # An unkown vlob ID was provided
                 continue
@@ -542,11 +545,12 @@ class MemoryVlobComponent(BaseVlobComponent):
     @override
     async def test_dump_vlobs(
         self, organization_id: OrganizationID
-    ) -> dict[VlobID, list[tuple[DeviceID, DateTime, VlobID, bytes]]]:
+    ) -> dict[VlobID, dict[VlobID, list[tuple[DeviceID, DateTime, bytes]]]]:
         org = self._data.organizations[organization_id]
         return {
-            vlob_id: [
-                (atom.author, atom.created_on, atom.realm_id, atom.blob) for atom in vlob_atoms
-            ]
-            for vlob_id, vlob_atoms in org.vlobs.items()
+            realm_id: {
+                vlob_id: [(atom.author, atom.created_on, atom.blob) for atom in vlob_atoms]
+                for vlob_id, vlob_atoms in realm.vlobs.items()
+            }
+            for realm_id, realm in org.realms.items()
         }

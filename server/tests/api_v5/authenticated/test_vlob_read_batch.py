@@ -41,6 +41,7 @@ async def create_vlob(
                 now=dt,
                 organization_id=organization_id,
                 author=author,
+                realm_id=realm_id,
                 vlob_id=vlob_id,
                 key_index=1,
                 version=version,

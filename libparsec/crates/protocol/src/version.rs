@@ -19,6 +19,7 @@ use libparsec_types::prelude::*;
 //   * Incompatible handling of sequester in `vlob_create` and `vlob_update`
 //   * Incompatible changes to `invite_info` to allow for multiple greeters during a user invitation
 //   * Support for Shamir recovery commands, invitation and greeting procedure
+//   * Incompatible change to `vlob_update` to add `realm_id` field as request parameter
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
     revision: 3,

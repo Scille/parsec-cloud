@@ -508,6 +508,7 @@ async fn upload_manifest<M: RemoteManifest>(
             use authenticated_cmds::latest::vlob_update::{Rep, Req};
             let req = Req {
                 key_index,
+                realm_id: ops.realm_id,
                 vlob_id: to_upload.id(),
                 version: to_upload.version(),
                 timestamp: to_upload.timestamp(),
@@ -557,8 +558,10 @@ async fn upload_manifest<M: RemoteManifest>(
 
                 // Unexpected errors :(
                 bad_rep @ (
+                    // Already checked the realm exists when we called `CertificateOps::encrypt_for_realm`
+                    Rep::RealmNotFound
                     // Already checked the vlob exists since the manifest has version > 0
-                    Rep::VlobNotFound
+                    | Rep::VlobNotFound
                     // Don't know what to do with this status :/
                     | Rep::UnknownStatus { .. }
                 ) => {

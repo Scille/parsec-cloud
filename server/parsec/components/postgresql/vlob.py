@@ -123,6 +123,7 @@ class PGVlobComponent(BaseVlobComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        realm_id: VlobID,
         vlob_id: VlobID,
         key_index: int,
         version: int,
@@ -143,6 +144,7 @@ class PGVlobComponent(BaseVlobComponent):
             now,
             organization_id,
             author,
+            realm_id,
             vlob_id,
             key_index,
             version,
@@ -191,5 +193,5 @@ class PGVlobComponent(BaseVlobComponent):
     @no_transaction
     async def test_dump_vlobs(
         self, conn: AsyncpgConnection, organization_id: OrganizationID
-    ) -> dict[VlobID, list[tuple[DeviceID, DateTime, VlobID, bytes]]]:
+    ) -> dict[VlobID, dict[VlobID, list[tuple[DeviceID, DateTime, bytes]]]]:
         return await vlob_test_dump_vlobs(conn, organization_id)

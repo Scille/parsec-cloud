@@ -50,6 +50,7 @@ class VlobUpdateBadOutcome(BadOutcomeEnum):
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
+    REALM_NOT_FOUND = auto()
     VLOB_NOT_FOUND = auto()
     BAD_VLOB_VERSION = auto()
 
@@ -110,6 +111,7 @@ class BaseVlobComponent:
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        realm_id: VlobID,
         vlob_id: VlobID,
         key_index: int,
         version: int,
@@ -156,7 +158,7 @@ class BaseVlobComponent:
 
     async def test_dump_vlobs(
         self, organization_id: OrganizationID
-    ) -> dict[VlobID, list[tuple[DeviceID, DateTime, VlobID, bytes]]]:
+    ) -> dict[VlobID, dict[VlobID, list[tuple[DeviceID, DateTime, bytes]]]]:
         raise NotImplementedError
 
     #
@@ -243,6 +245,7 @@ class BaseVlobComponent:
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
+            realm_id=req.realm_id,
             vlob_id=req.vlob_id,
             key_index=req.key_index,
             version=req.version,
@@ -260,6 +263,8 @@ class BaseVlobComponent:
                 )
             case VlobUpdateBadOutcome.BAD_VLOB_VERSION:
                 return authenticated_cmds.latest.vlob_update.RepBadVlobVersion()
+            case VlobUpdateBadOutcome.REALM_NOT_FOUND:
+                return authenticated_cmds.latest.vlob_update.RepRealmNotFound()
             case VlobUpdateBadOutcome.VLOB_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_update.RepVlobNotFound()
             case TimestampOutOfBallpark() as error:

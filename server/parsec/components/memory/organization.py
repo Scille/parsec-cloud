@@ -281,8 +281,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         for realm in org.realms.values():
             if realm.created_on <= at:
                 realms += 1
-        for vlob in org.vlobs.values():
-            metadata_size += sum(len(atom.blob) for atom in vlob if atom.created_on <= at)
+        for realm in org.realms.values():
+            for vlob in realm.vlobs.values():
+                metadata_size += sum(len(atom.blob) for atom in vlob if atom.created_on <= at)
         for block in org.blocks.values():
             if block.created_on <= at:
                 data_size += block.block_size
