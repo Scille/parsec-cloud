@@ -155,6 +155,7 @@ libsqlite3-sys = { version = "0.26.0", default-features = false }
 log = { version = "0.4.26", default-features = false }
 miniserde = { version = "0.1.41", default-features = false }
 neon = { version = "1.0.0", default-features = false }
+nix = { version = "0.29.0", default-features = false }
 once_cell = { version = "1.20.3", default-features = false }
 openssl = { version = "0.10.71", default-features = false }
 paste = { version = "1.0.15", default-features = false }
