@@ -53,12 +53,6 @@ class CertificateBasedActionIdempotentOutcome(BadOutcome):
     certificate_timestamp: DateTime
 
 
-@dataclass(slots=True)
-class RealmStats:
-    blocks_size: int
-    vlobs_size: int
-
-
 @dataclass(slots=True, repr=False)
 class RealmGrantedRole:
     def __repr__(self) -> str:
@@ -321,20 +315,6 @@ class RealmGetKeysBundleBadOutcome(BadOutcomeEnum):
     BAD_KEY_INDEX = auto()
 
 
-class RealmGetStatsAsUserBadOutcome(BadOutcomeEnum):
-    ORGANIZATION_NOT_FOUND = auto()
-    ORGANIZATION_EXPIRED = auto()
-    REALM_NOT_FOUND = auto()
-    AUTHOR_NOT_FOUND = auto()
-    AUTHOR_REVOKED = auto()
-    AUTHOR_NOT_ALLOWED = auto()
-
-
-class RealmGetStatsBadOutcome(BadOutcomeEnum):
-    ORGANIZATION_NOT_FOUND = auto()
-    REALM_NOT_FOUND = auto()
-
-
 class RealmGetCurrentRealmsForUserBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     USER_NOT_FOUND = auto()
@@ -457,11 +437,6 @@ class BaseRealmComponent:
         realm_id: VlobID,
         key_index: int | None,
     ) -> KeysBundle | RealmGetKeysBundleBadOutcome:
-        raise NotImplementedError
-
-    async def get_stats(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID
-    ) -> RealmStats | RealmGetStatsAsUserBadOutcome:
         raise NotImplementedError
 
     async def get_current_realms_for_user(
