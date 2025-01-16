@@ -233,32 +233,18 @@ async fn step1_shamir(
 
 /// Step 2: signify trust
 async fn step2_user(ctx: UserClaimInProgress1Ctx) -> anyhow::Result<UserClaimInProgress2Ctx> {
-    let mut input = String::new();
     let sas_codes = ctx.generate_greeter_sas_choices(3);
 
-    for (i, sas_code) in sas_codes.iter().enumerate() {
-        println!(" {i} - {YELLOW}{sas_code}{RESET}")
-    }
-
-    println!("Select code provided by greeter (0, 1, 2)");
-
-    choose_sas_code(&mut input, &sas_codes, ctx.greeter_sas())?;
+    choose_sas_code(&sas_codes, ctx.greeter_sas(), "greeter")?;
 
     Ok(ctx.do_signify_trust().await?)
 }
 
 /// Step 2: signify trust
 async fn step2_device(ctx: DeviceClaimInProgress1Ctx) -> anyhow::Result<DeviceClaimInProgress2Ctx> {
-    let mut input = String::new();
     let sas_codes = ctx.generate_greeter_sas_choices(3);
 
-    for (i, sas_code) in sas_codes.iter().enumerate() {
-        println!(" {i} - {YELLOW}{sas_code}{RESET}")
-    }
-
-    println!("Select code provided by greeter (0, 1, 2)");
-
-    choose_sas_code(&mut input, &sas_codes, ctx.greeter_sas())?;
+    choose_sas_code(&sas_codes, ctx.greeter_sas(), "greeter")?;
 
     Ok(ctx.do_signify_trust().await?)
 }
@@ -269,16 +255,9 @@ async fn step2_shamir(
 ) -> anyhow::Result<ShamirRecoveryClaimInProgress2Ctx> {
     let sas_codes = ctx.generate_greeter_sas_choices(3);
 
-    let selected_sas = Select::new()
-        .default(0)
-        .items(&sas_codes)
-        .with_prompt("Select code provided by greeter")
-        .interact()?;
-    if &sas_codes[selected_sas] != ctx.greeter_sas() {
-        Err(anyhow!("Invalid SAS code"))
-    } else {
-        Ok(ctx.do_signify_trust().await?)
-    }
+    choose_sas_code(&sas_codes, ctx.greeter_sas(), "greeter")?;
+
+    Ok(ctx.do_signify_trust().await?)
 }
 
 /// Step 3: wait peer trust

@@ -2,6 +2,8 @@
 
 use std::{fmt::Display, ops::Deref, path::Path, sync::Arc};
 
+use anyhow::anyhow;
+use dialoguer::Select;
 use libparsec::{
     internal::{Client, EventBus},
     list_available_devices, AuthenticatedCmds, AvailableDevice, DeviceAccessStrategy,
@@ -398,35 +400,33 @@ pub fn choose_human_handle(input: &mut String) -> anyhow::Result<HumanHandle> {
 }
 
 pub fn choose_sas_code(
-    input: &mut String,
     sas_codes: &[SASCode],
     expected: &SASCode,
+    provided_by: &str,
 ) -> anyhow::Result<()> {
-    std::io::stdin().read_line(input)?;
-
-    match sas_codes.get(input.trim().parse::<usize>()?) {
-        Some(sas_code) if sas_code == expected => Ok(()),
-        Some(_) => Err(anyhow::anyhow!("Invalid SAS code")),
-        None => Err(anyhow::anyhow!("Invalid input")),
+    let selected_sas = Select::new()
+        .default(0)
+        .items(sas_codes)
+        .with_prompt(format!("Select code provided by {provided_by}"))
+        .interact()?;
+    if &sas_codes[selected_sas] != expected {
+        return Err(anyhow!("Invalid SAS code"));
     }
+    Ok(())
 }
 
-pub fn choose_user_profile(input: &mut String) -> anyhow::Result<UserProfile> {
-    println!("Which profile? (0, 1, 2)");
-    println!(" 0 - {YELLOW}Standard{RESET}");
-    println!(" 1 - {YELLOW}Admin{RESET}");
-    println!(" 2 - {YELLOW}Outsider{RESET}");
-    loop {
-        input.clear();
-        std::io::stdin().read_line(input)?;
-
-        match input.trim() {
-            "0" => return Ok(UserProfile::Standard),
-            "1" => return Ok(UserProfile::Admin),
-            "2" => return Ok(UserProfile::Outsider),
-            _ => eprintln!("Invalid input, choose between 0, 1 or 2"),
-        }
-    }
+pub fn choose_user_profile() -> anyhow::Result<UserProfile> {
+    let profiles = [
+        UserProfile::Standard,
+        UserProfile::Admin,
+        UserProfile::Outsider,
+    ];
+    let selected_profile = Select::new()
+        .default(0)
+        .items(&profiles)
+        .with_prompt("Which profile?")
+        .interact()?;
+    Ok(profiles[selected_profile])
 }
 
 pub async fn poll_server_for_new_certificates(client: &StartedClient) -> anyhow::Result<()> {
