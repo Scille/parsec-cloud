@@ -10,6 +10,7 @@ from httpx import ASGITransport, AsyncClient, Response
 from httpx_sse import EventSource, ServerSentEvent, aconnect_sse
 
 from parsec._parsec import (
+    ApiVersion,
     DateTime,
     DeviceID,
     HumanHandle,
@@ -54,7 +55,7 @@ class AnonymousRpcClient(BaseAnonymousRpcClient):
         self.url = f"http://{SERVER_DOMAIN}/anonymous/{organization_id}"
         self.headers = {
             "Content-Type": "application/msgpack",
-            "Api-Version": "4.0",
+            "Api-Version": str(ApiVersion.API_LATEST_VERSION),
         }
 
     async def _do_request(self, req: bytes, family: str) -> bytes:
@@ -104,7 +105,7 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient, BaseTosRpcClient):
         self.url = f"http://{SERVER_DOMAIN}/authenticated/{organization_id}"
         self.headers = {
             "Content-Type": "application/msgpack",
-            "Api-Version": "4.0",
+            "Api-Version": str(ApiVersion.API_LATEST_VERSION),
         }
         # Useful to mock the current time
         self.now_factory = DateTime.now
@@ -193,7 +194,7 @@ class InvitedRpcClient(BaseInvitedRpcClient):
         self.url = f"http://{SERVER_DOMAIN}/invited/{organization_id}"
         self.headers = {
             "Content-Type": "application/msgpack",
-            "Api-Version": "4.0",
+            "Api-Version": str(ApiVersion.API_LATEST_VERSION),
             "Authorization": f"Bearer {self.token.hex}",
         }
 

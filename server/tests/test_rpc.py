@@ -4,7 +4,14 @@
 import httpx
 import pytest
 
-from parsec._parsec import DateTime, DeviceID, anonymous_cmds, authenticated_cmds, invited_cmds
+from parsec._parsec import (
+    ApiVersion,
+    DateTime,
+    DeviceID,
+    anonymous_cmds,
+    authenticated_cmds,
+    invited_cmds,
+)
 from parsec.ballpark import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from parsec.components.auth import AuthenticatedToken
 from tests.common import CoolorgRpcClients, RpcTransportError
@@ -14,7 +21,7 @@ from tests.common import CoolorgRpcClients, RpcTransportError
 async def test_unknown_org(family: str, client: httpx.AsyncClient) -> None:
     headers = {
         "Content-Type": "application/msgpack",
-        "Api-Version": "4.0",
+        "Api-Version": str(ApiVersion.API_LATEST_VERSION),
     }
 
     match family:
