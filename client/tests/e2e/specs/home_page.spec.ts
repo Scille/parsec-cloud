@@ -141,7 +141,7 @@ msTest('Login', async ({ home }) => {
   await expect(home).toBeWorkspacePage();
   await expect(home).toHaveHeader(['My workspaces'], false, false);
   const profile = home.locator('.topbar').locator('.profile-header');
-  await expect(profile.locator('.text-content-name')).toHaveText('Gordon Freeman');
+  await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
 });
 
 msTest('Login page and back to device list', async ({ home }) => {

@@ -16,18 +16,18 @@ msTest('Navigate to unknown URL from logged in', async ({ connected }) => {
 
 msTest('Navigate to unknown logged in URL from home', async ({ home }) => {
   await home.goto('/42/unknownURL');
-  await expect(home).toBeWorkspacePage();
-  await expect(home).toHaveURL(new RegExp('/\\d+/workspaces$'));
+  await expect(home).toBeHomePage();
+  await expect(home).toHaveURL(new RegExp('/home$'));
 });
 
 msTest('Navigate to unknown logged in URL from logged in', async ({ connected }) => {
   await connected.goto('/42/unknownURL');
-  await expect(connected).toBeWorkspacePage();
-  await expect(connected).toHaveURL(new RegExp('/\\d+/workspaces$'));
+  await expect(connected).toBeHomePage();
+  await expect(connected).toHaveURL(new RegExp('/home$'));
 });
 
 msTest('Navigate to unknown with query logged in URL from logged in', async ({ connected }) => {
   await connected.goto('/42/unknownURL?param1=test');
-  await expect(connected).toHaveURL(new RegExp('/\\d+/workspaces$'));
-  await expect(connected).toBeWorkspacePage();
+  await expect(connected).toBeHomePage();
+  await expect(connected).toHaveURL(new RegExp('/home$'));
 });

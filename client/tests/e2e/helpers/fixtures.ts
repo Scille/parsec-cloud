@@ -1,11 +1,23 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Locator, Page, test as base } from '@playwright/test';
+import { BrowserContext, Locator, Page, TestInfo, test as base } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { MockBms } from '@tests/e2e/helpers/bms';
-import { DEFAULT_ORGANIZATION_INFORMATION, DEFAULT_USER_INFORMATION, UserData } from '@tests/e2e/helpers/data';
+import {
+  DEFAULT_USER_INFORMATION,
+  OrganizationInformation,
+  UserData,
+  generateDefaultOrganizationInformation,
+  generateDefaultUserData,
+} from '@tests/e2e/helpers/data';
 import { dropTestbed, newTestbed } from '@tests/e2e/helpers/testbed';
-import { fillInputModal, fillIonInput } from '@tests/e2e/helpers/utils';
+import { createFolder, dragAndDropFile, fillInputModal, fillIonInput } from '@tests/e2e/helpers/utils';
+import path from 'path';
+
+export interface MsPage extends Page {
+  userData: UserData;
+  orgInfo: OrganizationInformation;
+}
 
 const debugTest = base.extend({
   ...(process.env.PWDEBUG && {
@@ -32,22 +44,33 @@ const debugTest = base.extend({
 });
 
 export const msTest = debugTest.extend<{
-  home: Page;
-  connected: Page;
-  documents: Page;
-  documentsReadOnly: Page;
-  usersPage: Page;
-  organizationPage: Page;
-  myProfilePage: Page;
+  context: BrowserContext;
+  home: MsPage;
+  secondTab: MsPage;
+  connected: MsPage;
+  workspaces: MsPage;
+  documents: MsPage;
+  documentsReadOnly: MsPage;
+  usersPage: MsPage;
+  organizationPage: MsPage;
+  myProfilePage: MsPage;
   userJoinModal: Locator;
-  createOrgModal: Locator;
   userGreetModal: Locator;
+  createOrgModal: Locator;
   deviceGreetModal: Locator;
   workspaceSharingModal: Locator;
-  clientArea: Page;
-  clientAreaCustomOrder: Page;
+  clientArea: MsPage;
+  clientAreaCustomOrder: MsPage;
 }>({
-  home: async ({ page, context }, use) => {
+  context: async ({ browser }, use) => {
+    const context = await browser.newContext();
+    await use(context);
+    await context.close();
+  },
+
+  home: async ({ context }, use) => {
+    const page = await context.newPage();
+
     page.on('console', (msg) => console.log('> ', msg.text()));
     await context.grantPermissions(['clipboard-read']);
 
@@ -109,6 +132,8 @@ export const msTest = debugTest.extend<{
     await expect(page.locator('#app')).toHaveAttribute('app-state', 'initializing');
 
     await newTestbed(page);
+    (page as MsPage).userData = generateDefaultUserData();
+    (page as MsPage).orgInfo = generateDefaultOrganizationInformation();
 
     if (process.env.PWDEBUG) {
       // Resize the viewport in debug mode to accomodate for the dev tools
@@ -120,8 +145,33 @@ export const msTest = debugTest.extend<{
     }
 
     await expect(page.locator('#app')).toHaveAttribute('app-state', 'ready');
-    await use(page);
+    await use(page as MsPage);
     await dropTestbed(page);
+    await page.close();
+  },
+
+  secondTab: async ({ context }, use) => {
+    const page = await context.newPage();
+
+    page.on('console', (msg) => console.log('> ', msg.text()));
+    await context.grantPermissions(['clipboard-read']);
+
+    await page.addInitScript(() => {
+      (window as any).TESTING = true;
+    });
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    await expect(page.locator('#app')).toHaveAttribute('app-state', 'initializing');
+
+    await newTestbed(page);
+    (page as MsPage).userData = generateDefaultUserData();
+    (page as MsPage).orgInfo = generateDefaultOrganizationInformation();
+
+    await expect(page.locator('#app')).toHaveAttribute('app-state', 'ready');
+    await use(page as MsPage);
+    await dropTestbed(page);
+    await page.close();
   },
 
   connected: async ({ home }, use) => {
@@ -133,27 +183,68 @@ export const msTest = debugTest.extend<{
     await home.locator('#password-input').locator('input').fill('P@ssw0rd.');
     await expect(home.locator('.login-button')).toBeEnabled();
     await home.locator('.login-button').click();
-    await expect(home).toHaveURL(/\/loading\??.*$/);
     await expect(home.locator('#connected-header')).toContainText('My workspaces');
     await expect(home).toBeWorkspacePage();
 
     await use(home);
   },
 
-  documents: async ({ connected }, use) => {
-    await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(connected).toHaveHeader(['The Copper Coronet'], true, true);
-    await expect(connected).toBeDocumentPage();
-    await expect(connected.locator('.folder-container').locator('.no-files-content')).toBeHidden();
+  workspaces: async ({ connected }, use) => {
     use(connected);
   },
 
-  documentsReadOnly: async ({ connected }, use) => {
-    await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(2).click();
-    await expect(connected).toHaveHeader(["Watcher's Keep"], true, true);
-    await expect(connected).toBeDocumentPage();
-    await expect(connected.locator('.folder-container').locator('.no-files-content')).toBeHidden();
-    use(connected);
+  documents: async ({ workspaces }, use, testInfo: TestInfo) => {
+    await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await expect(workspaces).toHaveHeader(['wksp1'], true, true);
+    await expect(workspaces).toBeDocumentPage();
+    await expect(workspaces.locator('.folder-container').locator('.no-files')).toBeVisible();
+    await createFolder(workspaces, 'Dir_Folder');
+    const dropZone = workspaces.locator('.folder-container').locator('.drop-zone').nth(0);
+    await dragAndDropFile(workspaces, dropZone, [
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'document.docx'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'pdfDocument.pdf'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'video.mp4'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'audio.mp3'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'spreadsheet.xlsx'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'text.txt'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'code.py'),
+    ]);
+    // Hide the import menu
+    const uploadMenu = workspaces.locator('.upload-menu');
+    await expect(uploadMenu).toBeVisible();
+    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
+    await expect(tabs.locator('.text-counter')).toHaveText(['0', '8', '0']);
+    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+    await expect(workspaces.locator('.folder-container').locator('.no-files-content')).toBeHidden();
+    use(workspaces);
+  },
+
+  documentsReadOnly: async ({ workspaces }, use, testInfo: TestInfo) => {
+    await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(2).click();
+    await expect(workspaces).toHaveHeader(["Watcher's Keep"], true, true);
+    await expect(workspaces).toBeDocumentPage();
+    await expect(workspaces.locator('.folder-container').locator('.no-files')).toBeVisible();
+    await createFolder(workspaces, 'Dir_Folder');
+    const dropZone = workspaces.locator('.folder-container').locator('.drop-zone').nth(0);
+    await dragAndDropFile(workspaces, dropZone, [
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'document.docx'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'pdfDocument.pdf'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'video.mp4'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'audio.mp3'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'spreadsheet.xlsx'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'text.txt'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'code.py'),
+    ]);
+    // Hide the import menu
+    const uploadMenu = workspaces.locator('.upload-menu');
+    await expect(uploadMenu).toBeVisible();
+    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
+    await expect(tabs.locator('.text-counter')).toHaveText(['0', '8', '0']);
+    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+    await expect(workspaces.locator('.folder-container').locator('.no-files-content')).toBeHidden();
+    use(workspaces);
   },
 
   usersPage: async ({ connected }, use) => {
@@ -234,22 +325,22 @@ export const msTest = debugTest.extend<{
     await use(modal);
   },
 
-  workspaceSharingModal: async ({ connected }, use) => {
-    await connected
+  workspaceSharingModal: async ({ workspaces }, use) => {
+    await workspaces
       .locator('.workspaces-container-grid')
       .locator('.workspace-card-item')
-      .nth(1)
+      .nth(0)
       .locator('.workspace-card-bottom__icons')
-      .locator('.icon-option-container')
+      .locator('.icon-share-container')
       .nth(0)
       .click();
-    const modal = connected.locator('.workspace-sharing-modal');
+    const modal = workspaces.locator('.workspace-sharing-modal');
     await expect(modal).toBeVisible();
     await use(modal);
   },
 
   clientArea: async ({ home }, use) => {
-    UserData.reset();
+    home.userData.reset();
     await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home);
     await MockBms.mockListOrganizations(home);
@@ -274,14 +365,14 @@ export const msTest = debugTest.extend<{
     await expect(popover).toBeVisible();
     const orgs = popover.locator('.organization-list').getByRole('listitem');
     await orgs.nth(0).click();
-    await expect(orgSwitchButton).toHaveText(DEFAULT_ORGANIZATION_INFORMATION.name);
+    await expect(orgSwitchButton).toHaveText(home.orgInfo.name);
     await expect(popover).toBeHidden();
 
     await use(home);
   },
 
   clientAreaCustomOrder: async ({ home }, use) => {
-    UserData.reset();
+    home.userData.reset();
     await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home, { billingSystem: 'CUSTOM_ORDER' });
     await MockBms.mockListOrganizations(home);
