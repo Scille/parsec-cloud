@@ -151,3 +151,14 @@ export async function openFileType(
     }
   }
 }
+
+export async function createWorkspace(workspacesPage: Page, name: string): Promise<void> {
+  const actionBar = workspacesPage.locator('#workspaces-ms-action-bar');
+  await actionBar.locator('#button-new-workspace').click();
+  await fillInputModal(workspacesPage, name);
+}
+
+export async function dismissToast(page: Page): Promise<void> {
+  page.locator('.notification-toast').locator('.toast-button-confirm').click();
+  await expect(page.locator('.notification-toast')).toBeHidden();
+}

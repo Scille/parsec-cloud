@@ -18,7 +18,6 @@
 
 <script setup lang="ts">
 import { Base64, LogoIconGradient, MsImage, MsSpinner } from 'megashark-lib';
-import { needsMocks } from '@/parsec';
 import { RouteBackup, Routes, getCurrentRouteQuery, navigateTo } from '@/router';
 import { IonContent, IonPage } from '@ionic/vue';
 import { onMounted } from 'vue';
@@ -32,30 +31,28 @@ onMounted(async () => {
   // in every component.
   // To force a reload, we first navigate to a loading page (/loading),
   // then to the connected organization.
-  // We masquerade this as a feature, showing the user a "please wait" message.
-  setTimeout(
-    async () => {
-      const query = getCurrentRouteQuery();
-      if (query.loginInfo) {
-        try {
-          const loginInfo = Base64.toObject(query.loginInfo) as RouteBackup;
-          await navigateTo(loginInfo.data.route, {
-            params: loginInfo.data.params,
-            query: loginInfo.data.query,
-            skipHandle: true,
-            replace: true,
-          });
-        } catch (e: any) {
-          window.electronAPI.log('error', `Invalid log in info provided: ${e}`);
-          await navigateTo(Routes.Home, { skipHandle: true, replace: true });
-        }
-      } else {
-        window.electronAPI.log('error', 'Trying to log in with no log in info provided');
+  // If we do it too fast, it causes a blink, so we masquerade this as a feature,
+  // showing the user a "please wait" message.
+  setTimeout(async () => {
+    const query = getCurrentRouteQuery();
+    if (query.loginInfo) {
+      try {
+        const loginInfo = Base64.toObject(query.loginInfo) as RouteBackup;
+        await navigateTo(loginInfo.data.route, {
+          params: loginInfo.data.params,
+          query: loginInfo.data.query,
+          skipHandle: true,
+          replace: true,
+        });
+      } catch (e: any) {
+        window.electronAPI.log('error', `Invalid log in info provided: ${e}`);
         await navigateTo(Routes.Home, { skipHandle: true, replace: true });
       }
-    },
-    needsMocks() ? 0 : 1500,
-  );
+    } else {
+      window.electronAPI.log('error', 'Trying to log in with no log in info provided');
+      await navigateTo(Routes.Home, { skipHandle: true, replace: true });
+    }
+  }, 1500);
 });
 </script>
 

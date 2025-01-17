@@ -23,7 +23,7 @@ import { availableDeviceMatchesServer } from '@/common/device';
 import { bootstrapLinkValidator, claimLinkValidator, fileLinkValidator } from '@/common/validators';
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
-import { getLoggedInDevices, getOrganizationHandle, isElectron, listAvailableDevices, logout, needsMocks, parseFileLink } from '@/parsec';
+import { getLoggedInDevices, getOrganizationHandle, isElectron, listAvailableDevices, logout, parseFileLink } from '@/parsec';
 import { AvailableDevice, Platform, libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 import { Events } from '@/services/eventDistributor';
@@ -52,6 +52,13 @@ function preventRightClick(): void {
         await top.dismiss();
       }
     }
+  });
+}
+
+function warnRefresh(): void {
+  window.addEventListener('beforeunload', async (event) => {
+    event.preventDefault();
+    event.returnValue = true;
   });
 }
 
@@ -161,20 +168,10 @@ async function setupApp(): Promise<void> {
     app.provide(ThemeManagerKey, themeManager);
 
     if ((await libparsec.getPlatform()) === Platform.Web) {
-      if (!needsMocks()) {
-        // Only called when the user has interacted with the page
-        window.addEventListener('beforeunload', async (event: BeforeUnloadEvent) => {
-          event.preventDefault();
-          event.returnValue = true;
-        });
-
-        window.addEventListener('unload', async (_event: Event) => {
-          // Stop the imports and properly logout on close.
-          await cleanBeforeQuitting(injectionProvider);
-        });
-      } else {
-        Sentry.disable();
-      }
+      window.addEventListener('unload', async (_event: Event) => {
+        // Stop the imports and properly logout on close.
+        await cleanBeforeQuitting(injectionProvider);
+      });
     }
 
     window.electronAPI.pageIsInitialized();
@@ -186,6 +183,7 @@ async function setupApp(): Promise<void> {
   // - dev or prod where devices are fetched from the local storage
   // - tests with Playwright where the testbed instantiation is done by Playwright
   if ('TESTING' in window && window.TESTING) {
+    Sentry.disable();
     //  handle the testbed and provides the configPath
     window.nextStageHook = (): any => {
       return [libparsec, nextStage];
@@ -358,7 +356,10 @@ function setupMockElectronAPI(): void {
       console[level](`[MOCKED-ELECTRON-LOG] ${message}`);
     },
     pageIsInitialized: (): void => {
-      window.isDev = (): boolean => needsMocks();
+      window.isDev = (): boolean => Boolean(import.meta.env.PARSEC_APP_TESTBED_SERVER);
+      if (!window.isDev()) {
+        warnRefresh();
+      }
     },
     openConfigDir: (): void => {
       console.log('OpenConfigDir: Not available');

@@ -33,13 +33,6 @@ export function usesTestbed(): boolean {
   return window.usesTestbed();
 }
 
-// Whether or not module functions should return mock values.
-// Currently, this can be used on web, since the bindings are not fully
-// implemented, but it could also prove useful when in a testing environment.
-export function needsMocks(): boolean {
-  return !isDesktop();
-}
-
 export function isElectron(): boolean {
   return isPlatform('electron');
 }

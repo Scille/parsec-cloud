@@ -50,79 +50,89 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/client-area/ClientAreaLayout.vue'),
   },
   {
-    // ConnectedLayout ensure that every children components are provided
-    // with a fileOperationManager, informationManager and eventDistributor
-    // that correspond with the current ConnectionHandle.
-    path: '/connected',
-    component: () => import('@/views/layouts/ConnectedLayout.vue'),
+    // DevLayout is used to login a default device in case the page was
+    // just refreshed and we're using the testbed.
+    // We have to do it this way because Vue doesn't let us make async calls
+    // in ConnectedLayout before calling provide().
+    path: '/dev',
+    component: () => import('@/views/layouts/DevLayout.vue'),
     children: [
       {
-        path: '/sidebar',
-        component: () => import('@/views/sidebar-menu/SidebarMenuPage.vue'),
+        // ConnectedLayout ensure that every children components are provided
+        // with a fileOperationManager, informationManager and eventDistributor
+        // that correspond with the current ConnectionHandle.
+        path: '/connected',
+        component: () => import('@/views/layouts/ConnectedLayout.vue'),
         children: [
           {
-            path: '/header',
-            component: () => import('@/views/header/HeaderPage.vue'),
+            path: '/sidebar',
+            component: () => import('@/views/sidebar-menu/SidebarMenuPage.vue'),
             children: [
               {
-                path: '/fileOp',
-                component: () => import('@/views/layouts/FileOperationLayout.vue'),
+                path: '/header',
+                component: () => import('@/views/header/HeaderPage.vue'),
                 children: [
                   {
-                    path: `/:handle(\\d+)/${Routes.Workspaces}`,
-                    name: Routes.Workspaces,
-                    component: () => import('@/views/workspaces/WorkspacesPage.vue'),
+                    path: '/fileOp',
+                    component: () => import('@/views/layouts/FileOperationLayout.vue'),
+                    children: [
+                      {
+                        path: `/:handle(\\d+)/${Routes.Workspaces}`,
+                        name: Routes.Workspaces,
+                        component: () => import('@/views/workspaces/WorkspacesPage.vue'),
+                      },
+                      {
+                        path: `/:handle(\\d+)/${Routes.Documents}`,
+                        name: Routes.Documents,
+                        component: () => import('@/views/files/FoldersPage.vue'),
+                      },
+                      {
+                        path: `/:handle(\\d+)/${Routes.History}`,
+                        name: Routes.History,
+                        component: () => import('@/views/workspaces/WorkspaceHistoryPage.vue'),
+                      },
+                    ],
                   },
                   {
-                    path: `/:handle(\\d+)/${Routes.Documents}`,
-                    name: Routes.Documents,
-                    component: () => import('@/views/files/FoldersPage.vue'),
+                    path: '/:handle(\\d+)',
+                    redirect: { name: Routes.Workspaces },
                   },
                   {
-                    path: `/:handle(\\d+)/${Routes.History}`,
-                    name: Routes.History,
-                    component: () => import('@/views/workspaces/WorkspaceHistoryPage.vue'),
+                    path: `/:handle(\\d+)/${Routes.Users}`,
+                    name: Routes.Users,
+                    component: () => import('@/views/users/UsersPage.vue'),
+                  },
+                  {
+                    path: `/:handle(\\d+)/${Routes.Storage}`,
+                    name: Routes.Storage,
+                    component: () => import('@/views/organizations/StoragePage.vue'),
+                  },
+                  {
+                    path: `/:handle(\\d+)/${Routes.Organization}`,
+                    name: Routes.Organization,
+                    component: () => import('@/views/organizations/OrganizationInformationPage.vue'),
+                  },
+                  {
+                    path: `/:handle(\\d+)/${Routes.About}`,
+                    name: Routes.About,
+                    component: () => import('@/views/about/AboutPage.vue'),
+                  },
+                  {
+                    path: `/:handle(\\d+)/${Routes.MyProfile}`,
+                    name: Routes.MyProfile,
+                    component: () => import('@/views/users/MyProfilePage.vue'),
+                  },
+                  {
+                    path: `/:handle(\\d+)/${Routes.RecoveryExport}`,
+                    name: Routes.RecoveryExport,
+                    component: () => import('@/views/devices/ExportRecoveryDevicePage.vue'),
+                  },
+                  {
+                    path: `/:handle(\\d+)/${Routes.Viewer}`,
+                    name: Routes.Viewer,
+                    component: () => import('@/views/viewers/FileViewer.vue'),
                   },
                 ],
-              },
-              {
-                path: '/:handle(\\d+)',
-                redirect: { name: Routes.Workspaces },
-              },
-              {
-                path: `/:handle(\\d+)/${Routes.Users}`,
-                name: Routes.Users,
-                component: () => import('@/views/users/UsersPage.vue'),
-              },
-              {
-                path: `/:handle(\\d+)/${Routes.Storage}`,
-                name: Routes.Storage,
-                component: () => import('@/views/organizations/StoragePage.vue'),
-              },
-              {
-                path: `/:handle(\\d+)/${Routes.Organization}`,
-                name: Routes.Organization,
-                component: () => import('@/views/organizations/OrganizationInformationPage.vue'),
-              },
-              {
-                path: `/:handle(\\d+)/${Routes.About}`,
-                name: Routes.About,
-                component: () => import('@/views/about/AboutPage.vue'),
-              },
-              {
-                path: `/:handle(\\d+)/${Routes.MyProfile}`,
-                name: Routes.MyProfile,
-                component: () => import('@/views/users/MyProfilePage.vue'),
-              },
-              {
-                path: `/:handle(\\d+)/${Routes.RecoveryExport}`,
-                name: Routes.RecoveryExport,
-                component: () => import('@/views/devices/ExportRecoveryDevicePage.vue'),
-              },
-              {
-                path: `/:handle(\\d+)/${Routes.Viewer}`,
-                name: Routes.Viewer,
-                component: () => import('@/views/viewers/FileViewer.vue'),
               },
             ],
           },
