@@ -575,7 +575,7 @@ async def administration_organization_sequester_services(
         case SequesterGetOrganizationServicesBadOutcome.ORGANIZATION_NOT_FOUND:
             raise HTTPException(status_code=404, detail="Organization not found")
         case SequesterGetOrganizationServicesBadOutcome.SEQUESTER_DISABLED:
-            cooked_services = []
+            raise HTTPException(status_code=400, detail="Sequester disabled")
 
     return JSONResponse(
         status_code=200,
@@ -746,6 +746,8 @@ async def administration_organization_sequester_service_update_config(
             pass
         case SequesterUpdateConfigForServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND:
             raise HTTPException(status_code=404, detail="Organization not found")
+        case SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_DISABLED:
+            raise HTTPException(status_code=400, detail="Sequester disabled")
         case SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND:
             raise HTTPException(status_code=404, detail="Sequester service not found")
 

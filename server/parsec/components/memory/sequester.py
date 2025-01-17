@@ -93,14 +93,14 @@ class MemorySequesterComponent(BaseSequesterComponent):
                 case error:
                     return error
 
-            if certif.service_id in org.sequester_services:
-                return SequesterCreateServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_EXISTS
-
             # Ensure certificate consistency: our certificate must be the very last among
             # the existing sequester (authority & service) certificates.
 
             if sequester_topic_last_timestamp >= certif.timestamp:
                 return RequireGreaterTimestamp(strictly_greater_than=sequester_topic_last_timestamp)
+
+            if certif.service_id in org.sequester_services:
+                return SequesterCreateServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_EXISTS
 
             # All checks are good, now we do the actual insertion
 
@@ -139,7 +139,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
             return SequesterUpdateConfigForServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND
 
         if org.sequester_services is None:
-            return SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND
+            return SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_DISABLED
 
         try:
             service = org.sequester_services[service_id]
@@ -190,14 +190,14 @@ class MemorySequesterComponent(BaseSequesterComponent):
             except KeyError:
                 return SequesterRevokeServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND
 
-            if service.is_revoked:
-                return SequesterRevokeServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_REVOKED
-
             # Ensure certificate consistency: our certificate must be the very last among
             # the existing sequester (authority & service) certificates.
 
             if sequester_topic_last_timestamp >= certif.timestamp:
                 return RequireGreaterTimestamp(strictly_greater_than=sequester_topic_last_timestamp)
+
+            if service.is_revoked:
+                return SequesterRevokeServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_REVOKED
 
             # All checks are good, now we do the actual insertion
 

@@ -12,7 +12,9 @@ from parsec.components.sequester import (
 
 _q_lock_sequester_topic_and_update_service = Q("""
 WITH my_organization AS (
-    SELECT _id
+    SELECT
+        _id,
+        sequester_authority_certificate IS NOT NULL AS organization_is_sequestered
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -47,6 +49,10 @@ SELECT
         FALSE
     ) AS organization_exists,
     COALESCE(
+        (SELECT organization_is_sequestered FROM my_organization),
+        FALSE
+    ) AS organization_is_sequestered,
+    COALESCE(
         (SELECT TRUE FROM updated_sequester_service),
         FALSE
     ) AS service_exists
@@ -80,6 +86,14 @@ async def sequester_update_config_for_service(
             pass
         case False:
             return SequesterUpdateConfigForServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND
+        case unknown:
+            assert False, repr(unknown)
+
+    match row["organization_is_sequestered"]:
+        case True:
+            pass
+        case False:
+            return SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_DISABLED
         case unknown:
             assert False, repr(unknown)
 
