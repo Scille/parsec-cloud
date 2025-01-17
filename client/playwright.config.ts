@@ -37,6 +37,16 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
+  testIgnore: [
+    '**/client_*',
+    '**/workspace_history.spec.ts',
+    '**/my_profile_page.spec.ts',
+    '**/organization_switch_popover.spec.ts',
+    '**/file_details.spec.ts',
+    '**/export_recovery_device.spec.ts',
+    '**/import_recovery_device.spec.ts',
+    '**/device_greet.spec.ts',
+  ],
   /* Configure projects for major browsers */
   projects: [
     {

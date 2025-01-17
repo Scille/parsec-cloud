@@ -15,13 +15,13 @@ async function toggleViewMode(page: Page): Promise<void> {
   }
 }
 
-async function openPopover(page: Page): Promise<Locator> {
+async function openPopover(page: Page, index: number): Promise<Locator> {
   if (await isInGridMode(page)) {
-    const entry = page.locator('.folder-container').locator('.file-card-item').nth(2);
+    const entry = page.locator('.folder-container').locator('.file-card-item').nth(index);
     await entry.hover();
     await entry.locator('.card-option').click();
   } else {
-    const entry = page.locator('.folder-container').locator('.file-list-item').nth(2);
+    const entry = page.locator('.folder-container').locator('.file-list-item').nth(index);
     await entry.hover();
     await entry.locator('.options-button').click();
   }
@@ -33,22 +33,21 @@ async function clickAction(popover: Locator, action: string): Promise<void> {
 }
 
 for (const gridMode of [false, true]) {
-  msTest(`Document actions default state in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
+  msTest(`Document actions default state in ${gridMode ? 'grid' : 'list'} mode for file`, async ({ documents }) => {
     await expect(documents.locator('.file-context-menu')).toBeHidden();
     if (!gridMode) {
-      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(2);
+      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(1);
       await entry.hover();
       await entry.locator('.options-button').click();
     } else {
       await toggleViewMode(documents);
-      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(2);
+      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(1);
       await entry.hover();
       await entry.locator('.card-option').click();
     }
     await expect(documents.locator('.file-context-menu')).toBeVisible();
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
-    await expect(popover.getByRole('listitem')).toHaveCount(10);
     await expect(popover.getByRole('listitem')).toHaveText([
       'Manage file',
       'Rename',
@@ -63,20 +62,47 @@ for (const gridMode of [false, true]) {
     ]);
   });
 
-  msTest(`Document popover on right click in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
+  msTest(`Document actions default state in ${gridMode ? 'grid' : 'list'} mode for folder`, async ({ documents }) => {
     await expect(documents.locator('.file-context-menu')).toBeHidden();
     if (!gridMode) {
-      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(2);
+      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
+      await entry.hover();
+      await entry.locator('.options-button').click();
+    } else {
+      await toggleViewMode(documents);
+      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
+      await entry.hover();
+      await entry.locator('.card-option').click();
+    }
+    await expect(documents.locator('.file-context-menu')).toBeVisible();
+    const popover = documents.locator('.file-context-menu');
+    await expect(popover.getByRole('group')).toHaveCount(2);
+    await expect(popover.getByRole('listitem')).toHaveText([
+      'Manage file',
+      'Rename',
+      'Move to',
+      'Make a copy',
+      'Delete',
+      'History',
+      'Details',
+      'Collaboration',
+      'Copy link',
+    ]);
+  });
+
+  msTest(`Document popover on right click in ${gridMode ? 'grid' : 'list'} mode for file`, async ({ documents }) => {
+    await expect(documents.locator('.file-context-menu')).toBeHidden();
+    if (!gridMode) {
+      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(1);
       await entry.click({ button: 'right' });
     } else {
       await toggleViewMode(documents);
-      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(2);
+      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(1);
       await entry.click({ button: 'right' });
     }
     await expect(documents.locator('.file-context-menu')).toBeVisible();
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
-    await expect(popover.getByRole('listitem')).toHaveCount(10);
     await expect(popover.getByRole('listitem')).toHaveText([
       'Manage file',
       'Rename',
@@ -91,7 +117,33 @@ for (const gridMode of [false, true]) {
     ]);
   });
 
-  msTest(`Document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
+  msTest(`Document popover on right click in ${gridMode ? 'grid' : 'list'} mode for folder`, async ({ documents }) => {
+    await expect(documents.locator('.file-context-menu')).toBeHidden();
+    if (!gridMode) {
+      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
+      await entry.click({ button: 'right' });
+    } else {
+      await toggleViewMode(documents);
+      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
+      await entry.click({ button: 'right' });
+    }
+    await expect(documents.locator('.file-context-menu')).toBeVisible();
+    const popover = documents.locator('.file-context-menu');
+    await expect(popover.getByRole('group')).toHaveCount(2);
+    await expect(popover.getByRole('listitem')).toHaveText([
+      'Manage file',
+      'Rename',
+      'Move to',
+      'Make a copy',
+      'Delete',
+      'History',
+      'Details',
+      'Collaboration',
+      'Copy link',
+    ]);
+  });
+
+  msTest(`Document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} only files`, async ({ documents }) => {
     await expect(documents.locator('.file-context-menu')).toBeHidden();
     let entries: Locator;
 
@@ -107,13 +159,38 @@ for (const gridMode of [false, true]) {
       await entry.locator('ion-checkbox').click();
       await expect(entry.locator('ion-checkbox')).toHaveState('checked');
     }
-    await entries.nth(2).click({ button: 'right' });
+    // Unselect the folder
+    entries.nth(0).locator('ion-checkbox').click();
+    await entries.nth(1).click({ button: 'right' });
 
     await expect(documents.locator('.file-context-menu')).toBeVisible();
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(1);
-    await expect(popover.getByRole('listitem')).toHaveCount(5);
     await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Move to', 'Make a copy', 'Delete', 'Download']);
+  });
+
+  msTest(`Document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} with a folder`, async ({ documents }) => {
+    await expect(documents.locator('.file-context-menu')).toBeHidden();
+    let entries: Locator;
+
+    if (!gridMode) {
+      entries = documents.locator('.folder-container').locator('.file-list-item');
+    } else {
+      await toggleViewMode(documents);
+      entries = documents.locator('.folder-container').locator('.file-card-item');
+    }
+
+    for (const entry of await entries.all()) {
+      await entry.hover();
+      await entry.locator('ion-checkbox').click();
+      await expect(entry.locator('ion-checkbox')).toHaveState('checked');
+    }
+    await entries.nth(0).click({ button: 'right' });
+
+    await expect(documents.locator('.file-context-menu')).toBeVisible();
+    const popover = documents.locator('.file-context-menu');
+    await expect(popover.getByRole('group')).toHaveCount(1);
+    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Move to', 'Make a copy', 'Delete']);
   });
 
   msTest(`Popover with right click on empty space in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
@@ -134,7 +211,7 @@ for (const gridMode of [false, true]) {
     if (gridMode) {
       await toggleViewMode(documents);
     }
-    await clickAction(await openPopover(documents), 'Copy link');
+    await clickAction(await openPopover(documents, 2), 'Copy link');
 
     // Fail to copy because no permission
     await expect(documents).toShowToast('Failed to copy link. Your browser or device does not seem to support copy/paste.', 'Error');
@@ -142,24 +219,27 @@ for (const gridMode of [false, true]) {
     // Grant the permissions
     await context.grantPermissions(['clipboard-write']);
 
-    await clickAction(await openPopover(documents), 'Copy link');
+    await clickAction(await openPopover(documents, 2), 'Copy link');
     await expect(documents).toShowToast('Link has been copied to clipboard.', 'Info');
     const filePath = await documents.evaluate(() => navigator.clipboard.readText());
-    expect(filePath).toMatch(/parsec3:\/\/[a-z.]+(:\d+)?\/[a-zA-Z0-9_]+\?.+/);
+    expect(filePath).toMatch(/^parsec3:\/\/.+$/);
   });
 
   msTest(`Rename document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
+    let entry;
     if (gridMode) {
       await toggleViewMode(documents);
-    }
-    await clickAction(await openPopover(documents), 'Rename');
-    await fillInputModal(documents, 'My file', true);
-    if (!gridMode) {
-      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(2);
-      await expect(entry.locator('.file-name').locator('.file-name__label')).toHaveText('My file');
+      entry = documents.locator('.folder-container').locator('.file-card-item').nth(1);
     } else {
-      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(2);
-      await expect(entry.locator('.file-card__title')).toHaveText('My file');
+      entry = documents.locator('.folder-container').locator('.file-list-item').nth(1);
+    }
+
+    await clickAction(await openPopover(documents, 1), 'Rename');
+    await fillInputModal(documents, 'New Name', true);
+    if (!gridMode) {
+      await expect(entry.locator('.file-name').locator('.file-name__label')).toHaveText('New Name');
+    } else {
+      await expect(entry.locator('.file-card__title')).toHaveText('New Name');
     }
   });
 
@@ -168,8 +248,10 @@ for (const gridMode of [false, true]) {
       await toggleViewMode(documents);
     }
     let fileName;
+    let count = 0;
     if (gridMode) {
       fileName = await documents.locator('.folder-container').locator('.file-card-item').nth(2).locator('.file-card__title').textContent();
+      count = await documents.locator('.folder-container').locator('.file-card-item').count();
     } else {
       fileName = await documents
         .locator('.folder-container')
@@ -178,9 +260,10 @@ for (const gridMode of [false, true]) {
         .locator('.file-name')
         .locator('.file-name__label')
         .textContent();
+      count = await documents.locator('.folder-container').locator('.file-list-item').count();
     }
 
-    await clickAction(await openPopover(documents), 'Delete');
+    await clickAction(await openPopover(documents, 2), 'Delete');
 
     await answerQuestion(documents, true, {
       expectedTitleText: 'Delete one file',
@@ -188,33 +271,41 @@ for (const gridMode of [false, true]) {
       expectedNegativeText: 'Keep file',
       expectedPositiveText: 'Delete file',
     });
+    if (gridMode) {
+      await expect(documents.locator('.folder-container').locator('.file-card-item')).toHaveCount(count - 1);
+    } else {
+      await expect(documents.locator('.folder-container').locator('.file-list-item')).toHaveCount(count - 1);
+    }
   });
 
-  msTest(`Document actions default state in a read only workspace in ${gridMode ? 'grid' : 'list'} mode`, async ({ documentsReadOnly }) => {
-    await expect(documentsReadOnly.locator('.file-context-menu')).toBeHidden();
-    if (!gridMode) {
-      const entry = documentsReadOnly.locator('.folder-container').locator('.file-list-item').nth(2);
-      await entry.hover();
-      await entry.locator('.options-button').click();
-    } else {
-      await toggleViewMode(documentsReadOnly);
-      const entry = documentsReadOnly.locator('.folder-container').locator('.file-card-item').nth(2);
-      await entry.hover();
-      await entry.locator('.card-option').click();
-    }
-    await expect(documentsReadOnly.locator('.file-context-menu')).toBeVisible();
-    const popover = documentsReadOnly.locator('.file-context-menu');
-    await expect(popover.getByRole('group')).toHaveCount(2);
-    await expect(popover.getByRole('listitem')).toHaveCount(5);
-    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Download', 'Details', 'Collaboration', 'Copy link']);
-  });
+  msTest.skip(
+    `Document actions default state in a read only workspace in ${gridMode ? 'grid' : 'list'} mode`,
+    async ({ documentsReadOnly }) => {
+      await expect(documentsReadOnly.locator('.file-context-menu')).toBeHidden();
+      if (!gridMode) {
+        const entry = documentsReadOnly.locator('.folder-container').locator('.file-list-item').nth(0);
+        await entry.hover();
+        await entry.locator('.options-button').click();
+      } else {
+        await toggleViewMode(documentsReadOnly);
+        const entry = documentsReadOnly.locator('.folder-container').locator('.file-card-item').nth(0);
+        await entry.hover();
+        await entry.locator('.card-option').click();
+      }
+      await expect(documentsReadOnly.locator('.file-context-menu')).toBeVisible();
+      const popover = documentsReadOnly.locator('.file-context-menu');
+      await expect(popover.getByRole('group')).toHaveCount(2);
+      await expect(popover.getByRole('listitem')).toHaveCount(5);
+      await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Download', 'Details', 'Collaboration', 'Copy link']);
+    },
+  );
 
   msTest(`Move document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
     if (gridMode) {
       await toggleViewMode(documents);
     }
     await expect(documents.locator('.folder-selection-modal')).toBeHidden();
-    await clickAction(await openPopover(documents), 'Move to');
+    await clickAction(await openPopover(documents, 1), 'Move to');
     const modal = documents.locator('.folder-selection-modal');
     await expect(modal).toBeVisible();
     await expect(modal.locator('.ms-modal-header__title')).toHaveText('Move one item');

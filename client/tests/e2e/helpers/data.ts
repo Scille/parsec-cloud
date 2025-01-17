@@ -1,5 +1,29 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { getOrganizationAddr, getServerAddr } from '@tests/e2e/helpers/utils';
+import { randomInt } from 'crypto';
+
+export interface UserInformation {
+  id: string;
+  clientId: string;
+  name: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  job: string;
+  company: string;
+  phone?: string;
+  address: {
+    line1: string;
+    postalCode: string;
+    city: string;
+    state: string;
+    country: string;
+    full: string;
+  };
+}
+
 export const DEFAULT_USER_INFORMATION = {
   id: '4242',
   clientId: '1337',
@@ -21,21 +45,29 @@ export const DEFAULT_USER_INFORMATION = {
   },
 };
 
-export const DEFAULT_ORGANIZATION_INFORMATION = {
-  name: 'BlackMesa',
-  // cspell:disable-next-line
-  addr: 'parsec3://blackmesa.com/BlackMesa',
-  // cspell:disable-next-line
-  serverAddr: 'parsec3://blackmesa.com',
-  bmsId: '42',
-};
+export interface OrganizationInformation {
+  name: string;
+  addr: string;
+  serverAddr: string;
+  bmsId: string;
+}
+
+export function generateDefaultOrganizationInformation(): OrganizationInformation {
+  const name = `BlackMesa${randomInt(2 ** 47)}`;
+  return {
+    name: name,
+    addr: getOrganizationAddr(name),
+    serverAddr: getServerAddr(),
+    bmsId: '42',
+  };
+}
 
 export const DEFAULT_ORGANIZATION_DATA_SLICE = {
   free: 1024 * 1024 * 1024 * 200, // 200 Gb
   paying: 1024 * 1024 * 1024 * 100, // 100 Gb
 };
 
-class _UserData {
+export class UserData {
   firstName: string;
   lastName: string;
   email: string;
@@ -81,4 +113,6 @@ class _UserData {
   }
 }
 
-export const UserData = new _UserData();
+export function generateDefaultUserData(): UserData {
+  return new UserData();
+}

@@ -107,9 +107,8 @@
               {{ $msTranslate({ key: 'workspaceRoles.members', data: { count: countSharedUsers }, count: countSharedUsers }) }}
             </ion-text>
             <workspace-user-role
-              v-if="clientInfo"
+              v-if="clientInfo && currentUserMatchSearch()"
               :class="{ 'checkbox-space': showCheckboxes }"
-              v-show="currentUserMatchSearch()"
               :disabled="true"
               :user="{ id: clientInfo.userId, humanHandle: clientInfo.humanHandle, profile: clientInfo.currentProfile }"
               :role="ownRole"
@@ -124,7 +123,7 @@
               class="user-list-members-item"
             >
               <ms-checkbox
-                id="member-checkbox"
+                class="member-checkbox"
                 v-show="showCheckboxes"
                 :disabled="!(entry.role && canSelectUser(entry.user.profile, entry.role))"
                 v-model="entry.isSelected"
@@ -158,7 +157,7 @@
               class="user-list-suggestions-item"
             >
               <ms-checkbox
-                id="suggested-checkbox"
+                class="suggested-checkbox"
                 v-show="showCheckboxes"
                 v-model="entry.isSelected"
               />
@@ -658,8 +657,8 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
     display: flex;
     flex-direction: column;
 
-    #member-checkbox,
-    #suggested-checkbox {
+    .member-checkbox,
+    .suggested-checkbox {
       padding-left: 0.75rem;
     }
 
