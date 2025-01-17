@@ -1,29 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import {
-  ActiveUsersLimitTag,
-  DeviceAccessStrategyKeyring,
-  DeviceFileType,
-  DeviceSaveStrategyKeyring,
-  DeviceSaveStrategyPassword,
-  libparsec,
-} from '@/plugins/libparsec';
+import { DeviceAccessStrategyKeyring, DeviceSaveStrategyKeyring, DeviceSaveStrategyPassword, libparsec } from '@/plugins/libparsec';
 
-import { needsMocks } from '@/parsec/environment';
-import { DEFAULT_HANDLE, getClientConfig } from '@/parsec/internals';
+import { getClientConfig } from '@/parsec/internals';
 import { parseParsecAddr } from '@/parsec/organization';
 import { getParsecHandle } from '@/parsec/routing';
 import {
   AvailableDevice,
   ClientChangeAuthenticationError,
-  ClientChangeAuthenticationErrorTag,
   ClientEvent,
   ClientEventInvitationChanged,
   ClientEventTag,
   ClientInfo,
   ClientInfoError,
   ClientStartError,
-  ClientStartErrorTag,
   ClientStopError,
   ConnectionHandle,
   DeviceAccessStrategy,
@@ -49,32 +39,6 @@ export interface LoggedInDeviceInfo {
 
 const loggedInDevices: Array<LoggedInDeviceInfo> = [];
 
-export function mockLoggedInDevice(): void {
-  if (loggedInDevices.length === 0) {
-    loggedInDevices.push({
-      handle: DEFAULT_HANDLE,
-      device: {
-        keyFilePath: '/fake',
-        createdOn: DateTime.now(),
-        protectedOn: DateTime.now(),
-        serverUrl: 'parsec3://127.0.0.1:6770?no_ssl=true',
-        organizationId: 'MyOrg',
-        userId: 'MockUserId',
-        deviceId: 'MockDeviceId',
-        humanHandle: {
-          label: 'Gordon Freeman',
-          email: 'gordon.freeman@blackmesa.nm',
-        },
-        deviceLabel: 'HEV Suit',
-        ty: DeviceFileType.Password,
-      },
-      isExpired: false,
-      isOnline: true,
-      shouldAcceptTos: false,
-    });
-  }
-}
-
 export async function getLoggedInDevices(): Promise<Array<LoggedInDeviceInfo>> {
   return loggedInDevices;
 }
@@ -94,15 +58,6 @@ export function getDeviceHandle(device: AvailableDevice): ConnectionHandle | nul
 export function getConnectionInfo(handle: ConnectionHandle | null = null): LoggedInDeviceInfo | undefined {
   if (!handle) {
     handle = getParsecHandle();
-  }
-  if (needsMocks()) {
-    return {
-      handle: DEFAULT_HANDLE,
-      device: {} as AvailableDevice,
-      isExpired: false,
-      isOnline: true,
-      shouldAcceptTos: false,
-    };
   }
   return loggedInDevices.find((info) => info.handle === handle);
 }
@@ -244,30 +199,12 @@ export async function login(
   const callback = (handle: ConnectionHandle, event: ClientEvent): void => {
     parsecEventCallback(eventDistributor, event, handle);
   };
-  if (!needsMocks()) {
-    const clientConfig = getClientConfig();
-    const result = await libparsec.clientStart(clientConfig, callback, accessStrategy);
-    if (result.ok) {
-      loggedInDevices.push({ handle: result.value, device: device, isExpired: false, isOnline: false, shouldAcceptTos: false });
-    }
-    return result;
-  } else {
-    if (
-      accessStrategy.tag === DeviceAccessStrategyTag.Password &&
-      ['P@ssw0rd.', 'AVeryL0ngP@ssw0rd'].includes((accessStrategy as DeviceAccessStrategyPassword).password)
-    ) {
-      loggedInDevices.push({ handle: DEFAULT_HANDLE, device: device, isExpired: false, isOnline: true, shouldAcceptTos: false });
-      callback(DEFAULT_HANDLE, { tag: ClientEventTag.Online });
-      return { ok: true, value: DEFAULT_HANDLE };
-    }
-    return {
-      ok: false,
-      error: {
-        tag: ClientStartErrorTag.LoadDeviceDecryptionFailed,
-        error: 'WrongPassword',
-      },
-    };
+  const clientConfig = getClientConfig();
+  const result = await libparsec.clientStart(clientConfig, callback, accessStrategy);
+  if (result.ok) {
+    loggedInDevices.push({ handle: result.value, device: device, isExpired: false, isOnline: false, shouldAcceptTos: false });
   }
+  return result;
 }
 
 export async function logout(handle?: ConnectionHandle | undefined | null): Promise<Result<null, ClientStopError>> {
@@ -275,7 +212,7 @@ export async function logout(handle?: ConnectionHandle | undefined | null): Prom
     handle = getParsecHandle();
   }
 
-  if (handle !== null && !needsMocks()) {
+  if (handle !== null) {
     const result = await libparsec.clientStop(handle);
     if (result.ok) {
       const index = loggedInDevices.findIndex((info) => info.handle === handle);
@@ -298,30 +235,10 @@ export async function getClientInfo(handle: ConnectionHandle | null = null): Pro
     handle = getConnectionHandle();
   }
 
-  if (handle !== null && !needsMocks()) {
+  if (handle !== null) {
     return await libparsec.clientInfo(handle);
   } else {
-    return {
-      ok: true,
-      value: {
-        organizationAddr: 'parsec3://example.com/MyOrg',
-        organizationId: 'MyOrg',
-        deviceId: 'device1',
-        deviceLabel: 'My First Device',
-        userId: 'me',
-        currentProfile: UserProfile.Admin,
-        humanHandle: {
-          email: 'user@host.com',
-          label: 'Gordon Freeman',
-        },
-        serverConfig: {
-          userProfileOutsiderAllowed: true,
-          activeUsersLimit: {
-            tag: ActiveUsersLimitTag.NoLimit,
-          },
-        },
-      },
-    };
+    throw new Error('No handle provided');
   }
 }
 
@@ -358,37 +275,19 @@ export async function getCurrentAvailableDevice(): Promise<Result<AvailableDevic
   // clientInfo are not real on web right now
   // const currentAvailableDevice = availableDevices.find((device) => device.deviceId === clientResult.value.deviceId);
 
-  if (!needsMocks()) {
-    const currentAvailableDevice = availableDevices.find((device) => device.deviceId === clientResult.value.deviceId);
-    if (!currentAvailableDevice) {
-      return { ok: false, error: { tag: 'NotFound' } };
-    }
-    return { ok: true, value: currentAvailableDevice };
-  } else {
-    const device = availableDevices[0];
-    // Uncomment this to experience the login as you would with keyring
-    // device.ty = DeviceFileType.Keyring;
-    return { ok: true, value: device };
+  const currentAvailableDevice = availableDevices.find((device) => device.deviceId === clientResult.value.deviceId);
+  if (!currentAvailableDevice) {
+    return { ok: false, error: { tag: 'NotFound' } };
   }
+  return { ok: true, value: currentAvailableDevice };
 }
 
 export async function changeAuthentication(
   accessStrategy: DeviceAccessStrategy,
   saveStrategy: DeviceSaveStrategy,
 ): Promise<Result<null, ClientChangeAuthenticationError>> {
-  if (!needsMocks()) {
-    const clientConfig = getClientConfig();
-    return await libparsec.clientChangeAuthentication(clientConfig, accessStrategy, saveStrategy);
-  } else {
-    // Fake an error
-    if (
-      accessStrategy.tag === DeviceAccessStrategyTag.Password &&
-      (accessStrategy as DeviceAccessStrategyPassword).password !== 'P@ssw0rd.'
-    ) {
-      return { ok: false, error: { tag: ClientChangeAuthenticationErrorTag.DecryptionFailed, error: 'Invalid password' } };
-    }
-    return { ok: true, value: null };
-  }
+  const clientConfig = getClientConfig();
+  return await libparsec.clientChangeAuthentication(clientConfig, accessStrategy, saveStrategy);
 }
 
 export async function isKeyringAvailable(): Promise<boolean> {
@@ -426,14 +325,7 @@ export const SaveStrategy = {
 };
 
 export async function isAuthenticationValid(device: AvailableDevice, accessStrategy: DeviceAccessStrategy): Promise<boolean> {
-  if (!needsMocks()) {
-    const clientConfig = getClientConfig();
-    const result = await libparsec.clientStart(clientConfig, (_handle: number, _event: ClientEvent) => {}, accessStrategy);
-    return result.ok;
-  } else {
-    return (
-      accessStrategy.tag === DeviceAccessStrategyTag.Password &&
-      ['P@ssw0rd.', 'AVeryL0ngP@ssw0rd'].includes((accessStrategy as DeviceAccessStrategyPassword).password)
-    );
-  }
+  const clientConfig = getClientConfig();
+  const result = await libparsec.clientStart(clientConfig, (_handle: number, _event: ClientEvent) => {}, accessStrategy);
+  return result.ok;
 }

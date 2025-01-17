@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts" setup>
-import { getConnectionInfo, getTOS, needsMocks, logout as parsecLogout, acceptTOS, mockLoggedInDevice, WorkspaceRole } from '@/parsec';
+import { getConnectionInfo, getTOS, needsMocks, logout as parsecLogout, acceptTOS, WorkspaceRole } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
@@ -40,14 +40,6 @@ onMounted(async () => {
     window.electronAPI.log('error', 'Failed to retrieve connection handle while logged in');
     await navigateTo(Routes.Home, { replace: true, skipHandle: true });
     return;
-  }
-  // When in dev mode, we often open directly a connected page,
-  // so a few states are not properly set.
-  if (needsMocks()) {
-    if (!injectionProvider.hasInjections(handle)) {
-      injectionProvider.createNewInjections(handle, new EventDistributor());
-    }
-    mockLoggedInDevice();
   }
   injections = injectionProvider.getInjections(handle);
   // Provide the injections to children
