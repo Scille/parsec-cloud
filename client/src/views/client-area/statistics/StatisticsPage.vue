@@ -28,7 +28,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.adminUsersDetail.active }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{ $msTranslate(stats.adminUsersDetail.active > 1 ? 'clientArea.statistics.admins' : 'clientArea.statistics.admin') }}
+                {{ $msTranslate({ key: 'clientArea.statistics.admin', count: stats.adminUsersDetail.active }) }}
               </ion-text>
             </div>
           </ion-card>
@@ -46,9 +46,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.standardUsersDetail.active }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{
-                  $msTranslate(stats.standardUsersDetail.active > 1 ? 'clientArea.statistics.standards' : 'clientArea.statistics.standard')
-                }}
+                {{ $msTranslate({ key: 'clientArea.statistics.standard', count: stats.standardUsersDetail.active }) }}
               </ion-text>
             </div>
           </ion-card>
@@ -66,9 +64,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.outsiderUsersDetail.active }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{
-                  $msTranslate(stats.outsiderUsersDetail.active > 1 ? 'clientArea.statistics.outsiders' : 'clientArea.statistics.outsider')
-                }}
+                {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: stats.outsiderUsersDetail.active }) }}
               </ion-text>
             </div>
           </ion-card>
@@ -99,7 +95,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.adminUsersDetail.revoked }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{ $msTranslate(stats.adminUsersDetail.revoked > 1 ? 'clientArea.statistics.admins' : 'clientArea.statistics.admin') }}
+                {{ $msTranslate({ key: 'clientArea.statistics.admin', count: stats.adminUsersDetail.revoked }) }}
               </ion-text>
             </div>
           </ion-card>
@@ -117,9 +113,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.standardUsersDetail.revoked }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{
-                  $msTranslate(stats.standardUsersDetail.revoked > 1 ? 'clientArea.statistics.standards' : 'clientArea.statistics.standard')
-                }}
+                {{ $msTranslate({ key: 'clientArea.statistics.standard', count: stats.standardUsersDetail.revoked }) }}
               </ion-text>
             </div>
           </ion-card>
@@ -137,9 +131,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.outsiderUsersDetail.revoked }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{
-                  $msTranslate(stats.outsiderUsersDetail.revoked > 1 ? 'clientArea.statistics.outsiders' : 'clientArea.statistics.outsider')
-                }}
+                {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: stats.outsiderUsersDetail.revoked }) }}
               </ion-text>
             </div>
           </ion-card>
@@ -359,7 +351,28 @@
         </div>
       </div>
     </template>
-    <template v-else-if="!querying && !stats && !error">
+    <template v-else-if="!querying && !stats && !error && allOrganizations.length">
+      <ion-text class="organization-choice-title body-lg">
+        {{ $msTranslate('clientArea.statistics.multipleOrganizations') }}
+      </ion-text>
+
+      <div class="organization-list">
+        <div
+          class="organization-list-item subtitles-normal"
+          v-for="org in allOrganizations"
+          :key="org.bmsId"
+          @click="onOrganizationSelected(org)"
+        >
+          {{ org.name }}
+          <ion-icon
+            :icon="arrowForward"
+            slot="end"
+            class="organization-list-item__icon"
+          />
+        </div>
+      </div>
+    </template>
+    <template v-else-if="!querying && !stats && !error && allOrganizations.length === 0">
       {{ $msTranslate('clientArea.statistics.noStats') }}
     </template>
     <ion-text
@@ -390,12 +403,17 @@ const props = defineProps<{
   organization: BmsOrganization;
 }>();
 
+const emits = defineEmits<{
+  (e: 'organizationSelected', organization: BmsOrganization): void;
+}>();
+
 const stats = ref<OrganizationStatsResultData>();
 const totalData = ref<number>(0);
 const freeSliceSize = ref<number>(0);
 const payingSliceSize = ref<number>(0);
 const querying = ref(true);
 const error = ref('');
+const allOrganizations = ref<Array<BmsOrganization>>([]);
 
 const firstBarData = ref<ProgressBarData>();
 const secondBarData = ref<ProgressBarData>();
@@ -455,6 +473,10 @@ function getThirdBarData(): ProgressBarData | undefined {
 
 onMounted(async () => {
   if (isDefaultOrganization(props.organization)) {
+    const listResponse = await BmsAccessInstance.get().listOrganizations();
+    if (!listResponse.isError && listResponse.data && listResponse.data.type === DataType.ListOrganizations) {
+      allOrganizations.value = listResponse.data.organizations;
+    }
     querying.value = false;
     return;
   }
@@ -475,6 +497,10 @@ onMounted(async () => {
   }
   querying.value = false;
 });
+
+async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
+  emits('organizationSelected', org);
+}
 </script>
 
 <style scoped lang="scss">
@@ -720,6 +746,43 @@ onMounted(async () => {
     .skeleton-loading-text {
       width: 2rem;
       height: 1rem;
+    }
+  }
+}
+
+.organization-choice-title {
+  color: var(--parsec-color-light-secondary-soft-text);
+}
+
+.organization-list {
+  min-height: 4em;
+  margin-top: 1.5rem;
+  width: fit-content;
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  border-radius: var(--parsec-radius-12);
+  background: var(--parsec-color-light-secondary-background);
+  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  overflow: hidden;
+
+  &-item {
+    display: flex;
+    justify-content: space-between;
+    color: var(--parsec-color-light-primary-700);
+    flex: 1;
+    padding: 1em 1rem 1rem 1.5rem;
+    cursor: pointer;
+    min-width: 20rem;
+    width: 100%;
+    transition: background 0.2s;
+
+    &__icon {
+      color: var(--parsec-color-light-secondary-text);
+    }
+
+    &:hover {
+      background: var(--parsec-color-light-secondary-medium);
     }
   }
 }
