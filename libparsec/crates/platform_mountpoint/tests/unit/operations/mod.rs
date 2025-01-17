@@ -13,6 +13,8 @@ mod remove_folder;
 mod rename_entry;
 mod stat_entry;
 mod to_os_path;
+#[cfg(target_family = "unix")]
+mod unix;
 mod utils;
 mod write_file;
 
