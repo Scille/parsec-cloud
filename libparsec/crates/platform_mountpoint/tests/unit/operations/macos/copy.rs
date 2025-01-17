@@ -26,13 +26,12 @@ async fn copy_file_using_finder(tmp_path: TmpPath, env: &TestbedEnv) {
             tokio::fs::write(&src_file, FILE_CONTENT).await.unwrap();
 
             // Call the osascript that perform the copy using Finder.app
-            tokio::process::Command::new("osascript")
+            let status = tokio::process::Command::new("osascript")
                 .args([&script_path, &src_file, &dst_file])
-                .spawn()
-                .unwrap()
-                .wait()
+                .status()
                 .await
                 .unwrap();
+            assert!(status.success());
 
             // Verify the content of the copied file
             let data = tokio::fs::read_to_string(&dst_file).await.unwrap();
