@@ -40,7 +40,8 @@ async fn info_shared_recovery_ok(tmp_path: TmpPath) {
         "1",
         "1",
         "--threshold",
-        "1"
+        "1",
+        "--no-confirmation"
     )
     .stdout(predicates::str::contains(
         "Shared recovery setup has been created",
