@@ -3,6 +3,8 @@
 mod create_folder;
 mod flush_file;
 mod list_directory;
+#[cfg(target_os = "macos")]
+mod macos;
 mod mount_unmount;
 mod move_entry;
 mod open_file;
