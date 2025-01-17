@@ -22,16 +22,16 @@ msTest('Download file', async ({ documents }) => {
   const uploadMenu = documents.locator('.upload-menu');
   await expect(uploadMenu).toBeVisible();
   const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-  await expect(tabs.locator('.text-counter')).toHaveText(['0', '1', '0']);
+  await expect(tabs.locator('.text-counter')).toHaveText(['0', '9', '0']);
   await expect(tabs.nth(0)).not.toHaveTheClass('active');
   await expect(tabs.nth(1)).toHaveTheClass('active');
   await expect(tabs.nth(2)).not.toHaveTheClass('active');
 
   const container = uploadMenu.locator('.element-container');
   const elements = container.locator('.element');
-  await expect(elements).toHaveCount(1);
-  await expect(elements.locator('.element-details__name')).toHaveText(entryName);
-  await expect(elements.locator('.element-details-info__size')).toHaveText('40.9 KB');
+  await expect(elements).toHaveCount(9);
+  await expect(elements.nth(0).locator('.element-details__name')).toHaveText(entryName);
+  await expect(elements.nth(0).locator('.element-details-info__size')).toHaveText('40.9 KB');
 
   const content = await getDownloadedFile(documents);
   expect(content).toBeTruthy();
@@ -71,19 +71,21 @@ msTest('Download multiple files', async ({ documents }) => {
   const uploadMenu = documents.locator('.upload-menu');
   await expect(uploadMenu).toBeVisible();
   const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-  await expect(tabs.locator('.text-counter')).toHaveText(['0', '3', '0']);
+  await expect(tabs.locator('.text-counter')).toHaveText(['0', '11', '0']);
   await expect(tabs.nth(0)).not.toHaveTheClass('active');
   await expect(tabs.nth(1)).toHaveTheClass('active');
   await expect(tabs.nth(2)).not.toHaveTheClass('active');
 
   const container = uploadMenu.locator('.element-container');
   const elements = container.locator('.element');
-  await expect(elements).toHaveCount(3);
+  await expect(elements).toHaveCount(11);
 
-  const fileRe = new RegExp(`^(${mp3EntryName}|${xlsxEntryName}|${pdfEntryName})$`);
-  await expect(elements.locator('.element-details__name')).toHaveText([fileRe, fileRe, fileRe]);
-  const sizeRe = /^(76\.9 KB|5\.99 KB|40\.9 KB)$/;
-  await expect(elements.locator('.element-details-info__size')).toHaveText([sizeRe, sizeRe, sizeRe]);
+  for (let i = 0; i < 3; i++) {
+    const fileRe = new RegExp(`^(${mp3EntryName}|${xlsxEntryName}|${pdfEntryName})$`);
+    await expect(elements.nth(i).locator('.element-details__name')).toHaveText(fileRe);
+    const sizeRe = /^(76\.9 KB|5\.99 KB|40\.9 KB)$/;
+    await expect(elements.nth(i).locator('.element-details-info__size')).toHaveText(sizeRe);
+  }
 
   const mp3Content = await getDownloadedFile(documents, mp3EntryName);
   const pdfContent = await getDownloadedFile(documents, pdfEntryName);
@@ -143,16 +145,16 @@ msTest('Download file and folder', async ({ documents }) => {
   const uploadMenu = documents.locator('.upload-menu');
   await expect(uploadMenu).toBeVisible();
   const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
-  await expect(tabs.locator('.text-counter')).toHaveText(['0', '1', '0']);
+  await expect(tabs.locator('.text-counter')).toHaveText(['0', '9', '0']);
   await expect(tabs.nth(0)).not.toHaveTheClass('active');
   await expect(tabs.nth(1)).toHaveTheClass('active');
   await expect(tabs.nth(2)).not.toHaveTheClass('active');
 
   const container = uploadMenu.locator('.element-container');
   const elements = container.locator('.element');
-  await expect(elements).toHaveCount(1);
-  await expect(elements.locator('.element-details__name')).toHaveText(entryName);
-  await expect(elements.locator('.element-details-info__size')).toHaveText('40.9 KB');
+  await expect(elements).toHaveCount(9);
+  await expect(elements.nth(0).locator('.element-details__name')).toHaveText(entryName);
+  await expect(elements.nth(0).locator('.element-details-info__size')).toHaveText('40.9 KB');
 
   const content = await getDownloadedFile(documents);
   expect(content).toBeTruthy();

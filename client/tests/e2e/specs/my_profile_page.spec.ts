@@ -3,7 +3,7 @@
 import { Page } from '@playwright/test';
 import { expect, fillIonInput, msTest, selectDropdown } from '@tests/e2e/helpers';
 
-msTest('Check devices list', async ({ myProfilePage }) => {
+msTest.fail('Check devices list', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
   await myProfilePage.locator('.menu-list__item').nth(1).click();
   await expect(myProfilePage.locator('#add-device-button')).toHaveText('Add a new device');

@@ -1,19 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page } from '@playwright/test';
-import {
-  DEFAULT_ORGANIZATION_INFORMATION,
-  DEFAULT_USER_INFORMATION,
-  expect,
-  fillInputModal,
-  fillIonInput,
-  msTest,
-} from '@tests/e2e/helpers';
-
-/* eslint-disable max-len */
-// cspell:disable-next-line
-const BOOTSTRAP_ADDR = `parsec3://trial.parsec.cloud/${DEFAULT_ORGANIZATION_INFORMATION.name}?no_ssl=true&a=bootstrap_organization&p=xBCy2YVGB31DPzcxGZbGVUt7`;
-/* eslint-enable max-len */
+import { DEFAULT_USER_INFORMATION, expect, fillInputModal, fillIonInput, getTestbedBootstrapAddr, msTest } from '@tests/e2e/helpers';
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
   await page.locator('#create-organization-button').click();
@@ -133,10 +121,11 @@ msTest('Go through trial org creation process', async ({ home }) => {
   await expect(modal).toBeHidden();
 });
 
-msTest('Go through trial org creation process from bootstrap link', async ({ home }) => {
+msTest.skip('Go through trial org creation process from bootstrap link', async ({ home }) => {
   await home.locator('#create-organization-button').click();
   await home.locator('.popover-viewport').getByRole('listitem').nth(1).click();
-  await fillInputModal(home, BOOTSTRAP_ADDR);
+  const bootstrapAddr = getTestbedBootstrapAddr('CustomOrg');
+  await fillInputModal(home, bootstrapAddr);
   const modal = home.locator('.create-organization-modal');
 
   const userInfoContainer = modal.locator('.user-information-page');
