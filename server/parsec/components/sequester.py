@@ -134,6 +134,7 @@ class SequesterCreateServiceStoreBadOutcome(BadOutcomeEnum):
 
 class SequesterUpdateConfigForServiceStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
+    SEQUESTER_DISABLED = auto()
     SEQUESTER_SERVICE_NOT_FOUND = auto()
 
 
