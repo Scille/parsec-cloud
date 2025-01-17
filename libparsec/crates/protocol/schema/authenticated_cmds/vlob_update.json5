@@ -7,6 +7,10 @@
             "cmd": "vlob_update",
             "fields": [
                 {
+                    "name": "realm_id",
+                    "type": "VlobID"
+                },
+                {
                     "name": "vlob_id",
                     "type": "VlobID"
                 },
@@ -54,6 +58,9 @@
                         "type": "DateTime"
                     }
                 ]
+            },
+            {
+                "status": "realm_not_found"
             },
             {
                 "status": "vlob_not_found"

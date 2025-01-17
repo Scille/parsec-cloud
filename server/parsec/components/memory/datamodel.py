@@ -100,7 +100,6 @@ class MemoryOrganization:
     greeting_attempts: dict[GreetingAttemptID, MemoryGreetingAttempt] = field(default_factory=dict)
     pki_enrollments: dict[EnrollmentID, MemoryPkiEnrollment] = field(default_factory=dict)
     realms: dict[VlobID, MemoryRealm] = field(default_factory=dict)
-    vlobs: dict[VlobID, list[MemoryVlobAtom]] = field(default_factory=dict)
     blocks: dict[BlockID, MemoryBlock] = field(default_factory=dict)
     block_store: dict[BlockID, bytes] = field(default_factory=dict, repr=False)
     # The user id is the author of the shamir recovery
@@ -515,6 +514,7 @@ class MemoryRealm:
     renames: list[MemoryRealmRename] = field(default_factory=list)
     archivings: list[MemoryRealmArchiving] = field(default_factory=list)
     last_vlob_timestamp: DateTime | None = None
+    vlobs: dict[VlobID, list[MemoryVlobAtom]] = field(default_factory=dict)
 
     def get_current_role_for(self, user_id: UserID) -> RealmRole | None:
         for role in reversed(self.roles):
@@ -579,7 +579,6 @@ class MemoryRealmUserChange:
 
 @dataclass(slots=True)
 class MemoryVlobAtom:
-    realm_id: VlobID
     vlob_id: VlobID
     key_index: int
     version: int

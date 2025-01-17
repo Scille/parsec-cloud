@@ -403,6 +403,7 @@ class Backend:
                         now=event.timestamp,
                         organization_id=org_id,
                         author=event.author,
+                        realm_id=event.realm,
                         vlob_id=event.vlob_id,
                         key_index=event.key_index,
                         version=event.version,
