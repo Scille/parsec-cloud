@@ -8,7 +8,6 @@ use rexpect::spawn;
 
 use crate::{
     integration_tests::bootstrap_cli_test,
-    match_sas_code,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
     utils::YELLOW,
 };
@@ -120,7 +119,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
         let mut locked = claimer_cloned.lock().unwrap();
 
         locked
-            .exp_string("Select code provided by greeter:")
+            .exp_string("Select code provided by greeter")
             .unwrap();
     });
     greeter.await.unwrap();
@@ -139,7 +138,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
     {
         let mut locked = cloned_claimer.lock().unwrap();
 
-        match_sas_code!(locked, sas_code);
+        locked.send_line(&sas_code).unwrap();
     }
 
     // retrieve claimer code
@@ -148,7 +147,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
         let mut locked = greeter_cloned.lock().unwrap();
         locked.exp_string("Waiting for claimer").unwrap();
         locked
-            .exp_string("Select code provided by claimer:")
+            .exp_string("Select code provided by claimer")
             .unwrap();
     });
 
@@ -166,7 +165,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
     {
         let mut locked = greeter_cloned.lock().unwrap();
 
-        match_sas_code!(locked, sas_code);
+        locked.send_line(&sas_code).unwrap();
         locked
             .exp_string(&format!("Select code provided by claimer: {sas_code}"))
             .unwrap();
@@ -191,7 +190,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
             .exp_string("New user: [alice2 <alice2@example.com>]")
             .unwrap();
         locked.exp_string("Which profile?").unwrap();
-        locked.send_line("\n").unwrap(); // selection on standard by default
+        locked.send_line("standard").unwrap();
 
         locked
             .exp_string("Creating the user in the server")

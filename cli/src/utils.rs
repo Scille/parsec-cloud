@@ -3,7 +3,7 @@
 use std::{fmt::Display, ops::Deref, path::Path, sync::Arc};
 
 use anyhow::anyhow;
-use dialoguer::Select;
+use dialoguer::FuzzySelect;
 use libparsec::{
     internal::{Client, EventBus},
     list_available_devices, AuthenticatedCmds, AvailableDevice, DeviceAccessStrategy,
@@ -404,7 +404,7 @@ pub fn choose_sas_code(
     expected: &SASCode,
     provided_by: &str,
 ) -> anyhow::Result<()> {
-    let selected_sas = Select::new()
+    let selected_sas = FuzzySelect::new()
         .default(0)
         .items(sas_codes)
         .with_prompt(format!("Select code provided by {provided_by}"))
@@ -421,7 +421,7 @@ pub fn choose_user_profile() -> anyhow::Result<UserProfile> {
         UserProfile::Admin,
         UserProfile::Outsider,
     ];
-    let selected_profile = Select::new()
+    let selected_profile = FuzzySelect::new()
         .default(0)
         .items(&profiles)
         .with_prompt("Which profile?")
