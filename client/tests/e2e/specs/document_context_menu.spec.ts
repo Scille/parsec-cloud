@@ -36,12 +36,12 @@ for (const gridMode of [false, true]) {
   msTest(`Document actions default state in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
     await expect(documents.locator('.file-context-menu')).toBeHidden();
     if (!gridMode) {
-      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(2);
+      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
       await entry.hover();
       await entry.locator('.options-button').click();
     } else {
       await toggleViewMode(documents);
-      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(2);
+      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
       await entry.hover();
       await entry.locator('.card-option').click();
     }
@@ -66,11 +66,11 @@ for (const gridMode of [false, true]) {
   msTest(`Document popover on right click in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
     await expect(documents.locator('.file-context-menu')).toBeHidden();
     if (!gridMode) {
-      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(2);
+      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
       await entry.click({ button: 'right' });
     } else {
       await toggleViewMode(documents);
-      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(2);
+      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
       await entry.click({ button: 'right' });
     }
     await expect(documents.locator('.file-context-menu')).toBeVisible();
@@ -107,7 +107,7 @@ for (const gridMode of [false, true]) {
       await entry.locator('ion-checkbox').click();
       await expect(entry.locator('ion-checkbox')).toHaveState('checked');
     }
-    await entries.nth(2).click({ button: 'right' });
+    await entries.nth(0).click({ button: 'right' });
 
     await expect(documents.locator('.file-context-menu')).toBeVisible();
     const popover = documents.locator('.file-context-menu');
@@ -155,10 +155,10 @@ for (const gridMode of [false, true]) {
     await clickAction(await openPopover(documents), 'Rename');
     await fillInputModal(documents, 'My file', true);
     if (!gridMode) {
-      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(2);
+      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
       await expect(entry.locator('.file-name').locator('.file-name__label')).toHaveText('My file');
     } else {
-      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(2);
+      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
       await expect(entry.locator('.file-card__title')).toHaveText('My file');
     }
   });
@@ -169,7 +169,7 @@ for (const gridMode of [false, true]) {
     }
     let fileName;
     if (gridMode) {
-      fileName = await documents.locator('.folder-container').locator('.file-card-item').nth(2).locator('.file-card__title').textContent();
+      fileName = await documents.locator('.folder-container').locator('.file-card-item').nth(0).locator('.file-card__title').textContent();
     } else {
       fileName = await documents
         .locator('.folder-container')
@@ -193,12 +193,12 @@ for (const gridMode of [false, true]) {
   msTest(`Document actions default state in a read only workspace in ${gridMode ? 'grid' : 'list'} mode`, async ({ documentsReadOnly }) => {
     await expect(documentsReadOnly.locator('.file-context-menu')).toBeHidden();
     if (!gridMode) {
-      const entry = documentsReadOnly.locator('.folder-container').locator('.file-list-item').nth(2);
+      const entry = documentsReadOnly.locator('.folder-container').locator('.file-list-item').nth(0);
       await entry.hover();
       await entry.locator('.options-button').click();
     } else {
       await toggleViewMode(documentsReadOnly);
-      const entry = documentsReadOnly.locator('.folder-container').locator('.file-card-item').nth(2);
+      const entry = documentsReadOnly.locator('.folder-container').locator('.file-card-item').nth(0);
       await entry.hover();
       await entry.locator('.card-option').click();
     }
