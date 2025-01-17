@@ -12,15 +12,13 @@ import {
   DeviceClaimInProgress1Info,
   DeviceClaimInProgress2Info,
   DeviceClaimInProgress3Info,
-  DeviceFileType,
   DeviceLabel,
   DeviceSaveStrategy,
   HumanHandle,
   Result,
   SASCode,
 } from '@/parsec';
-import { needsMocks } from '@/parsec/environment';
-import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
+import { getClientConfig } from '@/parsec/internals';
 import { libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
@@ -44,10 +42,10 @@ export class DeviceClaim {
   }
 
   async abort(): Promise<void> {
-    if (this.canceller !== null && !needsMocks()) {
+    if (this.canceller !== null) {
       await libparsec.cancel(this.canceller);
     }
-    if (this.handle !== null && !needsMocks()) {
+    if (this.handle !== null) {
       await libparsec.claimerGreeterAbortOperation(this.handle);
     }
     this.canceller = null;
@@ -79,193 +77,97 @@ export class DeviceClaim {
 
     this._assertState(true, true);
 
-    if (!needsMocks()) {
-      const clientConfig = getClientConfig();
-      const result = await libparsec.claimerRetrieveInfo(clientConfig, eventCallback, invitationLink);
-      if (result.ok) {
-        if (result.value.tag !== AnyClaimRetrievedInfoTag.Device) {
-          throw Error('Unexpected tag');
-        }
-        this.handle = result.value.handle;
-        this.greeter = result.value.greeterHumanHandle;
+    const clientConfig = getClientConfig();
+    const result = await libparsec.claimerRetrieveInfo(clientConfig, eventCallback, invitationLink);
+    if (result.ok) {
+      if (result.value.tag !== AnyClaimRetrievedInfoTag.Device) {
+        throw Error('Unexpected tag');
       }
-      return result as Result<AnyClaimRetrievedInfoDevice, ClaimerRetrieveInfoError>;
-    } else {
-      await wait(MOCK_WAITING_TIME);
-      this.handle = DEFAULT_HANDLE;
-      this.greeter = {
-        email: 'gale@waterdeep.faerun',
-        // cspell:disable-next-line
-        label: 'Gale Dekarios',
-      };
-      return {
-        ok: true,
-        value: {
-          tag: AnyClaimRetrievedInfoTag.Device,
-          handle: DEFAULT_HANDLE,
-          greeterUserId: '1234',
-          greeterHumanHandle: {
-            email: 'gale@waterdeep.faerun',
-            // cspell:disable-next-line
-            label: 'Gale Dekarios',
-          },
-        },
-      };
+      this.handle = result.value.handle;
+      this.greeter = result.value.greeterHumanHandle;
     }
+    return result as Result<AnyClaimRetrievedInfoDevice, ClaimerRetrieveInfoError>;
   }
 
   async initialWaitHost(): Promise<Result<DeviceClaimInProgress1Info, ClaimInProgressError>> {
     this._assertState(true, false);
-    if (!needsMocks()) {
-      this.canceller = await libparsec.newCanceller();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const result = await libparsec.claimerDeviceInitialDoWaitPeer(this.canceller, this.handle!);
-      if (result.ok) {
-        this.SASCodeChoices = result.value.greeterSasChoices;
-        this.correctSASCode = result.value.greeterSas;
-        this.handle = result.value.handle;
-      }
-      this.canceller = null;
-      return result;
-    } else {
-      this.SASCodeChoices = ['5MNO', '6PQR', '7STU', '8VWX'];
-      this.correctSASCode = '7STU';
-      return {
-        ok: true,
-        value: {
-          handle: DEFAULT_HANDLE,
-          greeterUserId: '1234',
-          greeterHumanHandle: {
-            email: 'gale@waterdeep.faerun',
-            // cspell:disable-next-line
-            label: 'Gale Dekarios',
-          },
-          greeterSas: this.correctSASCode,
-          greeterSasChoices: this.SASCodeChoices,
-        },
-      };
+
+    this.canceller = await libparsec.newCanceller();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const result = await libparsec.claimerDeviceInitialDoWaitPeer(this.canceller, this.handle!);
+    if (result.ok) {
+      this.SASCodeChoices = result.value.greeterSasChoices;
+      this.correctSASCode = result.value.greeterSas;
+      this.handle = result.value.handle;
     }
+    this.canceller = null;
+    return result;
   }
 
   async denyTrust(): Promise<Result<null, ClaimInProgressError>> {
     this._assertState(true, false);
-    if (!needsMocks()) {
-      this.canceller = await libparsec.newCanceller();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const result = await libparsec.claimerDeviceInProgress1DoDenyTrust(this.canceller, this.handle!);
-      this.handle = null;
-      this.canceller = null;
-      return result;
-    } else {
-      return { ok: true, value: null };
-    }
+    this.canceller = await libparsec.newCanceller();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const result = await libparsec.claimerDeviceInProgress1DoDenyTrust(this.canceller, this.handle!);
+    this.handle = null;
+    this.canceller = null;
+    return result;
   }
 
   async signifyTrust(): Promise<Result<DeviceClaimInProgress2Info, ClaimInProgressError>> {
     this._assertState(true, false);
-    if (!needsMocks()) {
-      this.canceller = await libparsec.newCanceller();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const result = await libparsec.claimerDeviceInProgress1DoSignifyTrust(this.canceller, this.handle!);
-      if (result.ok) {
-        this.guestSASCode = result.value.claimerSas;
-        this.handle = result.value.handle;
-      }
-      this.canceller = null;
-      return result;
-    } else {
-      this.guestSASCode = '1337';
-      return {
-        ok: true,
-        value: {
-          handle: DEFAULT_HANDLE,
-          claimerSas: '1337',
-        },
-      };
+    this.canceller = await libparsec.newCanceller();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const result = await libparsec.claimerDeviceInProgress1DoSignifyTrust(this.canceller, this.handle!);
+    if (result.ok) {
+      this.guestSASCode = result.value.claimerSas;
+      this.handle = result.value.handle;
     }
+    this.canceller = null;
+    return result;
   }
 
   async waitHostTrust(): Promise<Result<DeviceClaimInProgress3Info, ClaimInProgressError>> {
     this._assertState(true, false);
-    if (!needsMocks()) {
-      this.canceller = await libparsec.newCanceller();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const result = await libparsec.claimerDeviceInProgress2DoWaitPeerTrust(this.canceller, this.handle!);
-      this.canceller = null;
-      if (result.ok) {
-        this.handle = result.value.handle;
-      }
-      return result;
-    } else {
-      await wait(MOCK_WAITING_TIME);
-      return {
-        ok: true,
-        value: {
-          handle: DEFAULT_HANDLE,
-        },
-      };
+    this.canceller = await libparsec.newCanceller();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const result = await libparsec.claimerDeviceInProgress2DoWaitPeerTrust(this.canceller, this.handle!);
+    this.canceller = null;
+    if (result.ok) {
+      this.handle = result.value.handle;
     }
+    return result;
   }
 
   async doClaim(deviceLabel: DeviceLabel): Promise<Result<DeviceClaimFinalizeInfo, ClaimInProgressError>> {
     this._assertState(true, false);
-    if (!needsMocks()) {
-      this.canceller = await libparsec.newCanceller();
-      const result = await libparsec.claimerDeviceInProgress3DoClaim(
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.canceller,
-        this.handle!,
-        deviceLabel,
-      );
-      if (result.ok) {
-        this.handle = result.value.handle;
-      }
-      this.canceller = null;
-      return result;
-    } else {
-      await wait(MOCK_WAITING_TIME);
-      return {
-        ok: true,
-        value: {
-          handle: DEFAULT_HANDLE,
-        },
-      };
+    this.canceller = await libparsec.newCanceller();
+    const result = await libparsec.claimerDeviceInProgress3DoClaim(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.canceller,
+      this.handle!,
+      deviceLabel,
+    );
+    if (result.ok) {
+      this.handle = result.value.handle;
     }
+    this.canceller = null;
+    return result;
   }
 
   async finalize(saveStrategy: DeviceSaveStrategy): Promise<Result<AvailableDevice, ClaimInProgressError>> {
     this._assertState(true, false);
-    if (!needsMocks()) {
-      const result = await libparsec.claimerDeviceFinalizeSaveLocalDevice(
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.handle!,
-        saveStrategy,
-      );
-      if (result.ok) {
-        result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
-        result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);
-        this.device = result.value;
-      }
-      this.handle = null;
-      return result;
-    } else {
-      this.handle = null;
-      this.device = {
-        keyFilePath: '/path',
-        serverUrl: 'https://parsec.invalid',
-        createdOn: DateTime.utc(),
-        protectedOn: DateTime.utc(),
-        organizationId: 'MyOrg',
-        userId: 'userid',
-        deviceId: 'deviceid',
-        humanHandle: {
-          label: 'A',
-          email: 'a@b.c',
-        },
-        deviceLabel: 'a@b',
-        ty: DeviceFileType.Password,
-      };
-      return { ok: true, value: this.device };
+    const result = await libparsec.claimerDeviceFinalizeSaveLocalDevice(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.handle!,
+      saveStrategy,
+    );
+    if (result.ok) {
+      result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
+      result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);
+      this.device = result.value;
     }
+    this.handle = null;
+    return result;
   }
 }

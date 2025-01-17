@@ -57,7 +57,7 @@ import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZ
 import { MsSpinner, MsReportText, MsReportTheme, I18n } from 'megashark-lib';
 import * as pdfjs from 'pdfjs-dist';
 import { scan } from 'ionicons/icons';
-import { needsMocks } from '@/parsec';
+import { isWeb } from '@/parsec';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -118,7 +118,7 @@ async function loadPage(pageIndex: number): Promise<void> {
 
   try {
     const page = await pdf.value.getPage(pageIndex);
-    if (needsMocks() && pageIndex === 4) {
+    if (window.isDev() && isWeb() && pageIndex === 4) {
       throw new Error('Failed to load page');
     }
 

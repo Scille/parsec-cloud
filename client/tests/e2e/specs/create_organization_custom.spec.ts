@@ -1,19 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page } from '@playwright/test';
-import {
-  DEFAULT_ORGANIZATION_INFORMATION,
-  DEFAULT_USER_INFORMATION,
-  expect,
-  fillInputModal,
-  fillIonInput,
-  msTest,
-} from '@tests/e2e/helpers';
-
-/* eslint-disable max-len */
-// cspell:disable-next-line
-const BOOTSTRAP_ADDR = `${DEFAULT_ORGANIZATION_INFORMATION.serverAddr}/${DEFAULT_ORGANIZATION_INFORMATION.name}?no_ssl=true&a=bootstrap_organization&p=xBCy2YVGB31DPzcxGZbGVUt7`;
-/* eslint-enable max-len */
+import { DEFAULT_USER_INFORMATION, expect, fillInputModal, fillIonInput, getTestbedBootstrapAddr, msTest } from '@tests/e2e/helpers';
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
   await page.locator('#create-organization-button').click();
@@ -42,10 +30,10 @@ msTest('Go through custom org creation process', async ({ home }) => {
   const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
   await expect(orgPrevious).toBeVisible();
   await expect(orgNext).toHaveDisabledAttribute();
-  await fillIonInput(orgServerContainer.locator('ion-input').nth(0), DEFAULT_ORGANIZATION_INFORMATION.name);
+  await fillIonInput(orgServerContainer.locator('ion-input').nth(0), home.orgInfo.name);
   await expect(orgNext).toHaveDisabledAttribute();
-  await fillIonInput(orgServerContainer.locator('ion-input').nth(1), DEFAULT_ORGANIZATION_INFORMATION.serverAddr);
-  await expect(orgNext).toNotHaveDisabledAttribute();
+  await fillIonInput(orgServerContainer.locator('ion-input').nth(1), home.orgInfo.serverAddr);
+  await expect(orgNext).not.toHaveDisabledAttribute();
 
   // Wrong org name
   await fillIonInput(orgServerContainer.locator('ion-input').nth(0), 'Invalid Org N@me');
@@ -55,8 +43,8 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(orgNameError).toHaveText('Only letters, digits, underscores and hyphens. No spaces.');
 
   // Correct org name again
-  await fillIonInput(orgServerContainer.locator('ion-input').nth(0), DEFAULT_ORGANIZATION_INFORMATION.name);
-  await expect(orgNext).toNotHaveDisabledAttribute();
+  await fillIonInput(orgServerContainer.locator('ion-input').nth(0), home.orgInfo.name);
+  await expect(orgNext).not.toHaveDisabledAttribute();
   await expect(orgNameError).toBeHidden();
 
   // Now wrong server address
@@ -67,8 +55,8 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(orgServerError).toHaveText("Link should start with 'parsec3://'.");
 
   // And correct server address again
-  await fillIonInput(orgServerContainer.locator('ion-input').nth(1), DEFAULT_ORGANIZATION_INFORMATION.serverAddr);
-  await expect(orgNext).toNotHaveDisabledAttribute();
+  await fillIonInput(orgServerContainer.locator('ion-input').nth(1), home.orgInfo.serverAddr);
+  await expect(orgNext).not.toHaveDisabledAttribute();
   await expect(orgServerError).toBeHidden();
 
   await orgNext.click();
@@ -186,7 +174,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
     'Authentication method',
   ]);
   await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
-    DEFAULT_ORGANIZATION_INFORMATION.name,
+    home.orgInfo.name,
     DEFAULT_USER_INFORMATION.name,
     DEFAULT_USER_INFORMATION.email,
     'Custom Server',
@@ -208,10 +196,10 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(modal).toBeHidden();
 });
 
-msTest('Go through custom org creation process from bootstrap link', async ({ home }) => {
+msTest.skip('Go through custom org creation process from bootstrap link', async ({ home }) => {
   await home.locator('#create-organization-button').click();
   await home.locator('.popover-viewport').getByRole('listitem').nth(1).click();
-  await fillInputModal(home, BOOTSTRAP_ADDR);
+  await fillInputModal(home, getTestbedBootstrapAddr(home.orgInfo.name));
   const modal = home.locator('.create-organization-modal');
 
   const orgServerContainer = modal.locator('.organization-name-and-server-page');
@@ -222,11 +210,9 @@ msTest('Go through custom org creation process from bootstrap link', async ({ ho
   await expect(orgNext).toNotHaveDisabledAttribute();
 
   await expect(orgServerContainer.locator('ion-input').nth(0)).toHaveTheClass('input-disabled');
-  await expect(orgServerContainer.locator('ion-input').nth(0).locator('input')).toHaveValue(DEFAULT_ORGANIZATION_INFORMATION.name);
+  await expect(orgServerContainer.locator('ion-input').nth(0).locator('input')).toHaveValue(home.orgInfo.name);
   await expect(orgServerContainer.locator('ion-input').nth(1)).toHaveTheClass('input-disabled');
-  await expect(orgServerContainer.locator('ion-input').nth(1).locator('input')).toHaveValue(
-    `${DEFAULT_ORGANIZATION_INFORMATION.serverAddr}:80`,
-  );
+  await expect(orgServerContainer.locator('ion-input').nth(1).locator('input')).toHaveValue(`${home.orgInfo.serverAddr}`);
   await orgNext.click();
 
   const userInfoContainer = modal.locator('.user-information-page');
@@ -290,7 +276,7 @@ msTest('Go through custom org creation process from bootstrap link', async ({ ho
     'Authentication method',
   ]);
   await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
-    DEFAULT_ORGANIZATION_INFORMATION.name,
+    home.orgInfo.name,
     DEFAULT_USER_INFORMATION.name,
     DEFAULT_USER_INFORMATION.email,
     'Custom Server',

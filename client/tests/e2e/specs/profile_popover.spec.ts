@@ -4,11 +4,12 @@ import { expect, msTest } from '@tests/e2e/helpers';
 
 msTest('Profile popover default state', async ({ connected }) => {
   await expect(connected.locator('.profile-header-popover')).toBeHidden();
+  await expect(connected.locator('.topbar').locator('.profile-header').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
   await connected.locator('.topbar').locator('.profile-header').click();
   await expect(connected.locator('.profile-header-popover')).toBeVisible();
   const popover = connected.locator('.profile-header-popover');
   const header = popover.locator('.header-list');
-  await expect(header.locator('.header-list-email')).toHaveText('user@host.com');
+  await expect(header.locator('.header-list-email')).toHaveText('alice@example.com');
   await expect(header.locator('.profile')).toHaveText('Administrator');
 
   const buttons = popover.locator('.main-list').getByRole('listitem');
