@@ -1,15 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Locator, Page, test as base } from '@playwright/test';
+import { BrowserContext, Locator, Page, TestInfo, test as base } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { MockBms } from '@tests/e2e/helpers/bms';
 import { DEFAULT_ORGANIZATION_INFORMATION, DEFAULT_USER_INFORMATION, UserData } from '@tests/e2e/helpers/data';
 import { dropTestbed, newTestbed } from '@tests/e2e/helpers/testbed';
-import { fillInputModal, fillIonInput } from '@tests/e2e/helpers/utils';
+import { createWorkspace, dismissToast, dragAndDropFile, fillInputModal, fillIonInput } from '@tests/e2e/helpers/utils';
+import path from 'path';
 
 export const msTest = base.extend<{
+  context: BrowserContext;
   home: Page;
+  secondTab: Page;
   connected: Page;
+  workspaces: Page;
   documents: Page;
   documentsReadOnly: Page;
   usersPage: Page;
@@ -23,7 +27,36 @@ export const msTest = base.extend<{
   clientArea: Page;
   clientAreaCustomOrder: Page;
 }>({
-  home: async ({ page, context }, use) => {
+  context: async ({ browser }, use) => {
+    const context = await browser.newContext();
+    await use(context);
+    await context.close();
+  },
+
+  home: async ({ context }, use) => {
+    const page = await context.newPage();
+
+    page.on('console', (msg) => console.log('> ', msg.text()));
+    await context.grantPermissions(['clipboard-read']);
+
+    await page.addInitScript(() => {
+      (window as any).TESTING = true;
+    });
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    await expect(page.locator('#app')).toHaveAttribute('app-state', 'initializing');
+
+    await newTestbed(page);
+
+    await expect(page.locator('#app')).toHaveAttribute('app-state', 'ready');
+    await use(page);
+    await dropTestbed(page);
+  },
+
+  secondTab: async ({ context }, use) => {
+    const page = await context.newPage();
+
     page.on('console', (msg) => console.log('> ', msg.text()));
     await context.grantPermissions(['clipboard-read']);
 
@@ -59,20 +92,44 @@ export const msTest = base.extend<{
     await use(home);
   },
 
-  documents: async ({ connected }, use) => {
-    await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(connected).toHaveHeader(['The Copper Coronet'], true, true);
-    await expect(connected).toBeDocumentPage();
-    await expect(connected.locator('.folder-container').locator('.no-files-content')).toBeHidden();
+  workspaces: async ({ connected }, use) => {
+    await createWorkspace(connected, 'The Copper Coronet');
+    await dismissToast(connected);
+    await createWorkspace(connected, 'Trademeet');
+    await dismissToast(connected);
+    await createWorkspace(connected, "Watcher's Keep");
+    await dismissToast(connected);
     use(connected);
   },
 
-  documentsReadOnly: async ({ connected }, use) => {
-    await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(2).click();
-    await expect(connected).toHaveHeader(["Watcher's Keep"], true, true);
-    await expect(connected).toBeDocumentPage();
-    await expect(connected.locator('.folder-container').locator('.no-files-content')).toBeHidden();
-    use(connected);
+  documents: async ({ workspaces }, use, testInfo: TestInfo) => {
+    await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await expect(workspaces).toHaveHeader(['The Copper Coronet'], true, true);
+    await expect(workspaces).toBeDocumentPage();
+    await expect(workspaces.locator('.folder-container').locator('.no-files')).toBeVisible();
+    // Also create a folder here when available
+    const dropZone = workspaces.locator('.folder-container').locator('.drop-zone').nth(0);
+    await dragAndDropFile(workspaces, dropZone, [
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'document.docx'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'pdfDocument.pdf'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'video.mp4'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'audio.mp3'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'spreadsheet.xlsx'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'text.txt'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'code.py'),
+    ]);
+    // Hide the import menu
+    await workspaces.locator('.upload-menu').locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+    use(workspaces);
+  },
+
+  documentsReadOnly: async ({ workspaces }, use) => {
+    await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(2).click();
+    await expect(workspaces).toHaveHeader(["Watcher's Keep"], true, true);
+    await expect(workspaces).toBeDocumentPage();
+    await expect(workspaces.locator('.folder-container').locator('.no-files-content')).toBeHidden();
+    use(workspaces);
   },
 
   usersPage: async ({ connected }, use) => {
@@ -151,9 +208,9 @@ export const msTest = base.extend<{
     await use(modal);
   },
 
-  workspaceSharingModal: async ({ connected }, use) => {
-    await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(1).locator('.shared-group').click();
-    const modal = connected.locator('.workspace-sharing-modal');
+  workspaceSharingModal: async ({ workspaces }, use) => {
+    await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(1).locator('.shared-group').click();
+    const modal = workspaces.locator('.workspace-sharing-modal');
     await expect(modal).toBeVisible();
     await use(modal);
   },

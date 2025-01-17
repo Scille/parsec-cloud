@@ -50,7 +50,7 @@
         <!-- give code step -->
         <div
           v-show="pageStep === GreetUserStep.ProvideHostSasCode"
-          class="step"
+          class="step host-code"
         >
           <sas-code-provide :code="greeter.hostSASCode" />
         </div>

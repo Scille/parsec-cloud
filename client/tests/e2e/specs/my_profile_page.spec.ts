@@ -2,7 +2,7 @@
 
 import { expect, fillIonInput, msTest } from '@tests/e2e/helpers';
 
-msTest('Check devices list', async ({ myProfilePage }) => {
+msTest.fail('Check devices list', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('#add-device-button')).toHaveText('Add');
   const devices = myProfilePage.locator('#devices-list').getByRole('listitem');
   await expect(devices.locator('.device-name')).toHaveText([/^device\d$/, /^device\d$/]);

@@ -8,9 +8,9 @@
 </template>
 
 <script lang="ts" setup>
-import { getConnectionInfo, getTOS, needsMocks, logout as parsecLogout, acceptTOS, mockLoggedInDevice, WorkspaceRole } from '@/parsec';
+import { getConnectionInfo, getTOS, logout as parsecLogout, acceptTOS } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
-import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EventData, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey, Injections } from '@/services/injectionProvider';
@@ -22,7 +22,6 @@ import { MsModalResult, openSpinnerModal } from 'megashark-lib';
 import { DateTime } from 'luxon';
 import { StorageManagerKey, StorageManager } from '@/services/storageManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
-import { FileContentType } from '@/common/fileTypes';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -41,14 +40,8 @@ onMounted(async () => {
     await navigateTo(Routes.Home, { replace: true, skipHandle: true });
     return;
   }
-  // When in dev mode, we often open directly a connected page,
-  // so a few states are not properly set.
-  if (needsMocks()) {
-    if (!injectionProvider.hasInjections(handle)) {
-      injectionProvider.createNewInjections(handle, new EventDistributor());
-    }
-    mockLoggedInDevice();
-  }
+
+  // Vue wants `provide` to be the absolute first thing.
   injections = injectionProvider.getInjections(handle);
   // Provide the injections to children
   provide(FileOperationManagerKey, injections.fileOperationManager);
@@ -68,7 +61,7 @@ onMounted(async () => {
 
   recentDocumentManager.resetHistory();
   await recentDocumentManager.loadFromStorage(storageManager, handle);
-  await mockRecentDocuments();
+  // await mockRecentDocuments();
 
   initialized.value = true;
 
@@ -106,48 +99,6 @@ async function tryOpeningTOSModal(): Promise<void> {
       timeoutId = null;
     }
     await showTOSModal();
-  }
-}
-
-async function mockRecentDocuments(): Promise<void> {
-  // Adds fake files and workspace by default in dev mode
-  // to make sure we keep the feature in mind
-  if (needsMocks()) {
-    recentDocumentManager.addFile({
-      entryId: crypto.randomUUID().toString(),
-      workspaceHandle: 1337,
-      path: '/a/b/File_Fake image.png',
-      name: 'File_Fake image.png',
-      contentType: {
-        type: FileContentType.Image,
-        extension: 'png',
-        mimeType: 'image/png',
-      },
-    });
-    recentDocumentManager.addFile({
-      entryId: crypto.randomUUID().toString(),
-      workspaceHandle: 1337,
-      path: '/a/b/File_Fake PDF document.pdf',
-      name: 'File_Fake PDF document.pdf',
-      contentType: {
-        type: FileContentType.PdfDocument,
-        extension: 'pdf',
-        mimeType: 'application/pdf',
-      },
-    });
-    recentDocumentManager.addWorkspace({
-      id: '1',
-      currentName: 'Trademeet',
-      currentSelfRole: WorkspaceRole.Owner,
-      size: 934_583,
-      lastUpdated: DateTime.now().minus(2000),
-      availableOffline: false,
-      isStarted: false,
-      isBootstrapped: false,
-      sharing: [],
-      mountpoints: [[1, '/home/a']],
-      handle: 1,
-    });
   }
 }
 

@@ -8,8 +8,6 @@ import {
   libparsec,
 } from '@/plugins/libparsec';
 
-import { needsMocks } from '@/parsec/environment';
-import { MOCK_WAITING_TIME, wait } from '@/parsec/internals';
 import { getClientInfo } from '@/parsec/login';
 import {
   AvailableDevice,
@@ -17,7 +15,6 @@ import {
   BootstrapOrganizationErrorTag,
   ClientConfig,
   ClientEvent,
-  DeviceFileType,
   DeviceSaveStrategy,
   OrganizationID,
   OrganizationInfo,
@@ -46,53 +43,31 @@ export async function createOrganization(
 
   const bootstrapAddr = await libparsec.buildParsecOrganizationBootstrapAddr(serverAddr, orgName);
 
-  if (!needsMocks()) {
-    const config: ClientConfig = {
-      configDir: window.getConfigDir(),
-      dataBaseDir: window.getDataBaseDir(),
-      mountpointMountStrategy: { tag: MountpointMountStrategyTag.Disabled },
-      workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
-      withMonitors: false,
-      preventSyncPattern: null,
-    };
-    const result = await libparsec.bootstrapOrganization(
-      config,
-      parsecEventCallback,
-      bootstrapAddr,
-      saveStrategy,
-      { label: userName, email: email },
-      deviceLabel,
-      null,
-    );
-    if (!result.ok && result.error.tag === BootstrapOrganizationErrorTag.TimestampOutOfBallpark) {
-      result.error.clientTimestamp = DateTime.fromSeconds(result.error.clientTimestamp as any as number);
-      result.error.serverTimestamp = DateTime.fromSeconds(result.error.serverTimestamp as any as number);
-    } else if (result.ok) {
-      result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
-      result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);
-    }
-    return result;
-  } else {
-    await wait(MOCK_WAITING_TIME);
-    return {
-      ok: true,
-      value: {
-        keyFilePath: '/path',
-        serverUrl: 'https://parsec.invalid',
-        createdOn: DateTime.utc(),
-        protectedOn: DateTime.utc(),
-        organizationId: 'MyOrg',
-        userId: 'userid',
-        deviceId: 'deviceid',
-        humanHandle: {
-          label: 'A',
-          email: 'a@b.c',
-        },
-        deviceLabel: 'a@b',
-        ty: DeviceFileType.Password,
-      },
-    };
+  const config: ClientConfig = {
+    configDir: window.getConfigDir(),
+    dataBaseDir: window.getDataBaseDir(),
+    mountpointMountStrategy: { tag: MountpointMountStrategyTag.Disabled },
+    workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
+    withMonitors: false,
+    preventSyncPattern: null,
+  };
+  const result = await libparsec.bootstrapOrganization(
+    config,
+    parsecEventCallback,
+    bootstrapAddr,
+    saveStrategy,
+    { label: userName, email: email },
+    deviceLabel,
+    null,
+  );
+  if (!result.ok && result.error.tag === BootstrapOrganizationErrorTag.TimestampOutOfBallpark) {
+    result.error.clientTimestamp = DateTime.fromSeconds(result.error.clientTimestamp as any as number);
+    result.error.serverTimestamp = DateTime.fromSeconds(result.error.serverTimestamp as any as number);
+  } else if (result.ok) {
+    result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
+    result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);
   }
+  return result;
 }
 
 export async function bootstrapOrganization(
@@ -106,53 +81,31 @@ export async function bootstrapOrganization(
     console.log('On event', event);
   }
 
-  if (!needsMocks()) {
-    const config: ClientConfig = {
-      configDir: window.getConfigDir(),
-      dataBaseDir: window.getDataBaseDir(),
-      mountpointMountStrategy: { tag: MountpointMountStrategyTag.Disabled },
-      workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
-      withMonitors: false,
-      preventSyncPattern: null,
-    };
-    const result = await libparsec.bootstrapOrganization(
-      config,
-      parsecEventCallback,
-      bootstrapAddr,
-      saveStrategy,
-      { label: userName, email: email },
-      deviceLabel,
-      null,
-    );
-    if (!result.ok && result.error.tag === BootstrapOrganizationErrorTag.TimestampOutOfBallpark) {
-      result.error.clientTimestamp = DateTime.fromSeconds(result.error.clientTimestamp as any as number);
-      result.error.serverTimestamp = DateTime.fromSeconds(result.error.serverTimestamp as any as number);
-    } else if (result.ok) {
-      result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
-      result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);
-    }
-    return result;
-  } else {
-    await wait(MOCK_WAITING_TIME);
-    return {
-      ok: true,
-      value: {
-        keyFilePath: '/path',
-        serverUrl: 'https://parsec.invalid',
-        createdOn: DateTime.utc(),
-        protectedOn: DateTime.utc(),
-        organizationId: 'MyOrg',
-        userId: 'userid',
-        deviceId: 'deviceid',
-        humanHandle: {
-          label: 'A',
-          email: 'a@b.c',
-        },
-        deviceLabel: 'a@b',
-        ty: DeviceFileType.Password,
-      },
-    };
+  const config: ClientConfig = {
+    configDir: window.getConfigDir(),
+    dataBaseDir: window.getDataBaseDir(),
+    mountpointMountStrategy: { tag: MountpointMountStrategyTag.Disabled },
+    workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
+    withMonitors: false,
+    preventSyncPattern: null,
+  };
+  const result = await libparsec.bootstrapOrganization(
+    config,
+    parsecEventCallback,
+    bootstrapAddr,
+    saveStrategy,
+    { label: userName, email: email },
+    deviceLabel,
+    null,
+  );
+  if (!result.ok && result.error.tag === BootstrapOrganizationErrorTag.TimestampOutOfBallpark) {
+    result.error.clientTimestamp = DateTime.fromSeconds(result.error.clientTimestamp as any as number);
+    result.error.serverTimestamp = DateTime.fromSeconds(result.error.serverTimestamp as any as number);
+  } else if (result.ok) {
+    result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
+    result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);
   }
+  return result;
 }
 
 export async function parseParsecAddr(addr: string): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>> {
@@ -185,7 +138,7 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
       outsidersAllowed: clientInfoResult.value.serverConfig.userProfileOutsiderAllowed,
       userLimit:
         clientInfoResult.value.serverConfig.activeUsersLimit.tag === ActiveUsersLimitTag.LimitedTo
-          ? (clientInfoResult.value.serverConfig.activeUsersLimit as ActiveUsersLimitLimitedTo).x1
+          ? Number((clientInfoResult.value.serverConfig.activeUsersLimit as ActiveUsersLimitLimitedTo).x1)
           : undefined,
       hasUserLimit: clientInfoResult.value.serverConfig.activeUsersLimit.tag !== ActiveUsersLimitTag.NoLimit,
       organizationAddr: clientInfoResult.value.organizationAddr,

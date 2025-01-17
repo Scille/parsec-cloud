@@ -163,7 +163,7 @@ async function loadFile(): Promise<void> {
     return;
   }
   contentInfo.value = {
-    data: new Uint8Array((statsResult.value as EntryStatFile).size),
+    data: new Uint8Array(Number((statsResult.value as EntryStatFile).size)),
     extension: fileInfo.extension,
     mimeType: fileInfo.mimeType,
     fileName: fileName,
