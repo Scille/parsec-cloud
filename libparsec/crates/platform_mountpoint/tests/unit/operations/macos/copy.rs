@@ -13,7 +13,7 @@ async fn copy_file_using_finder(tmp_path: TmpPath, env: &TestbedEnv) {
         |_client, _wksp_ops, mountpoint_path: PathBuf| async move {
             const FILE_CONTENT: &str = "I'm the file content that should be copied";
             let src_file = tmp_path.join("source.txt");
-            let dst_file = mountpoint_path.join("destination.txt");
+            let dst_file = mountpoint_path.join("source.txt");
             let script_path = std::path::PathBuf::from(std::env!("CARGO_MANIFEST_DIR"))
                 .join("scripts/macos/copy-using-finder.scpt");
 
@@ -27,7 +27,7 @@ async fn copy_file_using_finder(tmp_path: TmpPath, env: &TestbedEnv) {
 
             // Call the osascript that perform the copy using Finder.app
             let status = tokio::process::Command::new("osascript")
-                .args([&script_path, &src_file, &dst_file])
+                .args([&script_path, &src_file, &mountpoint_path])
                 .status()
                 .await
                 .unwrap();
