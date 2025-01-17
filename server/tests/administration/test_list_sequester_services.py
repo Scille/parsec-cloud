@@ -3,7 +3,7 @@
 import httpx
 
 from parsec.components.sequester import SequesterServiceType
-from tests.common import Backend, SequesteredOrgRpcClients
+from tests.common import Backend, CoolorgRpcClients, SequesteredOrgRpcClients
 
 
 async def test_bad_auth(
@@ -52,6 +52,22 @@ async def test_unknown_organization(
         headers={"Authorization": f"Bearer {backend.config.administration_token}"},
     )
     assert response.status_code == 404, response.content
+    assert response.json() == {"detail": "Organization not found"}
+
+
+async def test_not_sequestered_organization(
+    client: httpx.AsyncClient,
+    backend: Backend,
+    sequestered_org: SequesteredOrgRpcClients,
+    coolorg: CoolorgRpcClients,
+) -> None:
+    url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}/sequester/services"
+    response = await client.get(
+        url,
+        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+    )
+    assert response.status_code == 400, response.content
+    assert response.json() == {"detail": "Sequester disabled"}
 
 
 async def test_ok(
