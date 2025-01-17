@@ -27,7 +27,8 @@ async fn create_shared_recovery_ok(tmp_path: TmpPath) {
         "1",
         "1",
         "--threshold",
-        "1"
+        "1",
+        "--no-confirmation"
     )
     .stdout(predicates::str::contains(
         "Shared recovery setup has been created",
@@ -57,7 +58,8 @@ async fn create_shared_recovery_incoherent_weights(tmp_path: TmpPath) {
         "--weights",
         "1",
         "--threshold",
-        "1"
+        "1",
+        "--no-confirmation"
     )
     .stderr(predicates::str::contains("incoherent weights count"));
 }
@@ -79,7 +81,8 @@ async fn create_shared_recovery_inexistent_email(tmp_path: TmpPath) {
         "--weights",
         "1",
         "--threshold",
-        "1"
+        "1",
+        "--no-confirmation"
     )
     .stderr(predicates::str::contains("A user is missing"));
 }
@@ -116,6 +119,9 @@ async fn create_shared_recovery_default(tmp_path: TmpPath) {
 
     p.exp_regex(".*The threshold is the minimum number of recipients that one must gather to recover the account.*").unwrap();
     p.send_line("1").unwrap();
+    p.exp_string("The following shared recovery setup will be created")
+        .unwrap();
+    p.send_line("y").unwrap();
     p.exp_regex(".*Shared recovery setup has been created.*")
         .unwrap();
     p.exp_eof().unwrap();

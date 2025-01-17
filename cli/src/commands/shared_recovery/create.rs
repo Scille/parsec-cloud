@@ -1,10 +1,11 @@
 use std::{collections::HashMap, num::NonZeroU8};
 
-use dialoguer::Input;
+use dialoguer::{Confirm, Input};
+use itertools::Itertools;
 use libparsec::{UserID, UserProfile};
 
 use crate::utils::{
-    poll_server_for_new_certificates, start_spinner, StartedClient, GREEN_CHECKMARK,
+    poll_server_for_new_certificates, start_spinner, StartedClient, BULLET_CHAR, GREEN_CHECKMARK,
 };
 
 // TODO: should provide the recipients and their share count as a single parameter
@@ -25,6 +26,9 @@ crate::clap_parser_with_shared_opts_builder!(
         /// Threshold number of shares required to proceed with recovery.
         #[arg(short, long, requires = "recipients")]
         threshold: Option<NonZeroU8>,
+        /// Whether to ask for confirmation or not
+        #[arg(long, default_value_t)]
+        no_confirmation: bool,
     }
 );
 
@@ -35,6 +39,7 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
         recipients,
         weights,
         threshold,
+        no_confirmation,
         ..
     } = args;
 
@@ -93,6 +98,29 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
             per_recipient_shares.len()
         )) .interact_text()?
     };
+
+    println!(
+        "The following shared recovery setup will be created:\n{BULLET_CHAR} Threshold: {threshold}\n{}",
+        per_recipient_shares
+            .iter()
+            .map(|(recipient, share)| {
+                let user = &users
+                    .iter()
+                    .find(|x| x.id == *recipient)
+                    .expect("missing recipient")
+                    .human_handle;
+                format!("{BULLET_CHAR} User {user} will have {share} share(s)") // TODO: special case if there is only one share
+            })
+            .join("\n"));
+    if !no_confirmation
+        && !Confirm::new()
+            .with_prompt("Do you want to proceed?")
+            .interact()?
+    {
+        println!("Shared recovery creation aborted.");
+        return Ok(());
+    }
+
     let mut handle = start_spinner("Creating shared recovery setup".into());
 
     client
