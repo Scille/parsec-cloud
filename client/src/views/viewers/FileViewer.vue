@@ -170,7 +170,7 @@ async function _getFileInfoAt(
       return;
     }
     const info: FileContentInfo = {
-      data: new Uint8Array((statsResult.value as WorkspaceHistoryEntryStatFile).size),
+      data: new Uint8Array(Number((statsResult.value as WorkspaceHistoryEntryStatFile).size)),
       extension: fileInfo.extension,
       contentType: fileInfo.type,
       fileName: fileName,
@@ -221,7 +221,7 @@ async function _getFileInfo(
     return;
   }
   const info: FileContentInfo = {
-    data: new Uint8Array((statsResult.value as EntryStatFile).size),
+    data: new Uint8Array(Number((statsResult.value as EntryStatFile).size)),
     extension: fileInfo.extension,
     contentType: fileInfo.type,
     fileName: fileName,
