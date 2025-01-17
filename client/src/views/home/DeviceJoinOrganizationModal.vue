@@ -89,7 +89,7 @@
         <!-- part 5 (finish the process)-->
         <div
           v-show="pageStep === DeviceJoinOrganizationStep.Finish"
-          class="step"
+          class="step final-step"
         >
           <ms-informative-text :icon="checkmarkCircle">
             {{ $msTranslate('ClaimDeviceModal.subtitles.done') }}

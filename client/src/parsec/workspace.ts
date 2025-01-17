@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { DataCache } from '@/common/cache';
-import { needsMocks } from '@/parsec/environment';
 import { getClientInfo } from '@/parsec/login';
 import { getParsecHandle } from '@/parsec/routing';
 import {
@@ -21,7 +20,6 @@ import {
   StartedWorkspaceInfo,
   SystemPath,
   UserID,
-  UserProfile,
   UserTuple,
   WorkspaceDecryptPathAddrError,
   WorkspaceGeneratePathAddrError,
@@ -29,12 +27,12 @@ import {
   WorkspaceID,
   WorkspaceInfo,
   WorkspaceInfoError,
-  WorkspaceInfoErrorTag,
   WorkspaceMountError,
   WorkspaceMountErrorTag,
   WorkspaceName,
   WorkspaceRole,
 } from '@/parsec/types';
+import { generateNoHandleError } from '@/parsec/utils';
 import { WorkspaceStopError, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
@@ -75,7 +73,7 @@ export async function listWorkspaces(
     handle = getParsecHandle();
   }
 
-  if (handle !== null && !needsMocks()) {
+  if (handle !== null) {
     const result = await libparsec.clientListWorkspaces(handle);
 
     if (result.ok) {
@@ -106,112 +104,24 @@ export async function listWorkspaces(
     } else {
       return result;
     }
-  } else {
-    const value: Array<WorkspaceInfo> = [
-      {
-        id: '1',
-        currentName: 'Trademeet',
-        currentSelfRole: WorkspaceRole.Owner,
-        size: 934_583,
-        lastUpdated: DateTime.now().minus(2000),
-        availableOffline: false,
-        isStarted: false,
-        isBootstrapped: false,
-        sharing: [],
-        mountpoints: [[1, '/home/a']],
-        handle: 1,
-      },
-      {
-        id: '2',
-        currentName: 'The Copper Coronet',
-        currentSelfRole: WorkspaceRole.Contributor,
-        size: 3_489_534_274,
-        lastUpdated: DateTime.now(),
-        availableOffline: false,
-        isStarted: false,
-        isBootstrapped: true,
-        sharing: [],
-        mountpoints: [[2, '/home/b']],
-        handle: 2,
-      },
-      {
-        id: '3',
-        currentName: "Watcher's Keep",
-        currentSelfRole: WorkspaceRole.Reader,
-        size: 56_153_023,
-        lastUpdated: DateTime.now(),
-        availableOffline: true,
-        isStarted: false,
-        isBootstrapped: true,
-        sharing: [],
-        mountpoints: [[3, '/home/c']],
-        handle: 3,
-      },
-    ];
-
-    return { ok: true, value: value };
   }
+  return generateNoHandleError<ClientListWorkspacesError>();
 }
 
 export async function getWorkspaceInfo(workspaceHandle: WorkspaceHandle): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>> {
-  if (!needsMocks()) {
-    const result = await libparsec.workspaceInfo(workspaceHandle);
-    if (result.ok) {
-      (result.value as StartedWorkspaceInfo).handle = workspaceHandle;
-      const createdResult = await libparsec.workspaceHistoryGetWorkspaceManifestV1Timestamp(workspaceHandle);
-      if (createdResult.ok && createdResult.value) {
-        try {
-          (result.value as StartedWorkspaceInfo).created = DateTime.fromSeconds(createdResult.value as any as number);
-        } catch (error: any) {
-          console.error(error);
-        }
+  const result = await libparsec.workspaceInfo(workspaceHandle);
+  if (result.ok) {
+    (result.value as StartedWorkspaceInfo).handle = workspaceHandle;
+    const createdResult = await libparsec.workspaceHistoryGetWorkspaceManifestV1Timestamp(workspaceHandle);
+    if (createdResult.ok && createdResult.value) {
+      try {
+        (result.value as StartedWorkspaceInfo).created = DateTime.fromSeconds(createdResult.value as any as number);
+      } catch (error: any) {
+        console.error(error);
       }
     }
-    return result as Result<StartedWorkspaceInfo, WorkspaceInfoError>;
-  } else {
-    switch (workspaceHandle) {
-      case 1:
-        return {
-          ok: true,
-          value: {
-            client: 42,
-            id: '1',
-            currentName: 'Trademeet',
-            currentSelfRole: WorkspaceRole.Owner,
-            mountpoints: [[1, '/home/a']],
-            handle: workspaceHandle,
-            created: DateTime.now().minus({ days: 8 }),
-          },
-        };
-      case 2:
-        return {
-          ok: true,
-          value: {
-            client: 42,
-            id: '2',
-            currentName: 'The Copper Coronet',
-            currentSelfRole: WorkspaceRole.Manager,
-            mountpoints: [[1, '/home/b']],
-            handle: workspaceHandle,
-            created: DateTime.now().minus({ days: 12 }),
-          },
-        };
-      case 3:
-        return {
-          ok: true,
-          value: {
-            client: 42,
-            id: '3',
-            currentName: "Watcher's Keep",
-            currentSelfRole: WorkspaceRole.Reader,
-            mountpoints: [[1, '/home/c']],
-            handle: workspaceHandle,
-          },
-        };
-      default:
-        return { ok: false, error: { tag: WorkspaceInfoErrorTag.Internal, error: 'internal' } };
-    }
   }
+  return result as Result<StartedWorkspaceInfo, WorkspaceInfoError>;
 }
 
 const WORKSPACE_NAMES_CACHE = new DataCache<WorkspaceHandle, string>();
@@ -233,21 +143,19 @@ export async function getWorkspaceName(workspaceHandle: WorkspaceHandle): Promis
 export async function createWorkspace(name: WorkspaceName): Promise<Result<WorkspaceID, ClientCreateWorkspaceError>> {
   const handle = getParsecHandle();
 
-  if (handle !== null && !needsMocks()) {
+  if (handle !== null) {
     return await libparsec.clientCreateWorkspace(handle, name);
-  } else {
-    return { ok: true, value: '1337' };
   }
+  return generateNoHandleError<ClientCreateWorkspaceError>();
 }
 
 export async function renameWorkspace(newName: WorkspaceName, id: WorkspaceID): Promise<Result<null, ClientRenameWorkspaceError>> {
   const handle = getParsecHandle();
 
-  if (handle !== null && !needsMocks()) {
+  if (handle !== null) {
     return await libparsec.clientRenameWorkspace(handle, id, newName);
-  } else {
-    return { ok: true, value: null };
   }
+  return generateNoHandleError<ClientRenameWorkspaceError>();
 }
 
 export async function getWorkspaceSharing(
@@ -257,7 +165,7 @@ export async function getWorkspaceSharing(
 ): Promise<Result<Array<[UserTuple, WorkspaceRole | null]>, ClientListWorkspaceUsersError>> {
   const handle = getParsecHandle();
 
-  if (handle !== null && !needsMocks()) {
+  if (handle !== null) {
     let selfId: UserID | null = null;
 
     if (!includeSelf) {
@@ -302,58 +210,9 @@ export async function getWorkspaceSharing(
       }
       return { ok: true, value: value };
     }
-    return { ok: false, error: result.error };
-  } else {
-    const value: Array<[UserTuple, WorkspaceRole | null]> = [];
-
-    if (workspaceId === '1' || workspaceId === '2') {
-      value.push([
-        {
-          id: '0123456789abcdef012345689abcdef',
-          // cspell:disable-next-line
-          humanHandle: { label: 'Korgan Bloodaxe', email: 'korgan@gmail.com' },
-          profile: UserProfile.Standard,
-        },
-        WorkspaceRole.Reader,
-      ]);
-    }
-    if (workspaceId === '2') {
-      value.push([
-        {
-          id: '123456789abcdef012345689abcdef0',
-          // cspell:disable-next-line
-          humanHandle: { label: 'Cernd', email: 'cernd@gmail.com' },
-          profile: UserProfile.Admin,
-        },
-        WorkspaceRole.Contributor,
-      ]);
-    }
-
-    if (includeSelf) {
-      value.push([
-        {
-          id: 'me',
-          humanHandle: { email: 'user@host.com', label: 'Gordon Freeman' },
-          profile: UserProfile.Admin,
-        },
-        WorkspaceRole.Owner,
-      ]);
-    }
-
-    if (includeAllUsers) {
-      value.push([
-        {
-          id: '23456789abcdef012345689abcdef01',
-          // cspell:disable-next-line
-          humanHandle: { label: 'Jaheira', email: 'jaheira@gmail.com' },
-          profile: UserProfile.Outsider,
-        },
-        null,
-      ]);
-    }
-
-    return { ok: true, value: value };
+    return result;
   }
+  return generateNoHandleError<ClientListWorkspaceUsersError>();
 }
 
 export async function shareWorkspace(
@@ -363,11 +222,10 @@ export async function shareWorkspace(
 ): Promise<Result<null, ClientShareWorkspaceError>> {
   const handle = getParsecHandle();
 
-  if (handle !== null && !needsMocks()) {
+  if (handle !== null) {
     return await libparsec.clientShareWorkspace(handle, workspaceId, userId, role);
-  } else {
-    return { ok: true, value: null };
   }
+  return generateNoHandleError<ClientShareWorkspaceError>();
 }
 
 export async function startWorkspace(
@@ -378,39 +236,34 @@ export async function startWorkspace(
     connectionHandle = getParsecHandle();
   }
 
-  if (connectionHandle !== null && !needsMocks()) {
+  if (connectionHandle !== null) {
     return await libparsec.clientStartWorkspace(connectionHandle, workspaceId);
-  } else {
-    return { ok: true, value: 1337 };
   }
+  return generateNoHandleError<ClientStartWorkspaceError>();
 }
 
 export async function stopWorkspace(workspaceHandle: WorkspaceHandle): Promise<Result<null, WorkspaceStopError>> {
   const handle = getParsecHandle();
 
-  if (handle !== null && !needsMocks()) {
+  if (handle !== null) {
     return await libparsec.workspaceStop(workspaceHandle);
-  } else {
-    return { ok: true, value: null };
   }
+  return generateNoHandleError<WorkspaceStopError>();
 }
 
 export async function mountWorkspace(
   workspaceHandle: WorkspaceHandle,
 ): Promise<Result<[MountpointHandle, SystemPath], WorkspaceMountError>> {
-  if (!needsMocks()) {
-    const startedWorkspaceResult = await getWorkspaceInfo(workspaceHandle);
-    if (!startedWorkspaceResult.ok) {
-      console.error(`Failed to get started workspace info: ${startedWorkspaceResult.error}`);
-      return { ok: false, error: { tag: WorkspaceMountErrorTag.Internal, error: '' } };
-    } else {
-      if (startedWorkspaceResult.value.mountpoints.length > 0) {
-        return { ok: true, value: startedWorkspaceResult.value.mountpoints[0] };
-      }
+  const startedWorkspaceResult = await getWorkspaceInfo(workspaceHandle);
+  if (!startedWorkspaceResult.ok) {
+    console.error(`Failed to get started workspace info: ${startedWorkspaceResult.error}`);
+    return { ok: false, error: { tag: WorkspaceMountErrorTag.Internal, error: '' } };
+  } else {
+    if (startedWorkspaceResult.value.mountpoints.length > 0) {
+      return { ok: true, value: startedWorkspaceResult.value.mountpoints[0] };
     }
-    return await libparsec.workspaceMount(workspaceHandle);
   }
-  return { ok: true, value: [0, ''] };
+  return await libparsec.workspaceMount(workspaceHandle);
 }
 
 export async function getPathLink(
@@ -418,29 +271,17 @@ export async function getPathLink(
   path: string,
   timestamp: DateTime | null = null,
 ): Promise<Result<ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError>> {
-  if (!needsMocks()) {
-    return await libparsec.workspaceGeneratePathAddr(workspaceHandle, path);
+  if (timestamp) {
+    window.electronAPI.log('warn', 'Parameter `timestamp` is ignored');
   }
-
-  const org = 'Org';
-  // cspell:disable-next-line
-  const payload = 'k8QY94a350f2f629403db2269c44583f7aa1AcQ0Zkd8YbWfYF19LMwc55HjBOvI8LA8c_9oU2xaBJ0u2Ou0AFZYA4-QHhi2FprzAtUoAgMYwg';
-  let link = `parsec3://parsec.cloud/${org}?a=path&p=${payload}`;
-  if (timestamp !== null) {
-    // cspell:disable-next-line
-    link += '&timestamp=JEFHNUJEF39350JFHNsss';
-  }
-  return { ok: true, value: link };
+  return await libparsec.workspaceGeneratePathAddr(workspaceHandle, path);
 }
 
 export async function decryptFileLink(
   workspaceHandle: WorkspaceHandle,
   link: ParsecWorkspacePathAddr,
 ): Promise<Result<FsPath, WorkspaceDecryptPathAddrError>> {
-  if (!needsMocks()) {
-    return await libparsec.workspaceDecryptPathAddr(workspaceHandle, link);
-  }
-  return { ok: true, value: '/' };
+  return await libparsec.workspaceDecryptPathAddr(workspaceHandle, link);
 }
 
 export interface SharedWithInfo {
@@ -491,8 +332,5 @@ export async function getSystemPath(
   if (infoResult.value.mountpoints.length === 0) {
     return { ok: false, error: { tag: MountpointToOsPathErrorTag.Internal, error: 'not mounted' } };
   }
-  if (!needsMocks()) {
-    return await libparsec.mountpointToOsPath(infoResult.value.mountpoints[0][0], entryPath);
-  }
-  return { ok: true, value: `/home${entryPath}` };
+  return await libparsec.mountpointToOsPath(infoResult.value.mountpoints[0][0], entryPath);
 }
