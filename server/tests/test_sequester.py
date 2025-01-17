@@ -250,24 +250,12 @@ async def test_update_config_for_service_organization_not_found(backend: Backend
     assert outcome == SequesterUpdateConfigForServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND
 
 
-@pytest.mark.parametrize("kind", ("sequester_disabled", "service_not_found"))
 async def test_update_config_for_service_sequester_service_not_found(
     sequestered_org: SequesteredOrgRpcClients,
-    minimalorg: MinimalorgRpcClients,
     backend: Backend,
-    kind: str,
 ):
-    match kind:
-        case "sequester_disabled":
-            organization_id = minimalorg.organization_id
-            service_id = SequesterServiceID.new()
-
-        case "service_not_found":
-            organization_id = sequestered_org.organization_id
-            service_id = SequesterServiceID.new()
-
-        case unknown:
-            assert False, unknown
+    organization_id = sequestered_org.organization_id
+    service_id = SequesterServiceID.new()
 
     outcome = await backend.sequester.update_config_for_service(
         organization_id=organization_id,
@@ -275,6 +263,21 @@ async def test_update_config_for_service_sequester_service_not_found(
         config=(SequesterServiceType.WEBHOOK, "https://parsec.invalid/webhook"),
     )
     assert outcome == SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND
+
+
+async def test_update_config_for_service_sequester_service_disabled(
+    minimalorg: MinimalorgRpcClients,
+    backend: Backend,
+):
+    organization_id = minimalorg.organization_id
+    service_id = SequesterServiceID.new()
+
+    outcome = await backend.sequester.update_config_for_service(
+        organization_id=organization_id,
+        service_id=service_id,
+        config=(SequesterServiceType.WEBHOOK, "https://parsec.invalid/webhook"),
+    )
+    assert outcome == SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_DISABLED
 
 
 async def test_revoke_service_ok(sequestered_org: SequesteredOrgRpcClients, backend: Backend):
