@@ -4,6 +4,23 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.2.4-rc.2 (2025-01-17)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix an issue when modifying a file using TextEdit on macOS
+  (`#8991 <https://github.com/Scille/parsec-cloud/issues/8991>`__)
+
+* Fix an issue when creating a new file from the mountpoint on macOS
+  (`#8976 <https://github.com/Scille/parsec-cloud/issues/8976>`__)
+
+* Fix a panic when copying a file using the mountpoint on macOS
+  (`#9173 <https://github.com/Scille/parsec-cloud/issues/9173>`__)
+
+
+
 Parsec v3.2.4-rc.1 (2025-01-15)
 -------------------------------
 
