@@ -13,8 +13,8 @@ from parsec.events import EventPinged
 @pytest.mark.postgresql
 async def test_cross_server_event(backend_config: BackendConfig) -> None:
     async with (
-        backend_factory(config=backend_config) as b1,
-        backend_factory(config=backend_config) as b2,
+        backend_factory(config=backend_config, verbose=False) as b1,
+        backend_factory(config=backend_config, verbose=False) as b2,
     ):
         b2_received_events = Queue()
 

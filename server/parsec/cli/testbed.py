@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import tempfile
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, TypeAlias
+from typing import Any, AsyncIterator, Callable, TypeAlias
 
 import anyio
 import click
@@ -42,6 +42,14 @@ from parsec.config import (
 )
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger()
+
+
+# Helper for other CLI commands to add dev-related options
+def if_testbed_available[FC](decorator: Callable[[FC], FC]) -> Callable[[FC], FC]:
+    if TESTBED_AVAILABLE:
+        return decorator
+    else:
+        return lambda f: f
 
 
 DEFAULT_PORT = 6770
@@ -247,7 +255,7 @@ async def testbed_backend_factory(
         administration_token="s3cr3t",
         organization_spontaneous_bootstrap=True,
     )
-    async with backend_factory(config=config) as backend:
+    async with backend_factory(config=config, verbose=True) as backend:
         yield TestbedBackend(backend=backend)
 
 

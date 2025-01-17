@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from dataclasses import dataclass, field, fields
 from enum import Enum
 from typing import TYPE_CHECKING, Literal
@@ -27,6 +28,9 @@ class BaseDatabaseConfig:
     # Overloaded by children
     type: Literal["POSTGRESQL", "MOCKED"]
 
+    def set_min_max_connections(self, min_connections: int, max_connections: int) -> None:
+        raise NotImplementedError
+
     def is_mocked(self) -> bool:
         raise NotImplementedError
 
@@ -38,6 +42,10 @@ class PostgreSQLDatabaseConfig(BaseDatabaseConfig):
     url: str
     min_connections: int
     max_connections: int
+
+    def set_min_max_connections(self, min_connections: int, max_connections: int) -> None:
+        self.min_connections = min_connections
+        self.max_connections = max_connections
 
     def is_mocked(self) -> bool:
         return False
@@ -52,6 +60,9 @@ class PostgreSQLDatabaseConfig(BaseDatabaseConfig):
 @dataclass(slots=True)
 class MockedDatabaseConfig(BaseDatabaseConfig):
     type = "MOCKED"
+
+    def set_min_max_connections(self, min_connections: int, max_connections: int) -> None:
+        pass
 
     def is_mocked(self) -> bool:
         return True
@@ -167,20 +178,30 @@ class LogLevel(Enum):
     CRITICAL = logging.CRITICAL
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, kw_only=True)
 class BackendConfig:
+    debug: bool
+    db_config: BaseDatabaseConfig
+    blockstore_config: BaseBlockStoreConfig
+    email_config: SmtpEmailConfig | MockedEmailConfig
+
+    # URL of the server to use when generating redirect URLs.
+    # This is currently used for two things:
+    # - For invitation URL in emails
+    # - In the redirect API (e.g. `GET /redirect/FOO` -> `302 <server_addr>/FOO`)
+    server_addr: ParsecAddr
+
+    # Bearer token used to authenticate the administration API
     administration_token: str
 
-    db_config: BaseDatabaseConfig
-    sse_keepalive: float  # Set to `math.inf` if disabled
+    # Amount of time (in seconds) before a keep alive message is sent to an SSE
+    # connection. Set to `math.inf` to disable keep alive messages.
+    sse_keepalive: float = math.inf
 
-    blockstore_config: BaseBlockStoreConfig
-
-    email_config: SmtpEmailConfig | MockedEmailConfig
-    proxy_trusted_addresses: str | None
-    server_addr: ParsecAddr | None
-
-    debug: bool
+    # Comma separated list of IP Addresses, IP Networks, or literals (e.g. UNIX Socket path) to trust with proxy headers
+    # Use "*" to trust all proxies. If not provided, the gunicorn/uvicorn `FORWARDED_ALLOW_IPS`
+    # environment variable is used, defaulting to trusting only localhost if absent.
+    proxy_trusted_addresses: str | None = None
 
     organization_bootstrap_webhook_url: str | None = None
     organization_spontaneous_bootstrap: bool = False
