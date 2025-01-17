@@ -51,12 +51,12 @@
       <div class="workspace-card-bottom__icons">
         <div
           v-show="clientProfile !== UserProfile.Outsider"
-          class="icon-option-container"
+          class="icon-share-container"
           @click.stop="$emit('shareClick', workspace, $event)"
         >
           <ion-icon
             :icon="shareSocial"
-            class="icon-option"
+            class="icon-share"
           />
         </div>
         <div
@@ -243,7 +243,7 @@ async function onOptionsClick(event: Event): Promise<void> {
     gap: 0.75rem;
     padding: 0.25rem;
 
-    .icon-option-container {
+    .icon-option-container, .icon-share-container {
       display: flex;
       align-items: center;
       padding: 0.25rem;
@@ -251,7 +251,7 @@ async function onOptionsClick(event: Event): Promise<void> {
       transition: background 0.15s ease-in-out;
       gap: 0.25rem;
 
-      .icon-option {
+      .icon-option, .icon-share {
         font-size: 1.375rem;
 
         @include breakpoint('sm') {

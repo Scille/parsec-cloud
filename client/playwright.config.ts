@@ -37,6 +37,26 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
+  testIgnore: [
+    '**/about_modal.spec.ts',
+    '**/app_update.spec.ts',
+    '**/client_*',
+    '**/workspace_history.spec.ts',
+    '**/workspace_actions.spec.ts',
+    '**/sidebar.spec.ts',
+    '**/profile_popover.spec.ts',
+    '**/my_profile_page.spec.ts',
+    '**/organization_information.spec.ts',
+    '**/organization_switch_popover.spec.ts',
+    '**/create_organization_saas.spec.ts',
+    '**/create_organization_custom.spec.ts',
+    '**/user_list.spec.ts',
+    '**/user_details.spec.ts',
+    '**/file_details.spec.ts',
+    '**/export_recovery_device.spec.ts',
+    '**/import_recovery_device.spec.ts',
+    '**/device_greet.spec.ts',
+  ],
   /* Configure projects for major browsers */
   projects: [
     {

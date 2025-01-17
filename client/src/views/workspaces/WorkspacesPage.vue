@@ -43,7 +43,7 @@
       <div class="workspaces-container scroll">
         <div
           v-show="querying && filteredWorkspaces.length === 0"
-          class="no-workspaces-content"
+          class="no-workspaces-loading"
         >
           <ms-spinner :title="'WorkspacesPage.loading'" />
         </div>
@@ -177,6 +177,7 @@ import {
   decryptFileLink,
   entryStat,
   getClientProfile,
+  isDesktop,
   parseFileLink,
   createWorkspace as parsecCreateWorkspace,
   getWorkspaceSharing as parsecGetWorkspaceSharing,
@@ -392,7 +393,7 @@ async function refreshWorkspacesList(): Promise<void> {
       } else {
         console.warn(`Failed to get sharing for ${wk.currentName}`);
       }
-      if (wk.mountpoints.length === 0) {
+      if (isDesktop() && wk.mountpoints.length === 0) {
         const mountResult = await parsecMountWorkspace(wk.handle);
         if (mountResult.ok) {
           wk.mountpoints.push(mountResult.value);
@@ -529,7 +530,8 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
   height: 100%;
   align-items: center;
 
-  &-content {
+  &-content,
+  &-loading {
     border-radius: var(--parsec-radius-8);
     display: flex;
     height: fit-content;

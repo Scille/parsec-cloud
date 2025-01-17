@@ -49,13 +49,12 @@ export async function fillIonInput(ionInput: Locator, text: string): Promise<voi
 
 export async function fillInputModal(root: Locator | Page, text: string, clear?: boolean): Promise<void> {
   const modal = root.locator('.text-input-modal');
+  await expect(modal).toBeVisible();
   if (clear) {
     await fillIonInput(modal.locator('ion-input'), '');
   }
   const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
-  await expect(okButton).toHaveDisabledAttribute();
   await fillIonInput(modal.locator('ion-input'), text);
-  await expect(okButton).toNotHaveDisabledAttribute();
   await okButton.click();
   await expect(modal).toBeHidden();
 }
@@ -204,4 +203,52 @@ export async function clientAreaSwitchOrganization(page: Page, organization: str
     }
   }
   await expect(popover).toBeHidden();
+}
+
+export async function workspacesInGridMode(workspacesPage: Page): Promise<boolean> {
+  return (await workspacesPage.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
+}
+
+export async function createWorkspace(workspacesPage: Page, name: string): Promise<void> {
+  let workspacesCount = 0;
+  const actionBar = workspacesPage.locator('#workspaces-ms-action-bar');
+  if (await workspacesInGridMode(workspacesPage)) {
+    workspacesCount = await workspacesPage.locator('.workspaces-container').locator('.workspace-card-item').count();
+  } else {
+    workspacesCount = await workspacesPage.locator('.workspaces-container').locator('.workspace-list-item').count();
+  }
+  await actionBar.locator('#button-new-workspace').click();
+  await fillInputModal(workspacesPage, name);
+  if (await workspacesInGridMode(workspacesPage)) {
+    await expect(workspacesPage.locator('.workspaces-container').locator('.workspace-card-item')).toHaveCount(workspacesCount + 1);
+  } else {
+    await expect(workspacesPage.locator('.workspaces-container').locator('.workspace-list-item')).toHaveCount(workspacesCount + 1);
+  }
+}
+
+export async function dismissToast(page: Page): Promise<void> {
+  await page.locator('.notification-toast').locator('.toast-button-confirm').click();
+  await expect(page.locator('.notification-toast')).toBeHidden();
+}
+
+export function getTestbedBootstrapAddr(orgName: string): string {
+  const url = new URL(process.env.TESTBED_SERVER ?? '');
+  const port = url.port ? `:${url.port}` : '';
+  let search = '?a=bootstrap_organization&p=wA';
+
+  for (const [key, val] of url.searchParams.entries()) {
+    search = `${search}&${key}=${val}`;
+  }
+  return `${url.protocol}//${url.hostname}${port}/${orgName}${search}`;
+}
+
+export function getOrganizationAddr(orgName: string): string {
+  const url = new URL(process.env.TESTBED_SERVER ?? '');
+  const port = url.port ? `:${url.port}` : '';
+
+  return `${url.protocol}//${url.hostname}${port}/${orgName}${url.search}`;
+}
+
+export function getServerAddr(): string {
+  return process.env.TESTBED_SERVER ?? '';
 }

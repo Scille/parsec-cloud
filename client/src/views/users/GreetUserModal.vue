@@ -50,7 +50,7 @@
         <!-- give code step -->
         <div
           v-show="pageStep === GreetUserStep.ProvideHostSasCode"
-          class="step"
+          class="step host-code"
         >
           <sas-code-provide :code="greeter.hostSASCode" />
         </div>
@@ -96,7 +96,7 @@
             :title="'UsersPage.greet.profileDropdownTitle'"
             :label="'UsersPage.greet.profileDropdownPlaceholder'"
             :options="profileOptions"
-            @change="setUserProfile($event.option.key as UserProfile)"
+            @change="setUserProfile"
           />
         </div>
 
@@ -178,9 +178,10 @@ import {
   MsSpinner,
   MsWizardStepper,
   Translatable,
+  MsDropdownChangeEvent,
 } from 'megashark-lib';
 import { close } from 'ionicons/icons';
-import { Ref, computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Ref, computed, onMounted, ref } from 'vue';
 
 enum GreetUserStep {
   WaitForGuest = 1,
@@ -240,13 +241,10 @@ function getTitleAndSubtitle(): [Translatable, Translatable] {
   return ['', ''];
 }
 
-function setUserProfile(role: UserProfile): void {
-  profile.value = role;
-}
-
-const unwatchProfile = watch(profile, async () => {
+async function setUserProfile(event: MsDropdownChangeEvent): Promise<void> {
+  profile.value = event.option.key;
   await updateCanGoForward();
-});
+}
 
 async function updateCanGoForward(): Promise<void> {
   if (pageStep.value === GreetUserStep.WaitForGuest && waitingForGuest.value === true) {
@@ -491,10 +489,6 @@ async function nextStep(): Promise<void> {
 
 onMounted(async () => {
   await startProcess();
-});
-
-onUnmounted(async () => {
-  unwatchProfile();
 });
 </script>
 
