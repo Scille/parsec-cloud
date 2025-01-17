@@ -8,7 +8,6 @@ use rexpect::{session::PtySession, spawn};
 
 use crate::{
     integration_tests::{bootstrap_cli_test, shared_recovery_create},
-    match_sas_code,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
@@ -95,14 +94,11 @@ async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
 
     let claimer = tokio::task::spawn(async move {
         let mut locked = claimer_cloned.lock().unwrap();
-        locked
-            .exp_string("Choose a person to contact now:")
-            .unwrap();
-        // down to choose bob
-        locked.send_line("j").unwrap();
+        locked.exp_string("Choose a person to contact now").unwrap();
+        locked.send_line("bob").unwrap();
 
         locked
-            .exp_string("Select code provided by greeter:")
+            .exp_string("Select code provided by greeter")
             .unwrap();
     });
     greeter.await.unwrap();
@@ -121,7 +117,7 @@ async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
     {
         let mut locked = cloned_claimer.lock().unwrap();
 
-        match_sas_code!(locked, sas_code);
+        locked.send_line(&sas_code).unwrap();
     }
 
     // retrieve claimer code
@@ -130,7 +126,7 @@ async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
         let mut locked = greeter_cloned.lock().unwrap();
         locked.exp_string("Waiting for claimer").unwrap();
         locked
-            .exp_string("Select code provided by claimer:")
+            .exp_string("Select code provided by claimer")
             .unwrap();
     });
 
@@ -146,7 +142,7 @@ async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
     {
         let mut locked = p_greeter.lock().unwrap();
 
-        match_sas_code!(locked, sas_code);
+        locked.send_line(&sas_code).unwrap();
     }
     let mut greeter = Arc::<Mutex<PtySession>>::try_unwrap(p_greeter)
         .ok()

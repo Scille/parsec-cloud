@@ -8,7 +8,6 @@ use rexpect::spawn;
 
 use crate::{
     integration_tests::bootstrap_cli_test,
-    match_sas_code,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
@@ -107,7 +106,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         let mut locked = claimer_cloned.lock().unwrap();
 
         locked
-            .exp_string("Select code provided by greeter:")
+            .exp_string("Select code provided by greeter")
             .unwrap();
     });
     greeter.await.unwrap();
@@ -126,7 +125,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
     {
         let mut locked = cloned_claimer.lock().unwrap();
 
-        match_sas_code!(locked, sas_code);
+        locked.send_line(&sas_code).unwrap();
     }
 
     // retrieve claimer code
@@ -135,7 +134,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         let mut locked = greeter_cloned.lock().unwrap();
         locked.exp_string("Waiting for claimer").unwrap();
         locked
-            .exp_string("Select code provided by claimer:")
+            .exp_string("Select code provided by claimer")
             .unwrap();
     });
 
@@ -153,7 +152,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
     {
         let mut locked = greeter_cloned.lock().unwrap();
 
-        match_sas_code!(locked, sas_code);
+        locked.send_line(&sas_code).unwrap();
         locked
             .exp_string(&format!("Select code provided by claimer: {sas_code}"))
             .unwrap();

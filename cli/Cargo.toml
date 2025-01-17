@@ -28,7 +28,7 @@ libparsec_platform_ipc = { workspace = true }
 
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["default", "derive", "env"] }
-dialoguer = { workspace = true }
+dialoguer = { workspace = true, features = ["fuzzy-select"] }
 env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
 log = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }

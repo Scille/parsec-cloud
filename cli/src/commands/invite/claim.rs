@@ -21,7 +21,7 @@ use libparsec_client::{
 };
 
 use crate::utils::*;
-use dialoguer::{Input, Select};
+use dialoguer::{FuzzySelect, Input};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, data_dir, password_stdin]
@@ -105,7 +105,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                 let ctx = step5_shamir(device_ctx).await?;
                 match ctx {
                     ShamirRecoveryClaimMaybeFinalizeCtx::Offline(ctx) => {
-                        let retry = Select::new()
+                        let retry = FuzzySelect::new()
                             .default(0)
                             .with_prompt("Unable to join server, do you want to retry ?")
                             .items(&["yes", "no"])
@@ -170,7 +170,7 @@ fn shamir_pick_recipient(
                 .fold(0_u8, |acc, (_, s)| acc + u8::from(*s))
         );
     }
-    let selection = Select::new()
+    let selection = FuzzySelect::new()
         .default(0)
         .with_prompt("Choose a person to contact now")
         .items(&human_recipients)
