@@ -1,1 +1,0 @@
-The CLI command ``invite user`` now take the email as an argument instead of an option

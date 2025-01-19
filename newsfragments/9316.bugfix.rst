@@ -1,1 +1,0 @@
-Fix crash when reading a Parsec URL containing tab or newline characters in the scheme part.

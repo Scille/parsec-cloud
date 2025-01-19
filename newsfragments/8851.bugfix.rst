@@ -1,1 +1,0 @@
-Fixed a few visual and functional bugs with the sidebar
