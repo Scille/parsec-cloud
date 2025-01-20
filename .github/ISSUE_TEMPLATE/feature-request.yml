@@ -5,6 +5,7 @@ title: "[🚀 | Feature request]: "
 labels:
   - B-Triage
   - C-Feature-Request
+type: Feature
 body:
   - type: markdown
     attributes:
