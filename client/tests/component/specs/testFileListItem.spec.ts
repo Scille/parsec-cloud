@@ -34,7 +34,6 @@ describe('File List Item', () => {
       isPlaceholder: false,
       needSync: false,
       size: BigInt(43_297_832_478),
-      getSize: (): number => 43_297_832_478,
       name: 'A File.txt',
       path: '/',
       isFile: (): boolean => true,

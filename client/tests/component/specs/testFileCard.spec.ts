@@ -34,7 +34,6 @@ describe('File Card Item', () => {
       name: 'A File.txt',
       path: '/',
       isFile: (): boolean => true,
-      getSize: (): number => 43_297_832_478,
       isSelected: false,
     };
 

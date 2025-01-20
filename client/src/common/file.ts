@@ -75,7 +75,7 @@ function size(bytes: number, system: [number, string][]): Translatable {
   return { key: key, data: { size: formattedAmount } };
 }
 
-export function formatFileSize(bytesize: number): Translatable {
+export function formatFileSize(bytesize: number | bigint): Translatable {
   const SYSTEM: [number, string][] = [
     [Math.pow(1024, 0), 'common.filesize.bytes'],
     [Math.pow(1024, 1), 'common.filesize.kilobytes'],
@@ -83,7 +83,7 @@ export function formatFileSize(bytesize: number): Translatable {
     [Math.pow(1024, 3), 'common.filesize.gigabytes'],
     [Math.pow(1024, 4), 'common.filesize.terabytes'],
   ];
-  return size(bytesize, SYSTEM);
+  return size(Number(bytesize), SYSTEM);
 }
 
 /* File icons */
