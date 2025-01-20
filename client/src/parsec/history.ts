@@ -24,6 +24,7 @@ import {
   WorkspaceHistoryStatFolderChildrenError,
 } from '@/parsec/types';
 import { libparsec } from '@/plugins/libparsec';
+import type { U64 } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 const MOCK_OPENED_FILES = new Map<FileDescriptor, FsPath>();
@@ -125,8 +126,8 @@ export async function closeHistoryFile(
 export async function readHistoryFile(
   workspaceHandle: WorkspaceHandle,
   fd: FileDescriptor,
-  offset: number,
-  size: number,
+  offset: U64,
+  size: U64,
 ): Promise<Result<ArrayBuffer, WorkspaceHistoryFdReadError>> {
   if (!needsMocks()) {
     return await libparsec.workspaceHistoryFdRead(workspaceHandle, fd, offset, size);
@@ -178,7 +179,7 @@ export async function readHistoryFile(
 }
 
 export interface HistoryEntryTree {
-  totalSize: number;
+  totalSize: U64;
   entries: Array<WorkspaceHistoryEntryStatFile>;
   maxRecursionReached: boolean;
   maxFilesReached: boolean;
@@ -192,7 +193,7 @@ export async function listTreeAt(
   filesLimit = 10000,
 ): Promise<HistoryEntryTree> {
   async function _innerListTreeAt(workspaceHandle: WorkspaceHandle, path: FsPath, at: DateTime, depth: number): Promise<HistoryEntryTree> {
-    const tree: HistoryEntryTree = { totalSize: 0, entries: [], maxRecursionReached: false, maxFilesReached: false };
+    const tree: HistoryEntryTree = { totalSize: 0n, entries: [], maxRecursionReached: false, maxFilesReached: false };
 
     if (depth > depthLimit) {
       console.warn('Max depth reached for listTree');

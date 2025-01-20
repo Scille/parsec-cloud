@@ -85,7 +85,7 @@ const viewerComponent: Ref<Component | null> = shallowRef(null);
 const contentInfo: Ref<FileContentInfo | null> = ref(null);
 const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
-const READ_CHUNK_SIZE = 512_000;
+const READ_CHUNK_SIZE = 512_000n;
 const atDateTime: Ref<DateTime | null> = ref(null);
 
 onMounted(async () => {
@@ -146,8 +146,12 @@ onMounted(async () => {
     await openWithSystem(path);
     return;
   }
+  const size = Number((statsResult.value as EntryStatFile).size);
+  if (size > Number.MAX_SAFE_INTEGER) {
+    throw new RangeError('File is too large');
+  }
   contentInfo.value = {
-    data: new Uint8Array((statsResult.value as EntryStatFile).size),
+    data: new Uint8Array(size),
     extension: fileInfo.extension,
     mimeType: fileInfo.mimeType,
     fileName: fileName,
@@ -156,7 +160,7 @@ onMounted(async () => {
   const fd = openResult.value;
   try {
     let loop = true;
-    let offset = 0;
+    let offset = 0n;
     while (loop) {
       let readResult;
       if (!atDateTime.value) {
@@ -167,12 +171,16 @@ onMounted(async () => {
       if (!readResult.ok) {
         throw Error(JSON.stringify(readResult.error));
       }
-      const buffer = new Uint8Array(readResult.value);
-      contentInfo.value?.data.set(buffer, offset);
+      const buffer = readResult.value as Uint8Array;
+      const _offset = Number(offset);
+      if (_offset > Number.MAX_SAFE_INTEGER) {
+        throw new RangeError('File is too large');
+      }
+      contentInfo.value?.data.set(buffer, _offset);
       if (readResult.value.byteLength < READ_CHUNK_SIZE) {
         loop = false;
       }
-      offset += readResult.value.byteLength;
+      offset += BigInt(readResult.value.byteLength);
     }
     loaded.value = true;
   } catch (e: any) {

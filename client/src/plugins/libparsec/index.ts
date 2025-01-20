@@ -49,7 +49,7 @@ const proxy = new Proxy(_libparsec, new ParsecProxy());
 
 export const libparsec = proxy;
 
-export * from '@/plugins/libparsec/definitions';
+export type * from '@/plugins/libparsec/definitions';
 
 // Global exposition of libparsec for easier debugging with console
 declare global {

@@ -40,6 +40,7 @@ import {
   WorkspaceStatFolderChildrenError,
 } from '@/parsec/types';
 import { MoveEntryModeTag, libparsec } from '@/plugins/libparsec';
+import type { U64 } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 const MOCK_OPENED_FILES = new Map<FileDescriptor, FsPath>();
@@ -277,7 +278,7 @@ export async function closeFile(workspaceHandle: WorkspaceHandle, fd: FileDescri
 export async function resizeFile(
   workspaceHandle: WorkspaceHandle,
   fd: FileDescriptor,
-  length: number,
+  length: U64,
 ): Promise<Result<null, WorkspaceFdResizeError>> {
   if (workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceFdResize(workspaceHandle, fd, length, true);
@@ -292,9 +293,9 @@ export async function resizeFile(
 export async function writeFile(
   workspaceHandle: WorkspaceHandle,
   fd: FileDescriptor,
-  offset: number,
+  offset: U64,
   data: Uint8Array,
-): Promise<Result<number, WorkspaceFdWriteError>> {
+): Promise<Result<U64, WorkspaceFdWriteError>> {
   if (!needsMocks()) {
     return await libparsec.workspaceFdWrite(workspaceHandle, fd, offset, data);
   } else {
@@ -309,8 +310,8 @@ export async function writeFile(
 export async function readFile(
   workspaceHandle: WorkspaceHandle,
   fd: FileDescriptor,
-  offset: number,
-  size: number,
+  offset: U64,
+  size: U64,
 ): Promise<Result<Uint8Array, WorkspaceFdReadError>> {
   if (!needsMocks()) {
     return await libparsec.workspaceFdRead(workspaceHandle, fd, offset, size);
@@ -362,7 +363,7 @@ export async function readFile(
 }
 
 export interface EntryTree {
-  totalSize: number;
+  totalSize: U64;
   entries: Array<EntryStatFile>;
   maxRecursionReached: boolean;
   maxFilesReached: boolean;
@@ -370,7 +371,7 @@ export interface EntryTree {
 
 export async function listTree(workspaceHandle: WorkspaceHandle, path: FsPath, depthLimit = 12, filesLimit = 10000): Promise<EntryTree> {
   async function _innerListTree(workspaceHandle: WorkspaceHandle, path: FsPath, depth: number): Promise<EntryTree> {
-    const tree: EntryTree = { totalSize: 0, entries: [], maxRecursionReached: false, maxFilesReached: false };
+    const tree: EntryTree = { totalSize: 0n, entries: [], maxRecursionReached: false, maxFilesReached: false };
 
     if (depth > depthLimit) {
       console.warn('Max depth reached for listTree');
