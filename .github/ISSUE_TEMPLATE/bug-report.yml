@@ -4,6 +4,7 @@ title: "[🐛 | Bug]: "
 labels:
   - C-Bug
   - B-Triage
+type: Bug
 body:
   - type: markdown
     attributes:
