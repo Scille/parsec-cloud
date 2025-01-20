@@ -18,15 +18,15 @@
       <file-viewer-background :icon="musicalNotes" />
     </template>
     <template #controls>
-      <file-controls-flux
-        v-model="progress"
-        :length="length"
-      />
       <file-controls>
         <file-controls-playback
           :paused="progress.paused"
           :ended="ended"
           @click="togglePlayback"
+        />
+        <file-controls-flux
+          v-model="progress"
+          :length="length"
         />
         <file-controls-volume @on-volume-change="updateVolume" />
       </file-controls>
