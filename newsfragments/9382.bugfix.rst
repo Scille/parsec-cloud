@@ -1,0 +1,1 @@
+Fix missing error message in Windows Explorer when trying to delete a file in a read-only mountpoint.
