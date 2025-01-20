@@ -1372,6 +1372,9 @@ export type MountpointUnmountError =
 export interface MoveEntryModeCanReplace {
     tag: "CanReplace"
 }
+export interface MoveEntryModeCanReplaceFileOnly {
+    tag: "CanReplaceFileOnly"
+}
 export interface MoveEntryModeExchange {
     tag: "Exchange"
 }
@@ -1380,6 +1383,7 @@ export interface MoveEntryModeNoReplace {
 }
 export type MoveEntryMode =
   | MoveEntryModeCanReplace
+  | MoveEntryModeCanReplaceFileOnly
   | MoveEntryModeExchange
   | MoveEntryModeNoReplace
 

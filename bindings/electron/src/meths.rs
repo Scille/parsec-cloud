@@ -5743,6 +5743,7 @@ fn variant_move_entry_mode_js_to_rs<'a>(
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
         "MoveEntryModeCanReplace" => Ok(libparsec::MoveEntryMode::CanReplace),
+        "MoveEntryModeCanReplaceFileOnly" => Ok(libparsec::MoveEntryMode::CanReplaceFileOnly),
         "MoveEntryModeExchange" => Ok(libparsec::MoveEntryMode::Exchange),
         "MoveEntryModeNoReplace" => Ok(libparsec::MoveEntryMode::NoReplace),
         _ => cx.throw_type_error("Object is not a MoveEntryMode"),
@@ -5758,6 +5759,10 @@ fn variant_move_entry_mode_rs_to_js<'a>(
     match rs_obj {
         libparsec::MoveEntryMode::CanReplace => {
             let js_tag = JsString::try_new(cx, "CanReplace").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::MoveEntryMode::CanReplaceFileOnly => {
+            let js_tag = JsString::try_new(cx, "CanReplaceFileOnly").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::MoveEntryMode::Exchange => {
