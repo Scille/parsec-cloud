@@ -223,6 +223,7 @@ interface EntryStatFolder extends ParsecEntryStatFolder {
 interface EntryStatFile extends ParsecEntryStatFile {
   isFile: () => boolean;
   isConfined: () => boolean;
+  getSize: () => number;
   path: FsPath;
   name: EntryName;
 }
@@ -233,6 +234,7 @@ interface WorkspaceHistoryEntryStatFile extends ParsecWorkspaceHistoryEntryStatF
   isFile: () => boolean;
   path: FsPath;
   name: EntryName;
+  getSize: () => number;
 }
 
 interface WorkspaceHistoryEntryStatFolder extends ParsecWorkspaceHistoryEntryStatFolder {

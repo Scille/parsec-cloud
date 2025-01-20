@@ -49,7 +49,7 @@
               <ion-label class="file-info-details-item__title subtitles-sm">
                 {{ $msTranslate('FileDetails.stats.size') }}
               </ion-label>
-              <span class="file-info-details-item__value body">{{ $msTranslate(formatFileSize((entry as EntryStatFile).size)) }}</span>
+              <span class="file-info-details-item__value body">{{ $msTranslate(formatFileSize((entry as EntryStatFile).getSize())) }}</span>
             </div>
             <!-- Version -->
             <div class="file-info-details-item">

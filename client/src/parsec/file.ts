@@ -69,7 +69,8 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
     result.value.created = DateTime.fromSeconds(result.value.created as any as number);
     result.value.updated = DateTime.fromSeconds(result.value.updated as any as number);
     if (result.value.tag === FileType.File) {
-      (result.value as EntryStatFile).size = Number(result.value.size);
+      (result.value as EntryStatFile).getSize = (): number => Number((result.value as EntryStatFile).size);
+      (result.value as EntryStatFile).size = result.value.size;
       (result.value as EntryStatFile).isFile = (): boolean => true;
       (result.value as EntryStatFile).name = fileName;
       (result.value as EntryStatFile).path = path;
@@ -104,11 +105,15 @@ export async function statFolderChildren(
 
   const cooked: Array<EntryStat> = [];
   for (const [name, stat] of result.value) {
+    if (name === undefined || stat === undefined) {
+      continue;
+    }
     if (!stat.confinementPoint || !excludeConfined) {
       stat.created = DateTime.fromSeconds(stat.created as any as number);
       stat.updated = DateTime.fromSeconds(stat.updated as any as number);
       if (stat.tag === FileType.File) {
         (stat as EntryStatFile).size = stat.size;
+        (stat as EntryStatFile).getSize = (): number => Number(stat.size);
         (stat as EntryStatFile).isFile = (): boolean => true;
         (stat as EntryStatFile).name = name;
         (stat as EntryStatFile).path = await Path.join(path, name);
@@ -248,7 +253,7 @@ export async function listTree(workspaceHandle: WorkspaceHandle, path: FsPath, d
             tree.maxFilesReached = true;
           }
         } else {
-          tree.totalSize += (entry as EntryStatFile).size;
+          tree.totalSize += (entry as EntryStatFile).getSize();
           tree.entries.push(entry as EntryStatFile);
           if (tree.entries.length > filesLimit) {
             tree.maxFilesReached = true;

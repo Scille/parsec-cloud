@@ -50,7 +50,7 @@
         v-if="entry.isFile()"
         class="label-size cell"
       >
-        {{ $msTranslate(formatFileSize((entry as WorkspaceHistoryFileModel).size)) }}
+        {{ $msTranslate(formatFileSize((entry as WorkspaceHistoryFileModel).getSize())) }}
       </ion-label>
     </div>
 

@@ -147,7 +147,7 @@ onMounted(async () => {
     return;
   }
   contentInfo.value = {
-    data: new Uint8Array((statsResult.value as EntryStatFile).size),
+    data: new Uint8Array((statsResult.value as EntryStatFile).getSize()),
     extension: fileInfo.extension,
     mimeType: fileInfo.mimeType,
     fileName: fileName,

@@ -323,7 +323,7 @@ class FileOperationManager {
     const srcEntry = statResult.value;
     if (statResult.value.isFile()) {
       tree = {
-        totalSize: (statResult.value as EntryStatFile).size,
+        totalSize: (statResult.value as EntryStatFile).getSize(),
         entries: [statResult.value as EntryStatFile],
         maxRecursionReached: false,
         maxFilesReached: false,
@@ -405,7 +405,7 @@ class FileOperationManager {
         fdW = openWriteResult.value;
 
         // Resize the destination
-        await resizeFile(data.workspaceHandle, fdW, entry.size);
+        await resizeFile(data.workspaceHandle, fdW, entry.getSize());
 
         let loop = true;
         let offset = 0;
@@ -546,7 +546,7 @@ class FileOperationManager {
     }
     if (statResult.value.isFile()) {
       tree = {
-        totalSize: (statResult.value as WorkspaceHistoryEntryStatFile).size,
+        totalSize: (statResult.value as WorkspaceHistoryEntryStatFile).getSize(),
         entries: [statResult.value as WorkspaceHistoryEntryStatFile],
         maxRecursionReached: false,
         maxFilesReached: false,
@@ -608,7 +608,7 @@ class FileOperationManager {
         fdW = openWriteResult.value;
 
         // Resize the destination
-        await resizeFile(data.workspaceHandle, fdW, entry.size);
+        await resizeFile(data.workspaceHandle, fdW, entry.getSize());
 
         let loop = true;
         let offset = 0;

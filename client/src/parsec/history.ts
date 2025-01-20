@@ -31,6 +31,7 @@ export async function statFolderChildrenAt(
       stat.created = DateTime.fromSeconds(stat.created as any as number);
       stat.updated = DateTime.fromSeconds(stat.updated as any as number);
       if (stat.tag === WorkspaceHistoryEntryStatTag.File) {
+        (stat as WorkspaceHistoryEntryStatFile).getSize = (): number => Number((stat as WorkspaceHistoryEntryStatFile).size);
         (stat as WorkspaceHistoryEntryStatFile).isFile = (): boolean => true;
         (stat as WorkspaceHistoryEntryStatFile).name = name;
         (stat as WorkspaceHistoryEntryStatFile).path = await Path.join(path, name);
@@ -55,6 +56,7 @@ export async function entryStatAt(
   const result = await libparsec.workspaceHistoryStatEntry(workspaceHandle, at.toSeconds() as any as DateTime, path);
   if (result.ok) {
     if (result.value.tag === WorkspaceHistoryEntryStatTag.File) {
+      (result.value as WorkspaceHistoryEntryStatFile).getSize = (): number => Number((result.value as WorkspaceHistoryEntryStatFile).size);
       (result.value as WorkspaceHistoryEntryStatFile).isFile = (): boolean => true;
       (result.value as WorkspaceHistoryEntryStatFile).name = fileName;
       (result.value as WorkspaceHistoryEntryStatFile).path = path;
@@ -89,7 +91,7 @@ export async function readHistoryFile(
   offset: number,
   size: number,
 ): Promise<Result<Uint8Array, WorkspaceHistoryFdReadError>> {
-  return (await libparsec.workspaceHistoryFdRead(workspaceHandle, fd, BigInt(offset), size)) as Result<
+  return (await libparsec.workspaceHistoryFdRead(workspaceHandle, fd, BigInt(offset), BigInt(size))) as Result<
     Uint8Array,
     WorkspaceHistoryFdReadError
   >;
@@ -139,7 +141,7 @@ export async function listTreeAt(
             tree.maxFilesReached = true;
           }
         } else {
-          tree.totalSize += (entry as WorkspaceHistoryEntryStatFile).size;
+          tree.totalSize += (entry as WorkspaceHistoryEntryStatFile).getSize();
           tree.entries.push(entry as WorkspaceHistoryEntryStatFile);
           if (tree.entries.length > filesLimit) {
             tree.maxFilesReached = true;
