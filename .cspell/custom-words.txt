@@ -190,6 +190,7 @@ fqcn
 freeline
 Freepik
 freethreaded
+FRFX
 fromjson
 fsyncdir
 fusepy

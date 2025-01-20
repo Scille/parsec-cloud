@@ -373,7 +373,15 @@ async fn read_only_realm(
             #[cfg(target_os = "windows")]
             p_assert_eq!(
                 err.raw_os_error(),
-                Some(windows_sys::Win32::Foundation::ERROR_WRITE_PROTECT as i32),
+                // We would expect to get an `ERROR_WRITE_PROTECT` here, however:
+                // - Windows calls `get_security_by_name` before `open_file`, the former
+                //   returning a flag to indicate the file is read-only, which in
+                //   turn causes Windows to return `ERROR_ACCESS_DENIED` right away
+                //   without even trying to call `open_file`!
+                // - Our implementation of `create_ex` returns `ERROR_ACCESS_DENIED`
+                //   instead of `ERROR_WRITE_PROTECT` given otherwise it causes a
+                //   "Catastrophic Failure" error in Windows Explorer...
+                Some(windows_sys::Win32::Foundation::ERROR_ACCESS_DENIED as i32),
                 "{}",
                 err
             );
