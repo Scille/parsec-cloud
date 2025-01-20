@@ -191,7 +191,7 @@ impl FolderReader {
     ) -> Result<Option<usize>, FolderReaderStatEntryError> {
         for (offset, (child_name, child_id)) in self.manifest.children.iter().enumerate() {
             if child_name == name {
-                let actual_child = ops
+                let maybe_child = ops
                     .store
                     .ensure_manifest_exists_with_parent(*child_id, self.manifest.base.id)
                     .await
@@ -216,7 +216,7 @@ impl FolderReader {
                         }
                         EnsureManifestExistsWithParentError::Internal(err) => err.into(),
                     })?;
-                if actual_child {
+                if maybe_child.is_some() {
                     return Ok(Some(offset));
                 }
             }

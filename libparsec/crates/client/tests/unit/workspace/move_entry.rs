@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok_same_parent(
-    #[values("empty_dst", "overwrite", "echange")] kind: &str,
+    #[values("empty_dst", "overwrite_any", "overwrite_file_only", "echange")] kind: &str,
     env: &TestbedEnv,
 ) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
@@ -42,12 +42,24 @@ async fn ok_same_parent(
                 ("spam2", wksp1_foo_spam_id),
             ],
         ),
-        "overwrite" => {
+        "overwrite_any" => {
             ops.create_file("/other.txt".parse().unwrap())
                 .await
                 .unwrap();
             (
                 MoveEntryMode::CanReplace,
+                "other.txt",
+                "/foo/egg.txt",
+                vec![("foo", wksp1_foo_id), ("other.txt", wksp1_bar_txt_id)],
+                vec![("egg.txt", wksp1_foo_spam_id)],
+            )
+        }
+        "overwrite_file_only" => {
+            ops.create_file("/other.txt".parse().unwrap())
+                .await
+                .unwrap();
+            (
+                MoveEntryMode::CanReplaceFileOnly,
                 "other.txt",
                 "/foo/egg.txt",
                 vec![("foo", wksp1_foo_id), ("other.txt", wksp1_bar_txt_id)],
@@ -100,7 +112,7 @@ async fn ok_same_parent(
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok_different_parents(
-    #[values("empty_dst", "overwrite", "echange")] kind: &str,
+    #[values("empty_dst", "overwrite_any", "overwrite_file_only", "echange")] kind: &str,
     env: &TestbedEnv,
 ) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
@@ -124,8 +136,14 @@ async fn ok_different_parents(
             ],
             vec![("egg.txt", wksp1_foo_egg_txt_id)],
         ),
-        "overwrite" => (
+        "overwrite_any" => (
             MoveEntryMode::CanReplace,
+            "/bar.txt",
+            vec![("bar.txt", wksp1_foo_spam_id), ("foo", wksp1_foo_id)],
+            vec![("egg.txt", wksp1_foo_egg_txt_id)],
+        ),
+        "overwrite_file_only" => (
+            MoveEntryMode::CanReplaceFileOnly,
             "/bar.txt",
             vec![("bar.txt", wksp1_foo_spam_id), ("foo", wksp1_foo_id)],
             vec![("egg.txt", wksp1_foo_egg_txt_id)],
@@ -324,4 +342,34 @@ async fn no_replace_but_dst_exists(env: &TestbedEnv) {
         .await
         .unwrap_err();
     p_assert_matches!(err, WorkspaceMoveEntryError::DestinationExists { entry_id } if entry_id == wksp1_bar_txt_id);
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn replace_file_only_but_dst_is_folder(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
+    let err = ops
+        .move_entry(
+            "/bar.txt".parse().unwrap(),
+            "/foo".parse().unwrap(),
+            MoveEntryMode::CanReplaceFileOnly,
+        )
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, WorkspaceMoveEntryError::DestinationExists { entry_id } if entry_id == wksp1_foo_id);
+
+    let err = ops
+        .rename_entry_by_id(
+            wksp1_id,
+            "bar.txt".parse().unwrap(),
+            "foo".parse().unwrap(),
+            MoveEntryMode::CanReplaceFileOnly,
+        )
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, WorkspaceMoveEntryError::DestinationExists { entry_id } if entry_id == wksp1_foo_id);
 }
