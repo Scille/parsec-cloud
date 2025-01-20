@@ -3,4 +3,4 @@ from __future__ import annotations
 
 # This file is imported from __init__.py and exec'd from setup.py
 
-__version__ = "3.2.4-rc.3+dev"
+__version__ = "3.2.4-rc.3"
