@@ -5,7 +5,8 @@ use itertools::Itertools;
 use libparsec::{UserID, UserProfile};
 
 use crate::utils::{
-    poll_server_for_new_certificates, start_spinner, StartedClient, BULLET_CHAR, GREEN_CHECKMARK,
+    maybe_plural, poll_server_for_new_certificates, start_spinner, StartedClient, BULLET_CHAR,
+    GREEN_CHECKMARK,
 };
 
 // TODO: should provide the recipients and their share count as a single parameter
@@ -109,7 +110,7 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
                     .find(|x| x.id == *recipient)
                     .expect("missing recipient")
                     .human_handle;
-                format!("{BULLET_CHAR} User {user} will have {share} share(s)") // TODO: special case if there is only one share
+                format!("{BULLET_CHAR} User {user} will have {share} share{}", maybe_plural(&share.get()))
             })
             .join("\n"));
     if !no_confirmation

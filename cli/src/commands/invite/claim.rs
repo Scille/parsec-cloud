@@ -157,10 +157,21 @@ fn shamir_pick_recipient(
     let recipients = ctx.recipients_without_a_share();
     let human_recipients: Vec<_> = recipients
         .iter()
-        .map(|r| format!("{} - {} share(s)", r.human_handle, r.shares))
+        .map(|r| {
+            format!(
+                "{} - {} share{}",
+                r.human_handle,
+                r.shares,
+                maybe_plural(&r.shares.get())
+            )
+        })
         .collect();
     if ctx.retrieved_shares().is_empty() {
-        println!("{} shares needed for recovery", ctx.threshold());
+        println!(
+            "{} share{} needed for recovery",
+            ctx.threshold(),
+            maybe_plural(&ctx.threshold().get())
+        );
     } else {
         println!(
             "Out of {} shares needed for recovery, {} were retrieved.",
