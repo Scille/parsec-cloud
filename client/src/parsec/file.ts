@@ -39,6 +39,7 @@ import {
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
 } from '@/parsec/types';
+import type { U64 } from '@/plugins/libparsec';
 import { MoveEntryModeTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
@@ -277,7 +278,7 @@ export async function closeFile(workspaceHandle: WorkspaceHandle, fd: FileDescri
 export async function resizeFile(
   workspaceHandle: WorkspaceHandle,
   fd: FileDescriptor,
-  length: number,
+  length: U64,
 ): Promise<Result<null, WorkspaceFdResizeError>> {
   if (workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceFdResize(workspaceHandle, fd, length, true);
@@ -292,9 +293,9 @@ export async function resizeFile(
 export async function writeFile(
   workspaceHandle: WorkspaceHandle,
   fd: FileDescriptor,
-  offset: number,
+  offset: U64,
   data: Uint8Array,
-): Promise<Result<number, WorkspaceFdWriteError>> {
+): Promise<Result<U64, WorkspaceFdWriteError>> {
   if (!needsMocks()) {
     return await libparsec.workspaceFdWrite(workspaceHandle, fd, offset, data);
   } else {
@@ -302,15 +303,15 @@ export async function writeFile(
       return { ok: false, error: { tag: WorkspaceFdWriteErrorTag.BadFileDescriptor, error: 'Invalid file descriptor' } };
     }
     await wait(100);
-    return { ok: true, value: data.length };
+    return { ok: true, value: BigInt(data.length) };
   }
 }
 
 export async function readFile(
   workspaceHandle: WorkspaceHandle,
   fd: FileDescriptor,
-  offset: number,
-  size: number,
+  offset: U64,
+  size: U64,
 ): Promise<Result<Uint8Array, WorkspaceFdReadError>> {
   if (!needsMocks()) {
     return await libparsec.workspaceFdRead(workspaceHandle, fd, offset, size);
@@ -325,29 +326,29 @@ export async function readFile(
 
     switch (ext) {
       case 'xlsx':
-        offset === 0 && console.log('Using XLSX content');
-        return { ok: true, value: MockFiles.XLSX.slice(offset, offset + size) };
+        offset === 0n && console.log('Using XLSX content');
+        return { ok: true, value: MockFiles.XLSX.slice(Number(offset), Number(offset + size)) };
       case 'png':
-        offset === 0 && console.log('Using PNG content');
-        return { ok: true, value: MockFiles.PNG.slice(offset, offset + size) };
+        offset === 0n && console.log('Using PNG content');
+        return { ok: true, value: MockFiles.PNG.slice(Number(offset), Number(offset + size)) };
       case 'docx':
-        offset === 0 && console.log('Using DOCX content');
-        return { ok: true, value: MockFiles.DOCX.slice(offset, offset + size) };
+        offset === 0n && console.log('Using DOCX content');
+        return { ok: true, value: MockFiles.DOCX.slice(Number(offset), Number(offset + size)) };
       case 'txt':
-        offset === 0 && console.log('Using TXT content');
-        return { ok: true, value: MockFiles.TXT.slice(offset, offset + size) };
+        offset === 0n && console.log('Using TXT content');
+        return { ok: true, value: MockFiles.TXT.slice(Number(offset), Number(offset + size)) };
       case 'py':
-        offset === 0 && console.log('Using PY content');
-        return { ok: true, value: MockFiles.PY.slice(offset, offset + size) };
+        offset === 0n && console.log('Using PY content');
+        return { ok: true, value: MockFiles.PY.slice(Number(offset), Number(offset + size)) };
       case 'pdf':
-        offset === 0 && console.log('Using PDF content');
-        return { ok: true, value: MockFiles.PDF.slice(offset, offset + size) };
+        offset === 0n && console.log('Using PDF content');
+        return { ok: true, value: MockFiles.PDF.slice(Number(offset), Number(offset + size)) };
       case 'mp3':
-        offset === 0 && console.log('Using MP3 content');
-        return { ok: true, value: MockFiles.MP3.slice(offset, offset + size) };
+        offset === 0n && console.log('Using MP3 content');
+        return { ok: true, value: MockFiles.MP3.slice(Number(offset), Number(offset + size)) };
       case 'mp4':
-        offset === 0 && console.log('Using MP4 content');
-        return { ok: true, value: MockFiles.MP4.slice(offset, offset + size) };
+        offset === 0n && console.log('Using MP4 content');
+        return { ok: true, value: MockFiles.MP4.slice(Number(offset), Number(offset + size)) };
     }
     console.log('Using default file content');
     return {
@@ -362,7 +363,7 @@ export async function readFile(
 }
 
 export interface EntryTree {
-  totalSize: number;
+  totalSize: U64;
   entries: Array<EntryStatFile>;
   maxRecursionReached: boolean;
   maxFilesReached: boolean;
@@ -370,7 +371,7 @@ export interface EntryTree {
 
 export async function listTree(workspaceHandle: WorkspaceHandle, path: FsPath, depthLimit = 12, filesLimit = 10000): Promise<EntryTree> {
   async function _innerListTree(workspaceHandle: WorkspaceHandle, path: FsPath, depth: number): Promise<EntryTree> {
-    const tree: EntryTree = { totalSize: 0, entries: [], maxRecursionReached: false, maxFilesReached: false };
+    const tree: EntryTree = { totalSize: 0n, entries: [], maxRecursionReached: false, maxFilesReached: false };
 
     if (depth > depthLimit) {
       console.warn('Max depth reached for listTree');
