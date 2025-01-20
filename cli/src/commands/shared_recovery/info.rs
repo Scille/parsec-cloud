@@ -30,7 +30,7 @@ pub async fn shared_recovery_info(_args: Args, client: &StartedClient) -> anyhow
                 } => println!("Shared recovery {GREEN}set up{RESET} with threshold {threshold}\n{}", per_recipient_shares.iter().map(|(recipient, share)| {
                     // this means that a user disappeared completely, it should not happen
                     let user = &users.get(recipient).expect("missing recipient").human_handle;
-                    format!("{BULLET_CHAR} User {user} has {share} share(s)") // TODO: special case if there is only one share
+                    format!("{BULLET_CHAR} User {user} has {share} share{}", maybe_plural(&share.get()))
                 }).join("\n")),
                 libparsec_client::SelfShamirRecoveryInfo::SetupWithRevokedRecipients {
                     threshold,
@@ -38,7 +38,8 @@ pub async fn shared_recovery_info(_args: Args, client: &StartedClient) -> anyhow
                     revoked_recipients,
                     ..
                 } => println!(
-                    "Shared recovery {YELLOW}set up{RESET} - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                    "Shared recovery {YELLOW}set up{RESET} - contains revoked recipient{maybe_plural}: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                    maybe_plural = maybe_plural(&(revoked_recipients.len() as u8)),
                     revoked = revoked_recipients.iter().join(", "),
                     revoked_len = revoked_recipients.len(),
                     total = per_recipient_shares.len()),
@@ -47,7 +48,8 @@ pub async fn shared_recovery_info(_args: Args, client: &StartedClient) -> anyhow
                     per_recipient_shares,
                     revoked_recipients,
                     ..
-                } => println!("{RED}Unusable{RESET} shared recovery - contains revoked recipients: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                } => println!("{RED}Unusable{RESET} shared recovery - contains revoked recipient{maybe_plural}: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                    maybe_plural = maybe_plural(&(revoked_recipients.len() as u8)),
                     revoked = revoked_recipients.iter().join(", "),
                     revoked_len = revoked_recipients.len(),
                     total = per_recipient_shares.len()),

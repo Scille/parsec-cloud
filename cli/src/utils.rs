@@ -452,3 +452,11 @@ pub fn read_password(read_from: ReadPasswordFrom) -> anyhow::Result<libparsec::P
     .map(Into::into)
     .map_err(anyhow::Error::from)
 }
+
+pub fn maybe_plural(number: &u8) -> &str {
+    if *number == 1 {
+        ""
+    } else {
+        "s"
+    }
+}
