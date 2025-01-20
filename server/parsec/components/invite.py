@@ -558,6 +558,8 @@ class BaseInviteComponent:
     def __init__(self, event_bus: EventBus, config: BackendConfig):
         self._event_bus = event_bus
         self._config = config
+
+        # TODO: is the following comment still relevant?
         # We use the `invite.status_changed` event to keep a list of all the
         # invitation claimers connected across all Parsec server instances.
         #
@@ -585,6 +587,7 @@ class BaseInviteComponent:
     def _on_event(self, event: Event) -> None:
         if isinstance(event, EventInvitation):
             if event.status == InvitationStatus.READY:
+                # TODO: investigate why READY events are no longer generated
                 self._claimers_ready[event.organization_id].add(event.token)
             else:  # Invitation deleted or back to idle
                 self._claimers_ready[event.organization_id].discard(event.token)
