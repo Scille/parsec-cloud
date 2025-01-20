@@ -651,7 +651,7 @@ class FileOperationManager {
           }
           totalSizeRestored += chunk.byteLength;
           await this.sendState(FileOperationState.OperationProgress, data, {
-            progress: (totalSizeRestored / Number(tree.totalSize)) * 100
+            progress: (totalSizeRestored / Number(tree.totalSize)) * 100,
           });
         }
         restored = true;
@@ -766,7 +766,7 @@ class FileOperationManager {
         } else {
           writtenData += writeResult.value;
           await this.sendState(FileOperationState.OperationProgress, data, {
-            progress: (Number(writtenData) / (data.file.size || 1)) * 100
+            progress: (Number(writtenData) / (data.file.size || 1)) * 100,
           });
         }
       }
