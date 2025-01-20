@@ -13,6 +13,13 @@ pub async fn start_client(env: &TestbedEnv, start_as: &'static str) -> Arc<Clien
     start_client_with_mountpoint_base_dir(env, env.discriminant_dir.clone(), start_as).await
 }
 
+#[cfg(target_os = "windows")]
+pub fn to_null_terminated_utf16(s: &str) -> Vec<u16> {
+    let mut utf16 = s.encode_utf16().collect::<Vec<u16>>();
+    utf16.push(0);
+    utf16
+}
+
 pub async fn start_client_with_mountpoint_base_dir(
     env: &TestbedEnv,
     mountpoint_base_dir: std::path::PathBuf,

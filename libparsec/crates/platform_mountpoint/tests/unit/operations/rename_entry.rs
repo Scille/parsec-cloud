@@ -84,10 +84,6 @@ async fn ok_folder(tmp_path: TmpPath, env: &TestbedEnv) {
     );
 }
 
-// TODO: `tokio::fs::rename` always overwrite target, however on Windows there
-//       is a `MOVEFILE_REPLACE_EXISTING` flag to control this behavior
-//       (see https://learn.microsoft.com/fr-fr/windows/win32/api/winbase/nf-winbase-movefileexw)
-#[cfg(not(target_os = "windows"))]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn dst_parent_exists_as_file(tmp_path: TmpPath, env: &TestbedEnv) {
     mount_and_test!(
@@ -97,12 +93,31 @@ async fn dst_parent_exists_as_file(tmp_path: TmpPath, env: &TestbedEnv) {
             let src = mountpoint_path.join("foo");
             let dst = mountpoint_path.join("bar.txt");
 
-            let err = tokio::fs::rename(&src, &dst).await.unwrap_err();
+            // `tokio::fs::rename` always overwrite target, however on Windows there
+            // is a `MOVEFILE_REPLACE_EXISTING` flag to control this behavior
+            // (see https://learn.microsoft.com/fr-fr/windows/win32/api/winbase/nf-winbase-movefileexw)
 
             #[cfg(not(target_os = "windows"))]
-            p_assert_eq!(err.raw_os_error(), Some(libc::ENOTDIR), "{}", err);
+            {
+                let err = tokio::fs::rename(&src, &dst).await.unwrap_err();
+                p_assert_eq!(err.raw_os_error(), Some(libc::ENOTDIR), "{}", err);
+            }
+
             #[cfg(target_os = "windows")]
             {
+                let src_utf16 = super::utils::to_null_terminated_utf16(&src.to_string_lossy());
+                let dst_utf16 = super::utils::to_null_terminated_utf16(&dst.to_string_lossy());
+                let ret = unsafe {
+                    windows_sys::Win32::Storage::FileSystem::MoveFileExW(
+                        src_utf16.as_ptr(),
+                        dst_utf16.as_ptr(),
+                        0,
+                    )
+                };
+
+                p_assert_eq!(ret, 0);
+                let err = std::io::Error::last_os_error();
+
                 p_assert_eq!(
                     err.raw_os_error(),
                     Some(windows_sys::Win32::Foundation::ERROR_ALREADY_EXISTS as i32),
