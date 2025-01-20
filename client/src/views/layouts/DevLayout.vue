@@ -11,7 +11,7 @@ import { inject, onMounted, ref } from 'vue';
 import { IonPage, IonRouterOutlet } from '@ionic/vue';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { EventDistributor } from '@/services/eventDistributor';
-import { AccessStrategy, getLoggedInDevices, listAvailableDevices, login } from '@/parsec';
+import { AccessStrategy, createWorkspace, getLoggedInDevices, listAvailableDevices, login } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
@@ -28,38 +28,48 @@ onMounted(async () => {
     return;
   }
 
+  if (!import.meta.env.PARSEC_APP_TESTBED_SERVER || (await getLoggedInDevices()).length !== 0) {
+    initialized.value = true;
+    return;
+  }
+
   // When in dev mode, we often open directly a connected page,
   // so a few states are not properly set.
-  if (import.meta.env.PARSEC_APP_TESTBED_SERVER && (await getLoggedInDevices()).length === 0) {
-    if (handle !== DEV_DEFAULT_HANDLE) {
-      window.electronAPI.log('error', `In dev mode, you should use "${DEV_DEFAULT_HANDLE}" as the default handle`);
-      // eslint-disable-next-line no-alert
-      alert(`Use "${DEV_DEFAULT_HANDLE}" as the default handle when not connecting properly`);
-      return;
-    }
-    window.electronAPI.log('info', 'Page was refreshed, login in a default device');
-    injectionProvider.createNewInjections(DEV_DEFAULT_HANDLE, new EventDistributor());
-    const devices = await listAvailableDevices();
-    let device = devices.find((d) => d.humanHandle.label === 'Alicey McAliceFace');
-
-    if (!device) {
-      device = devices[0];
-      window.electronAPI.log('error', `Could not find Alice device, using ${device.humanHandle.label}`);
-    }
-
-    const result = await login(
-      injectionProvider.getInjections(DEV_DEFAULT_HANDLE).eventDistributor,
-      device,
-      AccessStrategy.usePassword(device, 'P@ssw0rd.'),
-    );
-    if (!result.ok) {
-      window.electronAPI.log('error', `Failed to log in on a default device: ${JSON.stringify(result.error)}`);
-    } else if (result.value !== DEV_DEFAULT_HANDLE) {
-      window.electronAPI.log('error', `Lib returned handle ${result.value} instead of ${DEV_DEFAULT_HANDLE}`);
-    } else {
-      window.electronAPI.log('info', `Logged in as ${device.humanHandle.label}`);
-    }
+  if (handle !== DEV_DEFAULT_HANDLE) {
+    window.electronAPI.log('error', `In dev mode, you should use "${DEV_DEFAULT_HANDLE}" as the default handle`);
+    // eslint-disable-next-line no-alert
+    alert(`Use "${DEV_DEFAULT_HANDLE}" as the default handle when not connecting properly`);
+    return;
   }
+  window.electronAPI.log('info', 'Page was refreshed, login in a default device');
+  injectionProvider.createNewInjections(DEV_DEFAULT_HANDLE, new EventDistributor());
+  const devices = await listAvailableDevices();
+  let device = devices.find((d) => d.humanHandle.label === 'Alicey McAliceFace');
+
+  if (!device) {
+    device = devices[0];
+    window.electronAPI.log('error', `Could not find Alice device, using ${device.humanHandle.label}`);
+  }
+
+  const result = await login(
+    injectionProvider.getInjections(DEV_DEFAULT_HANDLE).eventDistributor,
+    device,
+    AccessStrategy.usePassword(device, 'P@ssw0rd.'),
+  );
+  if (!result.ok) {
+    window.electronAPI.log('error', `Failed to log in on a default device: ${JSON.stringify(result.error)}`);
+  } else if (result.value !== DEV_DEFAULT_HANDLE) {
+    window.electronAPI.log('error', `Lib returned handle ${result.value} instead of ${DEV_DEFAULT_HANDLE}`);
+  } else {
+    window.electronAPI.log('info', `Logged in as ${device.humanHandle.label}`);
+  }
+
+  if (import.meta.env.PARSEC_APP_CREATE_DEFAULT_WORKSPACES === 'true') {
+    await createWorkspace('The Copper Coronet');
+    await createWorkspace('Trademeet');
+    await createWorkspace("Watcher's Keep");
+  }
+
   initialized.value = true;
 });
 </script>
