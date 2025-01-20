@@ -11,7 +11,9 @@ pub use libparsec_client::{
     ShamirRecoveryClaimAddShareError, ShamirRecoveryClaimPickRecipientError,
     ShamirRecoveryClaimRecoverDeviceError,
 };
-pub use libparsec_protocol::invited_cmds::latest::invite_info::ShamirRecoveryRecipient;
+pub use libparsec_protocol::invited_cmds::latest::invite_info::{
+    ShamirRecoveryRecipient, UserOnlineStatus,
+};
 pub use libparsec_types::prelude::*;
 
 use crate::{

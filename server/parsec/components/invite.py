@@ -48,6 +48,12 @@ from parsec.templates import get_template
 from parsec.types import BadOutcome, BadOutcomeEnum
 
 ShamirRecoveryRecipient: TypeAlias = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
+UserOnlineStatus: TypeAlias = invited_cmds.latest.invite_info.UserOnlineStatus
+InviteInfoAdministrator: TypeAlias = invited_cmds.latest.invite_info.InviteInfoAdministrator
+UserInvitationCreatedByOrganizationAdministrator: TypeAlias = (
+    invited_cmds.latest.invite_info.UserInvitationCreatedByOrganizationAdministrator
+)
+
 
 logger = get_logger()
 
@@ -967,15 +973,24 @@ class BaseInviteComponent:
                 return invited_cmds.latest.invite_info.RepOk(
                     invited_cmds.latest.invite_info.InvitationTypeUser(
                         claimer_email=invitation.claimer_email,
-                        greeter_user_id=invitation.created_by_user_id,
-                        greeter_human_handle=invitation.created_by_human_handle,
+                        created_by=UserInvitationCreatedByOrganizationAdministrator(
+                            user_id=invitation.created_by_user_id,
+                            human_handle=invitation.created_by_human_handle,
+                        ),
+                        administrators=[
+                            InviteInfoAdministrator(
+                                user_id=invitation.created_by_user_id,
+                                human_handle=invitation.created_by_human_handle,
+                                online_status=UserOnlineStatus.UNKNOWN,
+                            )
+                        ],
                     )
                 )
             case DeviceInvitation() as invitation:
                 return invited_cmds.latest.invite_info.RepOk(
                     invited_cmds.latest.invite_info.InvitationTypeDevice(
-                        greeter_user_id=invitation.created_by_user_id,
-                        greeter_human_handle=invitation.created_by_human_handle,
+                        claimer_user_id=invitation.created_by_user_id,
+                        claimer_human_handle=invitation.created_by_human_handle,
                     )
                 )
             case ShamirRecoveryInvitation() as invitation:

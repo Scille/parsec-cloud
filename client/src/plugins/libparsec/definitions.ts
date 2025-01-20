@@ -65,6 +65,12 @@ export enum RealmRole {
     Reader = 'RealmRoleReader',
 }
 
+export enum UserOnlineStatus {
+    Offline = 'UserOnlineStatusOffline',
+    Online = 'UserOnlineStatusOnline',
+    Unknown = 'UserOnlineStatusUnknown',
+}
+
 export enum UserProfile {
     Admin = 'UserProfileAdmin',
     Outsider = 'UserProfileOutsider',
@@ -269,6 +275,7 @@ export interface ShamirRecoveryRecipient {
     humanHandle: HumanHandle
     revokedOn: DateTime | null
     shares: NonZeroU8
+    onlineStatus: UserOnlineStatus
 }
 
 export interface StartedWorkspaceInfo {

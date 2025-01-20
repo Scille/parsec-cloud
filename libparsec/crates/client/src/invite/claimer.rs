@@ -248,28 +248,32 @@ pub async fn claimer_retrieve_info(
         Rep::Ok(claimer) => match claimer {
             InvitationType::User {
                 claimer_email,
-                greeter_user_id,
-                greeter_human_handle,
+                created_by: invited_cmds::latest::invite_info::UserInvitationCreatedBy::OrganizationAdministrator { human_handle, user_id },
+                administrators: _administrators,
             } => Ok(AnyClaimRetrievedInfoCtx::User(UserClaimInitialCtx::new(
                 config,
                 cmds,
                 claimer_email,
-                greeter_user_id,
-                greeter_human_handle,
+                user_id,
+                human_handle,
                 time_provider,
             ))),
             InvitationType::Device {
-                greeter_user_id,
-                greeter_human_handle,
+                claimer_user_id,
+                claimer_human_handle,
             } => Ok(AnyClaimRetrievedInfoCtx::Device(
                 DeviceClaimInitialCtx::new(
                     config,
                     cmds,
-                    greeter_user_id,
-                    greeter_human_handle,
+                    claimer_user_id,
+                    claimer_human_handle,
                     time_provider,
                 ),
             )),
+            InvitationType::User {
+                created_by: invited_cmds::latest::invite_info::UserInvitationCreatedBy::ExternalService {..},
+                ..
+            } => Err(anyhow::anyhow!("Unexpected user invitation from an external service").into()),
             InvitationType::ShamirRecovery {
                 claimer_user_id,
                 claimer_human_handle,

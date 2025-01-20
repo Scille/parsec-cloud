@@ -269,6 +269,32 @@ fn enum_realm_role_rs_to_js(value: libparsec::RealmRole) -> &'static str {
     }
 }
 
+// UserOnlineStatus
+
+#[allow(dead_code)]
+fn enum_user_online_status_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::UserOnlineStatus> {
+    match raw_value {
+        "UserOnlineStatusOffline" => Ok(libparsec::UserOnlineStatus::Offline),
+        "UserOnlineStatusOnline" => Ok(libparsec::UserOnlineStatus::Online),
+        "UserOnlineStatusUnknown" => Ok(libparsec::UserOnlineStatus::Unknown),
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum UserOnlineStatus"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_user_online_status_rs_to_js(value: libparsec::UserOnlineStatus) -> &'static str {
+    match value {
+        libparsec::UserOnlineStatus::Offline => "UserOnlineStatusOffline",
+        libparsec::UserOnlineStatus::Online => "UserOnlineStatusOnline",
+        libparsec::UserOnlineStatus::Unknown => "UserOnlineStatusUnknown",
+    }
+}
+
 // UserProfile
 
 #[allow(dead_code)]
@@ -2185,11 +2211,19 @@ fn struct_shamir_recovery_recipient_js_to_rs<'a>(
             }
         }
     };
+    let online_status = {
+        let js_val: Handle<JsString> = obj.get(cx, "onlineStatus")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_user_online_status_js_to_rs(cx, js_string.as_str())?
+        }
+    };
     Ok(libparsec::ShamirRecoveryRecipient {
         user_id,
         human_handle,
         revoked_on,
         shares,
+        online_status,
     })
 }
 
@@ -2233,6 +2267,10 @@ fn struct_shamir_recovery_recipient_rs_to_js<'a>(
         }
     } as f64);
     js_obj.set(cx, "shares", js_shares)?;
+    let js_online_status =
+        JsString::try_new(cx, enum_user_online_status_rs_to_js(rs_obj.online_status))
+            .or_throw(cx)?;
+    js_obj.set(cx, "onlineStatus", js_online_status)?;
     Ok(js_obj)
 }
 

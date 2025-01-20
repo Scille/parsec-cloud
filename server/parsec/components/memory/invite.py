@@ -40,6 +40,7 @@ from parsec.components.invite import (
     ShamirRecoveryInvitation,
     ShamirRecoveryRecipient,
     UserInvitation,
+    UserOnlineStatus,
 )
 from parsec.components.memory.datamodel import (
     AdvisoryLock,
@@ -106,6 +107,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                 human_handle=org.users[user_id].cooked.human_handle,
                 shares=shares,
                 revoked_on=org.users[user_id].revoked_on,
+                online_status=UserOnlineStatus.UNKNOWN,
             )
             for user_id, shares in par_recipient_shares.items()
         ]
