@@ -650,7 +650,9 @@ class FileOperationManager {
             offset += BigInt(chunk.byteLength);
           }
           totalSizeRestored += chunk.byteLength;
-          await this.sendState(FileOperationState.OperationProgress, data, { progress: (totalSizeRestored / Number(tree.totalSize)) * 100 });
+          await this.sendState(FileOperationState.OperationProgress, data, {
+            progress: (totalSizeRestored / Number(tree.totalSize)) * 100
+          });
         }
         restored = true;
       } catch (e: any) {
@@ -763,7 +765,9 @@ class FileOperationManager {
           return;
         } else {
           writtenData += writeResult.value;
-          await this.sendState(FileOperationState.OperationProgress, data, { progress: (Number(writtenData) / (data.file.size || 1)) * 100 });
+          await this.sendState(FileOperationState.OperationProgress, data, {
+            progress: (Number(writtenData) / (data.file.size || 1)) * 100
+          });
         }
       }
       if (buffer.done) {
