@@ -1,6 +1,6 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 <template>
-  <div class="progress">
+  <file-controls-group class="file-controls-flux">
     <ms-slider
       class="progress-slider"
       v-model="sliderState"
@@ -8,12 +8,15 @@
       :max-value="length"
       :increment-value="500"
     />
-    {{ `${(sliderState.progress / 100).toFixed(0)} / ${(length / 100).toFixed(0)}` }}
-  </div>
+    <div class="progress-label">
+      {{ `${(sliderState.progress / 100).toFixed(0)} / ${(length / 100).toFixed(0)}` }}
+    </div>
+  </file-controls-group>
 </template>
 
 <script setup lang="ts">
 import { MsSlider, SliderState } from 'megashark-lib';
+import { FileControlsGroup } from '@/components/viewers';
 import { onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -52,7 +55,17 @@ function updateSliderState(value: SliderState): void {
 </script>
 
 <style scoped lang="scss">
-.progress {
-  width: 15rem;
+.file-controls-flux {
+  justify-content: start;
+  align-items: center;
+  gap: 1rem !important;
+
+  .progress-slider {
+    width: 30rem;
+  }
+
+  .progress-label {
+    text-align: center;
+  }
 }
 </style>

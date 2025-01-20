@@ -4,7 +4,6 @@
   <file-viewer-wrapper>
     <template #viewer>
       <audio
-        controls
         v-if="src.length"
         ref="audioElement"
         :src="src"
@@ -16,17 +15,18 @@
         @ended="updateMediaData"
         @timeupdate="onTimeUpdate"
       />
+      <file-viewer-background :icon="musicalNotes" />
     </template>
     <template #controls>
-      <file-controls-flux
-        v-model="progress"
-        :length="length"
-      />
       <file-controls>
         <file-controls-playback
           :paused="progress.paused"
           :ended="ended"
           @click="togglePlayback"
+        />
+        <file-controls-flux
+          v-model="progress"
+          :length="length"
         />
         <file-controls-volume @on-volume-change="updateVolume" />
       </file-controls>
@@ -36,9 +36,10 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { musicalNotes } from 'ionicons/icons';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
-import { FileControls, FileControlsFlux, FileControlsPlayback, FileControlsVolume } from '@/components/viewers';
+import { FileControls, FileControlsFlux, FileControlsPlayback, FileControlsVolume, FileViewerBackground } from '@/components/viewers';
 import { SliderState } from 'megashark-lib';
 
 const props = defineProps<{
