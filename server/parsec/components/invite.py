@@ -48,6 +48,51 @@ from parsec.templates import get_template
 from parsec.types import BadOutcome, BadOutcomeEnum
 
 ShamirRecoveryRecipient: TypeAlias = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
+UserOnlineStatus: TypeAlias = invited_cmds.latest.invite_info.UserOnlineStatus
+UserGreetingAdministrator: TypeAlias = invited_cmds.latest.invite_info.UserGreetingAdministrator
+InviteInfoInvitationCreatedBy: TypeAlias = invited_cmds.latest.invite_info.InvitationCreatedBy
+InviteListInvitationCreatedBy: TypeAlias = authenticated_cmds.latest.invite_list.InvitationCreatedBy
+
+
+@dataclass(slots=True)
+class InvitationCreatedBy:
+    def for_invite_info(self) -> InviteInfoInvitationCreatedBy:
+        match self:
+            case InvitationCreatedByUser(user_id, human_handle):
+                return invited_cmds.latest.invite_info.InvitationCreatedByUser(
+                    user_id, human_handle
+                )
+            case InvitationCreatedByExternalService(service_label):
+                return invited_cmds.latest.invite_info.InvitationCreatedByExternalService(
+                    service_label
+                )
+            case unknown:
+                assert False, unknown
+
+    def for_invite_list(self) -> InviteListInvitationCreatedBy:
+        match self:
+            case InvitationCreatedByUser(user_id, human_handle):
+                return authenticated_cmds.latest.invite_list.InvitationCreatedByUser(
+                    user_id, human_handle
+                )
+            case InvitationCreatedByExternalService(service_label):
+                return authenticated_cmds.latest.invite_list.InvitationCreatedByExternalService(
+                    service_label
+                )
+            case unknown:
+                assert False, unknown
+
+
+@dataclass(slots=True)
+class InvitationCreatedByUser(InvitationCreatedBy):
+    user_id: UserID
+    human_handle: HumanHandle
+
+
+@dataclass(slots=True)
+class InvitationCreatedByExternalService(InvitationCreatedBy):
+    service_label: str
+
 
 logger = get_logger()
 
@@ -55,32 +100,33 @@ logger = get_logger()
 @dataclass(slots=True)
 class UserInvitation:
     TYPE = InvitationType.USER
-    claimer_email: str
-    created_by_user_id: UserID
-    created_by_device_id: DeviceID
-    created_by_human_handle: HumanHandle
+    created_by: InvitationCreatedBy
     token: InvitationToken
     created_on: DateTime
     status: InvitationStatus
+
+    # User-specific fields
+    claimer_email: str
+    administrators: list[UserGreetingAdministrator]
 
 
 @dataclass(slots=True)
 class DeviceInvitation:
     TYPE = InvitationType.DEVICE
-    created_by_user_id: UserID
-    created_by_device_id: DeviceID
-    created_by_human_handle: HumanHandle
+    created_by: InvitationCreatedBy
     token: InvitationToken
     created_on: DateTime
     status: InvitationStatus
+
+    # Device-specific fields
+    claimer_user_id: UserID
+    claimer_human_handle: HumanHandle
 
 
 @dataclass(slots=True)
 class ShamirRecoveryInvitation:
     TYPE = InvitationType.SHAMIR_RECOVERY
-    created_by_user_id: UserID
-    created_by_device_id: DeviceID
-    created_by_human_handle: HumanHandle
+    created_by: InvitationCreatedBy
     token: InvitationToken
     created_on: DateTime
     status: InvitationStatus
@@ -934,6 +980,7 @@ class BaseInviteComponent:
                     cooked = authenticated_cmds.latest.invite_list.InviteListItemUser(
                         token=invitation.token,
                         created_on=invitation.created_on,
+                        created_by=invitation.created_by.for_invite_list(),
                         claimer_email=invitation.claimer_email,
                         status=invitation.status,
                     )
@@ -941,12 +988,14 @@ class BaseInviteComponent:
                     cooked = authenticated_cmds.latest.invite_list.InviteListItemDevice(
                         token=invitation.token,
                         created_on=invitation.created_on,
+                        created_by=invitation.created_by.for_invite_list(),
                         status=invitation.status,
                     )
                 case ShamirRecoveryInvitation():
                     cooked = authenticated_cmds.latest.invite_list.InviteListItemShamirRecovery(
                         token=invitation.token,
                         created_on=invitation.created_on,
+                        created_by=invitation.created_by.for_invite_list(),
                         status=invitation.status,
                         claimer_user_id=invitation.claimer_user_id,
                         shamir_recovery_created_on=invitation.shamir_recovery_created_on,
@@ -967,15 +1016,16 @@ class BaseInviteComponent:
                 return invited_cmds.latest.invite_info.RepOk(
                     invited_cmds.latest.invite_info.InvitationTypeUser(
                         claimer_email=invitation.claimer_email,
-                        greeter_user_id=invitation.created_by_user_id,
-                        greeter_human_handle=invitation.created_by_human_handle,
+                        created_by=invitation.created_by.for_invite_info(),
+                        administrators=invitation.administrators,
                     )
                 )
             case DeviceInvitation() as invitation:
                 return invited_cmds.latest.invite_info.RepOk(
                     invited_cmds.latest.invite_info.InvitationTypeDevice(
-                        greeter_user_id=invitation.created_by_user_id,
-                        greeter_human_handle=invitation.created_by_human_handle,
+                        claimer_user_id=invitation.claimer_user_id,
+                        claimer_human_handle=invitation.claimer_human_handle,
+                        created_by=invitation.created_by.for_invite_info(),
                     )
                 )
             case ShamirRecoveryInvitation() as invitation:
@@ -983,6 +1033,7 @@ class BaseInviteComponent:
                     invited_cmds.latest.invite_info.InvitationTypeShamirRecovery(
                         claimer_user_id=invitation.claimer_user_id,
                         claimer_human_handle=invitation.claimer_human_handle,
+                        created_by=invitation.created_by.for_invite_info(),
                         shamir_recovery_created_on=invitation.shamir_recovery_created_on,
                         threshold=invitation.threshold,
                         recipients=invitation.recipients,

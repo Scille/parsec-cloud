@@ -8,6 +8,7 @@ use invited_cmds::latest::invite_claimer_step;
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
 use libparsec_protocol::authenticated_cmds;
+use libparsec_protocol::invited_cmds::latest::invite_info::InvitationCreatedBy as InviteInfoInvitationCreatedBy;
 use libparsec_protocol::invited_cmds::latest::invite_info::ShamirRecoveryRecipient;
 use libparsec_types::prelude::*;
 
@@ -248,31 +249,49 @@ pub async fn claimer_retrieve_info(
         Rep::Ok(claimer) => match claimer {
             InvitationType::User {
                 claimer_email,
-                greeter_user_id,
-                greeter_human_handle,
-            } => Ok(AnyClaimRetrievedInfoCtx::User(UserClaimInitialCtx::new(
-                config,
-                cmds,
-                claimer_email,
-                greeter_user_id,
-                greeter_human_handle,
-                time_provider,
-            ))),
+                created_by:
+                    InviteInfoInvitationCreatedBy::User {
+                        human_handle,
+                        user_id,
+                    },
+                administrators: _administrators,
+            } => {
+                // TODO: Here we should let the user pick a greeter from the administrators
+                // instead of using the one that created the invitation.
+                Ok(AnyClaimRetrievedInfoCtx::User(UserClaimInitialCtx::new(
+                    config,
+                    cmds,
+                    claimer_email,
+                    user_id,
+                    human_handle,
+                    time_provider,
+                )))
+            }
+            InvitationType::User {
+                created_by: InviteInfoInvitationCreatedBy::ExternalService { .. },
+                ..
+            } => {
+                // TODO: Here we should let the user pick a greeter from the administrators
+                // when the invitation is created by an external service.
+                Err(anyhow::anyhow!("Unexpected user invitation from an external service").into())
+            }
             InvitationType::Device {
-                greeter_user_id,
-                greeter_human_handle,
+                claimer_user_id,
+                claimer_human_handle,
+                created_by: _created_by,
             } => Ok(AnyClaimRetrievedInfoCtx::Device(
                 DeviceClaimInitialCtx::new(
                     config,
                     cmds,
-                    greeter_user_id,
-                    greeter_human_handle,
+                    claimer_user_id,
+                    claimer_human_handle,
                     time_provider,
                 ),
             )),
             InvitationType::ShamirRecovery {
                 claimer_user_id,
                 claimer_human_handle,
+                created_by,
                 shamir_recovery_created_on,
                 recipients,
                 threshold,
@@ -282,6 +301,7 @@ pub async fn claimer_retrieve_info(
                     cmds,
                     claimer_user_id,
                     claimer_human_handle,
+                    invitation_created_by: created_by,
                     shamir_recovery_created_on,
                     recipients,
                     threshold,
@@ -332,6 +352,7 @@ pub struct ShamirRecoveryClaimPickRecipientCtx {
     cmds: Arc<InvitedCmds>,
     claimer_user_id: UserID,
     claimer_human_handle: HumanHandle,
+    invitation_created_by: InviteInfoInvitationCreatedBy,
     shamir_recovery_created_on: DateTime,
     recipients: Vec<ShamirRecoveryRecipient>,
     threshold: NonZeroU8,
@@ -354,6 +375,10 @@ impl ShamirRecoveryClaimPickRecipientCtx {
 
     pub fn claimer_human_handle(&self) -> &HumanHandle {
         &self.claimer_human_handle
+    }
+
+    pub fn invitation_created_by(&self) -> &InviteInfoInvitationCreatedBy {
+        &self.invitation_created_by
     }
 
     pub fn shamir_recovery_created_on(&self) -> DateTime {

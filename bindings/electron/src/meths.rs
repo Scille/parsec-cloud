@@ -269,6 +269,32 @@ fn enum_realm_role_rs_to_js(value: libparsec::RealmRole) -> &'static str {
     }
 }
 
+// UserOnlineStatus
+
+#[allow(dead_code)]
+fn enum_user_online_status_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::UserOnlineStatus> {
+    match raw_value {
+        "UserOnlineStatusOffline" => Ok(libparsec::UserOnlineStatus::Offline),
+        "UserOnlineStatusOnline" => Ok(libparsec::UserOnlineStatus::Online),
+        "UserOnlineStatusUnknown" => Ok(libparsec::UserOnlineStatus::Unknown),
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum UserOnlineStatus"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_user_online_status_rs_to_js(value: libparsec::UserOnlineStatus) -> &'static str {
+    match value {
+        libparsec::UserOnlineStatus::Offline => "UserOnlineStatusOffline",
+        libparsec::UserOnlineStatus::Online => "UserOnlineStatusOnline",
+        libparsec::UserOnlineStatus::Unknown => "UserOnlineStatusUnknown",
+    }
+}
+
 // UserProfile
 
 #[allow(dead_code)]
@@ -2185,11 +2211,19 @@ fn struct_shamir_recovery_recipient_js_to_rs<'a>(
             }
         }
     };
+    let online_status = {
+        let js_val: Handle<JsString> = obj.get(cx, "onlineStatus")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_user_online_status_js_to_rs(cx, js_string.as_str())?
+        }
+    };
     Ok(libparsec::ShamirRecoveryRecipient {
         user_id,
         human_handle,
         revoked_on,
         shares,
+        online_status,
     })
 }
 
@@ -2233,6 +2267,10 @@ fn struct_shamir_recovery_recipient_rs_to_js<'a>(
         }
     } as f64);
     js_obj.set(cx, "shares", js_shares)?;
+    let js_online_status =
+        JsString::try_new(cx, enum_user_online_status_rs_to_js(rs_obj.online_status))
+            .or_throw(cx)?;
+    js_obj.set(cx, "onlineStatus", js_online_status)?;
     Ok(js_obj)
 }
 
@@ -3514,6 +3552,10 @@ fn variant_any_claim_retrieved_info_js_to_rs<'a>(
                 let js_val: Handle<JsObject> = obj.get(cx, "claimerHumanHandle")?;
                 struct_human_handle_js_to_rs(cx, js_val)?
             };
+            let invitation_created_by = {
+                let js_val: Handle<JsObject> = obj.get(cx, "invitationCreatedBy")?;
+                variant_invite_info_invitation_created_by_js_to_rs(cx, js_val)?
+            };
             let shamir_recovery_created_on = {
                 let js_val: Handle<JsNumber> = obj.get(cx, "shamirRecoveryCreatedOn")?;
                 {
@@ -3565,6 +3607,7 @@ fn variant_any_claim_retrieved_info_js_to_rs<'a>(
                 handle,
                 claimer_user_id,
                 claimer_human_handle,
+                invitation_created_by,
                 shamir_recovery_created_on,
                 recipients,
                 threshold,
@@ -3648,6 +3691,7 @@ fn variant_any_claim_retrieved_info_rs_to_js<'a>(
             handle,
             claimer_user_id,
             claimer_human_handle,
+            invitation_created_by,
             shamir_recovery_created_on,
             recipients,
             threshold,
@@ -3671,6 +3715,9 @@ fn variant_any_claim_retrieved_info_rs_to_js<'a>(
             js_obj.set(cx, "claimerUserId", js_claimer_user_id)?;
             let js_claimer_human_handle = struct_human_handle_rs_to_js(cx, claimer_human_handle)?;
             js_obj.set(cx, "claimerHumanHandle", js_claimer_human_handle)?;
+            let js_invitation_created_by =
+                variant_invite_info_invitation_created_by_rs_to_js(cx, invitation_created_by)?;
+            js_obj.set(cx, "invitationCreatedBy", js_invitation_created_by)?;
             let js_shamir_recovery_created_on = JsNumber::new(cx, {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
                     Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
@@ -6630,6 +6677,166 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// InviteInfoInvitationCreatedBy
+
+#[allow(dead_code)]
+fn variant_invite_info_invitation_created_by_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::InviteInfoInvitationCreatedBy> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "InviteInfoInvitationCreatedByExternalService" => {
+            let service_label = {
+                let js_val: Handle<JsString> = obj.get(cx, "serviceLabel")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::InviteInfoInvitationCreatedBy::ExternalService { service_label })
+        }
+        "InviteInfoInvitationCreatedByUser" => {
+            let user_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let human_handle = {
+                let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
+                struct_human_handle_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::InviteInfoInvitationCreatedBy::User {
+                user_id,
+                human_handle,
+            })
+        }
+        _ => cx.throw_type_error("Object is not a InviteInfoInvitationCreatedBy"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_invite_info_invitation_created_by_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::InviteInfoInvitationCreatedBy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::InviteInfoInvitationCreatedBy::ExternalService { service_label, .. } => {
+            let js_tag = JsString::try_new(cx, "InviteInfoInvitationCreatedByExternalService")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_service_label = JsString::try_new(cx, service_label).or_throw(cx)?;
+            js_obj.set(cx, "serviceLabel", js_service_label)?;
+        }
+        libparsec::InviteInfoInvitationCreatedBy::User {
+            user_id,
+            human_handle,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "InviteInfoInvitationCreatedByUser").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "userId", js_user_id)?;
+            let js_human_handle = struct_human_handle_rs_to_js(cx, human_handle)?;
+            js_obj.set(cx, "humanHandle", js_human_handle)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// InviteListInvitationCreatedBy
+
+#[allow(dead_code)]
+fn variant_invite_list_invitation_created_by_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::InviteListInvitationCreatedBy> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "InviteListInvitationCreatedByExternalService" => {
+            let service_label = {
+                let js_val: Handle<JsString> = obj.get(cx, "serviceLabel")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::InviteListInvitationCreatedBy::ExternalService { service_label })
+        }
+        "InviteListInvitationCreatedByUser" => {
+            let user_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let human_handle = {
+                let js_val: Handle<JsObject> = obj.get(cx, "humanHandle")?;
+                struct_human_handle_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::InviteListInvitationCreatedBy::User {
+                user_id,
+                human_handle,
+            })
+        }
+        _ => cx.throw_type_error("Object is not a InviteListInvitationCreatedBy"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_invite_list_invitation_created_by_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::InviteListInvitationCreatedBy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::InviteListInvitationCreatedBy::ExternalService { service_label, .. } => {
+            let js_tag = JsString::try_new(cx, "InviteListInvitationCreatedByExternalService")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_service_label = JsString::try_new(cx, service_label).or_throw(cx)?;
+            js_obj.set(cx, "serviceLabel", js_service_label)?;
+        }
+        libparsec::InviteListInvitationCreatedBy::User {
+            user_id,
+            human_handle,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "InviteListInvitationCreatedByUser").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "userId", js_user_id)?;
+            let js_human_handle = struct_human_handle_rs_to_js(cx, human_handle)?;
+            js_obj.set(cx, "humanHandle", js_human_handle)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // InviteListItem
 
 #[allow(dead_code)]
@@ -6680,6 +6887,10 @@ fn variant_invite_list_item_js_to_rs<'a>(
                     }
                 }
             };
+            let created_by = {
+                let js_val: Handle<JsObject> = obj.get(cx, "createdBy")?;
+                variant_invite_list_invitation_created_by_js_to_rs(cx, js_val)?
+            };
             let status = {
                 let js_val: Handle<JsString> = obj.get(cx, "status")?;
                 {
@@ -6691,6 +6902,7 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 addr,
                 token,
                 created_on,
+                created_by,
                 status,
             })
         }
@@ -6735,6 +6947,10 @@ fn variant_invite_list_item_js_to_rs<'a>(
                     }
                 }
             };
+            let created_by = {
+                let js_val: Handle<JsObject> = obj.get(cx, "createdBy")?;
+                variant_invite_list_invitation_created_by_js_to_rs(cx, js_val)?
+            };
             let claimer_user_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "claimerUserId")?;
                 {
@@ -6772,6 +6988,7 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 addr,
                 token,
                 created_on,
+                created_by,
                 claimer_user_id,
                 shamir_recovery_created_on,
                 status,
@@ -6818,6 +7035,10 @@ fn variant_invite_list_item_js_to_rs<'a>(
                     }
                 }
             };
+            let created_by = {
+                let js_val: Handle<JsObject> = obj.get(cx, "createdBy")?;
+                variant_invite_list_invitation_created_by_js_to_rs(cx, js_val)?
+            };
             let claimer_email = {
                 let js_val: Handle<JsString> = obj.get(cx, "claimerEmail")?;
                 js_val.value(cx)
@@ -6833,6 +7054,7 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 addr,
                 token,
                 created_on,
+                created_by,
                 claimer_email,
                 status,
             })
@@ -6852,6 +7074,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
             addr,
             token,
             created_on,
+            created_by,
             status,
             ..
         } => {
@@ -6889,6 +7112,8 @@ fn variant_invite_list_item_rs_to_js<'a>(
                 }
             });
             js_obj.set(cx, "createdOn", js_created_on)?;
+            let js_created_by = variant_invite_list_invitation_created_by_rs_to_js(cx, created_by)?;
+            js_obj.set(cx, "createdBy", js_created_by)?;
             let js_status =
                 JsString::try_new(cx, enum_invitation_status_rs_to_js(status)).or_throw(cx)?;
             js_obj.set(cx, "status", js_status)?;
@@ -6897,6 +7122,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
             addr,
             token,
             created_on,
+            created_by,
             claimer_user_id,
             shamir_recovery_created_on,
             status,
@@ -6936,6 +7162,8 @@ fn variant_invite_list_item_rs_to_js<'a>(
                 }
             });
             js_obj.set(cx, "createdOn", js_created_on)?;
+            let js_created_by = variant_invite_list_invitation_created_by_rs_to_js(cx, created_by)?;
+            js_obj.set(cx, "createdBy", js_created_by)?;
             let js_claimer_user_id = JsString::try_new(cx, {
                 let custom_to_rs_string =
                     |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
@@ -6964,6 +7192,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
             addr,
             token,
             created_on,
+            created_by,
             claimer_email,
             status,
             ..
@@ -7002,6 +7231,8 @@ fn variant_invite_list_item_rs_to_js<'a>(
                 }
             });
             js_obj.set(cx, "createdOn", js_created_on)?;
+            let js_created_by = variant_invite_list_invitation_created_by_rs_to_js(cx, created_by)?;
+            js_obj.set(cx, "createdBy", js_created_by)?;
             let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
             js_obj.set(cx, "claimerEmail", js_claimer_email)?;
             let js_status =

@@ -158,11 +158,27 @@ class ClaimInProgressError(ErrorVariant):
         pass
 
 
+class UserOnlineStatus(Enum):
+    Online = EnumItemUnit
+    Offline = EnumItemUnit
+    Unknown = EnumItemUnit
+
+
 class ShamirRecoveryRecipient(Structure):
     user_id: UserID
     human_handle: HumanHandle
     revoked_on: Optional[DateTime]
     shares: NonZeroU8
+    online_status: UserOnlineStatus
+
+
+class InviteInfoInvitationCreatedBy(Variant):
+    class User:
+        user_id: UserID
+        human_handle: HumanHandle
+
+    class ExternalService:
+        service_label: str
 
 
 class AnyClaimRetrievedInfo(Variant):
@@ -181,6 +197,7 @@ class AnyClaimRetrievedInfo(Variant):
         handle: Handle
         claimer_user_id: UserID
         claimer_human_handle: HumanHandle
+        invitation_created_by: InviteInfoInvitationCreatedBy
         shamir_recovery_created_on: DateTime
         recipients: list[ShamirRecoveryRecipient]
         threshold: NonZeroU8
@@ -584,11 +601,21 @@ async def client_cancel_invitation(
     raise NotImplementedError
 
 
+class InviteListInvitationCreatedBy(Variant):
+    class User:
+        user_id: UserID
+        human_handle: HumanHandle
+
+    class ExternalService:
+        service_label: str
+
+
 class InviteListItem(Variant):
     class User:
         addr: ParsecInvitationAddr
         token: InvitationToken
         created_on: DateTime
+        created_by: InviteListInvitationCreatedBy
         claimer_email: str
         status: InvitationStatus
 
@@ -596,12 +623,14 @@ class InviteListItem(Variant):
         addr: ParsecInvitationAddr
         token: InvitationToken
         created_on: DateTime
+        created_by: InviteListInvitationCreatedBy
         status: InvitationStatus
 
     class ShamirRecovery:
         addr: ParsecInvitationAddr
         token: InvitationToken
         created_on: DateTime
+        created_by: InviteListInvitationCreatedBy
         claimer_user_id: UserID
         shamir_recovery_created_on: DateTime
         status: InvitationStatus

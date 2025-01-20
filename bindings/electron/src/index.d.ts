@@ -66,6 +66,12 @@ export enum RealmRole {
     Reader = 'RealmRoleReader',
 }
 
+export enum UserOnlineStatus {
+    Offline = 'UserOnlineStatusOffline',
+    Online = 'UserOnlineStatusOnline',
+    Unknown = 'UserOnlineStatusUnknown',
+}
+
 export enum UserProfile {
     Admin = 'UserProfileAdmin',
     Outsider = 'UserProfileOutsider',
@@ -267,6 +273,7 @@ export interface ShamirRecoveryRecipient {
     humanHandle: HumanHandle
     revokedOn: number | null
     shares: number
+    onlineStatus: UserOnlineStatus
 }
 
 
@@ -400,6 +407,7 @@ export interface AnyClaimRetrievedInfoShamirRecovery {
     handle: number
     claimer_user_id: string
     claimer_human_handle: HumanHandle
+    invitation_created_by: InviteInfoInvitationCreatedBy
     shamir_recovery_created_on: number
     recipients: Array<ShamirRecoveryRecipient>
     threshold: number
@@ -1610,12 +1618,43 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 
+// InviteInfoInvitationCreatedBy
+export interface InviteInfoInvitationCreatedByExternalService {
+    tag: "ExternalService"
+    service_label: string
+}
+export interface InviteInfoInvitationCreatedByUser {
+    tag: "User"
+    user_id: string
+    human_handle: HumanHandle
+}
+export type InviteInfoInvitationCreatedBy =
+  | InviteInfoInvitationCreatedByExternalService
+  | InviteInfoInvitationCreatedByUser
+
+
+// InviteListInvitationCreatedBy
+export interface InviteListInvitationCreatedByExternalService {
+    tag: "ExternalService"
+    service_label: string
+}
+export interface InviteListInvitationCreatedByUser {
+    tag: "User"
+    user_id: string
+    human_handle: HumanHandle
+}
+export type InviteListInvitationCreatedBy =
+  | InviteListInvitationCreatedByExternalService
+  | InviteListInvitationCreatedByUser
+
+
 // InviteListItem
 export interface InviteListItemDevice {
     tag: "Device"
     addr: string
     token: string
     created_on: number
+    created_by: InviteListInvitationCreatedBy
     status: InvitationStatus
 }
 export interface InviteListItemShamirRecovery {
@@ -1623,6 +1662,7 @@ export interface InviteListItemShamirRecovery {
     addr: string
     token: string
     created_on: number
+    created_by: InviteListInvitationCreatedBy
     claimer_user_id: string
     shamir_recovery_created_on: number
     status: InvitationStatus
@@ -1632,6 +1672,7 @@ export interface InviteListItemUser {
     addr: string
     token: string
     created_on: number
+    created_by: InviteListInvitationCreatedBy
     claimer_email: string
     status: InvitationStatus
 }

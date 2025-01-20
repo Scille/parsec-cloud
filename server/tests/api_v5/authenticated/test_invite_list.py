@@ -23,6 +23,10 @@ async def test_authenticated_invite_list_ok_with_shamir_recovery(
     expected_invitations = [
         authenticated_cmds.latest.invite_list.InviteListItemShamirRecovery(
             created_on=shamirorg.shamir_invited_alice.event.created_on,
+            created_by=authenticated_cmds.latest.invite_list.InvitationCreatedByUser(
+                user_id=shamirorg.bob.user_id,
+                human_handle=shamirorg.bob.human_handle,
+            ),
             status=InvitationStatus.IDLE,
             claimer_user_id=shamirorg.alice.user_id,
             shamir_recovery_created_on=shamirorg.alice_brief_certificate.timestamp,
@@ -64,6 +68,10 @@ async def test_authenticated_invite_list_ok(
     expected_invitations.append(
         authenticated_cmds.latest.invite_list.InviteListItemDevice(
             created_on=t1,
+            created_by=authenticated_cmds.latest.invite_list.InvitationCreatedByUser(
+                user_id=minimalorg.alice.user_id,
+                human_handle=minimalorg.alice.human_handle,
+            ),
             status=InvitationStatus.IDLE,
             token=outcome[0],
         )
@@ -82,6 +90,10 @@ async def test_authenticated_invite_list_ok(
     expected_invitations.append(
         authenticated_cmds.latest.invite_list.InviteListItemUser(
             created_on=t2,
+            created_by=authenticated_cmds.latest.invite_list.InvitationCreatedByUser(
+                user_id=minimalorg.alice.user_id,
+                human_handle=minimalorg.alice.human_handle,
+            ),
             status=InvitationStatus.IDLE,
             claimer_email="zack@example.invalid",
             token=outcome[0],
@@ -128,6 +140,10 @@ async def test_authenticated_invite_list_ok(
     expected_invitations.append(
         authenticated_cmds.latest.invite_list.InviteListItemUser(
             created_on=t4,
+            created_by=authenticated_cmds.latest.invite_list.InvitationCreatedByUser(
+                user_id=minimalorg.alice.user_id,
+                human_handle=minimalorg.alice.human_handle,
+            ),
             status=InvitationStatus.CANCELLED,
             claimer_email="deleted@example.invalid",
             token=outcome[0],
@@ -168,6 +184,10 @@ async def test_authenticated_invite_list_with_deleted_shamir(
     expected = authenticated_cmds.latest.invite_list.InviteListItemShamirRecovery(
         token=previous_invitation.token,
         created_on=previous_invitation.created_on,
+        created_by=authenticated_cmds.latest.invite_list.InvitationCreatedByUser(
+            user_id=shamirorg.bob.user_id,
+            human_handle=shamirorg.bob.human_handle,
+        ),
         claimer_user_id=previous_invitation.claimer_user_id,
         shamir_recovery_created_on=previous_invitation.shamir_recovery_created_on,
         status=InvitationStatus.CANCELLED,

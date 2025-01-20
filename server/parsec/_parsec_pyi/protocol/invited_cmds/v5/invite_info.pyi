@@ -11,27 +11,38 @@ class InvitationType:
 
 class InvitationTypeUser(InvitationType):
     def __init__(
-        self, claimer_email: str, greeter_user_id: UserID, greeter_human_handle: HumanHandle
+        self,
+        claimer_email: str,
+        created_by: InvitationCreatedBy,
+        administrators: list[UserGreetingAdministrator],
     ) -> None: ...
+    @property
+    def administrators(self) -> list[UserGreetingAdministrator]: ...
     @property
     def claimer_email(self) -> str: ...
     @property
-    def greeter_human_handle(self) -> HumanHandle: ...
-    @property
-    def greeter_user_id(self) -> UserID: ...
+    def created_by(self) -> InvitationCreatedBy: ...
 
 class InvitationTypeDevice(InvitationType):
-    def __init__(self, greeter_user_id: UserID, greeter_human_handle: HumanHandle) -> None: ...
+    def __init__(
+        self,
+        claimer_user_id: UserID,
+        claimer_human_handle: HumanHandle,
+        created_by: InvitationCreatedBy,
+    ) -> None: ...
     @property
-    def greeter_human_handle(self) -> HumanHandle: ...
+    def claimer_human_handle(self) -> HumanHandle: ...
     @property
-    def greeter_user_id(self) -> UserID: ...
+    def claimer_user_id(self) -> UserID: ...
+    @property
+    def created_by(self) -> InvitationCreatedBy: ...
 
 class InvitationTypeShamirRecovery(InvitationType):
     def __init__(
         self,
         claimer_user_id: UserID,
         claimer_human_handle: HumanHandle,
+        created_by: InvitationCreatedBy,
         shamir_recovery_created_on: DateTime,
         threshold: int,
         recipients: list[ShamirRecoveryRecipient],
@@ -41,18 +52,64 @@ class InvitationTypeShamirRecovery(InvitationType):
     @property
     def claimer_user_id(self) -> UserID: ...
     @property
+    def created_by(self) -> InvitationCreatedBy: ...
+    @property
     def recipients(self) -> list[ShamirRecoveryRecipient]: ...
     @property
     def shamir_recovery_created_on(self) -> DateTime: ...
     @property
     def threshold(self) -> int: ...
 
-class ShamirRecoveryRecipient:
+class UserOnlineStatus:
+    VALUES: tuple[UserOnlineStatus]
+    ONLINE: UserOnlineStatus
+    OFFLINE: UserOnlineStatus
+    UNKNOWN: UserOnlineStatus
+
+    @classmethod
+    def from_str(cls, value: str) -> UserOnlineStatus: ...
+    @property
+    def str(self) -> str: ...
+
+class InvitationCreatedBy:
+    pass
+
+class InvitationCreatedByUser(InvitationCreatedBy):
+    def __init__(self, user_id: UserID, human_handle: HumanHandle) -> None: ...
+    @property
+    def human_handle(self) -> HumanHandle: ...
+    @property
+    def user_id(self) -> UserID: ...
+
+class InvitationCreatedByExternalService(InvitationCreatedBy):
+    def __init__(self, service_label: str) -> None: ...
+    @property
+    def service_label(self) -> str: ...
+
+class UserGreetingAdministrator:
     def __init__(
-        self, user_id: UserID, human_handle: HumanHandle, shares: int, revoked_on: DateTime | None
+        self, user_id: UserID, human_handle: HumanHandle, online_status: UserOnlineStatus
     ) -> None: ...
     @property
     def human_handle(self) -> HumanHandle: ...
+    @property
+    def online_status(self) -> UserOnlineStatus: ...
+    @property
+    def user_id(self) -> UserID: ...
+
+class ShamirRecoveryRecipient:
+    def __init__(
+        self,
+        user_id: UserID,
+        human_handle: HumanHandle,
+        shares: int,
+        revoked_on: DateTime | None,
+        online_status: UserOnlineStatus,
+    ) -> None: ...
+    @property
+    def human_handle(self) -> HumanHandle: ...
+    @property
+    def online_status(self) -> UserOnlineStatus: ...
     @property
     def revoked_on(self) -> DateTime | None: ...
     @property

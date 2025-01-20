@@ -26,40 +26,31 @@
                                 "type": "String"
                             },
                             {
-                                // TODO: merge into `created_by`
-                                "name": "greeter_user_id",
-                                "type": "UserID"
+                                "name": "created_by",
+                                "type": "InvitationCreatedBy"
                             },
                             {
-                                // TODO: merge into `created_by`
-                                "name": "greeter_human_handle",
-                                "type": "HumanHandle"
+                                "name": "administrators",
+                                "type": "List<UserGreetingAdministrator>"
                             }
-                            // TODO: Add a `created_by` field and make it an `InviteInfoCreatedBy` type
-                            // which is a nested variant of either:
-                            // - OrganizationAdministrator<UserID, HumanHandle>
-                            // - ExternalService<String>
-                            //
-                            // TODO: Add an `administrators` field and make it a `List<InviteInfoAdministrator>` type
-                            // which is a nested type with the fields:
-                            // - user_id: UserID
-                            // - human_handle: HumanHandle
-                            // - status: ONLINE | OFFLINE | UNKNOWN
                         ]
                     },
                     {
                         "name": "Device",
                         "discriminant_value": "DEVICE",
                         "fields": [
+                            // Note: Greeter and claimer are the same for device invitations
                             {
-                                // TODO: Rename to `claimer_user_id`
-                                "name": "greeter_user_id",
+                                "name": "claimer_user_id",
                                 "type": "UserID"
                             },
                             {
-                                // TODO: Rename to `claimer_human_handle`
-                                "name": "greeter_human_handle",
+                                "name": "claimer_human_handle",
                                 "type": "HumanHandle"
+                            },
+                            {
+                                "name": "created_by",
+                                "type": "InvitationCreatedBy"
                             }
                         ]
                     },
@@ -76,6 +67,10 @@
                                 "type": "HumanHandle"
                             },
                             {
+                                "name": "created_by",
+                                "type": "InvitationCreatedBy"
+                            },
+                            {
                                 "name": "shamir_recovery_created_on",
                                 "type": "DateTime"
                             },
@@ -88,6 +83,70 @@
                                 "type": "List<ShamirRecoveryRecipient>"
                             }
                         ]
+                    }
+                ]
+            },
+            {
+                "name": "UserOnlineStatus",
+                "variants": [
+                    {
+                        "name": "Online",
+                        "discriminant_value": "ONLINE"
+                    },
+                    {
+                        "name": "Offline",
+                        "discriminant_value": "OFFLINE"
+                    },
+                    {
+                        "name": "Unknown",
+                        "discriminant_value": "UNKNOWN"
+                    }
+                ]
+            },
+            {
+                "name": "InvitationCreatedBy",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "User",
+                        "discriminant_value": "USER",
+                        "fields": [
+                            {
+                                "name": "user_id",
+                                "type": "UserID"
+                            },
+                            {
+                                "name": "human_handle",
+                                "type": "HumanHandle"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "ExternalService",
+                        "discriminant_value": "EXTERNAL_SERVICE",
+                        "fields": [
+                            {
+                                "name": "service_label",
+                                "type": "String"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "UserGreetingAdministrator",
+                "fields": [
+                    {
+                        "name": "user_id",
+                        "type": "UserID"
+                    },
+                    {
+                        "name": "human_handle",
+                        "type": "HumanHandle"
+                    },
+                    {
+                        "name": "online_status",
+                        "type": "UserOnlineStatus"
                     }
                 ]
             },
@@ -109,9 +168,11 @@
                     {
                         "name": "revoked_on",
                         "type": "RequiredOption<DateTime>"
+                    },
+                    {
+                        "name": "online_status",
+                        "type": "UserOnlineStatus"
                     }
-                    // TODO: Add a status field like:
-                    // - status: ONLINE | OFFLINE | UNKNOWN
                 ]
             }
         ]

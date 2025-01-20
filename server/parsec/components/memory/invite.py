@@ -21,6 +21,7 @@ from parsec.components.invite import (
     DeviceInvitation,
     GreetingAttemptCancelledBadOutcome,
     Invitation,
+    InvitationCreatedByUser,
     InviteAsInvitedInfoBadOutcome,
     InviteCancelBadOutcome,
     InviteClaimerCancelGreetingAttemptBadOutcome,
@@ -39,7 +40,9 @@ from parsec.components.invite import (
     SendEmailBadOutcome,
     ShamirRecoveryInvitation,
     ShamirRecoveryRecipient,
+    UserGreetingAdministrator,
     UserInvitation,
+    UserOnlineStatus,
 )
 from parsec.components.memory.datamodel import (
     AdvisoryLock,
@@ -106,12 +109,12 @@ class MemoryInviteComponent(BaseInviteComponent):
                 human_handle=org.users[user_id].cooked.human_handle,
                 shares=shares,
                 revoked_on=org.users[user_id].revoked_on,
+                online_status=UserOnlineStatus.UNKNOWN,
             )
             for user_id, shares in par_recipient_shares.items()
         ]
         recipients.sort(key=lambda x: x.human_handle.label)
         status = self._get_invitation_status(org.organization_id, invitation)
-        created_by_human_handle = org.users[invitation.created_by_user_id].cooked.human_handle
         claimer_human_handle = org.users[invitation.claimer_user_id].cooked.human_handle
 
         # Consider an active invitation as CANCELLED if the corresponding shamir recovery is deleted
@@ -121,9 +124,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         return ShamirRecoveryInvitation(
             token=invitation.token,
             created_on=invitation.created_on,
-            created_by_device_id=invitation.created_by_device_id,
-            created_by_user_id=invitation.created_by_user_id,
-            created_by_human_handle=created_by_human_handle,
+            created_by=invitation.created_by,
             status=status,
             claimer_user_id=invitation.claimer_user_id,
             claimer_human_handle=claimer_human_handle,
@@ -132,6 +133,17 @@ class MemoryInviteComponent(BaseInviteComponent):
             shamir_recovery_created_on=shamir_recovery.cooked_brief.timestamp,
             shamir_recovery_deleted_on=shamir_recovery.deleted_on,
         )
+
+    def _get_administrators(self, org: MemoryOrganization) -> list[UserGreetingAdministrator]:
+        return [
+            UserGreetingAdministrator(
+                user_id=user_id,
+                human_handle=user.cooked.human_handle,
+                online_status=UserOnlineStatus.UNKNOWN,
+            )
+            for user_id, user in org.users.items()
+            if user.current_profile == UserProfile.ADMIN and not user.is_revoked
+        ]
 
     @override
     async def new_for_user(
@@ -180,8 +192,11 @@ class MemoryInviteComponent(BaseInviteComponent):
                     force_token is None
                     and not invitation.is_deleted
                     and invitation.type == InvitationType.USER
-                    and invitation.created_by_user_id == author_user_id
                     and invitation.claimer_email == claimer_email
+                    # This allows to have multiple invitations for the same email for different administrators
+                    # TODO: Remove this when implementing https://github.com/Scille/parsec-cloud/issues/9413
+                    and isinstance(invitation.created_by, InvitationCreatedByUser)
+                    and invitation.created_by.user_id == author_user_id
                 ):
                     # An invitation already exists for what the user has asked for
                     token = invitation.token
@@ -189,13 +204,15 @@ class MemoryInviteComponent(BaseInviteComponent):
 
             else:
                 # Must create a new invitation
-
                 token = force_token or InvitationToken.new()
+                created_by = InvitationCreatedByUser(
+                    user_id=author_user_id,
+                    human_handle=author_user.cooked.human_handle,
+                )
                 org.invitations[token] = MemoryInvitation(
                     token=token,
                     type=InvitationType.USER,
-                    created_by_user_id=author_user_id,
-                    created_by_device_id=author,
+                    created_by=created_by,
                     claimer_email=claimer_email,
                     claimer_user_id=None,
                     shamir_recovery_index=None,
@@ -262,7 +279,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     force_token is None
                     and not invitation.is_deleted
                     and invitation.type == InvitationType.DEVICE
-                    and invitation.created_by_user_id == author_user_id
+                    and invitation.claimer_user_id == author_user_id
                 ):
                     # An invitation already exists for what the user has asked for
                     token = invitation.token
@@ -270,13 +287,15 @@ class MemoryInviteComponent(BaseInviteComponent):
 
             else:
                 # Must create a new invitation
-
                 token = force_token or InvitationToken.new()
+                created_by = InvitationCreatedByUser(
+                    user_id=author_user_id,
+                    human_handle=author_user.cooked.human_handle,
+                )
                 org.invitations[token] = MemoryInvitation(
                     token=token,
                     type=InvitationType.DEVICE,
-                    created_by_user_id=author_user_id,
-                    created_by_device_id=author,
+                    created_by=created_by,
                     claimer_user_id=author_user_id,
                     claimer_email=None,
                     shamir_recovery_index=None,
@@ -376,11 +395,14 @@ class MemoryInviteComponent(BaseInviteComponent):
                 # Must create a new invitation
 
                 token = force_token or InvitationToken.new()
+                created_by = InvitationCreatedByUser(
+                    user_id=author_user_id,
+                    human_handle=author_user.cooked.human_handle,
+                )
                 org.invitations[token] = MemoryInvitation(
                     token=token,
                     type=InvitationType.SHAMIR_RECOVERY,
-                    created_by_user_id=author_user_id,
-                    created_by_device_id=author,
+                    created_by=created_by,
                     claimer_email=claimer_human_handle.email,
                     created_on=now,
                     claimer_user_id=claimer_user_id,
@@ -484,10 +506,14 @@ class MemoryInviteComponent(BaseInviteComponent):
         for invitation in org.invitations.values():
             match invitation.type:
                 case InvitationType.USER:
-                    # In the future, this might change to:
-                    #     if author_user.current_profile == UserProfile.ADMIN
-                    # so that any admin can greet a user
-                    if invitation.created_by_user_id != author_user_id:
+                    if author_user.current_profile != UserProfile.ADMIN:
+                        continue
+                    # This removes the invitations created by other administrators
+                    # TODO: Remove this when implementing https://github.com/Scille/parsec-cloud/issues/9413
+                    if (
+                        isinstance(invitation.created_by, InvitationCreatedByUser)
+                        and invitation.created_by.user_id != author_user_id
+                    ):
                         continue
                     assert invitation.claimer_email is not None
                     status = self._get_invitation_status(organization_id, invitation)
@@ -495,22 +521,23 @@ class MemoryInviteComponent(BaseInviteComponent):
                         claimer_email=invitation.claimer_email,
                         token=invitation.token,
                         created_on=invitation.created_on,
-                        created_by_device_id=invitation.created_by_device_id,
-                        created_by_user_id=invitation.created_by_user_id,
-                        # This should also change once any admin can greet a user
-                        created_by_human_handle=author_user.cooked.human_handle,
+                        created_by=invitation.created_by,
+                        administrators=self._get_administrators(org),
                         status=status,
                     )
                 case InvitationType.DEVICE:
-                    if invitation.created_by_user_id != author_user_id:
+                    if invitation.claimer_user_id != author_user_id:
                         continue
+                    assert invitation.claimer_user_id is not None
                     status = self._get_invitation_status(organization_id, invitation)
                     item = DeviceInvitation(
                         token=invitation.token,
                         created_on=invitation.created_on,
-                        created_by_device_id=invitation.created_by_device_id,
-                        created_by_user_id=invitation.created_by_user_id,
-                        created_by_human_handle=author_user.cooked.human_handle,
+                        created_by=invitation.created_by,
+                        claimer_user_id=invitation.claimer_user_id,
+                        claimer_human_handle=org.users[
+                            invitation.claimer_user_id
+                        ].cooked.human_handle,
                         status=status,
                     )
                 case InvitationType.SHAMIR_RECOVERY:
@@ -549,7 +576,6 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteAsInvitedInfoBadOutcome.INVITATION_NOT_FOUND
         if invitation.is_deleted:
             return InviteAsInvitedInfoBadOutcome.INVITATION_DELETED
-        created_by_human_handle = org.users[invitation.created_by_user_id].cooked.human_handle
 
         match invitation.type:
             case InvitationType.USER:
@@ -558,18 +584,18 @@ class MemoryInviteComponent(BaseInviteComponent):
                     claimer_email=invitation.claimer_email,
                     created_on=invitation.created_on,
                     status=self._get_invitation_status(organization_id, invitation),
-                    created_by_user_id=invitation.created_by_user_id,
-                    created_by_device_id=invitation.created_by_device_id,
-                    created_by_human_handle=created_by_human_handle,
+                    created_by=invitation.created_by,
                     token=invitation.token,
+                    administrators=self._get_administrators(org),
                 )
             case InvitationType.DEVICE:
+                assert invitation.claimer_user_id is not None
                 return DeviceInvitation(
                     created_on=invitation.created_on,
                     status=self._get_invitation_status(organization_id, invitation),
-                    created_by_user_id=invitation.created_by_user_id,
-                    created_by_device_id=invitation.created_by_device_id,
-                    created_by_human_handle=created_by_human_handle,
+                    created_by=invitation.created_by,
+                    claimer_user_id=invitation.claimer_user_id,
+                    claimer_human_handle=org.users[invitation.claimer_user_id].cooked.human_handle,
                     token=invitation.token,
                 )
             case InvitationType.SHAMIR_RECOVERY:
@@ -627,12 +653,15 @@ class MemoryInviteComponent(BaseInviteComponent):
         org = self._data.organizations[organization_id]
         per_user_invitations = {}
         for invitation in org.invitations.values():
+            # TODO: Update method to also return invitation created by external services
+            if not isinstance(invitation.created_by, InvitationCreatedByUser):
+                continue
             try:
-                current_user_invitations = per_user_invitations[invitation.created_by_user_id]
+                current_user_invitations = per_user_invitations[invitation.created_by.user_id]
             except KeyError:
                 current_user_invitations = []
-                per_user_invitations[invitation.created_by_user_id] = current_user_invitations
-            created_by_human_handle = org.users[invitation.created_by_user_id].cooked.human_handle
+                per_user_invitations[invitation.created_by.user_id] = current_user_invitations
+
             match invitation.type:
                 case InvitationType.USER:
                     assert invitation.claimer_email is not None
@@ -641,21 +670,23 @@ class MemoryInviteComponent(BaseInviteComponent):
                             claimer_email=invitation.claimer_email,
                             created_on=invitation.created_on,
                             status=self._get_invitation_status(organization_id, invitation),
-                            created_by_user_id=invitation.created_by_user_id,
-                            created_by_device_id=invitation.created_by_device_id,
-                            created_by_human_handle=created_by_human_handle,
+                            created_by=invitation.created_by,
                             token=invitation.token,
+                            administrators=self._get_administrators(org),
                         )
                     )
                 case InvitationType.DEVICE:
+                    assert invitation.claimer_user_id is not None
                     current_user_invitations.append(
                         DeviceInvitation(
                             created_on=invitation.created_on,
                             status=self._get_invitation_status(organization_id, invitation),
-                            created_by_user_id=invitation.created_by_user_id,
-                            created_by_device_id=invitation.created_by_device_id,
-                            created_by_human_handle=created_by_human_handle,
+                            created_by=invitation.created_by,
                             token=invitation.token,
+                            claimer_user_id=invitation.claimer_user_id,
+                            claimer_human_handle=org.users[
+                                invitation.claimer_user_id
+                            ].cooked.human_handle,
                         )
                     )
                 case InvitationType.SHAMIR_RECOVERY:
@@ -674,7 +705,8 @@ class MemoryInviteComponent(BaseInviteComponent):
         self, org: MemoryOrganization, invitation: MemoryInvitation, greeter: MemoryUser
     ) -> bool:
         if invitation.type == InvitationType.DEVICE:
-            return invitation.created_by_user_id == greeter.cooked.user_id
+            assert invitation.claimer_user_id is not None
+            return invitation.claimer_user_id == greeter.cooked.user_id
         elif invitation.type == InvitationType.USER:
             return greeter.current_profile == UserProfile.ADMIN
         elif invitation.type == InvitationType.SHAMIR_RECOVERY:

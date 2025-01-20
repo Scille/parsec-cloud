@@ -16,7 +16,7 @@ import {
   UserInvitation,
 } from '@/parsec/types';
 import { listUsers } from '@/parsec/user';
-import { InviteListItem, InviteListItemTag, libparsec } from '@/plugins/libparsec';
+import { InviteListInvitationCreatedByTag, InviteListItem, InviteListItemTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 export async function inviteUser(email: string): Promise<Result<NewInvitationInfo, ClientNewUserInvitationError>> {
@@ -110,6 +110,15 @@ export async function listUserInvitations(options?: {
           token: '12346565645645654645645645645645',
           createdOn: DateTime.now(),
           claimerEmail: 'shadowheart@swordcoast.faerun',
+          createdBy: {
+            tag: InviteListInvitationCreatedByTag.User,
+            humanHandle: {
+              email: 'gale@waterdeep.faerun',
+              // cspell:disable-next-line
+              label: 'Gale Dekarios',
+            },
+            userId: '1234',
+          },
           status: InvitationStatus.Ready,
         },
         {
@@ -118,6 +127,15 @@ export async function listUserInvitations(options?: {
           addr: 'parsec3://parsec.example.com/MyOrg?a=claim_user&token=xBjfbfjrnrnrjnrjnrnjrjnrjnrjnrjnrjk',
           token: '32346565645645654645645645645645',
           createdOn: DateTime.now(),
+          createdBy: {
+            tag: InviteListInvitationCreatedByTag.User,
+            humanHandle: {
+              email: 'gale@waterdeep.faerun',
+              // cspell:disable-next-line
+              label: 'Gale Dekarios',
+            },
+            userId: '1234',
+          },
           claimerEmail: 'gale@waterdeep.faerun',
           status: InvitationStatus.Ready,
         },

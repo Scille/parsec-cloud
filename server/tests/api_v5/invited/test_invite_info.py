@@ -3,6 +3,11 @@
 import pytest
 
 from parsec._parsec import DateTime, RevokedUserCertificate, invited_cmds
+from parsec.components.invite import (
+    InvitationCreatedByUser,
+    UserGreetingAdministrator,
+    UserOnlineStatus,
+)
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, ShamirOrgRpcClients
 
 
@@ -14,8 +19,17 @@ async def test_invited_invite_info_ok(user_or_device: str, coolorg: CoolorgRpcCl
             assert rep == invited_cmds.latest.invite_info.RepOk(
                 invited_cmds.latest.invite_info.InvitationTypeUser(
                     claimer_email=coolorg.invited_zack.claimer_email,
-                    greeter_user_id=coolorg.alice.user_id,
-                    greeter_human_handle=coolorg.alice.human_handle,
+                    created_by=InvitationCreatedByUser(
+                        user_id=coolorg.alice.user_id,
+                        human_handle=coolorg.alice.human_handle,
+                    ).for_invite_info(),
+                    administrators=[
+                        UserGreetingAdministrator(
+                            user_id=coolorg.alice.user_id,
+                            human_handle=coolorg.alice.human_handle,
+                            online_status=UserOnlineStatus.UNKNOWN,
+                        ),
+                    ],
                 )
             )
 
@@ -23,8 +37,12 @@ async def test_invited_invite_info_ok(user_or_device: str, coolorg: CoolorgRpcCl
             rep = await coolorg.invited_alice_dev3.invite_info()
             assert rep == invited_cmds.latest.invite_info.RepOk(
                 invited_cmds.latest.invite_info.InvitationTypeDevice(
-                    greeter_user_id=coolorg.alice.user_id,
-                    greeter_human_handle=coolorg.alice.human_handle,
+                    claimer_user_id=coolorg.alice.user_id,
+                    claimer_human_handle=coolorg.alice.human_handle,
+                    created_by=InvitationCreatedByUser(
+                        user_id=coolorg.alice.user_id,
+                        human_handle=coolorg.alice.human_handle,
+                    ).for_invite_info(),
                 )
             )
 
@@ -56,6 +74,10 @@ async def test_invited_invite_info_ok_with_shamir(
         invited_cmds.latest.invite_info.InvitationTypeShamirRecovery(
             claimer_user_id=shamirorg.alice.user_id,
             claimer_human_handle=shamirorg.alice.human_handle,
+            created_by=InvitationCreatedByUser(
+                user_id=shamirorg.bob.user_id,
+                human_handle=shamirorg.bob.human_handle,
+            ).for_invite_info(),
             shamir_recovery_created_on=shamirorg.alice_brief_certificate.timestamp,
             threshold=2,
             recipients=[
@@ -64,18 +86,21 @@ async def test_invited_invite_info_ok_with_shamir(
                     human_handle=shamirorg.bob.human_handle,
                     shares=2,
                     revoked_on=None,
+                    online_status=UserOnlineStatus.UNKNOWN,
                 ),
                 invited_cmds.latest.invite_info.ShamirRecoveryRecipient(
                     user_id=shamirorg.mallory.user_id,
                     human_handle=shamirorg.mallory.human_handle,
                     shares=1,
                     revoked_on=now,
+                    online_status=UserOnlineStatus.UNKNOWN,
                 ),
                 invited_cmds.latest.invite_info.ShamirRecoveryRecipient(
                     user_id=shamirorg.mike.user_id,
                     human_handle=shamirorg.mike.human_handle,
                     shares=1,
                     revoked_on=None,
+                    online_status=UserOnlineStatus.UNKNOWN,
                 ),
             ],
         )
