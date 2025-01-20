@@ -9,11 +9,11 @@ Install Linux CLI
 
 Parsec is also available as a command line interface (CLI) for Linux. It is a standalone binary that is provided in our GitHub releases.
 
-.. _Parsec CLI v3.2.4-rc.4: https://github.com/Scille/parsec-cloud/releases/download/v3.2.4-rc.4/parsec-cli_3.2.4-rc.4_linux_x86_64
+.. _Parsec CLI v3.2.4-rc.5+dev: https://github.com/Scille/parsec-cloud/releases/download/v3.2.4-rc.5+dev/parsec-cli_3.2.4-rc.5+dev_linux_x86_64
 
 1. Download the CLI by following this link:
 
-   `Parsec CLI v3.2.4-rc.4`_.
+   `Parsec CLI v3.2.4-rc.5+dev`_.
 
 2. Make the file executable
 
@@ -22,16 +22,16 @@ Parsec is also available as a command line interface (CLI) for Linux. It is a st
 
     .. code-block:: shell
 
-        chmod +x parsec-cli_3.2.4-rc.4_linux_x86_64
+        chmod +x parsec-cli_3.2.4-rc.5+dev_linux_x86_64
 
 3. Verify the installation by running the following command:
 
   .. code-block:: shell
 
-      ./parsec-cli_3.2.4-rc.4_linux_x86_64 --version
+      ./parsec-cli_3.2.4-rc.5+dev_linux_x86_64 --version
 
   The CLI should output its version:
 
   .. code-block::
 
-      parsec-cli 3.2.4-rc.4
+      parsec-cli 3.2.4-rc.5+dev
