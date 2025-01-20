@@ -177,7 +177,8 @@ fn shared_recovery_create(
             "1",
             "1",
             "--threshold",
-            "1"
+            "1",
+            "--no-confirmation"
         )
         .stdout(predicates::str::contains(
             "Shared recovery setup has been created",
@@ -194,7 +195,8 @@ fn shared_recovery_create(
             "--weights",
             "1",
             "--threshold",
-            "1"
+            "1",
+            "--no-confirmation"
         )
         .stdout(predicates::str::contains(
             "Shared recovery setup has been created",
