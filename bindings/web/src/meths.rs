@@ -1551,7 +1551,7 @@ fn struct_file_stat_rs_to_js(rs_obj: libparsec::FileStat) -> Result<JsValue, JsV
     Reflect::set(&js_obj, &"isPlaceholder".into(), &js_is_placeholder)?;
     let js_need_sync = rs_obj.need_sync.into();
     Reflect::set(&js_obj, &"needSync".into(), &js_need_sync)?;
-    let js_size = JsValue::from(rs_obj.size);
+    let js_size = JsValue::from(BigInt::from(rs_obj.size));
     Reflect::set(&js_obj, &"size".into(), &js_size)?;
     Ok(js_obj)
 }
@@ -3457,7 +3457,7 @@ fn struct_workspace_history_file_stat_rs_to_js(
     Reflect::set(&js_obj, &"updated".into(), &js_updated)?;
     let js_version = JsValue::from(rs_obj.version);
     Reflect::set(&js_obj, &"version".into(), &js_version)?;
-    let js_size = JsValue::from(rs_obj.size);
+    let js_size = JsValue::from(BigInt::from(rs_obj.size));
     Reflect::set(&js_obj, &"size".into(), &js_size)?;
     Ok(js_obj)
 }
@@ -3677,7 +3677,7 @@ fn variant_active_users_limit_rs_to_js(
     match rs_obj {
         libparsec::ActiveUsersLimit::LimitedTo(x1, ..) => {
             Reflect::set(&js_obj, &"tag".into(), &"LimitedTo".into())?;
-            let js_x1 = JsValue::from(x1);
+            let js_x1 = JsValue::from(BigInt::from(x1));
             Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
         }
         libparsec::ActiveUsersLimit::NoLimit { .. } => {
@@ -5190,11 +5190,11 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 .as_ref()
             });
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
-            let js_blocks = JsValue::from(blocks);
+            let js_blocks = JsValue::from(BigInt::from(blocks));
             Reflect::set(&js_obj, &"blocks".into(), &js_blocks)?;
-            let js_block_index = JsValue::from(block_index);
+            let js_block_index = JsValue::from(BigInt::from(block_index));
             Reflect::set(&js_obj, &"blockIndex".into(), &js_block_index)?;
-            let js_blocksize = JsValue::from(blocksize);
+            let js_blocksize = JsValue::from(BigInt::from(blocksize));
             Reflect::set(&js_obj, &"blocksize".into(), &js_blocksize)?;
         }
         libparsec::ClientEvent::WorkspaceOpsOutboundSyncStarted {
@@ -6968,7 +6968,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             Reflect::set(&js_obj, &"isPlaceholder".into(), &js_is_placeholder)?;
             let js_need_sync = need_sync.into();
             Reflect::set(&js_obj, &"needSync".into(), &js_need_sync)?;
-            let js_size = JsValue::from(size);
+            let js_size = JsValue::from(BigInt::from(size));
             Reflect::set(&js_obj, &"size".into(), &js_size)?;
         }
         libparsec::EntryStat::Folder {
@@ -9759,7 +9759,7 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 .as_ref()
             });
             Reflect::set(&js_obj, &"workspaceId".into(), &js_workspace_id)?;
-            let js_key_index = JsValue::from(key_index);
+            let js_key_index = JsValue::from(BigInt::from(key_index));
             Reflect::set(&js_obj, &"keyIndex".into(), &js_key_index)?;
             let js_encrypted_path = JsValue::from(Uint8Array::from(encrypted_path.as_ref()));
             Reflect::set(&js_obj, &"encryptedPath".into(), &js_encrypted_path)?;
@@ -12139,7 +12139,7 @@ fn variant_workspace_history_entry_stat_rs_to_js(
             Reflect::set(&js_obj, &"updated".into(), &js_updated)?;
             let js_version = JsValue::from(version);
             Reflect::set(&js_obj, &"version".into(), &js_version)?;
-            let js_size = JsValue::from(size);
+            let js_size = JsValue::from(BigInt::from(size));
             Reflect::set(&js_obj, &"size".into(), &js_size)?;
         }
         libparsec::WorkspaceHistoryEntryStat::Folder {
@@ -16727,7 +16727,7 @@ pub fn workspaceFdWrite(workspace: u32, fd: u32, offset: u64, data: Uint8Array) 
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from(value);
+                let js_value = JsValue::from(BigInt::from(value));
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -16767,7 +16767,7 @@ pub fn workspaceFdWriteConstrainedIo(
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from(value);
+                let js_value = JsValue::from(BigInt::from(value));
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -16800,7 +16800,7 @@ pub fn workspaceFdWriteStartEof(workspace: u32, fd: u32, data: Uint8Array) -> Pr
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from(value);
+                let js_value = JsValue::from(BigInt::from(value));
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }

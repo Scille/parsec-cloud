@@ -88,6 +88,10 @@ export type SASCode = string
 export type UserID = string
 export type VlobID = string
 export type SequesterVerifyKeyDer = Uint8Array
+export type IndexInt = bigint
+export type SizeInt = bigint
+export type U64 = bigint
+export type I64 = bigint
 export type NonZeroU8 = number
 export type U8 = number
 export type I32 = number
@@ -96,10 +100,6 @@ export type FileDescriptor = number
 export type Handle = number
 export type U32 = number
 export type VersionInt = number
-export type I64 = number
-export type IndexInt = number
-export type SizeInt = number
-export type U64 = number
 export type { DateTime } from 'luxon'; import type { DateTime } from 'luxon';
 
 export interface AvailableDevice {

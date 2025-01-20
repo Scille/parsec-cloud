@@ -501,7 +501,7 @@ JsValue::from({{ rs_value }})
 {%- elif type.kind == "i64_based" -%}
 {%- if type.custom_to_rs_i64 %}
 {
-    let custom_to_rs_i64 = {{ type.custom_to_rs_i32 }};
+    let custom_to_rs_i64 = {{ type.custom_to_rs_i64 }};
     let v = match custom_to_rs_i64({{ rs_value }}) {
         Ok(ok) => ok,
         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
@@ -509,12 +509,12 @@ JsValue::from({{ rs_value }})
     JsValue::from(v)
 }
 {% else -%}
-JsValue::from({{ rs_value }})
+JsValue::from(BigInt::from({{ rs_value }}))
 {%- endif -%}
 {%- elif type.kind == "u64_based" -%}
 {%- if type.custom_to_rs_u64 %}
 {
-    let custom_to_rs_u64 = {{ type.custom_to_rs_i32 }};
+    let custom_to_rs_u64 = {{ type.custom_to_rs_u64 }};
     let v = match custom_to_rs_u64({{ rs_value }}) {
         Ok(ok) => ok,
         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
@@ -522,7 +522,7 @@ JsValue::from({{ rs_value }})
     JsValue::from(v)
 }
 {% else -%}
-JsValue::from({{ rs_value }})
+JsValue::from(BigInt::from({{ rs_value }}))
 {%- endif -%}
 {%- elif type.kind == "f64_based" -%}
 {%- if type.custom_to_rs_f64 %}
