@@ -363,7 +363,11 @@ async fn read_only_realm(tmp_path: TmpPath, env: &TestbedEnv) {
         let err = tokio::fs::create_dir(&new_dir).await.unwrap_err();
         #[cfg(not(target_os = "windows"))]
         p_assert_eq!(err.raw_os_error(), Some(libc::EROFS), "{}", err);
+
+        // In theory we would expect `ERROR_WRITE_PROTECT` here, however it causes
+        // a "Catastrophic Failure" error in Windows Explorer, so instead we use
+        // `ERROR_ACCESS_DENIED`.
         #[cfg(target_os = "windows")]
-        p_assert_eq!(err.raw_os_error(), Some(windows_sys::Win32::Foundation::ERROR_WRITE_PROTECT as i32), "{}", err);
+        p_assert_eq!(err.raw_os_error(), Some(windows_sys::Win32::Foundation::ERROR_ACCESS_DENIED as i32), "{}", err);
     });
 }
