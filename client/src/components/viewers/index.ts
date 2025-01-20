@@ -9,6 +9,7 @@ import FileControlsPagination from '@/components/viewers/controls/FileControlsPa
 import FileControlsPlayback from '@/components/viewers/controls/FileControlsPlayback.vue';
 import FileControlsVolume from '@/components/viewers/controls/FileControlsVolume.vue';
 import FileControlsZoom from '@/components/viewers/controls/FileControlsZoom.vue';
+import FileViewerBackground from '@/components/viewers/FileViewerBackground.vue';
 
 export {
   FileControls,
@@ -20,4 +21,5 @@ export {
   FileControlsPlayback,
   FileControlsVolume,
   FileControlsZoom,
+  FileViewerBackground,
 };
