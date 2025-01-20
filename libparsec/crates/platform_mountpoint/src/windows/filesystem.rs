@@ -25,8 +25,24 @@ use crate::windows::winify::winify_entry_name;
 
 use super::winify::unwinify_entry_name;
 
-/// we currently don't support arbitrary security descriptor and instead use only this one
-/// https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format
+// We don't support arbitrary security descriptor, and instead use a one-size-fits-all.
+//
+// To be honest, I'm genuinely impressed by how unreadable they managed to make this security descriptor format O_o
+//
+// Basically to have a chance deciphering this, you need to know:
+// - `:` is not a separator between groups
+// - There are 3 groups, starting with:
+//    - `O:` (for Owner)
+//    - `G:` (for Group)
+//    - `D:` (for DACL, or Discretionary Access Control List)
+// - The D group contains multiple sub-groups...
+// - ...which are this time splitted by `;`
+//
+// For instance `O:BAG:BAD:P(A;;FRFX;;;SY)(A;;FRFX;;;BA)(A;;FRFX;;;WD)` is the read-only version
+// of our current security descriptor (`FA` is "File All", `FRFX` is "File Read File Execute").
+//
+// See https://learn.microsoft.com/windows/win32/secauthz/security-descriptor-string-format
+// See https://learn.microsoft.com/en-us/windows/win32/secauthz/access-control-lists
 static SECURITY_DESCRIPTOR: Lazy<SecurityDescriptor> = Lazy::new(|| {
     SecurityDescriptor::from_wstr(u16cstr!("O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;WD)"))
         .expect("unreachable, valid SecurityDescriptor")
