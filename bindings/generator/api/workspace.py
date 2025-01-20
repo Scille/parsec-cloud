@@ -394,6 +394,7 @@ async def workspace_stat_folder_children_by_id(
 
 class MoveEntryMode(Variant):
     CanReplace = VariantItemUnit()
+    CanReplaceFileOnly = VariantItemUnit()
     NoReplace = VariantItemUnit()
     Exchange = VariantItemUnit()
 
