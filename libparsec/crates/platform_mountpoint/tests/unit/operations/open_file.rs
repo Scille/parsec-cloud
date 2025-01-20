@@ -373,7 +373,7 @@ async fn read_only_realm(
             #[cfg(target_os = "windows")]
             p_assert_eq!(
                 err.raw_os_error(),
-                Some(windows_sys::Win32::Foundation::ERROR_WRITE_PROTECT as i32),
+                Some(windows_sys::Win32::Foundation::ERROR_ACCESS_DENIED as i32),
                 "{}",
                 err
             );
