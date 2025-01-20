@@ -303,7 +303,7 @@ export async function writeFile(
       return { ok: false, error: { tag: WorkspaceFdWriteErrorTag.BadFileDescriptor, error: 'Invalid file descriptor' } };
     }
     await wait(100);
-    return { ok: true, value: data.length };
+    return { ok: true, value: BigInt(data.length) };
   }
 }
 
@@ -326,29 +326,29 @@ export async function readFile(
 
     switch (ext) {
       case 'xlsx':
-        offset === 0 && console.log('Using XLSX content');
-        return { ok: true, value: MockFiles.XLSX.slice(offset, offset + size) };
+        offset === 0n && console.log('Using XLSX content');
+        return { ok: true, value: MockFiles.XLSX.slice(Number(offset), Number(offset + size)) };
       case 'png':
-        offset === 0 && console.log('Using PNG content');
-        return { ok: true, value: MockFiles.PNG.slice(offset, offset + size) };
+        offset === 0n && console.log('Using PNG content');
+        return { ok: true, value: MockFiles.PNG.slice(Number(offset), Number(offset + size)) };
       case 'docx':
-        offset === 0 && console.log('Using DOCX content');
-        return { ok: true, value: MockFiles.DOCX.slice(offset, offset + size) };
+        offset === 0n && console.log('Using DOCX content');
+        return { ok: true, value: MockFiles.DOCX.slice(Number(offset), Number(offset + size)) };
       case 'txt':
-        offset === 0 && console.log('Using TXT content');
-        return { ok: true, value: MockFiles.TXT.slice(offset, offset + size) };
+        offset === 0n && console.log('Using TXT content');
+        return { ok: true, value: MockFiles.TXT.slice(Number(offset), Number(offset + size)) };
       case 'py':
-        offset === 0 && console.log('Using PY content');
-        return { ok: true, value: MockFiles.PY.slice(offset, offset + size) };
+        offset === 0n && console.log('Using PY content');
+        return { ok: true, value: MockFiles.PY.slice(Number(offset), Number(offset + size)) };
       case 'pdf':
-        offset === 0 && console.log('Using PDF content');
-        return { ok: true, value: MockFiles.PDF.slice(offset, offset + size) };
+        offset === 0n && console.log('Using PDF content');
+        return { ok: true, value: MockFiles.PDF.slice(Number(offset), Number(offset + size)) };
       case 'mp3':
-        offset === 0 && console.log('Using MP3 content');
-        return { ok: true, value: MockFiles.MP3.slice(offset, offset + size) };
+        offset === 0n && console.log('Using MP3 content');
+        return { ok: true, value: MockFiles.MP3.slice(Number(offset), Number(offset + size)) };
       case 'mp4':
-        offset === 0 && console.log('Using MP4 content');
-        return { ok: true, value: MockFiles.MP4.slice(offset, offset + size) };
+        offset === 0n && console.log('Using MP4 content');
+        return { ok: true, value: MockFiles.MP4.slice(Number(offset), Number(offset + size)) };
     }
     console.log('Using default file content');
     return {

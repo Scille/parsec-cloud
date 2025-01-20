@@ -408,8 +408,8 @@ class FileOperationManager {
         await resizeFile(data.workspaceHandle, fdW, entry.size);
 
         let loop = true;
-        let offset = 0;
-        const READ_CHUNK_SIZE = 1_000_000;
+        let offset = 0n;
+        const READ_CHUNK_SIZE = 1_000_000n;
         while (loop) {
           // Check if the copy has been cancelled
           let shouldCancel = false;
@@ -444,10 +444,10 @@ class FileOperationManager {
             loop = false;
           } else {
             // Otherwise, move the offset and keep going
-            offset += chunk.byteLength;
+            offset += BigInt(chunk.byteLength);
           }
           totalSizeCopied += chunk.byteLength;
-          await this.sendState(FileOperationState.OperationProgress, data, { progress: (totalSizeCopied / tree.totalSize) * 100 });
+          await this.sendState(FileOperationState.OperationProgress, data, { progress: (totalSizeCopied / Number(tree.totalSize)) * 100 });
         }
         copied = true;
       } catch (e: any) {
@@ -611,8 +611,8 @@ class FileOperationManager {
         await resizeFile(data.workspaceHandle, fdW, entry.size);
 
         let loop = true;
-        let offset = 0;
-        const READ_CHUNK_SIZE = 1_000_000;
+        let offset = 0n;
+        const READ_CHUNK_SIZE = 1_000_000n;
         while (loop) {
           // Check if the copy has been cancelled
           let shouldCancel = false;
@@ -647,10 +647,10 @@ class FileOperationManager {
             loop = false;
           } else {
             // Otherwise, move the offset and keep going
-            offset += chunk.byteLength;
+            offset += BigInt(chunk.byteLength);
           }
           totalSizeRestored += chunk.byteLength;
-          await this.sendState(FileOperationState.OperationProgress, data, { progress: (totalSizeRestored / tree.totalSize) * 100 });
+          await this.sendState(FileOperationState.OperationProgress, data, { progress: (totalSizeRestored / Number(tree.totalSize)) * 100 });
         }
         restored = true;
       } catch (e: any) {
@@ -715,7 +715,7 @@ class FileOperationManager {
 
     const fd = openResult.value;
 
-    const resizeResult = await resizeFile(data.workspaceHandle, fd, data.file.size);
+    const resizeResult = await resizeFile(data.workspaceHandle, fd, BigInt(data.file.size));
     if (!resizeResult.ok) {
       await closeFile(data.workspaceHandle, fd);
       await deleteFile(data.workspaceHandle, filePath);
@@ -724,7 +724,7 @@ class FileOperationManager {
     }
 
     await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
-    let writtenData = 0;
+    let writtenData = 0n;
 
     // Would prefer to use
     // for await (const chunk of data.file.stream()) {}
@@ -763,7 +763,7 @@ class FileOperationManager {
           return;
         } else {
           writtenData += writeResult.value;
-          await this.sendState(FileOperationState.OperationProgress, data, { progress: (writtenData / (data.file.size || 1)) * 100 });
+          await this.sendState(FileOperationState.OperationProgress, data, { progress: (Number(writtenData) / (data.file.size || 1)) * 100 });
         }
       }
       if (buffer.done) {
