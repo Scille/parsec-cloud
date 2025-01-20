@@ -65,6 +65,12 @@ export enum RealmRole {
     Reader = 'RealmRoleReader',
 }
 
+export enum UserOnlineStatus {
+    Offline = 'UserOnlineStatusOffline',
+    Online = 'UserOnlineStatusOnline',
+    Unknown = 'UserOnlineStatusUnknown',
+}
+
 export enum UserProfile {
     Admin = 'UserProfileAdmin',
     Outsider = 'UserProfileOutsider',
@@ -269,6 +275,7 @@ export interface ShamirRecoveryRecipient {
     humanHandle: HumanHandle
     revokedOn: DateTime | null
     shares: NonZeroU8
+    onlineStatus: UserOnlineStatus
 }
 
 export interface StartedWorkspaceInfo {
@@ -396,6 +403,7 @@ export interface AnyClaimRetrievedInfoShamirRecovery {
     handle: Handle
     claimerUserId: UserID
     claimerHumanHandle: HumanHandle
+    invitationCreatedBy: InviteInfoInvitationCreatedBy
     shamirRecoveryCreatedOn: DateTime
     recipients: Array<ShamirRecoveryRecipient>
     threshold: NonZeroU8
@@ -1880,6 +1888,44 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorStopped
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
+// InviteInfoInvitationCreatedBy
+export enum InviteInfoInvitationCreatedByTag {
+    ExternalService = 'InviteInfoInvitationCreatedByExternalService',
+    User = 'InviteInfoInvitationCreatedByUser',
+}
+
+export interface InviteInfoInvitationCreatedByExternalService {
+    tag: InviteInfoInvitationCreatedByTag.ExternalService
+    serviceLabel: string
+}
+export interface InviteInfoInvitationCreatedByUser {
+    tag: InviteInfoInvitationCreatedByTag.User
+    userId: UserID
+    humanHandle: HumanHandle
+}
+export type InviteInfoInvitationCreatedBy =
+  | InviteInfoInvitationCreatedByExternalService
+  | InviteInfoInvitationCreatedByUser
+
+// InviteListInvitationCreatedBy
+export enum InviteListInvitationCreatedByTag {
+    ExternalService = 'InviteListInvitationCreatedByExternalService',
+    User = 'InviteListInvitationCreatedByUser',
+}
+
+export interface InviteListInvitationCreatedByExternalService {
+    tag: InviteListInvitationCreatedByTag.ExternalService
+    serviceLabel: string
+}
+export interface InviteListInvitationCreatedByUser {
+    tag: InviteListInvitationCreatedByTag.User
+    userId: UserID
+    humanHandle: HumanHandle
+}
+export type InviteListInvitationCreatedBy =
+  | InviteListInvitationCreatedByExternalService
+  | InviteListInvitationCreatedByUser
+
 // InviteListItem
 export enum InviteListItemTag {
     Device = 'InviteListItemDevice',
@@ -1892,6 +1938,7 @@ export interface InviteListItemDevice {
     addr: ParsecInvitationAddr
     token: InvitationToken
     createdOn: DateTime
+    createdBy: InviteListInvitationCreatedBy
     status: InvitationStatus
 }
 export interface InviteListItemShamirRecovery {
@@ -1899,6 +1946,7 @@ export interface InviteListItemShamirRecovery {
     addr: ParsecInvitationAddr
     token: InvitationToken
     createdOn: DateTime
+    createdBy: InviteListInvitationCreatedBy
     claimerUserId: UserID
     shamirRecoveryCreatedOn: DateTime
     status: InvitationStatus
@@ -1908,6 +1956,7 @@ export interface InviteListItemUser {
     addr: ParsecInvitationAddr
     token: InvitationToken
     createdOn: DateTime
+    createdBy: InviteListInvitationCreatedBy
     claimerEmail: string
     status: InvitationStatus
 }

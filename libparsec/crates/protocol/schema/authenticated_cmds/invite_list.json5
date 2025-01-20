@@ -19,6 +19,36 @@
         ],
         "nested_types": [
             {
+                "name": "InvitationCreatedBy",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "User",
+                        "discriminant_value": "USER",
+                        "fields": [
+                            {
+                                "name": "user_id",
+                                "type": "UserID"
+                            },
+                            {
+                                "name": "human_handle",
+                                "type": "HumanHandle"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "ExternalService",
+                        "discriminant_value": "EXTERNAL_SERVICE",
+                        "fields": [
+                            {
+                                "name": "service_label",
+                                "type": "String"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
                 "name": "InviteListItem",
                 "discriminant_field": "type",
                 "variants": [
@@ -33,6 +63,10 @@
                             {
                                 "name": "created_on",
                                 "type": "DateTime"
+                            },
+                            {
+                                "name": "created_by",
+                                "type": "InvitationCreatedBy"
                             },
                             {
                                 "name": "claimer_email",
@@ -57,6 +91,10 @@
                                 "type": "DateTime"
                             },
                             {
+                                "name": "created_by",
+                                "type": "InvitationCreatedBy"
+                            },
+                            {
                                 "name": "status",
                                 "type": "InvitationStatus"
                             }
@@ -73,6 +111,10 @@
                             {
                                 "name": "created_on",
                                 "type": "DateTime"
+                            },
+                            {
+                                "name": "created_by",
+                                "type": "InvitationCreatedBy"
                             },
                             {
                                 "name": "claimer_user_id",

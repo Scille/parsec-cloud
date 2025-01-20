@@ -43,8 +43,17 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
             protocol::invited_cmds::latest::invite_info::Rep::Ok(
                 protocol::invited_cmds::latest::invite_info::InvitationType::User {
                     claimer_email: "john@example.com".to_owned(),
-                    greeter_human_handle: alice.human_handle.clone(),
-                    greeter_user_id: alice.user_id.to_owned(),
+                    created_by: protocol::invited_cmds::latest::invite_info::InvitationCreatedBy::User {
+                        user_id: alice.user_id.to_owned(),
+                        human_handle: alice.human_handle.to_owned(),
+                    },
+                    administrators: vec![
+                        protocol::invited_cmds::latest::invite_info::UserGreetingAdministrator {
+                            user_id: alice.user_id.to_owned(),
+                            human_handle: alice.human_handle.to_owned(),
+                            online_status: protocol::invited_cmds::latest::invite_info::UserOnlineStatus::Online,
+                        },
+                    ],
                 },
             )
         }

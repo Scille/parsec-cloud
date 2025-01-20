@@ -29,6 +29,7 @@ from parsec.components.invite import (
     DeviceInvitation,
     GreetingAttemptCancelledBadOutcome,
     Invitation,
+    InvitationCreatedByUser,
     InviteAsInvitedInfoBadOutcome,
     InviteCancelBadOutcome,
     InviteClaimerCancelGreetingAttemptBadOutcome,
@@ -46,7 +47,9 @@ from parsec.components.invite import (
     NotReady,
     SendEmailBadOutcome,
     ShamirRecoveryInvitation,
+    UserGreetingAdministrator,
     UserInvitation,
+    UserOnlineStatus,
 )
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
@@ -55,7 +58,6 @@ from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user import PGUserComponent, UserInfo
 from parsec.components.postgresql.utils import (
     Q,
-    q_device,
     q_device_internal_id,
     q_organization_internal_id,
     q_user,
@@ -75,7 +77,6 @@ class InvitationInfo:
     token: InvitationToken
     type: InvitationType
     created_by_user_id: UserID
-    created_by_device_id: DeviceID
     created_by_email: str
     created_by_label: str
     claimer_email: str | None
@@ -101,7 +102,6 @@ class InvitationInfo:
             token,
             type,
             created_by_user_id_str,
-            created_by_device_id_str,
             created_by_email,
             created_by_label,
             claimer_email,
@@ -125,7 +125,6 @@ class InvitationInfo:
             token=InvitationToken.from_hex(token),
             type=InvitationType.from_str(type),
             created_by_user_id=UserID.from_hex(created_by_user_id_str),
-            created_by_device_id=DeviceID.from_hex(created_by_device_id_str),
             created_by_email=created_by_email,
             created_by_label=created_by_label,
             claimer_email=claimer_email,
@@ -382,7 +381,6 @@ SELECT
     invitation.token,
     invitation.type,
     user_.user_id AS created_by_user_id,
-    device.device_id AS created_by_device_id,
     human.email,
     human.label,
     invitation.claimer_email,
@@ -417,7 +415,6 @@ SELECT
     invitation.token,
     invitation.type,
     user_.user_id AS created_by_user_id,
-    device.device_id as created_by_device_id,
     human.email as created_by_email,
     human.label as created_by_label,
     invitation.claimer_email,
@@ -470,8 +467,7 @@ def make_q_info_invitation(
             invitation._id AS invitation_internal_id,
             invitation.token,
             invitation.type,
-            { q_user(_id=q_device(_id="invitation.created_by", select="user_"), select="user_id") } as created_by_user_id,
-            { q_device(_id="invitation.created_by", select="device_id") } as created_by_device_id,
+            user_.user_id as created_by_user_id,
             human.email,
             human.label,
             invitation.claimer_email,
@@ -483,7 +479,8 @@ def make_q_info_invitation(
         FROM invitation
         INNER JOIN selected_invitation ON invitation._id = selected_invitation.invitation_internal_id
         INNER JOIN device ON invitation.created_by = device._id
-        INNER JOIN human ON human._id = (SELECT user_.human FROM user_ WHERE user_._id = device.user_)
+        INNER JOIN user_ ON device.user_ = user_._id
+        INNER JOIN human ON human._id = user_.human
         LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
         """)
 
@@ -754,6 +751,23 @@ RETURNING greeter_data
 )
 
 
+_q_list_administrators = Q(
+    """
+SELECT
+    user_.user_id,
+    human.email,
+    human.label
+FROM user_
+INNER JOIN human ON user_.human = human._id
+INNER JOIN organization ON user_.organization = organization._id
+WHERE
+    organization.organization_id = $organization_id
+    AND user_.current_profile = 'ADMIN'
+    AND user_.revoked_on IS NULL
+"""
+)
+
+
 async def query_retrieve_active_human_by_email(
     conn: AsyncpgConnection, organization_id: OrganizationID, email: str
 ) -> UserID | None:
@@ -783,6 +797,8 @@ async def _do_new_invitation(
     match invitation_type:
         case InvitationType.USER:
             assert claimer_email is not None
+            # This request allows to have multiple invitations for the same email for different administrators
+            # TODO: Update this when implementing https://github.com/Scille/parsec-cloud/issues/9413
             q = _q_retrieve_compatible_user_invitation(
                 organization_id=organization_id.str,
                 type=invitation_type.str,
@@ -1137,6 +1153,7 @@ class PGInviteComponent(BaseInviteComponent):
                 human_handle=HumanHandle(email=row["email"], label=row["label"]),
                 shares=row["shares"],
                 revoked_on=row["revoked_on"],
+                online_status=UserOnlineStatus.UNKNOWN,
             )
             for row in rows
         ]
@@ -1150,6 +1167,34 @@ class PGInviteComponent(BaseInviteComponent):
             created_on=created_on,
             deleted_on=deleted_on,
         )
+
+    async def _get_administrators(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID
+    ) -> list[UserGreetingAdministrator]:
+        administrators = []
+        rows = await conn.fetch(*_q_list_administrators(organization_id=organization_id.str))
+        for row in rows:
+            match row["user_id"]:
+                case str() as raw_user_id:
+                    user_id = UserID.from_hex(raw_user_id)
+                case unknown:
+                    assert False, repr(unknown)
+
+            match (row["email"], row["label"]):
+                case (str() as raw_email, str() as raw_label):
+                    human_handle = HumanHandle(email=raw_email, label=raw_label)
+                case unknown:
+                    assert False, repr(unknown)
+
+            administrators.append(
+                UserGreetingAdministrator(
+                    user_id=user_id,
+                    human_handle=human_handle,
+                    online_status=UserOnlineStatus.UNKNOWN,
+                )
+            )
+
+        return administrators
 
     @override
     @transaction
@@ -1225,6 +1270,8 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteListBadOutcome.AUTHOR_REVOKED
 
+        # This request does not select the user invitations created by other administrators
+        # TODO: Update this when implementing https://github.com/Scille/parsec-cloud/issues/9413
         rows = await conn.fetch(
             *_q_list_invitations(organization_id=organization_id.str, user_id=author_user_id)
         )
@@ -1246,20 +1293,29 @@ class PGInviteComponent(BaseInviteComponent):
             match invitation_info.type:
                 case InvitationType.USER:
                     assert invitation_info.claimer_email is not None
+                    # Note that the `administrators` field is actually not used in the context of the `invite_list` command.
+                    # Still, we compute it here for consistency. In order to save this unnecessary query to the database,
+                    # we could update the invite API to take this difference into account.
+                    administrators = await self._get_administrators(conn, organization_id)
                     invitation = UserInvitation(
-                        created_by_user_id=invitation_info.created_by_user_id,
-                        created_by_device_id=invitation_info.created_by_device_id,
-                        created_by_human_handle=invitation_info.created_by_human_handle,
+                        created_by=InvitationCreatedByUser(
+                            user_id=invitation_info.created_by_user_id,
+                            human_handle=invitation_info.created_by_human_handle,
+                        ),
                         claimer_email=invitation_info.claimer_email,
                         token=invitation_info.token,
                         created_on=invitation_info.created_on,
+                        administrators=administrators,
                         status=status,
                     )
                 case InvitationType.DEVICE:
                     invitation = DeviceInvitation(
-                        created_by_user_id=invitation_info.created_by_user_id,
-                        created_by_device_id=invitation_info.created_by_device_id,
-                        created_by_human_handle=invitation_info.created_by_human_handle,
+                        claimer_user_id=invitation_info.created_by_user_id,
+                        claimer_human_handle=invitation_info.created_by_human_handle,
+                        created_by=InvitationCreatedByUser(
+                            user_id=invitation_info.created_by_user_id,
+                            human_handle=invitation_info.created_by_human_handle,
+                        ),
                         token=invitation_info.token,
                         created_on=invitation_info.created_on,
                         status=status,
@@ -1271,9 +1327,10 @@ class PGInviteComponent(BaseInviteComponent):
                     )
 
                     invitation = ShamirRecoveryInvitation(
-                        created_by_user_id=invitation_info.created_by_user_id,
-                        created_by_device_id=invitation_info.created_by_device_id,
-                        created_by_human_handle=invitation_info.created_by_human_handle,
+                        created_by=InvitationCreatedByUser(
+                            user_id=invitation_info.created_by_user_id,
+                            human_handle=invitation_info.created_by_human_handle,
+                        ),
                         token=invitation_info.token,
                         created_on=invitation_info.created_on,
                         status=status,
@@ -1309,26 +1366,29 @@ class PGInviteComponent(BaseInviteComponent):
         if invitation_info.deleted_on:
             return InviteAsInvitedInfoBadOutcome.INVITATION_DELETED
 
-        greeter_human_handle = HumanHandle(
-            email=invitation_info.created_by_email, label=invitation_info.created_by_label
-        )
         match invitation_info.type:
             case InvitationType.USER:
                 assert invitation_info.claimer_email is not None
+                administrators = await self._get_administrators(conn, organization_id)
                 return UserInvitation(
-                    created_by_user_id=invitation_info.created_by_user_id,
-                    created_by_device_id=invitation_info.created_by_device_id,
-                    created_by_human_handle=greeter_human_handle,
+                    created_by=InvitationCreatedByUser(
+                        user_id=invitation_info.created_by_user_id,
+                        human_handle=invitation_info.created_by_human_handle,
+                    ),
                     claimer_email=invitation_info.claimer_email,
                     token=token,
                     created_on=invitation_info.created_on,
+                    administrators=administrators,
                     status=InvitationStatus.READY,
                 )
             case InvitationType.DEVICE:
                 return DeviceInvitation(
-                    created_by_user_id=invitation_info.created_by_user_id,
-                    created_by_device_id=invitation_info.created_by_device_id,
-                    created_by_human_handle=greeter_human_handle,
+                    claimer_user_id=invitation_info.created_by_user_id,
+                    claimer_human_handle=invitation_info.created_by_human_handle,
+                    created_by=InvitationCreatedByUser(
+                        user_id=invitation_info.created_by_user_id,
+                        human_handle=invitation_info.created_by_human_handle,
+                    ),
                     token=token,
                     created_on=invitation_info.created_on,
                     status=InvitationStatus.READY,
@@ -1339,9 +1399,10 @@ class PGInviteComponent(BaseInviteComponent):
                     conn, invitation_info.shamir_recovery_setup_internal_id
                 )
                 return ShamirRecoveryInvitation(
-                    created_by_user_id=invitation_info.created_by_user_id,
-                    created_by_device_id=invitation_info.created_by_device_id,
-                    created_by_human_handle=greeter_human_handle,
+                    created_by=InvitationCreatedByUser(
+                        user_id=invitation_info.created_by_user_id,
+                        human_handle=invitation_info.created_by_human_handle,
+                    ),
                     token=token,
                     created_on=invitation_info.created_on,
                     status=InvitationStatus.READY,
@@ -1449,14 +1510,17 @@ class PGInviteComponent(BaseInviteComponent):
             match invitation_info.type:
                 case InvitationType.USER:
                     assert invitation_info.claimer_email is not None
+                    administrators = await self._get_administrators(conn, organization_id)
                     current_user_invitations.append(
                         UserInvitation(
                             claimer_email=invitation_info.claimer_email,
                             created_on=invitation_info.created_on,
                             status=status,
-                            created_by_user_id=invitation_info.created_by_user_id,
-                            created_by_device_id=invitation_info.created_by_device_id,
-                            created_by_human_handle=invitation_info.created_by_human_handle,
+                            created_by=InvitationCreatedByUser(
+                                user_id=invitation_info.created_by_user_id,
+                                human_handle=invitation_info.created_by_human_handle,
+                            ),
+                            administrators=administrators,
                             token=invitation_info.token,
                         )
                     )
@@ -1464,10 +1528,13 @@ class PGInviteComponent(BaseInviteComponent):
                     current_user_invitations.append(
                         DeviceInvitation(
                             created_on=invitation_info.created_on,
+                            created_by=InvitationCreatedByUser(
+                                user_id=invitation_info.created_by_user_id,
+                                human_handle=invitation_info.created_by_human_handle,
+                            ),
                             status=status,
-                            created_by_user_id=invitation_info.created_by_user_id,
-                            created_by_device_id=invitation_info.created_by_device_id,
-                            created_by_human_handle=invitation_info.created_by_human_handle,
+                            claimer_human_handle=invitation_info.created_by_human_handle,
+                            claimer_user_id=invitation_info.created_by_user_id,
                             token=invitation_info.token,
                         )
                     )
@@ -1480,9 +1547,10 @@ class PGInviteComponent(BaseInviteComponent):
                         ShamirRecoveryInvitation(
                             created_on=invitation_info.created_on,
                             status=status,
-                            created_by_user_id=invitation_info.created_by_user_id,
-                            created_by_device_id=invitation_info.created_by_device_id,
-                            created_by_human_handle=invitation_info.created_by_human_handle,
+                            created_by=InvitationCreatedByUser(
+                                user_id=invitation_info.created_by_user_id,
+                                human_handle=invitation_info.created_by_human_handle,
+                            ),
                             token=invitation_info.token,
                             claimer_human_handle=shamir_recovery_info.claimer_human_handle,
                             claimer_user_id=shamir_recovery_info.claimer_user_id,

@@ -5,7 +5,7 @@ from unittest.mock import ANY
 import pytest
 
 from parsec._parsec import DateTime, InvitationStatus, authenticated_cmds
-from parsec.components.invite import DeviceInvitation, SendEmailBadOutcome
+from parsec.components.invite import DeviceInvitation, InvitationCreatedByUser, SendEmailBadOutcome
 from parsec.events import EventInvitation
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, MinimalorgRpcClients
 
@@ -42,9 +42,11 @@ async def test_authenticated_invite_new_device_ok_new(
         DeviceInvitation(
             token=invitation_token,
             created_on=ANY,
-            created_by_device_id=minimalorg.alice.device_id,
-            created_by_user_id=minimalorg.alice.user_id,
-            created_by_human_handle=minimalorg.alice.human_handle,
+            created_by=InvitationCreatedByUser(
+                user_id=minimalorg.alice.user_id, human_handle=minimalorg.alice.human_handle
+            ),
+            claimer_user_id=minimalorg.alice.user_id,
+            claimer_human_handle=minimalorg.alice.human_handle,
             status=InvitationStatus.IDLE,
         )
     ]
@@ -154,9 +156,11 @@ async def test_authenticated_invite_new_device_send_email_bad_outcome(
         DeviceInvitation(
             token=invitation_token,
             created_on=ANY,
-            created_by_device_id=minimalorg.alice.device_id,
-            created_by_user_id=minimalorg.alice.user_id,
-            created_by_human_handle=minimalorg.alice.human_handle,
+            created_by=InvitationCreatedByUser(
+                user_id=minimalorg.alice.user_id, human_handle=minimalorg.alice.human_handle
+            ),
+            claimer_user_id=minimalorg.alice.user_id,
+            claimer_human_handle=minimalorg.alice.human_handle,
             status=InvitationStatus.IDLE,
         )
     ]

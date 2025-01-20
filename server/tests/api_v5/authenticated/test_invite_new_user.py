@@ -5,7 +5,13 @@ from unittest.mock import ANY
 import pytest
 
 from parsec._parsec import DateTime, InvitationStatus, UserProfile, authenticated_cmds
-from parsec.components.invite import SendEmailBadOutcome, UserInvitation
+from parsec.components.invite import (
+    InvitationCreatedByUser,
+    SendEmailBadOutcome,
+    UserGreetingAdministrator,
+    UserInvitation,
+    UserOnlineStatus,
+)
 from parsec.events import EventInvitation
 from tests.common import (
     Backend,
@@ -47,9 +53,16 @@ async def test_authenticated_invite_new_user_ok_new(
                 token=invitation_token,
                 created_on=ANY,
                 claimer_email="new@example.invalid",
-                created_by_device_id=minimalorg.alice.device_id,
-                created_by_user_id=minimalorg.alice.user_id,
-                created_by_human_handle=minimalorg.alice.human_handle,
+                created_by=InvitationCreatedByUser(
+                    user_id=minimalorg.alice.user_id, human_handle=minimalorg.alice.human_handle
+                ),
+                administrators=[
+                    UserGreetingAdministrator(
+                        minimalorg.alice.user_id,
+                        minimalorg.alice.human_handle,
+                        UserOnlineStatus.UNKNOWN,
+                    )
+                ],
                 status=InvitationStatus.IDLE,
             )
         ]
@@ -197,9 +210,16 @@ async def test_authenticated_invite_new_user_send_email_bad_outcome(
                 token=invitation_token,
                 created_on=ANY,
                 claimer_email="new@example.invalid",
-                created_by_device_id=minimalorg.alice.device_id,
-                created_by_user_id=minimalorg.alice.user_id,
-                created_by_human_handle=minimalorg.alice.human_handle,
+                created_by=InvitationCreatedByUser(
+                    user_id=minimalorg.alice.user_id, human_handle=minimalorg.alice.human_handle
+                ),
+                administrators=[
+                    UserGreetingAdministrator(
+                        minimalorg.alice.user_id,
+                        minimalorg.alice.human_handle,
+                        UserOnlineStatus.UNKNOWN,
+                    )
+                ],
                 status=InvitationStatus.IDLE,
             )
         ]

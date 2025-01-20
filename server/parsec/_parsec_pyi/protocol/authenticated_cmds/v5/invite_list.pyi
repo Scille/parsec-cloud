@@ -4,7 +4,22 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, InvitationStatus, InvitationToken, UserID
+from parsec._parsec import DateTime, HumanHandle, InvitationStatus, InvitationToken, UserID
+
+class InvitationCreatedBy:
+    pass
+
+class InvitationCreatedByUser(InvitationCreatedBy):
+    def __init__(self, user_id: UserID, human_handle: HumanHandle) -> None: ...
+    @property
+    def human_handle(self) -> HumanHandle: ...
+    @property
+    def user_id(self) -> UserID: ...
+
+class InvitationCreatedByExternalService(InvitationCreatedBy):
+    def __init__(self, service_label: str) -> None: ...
+    @property
+    def service_label(self) -> str: ...
 
 class InviteListItem:
     pass
@@ -14,11 +29,14 @@ class InviteListItemUser(InviteListItem):
         self,
         token: InvitationToken,
         created_on: DateTime,
+        created_by: InvitationCreatedBy,
         claimer_email: str,
         status: InvitationStatus,
     ) -> None: ...
     @property
     def claimer_email(self) -> str: ...
+    @property
+    def created_by(self) -> InvitationCreatedBy: ...
     @property
     def created_on(self) -> DateTime: ...
     @property
@@ -28,8 +46,14 @@ class InviteListItemUser(InviteListItem):
 
 class InviteListItemDevice(InviteListItem):
     def __init__(
-        self, token: InvitationToken, created_on: DateTime, status: InvitationStatus
+        self,
+        token: InvitationToken,
+        created_on: DateTime,
+        created_by: InvitationCreatedBy,
+        status: InvitationStatus,
     ) -> None: ...
+    @property
+    def created_by(self) -> InvitationCreatedBy: ...
     @property
     def created_on(self) -> DateTime: ...
     @property
@@ -42,12 +66,15 @@ class InviteListItemShamirRecovery(InviteListItem):
         self,
         token: InvitationToken,
         created_on: DateTime,
+        created_by: InvitationCreatedBy,
         claimer_user_id: UserID,
         shamir_recovery_created_on: DateTime,
         status: InvitationStatus,
     ) -> None: ...
     @property
     def claimer_user_id(self) -> UserID: ...
+    @property
+    def created_by(self) -> InvitationCreatedBy: ...
     @property
     def created_on(self) -> DateTime: ...
     @property

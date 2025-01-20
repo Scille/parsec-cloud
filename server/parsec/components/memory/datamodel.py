@@ -44,6 +44,7 @@ from parsec._parsec import (
     VerifyKey,
     VlobID,
 )
+from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
 from parsec.components.sequester import SequesterServiceType
 
@@ -296,14 +297,15 @@ class MemoryInvitationDeletedReason(Enum):
 class MemoryInvitation:
     token: InvitationToken
     type: InvitationType
-    created_by_user_id: UserID
-    created_by_device_id: DeviceID
+    created_by: InvitationCreatedBy
 
     # Required for when type=USER
     claimer_email: str | None
 
-    # Required for when type=SHAMIR_RECOVERY
+    # Required for when type=DEVICE or type=SHAMIR_RECOVERY
     claimer_user_id: UserID | None
+
+    # Required for when type=SHAMIR_RECOVERY
     shamir_recovery_index: int | None
 
     created_on: DateTime

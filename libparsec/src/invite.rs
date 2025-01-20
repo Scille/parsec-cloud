@@ -11,7 +11,11 @@ pub use libparsec_client::{
     ShamirRecoveryClaimAddShareError, ShamirRecoveryClaimPickRecipientError,
     ShamirRecoveryClaimRecoverDeviceError,
 };
-pub use libparsec_protocol::invited_cmds::latest::invite_info::ShamirRecoveryRecipient;
+pub use libparsec_protocol::authenticated_cmds::latest::invite_list::InvitationCreatedBy as InviteListInvitationCreatedBy;
+pub use libparsec_protocol::invited_cmds::latest::invite_info::InvitationCreatedBy as InviteInfoInvitationCreatedBy;
+pub use libparsec_protocol::invited_cmds::latest::invite_info::{
+    ShamirRecoveryRecipient, UserOnlineStatus,
+};
 pub use libparsec_types::prelude::*;
 
 use crate::{
@@ -256,6 +260,7 @@ pub async fn claimer_retrieve_info(
         libparsec_client::AnyClaimRetrievedInfoCtx::ShamirRecovery(ctx) => {
             let claimer_user_id = ctx.claimer_user_id().to_owned();
             let claimer_human_handle = ctx.claimer_human_handle().to_owned();
+            let invitation_created_by = ctx.invitation_created_by().to_owned();
             let shamir_recovery_created_on = ctx.shamir_recovery_created_on().to_owned();
             let recipients = ctx.recipients().to_owned();
             let threshold = ctx.threshold().to_owned();
@@ -265,6 +270,7 @@ pub async fn claimer_retrieve_info(
                 handle,
                 claimer_user_id,
                 claimer_human_handle,
+                invitation_created_by,
                 shamir_recovery_created_on,
                 recipients,
                 threshold,
@@ -391,6 +397,7 @@ pub enum AnyClaimRetrievedInfo {
         handle: Handle,
         claimer_user_id: UserID,
         claimer_human_handle: HumanHandle,
+        invitation_created_by: InviteInfoInvitationCreatedBy,
         shamir_recovery_created_on: DateTime,
         recipients: Vec<ShamirRecoveryRecipient>,
         threshold: NonZeroU8,
@@ -1147,6 +1154,7 @@ pub enum InviteListItem {
         addr: ParsecInvitationAddr,
         token: InvitationToken,
         created_on: DateTime,
+        created_by: InviteListInvitationCreatedBy,
         claimer_email: String,
         status: InvitationStatus,
     },
@@ -1154,12 +1162,14 @@ pub enum InviteListItem {
         addr: ParsecInvitationAddr,
         token: InvitationToken,
         created_on: DateTime,
+        created_by: InviteListInvitationCreatedBy,
         status: InvitationStatus,
     },
     ShamirRecovery {
         addr: ParsecInvitationAddr,
         token: InvitationToken,
         created_on: DateTime,
+        created_by: InviteListInvitationCreatedBy,
         claimer_user_id: UserID,
         shamir_recovery_created_on: DateTime,
         status: InvitationStatus,
@@ -1182,6 +1192,7 @@ pub async fn client_list_invitations(
             libparsec_client::InviteListItem::User {
                 claimer_email,
                 created_on,
+                created_by,
                 status,
                 token,
             } => {
@@ -1195,12 +1206,14 @@ pub async fn client_list_invitations(
                     addr,
                     claimer_email,
                     created_on,
+                    created_by,
                     status,
                     token,
                 }
             }
             libparsec_client::InviteListItem::Device {
                 created_on,
+                created_by,
                 status,
                 token,
             } => {
@@ -1213,12 +1226,14 @@ pub async fn client_list_invitations(
                 InviteListItem::Device {
                     addr,
                     created_on,
+                    created_by,
                     status,
                     token,
                 }
             }
             libparsec_client::InviteListItem::ShamirRecovery {
                 created_on,
+                created_by,
                 status,
                 token,
                 claimer_user_id,
@@ -1233,6 +1248,7 @@ pub async fn client_list_invitations(
                 InviteListItem::ShamirRecovery {
                     addr,
                     created_on,
+                    created_by,
                     status,
                     token,
                     claimer_user_id,

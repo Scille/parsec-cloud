@@ -10,9 +10,11 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.components.invite import (
+    InvitationCreatedByUser,
     SendEmailBadOutcome,
     ShamirRecoveryInvitation,
     ShamirRecoveryRecipient,
+    UserOnlineStatus,
 )
 from parsec.events import EventInvitation
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, ShamirOrgRpcClients
@@ -51,9 +53,9 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
         ShamirRecoveryInvitation(
             token=invitation_token,
             created_on=ANY,
-            created_by_device_id=shamirorg.mike.device_id,
-            created_by_user_id=shamirorg.mike.user_id,
-            created_by_human_handle=shamirorg.mike.human_handle,
+            created_by=InvitationCreatedByUser(
+                user_id=shamirorg.mike.user_id, human_handle=shamirorg.mike.human_handle
+            ),
             status=InvitationStatus.IDLE,
             threshold=1,
             claimer_user_id=shamirorg.mallory.user_id,
@@ -64,6 +66,7 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
                     human_handle=shamirorg.mike.human_handle,
                     shares=1,
                     revoked_on=None,
+                    online_status=UserOnlineStatus.UNKNOWN,
                 ),
             ],
             shamir_recovery_created_on=shamirorg.mallory_brief_certificate.timestamp,
@@ -184,9 +187,9 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
         ShamirRecoveryInvitation(
             token=invitation_token,
             created_on=ANY,
-            created_by_device_id=shamirorg.mike.device_id,
-            created_by_user_id=shamirorg.mike.user_id,
-            created_by_human_handle=shamirorg.mike.human_handle,
+            created_by=InvitationCreatedByUser(
+                user_id=shamirorg.mike.user_id, human_handle=shamirorg.mike.human_handle
+            ),
             status=InvitationStatus.IDLE,
             threshold=1,
             claimer_user_id=shamirorg.mallory.user_id,
@@ -197,6 +200,7 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
                     human_handle=shamirorg.mike.human_handle,
                     shares=1,
                     revoked_on=None,
+                    online_status=UserOnlineStatus.UNKNOWN,
                 ),
             ],
             shamir_recovery_created_on=shamirorg.mallory_brief_certificate.timestamp,
