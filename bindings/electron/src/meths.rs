@@ -5,7 +5,10 @@
  */
 
 #[allow(unused_imports)]
-use neon::{prelude::*, types::buffer::TypedArray};
+use neon::{
+    prelude::*,
+    types::{buffer::TypedArray, JsBigInt},
+};
 
 // CancelledGreetingAttemptReason
 
@@ -1433,13 +1436,11 @@ fn struct_file_stat_js_to_rs<'a>(
         js_val.value(cx)
     };
     let size = {
-        let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
+        let js_val: Handle<JsBigInt> = obj.get(cx, "size")?;
         {
-            let v = js_val.value(cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
@@ -1496,7 +1497,7 @@ fn struct_file_stat_rs_to_js<'a>(
     js_obj.set(cx, "isPlaceholder", js_is_placeholder)?;
     let js_need_sync = JsBoolean::new(cx, rs_obj.need_sync);
     js_obj.set(cx, "needSync", js_need_sync)?;
-    let js_size = JsNumber::new(cx, rs_obj.size as f64);
+    let js_size = JsBigInt::from_u64(cx, rs_obj.size);
     js_obj.set(cx, "size", js_size)?;
     Ok(js_obj)
 }
@@ -3642,13 +3643,11 @@ fn struct_workspace_history_file_stat_js_to_rs<'a>(
         }
     };
     let size = {
-        let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
+        let js_val: Handle<JsBigInt> = obj.get(cx, "size")?;
         {
-            let v = js_val.value(cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
@@ -3699,7 +3698,7 @@ fn struct_workspace_history_file_stat_rs_to_js<'a>(
     js_obj.set(cx, "updated", js_updated)?;
     let js_version = JsNumber::new(cx, rs_obj.version as f64);
     js_obj.set(cx, "version", js_version)?;
-    let js_size = JsNumber::new(cx, rs_obj.size as f64);
+    let js_size = JsBigInt::from_u64(cx, rs_obj.size);
     js_obj.set(cx, "size", js_size)?;
     Ok(js_obj)
 }
@@ -3870,13 +3869,11 @@ fn variant_active_users_limit_js_to_rs<'a>(
     match tag.as_str() {
         "ActiveUsersLimitLimitedTo" => {
             let x0 = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "x0")?;
+                let js_val: Handle<JsBigInt> = obj.get(cx, "x0")?;
                 {
-                    let v = js_val.value(cx);
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        cx.throw_type_error("Not an u64 number")?
-                    }
-                    let v = v as u64;
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
                     v
                 }
             };
@@ -3897,7 +3894,7 @@ fn variant_active_users_limit_rs_to_js<'a>(
         libparsec::ActiveUsersLimit::LimitedTo(x0, ..) => {
             let js_tag = JsString::try_new(cx, "LimitedTo").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_x0 = JsNumber::new(cx, x0 as f64);
+            let js_x0 = JsBigInt::from_u64(cx, x0);
             js_obj.set(cx, "x0", js_x0)?;
         }
         libparsec::ActiveUsersLimit::NoLimit { .. } => {
@@ -5021,35 +5018,29 @@ fn variant_client_event_js_to_rs<'a>(
                 }
             };
             let blocks = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "blocks")?;
+                let js_val: Handle<JsBigInt> = obj.get(cx, "blocks")?;
                 {
-                    let v = js_val.value(cx);
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        cx.throw_type_error("Not an u64 number")?
-                    }
-                    let v = v as u64;
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
                     v
                 }
             };
             let block_index = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "blockIndex")?;
+                let js_val: Handle<JsBigInt> = obj.get(cx, "blockIndex")?;
                 {
-                    let v = js_val.value(cx);
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        cx.throw_type_error("Not an u64 number")?
-                    }
-                    let v = v as u64;
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
                     v
                 }
             };
             let blocksize = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "blocksize")?;
+                let js_val: Handle<JsBigInt> = obj.get(cx, "blocksize")?;
                 {
-                    let v = js_val.value(cx);
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        cx.throw_type_error("Not an u64 number")?
-                    }
-                    let v = v as u64;
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
                     v
                 }
             };
@@ -5433,11 +5424,11 @@ fn variant_client_event_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "entryId", js_entry_id)?;
-            let js_blocks = JsNumber::new(cx, blocks as f64);
+            let js_blocks = JsBigInt::from_u64(cx, blocks);
             js_obj.set(cx, "blocks", js_blocks)?;
-            let js_block_index = JsNumber::new(cx, block_index as f64);
+            let js_block_index = JsBigInt::from_u64(cx, block_index);
             js_obj.set(cx, "blockIndex", js_block_index)?;
-            let js_blocksize = JsNumber::new(cx, blocksize as f64);
+            let js_blocksize = JsBigInt::from_u64(cx, blocksize);
             js_obj.set(cx, "blocksize", js_blocksize)?;
         }
         libparsec::ClientEvent::WorkspaceOpsOutboundSyncStarted {
@@ -6850,13 +6841,11 @@ fn variant_entry_stat_js_to_rs<'a>(
                 js_val.value(cx)
             };
             let size = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
+                let js_val: Handle<JsBigInt> = obj.get(cx, "size")?;
                 {
-                    let v = js_val.value(cx);
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        cx.throw_type_error("Not an u64 number")?
-                    }
-                    let v = v as u64;
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
                     v
                 }
             };
@@ -7061,7 +7050,7 @@ fn variant_entry_stat_rs_to_js<'a>(
             js_obj.set(cx, "isPlaceholder", js_is_placeholder)?;
             let js_need_sync = JsBoolean::new(cx, need_sync);
             js_obj.set(cx, "needSync", js_need_sync)?;
-            let js_size = JsNumber::new(cx, size as f64);
+            let js_size = JsBigInt::from_u64(cx, size);
             js_obj.set(cx, "size", js_size)?;
         }
         libparsec::EntryStat::Folder {
@@ -9503,13 +9492,11 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
                 }
             };
             let key_index = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "keyIndex")?;
+                let js_val: Handle<JsBigInt> = obj.get(cx, "keyIndex")?;
                 {
-                    let v = js_val.value(cx);
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        cx.throw_type_error("Not an u64 number")?
-                    }
-                    let v = v as u64;
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
                     v
                 }
             };
@@ -9732,7 +9719,7 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
             })
             .or_throw(cx)?;
             js_obj.set(cx, "workspaceId", js_workspace_id)?;
-            let js_key_index = JsNumber::new(cx, key_index as f64);
+            let js_key_index = JsBigInt::from_u64(cx, key_index);
             js_obj.set(cx, "keyIndex", js_key_index)?;
             let js_encrypted_path = {
                 let mut js_buff = JsArrayBuffer::new(cx, encrypted_path.len())?;
@@ -12670,13 +12657,11 @@ fn variant_workspace_history_entry_stat_js_to_rs<'a>(
                 }
             };
             let size = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
+                let js_val: Handle<JsBigInt> = obj.get(cx, "size")?;
                 {
-                    let v = js_val.value(cx);
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        cx.throw_type_error("Not an u64 number")?
-                    }
-                    let v = v as u64;
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
                     v
                 }
             };
@@ -12825,7 +12810,7 @@ fn variant_workspace_history_entry_stat_rs_to_js<'a>(
             js_obj.set(cx, "updated", js_updated)?;
             let js_version = JsNumber::new(cx, version as f64);
             js_obj.set(cx, "version", js_version)?;
-            let js_size = JsNumber::new(cx, size as f64);
+            let js_size = JsBigInt::from_u64(cx, size);
             js_obj.set(cx, "size", js_size)?;
         }
         libparsec::WorkspaceHistoryEntryStat::Folder {
@@ -20342,24 +20327,20 @@ fn workspace_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let offset = {
-        let js_val = cx.argument::<JsNumber>(2)?;
+        let js_val = cx.argument::<JsBigInt>(2)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
     let size = {
-        let js_val = cx.argument::<JsNumber>(3)?;
+        let js_val = cx.argument::<JsBigInt>(3)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
@@ -20437,13 +20418,11 @@ fn workspace_fd_resize(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let length = {
-        let js_val = cx.argument::<JsNumber>(2)?;
+        let js_val = cx.argument::<JsBigInt>(2)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
@@ -20588,13 +20567,11 @@ fn workspace_fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let offset = {
-        let js_val = cx.argument::<JsNumber>(2)?;
+        let js_val = cx.argument::<JsBigInt>(2)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
@@ -20618,7 +20595,7 @@ fn workspace_fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        let js_value = JsBigInt::from_u64(&mut cx, ok);
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -20669,13 +20646,11 @@ fn workspace_fd_write_constrained_io(mut cx: FunctionContext) -> JsResult<JsProm
         }
     };
     let offset = {
-        let js_val = cx.argument::<JsNumber>(2)?;
+        let js_val = cx.argument::<JsBigInt>(2)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
@@ -20700,7 +20675,7 @@ fn workspace_fd_write_constrained_io(mut cx: FunctionContext) -> JsResult<JsProm
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        let js_value = JsBigInt::from_u64(&mut cx, ok);
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -20770,7 +20745,7 @@ fn workspace_fd_write_start_eof(mut cx: FunctionContext) -> JsResult<JsPromise> 
                         let js_obj = JsObject::new(&mut cx);
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        let js_value = JsBigInt::from_u64(&mut cx, ok);
                         js_obj.set(&mut cx, "value", js_value)?;
                         js_obj
                     }
@@ -22033,24 +22008,20 @@ fn workspace_history_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let offset = {
-        let js_val = cx.argument::<JsNumber>(2)?;
+        let js_val = cx.argument::<JsBigInt>(2)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
     let size = {
-        let js_val = cx.argument::<JsNumber>(3)?;
+        let js_val = cx.argument::<JsBigInt>(3)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
