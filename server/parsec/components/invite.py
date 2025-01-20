@@ -48,6 +48,12 @@ from parsec.templates import get_template
 from parsec.types import BadOutcome, BadOutcomeEnum
 
 ShamirRecoveryRecipient: TypeAlias = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
+UserOnlineStatus: TypeAlias = invited_cmds.latest.invite_info.UserOnlineStatus
+InviteInfoAdministrator: TypeAlias = invited_cmds.latest.invite_info.InviteInfoAdministrator
+UserInvitationCreatedByOrganizationAdministrator: TypeAlias = (
+    invited_cmds.latest.invite_info.UserInvitationCreatedByOrganizationAdministrator
+)
+
 
 logger = get_logger()
 
@@ -552,6 +558,8 @@ class BaseInviteComponent:
     def __init__(self, event_bus: EventBus, config: BackendConfig):
         self._event_bus = event_bus
         self._config = config
+
+        # TODO: is the following comment still relevant?
         # We use the `invite.status_changed` event to keep a list of all the
         # invitation claimers connected across all Parsec server instances.
         #
@@ -579,6 +587,7 @@ class BaseInviteComponent:
     def _on_event(self, event: Event) -> None:
         if isinstance(event, EventInvitation):
             if event.status == InvitationStatus.READY:
+                # TODO: investigate why READY events are no longer generated
                 self._claimers_ready[event.organization_id].add(event.token)
             else:  # Invitation deleted or back to idle
                 self._claimers_ready[event.organization_id].discard(event.token)
@@ -967,15 +976,24 @@ class BaseInviteComponent:
                 return invited_cmds.latest.invite_info.RepOk(
                     invited_cmds.latest.invite_info.InvitationTypeUser(
                         claimer_email=invitation.claimer_email,
-                        greeter_user_id=invitation.created_by_user_id,
-                        greeter_human_handle=invitation.created_by_human_handle,
+                        created_by=UserInvitationCreatedByOrganizationAdministrator(
+                            user_id=invitation.created_by_user_id,
+                            human_handle=invitation.created_by_human_handle,
+                        ),
+                        administrators=[
+                            InviteInfoAdministrator(
+                                user_id=invitation.created_by_user_id,
+                                human_handle=invitation.created_by_human_handle,
+                                online_status=UserOnlineStatus.UNKNOWN,
+                            )
+                        ],
                     )
                 )
             case DeviceInvitation() as invitation:
                 return invited_cmds.latest.invite_info.RepOk(
                     invited_cmds.latest.invite_info.InvitationTypeDevice(
-                        greeter_user_id=invitation.created_by_user_id,
-                        greeter_human_handle=invitation.created_by_human_handle,
+                        claimer_user_id=invitation.created_by_user_id,
+                        claimer_human_handle=invitation.created_by_human_handle,
                     )
                 )
             case ShamirRecoveryInvitation() as invitation:

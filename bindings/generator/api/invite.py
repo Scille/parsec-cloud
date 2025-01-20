@@ -158,11 +158,18 @@ class ClaimInProgressError(ErrorVariant):
         pass
 
 
+class UserOnlineStatus(Enum):
+    Online = EnumItemUnit
+    Offline = EnumItemUnit
+    Unknown = EnumItemUnit
+
+
 class ShamirRecoveryRecipient(Structure):
     user_id: UserID
     human_handle: HumanHandle
     revoked_on: Optional[DateTime]
     shares: NonZeroU8
+    online_status: UserOnlineStatus
 
 
 class AnyClaimRetrievedInfo(Variant):

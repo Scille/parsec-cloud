@@ -13,6 +13,7 @@ from parsec.components.invite import (
     SendEmailBadOutcome,
     ShamirRecoveryInvitation,
     ShamirRecoveryRecipient,
+    UserOnlineStatus,
 )
 from parsec.events import EventInvitation
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, ShamirOrgRpcClients
@@ -64,6 +65,7 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
                     human_handle=shamirorg.mike.human_handle,
                     shares=1,
                     revoked_on=None,
+                    online_status=UserOnlineStatus.UNKNOWN,
                 ),
             ],
             shamir_recovery_created_on=shamirorg.mallory_brief_certificate.timestamp,
@@ -197,6 +199,7 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
                     human_handle=shamirorg.mike.human_handle,
                     shares=1,
                     revoked_on=None,
+                    online_status=UserOnlineStatus.UNKNOWN,
                 ),
             ],
             shamir_recovery_created_on=shamirorg.mallory_brief_certificate.timestamp,

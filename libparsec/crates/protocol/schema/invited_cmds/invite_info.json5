@@ -14,6 +14,70 @@
         ],
         "nested_types": [
             {
+                "name": "UserOnlineStatus",
+                "variants": [
+                    {
+                        "name": "Online",
+                        "discriminant_value": "ONLINE"
+                    },
+                    {
+                        "name": "Offline",
+                        "discriminant_value": "OFFLINE"
+                    },
+                    {
+                        "name": "Unknown",
+                        "discriminant_value": "UNKNOWN"
+                    }
+                ]
+            },
+            {
+                "name": "UserInvitationCreatedBy",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "OrganizationAdministrator",
+                        "discriminant_value": "ORGANIZATION_ADMINISTRATOR",
+                        "fields": [
+                            {
+                                "name": "user_id",
+                                "type": "UserID"
+                            },
+                            {
+                                "name": "human_handle",
+                                "type": "HumanHandle"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "ExternalService",
+                        "discriminant_value": "EXTERNAL_SERVICE",
+                        "fields": [
+                            {
+                                "name": "service_name",
+                                "type": "String"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "InviteInfoAdministrator",
+                "fields": [
+                    {
+                        "name": "user_id",
+                        "type": "UserID"
+                    },
+                    {
+                        "name": "human_handle",
+                        "type": "HumanHandle"
+                    },
+                    {
+                        "name": "online_status",
+                        "type": "UserOnlineStatus"
+                    }
+                ]
+            },
+            {
                 "name": "InvitationType",
                 "discriminant_field": "type",
                 "variants": [
@@ -26,25 +90,13 @@
                                 "type": "String"
                             },
                             {
-                                // TODO: merge into `created_by`
-                                "name": "greeter_user_id",
-                                "type": "UserID"
+                                "name": "created_by",
+                                "type": "UserInvitationCreatedBy"
                             },
                             {
-                                // TODO: merge into `created_by`
-                                "name": "greeter_human_handle",
-                                "type": "HumanHandle"
+                                "name": "administrators",
+                                "type": "List<InviteInfoAdministrator>"
                             }
-                            // TODO: Add a `created_by` field and make it an `InviteInfoCreatedBy` type
-                            // which is a nested variant of either:
-                            // - OrganizationAdministrator<UserID, HumanHandle>
-                            // - ExternalService<String>
-                            //
-                            // TODO: Add an `administrators` field and make it a `List<InviteInfoAdministrator>` type
-                            // which is a nested type with the fields:
-                            // - user_id: UserID
-                            // - human_handle: HumanHandle
-                            // - status: ONLINE | OFFLINE | UNKNOWN
                         ]
                     },
                     {
@@ -52,13 +104,11 @@
                         "discriminant_value": "DEVICE",
                         "fields": [
                             {
-                                // TODO: Rename to `claimer_user_id`
-                                "name": "greeter_user_id",
+                                "name": "claimer_user_id",
                                 "type": "UserID"
                             },
                             {
-                                // TODO: Rename to `claimer_human_handle`
-                                "name": "greeter_human_handle",
+                                "name": "claimer_human_handle",
                                 "type": "HumanHandle"
                             }
                         ]
@@ -109,9 +159,11 @@
                     {
                         "name": "revoked_on",
                         "type": "RequiredOption<DateTime>"
+                    },
+                    {
+                        "name": "online_status",
+                        "type": "UserOnlineStatus"
                     }
-                    // TODO: Add a status field like:
-                    // - status: ONLINE | OFFLINE | UNKNOWN
                 ]
             }
         ]

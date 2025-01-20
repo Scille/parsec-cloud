@@ -47,6 +47,7 @@ from parsec.components.invite import (
     SendEmailBadOutcome,
     ShamirRecoveryInvitation,
     UserInvitation,
+    UserOnlineStatus,
 )
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
@@ -1137,6 +1138,7 @@ class PGInviteComponent(BaseInviteComponent):
                 human_handle=HumanHandle(email=row["email"], label=row["label"]),
                 shares=row["shares"],
                 revoked_on=row["revoked_on"],
+                online_status=UserOnlineStatus.UNKNOWN,
             )
             for row in rows
         ]

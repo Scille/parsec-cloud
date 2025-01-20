@@ -79,18 +79,21 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
                         human_handle: bob.human_handle.clone(),
                         shares: 2.try_into().unwrap(),
                         revoked_on: None,
+                        online_status: libparsec_protocol::invited_cmds::latest::invite_info::UserOnlineStatus::Unknown,
                     },
                     ShamirRecoveryRecipient {
                         user_id: mallory.user_id,
                         human_handle: mallory.human_handle.clone(),
                         shares: 1.try_into().unwrap(),
                         revoked_on: mallory_revoked_on,
+                        online_status: libparsec_protocol::invited_cmds::latest::invite_info::UserOnlineStatus::Unknown,
                     },
                     ShamirRecoveryRecipient {
                         user_id: mike.user_id,
                         human_handle: mike.human_handle.clone(),
                         shares: 1.try_into().unwrap(),
                         revoked_on: None,
+                        online_status: libparsec_protocol::invited_cmds::latest::invite_info::UserOnlineStatus::Unknown,
                     }
                 ]
             );
@@ -409,18 +412,21 @@ async fn unrecoverable_recovery(env: &TestbedEnv) {
                         human_handle: bob.human_handle.clone(),
                         shares: 2.try_into().unwrap(),
                         revoked_on: bob_revoked_on,
+                        online_status: libparsec_protocol::invited_cmds::latest::invite_info::UserOnlineStatus::Unknown,
                     },
                     ShamirRecoveryRecipient {
                         user_id: mallory.user_id,
                         human_handle: mallory.human_handle.clone(),
                         shares: 1.try_into().unwrap(),
                         revoked_on: mallory_revoked_on,
+                        online_status: libparsec_protocol::invited_cmds::latest::invite_info::UserOnlineStatus::Unknown,
                     },
                     ShamirRecoveryRecipient {
                         user_id: mike.user_id,
                         human_handle: mike.human_handle.clone(),
                         shares: 1.try_into().unwrap(),
                         revoked_on: None,
+                        online_status: libparsec_protocol::invited_cmds::latest::invite_info::UserOnlineStatus::Unknown,
                     }
                 ]
             );

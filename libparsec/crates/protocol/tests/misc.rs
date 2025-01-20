@@ -46,15 +46,14 @@ fn serde_block_read_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds
     // Generated from msgpack
     // Content:
     //  status': 'ok'
-    //  type: 'USER'
-    //  claimer_email: 'a@a.com'
-    //  greeter_user_id: ext(2, hex!("57c629b69d6c4abbaf651cafa46dbc93"))
-    //  greeter_human_handle: 42 // Invalid field
+    //  type: 'DEVICE'
+    //  claimer_user_id: ext(2, hex!("57c629b69d6c4abbaf651cafa46dbc93"))
+    //  claimer_human_handle: 42 // Invalid field
     //
     &hex!(
-        "85a6737461747573a26f6ba474797065a455534552ad636c61696d65725f656d61696c"
-        "a76140612e636f6daf677265657465725f757365725f6964d8021d3353157d7d4e95ad"
-        "2fdea7b3bd19c5b4677265657465725f68756d616e5f68616e646c652a"
+        "84a6737461747573a26f6ba474797065a6444556494345af636c61696d65725f757365"
+        "725f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5b4636c61696d65725f68756d61"
+        "6e5f68616e646c652a"
     )[..],
     "invalid type: integer `42`, expected a tuple of size 2",
 )]

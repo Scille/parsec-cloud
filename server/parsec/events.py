@@ -171,6 +171,7 @@ class EventInvitation(BaseModel, ClientBroadcastableEvent):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
     token: InvitationTokenField
+    # TODO: What to do with this field now that multiple users might be able to greet an invitation ?
     greeter: UserIDField
     status: InvitationStatusField
 

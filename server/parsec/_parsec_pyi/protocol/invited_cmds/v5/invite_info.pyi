@@ -6,26 +6,66 @@ from __future__ import annotations
 
 from parsec._parsec import DateTime, HumanHandle, UserID
 
+class UserOnlineStatus:
+    VALUES: tuple[UserOnlineStatus]
+    ONLINE: UserOnlineStatus
+    OFFLINE: UserOnlineStatus
+    UNKNOWN: UserOnlineStatus
+
+    @classmethod
+    def from_str(cls, value: str) -> UserOnlineStatus: ...
+    @property
+    def str(self) -> str: ...
+
+class UserInvitationCreatedBy:
+    pass
+
+class UserInvitationCreatedByOrganizationAdministrator(UserInvitationCreatedBy):
+    def __init__(self, user_id: UserID, human_handle: HumanHandle) -> None: ...
+    @property
+    def human_handle(self) -> HumanHandle: ...
+    @property
+    def user_id(self) -> UserID: ...
+
+class UserInvitationCreatedByExternalService(UserInvitationCreatedBy):
+    def __init__(self, service_name: str) -> None: ...
+    @property
+    def service_name(self) -> str: ...
+
+class InviteInfoAdministrator:
+    def __init__(
+        self, user_id: UserID, human_handle: HumanHandle, online_status: UserOnlineStatus
+    ) -> None: ...
+    @property
+    def human_handle(self) -> HumanHandle: ...
+    @property
+    def online_status(self) -> UserOnlineStatus: ...
+    @property
+    def user_id(self) -> UserID: ...
+
 class InvitationType:
     pass
 
 class InvitationTypeUser(InvitationType):
     def __init__(
-        self, claimer_email: str, greeter_user_id: UserID, greeter_human_handle: HumanHandle
+        self,
+        claimer_email: str,
+        created_by: UserInvitationCreatedBy,
+        administrators: list[InviteInfoAdministrator],
     ) -> None: ...
+    @property
+    def administrators(self) -> list[InviteInfoAdministrator]: ...
     @property
     def claimer_email(self) -> str: ...
     @property
-    def greeter_human_handle(self) -> HumanHandle: ...
-    @property
-    def greeter_user_id(self) -> UserID: ...
+    def created_by(self) -> UserInvitationCreatedBy: ...
 
 class InvitationTypeDevice(InvitationType):
-    def __init__(self, greeter_user_id: UserID, greeter_human_handle: HumanHandle) -> None: ...
+    def __init__(self, claimer_user_id: UserID, claimer_human_handle: HumanHandle) -> None: ...
     @property
-    def greeter_human_handle(self) -> HumanHandle: ...
+    def claimer_human_handle(self) -> HumanHandle: ...
     @property
-    def greeter_user_id(self) -> UserID: ...
+    def claimer_user_id(self) -> UserID: ...
 
 class InvitationTypeShamirRecovery(InvitationType):
     def __init__(
@@ -49,10 +89,17 @@ class InvitationTypeShamirRecovery(InvitationType):
 
 class ShamirRecoveryRecipient:
     def __init__(
-        self, user_id: UserID, human_handle: HumanHandle, shares: int, revoked_on: DateTime | None
+        self,
+        user_id: UserID,
+        human_handle: HumanHandle,
+        shares: int,
+        revoked_on: DateTime | None,
+        online_status: UserOnlineStatus,
     ) -> None: ...
     @property
     def human_handle(self) -> HumanHandle: ...
+    @property
+    def online_status(self) -> UserOnlineStatus: ...
     @property
     def revoked_on(self) -> DateTime | None: ...
     @property
