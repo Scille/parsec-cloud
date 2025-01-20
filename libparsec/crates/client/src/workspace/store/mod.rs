@@ -244,12 +244,12 @@ impl WorkspaceStore {
         &self,
         child_id: VlobID,
         expected_parent_id: VlobID,
-    ) -> Result<bool, EnsureManifestExistsWithParentError> {
+    ) -> Result<Option<ArcLocalChildManifest>, EnsureManifestExistsWithParentError> {
         let child_manifest = match self.get_manifest(child_id).await {
             Ok(manifest) => manifest,
             Err(err) => {
                 return match err {
-                    GetManifestError::EntryNotFound => Ok(false),
+                    GetManifestError::EntryNotFound => Ok(None),
                     GetManifestError::Offline => Err(EnsureManifestExistsWithParentError::Offline),
                     GetManifestError::Stopped => Err(EnsureManifestExistsWithParentError::Stopped),
                     GetManifestError::NoRealmAccess => {
@@ -269,7 +269,11 @@ impl WorkspaceStore {
             }
         };
 
-        Ok(child_manifest.parent() == expected_parent_id)
+        if child_manifest.parent() == expected_parent_id {
+            Ok(Some(child_manifest))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Lock the folder entry for update.

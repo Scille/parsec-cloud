@@ -29,8 +29,6 @@ async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
     );
 }
 
-// TODO: Fix for Windows
-#[cfg(not(target_os = "windows"))]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn already_exists(
     #[values("exist_as_file", "exist_as_folder")] kind: &'static str,
@@ -46,72 +44,121 @@ async fn already_exists(
                 "exist_as_folder" => "foo",
                 unknown => panic!("Unknown kind: {}", unknown),
             };
-
-            // Prevent lookup from discovering the file exists, which would bypass
-            // entirely the create_dir call
-            {
-                let mut guard = crate::LOOKUP_HOOK.lock().unwrap();
-                *guard = Some(Box::new(move |path| {
-                    if path == &format!("/{}", target_name).parse().unwrap() {
-                        Some(Err(
-                            libparsec_client::workspace::WorkspaceStatEntryError::EntryNotFound,
-                        ))
-                    } else {
-                        // Fallback to real lookup
-                        None
-                    }
-                }));
-            }
-
             let new_dir = mountpoint_path.join(target_name);
 
-            let entries = tokio::fs::read_dir(mountpoint_path.clone()).await.unwrap();
-            println!("Entries: {:?}", entries);
+            #[cfg(not(target_os = "windows"))]
+            {
+                // TODO: LOOKUP_HOOK is not implemented on Windows yet
+                // Prevent lookup from discovering the file exists, which would bypass
+                // entirely the create_dir call
+                {
+                    let mut guard = crate::LOOKUP_HOOK.lock().unwrap();
+                    *guard = Some(Box::new(move |path| {
+                        if path == &format!("/{}", target_name).parse().unwrap() {
+                            Some(Err(
+                                libparsec_client::workspace::WorkspaceStatEntryError::EntryNotFound,
+                            ))
+                        } else {
+                            // Fallback to real lookup
+                            None
+                        }
+                    }));
+                }
 
-            let err = tokio::fs::create_dir(&new_dir).await.unwrap_err();
-            p_assert_matches!(err.kind(), std::io::ErrorKind::AlreadyExists);
+                let entries = tokio::fs::read_dir(mountpoint_path.clone()).await.unwrap();
+                println!("Entries: {:?}", entries);
+
+                let err = tokio::fs::create_dir(&new_dir).await.unwrap_err();
+                p_assert_matches!(err.kind(), std::io::ErrorKind::AlreadyExists);
+            }
+
+            #[cfg(target_os = "windows")]
+            {
+                let new_dir_utf16 =
+                    super::utils::to_null_terminated_utf16(&new_dir.to_string_lossy());
+                let ret = unsafe {
+                    windows_sys::Win32::Storage::FileSystem::CreateDirectoryW(
+                        new_dir_utf16.as_ptr(),
+                        std::ptr::null_mut(),
+                    )
+                };
+
+                p_assert_eq!(ret, 0);
+                let err = std::io::Error::last_os_error();
+
+                p_assert_eq!(
+                    err.raw_os_error(),
+                    Some(windows_sys::Win32::Foundation::ERROR_ALREADY_EXISTS as i32),
+                    "{}",
+                    err
+                );
+            }
         }
     );
 }
 
-// TODO: Fix for Windows
-#[cfg(not(target_os = "windows"))]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn parent_doesnt_exist(tmp_path: TmpPath, env: &TestbedEnv) {
-    use libparsec_client::workspace::EntryStat;
-    use libparsec_types::prelude::*;
-
     mount_and_test!(
         env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            // Prevent lookup from discovering the file doesn't exist, which would bypass
-            // entirely the create_dir call
-            {
-                let mut guard = crate::LOOKUP_HOOK.lock().unwrap();
-                *guard = Some(Box::new(move |path| {
-                    if path == &"/dummy".parse().unwrap() {
-                        Some(Ok(EntryStat::Folder {
-                            confinement_point: None,
-                            id: VlobID::default(),
-                            parent: VlobID::default(),
-                            created: "2000-01-01T00:00:00Z".parse().unwrap(),
-                            updated: "2000-01-01T00:00:00Z".parse().unwrap(),
-                            base_version: 0,
-                            is_placeholder: false,
-                            need_sync: false,
-                        }))
-                    } else {
-                        // Fallback to real lookup
-                        None
-                    }
-                }));
-            }
-
             let new_dir = mountpoint_path.join("dummy/new_dir");
 
-            let err = tokio::fs::create_dir(&new_dir).await.unwrap_err();
-            p_assert_matches!(err.kind(), std::io::ErrorKind::NotFound);
+            #[cfg(not(target_os = "windows"))]
+            {
+                // TODO: LOOKUP_HOOK is not implemented on Windows yet
+                // Prevent lookup from discovering the file doesn't exist, which would bypass
+                // entirely the create_dir call
+                {
+                    use libparsec_client::workspace::EntryStat;
+                    use libparsec_types::prelude::*;
+
+                    let mut guard = crate::LOOKUP_HOOK.lock().unwrap();
+                    *guard = Some(Box::new(move |path| {
+                        if path == &"/dummy".parse().unwrap() {
+                            Some(Ok(EntryStat::Folder {
+                                confinement_point: None,
+                                id: VlobID::default(),
+                                parent: VlobID::default(),
+                                created: "2000-01-01T00:00:00Z".parse().unwrap(),
+                                updated: "2000-01-01T00:00:00Z".parse().unwrap(),
+                                base_version: 0,
+                                is_placeholder: false,
+                                need_sync: false,
+                            }))
+                        } else {
+                            // Fallback to real lookup
+                            None
+                        }
+                    }));
+                }
+
+                let err = tokio::fs::create_dir(&new_dir).await.unwrap_err();
+                p_assert_matches!(err.kind(), std::io::ErrorKind::NotFound);
+            }
+
+            #[cfg(target_os = "windows")]
+            {
+                let new_dir_utf16 =
+                    super::utils::to_null_terminated_utf16(&new_dir.to_string_lossy());
+                let ret = unsafe {
+                    windows_sys::Win32::Storage::FileSystem::CreateDirectoryW(
+                        new_dir_utf16.as_ptr(),
+                        std::ptr::null_mut(),
+                    )
+                };
+
+                p_assert_eq!(ret, 0);
+                let err = std::io::Error::last_os_error();
+
+                p_assert_eq!(
+                    err.raw_os_error(),
+                    Some(windows_sys::Win32::Foundation::ERROR_PATH_NOT_FOUND as i32),
+                    "{}",
+                    err
+                );
+            }
         }
     );
 }

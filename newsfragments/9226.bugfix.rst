@@ -1,0 +1,1 @@
+Fix wrong error showed in Windows File Explorer when moving a file to a destination where its name already exists.

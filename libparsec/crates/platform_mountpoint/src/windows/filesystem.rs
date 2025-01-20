@@ -867,7 +867,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
             let parsec_new_file_name = os_path_to_parsec_path(new_file_name)?;
 
             let mode = if replace_if_exists {
-                MoveEntryMode::CanReplace
+                MoveEntryMode::CanReplaceFileOnly
             } else {
                 MoveEntryMode::NoReplace
             };
@@ -877,10 +877,15 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                 .map_err(|err| match err {
                     WorkspaceMoveEntryError::SourceNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
                     WorkspaceMoveEntryError::DestinationNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
-                    WorkspaceMoveEntryError::CannotMoveRoot => STATUS_OBJECT_NAME_NOT_FOUND, // TODO
+                    WorkspaceMoveEntryError::CannotMoveRoot => STATUS_ACCESS_DENIED,
                     WorkspaceMoveEntryError::DestinationExists { .. } => {
-                        STATUS_OBJECT_NAME_NOT_FOUND
-                    } // TODO
+                        if replace_if_exists {
+                            // Occurs if the destination is a folder
+                            STATUS_ACCESS_DENIED
+                        } else {
+                            STATUS_OBJECT_NAME_COLLISION
+                        }
+                    }
                     WorkspaceMoveEntryError::Offline => STATUS_HOST_UNREACHABLE,
                     WorkspaceMoveEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                     WorkspaceMoveEntryError::ReadOnlyRealm => STATUS_MEDIA_WRITE_PROTECTED,

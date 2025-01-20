@@ -169,7 +169,7 @@ pub(crate) async fn remove_entry(
                 // The parent's `children` filed may contain invalid data (i.e. referencing
                 // a non existing child ID, or a child which `parent` field doesn't correspond
                 // to us). In this case we just pretend the entry doesn't exist.
-                let is_grandchild = ops
+                let maybe_grandchild = ops
                     .store
                     .ensure_manifest_exists_with_parent(*maybe_grandchild_id, child_id)
                     .await
@@ -197,7 +197,7 @@ pub(crate) async fn remove_entry(
                         }
                     })?;
 
-                if is_grandchild {
+                if maybe_grandchild.is_some() {
                     return Err(WorkspaceRemoveEntryError::EntryIsNonEmptyFolder);
                 }
             }

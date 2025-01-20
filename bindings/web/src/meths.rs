@@ -6332,6 +6332,7 @@ fn variant_move_entry_mode_js_to_rs(obj: JsValue) -> Result<libparsec::MoveEntry
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
         "MoveEntryModeCanReplace" => Ok(libparsec::MoveEntryMode::CanReplace),
+        "MoveEntryModeCanReplaceFileOnly" => Ok(libparsec::MoveEntryMode::CanReplaceFileOnly),
         "MoveEntryModeExchange" => Ok(libparsec::MoveEntryMode::Exchange),
         "MoveEntryModeNoReplace" => Ok(libparsec::MoveEntryMode::NoReplace),
         _ => Err(JsValue::from(TypeError::new(
@@ -6346,6 +6347,9 @@ fn variant_move_entry_mode_rs_to_js(rs_obj: libparsec::MoveEntryMode) -> Result<
     match rs_obj {
         libparsec::MoveEntryMode::CanReplace => {
             Reflect::set(&js_obj, &"tag".into(), &"CanReplace".into())?;
+        }
+        libparsec::MoveEntryMode::CanReplaceFileOnly => {
+            Reflect::set(&js_obj, &"tag".into(), &"CanReplaceFileOnly".into())?;
         }
         libparsec::MoveEntryMode::Exchange => {
             Reflect::set(&js_obj, &"tag".into(), &"Exchange".into())?;

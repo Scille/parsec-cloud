@@ -1612,12 +1612,16 @@ export type MountpointUnmountError =
 // MoveEntryMode
 export enum MoveEntryModeTag {
     CanReplace = 'MoveEntryModeCanReplace',
+    CanReplaceFileOnly = 'MoveEntryModeCanReplaceFileOnly',
     Exchange = 'MoveEntryModeExchange',
     NoReplace = 'MoveEntryModeNoReplace',
 }
 
 export interface MoveEntryModeCanReplace {
     tag: MoveEntryModeTag.CanReplace
+}
+export interface MoveEntryModeCanReplaceFileOnly {
+    tag: MoveEntryModeTag.CanReplaceFileOnly
 }
 export interface MoveEntryModeExchange {
     tag: MoveEntryModeTag.Exchange
@@ -1627,6 +1631,7 @@ export interface MoveEntryModeNoReplace {
 }
 export type MoveEntryMode =
   | MoveEntryModeCanReplace
+  | MoveEntryModeCanReplaceFileOnly
   | MoveEntryModeExchange
   | MoveEntryModeNoReplace
 

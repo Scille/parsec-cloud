@@ -21,6 +21,13 @@ use crate::{
 pub enum MoveEntryMode {
     /// Destination may or may not exist.
     CanReplace,
+    /// Destination may or may not exist, but must be a file if it exists.
+    ///
+    /// This is a special case to support Windows behavior when `MOVEFILE_REPLACE_EXISTING`
+    /// is set "If lpNewFileName names an existing directory, an error is reported".
+    //
+    /// (see https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-movefileexw)
+    CanReplaceFileOnly,
     /// Destination must not exit so that source can be moved without overwriting anything.
     NoReplace,
     /// Destination and source entries will be swapped, i.e. both must exist and neither will be deleted.
@@ -250,7 +257,7 @@ async fn move_entry_same_parent(
     // The parent's `children` field may contain invalid data (i.e. referencing
     // a non existing child ID, or a child which `parent` field doesn't correspond
     // to us). In this case we just pretend the entry doesn't exist.
-    let is_child = ops
+    let maybe_src_child = ops
         .store
         .ensure_manifest_exists_with_parent(child_id, parent_id)
         .await
@@ -273,14 +280,15 @@ async fn move_entry_same_parent(
                 err.context("cannot ensure child/parent coherence").into()
             }
         })?;
-    if !is_child {
+
+    if maybe_src_child.is_none() {
         return Err(WorkspaceMoveEntryError::SourceNotFound);
     }
 
     let exchange_src_child_id = match mut_parent.children.get(&dst_child_name).copied() {
         // The destination is maybe taken by an existing child...
         Some(dst_child_id) => {
-            let is_child = ops
+            let maybe_existing_dst_child = ops
                 .store
                 .ensure_manifest_exists_with_parent(dst_child_id, parent_id)
                 .await
@@ -308,26 +316,39 @@ async fn move_entry_same_parent(
                     }
                 })?;
 
-            if is_child {
-                // ...it is an actual child !
-                match mode {
-                    MoveEntryMode::CanReplace => None,
+            match maybe_existing_dst_child {
+                Some(existing_dst_child) => {
+                    // ...it is an actual child !
+                    match mode {
+                        MoveEntryMode::CanReplace => None,
 
-                    MoveEntryMode::NoReplace => {
-                        return Err(WorkspaceMoveEntryError::DestinationExists {
-                            entry_id: dst_child_id,
-                        });
+                        MoveEntryMode::CanReplaceFileOnly => match existing_dst_child {
+                            ArcLocalChildManifest::File(_) => None,
+                            ArcLocalChildManifest::Folder(_) => {
+                                return Err(WorkspaceMoveEntryError::DestinationExists {
+                                    entry_id: dst_child_id,
+                                });
+                            }
+                        },
+
+                        MoveEntryMode::NoReplace => {
+                            return Err(WorkspaceMoveEntryError::DestinationExists {
+                                entry_id: dst_child_id,
+                            });
+                        }
+
+                        // Modify the source child to point to the destination child
+                        MoveEntryMode::Exchange => Some(dst_child_id),
                     }
+                }
 
-                    // Modify the source child to point to the destination child
-                    MoveEntryMode::Exchange => Some(dst_child_id),
+                None => {
+                    // ...the entry was not a valid child, ignore it
+                    if matches!(mode, MoveEntryMode::Exchange) {
+                        return Err(WorkspaceMoveEntryError::DestinationNotFound);
+                    }
+                    None
                 }
-            } else {
-                // ...the entry was not a valid child, ignore it
-                if matches!(mode, MoveEntryMode::Exchange) {
-                    return Err(WorkspaceMoveEntryError::DestinationNotFound);
-                }
-                None
             }
         }
 
@@ -406,7 +427,7 @@ async fn move_entry_different_parents<'a>(
     let exchange_src_child_id = match mut_dst_parent.children.get(&dst_child_name).copied() {
         // The destination is maybe taken by an existing child...
         Some(dst_child_id) => {
-            let is_child = ops
+            let maybe_existing_dst_child = ops
                 .store
                 .ensure_manifest_exists_with_parent(dst_child_id, dst_parent_id)
                 .await
@@ -434,50 +455,63 @@ async fn move_entry_different_parents<'a>(
                     }
                 })?;
 
-            if is_child {
-                // ...it is an actual child !
-                match mode {
-                    MoveEntryMode::CanReplace => None,
+            match maybe_existing_dst_child {
+                Some(existing_dst_child) => {
+                    // ...it is an actual child !
+                    match mode {
+                        MoveEntryMode::CanReplace => None,
 
-                    MoveEntryMode::NoReplace => {
-                        return Err(WorkspaceMoveEntryError::DestinationExists {
-                            entry_id: dst_child_id,
-                        });
-                    }
+                        MoveEntryMode::CanReplaceFileOnly => match existing_dst_child {
+                            ArcLocalChildManifest::File(_) => None,
+                            ArcLocalChildManifest::Folder(_) => {
+                                return Err(WorkspaceMoveEntryError::DestinationExists {
+                                    entry_id: dst_child_id,
+                                })
+                            }
+                        },
 
-                    MoveEntryMode::Exchange => {
-                        // Also move destination child into source location
-                        match &mut updater
-                            .dst_child_manifest
-                            .as_mut()
-                            .expect("always exists in exchange mode")
-                        {
-                            ArcLocalChildManifest::File(manifest) => {
-                                let mut_manifest = Arc::make_mut(manifest);
-                                mut_manifest.parent = src_parent_id;
-                                mut_manifest.updated = now;
-                                mut_manifest.need_sync = true;
-                                // Sanity check
-                                debug_assert_eq!(mut_manifest.base.id, dst_child_id);
-                            }
-                            ArcLocalChildManifest::Folder(manifest) => {
-                                let mut_manifest = Arc::make_mut(manifest);
-                                mut_manifest.parent = src_parent_id;
-                                mut_manifest.updated = now;
-                                mut_manifest.need_sync = true;
-                                // Sanity check
-                                debug_assert_eq!(mut_manifest.base.id, dst_child_id);
-                            }
+                        MoveEntryMode::NoReplace => {
+                            return Err(WorkspaceMoveEntryError::DestinationExists {
+                                entry_id: dst_child_id,
+                            });
                         }
-                        Some(dst_child_id)
+
+                        MoveEntryMode::Exchange => {
+                            // Also move destination child into source location
+                            match &mut updater
+                                .dst_child_manifest
+                                .as_mut()
+                                .expect("always exists in exchange mode")
+                            {
+                                ArcLocalChildManifest::File(manifest) => {
+                                    let mut_manifest = Arc::make_mut(manifest);
+                                    mut_manifest.parent = src_parent_id;
+                                    mut_manifest.updated = now;
+                                    mut_manifest.need_sync = true;
+                                    // Sanity check
+                                    debug_assert_eq!(mut_manifest.base.id, dst_child_id);
+                                }
+                                ArcLocalChildManifest::Folder(manifest) => {
+                                    let mut_manifest = Arc::make_mut(manifest);
+                                    mut_manifest.parent = src_parent_id;
+                                    mut_manifest.updated = now;
+                                    mut_manifest.need_sync = true;
+                                    // Sanity check
+                                    debug_assert_eq!(mut_manifest.base.id, dst_child_id);
+                                }
+                            }
+                            Some(dst_child_id)
+                        }
                     }
                 }
-            } else {
-                // ...the entry was not a valid child, ignore it
-                if matches!(mode, MoveEntryMode::Exchange) {
-                    return Err(WorkspaceMoveEntryError::DestinationNotFound);
+
+                None => {
+                    // ...the entry was not a valid child, ignore it
+                    if matches!(mode, MoveEntryMode::Exchange) {
+                        return Err(WorkspaceMoveEntryError::DestinationNotFound);
+                    }
+                    None
                 }
-                None
             }
         }
 
