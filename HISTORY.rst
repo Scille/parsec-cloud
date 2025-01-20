@@ -10,10 +10,6 @@ Parsec v3.2.4-rc.3 (2025-01-20)
 Bugfixes
 ~~~~~~~~
 
-* Fix missing error message in Windows Explorer when trying to delete a file in
-  a read-only mountpoint on Windows.
-  (`#9382 <https://github.com/Scille/parsec-cloud/issues/9382>`__)
-
 * Fix wrong error showed in Windows File Explorer when moving a file to a
   destination where its name already exists.
   (`#9226 <https://github.com/Scille/parsec-cloud/issues/9226>`__)
