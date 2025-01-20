@@ -104,7 +104,7 @@ pub(crate) async fn create_file(
         // The parent's `children` filed may contain invalid data (i.e. referencing
         // a non existing child ID, or a child which `parent` field doesn't correspond
         // to us). In this case we just pretend the entry doesn't exist.
-        let is_child = ops
+        let maybe_child = ops
             .store
             .ensure_manifest_exists_with_parent(entry_id, parent_manifest.base.id)
             .await
@@ -127,7 +127,7 @@ pub(crate) async fn create_file(
                     err.context("cannot ensure child/parent coherence").into()
                 }
             })?;
-        if is_child {
+        if maybe_child.is_some() {
             return Err(WorkspaceCreateFileError::EntryExists { entry_id });
         }
     }
