@@ -39,8 +39,8 @@ import {
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
 } from '@/parsec/types';
-import { MoveEntryModeTag, libparsec } from '@/plugins/libparsec';
 import type { U64 } from '@/plugins/libparsec';
+import { MoveEntryModeTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 const MOCK_OPENED_FILES = new Map<FileDescriptor, FsPath>();

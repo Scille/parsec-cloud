@@ -23,8 +23,8 @@ import {
   WorkspaceHistoryStatEntryError,
   WorkspaceHistoryStatFolderChildrenError,
 } from '@/parsec/types';
-import { libparsec } from '@/plugins/libparsec';
 import type { U64 } from '@/plugins/libparsec';
+import { libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 const MOCK_OPENED_FILES = new Map<FileDescriptor, FsPath>();
