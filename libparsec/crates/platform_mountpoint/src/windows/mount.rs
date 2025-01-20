@@ -60,7 +60,6 @@ impl Mountpoint {
         let mountpoint_path_u16cstr =
             U16CString::from_os_str(mountpoint_path.as_os_str()).expect("Unreachable, valid OsStr");
 
-        let is_read_only = !self_role.can_write();
         let volume_label = generate_volume_label(&workspace_name);
 
         let params = {
@@ -79,7 +78,7 @@ impl Mountpoint {
                 .set_reparse_point_access_check(false)
                 .set_named_streams(false)
                 // TODO: Should detect and re-mount when the workspace switched between read-only and read-write
-                .set_read_only_volume(is_read_only)
+                .set_read_only_volume(!self_role.can_write())
                 .set_post_cleanup_when_modified_only(true)
                 .set_device_control(false)
                 .set_file_system_name(FILE_SYSTEM_NAME)
@@ -113,12 +112,8 @@ impl Mountpoint {
             }
         };
 
-        let context = ParsecFileSystemInterface::new(
-            is_read_only,
-            ops,
-            tokio::runtime::Handle::current(),
-            volume_label,
-        );
+        let context =
+            ParsecFileSystemInterface::new(ops, tokio::runtime::Handle::current(), volume_label);
         let filesystem = FileSystem::new(params, Some(&mountpoint_path_u16cstr), context)
             .map_err(|status| anyhow::anyhow!("Failed to init FileSystem {status}"))?;
 
