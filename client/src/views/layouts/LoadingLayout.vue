@@ -18,7 +18,6 @@
 
 <script setup lang="ts">
 import { Base64, LogoIconGradient, MsImage, MsSpinner } from 'megashark-lib';
-import { needsMocks } from '@/parsec';
 import { RouteBackup, Routes, getCurrentRouteQuery, navigateTo } from '@/router';
 import { IonContent, IonPage } from '@ionic/vue';
 import { onMounted } from 'vue';
@@ -32,7 +31,8 @@ onMounted(async () => {
   // in every component.
   // To force a reload, we first navigate to a loading page (/loading),
   // then to the connected organization.
-  // We masquerade this as a feature, showing the user a "please wait" message.
+  // If we do it too fast, it causes a blink, so we masquerade this as a feature,
+  // showing the user a "please wait" message.
   setTimeout(
     async () => {
       const query = getCurrentRouteQuery();
@@ -54,7 +54,7 @@ onMounted(async () => {
         await navigateTo(Routes.Home, { skipHandle: true, replace: true });
       }
     },
-    needsMocks() ? 0 : 1500,
+    import.meta.env.PARSEC_APP_TESTBED_SERVER ? 0 : 1500,
   );
 });
 </script>

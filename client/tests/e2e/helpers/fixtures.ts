@@ -5,11 +5,12 @@ import { expect } from '@tests/e2e/helpers/assertions';
 import { MockBms } from '@tests/e2e/helpers/bms';
 import { DEFAULT_ORGANIZATION_INFORMATION, DEFAULT_USER_INFORMATION, UserData } from '@tests/e2e/helpers/data';
 import { dropTestbed, newTestbed } from '@tests/e2e/helpers/testbed';
-import { fillInputModal, fillIonInput } from '@tests/e2e/helpers/utils';
+import { createWorkspace, dismissToast, fillInputModal, fillIonInput } from '@tests/e2e/helpers/utils';
 
 export const msTest = base.extend<{
   home: Page;
   connected: Page;
+  workspaces: Page;
   documents: Page;
   documentsReadOnly: Page;
   usersPage: Page;
@@ -59,20 +60,30 @@ export const msTest = base.extend<{
     await use(home);
   },
 
-  documents: async ({ connected }, use) => {
-    await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-    await expect(connected).toHaveHeader(['The Copper Coronet'], true, true);
-    await expect(connected).toBeDocumentPage();
-    await expect(connected.locator('.folder-container').locator('.no-files-content')).toBeHidden();
+  workspaces: async ({ connected }, use) => {
+    await createWorkspace(connected, 'The Copper Coronet');
+    await dismissToast(connected);
+    await createWorkspace(connected, 'Trademeet');
+    await dismissToast(connected);
+    await createWorkspace(connected, "Watcher's Keep");
+    await dismissToast(connected);
     use(connected);
   },
 
-  documentsReadOnly: async ({ connected }, use) => {
-    await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(2).click();
-    await expect(connected).toHaveHeader(["Watcher's Keep"], true, true);
-    await expect(connected).toBeDocumentPage();
-    await expect(connected.locator('.folder-container').locator('.no-files-content')).toBeHidden();
-    use(connected);
+  documents: async ({ workspaces }, use) => {
+    await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await expect(workspaces).toHaveHeader(['The Copper Coronet'], true, true);
+    await expect(workspaces).toBeDocumentPage();
+    await expect(workspaces.locator('.folder-container').locator('.no-files-content')).toBeHidden();
+    use(workspaces);
+  },
+
+  documentsReadOnly: async ({ workspaces }, use) => {
+    await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(2).click();
+    await expect(workspaces).toHaveHeader(["Watcher's Keep"], true, true);
+    await expect(workspaces).toBeDocumentPage();
+    await expect(workspaces.locator('.folder-container').locator('.no-files-content')).toBeHidden();
+    use(workspaces);
   },
 
   usersPage: async ({ connected }, use) => {
@@ -151,9 +162,9 @@ export const msTest = base.extend<{
     await use(modal);
   },
 
-  workspaceSharingModal: async ({ connected }, use) => {
-    await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(1).locator('.shared-group').click();
-    const modal = connected.locator('.workspace-sharing-modal');
+  workspaceSharingModal: async ({ workspaces }, use) => {
+    await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(1).locator('.shared-group').click();
+    const modal = workspaces.locator('.workspace-sharing-modal');
     await expect(modal).toBeVisible();
     await use(modal);
   },

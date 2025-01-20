@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { expect as baseExpect, Locator, Page } from '@playwright/test';
+import { dismissToast } from '@tests/e2e/helpers/utils';
 
 interface AssertReturnType {
   message: () => string;
@@ -48,8 +49,7 @@ export const expect = baseExpect.extend({
       }
     }
 
-    // Close toast
-    await toast.locator('.toast-button-confirm').click();
+    await dismissToast(page);
     await expect(toast).toBeHidden();
 
     return {
