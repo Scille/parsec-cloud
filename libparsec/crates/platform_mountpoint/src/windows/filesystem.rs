@@ -9,7 +9,7 @@ use winfsp_wrs::{
     STATUS_DEVICE_NOT_READY, STATUS_DIRECTORY_NOT_EMPTY, STATUS_FILE_IS_A_DIRECTORY,
     STATUS_HOST_UNREACHABLE, STATUS_INVALID_HANDLE, STATUS_MEDIA_WRITE_PROTECTED,
     STATUS_NOT_A_DIRECTORY, STATUS_NO_SUCH_DEVICE, STATUS_OBJECT_NAME_COLLISION,
-    STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_NOT_FOUND, STATUS_RESOURCEMANAGER_READ_ONLY,
+    STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_NOT_FOUND,
 };
 
 use libparsec_client::workspace::{
@@ -25,8 +25,24 @@ use crate::windows::winify::winify_entry_name;
 
 use super::winify::unwinify_entry_name;
 
-/// we currently don't support arbitrary security descriptor and instead use only this one
-/// https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format
+// We don't support arbitrary security descriptor, and instead use a one-size-fits-all.
+//
+// To be honest, I'm genuinely impressed by how unreadable they managed to make this security descriptor format O_o
+//
+// Basically to have a chance deciphering this, you need to know:
+// - `:` is not a separator between groups
+// - There are 3 groups, starting with:
+//    - `O:` (for Owner)
+//    - `G:` (for Group)
+//    - `D:` (for DACL, or Discretionary Access Control List)
+// - The D group contains multiple sub-groups...
+// - ...which are this time splitted by `;`
+//
+// For instance `O:BAG:BAD:P(A;;FRFX;;;SY)(A;;FRFX;;;BA)(A;;FRFX;;;WD)` is the read-only version
+// of our current security descriptor (`FA` is "File All", `FRFX` is "File Read File Execute").
+//
+// See https://learn.microsoft.com/windows/win32/secauthz/security-descriptor-string-format
+// See https://learn.microsoft.com/en-us/windows/win32/secauthz/access-control-lists
 static SECURITY_DESCRIPTOR: Lazy<SecurityDescriptor> = Lazy::new(|| {
     SecurityDescriptor::from_wstr(u16cstr!("O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FA;;;WD)"))
         .expect("unreachable, valid SecurityDescriptor")
@@ -102,7 +118,7 @@ fn parsec_file_stat_to_winfsp_file_info(stat: &FileStat) -> FileInfo {
         .set_allocation_size(stat.size)
 }
 
-fn parsec_entry_stat_to_winfsp_file_info(stat: &EntryStat) -> FileInfo {
+fn parsec_entry_stat_to_winfsp_file_info(stat: &EntryStat, is_read_only: bool) -> FileInfo {
     // TODO: consider using FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS/FILE_ATTRIBUTE_RECALL_ON_OPEN ?
     // (see https://docs.microsoft.com/en-us/windows/desktop/fileio/file-attribute-constants)
     match stat {
@@ -120,7 +136,13 @@ fn parsec_entry_stat_to_winfsp_file_info(stat: &EntryStat) -> FileInfo {
                 // This way, we don't need to deal with the weird semantics of
                 // FILE_ATTRIBUTE_NORMAL which means "no other attributes is set"
                 // Also, this is what the winfsp memfs does.
-                .set_file_attributes(FileAttributes::ARCHIVE | FileAttributes::NOT_CONTENT_INDEXED)
+                .set_file_attributes(if is_read_only {
+                    FileAttributes::ARCHIVE
+                        | FileAttributes::NOT_CONTENT_INDEXED
+                        | FileAttributes::READONLY
+                } else {
+                    FileAttributes::ARCHIVE | FileAttributes::NOT_CONTENT_INDEXED
+                })
                 .set_creation_time(created)
                 .set_last_access_time(updated)
                 .set_last_write_time(updated)
@@ -166,6 +188,7 @@ pub(crate) static LOOKUP_HOOK: Mutex<
 
 #[derive(Debug)]
 pub(crate) struct ParsecFileSystemInterface {
+    is_read_only: bool,
     ops: Arc<WorkspaceOps>,
     tokio_handle: tokio::runtime::Handle,
     volume_label: Mutex<U16String>,
@@ -173,11 +196,13 @@ pub(crate) struct ParsecFileSystemInterface {
 
 impl ParsecFileSystemInterface {
     pub fn new(
+        is_read_only: bool,
         ops: Arc<WorkspaceOps>,
         tokio_handle: tokio::runtime::Handle,
         volume_label: U16String,
     ) -> Self {
         Self {
+            is_read_only,
             ops,
             tokio_handle,
             volume_label: Mutex::new(volume_label),
@@ -206,7 +231,10 @@ impl ParsecFileSystemInterface {
                     .stat_entry_by_id_ignore_confinement_point(*id)
                     .await;
                 match outcome {
-                    Ok(stat) => Ok(parsec_entry_stat_to_winfsp_file_info(&stat)),
+                    Ok(stat) => Ok(parsec_entry_stat_to_winfsp_file_info(
+                        &stat,
+                        self.is_read_only,
+                    )),
                     Err(err) => Err(match err {
                         WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
                         WorkspaceStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
@@ -264,7 +292,8 @@ impl FileSystemInterface for ParsecFileSystemInterface {
 
         self.tokio_handle.block_on(async move {
             let file_attributes = match self.ops.stat_entry(&path).await {
-                Ok(stat) => parsec_entry_stat_to_winfsp_file_info(&stat).file_attributes(),
+                Ok(stat) => parsec_entry_stat_to_winfsp_file_info(&stat, self.is_read_only)
+                    .file_attributes(),
                 Err(err) => {
                     return Err(match err {
                         WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
@@ -323,7 +352,15 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         WorkspaceCreateFolderError::EntryExists { .. } => {
                             STATUS_OBJECT_NAME_COLLISION
                         }
-                        WorkspaceCreateFolderError::ReadOnlyRealm => STATUS_MEDIA_WRITE_PROTECTED,
+                        // WinFSP lacks a proper read-only support, so we will receive write
+                        // operations no matter what (see https://github.com/winfsp/winfsp/issues/84)
+                        //
+                        // Using `STATUS_MEDIA_WRITE_PROTECTED` here causes a "Catastrophic Failure"
+                        // error in Windows Explorer, so instead we must use `STATUS_ACCESS_DENIED`.
+                        //
+                        // TODO: `STATUS_ACCESS_DENIED` causes a "You need to confirm this operation" dialogue
+                        // in Windows Explorer, which is obviously not the best user experience :/
+                        WorkspaceCreateFolderError::ReadOnlyRealm => STATUS_ACCESS_DENIED,
                         WorkspaceCreateFolderError::NoRealmAccess
                         | WorkspaceCreateFolderError::InvalidKeysBundle(_)
                         | WorkspaceCreateFolderError::InvalidCertificate(_)
@@ -358,7 +395,15 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         WorkspaceOpenFileError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceOpenFileError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
                         WorkspaceOpenFileError::EntryNotAFile { .. } => STATUS_FILE_IS_A_DIRECTORY,
-                        WorkspaceOpenFileError::ReadOnlyRealm => STATUS_MEDIA_WRITE_PROTECTED,
+                        // WinFSP lacks a proper read-only support, so we will receive write
+                        // operations no matter what (see https://github.com/winfsp/winfsp/issues/84)
+                        //
+                        // Using `STATUS_MEDIA_WRITE_PROTECTED` here causes a "Catastrophic Failure"
+                        // error in Windows Explorer, so instead we must use `STATUS_ACCESS_DENIED`.
+                        //
+                        // TODO: `STATUS_ACCESS_DENIED` causes a "You need to confirm this operation" dialogue
+                        // in Windows Explorer, which is obviously not the best user experience :/
+                        WorkspaceOpenFileError::ReadOnlyRealm => STATUS_ACCESS_DENIED,
                         WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
                             STATUS_OBJECT_NAME_COLLISION
                         }
@@ -410,7 +455,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
             //     return match outcome {
             //         Ok(stat) => Ok(Arc::new(Mutex::new(OpenedObj::EntryInfo {
             //             parsec_file_name,
-            //             info: parsec_entry_stat_to_winfsp_file_info(&stat),
+            //             info: parsec_entry_stat_to_winfsp_file_info(&stat, , self.is_read_only),
             //         }))),
             //         Err(err) => Err(match err {
             //             WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
@@ -451,10 +496,12 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     }),
                     WorkspaceOpenFileError::Offline => Err(STATUS_HOST_UNREACHABLE),
                     WorkspaceOpenFileError::Stopped => Err(STATUS_NO_SUCH_DEVICE),
-                    WorkspaceOpenFileError::ReadOnlyRealm => Err(STATUS_MEDIA_WRITE_PROTECTED),
-                    WorkspaceOpenFileError::NoRealmAccess => Err(STATUS_ACCESS_DENIED),
                     WorkspaceOpenFileError::EntryNotFound => Err(STATUS_OBJECT_NAME_NOT_FOUND),
-                    WorkspaceOpenFileError::InvalidKeysBundle(_)
+                    // WinFSP lacks a proper read-only support, so we will receive write
+                    // operations no matter what (see https://github.com/winfsp/winfsp/issues/84)
+                    WorkspaceOpenFileError::ReadOnlyRealm => Err(STATUS_MEDIA_WRITE_PROTECTED),
+                    WorkspaceOpenFileError::NoRealmAccess
+                    | WorkspaceOpenFileError::InvalidKeysBundle(_)
                     | WorkspaceOpenFileError::InvalidCertificate(_)
                     | WorkspaceOpenFileError::InvalidManifest(_)
                     | WorkspaceOpenFileError::Internal(_) => Err(STATUS_ACCESS_DENIED),
@@ -778,6 +825,8 @@ impl FileSystemInterface for ParsecFileSystemInterface {
 
         self.tokio_handle.block_on(async move {
             if !self.ops.get_current_name_and_self_role().1.can_write() {
+                // WinFSP lacks a proper read-only support, so we will receive write
+                // operations no matter what (see https://github.com/winfsp/winfsp/issues/84)
                 return Err(STATUS_MEDIA_WRITE_PROTECTED);
             }
 
@@ -791,7 +840,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                 } => {
                     if parsec_file_name.is_root() {
                         // Cannot remove root mountpoint !
-                        return Err(STATUS_RESOURCEMANAGER_READ_ONLY);
+                        return Err(STATUS_ACCESS_DENIED);
                     }
 
                     self.ops
@@ -888,6 +937,8 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     }
                     WorkspaceMoveEntryError::Offline => STATUS_HOST_UNREACHABLE,
                     WorkspaceMoveEntryError::Stopped => STATUS_DEVICE_NOT_READY,
+                    // WinFSP lacks a proper read-only support, so we will receive write
+                    // operations no matter what (see https://github.com/winfsp/winfsp/issues/84)
                     WorkspaceMoveEntryError::ReadOnlyRealm => STATUS_MEDIA_WRITE_PROTECTED,
                     WorkspaceMoveEntryError::NoRealmAccess
                     | WorkspaceMoveEntryError::InvalidKeysBundle(_)
@@ -963,7 +1014,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     let directory_stat = reader.stat_folder();
 
                     if !add_dir_info(DirInfo::new(
-                        parsec_entry_stat_to_winfsp_file_info(&directory_stat),
+                        parsec_entry_stat_to_winfsp_file_info(&directory_stat, self.is_read_only),
                         u16cstr!("."),
                     )) {
                         return Ok(());
@@ -993,7 +1044,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         })?;
 
                     if !add_dir_info(DirInfo::new(
-                        parsec_entry_stat_to_winfsp_file_info(&parent_stat),
+                        parsec_entry_stat_to_winfsp_file_info(&parent_stat, self.is_read_only),
                         u16cstr!(".."),
                     )) {
                         return Ok(());
@@ -1049,7 +1100,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                 let winified_child_name = winify_entry_name(child_name);
 
                 if !add_dir_info(DirInfo::from_str(
-                    parsec_entry_stat_to_winfsp_file_info(&child_stat),
+                    parsec_entry_stat_to_winfsp_file_info(&child_stat, self.is_read_only),
                     &winified_child_name,
                 )) {
                     break;
@@ -1104,7 +1155,10 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     | WorkspaceStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
                 })?;
 
-            Ok(parsec_entry_stat_to_winfsp_file_info(&stat))
+            Ok(parsec_entry_stat_to_winfsp_file_info(
+                &stat,
+                self.is_read_only,
+            ))
         })
     }
 }
