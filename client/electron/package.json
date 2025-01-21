@@ -1,6 +1,6 @@
 {
     "name": "parsec",
-    "version": "3.2.4",
+    "version": "3.2.5-a.0+dev",
     "description": "Parsec.cloud",
     "author": {
         "name": "Scille SAS",
