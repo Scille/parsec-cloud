@@ -4,6 +4,18 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.2.4-rc.5 (2025-01-21)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix missing error message in Windows Explorer when trying to delete a file in
+  a read-only mountpoint.
+  (`#9382 <https://github.com/Scille/parsec-cloud/issues/9382>`__)
+
+
+
 Parsec v3.2.4-rc.4 (2025-01-20)
 -------------------------------
 
