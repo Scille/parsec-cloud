@@ -279,6 +279,7 @@ import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import { EntrySyncedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
+import { showSaveFilePicker } from 'native-file-system-adapter';
 
 interface FoldersPageSavedData {
   displayState?: DisplayState;
@@ -1161,7 +1162,25 @@ async function copyEntries(entries: EntryModel[]): Promise<void> {
 }
 
 async function downloadEntries(entries: EntryModel[]): Promise<void> {
-  console.log('Download', entries);
+  if (entries.length !== 1) {
+    return;
+  }
+  if (!workspaceInfo.value) {
+    window.electronAPI.log('error', 'No workspace info when trying to download a file');
+    return;
+  }
+
+  try {
+    const saveHandle = await showSaveFilePicker({
+      _preferPolyfill: false,
+      suggestedName: entries[0].name,
+    });
+
+    const stream = await parsec.createReadStream(workspaceInfo.value.handle, entries[0].path);
+    await stream.pipeTo(await saveHandle.createWritable());
+  } catch (e: any) {
+    window.electronAPI.log('error', `Failed to download file: ${e.toString()}`);
+  }
 }
 
 async function showHistory(entries: EntryModel[]): Promise<void> {

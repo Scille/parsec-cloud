@@ -65,6 +65,7 @@ import {
   openFileAt,
   readHistoryFile,
   closeHistoryFile,
+  DEFAULT_READ_SIZE,
 } from '@/parsec';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
 import { informationCircle, open } from 'ionicons/icons';
@@ -85,7 +86,6 @@ const viewerComponent: Ref<Component | null> = shallowRef(null);
 const contentInfo: Ref<FileContentInfo | null> = ref(null);
 const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
-const READ_CHUNK_SIZE = 512_000;
 const atDateTime: Ref<DateTime | null> = ref(null);
 
 onMounted(async () => {
@@ -160,16 +160,16 @@ onMounted(async () => {
     while (loop) {
       let readResult;
       if (!atDateTime.value) {
-        readResult = await readFile(workspaceHandle, openResult.value, offset, READ_CHUNK_SIZE);
+        readResult = await readFile(workspaceHandle, openResult.value, offset, DEFAULT_READ_SIZE);
       } else {
-        readResult = await readHistoryFile(workspaceHandle, openResult.value, offset, READ_CHUNK_SIZE);
+        readResult = await readHistoryFile(workspaceHandle, openResult.value, offset, DEFAULT_READ_SIZE);
       }
       if (!readResult.ok) {
         throw Error(JSON.stringify(readResult.error));
       }
       const buffer = new Uint8Array(readResult.value);
       contentInfo.value?.data.set(buffer, offset);
-      if (readResult.value.byteLength < READ_CHUNK_SIZE) {
+      if (readResult.value.byteLength < DEFAULT_READ_SIZE) {
         loop = false;
       }
       offset += readResult.value.byteLength;

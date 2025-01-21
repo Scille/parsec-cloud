@@ -53,6 +53,7 @@
         "luxon": "^3.4.4",
         "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#77e1cde26a5769ce9105687cbd64362ce0056c9c",
         "monaco-editor": "^0.52.0",
+        "native-file-system-adapter": "^3.0.1",
         "pdfjs-dist": "^4.8.69",
         "qrcode-vue3": "^1.6.8",
         "uuid": "^9.0.1",

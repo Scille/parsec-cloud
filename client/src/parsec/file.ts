@@ -45,6 +45,8 @@ import { DateTime } from 'luxon';
 const MOCK_OPENED_FILES = new Map<FileDescriptor, FsPath>();
 let MOCK_CURRENT_FD = 1;
 
+export const DEFAULT_READ_SIZE = 256_000;
+
 export async function createFile(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<FileID, WorkspaceCreateFileError>> {
   if (!needsMocks()) {
     return await libparsec.workspaceCreateFile(workspaceHandle, path);
@@ -236,6 +238,49 @@ export async function parseFileLink(link: string): Promise<Result<ParsedParsecAd
     return { ok: false, error: { tag: ParseParsecAddrErrorTag.InvalidUrl, error: 'not a file link' } };
   }
   return result as Result<ParsedParsecAddrWorkspacePath, ParseParsecAddrError>;
+}
+
+export async function createReadStream(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<ReadableStream> {
+  let fd: FileDescriptor | undefined;
+  let offset = 0;
+
+  return new ReadableStream({
+    async start(controller: ReadableStreamDefaultController): Promise<void> {
+      const result = await openFile(workspaceHandle, path, { read: true });
+      if (!result.ok) {
+        return controller.error(result.error);
+      }
+      fd = result.value;
+    },
+
+    async pull(controller: ReadableStreamDefaultController): Promise<void> {
+      if (fd === undefined) {
+        controller.error('No file descriptor');
+        return;
+      }
+      const result = await readFile(workspaceHandle, fd, offset, DEFAULT_READ_SIZE);
+
+      if (!result.ok) {
+        return controller.error(result.error);
+      }
+      if (result.value.length === 0) {
+        controller.close();
+        await closeFile(workspaceHandle, fd);
+        fd = undefined;
+      } else {
+        offset += result.value.length;
+        controller.enqueue(result.value);
+      }
+    },
+
+    async cancel(): Promise<void> {
+      if (fd !== undefined) {
+        await closeFile(workspaceHandle, fd);
+      }
+    },
+
+    type: 'bytes',
+  });
 }
 
 export async function openFile(
