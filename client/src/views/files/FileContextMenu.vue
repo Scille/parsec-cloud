@@ -94,10 +94,9 @@
 
         <ion-item
           button
-          v-if="!multipleFiles && !isDesktop()"
+          v-if="!multipleFiles && !isDesktop() && isFile"
           @click="onClick(FileAction.Download)"
           class="ion-no-padding list-group-item"
-          v-show="false"
         >
           <ion-icon :icon="download" />
           <ion-label class="body list-group-item__label">

@@ -48,7 +48,7 @@ for (const gridMode of [false, true]) {
     await expect(documents.locator('.file-context-menu')).toBeVisible();
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
-    await expect(popover.getByRole('listitem')).toHaveCount(9);
+    await expect(popover.getByRole('listitem')).toHaveCount(10);
     await expect(popover.getByRole('listitem')).toHaveText([
       'Manage file',
       'Rename',
@@ -56,6 +56,7 @@ for (const gridMode of [false, true]) {
       'Make a copy',
       'Delete',
       'History',
+      'Download',
       'Details',
       'Collaboration',
       'Copy link',
@@ -75,7 +76,7 @@ for (const gridMode of [false, true]) {
     await expect(documents.locator('.file-context-menu')).toBeVisible();
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
-    await expect(popover.getByRole('listitem')).toHaveCount(9);
+    await expect(popover.getByRole('listitem')).toHaveCount(10);
     await expect(popover.getByRole('listitem')).toHaveText([
       'Manage file',
       'Rename',
@@ -83,6 +84,7 @@ for (const gridMode of [false, true]) {
       'Make a copy',
       'Delete',
       'History',
+      'Download',
       'Details',
       'Collaboration',
       'Copy link',
@@ -203,8 +205,8 @@ for (const gridMode of [false, true]) {
     await expect(documentsReadOnly.locator('.file-context-menu')).toBeVisible();
     const popover = documentsReadOnly.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
-    await expect(popover.getByRole('listitem')).toHaveCount(4);
-    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Details', 'Collaboration', 'Copy link']);
+    await expect(popover.getByRole('listitem')).toHaveCount(5);
+    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Download', 'Details', 'Collaboration', 'Copy link']);
   });
 
   msTest(`Move document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {

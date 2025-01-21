@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import {
+  DEFAULT_READ_SIZE,
   EntryStatFile,
   EntryTree,
   FileDescriptor,
@@ -409,7 +410,6 @@ class FileOperationManager {
 
         let loop = true;
         let offset = 0;
-        const READ_CHUNK_SIZE = 1_000_000;
         while (loop) {
           // Check if the copy has been cancelled
           let shouldCancel = false;
@@ -426,7 +426,7 @@ class FileOperationManager {
           }
 
           // Read the source
-          const readResult = await readFile(data.workspaceHandle, fdR, offset, READ_CHUNK_SIZE);
+          const readResult = await readFile(data.workspaceHandle, fdR, offset, DEFAULT_READ_SIZE);
 
           // Failed to read, cancel the copy
           if (!readResult.ok) {
@@ -440,7 +440,7 @@ class FileOperationManager {
             throw Error('Failed to write the destination');
           }
           // Smaller that what we asked for, we're at the end of the file
-          if (chunk.byteLength < READ_CHUNK_SIZE) {
+          if (chunk.byteLength < DEFAULT_READ_SIZE) {
             loop = false;
           } else {
             // Otherwise, move the offset and keep going
@@ -612,7 +612,6 @@ class FileOperationManager {
 
         let loop = true;
         let offset = 0;
-        const READ_CHUNK_SIZE = 1_000_000;
         while (loop) {
           // Check if the copy has been cancelled
           let shouldCancel = false;
@@ -629,7 +628,7 @@ class FileOperationManager {
           }
 
           // Read the source
-          const readResult = await readHistoryFile(data.workspaceHandle, fdR, offset, READ_CHUNK_SIZE);
+          const readResult = await readHistoryFile(data.workspaceHandle, fdR, offset, DEFAULT_READ_SIZE);
 
           // Failed to read, cancel the copy
           if (!readResult.ok) {
@@ -643,7 +642,7 @@ class FileOperationManager {
             throw Error('Failed to write the destination');
           }
           // Smaller that what we asked for, we're at the end of the file
-          if (chunk.byteLength < READ_CHUNK_SIZE) {
+          if (chunk.byteLength < DEFAULT_READ_SIZE) {
             loop = false;
           } else {
             // Otherwise, move the offset and keep going
