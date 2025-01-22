@@ -188,6 +188,7 @@ import type {
   WorkspaceHistoryEntryStatFolder as ParsecWorkspaceHistoryEntryStatFolder,
   WorkspaceInfo as ParsecWorkspaceInfo,
   Path,
+  U64,
   UserID,
   UserProfile,
   VlobID,
@@ -313,7 +314,7 @@ interface OrganizationInfo {
     data: number;
   };
   outsidersAllowed: boolean;
-  userLimit?: number;
+  userLimit?: U64;
   hasUserLimit: boolean;
   organizationAddr: ParsecOrganizationAddr;
   organizationId: OrganizationID;

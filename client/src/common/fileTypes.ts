@@ -95,7 +95,7 @@ async function detectFileContentType(workspaceHandle: WorkspaceHandle, path: FsP
     return { type: FileContentType.Text, extension: ext, mimeType: TEXTS.get(ext) as string };
   }
 
-  const READ_CHUNK_SIZE = 512;
+  const READ_CHUNK_SIZE = 512n;
   let fd: FileDescriptor | null = null;
   try {
     let openResult;
@@ -110,9 +110,9 @@ async function detectFileContentType(workspaceHandle: WorkspaceHandle, path: FsP
     fd = openResult.value;
     let readResult;
     if (at) {
-      readResult = await readHistoryFile(workspaceHandle, fd, 0, READ_CHUNK_SIZE);
+      readResult = await readHistoryFile(workspaceHandle, fd, 0n, READ_CHUNK_SIZE);
     } else {
-      readResult = await readFile(workspaceHandle, fd, 0, READ_CHUNK_SIZE);
+      readResult = await readFile(workspaceHandle, fd, 0n, READ_CHUNK_SIZE);
     }
     if (!readResult.ok) {
       return;
