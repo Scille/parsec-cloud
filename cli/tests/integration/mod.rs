@@ -146,6 +146,19 @@ macro_rules! assert_cmd_failure {
     }
 }
 
+/// Creates a std `Command` to be run with the `parsec-cli` binary.
+#[macro_export]
+macro_rules! std_cmd {
+    ($($args:expr),*) => {
+        {
+            use assert_cmd::cargo::CommandCargoExt;
+            let mut command = std::process::Command::cargo_bin("parsec-cli").unwrap();
+            command.args([$($args),*]);
+            command
+        }
+    }
+}
+
 /// For Alice, with Bob and Toto as recipients
 fn shared_recovery_create(
     alice: &Arc<LocalDevice>,
@@ -211,4 +224,25 @@ fn shared_recovery_create(
     .stdout(predicates::str::contains(format!(
         "Shared recovery {GREEN}set up{RESET}"
     )));
+}
+
+/// Spawns `command` in the background with the given `timeout`
+/// and returns a session to interact with the started process.
+fn spawn_interactive_command(
+    command: std::process::Command,
+    timeout: Option<u64>,
+) -> Result<rexpect::session::PtySession, rexpect::error::Error> {
+    rexpect::spawn_with_options(
+        command,
+        rexpect::reader::Options {
+            // On CI we disable the timeout to avoid flakiness,
+            // If a test is too slow, it will be killed by the timeout set on the CI
+            timeout_ms: if std::option_env!("CI") == Some("true") {
+                None
+            } else {
+                timeout
+            },
+            strip_ansi_escape_codes: true,
+        },
+    )
 }
