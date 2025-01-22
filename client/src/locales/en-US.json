@@ -274,7 +274,8 @@
             "customOffline": "Failed to contact server. Please make sure you are online and that the server address is valid.",
             "alreadyExists": "This organization name is not available, please choose another one.",
             "generic": "Failed to create the organization (reason: {reason}).",
-            "customOrderNotAuthorized": "Clients with a custom contract are not allowed to directly create organizations. If you need another organization, please contact us."
+            "customOrderNotAuthorized": "Clients with a custom contract are not allowed to directly create organizations. If you need another organization, please make a request from your customer area.",
+            "incompatibleServer": "Your version of Parsec is incompatible with the server. Please update the app or contact an administrator."
         },
         "cancelConfirm": "Cancel organization creation",
         "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart.",

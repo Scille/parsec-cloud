@@ -443,7 +443,8 @@ msTest('Try to create an org with custom order', async ({ home }) => {
   await bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1).click();
   await expect(modal).toBeHidden();
   await expect(home).toShowInformationModal(
-    'Clients with a custom contract are not allowed to directly create organizations. If you need another organization, please contact us.',
+    // eslint-disable-next-line max-len
+    'Clients with a custom contract are not allowed to directly create organizations. If you need another organization, please make a request from your customer area.',
     'Error',
   );
 });
