@@ -77,10 +77,6 @@ Parsec is available for Linux, Mac, and Windows operating systems.
 
    .. group-tab:: macOS
 
-      .. warning::
-
-          Support for macOS is currently under development, some features are not fully implemented.
-
       1. Download the latest stable version of the **macOS installer**:
 
       .. image:: screens/download-parsec.png

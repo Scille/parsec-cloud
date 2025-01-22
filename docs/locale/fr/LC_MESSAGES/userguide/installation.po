@@ -121,14 +121,6 @@ msgstr ""
 msgid "macOS"
 msgstr "macOS"
 
-#: ../../userguide/installation.rst:83
-msgid ""
-"Support for macOS is currently under development, some features are not "
-"fully implemented."
-msgstr ""
-"Le support de macOS est actuellement en cours de développement, certaines "
-"fonctionnalités ne sont pas encore totalement implémentées."
-
 #: ../../userguide/installation.rst:85
 msgid "Download the latest stable version of the **macOS installer**:"
 msgstr "Téléchargez la dernière version stable de l'installateur **macOS** :"
