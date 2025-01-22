@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { OrganizationID } from '@/parsec';
 import { BmsApi } from '@/services/bms/api';
 import { MockedBmsApi } from '@/services/bms/mockApi';
 import {
@@ -130,6 +131,18 @@ class BmsAccess {
       }
     }
     return response;
+  }
+
+  async createOrganization(organizationName: OrganizationID): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+
+    return await this.api.createOrganization(this.tokens.access, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
+      organizationName: organizationName,
+    });
   }
 
   async updateEmailSendCode(email: string, lang: BmsLang): Promise<BmsResponse> {

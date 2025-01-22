@@ -274,7 +274,8 @@
             "customOffline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet et que l'adresse du serveur est correcte.",
             "alreadyExists": "Ce nom d'organisation n'est pas disponible, veuillez en choisir un autre.",
             "generic": "Impossible de créer l'organisation (raison: {reason}).",
-            "customOrderNotAuthorized": "Les clients sous contrat personnalisé ne sont pas autorisés à créer une organisation directement. Si vous avez besoin d'une organisation supplémentaire, veuillez nous contacter."
+            "customOrderNotAuthorized": "Les clients en contrat sur mesure ne sont pas autorisés à créer une organisation directement. Si vous avez besoin d'une organisation supplémentaire, veuillez remplir une demande depuis votre espace client.",
+            "incompatibleServer": "Votre version de Parsec n'est pas compatible avec le serveur. Veuillez mettre à jour votre application ou contacter un administrateur."
         },
         "cancelConfirm": "Annulation",
         "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus de création ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le début.",

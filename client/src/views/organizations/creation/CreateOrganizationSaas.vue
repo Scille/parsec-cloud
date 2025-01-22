@@ -74,7 +74,7 @@
 import {
   AuthenticationToken,
   BillingSystem,
-  BmsApi,
+  BmsAccessInstance,
   CONNECTION_ERROR_STATUS,
   DataType,
   PersonalInformationResultData,
@@ -127,7 +127,6 @@ const emits = defineEmits<{
 const step = ref<Steps>(Steps.BmsLogin);
 const organizationName = ref<OrganizationID | undefined>(undefined);
 const personalInformation = ref<PersonalInformationResultData | undefined>(undefined);
-const authenticationToken = ref<AuthenticationToken | undefined>(undefined);
 const currentError = ref<Translatable | undefined>(undefined);
 const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
 const availableDevice = ref<AvailableDevice | undefined>(undefined);
@@ -141,10 +140,7 @@ onMounted(async () => {
   }
 });
 
-async function onLoginSuccess(token: AuthenticationToken, info: PersonalInformationResultData): Promise<void> {
-  authenticationToken.value = token;
-  personalInformation.value = info;
-
+async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInformationResultData): Promise<void> {
   if (
     (info.billingSystem === BillingSystem.CustomOrder || info.billingSystem === BillingSystem.ExperimentalCandidate) &&
     !props.bootstrapLink
@@ -159,6 +155,7 @@ async function onLoginSuccess(token: AuthenticationToken, info: PersonalInformat
     );
     return;
   }
+  personalInformation.value = info;
 
   if (props.bootstrapLink) {
     step.value = Steps.Authentication;
@@ -168,7 +165,7 @@ async function onLoginSuccess(token: AuthenticationToken, info: PersonalInformat
 }
 
 async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID): Promise<void> {
-  if (!authenticationToken.value || !personalInformation.value) {
+  if (!personalInformation.value) {
     window.electronAPI.log(
       'error',
       'OrganizationCreation: no authentication token after choosing the organization name, should not happen',
@@ -198,7 +195,7 @@ async function onCreationError(startTime: number): Promise<void> {
 }
 
 async function onCreateClicked(): Promise<void> {
-  if (!organizationName.value || !personalInformation.value || !saveStrategy.value || !authenticationToken.value) {
+  if (!organizationName.value || !personalInformation.value || !saveStrategy.value) {
     window.electronAPI.log('error', 'OrganizationCreation: missing data at the creation step, should not happen');
     return;
   }
@@ -208,11 +205,7 @@ async function onCreateClicked(): Promise<void> {
   const startTime = new Date().valueOf();
   let bootstrapLink: string | undefined = props.bootstrapLink;
   if (!props.bootstrapLink) {
-    const response = await BmsApi.createOrganization(authenticationToken.value, {
-      organizationName: organizationName.value,
-      userId: personalInformation.value.id,
-      clientId: personalInformation.value.clientId,
-    });
+    const response = await BmsAccessInstance.get().createOrganization(organizationName.value);
 
     if (response.isError) {
       console.log('Failed to create organization');
@@ -262,6 +255,8 @@ async function onCreateClicked(): Promise<void> {
       currentError.value = 'CreateOrganization.errors.alreadyExists';
     } else if (result.error.tag === BootstrapOrganizationErrorTag.Offline) {
       currentError.value = 'CreateOrganization.errors.offline';
+    } else if (result.error.tag === BootstrapOrganizationErrorTag.Internal && result.error.error.includes('Unsupported')) {
+      currentError.value = 'CreateOrganization.errors.incompatibleServer';
     } else {
       currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: result.error.tag } };
     }
