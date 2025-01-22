@@ -1,6 +1,7 @@
 use libparsec::{tmp_path, TmpPath};
 
-use crate::integration_tests::bootstrap_cli_test;
+use crate::integration_tests::{bootstrap_cli_test, spawn_interactive_command};
+use crate::std_cmd;
 use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
 
 #[rstest::rstest]
@@ -87,25 +88,15 @@ async fn create_shared_recovery_inexistent_email(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn create_shared_recovery_default(tmp_path: TmpPath) {
-    use assert_cmd::cargo::CommandCargoExt;
-
     let (_, TestOrganization { bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
-    let mut cmd = std::process::Command::cargo_bin("parsec-cli").unwrap();
-    cmd.args([
+    let cmd = std_cmd!(
         "shared-recovery",
         "create",
         "--device",
-        &bob.device_id.hex(),
-    ]);
+        &bob.device_id.hex()
+    );
 
-    let mut p = rexpect::spawn_with_options(
-        cmd,
-        rexpect::reader::Options {
-            timeout_ms: Some(1500),
-            strip_ansi_escape_codes: true,
-        },
-    )
-    .unwrap();
+    let mut p = spawn_interactive_command(cmd, Some(1500)).unwrap();
 
     p.exp_string("Enter password for the device:").unwrap();
     p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();

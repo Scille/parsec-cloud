@@ -4,10 +4,10 @@ use libparsec::{
     authenticated_cmds::latest::invite_new_user, get_default_config_dir, tmp_path,
     AuthenticatedCmds, InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
 };
-use rexpect::spawn;
 
 use crate::{
-    integration_tests::bootstrap_cli_test,
+    integration_tests::{bootstrap_cli_test, spawn_interactive_command},
+    std_cmd,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
     utils::YELLOW,
 };
@@ -72,36 +72,24 @@ async fn invite_user_dance(tmp_path: TmpPath) {
 
     // spawn greeter thread
 
-    let mut cmd_greeter = assert_cmd::Command::cargo_bin("parsec-cli").unwrap();
-    cmd_greeter.args([
+    let program_greeter = std_cmd!(
         "invite",
         "greet",
         "--device",
         &alice.device_id.hex(),
-        &token.hex().to_string(),
-    ]);
-
-    let program_greeter = cmd_greeter.get_program().to_str().unwrap().to_string();
-    let program_greeter = cmd_greeter
-        .get_args()
-        .fold(program_greeter, |acc, s| format!("{acc} {s:?}"));
+        &token.hex()
+    );
 
     let p_greeter = Arc::new(Mutex::new(
-        spawn(&dbg!(program_greeter), Some(1000)).unwrap(),
+        spawn_interactive_command(dbg!(program_greeter), Some(1000)).unwrap(),
     ));
 
     // spawn claimer thread
 
-    let mut cmd_claimer = assert_cmd::Command::cargo_bin("parsec-cli").unwrap();
-    cmd_claimer.args(["invite", "claim", invitation_addr.to_url().as_ref()]);
-
-    let program_claimer = cmd_claimer.get_program().to_str().unwrap().to_string();
-    let program_claimer = cmd_claimer
-        .get_args()
-        .fold(program_claimer, |acc, s| format!("{acc} {s:?}"));
+    let program_claimer = std_cmd!("invite", "claim", invitation_addr.to_url().as_ref());
 
     let p_claimer = Arc::new(Mutex::new(
-        spawn(&dbg!(program_claimer), Some(10_000)).unwrap(),
+        spawn_interactive_command(dbg!(program_claimer), Some(10_000)).unwrap(),
     ));
 
     // retrieve greeter code
@@ -111,6 +99,9 @@ async fn invite_user_dance(tmp_path: TmpPath) {
 
         locked.exp_string("Enter password for the device:").unwrap();
         locked.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();
+        locked
+            .exp_string("Poll server for new certificates")
+            .unwrap();
         locked.exp_string("Waiting for claimer").unwrap();
     });
     let claimer_cloned = p_claimer.clone();
