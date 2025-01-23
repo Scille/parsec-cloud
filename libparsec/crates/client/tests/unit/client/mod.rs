@@ -19,6 +19,7 @@ mod share_workspace;
 mod start_shamir_recovery_invitation_greet;
 mod start_workspace;
 mod tos;
+mod update_user_profile;
 mod utils;
 mod with_monitors;
 mod workspace_refresh_list;
