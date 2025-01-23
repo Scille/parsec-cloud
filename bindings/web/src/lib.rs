@@ -15,5 +15,11 @@ pub fn initLogger() {
     {
         console_error_panic_hook::set_once();
     }
-    console_log::init_with_level(log::Level::Info).expect("cannot initialize console logger");
+    let log_level = if cfg!(debug_assertions) {
+        log::Level::Trace
+    } else {
+        log::Level::Info
+    };
+    console_log::init_with_level(log_level).expect("cannot initialize console logger");
+    log::info!("Libparsec logger initialized with level {log_level}");
 }
