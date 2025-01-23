@@ -6463,6 +6463,83 @@ fn variant_client_stop_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientUserUpdateProfileError
+
+#[allow(dead_code)]
+fn variant_client_user_update_profile_error_rs_to_js(
+    rs_obj: libparsec::ClientUserUpdateProfileError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientUserUpdateProfileError::AuthorNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientUserUpdateProfileErrorAuthorNotAllowed".into(),
+            )?;
+        }
+        libparsec::ClientUserUpdateProfileError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientUserUpdateProfileErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientUserUpdateProfileError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientUserUpdateProfileErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::ClientUserUpdateProfileError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientUserUpdateProfileErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientUserUpdateProfileError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientUserUpdateProfileErrorStopped".into(),
+            )?;
+        }
+        libparsec::ClientUserUpdateProfileError::TimestampOutOfBallpark { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientUserUpdateProfileErrorTimestampOutOfBallpark".into(),
+            )?;
+        }
+        libparsec::ClientUserUpdateProfileError::UserIsSelf { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientUserUpdateProfileErrorUserIsSelf".into(),
+            )?;
+        }
+        libparsec::ClientUserUpdateProfileError::UserNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientUserUpdateProfileErrorUserNotFound".into(),
+            )?;
+        }
+        libparsec::ClientUserUpdateProfileError::UserRevoked { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientUserUpdateProfileErrorUserRevoked".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // DeviceAccessStrategy
 
 #[allow(dead_code)]
@@ -15511,6 +15588,42 @@ pub fn clientStop(client: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_stop_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_update_user_profile
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientUpdateUserProfile(client_handle: u32, user: String, new_profile: String) -> Promise {
+    future_to_promise(async move {
+        let user = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(user).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let new_profile = enum_user_profile_js_to_rs(&new_profile)?;
+
+        let ret = libparsec::client_update_user_profile(client_handle, user, new_profile).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_user_update_profile_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

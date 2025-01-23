@@ -1635,6 +1635,66 @@ export interface ClientStopErrorInternal {
 export type ClientStopError =
   | ClientStopErrorInternal
 
+// ClientUserUpdateProfileError
+export enum ClientUserUpdateProfileErrorTag {
+    AuthorNotAllowed = 'ClientUserUpdateProfileErrorAuthorNotAllowed',
+    Internal = 'ClientUserUpdateProfileErrorInternal',
+    InvalidCertificate = 'ClientUserUpdateProfileErrorInvalidCertificate',
+    Offline = 'ClientUserUpdateProfileErrorOffline',
+    Stopped = 'ClientUserUpdateProfileErrorStopped',
+    TimestampOutOfBallpark = 'ClientUserUpdateProfileErrorTimestampOutOfBallpark',
+    UserIsSelf = 'ClientUserUpdateProfileErrorUserIsSelf',
+    UserNotFound = 'ClientUserUpdateProfileErrorUserNotFound',
+    UserRevoked = 'ClientUserUpdateProfileErrorUserRevoked',
+}
+
+export interface ClientUserUpdateProfileErrorAuthorNotAllowed {
+    tag: ClientUserUpdateProfileErrorTag.AuthorNotAllowed
+    error: string
+}
+export interface ClientUserUpdateProfileErrorInternal {
+    tag: ClientUserUpdateProfileErrorTag.Internal
+    error: string
+}
+export interface ClientUserUpdateProfileErrorInvalidCertificate {
+    tag: ClientUserUpdateProfileErrorTag.InvalidCertificate
+    error: string
+}
+export interface ClientUserUpdateProfileErrorOffline {
+    tag: ClientUserUpdateProfileErrorTag.Offline
+    error: string
+}
+export interface ClientUserUpdateProfileErrorStopped {
+    tag: ClientUserUpdateProfileErrorTag.Stopped
+    error: string
+}
+export interface ClientUserUpdateProfileErrorTimestampOutOfBallpark {
+    tag: ClientUserUpdateProfileErrorTag.TimestampOutOfBallpark
+    error: string
+}
+export interface ClientUserUpdateProfileErrorUserIsSelf {
+    tag: ClientUserUpdateProfileErrorTag.UserIsSelf
+    error: string
+}
+export interface ClientUserUpdateProfileErrorUserNotFound {
+    tag: ClientUserUpdateProfileErrorTag.UserNotFound
+    error: string
+}
+export interface ClientUserUpdateProfileErrorUserRevoked {
+    tag: ClientUserUpdateProfileErrorTag.UserRevoked
+    error: string
+}
+export type ClientUserUpdateProfileError =
+  | ClientUserUpdateProfileErrorAuthorNotAllowed
+  | ClientUserUpdateProfileErrorInternal
+  | ClientUserUpdateProfileErrorInvalidCertificate
+  | ClientUserUpdateProfileErrorOffline
+  | ClientUserUpdateProfileErrorStopped
+  | ClientUserUpdateProfileErrorTimestampOutOfBallpark
+  | ClientUserUpdateProfileErrorUserIsSelf
+  | ClientUserUpdateProfileErrorUserNotFound
+  | ClientUserUpdateProfileErrorUserRevoked
+
 // DeviceAccessStrategy
 export enum DeviceAccessStrategyTag {
     Keyring = 'DeviceAccessStrategyKeyring',
@@ -3895,6 +3955,11 @@ export interface LibParsecPlugin {
     clientStop(
         client: Handle
     ): Promise<Result<null, ClientStopError>>
+    clientUpdateUserProfile(
+        client_handle: Handle,
+        user: UserID,
+        new_profile: UserProfile
+    ): Promise<Result<null, ClientUserUpdateProfileError>>
     getDefaultConfigDir(
     ): Promise<Path>
     getDefaultDataBaseDir(

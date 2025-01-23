@@ -1408,6 +1408,55 @@ export type ClientStopError =
   | ClientStopErrorInternal
 
 
+// ClientUserUpdateProfileError
+export interface ClientUserUpdateProfileErrorAuthorNotAllowed {
+    tag: "AuthorNotAllowed"
+    error: string
+}
+export interface ClientUserUpdateProfileErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientUserUpdateProfileErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ClientUserUpdateProfileErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClientUserUpdateProfileErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export interface ClientUserUpdateProfileErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+}
+export interface ClientUserUpdateProfileErrorUserIsSelf {
+    tag: "UserIsSelf"
+    error: string
+}
+export interface ClientUserUpdateProfileErrorUserNotFound {
+    tag: "UserNotFound"
+    error: string
+}
+export interface ClientUserUpdateProfileErrorUserRevoked {
+    tag: "UserRevoked"
+    error: string
+}
+export type ClientUserUpdateProfileError =
+  | ClientUserUpdateProfileErrorAuthorNotAllowed
+  | ClientUserUpdateProfileErrorInternal
+  | ClientUserUpdateProfileErrorInvalidCertificate
+  | ClientUserUpdateProfileErrorOffline
+  | ClientUserUpdateProfileErrorStopped
+  | ClientUserUpdateProfileErrorTimestampOutOfBallpark
+  | ClientUserUpdateProfileErrorUserIsSelf
+  | ClientUserUpdateProfileErrorUserNotFound
+  | ClientUserUpdateProfileErrorUserRevoked
+
+
 // DeviceAccessStrategy
 export interface DeviceAccessStrategyKeyring {
     tag: "Keyring"
@@ -3297,6 +3346,11 @@ export function clientStartWorkspace(
 export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
+export function clientUpdateUserProfile(
+    client_handle: number,
+    user: string,
+    new_profile: UserProfile
+): Promise<Result<null, ClientUserUpdateProfileError>>
 export function getDefaultConfigDir(
 ): Promise<string>
 export function getDefaultDataBaseDir(

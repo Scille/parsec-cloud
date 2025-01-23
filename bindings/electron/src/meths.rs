@@ -5854,6 +5854,67 @@ fn variant_client_stop_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientUserUpdateProfileError
+
+#[allow(dead_code)]
+fn variant_client_user_update_profile_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientUserUpdateProfileError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientUserUpdateProfileError::AuthorNotAllowed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientUserUpdateProfileErrorAuthorNotAllowed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientUserUpdateProfileError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientUserUpdateProfileErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientUserUpdateProfileError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientUserUpdateProfileErrorInvalidCertificate")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientUserUpdateProfileError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientUserUpdateProfileErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientUserUpdateProfileError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientUserUpdateProfileErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientUserUpdateProfileError::TimestampOutOfBallpark { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientUserUpdateProfileErrorTimestampOutOfBallpark")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientUserUpdateProfileError::UserIsSelf { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientUserUpdateProfileErrorUserIsSelf").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientUserUpdateProfileError::UserNotFound { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientUserUpdateProfileErrorUserNotFound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientUserUpdateProfileError::UserRevoked { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientUserUpdateProfileErrorUserRevoked").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // DeviceAccessStrategy
 
 #[allow(dead_code)]
@@ -15916,6 +15977,80 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_update_user_profile
+fn client_update_user_profile(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client_handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let user = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let new_profile = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let js_string = js_val.value(&mut cx);
+            enum_user_profile_js_to_rs(&mut cx, js_string.as_str())?
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_update_user_profile(client_handle, user, new_profile).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_user_update_profile_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // get_default_config_dir
 fn get_default_config_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -21176,6 +21311,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("clientStartWorkspace", client_start_workspace)?;
     cx.export_function("clientStop", client_stop)?;
+    cx.export_function("clientUpdateUserProfile", client_update_user_profile)?;
     cx.export_function("getDefaultConfigDir", get_default_config_dir)?;
     cx.export_function("getDefaultDataBaseDir", get_default_data_base_dir)?;
     cx.export_function(
