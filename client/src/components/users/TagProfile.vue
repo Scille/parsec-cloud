@@ -25,7 +25,7 @@ function getClassForProfile(profile: UserProfile): string {
     case UserProfile.Admin:
       return 'admin';
     case UserProfile.Standard:
-      return 'standard';
+      return 'member';
     case UserProfile.Outsider:
       return 'outsider';
     default:

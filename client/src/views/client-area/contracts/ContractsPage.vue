@@ -116,7 +116,7 @@
               <ion-title class="item-header__title title-h4">
                 {{
                   $msTranslate({
-                    key: 'clientArea.invoicesCustomOrder.members.title',
+                    key: 'clientArea.invoicesCustomOrder.users.title',
                     count: contractDetails.administrators.quantityOrdered,
                   })
                 }}
@@ -128,13 +128,13 @@
                   <ion-text class="data-text__title subtitles-normal">
                     {{
                       $msTranslate({
-                        key: 'clientArea.invoicesCustomOrder.members.admin',
+                        key: 'clientArea.invoicesCustomOrder.users.admin',
                         count: contractDetails.administrators.quantityOrdered,
                       })
                     }}
                   </ion-text>
                   <ion-text class="data-text__description body">
-                    {{ $msTranslate('clientArea.invoicesCustomOrder.members.adminDescription') }}
+                    {{ $msTranslate('clientArea.invoicesCustomOrder.users.adminDescription') }}
                   </ion-text>
                 </div>
                 <ion-text class="data-number title-h2">{{ contractDetails.administrators.quantityOrdered }}</ion-text>
@@ -144,7 +144,7 @@
                   <ion-text class="data-text__title subtitles-normal">
                     {{
                       $msTranslate({
-                        key: 'clientArea.invoicesCustomOrder.members.standard',
+                        key: 'clientArea.invoicesCustomOrder.users.standard',
                         count: contractDetails.standards.quantityOrdered,
                       })
                     }}
@@ -155,10 +155,10 @@
               <div class="item-content-row">
                 <div class="data-text">
                   <ion-text class="data-text__title subtitles-normal">
-                    {{ $msTranslate('clientArea.invoicesCustomOrder.members.external') }}
+                    {{ $msTranslate('clientArea.invoicesCustomOrder.users.external') }}
                   </ion-text>
                   <ion-text class="data-text__description body">
-                    {{ $msTranslate('clientArea.invoicesCustomOrder.members.externalDescription') }}
+                    {{ $msTranslate('clientArea.invoicesCustomOrder.users.externalDescription') }}
                   </ion-text>
                 </div>
                 <ion-text class="data-number title-h2">{{ contractDetails.outsiders.quantityOrdered }}</ion-text>
@@ -251,7 +251,7 @@
           </div>
           <!-- standards-->
           <div
-            class="organization-users-item standards"
+            class="organization-users-item members"
             v-if="organizationStats.standardUsersDetail"
           >
             <ion-text class="item-title title-h4">
@@ -843,7 +843,7 @@ function getStoragePercentage(): number {
     }
   }
 
-  .standards {
+  .members {
     .progress-bar-used {
       width: v-bind(progressWidthStandard);
     }

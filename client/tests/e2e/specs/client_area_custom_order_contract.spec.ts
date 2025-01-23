@@ -35,7 +35,7 @@ msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
   const admins = org.locator('.admins');
   await expect(admins.locator('.item-active__number')).toHaveText('4 / 32 members');
   await expect(admins.locator('.progress-text')).toHaveText('28 remaining');
-  const standards = org.locator('.standards');
+  const standards = org.locator('.members');
   await expect(standards.locator('.item-active__number')).toHaveText('54 / 50 members');
   await expect(standards.locator('.progress-text')).toHaveText('0 remaining');
   const externals = org.locator('.externals');

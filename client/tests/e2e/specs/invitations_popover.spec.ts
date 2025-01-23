@@ -80,5 +80,5 @@ msTest('Invite user with already existing email', async ({ connected }) => {
   await popover.locator('.invitations-list-header__button').click();
   await expect(connected).toBeUserPage();
   await fillInputModal(connected, 'jaheira@gmail.com');
-  await expect(connected).toShowToast('The email jaheira@gmail.com is already used by a member of this organization.', 'Error');
+  await expect(connected).toShowToast('The email jaheira@gmail.com is already used by someone in this organization.', 'Error');
 });
