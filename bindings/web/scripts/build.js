@@ -31,6 +31,8 @@ console.log(`Current working dir ${WORKDIR}`);
 function on_windows() {
   return platform == "win32";
 }
+const WASM_PACK_CMD = on_windows() ? "wasm-pack.exe" : "wasm-pack";
+const RUSTUP_CMD = on_windows() ? "rustup.exe" : "rustup";
 
 function exec_cmd(args, options) {
   console.log(">>> ", args.join(" "));
@@ -70,12 +72,11 @@ function get_cargo_flag(profile) {
 }
 
 function ensure_wasm_pack_installed() {
-  const ret = spawnSync(
-    on_windows() ? "wasm-pack.exe" : "wasm-pack",
-    ["--version"],
+  const ret = exec_cmd(
+    [WASM_PACK_CMD, "--version"],
     {
-      // ignore stdin & stdout, stderr to actual stderr
-      stdio: ['ignore', 'ignore', 'inherit'],
+      // ignore stdin, stdout and stderr to their respective outputs
+      stdio: ['ignore', 'inherit', 'inherit'],
       cwd: WORKDIR,
       env: process.env
     }
@@ -91,7 +92,7 @@ function ensure_wasm_pack_installed() {
 
 function ensure_rust_target_installed() {
   const rustup_installed_targets_args = [
-    on_windows() ? "rustup.exe" : "rustup",
+    RUSTUP_CMD,
     "target",
     "list",
     "--installed",
@@ -116,7 +117,7 @@ function ensure_rust_target_installed() {
 function build_wasm(cargo_flags) {
   // On Windows only .exe/.bat can be directly execute
   const wasm_build_args = [
-    on_windows() ? "wasm-pack.exe" : "wasm-pack",
+    WASM_PACK_CMD,
     "build",
     "--target=web",
     "--locked",
