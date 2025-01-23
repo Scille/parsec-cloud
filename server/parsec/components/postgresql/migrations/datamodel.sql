@@ -231,10 +231,30 @@ CREATE TABLE invitation (
     token VARCHAR(32) NOT NULL,
     type INVITATION_TYPE NOT NULL,
 
+    -- A more readable ordering of these columns would be:
+    --
+    --     -- Invitation created by either a device or a service
+    --     created_by_device INTEGER REFERENCES device (_id),
+    --     created_by_service_label VARCHAR(254),
+    --
+    --     -- Type specific fields
+    --     -- Required when type=USER
+    --     claimer_email VARCHAR(255),
+    --     -- Required when type=DEVICE
+    --     claimer_user_id INTEGER REFERENCES user_ (_id),
+    --     -- Required when type=SHAMIR_RECOVERY
+    --     shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id),
+    --
+    --     -- Other fields
+    --     created_on TIMESTAMPTZ NOT NULL,
+    --     deleted_on TIMESTAMPTZ,
+    --     deleted_reason INVITATION_DELETED_REASON,
+
+
     -- Updated in migration 0009
     created_by_device INTEGER REFERENCES device (_id),
 
-    -- Required when type=USER or type=SHAMIR_RECOVERY
+    -- Required when type=USER
     claimer_email VARCHAR(255),
 
     created_on TIMESTAMPTZ NOT NULL,
