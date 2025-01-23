@@ -183,7 +183,7 @@ impl DeviceFileType {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum DeviceSaveStrategy {
     Keyring,
     Password { password: Password },
@@ -202,8 +202,19 @@ impl DeviceSaveStrategy {
     }
 }
 
+impl std::fmt::Debug for DeviceSaveStrategy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut fmt = f.debug_struct("DeviceSaveStrategy");
+        match self {
+            Self::Keyring => fmt.field("type", &"Keyring").finish(),
+            Self::Smartcard => fmt.field("type", &"Smartcard").finish(),
+            Self::Password { .. } => fmt.field("type", &"Password").finish_non_exhaustive(),
+        }
+    }
+}
+
 /// Represent how to load/save a device file
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub enum DeviceAccessStrategy {
     Keyring {
         key_file: PathBuf,
@@ -221,6 +232,18 @@ pub enum DeviceAccessStrategy {
     //     email: String,
     //     password: Password,
     // }
+}
+
+impl std::fmt::Debug for DeviceAccessStrategy {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut fmt = f.debug_struct("DeviceAccessStrategy");
+        fmt.field("key_file", &self.key_file().display());
+        match self {
+            Self::Keyring { .. } => fmt.field("type", &"Keyring").finish(),
+            Self::Password { .. } => fmt.field("type", &"Password").finish_non_exhaustive(),
+            Self::Smartcard { .. } => fmt.field("type", &"Smartcard").finish(),
+        }
+    }
 }
 
 impl DeviceAccessStrategy {
