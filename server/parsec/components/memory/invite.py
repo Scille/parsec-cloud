@@ -1042,8 +1042,16 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         # Only the greeter or the claimer can complete the invitation
         if not self.is_greeter_allowed(org, invitation, author_user):
-            if invitation.claimer_user_id != author_user.cooked.user_id:
-                return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
+            if invitation.type == InvitationType.USER:
+                assert invitation.claimer_email is not None
+                if invitation.claimer_email != author_user.cooked.human_handle.email:
+                    return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
+            elif invitation.type in (InvitationType.DEVICE, InvitationType.SHAMIR_RECOVERY):
+                assert invitation.claimer_user_id is not None
+                if invitation.claimer_user_id != author_user.cooked.user_id:
+                    return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
+            else:
+                assert False, invitation.type
 
         invitation.deleted_on = now
         invitation.deleted_reason = MemoryInvitationDeletedReason.FINISHED

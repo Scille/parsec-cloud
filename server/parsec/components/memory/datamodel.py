@@ -299,13 +299,13 @@ class MemoryInvitation:
     type: InvitationType
     created_by: InvitationCreatedBy
 
-    # Required for when type=USER or type=SHAMIR_RECOVERY
+    # Required when type=USER or type=SHAMIR_RECOVERY
     claimer_email: str | None
 
-    # Required for when type=DEVICE or type=SHAMIR_RECOVERY
+    # Required when type=DEVICE or type=SHAMIR_RECOVERY
     claimer_user_id: UserID | None
 
-    # Required for when type=SHAMIR_RECOVERY
+    # Required when type=SHAMIR_RECOVERY
     shamir_recovery_index: int | None
 
     created_on: DateTime
