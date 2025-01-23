@@ -29,20 +29,20 @@
               />
               {{ $msTranslate('HomePage.noExistingOrganization.createOrganization') }}
             </ion-button>
+            <div class="recovery-no-devices">
+              {{ $msTranslate('HomePage.lostDevice') }}
+              <ion-button
+                @click="$emit('recoverClick')"
+                fill="clear"
+              >
+                {{ $msTranslate('HomePage.recoverDevice') }}
+              </ion-button>
+            </div>
           </div>
           <ms-image
             :image="NoOrganization"
             class="create-organization-image"
           />
-          <div class="recovery-no-devices">
-            {{ $msTranslate('HomePage.lostDevice') }}
-            <ion-button
-              @click="$emit('recoverClick')"
-              fill="clear"
-            >
-              {{ $msTranslate('HomePage.recoverDevice') }}
-            </ion-button>
-          </div>
         </div>
         <div class="invitation">
           <ion-title class="invitation__title title-h4">
@@ -124,16 +124,16 @@
             </ion-col>
           </ion-row>
         </ion-grid>
-        <div class="recovery-devices">
-          {{ $msTranslate('HomePage.lostDevice') }}
-          <ion-button
-            @click="$emit('recoverClick')"
-            fill="clear"
-          >
-            {{ $msTranslate('HomePage.recoverDevice') }}
-          </ion-button>
-        </div>
       </ion-card-content>
+      <div class="recovery-devices">
+        {{ $msTranslate('HomePage.lostDevice') }}
+        <ion-button
+          @click="$emit('recoverClick')"
+          fill="clear"
+        >
+          {{ $msTranslate('HomePage.recoverDevice') }}
+        </ion-button>
+      </div>
     </template>
   </ion-card>
 </template>
@@ -396,7 +396,7 @@ const filteredDevices = computed(() => {
 
 .organization-content {
   display: flex;
-  padding: 2rem 2.5rem 0.5rem;
+  padding: 2rem 2.5rem 0;
   flex-direction: column;
   gap: 1.5rem;
   max-width: var(--parsec-max-content-width);
@@ -433,6 +433,21 @@ const filteredDevices = computed(() => {
   }
 }
 
+.recovery-devices {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  background: var(--parsec-color-light-secondary-white);
+  border-top: 1px solid var(--parsec-color-light-secondary-medium);
+  width: 100%;
+  gap: 0.5rem;
+  padding: 0.5rem 3rem;
+  color: var(--parsec-color-light-secondary-grey);
+  bottom: 0;
+  z-index: 100;
+  border-radius: 0 0 var(--parsec-radius-12) var(--parsec-radius-12);
+}
+
 .no-devices {
   max-width: 45rem;
   gap: 0;
@@ -456,7 +471,7 @@ const filteredDevices = computed(() => {
       }
 
       &__subtitle {
-        color: var(--parsec-color-light-secondary-grey);
+        color: var(--parsec-color-light-secondary-hard-grey);
         margin-bottom: 1.5rem;
       }
 
@@ -466,6 +481,14 @@ const filteredDevices = computed(() => {
         ion-icon {
           margin-inline-end: 0.5rem;
         }
+      }
+
+      .recovery-no-devices {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--parsec-color-light-secondary-grey);
+        margin-top: 1rem;
       }
     }
 
