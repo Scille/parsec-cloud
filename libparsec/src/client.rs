@@ -9,8 +9,8 @@ pub use libparsec_client::{
     ClientGetUserDeviceError, ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
     ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
     ClientRenameWorkspaceError, ClientRevokeUserError, ClientSetupShamirRecoveryError,
-    ClientShareWorkspaceError, DeviceInfo, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo, Tos,
-    UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
+    ClientShareWorkspaceError, ClientUserUpdateProfileError, DeviceInfo, OtherShamirRecoveryInfo,
+    SelfShamirRecoveryInfo, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_platform_device_loader::ChangeAuthentificationError;
@@ -591,4 +591,14 @@ pub async fn client_list_shamir_recoveries_for_others(
     let client = borrow_client(client)?;
 
     client.list_shamir_recoveries_for_others().await
+}
+
+pub async fn client_update_user_profile(
+    client: Handle,
+    user: UserID,
+    new_profile: UserProfile,
+) -> Result<(), ClientUserUpdateProfileError> {
+    let client = borrow_client(client)?;
+
+    client.update_user_profile(user, new_profile).await
 }

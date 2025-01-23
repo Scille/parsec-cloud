@@ -18,6 +18,7 @@ mod shamir_recovery_list;
 mod shamir_recovery_setup;
 mod store;
 mod user_revoke;
+mod user_update_profile;
 mod workspace_bootstrap;
 
 pub use add::{CertifAddCertificatesBatchError, InvalidCertificateError, MaybeRedactedSwitch};
@@ -51,6 +52,7 @@ pub use shamir_recovery_setup::{
 };
 pub use store::{CertifStoreError, UpTo};
 pub use user_revoke::CertifRevokeUserError;
+pub use user_update_profile::CertifUpdateUserProfileError;
 pub use workspace_bootstrap::CertifBootstrapWorkspaceError;
 
 use std::{collections::HashMap, num::NonZeroU8, sync::Arc};
@@ -483,6 +485,14 @@ impl CertificateOps {
         user: UserID,
     ) -> Result<CertificateBasedActionOutcome, CertifRevokeUserError> {
         user_revoke::revoke_user(self, user).await
+    }
+
+    pub async fn user_update_profile(
+        &self,
+        user_id: UserID,
+        new_profile: UserProfile,
+    ) -> Result<CertificateBasedActionOutcome, CertifUpdateUserProfileError> {
+        user_update_profile::update_profile(self, user_id, new_profile).await
     }
 
     /// Returns the timestamp of the uploaded certificate
