@@ -88,10 +88,16 @@ class InvitationCreatedByExternalService(InvitationCreatedBy):
 
 class UserGreetingAdministrator:
     def __init__(
-        self, user_id: UserID, human_handle: HumanHandle, online_status: UserOnlineStatus
+        self,
+        user_id: UserID,
+        human_handle: HumanHandle,
+        online_status: UserOnlineStatus,
+        last_greeting_attempt_joined_on: DateTime | None,
     ) -> None: ...
     @property
     def human_handle(self) -> HumanHandle: ...
+    @property
+    def last_greeting_attempt_joined_on(self) -> DateTime | None: ...
     @property
     def online_status(self) -> UserOnlineStatus: ...
     @property

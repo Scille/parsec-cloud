@@ -52,6 +52,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
                             user_id: alice.user_id.to_owned(),
                             human_handle: alice.human_handle.to_owned(),
                             online_status: protocol::invited_cmds::latest::invite_info::UserOnlineStatus::Online,
+                            last_greeting_attempt_joined_on: None,
                         },
                     ],
                 },

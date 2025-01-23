@@ -147,6 +147,10 @@
                     {
                         "name": "online_status",
                         "type": "UserOnlineStatus"
+                    },
+                    {
+                        "name": "last_greeting_attempt_joined_on",
+                        "type": "RequiredOption<DateTime>"
                     }
                 ]
             },
