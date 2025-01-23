@@ -47,6 +47,8 @@ from parsec.logging import get_logger
 from parsec.templates import get_template
 from parsec.types import BadOutcome, BadOutcomeEnum
 
+logger = get_logger()
+
 ShamirRecoveryRecipient: TypeAlias = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
 UserOnlineStatus: TypeAlias = invited_cmds.latest.invite_info.UserOnlineStatus
 UserGreetingAdministrator: TypeAlias = invited_cmds.latest.invite_info.UserGreetingAdministrator
@@ -55,7 +57,7 @@ InviteListInvitationCreatedBy: TypeAlias = authenticated_cmds.latest.invite_list
 
 
 @dataclass(slots=True)
-class InvitationCreatedBy:
+class _InvitationCreatedBy:
     def for_invite_info(self) -> InviteInfoInvitationCreatedBy:
         match self:
             case InvitationCreatedByUser(user_id, human_handle):
@@ -84,17 +86,17 @@ class InvitationCreatedBy:
 
 
 @dataclass(slots=True)
-class InvitationCreatedByUser(InvitationCreatedBy):
+class InvitationCreatedByUser(_InvitationCreatedBy):
     user_id: UserID
     human_handle: HumanHandle
 
 
 @dataclass(slots=True)
-class InvitationCreatedByExternalService(InvitationCreatedBy):
+class InvitationCreatedByExternalService(_InvitationCreatedBy):
     service_label: str
 
 
-logger = get_logger()
+InvitationCreatedBy: TypeAlias = InvitationCreatedByUser | InvitationCreatedByExternalService
 
 
 @dataclass(slots=True)

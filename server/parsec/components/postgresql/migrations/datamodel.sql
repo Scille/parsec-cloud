@@ -231,7 +231,9 @@ CREATE TABLE invitation (
     token VARCHAR(32) NOT NULL,
     type INVITATION_TYPE NOT NULL,
 
-    created_by INTEGER REFERENCES device (_id) NOT NULL,
+    -- Updated in migration 0009
+    created_by_device INTEGER REFERENCES device (_id),
+
     -- Required when type=USER or type=SHAMIR_RECOVERY
     claimer_email VARCHAR(255),
 
@@ -241,6 +243,11 @@ CREATE TABLE invitation (
 
     -- Required when type=SHAMIR_RECOVERY
     shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id),
+
+    -- Added in migration 0009
+    created_by_service_label VARCHAR(254),
+    -- Required when type=DEVICE
+    claimer_user_id INTEGER REFERENCES user_ (_id),
 
     UNIQUE (organization, token)
 );

@@ -404,8 +404,10 @@ new_invitations AS (
         organization,
         token,
         type,
-        created_by,
+        created_by_device,
+        created_by_service_label,
         claimer_email,
+        claimer_user_id,
         created_on,
         deleted_on,
         deleted_reason,
@@ -417,9 +419,14 @@ new_invitations AS (
         type,
         (
             SELECT _id FROM new_devices
-            WHERE device_id = { q_device(_id="invitation.created_by", select="device_id") }
+            WHERE device_id = { q_device(_id="invitation.created_by_device", select="device_id") }
         ),
+        created_by_service_label,
         claimer_email,
+        (
+            SELECT _id FROM new_users
+            WHERE user_id = { q_user(_id="invitation.claimer_user_id", select="user_id") }
+        ),
         created_on,
         deleted_on,
         deleted_reason,
