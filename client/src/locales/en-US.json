@@ -188,7 +188,9 @@
             "invitationLink": "Enter the invitation link",
             "invitationJoin": "Join",
             "subtitle": "Enjoy a cloud experience with the guarantee that your data belongs to you."
-        }
+        },
+        "lostDevice": "Lost your session?",
+        "recoverDevice": "Recover my session"
     },
     "CreateOrganization": {
         "fullname": "Full name",

@@ -34,6 +34,15 @@
             :image="NoOrganization"
             class="create-organization-image"
           />
+          <div class="recovery-no-devices">
+            {{ $msTranslate('HomePage.lostDevice') }}
+            <ion-button
+              @click="$emit('recoverClick')"
+              fill="clear"
+            >
+              {{ $msTranslate('HomePage.recoverDevice') }}
+            </ion-button>
+          </div>
         </div>
         <div class="invitation">
           <ion-title class="invitation__title title-h4">
@@ -41,8 +50,8 @@
           </ion-title>
           <div class="invitation-link">
             <ms-input
-              :label="'HomePage.noDevices.invitationLink'"
-              :placeholder="'JoinOrganization.linkFormPlaceholder'"
+              label="HomePage.noDevices.invitationLink"
+              placeholder="JoinOrganization.linkFormPlaceholder"
               v-model="link"
               @on-enter-keyup="onLinkClick"
               :validator="claimAndBootstrapLinkValidator"
@@ -115,6 +124,15 @@
             </ion-col>
           </ion-row>
         </ion-grid>
+        <div class="recovery-devices">
+          {{ $msTranslate('HomePage.lostDevice') }}
+          <ion-button
+            @click="$emit('recoverClick')"
+            fill="clear"
+          >
+            {{ $msTranslate('HomePage.recoverDevice') }}
+          </ion-button>
+        </div>
       </ion-card-content>
     </template>
   </ion-card>
@@ -162,6 +180,7 @@ const emits = defineEmits<{
   (e: 'joinOrganizationClick'): void;
   (e: 'joinOrganizationWithLinkClick', link: string): void;
   (e: 'bootstrapOrganizationWithLinkClick', link: string): void;
+  (e: 'recoverClick'): void;
 }>();
 
 defineExpose({

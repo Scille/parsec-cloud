@@ -124,3 +124,14 @@ msTest('Import recovery device invalid passphrase', async ({ home }, testInfo: T
 
   await expect(home).toShowToast('The secret key does not match the recovery file.', 'Error');
 });
+
+msTest('Access recovery page from org list', async ({ home }) => {
+  const btn = home.locator('.recovery-devices').locator('ion-button');
+  await expect(btn).toHaveText('Recover my session');
+  await btn.click();
+  const container = home.locator('.recovery-content');
+
+  await expect(container.locator('.container-textinfo')).toHaveText(
+    'You must have created a recovery file in order to reset your authentication method.',
+  );
+});
