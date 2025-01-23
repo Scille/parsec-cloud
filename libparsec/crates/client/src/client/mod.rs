@@ -10,6 +10,7 @@ mod shamir_recovery_setup;
 mod start_invitation_greet;
 mod tos;
 mod user_revoke;
+mod user_update_profile;
 mod workspace_bootstrap;
 mod workspace_create;
 mod workspace_list;
@@ -67,7 +68,8 @@ pub use crate::certif::{
     CertifListUsersError as ClientListUsersError,
     CertifListWorkspaceUsersError as ClientListWorkspaceUsersError,
     CertifRevokeUserError as ClientRevokeUserError,
-    CertifSetupShamirRecoveryError as ClientSetupShamirRecoveryError, DeviceInfo, UserInfo,
+    CertifSetupShamirRecoveryError as ClientSetupShamirRecoveryError,
+    CertifUpdateUserProfileError as ClientUserUpdateProfileError, DeviceInfo, UserInfo,
     WorkspaceUserAccessInfo,
 };
 pub use crate::invite::{
@@ -167,7 +169,6 @@ impl Client {
         if with_monitors {
             let workspaces_bootstrap_monitor =
                 start_workspaces_bootstrap_monitor(client.event_bus.clone(), client.clone()).await;
-
             let workspaces_process_needs_monitor =
                 start_workspaces_process_needs_monitor(client.event_bus.clone(), client.clone())
                     .await;
@@ -587,6 +588,14 @@ impl Client {
         device_label: DeviceLabel,
     ) -> Result<(SecretKeyPassphrase, Vec<u8>), ClientExportRecoveryDeviceError> {
         recovery_device::export_recovery_device(self, device_label).await
+    }
+
+    pub async fn update_user_profile(
+        &self,
+        user_id: UserID,
+        new_profile: UserProfile,
+    ) -> Result<(), ClientUserUpdateProfileError> {
+        user_update_profile::update_profile(self, user_id, new_profile).await
     }
 }
 

@@ -710,3 +710,40 @@ async def client_list_shamir_recoveries_for_others(
     client_handle: Handle,
 ) -> Result[list[OtherShamirRecoveryInfo], ClientListShamirRecoveriesForOthersError]:
     raise NotImplementedError
+
+
+class ClientUserUpdateProfileError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Offline:
+        pass
+
+    class UserNotFound:
+        pass
+
+    class UserIsSelf:
+        pass
+
+    class AuthorNotAllowed:
+        pass
+
+    class UserRevoked:
+        pass
+
+    class TimestampOutOfBallpark:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_update_user_profile(
+    client_handle: Handle,
+    user: UserID,
+    new_profile: UserProfile,
+) -> Result[None, ClientUserUpdateProfileError]:
+    raise NotImplementedError
