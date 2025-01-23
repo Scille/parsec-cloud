@@ -33,6 +33,7 @@
                 @join-organization-click="onJoinOrganizationClicked"
                 @join-organization-with-link-click="openJoinByLinkModal"
                 @bootstrap-organization-with-link-click="openCreateOrganizationModal"
+                @recover-click="onForgottenPasswordClicked"
                 ref="organizationListRef"
               />
             </template>
@@ -51,7 +52,6 @@
             </template>
             <template v-else-if="state === HomePageState.ForgottenPassword">
               <import-recovery-device-page
-                v-if="selectedDevice"
                 :device="selectedDevice"
                 @organization-selected="onOrganizationSelected"
               />
@@ -119,7 +119,7 @@ const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
 const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [deviceId: string]: StoredDeviceData }>({});
-const selectedDevice: Ref<AvailableDevice | null> = ref(null);
+const selectedDevice: Ref<AvailableDevice | undefined> = ref();
 const loginPageRef = ref();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
@@ -478,15 +478,19 @@ async function associateDefaultEvents(eventDistributor: EventDistributor, inform
 }
 
 async function backToPreviousPage(): Promise<void> {
-  if (state.value === HomePageState.Login || state.value === HomePageState.CustomerArea) {
-    state.value = HomePageState.OrganizationList;
-    selectedDevice.value = null;
-  } else if (state.value === HomePageState.ForgottenPassword) {
+  if (state.value === HomePageState.ForgottenPassword && selectedDevice.value) {
     state.value = HomePageState.Login;
+  } else if (
+    state.value === HomePageState.Login ||
+    state.value === HomePageState.CustomerArea ||
+    state.value === HomePageState.ForgottenPassword
+  ) {
+    state.value = HomePageState.OrganizationList;
+    selectedDevice.value = undefined;
   }
 }
 
-function onForgottenPasswordClicked(device: AvailableDevice): void {
+function onForgottenPasswordClicked(device?: AvailableDevice): void {
   selectedDevice.value = device;
   state.value = HomePageState.ForgottenPassword;
 }

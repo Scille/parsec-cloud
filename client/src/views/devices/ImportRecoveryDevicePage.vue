@@ -14,6 +14,7 @@
     <ion-card class="recovery-card">
       <ion-card-content class="card-container">
         <organization-card
+          v-if="device"
           :device="device"
           :org-name-only="true"
         />
@@ -156,6 +157,7 @@ import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonTitle } f
 import { checkmarkCircle } from 'ionicons/icons';
 import { Ref, inject, ref } from 'vue';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { getDefaultDeviceName } from '@/common/device';
 
 enum ImportDevicePageState {
   Start = 'start',
@@ -185,7 +187,7 @@ const emits = defineEmits<{
 }>();
 
 const props = defineProps<{
-  device: AvailableDevice;
+  device?: AvailableDevice;
 }>();
 
 async function onInputChange(_event: Event): Promise<void> {
@@ -230,7 +232,7 @@ async function createNewDevice(): Promise<void> {
   }
 
   const result = await importRecoveryDevice(
-    props.device.deviceLabel,
+    props.device ? props.device.deviceLabel : getDefaultDeviceName(),
     content,
     secretKey.value.trim(),
     chooseAuthRef.value.getSaveStrategy(),
