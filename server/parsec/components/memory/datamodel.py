@@ -299,7 +299,7 @@ class MemoryInvitation:
     type: InvitationType
     created_by: InvitationCreatedBy
 
-    # Required for when type=USER
+    # Required for when type=USER or type=SHAMIR_RECOVERY
     claimer_email: str | None
 
     # Required for when type=DEVICE or type=SHAMIR_RECOVERY
