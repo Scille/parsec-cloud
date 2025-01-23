@@ -189,8 +189,8 @@ msgstr ""
 "et l'adresse électronique d'autres utilisateurs au sein de l'organisation."
 
 #: ../../userguide/manage_organization.rst:86
-msgid "Standard profile"
-msgstr "Profil Standard"
+msgid "Member profile"
+msgstr "Profil Membre"
 
 #: ../../userguide/manage_organization.rst:90
 #: ../../userguide/manage_organization.rst:99

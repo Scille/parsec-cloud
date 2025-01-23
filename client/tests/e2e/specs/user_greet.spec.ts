@@ -52,9 +52,9 @@ msTest('Go through the greet process', async ({ userGreetModal }) => {
   await expect(profileButton).toHaveText('Choose a profile');
   await profileButton.click();
   const profileDropdown = userGreetModal.page().locator('.dropdown-popover');
-  await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Standard', 'External']);
+  await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Member', 'External']);
   await profileDropdown.getByRole('listitem').nth(1).click();
-  await expect(profileButton).toHaveText('Standard');
+  await expect(profileButton).toHaveText('Member');
   await expect(nextButton).not.toHaveDisabledAttribute();
   await expect(nextButton).toHaveText('Approve');
   await nextButton.click();
@@ -64,7 +64,7 @@ msTest('Go through the greet process', async ({ userGreetModal }) => {
   await expect(nextButton).toBeVisible();
   await expect(modalContent.locator('.final-step').locator('.person-name')).toHaveText('Gordon Freeman');
   await expect(modalContent.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText('gordon.freeman@blackmesa.nm');
-  await expect(modalContent.locator('.final-step').locator('.user-info__role').locator('.label-profile')).toHaveText('Standard');
+  await expect(modalContent.locator('.final-step').locator('.user-info__role').locator('.label-profile')).toHaveText('Member');
   await nextButton.click();
 
   await expect(userGreetModal.page().locator('.greet-organization-modal')).toBeHidden();

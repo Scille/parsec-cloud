@@ -10,11 +10,11 @@ msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
   const page = clientAreaCustomOrder.locator('.client-page-statistics');
   const active = page.locator('.users-cards-list').nth(0);
   const activeUserItems = active.locator('.users-cards-list-item').locator('.users-cards-list-item-text');
-  await expect(activeUserItems).toHaveText(['4Administrators', '54Standards', '1External']);
+  await expect(activeUserItems).toHaveText(['4Administrators', '54Members', '1External']);
 
   const revoked = page.locator('.users-cards-list').nth(1);
   const revokedUserItems = revoked.locator('.users-cards-list-item').locator('.users-cards-list-item-text');
-  await expect(revokedUserItems).toHaveText(['1Administrator', '1Standard', '142Externals']);
+  await expect(revokedUserItems).toHaveText(['1Administrator', '1Member', '142Externals']);
 
   const storage = page.locator('.storage-data');
   const storageGlobal = storage.locator('.storage-data-global');

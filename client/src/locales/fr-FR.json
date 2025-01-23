@@ -34,7 +34,7 @@
             "managerCannotUpdateManagers": "Les Gérants ne peuvent pas changer le rôle d'autres Gérants",
             "managerCannotPromoteToManager": "Les Gérants ne peuvent pas promouvoir au rôle de Gérant",
             "managerCannotPromoteToOwner": "Les Gérants ne peuvent pas promouvoir au rôle de Propriétaire",
-            "sameRole": "Rôle actuel de l'utilisateur",
+            "sameRole": "Rôle actuel",
             "alreadyNotShared": "Déjà non partagé avec cet utilisateur"
         },
         "reader": {
@@ -55,7 +55,7 @@
         },
         "none": "Non partagé",
         "members": "Membre ({count}) | Membres ({count})",
-        "suggestion": "Suggestions d'utilisateurs"
+        "suggestion": "Recommandés"
     },
     "link": {
         "invalid": "Le lien fourni n'est pas valide.",
@@ -129,7 +129,7 @@
             "title": "Vos organisations",
             "sortOrderAsc": "Croissant",
             "sortOrderDesc": "Décroissant",
-            "sortByOrganization": "Organisation",
+            "sortByOrganization": "Nom de l'organisation",
             "sortByUserName": "Nom d'utilisateur",
             "sortByLastLogin": "Dernière connexion",
             "labelSortBy": "Trier par",
@@ -658,7 +658,7 @@
             },
             "configuration": {
                 "outsidersAllowed": "Profil externe",
-                "userLimit": "Limite d'utilisateurs",
+                "userLimit": "Limite du nombre d'utilisateurs (hors utilisateurs avec un profil Externe)",
                 "unlimited": "Illimitée",
                 "allowed": "Activé",
                 "forbidden": "Désactivé",
@@ -913,7 +913,7 @@
         "instructions": {
             "start": {
                 "first": "Afin d'éviter toute attaque, vous devez être en contact direct avec la personne durant toute la durée du processus d'accueil.",
-                "second": "L'hôte devra se rendre dans Utilisateurs puis Invitation en cours pour commencer le processus.",
+                "second": "L'hôte devra se rendre dans Utilisateurs puis Invitations en cours pour commencer le processus.",
                 "greeter": "Vous serez accueilli(e) dans l'organisation {organizationName} par {greeter} <{greeterEmail}>."
             },
             "finish": {
@@ -979,7 +979,7 @@
                 "description": "Peut gérer l'organisation."
             },
             "standard": {
-                "label": "Standard",
+                "label": "Membre",
                 "description": "Peut créer des espaces de travail et partager des fichiers."
             },
             "outsider": {
@@ -1003,7 +1003,7 @@
         },
         "emptyList": "Aucun utilisateur à afficher.",
         "noMatch": "Aucun utilisateur ne correspond à vos filtres.",
-        "listUsersFailed": "Impossible d'obtenir la liste des utilisateurs. Veuillez vérifier votre connexion internet.",
+        "listUsersFailed": "Impossible d'obtenir les utilisateurs de l'organisation. Veuillez vérifier votre connexion internet.",
         "userSelectedCount": "Aucun utilisateur sélectionné | Un utilisateur sélectionné | {count} utilisateurs sélectionnés",
         "userContextMenu": {
             "titleRemove": "Suppression",
@@ -1070,7 +1070,7 @@
             "rejectUser": "Annuler",
             "inviteSuccessMailSent": "Une invitation a été envoyée à {email}.",
             "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé. Veuillez transmettre le lien d'invitation manuellement.",
-            "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par un membre de cette organisation.",
+            "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par un autre utilisateur dans cette organisation.",
             "inviteFailedOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
             "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes à rejoindre l'organisation.",
             "inviteFailedUnknown": "Une erreur imprévue est survenue (raison : {reason}).",
@@ -1135,7 +1135,7 @@
             "status": "État",
             "profile": "Profil",
             "admin": "Administrateur",
-            "standard": "Standard",
+            "standard": "Membre",
             "outsider": "Externe"
         },
         "assignRoles": {
@@ -1482,7 +1482,7 @@
                 "storage": "Stockage utilisé"
             },
             "admin": "Administrateur | Administrateur | Administrateurs",
-            "standard": "Standard | Standard | Standards",
+            "standard": "Membres | Membre | Membres",
             "outsider": "Externe | Externe | Externes",
             "consumptionDetail": "Détail des consommations",
             "nonPaying": "Non payant",
@@ -1542,12 +1542,12 @@
             "information": "Informations",
             "startingDate": "Date de début",
             "endingDate": "Date de fin",
-            "members": {
-                "title": "Licence membre | Licences membres",
-                "admin": "Membre administrateur | Membres administrateurs",
+            "users": {
+                "title": "Licence utilisateur | Licences utilisateur",
+                "admin": "Administrateur | Administrateurs",
                 "adminDescription": "Tous les accès",
-                "standard": "Membre standard | Membres standards",
-                "external": "Membre externe | Membres externes",
+                "standard": "Membre | Membres",
+                "external": "Externe | Externes",
                 "externalDescription": "Accès limité"
             },
             "storage": {
@@ -1667,7 +1667,7 @@
                 "unavailable": "Non disponible"
             },
             "user": {
-                "standard": "Standard | Standards",
+                "standard": "Membre | Membres",
                 "admin": "Administrateur | Administrateurs",
                 "external": "Externe | Externes",
                 "remaining": "{number} restant | {number} restants",

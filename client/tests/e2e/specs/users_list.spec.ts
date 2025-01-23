@@ -32,14 +32,14 @@ const USERS = [
     // cspell:disable-next-line
     name: 'Cernd',
     email: 'cernd@gmail.com',
-    profile: 'Standard',
+    profile: 'Member',
     active: true,
     frozen: false,
   },
   {
     name: 'Patches',
     email: 'patches@yahoo.fr',
-    profile: 'Standard',
+    profile: 'Member',
     active: true,
     frozen: false,
   },
@@ -47,7 +47,7 @@ const USERS = [
     // cspell:disable-next-line
     name: 'Valygar Corthala',
     email: 'val@gmail.com',
-    profile: 'Standard',
+    profile: 'Member',
     active: false,
     frozen: false,
   },
@@ -347,7 +347,7 @@ msTest('User filter popover default state', async ({ usersPage }) => {
   const profileGroup = popover.locator('#user-filter-list').getByRole('group').nth(1);
   await expect(profileGroup.locator('.list-group-title')).toHaveText('Profile');
   await expect(profileGroup.getByRole('listitem')).toHaveCount(3);
-  await expect(profileGroup.getByRole('listitem')).toHaveText(['Administrator', 'Standard', 'External']);
+  await expect(profileGroup.getByRole('listitem')).toHaveText(['Administrator', 'Member', 'External']);
   for (const checkbox of await profileGroup.locator('ion-checkbox').all()) {
     await expect(checkbox).toHaveState('checked');
   }
@@ -399,8 +399,8 @@ msTest('Remove selection on filtering', async ({ usersPage }) => {
   await item.hover();
   await item.locator('ion-checkbox').click();
   await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
-  await toggleFilter(usersPage, 'Standard');
-  const expectedUsers = USERS.filter((u) => u.currentUser || u.profile !== 'Standard');
+  await toggleFilter(usersPage, 'Member');
+  const expectedUsers = USERS.filter((u) => u.currentUser || u.profile !== 'Member');
   await expect(actionBar.locator('.counter')).toHaveText(`${expectedUsers.length} users`, { useInnerText: true });
 });
 
@@ -592,7 +592,7 @@ msTest('Invite new user', async ({ usersPage }) => {
 msTest('Invite user with already existing email', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
   await fillInputModal(usersPage, 'jaheira@gmail.com');
-  await expect(usersPage).toShowToast('The email jaheira@gmail.com is already used by a member of this organization.', 'Error');
+  await expect(usersPage).toShowToast('The email jaheira@gmail.com is already used by someone in this organization.', 'Error');
 });
 
 msTest('Reassign workspace role', async ({ usersPage }) => {

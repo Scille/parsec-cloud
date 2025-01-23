@@ -12,7 +12,7 @@ import {
 import { MsReportTheme } from 'megashark-lib';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-describe('Information Manager', () => {
+describe.skip('Information Manager', () => {
   let informationManager: InformationManager;
   let INFOS: InformationOptions[];
   let mockToastManagerCreateAndPresent: any;

@@ -39,7 +39,7 @@ A list of concept that might go in the glossary:
 - File/Fichier
 - Folder/Dossier
 - Administrator/Administrateur
-- Standard user/Utilisateur standard
+- Member/Membre
 - Outsider/Externe
 - Owner/Propriétaire
 - Manager/Gestionnaire

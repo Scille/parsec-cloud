@@ -34,7 +34,7 @@
             "managerCannotUpdateManagers": "Managers cannot change the role of other managers",
             "managerCannotPromoteToManager": "Managers cannot promote to Manager",
             "managerCannotPromoteToOwner": "Managers cannot promote to Owner",
-            "sameRole": "Current role of this user",
+            "sameRole": "Current role",
             "alreadyNotShared": "Already not shared with this user"
         },
         "reader": {
@@ -55,7 +55,7 @@
         },
         "none": "Not shared",
         "members": "Member ({count}) | Members ({count})",
-        "suggestion": "Suggested users"
+        "suggestion": "Suggested"
     },
     "link": {
         "invalid": "The provided link is invalid.",
@@ -129,8 +129,8 @@
             "title": "Your organizations",
             "sortOrderAsc": "Ascending",
             "sortOrderDesc": "Descending",
-            "sortByOrganization": "Organization",
-            "sortByUserName": "User Name",
+            "sortByOrganization": "Organization name",
+            "sortByUserName": "User name",
             "sortByLastLogin": "Last login",
             "labelSortBy": "Sort by",
             "search": "Search",
@@ -658,7 +658,7 @@
             },
             "configuration": {
                 "outsidersAllowed": "External profile",
-                "userLimit": "User limit",
+                "userLimit": "User limit (excluding users with External profile)",
                 "unlimited": "Unlimited",
                 "allowed": "Enabled",
                 "forbidden": "Disabled",
@@ -913,7 +913,7 @@
         "instructions": {
             "start": {
                 "first": "In order to avoid any attack, you will have to be in direct contact with the host during the whole onboarding process.",
-                "second": "The host will have to go to Users, then Pending invitation to start the process.",
+                "second": "The host will have to go to Users, then Pending invitations to start the process.",
                 "greeter": "You will be welcomed into the organization {organizationName} by {greeter} <{greeterEmail}>."
             },
             "finish": {
@@ -979,7 +979,7 @@
                 "description": "Can manage the organization"
             },
             "standard": {
-                "label": "Standard",
+                "label": "Member",
                 "description": "Can create workspaces."
             },
             "outsider": {
@@ -1003,7 +1003,7 @@
         },
         "emptyList": "No user to display.",
         "noMatch": "No users matching your filters.",
-        "listUsersFailed": "Failed to retrieve the users list. Please make sure you are online.",
+        "listUsersFailed": "Failed to retrieve users for this organization. Please make sure you are online.",
         "userSelectedCount": "No user selected | One user selected | {count} users selected",
         "userContextMenu": {
             "titleRemove": "Deletion",
@@ -1023,8 +1023,8 @@
                 "summary": "User has been added successfully!"
             },
             "subtitles": {
-                "waitForGuest1": "To onboard a new user, you have to be in direct contact with them during the onboarding process (around 2 minutes).",
-                "waitForGuest2": "Please do not close this window during the onboarding process.",
+                "waitForGuest1": "To greet a new user, you have to be in direct contact with them during the greeting process (around 2 minutes).",
+                "waitForGuest2": "Please do not close this window during the greeting process.",
                 "provideHostCode": "Give the code below to the guest.",
                 "getGuestCode": "Click on the code given to you by the guest.",
                 "getUserInfo": "Please wait while the guest enters their contact details. You will have to review them.",
@@ -1070,9 +1070,9 @@
             "rejectUser": "Cancel",
             "inviteSuccessMailSent": "An invitation to join the organization has been sent to {email}.",
             "inviteSuccessNoMail": "The invitation was successfully created but we failed to send an email to {email}. Please send the invitation link yourself or try again.",
-            "inviteFailedAlreadyMember": "The email {email} is already used by a member of this organization.",
+            "inviteFailedAlreadyMember": "The email {email} is already used by someone in this organization.",
             "inviteFailedOffline": "Failed to connect to the server. Please make sure you are online.",
-            "inviteFailedNotAllowed": "Only an administrator can invite new users into the organization.",
+            "inviteFailedNotAllowed": "Only administrators can invite new users into the organization.",
             "inviteFailedUnknown": "An unexpected error occurred, please try again (reason: {reason}).",
             "cancelSuccess": "Invitation has been cancelled.",
             "cancelFailed": "Failed to cancel invitation",
@@ -1135,7 +1135,7 @@
             "status": "Status",
             "profile": "Profile",
             "admin": "Administrator",
-            "standard": "Standard",
+            "standard": "Member",
             "outsider": "External"
         },
         "assignRoles": {
@@ -1482,7 +1482,7 @@
                 "storage": "Used storage"
             },
             "admin": "Administrators | Administrator | Administrators",
-            "standard": "Standards | Standard | Standards",
+            "standard": "Members | Member | Members",
             "outsider": "Externals | External | Externals",
             "consumptionDetail": "Consumption detail",
             "nonPaying": "Non paying",
@@ -1542,12 +1542,12 @@
             "information": "Information",
             "startingDate": "Starting date",
             "endingDate": "Ending date",
-            "members": {
-                "title": "License member | Licenses members",
-                "admin": "Administrator member | Administrator members",
+            "users": {
+                "title": "User licence | User licences",
+                "admin": "Administrator | Administrators",
                 "adminDescription": "Full access",
-                "standard": "Standard member | Standard members",
-                "external": "External member | External members",
+                "standard": "Member | Members",
+                "external": "External | Externals",
                 "externalDescription": "Limited use"
             },
             "storage": {
@@ -1667,7 +1667,7 @@
                 "unavailable": "Unavailable"
             },
             "user": {
-                "standard": "Standard | Standards",
+                "standard": "Member | Members",
                 "admin": "Administrator | Administrators",
                 "external": "External | Externals",
                 "remaining": "{number} remaining",

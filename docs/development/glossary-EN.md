@@ -9,7 +9,7 @@
     - [User](#user)
     - [Device](#device)
   - [User Profile](#user-profile)
-    - [Standard](#standard)
+    - [Member](#standard)
     - [Administrator](#administrator)
     - [Outsider](#outsider)
   - [Workspace Role](#workspace-role)
@@ -54,7 +54,7 @@ It allows to create and share Workspaces with other users within the Organizatio
 
 ### Administrator
 
-In addition to all the functionalities allowed by the Standard profile, the Administrator profile enables user management. That is, the ability to invite and revoke other users in the Organization.
+In addition to all the functionalities allowed by the Member profile, the Administrator profile enables user management. That is, the ability to invite and revoke other users in the Organization.
 
 ### Outsider
 

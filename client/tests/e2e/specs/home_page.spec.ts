@@ -6,7 +6,7 @@ const USER_NAMES = ['Alicey McAliceFace', 'Boby McBobFace', 'Malloryy McMalloryF
 
 msTest('Home default state with devices', async ({ home }) => {
   await expect(home.locator('.organization-title')).toHaveText('Your organizations');
-  await expect(home.locator('#organization-filter-select')).toHaveText('Organization');
+  await expect(home.locator('#organization-filter-select')).toHaveText('Organization name');
   await expect(home.locator('#create-organization-button')).toHaveText('Create or join');
   await expect(home.locator('#search-input-organization')).toBeVisible();
   const cards = home.locator('.organization-list').locator('.organization-card');
@@ -28,7 +28,7 @@ msTest('Sort devices', async ({ home }) => {
   await sortBy(sortButton, 'Ascending');
   // Should not change anything right now because all devices have the same organization
   await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
-  await sortBy(sortButton, 'Name');
+  await sortBy(sortButton, 'User name');
   // By name desc
   await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u2.localeCompare(u1)));
   await sortBy(sortButton, 'Descending');

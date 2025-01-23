@@ -82,7 +82,7 @@ This profile allows a user to:
   Users with the External profile are not allowed to see the name and
   email of other users within the organization.
 
-Standard profile
+Member profile
 ^^^^^^^^^^^^^^^^
 
 This profile allows a user to:
