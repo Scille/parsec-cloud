@@ -61,6 +61,7 @@ async def test_authenticated_invite_new_user_ok_new(
                         minimalorg.alice.user_id,
                         minimalorg.alice.human_handle,
                         UserOnlineStatus.UNKNOWN,
+                        None,
                     )
                 ],
                 status=InvitationStatus.IDLE,
@@ -218,6 +219,7 @@ async def test_authenticated_invite_new_user_send_email_bad_outcome(
                         minimalorg.alice.user_id,
                         minimalorg.alice.human_handle,
                         UserOnlineStatus.UNKNOWN,
+                        None,
                     )
                 ],
                 status=InvitationStatus.IDLE,

@@ -940,14 +940,20 @@ _q_list_administrators = Q(
 SELECT
     user_.user_id,
     human.email,
-    human.label
+    human.label,
+    MAX(greeting_attempt.greeter_joined) AS last_greeter_joined
 FROM user_
-INNER JOIN human ON user_.human = human._id
 INNER JOIN organization ON user_.organization = organization._id
+INNER JOIN human ON user_.human = human._id
+LEFT JOIN greeting_session ON user_._id = greeting_session.greeter
+LEFT JOIN invitation ON greeting_session.invitation = invitation._id
+LEFT JOIN greeting_attempt ON greeting_session._id = greeting_attempt.greeting_session
 WHERE
     organization.organization_id = $organization_id
     AND user_.current_profile = 'ADMIN'
     AND user_.revoked_on IS NULL
+    AND (invitation.token = $token OR invitation.token IS NULL)
+GROUP BY user_.user_id, human.email, human.label
 """
 )
 
@@ -1307,10 +1313,12 @@ class PGInviteComponent(BaseInviteComponent):
         return recipients
 
     async def _get_administrators(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken
     ) -> list[UserGreetingAdministrator]:
         administrators = []
-        rows = await conn.fetch(*_q_list_administrators(organization_id=organization_id.str))
+        rows = await conn.fetch(
+            *_q_list_administrators(organization_id=organization_id.str, token=token.hex)
+        )
         for row in rows:
             match row["user_id"]:
                 case str() as raw_user_id:
@@ -1324,11 +1332,18 @@ class PGInviteComponent(BaseInviteComponent):
                 case unknown:
                     assert False, repr(unknown)
 
+            match row["last_greeter_joined"]:
+                case DateTime() | None as last_greeting_attempt_joined_on:
+                    pass
+                case unknown:
+                    assert False, repr(unknown)
+
             administrators.append(
                 UserGreetingAdministrator(
                     user_id=user_id,
                     human_handle=human_handle,
                     online_status=UserOnlineStatus.UNKNOWN,
+                    last_greeting_attempt_joined_on=last_greeting_attempt_joined_on,
                 )
             )
 
@@ -1433,7 +1448,9 @@ class PGInviteComponent(BaseInviteComponent):
                     # Note that the `administrators` field is actually not used in the context of the `invite_list` command.
                     # Still, we compute it here for consistency. In order to save this unnecessary query to the database,
                     # we could update the invite API to take this difference into account.
-                    administrators = await self._get_administrators(conn, organization_id)
+                    administrators = await self._get_administrators(
+                        conn, organization_id, invitation_info.token
+                    )
                     invitation = UserInvitation(
                         created_by=invitation_info.created_by,
                         claimer_email=invitation_info.claimer_email,
@@ -1492,7 +1509,7 @@ class PGInviteComponent(BaseInviteComponent):
 
         match invitation_info:
             case UserInvitationInfo():
-                administrators = await self._get_administrators(conn, organization_id)
+                administrators = await self._get_administrators(conn, organization_id, token)
                 return UserInvitation(
                     created_by=invitation_info.created_by,
                     claimer_email=invitation_info.claimer_email,
@@ -1625,7 +1642,9 @@ class PGInviteComponent(BaseInviteComponent):
             # Append the invite
             match invitation_info:
                 case UserInvitationInfo():
-                    administrators = await self._get_administrators(conn, organization_id)
+                    administrators = await self._get_administrators(
+                        conn, organization_id, invitation_info.token
+                    )
                     current_user_invitations.append(
                         UserInvitation(
                             claimer_email=invitation_info.claimer_email,
@@ -1723,7 +1742,7 @@ class PGInviteComponent(BaseInviteComponent):
         cancelled_on = await conn.fetchval(
             *request(
                 greeting_attempt_internal_id=greeting_attempt_internal_id,
-                now=DateTime.now(),
+                now=now,
             )
         )
         return cancelled_on is None

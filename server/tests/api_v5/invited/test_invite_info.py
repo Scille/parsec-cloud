@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec._parsec import DateTime, RevokedUserCertificate, invited_cmds
+from parsec._parsec import DateTime, GreetingAttemptID, RevokedUserCertificate, invited_cmds
 from parsec.components.invite import (
     InvitationCreatedByUser,
     UserGreetingAdministrator,
@@ -28,6 +28,7 @@ async def test_invited_invite_info_ok(user_or_device: str, coolorg: CoolorgRpcCl
                             user_id=coolorg.alice.user_id,
                             human_handle=coolorg.alice.human_handle,
                             online_status=UserOnlineStatus.UNKNOWN,
+                            last_greeting_attempt_joined_on=None,
                         ),
                     ],
                 )
@@ -48,6 +49,40 @@ async def test_invited_invite_info_ok(user_or_device: str, coolorg: CoolorgRpcCl
 
         case unknown:
             assert False, unknown
+
+
+async def test_invited_invite_info_for_user_with_greeting_attempt(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+) -> None:
+    now = DateTime.now()
+    rep = await backend.invite.greeter_start_greeting_attempt(
+        now,
+        coolorg.organization_id,
+        coolorg.alice.device_id,
+        coolorg.alice.user_id,
+        coolorg.invited_zack.token,
+    )
+    assert isinstance(rep, GreetingAttemptID)
+
+    rep = await coolorg.invited_zack.invite_info()
+    assert rep == invited_cmds.latest.invite_info.RepOk(
+        invited_cmds.latest.invite_info.InvitationTypeUser(
+            claimer_email=coolorg.invited_zack.claimer_email,
+            created_by=InvitationCreatedByUser(
+                user_id=coolorg.alice.user_id,
+                human_handle=coolorg.alice.human_handle,
+            ).for_invite_info(),
+            administrators=[
+                UserGreetingAdministrator(
+                    user_id=coolorg.alice.user_id,
+                    human_handle=coolorg.alice.human_handle,
+                    online_status=UserOnlineStatus.UNKNOWN,
+                    last_greeting_attempt_joined_on=now,
+                ),
+            ],
+        )
+    )
 
 
 async def test_invited_invite_info_ok_with_shamir(

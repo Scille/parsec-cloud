@@ -49,19 +49,24 @@ pub fn rep_ok() {
             // Content:
             //   status: 'ok'
             //   type: 'USER'
-            //   administrators: [ { human_handle: [ 'bob@dev1', 'bob', ], online_status: 'UNKNOWN', user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4a), }, { human_handle: [ 'carl@dev1', 'carl', ], online_status: 'ONLINE', user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4b), }, ]
+            //   administrators: [
+            //     human_handle: [ 'bob@dev1', 'bob', ], online_status: 'UNKNOWN', user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4a), last_greeting_attempt_joined_on: None
+            //     human_handle: [ 'carl@dev1', 'carl', ], online_status: 'ONLINE', user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4b), last_greeting_attempt_joined_on: ext(1, 946774800000000) i.e. 2000-01-02T02:00:00Z
+            //   ]
             //   claimer_email: 'alice@dev1'
             //   created_by: { type: 'USER', human_handle: [ 'bob@dev1', 'bob', ], user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4a), }
             &hex!(
                 "85a6737461747573a26f6ba474797065a455534552ae61646d696e6973747261746f72"
-                "739283ac68756d616e5f68616e646c6592a8626f624064657631a3626f62ad6f6e6c69"
-                "6e655f737461747573a7554e4b4e4f574ea7757365725f6964d802109b68ba5cdf428e"
-                "a0017fc6bcc04d4a83ac68756d616e5f68616e646c6592a96361726c4064657631a463"
-                "61726cad6f6e6c696e655f737461747573a64f4e4c494e45a7757365725f6964d80210"
-                "9b68ba5cdf428ea0017fc6bcc04d4bad636c61696d65725f656d61696caa616c696365"
-                "4064657631aa637265617465645f627983a474797065a455534552ac68756d616e5f68"
-                "616e646c6592a8626f624064657631a3626f62a7757365725f6964d802109b68ba5cdf"
-                "428ea0017fc6bcc04d4a"
+                "739284ac68756d616e5f68616e646c6592a8626f624064657631a3626f62bf6c617374"
+                "5f6772656574696e675f617474656d70745f6a6f696e65645f6f6ec0ad6f6e6c696e65"
+                "5f737461747573a7554e4b4e4f574ea7757365725f6964d802109b68ba5cdf428ea001"
+                "7fc6bcc04d4a84ac68756d616e5f68616e646c6592a96361726c4064657631a4636172"
+                "6cbf6c6173745f6772656574696e675f617474656d70745f6a6f696e65645f6f6ed701"
+                "00035d162fa2e400ad6f6e6c696e655f737461747573a64f4e4c494e45a7757365725f"
+                "6964d802109b68ba5cdf428ea0017fc6bcc04d4bad636c61696d65725f656d61696caa"
+                "616c6963654064657631aa637265617465645f627983a474797065a455534552ac6875"
+                "6d616e5f68616e646c6592a8626f624064657631a3626f62a7757365725f6964d80210"
+                "9b68ba5cdf428ea0017fc6bcc04d4a"
             )[..],
             invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::InvitationType::User {
                 claimer_email: "alice@dev1".to_owned(),
@@ -74,11 +79,15 @@ pub fn rep_ok() {
                         human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
                         user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                         online_status: invited_cmds::invite_info::UserOnlineStatus::Unknown,
+                        last_greeting_attempt_joined_on: None,
                     },
                     invited_cmds::invite_info::UserGreetingAdministrator {
                         human_handle: HumanHandle::new("carl@dev1", "carl").unwrap(),
                         user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4b").unwrap(),
                         online_status: invited_cmds::invite_info::UserOnlineStatus::Online,
+                        last_greeting_attempt_joined_on: Some(
+                            "2000-1-2T01:00:00Z".parse().unwrap(),
+                        ),
                     },
                 ],
             }),
@@ -88,18 +97,23 @@ pub fn rep_ok() {
             // Content:
             //   status: 'ok'
             //   type: 'USER'
-            //   administrators: [ { human_handle: [ 'bob@dev1', 'bob', ], online_status: 'UNKNOWN', user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4a), }, { human_handle: [ 'carl@dev1', 'carl', ], online_status: 'ONLINE', user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4b), }, ]
+            //   administrators: [
+            //     human_handle: [ 'bob@dev1', 'bob', ], online_status: 'UNKNOWN', user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4a), last_greeting_attempt_joined_on: None
+            //     human_handle: [ 'carl@dev1', 'carl', ], online_status: 'ONLINE', user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4b), last_greeting_attempt_joined_on: ext(1, 946774800000000) i.e. 2000-01-02T02:00:00Z
+            //   ]
             //   claimer_email: 'alice@dev1'
             //   created_by: { type: 'EXTERNAL_SERVICE', service_label: 'LDAP', }
             &hex!(
                 "85a6737461747573a26f6ba474797065a455534552ae61646d696e6973747261746f72"
-                "739283ac68756d616e5f68616e646c6592a8626f624064657631a3626f62ad6f6e6c69"
-                "6e655f737461747573a7554e4b4e4f574ea7757365725f6964d802109b68ba5cdf428e"
-                "a0017fc6bcc04d4a83ac68756d616e5f68616e646c6592a96361726c4064657631a463"
-                "61726cad6f6e6c696e655f737461747573a64f4e4c494e45a7757365725f6964d80210"
-                "9b68ba5cdf428ea0017fc6bcc04d4bad636c61696d65725f656d61696caa616c696365"
-                "4064657631aa637265617465645f627982a474797065b045585445524e414c5f534552"
-                "56494345ad736572766963655f6c6162656ca44c444150"
+                "739284ac68756d616e5f68616e646c6592a8626f624064657631a3626f62bf6c617374"
+                "5f6772656574696e675f617474656d70745f6a6f696e65645f6f6ec0ad6f6e6c696e65"
+                "5f737461747573a7554e4b4e4f574ea7757365725f6964d802109b68ba5cdf428ea001"
+                "7fc6bcc04d4a84ac68756d616e5f68616e646c6592a96361726c4064657631a4636172"
+                "6cbf6c6173745f6772656574696e675f617474656d70745f6a6f696e65645f6f6ed701"
+                "00035d162fa2e400ad6f6e6c696e655f737461747573a64f4e4c494e45a7757365725f"
+                "6964d802109b68ba5cdf428ea0017fc6bcc04d4bad636c61696d65725f656d61696caa"
+                "616c6963654064657631aa637265617465645f627982a474797065b045585445524e41"
+                "4c5f53455256494345ad736572766963655f6c6162656ca44c444150"
             )[..],
             invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::InvitationType::User {
                 claimer_email: "alice@dev1".to_owned(),
@@ -111,11 +125,15 @@ pub fn rep_ok() {
                         human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
                         user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                         online_status: invited_cmds::invite_info::UserOnlineStatus::Unknown,
+                        last_greeting_attempt_joined_on: None,
                     },
                     invited_cmds::invite_info::UserGreetingAdministrator {
                         human_handle: HumanHandle::new("carl@dev1", "carl").unwrap(),
                         user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4b").unwrap(),
                         online_status: invited_cmds::invite_info::UserOnlineStatus::Online,
+                        last_greeting_attempt_joined_on: Some(
+                            "2000-1-2T01:00:00Z".parse().unwrap(),
+                        ),
                     },
                 ],
             }),

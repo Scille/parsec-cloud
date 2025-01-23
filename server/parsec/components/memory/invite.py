@@ -134,12 +134,23 @@ class MemoryInviteComponent(BaseInviteComponent):
             shamir_recovery_deleted_on=shamir_recovery.deleted_on,
         )
 
-    def _get_administrators(self, org: MemoryOrganization) -> list[UserGreetingAdministrator]:
+    def _get_administrators(
+        self, org: MemoryOrganization, invitation: MemoryInvitation
+    ) -> list[UserGreetingAdministrator]:
+        user_id_to_last_greeter_joined = {}
+        for user_id, session in invitation.greeting_sessions.items():
+            for greeting_attempt_id in reversed(session.greeting_attempts):
+                greeting_attempt = org.greeting_attempts[greeting_attempt_id]
+                if greeting_attempt.greeter_joined is not None:
+                    user_id_to_last_greeter_joined[user_id] = greeting_attempt.greeter_joined
+                    break
+
         return [
             UserGreetingAdministrator(
                 user_id=user_id,
                 human_handle=user.cooked.human_handle,
                 online_status=UserOnlineStatus.UNKNOWN,
+                last_greeting_attempt_joined_on=user_id_to_last_greeter_joined.get(user_id),
             )
             for user_id, user in org.users.items()
             if user.current_profile == UserProfile.ADMIN and not user.is_revoked
@@ -522,7 +533,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                         token=invitation.token,
                         created_on=invitation.created_on,
                         created_by=invitation.created_by,
-                        administrators=self._get_administrators(org),
+                        administrators=self._get_administrators(org, invitation),
                         status=status,
                     )
                 case InvitationType.DEVICE:
@@ -586,7 +597,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     status=self._get_invitation_status(organization_id, invitation),
                     created_by=invitation.created_by,
                     token=invitation.token,
-                    administrators=self._get_administrators(org),
+                    administrators=self._get_administrators(org, invitation),
                 )
             case InvitationType.DEVICE:
                 assert invitation.claimer_user_id is not None
@@ -672,7 +683,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                             status=self._get_invitation_status(organization_id, invitation),
                             created_by=invitation.created_by,
                             token=invitation.token,
-                            administrators=self._get_administrators(org),
+                            administrators=self._get_administrators(org, invitation),
                         )
                     )
                 case InvitationType.DEVICE:
