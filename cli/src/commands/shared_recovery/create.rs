@@ -92,12 +92,14 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
     let threshold = if let Some(t) = threshold {
         t
     } else {
+        println!("The threshold is the minimum number of recipients that one must gather to recover the account");
         // note that this is a blocking call
         Input::<NonZeroU8>::new()
-        .with_prompt(format!(
-            "Choose a threshold between 1 and {}\nThe threshold is the minimum number of recipients that one must gather to recover the account",
-            per_recipient_shares.len()
-        )) .interact_text()?
+            .with_prompt(format!(
+                "Choose a threshold between 1 and {}",
+                per_recipient_shares.len()
+            ))
+            .interact_text()?
     };
 
     println!(
