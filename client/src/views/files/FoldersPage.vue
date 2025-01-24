@@ -276,7 +276,7 @@ import { FileDetailsModal, FileContextMenu, FileAction, FolderGlobalContextMenu,
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
-import { EntrySyncedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
 import { showSaveFilePicker } from 'native-file-system-adapter';
@@ -441,6 +441,36 @@ async function defineShortcuts(): Promise<void> {
   );
 }
 
+async function handleEvents(event: Events, data?: EventData): Promise<void> {
+  if (event === Events.EntryUpdated) {
+    await listFolder({ sameFolder: true });
+  } else if (event === Events.WorkspaceUpdated && workspaceInfo.value) {
+    await updateWorkspaceInfo(workspaceInfo.value.id);
+  } else if (event === Events.EntrySynced || event === Events.EntrySyncStarted) {
+    const syncedData = data as EntrySyncData;
+    if (!workspaceInfo.value || workspaceInfo.value.id !== syncedData.workspaceId) {
+      return;
+    }
+    if (syncedData.way === 'inbound') {
+      await listFolder({ sameFolder: true });
+    } else {
+      let entry: EntryModel | undefined = files.value.getEntries().find((e) => e.id === syncedData.entryId);
+      if (!entry) {
+        entry = folders.value.getEntries().find((e) => e.id === syncedData.entryId);
+      }
+      if (entry && workspaceInfo.value) {
+        const statResult = await parsec.entryStat(workspaceInfo.value.handle, entry.path);
+        if (statResult.ok) {
+          entry.needSync = statResult.value.needSync;
+          if (statResult.value.isFile() && entry.isFile()) {
+            (entry as FileModel).size = (statResult.value as EntryStatFile).size;
+          }
+        }
+      }
+    }
+  }
+}
+
 onMounted(async () => {
   displayView.value = (
     await storageManager.retrieveComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY, {
@@ -451,30 +481,8 @@ onMounted(async () => {
   await defineShortcuts();
 
   eventCbId = await eventDistributor.registerCallback(
-    Events.EntryUpdated | Events.WorkspaceUpdated | Events.EntrySynced,
-    async (event: Events, data?: EventData) => {
-      if (event === Events.EntryUpdated) {
-        await listFolder({ sameFolder: true });
-      } else if (event === Events.WorkspaceUpdated && workspaceInfo.value) {
-        await updateWorkspaceInfo(workspaceInfo.value.id);
-      } else if (event === Events.EntrySynced) {
-        const syncedData = data as EntrySyncedData;
-        if (!workspaceInfo.value || workspaceInfo.value.id !== syncedData.workspaceId) {
-          return;
-        }
-        if (syncedData.way === 'inbound') {
-          await listFolder({ sameFolder: true });
-        } else {
-          let entry: EntryModel | undefined = files.value.getEntries().find((e) => e.id === syncedData.entryId);
-          if (!entry) {
-            entry = folders.value.getEntries().find((e) => e.id === syncedData.entryId);
-          }
-          if (entry) {
-            entry.needSync = false;
-          }
-        }
-      }
-    },
+    Events.EntryUpdated | Events.WorkspaceUpdated | Events.EntrySynced | Events.EntrySyncStarted,
+    handleEvents,
   );
 
   const workspaceHandle = getWorkspaceHandle();
