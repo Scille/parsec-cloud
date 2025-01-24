@@ -948,17 +948,16 @@ SELECT
 FROM user_
 INNER JOIN organization ON user_.organization = organization._id
 INNER JOIN human ON user_.human = human._id
+-- Use left joins to list all greeting attempts corresponding to a given invitation token
+-- for this specific administrator, while ensuring at least one row with NULL values so
+-- that the MAX() function returns NULL if no greeting attempt is found.
 LEFT JOIN greeting_session ON user_._id = greeting_session.greeter
 LEFT JOIN invitation ON greeting_session.invitation = invitation._id
-LEFT JOIN greeting_attempt ON greeting_session._id = greeting_attempt.greeting_session
+LEFT JOIN greeting_attempt ON greeting_session._id = greeting_attempt.greeting_session AND invitation.token = $token
 WHERE
     organization.organization_id = $organization_id
     AND user_.current_profile = 'ADMIN'
     AND user_.revoked_on IS NULL
-    -- Due to the left join, `invitation.token` might be `NULL`.
-    -- This happens when the administrator has never made any greeting attempt.
-    -- For this reason, we want to include the user even if `token` is null.
-    AND (invitation.token = $token OR invitation.token IS NULL)
 GROUP BY user_.user_id, human.email, human.label
 """
 )
@@ -1353,6 +1352,7 @@ class PGInviteComponent(BaseInviteComponent):
                 )
             )
 
+        administrators.sort(key=lambda x: x.human_handle.label)
         return administrators
 
     @override

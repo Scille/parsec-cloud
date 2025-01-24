@@ -9,6 +9,7 @@ from parsec.components.invite import (
     UserOnlineStatus,
 )
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, ShamirOrgRpcClients
+from tests.common.data import bob_becomes_admin
 
 
 @pytest.mark.parametrize("user_or_device", ("user", "device"))
@@ -79,6 +80,145 @@ async def test_invited_invite_info_for_user_with_greeting_attempt(
                     human_handle=coolorg.alice.human_handle,
                     online_status=UserOnlineStatus.UNKNOWN,
                     last_greeting_attempt_joined_on=now,
+                ),
+            ],
+        )
+    )
+
+
+async def test_invited_invite_info_for_user_with_multiple_admins(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+) -> None:
+    await bob_becomes_admin(coolorg, backend)
+
+    rep = await coolorg.invited_zack.invite_info()
+    assert rep == invited_cmds.latest.invite_info.RepOk(
+        invited_cmds.latest.invite_info.InvitationTypeUser(
+            claimer_email=coolorg.invited_zack.claimer_email,
+            created_by=InvitationCreatedByUser(
+                user_id=coolorg.alice.user_id,
+                human_handle=coolorg.alice.human_handle,
+            ).for_invite_info(),
+            administrators=[
+                UserGreetingAdministrator(
+                    user_id=coolorg.alice.user_id,
+                    human_handle=coolorg.alice.human_handle,
+                    online_status=UserOnlineStatus.UNKNOWN,
+                    last_greeting_attempt_joined_on=None,
+                ),
+                UserGreetingAdministrator(
+                    user_id=coolorg.bob.user_id,
+                    human_handle=coolorg.bob.human_handle,
+                    online_status=UserOnlineStatus.UNKNOWN,
+                    last_greeting_attempt_joined_on=None,
+                ),
+            ],
+        )
+    )
+
+    # New invitation for non-zack
+    t0 = DateTime.now()
+    rep = await backend.invite.new_for_user(
+        t0,
+        coolorg.organization_id,
+        coolorg.alice.device_id,
+        "non.zack@example.invalid",
+        False,
+    )
+    assert isinstance(rep, tuple)
+    non_zack_token, _ = rep
+
+    # Alice starts greeting attempt for zack
+    t1 = DateTime.now()
+    rep = await backend.invite.greeter_start_greeting_attempt(
+        t1,
+        coolorg.organization_id,
+        coolorg.alice.device_id,
+        coolorg.alice.user_id,
+        coolorg.invited_zack.token,
+    )
+    assert isinstance(rep, GreetingAttemptID)
+
+    # Bob starts greeting attempt for non-zack
+    t2 = DateTime.now()
+    rep = await backend.invite.greeter_start_greeting_attempt(
+        t2,
+        coolorg.organization_id,
+        coolorg.bob.device_id,
+        coolorg.bob.user_id,
+        non_zack_token,
+    )
+    assert isinstance(rep, GreetingAttemptID)
+
+    # Check the invite info for zack
+    rep = await coolorg.invited_zack.invite_info()
+    assert rep == invited_cmds.latest.invite_info.RepOk(
+        invited_cmds.latest.invite_info.InvitationTypeUser(
+            claimer_email=coolorg.invited_zack.claimer_email,
+            created_by=InvitationCreatedByUser(
+                user_id=coolorg.alice.user_id,
+                human_handle=coolorg.alice.human_handle,
+            ).for_invite_info(),
+            administrators=[
+                UserGreetingAdministrator(
+                    user_id=coolorg.alice.user_id,
+                    human_handle=coolorg.alice.human_handle,
+                    online_status=UserOnlineStatus.UNKNOWN,
+                    last_greeting_attempt_joined_on=t1,
+                ),
+                UserGreetingAdministrator(
+                    user_id=coolorg.bob.user_id,
+                    human_handle=coolorg.bob.human_handle,
+                    online_status=UserOnlineStatus.UNKNOWN,
+                    last_greeting_attempt_joined_on=None,
+                ),
+            ],
+        )
+    )
+
+    # Alice starts greeting attempt for zack
+    t3 = DateTime.now()
+    rep = await backend.invite.greeter_start_greeting_attempt(
+        t3,
+        coolorg.organization_id,
+        coolorg.alice.device_id,
+        coolorg.alice.user_id,
+        coolorg.invited_zack.token,
+    )
+    assert isinstance(rep, GreetingAttemptID)
+
+    # Bob starts greeting attempt for zack
+    t4 = DateTime.now()
+    rep = await backend.invite.greeter_start_greeting_attempt(
+        t4,
+        coolorg.organization_id,
+        coolorg.bob.device_id,
+        coolorg.bob.user_id,
+        coolorg.invited_zack.token,
+    )
+
+    # Check the invite info for zack
+    rep = await coolorg.invited_zack.invite_info()
+    assert rep == invited_cmds.latest.invite_info.RepOk(
+        invited_cmds.latest.invite_info.InvitationTypeUser(
+            claimer_email=coolorg.invited_zack.claimer_email,
+            created_by=InvitationCreatedByUser(
+                user_id=coolorg.alice.user_id,
+                human_handle=coolorg.alice.human_handle,
+            ).for_invite_info(),
+            administrators=[
+                UserGreetingAdministrator(
+                    user_id=coolorg.alice.user_id,
+                    human_handle=coolorg.alice.human_handle,
+                    online_status=UserOnlineStatus.UNKNOWN,
+                    last_greeting_attempt_joined_on=t3,
+                ),
+                UserGreetingAdministrator(
+                    user_id=coolorg.bob.user_id,
+                    human_handle=coolorg.bob.human_handle,
+                    online_status=UserOnlineStatus.UNKNOWN,
+                    last_greeting_attempt_joined_on=t4,
                 ),
             ],
         )
