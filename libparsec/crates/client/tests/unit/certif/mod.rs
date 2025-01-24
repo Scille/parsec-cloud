@@ -34,6 +34,7 @@ mod rotate_realm_key_idempotent;
 mod share_realm;
 mod store;
 mod utils;
+mod validate_block;
 mod validate_child_manifest;
 mod validate_user_manifest;
 mod validate_workspace_manifest;
