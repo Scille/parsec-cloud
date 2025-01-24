@@ -14,6 +14,15 @@ use super::{
 };
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidBlockAccessError {
+    #[error("Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): hash digest mismatch !")]
+    HashDigestMismatch {
+        realm_id: VlobID,
+        manifest_id: VlobID,
+        manifest_version: VersionInt,
+        manifest_timestamp: DateTime,
+        manifest_author: DeviceID,
+        block_id: BlockID,
+    },
     #[error("Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): cannot be decrypted by key index {key_index} !")]
     CannotDecrypt {
         realm_id: VlobID,
@@ -97,7 +106,8 @@ pub(super) async fn validate_block(
     let needed_timestamps =
         PerTopicLastTimestamps::new_for_realm(realm_id, needed_realm_certificate_timestamp);
 
-    ops.store
+    let block = ops
+        .store
         .for_read_with_requirements(ops, &needed_timestamps, |store| async move {
             realm_keys_bundle::decrypt_for_realm(
                 ops,
@@ -175,5 +185,20 @@ pub(super) async fn validate_block(
                 ))
             }
             CertifForReadWithRequirementsError::Internal(err) => err.into(),
-        })?
+        })??;
+
+    if HashDigest::from_data(&block) != access.digest {
+        return Err(CertifValidateBlockError::InvalidBlockAccess(Box::new(
+            InvalidBlockAccessError::HashDigestMismatch {
+                realm_id,
+                manifest_id: manifest.id,
+                manifest_version: manifest.version,
+                manifest_timestamp: manifest.timestamp,
+                manifest_author: manifest.author,
+                block_id: access.id,
+            },
+        )));
+    }
+
+    Ok(block)
 }
