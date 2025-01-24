@@ -226,9 +226,12 @@ export async function login(
       case ClientEventTag.WorkspaceOpsOutboundSyncDone:
         eventDistributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
         break;
-      // Ignore those events for now
       case ClientEventTag.WorkspaceOpsOutboundSyncStarted:
+        eventDistributor.dispatchEvent(Events.EntrySyncStarted, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
+        break;
+      // Ignore those events for now
       case ClientEventTag.WorkspaceOpsOutboundSyncProgress:
+      case ClientEventTag.ServerConfigChanged:
         break;
       default:
         window.electronAPI.log('debug', `Unhandled event ${event.tag}`);

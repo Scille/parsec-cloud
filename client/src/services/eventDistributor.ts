@@ -20,6 +20,7 @@ enum Events {
   EntrySynced = 1 << 11,
   TOSAcceptRequired = 1 << 12,
   LogoutRequested = 1 << 13,
+  EntrySyncStarted = 1 << 14,
 }
 
 interface WorkspaceCreatedData {
@@ -36,7 +37,7 @@ interface UpdateAvailabilityData {
   version?: string;
 }
 
-interface EntrySyncedData {
+interface EntrySyncData {
   workspaceId: WorkspaceID;
   entryId: EntryID;
   way: 'inbound' | 'outbound';
@@ -46,7 +47,7 @@ interface IncompatibleServerData {
   reason: string;
 }
 
-type EventData = WorkspaceCreatedData | InvitationUpdatedData | UpdateAvailabilityData | EntrySyncedData | IncompatibleServerData;
+type EventData = WorkspaceCreatedData | InvitationUpdatedData | UpdateAvailabilityData | EntrySyncData | IncompatibleServerData;
 
 interface Callback {
   id: string;
@@ -125,4 +126,4 @@ class EventDistributor {
   }
 }
 
-export { EntrySyncedData, EventData, EventDistributor, Events, InvitationUpdatedData, UpdateAvailabilityData, WorkspaceCreatedData };
+export { EntrySyncData, EventData, EventDistributor, Events, InvitationUpdatedData, UpdateAvailabilityData, WorkspaceCreatedData };
