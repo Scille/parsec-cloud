@@ -145,16 +145,19 @@ class MemoryInviteComponent(BaseInviteComponent):
                     user_id_to_last_greeter_joined[user_id] = greeting_attempt.greeter_joined
                     break
 
-        return [
-            UserGreetingAdministrator(
-                user_id=user_id,
-                human_handle=user.cooked.human_handle,
-                online_status=UserOnlineStatus.UNKNOWN,
-                last_greeting_attempt_joined_on=user_id_to_last_greeter_joined.get(user_id),
-            )
-            for user_id, user in org.users.items()
-            if user.current_profile == UserProfile.ADMIN and not user.is_revoked
-        ]
+        return sorted(
+            (
+                UserGreetingAdministrator(
+                    user_id=user_id,
+                    human_handle=user.cooked.human_handle,
+                    online_status=UserOnlineStatus.UNKNOWN,
+                    last_greeting_attempt_joined_on=user_id_to_last_greeter_joined.get(user_id),
+                )
+                for user_id, user in org.users.items()
+                if user.current_profile == UserProfile.ADMIN and not user.is_revoked
+            ),
+            key=lambda x: x.human_handle.label,
+        )
 
     @override
     async def new_for_user(
