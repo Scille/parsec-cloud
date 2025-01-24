@@ -240,7 +240,8 @@ async fn load_last_realm_keys_bundle(
         }
     };
 
-    // 2) Validate it against the corresponding key rotation certificate
+    // 3) Validate each key in the keys bundle against its corresponding key rotation certificate
+
     let realm_keys = validate_keys_bundle(
         ops,
         store,
@@ -754,7 +755,7 @@ async fn validate_keys_bundle(
         keys_bundle
     };
 
-    // 3) Validate keys bundle correspond to the last key rotation certificate.
+    // 3) Validate the keys bundle corresponds to the last key rotation certificate.
     // Note we don't need to check consistency with any other certificate given this
     // has already be done during corresponding key rotation certificate validation.
 
@@ -808,7 +809,7 @@ async fn validate_keys_bundle(
         )));
     }
 
-    // 4) Finally check each key in the bundle against it corresponding canary.
+    // 4) Finally check each key in the bundle against its corresponding canary.
     // Note this check can fail without invalidating the key rotation: a key
     // can be invalid due to a bug during a key rotation, so we trust the
     // certificate author that he did his best to provide us the valid keys.
