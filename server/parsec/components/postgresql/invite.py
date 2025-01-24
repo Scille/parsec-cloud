@@ -174,15 +174,15 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
             assert False, repr(unknown)
 
     if type == InvitationType.USER:
-        match record["claimer_email"]:
+        match record["user_invitation_claimer_email"]:
             case str() as claimer_email:
                 pass
             case unknown:
                 assert False, repr(unknown)
 
-        assert record["claimer_user_id"] is None
-        assert record["claimer_human_email"] is None
-        assert record["claimer_human_label"] is None
+        assert record["device_invitation_claimer_user_id"] is None
+        assert record["device_invitation_claimer_human_email"] is None
+        assert record["device_invitation_claimer_human_label"] is None
         assert record["shamir_recovery_internal_id"] is None
         assert record["shamir_recovery_user_id"] is None
         assert record["shamir_recovery_human_email"] is None
@@ -203,13 +203,16 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
         )
 
     if type == InvitationType.DEVICE:
-        match record["claimer_user_id"]:
+        match record["device_invitation_claimer_user_id"]:
             case str() as claimer_user_id_str:
                 claimer_user_id = UserID.from_hex(claimer_user_id_str)
             case unknown:
                 assert False, repr(unknown)
 
-        match (record["claimer_human_email"], record["claimer_human_label"]):
+        match (
+            record["device_invitation_claimer_human_email"],
+            record["device_invitation_claimer_human_label"],
+        ):
             case (str() as claimer_human_email, str() as claimer_human_label):
                 claimer_human_handle = HumanHandle(
                     email=claimer_human_email, label=claimer_human_label
@@ -217,7 +220,7 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
             case unknown:
                 assert False, repr(unknown)
 
-        assert record["claimer_email"] is None
+        assert record["user_invitation_claimer_email"] is None
         assert record["shamir_recovery_internal_id"] is None
         assert record["shamir_recovery_user_id"] is None
         assert record["shamir_recovery_human_email"] is None
@@ -280,10 +283,10 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
             case unknown:
                 assert False, repr(unknown)
 
-        assert record["claimer_email"] is None
-        assert record["claimer_user_id"] is None
-        assert record["claimer_human_email"] is None
-        assert record["claimer_human_label"] is None
+        assert record["user_invitation_claimer_email"] is None
+        assert record["device_invitation_claimer_user_id"] is None
+        assert record["device_invitation_claimer_human_email"] is None
+        assert record["device_invitation_claimer_human_label"] is None
 
         # Treat active invitation to a deleted shamir recovery as cancelled
         if shamir_recovery_deleted_on is not None and deleted_on is None:
@@ -370,7 +373,7 @@ _q_retrieve_shamir_recovery_setup = Q(
 -- gets updated, which do not have to remain consistent with other timestamped data.
 -- Less lock means less ways to mess up the ordering and create a hard-to-debug deadlock,
 -- so we simply accept that our checks might be slightly outdated when the invitation is written.
-SELECT shamir_recovery_setup._id as shamir_recovery_setup_internal_id
+SELECT shamir_recovery_setup._id AS shamir_recovery_setup_internal_id
 FROM shamir_recovery_setup
 INNER JOIN organization ON shamir_recovery_setup.organization = organization._id
 INNER JOIN user_ ON shamir_recovery_setup.user_ = user_._id
@@ -429,7 +432,7 @@ WHERE
     organization.organization_id = $organization_id
     AND type = 'USER'
     AND user_.user_id = $user_id
-    AND claimer_email = $claimer_email
+    AND user_invitation_claimer_email = $user_invitation_claimer_email
     AND deleted_on IS NULL
 LIMIT 1
 """
@@ -441,11 +444,11 @@ SELECT
     token
 FROM invitation
 LEFT JOIN organization ON invitation.organization = organization._id
-INNER JOIN user_ ON invitation.claimer_user_id = user_._id
+INNER JOIN user_ ON invitation.device_invitation_claimer = user_._id
 WHERE
     organization.organization_id = $organization_id
     AND type = 'DEVICE'
-    AND user_.user_id = $claimer_user_id
+    AND user_.user_id = $device_invitation_claimer_user_id
     AND deleted_on IS NULL
 LIMIT 1
 """
@@ -488,8 +491,8 @@ INSERT INTO invitation(
     organization,
     token,
     type,
-    claimer_email,
-    claimer_user_id,
+    user_invitation_claimer_email,
+    device_invitation_claimer,
     shamir_recovery,
     created_by_device,
     created_on
@@ -498,8 +501,8 @@ VALUES (
     { q_organization_internal_id("$organization_id") },
     $token,
     $type,
-    $claimer_email,
-    { q_user_internal_id(organization_id="$organization_id", user_id="$claimer_user_id") },
+    $user_invitation_claimer_email,
+    { q_user_internal_id(organization_id="$organization_id", user_id="$device_invitation_claimer_user_id") },
     $shamir_recovery_setup,
     { q_device_internal_id(organization_id="$organization_id", device_id="$created_by") },
     $created_on
@@ -530,10 +533,10 @@ SELECT
     human.email AS created_by_email,
     human.label AS created_by_label,
     invitation.created_by_service_label,
-    invitation.claimer_email,
-    claimer_user.user_id as claimer_user_id,
-    claimer_human.email AS claimer_human_email,
-    claimer_human.label AS claimer_human_label,
+    invitation.user_invitation_claimer_email,
+    device_invitation_claimer.user_id AS device_invitation_claimer_user_id,
+    device_invitation_claimer_human.email AS device_invitation_claimer_human_email,
+    device_invitation_claimer_human.label AS device_invitation_claimer_human_label,
     invitation.shamir_recovery AS shamir_recovery_internal_id,
     shamir_recovery_user.user_id AS shamir_recovery_user_id,
     shamir_recovery_human.email AS shamir_recovery_human_email,
@@ -548,8 +551,8 @@ FROM invitation
 LEFT JOIN device ON invitation.created_by_device = device._id
 LEFT JOIN user_ ON device.user_ = user_._id
 LEFT JOIN human ON human._id = user_.human
-LEFT JOIN user_ AS claimer_user ON invitation.claimer_user_id = claimer_user._id
-LEFT JOIN human AS claimer_human ON claimer_user.human = claimer_human._id
+LEFT JOIN user_ AS device_invitation_claimer ON invitation.device_invitation_claimer = device_invitation_claimer._id
+LEFT JOIN human AS device_invitation_claimer_human ON device_invitation_claimer.human = device_invitation_claimer_human._id
 LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
 LEFT JOIN user_ AS shamir_recovery_user ON shamir_recovery_setup.user_ = shamir_recovery_user._id
 LEFT JOIN human AS shamir_recovery_human ON shamir_recovery_user.human = shamir_recovery_human._id
@@ -574,13 +577,13 @@ SELECT
     invitation.token,
     invitation.type,
     user_.user_id AS created_by_user_id,
-    human.email as created_by_email,
-    human.label as created_by_label,
+    human.email AS created_by_email,
+    human.label AS created_by_label,
     invitation.created_by_service_label,
-    invitation.claimer_email,
-    claimer_user.user_id as claimer_user_id,
-    claimer_human.email AS claimer_human_email,
-    claimer_human.label AS claimer_human_label,
+    invitation.user_invitation_claimer_email,
+    device_invitation_claimer.user_id AS device_invitation_claimer_user_id,
+    device_invitation_claimer_human.email AS device_invitation_claimer_human_email,
+    device_invitation_claimer_human.label AS device_invitation_claimer_human_label,
     invitation.shamir_recovery AS shamir_recovery_internal_id,
     shamir_recovery_user.user_id AS shamir_recovery_user_id,
     shamir_recovery_human.email AS shamir_recovery_human_email,
@@ -595,8 +598,8 @@ FROM invitation
 LEFT JOIN device ON invitation.created_by_device = device._id
 LEFT JOIN user_ ON device.user_ = user_._id
 LEFT JOIN human ON human._id = user_.human
-LEFT JOIN user_ AS claimer_user ON invitation.claimer_user_id = claimer_user._id
-LEFT JOIN human AS claimer_human ON claimer_user.human = claimer_human._id
+LEFT JOIN user_ AS device_invitation_claimer ON invitation.device_invitation_claimer = device_invitation_claimer._id
+LEFT JOIN human AS device_invitation_claimer_human ON device_invitation_claimer.human = device_invitation_claimer_human._id
 LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
 LEFT JOIN user_ AS shamir_recovery_user ON shamir_recovery_setup.user_ = shamir_recovery_user._id
 LEFT JOIN human AS shamir_recovery_human ON shamir_recovery_user.human = shamir_recovery_human._id
@@ -639,14 +642,14 @@ def make_q_info_invitation(
             invitation._id AS invitation_internal_id,
             invitation.token,
             invitation.type,
-            user_.user_id as created_by_user_id,
+            user_.user_id AS created_by_user_id,
             human.email AS created_by_email,
             human.label AS created_by_label,
             invitation.created_by_service_label,
-            invitation.claimer_email,
-            claimer_user.user_id as claimer_user_id,
-            claimer_human.email AS claimer_human_email,
-            claimer_human.label AS claimer_human_label,
+            invitation.user_invitation_claimer_email,
+            device_invitation_claimer.user_id AS device_invitation_claimer_user_id,
+            device_invitation_claimer_human.email AS device_invitation_claimer_human_email,
+            device_invitation_claimer_human.label AS device_invitation_claimer_human_label,
             invitation.shamir_recovery AS shamir_recovery_internal_id,
             shamir_recovery_user.user_id AS shamir_recovery_user_id,
             shamir_recovery_human.email AS shamir_recovery_human_email,
@@ -662,8 +665,8 @@ def make_q_info_invitation(
         LEFT JOIN device ON invitation.created_by_device = device._id
         LEFT JOIN user_ ON device.user_ = user_._id
         LEFT JOIN human ON human._id = user_.human
-        LEFT JOIN user_ AS claimer_user ON invitation.claimer_user_id = claimer_user._id
-        LEFT JOIN human AS claimer_human ON claimer_user.human = claimer_human._id
+        LEFT JOIN user_ AS device_invitation_claimer ON invitation.device_invitation_claimer = device_invitation_claimer._id
+        LEFT JOIN human AS device_invitation_claimer_human ON device_invitation_claimer.human = device_invitation_claimer_human._id
         LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
         LEFT JOIN user_ AS shamir_recovery_user ON shamir_recovery_setup.user_ = shamir_recovery_user._id
         LEFT JOIN human AS shamir_recovery_human ON shamir_recovery_user.human = shamir_recovery_human._id
@@ -682,7 +685,7 @@ _q_greeting_attempt_info = Q(
 SELECT
     greeting_attempt._id,
     greeting_attempt.greeting_attempt_id,
-    user_.user_id as greeter,
+    user_.user_id AS greeter,
     greeting_attempt.claimer_joined,
     greeting_attempt.greeter_joined,
     greeting_attempt.cancelled_by,
@@ -952,6 +955,9 @@ WHERE
     organization.organization_id = $organization_id
     AND user_.current_profile = 'ADMIN'
     AND user_.revoked_on IS NULL
+    -- Due to the left join, `invitation.token` might be `NULL`.
+    -- This happens when the administrator has never made any greeting attempt.
+    -- For this reason, we want to include the user even if `token` is null.
     AND (invitation.token = $token OR invitation.token IS NULL)
 GROUP BY user_.user_id, human.email, human.label
 """
@@ -978,8 +984,8 @@ async def _do_new_invitation(
     organization_id: OrganizationID,
     author_user_id: UserID,
     author_device_id: DeviceID,
-    claimer_email: str | None,
-    claimer_user_id: UserID | None,
+    user_invitation_claimer_email: str | None,
+    device_invitation_claimer_user_id: UserID | None,
     shamir_recovery_setup: int | None,
     created_on: DateTime,
     invitation_type: InvitationType,
@@ -987,18 +993,18 @@ async def _do_new_invitation(
 ) -> InvitationToken:
     match invitation_type:
         case InvitationType.USER:
-            assert claimer_email is not None
+            assert user_invitation_claimer_email is not None
             # This request allows to have multiple invitations for the same email for different administrators
             # TODO: Update this when implementing https://github.com/Scille/parsec-cloud/issues/9413
             q = _q_retrieve_compatible_user_invitation(
                 organization_id=organization_id.str,
                 user_id=author_user_id,
-                claimer_email=claimer_email,
+                user_invitation_claimer_email=user_invitation_claimer_email,
             )
         case InvitationType.DEVICE:
             q = _q_retrieve_compatible_device_invitation(
                 organization_id=organization_id.str,
-                claimer_user_id=author_user_id,
+                device_invitation_claimer_user_id=device_invitation_claimer_user_id,
             )
         case InvitationType.SHAMIR_RECOVERY:
             assert shamir_recovery_setup is not None
@@ -1023,8 +1029,8 @@ async def _do_new_invitation(
                 organization_id=organization_id.str,
                 type=invitation_type.str,
                 token=token.hex,
-                claimer_email=claimer_email,
-                claimer_user_id=claimer_user_id,
+                user_invitation_claimer_email=user_invitation_claimer_email,
+                device_invitation_claimer_user_id=device_invitation_claimer_user_id,
                 shamir_recovery_setup=shamir_recovery_setup,
                 created_by=author_device_id,
                 created_on=created_on,
@@ -1111,8 +1117,8 @@ class PGInviteComponent(BaseInviteComponent):
             organization_id=organization_id,
             author_user_id=author_user_id,
             author_device_id=author,
-            claimer_email=claimer_email,
-            claimer_user_id=None,
+            user_invitation_claimer_email=claimer_email,
+            device_invitation_claimer_user_id=None,
             shamir_recovery_setup=None,
             created_on=now,
             invitation_type=InvitationType.USER,
@@ -1173,8 +1179,8 @@ class PGInviteComponent(BaseInviteComponent):
             organization_id=organization_id,
             author_user_id=author_user_id,
             author_device_id=author,
-            claimer_email=None,
-            claimer_user_id=author_user_id,
+            user_invitation_claimer_email=None,
+            device_invitation_claimer_user_id=author_user_id,
             shamir_recovery_setup=None,
             created_on=now,
             invitation_type=InvitationType.DEVICE,
@@ -1262,8 +1268,8 @@ class PGInviteComponent(BaseInviteComponent):
             organization_id=organization_id,
             author_user_id=author_user_id,
             author_device_id=author,
-            claimer_email=None,
-            claimer_user_id=None,
+            user_invitation_claimer_email=None,
+            device_invitation_claimer_user_id=None,
             shamir_recovery_setup=shamir_recovery_setup,
             created_on=now,
             invitation_type=InvitationType.SHAMIR_RECOVERY,

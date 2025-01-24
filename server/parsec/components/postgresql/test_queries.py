@@ -406,8 +406,8 @@ new_invitations AS (
         type,
         created_by_device,
         created_by_service_label,
-        claimer_email,
-        claimer_user_id,
+        user_invitation_claimer_email,
+        device_invitation_claimer,
         created_on,
         deleted_on,
         deleted_reason,
@@ -422,10 +422,10 @@ new_invitations AS (
             WHERE device_id = { q_device(_id="invitation.created_by_device", select="device_id") }
         ),
         created_by_service_label,
-        claimer_email,
+        user_invitation_claimer_email,
         (
             SELECT _id FROM new_users
-            WHERE user_id = { q_user(_id="invitation.claimer_user_id", select="user_id") }
+            WHERE user_id = { q_user(_id="invitation.device_invitation_claimer", select="user_id") }
         ),
         created_on,
         deleted_on,

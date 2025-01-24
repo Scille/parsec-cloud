@@ -239,9 +239,9 @@ CREATE TABLE invitation (
     --
     --     -- Type specific fields
     --     -- Required when type=USER
-    --     claimer_email VARCHAR(255),
+    --     user_invitation_claimer_email VARCHAR(255),
     --     -- Required when type=DEVICE
-    --     claimer_user_id INTEGER REFERENCES user_ (_id),
+    --     device_invitation_claimer INTEGER REFERENCES user_ (_id),
     --     -- Required when type=SHAMIR_RECOVERY
     --     shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id),
     --
@@ -255,7 +255,7 @@ CREATE TABLE invitation (
     created_by_device INTEGER REFERENCES device (_id),
 
     -- Required when type=USER
-    claimer_email VARCHAR(255),
+    user_invitation_claimer_email VARCHAR(255),
 
     created_on TIMESTAMPTZ NOT NULL,
     deleted_on TIMESTAMPTZ,
@@ -267,7 +267,7 @@ CREATE TABLE invitation (
     -- Added in migration 0009
     created_by_service_label VARCHAR(254),
     -- Required when type=DEVICE
-    claimer_user_id INTEGER REFERENCES user_ (_id),
+    device_invitation_claimer INTEGER REFERENCES user_ (_id),
 
     UNIQUE (organization, token)
 );
