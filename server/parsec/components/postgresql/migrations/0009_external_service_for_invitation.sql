@@ -6,19 +6,20 @@
 -- Rename `created_by` to `created_by_device` in invitation table
 -- Remove NOT NULL constraint on `created_by_device` column
 -- Add `created_by_service_label` column to invitation table
--- Add `claimer_user_id` column to invitation table
---
+-- Add `device_invitation_claimer` column to invitation table
+-- Rename `claimer_email` to `user_invitation_claimer_email` in invitation table
 -------------------------------------------------------
 
 ALTER TABLE invitation RENAME COLUMN created_by TO created_by_device;
 ALTER TABLE invitation ALTER COLUMN created_by_device DROP NOT NULL;
 ALTER TABLE invitation RENAME CONSTRAINT "invitation_created_by_fkey" TO "invitation_created_by_device_fkey";
 ALTER TABLE invitation ADD COLUMN created_by_service_label VARCHAR(254);
-ALTER TABLE invitation ADD COLUMN claimer_user_id INTEGER REFERENCES user_ (_id);
+ALTER TABLE invitation ADD COLUMN device_invitation_claimer INTEGER REFERENCES user_ (_id);
+ALTER TABLE invitation RENAME COLUMN claimer_email TO user_invitation_claimer_email;
 
--- Update `claimer_user_id` using the `created_by_device` column
+-- Update `device_invitation_claimer` using the `created_by_device` column
 UPDATE invitation
-SET claimer_user_id = user_._id
+SET device_invitation_claimer = user_._id
 FROM device
 INNER JOIN user_ ON device.user_ = user_._id
 WHERE
