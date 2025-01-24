@@ -12,12 +12,20 @@ use libparsec_types::prelude::*;
 
 #[tokio::main]
 async fn main() -> ExitCode {
+    let print_usage = || {
+        println!(
+            "Usage: {} <mountpoint_path>",
+            std::env::args_os().next().unwrap().to_string_lossy()
+        );
+    };
+
     // Configure logging with WARNING level by default (customize with `RUST_LOG` environ variable)
     env_logger::init();
 
     let mut args = std::env::args_os();
     let _ = args.next().unwrap(); // Ignore path of the executable
-                                  // First argument is the desired mountpoint path
+
+    // First argument is the desired mountpoint path
     let mountpoint_mount_strategy = match args.next() {
         Some(raw_path) => {
             let base_dir = PathBuf::from(raw_path);
@@ -33,13 +41,16 @@ async fn main() -> ExitCode {
             }
         }
         None => {
-            println!(
-                "Usage: {} <mountpoint_path>",
-                std::env::args_os().next().unwrap().to_string_lossy()
-            );
+            print_usage();
             return ExitCode::from(1);
         }
     };
+
+    // Too many arguments ?
+    if args.next().is_some() {
+        print_usage();
+        return ExitCode::from(1);
+    }
 
     libparsec_tests_fixtures::TestbedScope::run(
         "minimal_client_ready",
