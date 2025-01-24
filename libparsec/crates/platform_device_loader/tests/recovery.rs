@@ -11,7 +11,6 @@ use libparsec_types::HumanHandle;
 use libparsec_types::ParsecOrganizationAddr;
 use libparsec_types::UserProfile;
 use libparsec_types::{DeviceLabel, LocalDevice};
-use zeroize::Zeroizing;
 
 #[parsec_test]
 async fn test_ok_recovery() {
@@ -54,7 +53,7 @@ async fn test_ok_recovery() {
     // Invalid passphrase
 
     p_assert_matches!(
-        import_recovery_device(&data, Zeroizing::new("dummy".to_string())).await,
+        import_recovery_device(&data, "dummy".into()).await,
         Err(PlatformImportRecoveryDeviceError::InvalidPassphrase)
     );
 
