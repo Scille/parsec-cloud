@@ -16,7 +16,7 @@ macro_rules! impl_key_debug {
         impl ::std::fmt::Debug for $name {
             fn fmt(&self, formatter: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
                 // Hide secrets from debug output.
-                write!(formatter, "{}(****)", stringify!($name))
+                write!(formatter, concat!(stringify!($name), "(****)"))
             }
         }
     };
@@ -24,5 +24,52 @@ macro_rules! impl_key_debug {
 
 pub use impl_key_debug;
 
-pub type SecretKeyPassphrase = zeroize::Zeroizing<String>;
-pub type Password = zeroize::Zeroizing<String>;
+#[derive(Clone)]
+pub struct SecretKeyPassphrase(zeroize::Zeroizing<String>);
+
+impl std::ops::Deref for SecretKeyPassphrase {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for SecretKeyPassphrase {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl From<String> for SecretKeyPassphrase {
+    fn from(password: String) -> Self {
+        Self(password.into())
+    }
+}
+
+impl From<&str> for SecretKeyPassphrase {
+    fn from(password: &str) -> Self {
+        Self(password.to_string().into())
+    }
+}
+
+impl_key_debug!(SecretKeyPassphrase);
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct Password(zeroize::Zeroizing<String>);
+
+impl std::ops::Deref for Password {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<String> for Password {
+    fn from(password: String) -> Self {
+        Self(password.into())
+    }
+}
+
+impl_key_debug!(Password);
