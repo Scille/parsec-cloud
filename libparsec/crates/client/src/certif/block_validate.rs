@@ -34,6 +34,27 @@ pub enum InvalidBlockAccessError {
         block_id: BlockID,
         key_index: IndexInt,
     },
+    /// It might seem strange to have a `CorruptedKey` error here: if the key is corrupted
+    /// the error comes from fetching the key, not the block, so why are we declaring the
+    /// block as invalid ???
+    ///
+    /// The reason is a bit subtle:
+    ///
+    /// A valid keys bundle may contain invalid keys for two reasons:
+    /// 1. A valid key in the previous keys bundle has been replaced by an invalid one.
+    /// 2. In invalid key has been generated for the key rotation leading to this keys bundle.
+    ///
+    /// Of course both cases should not occur under normal circumstances, but we must take
+    /// them into account given they are possible in case of a buggy or malicious client.
+    ///
+    /// The idea here is to trust the last keys bundle author of having done his best to
+    /// provide us with valid keys (and if something is corrupted, an OWNER should do
+    /// a healing key rotation soon enough in theory).
+    ///
+    /// With this in mind, we consider any invalid key in the current key bundle as
+    /// always invalid (so falling into case 2).
+    /// If the key has never been valid, how could the block has been encrypted with it
+    /// in the first place ? Hence why we consider the block as invalid.
     #[error("Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): encrypted by key index {key_index} which appears corrupted !")]
     CorruptedKey {
         realm_id: VlobID,
