@@ -12,7 +12,7 @@ async function openModalWithUser(usersPage: Page, userIndex: number): Promise<Lo
   const popover = usersPage.locator('.user-context-menu');
   await popover
     .getByRole('listitem')
-    .nth(isRevoked ? 1 : 3)
+    .nth(isRevoked ? 1 : 5)
     .click();
   const modal = usersPage.locator('.user-details-modal');
   await expect(modal).toBeVisible();

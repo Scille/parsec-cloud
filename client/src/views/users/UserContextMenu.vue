@@ -5,7 +5,7 @@
     <ion-list class="menu-list">
       <ion-item-group
         class="list-group"
-        v-if="!isRevoked && clientIsAdmin"
+        v-if="!user.isRevoked() && clientIsAdmin"
       >
         <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
@@ -21,6 +21,27 @@
           <ion-icon :icon="personRemove" />
           <ion-label class="body list-group-item__label">
             {{ $msTranslate('UsersPage.userContextMenu.actionRevoke') }}
+          </ion-label>
+        </ion-item>
+      </ion-item-group>
+
+      <ion-item-group
+        class="list-group"
+        v-if="!user.isRevoked() && clientIsAdmin && user.currentProfile !== UserProfile.Outsider"
+      >
+        <ion-item class="list-group-title button-small">
+          <ion-label class="list-group-title__label">
+            {{ $msTranslate('UsersPage.userContextMenu.titleUpdateProfile') }}
+          </ion-label>
+        </ion-item>
+        <ion-item
+          button
+          @click="onClick(UserAction.UpdateProfile)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon :icon="repeat" />
+          <ion-label class="body list-group-item__label">
+            {{ $msTranslate('UsersPage.userContextMenu.actionUpdateProfile') }}
           </ion-label>
         </ion-item>
       </ion-item-group>
@@ -69,19 +90,21 @@ export enum UserAction {
   Revoke,
   Details,
   AssignRoles,
+  UpdateProfile,
 }
 </script>
 
 <script setup lang="ts">
+import { UserInfo, UserProfile } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
-import { informationCircle, personRemove, returnUpForward } from 'ionicons/icons';
+import { informationCircle, personRemove, returnUpForward, repeat } from 'ionicons/icons';
 
 defineProps<{
-  isRevoked: boolean;
+  user: UserInfo;
   clientIsAdmin?: boolean;
 }>();
 
-function onClick(action: UserAction): Promise<boolean> {
+async function onClick(action: UserAction): Promise<boolean> {
   return popoverController.dismiss({ action: action });
 }
 </script>

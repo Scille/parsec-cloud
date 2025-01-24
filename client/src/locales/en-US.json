@@ -999,6 +999,17 @@
                 "description": "Can only access shared workspaces."
             }
         },
+        "updateProfile": {
+            "success": "The profile has been changed! | The profiles have been changed!",
+            "failedOffline": "Could not change the profile. Make sure you are online. | Could not change the profiles. Make sure you are online.",
+            "failedGeneric": "Could not change the profile. | Could not change the profiles.",
+            "actionUpdate": "Change",
+            "actionCancel": "Cancel",
+            "title": "Change profile | Change profiles",
+            "additionalUsers": "+1 user | +{count} users",
+            "affectedUsers": "Affected user: | Affected users:",
+            "cannotUpdateOutsiders": "`External` users cannot have their profile changed."
+        },
         "status": {
             "active": "Active",
             "revoked": "Revoked",
@@ -1024,7 +1035,9 @@
             "actionDetails": "View details",
             "titleAssignRoles": "Copy roles",
             "actionAssignRoles": "Copy workspace roles to...",
-            "subtitleAssignRoles": "You can copy {sourceUser} roles to another person. Workspace roles will not be removed."
+            "subtitleAssignRoles": "You can copy {sourceUser} roles to another person. Workspace roles will not be removed.",
+            "titleUpdateProfile": "Profile",
+            "actionUpdateProfile": "Change profile | Change profiles"
         },
         "greet": {
             "titles": {
