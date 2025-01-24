@@ -17,13 +17,23 @@
           />
         </div>
         <!-- revoke or view common workspace -->
-        <div v-show="users.selectedCount() >= 1 && isAdmin">
+        <div
+          v-show="users.selectedCount() >= 1 && isAdmin"
+          class="action-bar-buttons"
+        >
           <ms-action-bar-button
             :icon="personRemove"
-            class="danger"
             id="button-revoke-user"
             :button-label="{ key: 'UsersPage.userContextMenu.actionRevoke', count: users.selectedCount() }"
             @click="revokeSelectedUsers"
+          />
+
+          <ms-action-bar-button
+            v-show="users.getSelectedUsers().filter((u) => u.currentProfile !== UserProfile.Outsider).length > 0"
+            :icon="repeat"
+            id="button-update-profile"
+            :button-label="{ key: 'UsersPage.userContextMenu.actionUpdateProfile', count: users.selectedCount() }"
+            @click="updateSelectedUserProfiles"
           />
         </div>
         <div v-show="users.selectedCount() === 1">
@@ -131,6 +141,7 @@ import {
   MsSorter,
   MsSorterChangeEvent,
   Translatable,
+  MsModalResult,
 } from 'megashark-lib';
 import { SortProperty, UserCollection, UserFilter, UserFilterLabels, UserModel } from '@/components/users';
 import {
@@ -145,6 +156,9 @@ import {
   listUsers as parsecListUsers,
   revokeUser as parsecRevokeUser,
   InvitationStatus,
+  updateProfile as parsecUpdateProfile,
+  ClientUserUpdateProfileError,
+  ClientUserUpdateProfileErrorTag,
 } from '@/parsec';
 import { Routes, getCurrentRouteQuery, watchRoute, currentRouteIsUserRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
@@ -155,10 +169,11 @@ import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
-import { informationCircle, personAdd, personRemove } from 'ionicons/icons';
+import { informationCircle, personAdd, personRemove, repeat } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref, toRaw } from 'vue';
 import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
+import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -375,7 +390,7 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
     dismissOnSelect: true,
     alignment: 'start',
     componentProps: {
-      isRevoked: user.isRevoked(),
+      user: user,
       clientIsAdmin: isAdmin.value,
     },
   });
@@ -386,6 +401,7 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
     [UserAction.Revoke, revokeUser],
     [UserAction.Details, openUserDetails],
     [UserAction.AssignRoles, assignWorkspaceRoles],
+    [UserAction.UpdateProfile, updateUserProfile],
   ]);
 
   if (!data) {
@@ -402,6 +418,68 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
   if (onFinished) {
     onFinished();
   }
+}
+
+async function updateSelectedUserProfiles(): Promise<void> {
+  await updateUserProfiles(users.value.getSelectedUsers());
+}
+
+async function updateUserProfile(user: UserInfo): Promise<void> {
+  await updateUserProfiles([user]);
+}
+
+async function updateUserProfiles(selectedUsers: Array<UserInfo>): Promise<void> {
+  const modal = await modalController.create({
+    component: UpdateProfileModal,
+    cssClass: 'update-profile-modal',
+    componentProps: {
+      users: selectedUsers,
+    },
+  });
+  await modal.present();
+  const { data, role } = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  if (role !== MsModalResult.Confirm) {
+    return;
+  }
+  const newProfile = data.profile;
+  let firstError: ClientUserUpdateProfileError | undefined = undefined;
+  const affectedUsers = selectedUsers.filter((u) => u.currentProfile !== UserProfile.Outsider);
+
+  for (const user of affectedUsers) {
+    if (user.currentProfile === newProfile) {
+      continue;
+    }
+    const result = await parsecUpdateProfile(user.id, newProfile);
+    if (!result.ok) {
+      if (!firstError) {
+        firstError = result.error;
+      }
+    }
+  }
+  let message = '';
+  if (!firstError) {
+    message = 'UsersPage.updateProfile.success';
+  } else {
+    switch (firstError.tag) {
+      case ClientUserUpdateProfileErrorTag.Offline:
+        message = 'UsersPage.updateProfile.failedOffline';
+        break;
+      default:
+        message = 'UsersPage.updateProfile.failedGeneric';
+        break;
+    }
+  }
+  informationManager.present(
+    new Information({
+      message: { key: message, count: affectedUsers.length },
+      level: firstError === undefined ? InformationLevel.Success : InformationLevel.Error,
+    }),
+    PresentationMode.Toast,
+  );
+
+  await refreshUserList();
 }
 
 async function assignWorkspaceRoles(user: UserInfo): Promise<void> {
@@ -574,6 +652,10 @@ onUnmounted(async () => {
 </script>
 
 <style scoped lang="scss">
+.action-bar-buttons {
+  gap: 0 !important;
+}
+
 .no-active {
   width: 100%;
   height: 100%;

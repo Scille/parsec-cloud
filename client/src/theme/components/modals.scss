@@ -339,3 +339,9 @@
     max-width: var(--parsec-modal-width-sm);
   }
 }
+
+.update-profile-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-md);
+  }
+}

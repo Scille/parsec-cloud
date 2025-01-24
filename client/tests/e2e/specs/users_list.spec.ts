@@ -132,7 +132,7 @@ for (const revokedUser of [false, true]) {
     const menu = usersPage.locator('#user-context-menu');
     const expectedActions = ['User details', 'View details', 'Copy roles', 'Copy workspace roles to...'];
     if (!revokedUser) {
-      expectedActions.unshift(...['Deletion', 'Revoke this user']);
+      expectedActions.unshift(...['Deletion', 'Revoke this user', 'Profile', 'Change profile']);
     }
     await expect(menu.getByRole('listitem')).toHaveText(expectedActions);
   });
@@ -150,7 +150,7 @@ for (const revokedUser of [false, true]) {
     const menu = usersPage.locator('#user-context-menu');
     const expectedActions = ['User details', 'View details', 'Copy roles', 'Copy workspace roles to...'];
     if (!revokedUser) {
-      expectedActions.unshift(...['Deletion', 'Revoke this user']);
+      expectedActions.unshift(...['Deletion', 'Revoke this user', 'Profile', 'Change profile']);
     }
     await expect(menu.getByRole('listitem')).toHaveText(expectedActions);
   });
@@ -599,7 +599,7 @@ msTest('Reassign workspace role', async ({ usersPage }) => {
   const sourceUser = usersPage.locator('.users-container').locator('#users-page-user-list').locator('.user-list-item').nth(3);
   await sourceUser.hover();
   await sourceUser.locator('.options-button').click();
-  const menuButton = usersPage.locator('.user-context-menu').getByRole('group').nth(2).getByRole('listitem').nth(1);
+  const menuButton = usersPage.locator('.user-context-menu').getByRole('group').nth(3).getByRole('listitem').nth(1);
   await expect(menuButton).toHaveText('Copy workspace roles to...');
   await menuButton.click();
   const modal = usersPage.locator('.role-assignment-modal');
@@ -627,4 +627,62 @@ msTest('Reassign workspace role', async ({ usersPage }) => {
   await expect(newRoles.locator('.workspace-item__role-old')).toHaveText('Not shared');
   await expect(newRoles.locator('.workspace-item__role-new')).toHaveText('Reader');
   await nextButton.click();
+});
+
+msTest('Update profile', async ({ usersPage }) => {
+  const sourceUser = usersPage.locator('.users-container').locator('#users-page-user-list').locator('.user-list-item').nth(3);
+  await sourceUser.hover();
+  await sourceUser.locator('.options-button').click();
+  const menuButton = usersPage.locator('.user-context-menu').getByRole('group').nth(1).getByRole('listitem').nth(1);
+  await expect(menuButton).toHaveText('Change profile');
+  await menuButton.click();
+  const modal = usersPage.locator('.update-profile-modal');
+  const modalContent = modal.locator('.ms-modal-content');
+  await expect(modal).toBeVisible();
+  const nextButton = modal.locator('#next-button');
+  await expect(nextButton).toHaveText('Change');
+  await expect(nextButton).toHaveDisabledAttribute();
+  // cspell:disable-next-line
+  await expect(modalContent.locator('.update-profile-user__item').nth(0)).toHaveText('Cernd');
+  const profileButton = modalContent.locator('#dropdown-popover-button');
+  await expect(profileButton).toHaveText('Choose a profile');
+  await profileButton.click();
+  const profileDropdown = usersPage.locator('.dropdown-popover');
+  await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Member']);
+  await profileDropdown.getByRole('listitem').nth(0).click();
+  await expect(profileButton).toHaveText('Administrator');
+  await expect(nextButton).toBeTrulyEnabled();
+  await nextButton.click();
+  await expect(usersPage).toShowToast('The profile has been changed!', 'Success');
+});
+
+msTest('Update multiple profiles', async ({ usersPage }) => {
+  for (const index of [1, 3, 4, 7]) {
+    const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(index);
+    await item.hover();
+    await item.locator('ion-checkbox').click();
+  }
+  await expect(usersPage.locator('#activate-users-ms-action-bar').locator('#button-update-profile')).toHaveText('Change profiles');
+  await usersPage.locator('#activate-users-ms-action-bar').locator('#button-update-profile').click();
+  const modal = usersPage.locator('.update-profile-modal');
+  const modalContent = modal.locator('.ms-modal-content');
+  await expect(modal).toBeVisible();
+  const nextButton = modal.locator('#next-button');
+  await expect(nextButton).toHaveText('Change');
+  await expect(nextButton).toHaveDisabledAttribute();
+  // cspell:disable-next-line
+  await expect(modalContent.locator('.update-profile-user__item')).toHaveText(['Jaheira', 'Cernd', 'Patches']);
+  // cspell:disable-next-line
+  await expect(modalContent.locator('.update-profile-user__more')).toBeHidden();
+  await expect(modalContent.locator('.warn-outsiders')).toBeVisible();
+  const profileButton = modalContent.locator('#dropdown-popover-button');
+  await expect(profileButton).toHaveText('Choose a profile');
+  await profileButton.click();
+  const profileDropdown = usersPage.locator('.dropdown-popover');
+  await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Member']);
+  await profileDropdown.getByRole('listitem').nth(1).click();
+  await expect(profileButton).toHaveText('Member');
+  await expect(nextButton).toBeTrulyEnabled();
+  await nextButton.click();
+  await expect(usersPage).toShowToast('The profiles have been changed!', 'Success');
 });

@@ -995,6 +995,17 @@
                 "description": "Peut uniquement accéder aux espaces de travail qui lui sont partagés."
             }
         },
+        "updateProfile": {
+            "success": "Le profil a été modifié ! | Les profils ont été modifiés.",
+            "failedOffline": "Impossible de modifier le profil. Veuillez vérifier votre connexion. | Impossible de modifier les profils. Veuillez vérifier votre connexion.",
+            "failedGeneric": "Impossible de modifier le profil. | Impossible de modifier les profils.",
+            "actionUpdate": "Modifier",
+            "actionCancel": "Annuler",
+            "title": "Modifier le profil | Modifier les profils",
+            "additionalUsers": "+1 utilisateur | +{count} users",
+            "affectedUsers": "Utilisateur concerné : | Utilisateurs concernés :",
+            "cannotUpdateOutsiders": "Impossible de modifier le profil des utilisateurs `Externe`."
+        },
         "status": {
             "active": "Actif",
             "revoked": "Révoqué",
@@ -1020,7 +1031,9 @@
             "actionDetails": "Voir les détails",
             "titleAssignRoles": "Copie de rôles",
             "actionAssignRoles": "Copier les rôles des espaces de travail à...",
-            "subtitleAssignRoles": "Vous pouvez copier les rôles de {sourceUser} vers une autre personne. Les rôles des espaces de travail ne seront pas retirés."
+            "subtitleAssignRoles": "Vous pouvez copier les rôles de {sourceUser} vers une autre personne. Les rôles des espaces de travail ne seront pas retirés.",
+            "titleUpdateProfile": "Profil",
+            "actionUpdateProfile": "Modifier le profil | Modifier les profils"
         },
         "greet": {
             "titles": {

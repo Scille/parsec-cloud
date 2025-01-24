@@ -4,7 +4,15 @@ import { libparsec } from '@/plugins/libparsec';
 
 import { needsMocks } from '@/parsec/environment';
 import { getParsecHandle } from '@/parsec/routing';
-import { ClientListUsersError, ClientRevokeUserError, Result, UserID, UserInfo, UserProfile } from '@/parsec/types';
+import {
+  ClientListUsersError,
+  ClientRevokeUserError,
+  ClientUserUpdateProfileError,
+  Result,
+  UserID,
+  UserInfo,
+  UserProfile,
+} from '@/parsec/types';
 import { DateTime } from 'luxon';
 
 function filterUserList(list: Array<UserInfo>, pattern: string): Array<UserInfo> {
@@ -196,4 +204,14 @@ export async function getUserInfo(userId: UserID): Promise<Result<UserInfo, User
     return { ok: false, error: { tag: UserInfoErrorTag.NotFound } };
   }
   return { ok: true, value: userInfo };
+}
+
+export async function updateProfile(userId: UserID, profile: UserProfile): Promise<Result<null, ClientUserUpdateProfileError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && !needsMocks()) {
+    return await libparsec.clientUpdateUserProfile(handle, userId, profile);
+  } else {
+    return { ok: true, value: null };
+  }
 }
