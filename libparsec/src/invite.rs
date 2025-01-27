@@ -12,9 +12,8 @@ pub use libparsec_client::{
     ShamirRecoveryClaimRecoverDeviceError,
 };
 pub use libparsec_protocol::authenticated_cmds::latest::invite_list::InvitationCreatedBy as InviteListInvitationCreatedBy;
-pub use libparsec_protocol::invited_cmds::latest::invite_info::InvitationCreatedBy as InviteInfoInvitationCreatedBy;
 pub use libparsec_protocol::invited_cmds::latest::invite_info::{
-    ShamirRecoveryRecipient, UserOnlineStatus,
+    InvitationCreatedBy as InviteInfoInvitationCreatedBy, ShamirRecoveryRecipient, UserOnlineStatus,
 };
 pub use libparsec_types::prelude::*;
 

@@ -110,7 +110,7 @@ class ShamirRecoveryInvitationInfo(BaseInvitationInfo):
     shamir_recovery_deleted_on: DateTime | None
 
 
-InvitationInfo: TypeAlias = UserInvitationInfo | DeviceInvitationInfo | ShamirRecoveryInvitationInfo
+type InvitationInfo = UserInvitationInfo | DeviceInvitationInfo | ShamirRecoveryInvitationInfo
 
 
 def invitation_info_from_record(record: Record) -> InvitationInfo:
@@ -132,16 +132,10 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
         case unknown:
             assert False, repr(unknown)
 
-    match record["created_by_user_id"]:
-        case None:
-            match record["created_by_service_label"]:
-                case str() as created_by_service_label:
-                    created_by = InvitationCreatedByExternalService(
-                        service_label=created_by_service_label
-                    )
-                case unknown:
-                    assert False, repr(unknown)
-        case str() as created_by_user_id_str:
+    match (record["created_by_user_id"], record["created_by_service_label"]):
+        case (None, str() as created_by_service_label):
+            created_by = InvitationCreatedByExternalService(service_label=created_by_service_label)
+        case (str() as created_by_user_id_str, None):
             match (record["created_by_email"], record["created_by_label"]):
                 case (str() as created_by_email, str() as created_by_label):
                     created_by = InvitationCreatedByUser(
@@ -431,7 +425,7 @@ INNER JOIN user_ ON device.user_ = user_._id
 WHERE
     organization.organization_id = $organization_id
     AND type = 'USER'
-    AND user_.user_id = $user_id
+    AND user_.user_id = $invitation_creator_user_id
     AND user_invitation_claimer_email = $user_invitation_claimer_email
     AND deleted_on IS NULL
 LIMIT 1
@@ -529,9 +523,9 @@ SELECT
     DISTINCT invitation._id AS invitation_internal_id,
     invitation.token,
     invitation.type,
-    user_.user_id AS created_by_user_id,
-    human.email AS created_by_email,
-    human.label AS created_by_label,
+    created_by_user.user_id AS created_by_user_id,
+    created_by_human.email AS created_by_email,
+    created_by_human.label AS created_by_label,
     invitation.created_by_service_label,
     invitation.user_invitation_claimer_email,
     device_invitation_claimer.user_id AS device_invitation_claimer_user_id,
@@ -548,9 +542,9 @@ SELECT
     invitation.deleted_on,
     invitation.deleted_reason
 FROM invitation
-LEFT JOIN device ON invitation.created_by_device = device._id
-LEFT JOIN user_ ON device.user_ = user_._id
-LEFT JOIN human ON human._id = user_.human
+LEFT JOIN device AS created_by_device ON invitation.created_by_device = created_by_device._id
+LEFT JOIN user_ AS created_by_user ON created_by_device.user_ = created_by_user._id
+LEFT JOIN human AS created_by_human ON created_by_human._id = created_by_user.human
 LEFT JOIN user_ AS device_invitation_claimer ON invitation.device_invitation_claimer = device_invitation_claimer._id
 LEFT JOIN human AS device_invitation_claimer_human ON device_invitation_claimer.human = device_invitation_claimer_human._id
 LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
@@ -562,8 +556,8 @@ WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     -- Different invitation types have different filtering rules
     AND (
-        (invitation.type = 'USER' AND user_.user_id = $user_id)
-        OR (invitation.type = 'DEVICE' AND user_.user_id = $user_id)
+        (invitation.type = 'USER' AND created_by_user.user_id = $user_id)
+        OR (invitation.type = 'DEVICE' AND device_invitation_claimer.user_id = $user_id)
         OR (invitation.type = 'SHAMIR_RECOVERY' AND recipient_user_.user_id = $user_id)
     )
 ORDER BY created_on
@@ -576,9 +570,9 @@ SELECT
     invitation._id AS invitation_internal_id,
     invitation.token,
     invitation.type,
-    user_.user_id AS created_by_user_id,
-    human.email AS created_by_email,
-    human.label AS created_by_label,
+    created_by_user.user_id AS created_by_user_id,
+    created_by_human.email AS created_by_email,
+    created_by_human.label AS created_by_label,
     invitation.created_by_service_label,
     invitation.user_invitation_claimer_email,
     device_invitation_claimer.user_id AS device_invitation_claimer_user_id,
@@ -595,9 +589,9 @@ SELECT
     invitation.deleted_on,
     invitation.deleted_reason
 FROM invitation
-LEFT JOIN device ON invitation.created_by_device = device._id
-LEFT JOIN user_ ON device.user_ = user_._id
-LEFT JOIN human ON human._id = user_.human
+LEFT JOIN device AS created_by_device ON invitation.created_by_device = created_by_device._id
+LEFT JOIN user_ AS created_by_user ON created_by_device.user_ = created_by_user._id
+LEFT JOIN human AS created_by_human ON created_by_human._id = created_by_user.human
 LEFT JOIN user_ AS device_invitation_claimer ON invitation.device_invitation_claimer = device_invitation_claimer._id
 LEFT JOIN human AS device_invitation_claimer_human ON device_invitation_claimer.human = device_invitation_claimer_human._id
 LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
@@ -642,9 +636,9 @@ def make_q_info_invitation(
             invitation._id AS invitation_internal_id,
             invitation.token,
             invitation.type,
-            user_.user_id AS created_by_user_id,
-            human.email AS created_by_email,
-            human.label AS created_by_label,
+            created_by_user.user_id AS created_by_user_id,
+            created_by_human.email AS created_by_email,
+            created_by_human.label AS created_by_label,
             invitation.created_by_service_label,
             invitation.user_invitation_claimer_email,
             device_invitation_claimer.user_id AS device_invitation_claimer_user_id,
@@ -662,9 +656,9 @@ def make_q_info_invitation(
             invitation.deleted_reason
         FROM invitation
         INNER JOIN selected_invitation ON invitation._id = selected_invitation.invitation_internal_id
-        LEFT JOIN device ON invitation.created_by_device = device._id
-        LEFT JOIN user_ ON device.user_ = user_._id
-        LEFT JOIN human ON human._id = user_.human
+        LEFT JOIN device AS created_by_device ON invitation.created_by_device = created_by_device._id
+        LEFT JOIN user_ AS created_by_user ON created_by_device.user_ = created_by_user._id
+        LEFT JOIN human AS created_by_human ON created_by_human._id = created_by_user.human
         LEFT JOIN user_ AS device_invitation_claimer ON invitation.device_invitation_claimer = device_invitation_claimer._id
         LEFT JOIN human AS device_invitation_claimer_human ON device_invitation_claimer.human = device_invitation_claimer_human._id
         LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_setup._id
@@ -997,7 +991,7 @@ async def _do_new_invitation(
             # TODO: Update this when implementing https://github.com/Scille/parsec-cloud/issues/9413
             q = _q_retrieve_compatible_user_invitation(
                 organization_id=organization_id.str,
-                user_id=author_user_id,
+                invitation_creator_user_id=author_user_id,
                 user_invitation_claimer_email=user_invitation_claimer_email,
             )
         case InvitationType.DEVICE:
