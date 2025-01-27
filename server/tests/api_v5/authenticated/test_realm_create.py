@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import asyncio
+
 import pytest
 
 from parsec._parsec import (
@@ -240,3 +242,42 @@ async def test_authenticated_realm_create_http_common_errors(
         )
 
     await authenticated_http_common_errors_tester(do)
+
+
+async def test_authenticated_realm_create_concurrency(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+) -> None:
+    now = DateTime.now()
+
+    # Generate 10 certificates
+    certifs = [
+        generate_realm_role_certificate(
+            coolorg,
+            user_id=coolorg.alice.user_id,
+            role=RealmRole.OWNER,
+            realm_id=VlobID.new(),
+            timestamp=now,
+        )
+        for _ in range(10)
+    ]
+
+    # Create 2 requests for each certificate
+    coros = [
+        coolorg.alice.realm_create(
+            realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
+        )
+        for certif in certifs
+        for _ in range(2)
+    ]
+
+    # Run all requests concurrently
+    reps = await asyncio.gather(*coros, return_exceptions=True)
+    for rep in reps:
+        assert isinstance(
+            rep,
+            (
+                authenticated_cmds.latest.realm_create.RepOk,
+                authenticated_cmds.latest.realm_create.RepRealmAlreadyExists,
+            ),
+        )

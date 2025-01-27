@@ -257,7 +257,7 @@ async def db_config(request: pytest.FixtureRequest) -> BaseDatabaseConfig:
         return PostgreSQLDatabaseConfig(
             url=url,
             min_connections=1,
-            max_connections=2,
+            max_connections=10,
         )
 
     elif request.node.get_closest_marker("postgresql"):

@@ -1,0 +1,1 @@
+Fix a race condition producing errors when creating the same workspace twice in parallel.
