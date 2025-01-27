@@ -720,7 +720,7 @@ async def test_authenticated_realm_rotate_key_concurrency(
     per_participant_keys_bundle_access = {
         coolorg.alice.user_id: f"<{coolorg.alice.user_id} keys bundle access>".encode()
     }
-    coros = [
+    coroutines = [
         coolorg.alice.realm_rotate_key(
             realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
             per_participant_keys_bundle_access=per_participant_keys_bundle_access,
@@ -732,7 +732,7 @@ async def test_authenticated_realm_rotate_key_concurrency(
     ]
 
     # Run all the coroutines concurrently
-    reps = await asyncio.gather(*coros)
+    reps = await asyncio.gather(*coroutines)
     for rep in reps:
         assert isinstance(
             rep,

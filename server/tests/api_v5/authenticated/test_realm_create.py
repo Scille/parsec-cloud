@@ -263,7 +263,7 @@ async def test_authenticated_realm_create_concurrency(
     ]
 
     # Create 2 requests for each certificate
-    coros = [
+    coroutines = [
         coolorg.alice.realm_create(
             realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
         )
@@ -272,7 +272,7 @@ async def test_authenticated_realm_create_concurrency(
     ]
 
     # Run all requests concurrently
-    reps = await asyncio.gather(*coros, return_exceptions=True)
+    reps = await asyncio.gather(*coroutines, return_exceptions=True)
     for rep in reps:
         assert isinstance(
             rep,
