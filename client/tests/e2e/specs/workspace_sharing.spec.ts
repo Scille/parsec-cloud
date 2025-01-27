@@ -160,3 +160,13 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
   await searchInput.getByRole('button', { name: 'reset' }).click();
   await expect(content.locator('#suggested-checkbox').nth(0)).toHaveState('unchecked');
 });
+
+msTest('Batch workspace sharing hidden when reader', async ({ connected }) => {
+  await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(2).locator('.not-shared-label').click();
+  const modal = connected.locator('.workspace-sharing-modal');
+  await expect(modal).toBeVisible();
+  const content = modal.locator('.ms-modal-content');
+
+  await expect(content.locator('.modal-head-content').locator('.dropdown-container').locator('#dropdown-popover-button')).toBeHidden();
+  await expect(content.locator('#batch-activate-button')).toBeHidden();
+});
