@@ -142,13 +142,18 @@ onMounted(async () => {
 
 async function onLoginSuccess(_token: AuthenticationToken, info: PersonalInformationResultData): Promise<void> {
   if (
-    (info.billingSystem === BillingSystem.CustomOrder || info.billingSystem === BillingSystem.ExperimentalCandidate) &&
+    (info.billingSystem === BillingSystem.CustomOrder ||
+      info.billingSystem === BillingSystem.ExperimentalCandidate ||
+      info.billingSystem === BillingSystem.None) &&
     !props.bootstrapLink
   ) {
     emits('closeRequested', true);
     props.informationManager.present(
       new Information({
-        message: 'CreateOrganization.errors.customOrderNotAuthorized',
+        message:
+          info.billingSystem === BillingSystem.None
+            ? 'CreateOrganization.errors.notClientAccount'
+            : 'CreateOrganization.errors.customOrderNotAuthorized',
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,

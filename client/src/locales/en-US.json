@@ -277,6 +277,7 @@
             "alreadyExists": "This organization name is not available, please choose another one.",
             "generic": "Failed to create the organization (reason: {reason}).",
             "customOrderNotAuthorized": "Clients with a custom contract are not allowed to directly create organizations. If you need another organization, please make a request from your customer area.",
+            "notClientAccount": "Your account is not a client account.",
             "incompatibleServer": "Your version of Parsec is incompatible with the server. Please update the app or contact an administrator."
         },
         "cancelConfirm": "Cancel organization creation",
