@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
-from typing import Any
 
 from parsec._parsec import (
     DateTime,
@@ -31,47 +30,42 @@ class LockRealmWriteRealmData:
 
 
 _Q_LOCK_REALM_TEMPLATE = """
-WITH my_realm AS (
-    SELECT
-        realm._id,
-        key_index
-    FROM realm
-    WHERE
-        organization = $organization_internal_id
-        AND realm_id = $realm_id
-    LIMIT 1
-),
+SELECT realm._id AS realm_internal_id
+FROM realm
+INNER JOIN realm_topic ON realm._id = realm_topic.realm
+WHERE
+    realm.organization = $organization_internal_id
+    AND realm_id = $realm_id
+{row_lock} OF realm_topic
+"""
 
--- Realm topic lock must occur ASAP
-my_locked_realm_topic AS (
-    SELECT last_timestamp
-    FROM realm_topic
+_q_lock_realm_write = Q(_Q_LOCK_REALM_TEMPLATE.format(row_lock="FOR UPDATE"))
+_q_lock_realm_read = Q(_Q_LOCK_REALM_TEMPLATE.format(row_lock="FOR SHARE"))
+
+
+_q_realm_info_after_lock = Q(
+    """
+WITH my_realm_user_role AS (
+    SELECT role
+    FROM realm_user_role
     WHERE
-        organization = $organization_internal_id
-        AND realm = (SELECT _id FROM my_realm)
+        user_ = $user_internal_id
+        AND realm = $realm_internal_id
+    ORDER BY certified_on DESC
     LIMIT 1
-    -- Read or write lock ?
-    {common_row_lock}
 )
 
 SELECT
-    (SELECT last_timestamp FROM my_locked_realm_topic) AS last_realm_certificate_timestamp,
-    (SELECT _id FROM my_realm) AS realm_internal_id,
-    (SELECT key_index FROM my_realm) AS realm_key_index,
-    (
-        SELECT role
-        FROM realm_user_role
-        WHERE
-            user_ = $user_internal_id
-            AND realm = (SELECT _id FROM my_realm)
-        ORDER BY certified_on DESC
-        LIMIT 1
-    ) AS realm_user_current_role
+    realm_topic.last_timestamp AS last_realm_certificate_timestamp,
+    key_index AS realm_key_index,
+    (SELECT role FROM my_realm_user_role) AS realm_user_current_role
+FROM realm
+INNER JOIN realm_topic ON realm._id = realm_topic.realm
+WHERE
+    realm.organization = $organization_internal_id
+    AND realm._id = $realm_internal_id
 """
-
-
-_q_lock_realm_write = Q(_Q_LOCK_REALM_TEMPLATE.format(common_row_lock="FOR UPDATE"))
-_q_lock_realm_read = Q(_Q_LOCK_REALM_TEMPLATE.format(common_row_lock="FOR SHARE"))
+)
 
 
 async def lock_realm_write(
@@ -80,13 +74,12 @@ async def lock_realm_write(
     user_internal_id: int,
     realm_id: VlobID,
 ) -> LockRealmWriteRealmData | LockRealmWriteRealmBadOutcome:
-    return await _do_query(
+    return await _do_lock_realm(
         conn,
-        _q_lock_realm_write(
-            organization_internal_id=organization_internal_id,
-            user_internal_id=user_internal_id,
-            realm_id=realm_id,
-        ),
+        _q_lock_realm_write,
+        organization_internal_id=organization_internal_id,
+        user_internal_id=user_internal_id,
+        realm_id=realm_id,
     )
 
 
@@ -96,31 +89,41 @@ async def lock_realm_read(
     user_internal_id: int,
     realm_id: VlobID,
 ) -> LockRealmWriteRealmData | LockRealmWriteRealmBadOutcome:
-    return await _do_query(
+    return await _do_lock_realm(
         conn,
-        _q_lock_realm_read(
-            organization_internal_id=organization_internal_id,
-            user_internal_id=user_internal_id,
-            realm_id=realm_id,
-        ),
+        _q_lock_realm_read,
+        organization_internal_id=organization_internal_id,
+        user_internal_id=user_internal_id,
+        realm_id=realm_id,
     )
 
 
-async def _do_query(
-    conn: AsyncpgConnection, args: tuple[Any]
+async def _do_lock_realm(
+    conn: AsyncpgConnection,
+    lock_query: Q,
+    organization_internal_id: int,
+    user_internal_id: int,
+    realm_id: VlobID,
 ) -> LockRealmWriteRealmData | LockRealmWriteRealmBadOutcome:
-    row = await conn.fetchrow(*args)
+    # 0) Lock realm
+
+    realm_internal_id = await conn.fetchval(
+        *lock_query(organization_internal_id=organization_internal_id, realm_id=realm_id)
+    )
+    if realm_internal_id is None:
+        return LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND
+    assert isinstance(realm_internal_id, int)
+
+    row = await conn.fetchrow(
+        *_q_realm_info_after_lock(
+            organization_internal_id=organization_internal_id,
+            user_internal_id=user_internal_id,
+            realm_internal_id=realm_internal_id,
+        )
+    )
     assert row is not None
 
     # 1) Check realm
-
-    match row["realm_internal_id"]:
-        case int() as realm_internal_id:
-            pass
-        case None:
-            return LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
 
     match row["realm_key_index"]:
         case int() as realm_key_index:
