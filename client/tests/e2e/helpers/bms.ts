@@ -100,26 +100,32 @@ async function mockLogin(page: Page, options?: MockRouteOptions): Promise<void> 
 
 interface MockUserOverload {
   billingSystem?: 'STRIPE' | 'CUSTOM_ORDER' | 'NONE' | 'EXPERIMENTAL_CANDIDATE';
+  noClient?: boolean;
 }
 
 async function mockUserRoute(page: Page, overload: MockUserOverload = {}, options?: MockRouteOptions): Promise<void> {
   await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}`, options, async (route) => {
     if (route.request().method() === 'GET') {
+      let client = null;
+      if (!overload.noClient) {
+        client = {
+          firstname: UserData.firstName,
+          lastname: UserData.lastName,
+          id: '1337',
+          job: UserData.job,
+          company: UserData.company,
+          phone: UserData.phone,
+          billing_system: overload.billingSystem ?? 'STRIPE',
+        };
+      }
+
       await route.fulfill({
         status: 200,
         json: {
           id: DEFAULT_USER_INFORMATION.id,
           created_at: '2024-07-15T13:21:32.141317Z',
           email: UserData.email,
-          client: {
-            firstname: UserData.firstName,
-            lastname: UserData.lastName,
-            id: '1337',
-            job: UserData.job,
-            company: UserData.company,
-            phone: UserData.phone,
-            billing_system: overload.billingSystem ?? 'STRIPE',
-          },
+          client: client,
         },
       });
     } else if (route.request().method() === 'PATCH') {

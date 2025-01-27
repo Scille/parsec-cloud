@@ -448,3 +448,17 @@ msTest('Try to create an org with custom order', async ({ home }) => {
     'Error',
   );
 });
+
+msTest('Try to create an org without being a client', async ({ home }) => {
+  const modal = await openCreateOrganizationModal(home);
+
+  await MockBms.mockLogin(home);
+  await MockBms.mockUserRoute(home, { noClient: true });
+
+  const bmsContainer = modal.locator('.saas-login');
+  await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
+  await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+  await bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1).click();
+  await expect(modal).toBeHidden();
+  await expect(home).toShowInformationModal('Your account is not a client account.', 'Error');
+});

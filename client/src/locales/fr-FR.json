@@ -277,6 +277,7 @@
             "alreadyExists": "Ce nom d'organisation n'est pas disponible, veuillez en choisir un autre.",
             "generic": "Impossible de créer l'organisation (raison: {reason}).",
             "customOrderNotAuthorized": "Les clients en contrat sur mesure ne sont pas autorisés à créer une organisation directement. Si vous avez besoin d'une organisation supplémentaire, veuillez remplir une demande depuis votre espace client.",
+            "notClientAccount": "Votre compte n'est pas un compte client.",
             "incompatibleServer": "Votre version de Parsec n'est pas compatible avec le serveur. Veuillez mettre à jour votre application ou contacter un administrateur."
         },
         "cancelConfirm": "Annulation",
