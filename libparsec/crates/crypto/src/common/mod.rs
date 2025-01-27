@@ -72,4 +72,10 @@ impl From<String> for Password {
     }
 }
 
+impl AsRef<str> for Password {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
 impl_key_debug!(Password);
