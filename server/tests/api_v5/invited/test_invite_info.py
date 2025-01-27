@@ -8,8 +8,13 @@ from parsec.components.invite import (
     UserGreetingAdministrator,
     UserOnlineStatus,
 )
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, ShamirOrgRpcClients
-from tests.common.data import bob_becomes_admin
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    ShamirOrgRpcClients,
+    bob_becomes_admin,
+)
 
 
 @pytest.mark.parametrize("user_or_device", ("user", "device"))
@@ -177,7 +182,7 @@ async def test_invited_invite_info_for_user_with_multiple_admins(
         )
     )
 
-    # Alice starts greeting attempt for zack
+    # Alice re-starts greeting attempt for zack
     t3 = DateTime.now()
     rep = await backend.invite.greeter_start_greeting_attempt(
         t3,

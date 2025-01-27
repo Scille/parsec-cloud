@@ -57,7 +57,7 @@ InviteListInvitationCreatedBy: TypeAlias = authenticated_cmds.latest.invite_list
 
 
 @dataclass(slots=True)
-class _InvitationCreatedBy:
+class BaseInvitationCreatedBy:
     def for_invite_info(self) -> InviteInfoInvitationCreatedBy:
         match self:
             case InvitationCreatedByUser(user_id, human_handle):
@@ -86,17 +86,17 @@ class _InvitationCreatedBy:
 
 
 @dataclass(slots=True)
-class InvitationCreatedByUser(_InvitationCreatedBy):
+class InvitationCreatedByUser(BaseInvitationCreatedBy):
     user_id: UserID
     human_handle: HumanHandle
 
 
 @dataclass(slots=True)
-class InvitationCreatedByExternalService(_InvitationCreatedBy):
+class InvitationCreatedByExternalService(BaseInvitationCreatedBy):
     service_label: str
 
 
-InvitationCreatedBy: TypeAlias = InvitationCreatedByUser | InvitationCreatedByExternalService
+type InvitationCreatedBy = InvitationCreatedByUser | InvitationCreatedByExternalService
 
 
 @dataclass(slots=True)

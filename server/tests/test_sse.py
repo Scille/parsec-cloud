@@ -208,12 +208,14 @@ def fork_process_to_run_asgi_server(app: AsgiApp) -> Iterator[tuple[str, int]]:
             "app": app,
             "host": HOST,
             "port": PORT,
+            "proxy_trusted_addresses": None,
         },
     )
 
     proc.start()
     yield (HOST, PORT)
     proc.terminate()
+    proc.join()
 
 
 @pytest.mark.timeout(2)

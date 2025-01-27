@@ -8,7 +8,6 @@ use super::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use libparsec_tests_lite::{hex, p_assert_eq};
-use libparsec_types::{InvitationStatus, InvitationToken};
 
 // Request
 
