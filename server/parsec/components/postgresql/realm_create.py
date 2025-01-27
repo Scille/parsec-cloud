@@ -20,7 +20,6 @@ from parsec.components.postgresql.queries import (
 from parsec.components.postgresql.utils import (
     Q,
     q_device_internal_id,
-    q_realm_internal_id,
     q_user_internal_id,
 )
 from parsec.components.realm import (
@@ -31,25 +30,38 @@ from parsec.components.realm import (
 )
 from parsec.events import EventRealmCertificate
 
+_q_lock_realm_creation = Q(
+    """
+INSERT INTO realm (
+    organization,
+    realm_id,
+    created_on,
+    key_index
+) VALUES (
+    $organization_internal_id,
+    $realm_id,
+    $timestamp,
+    0
+)
+ON CONFLICT (organization, realm_id) DO NOTHING
+RETURNING _id
+"""
+)
+
+_q_get_last_realm_certificate_timestamp = Q(
+    """
+SELECT last_timestamp
+FROM realm_topic
+INNER JOIN realm ON realm._id = realm_topic.realm
+WHERE
+    realm.organization = $organization_internal_id
+    AND realm_id = $realm_id
+"""
+)
+
 _q_create_realm = Q(
     f"""
-WITH new_realm_id AS (
-    INSERT INTO realm (
-        organization,
-        realm_id,
-        created_on,
-        key_index
-    ) VALUES (
-        $organization_internal_id,
-        $realm_id,
-        $timestamp,
-        0
-    )
-    ON CONFLICT (organization, realm_id) DO NOTHING
-    RETURNING _id
-),
-
-new_realm_user_role AS (
+WITH new_realm_user_role AS (
     INSERT INTO realm_user_role (
         realm,
         user_,
@@ -57,44 +69,32 @@ new_realm_user_role AS (
         certificate,
         certified_by,
         certified_on
-    )
-    SELECT
-        _id,
+    ) VALUES (
+        $realm_internal_id,
         { q_user_internal_id(organization="$organization_internal_id", user_id="$user_id") },
         'OWNER',
         $certificate,
         { q_device_internal_id(organization="$organization_internal_id", device_id="$certified_by") },
         $timestamp
-    FROM new_realm_id
+    )
+    RETURNING TRUE AS success
 ),
 
-new_timestamp AS (
+new_realm_topic AS (
     INSERT INTO realm_topic (
         organization,
         realm,
         last_timestamp
-    )
-    SELECT
+    ) VALUES (
         $organization_internal_id,
-        _id,
+        $realm_internal_id,
         $timestamp
-    FROM new_realm_id
-    RETURNING last_timestamp
+    )
+    RETURNING TRUE AS success
 )
 
-SELECT
-    TRUE AS inserted,
-    last_timestamp
-FROM new_timestamp
-
-UNION
-
-SELECT
-    FALSE AS inserted,
-    last_timestamp
-FROM realm_topic
-WHERE realm = { q_realm_internal_id(organization="$organization_internal_id", realm_id="$realm_id") }
-LIMIT 1
+SELECT new_realm_user_role.success AND new_realm_topic.success AS success
+FROM new_realm_user_role, new_realm_topic
 """
 )
 
@@ -152,36 +152,45 @@ async def realm_create(
             strictly_greater_than=db_common.last_common_certificate_timestamp
         )
 
-    # All checks are good, now we do the actual insertion
+    # Lock the realm creation by trying to insert a new row in the realm table
 
-    row = await conn.fetchrow(
-        *_q_create_realm(
+    realm_internal_id = await conn.fetchval(
+        *_q_lock_realm_creation(
             organization_internal_id=db_common.organization_internal_id,
             realm_id=certif.realm_id,
+            timestamp=certif.timestamp,
+        )
+    )
+
+    # The realm already exists
+
+    if realm_internal_id is None:
+        last_realm_certificate_timestamp = await conn.fetchval(
+            *_q_get_last_realm_certificate_timestamp(
+                organization_internal_id=db_common.organization_internal_id,
+                realm_id=certif.realm_id,
+            )
+        )
+        assert isinstance(last_realm_certificate_timestamp, DateTime)
+        return CertificateBasedActionIdempotentOutcome(
+            certificate_timestamp=last_realm_certificate_timestamp
+        )
+
+    # The realm has been created, fill the other realm-related tables
+
+    success = await conn.fetchval(
+        *_q_create_realm(
+            organization_internal_id=db_common.organization_internal_id,
+            realm_internal_id=realm_internal_id,
             timestamp=certif.timestamp,
             user_id=certif.user_id,
             certificate=realm_role_certificate,
             certified_by=certif.author,
         )
     )
-    assert row is not None
+    assert success, success
 
-    match row["inserted"]:
-        case bool() as inserted:
-            pass
-        case unknown:
-            assert False, unknown
-
-    match row["last_timestamp"]:
-        case DateTime() as last_realm_certificate_timestamp:
-            pass
-        case unknown:
-            assert False, unknown
-
-    if not inserted:
-        return CertificateBasedActionIdempotentOutcome(
-            certificate_timestamp=last_realm_certificate_timestamp
-        )
+    # Send the corresponding event
 
     await event_bus.send(
         EventRealmCertificate(
