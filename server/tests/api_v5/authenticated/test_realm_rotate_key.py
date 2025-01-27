@@ -676,3 +676,69 @@ async def test_authenticated_realm_rotate_key_sequester_service_unavailable(
     # Ensure no changes were made
     dump = await backend.vlob.test_dump_vlobs(organization_id=sequestered_org.organization_id)
     assert dump == initial_dump
+
+
+async def test_authenticated_realm_rotate_key_concurrency(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+) -> None:
+    t0 = DateTime.now()
+
+    # Create 10 realms
+    realm_ids = [VlobID.new() for _ in range(10)]
+    for realm_id in realm_ids:
+        certif = RealmRoleCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=t0,
+            realm_id=realm_id,
+            role=RealmRole.OWNER,
+            user_id=coolorg.alice.user_id,
+        )
+        await backend.realm.create(
+            now=t0,
+            organization_id=coolorg.organization_id,
+            author=coolorg.alice.device_id,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
+            realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+        )
+
+    # Create 10 key rotation certificates
+    t1 = DateTime.now()
+    t2 = t1.add(seconds=1)
+    certifs = [
+        wksp1_key_rotation_certificate(
+            coolorg,
+            realm_id=realm_id,
+            key_index=1,
+            timestamp=timestamp,
+        )
+        for realm_id in realm_ids
+        for timestamp in (t1, t2)
+    ]
+
+    # Create 2 requests for each certificate
+    per_participant_keys_bundle_access = {
+        coolorg.alice.user_id: f"<{coolorg.alice.user_id} keys bundle access>".encode()
+    }
+    coros = [
+        coolorg.alice.realm_rotate_key(
+            realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+            per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+            per_sequester_service_keys_bundle_access=None,
+            keys_bundle=b"<keys bundle>",
+        )
+        for certif in certifs
+        for _ in range(2)
+    ]
+
+    # Run all the coroutines concurrently
+    reps = await asyncio.gather(*coros)
+    for rep in reps:
+        assert isinstance(
+            rep,
+            (
+                authenticated_cmds.latest.realm_rotate_key.RepOk,
+                authenticated_cmds.latest.realm_rotate_key.RepBadKeyIndex,
+                authenticated_cmds.latest.realm_rotate_key.RepRequireGreaterTimestamp,
+            ),
+        )
