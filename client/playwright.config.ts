@@ -40,13 +40,11 @@ export default defineConfig({
   testIgnore: [
     '**/device_greet.spec.ts',
     '**/device_join_organization.spec.ts',
-    '**/user_join.spec.ts',
     '**/create_organization*.spec.ts',
     '**/workspace_sharing.spec.ts',
     '**/workspace_history.spec.ts',
     '**/user_list.spec.ts',
     '**/user_details.spec.ts',
-    '**/users_list.spec.ts',
     '**/document_context_menu.spec.ts',
     '**/file_import.spec.ts',
     '**/file_details.spec.ts',

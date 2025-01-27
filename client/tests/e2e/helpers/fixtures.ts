@@ -20,8 +20,8 @@ export const msTest = base.extend<{
   organizationPage: Page;
   myProfilePage: Page;
   userJoinModal: Locator;
-  createOrgModal: Locator;
   userGreetModal: Locator;
+  createOrgModal: Locator;
   deviceGreetModal: Locator;
   workspaceSharingModal: Locator;
   clientArea: Page;
