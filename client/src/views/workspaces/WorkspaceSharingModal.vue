@@ -31,6 +31,7 @@
           <ion-text
             id="batch-activate-button"
             @click="onBatchSharingActivate()"
+            v-show="ownRole === WorkspaceRole.Owner || ownRole === WorkspaceRole.Manager"
             fill="clear"
             class="button-small"
           >
