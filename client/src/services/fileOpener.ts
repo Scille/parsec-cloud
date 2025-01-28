@@ -2,7 +2,7 @@
 
 import { detectFileContentType, FileContentType } from '@/common/fileTypes';
 import { entryStat, EntryStat, entryStatAt, FsPath, getSystemPath, isDesktop, WorkspaceHandle, WorkspaceHistoryEntryStat } from '@/parsec';
-import { navigateTo, Routes } from '@/router';
+import { currentRouteIs, getDocumentPath, navigateTo, Routes } from '@/router';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { DateTime } from 'luxon';
@@ -91,6 +91,10 @@ async function openPath(
   }
   if (isDesktop() && options.skipViewers) {
     await openWithSystem(workspaceHandle, entry, informationManager);
+    return;
+  }
+
+  if (currentRouteIs(Routes.Viewer) && getDocumentPath() === path) {
     return;
   }
 

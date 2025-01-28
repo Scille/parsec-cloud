@@ -70,10 +70,10 @@ import {
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
 import { informationCircle, open } from 'ionicons/icons';
 import { Base64, MsSpinner, MsImage } from 'megashark-lib';
-import { ref, Ref, type Component, inject, onMounted, shallowRef } from 'vue';
+import { ref, Ref, type Component, inject, onMounted, shallowRef, onUnmounted } from 'vue';
 import { ImageViewer, VideoViewer, SpreadsheetViewer, DocumentViewer, AudioViewer, TextViewer, PdfViewer } from '@/views/viewers';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, Routes } from '@/router';
+import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, Routes, watchRoute } from '@/router';
 import { DetectedFileType, FileContentType } from '@/common/fileTypes';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { Env } from '@/services/environment';
@@ -88,8 +88,24 @@ const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
 const atDateTime: Ref<DateTime | null> = ref(null);
 
-onMounted(async () => {
+const cancelRouteWatch = watchRoute(async () => {
+  if (!currentRouteIs(Routes.Viewer)) {
+    return;
+  }
+
+  // Same file, no need to reload
+  if (contentInfo.value && contentInfo.value.path === getDocumentPath()) {
+    return;
+  }
+  await loadFile();
+});
+
+async function loadFile(): Promise<void> {
   loaded.value = false;
+  contentInfo.value = null;
+  detectedFileType.value = null;
+  atDateTime.value = null;
+  viewerComponent.value = null;
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
     window.electronAPI.log('error', 'Failed to retrieve workspace handle');
@@ -196,6 +212,14 @@ onMounted(async () => {
       await closeHistoryFile(workspaceHandle, fd);
     }
   }
+}
+
+onMounted(async () => {
+  await loadFile();
+});
+
+onUnmounted(async () => {
+  cancelRouteWatch();
 });
 
 async function getComponent(fileInfo: DetectedFileType): Promise<Component | undefined> {
