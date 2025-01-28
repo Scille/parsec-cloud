@@ -99,7 +99,11 @@
         "expiredOrganization": "This organization has expired."
     },
     "HomePage": {
+        "sidebar": {
+            "tagline": "Keep control over your data confidentiality"
+        },
         "topbar": {
+            "welcome": "Glad to see you back,",
             "backToList": "Return to organizations",
             "backToLogin": "Return to login",
             "settings": "Settings",
@@ -126,7 +130,7 @@
             "newVersionAvailable": "New update available"
         },
         "organizationList": {
-            "title": "Your organizations",
+            "title": "Access your organizations",
             "sortOrderAsc": "Ascending",
             "sortOrderDesc": "Descending",
             "sortByOrganization": "Organization name",

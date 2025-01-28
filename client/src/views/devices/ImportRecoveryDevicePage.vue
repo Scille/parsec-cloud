@@ -271,7 +271,7 @@ async function onLoginClick(): Promise<void> {
   width: 60vw;
   max-width: var(--parsec-max-forgotten-pwd-width);
   display: flex;
-  margin: auto;
+  margin: 2rem auto;
   flex-direction: column;
   align-items: center;
   gap: 2rem;
@@ -280,7 +280,7 @@ async function onLoginClick(): Promise<void> {
 
 .recovery-header {
   &__title {
-    color: var(--parsec-color-light-secondary-white);
+    color: var(--parsec-color-light-secondary-text);
   }
 }
 

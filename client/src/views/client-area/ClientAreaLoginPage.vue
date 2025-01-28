@@ -66,7 +66,7 @@ function getCurrentSectionClass(): string {
   display: flex;
   max-width: 48rem;
   max-height: 32rem;
-  margin: auto;
+  margin: 2rem auto;
 }
 
 .saas-login-container {

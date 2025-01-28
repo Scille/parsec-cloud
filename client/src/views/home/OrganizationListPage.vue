@@ -3,7 +3,7 @@
 <template>
   <ion-card class="organization">
     <ion-text
-      class="organization-title title-h1"
+      class="organization-title title-h3"
       v-if="deviceList.length > 0"
     >
       {{ $msTranslate('HomePage.organizationList.title') }}
@@ -376,43 +376,44 @@ const filteredDevices = computed(() => {
 .organization {
   background: none;
   height: auto;
-  width: 60vw;
-  max-width: var(--parsec-max-organization-width);
-  margin: auto;
+  width: 100%;
+  max-width: var(--parsec-max-content-width);
   box-shadow: none;
   display: flex;
-  align-items: center;
+  margin: 0;
   flex-direction: column;
   gap: 2rem;
 
   &-title {
-    text-align: center;
     padding: 0;
-    display: flex;
-    justify-content: center;
-    color: var(--parsec-color-light-secondary-white);
+    color: var(--parsec-color-light-secondary-text);
   }
 }
 
 .organization-content {
   display: flex;
-  padding: 2rem 2.5rem 0;
   flex-direction: column;
   gap: 1.5rem;
-  max-width: var(--parsec-max-content-width);
-  background: var(--parsec-color-light-secondary-white);
-  border-radius: var(--parsec-radius-12);
+  padding: 0;
   width: 100%;
+  max-width: var(--parsec-max-content-width);
+  border-radius: var(--parsec-radius-12);
 
   .organization-filter {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-inline: 0.5rem;
+    width: 100%;
+    max-width: 45rem;
 
     #organization-filter-select {
       margin-left: auto;
       margin-right: 1rem;
+    }
+
+    #create-organization-button {
+      --background: var(--parsec-color-light-secondary-text);
+      --background-hover: var(--parsec-color-light-secondary-contrast);
     }
   }
 
@@ -420,6 +421,7 @@ const filteredDevices = computed(() => {
     margin: 0;
     overflow-y: auto;
     --ion-grid-columns: 6;
+    max-width: 34.5rem;
     max-height: 50vh;
     min-height: 45vh;
   }
@@ -437,11 +439,11 @@ const filteredDevices = computed(() => {
   display: flex;
   align-items: center;
   position: absolute;
-  background: var(--parsec-color-light-secondary-white);
   border-top: 1px solid var(--parsec-color-light-secondary-medium);
   width: 100%;
   gap: 0.5rem;
-  padding: 0.5rem 3rem;
+  background: var(--parsec-color-light-secondary-inversed-contrast);
+  padding: 0.5rem 0.5rem 1.5rem;
   color: var(--parsec-color-light-secondary-grey);
   bottom: 0;
   z-index: 100;

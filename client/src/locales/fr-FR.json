@@ -99,7 +99,11 @@
         "expiredOrganization": "Cette organisation a expiré."
     },
     "HomePage": {
+        "sidebar": {
+            "tagline": "Gardez le contrôle sur la confidentialité de vos données"
+        },
         "topbar": {
+            "welcome": "Ravi de vous revoir,",
             "backToList": "Retour aux organisations",
             "backToLogin": "Retour à la connexion",
             "settings": "Paramètres",
@@ -126,7 +130,7 @@
             "newVersionAvailable": "Nouvelle version disponible"
         },
         "organizationList": {
-            "title": "Vos organisations",
+            "title": "Accéder à vos organisations",
             "sortOrderAsc": "Croissant",
             "sortOrderDesc": "Décroissant",
             "sortByOrganization": "Nom de l'organisation",

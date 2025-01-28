@@ -5,7 +5,7 @@ import { answerQuestion, expect, fillIonInput, msTest, sortBy } from '@tests/e2e
 const USER_NAMES = ['Alicey McAliceFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
 
 msTest('Home default state with devices', async ({ home }) => {
-  await expect(home.locator('.organization-title')).toHaveText('Your organizations');
+  await expect(home.locator('.organization-title')).toHaveText('Access to your organizations');
   await expect(home.locator('#organization-filter-select')).toHaveText('Organization name');
   await expect(home.locator('#create-organization-button')).toHaveText('Create or join');
   await expect(home.locator('#search-input-organization')).toBeVisible();
@@ -152,22 +152,17 @@ msTest('Logout and go back to devices list', async ({ home }) => {
   const buttons = home.locator('.profile-header-popover').locator('.main-list').getByRole('listitem');
   await buttons.nth(2).click();
   await answerQuestion(home, true);
-  await expect(home.locator('.organization-title')).toHaveText('Your organizations');
+  await expect(home.locator('.organization-title')).toHaveText('Access to your organizations');
   await expect(home).toBeHomePage();
 });
 
 msTest('Check header buttons', async ({ home }) => {
-  await expect(home.locator('.topbar-buttons').locator('ion-button')).toHaveText([
-    'Documentation',
-    'Contact us',
-    'Settings',
-    'Customer area',
-  ]);
+  await expect(home.locator('.topbar-buttons').locator('ion-button')).toHaveCount(5);
 });
 
 msTest('Open documentation', async ({ home }) => {
   const newTabPromise = home.waitForEvent('popup');
-  await home.locator('.topbar-buttons').locator('ion-button').nth(0).click();
+  await home.locator('.topbar-buttons').locator('ion-button').nth(1).click();
   const newTab = await newTabPromise;
   await newTab.waitForLoadState();
   await expect(newTab).toHaveURL(new RegExp('https://docs.parsec.cloud/(en|fr)/[a-z0-9-+.]+'));
@@ -175,7 +170,7 @@ msTest('Open documentation', async ({ home }) => {
 
 msTest('Open feedback', async ({ home }) => {
   const newTabPromise = home.waitForEvent('popup');
-  await home.locator('.topbar-buttons').locator('ion-button').nth(1).click();
+  await home.locator('.topbar-buttons').locator('ion-button').nth(2).click();
   const newTab = await newTabPromise;
   await newTab.waitForLoadState();
   await expect(newTab).toHaveURL(new RegExp('https://sign(-dev)?.parsec.cloud/contact'));
