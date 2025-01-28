@@ -1,57 +1,66 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use indexed_db_futures::{
-    prelude::IdbTransaction,
-    web_sys::{wasm_bindgen::JsValue, IdbTransactionMode},
-    IdbDatabase, IdbQuerySource,
+    database::Database,
+    prelude::BuildSerde,
+    query_source::QuerySource,
+    transaction::{Transaction, TransactionMode},
+    Build, BuildPrimitive, DeserialiseFromJs, KeyRange, SerialiseToJs,
 };
+use js_sys::wasm_bindgen::JsValue;
+use libparsec_platform_async::stream::TryStreamExt;
 use libparsec_types::anyhow;
 use serde::de::DeserializeOwned;
 
-pub(super) fn read<'a>(conn: &'a IdbDatabase, store: &str) -> anyhow::Result<IdbTransaction<'a>> {
-    conn.transaction_on_one_with_mode(store, IdbTransactionMode::Readonly)
+pub(super) fn read<'a>(conn: &'a Database, store: &str) -> anyhow::Result<Transaction<'a>> {
+    conn.transaction(store)
+        .with_mode(TransactionMode::Readonly)
+        .build()
         .map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
-pub(super) fn write<'a>(conn: &'a IdbDatabase, store: &str) -> anyhow::Result<IdbTransaction<'a>> {
-    conn.transaction_on_one_with_mode(store, IdbTransactionMode::Readwrite)
+pub(super) fn write<'a>(conn: &'a Database, store: &str) -> anyhow::Result<Transaction<'a>> {
+    conn.transaction(store)
+        .with_mode(TransactionMode::Readwrite)
+        .build()
         .map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
-pub(super) async fn commit(tx: IdbTransaction<'_>) -> anyhow::Result<()> {
-    tx.await.into_result().map_err(|e| anyhow::anyhow!("{e:?}"))
+pub(super) async fn commit(tx: Transaction<'_>) -> anyhow::Result<()> {
+    tx.commit().await.map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
-pub(super) async fn get_value<V>(
-    tx: &IdbTransaction<'_>,
+pub(super) async fn get_value<K, I, V>(
+    tx: &Transaction<'_>,
     store: &str,
-    key: JsValue,
+    key: I,
 ) -> anyhow::Result<Option<V>>
 where
     V: DeserializeOwned,
+    I: Into<KeyRange<K>>,
+    KeyRange<K>: SerialiseToJs,
 {
     let store = tx
         .object_store(store)
         .map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
     store
-        .get(&key)
+        .get(key)
+        .serde()
         .map_err(|e| anyhow::anyhow!("{e:?}"))?
         .await
-        .map_err(|e| anyhow::anyhow!("{e:?}"))?
-        .map(|x| serde_wasm_bindgen::from_value(x))
-        .transpose()
         .map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
-pub(super) async fn get_values<V>(
-    tx: &IdbTransaction<'_>,
+pub(super) async fn get_values<Q, V>(
+    tx: &Transaction<'_>,
     store: &str,
     index: &str,
-    key: JsValue,
+    query: Q,
 ) -> anyhow::Result<Vec<V>>
 where
     V: DeserializeOwned,
+    Q: Into<JsValue>,
 {
     let store = tx
         .object_store(store)
@@ -59,20 +68,20 @@ where
 
     let indexed_store = store.index(index).map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
-    let values = indexed_store
-        .get_all_with_key(&key)
+    let get_all = indexed_store.get_all::<V>().with_raw_query(query.into());
+    let values = get_all
+        .serde()
         .map_err(|e| anyhow::anyhow!("{e:?}"))?
         .await
         .map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
     values
         .into_iter()
-        .map(|x| serde_wasm_bindgen::from_value(x))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
-pub(super) async fn get_all<V>(tx: &IdbTransaction<'_>, store: &str) -> anyhow::Result<Vec<V>>
+pub(super) async fn get_all<V>(tx: &Transaction<'_>, store: &str) -> anyhow::Result<Vec<V>>
 where
     V: DeserializeOwned,
 {
@@ -81,20 +90,20 @@ where
         .map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
     let values = store
-        .get_all()
+        .get_all::<V>()
+        .serde()
         .map_err(|e| anyhow::anyhow!("{e:?}"))?
         .await
         .map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
     values
         .into_iter()
-        .map(|x| serde_wasm_bindgen::from_value(x))
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
 pub(super) async fn list<V>(
-    tx: &IdbTransaction<'_>,
+    tx: &Transaction<'_>,
     store: &str,
     offset: u32,
     limit: u32,
@@ -102,28 +111,21 @@ pub(super) async fn list<V>(
 where
     V: DeserializeOwned,
 {
-    use js_sys::Number;
-    use web_sys::IdbKeyRange;
+    use indexed_db_futures::KeyRange;
 
     // Index start at 1
     let start = offset + 1;
     let end = start + limit;
 
-    let range = IdbKeyRange::bound_with_lower_open_and_upper_open(
-        &Number::from(start),
-        &Number::from(end),
-        false,
-        true,
-    )
-    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+    let range = KeyRange::Bound(start, false, end, true);
 
     let store = tx
         .object_store(store)
         .map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
     let Some(cursor) = store
-        .open_cursor_with_range_owned(range)
-        .map_err(|e| anyhow::anyhow!("{e:?}"))?
+        .open_cursor()
+        .with_query::<u32, KeyRange<u32>>(range)
         .await
         .map_err(|e| anyhow::anyhow!("{e:?}"))?
     else {
@@ -131,27 +133,22 @@ where
     };
 
     cursor
-        .into_vec(0)
+        .stream_ser::<V>()
+        .try_collect()
         .await
         .map_err(|e| anyhow::anyhow!("{e:?}"))
-        .and_then(|v: Vec<_>| {
-            v.into_iter()
-                .map(|key_val|
-                    // TODO: Sad that KeyVal does not provide it's internal value without a reference.
-                    // That reference force us to clone the value, which is not optimal.
-                    // Could be improved if https://github.com/Alorel/rust-indexed-db/issues/39 is fixed
-                    serde_wasm_bindgen::from_value(key_val.value().clone())
-                        .map_err(|e| anyhow::anyhow!("{e:?}")))
-                .collect::<anyhow::Result<Vec<V>>>()
-        })
 }
 
-pub(super) async fn count(
-    tx: &IdbTransaction<'_>,
+pub(super) async fn count<I, K>(
+    tx: &Transaction<'_>,
     store: &str,
     index: &str,
-    key: JsValue,
-) -> anyhow::Result<u32> {
+    key: I,
+) -> anyhow::Result<u32>
+where
+    I: Into<KeyRange<K>>,
+    KeyRange<K>: SerialiseToJs,
+{
     let store = tx
         .object_store(store)
         .map_err(|e| anyhow::anyhow!("{e:?}"))?;
@@ -159,13 +156,15 @@ pub(super) async fn count(
     let indexed_store = store.index(index).map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
     indexed_store
-        .count_with_key(&key)
+        .count()
+        .with_query(key)
+        .serde()
         .map_err(|e| anyhow::anyhow!("{e:?}"))?
         .await
         .map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
-pub(super) async fn clear(tx: &IdbTransaction<'_>, store: &str) -> anyhow::Result<()> {
+pub(super) async fn clear(tx: &Transaction<'_>, store: &str) -> anyhow::Result<()> {
     let store = tx
         .object_store(store)
         .map_err(|e| anyhow::anyhow!("{e:?}"))?;
@@ -175,45 +174,56 @@ pub(super) async fn clear(tx: &IdbTransaction<'_>, store: &str) -> anyhow::Resul
     Ok(())
 }
 
-pub(super) async fn insert_with_key(
-    tx: &IdbTransaction<'_>,
+pub(super) async fn insert_with_key<K, V>(
+    tx: &Transaction<'_>,
     store: &str,
-    key: JsValue,
-    value: JsValue,
-) -> anyhow::Result<()> {
+    key: K,
+    value: V,
+) -> anyhow::Result<()>
+where
+    K: SerialiseToJs + DeserialiseFromJs,
+    V: SerialiseToJs,
+{
     let store = tx
         .object_store(store)
         .map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
     store
-        .put_key_val(&key, &value)
-        .map_err(|e| anyhow::anyhow!("{e:?} ({value:?}) is invalid"))?
+        .put(value)
+        .with_key(key)
+        .serde()
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?
         .await
+        .and(Ok(()))
         .map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
-pub(super) async fn insert(
-    tx: &IdbTransaction<'_>,
-    store: &str,
-    value: JsValue,
-) -> anyhow::Result<()> {
+pub(super) async fn insert<V>(tx: &Transaction<'_>, store: &str, value: V) -> anyhow::Result<()>
+where
+    V: SerialiseToJs,
+{
     let store = tx
         .object_store(store)
         .map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
     store
-        .put_val(&value)
-        .map_err(|e| anyhow::anyhow!("{e:?} ({value:?}) is invalid"))?
+        .put(value)
+        .serde()
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?
         .await
         .map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
-pub(super) async fn remove(
-    tx: &IdbTransaction<'_>,
+pub(super) async fn remove<I, K>(
+    tx: &Transaction<'_>,
     store: &str,
     index: &str,
-    key: JsValue,
-) -> anyhow::Result<()> {
+    key: I,
+) -> anyhow::Result<()>
+where
+    I: Into<KeyRange<K>> + std::fmt::Debug,
+    KeyRange<K>: indexed_db_futures::primitive::TryToJs,
+{
     let store = tx
         .object_store(store)
         .map_err(|e| anyhow::anyhow!("{e:?}"))?;
@@ -221,17 +231,20 @@ pub(super) async fn remove(
     let indexed_store = store.index(index).map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
     if let Some(primary_key) = indexed_store
-        .get_key(&key)
-        .map_err(|e| anyhow::anyhow!("{e:?} ({key:?}) is invalid"))?
+        .get_key(key)
+        .with_key_type::<JsValue>()
+        .primitive()
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?
         .await
         .map_err(|e| anyhow::anyhow!("{e:?}"))?
     {
         store
             .delete(&primary_key)
+            .primitive()
             .map_err(|e| anyhow::anyhow!("{e:?}"))?
             .await
             .map_err(|e| anyhow::anyhow!("{e:?}"))
     } else {
-        Err(anyhow::anyhow!("Entry with {key:?} not found"))
+        Err(anyhow::anyhow!("Entry not found"))
     }
 }

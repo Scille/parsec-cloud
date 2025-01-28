@@ -1,13 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-#![allow(unused_variables)]
-
 use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
-use indexed_db_futures::prelude::IdbTransaction;
-use indexed_db_futures::IdbDatabase;
+use indexed_db_futures::{database::Database, transaction::Transaction};
 use libparsec_types::prelude::*;
 
 use crate::certificates::{
@@ -19,12 +16,25 @@ use crate::web::DB_VERSION;
 
 #[derive(Debug)]
 pub(crate) struct PlatformCertificatesStorageForUpdateGuard<'a> {
-    transaction: IdbTransaction<'a>,
+    transaction: Option<Transaction<'a>>,
 }
 
 impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
-    pub async fn commit(self) -> anyhow::Result<()> {
-        super::db::commit(self.transaction).await
+    fn get_transaction(&self) -> &Transaction<'a> {
+        self.transaction
+            .as_ref()
+            .expect("Transaction already committed or dropped")
+    }
+
+    pub async fn commit(mut self) -> anyhow::Result<()> {
+        log::debug!(concat!(
+            stringify!(PlatformCertificatesStorageForUpdateGuard),
+            " Committing transaction"
+        ));
+        let Some(transaction) = self.transaction.take() else {
+            panic!("Transaction already committed or dropped")
+        };
+        super::db::commit(transaction).await
     }
 
     pub async fn get_certificate_encrypted<'b>(
@@ -32,7 +42,8 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         query: GetCertificateQuery<'b>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
-        let certifs = Certificate::get_values(&self.transaction, CertificateFilter(query)).await?;
+        let certifs =
+            Certificate::get_values(self.get_transaction(), CertificateFilter(query)).await?;
 
         let maybe_certif_timestamp = certifs
             .get(0)
@@ -64,7 +75,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         };
 
         // Determine if the result is an actual success or a ExistButTooRecent error
-        if let Some((certif_timestamp, certif)) = maybe_certif_timestamp {
+        if let Some((certif_timestamp, _certif)) = maybe_certif_timestamp {
             let certificate_timestamp = DateTime::from_timestamp_micros(certif_timestamp)
                 .map_err(|err| GetCertificateError::Internal(err.into()))?;
 
@@ -86,7 +97,8 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         offset: Option<u32>,
         limit: Option<u32>,
     ) -> anyhow::Result<Vec<(DateTime, Vec<u8>)>> {
-        let certifs = Certificate::get_values(&self.transaction, CertificateFilter(query)).await?;
+        let certifs =
+            Certificate::get_values(&self.get_transaction(), CertificateFilter(query)).await?;
 
         let mut certifs = if let UpTo::Timestamp(up_to) = up_to {
             certifs
@@ -116,7 +128,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
     }
 
     pub async fn forget_all_certificates(&mut self) -> anyhow::Result<()> {
-        Certificate::clear(&self.transaction).await
+        Certificate::clear(self.get_transaction()).await
     }
 
     pub async fn add_certificate(
@@ -147,7 +159,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
                 filter1,
                 filter2,
             },
-            &self.transaction,
+            self.get_transaction(),
         )
         .await
     }
@@ -157,10 +169,11 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         let mut sequester_last_timestamp = None;
         let mut per_realm_last_timestamps = HashMap::new();
         let mut shamir_recovery_last_timestamp = None;
+        let transaction = self.get_transaction();
 
         for ty in <CommonTopicArcCertificate as StorableCertificateTopic>::TYPES {
             let certifs = Certificate::get_values(
-                &self.transaction,
+                transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
                     certificate_type: ty,
                 }),
@@ -179,7 +192,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
 
         for ty in <SequesterTopicArcCertificate as StorableCertificateTopic>::TYPES {
             let certifs = Certificate::get_values(
-                &self.transaction,
+                transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
                     certificate_type: ty,
                 }),
@@ -198,7 +211,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
 
         for ty in <RealmTopicArcCertificate as StorableCertificateTopic>::TYPES {
             let certifs = Certificate::get_values(
-                &self.transaction,
+                transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
                     certificate_type: ty,
                 }),
@@ -225,7 +238,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
 
         for ty in <ShamirRecoveryTopicArcCertificate as StorableCertificateTopic>::TYPES {
             let certifs = Certificate::get_values(
-                &self.transaction,
+                transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
                     certificate_type: ty,
                 }),
@@ -260,7 +273,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
 
 #[derive(Debug)]
 pub(crate) struct PlatformCertificatesStorage {
-    conn: Arc<IdbDatabase>,
+    conn: Arc<Database>,
 }
 
 // Safety: PlatformCertificatesStorage is read only
@@ -283,8 +296,7 @@ impl PlatformCertificatesStorage {
         #[cfg(not(feature = "test-with-testbed"))]
         let name = format!("{}-certificates", device.device_id.hex());
 
-        let db_req =
-            IdbDatabase::open_u32(&name, DB_VERSION).map_err(|e| anyhow::anyhow!("{e:?}"))?;
+        let db_req = Database::open(&name).with_version(DB_VERSION);
 
         // 2) Initialize the database (if needed)
 
@@ -297,7 +309,8 @@ impl PlatformCertificatesStorage {
     }
 
     pub async fn stop(self) -> anyhow::Result<()> {
-        self.conn.close();
+        // TODO: Should we wrap the connection in an Option to be able to take the value on close?
+        self.conn.as_ref().clone().close();
         Ok(())
     }
 
@@ -305,7 +318,7 @@ impl PlatformCertificatesStorage {
         &mut self,
     ) -> anyhow::Result<PlatformCertificatesStorageForUpdateGuard> {
         Ok(PlatformCertificatesStorageForUpdateGuard {
-            transaction: Certificate::write(&self.conn)?,
+            transaction: Some(Certificate::write(&self.conn)?),
         })
     }
 

@@ -1,7 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use indexed_db_futures::{prelude::*, web_sys::DomException};
-use js_sys::{wasm_bindgen::JsValue, Array, Uint8Array};
+use indexed_db_futures::{
+    database::{Database, VersionChangeEvent},
+    factory::OpenDbRequestBuilder,
+    transaction::Transaction,
+    Build, KeyPath, KeyPathSeq,
+};
+use js_sys::Array;
+use js_sys::{wasm_bindgen::JsValue, Uint8Array};
 use serde::{Deserialize, Serialize};
 
 use libparsec_types::prelude::*;
@@ -27,13 +33,12 @@ impl CertificateFilter<'_> {
         }
     }
 
-    fn to_js_array(&self) -> JsValue {
+    fn to_query(&self) -> Array {
         match &self.0 {
             GetCertificateQuery::NoFilter { certificate_type } => {
                 let array = Array::new_with_length(1);
                 array.set(0, JsValue::from(*certificate_type));
-
-                array.into()
+                array
             }
             GetCertificateQuery::Filter1 {
                 certificate_type,
@@ -41,18 +46,16 @@ impl CertificateFilter<'_> {
             } => {
                 let array = Array::new_with_length(2);
                 array.set(0, JsValue::from(*certificate_type));
-
                 match filter1 {
                     FilterKind::Null => (),
                     FilterKind::Bytes(filter) => {
-                        array.set(1, JsValue::from(Uint8Array::from(filter.as_ref())));
+                        array.set(1, Uint8Array::from(filter.as_ref()).into())
                     }
                     FilterKind::U64(filter) => {
-                        array.set(1, JsValue::from(Uint8Array::from(filter.as_ref())));
+                        array.set(1, Uint8Array::from(filter.as_ref()).into())
                     }
                 }
-
-                array.into()
+                array
             }
             GetCertificateQuery::Filter2 {
                 certificate_type,
@@ -60,18 +63,16 @@ impl CertificateFilter<'_> {
             } => {
                 let array = Array::new_with_length(2);
                 array.set(0, JsValue::from(*certificate_type));
-
                 match filter2 {
                     FilterKind::Null => (),
                     FilterKind::Bytes(filter) => {
-                        array.set(1, JsValue::from(Uint8Array::from(filter.as_ref())));
+                        array.set(1, Uint8Array::from(filter.as_ref()).into())
                     }
                     FilterKind::U64(filter) => {
-                        array.set(1, JsValue::from(Uint8Array::from(filter.as_ref())));
+                        array.set(1, Uint8Array::from(filter.as_ref()).into())
                     }
                 }
-
-                array.into()
+                array
             }
             GetCertificateQuery::BothFilters {
                 certificate_type,
@@ -79,33 +80,29 @@ impl CertificateFilter<'_> {
                 filter2,
             } => {
                 let array = Array::new_with_length(3);
-                array.set(0, JsValue::from(*certificate_type));
-
                 let mut index = 1;
-
+                array.set(0, JsValue::from(*certificate_type));
                 match filter1 {
                     FilterKind::Null => (),
                     FilterKind::Bytes(filter) => {
-                        array.set(index, JsValue::from(Uint8Array::from(filter.as_ref())));
+                        array.set(index, Uint8Array::from(filter.as_ref()).into());
                         index += 1;
                     }
                     FilterKind::U64(filter) => {
-                        array.set(index, JsValue::from(Uint8Array::from(filter.as_ref())));
+                        array.set(index, Uint8Array::from(filter.as_ref()).into());
                         index += 1;
                     }
                 }
-
                 match filter2 {
                     FilterKind::Null => (),
                     FilterKind::Bytes(filter) => {
-                        array.set(index, JsValue::from(Uint8Array::from(filter.as_ref())));
+                        array.set(index, Uint8Array::from(filter.as_ref()).into())
                     }
                     FilterKind::U64(filter) => {
-                        array.set(index, JsValue::from(Uint8Array::from(filter.as_ref())));
+                        array.set(index, Uint8Array::from(filter.as_ref()).into())
                     }
                 }
-
-                array.into()
+                array
             }
             GetCertificateQuery::Filter1EqFilter2WhereFilter1 { .. }
             | GetCertificateQuery::Filter1EqFilter1WhereFilter2 { .. }
@@ -131,47 +128,66 @@ impl Certificate {
     const INDEX_FILTER2: &'static str = "filter2";
     const INDEX_FILTERS: &'static str = "filters";
 
-    fn create(evt: &IdbVersionChangeEvent) -> Result<(), DomException> {
-        if !evt.db().object_store_names().any(|n| n == Self::STORE) {
-            let store = evt.db().create_object_store_with_params(
-                Self::STORE,
-                IdbObjectStoreParameters::default().auto_increment(true),
-            )?;
-            store.create_index(
-                Self::INDEX_CERTIFICATE_TYPE,
-                &IdbKeyPath::str_sequence(&[Self::INDEX_CERTIFICATE_TYPE]),
-            )?;
-            store.create_index(
-                Self::INDEX_FILTER1,
-                &IdbKeyPath::str_sequence(&[Self::INDEX_CERTIFICATE_TYPE, Self::INDEX_FILTER1]),
-            )?;
-            store.create_index(
-                Self::INDEX_FILTER2,
-                &IdbKeyPath::str_sequence(&[Self::INDEX_CERTIFICATE_TYPE, Self::INDEX_FILTER2]),
-            )?;
-            store.create_index(
-                Self::INDEX_FILTERS,
-                &IdbKeyPath::str_sequence(&[
+    fn create(
+        _evt: &VersionChangeEvent,
+        db: &Database,
+    ) -> Result<(), indexed_db_futures::error::Error> {
+        if !db.object_store_names().any(|n| n == Self::STORE) {
+            let store = db
+                .create_object_store(Self::STORE)
+                .with_auto_increment(true)
+                .build()?;
+            store
+                .create_index(
                     Self::INDEX_CERTIFICATE_TYPE,
+                    KeyPath::Sequence(KeyPathSeq::from_slice(&[Self::INDEX_CERTIFICATE_TYPE])),
+                )
+                .build()?;
+            store
+                .create_index(
                     Self::INDEX_FILTER1,
+                    KeyPath::Sequence(KeyPathSeq::from_slice(&[
+                        Self::INDEX_CERTIFICATE_TYPE,
+                        Self::INDEX_FILTER1,
+                    ])),
+                )
+                .build()?;
+            store
+                .create_index(
                     Self::INDEX_FILTER2,
-                ]),
-            )?;
+                    KeyPath::Sequence(KeyPathSeq::from_slice(&[
+                        Self::INDEX_CERTIFICATE_TYPE,
+                        Self::INDEX_FILTER2,
+                    ])),
+                )
+                .build()?;
+            store
+                .create_index(
+                    Self::INDEX_FILTERS,
+                    KeyPath::Sequence(KeyPathSeq::from_slice(&[
+                        Self::INDEX_CERTIFICATE_TYPE,
+                        Self::INDEX_FILTER1,
+                        Self::INDEX_FILTER2,
+                    ])),
+                )
+                .build()?;
         }
 
         Ok(())
     }
 
-    pub(super) fn write(conn: &IdbDatabase) -> anyhow::Result<IdbTransaction> {
+    pub(super) fn write(conn: &Database) -> anyhow::Result<Transaction> {
+        log::debug!("Create write transaction for certificates");
         super::db::write(conn, Self::STORE)
     }
 
-    pub(super) async fn clear(tx: &IdbTransaction<'_>) -> anyhow::Result<()> {
+    pub(super) async fn clear(tx: &Transaction<'_>) -> anyhow::Result<()> {
+        log::debug!("Clear the certificate store");
         super::db::clear(tx, Self::STORE).await
     }
 
     pub(super) async fn get_values(
-        conn: &IdbTransaction<'_>,
+        conn: &Transaction<'_>,
         filter: CertificateFilter<'_>,
     ) -> anyhow::Result<Vec<Self>> {
         match &filter.0 {
@@ -179,7 +195,7 @@ impl Certificate {
             | GetCertificateQuery::Filter1 { .. }
             | GetCertificateQuery::Filter2 { .. }
             | GetCertificateQuery::BothFilters { .. } => {
-                super::db::get_values(conn, Self::STORE, filter.index(), filter.to_js_array()).await
+                super::db::get_values(conn, Self::STORE, filter.index(), filter.to_query()).await
             }
 
             GetCertificateQuery::Filter1EqFilter2WhereFilter1 {
@@ -195,7 +211,7 @@ impl Certificate {
                     conn,
                     Self::STORE,
                     subquery_filter.index(),
-                    subquery_filter.to_js_array(),
+                    subquery_filter.to_query(),
                 )
                 .await?;
                 let sub_query_filter2_result = match sub_query_certifs.get(0) {
@@ -214,7 +230,7 @@ impl Certificate {
                     conn,
                     Self::STORE,
                     main_filter.index(),
-                    main_filter.to_js_array(),
+                    main_filter.to_query(),
                 )
                 .await
             }
@@ -231,7 +247,7 @@ impl Certificate {
                     conn,
                     Self::STORE,
                     subquery_filter.index(),
-                    subquery_filter.to_js_array(),
+                    subquery_filter.to_query(),
                 )
                 .await?;
                 let sub_query_filter1_result = match sub_query_certifs.get(0) {
@@ -250,7 +266,7 @@ impl Certificate {
                     conn,
                     Self::STORE,
                     main_filter.index(),
-                    main_filter.to_js_array(),
+                    main_filter.to_query(),
                 )
                 .await
             }
@@ -267,7 +283,7 @@ impl Certificate {
                     conn,
                     Self::STORE,
                     subquery_filter.index(),
-                    subquery_filter.to_js_array(),
+                    subquery_filter.to_query(),
                 )
                 .await?;
                 let sub_query_filter1_result = match sub_query_certifs.get(0) {
@@ -286,7 +302,7 @@ impl Certificate {
                     conn,
                     Self::STORE,
                     main_filter.index(),
-                    main_filter.to_js_array(),
+                    main_filter.to_query(),
                 )
                 .await
             }
@@ -303,7 +319,7 @@ impl Certificate {
                     conn,
                     Self::STORE,
                     subquery_filter.index(),
-                    subquery_filter.to_js_array(),
+                    subquery_filter.to_query(),
                 )
                 .await?;
                 let sub_query_filter2_result = match sub_query_certifs.get(0) {
@@ -322,16 +338,15 @@ impl Certificate {
                     conn,
                     Self::STORE,
                     main_filter.index(),
-                    main_filter.to_js_array(),
+                    main_filter.to_query(),
                 )
                 .await
             }
         }
     }
 
-    pub(super) async fn insert(&self, tx: &IdbTransaction<'_>) -> anyhow::Result<()> {
-        let value = serde_wasm_bindgen::to_value(self).map_err(|e| anyhow::anyhow!("{e:?}"))?;
-        super::db::insert(tx, Self::STORE, value).await
+    pub(super) async fn insert(&self, tx: &Transaction<'_>) -> anyhow::Result<()> {
+        super::db::insert(tx, Self::STORE, self).await
     }
 }
 
@@ -351,68 +366,70 @@ impl Chunk {
     const INDEX_CHUNK_ID: &'static str = "chunk_id";
     const INDEX_IS_BLOCK: &'static str = "is_block";
 
-    fn create(evt: &IdbVersionChangeEvent) -> Result<(), DomException> {
-        if !evt.db().object_store_names().any(|n| n == Self::STORE) {
-            let store = evt.db().create_object_store_with_params(
-                Self::STORE,
-                IdbObjectStoreParameters::default().auto_increment(true),
-            )?;
-            let index_params = IdbIndexParameters::new();
-            index_params.set_unique(true);
-            store.create_index_with_params(
-                Self::INDEX_CHUNK_ID,
-                &IdbKeyPath::str(Self::INDEX_CHUNK_ID),
-                &index_params,
-            )?;
-            store.create_index(Self::INDEX_IS_BLOCK, &IdbKeyPath::str(Self::INDEX_IS_BLOCK))?;
+    fn create(
+        _evt: &VersionChangeEvent,
+        db: &Database,
+    ) -> Result<(), indexed_db_futures::error::Error> {
+        if !db.object_store_names().any(|n| n == Self::STORE) {
+            let store = db
+                .create_object_store(Self::STORE)
+                .with_auto_increment(true)
+                .build()?;
+            store
+                .create_index(Self::INDEX_CHUNK_ID, KeyPath::One(Self::INDEX_CHUNK_ID))
+                .with_unique(true)
+                .build()?;
+            store
+                .create_index(Self::INDEX_IS_BLOCK, KeyPath::One(Self::INDEX_IS_BLOCK))
+                .build()?;
         }
 
         Ok(())
     }
 
-    pub(super) fn read(conn: &IdbDatabase) -> anyhow::Result<IdbTransaction> {
+    pub(super) fn read(conn: &Database) -> anyhow::Result<Transaction> {
         super::db::read(conn, Self::STORE)
     }
 
-    pub(super) fn write(conn: &IdbDatabase) -> anyhow::Result<IdbTransaction> {
+    pub(super) fn write(conn: &Database) -> anyhow::Result<Transaction> {
         super::db::write(conn, Self::STORE)
     }
 
-    pub(super) async fn count_blocks(tx: &IdbTransaction<'_>) -> anyhow::Result<IndexInt> {
-        super::db::count(tx, Self::STORE, Self::INDEX_IS_BLOCK, 1.into())
+    pub(super) async fn count_blocks(tx: &Transaction<'_>) -> anyhow::Result<IndexInt> {
+        super::db::count(tx, Self::STORE, Self::INDEX_IS_BLOCK, 1_u32)
             .await
             .map(|x| x as IndexInt)
     }
 
     pub(super) async fn get(
-        tx: &IdbTransaction<'_>,
+        tx: &Transaction<'_>,
         chunk_id: &Bytes,
     ) -> anyhow::Result<Option<Self>> {
-        let chunk_id =
-            serde_wasm_bindgen::to_value(&chunk_id).map_err(|e| anyhow::anyhow!("{e:?}"))?;
-        super::db::get_values(tx, Self::STORE, Self::INDEX_CHUNK_ID, chunk_id)
-            .await
-            .map(|x| x.into_iter().nth(0))
+        super::db::get_values(
+            tx,
+            Self::STORE,
+            Self::INDEX_CHUNK_ID,
+            Uint8Array::from(chunk_id.as_ref()),
+        )
+        .await
+        .map(|x| x.into_iter().nth(0))
     }
 
     #[cfg(any(test, feature = "expose-test-methods"))]
-    pub(super) async fn get_chunks(tx: &IdbTransaction<'_>) -> anyhow::Result<Vec<Self>> {
-        super::db::get_values(tx, Self::STORE, Self::INDEX_IS_BLOCK, 0.into()).await
+    pub(super) async fn get_chunks(tx: &Transaction<'_>) -> anyhow::Result<Vec<Self>> {
+        super::db::get_values(tx, Self::STORE, Self::INDEX_IS_BLOCK, 0_u32).await
     }
 
-    pub(super) async fn get_blocks(tx: &IdbTransaction<'_>) -> anyhow::Result<Vec<Self>> {
-        super::db::get_values(tx, Self::STORE, Self::INDEX_IS_BLOCK, 1.into()).await
+    pub(super) async fn get_blocks(tx: &Transaction<'_>) -> anyhow::Result<Vec<Self>> {
+        super::db::get_values(tx, Self::STORE, Self::INDEX_IS_BLOCK, 1_u32).await
     }
 
-    pub(super) async fn insert(&self, tx: &IdbTransaction<'_>) -> anyhow::Result<()> {
-        let value = serde_wasm_bindgen::to_value(self).map_err(|e| anyhow::anyhow!("{e:?}"))?;
-        super::db::insert(tx, Self::STORE, value).await
+    pub(super) async fn insert(&self, tx: &Transaction<'_>) -> anyhow::Result<()> {
+        super::db::insert(tx, Self::STORE, self).await
     }
 
-    pub(super) async fn remove(tx: &IdbTransaction<'_>, chunk_id: &Bytes) -> anyhow::Result<()> {
-        let chunk_id =
-            serde_wasm_bindgen::to_value(chunk_id).map_err(|e| anyhow::anyhow!("{e:?}"))?;
-        super::db::remove(tx, Self::STORE, Self::INDEX_CHUNK_ID, chunk_id).await
+    pub(super) async fn remove(tx: &Transaction<'_>, chunk_id: &Bytes) -> anyhow::Result<()> {
+        super::db::remove(tx, Self::STORE, Self::INDEX_CHUNK_ID, chunk_id.as_ref()).await
     }
 }
 
@@ -425,35 +442,33 @@ pub(super) struct PreventSyncPattern {
 impl PreventSyncPattern {
     const STORE: &'static str = "prevent_sync_pattern";
 
-    fn create(evt: &IdbVersionChangeEvent) -> Result<(), DomException> {
-        if !evt.db().object_store_names().any(|n| n == Self::STORE) {
-            evt.db().create_object_store_with_params(
-                Self::STORE,
-                &IdbObjectStoreParameters::default(),
-            )?;
+    fn create(
+        _evt: &VersionChangeEvent,
+        db: &Database,
+    ) -> Result<(), indexed_db_futures::error::Error> {
+        if !db.object_store_names().any(|n| n == Self::STORE) {
+            db.create_object_store(Self::STORE).build()?;
         }
 
         Ok(())
     }
 
-    pub(super) fn read(conn: &IdbDatabase) -> anyhow::Result<IdbTransaction> {
+    pub(super) fn read(conn: &Database) -> anyhow::Result<Transaction> {
         super::db::read(conn, Self::STORE)
     }
 
-    pub(super) fn write(conn: &IdbDatabase) -> anyhow::Result<IdbTransaction> {
+    pub(super) fn write(conn: &Database) -> anyhow::Result<Transaction> {
         super::db::write(conn, Self::STORE)
     }
 
     /// Retrieve the prevent sync pattern with `id = 0` from the database.
-    pub(super) async fn get(tx: &IdbTransaction<'_>) -> anyhow::Result<Option<Self>> {
-        super::db::get_value(&tx, Self::STORE, 0.into()).await
+    pub(super) async fn get(tx: &Transaction<'_>) -> anyhow::Result<Option<Self>> {
+        super::db::get_value(&tx, Self::STORE, 0_u32).await
     }
 
     /// Insert the current sync pattern into the database.
-    pub(super) async fn insert(&self, tx: &IdbTransaction<'_>) -> anyhow::Result<()> {
-        let value = serde_wasm_bindgen::to_value(self).map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-        super::db::insert_with_key(&tx, Self::STORE, 0.into(), value).await
+    pub(super) async fn insert(&self, tx: &Transaction<'_>) -> anyhow::Result<()> {
+        super::db::insert_with_key(&tx, Self::STORE, 0_u32, self).await
     }
 }
 
@@ -465,32 +480,33 @@ pub(super) struct RealmCheckpoint {
 impl RealmCheckpoint {
     const STORE: &'static str = "realm_checkpoint";
 
-    fn create(evt: &IdbVersionChangeEvent) -> Result<(), DomException> {
-        if !evt.db().object_store_names().any(|n| n == Self::STORE) {
-            evt.db().create_object_store_with_params(
-                Self::STORE,
-                IdbObjectStoreParameters::default().auto_increment(true),
-            )?;
+    fn create(
+        _evt: &VersionChangeEvent,
+        db: &Database,
+    ) -> Result<(), indexed_db_futures::error::Error> {
+        if !db.object_store_names().any(|n| n == Self::STORE) {
+            db.create_object_store(Self::STORE)
+                .with_auto_increment(true)
+                .build()?;
         }
 
         Ok(())
     }
 
-    pub(super) fn read(conn: &IdbDatabase) -> anyhow::Result<IdbTransaction> {
+    pub(super) fn read(conn: &Database) -> anyhow::Result<Transaction> {
         super::db::read(conn, Self::STORE)
     }
 
-    pub(super) fn write(conn: &IdbDatabase) -> anyhow::Result<IdbTransaction> {
+    pub(super) fn write(conn: &Database) -> anyhow::Result<Transaction> {
         super::db::write(conn, Self::STORE)
     }
 
-    pub(super) async fn get(tx: &IdbTransaction<'_>) -> anyhow::Result<Option<Self>> {
-        super::db::get_value(&tx, Self::STORE, 0.into()).await
+    pub(super) async fn get(tx: &Transaction<'_>) -> anyhow::Result<Option<Self>> {
+        super::db::get_value(&tx, Self::STORE, 0_u32).await
     }
 
-    pub(super) async fn insert(&self, tx: &IdbTransaction<'_>) -> anyhow::Result<()> {
-        let value = serde_wasm_bindgen::to_value(self).map_err(|e| anyhow::anyhow!("{e:?}"))?;
-        super::db::insert_with_key(&tx, Self::STORE, 0.into(), value).await
+    pub(super) async fn insert(&self, tx: &Transaction<'_>) -> anyhow::Result<()> {
+        super::db::insert_with_key(&tx, Self::STORE, 0_u32, self).await
     }
 }
 
@@ -502,12 +518,14 @@ pub(super) struct Remanence {
 impl Remanence {
     const STORE: &'static str = "remanence";
 
-    fn create(evt: &IdbVersionChangeEvent) -> Result<(), DomException> {
-        if !evt.db().object_store_names().any(|n| n == Self::STORE) {
-            evt.db().create_object_store_with_params(
-                Self::STORE,
-                IdbObjectStoreParameters::default().auto_increment(true),
-            )?;
+    fn create(
+        _evt: &VersionChangeEvent,
+        db: &Database,
+    ) -> Result<(), indexed_db_futures::error::Error> {
+        if !db.object_store_names().any(|n| n == Self::STORE) {
+            db.create_object_store(Self::STORE)
+                .with_auto_increment(true)
+                .build()?;
         }
 
         Ok(())
@@ -528,59 +546,58 @@ impl Vlob {
     const INDEX_VLOB_ID: &'static str = "vlob_id";
     const INDEX_NEED_SYNC: &'static str = "need_sync";
 
-    fn create(evt: &IdbVersionChangeEvent) -> Result<(), DomException> {
-        if !evt.db().object_store_names().any(|n| n == Self::STORE) {
-            let store = evt.db().create_object_store_with_params(
-                Self::STORE,
-                IdbObjectStoreParameters::default().auto_increment(true),
-            )?;
-            let index_params = IdbIndexParameters::new();
-            index_params.set_unique(true);
-            store.create_index_with_params(
-                Self::INDEX_VLOB_ID,
-                &IdbKeyPath::str(Self::INDEX_VLOB_ID),
-                &index_params,
-            )?;
-            store.create_index(
-                Self::INDEX_NEED_SYNC,
-                &IdbKeyPath::str(Self::INDEX_NEED_SYNC),
-            )?;
+    fn create(
+        _evt: &VersionChangeEvent,
+        db: &Database,
+    ) -> Result<(), indexed_db_futures::error::Error> {
+        if !db.object_store_names().any(|n| n == Self::STORE) {
+            let store = db
+                .create_object_store(Self::STORE)
+                .with_auto_increment(true)
+                .build()?;
+            store
+                .create_index(Self::INDEX_VLOB_ID, KeyPath::One(Self::INDEX_VLOB_ID))
+                .with_unique(true)
+                .build()?;
+            store
+                .create_index(Self::INDEX_NEED_SYNC, KeyPath::One(Self::INDEX_NEED_SYNC))
+                .build()?;
         }
 
         Ok(())
     }
 
-    pub(super) fn read(conn: &IdbDatabase) -> anyhow::Result<IdbTransaction> {
+    pub(super) fn read(conn: &Database) -> anyhow::Result<Transaction> {
         super::db::read(conn, Self::STORE)
     }
 
-    pub(super) fn write(conn: &IdbDatabase) -> anyhow::Result<IdbTransaction> {
+    pub(super) fn write(conn: &Database) -> anyhow::Result<Transaction> {
         super::db::write(conn, Self::STORE)
     }
 
-    pub(super) async fn get(
-        tx: &IdbTransaction<'_>,
-        vlob_id: &Bytes,
-    ) -> anyhow::Result<Option<Self>> {
-        let vlob_id =
-            serde_wasm_bindgen::to_value(&vlob_id).map_err(|e| anyhow::anyhow!("{e:?}"))?;
-        super::db::get_values(&tx, Self::STORE, Self::INDEX_VLOB_ID, vlob_id)
-            .await
-            .map(|x| x.into_iter().nth(0))
+    pub(super) async fn get(tx: &Transaction<'_>, vlob_id: &Bytes) -> anyhow::Result<Option<Self>> {
+        super::db::get_values(
+            &tx,
+            Self::STORE,
+            Self::INDEX_VLOB_ID,
+            Uint8Array::from(vlob_id.as_ref()),
+        )
+        .await
+        .map(|x| x.into_iter().nth(0))
     }
 
-    pub(super) async fn get_need_sync(conn: &IdbDatabase) -> anyhow::Result<Vec<Self>> {
+    pub(super) async fn get_need_sync(conn: &Database) -> anyhow::Result<Vec<Self>> {
         let tx = Self::read(conn)?;
-        super::db::get_values(&tx, Self::STORE, Self::INDEX_NEED_SYNC, true.into()).await
+        super::db::get_values(&tx, Self::STORE, Self::INDEX_NEED_SYNC, true).await
     }
 
-    pub(super) async fn get_all(conn: &IdbDatabase) -> anyhow::Result<Vec<Self>> {
+    pub(super) async fn get_all(conn: &Database) -> anyhow::Result<Vec<Self>> {
         let tx = Self::read(conn)?;
         super::db::get_all(&tx, Self::STORE).await
     }
 
     pub(super) async fn list(
-        conn: &IdbDatabase,
+        conn: &Database,
         offset: u32,
         limit: u32,
     ) -> anyhow::Result<Vec<Self>> {
@@ -588,31 +605,28 @@ impl Vlob {
         super::db::list(&tx, Self::STORE, offset, limit).await
     }
 
-    pub(super) async fn remove(tx: &IdbTransaction<'_>, vlob_id: &Bytes) -> anyhow::Result<()> {
-        let vlob_id =
-            serde_wasm_bindgen::to_value(vlob_id).map_err(|e| anyhow::anyhow!("{e:?}"))?;
-        super::db::remove(&tx, Self::STORE, Self::INDEX_VLOB_ID, vlob_id).await
+    pub(super) async fn remove(tx: &Transaction<'_>, vlob_id: &Bytes) -> anyhow::Result<()> {
+        super::db::remove(&tx, Self::STORE, Self::INDEX_VLOB_ID, vlob_id.as_ref()).await
     }
 
-    pub(super) async fn insert(&self, tx: &IdbTransaction<'_>) -> anyhow::Result<()> {
-        let value = serde_wasm_bindgen::to_value(self).map_err(|e| anyhow::anyhow!("{e:?}"))?;
-        super::db::insert(&tx, Self::STORE, value).await
+    pub(super) async fn insert(&self, tx: &Transaction<'_>) -> anyhow::Result<()> {
+        super::db::insert(&tx, Self::STORE, self).await
     }
 }
 
 pub(super) async fn initialize_model_if_needed(
-    mut db_req: OpenDbRequest,
-) -> anyhow::Result<IdbDatabase> {
-    db_req.set_on_upgrade_needed(Some(|evt: &IdbVersionChangeEvent| {
-        Vlob::create(evt)?;
-        RealmCheckpoint::create(evt)?;
-        PreventSyncPattern::create(evt)?;
-        Chunk::create(evt)?;
-        Remanence::create(evt)?;
-        Certificate::create(evt)?;
+    db_req: OpenDbRequestBuilder<&'_ String, u32>,
+) -> anyhow::Result<Database> {
+    let db_req = db_req.with_on_upgrade_needed(|evt: VersionChangeEvent, db: Database| {
+        Vlob::create(&evt, &db)?;
+        RealmCheckpoint::create(&evt, &db)?;
+        PreventSyncPattern::create(&evt, &db)?;
+        Chunk::create(&evt, &db)?;
+        Remanence::create(&evt, &db)?;
+        Certificate::create(&evt, &db)?;
 
         Ok(())
-    }));
+    });
 
     let conn = db_req.await.map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
