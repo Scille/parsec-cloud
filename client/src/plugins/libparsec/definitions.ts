@@ -310,6 +310,14 @@ export interface UserClaimInProgress3Info {
     handle: Handle
 }
 
+export interface UserClaimInitialInfo {
+    handle: Handle
+    greeterUserId: UserID
+    greeterHumanHandle: HumanHandle
+    onlineStatus: UserOnlineStatus
+    lastGreetingAttemptJoinedOn: DateTime | null
+}
+
 export interface UserGreetInProgress1Info {
     handle: Handle
     greeterSas: SASCode
@@ -411,10 +419,9 @@ export interface AnyClaimRetrievedInfoShamirRecovery {
 }
 export interface AnyClaimRetrievedInfoUser {
     tag: AnyClaimRetrievedInfoTag.User
-    handle: Handle
     claimerEmail: string
-    greeterUserId: UserID
-    greeterHumanHandle: HumanHandle
+    createdBy: InviteInfoInvitationCreatedBy
+    userClaimInitialInfos: Array<UserClaimInitialInfo>
 }
 export type AnyClaimRetrievedInfo =
   | AnyClaimRetrievedInfoDevice

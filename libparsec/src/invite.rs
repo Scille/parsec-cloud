@@ -235,15 +235,32 @@ pub async fn claimer_retrieve_info(
 
     match ctx {
         libparsec_client::AnyClaimRetrievedInfoCtx::User(ctx) => {
-            let claimer_email = ctx.claimer_email.clone();
-            let greeter_user_id = ctx.greeter_user_id().to_owned();
-            let greeter_human_handle = ctx.greeter_human_handle().to_owned();
-            let handle = register_handle(HandleItem::UserClaimInitial(ctx));
+            let claimer_email = ctx.claimer_email().to_string();
+            let created_by = ctx.created_by().to_owned();
+            let user_claim_initial_ctx = ctx.list_user_claim_initial_ctxs();
+
+            let user_claim_initial_infos = user_claim_initial_ctx
+                .into_iter()
+                .map(|ctx| {
+                    let greeter_user_id = ctx.greeter_user_id().to_owned();
+                    let greeter_human_handle = ctx.greeter_human_handle().to_owned();
+                    let online_status = ctx.online_status();
+                    let last_greeting_attempt_joined_on = ctx.last_greeting_attempt_joined_on();
+                    let handle = register_handle(HandleItem::UserClaimInitial(ctx));
+                    UserClaimInitialInfo {
+                        handle,
+                        greeter_user_id,
+                        greeter_human_handle,
+                        online_status,
+                        last_greeting_attempt_joined_on,
+                    }
+                })
+                .collect();
+
             Ok(AnyClaimRetrievedInfo::User {
-                handle,
                 claimer_email,
-                greeter_user_id,
-                greeter_human_handle,
+                created_by,
+                user_claim_initial_infos,
             })
         }
         libparsec_client::AnyClaimRetrievedInfoCtx::Device(ctx) => {
@@ -382,10 +399,9 @@ pub async fn claimer_greeter_abort_operation(
 
 pub enum AnyClaimRetrievedInfo {
     User {
-        handle: Handle,
         claimer_email: String,
-        greeter_user_id: UserID,
-        greeter_human_handle: HumanHandle,
+        created_by: InviteInfoInvitationCreatedBy,
+        user_claim_initial_infos: Vec<UserClaimInitialInfo>,
     },
     Device {
         handle: Handle,
@@ -402,6 +418,14 @@ pub enum AnyClaimRetrievedInfo {
         threshold: NonZeroU8,
         is_recoverable: bool,
     },
+}
+
+pub struct UserClaimInitialInfo {
+    pub handle: Handle,
+    pub greeter_user_id: UserID,
+    pub greeter_human_handle: HumanHandle,
+    pub online_status: UserOnlineStatus,
+    pub last_greeting_attempt_joined_on: Option<DateTime>,
 }
 
 pub struct ShamirRecoveryClaimInitialInfo {

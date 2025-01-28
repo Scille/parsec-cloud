@@ -2912,6 +2912,128 @@ fn struct_user_claim_in_progress3_info_rs_to_js(
     Ok(js_obj)
 }
 
+// UserClaimInitialInfo
+
+#[allow(dead_code)]
+fn struct_user_claim_initial_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::UserClaimInitialInfo, JsValue> {
+    let handle = {
+        let js_val = Reflect::get(&obj, &"handle".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let greeter_user_id = {
+        let js_val = Reflect::get(&obj, &"greeterUserId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                    libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid UserID"))?
+    };
+    let greeter_human_handle = {
+        let js_val = Reflect::get(&obj, &"greeterHumanHandle".into())?;
+        struct_human_handle_js_to_rs(js_val)?
+    };
+    let online_status = {
+        let js_val = Reflect::get(&obj, &"onlineStatus".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_user_online_status_js_to_rs(raw_string.as_str())
+        }?
+    };
+    let last_greeting_attempt_joined_on = {
+        let js_val = Reflect::get(&obj, &"lastGreetingAttemptJoinedOn".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some({
+                let v = js_val.dyn_into::<Number>()?.value_of();
+                let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                    libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                        .map_err(|_| "Out-of-bound datetime")
+                };
+                let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                v
+            })
+        }
+    };
+    Ok(libparsec::UserClaimInitialInfo {
+        handle,
+        greeter_user_id,
+        greeter_human_handle,
+        online_status,
+        last_greeting_attempt_joined_on,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_user_claim_initial_info_rs_to_js(
+    rs_obj: libparsec::UserClaimInitialInfo,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_handle = JsValue::from(rs_obj.handle);
+    Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
+    let js_greeter_user_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.greeter_user_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
+    let js_greeter_human_handle = struct_human_handle_rs_to_js(rs_obj.greeter_human_handle)?;
+    Reflect::set(
+        &js_obj,
+        &"greeterHumanHandle".into(),
+        &js_greeter_human_handle,
+    )?;
+    let js_online_status =
+        JsValue::from_str(enum_user_online_status_rs_to_js(rs_obj.online_status));
+    Reflect::set(&js_obj, &"onlineStatus".into(), &js_online_status)?;
+    let js_last_greeting_attempt_joined_on = match rs_obj.last_greeting_attempt_joined_on {
+        Some(val) => {
+            let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+            };
+            let v = match custom_to_rs_f64(val) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            };
+            JsValue::from(v)
+        }
+        None => JsValue::NULL,
+    };
+    Reflect::set(
+        &js_obj,
+        &"lastGreetingAttemptJoinedOn".into(),
+        &js_last_greeting_attempt_joined_on,
+    )?;
+    Ok(js_obj)
+}
+
 // UserGreetInProgress1Info
 
 #[allow(dead_code)]
@@ -3883,20 +4005,6 @@ fn variant_any_claim_retrieved_info_js_to_rs(
             })
         }
         "AnyClaimRetrievedInfoUser" => {
-            let handle = {
-                let js_val = Reflect::get(&obj, &"handle".into())?;
-                {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
-                    }
-                    let v = v as u32;
-                    v
-                }
-            };
             let claimer_email = {
                 let js_val = Reflect::get(&obj, &"claimerEmail".into())?;
                 js_val
@@ -3905,30 +4013,28 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))?
             };
-            let greeter_user_id = {
-                let js_val = Reflect::get(&obj, &"greeterUserId".into())?;
-                js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
-                    .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
-                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
-                        };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-                    })
-                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+            let created_by = {
+                let js_val = Reflect::get(&obj, &"createdBy".into())?;
+                variant_invite_info_invitation_created_by_js_to_rs(js_val)?
             };
-            let greeter_human_handle = {
-                let js_val = Reflect::get(&obj, &"greeterHumanHandle".into())?;
-                struct_human_handle_js_to_rs(js_val)?
+            let user_claim_initial_infos = {
+                let js_val = Reflect::get(&obj, &"userClaimInitialInfos".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Array>()
+                        .map_err(|_| TypeError::new("Not an array"))?;
+                    let mut converted = Vec::with_capacity(js_val.length() as usize);
+                    for x in js_val.iter() {
+                        let x_converted = struct_user_claim_initial_info_js_to_rs(x)?;
+                        converted.push(x_converted);
+                    }
+                    converted
+                }
             };
             Ok(libparsec::AnyClaimRetrievedInfo::User {
-                handle,
                 claimer_email,
-                greeter_user_id,
-                greeter_human_handle,
+                created_by,
+                user_claim_initial_infos,
             })
         }
         _ => Err(JsValue::from(TypeError::new(
@@ -4053,32 +4159,29 @@ fn variant_any_claim_retrieved_info_rs_to_js(
             Reflect::set(&js_obj, &"isRecoverable".into(), &js_is_recoverable)?;
         }
         libparsec::AnyClaimRetrievedInfo::User {
-            handle,
             claimer_email,
-            greeter_user_id,
-            greeter_human_handle,
+            created_by,
+            user_claim_initial_infos,
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"AnyClaimRetrievedInfoUser".into())?;
-            let js_handle = JsValue::from(handle);
-            Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
             let js_claimer_email = claimer_email.into();
             Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
-            let js_greeter_user_id = JsValue::from_str({
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(greeter_user_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            let js_created_by = variant_invite_info_invitation_created_by_rs_to_js(created_by)?;
+            Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
+            let js_user_claim_initial_infos = {
+                // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                let js_array = Array::new_with_length(user_claim_initial_infos.len() as u32);
+                for (i, elem) in user_claim_initial_infos.into_iter().enumerate() {
+                    let js_elem = struct_user_claim_initial_info_rs_to_js(elem)?;
+                    js_array.set(i as u32, js_elem);
                 }
-                .as_ref()
-            });
-            Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
-            let js_greeter_human_handle = struct_human_handle_rs_to_js(greeter_human_handle)?;
+                js_array.into()
+            };
             Reflect::set(
                 &js_obj,
-                &"greeterHumanHandle".into(),
-                &js_greeter_human_handle,
+                &"userClaimInitialInfos".into(),
+                &js_user_claim_initial_infos,
             )?;
         }
     }

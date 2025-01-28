@@ -315,6 +315,15 @@ export interface UserClaimInProgress3Info {
 }
 
 
+export interface UserClaimInitialInfo {
+    handle: number
+    greeterUserId: string
+    greeterHumanHandle: HumanHandle
+    onlineStatus: UserOnlineStatus
+    lastGreetingAttemptJoinedOn: number | null
+}
+
+
 export interface UserGreetInProgress1Info {
     handle: number
     greeterSas: string
@@ -415,10 +424,9 @@ export interface AnyClaimRetrievedInfoShamirRecovery {
 }
 export interface AnyClaimRetrievedInfoUser {
     tag: "User"
-    handle: number
     claimer_email: string
-    greeter_user_id: string
-    greeter_human_handle: HumanHandle
+    created_by: InviteInfoInvitationCreatedBy
+    user_claim_initial_infos: Array<UserClaimInitialInfo>
 }
 export type AnyClaimRetrievedInfo =
   | AnyClaimRetrievedInfoDevice

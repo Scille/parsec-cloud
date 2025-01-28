@@ -65,6 +65,12 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 
     match ctx {
         AnyClaimRetrievedInfoCtx::User(ctx) => {
+            // TODO: Implement proper administrator pick
+            let ctx = ctx
+                .list_user_claim_initial_ctxs()
+                .into_iter()
+                .next()
+                .expect("At least one admin");
             let ctx = step1_user(ctx).await?;
             let ctx = step2_user(ctx).await?;
             let ctx = step3_user(ctx).await?;

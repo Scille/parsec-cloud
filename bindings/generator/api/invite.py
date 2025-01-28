@@ -181,12 +181,19 @@ class InviteInfoInvitationCreatedBy(Variant):
         service_label: str
 
 
+class UserClaimInitialInfo(Structure):
+    handle: Handle
+    greeter_user_id: UserID
+    greeter_human_handle: HumanHandle
+    online_status: UserOnlineStatus
+    last_greeting_attempt_joined_on: Optional[DateTime]
+
+
 class AnyClaimRetrievedInfo(Variant):
     class User:
-        handle: Handle
         claimer_email: str
-        greeter_user_id: UserID
-        greeter_human_handle: HumanHandle
+        created_by: InviteInfoInvitationCreatedBy
+        user_claim_initial_infos: list[UserClaimInitialInfo]
 
     class Device:
         handle: Handle
