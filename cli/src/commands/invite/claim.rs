@@ -7,17 +7,15 @@ use libparsec::{
     internal::{
         claimer_retrieve_info, AnyClaimRetrievedInfoCtx, DeviceClaimFinalizeCtx,
         DeviceClaimInProgress1Ctx, DeviceClaimInProgress2Ctx, DeviceClaimInProgress3Ctx,
-        DeviceClaimInitialCtx, UserClaimFinalizeCtx, UserClaimInProgress1Ctx,
-        UserClaimInProgress2Ctx, UserClaimInProgress3Ctx, UserClaimInitialCtx,
+        DeviceClaimInitialCtx, ShamirRecoveryClaimInProgress1Ctx,
+        ShamirRecoveryClaimInProgress2Ctx, ShamirRecoveryClaimInProgress3Ctx,
+        ShamirRecoveryClaimInitialCtx, ShamirRecoveryClaimMaybeFinalizeCtx,
+        ShamirRecoveryClaimMaybeRecoverDeviceCtx, ShamirRecoveryClaimPickRecipientCtx,
+        ShamirRecoveryClaimRecoverDeviceCtx, ShamirRecoveryClaimShare, UserClaimFinalizeCtx,
+        UserClaimInProgress1Ctx, UserClaimInProgress2Ctx, UserClaimInProgress3Ctx,
+        UserClaimInitialCtx, UserClaimListAdministratorsCtx,
     },
     ClientConfig, DeviceAccessStrategy, ParsecInvitationAddr,
-};
-use libparsec_client::{
-    ShamirRecoveryClaimInProgress1Ctx, ShamirRecoveryClaimInProgress2Ctx,
-    ShamirRecoveryClaimInProgress3Ctx, ShamirRecoveryClaimInitialCtx,
-    ShamirRecoveryClaimMaybeFinalizeCtx, ShamirRecoveryClaimMaybeRecoverDeviceCtx,
-    ShamirRecoveryClaimPickRecipientCtx, ShamirRecoveryClaimRecoverDeviceCtx,
-    ShamirRecoveryClaimShare,
 };
 
 use crate::utils::*;
@@ -65,12 +63,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 
     match ctx {
         AnyClaimRetrievedInfoCtx::User(ctx) => {
-            // TODO: Implement proper administrator pick
-            let ctx = ctx
-                .list_user_claim_initial_ctxs()
-                .into_iter()
-                .next()
-                .expect("At least one admin");
+            let ctx = user_pick_admin(ctx)?;
             let ctx = step1_user(ctx).await?;
             let ctx = step2_user(ctx).await?;
             let ctx = step3_user(ctx).await?;
@@ -154,6 +147,28 @@ async fn step0(
     handle.stop_with_symbol(GREEN_CHECKMARK);
 
     Ok(ctx)
+}
+
+fn user_pick_admin(ctx: UserClaimListAdministratorsCtx) -> anyhow::Result<UserClaimInitialCtx> {
+    let ctxs = ctx.list_user_claim_initial_ctxs();
+    assert!(!ctxs.is_empty());
+    // Only one admin, no need to choose
+    if ctxs.len() == 1 {
+        return Ok(ctxs.into_iter().next().expect("ctxs is non-empty"));
+    }
+    let humans: Vec<_> = ctxs
+        .iter()
+        .map(|ctx| format!("{}", ctx.greeter_human_handle()))
+        .collect();
+    let selection = FuzzySelect::new()
+        .default(0)
+        .with_prompt("Choose an administrator to contact now")
+        .items(&humans)
+        .interact()?;
+    Ok(ctxs
+        .into_iter()
+        .nth(selection)
+        .expect("selection should correspond to a ctx"))
 }
 
 /// Step 0.5: choose recipient
