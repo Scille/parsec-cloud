@@ -47,10 +47,15 @@ pub mod internal {
         DeviceClaimFinalizeCtx, DeviceClaimInProgress1Ctx, DeviceClaimInProgress2Ctx,
         DeviceClaimInProgress3Ctx, DeviceClaimInitialCtx, DeviceGreetInProgress1Ctx,
         DeviceGreetInProgress2Ctx, DeviceGreetInProgress3Ctx, DeviceGreetInProgress4Ctx,
-        DeviceGreetInitialCtx, EventBus, UserClaimFinalizeCtx, UserClaimInProgress1Ctx,
-        UserClaimInProgress2Ctx, UserClaimInProgress3Ctx, UserClaimInitialCtx,
-        UserGreetInProgress1Ctx, UserGreetInProgress2Ctx, UserGreetInProgress3Ctx,
-        UserGreetInProgress4Ctx, UserGreetInitialCtx,
+        DeviceGreetInitialCtx, EventBus, ShamirRecoveryClaimInProgress1Ctx,
+        ShamirRecoveryClaimInProgress2Ctx, ShamirRecoveryClaimInProgress3Ctx,
+        ShamirRecoveryClaimInitialCtx, ShamirRecoveryClaimMaybeFinalizeCtx,
+        ShamirRecoveryClaimMaybeRecoverDeviceCtx, ShamirRecoveryClaimPickRecipientCtx,
+        ShamirRecoveryClaimRecoverDeviceCtx, ShamirRecoveryClaimShare, UserClaimFinalizeCtx,
+        UserClaimInProgress1Ctx, UserClaimInProgress2Ctx, UserClaimInProgress3Ctx,
+        UserClaimInitialCtx, UserClaimListAdministratorsCtx, UserGreetInProgress1Ctx,
+        UserGreetInProgress2Ctx, UserGreetInProgress3Ctx, UserGreetInProgress4Ctx,
+        UserGreetInitialCtx,
     };
 }
 
