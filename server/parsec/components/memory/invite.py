@@ -207,10 +207,6 @@ class MemoryInviteComponent(BaseInviteComponent):
                     and not invitation.is_deleted
                     and invitation.type == InvitationType.USER
                     and invitation.claimer_email == claimer_email
-                    # This allows to have multiple invitations for the same email for different administrators
-                    # TODO: Remove this when implementing https://github.com/Scille/parsec-cloud/issues/9413
-                    and isinstance(invitation.created_by, InvitationCreatedByUser)
-                    and invitation.created_by.user_id == author_user_id
                 ):
                     # An invitation already exists for what the user has asked for
                     token = invitation.token
@@ -521,13 +517,6 @@ class MemoryInviteComponent(BaseInviteComponent):
             match invitation.type:
                 case InvitationType.USER:
                     if author_user.current_profile != UserProfile.ADMIN:
-                        continue
-                    # This removes the invitations created by other administrators
-                    # TODO: Remove this when implementing https://github.com/Scille/parsec-cloud/issues/9413
-                    if (
-                        isinstance(invitation.created_by, InvitationCreatedByUser)
-                        and invitation.created_by.user_id != author_user_id
-                    ):
                         continue
                     assert invitation.claimer_email is not None
                     status = self._get_invitation_status(organization_id, invitation)

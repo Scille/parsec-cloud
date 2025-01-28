@@ -420,12 +420,9 @@ SELECT
     token
 FROM invitation
 INNER JOIN organization ON invitation.organization = organization._id
-INNER JOIN device ON invitation.created_by_device = device._id
-INNER JOIN user_ ON device.user_ = user_._id
 WHERE
     organization.organization_id = $organization_id
     AND type = 'USER'
-    AND user_.user_id = $invitation_creator_user_id
     AND user_invitation_claimer_email = $user_invitation_claimer_email
     AND deleted_on IS NULL
 LIMIT 1
@@ -556,7 +553,7 @@ WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     -- Different invitation types have different filtering rules
     AND (
-        (invitation.type = 'USER' AND created_by_user.user_id = $user_id)
+        (invitation.type = 'USER' AND $is_admin)
         OR (invitation.type = 'DEVICE' AND device_invitation_claimer.user_id = $user_id)
         OR (invitation.type = 'SHAMIR_RECOVERY' AND recipient_user_.user_id = $user_id)
     )
@@ -987,11 +984,8 @@ async def _do_new_invitation(
     match invitation_type:
         case InvitationType.USER:
             assert user_invitation_claimer_email is not None
-            # This request allows to have multiple invitations for the same email for different administrators
-            # TODO: Update this when implementing https://github.com/Scille/parsec-cloud/issues/9413
             q = _q_retrieve_compatible_user_invitation(
                 organization_id=organization_id.str,
-                invitation_creator_user_id=author_user_id,
                 user_invitation_claimer_email=user_invitation_claimer_email,
             )
         case InvitationType.DEVICE:
@@ -1414,8 +1408,8 @@ class PGInviteComponent(BaseInviteComponent):
             return InviteListBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
-            case (author_user_id, _, _):
-                pass
+            case (author_user_id, author_profile, _):
+                author_is_admin = author_profile == UserProfile.ADMIN
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return InviteListBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
@@ -1423,10 +1417,12 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteListBadOutcome.AUTHOR_REVOKED
 
-        # This request does not select the user invitations created by other administrators
-        # TODO: Update this when implementing https://github.com/Scille/parsec-cloud/issues/9413
         rows = await conn.fetch(
-            *_q_list_invitations(organization_id=organization_id.str, user_id=author_user_id)
+            *_q_list_invitations(
+                organization_id=organization_id.str,
+                user_id=author_user_id,
+                is_admin=author_is_admin,
+            )
         )
 
         invitations_with_claimer_online = self._claimers_ready[organization_id]
