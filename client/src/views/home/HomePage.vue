@@ -4,6 +4,8 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <div id="page">
+        <!-- sidebar -->
+        <home-page-sidebar />
         <!-- organization list -->
         <!-- organization -->
         <div
@@ -95,6 +97,7 @@ import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.v
 import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
 import HomePageHeader from '@/views/home/HomePageHeader.vue';
+import HomePageSidebar from '@/views/home/HomePageSidebar.vue';
 import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
@@ -547,29 +550,36 @@ function getBackButtonTitle(): string {
   height: 100vh;
   display: flex;
   overflow: hidden;
-  padding: 0 2rem;
   align-items: self-start;
+  background: var(--parsec-color-light-secondary-inversed-contrast);
   z-index: -10;
-  background: var(--parsec-color-light-gradient);
-
-  &::before {
-    content: '';
-    position: absolute;
-    z-index: -2;
-    top: 0;
-    right: 0;
-    width: 100vw;
-    height: 100vh;
-    background: url('@/assets/images/background/homepage-rectangle.svg') repeat center;
-    background-size: cover;
-  }
 
   .content {
     width: 100%;
     height: 100%;
     display: flex;
+    gap: 2rem;
     flex-direction: column;
     position: relative;
+    max-width: var(--parsec-max-content-width);
+    padding: 6.26rem 5rem 0;
+
+    &::after {
+      content: '';
+      position: absolute;
+      height: 100%;
+      width: 100%;
+      max-width: 317px;
+      max-height: 326px;
+      bottom: 0;
+      right: 0;
+      background-image: url('@/assets/images/background/blob-shape.svg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: top center;
+      opacity: 0.5;
+      filter: blur(250px);
+    }
   }
 }
 </style>

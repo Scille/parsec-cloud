@@ -142,23 +142,12 @@ defineExpose({
   height: auto;
   width: 100%;
   max-width: 25rem;
-  margin: auto;
+  margin: 2rem auto;
   display: flex;
+  gap: 1.5rem;
   flex-direction: column;
   align-items: center;
   box-shadow: none;
-
-  .login-header {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    &__title {
-      padding: 0;
-      margin-bottom: 2rem;
-      color: var(--parsec-color-light-secondary-white);
-    }
-  }
 
   .login-card {
     background: var(--parsec-color-light-secondary-white);
@@ -174,7 +163,7 @@ defineExpose({
     transition: box-shadow 150ms ease-in-out;
 
     &:has(.has-focus) {
-      box-shadow: var(--parsec-shadow-card);
+      box-shadow: var(--parsec-shadow-light);
     }
 
     &-header {

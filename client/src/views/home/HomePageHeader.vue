@@ -2,43 +2,23 @@
 
 <template>
   <div class="topbar">
+    <ion-button
+      v-if="updateAvailability !== null && !showBackButton"
+      class="update-button form-label"
+      id="trigger-update-button"
+      fill="clear"
+      @click="update()"
+    >
+      {{ $msTranslate('notificationCenter.newVersionAvailable') }}
+    </ion-button>
     <div class="topbar-left">
-      <div
-        class="topbar-left__logo"
-        @click="$emit('backClick')"
+      <ion-text
+        class="topbar-left__title title-h1"
         v-if="!showBackButton"
       >
-        <ms-image
-          :image="LogoRowWhite"
-          class="logo-img"
-        />
-      </div>
+        {{ $msTranslate('HomePage.topbar.welcome') }}
+      </ion-text>
       <!-- back button -->
-      <ion-button
-        slot="icon-only"
-        id="trigger-version-button"
-        class="topbar-buttons__item body"
-        fill="clear"
-        @click="$emit('aboutClick')"
-        v-if="!showBackButton"
-      >
-        <ion-icon
-          slot="start"
-          :icon="informationCircle"
-          size="small"
-        />
-      </ion-button>
-      <!-- update button -->
-      <ion-button
-        v-if="updateAvailability !== null && !showBackButton"
-        class="topbar-buttons__item"
-        id="trigger-update-button"
-        fill="clear"
-        @click="update()"
-      >
-        <ion-icon :icon="sparkles" />
-        {{ $msTranslate('notificationCenter.newVersionAvailable') }}
-      </ion-button>
       <ion-button
         @click="$emit('backClick')"
         v-if="showBackButton"
@@ -53,23 +33,30 @@
     </div>
     <div class="topbar-right">
       <ion-buttons class="topbar-buttons">
+        <!-- about button -->
+        <ion-button
+          slot="icon-only"
+          id="trigger-version-button"
+          class="topbar-buttons__item body"
+          fill="clear"
+          @click="$emit('aboutClick')"
+          v-if="!showBackButton"
+        >
+          <ion-icon :icon="informationCircle" />
+        </ion-button>
         <!-- doc button -->
-
         <ion-button
           class="topbar-buttons__item"
           @click="Env.Links.openDocumentationLink"
         >
           <ion-icon :icon="documentText" />
-          {{ $msTranslate('HomePage.topbar.documentation') }}
         </ion-button>
         <!-- contact button -->
-
         <ion-button
           class="topbar-buttons__item"
           @click="Env.Links.openContactLink"
         >
           <ion-icon :icon="chatbubbles" />
-          {{ $msTranslate('HomePage.topbar.contactUs') }}
         </ion-button>
         <!-- settings button -->
         <ion-button
@@ -78,7 +65,6 @@
           @click="$emit('settingsClick')"
         >
           <ion-icon :icon="cog" />
-          {{ $msTranslate('HomePage.topbar.settings') }}
         </ion-button>
         <!-- customer area button -->
         <ion-button
@@ -95,11 +81,11 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonButtons, IonIcon, modalController } from '@ionic/vue';
-import { arrowBack, chatbubbles, cog, informationCircle, sparkles, documentText } from 'ionicons/icons';
+import { IonButton, IonButtons, IonIcon, modalController, IonText } from '@ionic/vue';
+import { arrowBack, chatbubbles, cog, informationCircle, documentText } from 'ionicons/icons';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { LogoRowWhite, MsImage, Translatable, MsModalResult } from 'megashark-lib';
+import { Translatable, MsModalResult } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
 import { Env } from '@/services/environment';
 import { needsMocks } from '@/parsec';
@@ -174,15 +160,31 @@ defineEmits<{
 
 <style lang="scss" scoped>
 .topbar {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   justify-content: space-between;
   width: 100%;
-  max-width: var(--parsec-max-content-width);
-  padding: 0;
-  margin: 2rem auto 0;
+  padding: 0 0 2rem;
+  position: relative;
+  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+}
+
+.update-button {
+  background: var(--parsec-color-light-primary-50);
+  color: var(--parsec-color-light-primary-700);
+  min-height: 1rem;
+  border: 1px solid var(--parsec-color-light-primary-100);
+  padding: 0 0.825rem;
+  border-radius: var(--parsec-radius-32);
+  position: absolute;
+  top: -3.5rem;
+  left: 50%;
+  transform: translate(-50%, 0);
+  transition: all 150ms linear;
+
+  &:hover {
+    --background-hover: none;
+    box-shadow: var(--parsec-shadow-light);
+  }
 }
 
 .topbar-left {
@@ -191,18 +193,17 @@ defineEmits<{
   width: 100%;
   gap: 1.5rem;
 
-  &__logo {
-    width: 8rem;
-    height: 1.5rem;
-    display: block;
-
-    .logo-img {
-      width: 100%;
-      height: 100%;
-    }
+  &__title {
+    background: var(--parsec-color-light-gradient-background);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
   }
 
   &__back-button {
+    color: var(--parsec-color-light-secondary-soft-text);
+
     &::part(native) {
       background: none;
       --background-hover: none;
@@ -228,7 +229,7 @@ defineEmits<{
 .topbar-right {
   display: flex;
   justify-content: flex-end;
-  width: 100%;
+  width: fit-content;
 }
 
 .topbar-buttons {
@@ -241,8 +242,8 @@ defineEmits<{
 }
 
 .topbar-buttons__item {
-  background: var(--parsec-color-light-primary-30-opacity15);
-  color: var(--parsec-color-light-secondary-white);
+  background: var(--parsec-color-light-secondary-white);
+  color: var(--parsec-color-light-secondary-soft-text);
   border-radius: var(--parsec-radius-32);
   transition: all 150ms linear;
 
@@ -255,43 +256,18 @@ defineEmits<{
   &:hover {
     background: var(--parsec-color-light-primary-100);
     color: var(--parsec-color-light-primary-600);
-    box-shadow: var(--parsec-shadow-strong);
+    box-shadow: var(--parsec-shadow-light);
   }
 
   ion-icon {
     font-size: 1.25rem;
-    margin-right: 0.5rem;
   }
 
   &#trigger-customer-area-button {
-    background: var(--parsec-color-light-secondary-white);
-    color: var(--parsec-color-light-primary-600);
-    align-self: stretch;
+    outline: 1px solid var(--parsec-color-light-secondary-text);
 
     &:hover {
-      background: var(--parsec-color-light-secondary-premiere);
-      outline: 1px solid var(--parsec-color-light-primary-100);
-      outline-offset: 2px;
-    }
-  }
-
-  &#trigger-version-button {
-    ion-icon {
-      margin: 0;
-    }
-  }
-
-  &#trigger-update-button {
-    background: linear-gradient(217deg, var(--parsec-color-light-primary-700), var(--parsec-color-light-primary-600)),
-      linear-gradient(127deg, var(--parsec-color-light-primary-100), var(--parsec-color-light-primary-300));
-    color: var(--parsec-color-light-secondary-white);
-    align-self: stretch;
-    transition: all 150ms linear;
-    outline: 0px solid var(--parsec-color-light-primary-700);
-
-    &:hover {
-      outline-width: 1px;
-      outline-offset: 2px;
+      outline: none;
     }
   }
 }
