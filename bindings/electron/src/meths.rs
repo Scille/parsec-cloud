@@ -2715,6 +2715,122 @@ fn struct_user_claim_in_progress3_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// UserClaimInitialInfo
+
+#[allow(dead_code)]
+fn struct_user_claim_initial_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::UserClaimInitialInfo> {
+    let handle = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let greeter_user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let greeter_human_handle = {
+        let js_val: Handle<JsObject> = obj.get(cx, "greeterHumanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
+    };
+    let online_status = {
+        let js_val: Handle<JsString> = obj.get(cx, "onlineStatus")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_user_online_status_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    let last_greeting_attempt_joined_on = {
+        let js_val: Handle<JsValue> = obj.get(cx, "lastGreetingAttemptJoinedOn")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsNumber, _>(cx)?;
+                Some({
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+            }
+        }
+    };
+    Ok(libparsec::UserClaimInitialInfo {
+        handle,
+        greeter_user_id,
+        greeter_human_handle,
+        online_status,
+        last_greeting_attempt_joined_on,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_user_claim_initial_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::UserClaimInitialInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
+    js_obj.set(cx, "handle", js_handle)?;
+    let js_greeter_user_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.greeter_user_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
+    let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.greeter_human_handle)?;
+    js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
+    let js_online_status =
+        JsString::try_new(cx, enum_user_online_status_rs_to_js(rs_obj.online_status))
+            .or_throw(cx)?;
+    js_obj.set(cx, "onlineStatus", js_online_status)?;
+    let js_last_greeting_attempt_joined_on = match rs_obj.last_greeting_attempt_joined_on {
+        Some(elem) => JsNumber::new(cx, {
+            let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+            };
+            match custom_to_rs_f64(elem) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        })
+        .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(
+        cx,
+        "lastGreetingAttemptJoinedOn",
+        js_last_greeting_attempt_joined_on,
+    )?;
+    Ok(js_obj)
+}
+
 // UserGreetInProgress1Info
 
 #[allow(dead_code)]
@@ -3615,42 +3731,30 @@ fn variant_any_claim_retrieved_info_js_to_rs<'a>(
             })
         }
         "AnyClaimRetrievedInfoUser" => {
-            let handle = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "handle")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        cx.throw_type_error("Not an u32 number")?
-                    }
-                    let v = v as u32;
-                    v
-                }
-            };
             let claimer_email = {
                 let js_val: Handle<JsString> = obj.get(cx, "claimerEmail")?;
                 js_val.value(cx)
             };
-            let greeter_user_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
+            let created_by = {
+                let js_val: Handle<JsObject> = obj.get(cx, "createdBy")?;
+                variant_invite_info_invitation_created_by_js_to_rs(cx, js_val)?
+            };
+            let user_claim_initial_infos = {
+                let js_val: Handle<JsArray> = obj.get(cx, "userClaimInitialInfos")?;
                 {
-                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
-                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
+                    let size = js_val.len(cx);
+                    let mut v = Vec::with_capacity(size as usize);
+                    for i in 0..size {
+                        let js_item: Handle<JsObject> = js_val.get(cx, i)?;
+                        v.push(struct_user_claim_initial_info_js_to_rs(cx, js_item)?);
                     }
+                    v
                 }
             };
-            let greeter_human_handle = {
-                let js_val: Handle<JsObject> = obj.get(cx, "greeterHumanHandle")?;
-                struct_human_handle_js_to_rs(cx, js_val)?
-            };
             Ok(libparsec::AnyClaimRetrievedInfo::User {
-                handle,
                 claimer_email,
-                greeter_user_id,
-                greeter_human_handle,
+                created_by,
+                user_claim_initial_infos,
             })
         }
         _ => cx.throw_type_error("Object is not a AnyClaimRetrievedInfo"),
@@ -3751,30 +3855,27 @@ fn variant_any_claim_retrieved_info_rs_to_js<'a>(
             js_obj.set(cx, "isRecoverable", js_is_recoverable)?;
         }
         libparsec::AnyClaimRetrievedInfo::User {
-            handle,
             claimer_email,
-            greeter_user_id,
-            greeter_human_handle,
+            created_by,
+            user_claim_initial_infos,
             ..
         } => {
             let js_tag = JsString::try_new(cx, "AnyClaimRetrievedInfoUser").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-            let js_handle = JsNumber::new(cx, handle as f64);
-            js_obj.set(cx, "handle", js_handle)?;
             let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
             js_obj.set(cx, "claimerEmail", js_claimer_email)?;
-            let js_greeter_user_id = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(greeter_user_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
+            let js_created_by = variant_invite_info_invitation_created_by_rs_to_js(cx, created_by)?;
+            js_obj.set(cx, "createdBy", js_created_by)?;
+            let js_user_claim_initial_infos = {
+                // JsArray::new allocates with `undefined` value, that's why we `set` value
+                let js_array = JsArray::new(cx, user_claim_initial_infos.len());
+                for (i, elem) in user_claim_initial_infos.into_iter().enumerate() {
+                    let js_elem = struct_user_claim_initial_info_rs_to_js(cx, elem)?;
+                    js_array.set(cx, i as u32, js_elem)?;
                 }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
-            let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, greeter_human_handle)?;
-            js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
+                js_array
+            };
+            js_obj.set(cx, "userClaimInitialInfos", js_user_claim_initial_infos)?;
         }
     }
     Ok(js_obj)

@@ -8,8 +8,10 @@ use invited_cmds::latest::invite_claimer_step;
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
 use libparsec_protocol::authenticated_cmds;
-use libparsec_protocol::invited_cmds::latest::invite_info::InvitationCreatedBy as InviteInfoInvitationCreatedBy;
-use libparsec_protocol::invited_cmds::latest::invite_info::ShamirRecoveryRecipient;
+use libparsec_protocol::invited_cmds::latest::invite_info::{
+    InvitationCreatedBy as InviteInfoInvitationCreatedBy, ShamirRecoveryRecipient,
+    UserGreetingAdministrator, UserOnlineStatus,
+};
 use libparsec_types::prelude::*;
 
 use crate::client::{register_new_device, RegisterNewDeviceError};
@@ -220,7 +222,7 @@ async fn run_claimer_step_until_ready(
 
 #[derive(Debug)]
 pub enum AnyClaimRetrievedInfoCtx {
-    User(UserClaimInitialCtx),
+    User(UserClaimListAdministratorsCtx),
     Device(DeviceClaimInitialCtx),
     ShamirRecovery(ShamirRecoveryClaimPickRecipientCtx),
 }
@@ -249,32 +251,18 @@ pub async fn claimer_retrieve_info(
         Rep::Ok(claimer) => match claimer {
             InvitationType::User {
                 claimer_email,
-                created_by:
-                    InviteInfoInvitationCreatedBy::User {
-                        human_handle,
-                        user_id,
-                    },
-                administrators: _administrators,
-            } => {
-                // TODO: Here we should let the user pick a greeter from the administrators
-                // instead of using the one that created the invitation.
-                Ok(AnyClaimRetrievedInfoCtx::User(UserClaimInitialCtx::new(
+                created_by,
+                administrators,
+            } => Ok(AnyClaimRetrievedInfoCtx::User(
+                UserClaimListAdministratorsCtx::new(
                     config,
                     cmds,
                     claimer_email,
-                    user_id,
-                    human_handle,
+                    created_by,
+                    administrators,
                     time_provider,
-                )))
-            }
-            InvitationType::User {
-                created_by: InviteInfoInvitationCreatedBy::ExternalService { .. },
-                ..
-            } => {
-                // TODO: Here we should let the user pick a greeter from the administrators
-                // when the invitation is created by an external service.
-                Err(anyhow::anyhow!("Unexpected user invitation from an external service").into())
-            }
+                ),
+            )),
             InvitationType::Device {
                 claimer_user_id,
                 claimer_human_handle,
@@ -313,6 +301,65 @@ pub async fn claimer_retrieve_info(
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
+    }
+}
+
+// UserClaimListAdministratorsCtx
+
+#[derive(Debug)]
+pub struct UserClaimListAdministratorsCtx {
+    config: Arc<ClientConfig>,
+    cmds: Arc<InvitedCmds>,
+    claimer_email: String,
+    created_by: InviteInfoInvitationCreatedBy,
+    administrators: Vec<UserGreetingAdministrator>,
+    time_provider: TimeProvider,
+}
+
+impl UserClaimListAdministratorsCtx {
+    pub fn new(
+        config: Arc<ClientConfig>,
+        cmds: Arc<InvitedCmds>,
+        claimer_email: String,
+        created_by: InviteInfoInvitationCreatedBy,
+        administrators: Vec<UserGreetingAdministrator>,
+        time_provider: TimeProvider,
+    ) -> Self {
+        Self {
+            config,
+            cmds,
+            claimer_email,
+            created_by,
+            administrators,
+            time_provider,
+        }
+    }
+
+    pub fn claimer_email(&self) -> &str {
+        &self.claimer_email
+    }
+
+    pub fn created_by(&self) -> &InviteInfoInvitationCreatedBy {
+        &self.created_by
+    }
+
+    pub fn administrators(&self) -> &[UserGreetingAdministrator] {
+        &self.administrators
+    }
+
+    pub fn list_user_claim_initial_ctxs(&self) -> Vec<UserClaimInitialCtx> {
+        self.administrators
+            .iter()
+            .map(|administrator| {
+                UserClaimInitialCtx::new(
+                    self.config.clone(),
+                    self.cmds.clone(),
+                    self.claimer_email.clone(),
+                    administrator.clone(),
+                    self.time_provider.clone(),
+                )
+            })
+            .collect()
     }
 }
 
@@ -826,7 +873,9 @@ impl BaseClaimInitialCtx {
 #[derive(Debug)]
 pub struct UserClaimInitialCtx {
     base: BaseClaimInitialCtx,
-    pub claimer_email: String,
+    claimer_email: String,
+    last_greeting_attempt_joined_on: Option<DateTime>,
+    online_status: UserOnlineStatus,
 }
 
 impl UserClaimInitialCtx {
@@ -834,19 +883,20 @@ impl UserClaimInitialCtx {
         config: Arc<ClientConfig>,
         cmds: Arc<InvitedCmds>,
         claimer_email: String,
-        greeter_user_id: UserID,
-        greeter_human_handle: HumanHandle,
+        administrator: UserGreetingAdministrator,
         time_provider: TimeProvider,
     ) -> Self {
         Self {
             base: BaseClaimInitialCtx {
                 config,
                 cmds,
-                greeter_user_id,
-                greeter_human_handle,
+                greeter_user_id: administrator.user_id,
+                greeter_human_handle: administrator.human_handle,
                 time_provider,
             },
             claimer_email,
+            last_greeting_attempt_joined_on: administrator.last_greeting_attempt_joined_on,
+            online_status: administrator.online_status,
         }
     }
 
@@ -856,6 +906,18 @@ impl UserClaimInitialCtx {
 
     pub fn greeter_human_handle(&self) -> &HumanHandle {
         &self.base.greeter_human_handle
+    }
+
+    pub fn claimer_email(&self) -> &str {
+        &self.claimer_email
+    }
+
+    pub fn last_greeting_attempt_joined_on(&self) -> Option<DateTime> {
+        self.last_greeting_attempt_joined_on
+    }
+
+    pub fn online_status(&self) -> UserOnlineStatus {
+        self.online_status
     }
 
     pub async fn do_wait_peer(self) -> Result<UserClaimInProgress1Ctx, ClaimInProgressError> {
