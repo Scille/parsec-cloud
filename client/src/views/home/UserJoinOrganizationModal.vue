@@ -67,18 +67,22 @@
             <ms-informative-text v-if="!claimer.greeter">
               {{ $msTranslate('JoinOrganization.instructions.start.second') }}
             </ms-informative-text>
-            <ms-informative-text v-if="claimer.greeter">
-              {{
-                $msTranslate({
-                  key: 'JoinOrganization.instructions.start.greeter',
-                  data: {
-                    greeter: claimer.greeter.label,
-                    greeterEmail: claimer.greeter.email,
-                    organizationName: organizationName,
-                  },
-                })
-              }}
-            </ms-informative-text>
+          </div>
+
+          <div
+            v-for="greeter in claimer.possibleGreeters"
+            :key="greeter.greeterUserId"
+          >
+            <span>{{ greeter.greeterHumanHandle.label }}</span>
+            <ms-spinner v-show="!claimer.greeter || claimer.greeter.greeterUserId !== greeter.greeterUserId" />
+            <ion-button
+              v-show="claimer.greeter && claimer.greeter.greeterUserId === greeter.greeterUserId"
+              @click="nextStep()"
+            >
+              <span>
+                {{ $msTranslate(getNextButtonText()) }}
+              </span>
+            </ion-button>
           </div>
         </div>
 
@@ -87,6 +91,18 @@
           v-show="pageStep === UserJoinOrganizationStep.GetHostSasCode"
           class="step"
         >
+          <ms-informative-text v-if="claimer.greeter">
+            {{
+              $msTranslate({
+                key: 'JoinOrganization.instructions.start.greeter',
+                data: {
+                  greeter: claimer.greeter.greeterHumanHandle.label,
+                  greeterEmail: claimer.greeter.greeterHumanHandle.email,
+                  organizationName: organizationName,
+                },
+              })
+            }}
+          </ms-informative-text>
           <sas-code-choice
             :disabled="querying"
             :choices="claimer.SASCodeChoices"
@@ -142,6 +158,7 @@
         <ion-buttons
           slot="primary"
           class="modal-footer-buttons"
+          v-if="pageStep !== UserJoinOrganizationStep.WaitForHost"
         >
           <ion-button
             fill="solid"

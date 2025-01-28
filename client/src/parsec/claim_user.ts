@@ -10,13 +10,15 @@ import {
   ConnectionHandle,
   DeviceFileType,
   DeviceSaveStrategy,
-  HumanHandle,
+  InviteInfoInvitationCreatedByTag,
   Result,
   SASCode,
   UserClaimFinalizeInfo,
   UserClaimInProgress1Info,
   UserClaimInProgress2Info,
   UserClaimInProgress3Info,
+  UserClaimInitialInfo,
+  UserOnlineStatus,
 } from '@/parsec';
 import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
@@ -25,43 +27,48 @@ import { DateTime } from 'luxon';
 
 export class UserClaim {
   handle: ConnectionHandle | null;
-  canceller: ConnectionHandle | null;
+  cancellers: Array<ConnectionHandle>;
   SASCodeChoices: SASCode[];
   correctSASCode: SASCode;
   guestSASCode: SASCode;
   device: AvailableDevice | null;
-  greeter: HumanHandle | null;
+  greeter: UserClaimInitialInfo | null;
+  possibleGreeters: Array<UserClaimInitialInfo>;
 
   constructor() {
     this.handle = null;
-    this.canceller = null;
+    this.cancellers = [];
     this.guestSASCode = '';
     this.correctSASCode = '';
     this.SASCodeChoices = [];
     this.device = null;
     this.greeter = null;
+    this.possibleGreeters = [];
   }
 
   async abort(): Promise<void> {
-    if (this.canceller !== null && !needsMocks()) {
-      await libparsec.cancel(this.canceller);
+    if (!needsMocks()) {
+      for (const canceller of this.cancellers) {
+        await libparsec.cancel(canceller);
+      }
     }
     if (this.handle !== null && !needsMocks()) {
       await libparsec.claimerGreeterAbortOperation(this.handle);
     }
-    this.canceller = null;
+    this.cancellers = [];
     this.handle = null;
     this.guestSASCode = '';
     this.correctSASCode = '';
     this.SASCodeChoices = [];
     this.device = null;
     this.greeter = null;
+    this.possibleGreeters = [];
   }
 
   _assertState(nullCanceller: boolean, nullHandle: boolean): void {
-    if (nullCanceller && this.canceller !== null) {
+    if (nullCanceller && this.cancellers.length !== 0) {
       throw Error('Canceller should be null');
-    } else if (!nullCanceller && this.canceller === null) {
+    } else if (!nullCanceller && this.cancellers.length === 0) {
       throw Error('Canceller should not be null');
     }
     if (nullHandle && this.handle !== null) {
@@ -85,48 +92,93 @@ export class UserClaim {
         if (result.value.tag !== AnyClaimRetrievedInfoTag.User) {
           throw Error('Unexpected tag');
         }
-        this.handle = result.value.handle;
-        this.greeter = result.value.greeterHumanHandle;
+        for (const initInfo of result.value.userClaimInitialInfos) {
+          this.possibleGreeters.push(initInfo);
+        }
       }
       return result as Result<AnyClaimRetrievedInfoUser, ClaimerRetrieveInfoError>;
     } else {
       await wait(MOCK_WAITING_TIME);
-      this.handle = DEFAULT_HANDLE;
-      this.greeter = {
-        email: 'gale@waterdeep.faerun',
-        // cspell:disable-next-line
-        label: 'Gale Dekarios',
-      };
+      this.possibleGreeters.push({
+        handle: DEFAULT_HANDLE,
+        greeterUserId: '1',
+        greeterHumanHandle: { email: 'a@b.c', label: 'Aaaaaaaaa Bbbbbbbb' },
+        onlineStatus: UserOnlineStatus.Unknown,
+        lastGreetingAttemptJoinedOn: null,
+      });
+      this.possibleGreeters.push({
+        handle: DEFAULT_HANDLE,
+        greeterUserId: '2',
+        greeterHumanHandle: { email: 'd@e.f', label: 'Dddddddddddddd Eeeeeeeeeeeeee' },
+        onlineStatus: UserOnlineStatus.Unknown,
+        lastGreetingAttemptJoinedOn: null,
+      });
+      this.possibleGreeters.push({
+        handle: DEFAULT_HANDLE,
+        greeterUserId: '3',
+        greeterHumanHandle: { email: 'g@h.i', label: 'Gggggggggggg Hhhhh' },
+        onlineStatus: UserOnlineStatus.Unknown,
+        lastGreetingAttemptJoinedOn: null,
+      });
       return {
         ok: true,
         value: {
           tag: AnyClaimRetrievedInfoTag.User,
-          handle: DEFAULT_HANDLE,
           claimerEmail: 'shadowheart@swordcoast.faerun',
-          greeterUserId: '1234',
-          greeterHumanHandle: {
-            email: 'gale@waterdeep.faerun',
-            // cspell:disable-next-line
-            label: 'Gale Dekarios',
+          userClaimInitialInfos: this.possibleGreeters,
+          createdBy: {
+            tag: InviteInfoInvitationCreatedByTag.User,
+            userId: 'ewferhgiuerg',
+            humanHandle: {
+              email: 'gordon.freeman@blackmesa.nm',
+              label: 'Gordon Freeman',
+            },
           },
         },
       };
     }
   }
 
+  private async _doWaitPeer(
+    canceller: ConnectionHandle,
+    info: UserClaimInitialInfo,
+  ): Promise<Result<[UserClaimInitialInfo, UserClaimInProgress1Info], ClaimInProgressError>> {
+    const result = await libparsec.claimerUserInitialDoWaitPeer(canceller, info.handle);
+    if (result.ok) {
+      return { ok: true, value: [info, result.value] };
+    }
+    return result;
+  }
+
   async initialWaitHost(): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>> {
-    this._assertState(true, false);
     if (!needsMocks()) {
-      this.canceller = await libparsec.newCanceller();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const result = await libparsec.claimerUserInitialDoWaitPeer(this.canceller, this.handle!);
-      if (result.ok) {
-        this.SASCodeChoices = result.value.greeterSasChoices;
-        this.correctSASCode = result.value.greeterSas;
-        this.handle = result.value.handle;
+      const promises: Array<Promise<Result<[UserClaimInitialInfo, UserClaimInProgress1Info], ClaimInProgressError>>> = [];
+      for (const info of this.possibleGreeters) {
+        const canceller = await libparsec.newCanceller();
+        this.cancellers.push(canceller);
+        promises.push(this._doWaitPeer(canceller, info));
       }
-      this.canceller = null;
-      return result;
+      const result = await Promise.any(promises);
+      // Cancel remaining
+      for (const canceller of this.cancellers) {
+        await libparsec.cancel(canceller);
+      }
+      this.cancellers = [];
+      // Wait for other promises to finish
+      await Promise.allSettled(promises);
+
+      if (result.ok) {
+        const initInfo = result.value[0];
+        const progressInfo = result.value[1];
+
+        this.greeter = initInfo;
+        this.handle = progressInfo.handle;
+        this.SASCodeChoices = progressInfo.greeterSasChoices;
+        this.correctSASCode = progressInfo.greeterSas;
+        return { ok: true, value: progressInfo };
+      } else {
+        return { ok: false, error: result.error };
+      }
     } else {
       this.SASCodeChoices = ['1ABC', '2DEF', '3GHI', '4JKL'];
       this.correctSASCode = '2DEF';
@@ -144,11 +196,11 @@ export class UserClaim {
   async denyTrust(): Promise<Result<null, ClaimInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
-      this.canceller = await libparsec.newCanceller();
+      this.cancellers.push(await libparsec.newCanceller());
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const result = await libparsec.claimerUserInProgress1DoDenyTrust(this.canceller, this.handle!);
+      const result = await libparsec.claimerUserInProgress1DoDenyTrust(this.cancellers[0], this.handle!);
       this.handle = null;
-      this.canceller = null;
+      this.cancellers = [];
       return result;
     } else {
       return { ok: true, value: null };
@@ -158,14 +210,14 @@ export class UserClaim {
   async signifyTrust(): Promise<Result<UserClaimInProgress2Info, ClaimInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
-      this.canceller = await libparsec.newCanceller();
+      this.cancellers.push(await libparsec.newCanceller());
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const result = await libparsec.claimerUserInProgress1DoSignifyTrust(this.canceller, this.handle!);
+      const result = await libparsec.claimerUserInProgress1DoSignifyTrust(this.cancellers[0], this.handle!);
       if (result.ok) {
         this.guestSASCode = result.value.claimerSas;
         this.handle = result.value.handle;
       }
-      this.canceller = null;
+      this.cancellers = [];
       return result;
     } else {
       this.guestSASCode = '1337';
@@ -182,10 +234,10 @@ export class UserClaim {
   async waitHostTrust(): Promise<Result<UserClaimInProgress3Info, ClaimInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
-      this.canceller = await libparsec.newCanceller();
+      this.cancellers.push(await libparsec.newCanceller());
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const result = await libparsec.claimerUserInProgress2DoWaitPeerTrust(this.canceller, this.handle!);
-      this.canceller = null;
+      const result = await libparsec.claimerUserInProgress2DoWaitPeerTrust(this.cancellers[0], this.handle!);
+      this.cancellers = [];
       if (result.ok) {
         this.handle = result.value.handle;
       }
@@ -204,10 +256,10 @@ export class UserClaim {
   async doClaim(deviceLabel: string, userName: string, email: string): Promise<Result<UserClaimFinalizeInfo, ClaimInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
-      this.canceller = await libparsec.newCanceller();
+      this.cancellers.push(await libparsec.newCanceller());
       const result = await libparsec.claimerUserInProgress3DoClaim(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.canceller,
+        this.cancellers[0],
         this.handle!,
         deviceLabel,
         { email: email, label: userName },
@@ -215,7 +267,7 @@ export class UserClaim {
       if (result.ok) {
         this.handle = result.value.handle;
       }
-      this.canceller = null;
+      this.cancellers = [];
       return result;
     } else {
       await wait(MOCK_WAITING_TIME);
