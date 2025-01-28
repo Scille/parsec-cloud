@@ -43,6 +43,8 @@ export async function createOrganization(
 
   const bootstrapAddr = await libparsec.buildParsecOrganizationBootstrapAddr(serverAddr, orgName);
 
+  console.log(bootstrapAddr);
+
   const config: ClientConfig = {
     configDir: window.getConfigDir(),
     dataBaseDir: window.getDataBaseDir(),

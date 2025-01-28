@@ -3,29 +3,40 @@
 import { BrowserContext, Locator, Page, TestInfo, test as base } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { MockBms } from '@tests/e2e/helpers/bms';
-import { DEFAULT_ORGANIZATION_INFORMATION, DEFAULT_USER_INFORMATION, UserData } from '@tests/e2e/helpers/data';
+import {
+  DEFAULT_USER_INFORMATION,
+  OrganizationInformation,
+  UserData,
+  generateDefaultOrganizationInformation,
+  generateDefaultUserData,
+} from '@tests/e2e/helpers/data';
 import { dropTestbed, newTestbed } from '@tests/e2e/helpers/testbed';
 import { createWorkspace, dismissToast, dragAndDropFile, fillInputModal, fillIonInput } from '@tests/e2e/helpers/utils';
 import path from 'path';
 
+export interface MsPage extends Page {
+  userData: UserData;
+  orgInfo: OrganizationInformation;
+}
+
 export const msTest = base.extend<{
   context: BrowserContext;
-  home: Page;
-  secondTab: Page;
-  connected: Page;
-  workspaces: Page;
-  documents: Page;
-  documentsReadOnly: Page;
-  usersPage: Page;
-  organizationPage: Page;
-  myProfilePage: Page;
+  home: MsPage;
+  secondTab: MsPage;
+  connected: MsPage;
+  workspaces: MsPage;
+  documents: MsPage;
+  documentsReadOnly: MsPage;
+  usersPage: MsPage;
+  organizationPage: MsPage;
+  myProfilePage: MsPage;
   userJoinModal: Locator;
   userGreetModal: Locator;
   createOrgModal: Locator;
   deviceGreetModal: Locator;
   workspaceSharingModal: Locator;
-  clientArea: Page;
-  clientAreaCustomOrder: Page;
+  clientArea: MsPage;
+  clientAreaCustomOrder: MsPage;
 }>({
   context: async ({ browser }, use) => {
     const context = await browser.newContext();
@@ -48,9 +59,11 @@ export const msTest = base.extend<{
     await expect(page.locator('#app')).toHaveAttribute('app-state', 'initializing');
 
     await newTestbed(page);
+    (page as MsPage).userData = generateDefaultUserData();
+    (page as MsPage).orgInfo = generateDefaultOrganizationInformation();
 
     await expect(page.locator('#app')).toHaveAttribute('app-state', 'ready');
-    await use(page);
+    await use(page as MsPage);
     await dropTestbed(page);
   },
 
@@ -69,9 +82,11 @@ export const msTest = base.extend<{
     await expect(page.locator('#app')).toHaveAttribute('app-state', 'initializing');
 
     await newTestbed(page);
+    (page as MsPage).userData = generateDefaultUserData();
+    (page as MsPage).orgInfo = generateDefaultOrganizationInformation();
 
     await expect(page.locator('#app')).toHaveAttribute('app-state', 'ready');
-    await use(page);
+    await use(page as MsPage);
     await dropTestbed(page);
   },
 
@@ -216,7 +231,7 @@ export const msTest = base.extend<{
   },
 
   clientArea: async ({ home }, use) => {
-    UserData.reset();
+    home.userData.reset();
     await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home);
     await MockBms.mockListOrganizations(home);
@@ -241,14 +256,14 @@ export const msTest = base.extend<{
     await expect(popover).toBeVisible();
     const orgs = popover.locator('.organization-list').getByRole('listitem');
     await orgs.nth(0).click();
-    await expect(orgSwitchButton).toHaveText(DEFAULT_ORGANIZATION_INFORMATION.name);
+    await expect(orgSwitchButton).toHaveText(home.orgInfo.name);
     await expect(popover).toBeHidden();
 
     await use(home);
   },
 
   clientAreaCustomOrder: async ({ home }, use) => {
-    UserData.reset();
+    home.userData.reset();
     await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home, { billingSystem: 'CUSTOM_ORDER' });
     await MockBms.mockListOrganizations(home);

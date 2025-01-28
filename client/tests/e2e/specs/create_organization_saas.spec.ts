@@ -2,20 +2,14 @@
 
 import { Locator, Page } from '@playwright/test';
 import {
-  DEFAULT_ORGANIZATION_INFORMATION,
   DEFAULT_USER_INFORMATION,
   MockBms,
   expect,
   fillInputModal,
   fillIonInput,
+  getTestbedBootstrapAddr,
   msTest,
 } from '@tests/e2e/helpers';
-
-// cspell:disable-next-line
-const _HOST = 'saas-demo-v3-mightyfairy.parsec.cloud';
-// cspell:disable-next-line
-const _PAYLOAD = 'xBCy2YVGB31DPzcxGZbGVUt7';
-const BOOTSTRAP_ADDR = `parsec3://${_HOST}/BlackMesa?no_ssl=true&a=bootstrap_organization&p=${_PAYLOAD}`;
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
   await page.locator('#create-organization-button').click();
@@ -41,7 +35,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
 
   await MockBms.mockLogin(home);
   await MockBms.mockUserRoute(home);
-  await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
+  await MockBms.mockCreateOrganization(home, getTestbedBootstrapAddr(home.orgInfo.name));
 
   const bmsContainer = modal.locator('.saas-login');
   await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link your customer account to your new organization');
@@ -72,7 +66,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(orgNameError).toHaveText('Only letters, digits, underscores and hyphens. No spaces.');
 
   // Back to good name
-  await fillIonInput(orgNameContainer.locator('ion-input'), DEFAULT_ORGANIZATION_INFORMATION.name);
+  await fillIonInput(orgNameContainer.locator('ion-input'), home.orgInfo.name);
   await expect(orgNameError).toBeHidden();
   await expect(orgNameNext).not.toHaveDisabledAttribute();
 
@@ -151,7 +145,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
     'Authentication method',
   ]);
   await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
-    DEFAULT_ORGANIZATION_INFORMATION.name,
+    home.orgInfo.name,
     DEFAULT_USER_INFORMATION.name,
     DEFAULT_USER_INFORMATION.email,
     'Parsec SaaS',
@@ -206,7 +200,8 @@ for (const testInfo of [
         status: testInfo.status,
       };
     }
-    await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR, { POST: routeOptions });
+
+    await MockBms.mockCreateOrganization(home, getTestbedBootstrapAddr(home.orgInfo.name), { POST: routeOptions });
 
     const bmsContainer = modal.locator('.saas-login');
     const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1);
@@ -216,7 +211,7 @@ for (const testInfo of [
 
     const orgNameContainer = modal.locator('.organization-name-page');
     const orgNameNext = modal.locator('.organization-name-page-footer').locator('ion-button').nth(1);
-    await fillIonInput(orgNameContainer.locator('ion-input'), DEFAULT_ORGANIZATION_INFORMATION.name);
+    await fillIonInput(orgNameContainer.locator('ion-input'), home.orgInfo.name);
     await orgNameNext.click();
 
     const authContainer = modal.locator('.authentication-page');
@@ -238,12 +233,12 @@ for (const testInfo of [
 msTest('Go through saas org creation process from bootstrap link', async ({ home }) => {
   await home.locator('#create-organization-button').click();
   await home.locator('.popover-viewport').getByRole('listitem').nth(1).click();
-  await fillInputModal(home, BOOTSTRAP_ADDR);
+  await fillInputModal(home, getTestbedBootstrapAddr(home.orgInfo.name));
   const modal = home.locator('.create-organization-modal');
 
   await MockBms.mockLogin(home);
   await MockBms.mockUserRoute(home);
-  await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
+  await MockBms.mockCreateOrganization(home, getTestbedBootstrapAddr(home.orgInfo.name));
 
   const bmsContainer = modal.locator('.saas-login');
   await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link your customer account to your new organization');
@@ -302,7 +297,7 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
     'Authentication method',
   ]);
   await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
-    DEFAULT_ORGANIZATION_INFORMATION.name,
+    home.orgInfo.name,
     DEFAULT_USER_INFORMATION.name,
     DEFAULT_USER_INFORMATION.email,
     'Parsec SaaS',
@@ -371,7 +366,7 @@ msTest('Edit from summary', async ({ home }) => {
 
   await MockBms.mockLogin(home);
   await MockBms.mockUserRoute(home);
-  await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
+  await MockBms.mockCreateOrganization(home, getTestbedBootstrapAddr(home.orgInfo.name));
 
   const bmsContainer = modal.locator('.saas-login');
   const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1);
@@ -381,7 +376,7 @@ msTest('Edit from summary', async ({ home }) => {
 
   const orgNameContainer = modal.locator('.organization-name-page');
   const orgNameNext = modal.locator('.organization-name-page-footer').locator('ion-button').nth(1);
-  await fillIonInput(orgNameContainer.locator('ion-input'), DEFAULT_ORGANIZATION_INFORMATION.name);
+  await fillIonInput(orgNameContainer.locator('ion-input'), home.orgInfo.name);
   await orgNameNext.click();
 
   const authContainer = modal.locator('.authentication-page');
@@ -401,7 +396,7 @@ msTest('Edit from summary', async ({ home }) => {
     'Authentication method',
   ]);
   await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
-    DEFAULT_ORGANIZATION_INFORMATION.name,
+    home.orgInfo.name,
     DEFAULT_USER_INFORMATION.name,
     DEFAULT_USER_INFORMATION.email,
     'Parsec SaaS',
@@ -414,7 +409,7 @@ msTest('Edit from summary', async ({ home }) => {
 
   await expect(summaryContainer).toBeHidden();
   await expect(orgNameContainer).toBeVisible();
-  await fillIonInput(orgNameContainer.locator('ion-input'), `${DEFAULT_ORGANIZATION_INFORMATION.name}2`);
+  await fillIonInput(orgNameContainer.locator('ion-input'), `${home.orgInfo.name}-2`);
   await orgNameNext.click();
 
   await authNext.click();
@@ -422,7 +417,7 @@ msTest('Edit from summary', async ({ home }) => {
   await expect(summaryContainer).toBeVisible();
   await expect(orgNameContainer).toBeHidden();
   await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
-    `${DEFAULT_ORGANIZATION_INFORMATION.name}2`,
+    `${home.orgInfo.name}-2`,
     DEFAULT_USER_INFORMATION.name,
     DEFAULT_USER_INFORMATION.email,
     'Parsec SaaS',

@@ -176,3 +176,25 @@ export async function dismissToast(page: Page): Promise<void> {
   await page.locator('.notification-toast').locator('.toast-button-confirm').click();
   await expect(page.locator('.notification-toast')).toBeHidden();
 }
+
+export function getTestbedBootstrapAddr(orgName: string): string {
+  const url = new URL(process.env.TESTBED_SERVER ?? '');
+  const port = url.port ? `:${url.port}` : '';
+  let search = '?a=bootstrap_organization&p=wA';
+
+  for (const [key, val] of url.searchParams.entries()) {
+    search = `${search}&${key}=${val}`;
+  }
+  return `${url.protocol}//${url.hostname}${port}/${orgName}${search}`;
+}
+
+export function getOrganizationAddr(orgName: string): string {
+  const url = new URL(process.env.TESTBED_SERVER ?? '');
+  const port = url.port ? `:${url.port}` : '';
+
+  return `${url.protocol}//${url.hostname}${port}/${orgName}${url.search}`;
+}
+
+export function getServerAddr(): string {
+  return process.env.TESTBED_SERVER ?? '';
+}
