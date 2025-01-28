@@ -14,6 +14,44 @@ msTest('Documents page default state', async ({ documents }) => {
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_.]+$/);
 });
 
+msTest('Quick access loads correct document', async ({ documents }) => {
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+
+  await entries.nth(2).dblclick();
+  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents).toBeViewerPage();
+  await expect(documents).toHavePageTitle('File viewer');
+  const doc1Name = (await documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text').textContent()) ?? '';
+  await documents.locator('.topbar-left').locator('.back-button').click();
+  await entries.nth(3).dblclick();
+  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents).toBeViewerPage();
+  await expect(documents).toHavePageTitle('File viewer');
+  const doc2Name = (await documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text').textContent()) ?? '';
+
+  const sidebar = documents.locator('.sidebar');
+  const recentDocs = sidebar.locator('.file-workspaces').locator('.list-sidebar-content').getByRole('listitem');
+  await expect(recentDocs).toHaveCount(4);
+  await expect(recentDocs.nth(0)).toHaveText(doc2Name);
+  await expect(recentDocs.nth(1)).toHaveText(doc1Name);
+
+  await recentDocs.nth(1).click();
+  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(doc1Name);
+
+  await recentDocs.nth(1).click();
+  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(doc2Name);
+});
+
 msTest('Spreadsheet viewer', async ({ documents }) => {
   await openFileType(documents, 'xlsx');
   await expect(documents).toBeViewerPage();
