@@ -728,17 +728,25 @@ async def test_authenticated_realm_rotate_key_concurrency(
             keys_bundle=b"<keys bundle>",
         )
         for certif in certifs
-        for _ in range(2)
     ]
 
     # Run all the coroutines concurrently
     reps = await asyncio.gather(*coroutines)
-    for rep in reps:
-        assert isinstance(
+
+    # We expect 10 successful responses
+    ok_reps = [rep for rep in reps if rep == authenticated_cmds.latest.realm_rotate_key.RepOk()]
+    assert len(ok_reps) == 10
+
+    # We expect 10 bad key index or require greater timestamp responses
+    non_ok_reps = [
+        rep
+        for rep in reps
+        if isinstance(
             rep,
             (
-                authenticated_cmds.latest.realm_rotate_key.RepOk,
                 authenticated_cmds.latest.realm_rotate_key.RepBadKeyIndex,
                 authenticated_cmds.latest.realm_rotate_key.RepRequireGreaterTimestamp,
             ),
         )
+    ]
+    assert len(non_ok_reps) == 10

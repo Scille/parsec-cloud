@@ -30,6 +30,20 @@ from parsec.components.realm import (
 )
 from parsec.events import EventRealmCertificate
 
+# Two important notes about preventing race conditions during realm creation:
+# - 1. Inserting a row with an `ON CONFLICT DO NOTHING` clause allows us to
+#   effectively lock the realm creation, as conflicting concurrent queries
+#   will block until the first transaction owning the lock is done (similar to
+#   what happens with a `SELECT ... FOR UPDATE` statement).
+# - 2. It is tempting to use a `WITH` clause to have a single query that both
+#   locks the realm creation and fills the realm-related tables. However, this
+#   would expose use to race conditions, as the `WITH` clause does not provide
+#   any guarantee on the order of execution of its subqueries. More generally,
+#   the order of execution of subqueries in an SQL query is not guaranteed, whether
+#   it is using a `WITH` clause, the `(SELECT ...)` syntax, or the `FROM ... JOIN ...`.
+#   This is why we have to split the realm creation in two queries, one to lock the
+#   realm creation and one to fill the realm-related tables.
+
 _q_lock_realm_creation = Q(
     """
 INSERT INTO realm (
@@ -162,21 +176,28 @@ async def realm_create(
         )
     )
 
-    # The realm already exists
+    match realm_internal_id:
+        # The realm has been successfully created and locked
+        case int() as realm_internal_id:
+            pass
 
-    if realm_internal_id is None:
-        last_realm_certificate_timestamp = await conn.fetchval(
-            *_q_get_last_realm_certificate_timestamp(
-                organization_internal_id=db_common.organization_internal_id,
-                realm_id=certif.realm_id,
+        # The realm has already been created, return the last realm certificate timestamp
+        case None:
+            last_realm_certificate_timestamp = await conn.fetchval(
+                *_q_get_last_realm_certificate_timestamp(
+                    organization_internal_id=db_common.organization_internal_id,
+                    realm_id=certif.realm_id,
+                )
             )
-        )
-        assert isinstance(last_realm_certificate_timestamp, DateTime)
-        return CertificateBasedActionIdempotentOutcome(
-            certificate_timestamp=last_realm_certificate_timestamp
-        )
+            assert isinstance(last_realm_certificate_timestamp, DateTime)
+            return CertificateBasedActionIdempotentOutcome(
+                certificate_timestamp=last_realm_certificate_timestamp
+            )
 
-    # The realm has been created, fill the other realm-related tables
+        case unknown:
+            assert False, repr(unknown)
+
+    # Fill the other realm-related tables
 
     success = await conn.fetchval(
         *_q_create_realm(
