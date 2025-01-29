@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-card class="organization">
+  <div class="organization">
     <ion-text
       class="organization-title title-h3"
       v-if="deviceList.length > 0"
@@ -10,12 +10,12 @@
     </ion-text>
     <template v-if="deviceList.length === 0 && !querying">
       <!-- No organization -->
-      <ion-card-content class="organization-content no-devices">
+      <div class="organization-content no-devices">
         <div class="create-organization">
           <div class="create-organization-text">
-            <ion-card-title class="create-organization-text__title title-h3">
+            <ion-text class="create-organization-text__title title-h3">
               {{ $msTranslate('HomePage.noDevices.titleCreateOrga') }}
-            </ion-card-title>
+            </ion-text>
             <ion-text class="create-organization-text__subtitle body">{{ $msTranslate('HomePage.noDevices.subtitle') }}</ion-text>
             <ion-button
               @click="$emit('createOrganizationClick')"
@@ -69,12 +69,12 @@
             </ion-button>
           </div>
         </div>
-      </ion-card-content>
+      </div>
       <!-- enf of No organization -->
     </template>
     <template v-else>
-      <ion-card-content class="organization-content">
-        <ion-card-title class="organization-filter">
+      <div class="organization-content">
+        <div class="organization-filter">
           <!-- No use in showing the sort/filter options for less than one device -->
           <ms-search-input
             :placeholder="'HomePage.organizationList.search'"
@@ -101,30 +101,24 @@
           >
             {{ $msTranslate('HomePage.noExistingOrganization.createOrJoin') }}
           </ion-button>
-        </ion-card-title>
-        <ion-grid class="organization-list">
-          <ion-row class="organization-list-row">
-            <ion-text
-              class="no-match-result body"
-              v-show="searchQuery.length > 0 && filteredDevices.length === 0 && deviceList.length > 0"
-            >
-              {{ $msTranslate({ key: 'HomePage.organizationList.noMatch', data: { query: searchQuery } }) }}
-            </ion-text>
-            <ion-col
-              v-for="device in filteredDevices"
-              :key="device.deviceId"
-              class="organization-list-row__col"
-              size="3"
-            >
-              <organization-card
-                :device="device"
-                :last-login-device="storedDeviceDataDict[device.deviceId]?.lastLogin"
-                @click="$emit('organizationSelect', device)"
-              />
-            </ion-col>
-          </ion-row>
-        </ion-grid>
-      </ion-card-content>
+        </div>
+        <div class="organization-list">
+          <ion-text
+            class="no-match-result body"
+            v-show="searchQuery.length > 0 && filteredDevices.length === 0 && deviceList.length > 0"
+          >
+            {{ $msTranslate({ key: 'HomePage.organizationList.noMatch', data: { query: searchQuery } }) }}
+          </ion-text>
+          <organization-card
+            v-for="device in filteredDevices"
+            :key="device.deviceId"
+            class="organization-list-item"
+            :device="device"
+            :last-login-device="storedDeviceDataDict[device.deviceId]?.lastLogin"
+            @click="$emit('organizationSelect', device)"
+          />
+        </div>
+      </div>
       <div class="recovery-devices">
         {{ $msTranslate('HomePage.lostDevice') }}
         <ion-button
@@ -135,7 +129,7 @@
         </ion-button>
       </div>
     </template>
-  </ion-card>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -159,13 +153,7 @@ import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import {
   IonButton,
-  IonCard,
-  IonCardContent,
-  IonCardTitle,
-  IonCol,
-  IonGrid,
   IonIcon,
-  IonRow,
   IonText,
   IonTitle,
   popoverController,
@@ -394,10 +382,10 @@ const filteredDevices = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding: 0;
+  overflow: hidden;
+  margin-bottom: 4.3125rem;
   width: 100%;
   max-width: var(--parsec-max-content-width);
-  border-radius: var(--parsec-radius-12);
 
   .organization-filter {
     display: flex;
@@ -420,25 +408,19 @@ const filteredDevices = computed(() => {
   .organization-list {
     margin: 0;
     overflow-y: auto;
-    --ion-grid-columns: 6;
     max-width: 34.5rem;
-    max-height: 50vh;
-    min-height: 45vh;
-  }
-
-  .organization-list-row {
-    &__col {
-      display: flex;
-      align-items: center;
-      padding: 0.5rem;
-    }
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+    z-index: 100;
   }
 }
 
 .recovery-devices {
   display: flex;
   align-items: center;
-  position: absolute;
+  position: fixed;
   border-top: 1px solid var(--parsec-color-light-secondary-medium);
   width: 100%;
   gap: 0.5rem;
@@ -447,7 +429,6 @@ const filteredDevices = computed(() => {
   color: var(--parsec-color-light-secondary-grey);
   bottom: 0;
   z-index: 100;
-  border-radius: 0 0 var(--parsec-radius-12) var(--parsec-radius-12);
 }
 
 .no-devices {

@@ -2,7 +2,7 @@
 
 import { answerQuestion, expect, fillIonInput, msTest, sortBy } from '@tests/e2e/helpers';
 
-const USER_NAMES = ['Alicey McAliceFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
+const USER_NAMES = ['(Alicey McAliceFace)', '(Boby McBobFace)', '(Malloryy McMalloryFace)'];
 
 msTest('Home default state with devices', async ({ home }) => {
   await expect(home.locator('.organization-title')).toHaveText('Access to your organizations');
@@ -14,43 +14,43 @@ msTest('Home default state with devices', async ({ home }) => {
   await expect(cards).toHaveCount(USER_NAMES.length);
 
   for (const card of await cards.all()) {
-    const lastLogin = card.locator('.organization-card-login-time__text');
-    await expect(card.locator('.organization-card-header').locator('.title-h4')).toHaveText(/Org\d+/);
+    const lastLogin = card.locator('.login-time__text');
+    await expect(card.locator('.organization-card-content-text').locator('.title-h4')).toHaveText(/Org\d+/);
     await expect(lastLogin).toHaveText('--');
   }
-  await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
 });
 
 msTest('Sort devices', async ({ home }) => {
   const sortButton = home.locator('#organization-filter-select');
   const cards = home.locator('.organization-list').locator('.organization-card');
-  await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
   await sortBy(sortButton, 'Ascending');
   // Should not change anything right now because all devices have the same organization
-  await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
   await sortBy(sortButton, 'User name');
   // By name desc
-  await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u2.localeCompare(u1)));
+  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u2.localeCompare(u1)));
   await sortBy(sortButton, 'Descending');
   // By name asc
-  await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
 });
 
 msTest('Filter devices', async ({ home }) => {
   const cards = home.locator('.organization-list').locator('.organization-card');
   const searchInput = home.locator('#search-input-organization').locator('ion-input');
-  await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
   await fillIonInput(searchInput, 'cey');
-  await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.filter((u) => u.includes('cey')));
+  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.filter((u) => u.includes('cey')));
   await fillIonInput(searchInput, 'al');
-  await expect(cards.locator('.organization-card-login__name')).toHaveCount(2);
-  await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.filter((u) => u.toLowerCase().includes('al')));
+  await expect(cards.locator('.login-name')).toHaveCount(2);
+  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.filter((u) => u.toLowerCase().includes('al')));
 });
 
 msTest('Filter devices no match', async ({ home }) => {
   const cards = home.locator('.organization-list').locator('.organization-card');
   const searchInput = home.locator('#search-input-organization').locator('ion-input');
-  await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
   await fillIonInput(searchInput, 'nomatch');
   await expect(cards).toBeHidden();
   await expect(home.locator('.no-match-result')).toBeVisible();
