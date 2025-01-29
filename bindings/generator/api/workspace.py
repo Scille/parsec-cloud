@@ -278,6 +278,33 @@ class WorkspaceMoveEntryError(ErrorVariant):
     class Internal:
         pass
 
+class FileDescriptor(U32BasedType):
+    custom_from_rs_u32 = "|raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) }"
+    custom_to_rs_u32 = "|fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) }"
+
+
+class WorkspaceFdStatError(ErrorVariant):
+    class BadFileDescriptor:
+        pass
+
+    class Internal:
+        pass
+
+
+class FileStat(Structure):
+    id: VlobID
+    created: DateTime
+    updated: DateTime
+    base_version: VersionInt
+    is_placeholder: bool
+    need_sync: bool
+    size: SizeInt
+
+
+async def workspace_fd_stat(
+    workspace: Handle, fd: FileDescriptor
+) -> Result[FileStat, WorkspaceFdStatError]:
+    raise NotImplementedError
 
 class WorkspaceStatEntryError(ErrorVariant):
     class Offline:
@@ -308,14 +335,8 @@ class WorkspaceStatEntryError(ErrorVariant):
 class EntryStat(Variant):
     class File:
         confinement_point: Optional[VlobID]
-        id: VlobID
         parent: VlobID
-        created: DateTime
-        updated: DateTime
-        base_version: VersionInt
-        is_placeholder: bool
-        need_sync: bool
-        size: SizeInt
+        base: FileStat
 
     class Folder:
         confinement_point: Optional[VlobID]
@@ -468,10 +489,6 @@ class OpenOptions(Structure):
     create_new: bool
 
 
-class FileDescriptor(U32BasedType):
-    custom_from_rs_u32 = "|raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) }"
-    custom_to_rs_u32 = "|fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) }"
-
 
 class WorkspaceOpenFileError(ErrorVariant):
     class Offline:
@@ -545,28 +562,7 @@ async def workspace_fd_close(
     raise NotImplementedError
 
 
-class WorkspaceFdStatError(ErrorVariant):
-    class BadFileDescriptor:
-        pass
 
-    class Internal:
-        pass
-
-
-class FileStat(Structure):
-    id: VlobID
-    created: DateTime
-    updated: DateTime
-    base_version: VersionInt
-    is_placeholder: bool
-    need_sync: bool
-    size: SizeInt
-
-
-async def workspace_fd_stat(
-    workspace: Handle, fd: FileDescriptor
-) -> Result[FileStat, WorkspaceFdStatError]:
-    raise NotImplementedError
 
 
 class WorkspaceFdFlushError(ErrorVariant):

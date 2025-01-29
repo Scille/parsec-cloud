@@ -70,7 +70,7 @@ async fn ok_first_open(
                 .stat_entry(&format!("/{}", name).parse().unwrap())
                 .await
                 .unwrap();
-            p_assert_matches!(stat, EntryStat::File { size, .. } if size == expected_size);
+            p_assert_matches!(stat, EntryStat::File { base, .. } if base.size == expected_size);
         }
     );
 }
@@ -122,7 +122,7 @@ async fn ok_already_opened(
                 .stat_entry(&format!("/{}", name).parse().unwrap())
                 .await
                 .unwrap();
-            p_assert_matches!(stat, EntryStat::File { size, .. } if size == expected_size);
+            p_assert_matches!(stat, EntryStat::File { base, .. } if base.size == expected_size);
         }
     );
 }
@@ -131,6 +131,8 @@ async fn ok_already_opened(
 #[cfg(not(target_os = "windows"))]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn no_create_and_not_found(tmp_path: TmpPath, env: &TestbedEnv) {
+    use libparsec_client::workspace::FileStat;
+
     mount_and_test!(
         env,
         &tmp_path,
@@ -143,14 +145,16 @@ async fn no_create_and_not_found(tmp_path: TmpPath, env: &TestbedEnv) {
                     if path == &"/dummy.txt".parse().unwrap() {
                         Some(Ok(EntryStat::File {
                             confinement_point: None,
-                            id: VlobID::default(),
                             parent: VlobID::default(),
-                            created: "2000-01-01T00:00:00Z".parse().unwrap(),
-                            updated: "2000-01-01T00:00:00Z".parse().unwrap(),
-                            base_version: 0,
-                            is_placeholder: false,
-                            need_sync: false,
-                            size: 0,
+                            base: FileStat {
+                                id: VlobID::default(),
+                                created: "2000-01-01T00:00:00Z".parse().unwrap(),
+                                updated: "2000-01-01T00:00:00Z".parse().unwrap(),
+                                base_version: 0,
+                                is_placeholder: false,
+                                need_sync: false,
+                                size: 0,
+                            },
                         }))
                     } else {
                         // Fallback to real lookup
