@@ -273,11 +273,15 @@ async def test_authenticated_realm_create_concurrency(
 
     # Run all requests concurrently
     reps = await asyncio.gather(*coroutines, return_exceptions=True)
-    for rep in reps:
-        assert isinstance(
-            rep,
-            (
-                authenticated_cmds.latest.realm_create.RepOk,
-                authenticated_cmds.latest.realm_create.RepRealmAlreadyExists,
-            ),
-        )
+
+    # We expect 10 successful responses
+    ok_reps = [rep for rep in reps if rep == authenticated_cmds.latest.realm_create.RepOk()]
+    assert len(ok_reps) == 10
+
+    # We expect 10 bad key index or require greater timestamp responses
+    non_ok_reps = [
+        rep
+        for rep in reps
+        if isinstance(rep, authenticated_cmds.latest.realm_create.RepRealmAlreadyExists)
+    ]
+    assert len(non_ok_reps) == 10

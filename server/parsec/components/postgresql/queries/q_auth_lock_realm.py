@@ -29,6 +29,22 @@ class LockRealmWriteRealmData:
     realm_user_current_role: RealmRole
 
 
+# Two important notes about preventing race conditions during realm-related operations:
+# - 1. Selecting the `realm_topic` table with a `FOR SHARE` or `FOR UPDATE` clause
+#   allows us to effectively lock the access to the realm, for read and write operations
+#   respectively. More specifically, concurrent read-locking queries on the same realm
+#   will block until the ongoing write transaction is done. Similarly, concurrent write-locking
+#   queries on the same realm will block until all ongoing transactions are done (read or write).
+# - 2. It is tempting to use a `WITH` clause to have a single query that both
+#   locks the realm topic and fetches information about the realm. However, this
+#   would expose use to race conditions, as the `WITH` clause does not provide
+#   any guarantee on the order of execution of its subqueries. More generally,
+#   the order of execution of subqueries in an SQL query is not guaranteed, whether
+#   it is using a `WITH` clause, the `(SELECT ...)` syntax, or the `FROM ... JOIN ...`.
+#   This is why we have to split the `lock_realm_*` functions in two queries, one to
+#   lock the realm topic and one to fetch the information about the realm.
+
+
 _Q_LOCK_REALM_TEMPLATE = """
 SELECT realm._id AS realm_internal_id
 FROM realm
@@ -110,9 +126,14 @@ async def _do_lock_realm(
     realm_internal_id = await conn.fetchval(
         *lock_query(organization_internal_id=organization_internal_id, realm_id=realm_id)
     )
-    if realm_internal_id is None:
-        return LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND
-    assert isinstance(realm_internal_id, int)
+
+    match realm_internal_id:
+        case int() as realm_internal_id:
+            pass
+        case None:
+            return LockRealmWriteRealmBadOutcome.REALM_NOT_FOUND
+        case unknown:
+            assert False, repr(unknown)
 
     row = await conn.fetchrow(
         *_q_realm_info_after_lock(
