@@ -250,12 +250,21 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
             HandleItem::Workspace {
                 client: x_client, ..
             }
+            | HandleItem::WorkspaceHistory {
+                client: x_client, ..
+            }
             | HandleItem::Mountpoint {
                 client: x_client, ..
             } if *x_client == client_handle => FilterCloseHandle::Close,
+
             // If something is still starting, it will most likely won't go very far
             // (all workspace ops now are stopped), but we have to wait for it anyway
             HandleItem::StartingMountpoint {
+                client: x_client,
+                to_wake_on_done,
+                ..
+            }
+            | HandleItem::StartingWorkspaceHistory {
                 client: x_client,
                 to_wake_on_done,
                 ..

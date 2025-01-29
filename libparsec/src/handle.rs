@@ -52,6 +52,14 @@ pub(crate) enum HandleItem {
         #[cfg(not(target_arch = "wasm32"))]
         mountpoint: libparsec_platform_mountpoint::Mountpoint,
     },
+    StartingWorkspaceHistory {
+        client: Handle,
+        to_wake_on_done: Vec<Event>,
+    },
+    WorkspaceHistory {
+        client: Handle,
+        workspace_history_ops: Arc<libparsec_client::WorkspaceHistoryOps>,
+    },
 
     UserGreetInitial(libparsec_client::UserGreetInitialCtx),
     DeviceGreetInitial(libparsec_client::DeviceGreetInitialCtx),
