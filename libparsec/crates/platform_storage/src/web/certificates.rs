@@ -172,6 +172,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         let transaction = self.get_transaction();
 
         for ty in <CommonTopicArcCertificate as StorableCertificateTopic>::TYPES {
+            log::trace!("get_last_timestamps: fetch common certifs of type {ty}");
             let certifs = Certificate::get_values(
                 transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
@@ -191,6 +192,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         }
 
         for ty in <SequesterTopicArcCertificate as StorableCertificateTopic>::TYPES {
+            log::trace!("get_last_timestamps: fetch sequester certifs of type {ty}");
             let certifs = Certificate::get_values(
                 transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
@@ -210,6 +212,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         }
 
         for ty in <RealmTopicArcCertificate as StorableCertificateTopic>::TYPES {
+            log::trace!("get_last_timestamps: fetch realm certifs of type {ty}");
             let certifs = Certificate::get_values(
                 transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
@@ -237,6 +240,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         }
 
         for ty in <ShamirRecoveryTopicArcCertificate as StorableCertificateTopic>::TYPES {
+            log::trace!("get_last_timestamps: fetch shamir certifs of type {ty}");
             let certifs = Certificate::get_values(
                 transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
@@ -268,6 +272,17 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
     #[cfg(any(test, feature = "expose-test-methods"))]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         todo!()
+    }
+}
+
+impl Drop for PlatformCertificatesStorageForUpdateGuard<'_> {
+    fn drop(&mut self) {
+        if self.transaction.is_some() {
+            log::debug!(concat!(
+                stringify!(PlatformCertificatesStorageForUpdateGuard),
+                " Dropping transaction without commit"
+            ));
+        }
     }
 }
 

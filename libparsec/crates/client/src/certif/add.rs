@@ -180,6 +180,7 @@ pub(super) async fn add_certificates_batch(
         return Ok(MaybeRedactedSwitch::NoSwitch);
     }
 
+    log::debug!("Add certificates batch: as work to do");
     let send_event_on_invalid_certificate = |err: CertifAddCertificatesBatchError| {
         if let CertifAddCertificatesBatchError::InvalidCertificate(what) = err {
             let event = EventInvalidCertificate(what);
@@ -191,8 +192,10 @@ pub(super) async fn add_certificates_batch(
     };
 
     let initial_stored_last_timestamps = store.get_last_timestamps().await?;
+    log::debug!("Add certificates batch: last_timestamp={initial_stored_last_timestamps:?}");
     let storage_initially_empty = initial_stored_last_timestamps.is_empty();
     let initial_self_profile = store.get_current_self_profile().await?;
+    log::debug!("Add certificates batch: self_profile={initial_self_profile}");
 
     // If a certificate is invalid we exit without any further validation: the
     // write operation is going to be rolled back.

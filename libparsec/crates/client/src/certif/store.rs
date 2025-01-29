@@ -256,6 +256,9 @@ impl CertificatesStore {
             // be rollback on drop.
             match write_guard.storage.commit().await {
                 Err(commit_err) => {
+                    log::error!(
+                        "Failed to commit transaction for certificate storage: {commit_err}"
+                    );
                     reset_cache();
                     Err(commit_err.into())
                 }
@@ -265,6 +268,7 @@ impl CertificatesStore {
                 }
             }
         } else {
+            log::debug!("Operation failed for certificate storage, not commiting transaction");
             reset_cache();
             // Ok(Err(...))
             Ok(outcome)
@@ -469,6 +473,7 @@ macro_rules! impl_read_methods {
                     .lock()
                     .expect("Mutex is poisoned !");
                 if let ScalarCache::Present(last_timestamps) = &guard.per_topic_last_timestamps {
+                    log::trace!("Cached last_timestamps");
                     return Ok(last_timestamps.to_owned());
                 }
             }
