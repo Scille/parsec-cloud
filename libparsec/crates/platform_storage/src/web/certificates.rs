@@ -268,6 +268,7 @@ unsafe impl Send for PlatformCertificatesStorage {}
 
 impl PlatformCertificatesStorage {
     pub async fn no_populate_start(
+        #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))]
         data_base_dir: &Path,
         device: &LocalDevice,
     ) -> anyhow::Result<Self> {
@@ -276,7 +277,7 @@ impl PlatformCertificatesStorage {
         #[cfg(feature = "test-with-testbed")]
         let name = format!(
             "{}-{}-certificates",
-            data_base_dir.to_str().unwrap(),
+            data_base_dir.display(),
             device.device_id.hex()
         );
 
