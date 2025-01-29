@@ -381,6 +381,10 @@
             "description": "Dossier où est stockée la configuration de Parsec",
             "open": "Ouvrir dans l'explorateur"
         },
+        "skipViewers": {
+            "label": "Ne pas utiliser l'aperçu des fichiers",
+            "description": "Toujours ouvrir les fichiers dans l'application par défaut de votre système"
+        },
         "language": {
             "label": "Langue",
             "description": "Choisir la langue de l'application",

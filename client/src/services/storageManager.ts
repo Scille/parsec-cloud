@@ -44,7 +44,7 @@ export class StorageManager {
       confirmBeforeQuit: true,
       meteredConnection: false,
       unsyncFiles: false,
-      skipViewers: true,
+      skipViewers: false,
     };
   }
 
@@ -172,7 +172,7 @@ export class StorageManager {
       confirmBeforeQuit: data.confirmBeforeQuit !== undefined ? data.confirmBeforeQuit : StorageManager.DEFAULT_CONFIG.confirmBeforeQuit,
       meteredConnection: data.meteredConnection !== undefined ? data.synchroWifiOnly : StorageManager.DEFAULT_CONFIG.meteredConnection,
       unsyncFiles: data.unsyncFiles !== undefined ? data.unsyncFiles : StorageManager.DEFAULT_CONFIG.unsyncFiles,
-      skipViewers: true, // data.skipViewers !== undefined ? data.skipViewers : StorageManager.DEFAULT_CONFIG.skipViewers,
+      skipViewers: data.skipViewers !== undefined ? data.skipViewers : StorageManager.DEFAULT_CONFIG.skipViewers,
     };
     return config;
   }

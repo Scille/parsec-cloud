@@ -13,6 +13,17 @@ interface OpenPathOptions {
   atTime?: DateTime;
 }
 
+// Uncomment here to enable file viewers on desktop; should be removed when all file viewers are implemented
+const ENABLED_FILE_VIEWERS = [
+  FileContentType.Audio,
+  FileContentType.Image,
+  FileContentType.PdfDocument,
+  FileContentType.Document,
+  // FileContentType.Video,
+  // FileContentType.Spreadsheet,
+  // FileContentType.Text,
+];
+
 const OPEN_FILE_SIZE_LIMIT = 15_000_000;
 
 async function openWithSystem(
@@ -102,7 +113,7 @@ async function openPath(
   const contentType = await detectFileContentType(workspaceHandle, entry.path, options.atTime);
 
   try {
-    if (!contentType || contentType.type === FileContentType.Unknown) {
+    if (!contentType || contentType.type === FileContentType.Unknown || (isDesktop() && !ENABLED_FILE_VIEWERS.includes(contentType.type))) {
       await openWithSystem(workspaceHandle, entry, informationManager);
     } else {
       if ((entry as any).size > OPEN_FILE_SIZE_LIMIT) {
