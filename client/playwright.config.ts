@@ -38,8 +38,6 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   testIgnore: [
-    '**/device_greet.spec.ts',
-    '**/device_join_organization.spec.ts',
     '**/workspace_sharing.spec.ts',
     '**/workspace_history.spec.ts',
     '**/user_list.spec.ts',
