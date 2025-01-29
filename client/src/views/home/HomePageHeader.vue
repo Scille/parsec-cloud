@@ -3,7 +3,7 @@
 <template>
   <div class="topbar">
     <ion-button
-      v-if="updateAvailability !== null && !showBackButton"
+      v-if="updateAvailability !== null"
       class="update-button form-label"
       id="trigger-update-button"
       fill="clear"
@@ -40,7 +40,6 @@
           class="topbar-buttons__item body"
           fill="clear"
           @click="$emit('aboutClick')"
-          v-if="!showBackButton"
         >
           <ion-icon :icon="informationCircle" />
         </ion-button>
@@ -71,7 +70,9 @@
           class="topbar-buttons__item"
           id="trigger-customer-area-button"
           @click="$emit('customerAreaClick')"
+          v-if="!showBackButton"
         >
+          <ion-icon :icon="personCircle" />
           {{ $msTranslate('HomePage.topbar.customerArea') }}
         </ion-button>
       </ion-buttons>
@@ -81,7 +82,7 @@
 
 <script setup lang="ts">
 import { IonButton, IonButtons, IonIcon, modalController, IonText } from '@ionic/vue';
-import { arrowBack, chatbubbles, cog, informationCircle, documentText } from 'ionicons/icons';
+import { arrowBack, chatbubbles, cog, informationCircle, documentText, personCircle } from 'ionicons/icons';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Translatable, MsModalResult } from 'megashark-lib';
@@ -188,7 +189,7 @@ defineEmits<{
 
 .topbar-left {
   display: flex;
-  margin: auto;
+  align-items: center;
   width: 100%;
   gap: 1.5rem;
 
@@ -197,11 +198,14 @@ defineEmits<{
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin: 0;
+    margin: 0.25rem 0;
   }
 
   &__back-button {
     color: var(--parsec-color-light-secondary-soft-text);
+    position: relative;
+    --overflow: visible;
+    margin: 1px 0;
 
     &::part(native) {
       background: none;
@@ -212,14 +216,16 @@ defineEmits<{
 
     ion-icon {
       margin-right: 0.5rem;
-      transition: margin-right 150ms linear;
+      position: absolute;
+      left: -1.75rem;
+      transition: left 150ms linear;
     }
 
     &:hover {
       border-color: transparent;
 
       ion-icon {
-        margin-right: 0.75rem;
+        left: -2.25rem;
       }
     }
   }
@@ -229,6 +235,7 @@ defineEmits<{
   display: flex;
   justify-content: flex-end;
   width: fit-content;
+  margin-left: auto;
 }
 
 .topbar-buttons {
@@ -263,10 +270,16 @@ defineEmits<{
   }
 
   &#trigger-customer-area-button {
-    outline: 1px solid var(--parsec-color-light-secondary-text);
+    background: var(--parsec-color-light-primary-50);
+    color: var(--parsec-color-light-primary-700);
+    border: 1px solid var(--parsec-color-light-primary-100);
+
+    ion-icon {
+      margin-right: 0.5rem;
+    }
 
     &:hover {
-      outline: none;
+      color: var(--parsec-color-light-primary-600);
     }
   }
 }

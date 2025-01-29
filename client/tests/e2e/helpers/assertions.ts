@@ -9,12 +9,18 @@ interface AssertReturnType {
 
 export const expect = baseExpect.extend({
   async toHaveDisabledAttribute(locator: Locator): Promise<AssertReturnType> {
-    const attr1 = await locator.getAttribute('disabled');
-    const attr2 = await locator.getAttribute('aria-disabled');
-    return {
-      message: () => 'failed',
-      pass: attr1 !== null || (attr2 !== null && attr2 === 'true'),
-    };
+    try {
+      await baseExpect(locator).toHaveAttribute('disabled');
+      return {
+        message: () => '',
+        pass: true,
+      };
+    } catch (error: any) {
+      return {
+        message: () => 'Does not have disabled attribute',
+        pass: false,
+      };
+    }
   },
 
   async toHaveTheClass(locator: Locator, className: string): Promise<AssertReturnType> {

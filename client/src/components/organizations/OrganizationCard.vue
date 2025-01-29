@@ -135,7 +135,6 @@ function getLastLoginText(): string {
     flex-shrink: 0;
     gap: 0.5rem;
     width: 4rem;
-    height: 100%;
     z-index: 1;
     background: var(--parsec-color-light-gradient-background);
     position: relative;

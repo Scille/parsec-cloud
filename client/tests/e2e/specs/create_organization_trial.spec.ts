@@ -49,7 +49,7 @@ msTest('Go through trial org creation process', async ({ home }) => {
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
   await expect(userNext).toHaveDisabledAttribute();
   await userInfoContainer.locator('.checkbox').locator('.native-wrapper').click();
-  await expect(userNext).not.toHaveDisabledAttribute();
+  await expect(userNext).not.toBeDisabled();
 
   // Try cancelling
   await cancelAndResume(home, userInfoContainer);
@@ -63,7 +63,7 @@ msTest('Go through trial org creation process', async ({ home }) => {
 
   // And correct name again
   await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
-  await expect(userNext).not.toHaveDisabledAttribute();
+  await expect(userNext).not.toBeDisabled();
   await expect(userNameError).toBeHidden();
 
   // Now with bad email
@@ -75,7 +75,7 @@ msTest('Go through trial org creation process', async ({ home }) => {
 
   // Correct email again
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
-  await expect(userNext).not.toHaveDisabledAttribute();
+  await expect(userNext).not.toBeDisabled();
   await expect(userNameError).toBeHidden();
 
   await userNext.click();
@@ -86,14 +86,14 @@ msTest('Go through trial org creation process', async ({ home }) => {
   await expect(userInfoContainer).toBeHidden();
   await expect(authContainer).toBeVisible();
   await expect(authPrevious).toBeVisible();
-  await expect(authPrevious).not.toHaveDisabledAttribute();
+  await expect(authPrevious).not.toBeDisabled();
   await expect(authNext).toBeVisible();
   await expect(authNext).toHaveDisabledAttribute();
   await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await expect(authNext).not.toHaveDisabledAttribute();
+  await expect(authNext).not.toBeDisabled();
 
   // Try cancelling
   await cancelAndResume(home, authContainer);
@@ -104,7 +104,7 @@ msTest('Go through trial org creation process', async ({ home }) => {
 
   // Back to complicated password
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
-  await expect(authNext).not.toHaveDisabledAttribute();
+  await expect(authNext).not.toBeDisabled();
 
   // Check does not match
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), `${DEFAULT_USER_INFORMATION.password}-extra`);
@@ -115,7 +115,7 @@ msTest('Go through trial org creation process', async ({ home }) => {
 
   // Back to matching password
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await expect(authNext).not.toHaveDisabledAttribute();
+  await expect(authNext).not.toBeDisabled();
   await expect(matchError).toBeHidden();
 
   await authNext.click();

@@ -49,10 +49,6 @@
           :disabled="password.length == 0 || loginInProgress === true"
           class="login-button"
         >
-          <ion-icon
-            slot="start"
-            :icon="logIn"
-          />
           {{ $msTranslate('HomePage.organizationLogin.login') }}
         </ion-button>
         <ms-spinner
@@ -71,8 +67,7 @@
 import { MsInput, MsPasswordInput, MsSpinner } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AccessStrategy, AvailableDevice, ClientStartError, ClientStartErrorTag, DeviceAccessStrategyPassword } from '@/parsec';
-import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonIcon, IonTitle } from '@ionic/vue';
-import { logIn } from 'ionicons/icons';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonTitle } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
@@ -161,6 +156,7 @@ defineExpose({
     gap: 1.5rem;
     width: 100%;
     transition: box-shadow 150ms ease-in-out;
+    overflow-y: auto;
 
     &:has(.has-focus) {
       box-shadow: var(--parsec-shadow-light);
