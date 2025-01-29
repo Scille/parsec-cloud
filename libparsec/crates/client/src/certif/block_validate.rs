@@ -12,6 +12,7 @@ use super::{
     store::CertifForReadWithRequirementsError, CertificateOps, InvalidCertificateError,
     InvalidKeysBundleError,
 };
+
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidBlockAccessError {
     #[error("Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): hash digest mismatch !")]
