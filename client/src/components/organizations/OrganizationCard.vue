@@ -6,44 +6,43 @@
     :class="orgNameOnly ? 'header-only' : ''"
   >
     <div class="organization-card-header">
-      <ion-avatar class="organization-card-header__avatar body-lg">
-        <span v-if="!isTrialOrg">{{ device.organizationId?.substring(0, 2) }}</span>
-        <ms-image
-          v-else
-          :image="LogoIconGradient"
-          class="organization-avatar-logo"
-        />
-      </ion-avatar>
-      <ion-card-title class="organization-card-header__title title-h4">{{ device.organizationId }}</ion-card-title>
+      <ion-text
+        v-if="!isTrialOrg"
+        class="organization-card-header__initials subtitles-normal"
+      >
+        {{ device.organizationId?.substring(0, 2) }}
+      </ion-text>
+      <ms-image
+        v-else
+        :image="LogoIconGradient"
+        class="organization-card-header__logo"
+      />
     </div>
-    <ion-card-content
-      v-if="!orgNameOnly"
-      class="organization-card-content"
-    >
-      <div class="organization-card-login">
-        <ion-text class="organization-card-login__name body">{{ device.humanHandle.label }}</ion-text>
+    <ion-card-content class="organization-card-content">
+      <div class="organization-card-content-text">
+        <ion-text class="organization-name title-h4">{{ device.organizationId }}</ion-text>
+        <ion-text
+          class="organization-connected body-sm"
+          v-show="isDeviceLoggedIn(device)"
+        >
+          {{ $msTranslate('HomePage.organizationList.loggedIn') }}
+        </ion-text>
+      </div>
+      <div class="organization-card-content-login">
         <div
           v-show="!isDeviceLoggedIn(device)"
-          class="organization-card-login-time"
+          v-if="!orgNameOnly"
+          class="login-time"
         >
           <ion-icon
             :icon="time"
-            class="organization-card-login-time__icon"
+            class="login-time__icon"
           />
-          <ion-text class="organization-card-login-time__text body-sm">
+          <ion-text class="login-time__text body-sm">
             {{ getLastLoginText() }}
           </ion-text>
         </div>
-        <div
-          v-show="isDeviceLoggedIn(device)"
-          class="organization-card-login-time connected"
-        >
-          <ion-icon
-            :icon="ellipse"
-            class="success"
-          />
-          <ion-text class="body-sm">{{ $msTranslate('HomePage.organizationList.loggedIn') }}</ion-text>
-        </div>
+        <ion-text class="login-name body">({{ device.humanHandle.label }})</ion-text>
       </div>
       <!-- trial expiration badge -->
       <ion-text
@@ -54,14 +53,19 @@
         {{ $msTranslate(formatExpirationTime(expirationDuration)) }}
       </ion-text>
     </ion-card-content>
+    <img
+      src="@/assets/images/arrow-forward-circle.svg"
+      class="organization-card-icon"
+      v-if="!orgNameOnly"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { AvailableDevice, isDeviceLoggedIn } from '@/parsec';
-import { IonAvatar, IonCardTitle, IonText, IonIcon, IonCardContent } from '@ionic/vue';
+import { IonText, IonIcon, IonCardContent } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
-import { ellipse, time } from 'ionicons/icons';
+import { time } from 'ionicons/icons';
 import { MsImage, LogoIconGradient, formatTimeSince, I18n } from 'megashark-lib';
 import { formatExpirationTime, isExpired, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
 import { Duration, DateTime } from 'luxon';
@@ -94,124 +98,141 @@ function getLastLoginText(): string {
 
 <style lang="scss" scoped>
 .organization-card {
-  background: var(--parsec-color-light-secondary-background);
-  transition: box-shadow 150ms linear;
+  background: var(--parsec-color-light-secondary-premiere);
   border: 1px solid var(--parsec-color-light-secondary-medium);
-  box-shadow: none;
   border-radius: var(--parsec-radius-12);
-  padding: 0.75rem;
   width: 100%;
-  margin: 0;
+  height: 100%;
+  min-height: 5rem;
+  padding-right: 1.5rem;
   display: flex;
-  flex-direction: column;
   gap: 0.75rem;
   user-select: none;
   box-shadow: none;
+  overflow: hidden;
   cursor: pointer;
+  transition: all 150ms linear;
 
   // when using the card as a header only
   &.header-only {
     padding: 0;
     box-shadow: none;
     border: none;
-    background: none;
+    background: var(--parsec-color-light-secondary-background);
     cursor: inherit;
   }
 
   &:hover:not(.header-only) {
     box-shadow: var(--parsec-shadow-light);
+    padding-right: 1rem;
+    border: 1px solid var(--parsec-color-light-primary-600);
   }
 
   &-header {
     display: flex;
+    justify-content: center;
     align-items: center;
+    flex-shrink: 0;
     gap: 0.5rem;
+    width: 4rem;
+    height: 100%;
     z-index: 1;
-    overflow: hidden;
+    background: var(--parsec-color-light-gradient-background);
+    position: relative;
 
-    &__avatar {
-      background-color: var(--parsec-color-light-secondary-white);
-      color: var(--parsec-color-light-primary-600);
-      width: 2.5rem;
-      height: 2.5rem;
-      border-radius: var(--parsec-radius-12);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      position: relative;
-      z-index: 1;
-      border: 1px solid var(--parsec-color-light-secondary-medium);
-
-      .organization-avatar-logo {
-        width: 1.5rem;
-      }
+    &::before {
+      content: '';
+      position: absolute;
+      width: 4rem;
+      height: 5rem;
+      top: 0;
+      right: 0;
+      background-image: url('@/assets/images/background/organization-shapes.svg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: top left;
     }
 
-    &__title {
-      display: block;
-      flex-direction: column;
-      gap: 0.375rem;
-      color: var(--parsec-color-light-primary-700);
+    &__initials {
+      color: var(--parsec-color-light-secondary-white);
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+    }
+
+    &__logo {
+      width: 1.5rem;
+      flex-shrink: 0;
     }
   }
 
   &-content {
     display: flex;
     flex-direction: column;
+    justify-content: center;
     gap: 0.5rem;
     padding: 0;
-  }
-}
+    gap: 0.25rem;
+    width: 100%;
+    overflow: hidden;
 
-.organization-card-login {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-
-  &__name {
-    color: var(--parsec-color-light-secondary-hard-grey);
-  }
-
-  &-time {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0;
-
-    &__icon {
-      color: var(--parsec-color-light-secondary-light);
-      font-size: 1.125rem;
-    }
-
-    &.connected {
+    &-text {
       display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--parsec-color-light-success-700);
+      gap: 0.375rem;
+      overflow: hidden;
 
-      .success {
+      .organization-name {
+        color: var(--parsec-color-light-secondary-text);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .organization-connected {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         color: var(--parsec-color-light-success-700);
-        font-size: 0.675rem;
       }
     }
+
+    &-login {
+      display: flex;
+      gap: 0.5rem;
+
+      .login-name {
+        color: var(--parsec-color-light-secondary-hard-grey);
+      }
+
+      .login-time {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0;
+
+        &__icon {
+          color: var(--parsec-color-light-secondary-light);
+          font-size: 1rem;
+        }
+      }
+    }
+  }
+
+  &-icon {
+    width: 1.5rem;
+    margin-left: auto;
+    flex-shrink: 0;
   }
 }
 
 .organization-card-expiration {
   border-radius: var(--parsec-radius-12);
-  padding: 0.25rem 0.5rem;
-  position: absolute;
-  bottom: 0;
-  right: 0;
+  padding: 0.1875rem 0.375rem;
   background: var(--parsec-color-light-primary-700);
   color: var(--parsec-color-light-secondary-white);
 
   &.expired {
-    background: var(--parsec-color-light-secondary-grey);
+    background: var(--parsec-color-light-secondary-text);
     color: var(--parsec-color-light-secondary-white);
   }
 }
