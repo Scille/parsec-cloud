@@ -117,10 +117,11 @@
                   </ion-button>
                 </settings-option>
 
+                <!-- skip file viewers -->
                 <settings-option
-                  v-if="isDesktop() && false"
-                  title="DONT USE VIEWERS"
-                  description="ALWAYS OPEN FILES WITH DEFAULT DESKTOP APP"
+                  v-if="isDesktop()"
+                  title="SettingsModal.skipViewers.label"
+                  description="SettingsModal.skipViewers.description"
                 >
                   <ion-toggle v-model="config.skipViewers" />
                 </settings-option>

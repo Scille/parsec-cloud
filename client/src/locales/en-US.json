@@ -381,6 +381,10 @@
             "description": "Folder where Parsec configuration is stored",
             "open": "Open in explorer"
         },
+        "skipViewers": {
+            "label": "Do not use file preview",
+            "description": "Always open files in your system's default application"
+        },
         "language": {
             "label": "Language",
             "description": "Choose application language",
