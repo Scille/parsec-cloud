@@ -120,7 +120,7 @@
         </div>
       </div>
       <div class="recovery-devices">
-        {{ $msTranslate('HomePage.lostDevice') }}
+        <ion-text class="body">{{ $msTranslate('HomePage.lostDevice') }}</ion-text>
         <ion-button
           @click="$emit('recoverClick')"
           fill="clear"
@@ -151,13 +151,7 @@ import { Routes } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
-import {
-  IonButton,
-  IonIcon,
-  IonText,
-  IonTitle,
-  popoverController,
-} from '@ionic/vue';
+import { IonButton, IonIcon, IonText, IonTitle, popoverController } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
@@ -394,6 +388,11 @@ const filteredDevices = computed(() => {
     width: 100%;
     max-width: 45rem;
 
+    #search-input-organization:focus-within {
+      outline: none;
+      border: 1px solid var(--parsec-color-light-primary-300);
+    }
+
     #organization-filter-select {
       margin-left: auto;
       margin-right: 1rem;
@@ -433,10 +432,13 @@ const filteredDevices = computed(() => {
 
 .no-devices {
   max-width: 45rem;
+  background: var(--parsec-color-light-secondary-white);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  border-radius: var(--parsec-radius-12);
+  margin-bottom: 0.5rem;
   gap: 0;
   padding: 0;
-  overflow: hidden;
-  margin: auto;
+  overflow: auto;
 
   .create-organization {
     display: flex;

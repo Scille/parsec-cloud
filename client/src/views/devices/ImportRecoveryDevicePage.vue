@@ -90,7 +90,7 @@
         </div>
         <div class="next-button">
           <ion-button
-            slot="start"
+            size="large"
             id="to-password-change-btn"
             @click="goToPasswordChange()"
             :disabled="!isSecretKeyValid || !recoveryFile"
@@ -301,6 +301,7 @@ async function onLoginClick(): Promise<void> {
   flex-direction: column;
   padding: 0;
   gap: 2rem;
+  overflow: auto;
 
   .recovery-list {
     display: flex;

@@ -5,7 +5,7 @@ import { answerQuestion, expect, fillIonInput, msTest, sortBy } from '@tests/e2e
 const USER_NAMES = ['(Alicey McAliceFace)', '(Boby McBobFace)', '(Malloryy McMalloryFace)'];
 
 msTest('Home default state with devices', async ({ home }) => {
-  await expect(home.locator('.organization-title')).toHaveText('Access to your organizations');
+  await expect(home.locator('.organization-title')).toHaveText('Access your organizations');
   await expect(home.locator('#organization-filter-select')).toHaveText('Organization name');
   await expect(home.locator('#create-organization-button')).toHaveText('Create or join');
   await expect(home.locator('#search-input-organization')).toBeVisible();
@@ -152,7 +152,7 @@ msTest('Logout and go back to devices list', async ({ home }) => {
   const buttons = home.locator('.profile-header-popover').locator('.main-list').getByRole('listitem');
   await buttons.nth(2).click();
   await answerQuestion(home, true);
-  await expect(home.locator('.organization-title')).toHaveText('Access to your organizations');
+  await expect(home.locator('.organization-title')).toHaveText('Access your organizations');
   await expect(home).toBeHomePage();
 });
 

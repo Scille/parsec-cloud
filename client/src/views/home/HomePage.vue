@@ -5,16 +5,15 @@
     <ion-content :fullscreen="true">
       <div id="page">
         <!-- sidebar -->
-        <home-page-sidebar />
-        <!-- organization list -->
-        <!-- organization -->
+        <home-page-sidebar class="homepage-sidebar" />
+        <!-- main content -->
         <div
-          class="content"
+          class="homepage-content"
           :class="{ 'login-fullscreen': state === HomePageState.Login }"
         >
           <!-- topbar -->
           <home-page-header
-            class="header"
+            class="homepage-header"
             @settings-click="openSettingsModal"
             @about-click="openAboutModal"
             @back-click="backToPreviousPage"
@@ -554,7 +553,30 @@ function getBackButtonTitle(): string {
   background: var(--parsec-color-light-secondary-inversed-contrast);
   z-index: -10;
 
-  .content {
+  // Should be edited later with responsive
+  .homepage-sidebar {
+    @media screen and (max-width: 1500px) {
+      max-width: 30rem;
+
+      &:before {
+        height: 560px;
+        max-height: 50vh;
+      }
+    }
+    @media screen and (max-width: 764px) {
+      display: none;
+    }
+  }
+
+  // Should be edited later with responsive
+  .homepage-header {
+    @media screen and (max-width: 1200px) {
+      flex-direction: column-reverse;
+      gap: 1rem;
+    }
+  }
+
+  .homepage-content {
     width: 100%;
     height: 100%;
     display: flex;
@@ -564,22 +586,26 @@ function getBackButtonTitle(): string {
     max-width: var(--parsec-max-content-width);
     padding: 6.26rem 5rem 0;
 
-    &::after {
-      content: '';
-      position: absolute;
-      height: 100%;
-      width: 100%;
-      max-width: 317px;
-      max-height: 326px;
-      bottom: 0;
-      right: 0;
-      background-image: url('@/assets/images/background/blob-shape.svg');
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: top center;
-      opacity: 0.5;
-      filter: blur(250px);
+    @media screen and (max-width: 764px) {
+      padding: 4.26rem 1.5rem 0;
     }
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    max-width: 500px;
+    max-height: 500px;
+    bottom: 0;
+    right: 0;
+    background-image: url('@/assets/images/background/blob-shape.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: top center;
+    opacity: 0.1;
+    filter: blur(600px);
   }
 }
 </style>

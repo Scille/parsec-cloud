@@ -50,7 +50,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await expect(bmsNext).toHaveDisabledAttribute();
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await expect(bmsNext).not.toHaveDisabledAttribute();
+  await expect(bmsNext).not.toBeDisabled();
 
   await cancelAndResume(home, bmsContainer);
   await bmsNext.click();
@@ -74,7 +74,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
   // Back to good name
   await fillIonInput(orgNameContainer.locator('ion-input'), DEFAULT_ORGANIZATION_INFORMATION.name);
   await expect(orgNameError).toBeHidden();
-  await expect(orgNameNext).not.toHaveDisabledAttribute();
+  await expect(orgNameNext).not.toBeDisabled();
 
   await orgNameNext.click();
 
@@ -86,13 +86,13 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(authContainer).toBeVisible();
   await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
   await expect(authPrevious).toBeVisible();
-  await expect(authPrevious).not.toHaveDisabledAttribute();
+  await expect(authPrevious).not.toBeDisabled();
   await expect(authNext).toBeVisible();
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await expect(authNext).not.toHaveDisabledAttribute();
+  await expect(authNext).not.toBeDisabled();
 
   // Try cancelling
   await cancelAndResume(home, authContainer);
@@ -103,7 +103,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
 
   // Back to complicated password
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
-  await expect(authNext).not.toHaveDisabledAttribute();
+  await expect(authNext).not.toBeDisabled();
 
   // Check does not match
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), `${DEFAULT_USER_INFORMATION.password}-extra`);
@@ -114,7 +114,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
 
   // Back to matching password
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await expect(authNext).not.toHaveDisabledAttribute();
+  await expect(authNext).not.toBeDisabled();
   await expect(matchError).toBeHidden();
 
   await authNext.click();
@@ -129,9 +129,9 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(summaryContainer).toBeVisible();
   await expect(summaryContainer.locator('.modal-header-title__text')).toHaveText('Overview of your organization');
   await expect(summaryPrevious).toBeVisible();
-  await expect(summaryPrevious).not.toHaveDisabledAttribute();
+  await expect(summaryPrevious).not.toBeDisabled();
   await expect(summaryNext).toBeVisible();
-  await expect(summaryNext).not.toHaveDisabledAttribute();
+  await expect(summaryNext).not.toBeDisabled();
   await expect(summaryContainer.locator('.tos')).toHaveText('By using Parsec, I accept the Terms and Conditions and Privacy Policy');
 
   // Only the authentication and org name fields can be updated
@@ -252,7 +252,7 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await expect(bmsNext).toHaveDisabledAttribute();
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await expect(bmsNext).not.toHaveDisabledAttribute();
+  await expect(bmsNext).not.toBeDisabled();
 
   await bmsNext.click();
 
@@ -268,7 +268,7 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await expect(authNext).not.toHaveDisabledAttribute();
+  await expect(authNext).not.toBeDisabled();
 
   await authNext.click();
 
@@ -281,9 +281,9 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
   await expect(summaryContainer).toBeVisible();
   await expect(summaryContainer.locator('.modal-header-title__text')).toHaveText('Overview of your organization');
   await expect(summaryPrevious).toBeVisible();
-  await expect(summaryPrevious).not.toHaveDisabledAttribute();
+  await expect(summaryPrevious).not.toBeDisabled();
   await expect(summaryNext).toBeVisible();
-  await expect(summaryNext).not.toHaveDisabledAttribute();
+  await expect(summaryNext).not.toBeDisabled();
 
   // Only the authentication field can be updated
   await expect(summaryEditButtons.nth(0)).not.toBeVisible();
