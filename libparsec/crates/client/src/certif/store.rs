@@ -291,7 +291,7 @@ impl CertificatesStore {
             Some(storage) => storage,
         };
 
-        let mut write_guard = CertificatesStoreReadGuard {
+        let mut read_guard = CertificatesStoreReadGuard {
             store: self,
             storage,
         };
@@ -305,9 +305,9 @@ impl CertificatesStore {
         // of a Future returned by a closure depends on the closure parameter if
         // they are references (see `for_write` code).
         // TODO: Remove this once async closure are available
-        let static_write_guard_mut_ref = unsafe { pretend_static(&mut write_guard) };
+        let static_read_guard_mut_ref = unsafe { pretend_static(&mut read_guard) };
 
-        let fut = cb(static_write_guard_mut_ref);
+        let fut = cb(static_read_guard_mut_ref);
         let outcome = fut.await;
 
         Ok(outcome)
