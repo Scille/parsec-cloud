@@ -17,10 +17,11 @@ import {
   UserClaimInProgress1Info,
   UserClaimInProgress2Info,
   UserClaimInProgress3Info,
+  UserOnlineStatus,
 } from '@/parsec';
 import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
-import { libparsec } from '@/plugins/libparsec';
+import { InviteInfoInvitationCreatedByTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 export class UserClaim {
@@ -85,8 +86,18 @@ export class UserClaim {
         if (result.value.tag !== AnyClaimRetrievedInfoTag.User) {
           throw Error('Unexpected tag');
         }
-        this.handle = result.value.handle;
-        this.greeter = result.value.greeterHumanHandle;
+        let greeter = result.value.userClaimInitialInfos[0];
+
+        if (result.value.createdBy.tag === InviteInfoInvitationCreatedByTag.User) {
+          for (const claimInfo of result.value.userClaimInitialInfos) {
+            if (claimInfo.greeterUserId === result.value.createdBy.userId) {
+              greeter = claimInfo;
+              break;
+            }
+          }
+        }
+        this.handle = greeter.handle;
+        this.greeter = greeter.greeterHumanHandle;
       }
       return result as Result<AnyClaimRetrievedInfoUser, ClaimerRetrieveInfoError>;
     } else {
@@ -101,14 +112,29 @@ export class UserClaim {
         ok: true,
         value: {
           tag: AnyClaimRetrievedInfoTag.User,
-          handle: DEFAULT_HANDLE,
           claimerEmail: 'shadowheart@swordcoast.faerun',
-          greeterUserId: '1234',
-          greeterHumanHandle: {
-            email: 'gale@waterdeep.faerun',
-            // cspell:disable-next-line
-            label: 'Gale Dekarios',
+          createdBy: {
+            tag: InviteInfoInvitationCreatedByTag.User,
+            userId: 'xxx',
+            humanHandle: {
+              email: 'gale@waterdeep.faerun',
+              // cspell:disable-next-line
+              label: 'Gale Dekarios',
+            },
           },
+          userClaimInitialInfos: [
+            {
+              handle: DEFAULT_HANDLE,
+              greeterUserId: '1234',
+              greeterHumanHandle: {
+                email: 'gale@waterdeep.faerun',
+                // cspell:disable-next-line
+                label: 'Gale Dekarios',
+              },
+              lastGreetingAttemptJoinedOn: null,
+              onlineStatus: UserOnlineStatus.Unknown,
+            },
+          ],
         },
       };
     }

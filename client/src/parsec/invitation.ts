@@ -1,29 +1,42 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { needsMocks } from '@/parsec/environment';
+import { getClientInfo } from '@/parsec/login';
 import { getParsecHandle } from '@/parsec/routing';
 import {
   ClientCancelInvitationError,
+  ClientInfo,
   ClientNewDeviceInvitationError,
   ClientNewUserInvitationError,
   ClientNewUserInvitationErrorTag,
   InvitationEmailSentStatus,
   InvitationStatus,
   InvitationToken,
+  InviteListInvitationCreatedByTag,
+  InviteListItem,
+  InviteListItemTag,
   ListInvitationsError,
   NewInvitationInfo,
   Result,
   UserInvitation,
 } from '@/parsec/types';
 import { listUsers } from '@/parsec/user';
-import { InviteListInvitationCreatedByTag, InviteListItem, InviteListItemTag, libparsec } from '@/plugins/libparsec';
+import { libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 export async function inviteUser(email: string): Promise<Result<NewInvitationInfo, ClientNewUserInvitationError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
-    return await libparsec.clientNewUserInvitation(handle, email, true);
+    const allInvitesResult = await listUserInvitations({ skipOthers: false });
+    const result = await libparsec.clientNewUserInvitation(handle, email, true);
+    if (!result.ok || !allInvitesResult.ok) {
+      return result;
+    }
+    if (allInvitesResult.value.find((inv) => inv.token === result.value.token) !== undefined) {
+      return { ok: false, error: { tag: ClientNewUserInvitationErrorTag.AlreadyMember, error: 'invitation_exists' } };
+    }
+    return result;
   } else {
     const usersResult = await listUsers(true);
     if (usersResult.ok) {
@@ -68,8 +81,9 @@ export async function inviteDevice(
 export async function listUserInvitations(options?: {
   includeCancelled?: boolean;
   includeFinished?: boolean;
+  skipOthers?: boolean;
 }): Promise<Result<Array<UserInvitation>, ListInvitationsError>> {
-  function shouldIncludeInvitation(invite: InviteListItem): boolean {
+  function shouldIncludeInvitation(invite: InviteListItem, clientInfo?: ClientInfo): boolean {
     if (invite.tag !== InviteListItemTag.User) {
       return false;
     }
@@ -79,10 +93,22 @@ export async function listUserInvitations(options?: {
     if (invite.status === InvitationStatus.Finished && (!options || !options.includeFinished)) {
       return false;
     }
+    if (!clientInfo) {
+      return true;
+    }
+    if (options && options.skipOthers) {
+      if (invite.createdBy.tag !== InviteListInvitationCreatedByTag.User) {
+        return false;
+      }
+      if (invite.createdBy.userId !== clientInfo.userId) {
+        return false;
+      }
+    }
     return true;
   }
 
   const handle = getParsecHandle();
+  const infoResult = await getClientInfo();
 
   if (handle !== null && !needsMocks()) {
     const result = await libparsec.clientListInvitations(handle);
@@ -92,7 +118,9 @@ export async function listUserInvitations(options?: {
     }
 
     // No need to add device invitations
-    result.value = result.value.filter((item: InviteListItem) => shouldIncludeInvitation(item));
+    result.value = result.value.filter((item: InviteListItem) =>
+      shouldIncludeInvitation(item, infoResult.ok ? infoResult.value : undefined),
+    );
     // Convert InviteListItemUser to UserInvitation
     result.value = result.value.map((item) => {
       item.createdOn = DateTime.fromSeconds(item.createdOn as any as number);

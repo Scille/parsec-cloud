@@ -1075,6 +1075,7 @@
             "inviteSuccessMailSent": "Une invitation a été envoyée à {email}.",
             "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé. Veuillez transmettre le lien d'invitation manuellement.",
             "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par un autre utilisateur dans cette organisation.",
+            "inviteFailedAlreadyInvited": "Une invitation a déjà été créée par un autre administrateur pour l'email {email}.",
             "inviteFailedOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
             "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes à rejoindre l'organisation.",
             "inviteFailedUnknown": "Une erreur imprévue est survenue (raison : {reason}).",

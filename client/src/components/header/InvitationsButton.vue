@@ -49,7 +49,7 @@ onUnmounted(async () => {
 });
 
 async function updateInvitations(): Promise<void> {
-  const result = await listUserInvitations();
+  const result = await listUserInvitations({ skipOthers: true });
   if (result.ok) {
     invitations.value = result.value;
   }
