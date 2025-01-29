@@ -33,7 +33,8 @@ unsafe impl Send for PlatformWorkspaceStorage {}
 
 impl PlatformWorkspaceStorage {
     pub async fn no_populate_start(
-        _data_base_dir: &Path,
+        #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))]
+        data_base_dir: &Path,
         device: &LocalDevice,
         realm_id: VlobID,
         cache_max_blocks: u64,
@@ -43,7 +44,7 @@ impl PlatformWorkspaceStorage {
         #[cfg(feature = "test-with-testbed")]
         let name = format!(
             "{}-{}-{}-workspace",
-            _data_base_dir.to_str().unwrap(),
+            data_base_dir.display(),
             device.device_id.hex(),
             realm_id.hex()
         );
