@@ -507,7 +507,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
 
     wksp2_certificates.append((certif_timestamp, certif))
 
-    # TODO: add RealmArchiving certificate once implemented !
+    # TODO #6092: add RealmArchiving certificate once implemented !
 
     # 1) Get all certificates
 

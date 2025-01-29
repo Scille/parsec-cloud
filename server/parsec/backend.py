@@ -340,7 +340,7 @@ class Backend:
                 )
                 assert isinstance(outcome, RealmKeyRotationCertificate)
             elif isinstance(event, testbed.TestbedEventArchiveRealm):
-                # TODO: Realm archiving not implemented yet !
+                # TODO #6092: support archiving here !
                 raise NotImplementedError
             elif isinstance(event, testbed.TestbedEventNewShamirRecovery):
                 outcome = await self.shamir.setup(
