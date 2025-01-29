@@ -12,24 +12,37 @@
       </ms-report-text>
       <ms-spinner v-show="loading" />
       <div
-        ref="spreadsheet"
+        class="spreadsheet-container"
         v-show="!loading"
-        class="spreadsheet-content"
-        v-html="htmlContent"
-      />
+      >
+        <div
+          ref="spreadsheet"
+          v-show="!loading"
+          class="spreadsheet-content"
+          v-html="htmlContent"
+        />
+      </div>
     </template>
     <template #controls>
       <file-controls v-show="!loading && workbook">
-        <file-controls-button
-          v-for="(action, key) in actions"
-          :key="key"
-          @click="action.handler"
-          :label="action.text"
+        <file-controls-group>
+          <file-controls-button
+            v-for="(action, key) in actions"
+            :key="key"
+            @click="action.handler"
+            :label="action.text"
+          />
+        </file-controls-group>
+        <file-controls-zoom
+          @change="onZoomLevelChange"
+          ref="zoomControl"
         />
-        <file-controls-button
-          @click="toggleFullScreen"
-          :icon="scan"
-        />
+        <file-controls-group>
+          <file-controls-button
+            @click="toggleFullScreen"
+            :icon="scan"
+          />
+        </file-controls-group>
       </file-controls>
     </template>
   </file-viewer-wrapper>
@@ -39,7 +52,7 @@
 import { MsSpinner, I18n, Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
 import { onBeforeMount, onMounted, Ref, ref } from 'vue';
 import XLSX from 'xlsx';
-import { FileControls, FileControlsButton } from '@/components/viewers';
+import { FileControls, FileControlsButton, FileControlsGroup, FileControlsZoom } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { scan } from 'ionicons/icons';
@@ -57,6 +70,8 @@ const error = ref('');
 let worker: Worker | null = null;
 const actions: Ref<Array<{ icon?: string; text?: Translatable; handler: () => void }>> = ref([]);
 const spreadsheet = ref();
+const zoomControl = ref();
+const zoomLevel = ref(1);
 
 onMounted(async () => {
   try {
@@ -107,16 +122,29 @@ async function switchToPage(page: string): Promise<void> {
   worker.postMessage(ws);
 }
 
+function onZoomLevelChange(value: number): void {
+  zoomLevel.value = value / 100;
+}
+
 async function toggleFullScreen(): Promise<void> {
   await spreadsheet.value.requestFullscreen();
 }
 </script>
 
 <style scoped lang="scss">
-.spreadsheet-content {
+.spreadsheet-container {
+  background-color: grey;
   width: 100%;
-  max-height: 100%;
-  overflow: auto;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.spreadsheet-content {
+  transform: scale(v-bind(zoomLevel));
+  transform-origin: top left;
+  margin: auto;
+  height: 100%;
+  width: 100%;
 
   :deep(table) {
     width: 100%;
