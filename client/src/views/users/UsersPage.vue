@@ -13,7 +13,7 @@
             :icon="personAdd"
             id="button-invite-user"
             :button-label="'UsersPage.inviteUser'"
-            @click="inviteUser()"
+            @click="inviteUser"
           />
         </div>
         <!-- revoke or view common workspace -->
@@ -464,7 +464,11 @@ async function inviteUser(): Promise<void> {
     let message: Translatable = '';
     switch (result.error.tag) {
       case ClientNewUserInvitationErrorTag.AlreadyMember:
-        message = { key: 'UsersPage.invitation.inviteFailedAlreadyMember', data: { email: email } };
+        if (result.error.error === 'invitation_exists') {
+          message = { key: 'UsersPage.invitation.inviteFailedAlreadyInvited', data: { email: email } };
+        } else {
+          message = { key: 'UsersPage.invitation.inviteFailedAlreadyMember', data: { email: email } };
+        }
         break;
       case ClientNewUserInvitationErrorTag.Offline:
         message = 'UsersPage.invitation.inviteFailedOffline';

@@ -64,7 +64,7 @@ defineProps<{
 const invitations: Ref<UserInvitation[]> = ref([]);
 
 onMounted(async () => {
-  const listResult = await listUserInvitations();
+  const listResult = await listUserInvitations({ skipOthers: true });
 
   if (listResult.ok) {
     invitations.value = listResult.value;

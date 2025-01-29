@@ -1079,6 +1079,7 @@
             "inviteSuccessMailSent": "An invitation to join the organization has been sent to {email}.",
             "inviteSuccessNoMail": "The invitation was successfully created but we failed to send an email to {email}. Please send the invitation link yourself or try again.",
             "inviteFailedAlreadyMember": "The email {email} is already used by someone in this organization.",
+            "inviteFailedAlreadyInvited": "An invitation has already been created by another administrator for the email {email}.",
             "inviteFailedOffline": "Failed to connect to the server. Please make sure you are online.",
             "inviteFailedNotAllowed": "Only administrators can invite new users into the organization.",
             "inviteFailedUnknown": "An unexpected error occurred, please try again (reason: {reason}).",
