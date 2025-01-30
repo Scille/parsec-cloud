@@ -76,6 +76,8 @@ pub(crate) enum HandleItem {
     ShamirRecoveryClaimShare(libparsec_client::ShamirRecoveryClaimShare),
     ShamirRecoveryClaimRecoverDevice(libparsec_client::ShamirRecoveryClaimRecoverDeviceCtx),
 
+    UserClaimListAdministrators(libparsec_client::UserClaimListAdministratorsCtx),
+
     UserClaimInitial(libparsec_client::UserClaimInitialCtx),
     DeviceClaimInitial(libparsec_client::DeviceClaimInitialCtx),
     ShamirRecoveryClaimInitial(libparsec_client::ShamirRecoveryClaimInitialCtx),

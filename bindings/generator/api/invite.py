@@ -181,19 +181,19 @@ class InviteInfoInvitationCreatedBy(Variant):
         service_label: str
 
 
-class UserClaimInitialInfo(Structure):
-    handle: Handle
-    greeter_user_id: UserID
-    greeter_human_handle: HumanHandle
+class UserGreetingAdministrator(Structure):
+    user_id: UserID
+    human_handle: HumanHandle
     online_status: UserOnlineStatus
     last_greeting_attempt_joined_on: Optional[DateTime]
 
 
 class AnyClaimRetrievedInfo(Variant):
     class User:
+        handle: Handle
         claimer_email: str
         created_by: InviteInfoInvitationCreatedBy
-        user_claim_initial_infos: list[UserClaimInitialInfo]
+        administrators: list[UserGreetingAdministrator]
 
     class Device:
         handle: Handle
@@ -216,6 +216,42 @@ async def claimer_retrieve_info(
     on_event_callback: OnClientEventCallback,
     addr: ParsecInvitationAddr,
 ) -> Result[AnyClaimRetrievedInfo, ClaimerRetrieveInfoError]:
+    raise NotImplementedError
+
+
+class UserClaimInitialInfo(Structure):
+    handle: Handle
+    greeter_user_id: UserID
+    greeter_human_handle: HumanHandle
+    online_status: UserOnlineStatus
+    last_greeting_attempt_joined_on: Optional[DateTime]
+
+
+class UserClaimCreatedByUserAsGreeterError(ErrorVariant):
+    class CreatedByExternalService:
+        pass
+
+    class NotPartOfAdministrators:
+        pass
+
+    class Internal:
+        pass
+
+
+def claimer_user_get_created_by_user_initial_info(
+    handle: Handle,
+) -> Result[UserClaimInitialInfo, UserClaimCreatedByUserAsGreeterError]:
+    raise NotImplementedError
+
+
+class UserClaimListInitialInfosError(ErrorVariant):
+    class Internal:
+        pass
+
+
+def claimer_user_list_initial_info(
+    handle: Handle,
+) -> Result[list[UserClaimInitialInfo], UserClaimListInitialInfosError]:
     raise NotImplementedError
 
 

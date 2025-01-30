@@ -66,7 +66,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     let ctx = match ctx {
         AnyClaimRetrievedInfoCtx::User(list_administrators_ctx) => {
             p_assert_eq!(list_administrators_ctx.claimer_email(), "john@example.com");
-            let ctxs = list_administrators_ctx.list_user_claim_initial_ctxs();
+            let ctxs = list_administrators_ctx.list_initial_ctxs();
             assert_eq!(ctxs.len(), 1);
             let ctx = ctxs.into_iter().next().unwrap();
             p_assert_eq!(*ctx.greeter_user_id(), alice.user_id);

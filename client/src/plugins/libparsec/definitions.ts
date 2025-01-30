@@ -343,6 +343,13 @@ export interface UserGreetInitialInfo {
     handle: Handle
 }
 
+export interface UserGreetingAdministrator {
+    userId: UserID
+    humanHandle: HumanHandle
+    onlineStatus: UserOnlineStatus
+    lastGreetingAttemptJoinedOn: DateTime | null
+}
+
 export interface UserInfo {
     id: UserID
     humanHandle: HumanHandle
@@ -419,9 +426,10 @@ export interface AnyClaimRetrievedInfoShamirRecovery {
 }
 export interface AnyClaimRetrievedInfoUser {
     tag: AnyClaimRetrievedInfoTag.User
+    handle: Handle
     claimerEmail: string
     createdBy: InviteInfoInvitationCreatedBy
-    userClaimInitialInfos: Array<UserClaimInitialInfo>
+    administrators: Array<UserGreetingAdministrator>
 }
 export type AnyClaimRetrievedInfo =
   | AnyClaimRetrievedInfoDevice
@@ -2484,6 +2492,42 @@ export type TestbedError =
   | TestbedErrorDisabled
   | TestbedErrorInternal
 
+// UserClaimCreatedByUserAsGreeterError
+export enum UserClaimCreatedByUserAsGreeterErrorTag {
+    CreatedByExternalService = 'UserClaimCreatedByUserAsGreeterErrorCreatedByExternalService',
+    Internal = 'UserClaimCreatedByUserAsGreeterErrorInternal',
+    NotPartOfAdministrators = 'UserClaimCreatedByUserAsGreeterErrorNotPartOfAdministrators',
+}
+
+export interface UserClaimCreatedByUserAsGreeterErrorCreatedByExternalService {
+    tag: UserClaimCreatedByUserAsGreeterErrorTag.CreatedByExternalService
+    error: string
+}
+export interface UserClaimCreatedByUserAsGreeterErrorInternal {
+    tag: UserClaimCreatedByUserAsGreeterErrorTag.Internal
+    error: string
+}
+export interface UserClaimCreatedByUserAsGreeterErrorNotPartOfAdministrators {
+    tag: UserClaimCreatedByUserAsGreeterErrorTag.NotPartOfAdministrators
+    error: string
+}
+export type UserClaimCreatedByUserAsGreeterError =
+  | UserClaimCreatedByUserAsGreeterErrorCreatedByExternalService
+  | UserClaimCreatedByUserAsGreeterErrorInternal
+  | UserClaimCreatedByUserAsGreeterErrorNotPartOfAdministrators
+
+// UserClaimListInitialInfosError
+export enum UserClaimListInitialInfosErrorTag {
+    Internal = 'UserClaimListInitialInfosErrorInternal',
+}
+
+export interface UserClaimListInitialInfosErrorInternal {
+    tag: UserClaimListInitialInfosErrorTag.Internal
+    error: string
+}
+export type UserClaimListInitialInfosError =
+  | UserClaimListInitialInfosErrorInternal
+
 // WaitForDeviceAvailableError
 export enum WaitForDeviceAvailableErrorTag {
     Internal = 'WaitForDeviceAvailableErrorInternal',
@@ -3821,6 +3865,9 @@ export interface LibParsecPlugin {
         handle: Handle,
         save_strategy: DeviceSaveStrategy
     ): Promise<Result<AvailableDevice, ClaimInProgressError>>
+    claimerUserGetCreatedByUserInitialInfo(
+        handle: Handle
+    ): Promise<Result<UserClaimInitialInfo, UserClaimCreatedByUserAsGreeterError>>
     claimerUserInProgress1DoDenyTrust(
         canceller: Handle,
         handle: Handle
@@ -3843,6 +3890,9 @@ export interface LibParsecPlugin {
         canceller: Handle,
         handle: Handle
     ): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
+    claimerUserListInitialInfo(
+        handle: Handle
+    ): Promise<Result<Array<UserClaimInitialInfo>, UserClaimListInitialInfosError>>
     clientAcceptTos(
         client: Handle,
         tos_updated_on: DateTime
