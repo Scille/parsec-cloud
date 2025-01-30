@@ -13,6 +13,7 @@ mod user;
 
 // Workspaces can be started & accessed independently of each other, so we expose it directly
 pub mod workspace;
+pub mod workspace_history;
 
 // For clarity, user & certificate stuff are re-exposed through client
 pub use certif::*;
@@ -21,6 +22,7 @@ pub use config::*;
 pub use device::remove_device;
 pub use event_bus::*;
 pub use invite::*;
+pub use workspace_history::*;
 
 // Testing on web requires this macro configuration to be present anywhere in
 // the crate.

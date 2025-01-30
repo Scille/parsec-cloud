@@ -50,6 +50,7 @@ use crate::{
         start_workspaces_refresh_list_monitor, Monitor,
     },
     user::UserOps,
+    workspace_history::{WorkspaceHistoryOps, WorkspaceHistoryOpsStartError},
 };
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
@@ -86,6 +87,8 @@ pub use shamir_recovery_list::{
     ClientGetSelfShamirRecoveryError, ClientListShamirRecoveriesForOthersError,
     OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
 };
+
+pub type ClientStartWorkspaceHistoryError = WorkspaceHistoryOpsStartError;
 
 // Should not be `Clone` given it manages underlying resources !
 pub struct Client {
@@ -509,6 +512,20 @@ impl Client {
 
     pub async fn stop_workspace(&self, realm_id: VlobID) {
         workspace_start::stop_workspace(self, realm_id).await
+    }
+
+    pub async fn start_workspace_history(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<Arc<WorkspaceHistoryOps>, ClientStartWorkspaceHistoryError> {
+        WorkspaceHistoryOps::start_with_server_access(
+            self.config.clone(),
+            self.cmds.clone(),
+            self.certificates_ops.clone(),
+            realm_id,
+        )
+        .await
+        .map(Arc::new)
     }
 
     pub async fn new_user_invitation(
