@@ -2,7 +2,7 @@
 
 use libparsec_types::prelude::*;
 
-use crate::workspace::WorkspaceHistoryOps;
+use super::WorkspaceHistoryOps;
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryFdCloseError {
