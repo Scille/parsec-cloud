@@ -727,19 +727,7 @@ impl ShamirRecoveryClaimRecoverDeviceCtx {
 #[derive(Debug)]
 enum GreetingAttemptAccess {
     Available(GreetingAttemptID),
-    Protected(Arc<AsyncMutex<Option<GreetingAttemptID>>>),
-}
-
-impl From<GreetingAttemptID> for GreetingAttemptAccess {
-    fn from(greeting_attempt: GreetingAttemptID) -> Self {
-        GreetingAttemptAccess::Available(greeting_attempt)
-    }
-}
-
-impl From<Arc<AsyncMutex<Option<GreetingAttemptID>>>> for GreetingAttemptAccess {
-    fn from(greeting_attempt: Arc<AsyncMutex<Option<GreetingAttemptID>>>) -> Self {
-        GreetingAttemptAccess::Protected(greeting_attempt)
-    }
+    BehindMutex(Arc<AsyncMutex<Option<GreetingAttemptID>>>),
 }
 
 #[derive(Debug)]
@@ -749,10 +737,30 @@ pub struct ClaimCancellerCtx {
 }
 
 impl ClaimCancellerCtx {
+    fn new_from_maybe_greeting_attempt(
+        maybe_greeting_attempt: Arc<AsyncMutex<Option<GreetingAttemptID>>>,
+        cmds: Arc<InvitedCmds>,
+    ) -> Self {
+        Self {
+            greeting_attempt_access: GreetingAttemptAccess::BehindMutex(maybe_greeting_attempt),
+            cmds,
+        }
+    }
+
+    fn new_from_greeting_attempt(
+        greeting_attempt: GreetingAttemptID,
+        cmds: Arc<InvitedCmds>,
+    ) -> Self {
+        Self {
+            greeting_attempt_access: GreetingAttemptAccess::Available(greeting_attempt),
+            cmds,
+        }
+    }
+
     async fn maybe_greeting_attempt(&self) -> Option<GreetingAttemptID> {
         match &self.greeting_attempt_access {
             GreetingAttemptAccess::Available(greeting_attempt) => Some(*greeting_attempt),
-            GreetingAttemptAccess::Protected(greeting_attempt) => *greeting_attempt.lock().await,
+            GreetingAttemptAccess::BehindMutex(greeting_attempt) => *greeting_attempt.lock().await,
         }
     }
 
@@ -789,7 +797,7 @@ struct BaseClaimInitialCtx {
     greeter_user_id: UserID,
     greeter_human_handle: HumanHandle,
     time_provider: TimeProvider,
-    greeting_attempt: Arc<AsyncMutex<Option<GreetingAttemptID>>>,
+    maybe_greeting_attempt: Arc<AsyncMutex<Option<GreetingAttemptID>>>,
 }
 
 impl BaseClaimInitialCtx {
@@ -806,7 +814,7 @@ impl BaseClaimInitialCtx {
             greeter_user_id,
             greeter_human_handle,
             time_provider,
-            greeting_attempt: Arc::new(AsyncMutex::new(None)),
+            maybe_greeting_attempt: Arc::new(AsyncMutex::new(None)),
         }
     }
 
@@ -847,7 +855,7 @@ impl BaseClaimInitialCtx {
     ) -> Result<(GreetingAttemptID, SASCode, SASCode, SecretKey), ClaimInProgressError> {
         let greeting_attempt = {
             use invited_cmds::latest::invite_claimer_start_greeting_attempt::{Rep, Req};
-            let mut guard = self.greeting_attempt.lock().await;
+            let mut maybe_greeting_attempt_guard = self.maybe_greeting_attempt.lock().await;
             let rep = self
                 .cmds
                 .send(Req {
@@ -864,7 +872,7 @@ impl BaseClaimInitialCtx {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
             }?;
-            guard.replace(greeting_attempt);
+            maybe_greeting_attempt_guard.replace(greeting_attempt);
             greeting_attempt
         };
 
@@ -988,10 +996,10 @@ impl UserClaimInitialCtx {
     }
 
     pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
-        ClaimCancellerCtx {
-            greeting_attempt_access: self.base.greeting_attempt.clone().into(),
-            cmds: self.base.cmds.clone(),
-        }
+        ClaimCancellerCtx::new_from_maybe_greeting_attempt(
+            self.base.maybe_greeting_attempt.clone(),
+            self.base.cmds.clone(),
+        )
     }
 
     pub fn greeter_user_id(&self) -> &UserID {
@@ -1040,10 +1048,10 @@ impl DeviceClaimInitialCtx {
     }
 
     pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
-        ClaimCancellerCtx {
-            greeting_attempt_access: self.0.greeting_attempt.clone().into(),
-            cmds: self.0.cmds.clone(),
-        }
+        ClaimCancellerCtx::new_from_maybe_greeting_attempt(
+            self.0.maybe_greeting_attempt.clone(),
+            self.0.cmds.clone(),
+        )
     }
 
     pub fn greeter_user_id(&self) -> &UserID {
@@ -1080,10 +1088,10 @@ impl ShamirRecoveryClaimInitialCtx {
     }
 
     pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
-        ClaimCancellerCtx {
-            greeting_attempt_access: self.0.greeting_attempt.clone().into(),
-            cmds: self.0.cmds.clone(),
-        }
+        ClaimCancellerCtx::new_from_maybe_greeting_attempt(
+            self.0.maybe_greeting_attempt.clone(),
+            self.0.cmds.clone(),
+        )
     }
 
     pub fn greeter_user_id(&self) -> &UserID {
@@ -1168,10 +1176,7 @@ impl UserClaimInProgress1Ctx {
     }
 
     pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
-        ClaimCancellerCtx {
-            greeting_attempt_access: self.0.greeting_attempt.into(),
-            cmds: self.0.cmds.clone(),
-        }
+        ClaimCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_deny_trust(self) -> Result<(), ClaimInProgressError> {
@@ -1196,10 +1201,7 @@ impl DeviceClaimInProgress1Ctx {
     }
 
     pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
-        ClaimCancellerCtx {
-            greeting_attempt_access: self.0.greeting_attempt.into(),
-            cmds: self.0.cmds.clone(),
-        }
+        ClaimCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_deny_trust(self) -> Result<(), ClaimInProgressError> {
@@ -1227,10 +1229,7 @@ impl ShamirRecoveryClaimInProgress1Ctx {
     }
 
     pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
-        ClaimCancellerCtx {
-            greeting_attempt_access: self.0.greeting_attempt.into(),
-            cmds: self.0.cmds.clone(),
-        }
+        ClaimCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_deny_trust(self) -> Result<(), ClaimInProgressError> {
@@ -1292,10 +1291,7 @@ impl UserClaimInProgress2Ctx {
     }
 
     pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
-        ClaimCancellerCtx {
-            greeting_attempt_access: self.0.greeting_attempt.into(),
-            cmds: self.0.cmds.clone(),
-        }
+        ClaimCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_wait_peer_trust(self) -> Result<UserClaimInProgress3Ctx, ClaimInProgressError> {
@@ -1315,10 +1311,7 @@ impl DeviceClaimInProgress2Ctx {
     }
 
     pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
-        ClaimCancellerCtx {
-            greeting_attempt_access: self.0.greeting_attempt.into(),
-            cmds: self.0.cmds.clone(),
-        }
+        ClaimCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_wait_peer_trust(
@@ -1340,10 +1333,7 @@ impl ShamirRecoveryClaimInProgress2Ctx {
     }
 
     pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
-        ClaimCancellerCtx {
-            greeting_attempt_access: self.0.greeting_attempt.into(),
-            cmds: self.0.cmds.clone(),
-        }
+        ClaimCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_wait_peer_trust(
@@ -1436,10 +1426,7 @@ pub struct UserClaimInProgress3Ctx(BaseClaimInProgress3Ctx);
 
 impl UserClaimInProgress3Ctx {
     pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
-        ClaimCancellerCtx {
-            greeting_attempt_access: self.0.greeting_attempt.into(),
-            cmds: self.0.cmds.clone(),
-        }
+        ClaimCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_claim_user(
@@ -1529,10 +1516,7 @@ pub struct DeviceClaimInProgress3Ctx(BaseClaimInProgress3Ctx);
 
 impl DeviceClaimInProgress3Ctx {
     pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
-        ClaimCancellerCtx {
-            greeting_attempt_access: self.0.greeting_attempt.into(),
-            cmds: self.0.cmds.clone(),
-        }
+        ClaimCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_claim_device(
@@ -1623,10 +1607,7 @@ pub struct ShamirRecoveryClaimInProgress3Ctx(BaseClaimInProgress3Ctx);
 
 impl ShamirRecoveryClaimInProgress3Ctx {
     pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
-        ClaimCancellerCtx {
-            greeting_attempt_access: self.0.greeting_attempt.into(),
-            cmds: self.0.cmds.clone(),
-        }
+        ClaimCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_recover_share(self) -> Result<ShamirRecoveryClaimShare, ClaimInProgressError> {
