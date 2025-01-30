@@ -191,6 +191,11 @@ export class StorageManager {
   async retrieveBmsAccess(): Promise<BmsAccessData | undefined> {
     return await this.internalStore.get(StorageManager.STORED_BMS_ACCESS_KEY);
   }
+
+  async clearAll(): Promise<void> {
+    window.electronAPI.log('warn', 'Clearing all cache');
+    await this.internalStore.clear();
+  }
 }
 
 class StorageManagerInstance {

@@ -1,14 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import {
-  DEFAULT_ORGANIZATION_INFORMATION,
-  DEFAULT_USER_INFORMATION,
-  MockBms,
-  answerQuestion,
-  expect,
-  fillIonInput,
-  msTest,
-} from '@tests/e2e/helpers';
+import { DEFAULT_USER_INFORMATION, MockBms, answerQuestion, expect, fillIonInput, msTest } from '@tests/e2e/helpers';
 
 msTest('Log into the customer area', async ({ home }) => {
   await MockBms.mockLogin(home);
@@ -81,8 +73,8 @@ msTest('Switch pages', async ({ clientArea }) => {
 });
 
 msTest('Switch org', async ({ clientArea }) => {
-  const org1 = DEFAULT_ORGANIZATION_INFORMATION.name;
-  const org2 = `${DEFAULT_ORGANIZATION_INFORMATION.name}-2`;
+  const org1 = clientArea.orgInfo.name;
+  const org2 = `${clientArea.orgInfo.name}-2`;
 
   const orgSwitchButton = clientArea.locator('.sidebar-header').locator('.card-header-title');
   await expect(orgSwitchButton).toHaveText(org1);
@@ -151,7 +143,7 @@ for (const frozen of [false, true]) {
     const popover = home.locator('.popover-switch');
     const orgs = popover.locator('.organization-list').getByRole('listitem');
     await orgs.nth(0).click();
-    await expect(orgSwitchButton).toHaveText(DEFAULT_ORGANIZATION_INFORMATION.name);
+    await expect(orgSwitchButton).toHaveText(home.orgInfo.name);
 
     const orgState = home.locator('.sidebar').locator('.sidebar-header').locator('.organization-card-state');
     await expect(orgState).toHaveText(frozen ? 'State: Frozen' : 'State: Active');

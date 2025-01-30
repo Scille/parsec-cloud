@@ -146,7 +146,7 @@ import {
   revokeUser as parsecRevokeUser,
   InvitationStatus,
 } from '@/parsec';
-import { Routes, getCurrentRouteQuery, watchRoute, currentRouteIsUserRoute } from '@/router';
+import { Routes, getCurrentRouteQuery, watchRoute, currentRouteIsUserRoute, navigateTo } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -520,6 +520,7 @@ const routeWatchCancel = watchRoute(async () => {
   const query = getCurrentRouteQuery();
   if (query.openInvite) {
     await inviteUser();
+    await navigateTo(Routes.Users, { replace: true, query: {} });
   }
   await refreshUserList();
 });
@@ -555,6 +556,7 @@ onMounted(async (): Promise<void> => {
   const query = getCurrentRouteQuery();
   if (query.openInvite) {
     await inviteUser();
+    await navigateTo(Routes.Users, { replace: true, query: {} });
   }
 });
 

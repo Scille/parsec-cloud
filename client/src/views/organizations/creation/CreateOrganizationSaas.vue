@@ -212,6 +212,7 @@ async function onCreateClicked(): Promise<void> {
   if (!props.bootstrapLink) {
     const response = await BmsAccessInstance.get().createOrganization(organizationName.value);
 
+    console.log(response);
     if (response.isError) {
       console.log('Failed to create organization');
       // TODO: Change this error handling with the real backend response

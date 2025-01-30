@@ -119,9 +119,11 @@ ionic cap add ios
 
 ## Variables
 
-| Name                               | Type                      | Description                                                                   | Remark                                                                                          |
-| ---------------------------------- | ------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `PARSEC_APP_DEV_BMS_CREDENTIALS`   | `<email>:<password>`      | Used as default login credentials for the BMS                                 | Only for development purposes! Avoid using `:` in your password as it will mess up the parsing. |
-| `PARSEC_APP_BMS_USE_MOCK`          | `boolean`                 | Used to mock calls to the BMS                                                 | Only for development purposes!                                                                  |
-| `PARSEC_APP_BMS_MOCKED_FUNCTIONS ` | `function1;function2;...` | Comma-separated list of functions from the BMS API to mock                    | Only for development purposes!                                                                  |
-| `PARSEC_APP_BMS_FAIL_FUNCTIONS `   | `function1;function2;...` | Comma-separated list of functions from the BMS API that should fail if mocked | Only for development purposes!                                                                  |
+| Name                                   | Type                      | Description                                                                   | Remark                                                                                          |
+| -------------------------------------- | ------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `PARSEC_APP_DEV_BMS_CREDENTIALS`       | `<email>:<password>`      | Used as default login credentials for the BMS                                 | Only for development purposes! Avoid using `:` in your password as it will mess up the parsing. |
+| `PARSEC_APP_BMS_USE_MOCK`              | `boolean`                 | Used to mock calls to the BMS                                                 | Only for development purposes!                                                                  |
+| `PARSEC_APP_BMS_MOCKED_FUNCTIONS `     | `function1;function2;...` | Comma-separated list of functions from the BMS API to mock                    | Only for development purposes!                                                                  |
+| `PARSEC_APP_BMS_FAIL_FUNCTIONS `       | `function1;function2;...` | Comma-separated list of functions from the BMS API that should fail if mocked | Only for development purposes!                                                                  |
+| `PARSEC_APP_CREATE_DEFAULT_WORKSPACES` | `boolean`                 | Create default workspaces when initializing the app                           | Only for development purposes!                                                                  |
+| `PARSEC_APP_CLEAR_CACHE`               | `boolean`                 | Clear the cache                                                               | Only for development purposes!                                                                  |
