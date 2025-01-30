@@ -8,6 +8,7 @@ mod device;
 mod event_bus;
 mod invite;
 mod monitors;
+mod server_fetch;
 mod user;
 
 // Workspaces can be started & accessed independently of each other, so we expose it directly

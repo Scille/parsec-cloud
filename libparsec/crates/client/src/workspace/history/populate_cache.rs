@@ -6,7 +6,9 @@ use libparsec_types::prelude::*;
 
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
-    workspace::fetch::FetchRemoteManifestError,
+    server_fetch::{
+        server_fetch_child_manifest, server_fetch_workspace_manifest, ServerFetchManifestError,
+    },
 };
 
 use super::CacheResolvedEntry;
@@ -39,16 +41,11 @@ pub(super) async fn populate_cache_from_server(
     // 1) Server lookup
 
     let outcome = if ops.realm_id == entry_id {
-        super::super::fetch::fetch_remote_workspace_manifest(
-            &ops.cmds,
-            &ops.certificates_ops,
-            ops.realm_id,
-            Some(at),
-        )
-        .await
-        .map(ChildManifest::Folder)
+        server_fetch_workspace_manifest(&ops.cmds, &ops.certificates_ops, ops.realm_id, Some(at))
+            .await
+            .map(ChildManifest::Folder)
     } else {
-        super::super::fetch::fetch_remote_child_manifest(
+        server_fetch_child_manifest(
             &ops.cmds,
             &ops.certificates_ops,
             ops.realm_id,
@@ -74,31 +71,31 @@ pub(super) async fn populate_cache_from_server(
         //   was buggy and include the ID of a not-yet-synchronized entry
         //
         // We just pretend the entry doesn't exist
-        Err(FetchRemoteManifestError::VlobNotFound) => None,
-        Err(FetchRemoteManifestError::Stopped) => {
+        Err(ServerFetchManifestError::VlobNotFound) => None,
+        Err(ServerFetchManifestError::Stopped) => {
             return Err(PopulateCacheFromServerError::Stopped);
         }
-        Err(FetchRemoteManifestError::Offline) => {
+        Err(ServerFetchManifestError::Offline) => {
             return Err(PopulateCacheFromServerError::Offline);
         }
         // The realm doesn't exist on server side, hence we are it creator and
         // it data only live on our local storage, which we have already checked.
-        Err(FetchRemoteManifestError::RealmNotFound) => {
+        Err(ServerFetchManifestError::RealmNotFound) => {
             return Err(PopulateCacheFromServerError::EntryNotFound);
         }
-        Err(FetchRemoteManifestError::NoRealmAccess) => {
+        Err(ServerFetchManifestError::NoRealmAccess) => {
             return Err(PopulateCacheFromServerError::NoRealmAccess);
         }
-        Err(FetchRemoteManifestError::InvalidKeysBundle(err)) => {
+        Err(ServerFetchManifestError::InvalidKeysBundle(err)) => {
             return Err(PopulateCacheFromServerError::InvalidKeysBundle(err));
         }
-        Err(FetchRemoteManifestError::InvalidCertificate(err)) => {
+        Err(ServerFetchManifestError::InvalidCertificate(err)) => {
             return Err(PopulateCacheFromServerError::InvalidCertificate(err));
         }
-        Err(FetchRemoteManifestError::InvalidManifest(err)) => {
+        Err(ServerFetchManifestError::InvalidManifest(err)) => {
             return Err(PopulateCacheFromServerError::InvalidManifest(err));
         }
-        Err(FetchRemoteManifestError::Internal(err)) => {
+        Err(ServerFetchManifestError::Internal(err)) => {
             return Err(err.context("cannot fetch from server").into());
         }
     };
