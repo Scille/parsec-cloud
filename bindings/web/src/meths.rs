@@ -3599,6 +3599,132 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     Ok(js_obj)
 }
 
+// WorkspaceHistory2FileStat
+
+#[allow(dead_code)]
+fn struct_workspace_history2_file_stat_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::WorkspaceHistory2FileStat, JsValue> {
+    let id = {
+        let js_val = Reflect::get(&obj, &"id".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                    libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid VlobID"))?
+    };
+    let created = {
+        let js_val = Reflect::get(&obj, &"created".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let updated = {
+        let js_val = Reflect::get(&obj, &"updated".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let version = {
+        let js_val = Reflect::get(&obj, &"version".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let size = {
+        let js_val = Reflect::get(&obj, &"size".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u64 number")));
+            }
+            let v = v as u64;
+            v
+        }
+    };
+    Ok(libparsec::WorkspaceHistory2FileStat {
+        id,
+        created,
+        updated,
+        version,
+        size,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_workspace_history2_file_stat_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistory2FileStat,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"id".into(), &js_id)?;
+    let js_created = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.created) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"created".into(), &js_created)?;
+    let js_updated = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.updated) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"updated".into(), &js_updated)?;
+    let js_version = JsValue::from(rs_obj.version);
+    Reflect::set(&js_obj, &"version".into(), &js_version)?;
+    let js_size = JsValue::from(rs_obj.size);
+    Reflect::set(&js_obj, &"size".into(), &js_size)?;
+    Ok(js_obj)
+}
+
 // WorkspaceHistoryFileStat
 
 #[allow(dead_code)]
@@ -6670,6 +6796,76 @@ fn variant_client_start_workspace_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientStartWorkspaceErrorWorkspaceNotFound".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientStartWorkspaceHistory2Error
+
+#[allow(dead_code)]
+fn variant_client_start_workspace_history2_error_rs_to_js(
+    rs_obj: libparsec::ClientStartWorkspaceHistory2Error,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientStartWorkspaceHistory2Error::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartWorkspaceHistory2ErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientStartWorkspaceHistory2Error::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartWorkspaceHistory2ErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::ClientStartWorkspaceHistory2Error::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartWorkspaceHistory2ErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::ClientStartWorkspaceHistory2Error::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartWorkspaceHistory2ErrorInvalidManifest".into(),
+            )?;
+        }
+        libparsec::ClientStartWorkspaceHistory2Error::NoHistory { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartWorkspaceHistory2ErrorNoHistory".into(),
+            )?;
+        }
+        libparsec::ClientStartWorkspaceHistory2Error::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartWorkspaceHistory2ErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::ClientStartWorkspaceHistory2Error::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartWorkspaceHistory2ErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientStartWorkspaceHistory2Error::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartWorkspaceHistory2ErrorStopped".into(),
             )?;
         }
     }
@@ -12525,6 +12721,813 @@ fn variant_workspace_generate_path_addr_error_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceHistory2EntryStat
+
+#[allow(dead_code)]
+fn variant_workspace_history2_entry_stat_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::WorkspaceHistory2EntryStat, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "WorkspaceHistory2EntryStatFile" => {
+            let id = {
+                let js_val = Reflect::get(&obj, &"id".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            let parent = {
+                let js_val = Reflect::get(&obj, &"parent".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            let created = {
+                let js_val = Reflect::get(&obj, &"created".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let updated = {
+                let js_val = Reflect::get(&obj, &"updated".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let version = {
+                let js_val = Reflect::get(&obj, &"version".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let size = {
+                let js_val = Reflect::get(&obj, &"size".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
+                    }
+                    let v = v as u64;
+                    v
+                }
+            };
+            Ok(libparsec::WorkspaceHistory2EntryStat::File {
+                id,
+                parent,
+                created,
+                updated,
+                version,
+                size,
+            })
+        }
+        "WorkspaceHistory2EntryStatFolder" => {
+            let id = {
+                let js_val = Reflect::get(&obj, &"id".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            let parent = {
+                let js_val = Reflect::get(&obj, &"parent".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            let created = {
+                let js_val = Reflect::get(&obj, &"created".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let updated = {
+                let js_val = Reflect::get(&obj, &"updated".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let version = {
+                let js_val = Reflect::get(&obj, &"version".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            Ok(libparsec::WorkspaceHistory2EntryStat::Folder {
+                id,
+                parent,
+                created,
+                updated,
+                version,
+            })
+        }
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a WorkspaceHistory2EntryStat",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_workspace_history2_entry_stat_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistory2EntryStat,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::WorkspaceHistory2EntryStat::File {
+            id,
+            parent,
+            created,
+            updated,
+            version,
+            size,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2EntryStatFile".into(),
+            )?;
+            let js_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"id".into(), &js_id)?;
+            let js_parent = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(parent) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"parent".into(), &js_parent)?;
+            let js_created = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(created) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"created".into(), &js_created)?;
+            let js_updated = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(updated) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"updated".into(), &js_updated)?;
+            let js_version = JsValue::from(version);
+            Reflect::set(&js_obj, &"version".into(), &js_version)?;
+            let js_size = JsValue::from(size);
+            Reflect::set(&js_obj, &"size".into(), &js_size)?;
+        }
+        libparsec::WorkspaceHistory2EntryStat::Folder {
+            id,
+            parent,
+            created,
+            updated,
+            version,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2EntryStatFolder".into(),
+            )?;
+            let js_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"id".into(), &js_id)?;
+            let js_parent = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(parent) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"parent".into(), &js_parent)?;
+            let js_created = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(created) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"created".into(), &js_created)?;
+            let js_updated = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(updated) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"updated".into(), &js_updated)?;
+            let js_version = JsValue::from(version);
+            Reflect::set(&js_obj, &"version".into(), &js_version)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistory2FdCloseError
+
+#[allow(dead_code)]
+fn variant_workspace_history2_fd_close_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistory2FdCloseError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceHistory2FdCloseError::BadFileDescriptor { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdCloseErrorBadFileDescriptor".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2FdCloseError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdCloseErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistory2FdReadError
+
+#[allow(dead_code)]
+fn variant_workspace_history2_fd_read_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistory2FdReadError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceHistory2FdReadError::BadFileDescriptor { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdReadErrorBadFileDescriptor".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2FdReadError::BlockNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdReadErrorBlockNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2FdReadError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdReadErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2FdReadError::InvalidBlockAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdReadErrorInvalidBlockAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2FdReadError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdReadErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2FdReadError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdReadErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2FdReadError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdReadErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2FdReadError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdReadErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2FdReadError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdReadErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistory2FdStatError
+
+#[allow(dead_code)]
+fn variant_workspace_history2_fd_stat_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistory2FdStatError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceHistory2FdStatError::BadFileDescriptor { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdStatErrorBadFileDescriptor".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2FdStatError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdStatErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistory2InternalOnlyError
+
+#[allow(dead_code)]
+fn variant_workspace_history2_internal_only_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistory2InternalOnlyError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceHistory2InternalOnlyError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2InternalOnlyErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistory2OpenFileError
+
+#[allow(dead_code)]
+fn variant_workspace_history2_open_file_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistory2OpenFileError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceHistory2OpenFileError::EntryNotAFile { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2OpenFileErrorEntryNotAFile".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2OpenFileError::EntryNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2OpenFileErrorEntryNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2OpenFileError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2OpenFileErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2OpenFileError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2OpenFileErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2OpenFileError::InvalidHistory { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2OpenFileErrorInvalidHistory".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2OpenFileError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2OpenFileErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2OpenFileError::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2OpenFileErrorInvalidManifest".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2OpenFileError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2OpenFileErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2OpenFileError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2OpenFileErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2OpenFileError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2OpenFileErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistory2SetTimestampOfInterestError
+
+#[allow(dead_code)]
+fn variant_workspace_history2_set_timestamp_of_interest_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistory2SetTimestampOfInterestError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceHistory2SetTimestampOfInterestError::EntryNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2SetTimestampOfInterestErrorEntryNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2SetTimestampOfInterestError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2SetTimestampOfInterestErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2SetTimestampOfInterestError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2SetTimestampOfInterestErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2SetTimestampOfInterestError::InvalidHistory { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2SetTimestampOfInterestErrorInvalidHistory".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2SetTimestampOfInterestError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2SetTimestampOfInterestErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2SetTimestampOfInterestError::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2SetTimestampOfInterestErrorInvalidManifest".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2SetTimestampOfInterestError::NewerThanHigherBound {
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2SetTimestampOfInterestErrorNewerThanHigherBound".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2SetTimestampOfInterestError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2SetTimestampOfInterestErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2SetTimestampOfInterestError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2SetTimestampOfInterestErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2SetTimestampOfInterestError::OlderThanLowerBound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2SetTimestampOfInterestErrorOlderThanLowerBound".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2SetTimestampOfInterestError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2SetTimestampOfInterestErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistory2StatEntryError
+
+#[allow(dead_code)]
+fn variant_workspace_history2_stat_entry_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistory2StatEntryError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceHistory2StatEntryError::EntryNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatEntryErrorEntryNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatEntryError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatEntryErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatEntryError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatEntryErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatEntryError::InvalidHistory { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatEntryErrorInvalidHistory".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatEntryError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatEntryErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatEntryError::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatEntryErrorInvalidManifest".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatEntryError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatEntryErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatEntryError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatEntryErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatEntryError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatEntryErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistory2StatFolderChildrenError
+
+#[allow(dead_code)]
+fn variant_workspace_history2_stat_folder_children_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceHistory2StatFolderChildrenError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceHistory2StatFolderChildrenError::EntryIsFile { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatFolderChildrenErrorEntryIsFile".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatFolderChildrenError::EntryNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatFolderChildrenErrorEntryNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatFolderChildrenError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatFolderChildrenErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatFolderChildrenError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatFolderChildrenErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatFolderChildrenError::InvalidHistory { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatFolderChildrenErrorInvalidHistory".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatFolderChildrenError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatFolderChildrenErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatFolderChildrenError::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatFolderChildrenErrorInvalidManifest".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatFolderChildrenError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatFolderChildrenErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatFolderChildrenError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatFolderChildrenErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2StatFolderChildrenError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2StatFolderChildrenErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceHistoryEntryStat
 
 #[allow(dead_code)]
@@ -15911,6 +16914,37 @@ pub fn clientStartWorkspace(client: u32, realm_id: String) -> Promise {
     })
 }
 
+// client_start_workspace_history2
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientStartWorkspaceHistory2(client: u32, realm_id: String) -> Promise {
+    future_to_promise(async move {
+        let realm_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::client_start_workspace_history2(client, realm_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(value);
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_start_workspace_history2_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // client_stop
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -17593,6 +18627,566 @@ pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_generate_path_addr_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_fd_close
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2FdClose(workspace_history: u32, fd: u32) -> Promise {
+    future_to_promise(async move {
+        let fd = {
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::workspace_history2_fd_close(workspace_history, fd);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_fd_close_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_fd_read
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2FdRead(workspace_history: u32, fd: u32, offset: u64, size: u64) -> Promise {
+    future_to_promise(async move {
+        let fd = {
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_history2_fd_read(workspace_history, fd, offset, size).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(Uint8Array::from(value.as_ref()));
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_fd_read_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_fd_stat
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2FdStat(workspace_history: u32, fd: u32) -> Promise {
+    future_to_promise(async move {
+        let fd = {
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_history2_fd_stat(workspace_history, fd).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_workspace_history2_file_stat_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_fd_stat_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_get_timestamp_higher_bound
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2GetTimestampHigherBound(workspace_history: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::workspace_history2_get_timestamp_higher_bound(workspace_history);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                        Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                    };
+                    let v = match custom_to_rs_f64(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    };
+                    JsValue::from(v)
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_internal_only_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_get_timestamp_lower_bound
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2GetTimestampLowerBound(workspace_history: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::workspace_history2_get_timestamp_lower_bound(workspace_history);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                        Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                    };
+                    let v = match custom_to_rs_f64(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    };
+                    JsValue::from(v)
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_internal_only_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_get_timestamp_of_interest
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2GetTimestampOfInterest(workspace_history: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::workspace_history2_get_timestamp_of_interest(workspace_history);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                        Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                    };
+                    let v = match custom_to_rs_f64(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    };
+                    JsValue::from(v)
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_internal_only_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_open_file
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2OpenFile(workspace_history: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::workspace_history2_open_file(workspace_history, path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let custom_to_rs_u32 =
+                        |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
+                    let v = match custom_to_rs_u32(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    };
+                    JsValue::from(v)
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_open_file_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_open_file_and_get_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2OpenFileAndGetId(workspace_history: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::workspace_history2_open_file_and_get_id(workspace_history, path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let (x1, x2) = value;
+                    let js_array = Array::new_with_length(2);
+                    let js_value = {
+                        let custom_to_rs_u32 =
+                            |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
+                        let v = match custom_to_rs_u32(x1) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        };
+                        JsValue::from(v)
+                    };
+                    js_array.push(&js_value);
+                    let js_value = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(x2) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    js_array.push(&js_value);
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_open_file_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_open_file_by_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2OpenFileById(workspace_history: u32, entry_id: String) -> Promise {
+    future_to_promise(async move {
+        let entry_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::workspace_history2_open_file_by_id(workspace_history, entry_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let custom_to_rs_u32 =
+                        |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
+                    let v = match custom_to_rs_u32(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    };
+                    JsValue::from(v)
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_open_file_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_set_timestamp_of_interest
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2SetTimestampOfInterest(workspace_history: u32, toi: f64) -> Promise {
+    future_to_promise(async move {
+        let toi = {
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            custom_from_rs_f64(toi).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret =
+            libparsec::workspace_history2_set_timestamp_of_interest(workspace_history, toi).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err =
+                    variant_workspace_history2_set_timestamp_of_interest_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_stat_entry
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2StatEntry(workspace_history: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_history2_stat_entry(workspace_history, &path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = variant_workspace_history2_entry_stat_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_stat_entry_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_stat_entry_by_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2StatEntryById(workspace_history: u32, entry_id: String) -> Promise {
+    future_to_promise(async move {
+        let entry_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::workspace_history2_stat_entry_by_id(workspace_history, entry_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = variant_workspace_history2_entry_stat_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_stat_entry_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_stat_folder_children
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2StatFolderChildren(workspace_history: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret =
+            libparsec::workspace_history2_stat_folder_children(workspace_history, &path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = {
+                            let (x1, x2) = elem;
+                            let js_array = Array::new_with_length(2);
+                            let js_value = JsValue::from_str(x1.as_ref());
+                            js_array.push(&js_value);
+                            let js_value = variant_workspace_history2_entry_stat_rs_to_js(x2)?;
+                            js_array.push(&js_value);
+                            js_array.into()
+                        };
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_stat_folder_children_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_stat_folder_children_by_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2StatFolderChildrenById(
+    workspace_history: u32,
+    entry_id: String,
+) -> Promise {
+    future_to_promise(async move {
+        let entry_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret =
+            libparsec::workspace_history2_stat_folder_children_by_id(workspace_history, entry_id)
+                .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = {
+                            let (x1, x2) = elem;
+                            let js_array = Array::new_with_length(2);
+                            let js_value = JsValue::from_str(x1.as_ref());
+                            js_array.push(&js_value);
+                            let js_value = variant_workspace_history2_entry_stat_rs_to_js(x2)?;
+                            js_array.push(&js_value);
+                            js_array.into()
+                        };
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_stat_folder_children_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_history2_stop
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceHistory2Stop(workspace_history: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::workspace_history2_stop(workspace_history);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_history2_internal_only_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
