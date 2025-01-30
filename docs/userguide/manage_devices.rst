@@ -30,8 +30,8 @@ Add a new device
 
 You can add a new device from your profile page.
 
-1. Click on your name on the main menu (top-right) and select ``My Profile``.
-2. In ``My devices``, click ``+ Add``.
+1. Click on your name on the main menu (top-right) and select ``My devices``.
+2. In ``My devices`` tab, click ``+ Add a new device``.
 
 .. image:: screens/manage_devices_invite.png
     :align: center
@@ -87,7 +87,7 @@ The Secret Key is used to unlock the Recovery File and get access to your data.
 Create a recovery files
 -----------------------
 
-When you access your profile, in the ``My Devices`` page, click on ``Create recovery files``.
+When you access your profile, in the ``Organization recovery`` page, click on ``Create a recovery file``.
 
 .. image:: screens/profile_popover.png
     :align: center
@@ -96,14 +96,8 @@ When you access your profile, in the ``My Devices`` page, click on ``Create reco
 
 .. image:: screens/profile_add_recovery_device.png
     :align: center
-    :width: 400
+    :width: 650
     :alt: Create a recovery file
-
-Once you're ready, click on ``I understand``.
-
-.. image:: screens/export_recovery_device_page.png
-    :align: center
-    :alt: Export a recovery device
 
 You'll be able to download both the Recovery File and the Secret Key. Make sure to get them both.
 
@@ -114,6 +108,7 @@ You'll be able to download both the Recovery File and the Secret Key. Make sure 
 
 .. image:: screens/export_recovery_device_download.png
     :align: center
+    :width: 550
     :alt: Download the recovery file and passphrase
 
 

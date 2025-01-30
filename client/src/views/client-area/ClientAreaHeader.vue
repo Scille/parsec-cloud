@@ -5,14 +5,14 @@
     <ion-title class="header-title title-h1">{{ $msTranslate(title) }}</ion-title>
 
     <div class="header-right">
-      <!-- preferences -->
+      <!-- settings -->
       <ion-text
         class="button-medium custom-button custom-button-fill"
         button
-        @click="openPreferencesModal"
+        @click="openSettingsModal"
       >
         <ion-icon :icon="cog" />
-        {{ $msTranslate('clientArea.header.preferences') }}
+        {{ $msTranslate('clientArea.header.settings') }}
       </ion-text>
 
       <!-- profile -->
@@ -52,10 +52,6 @@ onMounted(async () => {
     personalInformation.value = await BmsAccessInstance.get().getPersonalInformation();
   }
 });
-
-async function openPreferencesModal(): Promise<void> {
-  await openSettingsModal();
-}
 
 const emits = defineEmits<{
   (e: 'pageSelected', page: ClientAreaPages): void;

@@ -5,33 +5,36 @@
     class="card"
     :class="isCurrent ? 'device-active' : ''"
   >
-    <ion-icon
-      class="icon-device"
-      :icon="desktopOutline"
-    />
-    <div class="card-text">
-      <div class="card-text-info">
-        <ion-text class="device-name body">
-          {{ device.deviceLabel }}
-        </ion-text>
-        <ion-text class="join-date body-sm">
-          {{ $msTranslate('DevicesPage.joinedOn') }}
-          <span>{{ $msTranslate(formatTimeSince(device.createdOn, '--', 'short', true)) }}</span>
-        </ion-text>
-      </div>
-      <technical-id
-        v-show="showId"
-        :id="device.id"
+    <div class="card-content">
+      <ion-icon
+        class="icon-device"
+        :icon="desktopOutline"
       />
+      <div class="card-text">
+        <div class="card-text-info">
+          <ion-text class="device-name subtitles-sm">
+            {{ device.deviceLabel }}
+          </ion-text>
+          <ion-text class="join-date body-sm">
+            {{ $msTranslate('DevicesPage.joinedOn') }}
+            <span>{{ $msTranslate(formatTimeSince(device.createdOn, '--', 'short', true)) }}</span>
+          </ion-text>
+        </div>
+      </div>
+
+      <ion-text
+        class="badge button-medium"
+        v-show="isCurrent"
+        :outline="true"
+      >
+        {{ $msTranslate('DevicesPage.activeDeviceBadge') }}
+      </ion-text>
     </div>
 
-    <ion-text
-      class="badge button-medium"
-      v-show="isCurrent"
-      :outline="true"
-    >
-      {{ $msTranslate('DevicesPage.activeDeviceBadge') }}
-    </ion-text>
+    <technical-id
+      v-show="showId"
+      :id="device.id"
+    />
   </div>
 </template>
 
@@ -57,15 +60,18 @@ defineProps<{
   width: 100%;
   border-radius: var(--parsec-radius-8);
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
+  flex-direction: column;
+  gap: 1rem;
 
-  &.device-active {
-    background-color: var(--parsec-color-light-secondary-background);
+  &-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
   }
 
   .icon-device {
     font-size: 1.5rem;
+    flex-shrink: 0;
     padding: 0.5rem;
     border-radius: var(--parsec-radius-circle);
     color: var(--parsec-color-light-secondary-grey);
@@ -76,6 +82,7 @@ defineProps<{
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    overflow: hidden;
 
     &-info {
       display: flex;
@@ -84,7 +91,10 @@ defineProps<{
     }
 
     .device-name {
-      color: var(--parsec-color-light-secondary-text);
+      color: var(--parsec-color-light-primary-700);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
     }
 
     .join-date {
@@ -108,9 +118,19 @@ defineProps<{
       }
     }
   }
+
+  &.device-active {
+    background-color: var(--parsec-color-light-secondary-background);
+
+    .icon-device {
+      color: var(--parsec-color-light-secondary-hard-grey);
+      background-color: var(--parsec-color-light-secondary-medium);
+    }
+  }
 }
 
 .badge {
+  font-size: 0.8125rem;
   margin: auto 0 auto auto;
   border-radius: var(--parsec-radius-32);
   padding: 0.25em 0.5em;

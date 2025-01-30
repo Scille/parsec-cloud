@@ -100,7 +100,6 @@ export const msTest = base.extend<{
     await home.locator('#password-input').locator('input').fill('P@ssw0rd.');
     await expect(home.locator('.login-button')).toBeEnabled();
     await home.locator('.login-button').click();
-    await expect(home.locator('.loading-container')).toBeVisible();
     await expect(home).toHaveURL(/\/loading\??.*$/);
     await expect(home.locator('#connected-header')).toContainText('My workspaces');
     await expect(home).toBeWorkspacePage();
@@ -149,7 +148,7 @@ export const msTest = base.extend<{
   myProfilePage: async ({ connected }, use) => {
     await connected.locator('.topbar').locator('.profile-header').click();
     const myProfileButton = connected.locator('.profile-header-popover').locator('.main-list').getByRole('listitem').nth(0);
-    await expect(myProfileButton).toHaveText('My profile');
+    await expect(myProfileButton).toHaveText('Settings');
     await myProfileButton.click();
     await expect(connected).toHavePageTitle('My profile');
     await expect(connected).toBeMyProfilePage();
@@ -189,12 +188,14 @@ export const msTest = base.extend<{
 
   deviceGreetModal: async ({ connected }, use) => {
     await connected.locator('.topbar').locator('.profile-header').click();
-    const myProfileButton = connected.locator('.profile-header-popover').locator('.main-list').getByRole('listitem').nth(0);
-    await expect(myProfileButton).toHaveText('My profile');
+    const myProfileButton = connected.locator('.profile-header-popover').locator('.main-list').getByRole('listitem').nth(1);
+    await expect(myProfileButton).toHaveText('My devices');
     await myProfileButton.click();
     await expect(connected).toHavePageTitle('My profile');
     await expect(connected).toBeMyProfilePage();
-    await connected.locator('.devices-header-button').click();
+    await expect(connected.locator('.menu-list__item').nth(1)).toHaveText('My devices');
+    await connected.locator('.menu-list__item').nth(1).click();
+    await connected.locator('#add-device-button').click();
     const modal = connected.locator('.greet-organization-modal');
     await expect(modal).toBeVisible();
     await use(modal);

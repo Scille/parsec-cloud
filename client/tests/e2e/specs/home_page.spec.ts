@@ -150,7 +150,7 @@ msTest('Logout and go back to devices list', async ({ home }) => {
   await expect(home).toBeWorkspacePage();
   await home.locator('.topbar').locator('.profile-header').click();
   const buttons = home.locator('.profile-header-popover').locator('.main-list').getByRole('listitem');
-  await buttons.nth(2).click();
+  await buttons.nth(4).click();
   await answerQuestion(home, true);
   await expect(home.locator('.organization-title')).toHaveText('Access your organizations');
   await expect(home).toBeHomePage();
