@@ -67,6 +67,7 @@ onMounted(async () => {
   flex-direction: column;
   width: 100vw;
   height: 100vh;
+  user-select: none;
 }
 
 @keyframes LogoFadeIn {

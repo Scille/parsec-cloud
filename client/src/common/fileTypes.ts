@@ -39,18 +39,49 @@ const PDF_DOCUMENTS = ['application/pdf'];
 const AUDIOS = ['audio/x-wav', 'audio/mpeg'];
 const VIDEOS = ['video/mp4', 'video/mpeg'];
 
-const TEXTS = new Map<string, string>([
+// For custom mimetypes
+const SPECIAL_TEXTS = new Map<string, string>([
   ['xml', 'application/xml'],
   ['json', 'application/json'],
   ['js', 'text/javascript'],
   ['html', 'text/html'],
   ['htm', 'text/html'],
-  ['txt', 'text/plain'],
+  ['xhtml', 'text/html'],
   ['sh', 'application/x-sh'],
   ['csv', 'text/csv'],
   ['css', 'text/css'],
   ['py', 'text/x-python'],
+  ['php', 'application/x-httpd-php'],
+  ['sh', 'application/x-sh'],
+  ['tex', 'application/x-latex'],
 ]);
+
+// For generic text/plain
+const TEXTS = [
+  'txt',
+  'h',
+  'hpp',
+  'c',
+  'cpp',
+  'rs',
+  'java',
+  'ts',
+  'ini',
+  'cs',
+  'vb',
+  'swift',
+  'lua',
+  'rb',
+  'vbs',
+  'md',
+  'log',
+  'rst',
+  'toml',
+  'po',
+  'vue',
+  'kt',
+  'ylm',
+];
 
 async function detectFileContentTypeFromBuffer(buffer: Uint8Array, fileExt?: string): Promise<DetectedFileType> {
   const result = await fileTypeFromBuffer(buffer);
@@ -65,7 +96,6 @@ async function detectFileContentTypeFromBuffer(buffer: Uint8Array, fileExt?: str
   if (SPREADSHEETS.includes(result.mime)) {
     return { type: FileContentType.Spreadsheet, extension: fileExt ?? result.ext, mimeType: result.mime };
   }
-  console.log(result.mime, result.ext);
   if (DOCUMENTS.includes(result.mime) || (result.mime === 'application/zip' && fileExt === 'docx')) {
     return { type: FileContentType.Document, extension: fileExt ?? result.ext, mimeType: result.mime };
   }
@@ -91,8 +121,11 @@ async function detectFileContentType(workspaceHandle: WorkspaceHandle, path: FsP
   }
   const ext = Path.getFileExtension(fileName).toLocaleLowerCase();
 
-  if (TEXTS.has(ext)) {
-    return { type: FileContentType.Text, extension: ext, mimeType: TEXTS.get(ext) as string };
+  if (SPECIAL_TEXTS.has(ext)) {
+    return { type: FileContentType.Text, extension: ext, mimeType: SPECIAL_TEXTS.get(ext) as string };
+  }
+  if (TEXTS.includes(ext)) {
+    return { type: FileContentType.Text, extension: ext, mimeType: 'text/plain' };
   }
 
   const READ_CHUNK_SIZE = 512;
