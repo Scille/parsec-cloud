@@ -6,7 +6,7 @@
 
 use std::{path::Path, sync::Arc};
 
-use indexed_db_futures::{prelude::IdbTransaction, IdbDatabase};
+use indexed_db_futures::{database::Database, transaction::Transaction};
 use libparsec_types::prelude::*;
 
 #[cfg(any(test, feature = "expose-test-methods"))]
@@ -24,7 +24,7 @@ use crate::{
 
 #[derive(Debug)]
 pub(crate) struct PlatformWorkspaceStorage {
-    conn: Arc<IdbDatabase>,
+    conn: Arc<Database>,
     cache_max_blocks: u64,
 }
 
@@ -33,7 +33,8 @@ unsafe impl Send for PlatformWorkspaceStorage {}
 
 impl PlatformWorkspaceStorage {
     pub async fn no_populate_start(
-        _data_base_dir: &Path,
+        #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))]
+        data_base_dir: &Path,
         device: &LocalDevice,
         realm_id: VlobID,
         cache_max_blocks: u64,
@@ -43,7 +44,7 @@ impl PlatformWorkspaceStorage {
         #[cfg(feature = "test-with-testbed")]
         let name = format!(
             "{}-{}-{}-workspace",
-            _data_base_dir.to_str().unwrap(),
+            data_base_dir.display(),
             device.device_id.hex(),
             realm_id.hex()
         );
@@ -51,8 +52,7 @@ impl PlatformWorkspaceStorage {
         #[cfg(not(feature = "test-with-testbed"))]
         let name = format!("{}-{}-workspace", device.device_id.hex(), realm_id.hex());
 
-        let db_req =
-            IdbDatabase::open_u32(&name, DB_VERSION).map_err(|e| anyhow::anyhow!("{e:?}"))?;
+        let db_req = Database::open(&name).with_version(DB_VERSION);
 
         // 2) Initialize the database (if needed)
 
@@ -68,7 +68,9 @@ impl PlatformWorkspaceStorage {
     }
 
     pub async fn stop(self) -> anyhow::Result<()> {
-        self.conn.close();
+        // TODO: Should we wrap the connection in an Option to be able to take it once closing the
+        // storage?
+        self.conn.as_ref().clone().close();
         Ok(())
     }
 
@@ -517,7 +519,7 @@ pub async fn workspace_storage_non_speculative_init(
 }
 
 pub async fn db_populate_manifest<'a>(
-    tx: &IdbTransaction<'a>,
+    tx: &Transaction<'a>,
     manifest: &UpdateManifestData,
 ) -> anyhow::Result<PopulateManifestOutcome> {
     match Vlob::get(tx, &manifest.entry_id.as_bytes().to_vec().into()).await? {
@@ -538,7 +540,7 @@ pub async fn db_populate_manifest<'a>(
 }
 
 async fn db_update_manifest<'a>(
-    tx: &IdbTransaction<'a>,
+    tx: &Transaction<'a>,
     manifest: &UpdateManifestData,
 ) -> anyhow::Result<()> {
     match Vlob::get(tx, &manifest.entry_id.as_bytes().to_vec().into()).await? {
@@ -569,7 +571,7 @@ async fn db_update_manifest<'a>(
 }
 
 async fn db_get_chunk(
-    tx: &IdbTransaction<'_>,
+    tx: &Transaction<'_>,
     chunk_id: ChunkID,
 ) -> anyhow::Result<Option<RawEncryptedChunk>> {
     match super::model::Chunk::get(tx, &chunk_id.as_bytes().to_vec().into()).await? {
@@ -579,7 +581,7 @@ async fn db_get_chunk(
 }
 
 async fn db_insert_block(
-    tx: &IdbTransaction<'_>,
+    tx: &Transaction<'_>,
     block_id: BlockID,
     encrypted: &[u8],
     accessed_on: DateTime,
@@ -596,6 +598,6 @@ async fn db_insert_block(
     .await
 }
 
-async fn db_remove_chunk(tx: &IdbTransaction<'_>, chunk_id: ChunkID) -> anyhow::Result<()> {
+async fn db_remove_chunk(tx: &Transaction<'_>, chunk_id: ChunkID) -> anyhow::Result<()> {
     super::model::Chunk::remove(tx, &chunk_id.as_bytes().to_vec().into()).await
 }

@@ -2,7 +2,7 @@
 
 use std::{path::Path, sync::Arc};
 
-use indexed_db_futures::prelude::*;
+use indexed_db_futures::database::Database;
 use libparsec_types::prelude::*;
 
 use crate::web::{
@@ -18,7 +18,7 @@ pub struct NeedSyncEntries {
 
 #[derive(Debug)]
 pub struct PlatformUserStorage {
-    conn: Arc<IdbDatabase>,
+    conn: Arc<Database>,
     realm_id: VlobID,
 }
 
@@ -42,8 +42,7 @@ impl PlatformUserStorage {
         #[cfg(not(feature = "test-with-testbed"))]
         let name = format!("{}-user", device.device_id.hex());
 
-        let db_req =
-            IdbDatabase::open_u32(&name, DB_VERSION).map_err(|e| anyhow::anyhow!("{e:?}"))?;
+        let db_req = Database::open(&name).with_version(DB_VERSION);
 
         // 2) Initialize the database (if needed)
 
@@ -58,7 +57,9 @@ impl PlatformUserStorage {
     }
 
     pub async fn stop(&self) -> anyhow::Result<()> {
-        self.conn.close();
+        // TODO: Should we wrap the connection in an Option to be able to take it once closing the
+        // storage?
+        self.conn.as_ref().clone().close();
         Ok(())
     }
 

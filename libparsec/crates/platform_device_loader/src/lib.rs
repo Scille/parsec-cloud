@@ -128,7 +128,9 @@ pub async fn load_device(
 ) -> Result<Arc<LocalDevice>, LoadDeviceError> {
     #[cfg(feature = "test-with-testbed")]
     if let Some(result) = testbed::maybe_load_device(config_dir, access) {
-        return result;
+        return result.inspect_err(|e| log::error!("Failed to load device from testbed: {e}"));
+    } else {
+        log::trace!("Device not found in testbed");
     }
 
     platform::load_device(access)

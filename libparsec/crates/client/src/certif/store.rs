@@ -256,6 +256,9 @@ impl CertificatesStore {
             // be rollback on drop.
             match write_guard.storage.commit().await {
                 Err(commit_err) => {
+                    log::error!(
+                        "Failed to commit transaction for certificate storage: {commit_err}"
+                    );
                     reset_cache();
                     Err(commit_err.into())
                 }
@@ -265,6 +268,7 @@ impl CertificatesStore {
                 }
             }
         } else {
+            log::debug!("Operation failed for certificate storage, not commiting transaction");
             reset_cache();
             // Ok(Err(...))
             Ok(outcome)
@@ -291,7 +295,7 @@ impl CertificatesStore {
             Some(storage) => storage,
         };
 
-        let mut write_guard = CertificatesStoreReadGuard {
+        let mut read_guard = CertificatesStoreReadGuard {
             store: self,
             storage,
         };
@@ -305,9 +309,9 @@ impl CertificatesStore {
         // of a Future returned by a closure depends on the closure parameter if
         // they are references (see `for_write` code).
         // TODO: Remove this once async closure are available
-        let static_write_guard_mut_ref = unsafe { pretend_static(&mut write_guard) };
+        let static_read_guard_mut_ref = unsafe { pretend_static(&mut read_guard) };
 
-        let fut = cb(static_write_guard_mut_ref);
+        let fut = cb(static_read_guard_mut_ref);
         let outcome = fut.await;
 
         Ok(outcome)
@@ -469,6 +473,7 @@ macro_rules! impl_read_methods {
                     .lock()
                     .expect("Mutex is poisoned !");
                 if let ScalarCache::Present(last_timestamps) = &guard.per_topic_last_timestamps {
+                    log::trace!("Cached last_timestamps");
                     return Ok(last_timestamps.to_owned());
                 }
             }

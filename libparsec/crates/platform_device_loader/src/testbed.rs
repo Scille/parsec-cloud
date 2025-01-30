@@ -219,6 +219,10 @@ pub(crate) fn maybe_load_device(
     config_dir: &Path,
     access: &DeviceAccessStrategy,
 ) -> Option<Result<Arc<LocalDevice>, LoadDeviceError>> {
+    log::trace!(
+        "Trying to load device from testbed (cfg={cfg}, access={access:?})",
+        cfg = config_dir.display()
+    );
     test_get_testbed_component_store::<ComponentStore>(config_dir, STORE_ENTRY_KEY, store_factory)
         .and_then(|store| {
             // 1) Try to load from the cache
