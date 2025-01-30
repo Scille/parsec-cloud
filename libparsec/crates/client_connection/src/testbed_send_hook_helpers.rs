@@ -185,6 +185,7 @@ macro_rules! test_send_hook_vlob_read_batch {
 /// Register a `realm_get_keys_bundle` RPC call.
 ///
 /// Notes:
+/// - If `$key_index` is not provided, the last one is used.
 /// - No access control is done ! So only use this for a user that has access to the realm.
 #[macro_export]
 macro_rules! test_send_hook_realm_get_keys_bundle {
