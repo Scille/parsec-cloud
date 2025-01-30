@@ -459,38 +459,53 @@ class MemoryInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"]):
-            try:
-                author_device = org.devices[author]
-            except KeyError:
-                return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
-            author_user_id = author_device.cooked.user_id
+        try:
+            author_device = org.devices[author]
+        except KeyError:
+            return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
 
-            try:
-                author_user = org.users[author_user_id]
-            except KeyError:
-                return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
-            if author_user.is_revoked:
-                return InviteCancelBadOutcome.AUTHOR_REVOKED
+        try:
+            author_user = org.users[author_user_id]
+        except KeyError:
+            return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
+        if author_user.is_revoked:
+            return InviteCancelBadOutcome.AUTHOR_REVOKED
 
-            try:
-                invitation = org.invitations[token]
-            except KeyError:
-                return InviteCancelBadOutcome.INVITATION_NOT_FOUND
-            if invitation.is_deleted:
-                return InviteCancelBadOutcome.INVITATION_ALREADY_DELETED
+        try:
+            invitation = org.invitations[token]
+        except KeyError:
+            return InviteCancelBadOutcome.INVITATION_NOT_FOUND
 
-            invitation.deleted_on = now
-            invitation.deleted_reason = MemoryInvitationDeletedReason.CANCELLED
+        if _is_invitation_cancelled(org, invitation):
+            return InviteCancelBadOutcome.INVITATION_ALREADY_CANCELLED
+        if invitation.is_completed:
+            return InviteCancelBadOutcome.INVITATION_COMPLETED
 
-            await self._event_bus.send(
-                EventInvitation(
-                    organization_id=organization_id,
-                    token=token,
-                    greeter=author_user_id,
-                    status=InvitationStatus.CANCELLED,
-                )
+        # Only the greeter or the claimer can cancel the invitation
+        if not self.is_greeter_allowed(org, invitation, author_user):
+            if invitation.type == InvitationType.USER:
+                assert invitation.claimer_email is not None
+                if invitation.claimer_email != author_user.cooked.human_handle.email:
+                    return InviteCancelBadOutcome.AUTHOR_NOT_ALLOWED
+            elif invitation.type in (InvitationType.DEVICE, InvitationType.SHAMIR_RECOVERY):
+                assert invitation.claimer_user_id is not None
+                if invitation.claimer_user_id != author_user.cooked.user_id:
+                    return InviteCancelBadOutcome.AUTHOR_NOT_ALLOWED
+            else:
+                assert False, invitation.type
+
+        invitation.deleted_on = now
+        invitation.deleted_reason = MemoryInvitationDeletedReason.CANCELLED
+
+        await self._event_bus.send(
+            EventInvitation(
+                organization_id=organization_id,
+                token=token,
+                greeter=author_user_id,
+                status=InvitationStatus.CANCELLED,
             )
+        )
 
     @override
     async def list(

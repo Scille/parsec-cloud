@@ -20,7 +20,13 @@
                 "status": "invitation_not_found"
             },
             {
-                "status": "invitation_already_deleted"
+                "status": "author_not_allowed"
+            },
+            {
+                "status": "invitation_completed"
+            },
+            {
+                "status": "invitation_already_cancelled"
             }
         ]
     }

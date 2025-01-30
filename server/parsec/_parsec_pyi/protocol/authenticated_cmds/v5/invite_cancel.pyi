@@ -34,7 +34,17 @@ class RepInvitationNotFound(Rep):
         self,
     ) -> None: ...
 
-class RepInvitationAlreadyDeleted(Rep):
+class RepAuthorNotAllowed(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepInvitationCompleted(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepInvitationAlreadyCancelled(Rep):
     def __init__(
         self,
     ) -> None: ...

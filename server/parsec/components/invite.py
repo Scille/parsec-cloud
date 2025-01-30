@@ -307,15 +307,6 @@ class InviteNewForShamirRecoveryBadOutcome(BadOutcomeEnum):
     USER_NOT_FOUND = auto()
 
 
-class InviteCancelBadOutcome(BadOutcomeEnum):
-    ORGANIZATION_NOT_FOUND = auto()
-    ORGANIZATION_EXPIRED = auto()
-    AUTHOR_NOT_FOUND = auto()
-    AUTHOR_REVOKED = auto()
-    INVITATION_NOT_FOUND = auto()
-    INVITATION_ALREADY_DELETED = auto()
-
-
 class InviteListBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
@@ -337,10 +328,6 @@ class InviteShamirRecoveryRevealBadOutcome(BadOutcomeEnum):
     INVITATION_DELETED = auto()
     BAD_INVITATION_TYPE = auto()
     BAD_REVEAL_TOKEN = auto()
-
-
-# New transport definitions
-# TODO: Remove the old ones once fully migrated
 
 
 @dataclass
@@ -439,6 +426,19 @@ class InviteClaimerStepBadOutcome(BadOutcomeEnum):
     GREETING_ATTEMPT_NOT_JOINED = auto()
     STEP_TOO_ADVANCED = auto()
     STEP_MISMATCH = auto()
+
+
+class InviteCancelBadOutcome(BadOutcomeEnum):
+    # Common outcomes
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    # Specific outcomes
+    AUTHOR_NOT_ALLOWED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_ALREADY_CANCELLED = auto()
+    INVITATION_COMPLETED = auto()
 
 
 class InviteCompleteBadOutcome(BadOutcomeEnum):
@@ -942,8 +942,12 @@ class BaseInviteComponent:
                 return authenticated_cmds.latest.invite_cancel.RepOk()
             case InviteCancelBadOutcome.INVITATION_NOT_FOUND:
                 return authenticated_cmds.latest.invite_cancel.RepInvitationNotFound()
-            case InviteCancelBadOutcome.INVITATION_ALREADY_DELETED:
-                return authenticated_cmds.latest.invite_cancel.RepInvitationAlreadyDeleted()
+            case InviteCancelBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.invite_cancel.RepAuthorNotAllowed()
+            case InviteCancelBadOutcome.INVITATION_COMPLETED:
+                return authenticated_cmds.latest.invite_cancel.RepInvitationCompleted()
+            case InviteCancelBadOutcome.INVITATION_ALREADY_CANCELLED:
+                return authenticated_cmds.latest.invite_cancel.RepInvitationAlreadyCancelled()
             case InviteCancelBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case InviteCancelBadOutcome.ORGANIZATION_EXPIRED:
