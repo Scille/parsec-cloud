@@ -13,6 +13,7 @@ from tests.common import (
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
     ShamirOrgRpcClients,
+    bob_becomes_admin,
 )
 
 
@@ -198,6 +199,60 @@ async def test_authenticated_invite_list_with_deleted_shamir(
     assert isinstance(rep, authenticated_cmds.latest.invite_list.RepOk)
     (invitation,) = rep.invitations
     assert invitation == expected
+
+
+async def test_authenticated_invite_list_with_shared_user_invitations(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    # Bob has no invitations
+    rep = await coolorg.bob.invite_list()
+    assert isinstance(rep, authenticated_cmds.latest.invite_list.RepOk)
+    assert rep.invitations == []
+
+    # Save alice's user invitations
+    rep = await coolorg.alice.invite_list()
+    assert isinstance(rep, authenticated_cmds.latest.invite_list.RepOk)
+    expected_invitations = [
+        invitation
+        for invitation in rep.invitations
+        if isinstance(invitation, authenticated_cmds.latest.invite_list.InviteListItemUser)
+    ]
+
+    # Bob becomes admin
+    await bob_becomes_admin(coolorg, backend)
+
+    # Bob has the same user invitations as Alice
+    rep = await coolorg.bob.invite_list()
+    assert isinstance(rep, authenticated_cmds.latest.invite_list.RepOk)
+    assert rep.invitations == expected_invitations
+
+    # Alice creates a new user invite
+    t2 = DateTime.now()
+    outcome = await backend.invite.new_for_user(
+        now=t2,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        claimer_email="another_zack@example.invalid",
+        send_email=False,
+    )
+    assert isinstance(outcome, tuple)
+    expected_invitations.append(
+        authenticated_cmds.latest.invite_list.InviteListItemUser(
+            created_on=t2,
+            created_by=authenticated_cmds.latest.invite_list.InvitationCreatedByUser(
+                user_id=coolorg.alice.user_id,
+                human_handle=coolorg.alice.human_handle,
+            ),
+            status=InvitationStatus.IDLE,
+            claimer_email="another_zack@example.invalid",
+            token=outcome[0],
+        )
+    )
+
+    # Bob sees the new invitation
+    rep = await coolorg.bob.invite_list()
+    assert isinstance(rep, authenticated_cmds.latest.invite_list.RepOk)
+    assert rep.invitations == expected_invitations
 
 
 async def test_authenticated_invite_list_http_common_errors(

@@ -18,6 +18,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
+    bob_becomes_admin,
     bob_becomes_admin_and_changes_alice,
 )
 
@@ -229,6 +230,43 @@ async def test_authenticated_invite_new_user_send_email_bad_outcome(
     assert (
         await backend.invite.test_dump_all_invitations(minimalorg.organization_id)
         == expected_invitations
+    )
+
+
+async def test_authenticated_invite_new_user_with_shared_user_invitations(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    # Bob becomes admin
+    await bob_becomes_admin(coolorg, backend)
+
+    # Save invitations for reference
+    excepted_invitations = await backend.invite.test_dump_all_invitations(coolorg.organization_id)
+
+    with backend.event_bus.spy() as spy:
+        # Bob invites zack, although an existing invitation created by Alice already exists
+        rep = await coolorg.bob.invite_new_user(
+            claimer_email="zack@example.invalid",
+            send_email=False,
+        )
+
+        # The same token as the existing invitation has been returned
+        assert isinstance(rep, authenticated_cmds.latest.invite_new_user.RepOk)
+        assert rep.token == coolorg.invited_zack.token
+
+        # The corresponding event has been generated
+        await spy.wait_event_occurred(
+            EventInvitation(
+                organization_id=coolorg.organization_id,
+                greeter=coolorg.bob.user_id,
+                token=coolorg.invited_zack.token,
+                status=InvitationStatus.IDLE,
+            )
+        )
+
+    # No new invitation has been created
+    assert (
+        await backend.invite.test_dump_all_invitations(coolorg.organization_id)
+        == excepted_invitations
     )
 
 
