@@ -233,3 +233,8 @@ impl WorkspaceHistoryOps {
         transactions::fd_stat(self, fd).await
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/workspace_history/mod.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;
