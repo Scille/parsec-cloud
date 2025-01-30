@@ -157,11 +157,11 @@ macro_rules! test_send_hook_vlob_read_batch {
         test_send_hook_vlob_read_batch!(__internal, true, $env, None, Some($at), $realm_id, $($entry_id),*)
     };
     // allowed
-    ($env: expr, $realm_id: expr, allowed: [$($entry_id: expr),*] $(,)?) => {
+    ($env: expr, $realm_id: expr, allowed: [$($entry_id: expr),* $(,)?] $(,)?) => {
         test_send_hook_vlob_read_batch!(__internal, false, $env, None, None, $realm_id, $($entry_id),*)
     };
     // at + allowed
-    ($env: expr, at: $at: expr, $realm_id: expr, allowed: [$($entry_id: expr),*] $(,)?) => {
+    ($env: expr, at: $at: expr, $realm_id: expr, allowed: [$($entry_id: expr),* $(,)?] $(,)?) => {
         test_send_hook_vlob_read_batch!(__internal, false, $env, None, Some($at), $realm_id, $($entry_id),*)
     };
     // server_up_to
@@ -173,11 +173,11 @@ macro_rules! test_send_hook_vlob_read_batch {
         test_send_hook_vlob_read_batch!(__internal, true, $env, Some($server_up_to), Some($at), $realm_id, $($entry_id),*)
     };
     // server_up_to + allowed
-    ($env: expr, server_up_to: $server_up_to: expr, $realm_id: expr, allowed: [$($entry_id: expr),*] $(,)?) => {
+    ($env: expr, server_up_to: $server_up_to: expr, $realm_id: expr, allowed: [$($entry_id: expr),* $(,)?] $(,)?) => {
         test_send_hook_vlob_read_batch!(__internal, false, $env, Some($server_up_to), None, $realm_id, $($entry_id),*)
     };
     // server_up_to + at + allowed
-    ($env: expr, server_up_to: $server_up_to: expr, at: $at: expr, $realm_id: expr, allowed: [$($entry_id: expr),*] $(,)?) => {
+    ($env: expr, server_up_to: $server_up_to: expr, at: $at: expr, $realm_id: expr, allowed: [$($entry_id: expr),* $(,)?] $(,)?) => {
         test_send_hook_vlob_read_batch!(__internal, false, $env, Some($server_up_to), Some($at), $realm_id, $($entry_id),*)
     };
 }
@@ -330,7 +330,7 @@ macro_rules! test_send_hook_vlob_read_versions {
         test_send_hook_vlob_read_versions!(__internal, true, $env, None, $realm_id, $(($entry_id, $entry_version)),*)
     };
     // allowed
-    ($env: expr, $realm_id: expr, allowed: [$(($entry_id: expr, $entry_version: expr)),*] $(,)?) => {
+    ($env: expr, $realm_id: expr, allowed: [$(($entry_id: expr, $entry_version: expr)),* $(,)?] $(,)?) => {
         test_send_hook_vlob_read_versions!(__internal, false, $env, None, $realm_id, $(($entry_id, $entry_version)),*)
     };
     // server_up_to
@@ -338,7 +338,7 @@ macro_rules! test_send_hook_vlob_read_versions {
         test_send_hook_vlob_read_versions!(__internal, true, $env, Some($server_up_to), $realm_id, $(($entry_id, $entry_version)),*)
     };
     // server_up_to + allowed
-    ($env: expr, server_up_to: $server_up_to: expr, $realm_id: expr, allowed: [$(($entry_id: expr, $entry_version: expr)),*] $(,)?) => {
+    ($env: expr, server_up_to: $server_up_to: expr, $realm_id: expr, allowed: [$(($entry_id: expr, $entry_version: expr)),* $(,)?] $(,)?) => {
         test_send_hook_vlob_read_versions!(__internal, false, $env, Some($server_up_to), $realm_id, $(($entry_id, $entry_version)),*)
     };
 }
@@ -399,35 +399,44 @@ macro_rules! test_send_hook_realm_get_keys_bundle {
 ///
 /// Notes:
 /// - No access control is done ! So only use this for a user that has access to the realm.
+/// - Use the `allowed: [...]` parameter in case the order the client will query multiple
+///   blocks is not guaranteed.
 #[macro_export]
 macro_rules! test_send_hook_block_read {
-    ($env: expr, $realm_id: expr, $block_id: expr) => {{
+    ($env: expr, $realm_id: expr, allowed: [$($block_id: expr),* $(,)?] $(,)?) => {{
         let env: &TestbedEnv = $env;
         let realm_id: VlobID = $realm_id;
-        let block_id: BlockID = $block_id;
+        let allowed_block_ids: Vec<BlockID> = vec![$($block_id),*];
 
         let last_realm_certificate_timestamp = env.get_last_realm_certificate_timestamp(realm_id);
-        let fetch_block_rep = env
+        let allowed_reps = env
             .template
             .events
             .iter()
             .rev()
-            .find_map(|e| match e {
-                TestbedEvent::CreateBlock(e) if e.block_id == block_id => {
+            .filter_map(|e| match e {
+                TestbedEvent::CreateBlock(e) if allowed_block_ids.contains(&e.block_id) => {
                     let rep = $crate::protocol::authenticated_cmds::latest::block_read::Rep::Ok {
                         needed_realm_certificate_timestamp: last_realm_certificate_timestamp,
                         key_index: e.key_index,
                         block: e.encrypted(&env.template),
                     };
-                    Some(rep)
+                    Some((e.block_id, rep))
                 }
                 _ => None,
             })
-            .unwrap();
+            .collect::<Vec<_>>();
 
         move |req: $crate::protocol::authenticated_cmds::latest::block_read::Req| {
-            p_assert_eq!(req.block_id, block_id);
-            fetch_block_rep
+            for (block_id, rep) in allowed_reps.into_iter() {
+                if block_id == req.block_id {
+                    return rep;
+                }
+            }
+            panic!("Unexpected block_id: {:?} (expected: {:?})", req.block_id, allowed_block_ids);
         }
     }};
+    ($env: expr, $realm_id: expr, $block_id: expr) => {
+        test_send_hook_block_read!($env, $realm_id, allowed: [$block_id])
+    };
 }
