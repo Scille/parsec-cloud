@@ -630,7 +630,13 @@ class ClientCancelInvitationError(ErrorVariant):
     class NotFound:
         pass
 
-    class AlreadyDeleted:
+    class NotAllowed:
+        pass
+
+    class AlreadyCancelled:
+        pass
+
+    class Completed:
         pass
 
     class Internal:

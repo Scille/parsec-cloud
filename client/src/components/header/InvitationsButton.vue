@@ -109,11 +109,13 @@ async function cancelUserInvitation(invitation: UserInvitation): Promise<void> {
     );
     await updateInvitations();
   } else {
-    // In both those cases we can just refresh the list and the invitation should disappear, no need
+    // In all those cases we can just refresh the list and the invitation should disappear, no need
     // to warn the user.
     if (
       result.error.tag === ClientCancelInvitationErrorTag.NotFound ||
-      result.error.tag === ClientCancelInvitationErrorTag.AlreadyDeleted
+      result.error.tag === ClientCancelInvitationErrorTag.NotAllowed ||
+      result.error.tag === ClientCancelInvitationErrorTag.AlreadyCancelled ||
+      result.error.tag === ClientCancelInvitationErrorTag.Completed
     ) {
       await updateInvitations();
     } else {

@@ -634,12 +634,20 @@ export type ClientAcceptTosError =
 
 
 // ClientCancelInvitationError
-export interface ClientCancelInvitationErrorAlreadyDeleted {
-    tag: "AlreadyDeleted"
+export interface ClientCancelInvitationErrorAlreadyCancelled {
+    tag: "AlreadyCancelled"
+    error: string
+}
+export interface ClientCancelInvitationErrorCompleted {
+    tag: "Completed"
     error: string
 }
 export interface ClientCancelInvitationErrorInternal {
     tag: "Internal"
+    error: string
+}
+export interface ClientCancelInvitationErrorNotAllowed {
+    tag: "NotAllowed"
     error: string
 }
 export interface ClientCancelInvitationErrorNotFound {
@@ -651,8 +659,10 @@ export interface ClientCancelInvitationErrorOffline {
     error: string
 }
 export type ClientCancelInvitationError =
-  | ClientCancelInvitationErrorAlreadyDeleted
+  | ClientCancelInvitationErrorAlreadyCancelled
+  | ClientCancelInvitationErrorCompleted
   | ClientCancelInvitationErrorInternal
+  | ClientCancelInvitationErrorNotAllowed
   | ClientCancelInvitationErrorNotFound
   | ClientCancelInvitationErrorOffline
 

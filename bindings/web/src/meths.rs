@@ -4671,11 +4671,18 @@ fn variant_client_cancel_invitation_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::ClientCancelInvitationError::AlreadyDeleted { .. } => {
+        libparsec::ClientCancelInvitationError::AlreadyCancelled { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientCancelInvitationErrorAlreadyDeleted".into(),
+                &"ClientCancelInvitationErrorAlreadyCancelled".into(),
+            )?;
+        }
+        libparsec::ClientCancelInvitationError::Completed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientCancelInvitationErrorCompleted".into(),
             )?;
         }
         libparsec::ClientCancelInvitationError::Internal { .. } => {
@@ -4683,6 +4690,13 @@ fn variant_client_cancel_invitation_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientCancelInvitationErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientCancelInvitationError::NotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientCancelInvitationErrorNotAllowed".into(),
             )?;
         }
         libparsec::ClientCancelInvitationError::NotFound { .. } => {
