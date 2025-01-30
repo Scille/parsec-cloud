@@ -15,6 +15,7 @@ pub(crate) use windows as platform;
 #[cfg(test)]
 pub(crate) use platform::LOOKUP_HOOK;
 
+pub use platform::clean_base_mountpoint_dir;
 pub use platform::Mountpoint;
 
 #[cfg(test)]

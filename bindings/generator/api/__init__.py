@@ -15,3 +15,7 @@ from .testbed import *
 from .validation import *
 from .workspace import *
 from .workspace_history import *
+
+
+async def init_libparsec(config: ClientConfig):
+    raise NotImplementedError

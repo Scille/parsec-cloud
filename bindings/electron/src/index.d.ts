@@ -3498,6 +3498,9 @@ export function importRecoveryDevice(
     device_label: string,
     save_strategy: DeviceSaveStrategy
 ): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
+export function initLibparsec(
+    config: ClientConfig
+): Promise<null>
 export function isKeyringAvailable(
 ): Promise<boolean>
 export function listAvailableDevices(

@@ -4115,6 +4115,9 @@ export interface LibParsecPlugin {
         device_label: DeviceLabel,
         save_strategy: DeviceSaveStrategy
     ): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
+    initLibparsec(
+        config: ClientConfig
+    ): Promise<null>
     isKeyringAvailable(
     ): Promise<boolean>
     listAvailableDevices(

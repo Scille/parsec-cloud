@@ -17706,6 +17706,32 @@ fn import_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// init_libparsec
+fn init_libparsec(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            libparsec::init_libparsec(config).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = cx.null();
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // is_keyring_available
 fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -21760,6 +21786,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         greeter_user_initial_do_wait_peer,
     )?;
     cx.export_function("importRecoveryDevice", import_recovery_device)?;
+    cx.export_function("initLibparsec", init_libparsec)?;
     cx.export_function("isKeyringAvailable", is_keyring_available)?;
     cx.export_function("listAvailableDevices", list_available_devices)?;
     cx.export_function("mountpointToOsPath", mountpoint_to_os_path)?;

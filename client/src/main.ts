@@ -24,6 +24,7 @@ import { bootstrapLinkValidator, claimLinkValidator, fileLinkValidator } from '@
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
 import { getLoggedInDevices, getOrganizationHandle, isElectron, listAvailableDevices, logout, needsMocks, parseFileLink } from '@/parsec';
+import { getClientConfig } from '@/parsec/internals';
 import { AvailableDevice, Platform, libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 import { Events } from '@/services/eventDistributor';
@@ -145,6 +146,9 @@ async function setupApp(): Promise<void> {
     } else {
       window.usesTestbed = (): boolean => false;
     }
+
+    // Libparsec initialization
+    await libparsec.initLibparsec(getClientConfig());
 
     if (locale) {
       I18n.changeLocale(locale);

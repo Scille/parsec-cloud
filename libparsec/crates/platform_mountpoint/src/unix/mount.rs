@@ -152,10 +152,124 @@ impl Drop for Mountpoint {
     }
 }
 
-// Find a suitable path where to mount the workspace. The check we are doing
-// here are not atomic (and the mount operation is not itself atomic anyway),
-// hence there is still edge-cases where the mount can crash due to concurrent
-// changes on the mountpoint path.
+/// Cleanup mountpoint base directory
+///
+/// This routine ensures the base mountpoint directory does not contain
+/// regular empty directories or artifacts from previously mounted workspaces.
+///
+/// To prevent data loss, non-empty directories are left untouched.
+///
+/// Essentially, the following is applied to entries in the base mountpoint dir:
+/// - Regular file --> skip
+/// - Regular empty directory --> remove
+/// - Regular non-empty directory --> skip
+/// - Directory of a valid mountpoint (empty or not) --> skip
+/// - Directory of an invalid mountpoint (artifact) --> unmount + remove
+///
+/// A directory is considered an artifact when their metadata (stat) cannot be
+/// obtained. This is typically the case when Parsec app crashes and workspaces
+/// are not properly unmounted.
+pub async fn clean_base_mountpoint_dir(
+    mountpoint_base_path: std::path::PathBuf,
+) -> anyhow::Result<(), libparsec_types::anyhow::Error> {
+    // Check if path is not empty
+    if mountpoint_base_path.components().next().is_none() {
+        log::error!(
+            "Base home dir cleanup, invalid path: {}",
+            mountpoint_base_path.display()
+        );
+        return Ok(());
+    }
+
+    tokio::task::spawn_blocking(move || {
+        // Obtain metadata for base mountpoint dir and iterate over its entries.
+        //
+        // Note that if metadata or read fail on base mountpoint dir there is no
+        // much we can do so errors are propagated.
+        let base_metadata = std::fs::metadata(&mountpoint_base_path)?;
+        for entry in std::fs::read_dir(&mountpoint_base_path)?
+            .flatten()
+        {
+            let entry_path = entry.path();
+            log::debug!("Base home dir cleanup, processing: {}", entry_path.display());
+
+            let ws_metadata = match std::fs::metadata(&entry_path) {
+                Ok(ws_metadata) => ws_metadata,
+                Err(_) => {
+                    // If dir metadata cannot be obtained, it is most likely
+                    // an artifact from a previously mounted workspace
+                    // (e.g. Parsec crashed without properly unmounting).
+                    // The only way to remove it is to manually force unmount.
+                    log::debug!("Base home dir cleanup, unmounting: {}", entry_path.display());
+                    if let Err(err) = std::process::Command::new("fusermount")
+                        .arg("-u")
+                        .arg(&entry_path)
+                        .status()
+                    {
+                        log::warn!(
+                            "Base home dir cleanup, failed to unmount: {} ({err})",
+                            entry_path.display()
+                        );
+                        continue;
+                    }
+
+                    // Now that is unmounted, it should be safe to obtain metadata
+                    match std::fs::metadata(&entry_path){
+                        Ok(ws_metadata) => ws_metadata,
+                        Err(err) =>
+                        {
+                            // Ouch... still an error, let's just skip this directory.
+                            log::warn!(
+                                "Base home dir cleanup, failed to get metadata after unmount: {} ({err})",
+                                entry_path.display()
+                            );
+                            continue;
+                        }
+                    }
+                }
+            };
+
+            // Skip if not a directory
+            // NOTE: this filter cannot be applied during the for entry iterator (above)
+            //       because is_dir depends on obtaining entry metadata which, as seen
+            //       above, will fail on artifacts (and therefore skip them!)
+            if !entry_path.is_dir(){
+                continue;
+            }
+
+            // Only regular directories should be considered (that is, directories that do
+            // not correspond to a valid workspace mountpoint!). For that, their device
+            // must be equal to the base mountpoint directory.
+            if ws_metadata.st_dev() == base_metadata.st_dev() {
+                if std::fs::read_dir(&entry_path)?.next().is_none() {
+                    // Empty directory, safe to remove it!
+                    if let Err(err) = std::fs::remove_dir(&entry_path) {
+                        log::error!(
+                            "Base home dir cleanup, could not remove empty directory: {} ({err})",
+                            entry_path.display(),
+                        );
+                    }
+                } else {
+                    // Non-empty directory likely means it was created by the user.
+                    // Let's skip it to prevent data loss.
+                    log::warn!(
+                        "Base home dir cleanup, skipping non-empty directory: {}",
+                        entry_path.display(),
+                    );
+                }
+            }
+        }
+        Ok(())
+    })
+    .await
+    .context("cannot run clean_base_mountpoint_dir task")?
+}
+
+/// Find a suitable path to mount the workspace.
+///
+/// The checks performed here are not atomic (and the mount operation is not
+/// itself atomic anyway), hence there are still some edge-cases where the
+/// mountpoint can crash due to concurrent changes on the mountpoint path.
 fn create_suitable_mountpoint_dir(
     base_mountpoint_path: &std::path::Path,
     workspace_name: &EntryName,

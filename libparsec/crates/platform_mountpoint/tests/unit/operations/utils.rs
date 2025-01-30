@@ -41,6 +41,30 @@ pub async fn start_client_with_mountpoint_base_dir(
     Client::start(config, event_bus, device).await.unwrap()
 }
 
+/// Mount workspace "wksp1" from TestbedEnv `env` in `mountpoint_base_dir` and
+/// execute the given `test` closure.
+///
+/// If specified, `start_as` is the client used to mount "wksp1". Otherwise
+/// "alice@dev1" will be used.
+///
+/// # Examples
+///
+/// Mount wksp1 as "alice@dev1":
+///
+/// ```
+/// mount_and_test!(env, &tmp_path,
+///     |client: Arc<Client>, wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {{
+///     // ...
+///     });
+/// ```
+///
+/// Mount wksp1 as "bob@dev1":
+/// ```
+/// mount_and_test!(as "bob@dev1", env, &tmp_path,
+///     |bob_client: Arc<Client>, bob_wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {{
+///     // ...
+///     });
+/// ```
 macro_rules! mount_and_test {
     ($env:expr, $mountpoint_base_dir:expr, $test:expr) => {
         mount_and_test!(as "alice@dev1", $env, $mountpoint_base_dir, $test)

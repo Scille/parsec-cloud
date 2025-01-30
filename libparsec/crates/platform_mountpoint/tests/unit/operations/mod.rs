@@ -17,6 +17,8 @@ mod write_file;
 
 #[cfg(target_os = "linux")]
 mod linux_fusermount;
+#[cfg(target_family = "unix")]
+mod unix_clean_mountpoint_base_dir;
 #[cfg(target_os = "windows")]
 mod windows_drive_mount;
 #[cfg(target_os = "windows")]

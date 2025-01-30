@@ -16590,6 +16590,19 @@ pub fn importRecoveryDevice(
     })
 }
 
+// init_libparsec
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn initLibparsec(config: Object) -> Promise {
+    future_to_promise(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        libparsec::init_libparsec(config).await;
+        Ok(JsValue::NULL)
+    })
+}
+
 // is_keyring_available
 #[allow(non_snake_case)]
 #[wasm_bindgen]

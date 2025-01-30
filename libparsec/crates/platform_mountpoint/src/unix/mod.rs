@@ -7,4 +7,5 @@ mod mount;
 #[cfg(test)]
 pub(crate) use filesystem::LOOKUP_HOOK;
 
+pub use mount::clean_base_mountpoint_dir;
 pub use mount::Mountpoint;

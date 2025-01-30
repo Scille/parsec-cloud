@@ -59,5 +59,27 @@ pub mod internal {
     };
 }
 
+/// Libparsec initialization routine
+pub async fn init_libparsec(
+    #[cfg_attr(target_arch = "wasm32", allow(unused_variables))] config: ClientConfig,
+) {
+    log::debug!("Initializing libparsec");
+
+    // 1) Clean base home directory
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        if let MountpointMountStrategy::Directory { base_dir } = config.mountpoint_mount_strategy {
+            if let Err(err) =
+                libparsec_platform_mountpoint::clean_base_mountpoint_dir(base_dir).await
+            {
+                log::error!("Failed to clean base home directory ({err})");
+            } else {
+                log::debug!("Cleaned base home directory");
+            }
+        };
+    }
+}
+
 #[cfg(feature = "cli-tests")]
 pub use libparsec_tests_fixtures::{tmp_path, TmpPath};

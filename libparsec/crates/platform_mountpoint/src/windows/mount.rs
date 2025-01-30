@@ -224,6 +224,14 @@ pub(crate) fn find_suitable_drive_letter(
     None
 }
 
+/// Cleanup mountpoint base directory
+pub async fn clean_base_mountpoint_dir(
+    _mountpoint_base_path: std::path::PathBuf,
+) -> anyhow::Result<(), libparsec_types::anyhow::Error> {
+    // Currently a no-op on Windows. See `clean_base_mountpoint_dir` in `unix/mount.rs`
+    Ok(())
+}
+
 // TODO: is volume serial number really needed ?
 // fn generate_volume_serial_number(device: LocalDevice, workspace_id: VlobID) -> u64 {
 //     use std::hash::{Hash, Hasher};
