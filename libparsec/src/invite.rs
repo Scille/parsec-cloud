@@ -314,9 +314,15 @@ pub async fn claimer_greeter_abort_operation(
         HandleItem::ShamirRecoveryClaimPickRecipient(_) => Ok(None),
         HandleItem::ShamirRecoveryClaimShare(_) => Ok(None),
         HandleItem::ShamirRecoveryClaimRecoverDevice(_) => Ok(None),
-        HandleItem::ShamirRecoveryClaimInitial(_) => Ok(None),
-        HandleItem::UserClaimInitial(_) => Ok(None),
-        HandleItem::DeviceClaimInitial(_) => Ok(None),
+        HandleItem::ShamirRecoveryClaimInitial(x) => Ok(Some(
+            EitherCancellerCtx::ClaimCancellerCtx(x.canceller_ctx()),
+        )),
+        HandleItem::UserClaimInitial(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::DeviceClaimInitial(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
+            x.canceller_ctx(),
+        ))),
         HandleItem::UserClaimInProgress1(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
             x.canceller_ctx(),
         ))),
@@ -347,9 +353,15 @@ pub async fn claimer_greeter_abort_operation(
         HandleItem::UserClaimFinalize(_) => Ok(None),
         HandleItem::DeviceClaimFinalize(_) => Ok(None),
         HandleItem::ShamirRecoveryClaimFinalize(_) => Ok(None),
-        HandleItem::UserGreetInitial(_) => Ok(None),
-        HandleItem::DeviceGreetInitial(_) => Ok(None),
-        HandleItem::ShamirRecoveryGreetInitial(_) => Ok(None),
+        HandleItem::UserGreetInitial(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::DeviceGreetInitial(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::ShamirRecoveryGreetInitial(x) => Ok(Some(
+            EitherCancellerCtx::GreetCancellerCtx(x.canceller_ctx()),
+        )),
         HandleItem::UserGreetInProgress1(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
             x.canceller_ctx(),
         ))),
@@ -457,12 +469,13 @@ pub async fn claimer_user_initial_do_wait_peer(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserClaimInProgress1Info, ClaimInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserClaimInitial(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::UserClaimInitial(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_wait_peer().await?;
         let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
         let greeter_sas = ctx.greeter_sas().to_owned();
@@ -479,7 +492,10 @@ pub async fn claimer_user_initial_do_wait_peer(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+        _ = cancel_requested => {
+            canceller_ctx.cancel_and_warn_on_error().await;
+            Err(ClaimInProgressError::Cancelled)
+        },
     )
 }
 
@@ -487,12 +503,13 @@ pub async fn claimer_device_initial_do_wait_peer(
     canceller: Handle,
     handle: Handle,
 ) -> Result<DeviceClaimInProgress1Info, ClaimInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceClaimInitial(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::DeviceClaimInitial(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_wait_peer().await?;
         let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
         let greeter_sas = ctx.greeter_sas().to_owned();
@@ -509,7 +526,10 @@ pub async fn claimer_device_initial_do_wait_peer(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+        _ = cancel_requested => {
+            canceller_ctx.cancel_and_warn_on_error().await;
+            Err(ClaimInProgressError::Cancelled)
+        },
     )
 }
 
@@ -517,12 +537,13 @@ pub async fn claimer_shamir_recovery_initial_do_wait_peer(
     canceller: Handle,
     handle: Handle,
 ) -> Result<ShamirRecoveryClaimInProgress1Info, ClaimInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::ShamirRecoveryClaimInitial(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::ShamirRecoveryClaimInitial(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_wait_peer().await?;
         let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
         let greeter_sas = ctx.greeter_sas().to_owned();
@@ -539,7 +560,10 @@ pub async fn claimer_shamir_recovery_initial_do_wait_peer(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+        _ = cancel_requested => {
+            canceller_ctx.cancel_and_warn_on_error().await;
+            Err(ClaimInProgressError::Cancelled)
+        },
     )
 }
 
