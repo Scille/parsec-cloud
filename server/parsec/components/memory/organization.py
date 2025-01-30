@@ -254,14 +254,22 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         if user.current_profile != UserProfile.ADMIN:
             return OrganizationStatsAsUserBadOutcome.AUTHOR_NOT_ALLOWED
 
-        return self._stats(org, at)
+        match self._stats(org, at):
+            case OrganizationStats() as stats:
+                return stats
+            case OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND:
+                return OrganizationStatsAsUserBadOutcome.ORGANIZATION_NOT_FOUND
 
     def _stats(
         self,
         org: MemoryOrganization,
         at: DateTime | None,
-    ) -> OrganizationStats:
+    ) -> OrganizationStats | OrganizationStatsBadOutcome:
         at = at or DateTime.now()
+
+        if org.created_on > at:
+            return OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND
+
         users = 0
         active_users = 0
         users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile.VALUES}
@@ -310,7 +318,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND
-        return self._stats(org, None)
+        match self._stats(org, None):
+            case OrganizationStats() as stats:
+                return stats
+            case OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND:
+                return OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND
 
     @override
     async def server_stats(
@@ -320,7 +332,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
         result = {}
         for org_id, org in sorted(self._data.organizations.items()):
-            result[org_id] = self._stats(org, at)
+            match self._stats(org, at):
+                case OrganizationStats() as stats:
+                    result[org_id] = stats
+                case OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND:
+                    pass
 
         return result
 

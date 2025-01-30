@@ -311,6 +311,7 @@ async def test_server_stats_at(
         assert response.status_code == 200, response.content
         return _strip_template_orgs(response.json())
 
+    # Org1 was created at 1970-01-01T00:00:00Z
     response = await server_stats("1990-01-01T00:00:00Z")
     expected = {
         "stats": [
@@ -329,5 +330,9 @@ async def test_server_stats_at(
             },
         ]
     }
+    assert response == expected
 
+    # Org1 should not appear in stats if `at` is before its creation
+    response = await server_stats("1969-01-01T00:00:00Z")
+    expected = {"stats": []}
     assert response == expected

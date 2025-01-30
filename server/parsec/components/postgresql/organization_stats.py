@@ -159,10 +159,14 @@ async def organization_stats(
 async def organization_server_stats(
     conn: AsyncpgConnection, at: DateTime | None = None
 ) -> dict[OrganizationID, OrganizationStats]:
-    results = {}
+    results: dict[OrganizationID, OrganizationStats] = {}
     for org in await conn.fetch(*_q_get_organizations()):
         org_id = OrganizationID(org["id"])
         org_stats = await _get_organization_stats(conn, org_id, at=at)
-        if org_stats:
-            results[org_id] = org_stats
+        match org_stats:
+            case OrganizationStats() as org_stats:
+                results[org_id] = org_stats
+            # The organization didn't exist at `at` time
+            case OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND:
+                pass
     return results
