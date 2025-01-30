@@ -229,7 +229,9 @@ pub async fn cancel_invitation(
 
     match rep {
         Rep::Ok => Ok(()),
-        Rep::InvitationAlreadyDeleted => Err(CancelInvitationError::AlreadyDeleted),
+        Rep::AuthorNotAllowed => Err(CancelInvitationError::NotFound),
+        Rep::InvitationAlreadyCancelled => Err(CancelInvitationError::AlreadyDeleted),
+        Rep::InvitationCompleted => Err(CancelInvitationError::AlreadyDeleted),
         Rep::InvitationNotFound => Err(CancelInvitationError::NotFound),
         rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())

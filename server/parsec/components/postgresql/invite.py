@@ -1354,15 +1354,15 @@ class PGInviteComponent(BaseInviteComponent):
         token: InvitationToken,
     ) -> None | InviteCancelBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case Organization() as organization:
+            case Organization() as org:
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteCancelBadOutcome.ORGANIZATION_NOT_FOUND
-        if organization.is_expired:
+        if org.is_expired:
             return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
-            case (author_user_id, _, _):
+            case (author_user_id, current_profile, _):
                 pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
@@ -1374,8 +1374,28 @@ class PGInviteComponent(BaseInviteComponent):
         invitation_info = await self.lock_invitation(conn, organization_id, token)
         if invitation_info is None:
             return InviteCancelBadOutcome.INVITATION_NOT_FOUND
-        if invitation_info.deleted_on is not None:
-            return InviteCancelBadOutcome.INVITATION_ALREADY_DELETED
+        if invitation_info.is_finished():
+            return InviteCancelBadOutcome.INVITATION_COMPLETED
+        if invitation_info.is_cancelled():
+            return InviteCancelBadOutcome.INVITATION_ALREADY_CANCELLED
+
+        match await self.user.get_user_info(conn, organization_id, author_user_id):
+            case UserInfo() as author_info:
+                pass
+            case None:
+                return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
+
+        # Only the greeter or the claimer can complete the invitation
+        if not await self.is_greeter_allowed(
+            conn, invitation_info, author_user_id, current_profile
+        ):
+            match invitation_info:
+                case UserInvitationInfo():
+                    if author_info.human_handle.email != invitation_info.claimer_email:
+                        return InviteCancelBadOutcome.AUTHOR_NOT_ALLOWED
+                case DeviceInvitationInfo() | ShamirRecoveryInvitationInfo():
+                    if author_user_id != invitation_info.claimer_user_id:
+                        return InviteCancelBadOutcome.AUTHOR_NOT_ALLOWED
 
         await conn.execute(
             *_q_delete_invitation(

@@ -62,16 +62,39 @@ pub fn rep_invitation_not_found() {
     rep_helper(&raw, expected);
 }
 
-pub fn rep_invitation_already_deleted() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+pub fn rep_author_not_allowed() {
+    // Generated from Parsec 3.2.5-a.0+dev
     // Content:
-    //   status: "invitation_already_deleted"
-    let raw = hex!("81a6737461747573ba696e7669746174696f6e5f616c72656164795f64656c65746564");
-    let expected = authenticated_cmds::invite_cancel::Rep::InvitationAlreadyDeleted;
-    rep_helper(&raw, expected);
+    //   status: 'author_not_allowed'
+    let raw: &[u8] = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564").as_ref();
+    let expected = authenticated_cmds::invite_cancel::Rep::AuthorNotAllowed;
+    rep_helper(raw, expected);
+}
+
+pub fn rep_invitation_already_cancelled() {
+    // Generated from Parsec 3.2.5-a.0+dev
+    // Content:
+    //   status: 'invitation_already_cancelled'
+    let raw: &[u8] = hex!(
+    "81a6737461747573bc696e7669746174696f6e5f616c72656164795f63616e63656c6c"
+    "6564"
+    )
+    .as_ref();
+    let expected = authenticated_cmds::invite_cancel::Rep::InvitationAlreadyCancelled;
+    rep_helper(raw, expected);
+}
+
+pub fn rep_invitation_completed() {
+    // Generated from Parsec 3.2.5-a.0+dev
+    // Content:
+    //   status: 'invitation_completed'
+    let raw: &[u8] = hex!("81a6737461747573b4696e7669746174696f6e5f636f6d706c65746564").as_ref();
+    let expected = authenticated_cmds::invite_cancel::Rep::InvitationCompleted;
+    rep_helper(raw, expected);
 }
 
 fn rep_helper(raw: &[u8], expected: authenticated_cmds::invite_cancel::Rep) {
+    println!("***expected: {:?}", expected.dump().unwrap());
     let data = authenticated_cmds::invite_cancel::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
