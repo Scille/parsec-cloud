@@ -21,7 +21,7 @@ import {
 } from '@/parsec';
 import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
-import { InviteInfoInvitationCreatedByTag, libparsec } from '@/plugins/libparsec';
+import { InviteInfoInvitationCreatedByTag, UserClaimCreatedByUserAsGreeterError, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 export class UserClaim {
@@ -72,7 +72,9 @@ export class UserClaim {
     }
   }
 
-  async retrieveInfo(invitationLink: string): Promise<Result<AnyClaimRetrievedInfoUser, ClaimerRetrieveInfoError>> {
+  async retrieveInfo(
+    invitationLink: string,
+  ): Promise<Result<AnyClaimRetrievedInfoUser, ClaimerRetrieveInfoError | UserClaimCreatedByUserAsGreeterError>> {
     function eventCallback(_handle: number, event: ClientEvent): void {
       console.log('On event', event);
     }
@@ -86,18 +88,13 @@ export class UserClaim {
         if (result.value.tag !== AnyClaimRetrievedInfoTag.User) {
           throw Error('Unexpected tag');
         }
-        let greeter = result.value.userClaimInitialInfos[0];
-
-        if (result.value.createdBy.tag === InviteInfoInvitationCreatedByTag.User) {
-          for (const claimInfo of result.value.userClaimInitialInfos) {
-            if (claimInfo.greeterUserId === result.value.createdBy.userId) {
-              greeter = claimInfo;
-              break;
-            }
-          }
+        const getInitialInfoResult = await libparsec.claimerUserGetCreatedByUserInitialInfo(result.value.handle);
+        // Return the error if the created-by user could not be used as a greeter
+        if (!getInitialInfoResult.ok) {
+          return getInitialInfoResult as Result<AnyClaimRetrievedInfoUser, UserClaimCreatedByUserAsGreeterError>;
         }
-        this.handle = greeter.handle;
-        this.greeter = greeter.greeterHumanHandle;
+        this.handle = getInitialInfoResult.value.handle;
+        this.greeter = getInitialInfoResult.value.greeterHumanHandle;
       }
       return result as Result<AnyClaimRetrievedInfoUser, ClaimerRetrieveInfoError>;
     } else {
@@ -112,6 +109,7 @@ export class UserClaim {
         ok: true,
         value: {
           tag: AnyClaimRetrievedInfoTag.User,
+          handle: DEFAULT_HANDLE,
           claimerEmail: 'shadowheart@swordcoast.faerun',
           createdBy: {
             tag: InviteInfoInvitationCreatedByTag.User,
@@ -122,11 +120,10 @@ export class UserClaim {
               label: 'Gale Dekarios',
             },
           },
-          userClaimInitialInfos: [
+          administrators: [
             {
-              handle: DEFAULT_HANDLE,
-              greeterUserId: '1234',
-              greeterHumanHandle: {
+              userId: '1234',
+              humanHandle: {
                 email: 'gale@waterdeep.faerun',
                 // cspell:disable-next-line
                 label: 'Gale Dekarios',

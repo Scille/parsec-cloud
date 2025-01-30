@@ -150,7 +150,7 @@ async fn step0(
 }
 
 fn user_pick_admin(ctx: UserClaimListAdministratorsCtx) -> anyhow::Result<UserClaimInitialCtx> {
-    let ctxs = ctx.list_user_claim_initial_ctxs();
+    let ctxs = ctx.list_initial_ctxs();
     assert!(!ctxs.is_empty());
     // Only one admin, no need to choose
     if ctxs.len() == 1 {

@@ -354,6 +354,14 @@ export interface UserGreetInitialInfo {
 }
 
 
+export interface UserGreetingAdministrator {
+    userId: string
+    humanHandle: HumanHandle
+    onlineStatus: UserOnlineStatus
+    lastGreetingAttemptJoinedOn: number | null
+}
+
+
 export interface UserInfo {
     id: string
     humanHandle: HumanHandle
@@ -424,9 +432,10 @@ export interface AnyClaimRetrievedInfoShamirRecovery {
 }
 export interface AnyClaimRetrievedInfoUser {
     tag: "User"
+    handle: number
     claimer_email: string
     created_by: InviteInfoInvitationCreatedBy
-    user_claim_initial_infos: Array<UserClaimInitialInfo>
+    administrators: Array<UserGreetingAdministrator>
 }
 export type AnyClaimRetrievedInfo =
   | AnyClaimRetrievedInfoDevice
@@ -2063,6 +2072,34 @@ export type TestbedError =
   | TestbedErrorInternal
 
 
+// UserClaimCreatedByUserAsGreeterError
+export interface UserClaimCreatedByUserAsGreeterErrorCreatedByExternalService {
+    tag: "CreatedByExternalService"
+    error: string
+}
+export interface UserClaimCreatedByUserAsGreeterErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface UserClaimCreatedByUserAsGreeterErrorNotPartOfAdministrators {
+    tag: "NotPartOfAdministrators"
+    error: string
+}
+export type UserClaimCreatedByUserAsGreeterError =
+  | UserClaimCreatedByUserAsGreeterErrorCreatedByExternalService
+  | UserClaimCreatedByUserAsGreeterErrorInternal
+  | UserClaimCreatedByUserAsGreeterErrorNotPartOfAdministrators
+
+
+// UserClaimListInitialInfosError
+export interface UserClaimListInitialInfosErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type UserClaimListInitialInfosError =
+  | UserClaimListInitialInfosErrorInternal
+
+
 // WaitForDeviceAvailableError
 export interface WaitForDeviceAvailableErrorInternal {
     tag: "Internal"
@@ -3164,6 +3201,9 @@ export function claimerUserFinalizeSaveLocalDevice(
     handle: number,
     save_strategy: DeviceSaveStrategy
 ): Promise<Result<AvailableDevice, ClaimInProgressError>>
+export function claimerUserGetCreatedByUserInitialInfo(
+    handle: number
+): Promise<Result<UserClaimInitialInfo, UserClaimCreatedByUserAsGreeterError>>
 export function claimerUserInProgress1DoDenyTrust(
     canceller: number,
     handle: number
@@ -3186,6 +3226,9 @@ export function claimerUserInitialDoWaitPeer(
     canceller: number,
     handle: number
 ): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
+export function claimerUserListInitialInfo(
+    handle: number
+): Promise<Result<Array<UserClaimInitialInfo>, UserClaimListInitialInfosError>>
 export function clientAcceptTos(
     client: number,
     tos_updated_on: number

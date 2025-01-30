@@ -6,14 +6,13 @@ pub use libparsec_client::{
     ClientCancelInvitationError, ClientNewDeviceInvitationError,
     ClientNewShamirRecoveryInvitationError, ClientNewUserInvitationError,
     ClientStartShamirRecoveryInvitationGreetError, InvitationEmailSentStatus, ListInvitationsError,
-};
-pub use libparsec_client::{
     ShamirRecoveryClaimAddShareError, ShamirRecoveryClaimPickRecipientError,
-    ShamirRecoveryClaimRecoverDeviceError,
+    ShamirRecoveryClaimRecoverDeviceError, UserClaimCreatedByUserAsGreeterError,
 };
 pub use libparsec_protocol::authenticated_cmds::latest::invite_list::InvitationCreatedBy as InviteListInvitationCreatedBy;
 pub use libparsec_protocol::invited_cmds::latest::invite_info::{
-    InvitationCreatedBy as InviteInfoInvitationCreatedBy, ShamirRecoveryRecipient, UserOnlineStatus,
+    InvitationCreatedBy as InviteInfoInvitationCreatedBy, ShamirRecoveryRecipient,
+    UserGreetingAdministrator, UserOnlineStatus,
 };
 pub use libparsec_types::prelude::*;
 
@@ -237,30 +236,13 @@ pub async fn claimer_retrieve_info(
         libparsec_client::AnyClaimRetrievedInfoCtx::User(ctx) => {
             let claimer_email = ctx.claimer_email().to_string();
             let created_by = ctx.created_by().to_owned();
-            let user_claim_initial_ctx = ctx.list_user_claim_initial_ctxs();
-
-            let user_claim_initial_infos = user_claim_initial_ctx
-                .into_iter()
-                .map(|ctx| {
-                    let greeter_user_id = ctx.greeter_user_id().to_owned();
-                    let greeter_human_handle = ctx.greeter_human_handle().to_owned();
-                    let online_status = ctx.online_status();
-                    let last_greeting_attempt_joined_on = ctx.last_greeting_attempt_joined_on();
-                    let handle = register_handle(HandleItem::UserClaimInitial(ctx));
-                    UserClaimInitialInfo {
-                        handle,
-                        greeter_user_id,
-                        greeter_human_handle,
-                        online_status,
-                        last_greeting_attempt_joined_on,
-                    }
-                })
-                .collect();
-
+            let administrators = ctx.administrators().to_owned();
+            let handle = register_handle(HandleItem::UserClaimListAdministrators(ctx));
             Ok(AnyClaimRetrievedInfo::User {
+                handle,
                 claimer_email,
                 created_by,
-                user_claim_initial_infos,
+                administrators,
             })
         }
         libparsec_client::AnyClaimRetrievedInfoCtx::Device(ctx) => {
@@ -411,9 +393,10 @@ pub async fn claimer_greeter_abort_operation(
 
 pub enum AnyClaimRetrievedInfo {
     User {
+        handle: Handle,
         claimer_email: String,
         created_by: InviteInfoInvitationCreatedBy,
-        user_claim_initial_infos: Vec<UserClaimInitialInfo>,
+        administrators: Vec<UserGreetingAdministrator>,
     },
     Device {
         handle: Handle,
@@ -438,6 +421,62 @@ pub struct UserClaimInitialInfo {
     pub greeter_human_handle: HumanHandle,
     pub online_status: UserOnlineStatus,
     pub last_greeting_attempt_joined_on: Option<DateTime>,
+}
+
+pub fn claimer_user_get_created_by_user_initial_info(
+    handle: Handle,
+) -> Result<UserClaimInitialInfo, UserClaimCreatedByUserAsGreeterError> {
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::UserClaimListAdministrators(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let ctx = ctx.get_created_by_user_initial_ctx()?;
+    let greeter_user_id = ctx.greeter_user_id().to_owned();
+    let greeter_human_handle = ctx.greeter_human_handle().to_owned();
+    let online_status = ctx.online_status().to_owned();
+    let last_greeting_attempt_joined_on = ctx.last_greeting_attempt_joined_on().to_owned();
+    let new_handle = register_handle(HandleItem::UserClaimInitial(ctx));
+
+    Ok(UserClaimInitialInfo {
+        handle: new_handle,
+        greeter_user_id,
+        greeter_human_handle,
+        online_status,
+        last_greeting_attempt_joined_on,
+    })
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum UserClaimListInitialInfosError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub fn claimer_user_list_initial_info(
+    handle: Handle,
+) -> Result<Vec<UserClaimInitialInfo>, UserClaimListInitialInfosError> {
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::UserClaimListAdministrators(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    Ok(ctx
+        .list_initial_ctxs()
+        .into_iter()
+        .map(|ctx| {
+            let greeter_user_id = ctx.greeter_user_id().to_owned();
+            let greeter_human_handle = ctx.greeter_human_handle().to_owned();
+            let online_status = ctx.online_status().to_owned();
+            let last_greeting_attempt_joined_on = ctx.last_greeting_attempt_joined_on().to_owned();
+            let new_handle = register_handle(HandleItem::UserClaimInitial(ctx));
+            UserClaimInitialInfo {
+                handle: new_handle,
+                greeter_user_id,
+                greeter_human_handle,
+                online_status,
+                last_greeting_attempt_joined_on,
+            }
+        })
+        .collect())
 }
 
 pub struct ShamirRecoveryClaimInitialInfo {
