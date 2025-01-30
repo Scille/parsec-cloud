@@ -4095,14 +4095,24 @@ fn variant_client_cancel_invitation_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::ClientCancelInvitationError::AlreadyDeleted { .. } => {
+        libparsec::ClientCancelInvitationError::AlreadyCancelled { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientCancelInvitationErrorAlreadyCancelled")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientCancelInvitationError::Completed { .. } => {
             let js_tag =
-                JsString::try_new(cx, "ClientCancelInvitationErrorAlreadyDeleted").or_throw(cx)?;
+                JsString::try_new(cx, "ClientCancelInvitationErrorCompleted").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientCancelInvitationError::Internal { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClientCancelInvitationErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientCancelInvitationError::NotAllowed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientCancelInvitationErrorNotAllowed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientCancelInvitationError::NotFound { .. } => {

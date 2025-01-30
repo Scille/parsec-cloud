@@ -658,18 +658,28 @@ export type ClientAcceptTosError =
 
 // ClientCancelInvitationError
 export enum ClientCancelInvitationErrorTag {
-    AlreadyDeleted = 'ClientCancelInvitationErrorAlreadyDeleted',
+    AlreadyCancelled = 'ClientCancelInvitationErrorAlreadyCancelled',
+    Completed = 'ClientCancelInvitationErrorCompleted',
     Internal = 'ClientCancelInvitationErrorInternal',
+    NotAllowed = 'ClientCancelInvitationErrorNotAllowed',
     NotFound = 'ClientCancelInvitationErrorNotFound',
     Offline = 'ClientCancelInvitationErrorOffline',
 }
 
-export interface ClientCancelInvitationErrorAlreadyDeleted {
-    tag: ClientCancelInvitationErrorTag.AlreadyDeleted
+export interface ClientCancelInvitationErrorAlreadyCancelled {
+    tag: ClientCancelInvitationErrorTag.AlreadyCancelled
+    error: string
+}
+export interface ClientCancelInvitationErrorCompleted {
+    tag: ClientCancelInvitationErrorTag.Completed
     error: string
 }
 export interface ClientCancelInvitationErrorInternal {
     tag: ClientCancelInvitationErrorTag.Internal
+    error: string
+}
+export interface ClientCancelInvitationErrorNotAllowed {
+    tag: ClientCancelInvitationErrorTag.NotAllowed
     error: string
 }
 export interface ClientCancelInvitationErrorNotFound {
@@ -681,8 +691,10 @@ export interface ClientCancelInvitationErrorOffline {
     error: string
 }
 export type ClientCancelInvitationError =
-  | ClientCancelInvitationErrorAlreadyDeleted
+  | ClientCancelInvitationErrorAlreadyCancelled
+  | ClientCancelInvitationErrorCompleted
   | ClientCancelInvitationErrorInternal
+  | ClientCancelInvitationErrorNotAllowed
   | ClientCancelInvitationErrorNotFound
   | ClientCancelInvitationErrorOffline
 

@@ -202,8 +202,12 @@ pub enum CancelInvitationError {
     Offline,
     #[error("Invitation not found")]
     NotFound,
-    #[error("Invitation already deleted")]
-    AlreadyDeleted,
+    #[error("Author not allowed")]
+    NotAllowed,
+    #[error("Invitation already cancelled")]
+    AlreadyCancelled,
+    #[error("Invitation already completed")]
+    Completed,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -228,9 +232,9 @@ pub async fn cancel_invitation(
 
     match rep {
         Rep::Ok => Ok(()),
-        Rep::AuthorNotAllowed => Err(CancelInvitationError::NotFound),
-        Rep::InvitationAlreadyCancelled => Err(CancelInvitationError::AlreadyDeleted),
-        Rep::InvitationCompleted => Err(CancelInvitationError::AlreadyDeleted),
+        Rep::AuthorNotAllowed => Err(CancelInvitationError::NotAllowed),
+        Rep::InvitationAlreadyCancelled => Err(CancelInvitationError::AlreadyCancelled),
+        Rep::InvitationCompleted => Err(CancelInvitationError::Completed),
         Rep::InvitationNotFound => Err(CancelInvitationError::NotFound),
         rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
