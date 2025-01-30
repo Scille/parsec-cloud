@@ -515,7 +515,14 @@ async fn sse_event_id_mocked(
 #[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "minimal")]
 async fn sse_retry_mocked(
-    #[values("good", "good_with_data", "empty", "not_a_number")] kind: &'static str,
+    #[values(
+        "good",
+        "good_with_data",
+        "empty",
+        "not_a_number",
+        "bad_deserialization"
+    )]
+    kind: &'static str,
     env: &TestbedEnv,
 ) {
     let alice = env.local_device("alice@dev1");
@@ -548,6 +555,11 @@ async fn sse_retry_mocked(
         ),
         "empty" => register_send_hook!("retry: \ndata:\n\n"),
         "not_a_number" => register_send_hook!("retry: <dummy>\ndata:\n\n"),
+        // "bad_deserialization" in base46
+        "bad_deserialization" => {
+            // cspell:disable-next-line
+            register_send_hook!("data: YmFkX2Rlc2VyaWFsaXphdGlvbg==\nretry: 1000\n\n")
+        }
         unknown => unreachable!("{}", unknown),
     }
 
@@ -577,6 +589,10 @@ async fn sse_retry_mocked(
         "not_a_number" => {
             p_assert_matches!(event.message, SSEResponseOrMissedEvents::Empty);
             p_assert_eq!(event.retry, None);
+        }
+        "bad_deserialization" => {
+            p_assert_matches!(event.message, SSEResponseOrMissedEvents::Empty);
+            p_assert_eq!(event.retry, Some(std::time::Duration::from_millis(1000)));
         }
         unknown => unreachable!("{}", unknown),
     }

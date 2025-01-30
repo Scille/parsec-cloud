@@ -94,10 +94,17 @@ where
             let raw = BASE64
                 .decode(event.data.as_bytes())
                 .map_err(|_| ConnectionError::BadContent)?;
-            let cooked =
-                T::api_load_response(raw.as_ref()).map_err(|_| ConnectionError::BadContent)?;
-            SSEResponseOrMissedEvents::Response(cooked)
+            match T::api_load_response(raw.as_ref()) {
+                Ok(cooked) => SSEResponseOrMissedEvents::Response(cooked),
+                Err(e) => {
+                    log::warn!("Invalid event data: {e}");
+                    // We ignore bad deserialization to avoid breaking compatibility
+                    // when new event types are added to the protocol
+                    SSEResponseOrMissedEvents::Empty
+                }
+            }
         }
+
         // Unknown event should still be returned given it can modify `retry` param
         _ => SSEResponseOrMissedEvents::Empty,
     };
