@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod addr;
-mod fetch;
 mod history;
 mod merge;
 mod store;
