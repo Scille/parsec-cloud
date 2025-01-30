@@ -3,18 +3,19 @@
 import { answerQuestion, expect, msTest } from '@tests/e2e/helpers';
 
 msTest('Export recovery device', async ({ myProfilePage }) => {
-  const container = myProfilePage.locator('.restore-password');
-  await container.locator('.restore-password-button').click();
+  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Organization recovery');
+  await myProfilePage.locator('.menu-list__item').nth(3).click();
+  const restorePassword = myProfilePage.locator('.recovery');
+  await restorePassword.locator('.restore-password-button').locator('.button').click();
   await answerQuestion(myProfilePage, true, {
     expectedTitleText: 'Create a new recovery file?',
     expectedQuestionText: 'You have already created a recovery file in the past. Do you want to create a new one?',
     expectedPositiveText: 'Create a new recovery file',
     expectedNegativeText: 'Cancel',
   });
-  await expect(myProfilePage.locator('.topbar-left').locator('.topbar-left__title')).toHaveText('Recovery file');
-  const recoveryContainer = myProfilePage.locator('.recovery-container');
-  const fileContainer = recoveryContainer.locator('.file-item').nth(0);
-  const passphraseContainer = recoveryContainer.locator('.file-item').nth(1);
+  const recoveryContainer = myProfilePage.locator('.organization-recovery-container');
+  const fileContainer = recoveryContainer.locator('.recovery-item').nth(0);
+  const passphraseContainer = recoveryContainer.locator('.recovery-item').nth(1);
 
   await expect(fileContainer.locator('ion-button')).toHaveText('Download');
   await expect(passphraseContainer.locator('ion-button')).toHaveText('Download');

@@ -12,7 +12,7 @@ msTest('Profile popover default state', async ({ connected }) => {
   await expect(header.locator('.profile')).toHaveText('Administrator');
 
   const buttons = popover.locator('.main-list').getByRole('listitem');
-  await expect(buttons).toHaveText(['My profile', 'Settings', 'Log out']);
+  await expect(buttons).toHaveText(['Settings', 'My devices', 'Authentication', 'Organization recovery', 'Log out']);
 
   const footer = popover.locator('.footer-list');
   await expect(footer.locator('ion-item')).toHaveText(['Documentation', 'Feedback', /About \(v.+\)/]);
@@ -42,7 +42,7 @@ msTest('Profile popover go to about', async ({ connected }) => {
   await connected.locator('.topbar').locator('.profile-header').click();
   const popover = connected.locator('.profile-header-popover');
   await popover.locator('.footer-list').locator('ion-item').nth(2).click();
-  await expect(connected.locator('#connected-header').locator('.topbar-left__title')).toHaveText('About');
+  await expect(connected.locator('.profile-content-item').locator('.item-header__title')).toHaveText('About');
 });
 
 msTest('Profile popover go to profile', async ({ connected }) => {
@@ -55,6 +55,6 @@ msTest('Profile popover go to profile', async ({ connected }) => {
 msTest('Profile popover go to settings', async ({ connected }) => {
   await connected.locator('.topbar').locator('.profile-header').click();
   const popover = connected.locator('.profile-header-popover');
-  await popover.locator('.main-list').getByRole('listitem').nth(1).click();
-  await expect(connected.locator('.settings-modal')).toBeVisible();
+  await popover.locator('.main-list').getByRole('listitem').nth(0).click();
+  await expect(connected.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Settings');
 });

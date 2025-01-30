@@ -25,18 +25,6 @@
       </div>
       <ion-item
         class="main-list__item"
-        @click="onOptionClick(ProfilePopoverOption.MyProfile)"
-      >
-        <ion-icon
-          :icon="personCircle"
-          slot="start"
-        />
-        <ion-label class="body item-label">
-          {{ $msTranslate('HomePage.topbar.myProfile') }}
-        </ion-label>
-      </ion-item>
-      <ion-item
-        class="main-list__item"
         @click="onOptionClick(ProfilePopoverOption.Settings)"
       >
         <ion-icon
@@ -45,6 +33,42 @@
         />
         <ion-label class="body item-label">
           {{ $msTranslate('HomePage.topbar.settings') }}
+        </ion-label>
+      </ion-item>
+      <ion-item
+        class="main-list__item"
+        @click="onOptionClick(ProfilePopoverOption.Device)"
+      >
+        <ion-icon
+          :icon="phonePortrait"
+          slot="start"
+        />
+        <ion-label class="body item-label">
+          {{ $msTranslate('HomePage.topbar.devices') }}
+        </ion-label>
+      </ion-item>
+      <ion-item
+        class="main-list__item"
+        @click="onOptionClick(ProfilePopoverOption.Authentication)"
+      >
+        <ion-icon
+          :icon="fingerPrint"
+          slot="start"
+        />
+        <ion-label class="body item-label">
+          {{ $msTranslate('HomePage.topbar.authentication') }}
+        </ion-label>
+      </ion-item>
+      <ion-item
+        class="main-list__item"
+        @click="onOptionClick(ProfilePopoverOption.Recovery)"
+      >
+        <ion-icon
+          :icon="idCard"
+          slot="start"
+        />
+        <ion-label class="body item-label">
+          {{ $msTranslate('HomePage.topbar.recovery') }}
         </ion-label>
       </ion-item>
       <ion-item
@@ -75,7 +99,7 @@
       </ion-item>
       <ion-item
         class="footer-list__item"
-        @click="onOptionClick(ProfilePopoverOption.App)"
+        @click="onOptionClick(ProfilePopoverOption.About)"
       >
         <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.about') }} (v{{ APP_VERSION }}) </ion-text>
       </ion-item>
@@ -86,12 +110,14 @@
 <script lang="ts">
 export enum ProfilePopoverOption {
   Settings = 0,
-  Documentation = 1,
-  LogOut = 2,
-  App = 3,
-  MyProfile = 4,
-  Update = 5,
+  Device = 1,
+  Authentication = 2,
+  Recovery = 3,
+  Documentation = 4,
+  LogOut = 5,
   Feedback = 6,
+  About = 7,
+  Update = 8,
 }
 </script>
 
@@ -102,7 +128,7 @@ import { UserProfile } from '@/parsec';
 import { UpdateAvailabilityData } from '@/services/eventDistributor';
 import { popoverController } from '@ionic/core';
 import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
-import { cog, logOut, personCircle } from 'ionicons/icons';
+import { cog, fingerPrint, idCard, logOut, phonePortrait } from 'ionicons/icons';
 
 defineProps<{
   email: string;

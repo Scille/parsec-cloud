@@ -16,7 +16,6 @@ export enum Routes {
   Organization = 'organization',
   About = 'about',
   MyProfile = 'myProfile',
-  RecoveryExport = 'recoveryExport',
   Loading = 'loading',
   ClientAreaLogin = 'clientLogin',
   ClientArea = 'clientArea',
@@ -115,11 +114,6 @@ const routes: Array<RouteRecordRaw> = [
                 component: () => import('@/views/users/MyProfilePage.vue'),
               },
               {
-                path: `/:handle(\\d+)/${Routes.RecoveryExport}`,
-                name: Routes.RecoveryExport,
-                component: () => import('@/views/devices/ExportRecoveryDevicePage.vue'),
-              },
-              {
                 path: `/:handle(\\d+)/${Routes.Viewer}`,
                 name: Routes.Viewer,
                 component: () => import('@/views/viewers/FileViewer.vue'),
@@ -164,6 +158,14 @@ export interface RouteBackup {
   };
 }
 
+export enum ProfilePages {
+  Devices = 'devices',
+  Recovery = 'recovery',
+  Authentication = 'authentication',
+  Settings = 'settings',
+  About = 'about',
+}
+
 export interface Query {
   documentPath?: FsPath;
   deviceId?: DeviceID;
@@ -179,6 +181,7 @@ export interface Query {
   createOrg?: ServerType;
   fileTypeInfo?: string;
   timestamp?: string;
+  profilePage?: ProfilePages;
 }
 
 export interface ClientAreaQuery {

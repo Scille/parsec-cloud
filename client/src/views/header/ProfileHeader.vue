@@ -36,12 +36,11 @@
 <script setup lang="ts">
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserProfile, getConnectionInfo } from '@/parsec';
-import { Routes, navigateTo } from '@/router';
+import { Routes, navigateTo, ProfilePages } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import { Answer, askQuestion } from 'megashark-lib';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
-import { openSettingsModal } from '@/views/settings';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
@@ -134,15 +133,19 @@ async function openPopover(event: Event): Promise<void> {
       await eventDistributor.dispatchEvent(Events.LogoutRequested);
     }
   } else if (data.option === ProfilePopoverOption.Settings) {
-    await openSettingsModal();
+    await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Settings } });
   } else if (data.option === ProfilePopoverOption.Documentation) {
     await Env.Links.openDocumentationLink();
   } else if (data.option === ProfilePopoverOption.Feedback) {
     await Env.Links.openContactLink();
-  } else if (data.option === ProfilePopoverOption.App) {
-    await navigateTo(Routes.About);
-  } else if (data.option === ProfilePopoverOption.MyProfile) {
-    await navigateTo(Routes.MyProfile);
+  } else if (data.option === ProfilePopoverOption.About) {
+    await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.About } });
+  } else if (data.option === ProfilePopoverOption.Device) {
+    await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Devices } });
+  } else if (data.option === ProfilePopoverOption.Authentication) {
+    await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Authentication } });
+  } else if (data.option === ProfilePopoverOption.Recovery) {
+    await navigateTo(Routes.MyProfile, { query: { profilePage: ProfilePages.Recovery } });
   }
 }
 </script>

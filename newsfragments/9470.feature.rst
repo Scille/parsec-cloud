@@ -1,0 +1,1 @@
+Update user interface to regroup any user profile and settings in a single tabbed view.

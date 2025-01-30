@@ -3,7 +3,9 @@
 import { expect, fillIonInput, msTest } from '@tests/e2e/helpers';
 
 msTest('Check devices list', async ({ myProfilePage }) => {
-  await expect(myProfilePage.locator('#add-device-button')).toHaveText('Add');
+  await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
+  await myProfilePage.locator('.menu-list__item').nth(1).click();
+  await expect(myProfilePage.locator('#add-device-button')).toHaveText('Add a new device');
   const devices = myProfilePage.locator('#devices-list').getByRole('listitem');
   await expect(devices.locator('.device-name')).toHaveText([/^device\d$/, /^device\d$/]);
   await expect(devices.locator('.join-date')).toHaveText(['Joined: Today', 'Joined: Today']);
@@ -12,29 +14,34 @@ msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(devices.nth(1).locator('.badge')).toBeHidden();
 });
 
+msTest('Open authentication section', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('.menu-list__item').nth(2)).toHaveText('Authentication');
+  await myProfilePage.locator('.menu-list__item').nth(2).click();
+  await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
+  await expect(myProfilePage.locator('#change-authentication-button')).toBeVisible();
+});
+
 msTest('Check if restore-password section is displayed', async ({ myProfilePage }) => {
-  const restorePassword = myProfilePage.locator('.restore-password');
+  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Organization recovery');
+  await myProfilePage.locator('.menu-list__item').nth(3).click();
+  const restorePassword = myProfilePage.locator('.recovery');
   await expect(restorePassword).toBeVisible();
-  await expect(restorePassword.locator('.restore-password-header__title')).toHaveText('Create a recovery file');
-  await expect(restorePassword.locator('.restore-password-subtitles')).toHaveText(
-    `A recovery file allows you to get back access to your data in case your forgot your password or lose your
- devices.Without a recovery file, your account cannot be recovered and you will need to be re-invited to join the organization.`,
+  await expect(restorePassword.locator('.item-header__title')).toHaveText('Organization recovery files');
+  await expect(restorePassword.locator('.item-header__description span').nth(0)).toHaveText(
+    'A recovery file enables you to reclaim access to your data if you forget your password or lose your devices.',
+  );
+  await expect(restorePassword.locator('.item-header__description span').nth(1)).toHaveText(
+    `Without a recovery file, you wouldn't be able to recover your account in such a case,
+  and you would need to be re-invited to the organization to regain access to your data.`,
   );
   await expect(restorePassword.locator('.restore-password-button')).toHaveText('Create a recovery file');
 });
 
-msTest('Open authentication section', async ({ myProfilePage }) => {
-  await myProfilePage.locator('ion-radio').nth(1).click();
-  await expect(myProfilePage.locator('.user-info').locator('.title')).toHaveText('Password');
-  await expect(myProfilePage.locator('.user-info').locator('.input-container').locator('.user-info__input')).toHaveTheClass(
-    'input-disabled',
-  );
-  await expect(myProfilePage.locator('#change-authentication-button')).toBeVisible();
-});
-
 msTest('Change password', async ({ home, myProfilePage }) => {
-  await myProfilePage.locator('ion-radio').nth(1).click();
-  await myProfilePage.locator('.user-info').locator('#change-authentication-button').click();
+  await expect(myProfilePage.locator('.menu-list__item').nth(2)).toHaveText('Authentication');
+  await myProfilePage.locator('.menu-list__item').nth(2).click();
+  await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
+  await myProfilePage.locator('#change-authentication-button').click();
   const changePasswordModal = home.locator('.change-authentication-modal');
   await expect(changePasswordModal).toBeVisible();
   await expect(changePasswordModal.locator('.modal-header')).toHaveText('Enter your current password');

@@ -107,6 +107,9 @@
             "backToList": "Retour aux organisations",
             "backToLogin": "Retour à la connexion",
             "settings": "Paramètres",
+            "devices": "Mes appareils",
+            "authentication": "Authentification",
+            "recovery": "Récupération d'organisation",
             "contactUs": "Nous contacter",
             "documentation": "Documentation",
             "logout": "Déconnexion",
@@ -362,6 +365,7 @@
     },
     "SettingsModal": {
         "pageTitle": "Paramètres",
+        "description": "Accédez à l'ensemble des paramètres de langue, de thème et de confidentialité de l'application.",
         "general": "Général",
         "advanced": "Avancé",
         "enableTelemetry": {
@@ -740,30 +744,13 @@
         }
     },
     "DevicesPage": {
-        "addDevice": "Ajouter",
+        "title": "Mes appareils",
+        "description": "Vous pouvez consulter et ajouter de nouveaux appareils à votre profil pour accéder à cette organisation.",
+        "addDevice": "Ajouter un nouvel appareil",
         "noDevices": "Aucun appareil.",
         "activeDeviceBadge": "Actif",
         "joinedOn": "Rejoint :",
         "now": "À l'instant",
-        "restorePassword": {
-            "title": "Créer un fichier de récupération",
-            "done": {
-                "label": "Fichier de récupération déjà créé",
-                "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
-                "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré et vous devrez être réinvité à rejoindre l'organisation.",
-                "button": "Créer un fichier de récupération",
-                "recreateQuestionTitle": "Créer un nouveau fichier de récupération ?",
-                "recreateQuestionMessage": "Vous avez déjà créé un fichier de récupération dans le passé. Souhaitez-vous en créer un nouveau ?",
-                "recreateYes": "Créer un nouveau fichier",
-                "recreateNo": "Annuler"
-            },
-            "notDone": {
-                "label": "Action requise",
-                "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
-                "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré et vous devrez être réinvité à rejoindre l'organisation.",
-                "button": "Créer un fichier de récupération"
-            }
-        },
         "greet": {
             "steps": {
                 "hostCode": "Code hôte",
@@ -836,10 +823,17 @@
         "noMatch": "Ne correspondent pas"
     },
     "Authentication": {
+        "title": "Authentification",
+        "description": "Vous pouvez à tout moment changer de méthode pour vous authentifier à cette organisation.",
         "keyringInfo": "L'authentification sera gérée par votre système. Vous n'avez pas à retenir un mot de passe supplémentaire. N'oubliez pas de verrouiller votre session quand vous n'utilisez pas votre ordinateur !",
+        "method": {
+            "system": "Authentification du système",
+            "password": "Mot de passe"
+        },
+        "changeAuthenticationButton": "Changer de méthode",
         "useKeyring": "Utiliser l'authentification du système",
         "usePassword": "Utiliser un mot de passe",
-        "description": "Méthode d'authentification",
+        "label": "Méthode d'authentification",
         "keyringUnavailableOnSystem": "Indisponible sur votre système",
         "keyringUnavailableOnWeb": "Indisponible sur le web"
     },
@@ -894,6 +888,7 @@
             "fileDownloaded": "Fichier téléchargé"
         },
         "actions": {
+            "createRecoveryButton": "Créer un fichier de récupération",
             "download": "Télécharger",
             "downloadAgain": "Télécharger à nouveau",
             "backToDevices": "Retour à mes appareils"
@@ -1185,6 +1180,8 @@
         }
     },
     "AboutPage": {
+        "title": "À propos",
+        "description": "Consultez les informations de l'application et les derniers changements apportés.",
         "appInfo": {
             "version": "Version",
             "developer": "Développeur",
@@ -1261,13 +1258,45 @@
         "changeAuthenticationButton": "Modifier",
         "authenticationUpdated": "L'authentification a été mise à jour.",
         "tabs": {
-            "devices": "Mes appareils",
-            "authentication": "Authentification"
+            "account": {
+                "title": "Mon compte",
+                "settings": "Paramètres",
+                "devices": "Mes appareils",
+                "authentication": "Authentification",
+                "recovery": "Récupération d'organisation"
+            },
+            "support": {
+                "title": "Support",
+                "documentation": "Documentation",
+                "help": "Commentaires",
+                "about": "À propos"
+            }
         },
         "errors": {
             "wrongPassword": "Mot de passe incorrect. Veuillez réessayer.",
             "cannotChangeAuthentication": "Impossible de changer l'authentification",
             "failedToRetrieveInformation": "Impossible de récupérer les informations. Veuillez vérifier que vous êtes bien connecté(e) à Internet."
+        }
+    },
+    "OrganizationRecovery": {
+        "title": "Fichiers de récupération d'organisation",
+        "recoveryFile": "Fichier de récupération",
+        "recoveryKey": "Clé secrète",
+        "done": {
+            "label": "Fichier déjà créé",
+            "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
+            "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
+            "button": "Créer un fichier de récupération",
+            "recreateQuestionTitle": "Créer un nouveau fichier de récupération ?",
+            "recreateQuestionMessage": "Vous avez déjà créé un fichier de récupération dans le passé. Souhaitez-vous en créer un nouveau ?",
+            "recreateYes": "Créer un nouveau fichier",
+            "recreateNo": "Annuler"
+        },
+        "notDone": {
+            "label": "Action requise",
+            "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
+            "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
+            "button": "Créer un fichier de récupération"
         }
     },
     "validators": {
@@ -1414,7 +1443,7 @@
                 "customOrderProcessing": "Suivi de commande",
                 "orders": "Commandes"
             },
-            "preferences": "Préférences"
+            "settings": "Paramètres"
         },
         "personalDataPage": {
             "personalInfo": {

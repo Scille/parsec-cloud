@@ -3,92 +3,187 @@
 <template>
   <ion-page class="page">
     <ion-content :fullscreen="true">
-      <div class="page-content">
-        <div class="menu">
-          <ion-radio-group
-            v-model="myProfileTab"
-            :value="MyProfileTabs.Devices"
-            class="menu-list"
-          >
+      <div class="page-container">
+        <ion-radio-group
+          v-model="myProfileTab"
+          class="profile-menu"
+          @ion-change="switchPage"
+        >
+          <div class="menu-list">
+            <ion-text class="menu-list__title subtitles-sm">
+              {{ $msTranslate('MyProfilePage.tabs.account.title') }}
+            </ion-text>
+            <!-- Settings -->
             <ion-radio
               slot="start"
-              :value="MyProfileTabs.Devices"
+              :value="ProfilePages.Settings"
+              class="menu-list__item"
+            >
+              <div class="item-container">
+                <ion-icon :icon="cog" />
+                <ion-text class="item-container__text body">
+                  {{ $msTranslate('MyProfilePage.tabs.account.settings') }}
+                </ion-text>
+              </div>
+            </ion-radio>
+            <!-- Devices -->
+            <ion-radio
+              slot="start"
+              :value="ProfilePages.Devices"
               class="menu-list__item"
             >
               <div class="item-container">
                 <ion-icon :icon="phonePortrait" />
-                <ion-text class="body">
-                  {{ $msTranslate('MyProfilePage.tabs.devices') }}
+                <ion-text class="item-container__text body">
+                  {{ $msTranslate('MyProfilePage.tabs.account.devices') }}
                 </ion-text>
               </div>
             </ion-radio>
+            <!-- Authentication -->
             <ion-radio
               slot="start"
-              :value="MyProfileTabs.Authentication"
+              :value="ProfilePages.Authentication"
               class="menu-list__item"
             >
               <div class="item-container">
-                <ion-icon :icon="lockClosed" />
-                <ion-text class="body">
-                  {{ $msTranslate('MyProfilePage.tabs.authentication') }}
+                <ion-icon :icon="fingerPrint" />
+                <ion-text class="item-container__text body">
+                  {{ $msTranslate('MyProfilePage.tabs.account.authentication') }}
                 </ion-text>
               </div>
             </ion-radio>
-          </ion-radio-group>
+            <!-- Organization Recovery -->
+            <ion-radio
+              slot="start"
+              :value="ProfilePages.Recovery"
+              class="menu-list__item"
+            >
+              <div class="item-container">
+                <ion-icon :icon="idCard" />
+                <ion-text class="item-container__text body">
+                  {{ $msTranslate('MyProfilePage.tabs.account.recovery') }}
+                </ion-text>
+              </div>
+            </ion-radio>
+          </div>
+
+          <div class="menu-list">
+            <ion-text class="menu-list__title subtitles-sm">
+              {{ $msTranslate('MyProfilePage.tabs.support.title') }}
+            </ion-text>
+            <!-- Documentation -->
+            <ion-text
+              @click="openDocumentationPopover"
+              class="menu-list__item"
+            >
+              <div class="item-container">
+                <ion-icon :icon="documentText" />
+                <ion-text class="item-container__text body">
+                  {{ $msTranslate('MyProfilePage.tabs.support.documentation') }}
+                </ion-text>
+                <ion-icon :icon="open" />
+              </div>
+            </ion-text>
+            <!-- Help & comments -->
+            <ion-radio
+              slot="start"
+              @click="openFeedbackPopover"
+              class="menu-list__item"
+            >
+              <div class="item-container">
+                <ion-icon :icon="chatbubbles" />
+                <ion-text class="item-container__text body">
+                  {{ $msTranslate('MyProfilePage.tabs.support.help') }}
+                </ion-text>
+                <ion-icon :icon="open" />
+              </div>
+            </ion-radio>
+            <!-- About -->
+            <ion-radio
+              slot="start"
+              :value="ProfilePages.About"
+              class="menu-list__item"
+            >
+              <div class="item-container">
+                <ion-icon :icon="information" />
+                <ion-text class="item-container__text body">
+                  {{ $msTranslate('MyProfilePage.tabs.support.about') }}
+                </ion-text>
+              </div>
+            </ion-radio>
+          </div>
+        </ion-radio-group>
+        <div class="profile-content">
+          <!-- profile info -->
           <div
-            v-if="myProfileTab === MyProfileTabs.Devices"
-            class="menu-item-content"
+            class="profile-content-infos"
+            v-if="clientInfo"
           >
+            <ion-text class="profile-content-infos__name title-h2">
+              {{ clientInfo.humanHandle.label }}
+            </ion-text>
+            <ion-text class="profile-content-infos__email body">
+              {{ clientInfo.humanHandle.email }}
+            </ion-text>
+            <tag-profile :profile="clientInfo.currentProfile" />
+          </div>
+          <!-- Settings tab -->
+          <div
+            v-if="myProfileTab === ProfilePages.Settings"
+            class="profile-content-item"
+          >
+            <div class="item-header">
+              <ion-text class="item-header__title title-h3">{{ $msTranslate('SettingsModal.pageTitle') }}</ion-text>
+              <ion-text class="item-header__description body">{{ $msTranslate('SettingsModal.description') }}</ion-text>
+            </div>
+            <settings-list />
+          </div>
+          <!-- devices tab -->
+          <div
+            v-if="myProfileTab === ProfilePages.Devices"
+            class="profile-content-item"
+          >
+            <div class="item-header">
+              <ion-text class="item-header__title title-h3">{{ $msTranslate('DevicesPage.title') }}</ion-text>
+              <ion-text class="item-header__description body">{{ $msTranslate('DevicesPage.description') }}</ion-text>
+            </div>
             <devices-page class="devices" />
           </div>
+          <!-- authentication tab -->
           <div
-            v-if="myProfileTab === MyProfileTabs.Authentication"
-            class="menu-item-content"
+            v-if="myProfileTab === ProfilePages.Authentication"
+            class="profile-content-item"
           >
-            <template v-if="clientInfo && currentDevice">
-              <!-- inputs fields -->
-              <div class="user-info">
-                <ion-text class="user-info__label body title">
-                  {{ $msTranslate('MyProfilePage.password') }}
-                </ion-text>
-                <div
-                  class="user-info__password"
-                  v-show="currentDevice && currentDevice.ty === DeviceFileType.Password"
-                >
-                  <ms-input
-                    :placeholder="'MyProfilePage.passwordPlaceholder'"
-                    name="fullname"
-                    :disabled="true"
-                    class="user-info__input"
-                  />
-                </div>
-                <div v-show="currentDevice && currentDevice.ty === DeviceFileType.Keyring">
-                  <ms-informative-text>{{ $msTranslate('MyProfilePage.systemAuthentication') }}</ms-informative-text>
-                </div>
-                <ion-button
-                  id="change-authentication-button"
-                  class="update-auth-button"
-                  @click="openChangeAuthentication()"
-                  size="small"
-                >
-                  <ion-icon :icon="create" />
-                  <ion-label class="update-auth-button__label">
-                    {{ $msTranslate('MyProfilePage.changeAuthenticationButton') }}
-                  </ion-label>
-                </ion-button>
-              </div>
-            </template>
-            <template v-else>
-              <div class="device-not-found">
-                <ion-icon
-                  :icon="warning"
-                  size="large"
-                />
-                <ion-text class="body">
-                  {{ $msTranslate('MyProfilePage.errors.failedToRetrieveInformation') }}
-                </ion-text>
-              </div>
-            </template>
+            <div class="item-header">
+              <ion-text class="item-header__title title-h3">{{ $msTranslate('Authentication.title') }}</ion-text>
+              <ion-text class="item-header__description body">{{ $msTranslate('Authentication.description') }}</ion-text>
+            </div>
+            <authentication-page />
+          </div>
+          <!-- organization recovery tab -->
+          <div
+            v-if="myProfileTab === ProfilePages.Recovery"
+            class="profile-content-item recovery"
+          >
+            <div class="item-header">
+              <ion-text class="item-header__title title-h3">{{ $msTranslate('OrganizationRecovery.title') }}</ion-text>
+              <ion-text class="item-header__description body">
+                <span>{{ $msTranslate('OrganizationRecovery.done.subtitle') }}</span>
+                <span>{{ $msTranslate('OrganizationRecovery.done.subtitle2') }}</span>
+              </ion-text>
+            </div>
+            <organization-recovery-page />
+          </div>
+          <!-- About tab -->
+          <div
+            v-if="myProfileTab === ProfilePages.About"
+            class="profile-content-item"
+          >
+            <div class="item-header">
+              <ion-text class="item-header__title title-h3">{{ $msTranslate('AboutPage.title') }}</ion-text>
+              <ion-text class="item-header__description body">{{ $msTranslate('AboutPage.description') }}</ion-text>
+            </div>
+            <about-view />
           </div>
         </div>
       </div>
@@ -97,44 +192,50 @@
 </template>
 
 <script setup lang="ts">
-import { MsInformativeText, MsInput, MsModalResult } from 'megashark-lib';
-import { AvailableDevice, ClientInfo, DeviceFileType, getClientInfo, getCurrentAvailableDevice } from '@/parsec';
+import TagProfile from '@/components/users/TagProfile.vue';
+import { ClientInfo, getClientInfo, getCurrentAvailableDevice } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import DevicesPage from '@/views/devices/DevicesPage.vue';
-import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
-import { IonButton, IonContent, IonIcon, IonPage, IonRadio, IonRadioGroup, IonText, modalController, IonLabel } from '@ionic/vue';
-import { lockClosed, phonePortrait, warning, create } from 'ionicons/icons';
-import { Ref, inject, onMounted, ref } from 'vue';
+import SettingsList from '@/components/settings/SettingsList.vue';
+import AboutView from '@/views/about/AboutView.vue';
+import AuthenticationPage from '@/views/profile/AuthenticationPage.vue';
+import OrganizationRecoveryPage from '@/views/profile/OrganizationRecoveryPage.vue';
+import { IonContent, IonIcon, IonPage, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
+import { open, phonePortrait, cog, fingerPrint, idCard, documentText, information, chatbubbles } from 'ionicons/icons';
+import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
+import { Env } from '@/services/environment';
+import { getCurrentRouteName, getCurrentRouteQuery, navigateTo, Routes, watchRoute, ProfilePages } from '@/router';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
-const currentDevice: Ref<AvailableDevice | null> = ref(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 
-enum MyProfileTabs {
-  Devices = 'Devices',
-  Authentication = 'Authentication',
+const myProfileTab = ref(ProfilePages.Settings);
+
+const routeUnwatch = watchRoute(async () => {
+  if (getCurrentRouteName() !== Routes.MyProfile) {
+    return;
+  }
+  await switchPageFromQuery();
+});
+
+async function openDocumentationPopover(): Promise<void> {
+  await Env.Links.openDocumentationLink();
 }
 
-const myProfileTab = ref(MyProfileTabs.Devices);
+async function openFeedbackPopover(): Promise<void> {
+  await Env.Links.openContactLink();
+}
 
-async function openChangeAuthentication(): Promise<void> {
-  const modal = await modalController.create({
-    component: UpdateAuthenticationModal,
-    cssClass: 'change-authentication-modal',
-    componentProps: {
-      currentDevice: currentDevice.value,
-      informationManager: informationManager,
-    },
-  });
-  await modal.present();
-  const { role } = await modal.onWillDismiss();
-  await modal.dismiss();
-  if (role === MsModalResult.Confirm) {
-    const result = await getCurrentAvailableDevice();
-    if (result.ok) {
-      currentDevice.value = result.value;
-    }
+async function switchPageFromQuery(): Promise<void> {
+  myProfileTab.value = ProfilePages.Settings;
+  const page = getCurrentRouteQuery().profilePage;
+  if (page && Object.values(ProfilePages).includes(page)) {
+    myProfileTab.value = page;
   }
+}
+
+async function switchPage(): Promise<void> {
+  await navigateTo(Routes.MyProfile, { replace: true, query: { profilePage: myProfileTab.value } });
 }
 
 onMounted(async () => {
@@ -151,35 +252,108 @@ onMounted(async () => {
     );
   } else {
     clientInfo.value = result.value;
-    currentDevice.value = deviceResult.value;
   }
+  await switchPageFromQuery();
+});
+
+onUnmounted(async () => {
+  routeUnwatch();
 });
 </script>
 
 <style scoped lang="scss">
-.page-content {
-  margin: 3rem 2rem 2rem;
+.page-container {
   display: flex;
-  gap: 1.5rem;
+  width: 100%;
+  height: 100%;
+
+  .profile-menu {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 21.375rem;
+    height: 100%;
+    padding: 1.5rem;
+    border-top: 1px solid var(--parsec-color-light-secondary-medium);
+    border-right: 1px solid var(--parsec-color-light-secondary-medium);
+    gap: 1rem;
+    overflow: auto;
+  }
+
+  .profile-content {
+    width: 100%;
+    background: var(--parsec-color-light-secondary-background);
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem 2.5rem;
+    overflow: auto;
+
+    &-item {
+      display: flex;
+      flex-direction: column;
+      background: var(--parsec-color-light-secondary-white);
+      max-width: 37.5rem;
+      height: fit-content;
+      padding: 2rem;
+      gap: 1.5rem;
+      border-radius: var(--parsec-radius-8);
+    }
+
+    &-infos {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      &__name {
+        color: var(--parsec-color-light-secondary-text);
+      }
+
+      &__email {
+        color: var(--parsec-color-light-secondary-soft-text);
+      }
+    }
+  }
 }
 
-.menu {
+.item-header {
   display: flex;
-  gap: 2rem;
-  width: 100%;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  &__title {
+    color: var(--parsec-color-light-primary-700);
+  }
+
+  &__description {
+    color: var(--parsec-color-light-secondary-hard-grey);
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 .menu-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
   width: 100%;
-  max-width: 11.25rem;
+  padding: 1rem 0.5rem;
+
+  &__title {
+    color: var(--parsec-color-light-secondary-hard-grey);
+    margin: 0 0.5rem 0.75rem;
+  }
 
   // eslint-disable-next-line vue-scoped-css/no-unused-selector
   &__item {
-    color: var(--parsec-color-light-secondary-grey);
-    border-radius: var(--parsec-radius-6);
+    color: var(--parsec-color-light-secondary-text);
+    border-radius: var(--parsec-radius-8);
+    cursor: pointer;
+
+    &::part(label) {
+      width: 100%;
+      margin: 0;
+    }
 
     .item-container {
       display: flex;
@@ -187,6 +361,12 @@ onMounted(async () => {
       justify-content: center;
       padding: 0.5rem 0.75em;
       gap: 0.375rem;
+      width: 100%;
+
+      &__text {
+        flex: 1;
+        width: 100%;
+      }
     }
 
     &::part(container) {
@@ -194,8 +374,8 @@ onMounted(async () => {
     }
 
     &.radio-checked {
-      color: var(--parsec-color-light-primary-600);
-      background: var(--parsec-color-light-primary-50);
+      color: var(--parsec-color-light-secondary-text);
+      background: var(--parsec-color-light-secondary-medium);
     }
 
     &:hover:not(.radio-checked) {
@@ -204,60 +384,14 @@ onMounted(async () => {
     }
 
     ion-icon {
-      font-size: 1.25rem;
+      font-size: 1.125rem;
+      opacity: 0.8;
+      flex-shrink: 0;
     }
   }
 }
 
-.menu-item-content {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 30rem;
-  margin-top: 0.75rem;
-}
-
-.user-info {
-  &__label {
-    min-width: 14rem;
-    color: var(--parsec-color-light-primary-700);
-    margin-bottom: 1rem;
-    display: flex;
-  }
-
-  &__input {
-    display: flex;
-    width: 100%;
-    max-width: 20rem;
-  }
-
-  &__password {
-    display: flex;
-    align-items: start;
-    gap: 1rem;
-    width: 100%;
-    flex-direction: column;
-  }
-}
-
-.device-not-found {
-  background: var(--parsec-color-light-danger-100);
-  color: var(--parsec-color-light-danger-700);
-  padding: 1rem;
-  display: flex;
-  gap: 0.75rem;
-  border-left: 0.25rem solid var(--parsec-color-light-danger-500);
-
-  ion-text {
-    padding: 0.25rem 0;
-  }
-}
-
-.update-auth-button {
-  margin-top: 1em;
-
-  &__label {
-    margin-left: 0.625rem;
-  }
+.recovery {
+  position: relative;
 }
 </style>

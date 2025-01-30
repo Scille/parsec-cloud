@@ -107,6 +107,9 @@
             "backToList": "Return to organizations",
             "backToLogin": "Return to login",
             "settings": "Settings",
+            "devices": "My devices",
+            "authentication": "Authentication",
+            "recovery": "Organization recovery",
             "contactUs": "Contact us",
             "documentation": "Documentation",
             "logout": "Log out",
@@ -362,6 +365,7 @@
     },
     "SettingsModal": {
         "pageTitle": "Settings",
+        "description": "Access language, theme and privacy settings for the application.",
         "general": "General",
         "advanced": "Advanced",
         "enableTelemetry": {
@@ -740,30 +744,13 @@
         }
     },
     "DevicesPage": {
-        "addDevice": "Add",
+        "title": "My devices",
+        "description": "You can preview and add new devices to your profile to access this organization.",
+        "addDevice": "Add a new device",
         "noDevices": "No devices.",
         "activeDeviceBadge": "Current",
         "joinedOn": "Joined:",
         "now": "Now",
-        "restorePassword": {
-            "title": "Create a recovery file",
-            "done": {
-                "label": "Recovery file already created",
-                "subtitle": "A recovery file allows you to get back access to your data in case your forgot your password or lose your devices.",
-                "subtitle2": "Without a recovery file, your account cannot be recovered and you will need to be re-invited to join the organization.",
-                "button": "Create a recovery file",
-                "recreateQuestionTitle": "Create a new recovery file?",
-                "recreateQuestionMessage": "You have already created a recovery file in the past. Do you want to create a new one?",
-                "recreateYes": "Create a new recovery file",
-                "recreateNo": "Cancel"
-            },
-            "notDone": {
-                "label": "Action required",
-                "subtitle": "A recovery file allows you to get back access to your data in case your forgot your password or lose your devices.",
-                "subtitle2": "Without a recovery file, your account cannot be recovered and you will need to be re-invited to join the organization.",
-                "button": "Create a recovery file"
-            }
-        },
         "greet": {
             "steps": {
                 "hostCode": "Host code",
@@ -836,10 +823,17 @@
         "noMatch": "Do not match"
     },
     "Authentication": {
+        "title": "Authentication",
+        "description": "You can change your authentication method at any time.",
         "keyringInfo": "Authentication will be handled through your system, so you do not have to remember an additional password. Just do not forget to lock your session when you are not in front of your computer!",
+        "method": {
+            "system": "System authentication",
+            "password": "Password"
+        },
+        "changeAuthenticationButton": "Change method",
         "useKeyring": "Use System Authentication",
         "usePassword": "Use Password",
-        "description": "Authentication method",
+        "label": "Authentication method",
         "keyringUnavailableOnSystem": "Unavailable on your system",
         "keyringUnavailableOnWeb": "Unavailable on web"
     },
@@ -886,7 +880,7 @@
             "recoveryKey": "Secret Key"
         },
         "subtitles": {
-            "aboutRecoveryFiles": "A recovery file allows you to get back access to your data in case your forgot your password or lose your devices.",
+            "aboutRecoveryFiles": "A recovery file enables you to reclaim access to your data if you forgot your password or lose your devices.",
             "keepFilesSeparate": "You will need to save the recovery file and its secret key. Make sure both are not stored in the same place.",
             "warningUniqueness": "Please note that these files are not stored by Parsec. If you lose one or both, you will need to create a new recovery file.",
             "fileExplanation": "The recovery file allows you to reset your password using the corresponding secret key.",
@@ -894,6 +888,7 @@
             "fileDownloaded": "File downloaded"
         },
         "actions": {
+            "createRecoveryButton": "Create a recovery file",
             "download": "Download",
             "downloadAgain": "Download again",
             "backToDevices": "Back to my devices"
@@ -1185,6 +1180,8 @@
         }
     },
     "AboutPage": {
+        "title": "About",
+        "description": "Get application information and latest changes.",
         "appInfo": {
             "version": "Version",
             "developer": "Developer",
@@ -1261,13 +1258,45 @@
         "changeAuthenticationButton": "Update",
         "authenticationUpdated": "Authentication has been updated.",
         "tabs": {
-            "devices": "My devices",
-            "authentication": "Authentication"
+            "account": {
+                "title": "My account",
+                "settings": "Settings",
+                "devices": "My devices",
+                "authentication": "Authentication",
+                "recovery": "Organization recovery"
+            },
+            "support": {
+                "title": "Support",
+                "documentation": "Documentation",
+                "help": "Feedback",
+                "about": "About"
+            }
         },
         "errors": {
             "wrongPassword": "Wrong password. Please try again.",
             "cannotChangeAuthentication": "Failed to update authentication",
             "failedToRetrieveInformation": "Failed to retrieve information. Please make sure you are online."
+        }
+    },
+    "OrganizationRecovery": {
+        "title": "Organization recovery files",
+        "recoveryFile": "Recovery File",
+        "recoveryKey": "Secret Key",
+        "done": {
+            "label": "Recovery file already created",
+            "subtitle": "A recovery file enables you to reclaim access to your data if you forget your password or lose your devices.",
+            "subtitle2": "Without a recovery file, you wouldn't be able to recover your account in such a case, and you would need to be re-invited to the organization to regain access to your data.",
+            "button": "Download file",
+            "recreateQuestionTitle": "Create a new recovery file?",
+            "recreateQuestionMessage": "You have already created a recovery file in the past. Do you want to create a new one?",
+            "recreateYes": "Create a new recovery file",
+            "recreateNo": "Cancel"
+        },
+        "notDone": {
+            "label": "Action required",
+            "subtitle": "A recovery file enables you to reclaim access to your data if you forget your password or lose your devices.",
+            "subtitle2": "Without a recovery file, you wouldn't be able to recover your account in such a case, and you would need to be re-invited to the organization to regain access to your data.",
+            "button": "Create a recovery file"
         }
     },
     "validators": {
@@ -1414,7 +1443,7 @@
                 "customOrderProcessing": "Order tracking",
                 "orders": "Orders"
             },
-            "preferences": "Preferences"
+            "settings": "Settings"
         },
         "personalDataPage": {
             "personalInfo": {
