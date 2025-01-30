@@ -14,7 +14,7 @@ use crate::{
 };
 
 #[derive(Debug, thiserror::Error)]
-pub enum FetchRemoteManifestError {
+pub(crate) enum ServerFetchManifestError {
     #[error("Component has stopped")]
     Stopped,
     #[error("Cannot reach the server")]
@@ -35,7 +35,7 @@ pub enum FetchRemoteManifestError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for FetchRemoteManifestError {
+impl From<ConnectionError> for ServerFetchManifestError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
@@ -44,13 +44,13 @@ impl From<ConnectionError> for FetchRemoteManifestError {
     }
 }
 
-pub(super) async fn fetch_remote_child_manifest(
+pub(crate) async fn server_fetch_child_manifest(
     cmds: &AuthenticatedCmds,
     certificates_ops: &CertificateOps,
     realm_id: VlobID,
     vlob_id: VlobID,
     at: Option<DateTime>,
-) -> Result<ChildManifest, FetchRemoteManifestError> {
+) -> Result<ChildManifest, ServerFetchManifestError> {
     let data = fetch_vlob(cmds, realm_id, vlob_id, at).await?;
 
     certificates_ops
@@ -67,17 +67,17 @@ pub(super) async fn fetch_remote_child_manifest(
         )
         .await
         .map_err(|err| match err {
-            CertifValidateManifestError::Offline => FetchRemoteManifestError::Offline,
-            CertifValidateManifestError::Stopped => FetchRemoteManifestError::Stopped,
-            CertifValidateManifestError::NotAllowed => FetchRemoteManifestError::NoRealmAccess,
+            CertifValidateManifestError::Offline => ServerFetchManifestError::Offline,
+            CertifValidateManifestError::Stopped => ServerFetchManifestError::Stopped,
+            CertifValidateManifestError::NotAllowed => ServerFetchManifestError::NoRealmAccess,
             CertifValidateManifestError::InvalidManifest(err) => {
-                FetchRemoteManifestError::InvalidManifest(err)
+                ServerFetchManifestError::InvalidManifest(err)
             }
             CertifValidateManifestError::InvalidCertificate(err) => {
-                FetchRemoteManifestError::InvalidCertificate(err)
+                ServerFetchManifestError::InvalidCertificate(err)
             }
             CertifValidateManifestError::InvalidKeysBundle(err) => {
-                FetchRemoteManifestError::InvalidKeysBundle(err)
+                ServerFetchManifestError::InvalidKeysBundle(err)
             }
             CertifValidateManifestError::Internal(err) => {
                 err.context("Cannot validate vlob").into()
@@ -85,12 +85,12 @@ pub(super) async fn fetch_remote_child_manifest(
         })
 }
 
-pub(super) async fn fetch_remote_workspace_manifest(
+pub(super) async fn server_fetch_workspace_manifest(
     cmds: &AuthenticatedCmds,
     certificates_ops: &CertificateOps,
     realm_id: VlobID,
     at: Option<DateTime>,
-) -> Result<FolderManifest, FetchRemoteManifestError> {
+) -> Result<FolderManifest, ServerFetchManifestError> {
     let vlob_id = realm_id; // Remember: workspace manifest's ID *is* the realm ID !
     let data = fetch_vlob(cmds, realm_id, vlob_id, at).await?;
 
@@ -107,17 +107,17 @@ pub(super) async fn fetch_remote_workspace_manifest(
         )
         .await
         .map_err(|err| match err {
-            CertifValidateManifestError::Offline => FetchRemoteManifestError::Offline,
-            CertifValidateManifestError::Stopped => FetchRemoteManifestError::Stopped,
-            CertifValidateManifestError::NotAllowed => FetchRemoteManifestError::NoRealmAccess,
+            CertifValidateManifestError::Offline => ServerFetchManifestError::Offline,
+            CertifValidateManifestError::Stopped => ServerFetchManifestError::Stopped,
+            CertifValidateManifestError::NotAllowed => ServerFetchManifestError::NoRealmAccess,
             CertifValidateManifestError::InvalidManifest(err) => {
-                FetchRemoteManifestError::InvalidManifest(err)
+                ServerFetchManifestError::InvalidManifest(err)
             }
             CertifValidateManifestError::InvalidCertificate(err) => {
-                FetchRemoteManifestError::InvalidCertificate(err)
+                ServerFetchManifestError::InvalidCertificate(err)
             }
             CertifValidateManifestError::InvalidKeysBundle(err) => {
-                FetchRemoteManifestError::InvalidKeysBundle(err)
+                ServerFetchManifestError::InvalidKeysBundle(err)
             }
             CertifValidateManifestError::Internal(err) => {
                 err.context("Cannot validate vlob").into()
@@ -140,7 +140,7 @@ async fn fetch_vlob(
     realm_id: VlobID,
     vlob_id: VlobID,
     at: Option<DateTime>,
-) -> Result<VlobData, FetchRemoteManifestError> {
+) -> Result<VlobData, ServerFetchManifestError> {
     use authenticated_cmds::latest::vlob_read_batch::{Rep, Req};
 
     let req = Req {
@@ -153,7 +153,7 @@ async fn fetch_vlob(
 
     match rep {
         Rep::Ok { mut items, needed_common_certificate_timestamp, needed_realm_certificate_timestamp } => {
-            let (_, key_index, expected_author, expected_version, expected_timestamp, blob) = items.pop().ok_or(FetchRemoteManifestError::VlobNotFound)?;
+            let (_, key_index, expected_author, expected_version, expected_timestamp, blob) = items.pop().ok_or(ServerFetchManifestError::VlobNotFound)?;
             Ok(VlobData {
                 needed_common_certificate_timestamp,
                 needed_realm_certificate_timestamp,
@@ -165,8 +165,8 @@ async fn fetch_vlob(
             })
         },
         // Expected errors
-        Rep::AuthorNotAllowed => Err(FetchRemoteManifestError::NoRealmAccess),
-        Rep::RealmNotFound => Err(FetchRemoteManifestError::RealmNotFound),
+        Rep::AuthorNotAllowed => Err(ServerFetchManifestError::NoRealmAccess),
+        Rep::RealmNotFound => Err(ServerFetchManifestError::RealmNotFound),
         // Unexpected errors :(
         rep @ (
             // One item is too many ???? Really ????
@@ -180,7 +180,7 @@ async fn fetch_vlob(
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum FetchRemoteBlockError {
+pub enum ServerFetchBlockError {
     #[error("Component has stopped")]
     Stopped,
     #[error("Cannot reach the server")]
@@ -203,7 +203,7 @@ pub enum FetchRemoteBlockError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for FetchRemoteBlockError {
+impl From<ConnectionError> for ServerFetchBlockError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
@@ -212,19 +212,19 @@ impl From<ConnectionError> for FetchRemoteBlockError {
     }
 }
 
-pub(super) async fn fetch_block(
+pub(crate) async fn server_fetch_block(
     cmds: &AuthenticatedCmds,
     certificates_ops: &CertificateOps,
     realm_id: VlobID,
     manifest: &FileManifest,
     access: &BlockAccess,
-) -> Result<Bytes, FetchRemoteBlockError> {
+) -> Result<Bytes, ServerFetchBlockError> {
     let (needed_realm_certificate_timestamp, key_index, encrypted) = {
         use authenticated_cmds::latest::block_read::{Rep, Req};
 
         let req = Req {
-            realm_id,
             block_id: access.id,
+            realm_id,
         };
 
         let rep = cmds.send(req).await?;
@@ -236,10 +236,10 @@ pub(super) async fn fetch_block(
                 block,
             } => Ok((needed_realm_certificate_timestamp, key_index, block)),
             // Expected errors
-            Rep::StoreUnavailable => Err(FetchRemoteBlockError::StoreUnavailable),
-            Rep::AuthorNotAllowed => Err(FetchRemoteBlockError::NoRealmAccess),
-            Rep::RealmNotFound => Err(FetchRemoteBlockError::RealmNotFound),
-            Rep::BlockNotFound => Err(FetchRemoteBlockError::BlockNotFound),
+            Rep::StoreUnavailable => Err(ServerFetchBlockError::StoreUnavailable),
+            Rep::AuthorNotAllowed => Err(ServerFetchBlockError::NoRealmAccess),
+            Rep::RealmNotFound => Err(ServerFetchBlockError::RealmNotFound),
+            Rep::BlockNotFound => Err(ServerFetchBlockError::BlockNotFound),
             // Unexpected errors :(
             rep @ Rep::UnknownStatus { .. } => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
@@ -258,17 +258,17 @@ pub(super) async fn fetch_block(
         )
         .await
         .map_err(|err| match err {
-            CertifValidateBlockError::Offline => FetchRemoteBlockError::Offline,
-            CertifValidateBlockError::Stopped => FetchRemoteBlockError::Stopped,
-            CertifValidateBlockError::NotAllowed => FetchRemoteBlockError::NoRealmAccess,
+            CertifValidateBlockError::Offline => ServerFetchBlockError::Offline,
+            CertifValidateBlockError::Stopped => ServerFetchBlockError::Stopped,
+            CertifValidateBlockError::NotAllowed => ServerFetchBlockError::NoRealmAccess,
             CertifValidateBlockError::InvalidBlockAccess(err) => {
-                FetchRemoteBlockError::InvalidBlockAccess(err)
+                ServerFetchBlockError::InvalidBlockAccess(err)
             }
             CertifValidateBlockError::InvalidCertificate(err) => {
-                FetchRemoteBlockError::InvalidCertificate(err)
+                ServerFetchBlockError::InvalidCertificate(err)
             }
             CertifValidateBlockError::InvalidKeysBundle(err) => {
-                FetchRemoteBlockError::InvalidKeysBundle(err)
+                ServerFetchBlockError::InvalidKeysBundle(err)
             }
             CertifValidateBlockError::Internal(err) => {
                 err.context("cannot validate block from server").into()
@@ -280,7 +280,7 @@ pub(super) async fn fetch_block(
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum FetchVersionsRemoteManifestError {
+pub enum ServerFetchVersionsManifestError {
     #[error("Component has stopped")]
     Stopped,
     #[error("Cannot reach the server")]
@@ -299,7 +299,7 @@ pub enum FetchVersionsRemoteManifestError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for FetchVersionsRemoteManifestError {
+impl From<ConnectionError> for ServerFetchVersionsManifestError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
@@ -308,12 +308,12 @@ impl From<ConnectionError> for FetchVersionsRemoteManifestError {
     }
 }
 
-pub(super) async fn fetch_versions_remote_workspace_manifest(
+pub(crate) async fn server_fetch_versions_workspace_manifest(
     cmds: &AuthenticatedCmds,
     certificates_ops: &CertificateOps,
     realm_id: VlobID,
     versions: &[VersionInt],
-) -> Result<Vec<FolderManifest>, FetchVersionsRemoteManifestError> {
+) -> Result<Vec<FolderManifest>, ServerFetchVersionsManifestError> {
     let VlobVersionsData {
         needed_common_certificate_timestamp,
         needed_realm_certificate_timestamp,
@@ -340,19 +340,19 @@ pub(super) async fn fetch_versions_remote_workspace_manifest(
             )
             .await
             .map_err(|err| match err {
-                CertifValidateManifestError::Offline => FetchVersionsRemoteManifestError::Offline,
-                CertifValidateManifestError::Stopped => FetchVersionsRemoteManifestError::Stopped,
+                CertifValidateManifestError::Offline => ServerFetchVersionsManifestError::Offline,
+                CertifValidateManifestError::Stopped => ServerFetchVersionsManifestError::Stopped,
                 CertifValidateManifestError::NotAllowed => {
-                    FetchVersionsRemoteManifestError::NoRealmAccess
+                    ServerFetchVersionsManifestError::NoRealmAccess
                 }
                 CertifValidateManifestError::InvalidManifest(err) => {
-                    FetchVersionsRemoteManifestError::InvalidManifest(err)
+                    ServerFetchVersionsManifestError::InvalidManifest(err)
                 }
                 CertifValidateManifestError::InvalidCertificate(err) => {
-                    FetchVersionsRemoteManifestError::InvalidCertificate(err)
+                    ServerFetchVersionsManifestError::InvalidCertificate(err)
                 }
                 CertifValidateManifestError::InvalidKeysBundle(err) => {
-                    FetchVersionsRemoteManifestError::InvalidKeysBundle(err)
+                    ServerFetchVersionsManifestError::InvalidKeysBundle(err)
                 }
                 CertifValidateManifestError::Internal(err) => {
                     err.context("Cannot validate vlob").into()
@@ -382,7 +382,7 @@ async fn fetch_versions_vlob(
     cmds: &AuthenticatedCmds,
     realm_id: VlobID,
     items: impl Iterator<Item = (VlobID, VersionInt)>,
-) -> Result<VlobVersionsData, FetchVersionsRemoteManifestError> {
+) -> Result<VlobVersionsData, ServerFetchVersionsManifestError> {
     use authenticated_cmds::latest::vlob_read_versions::{Rep, Req};
 
     let req = Req {
@@ -401,8 +401,8 @@ async fn fetch_versions_vlob(
             })
         },
         // Expected errors
-        Rep::AuthorNotAllowed => Err(FetchVersionsRemoteManifestError::NoRealmAccess),
-        Rep::RealmNotFound => Err(FetchVersionsRemoteManifestError::RealmNotFound),
+        Rep::AuthorNotAllowed => Err(ServerFetchVersionsManifestError::NoRealmAccess),
+        Rep::RealmNotFound => Err(ServerFetchVersionsManifestError::RealmNotFound),
         // Unexpected errors :(
         rep @ (
             // One item is too many ???? Really ????

@@ -7,7 +7,7 @@ use libparsec_types::prelude::*;
 
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
-    workspace::fetch::FetchRemoteManifestError,
+    server_fetch::{server_fetch_child_manifest, ServerFetchManifestError},
 };
 
 use super::per_manifest_update_lock::PerManifestUpdateLock;
@@ -291,7 +291,7 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
     )
     .await;
 
-    let outcome = super::super::fetch::fetch_remote_child_manifest(
+    let outcome = server_fetch_child_manifest(
         &store.cmds,
         &store.certificates_ops,
         store.realm_id,
@@ -308,13 +308,13 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
         )),
         Err(err) => {
             return Err(match err {
-                FetchRemoteManifestError::Stopped => {
+                ServerFetchManifestError::Stopped => {
                     PopulateCacheFromLocalStorageOrServerError::Stopped
                 }
-                FetchRemoteManifestError::Offline => {
+                ServerFetchManifestError::Offline => {
                     PopulateCacheFromLocalStorageOrServerError::Offline
                 }
-                FetchRemoteManifestError::VlobNotFound => {
+                ServerFetchManifestError::VlobNotFound => {
                     // This is unexpected: we got an entry ID from a parent folder/workspace
                     // manifest, but this ID points to nothing according to the server :/
                     //
@@ -331,24 +331,24 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
                     // TODO: add warning log !
                     PopulateCacheFromLocalStorageOrServerError::EntryNotFound
                 }
-                FetchRemoteManifestError::RealmNotFound => {
+                ServerFetchManifestError::RealmNotFound => {
                     // The realm doesn't exist on server side, hence we are its creator and
                     // it data only live on our local storage, which we have already checked.
                     PopulateCacheFromLocalStorageOrServerError::EntryNotFound
                 }
-                FetchRemoteManifestError::NoRealmAccess => {
+                ServerFetchManifestError::NoRealmAccess => {
                     PopulateCacheFromLocalStorageOrServerError::NoRealmAccess
                 }
-                FetchRemoteManifestError::InvalidKeysBundle(err) => {
+                ServerFetchManifestError::InvalidKeysBundle(err) => {
                     PopulateCacheFromLocalStorageOrServerError::InvalidKeysBundle(err)
                 }
-                FetchRemoteManifestError::InvalidCertificate(err) => {
+                ServerFetchManifestError::InvalidCertificate(err) => {
                     PopulateCacheFromLocalStorageOrServerError::InvalidCertificate(err)
                 }
-                FetchRemoteManifestError::InvalidManifest(err) => {
+                ServerFetchManifestError::InvalidManifest(err) => {
                     PopulateCacheFromLocalStorageOrServerError::InvalidManifest(err)
                 }
-                FetchRemoteManifestError::Internal(err) => {
+                ServerFetchManifestError::Internal(err) => {
                     err.context("cannot fetch from server").into()
                 }
             });

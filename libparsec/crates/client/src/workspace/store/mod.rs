@@ -21,8 +21,9 @@ use libparsec_platform_storage::workspace::{UpdateManifestData, WorkspaceStorage
 use libparsec_types::prelude::*;
 
 use crate::{
-    certif::CertificateOps, InvalidBlockAccessError, InvalidCertificateError,
-    InvalidKeysBundleError, InvalidManifestError,
+    certif::CertificateOps,
+    server_fetch::{server_fetch_block, ServerFetchBlockError},
+    InvalidBlockAccessError, InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError,
 };
 
 use cache::CurrentViewCache;
@@ -36,8 +37,6 @@ pub(crate) use resolve_path::{
 pub(crate) use sync_updater::{
     ForUpdateSyncError, ForUpdateSyncLocalOnlyError, IntoSyncConflictUpdaterError, SyncUpdater,
 };
-
-use super::fetch::FetchRemoteBlockError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceStoreOperationError {
@@ -650,7 +649,7 @@ impl WorkspaceStore {
             None => return Err(ReadChunkOrBlockError::ChunkNotFound),
         };
 
-        let data = super::fetch::fetch_block(
+        let data = server_fetch_block(
             &self.cmds,
             &self.certificates_ops,
             self.realm_id,
@@ -659,11 +658,11 @@ impl WorkspaceStore {
         )
         .await
         .map_err(|err| match err {
-            FetchRemoteBlockError::Stopped => ReadChunkOrBlockError::Stopped,
-            FetchRemoteBlockError::Offline | FetchRemoteBlockError::StoreUnavailable => {
+            ServerFetchBlockError::Stopped => ReadChunkOrBlockError::Stopped,
+            ServerFetchBlockError::Offline | ServerFetchBlockError::StoreUnavailable => {
                 ReadChunkOrBlockError::Offline
             }
-            FetchRemoteBlockError::BlockNotFound => {
+            ServerFetchBlockError::BlockNotFound => {
                 // This is unexpected: we got a block ID from a file manifest,
                 // but this ID points to nothing according to the server :/
                 //
@@ -673,22 +672,22 @@ impl WorkspaceStore {
                 //   and included the ID of a not-yet-synchronized block.
                 ReadChunkOrBlockError::ChunkNotFound
             }
-            FetchRemoteBlockError::RealmNotFound => {
+            ServerFetchBlockError::RealmNotFound => {
                 // The realm doesn't exist on server side, hence we are its creator and
                 // its data only live on our local storage, which we have already checked.
                 ReadChunkOrBlockError::ChunkNotFound
             }
-            FetchRemoteBlockError::NoRealmAccess => ReadChunkOrBlockError::NoRealmAccess,
-            FetchRemoteBlockError::InvalidBlockAccess(err) => {
+            ServerFetchBlockError::NoRealmAccess => ReadChunkOrBlockError::NoRealmAccess,
+            ServerFetchBlockError::InvalidBlockAccess(err) => {
                 ReadChunkOrBlockError::InvalidBlockAccess(err)
             }
-            FetchRemoteBlockError::InvalidKeysBundle(err) => {
+            ServerFetchBlockError::InvalidKeysBundle(err) => {
                 ReadChunkOrBlockError::InvalidKeysBundle(err)
             }
-            FetchRemoteBlockError::InvalidCertificate(err) => {
+            ServerFetchBlockError::InvalidCertificate(err) => {
                 ReadChunkOrBlockError::InvalidCertificate(err)
             }
-            FetchRemoteBlockError::Internal(err) => {
+            ServerFetchBlockError::Internal(err) => {
                 err.context("cannot fetch block from server").into()
             }
         })?;

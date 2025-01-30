@@ -10,7 +10,8 @@ use super::{
 };
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
-    workspace::{fetch::FetchRemoteBlockError, history::CacheResolvedEntry},
+    server_fetch::{server_fetch_block, ServerFetchBlockError},
+    workspace::history::CacheResolvedEntry,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -357,7 +358,7 @@ pub(super) async fn get_entry(
     populate_cache_from_server(ops, at, entry_id).await
 }
 
-pub(super) type WorkspaceHistoryGetBlockError = FetchRemoteBlockError;
+pub(super) type WorkspaceHistoryGetBlockError = ServerFetchBlockError;
 
 pub(super) async fn get_block(
     ops: &WorkspaceHistoryOps,
@@ -375,7 +376,7 @@ pub(super) async fn get_block(
 
     // Cache miss, must fetch from server
 
-    let block = super::super::fetch::fetch_block(
+    let block = server_fetch_block(
         &ops.cmds,
         &ops.certificates_ops,
         ops.realm_id,

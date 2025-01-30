@@ -3,11 +3,11 @@
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
-use super::super::fetch::{
-    fetch_versions_remote_workspace_manifest, FetchVersionsRemoteManifestError,
-};
 use super::WorkspaceHistoryOps;
-use crate::certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError};
+use crate::{
+    certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
+    server_fetch::{server_fetch_versions_workspace_manifest, ServerFetchVersionsManifestError},
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryGetWorkspaceManifestV1TimestampError {
@@ -54,7 +54,7 @@ pub async fn get_workspace_manifest_v1_timestamp(
 
     // Cache miss !
 
-    let outcome = fetch_versions_remote_workspace_manifest(
+    let outcome = server_fetch_versions_workspace_manifest(
         &ops.cmds,
         &ops.certificates_ops,
         ops.realm_id,
@@ -72,28 +72,28 @@ pub async fn get_workspace_manifest_v1_timestamp(
             return match err {
                 // The realm doesn't exist on server side, hence we are its creator and
                 // the manifest has never been uploaded to the server yet.
-                FetchVersionsRemoteManifestError::RealmNotFound => Ok(None),
+                ServerFetchVersionsManifestError::RealmNotFound => Ok(None),
 
                 // Actual errors
-                FetchVersionsRemoteManifestError::Stopped => {
+                ServerFetchVersionsManifestError::Stopped => {
                     Err(WorkspaceHistoryGetWorkspaceManifestV1TimestampError::Stopped)
                 }
-                FetchVersionsRemoteManifestError::Offline => {
+                ServerFetchVersionsManifestError::Offline => {
                     Err(WorkspaceHistoryGetWorkspaceManifestV1TimestampError::Offline)
                 }
-                FetchVersionsRemoteManifestError::NoRealmAccess => {
+                ServerFetchVersionsManifestError::NoRealmAccess => {
                     Err(WorkspaceHistoryGetWorkspaceManifestV1TimestampError::NoRealmAccess)
                 }
-                FetchVersionsRemoteManifestError::InvalidKeysBundle(err) => Err(
+                ServerFetchVersionsManifestError::InvalidKeysBundle(err) => Err(
                     WorkspaceHistoryGetWorkspaceManifestV1TimestampError::InvalidKeysBundle(err),
                 ),
-                FetchVersionsRemoteManifestError::InvalidCertificate(err) => Err(
+                ServerFetchVersionsManifestError::InvalidCertificate(err) => Err(
                     WorkspaceHistoryGetWorkspaceManifestV1TimestampError::InvalidCertificate(err),
                 ),
-                FetchVersionsRemoteManifestError::InvalidManifest(err) => {
+                ServerFetchVersionsManifestError::InvalidManifest(err) => {
                     Err(WorkspaceHistoryGetWorkspaceManifestV1TimestampError::InvalidManifest(err))
                 }
-                FetchVersionsRemoteManifestError::Internal(err) => Err(err.into()),
+                ServerFetchVersionsManifestError::Internal(err) => Err(err.into()),
             };
         }
     };
