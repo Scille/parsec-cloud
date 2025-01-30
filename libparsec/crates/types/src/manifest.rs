@@ -163,7 +163,14 @@ macro_rules! impl_manifest_verify {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct BlockAccess {
     pub id: BlockID,
+    /// Offset within the file where the block should be placed.
+    ///
+    /// Note this should not be confused with the offset *within the block* itself.
     pub offset: SizeInt,
+    /// Size of the block.
+    ///
+    /// Note the actual block data size might differ from this value, in which case
+    /// the block should be padded with zeroes.
     pub size: NonZeroU64,
     pub digest: HashDigest,
 }
@@ -288,7 +295,14 @@ pub struct FileManifest {
     pub updated: DateTime,
     /// Total size of the file
     pub size: SizeInt,
-    /// Size of a single block
+    /// Recommended size of a single block.
+    ///
+    // Note blocks are not necessarily of `blocksize` size (nor aligned on `blocksize`),
+    // this is for three reasons:
+    // - Last block can be smaller than `blocksize`.
+    // - Ranges of zero-filled data in the file can be omitted.
+    // - If the total file size change significantly (e.g. file grows at lot),
+    //   `blocksize` can be updated to try to keep the number of blocks manageable.
     pub blocksize: Blocksize,
     pub blocks: Vec<BlockAccess>,
 }
