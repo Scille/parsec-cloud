@@ -97,8 +97,6 @@ if (!lock) {
     // Initialize our app, build windows, and load content.
     await myCapacitorApp.init();
 
-    // Check for updates if we are in a packaged app.
-    // autoUpdater.checkForUpdatesAndNotify();
     process.on('SIGINT', () => {
       if (!sigProcessed) {
         console.log('Killed by SIGINT, cleaning up Parsec...');
