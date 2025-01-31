@@ -1,0 +1,1 @@
+Preview some file types when exploring a workspace history

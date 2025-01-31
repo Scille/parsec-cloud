@@ -147,7 +147,6 @@ import { computed, onBeforeUnmount, onMounted, ref, Ref, inject } from 'vue';
 import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, statFolderChildrenAt, entryStatAt, EntryName } from '@/parsec';
 import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, I18n } from 'megashark-lib';
 import { DateTime } from 'luxon';
-import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel, HistoryFileListItem } from '@/components/files';
@@ -159,7 +158,6 @@ import { InformationManager, InformationManagerKey } from '@/services/informatio
 import { openPath } from '@/services/fileOpener';
 
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
-const storageManager: StorageManager = inject(StorageManagerKey)!;
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 // Default it to 5 seconds ago to not interfere with the `max` value
@@ -324,18 +322,8 @@ async function onEntryClicked(entry: WorkspaceHistoryEntryModel): Promise<void> 
       return;
     }
 
-    // Cannot open files for now
-
-    // Doing it this way to trick the linter
-    const a = 0;
-    if (a === 0) {
-      return;
-    }
-
-    const config = await storageManager.retrieveConfig();
-
     await openPath(workspaceInfo.value.handle, entry.path, informationManager, {
-      skipViewers: config.skipViewers,
+      onlyViewers: true,
       atTime: DateTime.fromJSDate(selectedDateTime.value),
     });
   } else {

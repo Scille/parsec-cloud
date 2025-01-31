@@ -10,6 +10,7 @@ import { Base64, openSpinnerModal } from 'megashark-lib';
 
 interface OpenPathOptions {
   skipViewers?: boolean;
+  onlyViewers?: boolean;
   atTime?: DateTime;
 }
 
@@ -97,11 +98,31 @@ async function openPath(
   const entry = statsResult.value;
 
   if (!entry.isFile()) {
-    await openWithSystem(workspaceHandle, entry, informationManager);
+    if (!options.onlyViewers) {
+      await openWithSystem(workspaceHandle, entry, informationManager);
+    } else {
+      await informationManager.present(
+        new Information({
+          message: 'FoldersPage.open.noFolderPreview',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+    }
     return;
   }
   if (isDesktop() && options.skipViewers) {
-    await openWithSystem(workspaceHandle, entry, informationManager);
+    if (!options.onlyViewers) {
+      await openWithSystem(workspaceHandle, entry, informationManager);
+    } else {
+      await informationManager.present(
+        new Information({
+          message: 'FoldersPage.open.unknownFileType',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+    }
     return;
   }
 
@@ -114,7 +135,9 @@ async function openPath(
 
   try {
     if (!contentType || contentType.type === FileContentType.Unknown || (isDesktop() && !ENABLED_FILE_VIEWERS.includes(contentType.type))) {
-      await openWithSystem(workspaceHandle, entry, informationManager);
+      if (!options.onlyViewers) {
+        await openWithSystem(workspaceHandle, entry, informationManager);
+      }
     } else {
       if ((entry as any).size > OPEN_FILE_SIZE_LIMIT) {
         informationManager.present(
@@ -124,20 +147,36 @@ async function openPath(
           }),
           PresentationMode.Toast,
         );
-        await openWithSystem(workspaceHandle, entry, informationManager);
+        if (!options.onlyViewers) {
+          await openWithSystem(workspaceHandle, entry, informationManager);
+        } else {
+          await informationManager.present(
+            new Information({
+              message: 'FoldersPage.open.unknownType',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Modal,
+          );
+        }
         return;
       }
-
-      recentDocumentManager.addFile({
-        entryId: entry.id,
-        path: entry.path,
-        workspaceHandle: workspaceHandle,
-        name: entry.name,
-        contentType: contentType,
-      });
+      if (!options.atTime) {
+        recentDocumentManager.addFile({
+          entryId: entry.id,
+          path: entry.path,
+          workspaceHandle: workspaceHandle,
+          name: entry.name,
+          contentType: contentType,
+        });
+      }
 
       await navigateTo(Routes.Viewer, {
-        query: { workspaceHandle: workspaceHandle, documentPath: entry.path, fileTypeInfo: Base64.fromObject(contentType) },
+        query: {
+          workspaceHandle: workspaceHandle,
+          documentPath: entry.path,
+          timestamp: options.atTime?.toMillis().toString(),
+          fileTypeInfo: Base64.fromObject(contentType),
+        },
       });
     }
   } finally {

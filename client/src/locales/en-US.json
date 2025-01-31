@@ -1759,6 +1759,8 @@
         "details": "Details",
         "openingFile": "Opening file...",
         "fileTooBig": "File is too big to be opened using a viewer.",
+        "unknownFileType": "Cannot preview this file type.",
+        "noFolderPreview": "Cannot preview folders.",
         "genericError": "Failed to open the file.",
         "controls": {
             "zoom": {
