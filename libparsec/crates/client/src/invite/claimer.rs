@@ -724,10 +724,15 @@ impl ShamirRecoveryClaimRecoverDeviceCtx {
 
 // ClaimCancellerCtx
 
+type MaybeGreetingAttemptID = Arc<AsyncMutex<Option<GreetingAttemptID>>>;
+
 #[derive(Debug)]
 enum GreetingAttemptAccess {
+    // For the initial contexts, the greeting attempt might not be available yet
+    MaybeAvailable(MaybeGreetingAttemptID),
+    // For the in-progress contexts, the greeting attempt is always available
+    // since it was obtained during the initial context
     Available(GreetingAttemptID),
-    BehindMutex(Arc<AsyncMutex<Option<GreetingAttemptID>>>),
 }
 
 #[derive(Debug)]
@@ -738,48 +743,50 @@ pub struct ClaimCancellerCtx {
 
 impl ClaimCancellerCtx {
     fn new_from_maybe_greeting_attempt(
-        maybe_greeting_attempt: Arc<AsyncMutex<Option<GreetingAttemptID>>>,
+        maybe_greeting_attempt_id: MaybeGreetingAttemptID,
         cmds: Arc<InvitedCmds>,
     ) -> Self {
         Self {
-            greeting_attempt_access: GreetingAttemptAccess::BehindMutex(maybe_greeting_attempt),
+            greeting_attempt_access: GreetingAttemptAccess::MaybeAvailable(
+                maybe_greeting_attempt_id,
+            ),
             cmds,
         }
     }
 
     fn new_from_greeting_attempt(
-        greeting_attempt: GreetingAttemptID,
+        greeting_attempt_id: GreetingAttemptID,
         cmds: Arc<InvitedCmds>,
     ) -> Self {
         Self {
-            greeting_attempt_access: GreetingAttemptAccess::Available(greeting_attempt),
+            greeting_attempt_access: GreetingAttemptAccess::Available(greeting_attempt_id),
             cmds,
         }
     }
 
-    async fn maybe_greeting_attempt(&self) -> Option<GreetingAttemptID> {
+    async fn get_greeting_attempt(&self) -> Option<GreetingAttemptID> {
         match &self.greeting_attempt_access {
-            GreetingAttemptAccess::Available(greeting_attempt) => Some(*greeting_attempt),
-            GreetingAttemptAccess::BehindMutex(greeting_attempt) => *greeting_attempt.lock().await,
+            GreetingAttemptAccess::Available(greeting_attempt_id) => Some(*greeting_attempt_id),
+            GreetingAttemptAccess::MaybeAvailable(maybe_greeting_attempt_id) => {
+                *maybe_greeting_attempt_id.lock().await
+            }
         }
     }
 
     pub async fn cancel(self) -> Result<(), ClaimInProgressError> {
-        match self.maybe_greeting_attempt().await {
-            Some(greeting_attempt) => {
-                cancel_greeting_attempt(
-                    &self.cmds,
-                    greeting_attempt,
-                    CancelledGreetingAttemptReason::ManuallyCancelled,
-                )
-                .await
-            }
-            None => Ok(()),
+        if let Some(greeting_attempt) = self.get_greeting_attempt().await {
+            cancel_greeting_attempt(
+                &self.cmds,
+                greeting_attempt,
+                CancelledGreetingAttemptReason::ManuallyCancelled,
+            )
+            .await?;
         }
+        Ok(())
     }
 
     pub async fn cancel_and_warn_on_error(self) {
-        if let Some(greeting_attempt) = self.maybe_greeting_attempt().await {
+        if let Some(greeting_attempt) = self.get_greeting_attempt().await {
             cancel_greeting_attempt_and_warn_on_error(
                 &self.cmds,
                 greeting_attempt,
@@ -797,7 +804,15 @@ struct BaseClaimInitialCtx {
     greeter_user_id: UserID,
     greeter_human_handle: HumanHandle,
     time_provider: TimeProvider,
-    maybe_greeting_attempt: Arc<AsyncMutex<Option<GreetingAttemptID>>>,
+
+    // This field is used to expose the greeting attempt ID obtained during
+    // the `start_greeting_attempt` command. This way, the canceller can use
+    // it to cancel the greeting attempt if needed.
+    // We use an `AsyncMutex` here, which is allowing us to take the lock
+    // while sending the `start_greeting_attempt` request to the server
+    // so a concurrent canceller is able to wait for it to succeed and then
+    // send the `cancel_greeting_attempt` request.
+    maybe_greeting_attempt: MaybeGreetingAttemptID,
 }
 
 impl BaseClaimInitialCtx {
@@ -872,6 +887,7 @@ impl BaseClaimInitialCtx {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
             }?;
+            // Update the `maybe_greeting_attempt` field
             maybe_greeting_attempt_guard.replace(greeting_attempt);
             greeting_attempt
         };
