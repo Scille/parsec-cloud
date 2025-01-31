@@ -1,17 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import {
-  closeFile,
-  closeHistoryFile,
-  FileDescriptor,
-  FsPath,
-  openFile,
-  openFileAt,
-  Path,
-  readFile,
-  readHistoryFile,
-  WorkspaceHandle,
-} from '@/parsec';
+import { closeFile, FileDescriptor, FsPath, getWorkspaceInfo, openFile, Path, readFile, WorkspaceHandle, WorkspaceHistory } from '@/parsec';
 import { fileTypeFromBuffer } from 'file-type';
 import { DateTime } from 'luxon';
 
@@ -121,6 +110,56 @@ async function detectFileContentTypeFromBuffer(buffer: Uint8Array, fileExt?: str
   return { type: FileContentType.Unknown, extension: fileExt ?? result.ext, mimeType: result.mime };
 }
 
+const READ_CHUNK_SIZE = 512;
+
+async function _getFileAtBuffer(workspaceHandle: WorkspaceHandle, path: FsPath, at: DateTime): Promise<Uint8Array | undefined> {
+  let fd: FileDescriptor | null = null;
+  const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
+  if (!workspaceInfoResult.ok) {
+    return undefined;
+  }
+  const history = new WorkspaceHistory(workspaceInfoResult.value.id);
+  try {
+    await history.start();
+    await history.setCurrentTime(at);
+    const openResult = await history.openFile(path);
+    if (!openResult.ok) {
+      return;
+    }
+    fd = openResult.value;
+    const readResult = await history.readFile(fd, 0, READ_CHUNK_SIZE);
+    if (!readResult.ok) {
+      return;
+    }
+    return new Uint8Array(readResult.value);
+  } finally {
+    if (fd) {
+      await history.closeFile(fd);
+    }
+    await history.stop();
+  }
+}
+
+async function _getFileBuffer(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Uint8Array | undefined> {
+  let fd: FileDescriptor | null = null;
+  try {
+    const openResult = await openFile(workspaceHandle, path, { read: true });
+    if (!openResult.ok) {
+      return;
+    }
+    fd = openResult.value;
+    const readResult = await readFile(workspaceHandle, fd, 0, READ_CHUNK_SIZE);
+    if (!readResult.ok) {
+      return;
+    }
+    return new Uint8Array(readResult.value);
+  } finally {
+    if (fd) {
+      await closeFile(workspaceHandle, fd);
+    }
+  }
+}
+
 async function detectFileContentType(workspaceHandle: WorkspaceHandle, path: FsPath, at?: DateTime): Promise<DetectedFileType | undefined> {
   const fileName = await Path.filename(path);
 
@@ -136,38 +175,9 @@ async function detectFileContentType(workspaceHandle: WorkspaceHandle, path: FsP
     return { type: FileContentType.Text, extension: ext, mimeType: 'text/plain' };
   }
 
-  const READ_CHUNK_SIZE = 512;
-  let fd: FileDescriptor | null = null;
-  try {
-    let openResult;
-    if (at) {
-      openResult = await openFileAt(workspaceHandle, path, at);
-    } else {
-      openResult = await openFile(workspaceHandle, path, { read: true });
-    }
-    if (!openResult.ok) {
-      return;
-    }
-    fd = openResult.value;
-    let readResult;
-    if (at) {
-      readResult = await readHistoryFile(workspaceHandle, fd, 0, READ_CHUNK_SIZE);
-    } else {
-      readResult = await readFile(workspaceHandle, fd, 0, READ_CHUNK_SIZE);
-    }
-    if (!readResult.ok) {
-      return;
-    }
-    const buffer = new Uint8Array(readResult.value);
+  const buffer = at ? await _getFileAtBuffer(workspaceHandle, path, at) : await _getFileBuffer(workspaceHandle, path);
+  if (buffer) {
     return await detectFileContentTypeFromBuffer(buffer, ext);
-  } finally {
-    if (fd) {
-      if (at) {
-        closeHistoryFile(workspaceHandle, fd);
-      } else {
-        closeFile(workspaceHandle, fd);
-      }
-    }
   }
 }
 

@@ -23,8 +23,8 @@
             <ms-datetime-picker
               v-model="selectedDateTime"
               @update:model-value="onDateTimeChange"
-              :min-date="workspaceInfo && workspaceInfo.created ? workspaceInfo.created.toJSDate() : undefined"
-              :max-date="DateTime.now().toJSDate()"
+              :min-date="minDate"
+              :max-date="maxDate"
               :locale="I18n.getLocale()"
             />
           </div>
@@ -144,7 +144,7 @@
 <script setup lang="ts">
 import { IonPage, IonList, IonLabel, IonButtons, IonIcon, IonButton, IonListHeader, IonContent, IonText } from '@ionic/vue';
 import { computed, onBeforeUnmount, onMounted, ref, Ref, inject, onUnmounted } from 'vue';
-import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, statFolderChildrenAt, entryStatAt, EntryName } from '@/parsec';
+import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, WorkspaceHistory, EntryName } from '@/parsec';
 import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, I18n } from 'megashark-lib';
 import { DateTime } from 'luxon';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
@@ -161,7 +161,7 @@ const fileOperationManager: FileOperationManager = inject(FileOperationManagerKe
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 // Default it to 5 seconds ago to not interfere with the `max` value
-const selectedDateTime: Ref<Date> = ref(DateTime.now().minus({ seconds: 5 }).toJSDate());
+const selectedDateTime = ref(DateTime.now().minus({ seconds: 5 }).toJSDate());
 const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
 const currentPath: Ref<FsPath> = ref('/');
@@ -174,6 +174,8 @@ let timeoutId: number | null = null;
 const resultFromSearch = ref(false);
 const error = ref('');
 const selectEntry: Ref<EntryName> = ref('');
+const minDate = ref(DateTime.now().toJSDate());
+const maxDate = ref(DateTime.now().toJSDate());
 
 const allSelected = computed(() => {
   return entries.value.selectedCount() === entries.value.entriesCount();
@@ -196,6 +198,9 @@ async function loadHistory(): Promise<void> {
     const infoResult = await getWorkspaceInfo(workspaceHandle);
     if (infoResult.ok) {
       workspaceInfo.value = infoResult.value;
+      if (infoResult.value.created) {
+        minDate.value = infoResult.value.created.toJSDate();
+      }
     } else {
       console.error('Failed to retrieve workspace info');
     }
@@ -237,13 +242,20 @@ async function listCurrentPath(): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
-
+  const history = new WorkspaceHistory(workspaceInfo.value.id);
   try {
     querying.value = true;
+    const startResult = await history.start(DateTime.fromJSDate(selectedDateTime.value));
+    if (!startResult.ok) {
+      error.value = 'workspaceHistory.error';
+      entries.value.clear();
+      return;
+    }
+    minDate.value = history.getLowerBound().toJSDate();
+    maxDate.value = history.getUpperBound().toJSDate();
+    selectedDateTime.value = history.getCurrentTime().toJSDate();
 
-    const workspaceHandle = workspaceInfo.value.handle;
-
-    const statsResult = await entryStatAt(workspaceHandle, currentPath.value, DateTime.fromJSDate(selectedDateTime.value));
+    const statsResult = await history.entryStat(currentPath.value);
 
     if (!statsResult.ok) {
       error.value = 'workspaceHistory.error';
@@ -259,7 +271,7 @@ async function listCurrentPath(): Promise<void> {
 
     const breadcrumbs = await Path.parse(currentPath.value);
 
-    const result = await statFolderChildrenAt(workspaceHandle, currentPath.value, DateTime.fromJSDate(selectedDateTime.value));
+    const result = await history.statFolderChildren(currentPath.value);
     if (result.ok) {
       const newEntries: WorkspaceHistoryEntryModel[] = [];
       for (const entry of result.value) {
@@ -291,6 +303,9 @@ async function listCurrentPath(): Promise<void> {
     }
   } finally {
     querying.value = false;
+    if (history.isStarted()) {
+      await history.stop();
+    }
   }
 }
 

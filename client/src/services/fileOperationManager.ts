@@ -11,6 +11,7 @@ import {
   WorkspaceCreateFolderErrorTag,
   WorkspaceFdWriteErrorTag,
   WorkspaceHandle,
+  WorkspaceHistory,
   WorkspaceHistoryEntryStatFile,
   WorkspaceID,
   WorkspaceMoveEntryErrorTag,
@@ -20,14 +21,11 @@ import {
   createReadStream,
   deleteFile,
   entryStat,
-  entryStatAt,
   listTree,
   listTreeAt,
   moveEntry,
   openFile,
-  openFileAt,
   readFile,
-  readHistoryFile,
   resizeFile,
   writeFile,
 } from '@/parsec';
@@ -576,160 +574,173 @@ class FileOperationManager {
     await this.sendState(FileOperationState.RestoreStarted, data);
     await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
 
-    let tree: HistoryEntryTree;
+    let tree: HistoryEntryTree | undefined;
 
     const start = DateTime.now();
+    const history = new WorkspaceHistory(data.workspaceId);
 
-    const statResult = await entryStatAt(data.workspaceHandle, data.path, data.dateTime);
-    if (!statResult.ok) {
-      await this.sendState(FileOperationState.RestoreFailed, data, {
-        path: data.path,
-        workspaceHandle: data.workspaceHandle,
-        error: RestoreFailedError.SourceDoesNotExist,
-      });
-      return;
-    }
-    if (statResult.value.isFile()) {
-      tree = {
-        totalSize: (statResult.value as WorkspaceHistoryEntryStatFile).size,
-        entries: [statResult.value as WorkspaceHistoryEntryStatFile],
-        maxRecursionReached: false,
-        maxFilesReached: false,
-      };
-    } else {
-      tree = await listTreeAt(data.workspaceHandle, data.path, data.dateTime);
-    }
+    try {
+      await history.start(data.dateTime);
 
-    // If we reach max recursion or max files, it's better to simply give up right at the start rather than
-    // trying to copy incomplete data
-    if (tree.maxRecursionReached) {
-      await this.sendState(FileOperationState.RestoreFailed, data, {
-        path: data.path,
-        workspaceHandle: data.workspaceHandle,
-        error: RestoreFailedError.MaxRecursionReached,
-      });
-      return;
-    } else if (tree.maxFilesReached) {
-      await this.sendState(FileOperationState.RestoreFailed, data, {
-        path: data.path,
-        workspaceHandle: data.workspaceHandle,
-        error: RestoreFailedError.MaxFilesReached,
-      });
-      return;
-    }
-    await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
+      const statResult = await history.entryStat(data.path);
+      if (!statResult.ok) {
+        await this.sendState(FileOperationState.RestoreFailed, data, {
+          path: data.path,
+          workspaceHandle: data.workspaceHandle,
+          error: RestoreFailedError.SourceDoesNotExist,
+        });
+        return;
+      }
+      if (statResult.value.isFile()) {
+        tree = {
+          totalSize: (statResult.value as WorkspaceHistoryEntryStatFile).size,
+          entries: [statResult.value as WorkspaceHistoryEntryStatFile],
+          maxRecursionReached: false,
+          maxFilesReached: false,
+        };
+      } else {
+        tree = await listTreeAt(history, data.path);
+      }
 
-    let totalSizeRestored = 0;
+      if (!tree) {
+        return;
+      }
 
-    for (const entry of tree.entries) {
-      const dstPath = entry.path;
-      const dstDir = await Path.parent(dstPath);
-      if (dstDir !== '/') {
-        const result = await createFolder(data.workspaceHandle, dstDir);
-        if (result.ok) {
-          await this.sendState(FileOperationState.FolderCreated, undefined, { path: dstDir, workspaceHandle: data.workspaceHandle });
-        } else if (!result.ok && result.error.tag !== WorkspaceCreateFolderErrorTag.EntryExists) {
-          // No need to go further if the folder creation failed
-          continue;
+      // If we reach max recursion or max files, it's better to simply give up right at the start rather than
+      // trying to copy incomplete data
+      if (tree.maxRecursionReached) {
+        await this.sendState(FileOperationState.RestoreFailed, data, {
+          path: data.path,
+          workspaceHandle: data.workspaceHandle,
+          error: RestoreFailedError.MaxRecursionReached,
+        });
+        return;
+      } else if (tree.maxFilesReached) {
+        await this.sendState(FileOperationState.RestoreFailed, data, {
+          path: data.path,
+          workspaceHandle: data.workspaceHandle,
+          error: RestoreFailedError.MaxFilesReached,
+        });
+        return;
+      }
+      await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
+
+      let totalSizeRestored = 0;
+
+      for (const entry of tree.entries) {
+        const dstPath = entry.path;
+        const dstDir = await Path.parent(dstPath);
+        if (dstDir !== '/') {
+          const result = await createFolder(data.workspaceHandle, dstDir);
+          if (result.ok) {
+            await this.sendState(FileOperationState.FolderCreated, undefined, { path: dstDir, workspaceHandle: data.workspaceHandle });
+          } else if (!result.ok && result.error.tag !== WorkspaceCreateFolderErrorTag.EntryExists) {
+            // No need to go further if the folder creation failed
+            continue;
+          }
+        }
+        let fdR: FileDescriptor | null = null;
+        let fdW: FileDescriptor | null = null;
+        let restored = false;
+        let cancelled = false;
+        try {
+          // Open the source
+          const openReadResult = await history.openFile(entry.path);
+          if (!openReadResult.ok) {
+            continue;
+          }
+          fdR = openReadResult.value;
+          // Try to open the destination
+          const openWriteResult = await openFile(data.workspaceHandle, dstPath, { write: true, truncate: true, create: true });
+          // No luck, cancel the copy
+          if (!openWriteResult.ok) {
+            throw Error('Failed to open destination');
+          }
+          fdW = openWriteResult.value;
+
+          // Resize the destination
+          await resizeFile(data.workspaceHandle, fdW, entry.size);
+
+          let loop = true;
+          let offset = 0;
+          while (loop) {
+            // Check if the copy has been cancelled
+            let shouldCancel = false;
+            const index = this.cancelList.findIndex((item) => item === data.id);
+
+            if (index !== -1) {
+              // Remove from cancel list
+              this.cancelList.splice(index, 1);
+              shouldCancel = true;
+            }
+            if (shouldCancel) {
+              cancelled = true;
+              throw Error('cancelled');
+            }
+
+            // Read the source
+            const readResult = await history.readFile(fdR, offset, DEFAULT_READ_SIZE);
+
+            // Failed to read, cancel the copy
+            if (!readResult.ok) {
+              throw Error('Failed to read the source');
+            }
+            const chunk = readResult.value;
+            const writeResult = await writeFile(data.workspaceHandle, fdW, offset, new Uint8Array(chunk));
+
+            // Failed to write, or not everything's been written
+            if (!writeResult.ok || writeResult.value < chunk.byteLength) {
+              throw Error('Failed to write the destination');
+            }
+            // Smaller that what we asked for, we're at the end of the file
+            if (chunk.byteLength < DEFAULT_READ_SIZE) {
+              loop = false;
+            } else {
+              // Otherwise, move the offset and keep going
+              offset += chunk.byteLength;
+            }
+            totalSizeRestored += chunk.byteLength;
+            await this.sendState(FileOperationState.OperationProgress, data, { progress: (totalSizeRestored / tree.totalSize) * 100 });
+          }
+          restored = true;
+        } catch (e: any) {
+          console.warn(`Failed to restore file: ${e}`);
+        } finally {
+          if (fdR !== null) {
+            await history.closeFile(fdR);
+          }
+          if (fdW !== null) {
+            await closeFile(data.workspaceHandle, fdW);
+          }
+          if (cancelled) {
+            await deleteFile(data.workspaceHandle, dstPath);
+            await this.sendState(FileOperationState.Cancelled, data);
+            // eslint-disable-next-line no-unsafe-finally
+            return;
+          }
+          if (!restored) {
+            await this.sendState(FileOperationState.RestoreFailed, data, {
+              path: data.path,
+              workspaceHandle: data.workspaceHandle,
+              error: RestoreFailedError.OneFailed,
+            });
+            // eslint-disable-next-line no-unsafe-finally
+            return;
+          }
         }
       }
-      let fdR: FileDescriptor | null = null;
-      let fdW: FileDescriptor | null = null;
-      let restored = false;
-      let cancelled = false;
-      try {
-        // Open the source
-        const openReadResult = await openFileAt(data.workspaceHandle, entry.path, data.dateTime);
-        if (!openReadResult.ok) {
-          continue;
-        }
-        fdR = openReadResult.value;
-        // Try to open the destination
-        const openWriteResult = await openFile(data.workspaceHandle, dstPath, { write: true, truncate: true, create: true });
-        // No luck, cancel the copy
-        if (!openWriteResult.ok) {
-          throw Error('Failed to open destination');
-        }
-        fdW = openWriteResult.value;
+      const end = DateTime.now();
+      const diff = end.toMillis() - start.toMillis();
 
-        // Resize the destination
-        await resizeFile(data.workspaceHandle, fdW, entry.size);
-
-        let loop = true;
-        let offset = 0;
-        while (loop) {
-          // Check if the copy has been cancelled
-          let shouldCancel = false;
-          const index = this.cancelList.findIndex((item) => item === data.id);
-
-          if (index !== -1) {
-            // Remove from cancel list
-            this.cancelList.splice(index, 1);
-            shouldCancel = true;
-          }
-          if (shouldCancel) {
-            cancelled = true;
-            throw Error('cancelled');
-          }
-
-          // Read the source
-          const readResult = await readHistoryFile(data.workspaceHandle, fdR, offset, DEFAULT_READ_SIZE);
-
-          // Failed to read, cancel the copy
-          if (!readResult.ok) {
-            throw Error('Failed to read the source');
-          }
-          const chunk = readResult.value;
-          const writeResult = await writeFile(data.workspaceHandle, fdW, offset, new Uint8Array(chunk));
-
-          // Failed to write, or not everything's been written
-          if (!writeResult.ok || writeResult.value < chunk.byteLength) {
-            throw Error('Failed to write the destination');
-          }
-          // Smaller that what we asked for, we're at the end of the file
-          if (chunk.byteLength < DEFAULT_READ_SIZE) {
-            loop = false;
-          } else {
-            // Otherwise, move the offset and keep going
-            offset += chunk.byteLength;
-          }
-          totalSizeRestored += chunk.byteLength;
-          await this.sendState(FileOperationState.OperationProgress, data, { progress: (totalSizeRestored / tree.totalSize) * 100 });
-        }
-        restored = true;
-      } catch (e: any) {
-        console.warn(`Failed to restore file: ${e}`);
-      } finally {
-        if (fdR !== null) {
-          await closeFile(data.workspaceHandle, fdR);
-        }
-        if (fdW !== null) {
-          await closeFile(data.workspaceHandle, fdW);
-        }
-        if (cancelled) {
-          await deleteFile(data.workspaceHandle, dstPath);
-          await this.sendState(FileOperationState.Cancelled, data);
-          // eslint-disable-next-line no-unsafe-finally
-          return;
-        }
-        if (!restored) {
-          await this.sendState(FileOperationState.RestoreFailed, data, {
-            path: data.path,
-            workspaceHandle: data.workspaceHandle,
-            error: RestoreFailedError.OneFailed,
-          });
-          // eslint-disable-next-line no-unsafe-finally
-          return;
-        }
+      if (diff < MIN_OPERATION_TIME_MS) {
+        await wait(MIN_OPERATION_TIME_MS - diff);
       }
+      await this.sendState(FileOperationState.EntryRestored, data);
+    } catch (e: any) {
+      window.electronAPI.log('error', `Error while restoring: ${e.toString()}`);
+    } finally {
+      await history.stop();
     }
-    const end = DateTime.now();
-    const diff = end.toMillis() - start.toMillis();
-
-    if (diff < MIN_OPERATION_TIME_MS) {
-      await wait(MIN_OPERATION_TIME_MS - diff);
-    }
-    await this.sendState(FileOperationState.EntryRestored, data);
   }
 
   private async doDownload(data: DownloadData): Promise<void> {
