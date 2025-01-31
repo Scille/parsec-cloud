@@ -16,15 +16,17 @@
               :image="getFileIcon(contentInfo.fileName)"
               class="file-icon"
             />
-            <ion-text class="title-h3">
-              {{ contentInfo.fileName }}
-            </ion-text>
-            <ion-text
-              class="title-h4"
-              v-if="atDateTime"
-            >
-              {{ $msTranslate(I18n.formatDate(atDateTime)) }}
-            </ion-text>
+            <div class="file-viewer-topbar__title">
+              <ion-text class="title-h3">
+                {{ contentInfo.fileName }}
+              </ion-text>
+              <ion-text
+                class="subtitles-sm"
+                v-if="atDateTime"
+              >
+                {{ $msTranslate(I18n.formatDate(atDateTime)) }}
+              </ion-text>
+            </div>
             <!-- Here we could put the file action buttons -->
             <ion-buttons class="file-viewer-topbar-buttons">
               <ion-button
@@ -346,6 +348,16 @@ async function onClick(event: MouseEvent): Promise<void> {
       .file-icon {
         width: 1.5rem;
         height: 1.5rem;
+      }
+
+      &__title {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        .subtitles-sm {
+          color: var(--parsec-color-light-secondary-grey);
+        }
       }
 
       .title-h3 {
