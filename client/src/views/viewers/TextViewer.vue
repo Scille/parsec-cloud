@@ -36,6 +36,7 @@ const zoomControl = ref();
 const zoomLevel = ref(1);
 
 onMounted(async () => {
+  zoomLevel.value = 1;
   const text = new TextDecoder().decode(props.contentInfo.data);
   editor.value = monaco.editor.create(container.value, {
     value: text,

@@ -313,7 +313,6 @@ async function onClick(event: MouseEvent): Promise<void> {
 .container {
   height: 100%;
   height: -webkit-fill-available;
-  height: -moz-available;
   height: stretch;
   margin: 0 1em 1em 1em;
   padding: 1.5em;

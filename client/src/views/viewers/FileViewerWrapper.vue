@@ -44,7 +44,6 @@ defineProps<{
 .file-viewer-wrapper {
   height: 100%;
   height: -webkit-fill-available;
-  height: -moz-available;
   height: stretch;
   display: flex;
   justify-content: center;
