@@ -1,0 +1,1 @@
+Replaced the list of workspaces in the sidebar by a list of the most recently accessed workspaces
