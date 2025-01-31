@@ -1,7 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { detectFileContentType, FileContentType } from '@/common/fileTypes';
-import { entryStat, EntryStat, entryStatAt, FsPath, getSystemPath, isDesktop, WorkspaceHandle, WorkspaceHistoryEntryStat } from '@/parsec';
+import {
+  entryStat,
+  EntryStat,
+  FsPath,
+  getSystemPath,
+  getWorkspaceInfo,
+  isDesktop,
+  WorkspaceHandle,
+  WorkspaceHistory,
+  WorkspaceHistoryEntryStat,
+} from '@/parsec';
 import { currentRouteIs, getDocumentPath, navigateTo, Routes } from '@/router';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
@@ -80,7 +90,14 @@ async function openPath(
 ): Promise<void> {
   let statsResult;
   if (options.atTime) {
-    statsResult = await entryStatAt(workspaceHandle, path, options.atTime);
+    const infoResult = await getWorkspaceInfo(workspaceHandle);
+    if (!infoResult.ok) {
+      return;
+    }
+    const history = new WorkspaceHistory(infoResult.value.id);
+    await history.start(options.atTime);
+    statsResult = await history.entryStat(path);
+    await history.stop();
   } else {
     statsResult = await entryStat(workspaceHandle, path);
   }
