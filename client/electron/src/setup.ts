@@ -121,7 +121,11 @@ export class ElectronCapacitorApp {
       scheme: this.customScheme,
     });
 
-    this.updater = createAppUpdater();
+    if (process.env.GUI_DISABLE_UPDATES === 'true') {
+      log['info']('Updates are disabled');
+    } else {
+      this.updater = createAppUpdater();
+    }
 
     if (this.updater) {
       this.updater.on(UpdaterState.UpdateDownloaded, (info) => {
@@ -182,7 +186,9 @@ export class ElectronCapacitorApp {
    * If an update is available, an event will be sent to the web app.
    */
   async checkForUpdates(): Promise<void> {
-    await this.updater?.checkForUpdates();
+    if (this.updater) {
+      await this.updater.checkForUpdates();
+    }
   }
 
   addAuthorizedURL(url: string): void {
