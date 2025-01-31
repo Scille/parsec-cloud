@@ -34,11 +34,10 @@
     <template #controls>
       <file-controls v-show="!loading && workbook">
         <file-controls-group>
-          <file-controls-button
-            v-for="(action, key) in actions"
-            :key="key"
-            @click="action.handler"
-            :label="action.text"
+          <file-controls-dropdown
+            :items="dropdownItems"
+            :title="I18n.valueAsTranslatable(currentPageName)"
+            :icon="chevronDown"
           />
         </file-controls-group>
         <file-controls-zoom
@@ -58,12 +57,19 @@
 
 <script setup lang="ts">
 import { MsSpinner, I18n, Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
-import { onMounted, onUnmounted, Ref, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import XLSX from 'xlsx';
-import { FileControls, FileControlsButton, FileControlsGroup, FileControlsZoom } from '@/components/viewers';
+import {
+  FileControls,
+  FileControlsButton,
+  FileControlsDropdown,
+  FileControlsDropdownItemContent,
+  FileControlsGroup,
+  FileControlsZoom,
+} from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
-import { scan } from 'ionicons/icons';
+import { chevronDown, scan } from 'ionicons/icons';
 import RevoGrid from '@revolist/vue3-datagrid';
 
 const props = defineProps<{
@@ -73,17 +79,18 @@ const props = defineProps<{
 let workbook: XLSX.WorkBook | null = null;
 const pages = ref<Array<string>>([]);
 const currentPage = ref('');
+const currentPageName = ref('');
 const loading = ref(true);
 const error = ref('');
 let documentWorker: Worker;
 let pageWorker: Worker;
-const actions: Ref<Array<{ icon?: string; text?: Translatable; handler: () => void }>> = ref([]);
 const zoomControl = ref();
 const zoomLevel = ref(1);
 const rows = ref<Array<any>>([]);
 const columns = ref<Array<{ prop: string; name: string }>>([]);
 const loadingLabel = ref<Translatable>('');
 const gridContainer = ref();
+const dropdownItems = ref<FileControlsDropdownItemContent[]>([]);
 
 onMounted(async () => {
   documentWorker = new Worker(new URL('@/views/viewers/workers/spreadsheet_document_loader.ts', import.meta.url));
@@ -106,9 +113,13 @@ onMounted(async () => {
     }
     workbook = e.data.value as XLSX.WorkBook;
     pages.value = workbook.SheetNames;
-    for (const page of pages.value) {
-      actions.value.push({ text: I18n.valueAsTranslatable(page), handler: () => switchToPage(page) });
-    }
+    pages.value.forEach((page, index) => {
+      dropdownItems.value.push({
+        label: I18n.valueAsTranslatable(page),
+        callback: () => switchToPage(page),
+        isActive: index === 0,
+      });
+    });
     await switchToPage(workbook.SheetNames[0]);
   };
 
@@ -151,6 +162,10 @@ async function switchToPage(page: string): Promise<void> {
   loadingLabel.value = { key: 'fileViewers.spreadsheet.loadingSheet', data: { page: page } };
   error.value = '';
   pageWorker.postMessage(ws);
+
+  currentPageName.value = page;
+  const currentIndex = pages.value.indexOf(page);
+  dropdownItems.value.forEach((item, index) => (item.isActive = index === currentIndex));
 }
 
 function onZoomLevelChange(value: number): void {

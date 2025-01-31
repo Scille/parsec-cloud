@@ -58,12 +58,16 @@ msTest('Spreadsheet viewer', async ({ documents }) => {
   await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.xlsx$/);
   const bottomBar = documents.locator('.file-viewer-bottombar');
-  await expect(bottomBar.locator('.file-controls-button')).toContainText(['Sheet1', 'Sheet2']);
+  const dropdown = bottomBar.locator('.file-controls-dropdown');
+  await expect(dropdown).toContainText('Sheet1');
   const wrapper = documents.locator('.file-viewer-wrapper');
   const spreadsheet = wrapper.locator('.inner-content-table').nth(1).locator('.content-wrapper');
   await expect(spreadsheet.locator('.rgCell')).toHaveText(['A', '1', 'B', '2', 'C', '3', 'D', '4']);
+  await dropdown.click();
+  const popover = documents.locator('.file-controls-dropdown-popover');
+  await expect(popover.locator('.dropdown-item')).toHaveCount(2);
   // Switch to second sheet
-  await bottomBar.locator('.file-controls-button').nth(1).click();
+  await popover.locator('.dropdown-item').nth(1).click();
   await expect(spreadsheet.locator('.rgCell')).toHaveText(['E', '5', 'F', '6', 'G', '7', 'H', '8']);
 });
 
