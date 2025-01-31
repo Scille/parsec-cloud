@@ -1758,6 +1758,8 @@
         "details": "Détails",
         "openingFile": "Ouverture du fichier...",
         "fileTooBig": "Le fichier est trop large pour être ouvert avec un visualiseur.",
+        "unknownFileType": "Impossible de prévisualiser ce type de fichier.",
+        "noFolderPreview": "Impossible de prévisualiser les dossiers.",
         "genericError": "Impossible d'ouvrir le fichier.",
         "controls": {
             "zoom": {

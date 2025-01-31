@@ -19,6 +19,12 @@
             <ion-text class="title-h3">
               {{ contentInfo.fileName }}
             </ion-text>
+            <ion-text
+              class="title-h4"
+              v-if="atDateTime"
+            >
+              {{ $msTranslate(I18n.formatDate(atDateTime)) }}
+            </ion-text>
             <!-- Here we could put the file action buttons -->
             <ion-buttons class="file-viewer-topbar-buttons">
               <ion-button
@@ -69,7 +75,7 @@ import {
 } from '@/parsec';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
 import { informationCircle, open } from 'ionicons/icons';
-import { Base64, MsSpinner, MsImage } from 'megashark-lib';
+import { Base64, MsSpinner, MsImage, I18n } from 'megashark-lib';
 import { ref, Ref, type Component, inject, onMounted, shallowRef, onUnmounted } from 'vue';
 import { ImageViewer, VideoViewer, SpreadsheetViewer, DocumentViewer, AudioViewer, TextViewer, PdfViewer } from '@/views/viewers';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -86,15 +92,18 @@ const viewerComponent: Ref<Component | null> = shallowRef(null);
 const contentInfo: Ref<FileContentInfo | null> = ref(null);
 const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
-const atDateTime: Ref<DateTime | null> = ref(null);
+const atDateTime: Ref<DateTime | undefined> = ref(undefined);
 
 const cancelRouteWatch = watchRoute(async () => {
   if (!currentRouteIs(Routes.Viewer)) {
     return;
   }
 
+  const query = getCurrentRouteQuery();
+  const timestamp = Number.isNaN(Number(query.timestamp)) ? undefined : Number(query.timestamp);
+
   // Same file, no need to reload
-  if (contentInfo.value && contentInfo.value.path === getDocumentPath()) {
+  if (contentInfo.value && contentInfo.value.path === getDocumentPath() && atDateTime.value?.toMillis() === timestamp) {
     return;
   }
   await loadFile();
@@ -104,7 +113,7 @@ async function loadFile(): Promise<void> {
   loaded.value = false;
   contentInfo.value = null;
   detectedFileType.value = null;
-  atDateTime.value = null;
+  atDateTime.value = undefined;
   viewerComponent.value = null;
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
@@ -121,7 +130,7 @@ async function loadFile(): Promise<void> {
   }
 
   const timestamp = Number(getCurrentRouteQuery().timestamp);
-  if (timestamp) {
+  if (!Number.isNaN(timestamp)) {
     atDateTime.value = DateTime.fromMillis(timestamp);
   }
 
