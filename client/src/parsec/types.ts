@@ -24,6 +24,7 @@ export {
   ClientStartErrorTag,
   ClientStartInvitationGreetErrorTag,
   ClientStartWorkspaceErrorTag,
+  ClientStartWorkspaceHistory2ErrorTag,
   ClientStopErrorTag,
   DeviceAccessStrategyTag,
   DeviceFileType,
@@ -47,6 +48,13 @@ export {
   WorkspaceFdReadErrorTag,
   WorkspaceFdResizeErrorTag,
   WorkspaceFdWriteErrorTag,
+  WorkspaceHistory2EntryStatTag,
+  WorkspaceHistory2FdCloseErrorTag,
+  WorkspaceHistory2FdReadErrorTag,
+  WorkspaceHistory2InternalOnlyErrorTag,
+  WorkspaceHistory2OpenFileErrorTag,
+  WorkspaceHistory2StatEntryErrorTag,
+  WorkspaceHistory2StatFolderChildrenErrorTag,
   WorkspaceHistoryEntryStatTag,
   WorkspaceHistoryFdCloseErrorTag,
   WorkspaceHistoryFdReadErrorTag,
@@ -63,6 +71,7 @@ export {
   WorkspaceStopErrorTag,
 } from '@/plugins/libparsec';
 export type {
+  WorkspaceHistory2EntryStat,
   AnyClaimRetrievedInfoDevice,
   AnyClaimRetrievedInfoUser,
   ArchiveDeviceError,
@@ -94,6 +103,7 @@ export type {
   ClientStartError,
   ClientStartInvitationGreetError,
   ClientStartWorkspaceError,
+  ClientStartWorkspaceHistory2Error,
   ClientStopError,
   DeviceAccessStrategy,
   DeviceAccessStrategyPassword,
@@ -155,6 +165,12 @@ export type {
   WorkspaceFdResizeError,
   WorkspaceFdWriteError,
   WorkspaceGeneratePathAddrError,
+  WorkspaceHistory2FdCloseError,
+  WorkspaceHistory2FdReadError,
+  WorkspaceHistory2InternalOnlyError,
+  WorkspaceHistory2OpenFileError,
+  WorkspaceHistory2StatEntryError,
+  WorkspaceHistory2StatFolderChildrenError,
   WorkspaceHistoryFdCloseError,
   WorkspaceHistoryFdReadError,
   WorkspaceHistoryOpenFileError,
@@ -184,8 +200,8 @@ import type {
   ParsecOrganizationAddr,
   StartedWorkspaceInfo as ParsecStartedWorkspaceInfo,
   UserInfo as ParsecUserInfo,
-  WorkspaceHistoryEntryStatFile as ParsecWorkspaceHistoryEntryStatFile,
-  WorkspaceHistoryEntryStatFolder as ParsecWorkspaceHistoryEntryStatFolder,
+  WorkspaceHistory2EntryStatFile as ParsecWorkspaceHistory2EntryStatFile,
+  WorkspaceHistory2EntryStatFolder as ParsecWorkspaceHistory2EntryStatFolder,
   WorkspaceInfo as ParsecWorkspaceInfo,
   Path,
   UserID,
@@ -195,6 +211,7 @@ import type {
 
 import { RealmRole as WorkspaceRole } from '@/plugins/libparsec';
 
+type WorkspaceHistoryHandle = Handle;
 type WorkspaceHandle = Handle;
 type EntryID = VlobID;
 type WorkspaceName = EntryName;
@@ -229,13 +246,27 @@ interface EntryStatFile extends ParsecEntryStatFile {
 
 type EntryStat = EntryStatFile | EntryStatFolder;
 
-interface WorkspaceHistoryEntryStatFile extends ParsecWorkspaceHistoryEntryStatFile {
+// interface WorkspaceHistoryEntryStatFile extends ParsecWorkspaceHistoryEntryStatFile {
+//   isFile: () => boolean;
+//   path: FsPath;
+//   name: EntryName;
+// }
+
+// interface WorkspaceHistoryEntryStatFolder extends ParsecWorkspaceHistoryEntryStatFolder {
+//   isFile: () => boolean;
+//   path: FsPath;
+//   name: EntryName;
+// }
+
+// type WorkspaceHistoryEntryStat = WorkspaceHistoryEntryStatFile | WorkspaceHistoryEntryStatFolder;
+
+interface WorkspaceHistoryEntryStatFile extends ParsecWorkspaceHistory2EntryStatFile {
   isFile: () => boolean;
   path: FsPath;
   name: EntryName;
 }
 
-interface WorkspaceHistoryEntryStatFolder extends ParsecWorkspaceHistoryEntryStatFolder {
+interface WorkspaceHistoryEntryStatFolder extends ParsecWorkspaceHistory2EntryStatFolder {
   isFile: () => boolean;
   path: FsPath;
   name: EntryName;
@@ -349,6 +380,7 @@ export {
   WorkspaceHistoryEntryStat,
   WorkspaceHistoryEntryStatFile,
   WorkspaceHistoryEntryStatFolder,
+  WorkspaceHistoryHandle,
   WorkspaceInfo,
   WorkspaceName,
   WorkspaceRole,

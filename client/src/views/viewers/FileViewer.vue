@@ -19,6 +19,12 @@
             <ion-text class="title-h3">
               {{ contentInfo.fileName }}
             </ion-text>
+            <ion-text
+              class="title-h3"
+              v-if="atDateTime"
+            >
+              {{ $msTranslate(I18n.formatDate(atDateTime)) }}
+            </ion-text>
             <!-- Here we could put the file action buttons -->
             <ion-buttons class="file-viewer-topbar-buttons">
               <ion-button
@@ -61,15 +67,16 @@ import {
   readFile,
   getSystemPath,
   isDesktop,
-  entryStatAt,
-  openFileAt,
-  readHistoryFile,
-  closeHistoryFile,
+  WorkspaceHistory,
   DEFAULT_READ_SIZE,
+  WorkspaceHandle,
+  EntryName,
+  getWorkspaceInfo,
+  WorkspaceHistoryEntryStatFile,
 } from '@/parsec';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
 import { informationCircle, open } from 'ionicons/icons';
-import { Base64, MsSpinner, MsImage } from 'megashark-lib';
+import { Base64, MsSpinner, MsImage, I18n } from 'megashark-lib';
 import { ref, Ref, type Component, inject, onMounted, shallowRef, onUnmounted } from 'vue';
 import { ImageViewer, VideoViewer, SpreadsheetViewer, DocumentViewer, AudioViewer, TextViewer, PdfViewer } from '@/views/viewers';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -100,6 +107,113 @@ const cancelRouteWatch = watchRoute(async () => {
   await loadFile();
 });
 
+async function _getFileInfoAt(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+  at: DateTime,
+  fileInfo: DetectedFileType,
+  fileName: EntryName,
+): Promise<FileContentInfo | undefined> {
+  const infoResult = await getWorkspaceInfo(workspaceHandle);
+  if (!infoResult.ok) {
+    return;
+  }
+  const history = new WorkspaceHistory(infoResult.value.id);
+  try {
+    await history.start(at);
+    const statsResult = await history.entryStat(path);
+
+    if (!statsResult.ok || !statsResult.value.isFile()) {
+      return;
+    }
+    const openResult = await history.openFile(path);
+    if (!openResult.ok) {
+      await openWithSystem(path);
+      return;
+    }
+    const info: FileContentInfo = {
+      data: new Uint8Array((statsResult.value as WorkspaceHistoryEntryStatFile).size),
+      extension: fileInfo.extension,
+      mimeType: fileInfo.mimeType,
+      fileName: fileName,
+      path: path,
+    };
+    const fd = openResult.value;
+    try {
+      let loop = true;
+      let offset = 0;
+      while (loop) {
+        const readResult = await history.readFile(openResult.value, offset, DEFAULT_READ_SIZE);
+        if (!readResult.ok) {
+          throw Error(JSON.stringify(readResult.error));
+        }
+        const buffer = new Uint8Array(readResult.value);
+        contentInfo.value?.data.set(buffer, offset);
+        if (readResult.value.byteLength < DEFAULT_READ_SIZE) {
+          loop = false;
+        }
+        offset += readResult.value.byteLength;
+      }
+      return info;
+    } catch (e: any) {
+      window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
+    } finally {
+      await history.closeFile(fd);
+    }
+  } catch (e: any) {
+    window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
+  } finally {
+    await history.stop();
+  }
+}
+
+async function _getFileInfo(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+  fileInfo: DetectedFileType,
+  fileName: EntryName,
+): Promise<FileContentInfo | undefined> {
+  const statsResult = await entryStat(workspaceHandle, path);
+  if (!statsResult.ok || !statsResult.value.isFile()) {
+    return;
+  }
+
+  const openResult = await openFile(workspaceHandle, path, { read: true });
+  if (!openResult.ok) {
+    await openWithSystem(path);
+    return;
+  }
+  const info: FileContentInfo = {
+    data: new Uint8Array((statsResult.value as EntryStatFile).size),
+    extension: fileInfo.extension,
+    mimeType: fileInfo.mimeType,
+    fileName: fileName,
+    path: path,
+  };
+  const fd = openResult.value;
+  try {
+    let loop = true;
+    let offset = 0;
+    while (loop) {
+      const readResult = await readFile(workspaceHandle, openResult.value, offset, DEFAULT_READ_SIZE);
+      if (!readResult.ok) {
+        throw Error(JSON.stringify(readResult.error));
+      }
+      const buffer = new Uint8Array(readResult.value);
+      info.data.set(buffer, offset);
+      if (readResult.value.byteLength < DEFAULT_READ_SIZE) {
+        loop = false;
+      }
+      offset += readResult.value.byteLength;
+    }
+    return info;
+  } catch (e: any) {
+    window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
+  } finally {
+    await closeFile(workspaceHandle, fd);
+  }
+}
+
 async function loadFile(): Promise<void> {
   loaded.value = false;
   contentInfo.value = null;
@@ -121,9 +235,6 @@ async function loadFile(): Promise<void> {
   }
 
   const timestamp = Number(getCurrentRouteQuery().timestamp);
-  if (timestamp) {
-    atDateTime.value = DateTime.fromMillis(timestamp);
-  }
 
   const fileInfoSerialized = getCurrentRouteQuery().fileTypeInfo;
   if (!fileInfoSerialized) {
@@ -133,66 +244,9 @@ async function loadFile(): Promise<void> {
   const fileInfo: DetectedFileType = Base64.toObject(fileInfoSerialized) as DetectedFileType;
   detectedFileType.value = fileInfo;
 
-  let statsResult;
-
-  if (!atDateTime.value) {
-    statsResult = await entryStat(workspaceHandle, path);
-  } else {
-    statsResult = await entryStatAt(workspaceHandle, path, atDateTime.value);
-  }
-  if (!statsResult.ok || !statsResult.value.isFile()) {
-    return;
-  }
-
   const component = await getComponent(fileInfo);
   if (!component) {
     window.electronAPI.log('error', `No component for file of type ${fileInfo.mimeType}`);
-    return;
-  }
-  viewerComponent.value = component;
-
-  let openResult;
-
-  if (!atDateTime.value) {
-    openResult = await openFile(workspaceHandle, path, { read: true });
-  } else {
-    openResult = await openFileAt(workspaceHandle, path, atDateTime.value);
-  }
-  if (!openResult.ok) {
-    await openWithSystem(path);
-    return;
-  }
-  contentInfo.value = {
-    data: new Uint8Array((statsResult.value as EntryStatFile).size),
-    extension: fileInfo.extension,
-    mimeType: fileInfo.mimeType,
-    fileName: fileName,
-    path: path,
-  };
-  const fd = openResult.value;
-  try {
-    let loop = true;
-    let offset = 0;
-    while (loop) {
-      let readResult;
-      if (!atDateTime.value) {
-        readResult = await readFile(workspaceHandle, openResult.value, offset, DEFAULT_READ_SIZE);
-      } else {
-        readResult = await readHistoryFile(workspaceHandle, openResult.value, offset, DEFAULT_READ_SIZE);
-      }
-      if (!readResult.ok) {
-        throw Error(JSON.stringify(readResult.error));
-      }
-      const buffer = new Uint8Array(readResult.value);
-      contentInfo.value?.data.set(buffer, offset);
-      if (readResult.value.byteLength < DEFAULT_READ_SIZE) {
-        loop = false;
-      }
-      offset += readResult.value.byteLength;
-    }
-    loaded.value = true;
-  } catch (e: any) {
-    window.electronAPI.log('error', `Can't view the file: ${e.toString()}`);
     informationManager.present(
       new Information({
         message: 'fileViewers.genericError',
@@ -200,18 +254,34 @@ async function loadFile(): Promise<void> {
       }),
       PresentationMode.Toast,
     );
+    return;
+  }
+
+  const info = timestamp
+    ? await _getFileInfoAt(workspaceHandle, path, DateTime.fromMillis(timestamp), fileInfo, fileName)
+    : await _getFileInfo(workspaceHandle, path, fileInfo, fileName);
+
+  if (!info) {
     contentInfo.value = null;
     viewerComponent.value = null;
+    informationManager.present(
+      new Information({
+        message: 'fileViewers.genericError',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
     if (!(await openWithSystem(path))) {
       await navigateTo(Routes.Documents, { query: { workspaceHandle: workspaceHandle, documentPath: await Path.parent(path) } });
     }
-  } finally {
-    if (!atDateTime.value) {
-      await closeFile(workspaceHandle, fd);
-    } else {
-      await closeHistoryFile(workspaceHandle, fd);
-    }
+    return;
   }
+  contentInfo.value = info;
+  if (timestamp) {
+    atDateTime.value = DateTime.fromMillis(timestamp);
+  }
+  viewerComponent.value = component;
+  loaded.value = true;
 }
 
 onMounted(async () => {
