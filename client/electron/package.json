@@ -23,7 +23,7 @@
     },
     "dependencies": {
         "@capacitor-community/electron": "^5.0.1",
-        "@sentry/electron": "^5.7.0",
+        "@sentry/electron": "^5.11.0",
         "builder-util-runtime": "9.2.4",
         "chokidar": "~3.6.0",
         "electron-log": "^5.1.2",
