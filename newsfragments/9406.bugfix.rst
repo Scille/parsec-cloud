@@ -1,0 +1,1 @@
+Fixed a bug when logging in to the customer account to create a new organization
