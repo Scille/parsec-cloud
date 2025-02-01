@@ -693,6 +693,28 @@ impl WorkspaceStore {
             }
         })?;
 
+        // Now that we have received the block data from the server, it's time to
+        // ask ourself about concurrency. What if another task also got a cache miss
+        // and is currently fetching the same block ?
+        //
+        // Long story short: not doing anything about it is fine.
+        //
+        // Long version:
+        //
+        // The risk here is to have two concurrent tasks wanting to populate a given
+        // block with different data (in case the server is buggy/malicious).
+        //
+        // However, the block data has been validated against a block access containing
+        // its hash. So to have a given block changing between two concurrent populates,
+        // it must be two different manifests that are accessed concurrently and which
+        // both reference the same block ID but with different block hash.
+        //
+        // This is a purely theoretical case since a block can only be uploaded once.
+        // The most likely reason for ending up with this would be if we get a block ID
+        // collision (given when a block upload is rejected because the server already
+        // contains one with this ID, the client assumes the block data on the server
+        // are the one it wanted to upload...).
+
         // Should both store the data in local storage...
 
         let encrypted = self.device.local_symkey.encrypt(&data);
