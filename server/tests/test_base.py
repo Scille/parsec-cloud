@@ -74,5 +74,5 @@ def test_vlob_event_max_size_compatible_with_postgresql_notify(minimalorg: Minim
         last_common_certificate_timestamp=big_ts,
         last_realm_certificate_timestamp=big_ts,
     )
-    dumped = event.dump_as_apiv4_sse_payload()
+    dumped = event.dump_as_apiv5_sse_payload()
     assert len(dumped) < 8000
