@@ -37,7 +37,7 @@ pbr = { version = ">=5.9,<7.0" }
 pydantic = "^2.7.1"
 pydantic-core = "^2.18.2"
 sentry-sdk = "2.20.0"
-starlette = ">=0.37.2,<0.42.0"
+starlette = ">=0.37.2,<0.46.0"
 structlog = ">=21.5,<26.0"
 typing-extensions = "^4.11.0"
 # ASGI server
