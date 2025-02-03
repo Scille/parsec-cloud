@@ -42,7 +42,7 @@ async def test_authenticated_invite_new_user_ok_new(
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=minimalorg.organization_id,
-                greeter=minimalorg.alice.user_id,
+                possible_greeters={minimalorg.alice.user_id},
                 token=invitation_token,
                 status=InvitationStatus.PENDING,
             )
@@ -94,7 +94,7 @@ async def test_authenticated_invite_new_user_ok_already_exist(
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=minimalorg.organization_id,
-                greeter=minimalorg.alice.user_id,
+                possible_greeters={minimalorg.alice.user_id},
                 token=invitation_token,
                 status=InvitationStatus.PENDING,
             )
@@ -115,7 +115,7 @@ async def test_authenticated_invite_new_user_ok_already_exist(
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=minimalorg.organization_id,
-                greeter=minimalorg.alice.user_id,
+                possible_greeters={minimalorg.alice.user_id},
                 token=invitation_token,
                 status=InvitationStatus.PENDING,
             )
@@ -200,7 +200,7 @@ async def test_authenticated_invite_new_user_send_email_bad_outcome(
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=minimalorg.organization_id,
-                greeter=minimalorg.alice.user_id,
+                possible_greeters={minimalorg.alice.user_id},
                 token=invitation_token,
                 status=InvitationStatus.PENDING,
             )
@@ -257,7 +257,7 @@ async def test_authenticated_invite_new_user_with_shared_user_invitations(
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=coolorg.organization_id,
-                greeter=coolorg.bob.user_id,
+                possible_greeters={coolorg.alice.user_id, coolorg.bob.user_id},
                 token=coolorg.invited_zack.token,
                 status=InvitationStatus.PENDING,
             )

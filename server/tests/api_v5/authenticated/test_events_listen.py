@@ -58,7 +58,7 @@ ALICE_USER_ID = UserID.test_from_nickname("alice")
             functools.partial(
                 events.EventInvitation,
                 token=INVITATION_TOKEN,
-                greeter=ALICE_USER_ID,
+                possible_greeters={ALICE_USER_ID},
                 status=InvitationStatus.PENDING,
             ),
             authenticated_cmds.latest.events_listen.APIEventInvitation(

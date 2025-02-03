@@ -21,6 +21,7 @@ from parsec._parsec import (
     EnrollmentID,
     GreeterOrClaimer,
     GreetingAttemptID,
+    InvitationStatus,
     InvitationToken,
     InvitationType,
     OrganizationID,
@@ -519,6 +520,16 @@ class MemoryInvitation:
     @property
     def is_cancelled(self) -> bool:
         return self.deleted_reason == MemoryInvitationDeletedReason.CANCELLED
+
+    @property
+    def invitation_status(self) -> InvitationStatus:
+        if self.deleted_reason is not None:
+            match self.deleted_reason:
+                case MemoryInvitationDeletedReason.CANCELLED:
+                    return InvitationStatus.CANCELLED
+                case MemoryInvitationDeletedReason.FINISHED:
+                    return InvitationStatus.FINISHED
+        return InvitationStatus.PENDING
 
     def get_greeting_session(self, user_id: UserID) -> MemoryGreetingSession:
         try:
