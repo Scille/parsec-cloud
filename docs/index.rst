@@ -34,6 +34,7 @@ You can also use the search function in the top left corner.
     userguide/manage_organization
     userguide/join_organization
     userguide/parsec_workspaces
+    userguide/manage_files
     userguide/manage_devices
     userguide/troubleshooting
 
