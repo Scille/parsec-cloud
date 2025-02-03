@@ -55,7 +55,6 @@ from parsec.components.invite import (
 )
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
-from parsec.components.postgresql.handler import send_signal
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user import PGUserComponent, UserInfo
 from parsec.components.postgresql.utils import (
@@ -928,8 +927,34 @@ RETURNING greeter_data
 """
 )
 
-
 _q_list_administrators = Q(
+    """
+SELECT
+    user_id
+FROM user_
+INNER JOIN organization ON user_.organization = organization._id
+WHERE
+    organization.organization_id = $organization_id
+    AND user_.current_profile = 'ADMIN'
+    AND user_.revoked_on IS NULL
+"""
+)
+
+_q_list_non_revoked_recipient = Q(
+    """
+SELECT
+    user_.user_id
+FROM shamir_recovery_share
+INNER JOIN user_ ON shamir_recovery_share.recipient = user_._id
+INNER JOIN organization ON user_.organization = organization._id
+WHERE
+    organization.organization_id = $organization_id
+    AND shamir_recovery_share.shamir_recovery = $shamir_recovery
+    AND user_.revoked_on IS NULL
+"""
+)
+
+_q_list_user_greeting_administrators = Q(
     """
 SELECT
     user_.user_id,
@@ -969,6 +994,127 @@ async def query_retrieve_active_human_by_email(
     return None
 
 
+async def _send_invitation_event(
+    conn: AsyncpgConnection,
+    event_bus: EventBus,
+    organization_id: OrganizationID,
+    invitation_info: InvitationInfo,
+    status: InvitationStatus,
+) -> None:
+    match invitation_info:
+        case UserInvitationInfo():
+            return await _send_invitation_event_for_user(
+                conn,
+                event_bus,
+                organization_id,
+                invitation_info.token,
+                status,
+            )
+        case DeviceInvitationInfo():
+            return await _send_invitation_event_for_device(
+                conn,
+                event_bus,
+                organization_id,
+                invitation_info.token,
+                invitation_info.claimer_user_id,
+                status,
+            )
+        case ShamirRecoveryInvitationInfo():
+            return await _send_invitation_event_for_shamir_recovery(
+                conn,
+                event_bus,
+                organization_id,
+                invitation_info.token,
+                invitation_info.shamir_recovery_setup_internal_id,
+                status,
+            )
+
+
+async def _send_invitation_event_for_user(
+    conn: AsyncpgConnection,
+    event_bus: EventBus,
+    organization_id: OrganizationID,
+    token: InvitationToken,
+    status: InvitationStatus,
+) -> None:
+    rows = await conn.fetch(
+        *_q_list_administrators(
+            organization_id=organization_id.str,
+        )
+    )
+    possible_greeters = set()
+    for row in rows:
+        match row["user_id"]:
+            case str() as raw_user_id:
+                user_id = UserID.from_hex(raw_user_id)
+                possible_greeters.add(user_id)
+            case unknown:
+                assert False, repr(unknown)
+
+    await event_bus.send(
+        EventInvitation(
+            organization_id=organization_id,
+            token=token,
+            possible_greeters=possible_greeters,
+            status=status,
+        ),
+    )
+
+
+async def _send_invitation_event_for_device(
+    conn: AsyncpgConnection,
+    event_bus: EventBus,
+    organization_id: OrganizationID,
+    token: InvitationToken,
+    claimer_user_id: UserID,
+    status: InvitationStatus,
+) -> None:
+    # Only the corresponding user can greet a device invitation
+    possible_greeters = {claimer_user_id}
+    await event_bus.send(
+        EventInvitation(
+            organization_id=organization_id,
+            token=token,
+            possible_greeters=possible_greeters,
+            status=status,
+        ),
+    )
+
+
+async def _send_invitation_event_for_shamir_recovery(
+    conn: AsyncpgConnection,
+    event_bus: EventBus,
+    organization_id: OrganizationID,
+    token: InvitationToken,
+    shamir_recovery_setup_internal_id: int,
+    status: InvitationStatus,
+) -> None:
+    # Only the non-revoked recipients can greet a shamir recovery invitation
+    rows = await conn.fetch(
+        *_q_list_non_revoked_recipient(
+            organization_id=organization_id.str,
+            shamir_recovery=shamir_recovery_setup_internal_id,
+        )
+    )
+    possible_greeters = set()
+    for row in rows:
+        match row["user_id"]:
+            case str() as raw_user_id:
+                user_id = UserID.from_hex(raw_user_id)
+                possible_greeters.add(user_id)
+            case unknown:
+                assert False, repr(unknown)
+
+    await event_bus.send(
+        EventInvitation(
+            organization_id=organization_id,
+            token=token,
+            possible_greeters=possible_greeters,
+            status=status,
+        ),
+    )
+
+
 async def _do_new_invitation(
     conn: AsyncpgConnection,
     organization_id: OrganizationID,
@@ -980,6 +1126,7 @@ async def _do_new_invitation(
     created_on: DateTime,
     invitation_type: InvitationType,
     suggested_token: InvitationToken,
+    event_bus: EventBus,
 ) -> InvitationToken:
     match invitation_type:
         case InvitationType.USER:
@@ -1023,15 +1170,39 @@ async def _do_new_invitation(
                 created_on=created_on,
             )
         )
-    await send_signal(
-        conn,
-        EventInvitation(
-            organization_id=organization_id,
-            token=token,
-            greeter=author_user_id,
-            status=InvitationStatus.PENDING,
-        ),
-    )
+
+    # Send event to notify the possible greeters
+    match invitation_type:
+        case InvitationType.USER:
+            await _send_invitation_event_for_user(
+                conn,
+                event_bus,
+                organization_id=organization_id,
+                token=token,
+                status=InvitationStatus.PENDING,
+            )
+        case InvitationType.DEVICE:
+            await _send_invitation_event_for_device(
+                conn,
+                event_bus,
+                organization_id=organization_id,
+                token=token,
+                claimer_user_id=author_user_id,
+                status=InvitationStatus.PENDING,
+            )
+        case InvitationType.SHAMIR_RECOVERY:
+            assert shamir_recovery_setup is not None
+            await _send_invitation_event_for_shamir_recovery(
+                conn,
+                event_bus,
+                organization_id=organization_id,
+                token=token,
+                shamir_recovery_setup_internal_id=shamir_recovery_setup,
+                status=InvitationStatus.PENDING,
+            )
+        case _:
+            assert False, "No other invitation type for the moment"
+
     return token
 
 
@@ -1101,6 +1272,7 @@ class PGInviteComponent(BaseInviteComponent):
         suggested_token = force_token or InvitationToken.new()
         token = await _do_new_invitation(
             conn,
+            event_bus=self._event_bus,
             organization_id=organization_id,
             author_user_id=author_user_id,
             author_device_id=author,
@@ -1163,6 +1335,7 @@ class PGInviteComponent(BaseInviteComponent):
         suggested_token = force_token or InvitationToken.new()
         token = await _do_new_invitation(
             conn,
+            event_bus=self._event_bus,
             organization_id=organization_id,
             author_user_id=author_user_id,
             author_device_id=author,
@@ -1252,6 +1425,7 @@ class PGInviteComponent(BaseInviteComponent):
         suggested_token = force_token or InvitationToken.new()
         token = await _do_new_invitation(
             conn,
+            event_bus=self._event_bus,
             organization_id=organization_id,
             author_user_id=author_user_id,
             author_device_id=author,
@@ -1305,12 +1479,14 @@ class PGInviteComponent(BaseInviteComponent):
 
         return recipients
 
-    async def _get_administrators(
+    async def _get_user_greeting_administrators(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken
     ) -> list[UserGreetingAdministrator]:
         administrators = []
         rows = await conn.fetch(
-            *_q_list_administrators(organization_id=organization_id.str, token=token.hex)
+            *_q_list_user_greeting_administrators(
+                organization_id=organization_id.str, token=token.hex
+            )
         )
         for row in rows:
             match row["user_id"]:
@@ -1405,13 +1581,12 @@ class PGInviteComponent(BaseInviteComponent):
             )
         )
 
-        await self._event_bus.send(
-            EventInvitation(
-                organization_id=organization_id,
-                token=token,
-                greeter=author_user_id,
-                status=InvitationStatus.CANCELLED,
-            )
+        await _send_invitation_event(
+            conn,
+            self._event_bus,
+            organization_id=organization_id,
+            invitation_info=invitation_info,
+            status=InvitationStatus.PENDING,
         )
 
     @override
@@ -1461,7 +1636,7 @@ class PGInviteComponent(BaseInviteComponent):
                     # Note that the `administrators` field is actually not used in the context of the `invite_list` command.
                     # Still, we compute it here for consistency. In order to save this unnecessary query to the database,
                     # we could update the invite API to take this difference into account.
-                    administrators = await self._get_administrators(
+                    administrators = await self._get_user_greeting_administrators(
                         conn, organization_id, invitation_info.token
                     )
                     invitation = UserInvitation(
@@ -1522,7 +1697,9 @@ class PGInviteComponent(BaseInviteComponent):
 
         match invitation_info:
             case UserInvitationInfo():
-                administrators = await self._get_administrators(conn, organization_id, token)
+                administrators = await self._get_user_greeting_administrators(
+                    conn, organization_id, token
+                )
                 return UserInvitation(
                     created_by=invitation_info.created_by,
                     claimer_email=invitation_info.claimer_email,
@@ -1652,7 +1829,7 @@ class PGInviteComponent(BaseInviteComponent):
             # Append the invite
             match invitation_info:
                 case UserInvitationInfo():
-                    administrators = await self._get_administrators(
+                    administrators = await self._get_user_greeting_administrators(
                         conn, organization_id, invitation_info.token
                     )
                     current_user_invitations.append(
@@ -2392,15 +2569,14 @@ class PGInviteComponent(BaseInviteComponent):
             *_q_delete_invitation(
                 invitation_internal_id=invitation_info.internal_id,
                 on=now,
-                reason="FINISHED",  # TODO: use an enum see #8224
+                reason=InvitationStatus.FINISHED.str,
             )
         )
 
-        await self._event_bus.send(
-            EventInvitation(
-                organization_id=organization_id,
-                token=token,
-                greeter=author_user_id,
-                status=InvitationStatus.FINISHED,
-            )
+        await _send_invitation_event(
+            conn,
+            event_bus=self._event_bus,
+            organization_id=organization_id,
+            invitation_info=invitation_info,
+            status=InvitationStatus.FINISHED,
         )
