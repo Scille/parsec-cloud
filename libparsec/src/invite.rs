@@ -8,7 +8,9 @@ pub use libparsec_client::{
     ClientStartShamirRecoveryInvitationGreetError, InvitationEmailSentStatus, ListInvitationsError,
     ShamirRecoveryClaimAddShareError, ShamirRecoveryClaimPickRecipientError,
     ShamirRecoveryClaimRecoverDeviceError, UserClaimCreatedByUserAsGreeterError,
+    UserClaimInitialCtx,
 };
+pub use libparsec_platform_async::future::join_all;
 pub use libparsec_protocol::authenticated_cmds::latest::invite_list::InvitationCreatedBy as InviteListInvitationCreatedBy;
 pub use libparsec_protocol::invited_cmds::latest::invite_info::{
     InvitationCreatedBy as InviteInfoInvitationCreatedBy, ShamirRecoveryRecipient,
@@ -444,6 +446,44 @@ pub fn claimer_user_get_created_by_user_initial_info(
         online_status,
         last_greeting_attempt_joined_on,
     })
+}
+
+pub async fn claimer_user_wait_all_peers(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<UserClaimInProgress1Info, ClaimInProgressError> {
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::UserClaimListAdministrators(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let initial_ctxs = ctx.list_initial_ctxs();
+    let cancellers = initial_ctxs
+        .iter()
+        .map(|ctx| ctx.canceller_ctx())
+        .collect::<Vec<_>>();
+
+    let work = async {
+        let ctx = UserClaimInitialCtx::do_wait_multiple_peer(initial_ctxs).await?;
+        let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
+        let greeter_sas = ctx.greeter_sas().to_owned();
+
+        let new_handle = register_handle(HandleItem::UserClaimInProgress1(ctx));
+
+        Ok(UserClaimInProgress1Info {
+            handle: new_handle,
+            greeter_sas,
+            greeter_sas_choices,
+        })
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => {
+            join_all(cancellers.into_iter().map(|c| c.cancel_and_warn_on_error())).await;
+            Err(ClaimInProgressError::Cancelled)
+        },
+    )
 }
 
 #[derive(Debug, thiserror::Error)]

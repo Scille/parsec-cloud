@@ -3926,6 +3926,10 @@ export interface LibParsecPlugin {
     claimerUserListInitialInfo(
         handle: Handle
     ): Promise<Result<Array<UserClaimInitialInfo>, UserClaimListInitialInfosError>>
+    claimerUserWaitAllPeers(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
     clientAcceptTos(
         client: Handle,
         tos_updated_on: DateTime

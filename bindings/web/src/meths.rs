@@ -15039,6 +15039,31 @@ pub fn claimerUserListInitialInfo(handle: u32) -> Promise {
     })
 }
 
+// claimer_user_wait_all_peers
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerUserWaitAllPeers(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::claimer_user_wait_all_peers(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_user_claim_in_progress1_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // client_accept_tos
 #[allow(non_snake_case)]
 #[wasm_bindgen]

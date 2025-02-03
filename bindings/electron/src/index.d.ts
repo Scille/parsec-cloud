@@ -3305,6 +3305,10 @@ export function claimerUserInitialDoWaitPeer(
 export function claimerUserListInitialInfo(
     handle: number
 ): Promise<Result<Array<UserClaimInitialInfo>, UserClaimListInitialInfosError>>
+export function claimerUserWaitAllPeers(
+    canceller: number,
+    handle: number
+): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
 export function clientAcceptTos(
     client: number,
     tos_updated_on: number

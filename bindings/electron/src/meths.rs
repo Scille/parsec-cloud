@@ -14503,6 +14503,67 @@ fn claimer_user_list_initial_info(mut cx: FunctionContext) -> JsResult<JsPromise
     Ok(promise)
 }
 
+// claimer_user_wait_all_peers
+fn claimer_user_wait_all_peers(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let canceller = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let handle = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::claimer_user_wait_all_peers(canceller, handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_user_claim_in_progress1_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_claim_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_accept_tos
 fn client_accept_tos(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -21854,6 +21915,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         claimer_user_initial_do_wait_peer,
     )?;
     cx.export_function("claimerUserListInitialInfo", claimer_user_list_initial_info)?;
+    cx.export_function("claimerUserWaitAllPeers", claimer_user_wait_all_peers)?;
     cx.export_function("clientAcceptTos", client_accept_tos)?;
     cx.export_function("clientCancelInvitation", client_cancel_invitation)?;
     cx.export_function("clientChangeAuthentication", client_change_authentication)?;

@@ -300,6 +300,13 @@ class ShamirRecoveryClaimInProgress1Info(Structure):
     greeter_sas_choices: list[SASCode]
 
 
+async def claimer_user_wait_all_peers(
+    canceller: Handle,
+    handle: Handle,
+) -> Result[UserClaimInProgress1Info, ClaimInProgressError]:
+    raise NotImplementedError
+
+
 async def claimer_user_initial_do_wait_peer(
     canceller: Handle,
     handle: Handle,

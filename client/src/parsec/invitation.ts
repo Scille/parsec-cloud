@@ -28,15 +28,7 @@ export async function inviteUser(email: string): Promise<Result<NewInvitationInf
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
-    const allInvitesResult = await listUserInvitations({ skipOthers: false });
-    const result = await libparsec.clientNewUserInvitation(handle, email, true);
-    if (!result.ok || !allInvitesResult.ok) {
-      return result;
-    }
-    if (allInvitesResult.value.find((inv) => inv.token === result.value.token) !== undefined) {
-      return { ok: false, error: { tag: ClientNewUserInvitationErrorTag.AlreadyMember, error: 'invitation_exists' } };
-    }
-    return result;
+    return await libparsec.clientNewUserInvitation(handle, email, true);
   } else {
     const usersResult = await listUsers(true);
     if (usersResult.ok) {

@@ -149,26 +149,40 @@ async fn step0(
     Ok(ctx)
 }
 
-fn user_pick_admin(ctx: UserClaimListAdministratorsCtx) -> anyhow::Result<UserClaimInitialCtx> {
+enum UserClaimAdministratorPick {
+    Single(UserClaimInitialCtx),
+    Multiple(Vec<UserClaimInitialCtx>),
+}
+
+fn user_pick_admin(
+    ctx: UserClaimListAdministratorsCtx,
+) -> anyhow::Result<UserClaimAdministratorPick> {
     let ctxs = ctx.list_initial_ctxs();
     assert!(!ctxs.is_empty());
     // Only one admin, no need to choose
     if ctxs.len() == 1 {
-        return Ok(ctxs.into_iter().next().expect("ctxs is non-empty"));
+        return Ok(UserClaimAdministratorPick::Single(
+            ctxs.into_iter().next().expect("ctxs is non-empty"),
+        ));
     }
-    let humans: Vec<_> = ctxs
+    let mut humans: Vec<_> = ctxs
         .iter()
         .map(|ctx| format!("{}", ctx.greeter_human_handle()))
         .collect();
+    humans.push("All administrators".to_string());
     let selection = FuzzySelect::new()
         .default(0)
         .with_prompt("Choose an administrator to contact now")
         .items(&humans)
         .interact()?;
-    Ok(ctxs
-        .into_iter()
-        .nth(selection)
-        .expect("selection should correspond to a ctx"))
+    if selection == ctxs.len() {
+        return Ok(UserClaimAdministratorPick::Multiple(ctxs));
+    }
+    Ok(UserClaimAdministratorPick::Single(
+        ctxs.into_iter()
+            .nth(selection)
+            .expect("selection should correspond to a ctx"),
+    ))
 }
 
 /// Step 0.5: choose recipient
@@ -211,19 +225,40 @@ fn shamir_pick_recipient(
 }
 
 /// Step 1: wait peer
-async fn step1_user(ctx: UserClaimInitialCtx) -> anyhow::Result<UserClaimInProgress1Ctx> {
-    println!(
-        "Invitation greeter: {YELLOW}{}{RESET}",
-        ctx.greeter_human_handle()
-    );
+async fn step1_user(ctx: UserClaimAdministratorPick) -> anyhow::Result<UserClaimInProgress1Ctx> {
+    match ctx {
+        UserClaimAdministratorPick::Single(ctx) => {
+            println!(
+                "Invitation greeter: {YELLOW}{}{RESET}",
+                ctx.greeter_human_handle()
+            );
 
-    let mut handle = start_spinner("Waiting the greeter to start the invitation procedure".into());
+            let mut handle =
+                start_spinner("Waiting the greeter to start the invitation procedure".into());
 
-    let ctx = ctx.do_wait_peer().await?;
+            let ctx = ctx.do_wait_peer().await?;
 
-    handle.stop_with_symbol(GREEN_CHECKMARK);
+            handle.stop_with_symbol(GREEN_CHECKMARK);
 
-    Ok(ctx)
+            Ok(ctx)
+        }
+        UserClaimAdministratorPick::Multiple(ctxs) => {
+            let mut handle = start_spinner(
+                "Waiting for an administrator to start the invitation procedure".into(),
+            );
+
+            let ctx = UserClaimInitialCtx::do_wait_multiple_peer(ctxs).await?;
+
+            handle.stop_with_symbol(GREEN_CHECKMARK);
+
+            println!(
+                "Invitation greeter: {YELLOW}{}{RESET}",
+                ctx.greeter_human_handle()
+            );
+
+            Ok(ctx)
+        }
+    }
 }
 
 /// Step 1: wait peer

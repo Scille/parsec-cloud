@@ -496,7 +496,7 @@ async function startProcess(): Promise<void> {
   if (userInfoPage.value) {
     userInfoPage.value.email = retrieveResult.value.claimerEmail;
   }
-  const waitResult = await claimer.value.initialWaitHost();
+  const waitResult = await claimer.value.initialWaitAllAdministrators();
   if (!waitResult.ok && !cancelled.value) {
     await claimer.value.abort();
     await modalController.dismiss(null, MsModalResult.Cancel);

@@ -21,7 +21,7 @@ import {
 } from '@/parsec';
 import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
-import { InviteInfoInvitationCreatedByTag, UserClaimCreatedByUserAsGreeterError, libparsec } from '@/plugins/libparsec';
+import { InviteInfoInvitationCreatedByTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 export class UserClaim {
@@ -72,9 +72,7 @@ export class UserClaim {
     }
   }
 
-  async retrieveInfo(
-    invitationLink: string,
-  ): Promise<Result<AnyClaimRetrievedInfoUser, ClaimerRetrieveInfoError | UserClaimCreatedByUserAsGreeterError>> {
+  async retrieveInfo(invitationLink: string): Promise<Result<AnyClaimRetrievedInfoUser, ClaimerRetrieveInfoError>> {
     function eventCallback(_handle: number, event: ClientEvent): void {
       console.log('On event', event);
     }
@@ -88,13 +86,11 @@ export class UserClaim {
         if (result.value.tag !== AnyClaimRetrievedInfoTag.User) {
           throw Error('Unexpected tag');
         }
-        const getInitialInfoResult = await libparsec.claimerUserGetCreatedByUserInitialInfo(result.value.handle);
-        // Return the error if the created-by user could not be used as a greeter
-        if (!getInitialInfoResult.ok) {
-          return getInitialInfoResult as Result<AnyClaimRetrievedInfoUser, UserClaimCreatedByUserAsGreeterError>;
+        this.handle = result.value.handle;
+        if (result.value.createdBy.tag !== InviteInfoInvitationCreatedByTag.User) {
+          throw Error('Created by external service');
         }
-        this.handle = getInitialInfoResult.value.handle;
-        this.greeter = getInitialInfoResult.value.greeterHumanHandle;
+        this.greeter = result.value.createdBy.humanHandle;
       }
       return result as Result<AnyClaimRetrievedInfoUser, ClaimerRetrieveInfoError>;
     } else {
@@ -137,12 +133,12 @@ export class UserClaim {
     }
   }
 
-  async initialWaitHost(): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>> {
+  async initialWaitAllAdministrators(): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
       this.canceller = await libparsec.newCanceller();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const result = await libparsec.claimerUserInitialDoWaitPeer(this.canceller, this.handle!);
+      const result = await libparsec.claimerUserWaitAllPeers(this.canceller, this.handle!);
       if (result.ok) {
         this.SASCodeChoices = result.value.greeterSasChoices;
         this.correctSASCode = result.value.greeterSas;

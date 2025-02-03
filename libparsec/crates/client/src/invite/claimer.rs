@@ -7,7 +7,9 @@ use std::{path::PathBuf, sync::Arc};
 use invited_cmds::latest::invite_claimer_step;
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
+use libparsec_platform_async::future::{join_all, select_all};
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
+use libparsec_platform_async::spawn;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_protocol::invited_cmds::latest::invite_info::{
     InvitationCreatedBy as InviteInfoInvitationCreatedBy, ShamirRecoveryRecipient,
@@ -137,6 +139,10 @@ async fn cancel_greeting_attempt_and_warn_on_error(
     reason: CancelledGreetingAttemptReason,
 ) {
     if let Err(err) = cancel_greeting_attempt(cmds, greeting_attempt, reason).await {
+        // Already cancelled, no need to log a warning
+        if let ClaimInProgressError::GreetingAttemptCancelled { .. } = &err {
+            return;
+        }
         log::warn!(
             "Claimer failed to cancel greeting attempt {:?} with reason {:?}: {:?}",
             greeting_attempt,
@@ -855,6 +861,7 @@ impl BaseClaimInitialCtx {
                 config: self.config,
                 cmds: self.cmds,
                 greeter_user_id: self.greeter_user_id,
+                greeter_human_handle: self.greeter_human_handle,
                 greeting_attempt,
                 greeter_sas,
                 claimer_sas,
@@ -1041,6 +1048,28 @@ impl UserClaimInitialCtx {
     pub async fn do_wait_peer(self) -> Result<UserClaimInProgress1Ctx, ClaimInProgressError> {
         self.base.do_wait_peer().await.map(UserClaimInProgress1Ctx)
     }
+
+    pub async fn do_wait_multiple_peer(
+        initial_ctxs: Vec<Self>,
+    ) -> Result<UserClaimInProgress1Ctx, ClaimInProgressError> {
+        let cancellers = initial_ctxs
+            .iter()
+            .map(|ctx| ctx.canceller_ctx())
+            .collect::<Vec<_>>();
+        let wait_peers = initial_ctxs
+            .into_iter()
+            .map(|ctx| spawn(ctx.do_wait_peer()));
+        let (result, index, _) = select_all(wait_peers).await;
+        join_all(
+            cancellers
+                .into_iter()
+                .enumerate()
+                .filter(|(i, _)| *i != index)
+                .map(|(_, c)| c.cancel_and_warn_on_error()),
+        )
+        .await;
+        result.map_err(|e| anyhow::anyhow!(e))?
+    }
 }
 
 #[derive(Debug)]
@@ -1133,6 +1162,7 @@ struct BaseClaimInProgress1Ctx {
     config: Arc<ClientConfig>,
     cmds: Arc<InvitedCmds>,
     greeter_user_id: UserID,
+    greeter_human_handle: HumanHandle,
     greeting_attempt: GreetingAttemptID,
     greeter_sas: SASCode,
     claimer_sas: SASCode,
@@ -1183,6 +1213,14 @@ impl BaseClaimInProgress1Ctx {
 pub struct UserClaimInProgress1Ctx(BaseClaimInProgress1Ctx);
 
 impl UserClaimInProgress1Ctx {
+    pub fn greeter_user_id(&self) -> &UserID {
+        &self.0.greeter_user_id
+    }
+
+    pub fn greeter_human_handle(&self) -> &HumanHandle {
+        &self.0.greeter_human_handle
+    }
+
     pub fn greeter_sas(&self) -> &SASCode {
         &self.0.greeter_sas
     }

@@ -386,6 +386,10 @@ async fn cancel_greeting_attempt_and_warn_on_error(
     reason: CancelledGreetingAttemptReason,
 ) {
     if let Err(err) = cancel_greeting_attempt(cmds, greeting_attempt, reason).await {
+        // Already cancelled, no need to log a warning
+        if let GreetInProgressError::GreetingAttemptCancelled { .. } = &err {
+            return;
+        }
         log::warn!(
             "Greeter failed to cancel greeting attempt {:?} with reason {:?}: {:?}",
             greeting_attempt,
