@@ -46,7 +46,7 @@ async fn list_invitations(tmp_path: TmpPath) {
         &alice.device_id.hex()
     )
     .stdout(predicates::str::contains(format!(
-        "{}\t{YELLOW}idle{RESET}\tdevice",
+        "{}\t{YELLOW}pending{RESET}\tdevice",
         token.hex()
     )));
 }
@@ -68,7 +68,7 @@ async fn issue_9176_list_more_than_one_invitations(tmp_path: TmpPath) {
     let token3 = invite_device(&cmds).await;
 
     let contains_invite = |token: InvitationToken| {
-        predicates::str::contains(format!("{token}\t{YELLOW}idle{RESET}\tdevice"))
+        predicates::str::contains(format!("{token}\t{YELLOW}pending{RESET}\tdevice"))
     };
 
     crate::assert_cmd_success!(
