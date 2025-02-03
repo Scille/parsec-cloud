@@ -99,12 +99,15 @@ class EventInvitation(BaseModel, ClientBroadcastableEvent):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
     token: InvitationTokenField
-    greeter: UserIDField
+    possible_greeters: set[UserIDField]
     status: InvitationStatusField
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
-        return self.organization_id == client.organization_id and self.greeter == client.user_id
+        return (
+            self.organization_id == client.organization_id
+            and client.user_id in self.possible_greeters
+        )
 
     @override
     def dump_as_apiv5_sse_payload(self) -> bytes:

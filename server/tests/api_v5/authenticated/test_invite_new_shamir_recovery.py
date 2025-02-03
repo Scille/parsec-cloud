@@ -39,11 +39,10 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
             == authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.SUCCESS
         )
         invitation_token = rep.token
-
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=shamirorg.organization_id,
-                greeter=shamirorg.mike.user_id,
+                possible_greeters={shamirorg.mike.user_id},
                 token=invitation_token,
                 status=InvitationStatus.PENDING,
             )
@@ -125,7 +124,11 @@ async def test_authenticated_invite_new_shamir_recovery_ok_already_exist(
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=shamirorg.organization_id,
-                greeter=shamirorg.bob.user_id,
+                possible_greeters={
+                    shamirorg.bob.user_id,
+                    shamirorg.mallory.user_id,
+                    shamirorg.mike.user_id,
+                },
                 token=rep.token,
                 status=InvitationStatus.PENDING,
             )
@@ -177,7 +180,7 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=shamirorg.organization_id,
-                greeter=shamirorg.mike.user_id,
+                possible_greeters={shamirorg.mike.user_id},
                 token=invitation_token,
                 status=InvitationStatus.PENDING,
             )

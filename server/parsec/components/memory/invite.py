@@ -77,17 +77,6 @@ class MemoryInviteComponent(BaseInviteComponent):
         super().__init__(*args, **kwargs)
         self._data = data
 
-    def _get_invitation_status(
-        self, organization_id: OrganizationID, invitation: MemoryInvitation
-    ) -> InvitationStatus:
-        if invitation.deleted_reason:
-            match invitation.deleted_reason:
-                case MemoryInvitationDeletedReason.CANCELLED:
-                    return InvitationStatus.CANCELLED
-                case MemoryInvitationDeletedReason.FINISHED:
-                    return InvitationStatus.FINISHED
-        return InvitationStatus.PENDING
-
     def _get_shamir_recovery_invitation(
         self, org: MemoryOrganization, invitation: MemoryInvitation
     ) -> ShamirRecoveryInvitation:
@@ -110,10 +99,10 @@ class MemoryInviteComponent(BaseInviteComponent):
             for user_id, shares in par_recipient_shares.items()
         ]
         recipients.sort(key=lambda x: x.human_handle.label)
-        status = self._get_invitation_status(org.organization_id, invitation)
         claimer_human_handle = org.users[invitation.claimer_user_id].cooked.human_handle
 
         # Consider an active invitation as CANCELLED if the corresponding shamir recovery is deleted
+        status = invitation.invitation_status
         if status == InvitationStatus.PENDING and shamir_recovery.is_deleted:
             status = InvitationStatus.CANCELLED
 
@@ -130,7 +119,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             shamir_recovery_deleted_on=shamir_recovery.deleted_on,
         )
 
-    def _get_administrators(
+    def _get_user_greeting_administrators(
         self, org: MemoryOrganization, invitation: MemoryInvitation
     ) -> list[UserGreetingAdministrator]:
         user_id_to_last_greeter_joined = {}
@@ -153,6 +142,40 @@ class MemoryInviteComponent(BaseInviteComponent):
                 if user.current_profile == UserProfile.ADMIN and not user.is_revoked
             ),
             key=lambda x: x.human_handle.label,
+        )
+
+    async def send_invitation_event(
+        self, org: MemoryOrganization, invitation: MemoryInvitation
+    ) -> None:
+        if invitation.type == InvitationType.USER:
+            # All non-revoked admins can greet a user invitation
+            possible_greeters = {
+                user_id
+                for user_id, user in org.users.items()
+                if user.current_profile == UserProfile.ADMIN and not user.is_revoked
+            }
+        elif invitation.type == InvitationType.DEVICE:
+            assert invitation.claimer_user_id is not None
+            # Only the corresponding user can greet a device invitation
+            possible_greeters = {invitation.claimer_user_id}
+        elif invitation.type == InvitationType.SHAMIR_RECOVERY:
+            assert invitation.claimer_user_id is not None
+            assert invitation.shamir_recovery_index is not None
+            shamir_recoveries = org.shamir_recoveries[invitation.claimer_user_id]
+            shamir_recovery = shamir_recoveries[invitation.shamir_recovery_index]
+            # Only the non-revoked recipients can greet a shamir recovery invitation
+            possible_greeters = {
+                user_id for user_id in shamir_recovery.shares if not org.users[user_id].is_revoked
+            }
+        else:
+            assert False, invitation.type
+        await self._event_bus.send(
+            EventInvitation(
+                organization_id=org.organization_id,
+                token=invitation.token,
+                possible_greeters=possible_greeters,
+                status=invitation.invitation_status,
+            )
         )
 
     @override
@@ -215,7 +238,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     user_id=author_user_id,
                     human_handle=author_user.cooked.human_handle,
                 )
-                org.invitations[token] = MemoryInvitation(
+                org.invitations[token] = invitation = MemoryInvitation(
                     token=token,
                     type=InvitationType.USER,
                     created_by=created_by,
@@ -225,13 +248,9 @@ class MemoryInviteComponent(BaseInviteComponent):
                     created_on=now,
                 )
 
-            await self._event_bus.send(
-                EventInvitation(
-                    organization_id=organization_id,
-                    token=token,
-                    greeter=author_user_id,
-                    status=InvitationStatus.PENDING,
-                )
+            await self.send_invitation_event(
+                org=org,
+                invitation=invitation,
             )
 
             if send_email:
@@ -298,7 +317,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     user_id=author_user_id,
                     human_handle=author_user.cooked.human_handle,
                 )
-                org.invitations[token] = MemoryInvitation(
+                org.invitations[token] = invitation = MemoryInvitation(
                     token=token,
                     type=InvitationType.DEVICE,
                     created_by=created_by,
@@ -308,13 +327,9 @@ class MemoryInviteComponent(BaseInviteComponent):
                     created_on=now,
                 )
 
-            await self._event_bus.send(
-                EventInvitation(
-                    organization_id=organization_id,
-                    token=token,
-                    greeter=author_user_id,
-                    status=InvitationStatus.PENDING,
-                )
+            await self.send_invitation_event(
+                org=org,
+                invitation=invitation,
             )
 
             if send_email:
@@ -405,7 +420,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     user_id=author_user_id,
                     human_handle=author_user.cooked.human_handle,
                 )
-                org.invitations[token] = MemoryInvitation(
+                org.invitations[token] = invitation = MemoryInvitation(
                     token=token,
                     type=InvitationType.SHAMIR_RECOVERY,
                     created_by=created_by,
@@ -415,13 +430,9 @@ class MemoryInviteComponent(BaseInviteComponent):
                     shamir_recovery_index=last_shamir_recovery_index,
                 )
 
-            await self._event_bus.send(
-                EventInvitation(
-                    organization_id=organization_id,
-                    token=token,
-                    greeter=author_user_id,
-                    status=InvitationStatus.PENDING,
-                )
+            await self.send_invitation_event(
+                org=org,
+                invitation=invitation,
             )
 
             if send_email:
@@ -490,13 +501,9 @@ class MemoryInviteComponent(BaseInviteComponent):
         invitation.deleted_on = now
         invitation.deleted_reason = MemoryInvitationDeletedReason.CANCELLED
 
-        await self._event_bus.send(
-            EventInvitation(
-                organization_id=organization_id,
-                token=token,
-                greeter=author_user_id,
-                status=InvitationStatus.CANCELLED,
-            )
+        await self.send_invitation_event(
+            org=org,
+            invitation=invitation,
         )
 
     @override
@@ -530,20 +537,18 @@ class MemoryInviteComponent(BaseInviteComponent):
                     if author_user.current_profile != UserProfile.ADMIN:
                         continue
                     assert invitation.claimer_email is not None
-                    status = self._get_invitation_status(organization_id, invitation)
                     item = UserInvitation(
                         claimer_email=invitation.claimer_email,
                         token=invitation.token,
                         created_on=invitation.created_on,
                         created_by=invitation.created_by,
-                        administrators=self._get_administrators(org, invitation),
-                        status=status,
+                        administrators=self._get_user_greeting_administrators(org, invitation),
+                        status=invitation.invitation_status,
                     )
                 case InvitationType.DEVICE:
                     if invitation.claimer_user_id != author_user_id:
                         continue
                     assert invitation.claimer_user_id is not None
-                    status = self._get_invitation_status(organization_id, invitation)
                     item = DeviceInvitation(
                         token=invitation.token,
                         created_on=invitation.created_on,
@@ -552,7 +557,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                         claimer_human_handle=org.users[
                             invitation.claimer_user_id
                         ].cooked.human_handle,
-                        status=status,
+                        status=invitation.invitation_status,
                     )
                 case InvitationType.SHAMIR_RECOVERY:
                     shamir_recovery_invitation = self._get_shamir_recovery_invitation(
@@ -597,16 +602,16 @@ class MemoryInviteComponent(BaseInviteComponent):
                 return UserInvitation(
                     claimer_email=invitation.claimer_email,
                     created_on=invitation.created_on,
-                    status=self._get_invitation_status(organization_id, invitation),
+                    status=invitation.invitation_status,
                     created_by=invitation.created_by,
                     token=invitation.token,
-                    administrators=self._get_administrators(org, invitation),
+                    administrators=self._get_user_greeting_administrators(org, invitation),
                 )
             case InvitationType.DEVICE:
                 assert invitation.claimer_user_id is not None
                 return DeviceInvitation(
                     created_on=invitation.created_on,
-                    status=self._get_invitation_status(organization_id, invitation),
+                    status=invitation.invitation_status,
                     created_by=invitation.created_by,
                     claimer_user_id=invitation.claimer_user_id,
                     claimer_human_handle=org.users[invitation.claimer_user_id].cooked.human_handle,
@@ -683,10 +688,10 @@ class MemoryInviteComponent(BaseInviteComponent):
                         UserInvitation(
                             claimer_email=invitation.claimer_email,
                             created_on=invitation.created_on,
-                            status=self._get_invitation_status(organization_id, invitation),
+                            status=invitation.invitation_status,
                             created_by=invitation.created_by,
                             token=invitation.token,
-                            administrators=self._get_administrators(org, invitation),
+                            administrators=self._get_user_greeting_administrators(org, invitation),
                         )
                     )
                 case InvitationType.DEVICE:
@@ -694,7 +699,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     current_user_invitations.append(
                         DeviceInvitation(
                             created_on=invitation.created_on,
-                            status=self._get_invitation_status(organization_id, invitation),
+                            status=invitation.invitation_status,
                             created_by=invitation.created_by,
                             token=invitation.token,
                             claimer_user_id=invitation.claimer_user_id,
@@ -1070,11 +1075,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         invitation.deleted_on = now
         invitation.deleted_reason = MemoryInvitationDeletedReason.FINISHED
 
-        await self._event_bus.send(
-            EventInvitation(
-                organization_id=organization_id,
-                token=token,
-                greeter=author_user_id,
-                status=InvitationStatus.FINISHED,
-            )
+        await self.send_invitation_event(
+            org=org,
+            invitation=invitation,
         )
