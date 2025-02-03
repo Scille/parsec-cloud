@@ -16,9 +16,10 @@ test-with-testbed = ["libparsec_testbed"]
 vendored-dbus = ["keyring/vendored"]
 
 [dependencies]
-libparsec_types = { workspace = true }
 libparsec_crypto = { workspace = true }
+libparsec_platform_async = { workspace = true }
 libparsec_testbed = { workspace = true, optional = true }
+libparsec_types = { workspace = true }
 
 # `alloc` feature is required to properly erase struct containing vec/string
 zeroize = { workspace = true, features = ["alloc"] }

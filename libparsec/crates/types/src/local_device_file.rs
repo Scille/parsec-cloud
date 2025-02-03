@@ -162,6 +162,15 @@ impl DeviceFile {
     pub fn load(data: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
         rmp_serde::from_slice(data)
     }
+
+    pub fn ciphertext(&self) -> &Bytes {
+        match self {
+            DeviceFile::Keyring(device) => &device.ciphertext,
+            DeviceFile::Password(device) => &device.ciphertext,
+            DeviceFile::Recovery(device) => &device.ciphertext,
+            DeviceFile::Smartcard(device) => &device.ciphertext,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

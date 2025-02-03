@@ -317,3 +317,102 @@ pub async fn export_recovery_device(
 
     (passphrase, file_content, recovery_device)
 }
+
+#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
+fn load_available_device_from_blob(
+    path: PathBuf,
+    blob: &[u8],
+) -> Result<AvailableDevice, libparsec_types::RmpDecodeError> {
+    let device_file = DeviceFile::load(blob)?;
+
+    let (
+        ty,
+        created_on,
+        protected_on,
+        server_url,
+        organization_id,
+        user_id,
+        device_id,
+        human_handle,
+        device_label,
+    ) = match device_file {
+        DeviceFile::Keyring(device) => (
+            DeviceFileType::Keyring,
+            device.created_on,
+            device.protected_on,
+            device.server_url,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
+        DeviceFile::Password(device) => (
+            DeviceFileType::Password,
+            device.created_on,
+            device.protected_on,
+            device.server_url,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
+        DeviceFile::Recovery(device) => (
+            DeviceFileType::Recovery,
+            device.created_on,
+            device.protected_on,
+            device.server_url,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
+        DeviceFile::Smartcard(device) => (
+            DeviceFileType::Smartcard,
+            device.created_on,
+            device.protected_on,
+            device.server_url,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
+    };
+
+    Ok(AvailableDevice {
+        key_file_path: path,
+        created_on,
+        protected_on,
+        server_url,
+        organization_id,
+        user_id,
+        device_id,
+        human_handle,
+        device_label,
+        ty,
+    })
+}
+
+#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
+fn secret_key_from_password(
+    password: &Password,
+    algorithm: &DeviceFilePasswordAlgorithm,
+) -> Result<SecretKey, CryptoError> {
+    match algorithm {
+        DeviceFilePasswordAlgorithm::Argon2id {
+            memlimit_kb,
+            opslimit,
+            parallelism,
+            salt,
+        } => SecretKey::from_argon2id_password(
+            password,
+            salt,
+            (*opslimit).try_into().or(Err(CryptoError::DataSize))?,
+            (*memlimit_kb).try_into().or(Err(CryptoError::DataSize))?,
+            (*parallelism).try_into().or(Err(CryptoError::DataSize))?,
+        ),
+    }
+}

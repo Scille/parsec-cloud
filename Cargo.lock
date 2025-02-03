@@ -2158,6 +2158,7 @@ dependencies = [
  "dirs",
  "keyring",
  "libparsec_crypto",
+ "libparsec_platform_async",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
  "libparsec_tests_lite",
