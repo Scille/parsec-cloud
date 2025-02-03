@@ -82,6 +82,7 @@
         </ion-button>
         <!-- customer area button -->
         <ion-button
+          v-show="!Env.isStripeDisabled()"
           class="topbar-buttons__item"
           id="trigger-customer-area-button"
           @click="$emit('customerAreaClick')"

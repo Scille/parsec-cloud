@@ -32,7 +32,7 @@ import { Information, InformationDataType, InformationLevel, InformationManager,
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Sentry } from '@/services/sentry';
 import { initViewers } from '@/services/viewers';
-import { Answer, Base64, I18n, Locale, MegaSharkPlugin, ThemeManager, Validity, askQuestion } from 'megashark-lib';
+import { Answer, Base64, I18n, Locale, MegaSharkPlugin, StripeConfig, ThemeManager, Validity, askQuestion } from 'megashark-lib';
 
 enum AppState {
   Ready = 'ready',
@@ -63,6 +63,17 @@ async function setupApp(): Promise<void> {
   const hotkeyManager = new HotkeyManager();
   const router = getRouter();
 
+  let stripeConfig: StripeConfig | undefined = undefined;
+  if (Env.isStripeDisabled()) {
+    console.log('Stripe is disabled');
+  } else {
+    stripeConfig = {
+      publishableKey: Env.getStripeApiKey().key,
+      environment: Env.getStripeApiKey().mode,
+      locale: config.locale,
+    };
+  }
+
   const megasharkPlugin = new MegaSharkPlugin({
     i18n: {
       defaultLocale: config.locale,
@@ -75,11 +86,7 @@ async function setupApp(): Promise<void> {
         'en-US': 'EUR',
       },
     },
-    stripeConfig: {
-      publishableKey: Env.getStripeApiKey().key,
-      environment: Env.getStripeApiKey().mode,
-      locale: config.locale,
-    },
+    stripeConfig: stripeConfig,
   });
   await megasharkPlugin.init();
 

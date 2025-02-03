@@ -7,6 +7,7 @@ export const APP_VERSION = __APP_VERSION__;
 const STRIPE_ENV_VARIABLE = 'PARSEC_APP_STRIPE_API_KEY';
 // cspell:disable-next-line
 const DEFAULT_STRIPE_API_KEY = 'pk_test_P4dfuyoLBQtDHKjTiNDH3JH700TT3mCLbE';
+const STRIPE_DISABLE_ENV_VARIABLE = 'PARSEC_APP_DISABLE_STRIPE';
 
 function getStripeApiKey(): { key: string; mode: EnvironmentType } {
   if (import.meta.env[STRIPE_ENV_VARIABLE]) {
@@ -18,6 +19,10 @@ function getStripeApiKey(): { key: string; mode: EnvironmentType } {
     };
   }
   return { key: DEFAULT_STRIPE_API_KEY, mode: EnvironmentType.Development };
+}
+
+function isStripeDisabled(): boolean {
+  return import.meta.env[STRIPE_DISABLE_ENV_VARIABLE] === 'true';
 }
 
 const BMS_ENV_VARIABLE = 'PARSEC_APP_BMS_API_URL';
@@ -107,6 +112,7 @@ export const Env = {
   getSignUrl,
   getSaasServers,
   getTrialServers,
+  isStripeDisabled,
   Links: {
     openDocumentationLink,
     openContactLink,
