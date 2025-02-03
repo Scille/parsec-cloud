@@ -31,7 +31,7 @@
               slot="start"
               :value="SettingsTabs.Advanced"
               class="menu-list__item"
-              v-show="isDesktop() && !usesTestbed()"
+              v-show="isDesktop()"
             >
               <div class="item-container">
                 <ion-icon :icon="options" />

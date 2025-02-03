@@ -1,0 +1,428 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.2.5-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-02-04 08:57+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../userguide/manage_files.rst:6
+msgid "Files and folders"
+msgstr "Fichiers et dossiers"
+
+#: ../../userguide/manage_files.rst:8
+msgid ""
+"You can import files into a workspace. Files in a workspace are "
+"automatically shared with the users who have access to the workspace (see :"
+"ref:`Share a workspace <doc_userguide_parsec_workspaces_share>`). Depending "
+"on your :ref:`workspace role <doc_userguide_parsec_workspaces_roles>`, some "
+"features may not be available."
+msgstr ""
+"Vous pouvez importer des fichiers dans un espace de travail. Ces fichiers "
+"sont automatiquement partagés avec les utilisateurs qui ont accès à cet "
+"espace (voir :ref:`Partager un espace de travail "
+"<doc_userguide_parsec_workspaces_share>`). Les fonctionnalités disponibles "
+"dépendent de votre :ref:`rôle <doc_userguide_parsec_workspaces_roles>`."
+
+#: ../../userguide/manage_files.rst:12
+msgid "Importing files"
+msgstr "Importer des fichiers"
+
+#: ../../userguide/manage_files.rst:15
+msgid "Using the import button"
+msgstr "En utilisant le bouton d'import"
+
+#: ../../userguide/manage_files.rst:17
+msgid ""
+"Click on the button ``Import`` in the action bar and select ``Import files`` "
+"or ``Import a folder``.  Select the files or folder to import from your file "
+"system. The files will be imported in the current directory."
+msgstr ""
+"Cliquez sur le bouton ``Importer`` dans la barre d'action et sélectionnez "
+"``Importer des fichiers`` ou ``Importer un dossier``. Choisissez les "
+"fichiers ou dossier à importer depuis votre système de fichier. Les fichiers "
+"seront importés dans le répertoire courant."
+
+#: ../../userguide/manage_files.rst:19
+msgid "import buttons screenshot"
+msgstr "Capture d'écran des boutons d'import"
+
+#: ../../userguide/manage_files.rst:25
+msgid "Using drag and drop"
+msgstr "En utilisant le `glisser-déposer`"
+
+#: ../../userguide/manage_files.rst:27
+msgid ""
+"You can drag and drop files and folders directly from your file explorer to "
+"Parsec. This is the preferred method as you are able to import both files "
+"and folders at the same time. You can either drop the files on an empty "
+"space to import them in the current folder, or on a specific folder to place "
+"them inside it."
+msgstr ""
+"Vous pouvez glisser et déposer des fichiers et dossiers directement depuis "
+"votre explorateur de fichier dans Parsec. Cette méthode est préférable "
+"puisqu'elle vous permet d'importer plusieurs fichiers et dossiers "
+"simultanément. Vous pouvez déposer les fichiers sur un espace vide pour les "
+"importer dans le dossier courant, ou sur un dossier spécifique pour les "
+"importer à l'intérieur."
+
+#: ../../userguide/manage_files.rst:29
+msgid "drag and drop screenshot"
+msgstr "Capture d'écran du glisser-déposer"
+
+#: ../../userguide/manage_files.rst:34
+msgid "The import window"
+msgstr "La fenêtre d'import"
+
+#: ../../userguide/manage_files.rst:36
+msgid ""
+"When you import files, the import windows appears automatically to show the "
+"progress. You can use Parsec during the import process. We strongly "
+"recommend that you do not close Parsec or log out before it has finished to "
+"guarantee that all your files are being imported."
+msgstr ""
+"Quand vous importez des fichiers, la fenêtre d'import apparait "
+"automatiquement pour montrer l'avancement. Vous pouvez continuer d'utiliser "
+"Parsec pendant l'import. Nous vous recommandons de ne pas fermer Parsec et "
+"de ne pas vous déconnecter avant la fin de l'import pour garantir que vos "
+"fichiers ont tous été correctement importés."
+
+#: ../../userguide/manage_files.rst:38
+msgid "import window screenshot"
+msgstr "Capture d'écran de la fenêtre d'import"
+
+#: ../../userguide/manage_files.rst:43
+msgid ""
+"When a file is imported, Parsec will start synchronizing it right away with "
+"the server. The cloud icon next to the file name indicates its "
+"synchronization status:"
+msgstr ""
+"Quand un fichier est importé, Parsec commencera à le synchroniser avec le "
+"serveur. L'icône de nuage à côté du nom indique sont statut :"
+
+#: ../../userguide/manage_files.rst:45
+msgid "File/Folder has not yet been synchronized yet."
+msgstr "Le fichier/dossier n'est pas encore synchronisé."
+
+#: ../../userguide/manage_files.rst:51
+msgid ""
+"File/Folder has been fully synchronized with the server and is available to "
+"other users in the workspace."
+msgstr ""
+"Le fichier/dossier a été synchronisé avec le serveur et est disponible pour "
+"les autres utilisateurs de l'espace"
+
+#: ../../userguide/manage_files.rst:58
+msgid "Working with files and folders"
+msgstr "Travailler avec des fichiers et dossiers"
+
+#: ../../userguide/manage_files.rst:61
+msgid "Creating a folder"
+msgstr "Créer un dossier"
+
+#: ../../userguide/manage_files.rst:63
+msgid ""
+"To create a new folder, simply click the ``New folder`` button, or right-"
+"click in an empty space in the file list to bring out the context menu and "
+"click ``New folder``."
+msgstr ""
+"Pour créer un nouveau dossier, cliquez sur ``Nouveau dossier``, ou faites un "
+"clic droit sur un espace vide de la liste des fichiers pour afficher le menu "
+"contextuel et cliquez sur ``Nouveau dossier``"
+
+#: ../../userguide/manage_files.rst:65
+msgid "create folder screenshot"
+msgstr "Capture d'écran de la création de dossier"
+
+#: ../../userguide/manage_files.rst:70
+msgid "Deleting files"
+msgstr "Supprimer des fichiers"
+
+#: ../../userguide/manage_files.rst:72
+msgid ""
+"Either right-click on a file and select ``Delete``, or select a file and "
+"click ``Delete`` in the action bar, and then answer ``Yes`` when asked for "
+"confirmation. You can delete multiple files at the same time."
+msgstr ""
+"Vous pouvez faire un clic droit sur un fichier et cliquer sur ``Supprimer`` "
+"ou sélectionner un fichier et cliquer sur ``Supprimer`` dans la barre "
+"d'action, puis répondre ``Oui`` quand une confirmation vous est demandée. "
+"Vous pouvez supprimer plusieurs fichiers simultanément."
+
+#: ../../userguide/manage_files.rst:74
+msgid "delete files screenshot"
+msgstr "Capture d'écran de la suppression de fichiers"
+
+#: ../../userguide/manage_files.rst:79
+msgid "Renaming files"
+msgstr "Renommer des fichiers"
+
+#: ../../userguide/manage_files.rst:81
+msgid ""
+"Either right-click on a file and select ``Rename``, or select a file and "
+"click ``Rename`` in the action bar. Enter the file's new name in the pop-up. "
+"You can only rename one file at a time."
+msgstr ""
+"Vous pouvez faire un clic droit sur un fichier et cliquer sur ``Renommer`` "
+"ou sélectionner un fichier et cliquer sur ``Renommer`` dans la barre "
+"d'action, puis entrez le nouveau nom du fichier dans la fenêtre qui "
+"apparait. Vous ne pouvez renommer qu'un fichier à la fois."
+
+#: ../../userguide/manage_files.rst:83
+msgid "rename files screenshot"
+msgstr "Capture d'écran du renommage de fichiers"
+
+#: ../../userguide/manage_files.rst:88
+msgid "Copying files"
+msgstr "Copier des fichiers"
+
+#: ../../userguide/manage_files.rst:90
+msgid ""
+"Either right-click on a file and select ``Copy``, or select a file and click "
+"``Copy`` in the action bar. In the pop-up, select the folder you want to "
+"copy your files into. You can copy multiple files at the same time. You can "
+"only copy files inside the same workspace."
+msgstr ""
+"Vous pouvez faire un clic droit sur un fichier et cliquer sur ``Copier`` ou "
+"sélectionner un fichier et cliquer sur ``Copier`` dans la barre d'action, "
+"puis choisissez l'emplacement où copier vos fichiers dans la fenêtre qui "
+"apparait. Vous pouvez copier plusieurs fichiers à la fois. Vous ne pouvez "
+"copier des fichiers qu'à l'intérieur d'un même espace de travail."
+
+#: ../../userguide/manage_files.rst:92
+msgid "copy files screenshot"
+msgstr "Capture d'écran de la copie de fichiers"
+
+#: ../../userguide/manage_files.rst:97
+msgid "Moving files"
+msgstr "Déplacer des fichiers"
+
+#: ../../userguide/manage_files.rst:99
+msgid ""
+"Either right-click on a file and select ``Move``, or select a file and click "
+"``Move`` in the action bar. In the pop-up, select the folder you want to "
+"move your files into. You can move multiple files at the same time. You can "
+"only move files inside the same workspace."
+msgstr ""
+"Vous pouvez faire un clic droit sur un fichier et cliquer sur ``Déplacer`` "
+"ou sélectionner un fichier et cliquer sur ``Déplacer`` dans la barre "
+"d'action, puis choisissez l'emplacement où déplacer vos fichiers dans la "
+"fenêtre qui apparait. Vous pouvez déplacer plusieurs fichiers à la fois. "
+"Vous ne pouvez déplacer des fichiers qu'à l'intérieur d'un même espace de "
+"travail."
+
+#: ../../userguide/manage_files.rst:101
+msgid "move files screenshot"
+msgstr "Capture d'écran du déplacement des fichiers"
+
+#: ../../userguide/manage_files.rst:106
+msgid "Share a link to a file"
+msgstr "Partager un lien vers un fichier"
+
+#: ../../userguide/manage_files.rst:108
+msgid ""
+"You can securely share a link to a file with other users. Parsec ensures "
+"only users from the organization having access to the workspace will be able "
+"to open the link."
+msgstr ""
+"Vous pouvez partagé un lien de façon sécurisée avec les autres utilisateurs. "
+"Parsec s'assure que seuls les utilisateurs de l'organisation qui ont accès à "
+"l'espace contenant le fichier peuvent ouvrir le fichier."
+
+#: ../../userguide/manage_files.rst:110
+msgid ""
+"When a user clicks on the link, if they have the proper access and "
+"permissions, Parsec will open and point to the specific file."
+msgstr ""
+"Quand un utilisateur clique sur le lien, s'il dispose des droits d'accès, "
+"Parsec s'ouvrira et pointera le fichier."
+
+#: ../../userguide/manage_files.rst:112
+msgid ""
+"In order to get a link to a file, either right-click on a file and select "
+"``Copy link``, or select a file and click ``Copy link`` in the action bar. "
+"This will copy the file link that you can share with other users of the "
+"workspace (in an email for example)."
+msgstr ""
+"Pour obtenir un lien vers un fichier, vous pouvez faire un clic droit sur le "
+"fichier et sélectionner ``Copier le lien`` ou sélectionner un fichier et "
+"cliquer sur ``Copier le lien`` dans la barre d'action. Le lien sera copié "
+"dans le presse-papier et vous pouvez le partager avec d'autres utilisateurs "
+"de l'espace (dans un email par exemple)."
+
+#: ../../userguide/manage_files.rst:114
+msgid "share file link screenshot"
+msgstr "Capture d'écran du lien de partager"
+
+#: ../../userguide/manage_files.rst:119
+msgid "File explorer integration"
+msgstr "Intégration avec l'explorateur de fichier"
+
+#: ../../userguide/manage_files.rst:121
+msgid ""
+"When you're logged-in to Parsec, your workspaces are available from the file "
+"explorer so you can access your data directly from your computer."
+msgstr ""
+"Quand vous êtes connecté à Parsec, vos espaces de travail sont disponibles "
+"depuis votre explorateur de fichiers."
+
+#: ../../userguide/manage_files.rst:123
+msgid ""
+"Each workspace is exposed in a specific folder matching the workspace name. "
+"You can add, delete, rename or open files, or any other other operations "
+"that you would normally do, as if your workspace was any regular folder on "
+"your computer."
+msgstr ""
+"Chaque espace de travail est exposé dans un dossier spécifique au nom de "
+"l'espace. Vou pouvez ajouter, supprimer, renommer ou ouvrir des fichiers, ou "
+"toute autre opération que vous feriez normalement, comme si l'espace n'était "
+"qu'un dossier quelconque sur votre ordinateur."
+
+#: ../../userguide/manage_files.rst:125
+msgid ""
+"Any operation performed in the file explorer will be automatically "
+"synchronized in Parsec."
+msgstr ""
+"Toutes les opérations dans l'explorateur de fichier seront automatiquement "
+"synchronisées dans Parsec."
+
+#: ../../userguide/manage_files.rst:127
+msgid ""
+"If you logout or quit Parsec, your workspaces will no longer be accessible "
+"from the file explorer, until you log back in."
+msgstr ""
+"Si vous vous déconnecter ou fermez Parsec, vos espaces de travail ne seront "
+"plus accessibles dans l'explorateur de fichiers, jusqu'à votre reconnexion."
+
+#: ../../userguide/manage_files.rst:129
+msgid "file explorer screenshot"
+msgstr "Capture d'écran de l'explorateur de fichier"
+
+#: ../../userguide/manage_files.rst:134
+msgid "Opening a file"
+msgstr "Ouvrir un fichier"
+
+#: ../../userguide/manage_files.rst:136
+msgid ""
+"When you open a file in Parsec, it will be downloaded and stored locally so "
+"files that you open often will not have to be downloaded again. Large files "
+"may take some time to open the first time for this reason. If you are "
+"offline, only the files that have been downloaded while you were online can "
+"be opened."
+msgstr ""
+"Quand vous ouvrez un fichier dans Parsec, il sera téléchargé et stocké "
+"localement, afin que les fichiers que vous ouvrez régulièrement ne soient "
+"pas re-téléchargés. Pour cette raison, les fichiers larges peuvent être plus "
+"longs à ouvrir. Si vous êtes hors-ligne, vous ne pourrez ouvrir que les "
+"fichiers que vous aviez téléchargés précédemment."
+
+#: ../../userguide/manage_files.rst:139
+msgid "Using an external application"
+msgstr "En utilisant une application externe"
+
+#: ../../userguide/manage_files.rst:141
+msgid ""
+"When you double-click on a file, it will be opened with the default "
+"application that is associated with the file type on your system. This is "
+"therefore defined by your system and not by Parsec."
+msgstr ""
+"Quand vous double-cliquez sur un fichier, celui-ci sera ouvert avec "
+"l'application par défaut qui est associée à ce type de fichier sur votre "
+"système. Cette application est choisie par votre système, et non par Parsec."
+
+#: ../../userguide/manage_files.rst:144
+msgid "Using Parsec preview"
+msgstr "En utilisant la visualisation de fichiers"
+
+#: ../../userguide/manage_files.rst:146
+msgid ""
+"Some file types can be displayed directly in Parsec without using an "
+"external application."
+msgstr ""
+"Certains fichiers peuvent être affichés directement dans Parsec sans passer "
+"par une application externe."
+
+#: ../../userguide/manage_files.rst:148
+msgid ""
+"If the file type is supported (see below), Parsec will display a preview of "
+"it. While this preview does not allow you to make any change, and may lack "
+"some of the functionality provided by external applications, it is the more "
+"secure way of viewing your files as they will not leave Parsec."
+msgstr ""
+"Pour les types de fichiers supportés (voir ci-dessous), Parsec est capable "
+"d'afficher le contenu du fichier. Cette visualisation ne permet pas de "
+"modifier le fichier, et ne disposera pas de toutes les fonctionnalités des "
+"applications externes. Il s'agit de la manière la plus sécurisée d'ouvrir un "
+"fichier, puisque ceux-ci ne sortiront pas de Parsec."
+
+#: ../../userguide/manage_files.rst:150
+msgid "PDF viewer screenshot"
+msgstr "Capture d'écran de la visualisation de PDF"
+
+#: ../../userguide/manage_files.rst:154
+msgid ""
+"Parsec preview is limited to files with size inferior to 15MB. The following "
+"file formats are supported:"
+msgstr ""
+"La visualisation est limitée aux fichiers d'une taille inférieure à 15Mo. "
+"Les formats suivants sont supportés :"
+
+#: ../../userguide/manage_files.rst:156
+msgid "PDF"
+msgstr "PDF"
+
+#: ../../userguide/manage_files.rst:157
+msgid "DOCX (Microsoft Word). XLSX (Microsoft Excel) support is coming soon."
+msgstr ""
+"DOCX (Microsoft Word). Le support XLSX (Microsoft Excel) arrivera "
+"prochainement."
+
+#: ../../userguide/manage_files.rst:158
+msgid "Audio"
+msgstr "Audio"
+
+#: ../../userguide/manage_files.rst:159
+msgid "Images"
+msgstr "Images"
+
+#: ../../userguide/manage_files.rst:160
+msgid "Plain Text"
+msgstr "Texte simple"
+
+#: ../../userguide/manage_files.rst:162
+msgid "Parsec preview can be disabled in the desktop application settings."
+msgstr ""
+"La visualisation peut être désactivées dans les paramètres de l'application."
+
+#: ../../userguide/manage_files.rst:164
+msgid "Disable viewers screenshot"
+msgstr "Désactiver la visualisation de fichiers"
+
+#: ../../userguide/manage_files.rst:170
+msgid "Recent documents"
+msgstr "Documents récents"
+
+#: ../../userguide/manage_files.rst:172
+msgid ""
+"Files you have recently opened are shown in the quick access menu in the "
+"sidebar for convenience."
+msgstr ""
+"Les fichiers que vous avez ouverts récemment sont affichés dans le menu "
+"d'accès rapide dans la barre latérale."
+
+#: ../../userguide/manage_files.rst:174
+msgid "Quick access screenshot"
+msgstr "Capture d'écran de l'accès rapide"
