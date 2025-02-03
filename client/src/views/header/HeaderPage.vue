@@ -8,20 +8,14 @@
         :class="currentRouteIs(Routes.History) ? 'topbar-history' : ''"
       >
         <!-- icon visible when menu is hidden -->
-        <ion-buttons slot="start">
-          <ion-button
-            v-if="!isMobile()"
-            slot="icon-only"
-            id="trigger-toggle-menu-button"
-            class="topbar-button__item"
-            @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
-          >
-            <ion-icon
-              slot="icon-only"
-              :icon="menu"
-            />
-          </ion-button>
-        </ion-buttons>
+        <ms-image
+          v-if="!isMobile()"
+          slot="start"
+          id="trigger-toggle-menu-button"
+          class="topbar-button__item"
+          @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
+          :image="SidebarToggle"
+        />
         <!-- end of icon visible when menu is hidden -->
         <div class="topbar-left">
           <div
@@ -139,7 +133,7 @@ import {
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { Translatable } from 'megashark-lib';
+import { Translatable, MsImage, SidebarToggle } from 'megashark-lib';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import { openSettingsModal } from '@/views/settings';
@@ -156,7 +150,7 @@ import {
   IonToolbar,
   popoverController,
 } from '@ionic/vue';
-import { home, menu, notifications, search } from 'ionicons/icons';
+import { home, notifications, search } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
@@ -327,6 +321,18 @@ async function openNotificationCenter(event: Event): Promise<void> {
 
     .topbar-left {
       min-height: 2.25rem;
+    }
+  }
+
+  #trigger-toggle-menu-button {
+    --fill-color: var(--parsec-color-light-secondary-text);
+    padding: 0.625rem;
+    border-radius: var(--parsec-radius-12);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--parsec-color-light-secondary-premiere);
+      --fill-color: var(--parsec-color-light-secondary-contrast);
     }
   }
 }
