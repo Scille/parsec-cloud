@@ -813,7 +813,7 @@ class StreamingResponseMiddleware(StreamingResponse):
         # away so the client knows it is correctly connected without delay.
         # Fortunately we just have the right thing for that: the organization
         # config (given it may have changed since the last time the client connected).
-        yield self.initial_organization_config_event.dump_as_apiv4_sse_payload()
+        yield self.initial_organization_config_event.dump_as_apiv5_sse_payload()
 
         while True:
             next_event = None
@@ -845,11 +845,11 @@ class StreamingResponseMiddleware(StreamingResponse):
                     yield b"event:missed_events\ndata:\n\n"
 
                 else:
-                    (event, apiv4_sse_payload) = next_event
-                    if apiv4_sse_payload is None:
-                        apiv4_sse_payload = event.dump_as_apiv4_sse_payload()
+                    (event, apiv5_sse_payload) = next_event
+                    if apiv5_sse_payload is None:
+                        apiv5_sse_payload = event.dump_as_apiv5_sse_payload()
                     self.client_ctx.logger.debug("SSE event", event_=event)
-                    yield apiv4_sse_payload
+                    yield apiv5_sse_payload
 
     async def __call__(self, scope, receive, send) -> None:
         self.client_ctx.logger.info("SSE session start")

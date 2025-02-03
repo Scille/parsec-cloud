@@ -277,7 +277,7 @@ class BaseEventsComponent:
             case ClientBroadcastableEvent():
                 # It's likely the latest api is the most used, hence we only dump the
                 # event once for this case
-                apiv4_sse_payload = event.dump_as_apiv4_sse_payload()
+                apiv5_sse_payload = event.dump_as_apiv5_sse_payload()
 
                 self._last_events_cache.append(event)
                 for registered in self._registered_clients.values():
@@ -306,7 +306,7 @@ class BaseEventsComponent:
                         registered.realms.discard(event.realm_id)
 
                     try:
-                        registered.channel_sender.send_nowait((event, apiv4_sse_payload))
+                        registered.channel_sender.send_nowait((event, apiv5_sse_payload))
                     except anyio.WouldBlock:
                         # Client is lagging too much behind, kill it
                         registered.cancel_scope.cancel()

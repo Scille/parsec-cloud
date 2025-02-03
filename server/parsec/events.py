@@ -44,10 +44,10 @@ class ClientBroadcastableEvent(ABC):
 
     def is_event_for_client(self, client: RegisteredClient) -> bool: ...
 
-    def dump_as_apiv4_sse_payload(self) -> bytes: ...
+    def dump_as_apiv5_sse_payload(self) -> bytes: ...
 
     @staticmethod
-    def _dump_as_apiv4_sse_payload(
+    def _dump_as_apiv5_sse_payload(
         unit: authenticated_cmds.latest.events_listen.APIEvent, event_id: UUID | None
     ) -> bytes:
         data = authenticated_cmds.latest.events_listen.RepOk(unit=unit).dump()
@@ -76,8 +76,8 @@ class EventPinged(BaseModel, ClientBroadcastableEvent):
         return self.organization_id == client.organization_id
 
     @override
-    def dump_as_apiv4_sse_payload(self) -> bytes:
-        return self._dump_as_apiv4_sse_payload(
+    def dump_as_apiv5_sse_payload(self) -> bytes:
+        return self._dump_as_apiv5_sse_payload(
             authenticated_cmds.latest.events_listen.APIEventPinged(self.ping), self.event_id
         )
 
@@ -107,8 +107,8 @@ class EventInvitation(BaseModel, ClientBroadcastableEvent):
         return self.organization_id == client.organization_id and self.greeter == client.user_id
 
     @override
-    def dump_as_apiv4_sse_payload(self) -> bytes:
-        return self._dump_as_apiv4_sse_payload(
+    def dump_as_apiv5_sse_payload(self) -> bytes:
+        return self._dump_as_apiv5_sse_payload(
             authenticated_cmds.latest.events_listen.APIEventInvitation(
                 token=self.token,
                 invitation_status=self.status,
@@ -138,8 +138,8 @@ class EventPkiEnrollment(BaseModel, ClientBroadcastableEvent):
         )
 
     @override
-    def dump_as_apiv4_sse_payload(self) -> bytes:
-        return self._dump_as_apiv4_sse_payload(
+    def dump_as_apiv5_sse_payload(self) -> bytes:
+        return self._dump_as_apiv5_sse_payload(
             authenticated_cmds.latest.events_listen.APIEventPkiEnrollment(), self.event_id
         )
 
@@ -176,8 +176,8 @@ class EventVlob(BaseModel, ClientBroadcastableEvent):
         )
 
     @override
-    def dump_as_apiv4_sse_payload(self) -> bytes:
-        return self._dump_as_apiv4_sse_payload(
+    def dump_as_apiv5_sse_payload(self) -> bytes:
+        return self._dump_as_apiv5_sse_payload(
             authenticated_cmds.latest.events_listen.APIEventVlob(
                 realm_id=self.realm_id,
                 vlob_id=self.vlob_id,
@@ -215,8 +215,8 @@ class EventCommonCertificate(BaseModel, ClientBroadcastableEvent):
         return self.organization_id == client.organization_id
 
     @override
-    def dump_as_apiv4_sse_payload(self) -> bytes:
-        return self._dump_as_apiv4_sse_payload(
+    def dump_as_apiv5_sse_payload(self) -> bytes:
+        return self._dump_as_apiv5_sse_payload(
             authenticated_cmds.latest.events_listen.APIEventCommonCertificate(
                 timestamp=self.timestamp,
             ),
@@ -243,8 +243,8 @@ class EventSequesterCertificate(BaseModel, ClientBroadcastableEvent):
         return self.organization_id == client.organization_id
 
     @override
-    def dump_as_apiv4_sse_payload(self) -> bytes:
-        return self._dump_as_apiv4_sse_payload(
+    def dump_as_apiv5_sse_payload(self) -> bytes:
+        return self._dump_as_apiv5_sse_payload(
             authenticated_cmds.latest.events_listen.APIEventSequesterCertificate(
                 timestamp=self.timestamp,
             ),
@@ -278,8 +278,8 @@ class EventShamirRecoveryCertificate(BaseModel, ClientBroadcastableEvent):
         )
 
     @override
-    def dump_as_apiv4_sse_payload(self) -> bytes:
-        return self._dump_as_apiv4_sse_payload(
+    def dump_as_apiv5_sse_payload(self) -> bytes:
+        return self._dump_as_apiv5_sse_payload(
             authenticated_cmds.latest.events_listen.APIEventShamirRecoveryCertificate(
                 timestamp=self.timestamp,
             ),
@@ -316,8 +316,8 @@ class EventRealmCertificate(BaseModel, ClientBroadcastableEvent):
         return self.organization_id == client.organization_id and self.realm_id in client.realms
 
     @override
-    def dump_as_apiv4_sse_payload(self) -> bytes:
-        return self._dump_as_apiv4_sse_payload(
+    def dump_as_apiv5_sse_payload(self) -> bytes:
+        return self._dump_as_apiv5_sse_payload(
             authenticated_cmds.latest.events_listen.APIEventRealmCertificate(
                 timestamp=self.timestamp,
                 realm_id=self.realm_id,
@@ -345,8 +345,8 @@ class EventOrganizationConfig(BaseModel):
     def is_event_for_client(self, client: RegisteredClient) -> bool:
         return self.organization_id == client.organization_id
 
-    def dump_as_apiv4_sse_payload(self) -> bytes:
-        return ClientBroadcastableEvent._dump_as_apiv4_sse_payload(
+    def dump_as_apiv5_sse_payload(self) -> bytes:
+        return ClientBroadcastableEvent._dump_as_apiv5_sse_payload(
             authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 user_profile_outsider_allowed=self.user_profile_outsider_allowed,
                 active_users_limit=self.active_users_limit,
