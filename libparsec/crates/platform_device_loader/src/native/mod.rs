@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use keyring::Entry as KeyringEntry;
+use libparsec_platform_async::future::FutureExt as _;
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
@@ -103,78 +104,8 @@ fn load_available_device(
     let content = std::fs::read(&key_file_path)
         .map_err(|e| LoadAvailableDeviceFileError::InvalidPath(e.into()))?;
 
-    let device_file =
-        DeviceFile::load(&content).map_err(|_| LoadAvailableDeviceFileError::InvalidData)?;
-
-    let (
-        ty,
-        created_on,
-        protected_on,
-        server_url,
-        organization_id,
-        user_id,
-        device_id,
-        human_handle,
-        device_label,
-    ) = match device_file {
-        DeviceFile::Keyring(device) => (
-            DeviceFileType::Keyring,
-            device.created_on,
-            device.protected_on,
-            device.server_url,
-            device.organization_id,
-            device.user_id,
-            device.device_id,
-            device.human_handle,
-            device.device_label,
-        ),
-        DeviceFile::Password(device) => (
-            DeviceFileType::Password,
-            device.created_on,
-            device.protected_on,
-            device.server_url,
-            device.organization_id,
-            device.user_id,
-            device.device_id,
-            device.human_handle,
-            device.device_label,
-        ),
-        DeviceFile::Recovery(device) => (
-            DeviceFileType::Recovery,
-            device.created_on,
-            device.protected_on,
-            device.server_url,
-            device.organization_id,
-            device.user_id,
-            device.device_id,
-            device.human_handle,
-            device.device_label,
-        ),
-        DeviceFile::Smartcard(device) => (
-            DeviceFileType::Smartcard,
-            device.created_on,
-            device.protected_on,
-            device.server_url,
-            device.organization_id,
-            device.user_id,
-            device.device_id,
-            device.human_handle,
-            device.device_label,
-        ),
-    };
-
-    Ok(AvailableDevice {
-        key_file_path,
-        created_on,
-        protected_on,
-        server_url,
-        organization_id,
-        user_id,
-        device_id,
-        human_handle,
-        device_label,
-        ty,
-    })
+    super::load_available_device_from_blob(key_file_path, &content)
+        .map_err(|_| LoadAvailableDeviceFileError::InvalidData)
 }
 
 /*
@@ -184,102 +115,55 @@ fn load_available_device(
 pub async fn load_device(
     access: &DeviceAccessStrategy,
 ) -> Result<(Arc<LocalDevice>, DateTime), LoadDeviceError> {
-    let (device, created_on) = match access {
-        DeviceAccessStrategy::Keyring { key_file } => {
-            // TODO: make file access on a worker thread !
-            let content =
-                std::fs::read(key_file).map_err(|e| LoadDeviceError::InvalidPath(e.into()))?;
+    let key_file = access.key_file();
+    let content = tokio::fs::read(key_file)
+        .await
+        .map_err(|e| LoadDeviceError::InvalidPath(e.into()))?;
 
-            // Regular load
-            let device_file =
-                DeviceFile::load(&content).map_err(|_| LoadDeviceError::InvalidData)?;
+    // Regular load
+    let device_file = DeviceFile::load(&content).map_err(|_| LoadDeviceError::InvalidData)?;
 
-            if let DeviceFile::Keyring(x) = device_file {
-                let entry = KeyringEntry::new(&x.keyring_service, &x.keyring_user)?;
+    let (key, created_on) = match (access, &device_file) {
+        (DeviceAccessStrategy::Keyring { .. }, DeviceFile::Keyring(device)) => {
+            let entry = KeyringEntry::new(&device.keyring_service, &device.keyring_user)?;
 
-                let passphrase = entry.get_password()?.into();
+            let passphrase = entry.get_password()?.into();
 
-                let key = SecretKey::from_recovery_passphrase(passphrase)
-                    .map_err(|_| LoadDeviceError::DecryptionFailed)?;
+            let key = SecretKey::from_recovery_passphrase(passphrase)
+                .map_err(|_| LoadDeviceError::DecryptionFailed)?;
 
-                let mut cleartext = key
-                    .decrypt(&x.ciphertext)
-                    .map_err(|_| LoadDeviceError::DecryptionFailed)?;
-
-                let device =
-                    LocalDevice::load(&cleartext).map_err(|_| LoadDeviceError::InvalidData)?;
-
-                cleartext.zeroize();
-
-                (device, x.created_on)
-            } else {
-                return Err(LoadDeviceError::InvalidData);
-            }
+            Ok((key, device.created_on))
         }
 
-        DeviceAccessStrategy::Password { key_file, password } => {
-            // TODO: make file access on a worker thread !
-            let content =
-                std::fs::read(key_file).map_err(|e| LoadDeviceError::InvalidPath(e.into()))?;
+        (DeviceAccessStrategy::Password { password, .. }, DeviceFile::Password(device)) => {
+            let key = super::secret_key_from_password(password, &device.algorithm)
+                .map_err(|_| LoadDeviceError::InvalidData)?;
 
-            let device_file =
-                DeviceFile::load(&content).map_err(|_| LoadDeviceError::InvalidData)?;
-
-            match device_file {
-                DeviceFile::Password(x) => {
-                    let (salt, opslimit, memlimit_kb, parallelism) = match x.algorithm {
-                        DeviceFilePasswordAlgorithm::Argon2id {
-                            salt,
-                            opslimit,
-                            memlimit_kb,
-                            parallelism,
-                        } => {
-                            let opslimit: u32 = opslimit
-                                .try_into()
-                                .map_err(|_| LoadDeviceError::InvalidData)?;
-                            let memlimit_kb: u32 = memlimit_kb
-                                .try_into()
-                                .map_err(|_| LoadDeviceError::InvalidData)?;
-                            let parallelism: u32 = parallelism
-                                .try_into()
-                                .map_err(|_| LoadDeviceError::InvalidData)?;
-                            (salt, opslimit, memlimit_kb, parallelism)
-                        }
-                    };
-                    let key = SecretKey::from_argon2id_password(
-                        password,
-                        &salt,
-                        opslimit,
-                        memlimit_kb,
-                        parallelism,
-                    )
-                    .map_err(|_| LoadDeviceError::InvalidData)?;
-                    let cleartext = key
-                        .decrypt(&x.ciphertext)
-                        .map(Zeroizing::new)
-                        .map_err(|_| LoadDeviceError::DecryptionFailed)?;
-                    let device =
-                        LocalDevice::load(&cleartext).map_err(|_| LoadDeviceError::InvalidData)?;
-
-                    (device, x.created_on)
-                }
-                // We are not expecting other type of device file
-                _ => return Err(LoadDeviceError::InvalidData),
-            }
+            Ok((key, device.created_on))
         }
 
-        DeviceAccessStrategy::Smartcard { .. } => {
-            // TODO !
-            todo!()
+        (DeviceAccessStrategy::Smartcard { .. }, DeviceFile::Smartcard(_device)) => {
+            todo!("Load smartcard device")
         }
-    };
+        _ => Err(LoadDeviceError::InvalidData),
+    }?;
+
+    let mut cleartext = key
+        .decrypt(device_file.ciphertext())
+        .map_err(|_| LoadDeviceError::DecryptionFailed)?;
+
+    let device = LocalDevice::load(&cleartext).map_err(|_| LoadDeviceError::InvalidData)?;
+
+    cleartext.zeroize();
 
     Ok((Arc::new(device), created_on))
 }
 
-fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), SaveDeviceError> {
+async fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), SaveDeviceError> {
     if let Some(parent) = key_file.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
+        tokio::fs::create_dir_all(parent)
+            .await
+            .map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
     }
     let tmp_path = match key_file.file_name() {
         Some(file_name) => {
@@ -303,13 +187,17 @@ fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), SaveDevic
     // - Then move the file to it final location
     // This way a crash during file write won't end up with a corrupted
     // file in the final location.
-    std::fs::write(&tmp_path, file_content).map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
-    std::fs::rename(&tmp_path, key_file).map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
+    tokio::fs::write(&tmp_path, file_content)
+        .await
+        .map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
+    tokio::fs::rename(&tmp_path, key_file)
+        .await
+        .map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
 
     Ok(())
 }
 
-fn generate_keyring_user(
+async fn generate_keyring_user(
     keyring_user_path: &PathBuf,
 ) -> Result<(SecretKey, String), SaveDeviceError> {
     // Generate a keyring user
@@ -324,7 +212,7 @@ fn generate_keyring_user(
     entry.set_password(&passphrase)?;
 
     // Save the keyring user to the config file
-    save_content(keyring_user_path, keyring_user.as_bytes())?;
+    save_content(keyring_user_path, keyring_user.as_bytes()).await?;
 
     Ok((key, keyring_user))
 }
@@ -349,22 +237,25 @@ pub async fn save_device(
         DeviceAccessStrategy::Keyring { key_file } => {
             let keyring_user_path = crate::get_default_data_base_dir().join("keyring_user.txt");
 
-            let (key, keyring_user) = std::fs::read_to_string(&keyring_user_path)
-                .ok()
-                .and_then(|keyring_user| {
-                    KeyringEntry::new(KEYRING_SERVICE, &keyring_user)
-                        .map(|x| (x, keyring_user))
-                        .ok()
+            let keyring_info = tokio::fs::read_to_string(&keyring_user_path)
+                .map(|keyring_user| {
+                    keyring_user.ok().and_then(|keyring_user| {
+                        KeyringEntry::new(KEYRING_SERVICE, &keyring_user)
+                            .and_then(|entry| {
+                                entry
+                                    .get_password()
+                                    .map(libparsec_types::SecretKeyPassphrase::from)
+                            })
+                            .ok()
+                            .and_then(|secret| SecretKey::from_recovery_passphrase(secret).ok())
+                            .map(|key| (key, keyring_user))
+                    })
                 })
-                .and_then(|(entry, keyring_user)| {
-                    entry.get_password().map(|x| (x, keyring_user)).ok()
-                })
-                .and_then(|(passphrase, keyring_user)| {
-                    SecretKey::from_recovery_passphrase(passphrase.into())
-                        .map(|x| (x, keyring_user))
-                        .ok()
-                })
-                .unwrap_or(generate_keyring_user(&keyring_user_path)?);
+                .await;
+            let (key, keyring_user) = match keyring_info {
+                Some(v) => v,
+                None => generate_keyring_user(&keyring_user_path).await?,
+            };
 
             let cleartext = device.dump();
             let ciphertext = key.encrypt(&cleartext);
@@ -385,7 +276,7 @@ pub async fn save_device(
 
             let file_content = file_content.dump();
 
-            save_content(key_file, &file_content)?;
+            save_content(key_file, &file_content).await?;
         }
 
         DeviceAccessStrategy::Password { key_file, password } => {
@@ -429,12 +320,11 @@ pub async fn save_device(
 
             let file_content = file_content.dump();
 
-            save_content(key_file, &file_content)?;
+            save_content(key_file, &file_content).await?;
         }
 
         DeviceAccessStrategy::Smartcard { .. } => {
-            // TODO
-            todo!()
+            todo!("Save smartcard device")
         }
     }
 
@@ -464,7 +354,8 @@ pub async fn change_authentication(
     let new_key_file = new_access.key_file();
 
     if key_file != new_key_file {
-        std::fs::remove_file(key_file)
+        tokio::fs::remove_file(key_file)
+            .await
             .map_err(|_| ChangeAuthentificationError::CannotRemoveOldDevice)?;
     }
 

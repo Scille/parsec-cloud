@@ -8,6 +8,8 @@ use libparsec_crypto::CryptoError;
 
 use crate::{DateTime, DeviceFileType, DeviceID, HumanHandle, UserID, VlobID};
 
+pub use rmp_serde::{decode::Error as RmpDecodeError, encode::Error as RmpEncodeError};
+
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum DataError {
     #[error("Invalid encryption")]
