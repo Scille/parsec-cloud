@@ -11,6 +11,7 @@
       <!-- Saas -->
       <div
         class="server-choice-item"
+        v-show="!Env.isStripeDisabled()"
         @click="serverChoice = ServerType.Saas"
         :class="{ selected: serverChoice === ServerType.Saas }"
       >
@@ -81,6 +82,7 @@ import { I18n } from 'megashark-lib';
 import TrialUS from '@/assets/images/trial-US.svg';
 import TrialFR from '@/assets/images/trial-FR.svg';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
+import { Env } from '@/services/environment';
 
 const emits = defineEmits<{
   (e: 'serverChosen', serverType: ServerType): void;
