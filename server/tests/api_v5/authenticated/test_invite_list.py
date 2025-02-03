@@ -28,7 +28,7 @@ async def test_authenticated_invite_list_ok_with_shamir_recovery(
                 user_id=shamirorg.bob.user_id,
                 human_handle=shamirorg.bob.human_handle,
             ),
-            status=InvitationStatus.IDLE,
+            status=InvitationStatus.PENDING,
             claimer_user_id=shamirorg.alice.user_id,
             shamir_recovery_created_on=shamirorg.alice_brief_certificate.timestamp,
             token=shamirorg.shamir_invited_alice.token,
@@ -73,7 +73,7 @@ async def test_authenticated_invite_list_ok(
                 user_id=minimalorg.alice.user_id,
                 human_handle=minimalorg.alice.human_handle,
             ),
-            status=InvitationStatus.IDLE,
+            status=InvitationStatus.PENDING,
             token=outcome[0],
         )
     )
@@ -95,31 +95,11 @@ async def test_authenticated_invite_list_ok(
                 user_id=minimalorg.alice.user_id,
                 human_handle=minimalorg.alice.human_handle,
             ),
-            status=InvitationStatus.IDLE,
+            status=InvitationStatus.PENDING,
             claimer_email="zack@example.invalid",
             token=outcome[0],
         )
     )
-
-    # # READY user invitation
-    # t3 = DateTime(2020, 1, 3)
-    # outcome = await backend.invite.new_for_user(
-    #     now=t3,
-    #     organization_id=shamirorg.organization_id,
-    #     author=shamirorg.alice.user_id,
-    #     claimer_email="zack@example.invalid",
-    #     send_email=False,
-    # )
-    # assert isinstance(outcome, tuple)
-    # expected_invitations.append(
-    #     authenticated_cmds.latest.invite_list.InviteListItemUser(
-    #         created_on=t3,
-    #         status=InvitationStatus.READY,
-    #         claimer_email="zack@example.invalid",
-    #         token=outcome[0],
-    #     )
-    # )
-    # TODO: have the invitation switch to READY
 
     # DELETED user invitation
     t4 = DateTime(2020, 1, 4)
@@ -243,7 +223,7 @@ async def test_authenticated_invite_list_with_shared_user_invitations(
                 user_id=coolorg.alice.user_id,
                 human_handle=coolorg.alice.human_handle,
             ),
-            status=InvitationStatus.IDLE,
+            status=InvitationStatus.PENDING,
             claimer_email="another_zack@example.invalid",
             token=outcome[0],
         )

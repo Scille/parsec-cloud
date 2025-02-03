@@ -197,8 +197,7 @@ fn enum_invitation_status_js_to_rs<'a>(
     match raw_value {
         "InvitationStatusCancelled" => Ok(libparsec::InvitationStatus::Cancelled),
         "InvitationStatusFinished" => Ok(libparsec::InvitationStatus::Finished),
-        "InvitationStatusIdle" => Ok(libparsec::InvitationStatus::Idle),
-        "InvitationStatusReady" => Ok(libparsec::InvitationStatus::Ready),
+        "InvitationStatusPending" => Ok(libparsec::InvitationStatus::Pending),
         _ => cx.throw_range_error(format!(
             "Invalid value `{raw_value}` for enum InvitationStatus"
         )),
@@ -210,8 +209,7 @@ fn enum_invitation_status_rs_to_js(value: libparsec::InvitationStatus) -> &'stat
     match value {
         libparsec::InvitationStatus::Cancelled => "InvitationStatusCancelled",
         libparsec::InvitationStatus::Finished => "InvitationStatusFinished",
-        libparsec::InvitationStatus::Idle => "InvitationStatusIdle",
-        libparsec::InvitationStatus::Ready => "InvitationStatusReady",
+        libparsec::InvitationStatus::Pending => "InvitationStatusPending",
     }
 }
 

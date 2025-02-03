@@ -45,7 +45,7 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
                 organization_id=shamirorg.organization_id,
                 greeter=shamirorg.mike.user_id,
                 token=invitation_token,
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         )
 
@@ -56,7 +56,7 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
             created_by=InvitationCreatedByUser(
                 user_id=shamirorg.mike.user_id, human_handle=shamirorg.mike.human_handle
             ),
-            status=InvitationStatus.IDLE,
+            status=InvitationStatus.PENDING,
             threshold=1,
             claimer_user_id=shamirorg.mallory.user_id,
             claimer_human_handle=shamirorg.mallory.human_handle,
@@ -127,7 +127,7 @@ async def test_authenticated_invite_new_shamir_recovery_ok_already_exist(
                 organization_id=shamirorg.organization_id,
                 greeter=shamirorg.bob.user_id,
                 token=rep.token,
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         )
 
@@ -179,7 +179,7 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
                 organization_id=shamirorg.organization_id,
                 greeter=shamirorg.mike.user_id,
                 token=invitation_token,
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         )
 
@@ -190,7 +190,7 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
             created_by=InvitationCreatedByUser(
                 user_id=shamirorg.mike.user_id, human_handle=shamirorg.mike.human_handle
             ),
-            status=InvitationStatus.IDLE,
+            status=InvitationStatus.PENDING,
             threshold=1,
             claimer_user_id=shamirorg.mallory.user_id,
             claimer_human_handle=shamirorg.mallory.human_handle,

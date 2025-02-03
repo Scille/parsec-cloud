@@ -5,7 +5,6 @@ import smtplib
 import ssl
 import sys
 import tempfile
-from collections import defaultdict
 from collections.abc import Buffer
 from dataclasses import dataclass
 from email.header import Header
@@ -39,10 +38,6 @@ from parsec.api import api
 from parsec.client_context import AuthenticatedClientContext, InvitedClientContext
 from parsec.components.events import EventBus
 from parsec.config import BackendConfig, EmailConfig, MockedEmailConfig, SmtpEmailConfig
-from parsec.events import (
-    Event,
-    EventInvitation,
-)
 from parsec.logging import get_logger
 from parsec.templates import get_template
 from parsec.types import BadOutcome, BadOutcomeEnum
@@ -600,36 +595,6 @@ class BaseInviteComponent:
     def __init__(self, event_bus: EventBus, config: BackendConfig):
         self._event_bus = event_bus
         self._config = config
-        # We use the `invite.status_changed` event to keep a list of all the
-        # invitation claimers connected across all Parsec server instances.
-        #
-        # This is useful to display the invitations ready to be greeted.
-        # Note we rely on a per-server list in memory instead of storing this
-        # information in database so that we default to no claimer present
-        # (which is the most likely when a server is restarted) .
-        #
-        # However there are multiple ways this list can go out of sync:
-        # - a claimer can be connected to a server, then another server starts
-        # - the server the claimer is connected to crashes without being able
-        #   to notify the other servers
-        # - a claimer open multiple connections at the same time, then is
-        #   considered disconnected as soon as he closes one of his connections
-        #
-        # This is considered "fine enough" given all the claimer has to do
-        # to fix this is to retry a connection, which precisely the kind of
-        # "I.T., have you tried to turn it off and on again ?" a human is
-        # expected to do ;-)
-        self._claimers_ready: dict[OrganizationID, set[InvitationToken]] = defaultdict(set)
-        self._event_bus.connect(self._on_event)
-        # Note we don't have a `__del__` to disconnect from the event bus: the lifetime
-        # of this component is basically equivalent of the one of the event bus anyway
-
-    def _on_event(self, event: Event) -> None:
-        if isinstance(event, EventInvitation):
-            if event.status == InvitationStatus.READY:
-                self._claimers_ready[event.organization_id].add(event.token)
-            else:  # Invitation deleted or back to idle
-                self._claimers_ready[event.organization_id].discard(event.token)
 
     # Used by `new_for_user` implementations
     async def _send_user_invitation_email(

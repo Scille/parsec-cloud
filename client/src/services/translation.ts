@@ -71,10 +71,8 @@ export function getWorkspaceRoleTranslationKey(role: WorkspaceRole | null): Work
 
 export function getInvitationStatusTranslationKey(status: InvitationStatus): Translatable {
   switch (status) {
-    case InvitationStatus.Ready:
-      return 'UsersPage.invitation.status.ready';
-    case InvitationStatus.Idle:
-      return 'UsersPage.invitation.status.idle';
+    case InvitationStatus.Pending:
+      return 'UsersPage.invitation.status.pending';
     case InvitationStatus.Finished:
       return 'UsersPage.invitation.status.finished';
     case InvitationStatus.Cancelled:

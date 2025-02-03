@@ -34,7 +34,7 @@ async def test_authenticated_invite_new_device_ok_new(
                 organization_id=minimalorg.organization_id,
                 greeter=minimalorg.alice.user_id,
                 token=invitation_token,
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         )
 
@@ -47,7 +47,7 @@ async def test_authenticated_invite_new_device_ok_new(
             ),
             claimer_user_id=minimalorg.alice.user_id,
             claimer_human_handle=minimalorg.alice.human_handle,
-            status=InvitationStatus.IDLE,
+            status=InvitationStatus.PENDING,
         )
     ]
     assert (
@@ -76,7 +76,7 @@ async def test_authenticated_invite_new_device_ok_already_exist(
                 organization_id=minimalorg.organization_id,
                 greeter=minimalorg.alice.user_id,
                 token=invitation_token,
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         )
 
@@ -96,7 +96,7 @@ async def test_authenticated_invite_new_device_ok_already_exist(
                 organization_id=minimalorg.organization_id,
                 greeter=minimalorg.alice.user_id,
                 token=invitation_token,
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         )
 
@@ -148,7 +148,7 @@ async def test_authenticated_invite_new_device_send_email_bad_outcome(
                 organization_id=minimalorg.organization_id,
                 greeter=minimalorg.alice.user_id,
                 token=invitation_token,
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         )
 
@@ -161,7 +161,7 @@ async def test_authenticated_invite_new_device_send_email_bad_outcome(
             ),
             claimer_user_id=minimalorg.alice.user_id,
             claimer_human_handle=minimalorg.alice.human_handle,
-            status=InvitationStatus.IDLE,
+            status=InvitationStatus.PENDING,
         )
     ]
     assert (

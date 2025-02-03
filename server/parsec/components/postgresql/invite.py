@@ -1029,7 +1029,7 @@ async def _do_new_invitation(
             organization_id=organization_id,
             token=token,
             greeter=author_user_id,
-            status=InvitationStatus.IDLE,
+            status=InvitationStatus.PENDING,
         ),
     )
     return token
@@ -1445,7 +1445,6 @@ class PGInviteComponent(BaseInviteComponent):
             )
         )
 
-        invitations_with_claimer_online = self._claimers_ready[organization_id]
         invitations = []
         for record in rows:
             invitation_info = invitation_info_from_record(record)
@@ -1453,10 +1452,8 @@ class PGInviteComponent(BaseInviteComponent):
             if invitation_info.deleted_on:
                 assert invitation_info.deleted_reason is not None
                 status = invitation_info.deleted_reason
-            elif invitation_info.token in invitations_with_claimer_online:
-                status = InvitationStatus.READY
             else:
-                status = InvitationStatus.IDLE
+                status = InvitationStatus.PENDING
 
             invitation: Invitation
             match invitation_info:
@@ -1532,7 +1529,7 @@ class PGInviteComponent(BaseInviteComponent):
                     token=token,
                     created_on=invitation_info.created_on,
                     administrators=administrators,
-                    status=InvitationStatus.READY,
+                    status=InvitationStatus.PENDING,
                 )
             case DeviceInvitationInfo():
                 return DeviceInvitation(
@@ -1541,7 +1538,7 @@ class PGInviteComponent(BaseInviteComponent):
                     created_by=invitation_info.created_by,
                     token=token,
                     created_on=invitation_info.created_on,
-                    status=InvitationStatus.READY,
+                    status=InvitationStatus.PENDING,
                 )
             case ShamirRecoveryInvitationInfo():
                 shamir_recovery_recipients = await self._get_shamir_recovery_recipients(
@@ -1551,7 +1548,7 @@ class PGInviteComponent(BaseInviteComponent):
                     created_by=invitation_info.created_by,
                     token=token,
                     created_on=invitation_info.created_on,
-                    status=InvitationStatus.READY,
+                    status=InvitationStatus.PENDING,
                     claimer_user_id=invitation_info.claimer_user_id,
                     claimer_human_handle=invitation_info.claimer_human_handle,
                     threshold=invitation_info.shamir_recovery_threshold,
@@ -1632,7 +1629,6 @@ class PGInviteComponent(BaseInviteComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> dict[UserID, list[Invitation]]:
         per_user_invitations: dict[UserID, list[Invitation]] = {}
-        invitations_with_claimer_online = self._claimers_ready[organization_id]
 
         # Loop over rows
         rows = await conn.fetch(*_q_list_all_invitations(organization_id=organization_id.str))
@@ -1650,10 +1646,8 @@ class PGInviteComponent(BaseInviteComponent):
             if invitation_info.deleted_on:
                 assert invitation_info.deleted_reason is not None
                 status = invitation_info.deleted_reason
-            elif invitation_info.token in invitations_with_claimer_online:
-                status = InvitationStatus.READY
             else:
-                status = InvitationStatus.IDLE
+                status = InvitationStatus.PENDING
 
             # Append the invite
             match invitation_info:

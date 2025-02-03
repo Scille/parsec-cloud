@@ -59,11 +59,11 @@ ALICE_USER_ID = UserID.test_from_nickname("alice")
                 events.EventInvitation,
                 token=INVITATION_TOKEN,
                 greeter=ALICE_USER_ID,
-                status=InvitationStatus.READY,
+                status=InvitationStatus.PENDING,
             ),
             authenticated_cmds.latest.events_listen.APIEventInvitation(
                 token=INVITATION_TOKEN,
-                invitation_status=InvitationStatus.READY,
+                invitation_status=InvitationStatus.PENDING,
             ),
             id="invitation",
         ),

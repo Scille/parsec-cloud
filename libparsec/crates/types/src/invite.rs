@@ -67,8 +67,7 @@ impl Display for InvitationType {
 #[derive(Debug, Copy, Clone, Hash, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum InvitationStatus {
-    Idle,
-    Ready,
+    Pending,
     Finished,
     Cancelled,
 }

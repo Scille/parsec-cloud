@@ -86,11 +86,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     return InvitationStatus.CANCELLED
                 case MemoryInvitationDeletedReason.FINISHED:
                     return InvitationStatus.FINISHED
-
-        elif invitation.token in self._claimers_ready[organization_id]:
-            return InvitationStatus.READY
-        else:
-            return InvitationStatus.IDLE
+        return InvitationStatus.PENDING
 
     def _get_shamir_recovery_invitation(
         self, org: MemoryOrganization, invitation: MemoryInvitation
@@ -118,7 +114,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         claimer_human_handle = org.users[invitation.claimer_user_id].cooked.human_handle
 
         # Consider an active invitation as CANCELLED if the corresponding shamir recovery is deleted
-        if status in (InvitationStatus.IDLE, InvitationStatus.READY) and shamir_recovery.is_deleted:
+        if status == InvitationStatus.PENDING and shamir_recovery.is_deleted:
             status = InvitationStatus.CANCELLED
 
         return ShamirRecoveryInvitation(
@@ -234,7 +230,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     organization_id=organization_id,
                     token=token,
                     greeter=author_user_id,
-                    status=InvitationStatus.IDLE,
+                    status=InvitationStatus.PENDING,
                 )
             )
 
@@ -317,7 +313,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     organization_id=organization_id,
                     token=token,
                     greeter=author_user_id,
-                    status=InvitationStatus.IDLE,
+                    status=InvitationStatus.PENDING,
                 )
             )
 
@@ -424,7 +420,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     organization_id=organization_id,
                     token=token,
                     greeter=author_user_id,
-                    status=InvitationStatus.IDLE,
+                    status=InvitationStatus.PENDING,
                 )
             )
 

@@ -1095,8 +1095,7 @@
                 "no": "Conserver l'invitation"
             },
             "status": {
-                "ready": "Prête",
-                "idle": "Inactive",
+                "pending": "En attente",
                 "finished": "Terminée",
                 "cancelled": "Annulée"
             }
