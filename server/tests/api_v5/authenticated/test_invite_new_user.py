@@ -44,7 +44,7 @@ async def test_authenticated_invite_new_user_ok_new(
                 organization_id=minimalorg.organization_id,
                 greeter=minimalorg.alice.user_id,
                 token=invitation_token,
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         )
 
@@ -65,7 +65,7 @@ async def test_authenticated_invite_new_user_ok_new(
                         None,
                     )
                 ],
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         ]
     }
@@ -96,7 +96,7 @@ async def test_authenticated_invite_new_user_ok_already_exist(
                 organization_id=minimalorg.organization_id,
                 greeter=minimalorg.alice.user_id,
                 token=invitation_token,
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         )
 
@@ -117,7 +117,7 @@ async def test_authenticated_invite_new_user_ok_already_exist(
                 organization_id=minimalorg.organization_id,
                 greeter=minimalorg.alice.user_id,
                 token=invitation_token,
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         )
 
@@ -202,7 +202,7 @@ async def test_authenticated_invite_new_user_send_email_bad_outcome(
                 organization_id=minimalorg.organization_id,
                 greeter=minimalorg.alice.user_id,
                 token=invitation_token,
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         )
 
@@ -223,7 +223,7 @@ async def test_authenticated_invite_new_user_send_email_bad_outcome(
                         None,
                     )
                 ],
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         ]
     }
@@ -259,7 +259,7 @@ async def test_authenticated_invite_new_user_with_shared_user_invitations(
                 organization_id=coolorg.organization_id,
                 greeter=coolorg.bob.user_id,
                 token=coolorg.invited_zack.token,
-                status=InvitationStatus.IDLE,
+                status=InvitationStatus.PENDING,
             )
         )
 

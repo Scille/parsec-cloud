@@ -47,8 +47,7 @@ export enum InvitationEmailSentStatus {
 export enum InvitationStatus {
     Cancelled = 'InvitationStatusCancelled',
     Finished = 'InvitationStatusFinished',
-    Idle = 'InvitationStatusIdle',
-    Ready = 'InvitationStatusReady',
+    Pending = 'InvitationStatusPending',
 }
 
 export enum Platform {

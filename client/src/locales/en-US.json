@@ -1099,8 +1099,7 @@
                 "no": "Keep invitation"
             },
             "status": {
-                "ready": "Ready",
-                "idle": "Idle",
+                "pending": "Pending",
                 "finished": "Finished",
                 "cancelled": "Cancelled"
             }

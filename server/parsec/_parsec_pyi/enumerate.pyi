@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 class InvitationStatus:
-    IDLE: InvitationStatus
-    READY: InvitationStatus
+    PENDING: InvitationStatus
     CANCELLED: InvitationStatus
     FINISHED: InvitationStatus
     VALUES: tuple[InvitationStatus, ...]

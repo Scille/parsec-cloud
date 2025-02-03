@@ -14,8 +14,11 @@ use pyo3::{
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
     InvitationStatus,
     libparsec_types::InvitationStatus,
-    ["IDLE", idle, libparsec_types::InvitationStatus::Idle],
-    ["READY", ready, libparsec_types::InvitationStatus::Ready],
+    [
+        "PENDING",
+        pending,
+        libparsec_types::InvitationStatus::Pending
+    ],
     [
         "CANCELLED",
         cancelled,

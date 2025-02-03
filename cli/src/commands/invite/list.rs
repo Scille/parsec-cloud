@@ -56,8 +56,7 @@ pub async fn list_invite(_args: Args, client: &StartedClient) -> anyhow::Result<
             let token = token.hex();
 
             let display_status = match status {
-                InvitationStatus::Idle => format!("{YELLOW}idle{RESET}"),
-                InvitationStatus::Ready => format!("{GREEN}ready{RESET}"),
+                InvitationStatus::Pending => format!("{YELLOW}pending{RESET}"),
                 InvitationStatus::Cancelled => format!("{RED}cancelled{RESET}"),
                 InvitationStatus::Finished => format!("{GREEN}finished{RESET}"),
             };

@@ -261,7 +261,6 @@ class RealmRole(Enum):
 
 
 class InvitationStatus(Enum):
-    Idle = EnumItemUnit
-    Ready = EnumItemUnit
+    Pending = EnumItemUnit
     Finished = EnumItemUnit
     Cancelled = EnumItemUnit

@@ -147,7 +147,7 @@ export async function listUserInvitations(options?: {
             },
             userId: '1234',
           },
-          status: InvitationStatus.Ready,
+          status: InvitationStatus.Pending,
         },
         {
           tag: InviteListItemTag.User,
@@ -165,7 +165,7 @@ export async function listUserInvitations(options?: {
             userId: '1234',
           },
           claimerEmail: 'gale@waterdeep.faerun',
-          status: InvitationStatus.Ready,
+          status: InvitationStatus.Pending,
         },
       ],
     };

@@ -92,20 +92,20 @@ pub fn rep_ok() {
             ),
         ),
         (
-            // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-03-29)
+            // Generated from Parsec 3.2.5-a.0+dev
             // Content:
-            //   event: "INVITATION"
-            //   invitation_status: "IDLE"
-            //   status: "ok"
-            //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
+            //   status: 'ok'
+            //   event: 'INVITATION'
+            //   invitation_status: 'PENDING'
+            //   token: 0xd864b93ded264aae9ae583fd3d40c45a
             &hex!(
                 "84a6737461747573a26f6ba56576656e74aa494e5649544154494f4eb1696e76697461"
-                "74696f6e5f737461747573a449444c45a5746f6b656ec410d864b93ded264aae9ae583"
-                "fd3d40c45a"
+                "74696f6e5f737461747573a750454e44494e47a5746f6b656ec410d864b93ded264aae"
+                "9ae583fd3d40c45a"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::Invitation {
-                    invitation_status: InvitationStatus::Idle,
+                    invitation_status: InvitationStatus::Pending,
                     token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 },
             ),
@@ -171,6 +171,7 @@ pub fn rep_ok() {
     ];
 
     for (raw, expected) in raw_expected {
+        println!("***expected: {:?}", expected.dump().unwrap());
         let data = authenticated_cmds::events_listen::Rep::load(raw).unwrap();
 
         assert_eq!(data, expected);
