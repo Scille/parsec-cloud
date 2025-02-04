@@ -21,7 +21,7 @@ msTest('Go through the join user process', async ({ home, userJoinModal }) => {
   const nextButton = userJoinModal.locator('#next-button');
   const title = userJoinModal.locator('.modal-header__title');
   await expect(title).toHaveText('Welcome to Parsec!');
-  await expect(nextButton).toHaveText('I understand!');
+  await expect(nextButton).toHaveText('Continue with ');
   await nextButton.click();
   await expect(title).toHaveText('Get host code');
   await expect(userJoinModal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 0);
@@ -66,7 +66,7 @@ msTest('User join select invalid SAS code', async ({ userJoinModal }) => {
   const nextButton = userJoinModal.locator('#next-button');
   const title = userJoinModal.locator('.modal-header__title');
   await expect(title).toHaveText('Welcome to Parsec!');
-  await expect(nextButton).toHaveText('I understand!');
+  await expect(nextButton).toHaveText('Continue with ');
   await nextButton.click();
   await expect(title).toHaveText('Get host code');
   await expect(userJoinModal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 0);
@@ -74,14 +74,14 @@ msTest('User join select invalid SAS code', async ({ userJoinModal }) => {
   await sasCodeButtons.nth(0).click();
   await expect(userJoinModal.page()).toShowToast('You did not select the correct code. Please restart the onboarding process.', 'Error');
   await expect(title).toHaveText('Welcome to Parsec!');
-  await expect(nextButton).toHaveText('I understand!');
+  await expect(nextButton).toHaveText('Continue with ');
 });
 
 msTest('User join select no SAS code', async ({ userJoinModal }) => {
   const nextButton = userJoinModal.locator('#next-button');
   const title = userJoinModal.locator('.modal-header__title');
   await expect(title).toHaveText('Welcome to Parsec!');
-  await expect(nextButton).toHaveText('I understand!');
+  await expect(nextButton).toHaveText('Continue with ');
   await nextButton.click();
   await expect(title).toHaveText('Get host code');
   await expect(userJoinModal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 0);
@@ -92,7 +92,7 @@ msTest('User join select no SAS code', async ({ userJoinModal }) => {
     'Error',
   );
   await expect(title).toHaveText('Welcome to Parsec!');
-  await expect(nextButton).toHaveText('I understand!');
+  await expect(nextButton).toHaveText('Continue with ');
 });
 
 msTest('Close user join process', async ({ userJoinModal }) => {

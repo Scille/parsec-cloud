@@ -914,7 +914,7 @@
         "logIn": "Me connecter",
         "createDevice": "Rejoindre l'organisation",
         "validateUserInfo": "Valider mes informations",
-        "understand": "J'ai compris !",
+        "continueWith": "Continuer avec {greeter}",
         "waitingForHost": "(En attente d'un administrateur)",
         "linkFormLabel": "Lien d'invitation",
         "linkFormPlaceholder": "parsec3://exemple.com/Org?...",

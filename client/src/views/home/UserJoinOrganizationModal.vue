@@ -337,19 +337,19 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
     querying.value = false;
   }
 }
-
-function getNextButtonText(): string {
-  if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
-    return 'JoinOrganization.validateUserInfo';
-  } else if (pageStep.value === UserJoinOrganizationStep.Authentication) {
-    return 'JoinOrganization.createDevice';
-  } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
-    return 'JoinOrganization.logIn';
-  } else if (pageStep.value === UserJoinOrganizationStep.WaitForHost) {
-    return 'JoinOrganization.understand';
+function getNextButtonText(): Translatable {
+  switch (pageStep.value) {
+    case UserJoinOrganizationStep.GetUserInfo:
+      return { key: 'JoinOrganization.validateUserInfo' };
+    case UserJoinOrganizationStep.Authentication:
+      return { key: 'JoinOrganization.createDevice' };
+    case UserJoinOrganizationStep.Finish:
+      return { key: 'JoinOrganization.logIn' };
+    case UserJoinOrganizationStep.WaitForHost:
+      return { key: 'JoinOrganization.continueWith', data: { greeter: claimer.value.greeter?.label } };
+    default:
+      return { key: '' };
   }
-
-  return '';
 }
 
 const nextButtonIsVisible = computed(() => {
