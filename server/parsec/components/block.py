@@ -32,6 +32,7 @@ class BlockReadBadOutcome(BadOutcomeEnum):
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
+    REALM_NOT_FOUND = auto()
     BLOCK_NOT_FOUND = auto()
     STORE_UNAVAILABLE = auto()
 
@@ -53,7 +54,7 @@ class BaseBlockComponent:
     #
 
     async def read(
-        self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID, block_id: BlockID
     ) -> BlockReadResult | BlockReadBadOutcome:
         raise NotImplementedError
 
@@ -86,6 +87,7 @@ class BaseBlockComponent:
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             block_id=req.block_id,
+            realm_id=req.realm_id,
         )
         match outcome:
             case BlockReadResult() as result:
@@ -94,6 +96,8 @@ class BaseBlockComponent:
                     key_index=result.key_index,
                     needed_realm_certificate_timestamp=result.needed_realm_certificate_timestamp,
                 )
+            case BlockReadBadOutcome.REALM_NOT_FOUND:
+                return authenticated_cmds.latest.block_read.RepRealmNotFound()
             case BlockReadBadOutcome.BLOCK_NOT_FOUND:
                 return authenticated_cmds.latest.block_read.RepBlockNotFound()
             case BlockReadBadOutcome.AUTHOR_NOT_ALLOWED:

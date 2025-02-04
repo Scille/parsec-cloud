@@ -8,6 +8,7 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
+    VlobID,
 )
 from parsec.components.block import (
     BlockReadBadOutcome,
@@ -60,6 +61,15 @@ my_user AS (
     WHERE _id = (SELECT user_ FROM my_device)
     LIMIT 1
 ),
+my_realm AS (
+    SELECT
+        _id
+    FROM realm
+    WHERE
+        organization = (SELECT _id FROM my_organization)
+        AND realm_id = $realm_id
+    LIMIT 1
+),
 my_block AS (
     SELECT
         _id,
@@ -68,6 +78,7 @@ my_block AS (
     FROM block
     WHERE
         organization = (SELECT _id FROM my_organization)
+        AND realm = (SELECT _id FROM my_realm)
         AND block_id = $block_id
     LIMIT 1
 )
@@ -82,7 +93,7 @@ SELECT
         FROM realm_topic
         WHERE
             organization = (SELECT _id FROM my_organization)
-            AND realm = (SELECT realm FROM my_block)
+            AND realm = (SELECT _id FROM my_realm)
         LIMIT 1
     ) AS last_realm_certificate_timestamp,
     COALESCE(
@@ -92,7 +103,7 @@ SELECT
             FROM realm_user_role
             WHERE
                 realm_user_role.user_ = (SELECT _id FROM my_user)
-                AND realm_user_role.realm = (SELECT realm FROM my_block)
+                AND realm_user_role.realm = (SELECT _id FROM my_realm)
             ORDER BY certified_on DESC
             LIMIT 1
         ),
@@ -108,6 +119,7 @@ async def block_read(
     pool: AsyncpgPool,
     organization_id: OrganizationID,
     author: DeviceID,
+    realm_id: VlobID,
     block_id: BlockID,
 ) -> BlockReadResult | BlockReadBadOutcome:
     # We shouldn't keep topics lock during step 2:
@@ -118,7 +130,10 @@ async def block_read(
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
             *_q_read_fetch_data(
-                organization_id=organization_id.str, device_id=author, block_id=block_id
+                organization_id=organization_id.str,
+                device_id=author,
+                realm_id=realm_id,
+                block_id=block_id,
             )
         )
     assert row is not None
@@ -167,22 +182,23 @@ async def block_read(
         case unknown:
             assert False, repr(unknown)
 
-    # 1.2) Check block
+    # 1.2) Check realm
+
+    match row["last_realm_certificate_timestamp"]:
+        case DateTime() as last_realm_certificate_timestamp:
+            pass
+        case None:
+            return BlockReadBadOutcome.REALM_NOT_FOUND
+        case unknown:
+            assert False, repr(unknown)
+
+    # 1.3) Check block
 
     match row["block_key_index"]:
         case int() as block_key_index:
             pass
         case None:
             return BlockReadBadOutcome.BLOCK_NOT_FOUND
-        case unknown:
-            assert False, repr(unknown)
-
-    # 1.3) Check realm
-    # (Note since block exists, then it must belong to an existing realm !)
-
-    match row["last_realm_certificate_timestamp"]:
-        case DateTime() as last_realm_certificate_timestamp:
-            pass
         case unknown:
             assert False, repr(unknown)
 
@@ -209,6 +225,7 @@ async def block_read(
             logger.warning(
                 "Block present in database but not in object storage",
                 organization_id=organization_id,
+                realm_id=realm_id,
                 block_id=block_id,
             )
             return BlockReadBadOutcome.STORE_UNAVAILABLE

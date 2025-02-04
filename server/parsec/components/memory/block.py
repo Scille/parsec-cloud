@@ -27,7 +27,7 @@ class MemoryBlockComponent(BaseBlockComponent):
 
     @override
     async def read(
-        self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
+        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID, block_id: BlockID
     ) -> BlockReadResult | BlockReadBadOutcome:
         try:
             org = self._data.organizations[organization_id]
@@ -41,12 +41,17 @@ class MemoryBlockComponent(BaseBlockComponent):
         author_user_id = author_device.cooked.user_id
 
         try:
+            realm = org.realms[realm_id]
+        except KeyError:
+            return BlockReadBadOutcome.REALM_NOT_FOUND
+
+        try:
             block_info = org.blocks[block_id]
         except KeyError:
             return BlockReadBadOutcome.BLOCK_NOT_FOUND
 
-        realm = org.realms.get(block_info.realm_id)
-        assert realm is not None  # Sanity check, this consistency is enforced by the database
+        if block_info.realm_id != realm_id:
+            return BlockReadBadOutcome.BLOCK_NOT_FOUND
 
         current_role = realm.get_current_role_for(author_user_id)
         if current_role is None:
