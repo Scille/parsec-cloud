@@ -134,6 +134,12 @@ export class DeviceClaim {
         ok: true,
         value: {
           handle: DEFAULT_HANDLE,
+          greeterUserId: '1234',
+          greeterHumanHandle: {
+            email: 'gale@waterdeep.faerun',
+            // cspell:disable-next-line
+            label: 'Gale Dekarios',
+          },
           greeterSas: this.correctSASCode,
           greeterSasChoices: this.SASCodeChoices,
         },

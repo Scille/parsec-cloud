@@ -915,7 +915,7 @@
         "createDevice": "Rejoindre l'organisation",
         "validateUserInfo": "Valider mes informations",
         "understand": "J'ai compris !",
-        "waitingForHost": "(En attente de l'hôte)",
+        "waitingForHost": "(En attente d'un administrateur)",
         "linkFormLabel": "Lien d'invitation",
         "linkFormPlaceholder": "parsec3://exemple.com/Org?...",
         "successMessage": "Vous avez rejoint l'organisation avec succès.",
@@ -927,9 +927,10 @@
         },
         "instructions": {
             "start": {
-                "first": "Afin d'éviter toute attaque, vous devez être en contact direct avec la personne durant toute la durée du processus d'accueil.",
-                "second": "L'hôte devra se rendre dans Utilisateurs puis Invitations en cours pour commencer le processus.",
-                "greeter": "Vous serez accueilli(e) dans l'organisation {organizationName} par {greeter} <{greeterEmail}>."
+                "first": "Afin d'éviter toute attaque, vous devez être en contact direct avec un administrateur durant toute la durée du processus d'accueil.",
+                "secondWithoutPreferredGreeter": "Vous allez être accueilli(e) dans l'organisation {organizationName}. Veuillez contacter un administrateur pour commencer le processus.",
+                "secondWithPreferredGreeter": "Vous allez être accueilli(e) dans l'organisation {organizationName}. Veuillez contacter {greeter} ({greeterEmail}) ou un autre administrateur pour commencer le processus.",
+                "secondWithGreeterReady": "L'administrateur {greeter} ({greeterEmail}) est prêt(e) à vous accueillir dans l'organisation {organizationName}."
             },
             "finish": {
                 "first": "Vous pouvez maintenant vous connecter à Parsec.",

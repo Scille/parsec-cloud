@@ -822,6 +822,22 @@ fn struct_device_claim_in_progress1_info_js_to_rs<'a>(
             v
         }
     };
+    let greeter_user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let greeter_human_handle = {
+        let js_val: Handle<JsObject> = obj.get(cx, "greeterHumanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
+    };
     let greeter_sas = {
         let js_val: Handle<JsString> = obj.get(cx, "greeterSas")?;
         {
@@ -856,6 +872,8 @@ fn struct_device_claim_in_progress1_info_js_to_rs<'a>(
     };
     Ok(libparsec::DeviceClaimInProgress1Info {
         handle,
+        greeter_user_id,
+        greeter_human_handle,
         greeter_sas,
         greeter_sas_choices,
     })
@@ -869,6 +887,18 @@ fn struct_device_claim_in_progress1_info_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
     js_obj.set(cx, "handle", js_handle)?;
+    let js_greeter_user_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.greeter_user_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
+    let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.greeter_human_handle)?;
+    js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
     let js_greeter_sas = JsString::try_new(cx, rs_obj.greeter_sas).or_throw(cx)?;
     js_obj.set(cx, "greeterSas", js_greeter_sas)?;
     let js_greeter_sas_choices = {
@@ -1716,6 +1746,22 @@ fn struct_shamir_recovery_claim_in_progress1_info_js_to_rs<'a>(
             v
         }
     };
+    let greeter_user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let greeter_human_handle = {
+        let js_val: Handle<JsObject> = obj.get(cx, "greeterHumanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
+    };
     let greeter_sas = {
         let js_val: Handle<JsString> = obj.get(cx, "greeterSas")?;
         {
@@ -1750,6 +1796,8 @@ fn struct_shamir_recovery_claim_in_progress1_info_js_to_rs<'a>(
     };
     Ok(libparsec::ShamirRecoveryClaimInProgress1Info {
         handle,
+        greeter_user_id,
+        greeter_human_handle,
         greeter_sas,
         greeter_sas_choices,
     })
@@ -1763,6 +1811,18 @@ fn struct_shamir_recovery_claim_in_progress1_info_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
     js_obj.set(cx, "handle", js_handle)?;
+    let js_greeter_user_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.greeter_user_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
+    let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.greeter_human_handle)?;
+    js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
     let js_greeter_sas = JsString::try_new(cx, rs_obj.greeter_sas).or_throw(cx)?;
     js_obj.set(cx, "greeterSas", js_greeter_sas)?;
     let js_greeter_sas_choices = {
@@ -2570,6 +2630,22 @@ fn struct_user_claim_in_progress1_info_js_to_rs<'a>(
             v
         }
     };
+    let greeter_user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let greeter_human_handle = {
+        let js_val: Handle<JsObject> = obj.get(cx, "greeterHumanHandle")?;
+        struct_human_handle_js_to_rs(cx, js_val)?
+    };
     let greeter_sas = {
         let js_val: Handle<JsString> = obj.get(cx, "greeterSas")?;
         {
@@ -2604,6 +2680,8 @@ fn struct_user_claim_in_progress1_info_js_to_rs<'a>(
     };
     Ok(libparsec::UserClaimInProgress1Info {
         handle,
+        greeter_user_id,
+        greeter_human_handle,
         greeter_sas,
         greeter_sas_choices,
     })
@@ -2617,6 +2695,18 @@ fn struct_user_claim_in_progress1_info_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_handle = JsNumber::new(cx, rs_obj.handle as f64);
     js_obj.set(cx, "handle", js_handle)?;
+    let js_greeter_user_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.greeter_user_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
+    let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.greeter_human_handle)?;
+    js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
     let js_greeter_sas = JsString::try_new(cx, rs_obj.greeter_sas).or_throw(cx)?;
     js_obj.set(cx, "greeterSas", js_greeter_sas)?;
     let js_greeter_sas_choices = {
@@ -3862,11 +3952,23 @@ fn variant_any_claim_retrieved_info_js_to_rs<'a>(
                     v
                 }
             };
+            let preferred_greeter = {
+                let js_val: Handle<JsValue> = obj.get(cx, "preferredGreeter")?;
+                {
+                    if js_val.is_a::<JsNull, _>(cx) {
+                        None
+                    } else {
+                        let js_val = js_val.downcast_or_throw::<JsObject, _>(cx)?;
+                        Some(struct_user_greeting_administrator_js_to_rs(cx, js_val)?)
+                    }
+                }
+            };
             Ok(libparsec::AnyClaimRetrievedInfo::User {
                 handle,
                 claimer_email,
                 created_by,
                 administrators,
+                preferred_greeter,
             })
         }
         _ => cx.throw_type_error("Object is not a AnyClaimRetrievedInfo"),
@@ -3971,6 +4073,7 @@ fn variant_any_claim_retrieved_info_rs_to_js<'a>(
             claimer_email,
             created_by,
             administrators,
+            preferred_greeter,
             ..
         } => {
             let js_tag = JsString::try_new(cx, "AnyClaimRetrievedInfoUser").or_throw(cx)?;
@@ -3991,6 +4094,11 @@ fn variant_any_claim_retrieved_info_rs_to_js<'a>(
                 js_array
             };
             js_obj.set(cx, "administrators", js_administrators)?;
+            let js_preferred_greeter = match preferred_greeter {
+                Some(elem) => struct_user_greeting_administrator_rs_to_js(cx, elem)?.as_value(cx),
+                None => JsNull::new(cx).as_value(cx),
+            };
+            js_obj.set(cx, "preferredGreeter", js_preferred_greeter)?;
         }
     }
     Ok(js_obj)

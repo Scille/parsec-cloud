@@ -64,13 +64,32 @@
             <ms-informative-text>
               {{ $msTranslate('JoinOrganization.instructions.start.first') }}
             </ms-informative-text>
-            <ms-informative-text v-if="!claimer.greeter">
-              {{ $msTranslate('JoinOrganization.instructions.start.second') }}
+            <ms-informative-text v-if="!claimer.preferredGreeter && !claimer.greeter">
+              {{
+                $msTranslate({
+                  key: 'JoinOrganization.instructions.start.secondWithoutPreferredGreeter',
+                  data: {
+                    organizationName: organizationName,
+                  },
+                })
+              }}
+            </ms-informative-text>
+            <ms-informative-text v-if="claimer.preferredGreeter && !claimer.greeter">
+              {{
+                $msTranslate({
+                  key: 'JoinOrganization.instructions.start.secondWithPreferredGreeter',
+                  data: {
+                    greeter: claimer.preferredGreeter.label,
+                    greeterEmail: claimer.preferredGreeter.email,
+                    organizationName: organizationName,
+                  },
+                })
+              }}
             </ms-informative-text>
             <ms-informative-text v-if="claimer.greeter">
               {{
                 $msTranslate({
-                  key: 'JoinOrganization.instructions.start.greeter',
+                  key: 'JoinOrganization.instructions.start.secondWithGreeterReady',
                   data: {
                     greeter: claimer.greeter.label,
                     greeterEmail: claimer.greeter.email,

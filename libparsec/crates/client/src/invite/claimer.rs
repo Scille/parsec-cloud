@@ -364,6 +364,17 @@ impl UserClaimListAdministratorsCtx {
         &self.administrators
     }
 
+    pub fn preferred_greeter(&self) -> Option<UserGreetingAdministrator> {
+        match self.created_by {
+            InviteInfoInvitationCreatedBy::ExternalService { .. } => None,
+            InviteInfoInvitationCreatedBy::User { user_id, .. } => self
+                .administrators
+                .iter()
+                .find(|administrator| administrator.user_id == user_id)
+                .cloned(),
+        }
+    }
+
     pub fn list_initial_ctxs(self) -> Vec<UserClaimInitialCtx> {
         self.administrators
             .iter()
@@ -1246,6 +1257,14 @@ impl UserClaimInProgress1Ctx {
 pub struct DeviceClaimInProgress1Ctx(BaseClaimInProgress1Ctx);
 
 impl DeviceClaimInProgress1Ctx {
+    pub fn greeter_user_id(&self) -> &UserID {
+        &self.0.greeter_user_id
+    }
+
+    pub fn greeter_human_handle(&self) -> &HumanHandle {
+        &self.0.greeter_human_handle
+    }
+
     pub fn greeter_sas(&self) -> &SASCode {
         &self.0.greeter_sas
     }
@@ -1274,6 +1293,14 @@ impl DeviceClaimInProgress1Ctx {
 pub struct ShamirRecoveryClaimInProgress1Ctx(BaseClaimInProgress1Ctx);
 
 impl ShamirRecoveryClaimInProgress1Ctx {
+    pub fn greeter_user_id(&self) -> &UserID {
+        &self.0.greeter_user_id
+    }
+
+    pub fn greeter_human_handle(&self) -> &HumanHandle {
+        &self.0.greeter_human_handle
+    }
+
     pub fn greeter_sas(&self) -> &SASCode {
         &self.0.greeter_sas
     }

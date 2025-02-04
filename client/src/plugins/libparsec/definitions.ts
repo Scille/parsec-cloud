@@ -147,6 +147,8 @@ export interface DeviceClaimFinalizeInfo {
 
 export interface DeviceClaimInProgress1Info {
     handle: Handle
+    greeterUserId: UserID
+    greeterHumanHandle: HumanHandle
     greeterSas: SASCode
     greeterSasChoices: Array<SASCode>
 }
@@ -228,6 +230,8 @@ export interface ServerConfig {
 
 export interface ShamirRecoveryClaimInProgress1Info {
     handle: Handle
+    greeterUserId: UserID
+    greeterHumanHandle: HumanHandle
     greeterSas: SASCode
     greeterSasChoices: Array<SASCode>
 }
@@ -297,6 +301,8 @@ export interface UserClaimFinalizeInfo {
 
 export interface UserClaimInProgress1Info {
     handle: Handle
+    greeterUserId: UserID
+    greeterHumanHandle: HumanHandle
     greeterSas: SASCode
     greeterSasChoices: Array<SASCode>
 }
@@ -430,6 +436,7 @@ export interface AnyClaimRetrievedInfoUser {
     claimerEmail: string
     createdBy: InviteInfoInvitationCreatedBy
     administrators: Array<UserGreetingAdministrator>
+    preferredGreeter: UserGreetingAdministrator | null
 }
 export type AnyClaimRetrievedInfo =
   | AnyClaimRetrievedInfoDevice

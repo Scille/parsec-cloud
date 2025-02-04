@@ -32,6 +32,7 @@ export class UserClaim {
   guestSASCode: SASCode;
   device: AvailableDevice | null;
   greeter: HumanHandle | null;
+  preferredGreeter: HumanHandle | null;
 
   constructor() {
     this.handle = null;
@@ -41,6 +42,7 @@ export class UserClaim {
     this.SASCodeChoices = [];
     this.device = null;
     this.greeter = null;
+    this.preferredGreeter = null;
   }
 
   async abort(): Promise<void> {
@@ -57,6 +59,7 @@ export class UserClaim {
     this.SASCodeChoices = [];
     this.device = null;
     this.greeter = null;
+    this.preferredGreeter = null;
   }
 
   _assertState(nullCanceller: boolean, nullHandle: boolean): void {
@@ -87,16 +90,13 @@ export class UserClaim {
           throw Error('Unexpected tag');
         }
         this.handle = result.value.handle;
-        if (result.value.createdBy.tag !== InviteInfoInvitationCreatedByTag.User) {
-          throw Error('Created by external service');
-        }
-        this.greeter = result.value.createdBy.humanHandle;
+        this.preferredGreeter = result.value.preferredGreeter?.humanHandle ?? null;
       }
       return result as Result<AnyClaimRetrievedInfoUser, ClaimerRetrieveInfoError>;
     } else {
       await wait(MOCK_WAITING_TIME);
       this.handle = DEFAULT_HANDLE;
-      this.greeter = {
+      this.preferredGreeter = {
         email: 'gale@waterdeep.faerun',
         // cspell:disable-next-line
         label: 'Gale Dekarios',
@@ -128,6 +128,16 @@ export class UserClaim {
               onlineStatus: UserOnlineStatus.Unknown,
             },
           ],
+          preferredGreeter: {
+            userId: '1234',
+            humanHandle: {
+              email: 'gale@waterdeep.faerun',
+              // cspell:disable-next-line
+              label: 'Gale Dekarios',
+            },
+            lastGreetingAttemptJoinedOn: null,
+            onlineStatus: UserOnlineStatus.Unknown,
+          },
         },
       };
     }
@@ -142,6 +152,7 @@ export class UserClaim {
       if (result.ok) {
         this.SASCodeChoices = result.value.greeterSasChoices;
         this.correctSASCode = result.value.greeterSas;
+        this.greeter = result.value.greeterHumanHandle;
         this.handle = result.value.handle;
       }
       this.canceller = null;
@@ -153,6 +164,12 @@ export class UserClaim {
         ok: true,
         value: {
           handle: DEFAULT_HANDLE,
+          greeterUserId: '1234',
+          greeterHumanHandle: {
+            email: 'gale@waterdeep.faerun',
+            // cspell:disable-next-line
+            label: 'Gale Dekarios',
+          },
           greeterSas: '2DEF',
           greeterSasChoices: ['1ABC', '2DEF', '3GHI', '4JKL'],
         },

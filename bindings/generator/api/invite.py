@@ -194,6 +194,7 @@ class AnyClaimRetrievedInfo(Variant):
         claimer_email: str
         created_by: InviteInfoInvitationCreatedBy
         administrators: list[UserGreetingAdministrator]
+        preferred_greeter: Optional[UserGreetingAdministrator]
 
     class Device:
         handle: Handle
@@ -284,18 +285,24 @@ def claimer_shamir_recovery_pick_recipient(
 
 class UserClaimInProgress1Info(Structure):
     handle: Handle
+    greeter_user_id: UserID
+    greeter_human_handle: HumanHandle
     greeter_sas: SASCode
     greeter_sas_choices: list[SASCode]
 
 
 class DeviceClaimInProgress1Info(Structure):
     handle: Handle
+    greeter_user_id: UserID
+    greeter_human_handle: HumanHandle
     greeter_sas: SASCode
     greeter_sas_choices: list[SASCode]
 
 
 class ShamirRecoveryClaimInProgress1Info(Structure):
     handle: Handle
+    greeter_user_id: UserID
+    greeter_human_handle: HumanHandle
     greeter_sas: SASCode
     greeter_sas_choices: list[SASCode]
 

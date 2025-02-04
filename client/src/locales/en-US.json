@@ -915,7 +915,7 @@
         "createDevice": "Join the organization",
         "validateUserInfo": "Validate my information",
         "understand": "I understand!",
-        "waitingForHost": "(Waiting for the host)",
+        "waitingForHost": "(Waiting for an administrator)",
         "linkFormLabel": "Invitation link",
         "linkFormPlaceholder": "parsec3://example.com/Org?...",
         "successMessage": "You successfully joined the organization.",
@@ -927,9 +927,10 @@
         },
         "instructions": {
             "start": {
-                "first": "In order to avoid any attack, you will have to be in direct contact with the host during the whole onboarding process.",
-                "second": "The host will have to go to Users, then Pending invitations to start the process.",
-                "greeter": "You will be welcomed into the organization {organizationName} by {greeter} <{greeterEmail}>."
+                "first": "In order to avoid any attack, you will have to be in direct contact with an administrator during the whole onboarding process.",
+                "secondWithoutPreferredGreeter": "You will be welcomed into the organization {organizationName}. Please contact an administrator to start the process.",
+                "secondWithPreferredGreeter": "You will be welcomed into the organization {organizationName}. Please contact {greeter} ({greeterEmail}) or another administrator to start the process.",
+                "secondWithGreeterReady": "The administrator {greeter} ({greeterEmail}) is ready to welcome you into the organization {organizationName}."
             },
             "finish": {
                 "first": "You can now log in to Parsec.",

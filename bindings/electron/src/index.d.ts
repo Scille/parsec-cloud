@@ -121,6 +121,8 @@ export interface DeviceClaimFinalizeInfo {
 
 export interface DeviceClaimInProgress1Info {
     handle: number
+    greeterUserId: string
+    greeterHumanHandle: HumanHandle
     greeterSas: string
     greeterSasChoices: Array<string>
 }
@@ -216,6 +218,8 @@ export interface ServerConfig {
 
 export interface ShamirRecoveryClaimInProgress1Info {
     handle: number
+    greeterUserId: string
+    greeterHumanHandle: HumanHandle
     greeterSas: string
     greeterSasChoices: Array<string>
 }
@@ -298,6 +302,8 @@ export interface UserClaimFinalizeInfo {
 
 export interface UserClaimInProgress1Info {
     handle: number
+    greeterUserId: string
+    greeterHumanHandle: HumanHandle
     greeterSas: string
     greeterSasChoices: Array<string>
 }
@@ -435,6 +441,7 @@ export interface AnyClaimRetrievedInfoUser {
     claimer_email: string
     created_by: InviteInfoInvitationCreatedBy
     administrators: Array<UserGreetingAdministrator>
+    preferred_greeter: UserGreetingAdministrator | null
 }
 export type AnyClaimRetrievedInfo =
   | AnyClaimRetrievedInfoDevice

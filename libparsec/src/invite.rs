@@ -239,12 +239,14 @@ pub async fn claimer_retrieve_info(
             let claimer_email = ctx.claimer_email().to_string();
             let created_by = ctx.created_by().to_owned();
             let administrators = ctx.administrators().to_owned();
+            let preferred_greeter = ctx.preferred_greeter().to_owned();
             let handle = register_handle(HandleItem::UserClaimListAdministrators(ctx));
             Ok(AnyClaimRetrievedInfo::User {
                 handle,
                 claimer_email,
                 created_by,
                 administrators,
+                preferred_greeter,
             })
         }
         libparsec_client::AnyClaimRetrievedInfoCtx::Device(ctx) => {
@@ -399,6 +401,7 @@ pub enum AnyClaimRetrievedInfo {
         claimer_email: String,
         created_by: InviteInfoInvitationCreatedBy,
         administrators: Vec<UserGreetingAdministrator>,
+        preferred_greeter: Option<UserGreetingAdministrator>,
     },
     Device {
         handle: Handle,
@@ -466,11 +469,15 @@ pub async fn claimer_user_wait_all_peers(
         let ctx = UserClaimInitialCtx::do_wait_multiple_peer(initial_ctxs).await?;
         let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
         let greeter_sas = ctx.greeter_sas().to_owned();
+        let greeter_user_id = ctx.greeter_user_id().to_owned();
+        let greeter_human_handle = ctx.greeter_human_handle().to_owned();
 
         let new_handle = register_handle(HandleItem::UserClaimInProgress1(ctx));
 
         Ok(UserClaimInProgress1Info {
             handle: new_handle,
+            greeter_user_id,
+            greeter_human_handle,
             greeter_sas,
             greeter_sas_choices,
         })
@@ -556,6 +563,8 @@ pub async fn claimer_user_initial_do_wait_peer(
 
     let work = async {
         let ctx = ctx.do_wait_peer().await?;
+        let greeter_user_id = ctx.greeter_user_id().to_owned();
+        let greeter_human_handle = ctx.greeter_human_handle().to_owned();
         let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
         let greeter_sas = ctx.greeter_sas().to_owned();
 
@@ -563,6 +572,8 @@ pub async fn claimer_user_initial_do_wait_peer(
 
         Ok(UserClaimInProgress1Info {
             handle: new_handle,
+            greeter_user_id,
+            greeter_human_handle,
             greeter_sas,
             greeter_sas_choices,
         })
@@ -590,6 +601,8 @@ pub async fn claimer_device_initial_do_wait_peer(
 
     let work = async {
         let ctx = ctx.do_wait_peer().await?;
+        let greeter_user_id = ctx.greeter_user_id().to_owned();
+        let greeter_human_handle = ctx.greeter_human_handle().to_owned();
         let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
         let greeter_sas = ctx.greeter_sas().to_owned();
 
@@ -597,6 +610,8 @@ pub async fn claimer_device_initial_do_wait_peer(
 
         Ok(DeviceClaimInProgress1Info {
             handle: new_handle,
+            greeter_user_id,
+            greeter_human_handle,
             greeter_sas,
             greeter_sas_choices,
         })
@@ -624,6 +639,8 @@ pub async fn claimer_shamir_recovery_initial_do_wait_peer(
 
     let work = async {
         let ctx = ctx.do_wait_peer().await?;
+        let greeter_user_id = ctx.greeter_user_id().to_owned();
+        let greeter_human_handle = ctx.greeter_human_handle().to_owned();
         let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
         let greeter_sas = ctx.greeter_sas().to_owned();
 
@@ -631,6 +648,8 @@ pub async fn claimer_shamir_recovery_initial_do_wait_peer(
 
         Ok(ShamirRecoveryClaimInProgress1Info {
             handle: new_handle,
+            greeter_user_id,
+            greeter_human_handle,
             greeter_sas,
             greeter_sas_choices,
         })
@@ -711,16 +730,22 @@ pub async fn claimer_shamir_recovery_in_progress_1_do_deny_trust(
 
 pub struct UserClaimInProgress1Info {
     pub handle: Handle,
+    pub greeter_user_id: UserID,
+    pub greeter_human_handle: HumanHandle,
     pub greeter_sas: SASCode,
     pub greeter_sas_choices: Vec<SASCode>,
 }
 pub struct DeviceClaimInProgress1Info {
     pub handle: Handle,
+    pub greeter_user_id: UserID,
+    pub greeter_human_handle: HumanHandle,
     pub greeter_sas: SASCode,
     pub greeter_sas_choices: Vec<SASCode>,
 }
 pub struct ShamirRecoveryClaimInProgress1Info {
     pub handle: Handle,
+    pub greeter_user_id: UserID,
+    pub greeter_human_handle: HumanHandle,
     pub greeter_sas: SASCode,
     pub greeter_sas_choices: Vec<SASCode>,
 }
