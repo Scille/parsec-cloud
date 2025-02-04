@@ -44,9 +44,12 @@ class PGBlockComponent(BaseBlockComponent):
         self,
         organization_id: OrganizationID,
         author: DeviceID,
+        realm_id: VlobID,
         block_id: BlockID,
     ) -> BlockReadResult | BlockReadBadOutcome:
-        return await block_read(self.blockstore, self.pool, organization_id, author, block_id)
+        return await block_read(
+            self.blockstore, self.pool, organization_id, author, realm_id, block_id
+        )
 
     @override
     async def create(
