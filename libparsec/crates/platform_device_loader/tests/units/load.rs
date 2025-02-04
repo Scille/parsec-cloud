@@ -3,8 +3,6 @@
 // `allow-unwrap-in-test` don't behave as expected, see:
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
-// TODO: Web support is not implemented
-#![cfg(not(target_arch = "wasm32"))]
 
 use crate::{load_device, LoadDeviceError};
 use libparsec_tests_fixtures::prelude::*;
@@ -15,12 +13,16 @@ use libparsec_types::prelude::*;
 // - load ok (relative path in access, hence config_dir is used)
 // - bad password
 
+#[cfg(not(target_arch = "wasm32"))]
 enum BadPathKind {
     UnknownPath,
     ExistingParent,
     NotAFile,
 }
 
+// Wasm impl do not use a filesystem, so we do not have invalidPath error except if the path
+// contain invalid utf-8 char.
+#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test]
 #[case::unknown_path(BadPathKind::UnknownPath)]
 #[case::existing_parent(BadPathKind::ExistingParent)]
@@ -48,8 +50,7 @@ async fn bad_path(tmp_path: TmpPath, #[case] kind: BadPathKind) {
 #[parsec_test]
 async fn bad_file_content(tmp_path: TmpPath) {
     let key_file = tmp_path.join("devices/my_device.keys");
-    std::fs::create_dir_all(key_file.parent().unwrap()).unwrap();
-    std::fs::write(&key_file, b"<dummy>").unwrap();
+    crate::tests::utils::create_device_file(&key_file, b"dummy");
 
     let access = DeviceAccessStrategy::Password {
         key_file,
@@ -84,8 +85,7 @@ async fn invalid_salt_size(tmp_path: TmpPath) {
     // Store it in a path compatible with the legacy format
     let key_file =
         tmp_path.join("devices/c17fc4c8bf#corp#alice@laptop/c17fc4c8bf#corp#alice@laptop.keys");
-    std::fs::create_dir_all(key_file.parent().unwrap()).unwrap();
-    std::fs::write(&key_file, content).unwrap();
+    crate::tests::utils::create_device_file(&key_file, content);
 
     let access = DeviceAccessStrategy::Password {
         key_file,
@@ -142,7 +142,7 @@ async fn testbed(env: &TestbedEnv) {
         Err(LoadDeviceError::DecryptionFailed)
     );
 
-    // Bad path
+    // Bad path (key file is missing)
 
     let bad_path_access = DeviceAccessStrategy::Password {
         key_file: env.discriminant_dir.join("devices/dummy.keys"),
