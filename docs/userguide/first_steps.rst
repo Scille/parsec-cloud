@@ -13,7 +13,7 @@ Welcome to Parsec! Here's a brief overview of the user interface.
 
 \1. **Organization section**: select your organization and access your organization details (if allowed by your profile).
 
-\2. **Shared workspaces**: list of workspaces created or shared with you.
+\2. **Recent workspaces and documents**: list of workspaces and documents you have accessed recently.
 
 \3. **Main menu**: access application settings and your user profile.
 
