@@ -1645,14 +1645,18 @@
                 "description": "Vous pouvez à tout moment changer votre carte bancaire.",
                 "update": "Modifier"
             },
-            "processing": {
+            "step": {
                 "requestSent": {
                     "title": "Demande envoyée",
                     "description": "Nous traitons votre demande. Nous allons vous recontacter dès que possible."
                 },
-                "estimateLinked": {
+                "processing": {
                     "title": "Échange avec le service commercial",
                     "description": "Vous allez être contacté par notre service commercial pour finaliser votre commande."
+                },
+                "validate": {
+                    "title": "Commande confirmée",
+                    "description": "Votre commande a été confirmée, vous allez bientôt recevoir votre contrat."
                 },
                 "invoiceToBePaid": {
                     "title": "Facture à régler",

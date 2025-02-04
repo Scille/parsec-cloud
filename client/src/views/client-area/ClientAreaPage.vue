@@ -302,6 +302,8 @@ function getTitleByPage(): Translatable {
       return 'clientArea.header.titles.customOrderStatistics';
     case ClientAreaPages.CustomOrderBillingDetails:
       return 'clientArea.header.titles.customOrderBillingDetails';
+    case ClientAreaPages.CustomOrderProcessing:
+      return 'clientArea.header.titles.customOrderProcessing';
     default:
       return '';
   }

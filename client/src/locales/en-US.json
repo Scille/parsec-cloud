@@ -1645,14 +1645,18 @@
                 "description": "You can change your credit card at any time.",
                 "update": "Update"
             },
-            "processing": {
+            "step": {
                 "requestSent": {
                     "title": "Request sent",
                     "description": "Your request is being processed. We will contact you as soon as possible."
                 },
-                "estimateLinked": {
+                "processing": {
                     "title": "Exchange with the sales department",
                     "description": "Our sales department will contact you to finalize your order."
+                },
+                "validate": {
+                    "title": "Order confirmed",
+                    "description": "Your order is confirmed, you will receive an invoice soon."
                 },
                 "invoiceToBePaid": {
                     "title": "Invoice to be paid",

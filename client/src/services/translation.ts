@@ -1,8 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { InvitationStatus, UserProfile, WorkspaceRole } from '@/parsec';
-import { InvoiceStatus } from '@/services/bms';
-import { CustomOrderStatus } from '@/services/bms';
+import { CustomOrderRequestStatus, CustomOrderStatus, InvoiceStatus } from '@/services/bms';
 import { Locale, Translatable } from 'megashark-lib';
 
 export function getProfileTranslationKey(profile: UserProfile): Translatable {
@@ -75,32 +74,35 @@ interface CustomOrderStatusTranslations {
   description?: Translatable;
 }
 
-export function getCustomOrderStatusTranslationKey(status: CustomOrderStatus): CustomOrderStatusTranslations {
-  const locale = 'clientArea.dashboard.processing';
+export function getCustomOrderStatusTranslationKey(
+  statusBms: CustomOrderStatus,
+  statusSellsy: CustomOrderRequestStatus,
+): CustomOrderStatusTranslations {
+  const key = `${statusBms}-${statusSellsy}`;
+  const locale = 'clientArea.dashboard.step';
 
-  switch (status) {
-    case CustomOrderStatus.Unknown: {
-      return {
-        title: `${locale}.error.title`,
-        description: `${locale}.error.description`,
-      };
-    }
-    case CustomOrderStatus.NothingLinked:
+  switch (key) {
+    case `${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Received}`:
       return {
         title: `${locale}.requestSent.title`,
         description: `${locale}.requestSent.description`,
       };
-    case CustomOrderStatus.EstimateLinked:
+    case `${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Processing}`:
       return {
-        title: `${locale}.estimateLinked.title`,
-        description: `${locale}.estimateLinked.description`,
+        title: `${locale}.processing.title`,
+        description: `${locale}.processing.description`,
       };
-    case CustomOrderStatus.InvoiceToBePaid:
+    case `${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Finished}`:
+      return {
+        title: `${locale}.validate.title`,
+        description: `${locale}.validate.description`,
+      };
+    case `${CustomOrderStatus.InvoiceToBePaid}-${CustomOrderRequestStatus.Finished}`:
       return {
         title: `${locale}.invoiceToBePaid.title`,
         description: `${locale}.invoiceToBePaid.description`,
       };
-    case CustomOrderStatus.InvoicePaid:
+    case `${CustomOrderStatus.InvoicePaid}-${CustomOrderRequestStatus.Finished}`:
       return {
         title: `${locale}.organizationAvailable.title`,
         description: `${locale}.organizationAvailable.description`,

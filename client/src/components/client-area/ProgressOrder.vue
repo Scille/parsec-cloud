@@ -1,59 +1,57 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="client-page-processing">
-    {{ customOrderBmsStatus }}
-    {{  }}
-    <template v-if="!querying && !error && customOrderBmsStatus && customOrderBmsStatus !== CustomOrderStatus.Unknown">
-      <div class="process-container">
-        <div
-          class="process-step"
-          v-for="(step, index) in steps"
-          :key="index"
-          :class="{
-            'process-step-todo': CustomOrderStatusSteps[customOrderBmsStatus] < CustomOrderStatusSteps[step.status],
-            'process-step-active': CustomOrderStatusSteps[customOrderBmsStatus] === CustomOrderStatusSteps[step.status],
-            'process-step-done': CustomOrderStatusSteps[customOrderBmsStatus] > CustomOrderStatusSteps[step.status],
-          }"
-        >
-          <div class="process-step-icon">
-            <div
-              class="dot-todo"
-              v-if="CustomOrderStatusSteps[customOrderBmsStatus] < CustomOrderStatusSteps[step.status]"
-            />
-            <div
-              class="dot-active"
-              v-if="CustomOrderStatusSteps[customOrderBmsStatus] === CustomOrderStatusSteps[step.status]"
-            />
-            <ion-icon
-              class="process-step-icon__item"
-              :icon="checkmarkCircle"
-              v-if="CustomOrderStatusSteps[customOrderBmsStatus] > CustomOrderStatusSteps[step.status]"
-            />
-          </div>
-          <div class="process-step-text">
-            <ion-text class="process-step-text__title title-h3">
-              {{ $msTranslate(step.title) }}
-            </ion-text>
-            <ion-text
-              class="process-step-text__info body"
-              v-if="CustomOrderStatusSteps[customOrderBmsStatus] === CustomOrderStatusSteps[step.status]"
-            >
-              {{ $msTranslate(step.description) }}
-            </ion-text>
-          </div>
+  <template
+    v-if="!querying && !error && customOrderBmsStatus && customOrderBmsStatus !== CustomOrderStatus.Unknown && customOrderSellsyStatus"
+  >
+    <div class="process-container">
+      <div
+        class="process-step"
+        v-for="(step, index) in steps"
+        :key="index"
+        :class="{
+          'process-step-todo': getStep(customOrderBmsStatus, customOrderSellsyStatus) < getStep(step.statusBms, step.statusRequest),
+          'process-step-active': getStep(customOrderBmsStatus, customOrderSellsyStatus) === getStep(step.statusBms, step.statusRequest),
+          'process-step-done': getStep(customOrderBmsStatus, customOrderSellsyStatus) > getStep(step.statusBms, step.statusRequest),
+        }"
+      >
+        <div class="process-step-icon">
+          <div
+            class="dot-todo"
+            v-if="getStep(customOrderBmsStatus, customOrderSellsyStatus) < getStep(step.statusBms, step.statusRequest)"
+          />
+          <div
+            class="dot-active"
+            v-if="getStep(customOrderBmsStatus, customOrderSellsyStatus) === getStep(step.statusBms, step.statusRequest)"
+          />
+          <ion-icon
+            class="process-step-icon__item"
+            :icon="checkmarkCircle"
+            v-if="getStep(customOrderBmsStatus, customOrderSellsyStatus) > getStep(step.statusBms, step.statusRequest)"
+          />
+        </div>
+        <div class="process-step-text">
+          <ion-text class="process-step-text__title title-h3">
+            {{ $msTranslate(step.title) }}
+          </ion-text>
+          <ion-text
+            class="process-step-text__info body"
+            v-if="getStep(customOrderBmsStatus, customOrderSellsyStatus) === getStep(step.statusBms, step.statusRequest)"
+          >
+            {{ $msTranslate(step.description) }}
+          </ion-text>
         </div>
       </div>
-    </template>
-    <template v-else-if="querying">
-      <ms-spinner />
-    </template>
-    <template v-else-if="error || customOrderBmsStatus === CustomOrderStatus.Unknown">
-      <ms-report-text :theme="MsReportTheme.Error">
-        {{ $msTranslate(error) }}
-      </ms-report-text>
-    </template>
-  </div>
+    </div>
+  </template>
+  <template v-else-if="querying">
+    <ms-spinner />
+  </template>
+  <template v-else-if="error || customOrderBmsStatus === CustomOrderStatus.Unknown">
+    <ms-report-text :theme="MsReportTheme.Error">
+      {{ $msTranslate(error) }}
+    </ms-report-text>
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -66,6 +64,7 @@ import { MsSpinner, MsReportText, MsReportTheme } from 'megashark-lib';
 import { getCustomOrderStatusTranslationKey } from '@/services/translation';
 
 const customOrderBmsStatus = ref<CustomOrderStatus>(CustomOrderStatus.Unknown);
+const customOrderSellsyStatus = ref<CustomOrderRequestStatus>(CustomOrderRequestStatus.Received);
 
 const querying = ref(true);
 const error = ref('');
@@ -74,37 +73,59 @@ const props = defineProps<{
   organization: BmsOrganization;
 }>();
 
-const CustomOrderStatusSteps = {
-  [CustomOrderStatus.ContractEnded]: -1,
-  [CustomOrderStatus.Unknown]: 0,
-  [CustomOrderStatus.NothingLinked]: 1,
-  [CustomOrderStatus.EstimateLinked]: 2,
-  [CustomOrderStatus.InvoiceToBePaid]: 3,
-  [CustomOrderStatus.InvoicePaid]: 4,
-};
-
 const steps = [
   {
-    status: CustomOrderStatus.NothingLinked,
-    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked).title,
-    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked).description,
+    id: 1,
+    statusBms: CustomOrderStatus.NothingLinked,
+    statusRequest: CustomOrderRequestStatus.Received,
+    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Received).title,
+    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Received).description,
   },
   {
-    status: CustomOrderStatus.EstimateLinked,
-    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.EstimateLinked).title,
-    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.EstimateLinked).description,
+    id: 2,
+    statusBms: CustomOrderStatus.NothingLinked,
+    statusRequest: CustomOrderRequestStatus.Processing,
+    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Processing).title,
+    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Processing).description,
   },
   {
-    status: CustomOrderStatus.InvoiceToBePaid,
-    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoiceToBePaid).title,
-    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoiceToBePaid).description,
+    id: 3,
+    statusBms: CustomOrderStatus.NothingLinked,
+    statusRequest: CustomOrderRequestStatus.Finished,
+    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Finished).title,
+    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Finished).description,
   },
   {
-    status: CustomOrderStatus.InvoicePaid,
-    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoicePaid).title,
-    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoicePaid).description,
+    id: 4,
+    statusBms: CustomOrderStatus.InvoiceToBePaid,
+    statusRequest: CustomOrderRequestStatus.Finished,
+    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoiceToBePaid, CustomOrderRequestStatus.Finished).title,
+    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoiceToBePaid, CustomOrderRequestStatus.Finished).description,
+  },
+  {
+    id: 5,
+    statusBms: CustomOrderStatus.InvoicePaid,
+    statusRequest: CustomOrderRequestStatus.Finished,
+    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoicePaid, CustomOrderRequestStatus.Finished).title,
+    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoicePaid, CustomOrderRequestStatus.Finished).description,
   },
 ];
+
+const CustomOrderStatusSteps = {
+  [`${CustomOrderStatus.NothingLinked}-${CustomOrderStatus.Unknown}`]: 0,
+  [`${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Received}`]: 1,
+  [`${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Processing}`]: 2,
+  [`${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Finished}`]: 3,
+  [`${CustomOrderStatus.InvoiceToBePaid}-${CustomOrderRequestStatus.Finished}`]: 4,
+  [`${CustomOrderStatus.InvoicePaid}-${CustomOrderRequestStatus.Finished}`]: 5,
+  [`${CustomOrderStatus.ContractEnded}-${CustomOrderRequestStatus.Finished}`]: 6,
+};
+
+function getStep(customOrderStatus: CustomOrderStatus, customOrderRequestStatus: CustomOrderRequestStatus): number {
+  const key = `${customOrderStatus}-${customOrderRequestStatus}`;
+  console.log(key);
+  return CustomOrderStatusSteps[key as keyof typeof CustomOrderStatusSteps] ?? 0;
+}
 
 onMounted(async () => {
   if (isDefaultOrganization(props.organization)) {
@@ -125,12 +146,6 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-.client-page-processing {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 .process-container {
   display: flex;
   max-width: 28rem;
@@ -142,7 +157,6 @@ onMounted(async () => {
   padding: 2.5rem;
   border-radius: var(--parsec-radius-12);
   background-color: var(--parsec-color-light-primary-30-opacity15);
-  box-shadow: var(--parsec-shadow-light);
 }
 
 .process-step {
