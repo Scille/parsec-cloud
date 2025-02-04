@@ -18,6 +18,7 @@ import {
   ClientChangeAuthenticationError,
   ClientChangeAuthenticationErrorTag,
   ClientEvent,
+  ClientEventGreetingAttemptCancelled,
   ClientEventGreetingAttemptReady,
   ClientEventInvitationChanged,
   ClientEventTag,
@@ -203,6 +204,12 @@ export async function login(
         distributor.dispatchEvent(Events.GreetingAttemptReady, {
           token: (event as ClientEventGreetingAttemptReady).token,
           greetingAttempt: (event as ClientEventGreetingAttemptReady).greetingAttempt,
+        });
+        break;
+      case ClientEventTag.GreetingAttemptCancelled:
+        distributor.dispatchEvent(Events.GreetingAttemptCancelled, {
+          token: (event as ClientEventGreetingAttemptCancelled).token,
+          greetingAttempt: (event as ClientEventGreetingAttemptCancelled).greetingAttempt,
         });
         break;
       case ClientEventTag.IncompatibleServer:

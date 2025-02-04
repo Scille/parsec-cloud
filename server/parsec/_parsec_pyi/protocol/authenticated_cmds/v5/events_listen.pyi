@@ -45,6 +45,13 @@ class APIEventGreetingAttemptReady(APIEvent):
     @property
     def token(self) -> InvitationToken: ...
 
+class APIEventGreetingAttemptCancelled(APIEvent):
+    def __init__(self, token: InvitationToken, greeting_attempt: GreetingAttemptID) -> None: ...
+    @property
+    def greeting_attempt(self) -> GreetingAttemptID: ...
+    @property
+    def token(self) -> InvitationToken: ...
+
 class APIEventPkiEnrollment(APIEvent):
     def __init__(
         self,

@@ -52,7 +52,7 @@ from parsec.components.memory.datamodel import (
     MemoryOrganization,
     MemoryUser,
 )
-from parsec.events import EventGreetingAttemptReady, EventInvitation
+from parsec.events import EventGreetingAttemptCancelled, EventGreetingAttemptReady, EventInvitation
 
 
 def _is_invitation_cancelled(org: MemoryOrganization, invitation: MemoryInvitation) -> bool:
@@ -868,6 +868,15 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         attempt.greeter_cancel(now, reason)
 
+        await self._event_bus.send(
+            EventGreetingAttemptCancelled(
+                organization_id=organization_id,
+                token=invitation.token,
+                greeter=greeter,
+                greeting_attempt=greeting_attempt,
+            )
+        )
+
     @override
     async def claimer_cancel_greeting_attempt(
         self,
@@ -910,6 +919,15 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteClaimerCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_JOINED
 
         attempt.claimer_cancel(now, reason)
+
+        await self._event_bus.send(
+            EventGreetingAttemptCancelled(
+                organization_id=organization_id,
+                token=invitation.token,
+                greeter=attempt.greeter_id,
+                greeting_attempt=greeting_attempt,
+            )
+        )
 
     @override
     async def greeter_step(

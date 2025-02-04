@@ -80,6 +80,7 @@ export type {
   ClientConfig,
   ClientCreateWorkspaceError,
   ClientEvent,
+  ClientEventGreetingAttemptCancelled,
   ClientEventGreetingAttemptReady,
   ClientEventInvitationChanged,
   ClientEventPing,

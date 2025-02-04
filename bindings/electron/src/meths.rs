@@ -4493,6 +4493,40 @@ fn variant_client_event_js_to_rs<'a>(
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
         "ClientEventExpiredOrganization" => Ok(libparsec::ClientEvent::ExpiredOrganization {}),
+        "ClientEventGreetingAttemptCancelled" => {
+            let token = {
+                let js_val: Handle<JsString> = obj.get(cx, "token")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::InvitationToken, _> {
+                            libparsec::InvitationToken::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let greeting_attempt = {
+                let js_val: Handle<JsString> = obj.get(cx, "greetingAttempt")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::GreetingAttemptID, _> {
+                            libparsec::GreetingAttemptID::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ClientEvent::GreetingAttemptCancelled {
+                token,
+                greeting_attempt,
+            })
+        }
         "ClientEventGreetingAttemptReady" => {
             let token = {
                 let js_val: Handle<JsString> = obj.get(cx, "token")?;
@@ -4835,6 +4869,37 @@ fn variant_client_event_rs_to_js<'a>(
         libparsec::ClientEvent::ExpiredOrganization { .. } => {
             let js_tag = JsString::try_new(cx, "ClientEventExpiredOrganization").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientEvent::GreetingAttemptCancelled {
+            token,
+            greeting_attempt,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEventGreetingAttemptCancelled").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_token = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "token", js_token)?;
+            let js_greeting_attempt = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::GreetingAttemptID| -> Result<String, &'static str> {
+                        Ok(x.hex())
+                    };
+                match custom_to_rs_string(greeting_attempt) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "greetingAttempt", js_greeting_attempt)?;
         }
         libparsec::ClientEvent::GreetingAttemptReady {
             token,

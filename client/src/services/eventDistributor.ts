@@ -23,6 +23,7 @@ enum Events {
   LogoutRequested = 1 << 13,
   EntrySyncStarted = 1 << 14,
   GreetingAttemptReady = 1 << 15,
+  GreetingAttemptCancelled = 1 << 15,
 }
 
 interface WorkspaceCreatedData {
@@ -35,6 +36,11 @@ interface InvitationUpdatedData {
 }
 
 interface GreetingAttemptReadyData {
+  token: InvitationToken;
+  greetingAttempt: GreetingAttemptID;
+}
+
+interface GreetingAttemptCancelledData {
   token: InvitationToken;
   greetingAttempt: GreetingAttemptID;
 }
@@ -60,7 +66,8 @@ type EventData =
   | UpdateAvailabilityData
   | EntrySyncData
   | IncompatibleServerData
-  | GreetingAttemptReadyData;
+  | GreetingAttemptReadyData
+  | GreetingAttemptCancelledData;
 
 interface Callback {
   id: string;
