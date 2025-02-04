@@ -5,29 +5,32 @@
 #![allow(clippy::unwrap_used)]
 
 use libparsec_tests_lite::{hex, p_assert_eq};
-use libparsec_types::BlockID;
+use libparsec_types::{BlockID, VlobID};
 
 use super::authenticated_cmds;
 
 // Request
 
 pub fn req() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Parsec 3.2.5-a.0+dev
     // Content:
-    //   block_id: ext(2, hex!("57c629b69d6c4abbaf651cafa46dbc93"))
-    //   cmd: "block_read"
-    let raw = hex!(
-        "82a8626c6f636b5f6964d80257c629b69d6c4abbaf651cafa46dbc93a3636d64aa626c"
-        "6f636b5f72656164"
-    );
+    //   cmd: 'block_read'
+    //   block_id: ext(2, 0x57c629b69d6c4abbaf651cafa46dbc93)
+    //   realm_id: ext(2, 0x1d3353157d7d4e95ad2fdea7b3bd19c5)
+    let raw: &[u8] = hex!(
+        "83a3636d64aa626c6f636b5f72656164a8626c6f636b5f6964d80257c629b69d6c4abb"
+        "af651cafa46dbc93a87265616c6d5f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5"
+    )
+    .as_ref();
 
     let req = authenticated_cmds::block_read::Req {
+        realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
         block_id: BlockID::from_hex("57c629b69d6c4abbaf651cafa46dbc93").unwrap(),
     };
 
     let expected = authenticated_cmds::AnyCmdReq::BlockRead(req.clone());
 
-    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
@@ -40,6 +43,7 @@ pub fn req() {
 }
 
 // Responses
+
 pub fn rep_ok() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
@@ -58,6 +62,15 @@ pub fn rep_ok() {
         needed_realm_certificate_timestamp: "2000-01-01T00:00:00Z".parse().unwrap(),
     };
     rep_helper(&raw, expected);
+}
+
+pub fn rep_realm_not_found() {
+    // Generated from Parsec 3.2.5-a.0+dev
+    // Content:
+    //   status: 'realm_not_found'
+    let raw: &[u8] = hex!("81a6737461747573af7265616c6d5f6e6f745f666f756e64").as_ref();
+    let expected = authenticated_cmds::block_read::Rep::RealmNotFound;
+    rep_helper(raw, expected);
 }
 
 pub fn rep_block_not_found() {
