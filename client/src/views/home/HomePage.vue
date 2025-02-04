@@ -555,6 +555,10 @@ function getBackButtonTitle(): string {
 
   // Should be edited later with responsive
   .homepage-sidebar {
+    @media screen and (max-width: 1920px) {
+      max-width: 35rem;
+    }
+
     @media screen and (max-width: 1500px) {
       max-width: 30rem;
 
@@ -563,6 +567,11 @@ function getBackButtonTitle(): string {
         max-height: 50vh;
       }
     }
+
+    @media screen and (max-width: 1200px) {
+      max-width: 22rem;
+    }
+
     @media screen and (max-width: 764px) {
       display: none;
     }
