@@ -9,6 +9,10 @@
                 {
                     "name": "block_id",
                     "type": "BlockID"
+                },
+                {
+                    "name": "realm_id",
+                    "type": "VlobID"
                 }
             ]
         },
@@ -29,6 +33,9 @@
                         "type": "DateTime"
                     }
                 ]
+            },
+            {
+                "status": "realm_not_found"
             },
             {
                 "status": "block_not_found"
