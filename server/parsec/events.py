@@ -84,14 +84,14 @@ class EventPinged(BaseModel, ClientBroadcastableEvent):
 
 class EventInvitation(BaseModel, ClientBroadcastableEvent):
     """
-    Event used to inform an invitation has changed status.
+    Event used to inform that an invitation has changed status.
 
-    This event is used in two way:
+    This event is sent in three cases:
+    - When an invitation is created.
+    - When an invitation is cancelled.
+    - When an invitation is completed.
 
-    - Keep a list of all claimers connected across all Parsec server instances, which
-      is useful to display the invitations ready to be greeted.
-    - Broadcasted to the invitation greeter to notify him the invitation status has
-      changed (e.g. invitation has been cancelled, claimer is now connected to the server).
+    Note that this event to is broadcasted to all possible greeters of the corresponding invitation.
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)

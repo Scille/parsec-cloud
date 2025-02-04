@@ -353,8 +353,8 @@ impl_events!(
 
     /// This event is fired by the connection monitor.
     ///
-    /// The invitation status has changed on server side (e.g. a claimer is online,
-    /// an invitation has been deleted etc.).
+    /// The invitation status has changed on server side (i.e the invitation
+    /// has been created, cancelled or completed).
     ///
     /// Note this event will be fired (i.e. the server pushes it to us) even if
     /// we are at the origin of the change (e.g. we cancelled the invitation).
