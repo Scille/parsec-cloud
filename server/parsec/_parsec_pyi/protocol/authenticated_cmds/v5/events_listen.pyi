@@ -8,6 +8,7 @@ from parsec._parsec import (
     ActiveUsersLimit,
     DateTime,
     DeviceID,
+    GreetingAttemptID,
     InvitationStatus,
     InvitationToken,
     VlobID,
@@ -34,6 +35,13 @@ class APIEventInvitation(APIEvent):
     def __init__(self, token: InvitationToken, invitation_status: InvitationStatus) -> None: ...
     @property
     def invitation_status(self) -> InvitationStatus: ...
+    @property
+    def token(self) -> InvitationToken: ...
+
+class APIEventGreetingAttemptReady(APIEvent):
+    def __init__(self, token: InvitationToken, greeting_attempt: GreetingAttemptID) -> None: ...
+    @property
+    def greeting_attempt(self) -> GreetingAttemptID: ...
     @property
     def token(self) -> InvitationToken: ...
 

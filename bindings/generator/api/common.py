@@ -247,6 +247,13 @@ class InvitationToken(StrBasedType):
     )
 
 
+class GreetingAttemptID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::GreetingAttemptID, _> { libparsec::GreetingAttemptID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::GreetingAttemptID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    )
+
+
 class UserProfile(Enum):
     Admin = EnumItemUnit
     Standard = EnumItemUnit

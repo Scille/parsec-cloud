@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { EntryID, InvitationStatus, InvitationToken, WorkspaceID } from '@/parsec';
+import { GreetingAttemptID } from '@/plugins/libparsec';
 import { v4 as uuid4 } from 'uuid';
 
 export const EventDistributorKey = 'eventDistributor';
@@ -21,6 +22,7 @@ enum Events {
   TOSAcceptRequired = 1 << 12,
   LogoutRequested = 1 << 13,
   EntrySyncStarted = 1 << 14,
+  GreetingAttemptReady = 1 << 15,
 }
 
 interface WorkspaceCreatedData {
@@ -30,6 +32,11 @@ interface WorkspaceCreatedData {
 interface InvitationUpdatedData {
   token: InvitationToken;
   status: InvitationStatus;
+}
+
+interface GreetingAttemptReadyData {
+  token: InvitationToken;
+  greetingAttempt: GreetingAttemptID;
 }
 
 interface UpdateAvailabilityData {
@@ -47,7 +54,13 @@ interface IncompatibleServerData {
   reason: string;
 }
 
-type EventData = WorkspaceCreatedData | InvitationUpdatedData | UpdateAvailabilityData | EntrySyncData | IncompatibleServerData;
+type EventData =
+  | WorkspaceCreatedData
+  | InvitationUpdatedData
+  | UpdateAvailabilityData
+  | EntrySyncData
+  | IncompatibleServerData
+  | GreetingAttemptReadyData;
 
 interface Callback {
   id: string;

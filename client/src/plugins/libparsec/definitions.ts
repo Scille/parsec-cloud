@@ -79,6 +79,7 @@ export type DeviceID = string
 export type DeviceLabel = string
 export type EntryName = string
 export type FsPath = string
+export type GreetingAttemptID = string
 export type InvitationToken = string
 export type OrganizationID = string
 export type ParsecAddr = string
@@ -803,6 +804,7 @@ export type ClientDeleteShamirRecoveryError =
 // ClientEvent
 export enum ClientEventTag {
     ExpiredOrganization = 'ClientEventExpiredOrganization',
+    GreetingAttemptReady = 'ClientEventGreetingAttemptReady',
     IncompatibleServer = 'ClientEventIncompatibleServer',
     InvitationChanged = 'ClientEventInvitationChanged',
     MustAcceptTos = 'ClientEventMustAcceptTos',
@@ -824,6 +826,11 @@ export enum ClientEventTag {
 
 export interface ClientEventExpiredOrganization {
     tag: ClientEventTag.ExpiredOrganization
+}
+export interface ClientEventGreetingAttemptReady {
+    tag: ClientEventTag.GreetingAttemptReady
+    token: InvitationToken
+    greetingAttempt: GreetingAttemptID
 }
 export interface ClientEventIncompatibleServer {
     tag: ClientEventTag.IncompatibleServer
@@ -901,6 +908,7 @@ export interface ClientEventWorkspacesSelfListChanged {
 }
 export type ClientEvent =
   | ClientEventExpiredOrganization
+  | ClientEventGreetingAttemptReady
   | ClientEventIncompatibleServer
   | ClientEventInvitationChanged
   | ClientEventMustAcceptTos

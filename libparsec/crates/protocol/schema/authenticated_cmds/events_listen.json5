@@ -64,6 +64,20 @@
                         ]
                     },
                     {
+                        "name": "GreetingAttemptReady",
+                        "discriminant_value": "GREETING_ATTEMPT_READY",
+                        "fields": [
+                            {
+                                "name": "token",
+                                "type": "InvitationToken"
+                            },
+                            {
+                                "name": "greeting_attempt",
+                                "type": "GreetingAttemptID"
+                            }
+                        ]
+                    },
+                    {
                         "name": "PkiEnrollment",
                         "discriminant_value": "PKI_ENROLLMENT"
                     },

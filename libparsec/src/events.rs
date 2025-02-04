@@ -59,6 +59,11 @@ pub enum ClientEvent {
         status: InvitationStatus,
     },
 
+    GreetingAttemptReady {
+        token: InvitationToken,
+        greeting_attempt: GreetingAttemptID,
+    },
+
     // Error from server & server-provided data
     ExpiredOrganization,
     RevokedSelfUser,
@@ -110,6 +115,8 @@ pub(crate) struct OnEventCallbackPlugged {
     _workspace_ops_inbound_sync_done:
         EventBusConnectionLifetime<libparsec_client::EventWorkspaceOpsInboundSyncDone>,
     _invitation_changed: EventBusConnectionLifetime<libparsec_client::EventInvitationChanged>,
+    _greeting_attempt_ready:
+        EventBusConnectionLifetime<libparsec_client::EventGreetingAttemptReady>,
     _expired_organization: EventBusConnectionLifetime<libparsec_client::EventExpiredOrganization>,
     _revoked_self_user: EventBusConnectionLifetime<libparsec_client::EventRevokedSelfUser>,
     _must_accept_tos: EventBusConnectionLifetime<libparsec_client::EventMustAcceptTos>,
@@ -295,6 +302,18 @@ impl OnEventCallbackPlugged {
                 );
             })
         };
+        let greeting_attempt_ready = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(move |e: &libparsec_client::EventGreetingAttemptReady| {
+                (on_event_callback)(
+                    handle,
+                    ClientEvent::GreetingAttemptReady {
+                        token: e.token,
+                        greeting_attempt: e.greeting_attempt,
+                    },
+                );
+            })
+        };
         let expired_organization = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |_: &libparsec_client::EventExpiredOrganization| {
@@ -376,6 +395,7 @@ impl OnEventCallbackPlugged {
             _workspace_ops_outbound_sync_done: workspace_ops_outbound_sync_done,
             _workspace_ops_inbound_sync_done: workspace_ops_inbound_sync_done,
             _invitation_changed: invitation_changed,
+            _greeting_attempt_ready: greeting_attempt_ready,
             _too_much_drift_with_server_clock: too_much_drift_with_server_clock,
             _expired_organization: expired_organization,
             _revoked_self_user: revoked_self_user,
