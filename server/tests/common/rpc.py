@@ -95,8 +95,10 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.block_create.Rep.load(raw_rep)
 
-    async def block_read(self, block_id: BlockID) -> authenticated_cmds.latest.block_read.Rep:
-        req = authenticated_cmds.latest.block_read.Req(block_id=block_id)
+    async def block_read(
+        self, realm_id: VlobID, block_id: BlockID
+    ) -> authenticated_cmds.latest.block_read.Rep:
+        req = authenticated_cmds.latest.block_read.Req(block_id=block_id, realm_id=realm_id)
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.block_read.Rep.load(raw_rep)
 
