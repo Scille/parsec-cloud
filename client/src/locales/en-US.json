@@ -1666,6 +1666,14 @@
                     "title": "Organization available",
                     "description": "You can now access to your organization."
                 },
+                "standby": {
+                    "title": "Order in standby",
+                    "description": "Your order has been put on hold, please contact us for more information."
+                },
+                "cancel": {
+                    "title": "Order cancelled",
+                    "description": "Your order has been cancelled, please contact us for more information."
+                },
                 "error": {
                     "title": "Failed to retrieve the information.",
                     "description": "An error occurred while processing your order. Please contact us."

@@ -1,10 +1,29 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <template
-    v-if="!querying && !error && customOrderBmsStatus && customOrderBmsStatus !== CustomOrderStatus.Unknown && customOrderSellsyStatus"
-  >
+  <template v-if="!querying && !error && customOrderBmsStatus !== CustomOrderStatus.Unknown && customOrderSellsyStatus">
     <div class="process-container">
+      <ms-report-text
+        v-if="customOrderSellsyStatus === CustomOrderRequestStatus.Standby"
+        :theme="MsReportTheme.Warning"
+        class="process-stop-container"
+      >
+        <div class="process-stop-text">
+          <ion-text class="title-h4">{{ $msTranslate('clientArea.dashboard.step.standby.title') }}</ion-text>
+          <ion-text class="body">{{ $msTranslate('clientArea.dashboard.step.standby.description') }}</ion-text>
+        </div>
+      </ms-report-text>
+
+      <ms-report-text
+        v-if="customOrderSellsyStatus === CustomOrderRequestStatus.Cancelled"
+        :theme="MsReportTheme.Error"
+        class="process-stop-container"
+      >
+        <div class="process-stop-text">
+          <ion-text class="title-h4">{{ $msTranslate('clientArea.dashboard.step.cancel.title') }}</ion-text>
+          <ion-text class="body">{{ $msTranslate('clientArea.dashboard.step.cancel.description') }}</ion-text>
+        </div>
+      </ms-report-text>
       <div
         class="process-step"
         v-for="(step, index) in steps"
@@ -47,7 +66,7 @@
   <template v-else-if="querying">
     <ms-spinner />
   </template>
-  <template v-else-if="error || customOrderBmsStatus === CustomOrderStatus.Unknown">
+  <template v-else-if="error">
     <ms-report-text :theme="MsReportTheme.Error">
       {{ $msTranslate(error) }}
     </ms-report-text>
@@ -118,7 +137,6 @@ const CustomOrderStatusSteps = {
   [`${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Finished}`]: 3,
   [`${CustomOrderStatus.InvoiceToBePaid}-${CustomOrderRequestStatus.Finished}`]: 4,
   [`${CustomOrderStatus.InvoicePaid}-${CustomOrderRequestStatus.Finished}`]: 5,
-  [`${CustomOrderStatus.ContractEnded}-${CustomOrderRequestStatus.Finished}`]: 6,
 };
 
 function getStep(customOrderStatus: CustomOrderStatus, customOrderRequestStatus: CustomOrderRequestStatus): number {
@@ -157,6 +175,27 @@ onMounted(async () => {
   padding: 2.5rem;
   border-radius: var(--parsec-radius-12);
   background-color: var(--parsec-color-light-primary-30-opacity15);
+}
+
+// eslint-disable-next-line vue-scoped-css/no-unused-selector
+.process-stop-container {
+  .process-stop-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  &.ms-warning {
+    .title-h4 {
+      color: var(--parsec-color-light-warning-700);
+    }
+  }
+
+  &.ms-error {
+    .title-h4 {
+      color: var(--parsec-color-light-danger-700);
+    }
+  }
 }
 
 .process-step {
