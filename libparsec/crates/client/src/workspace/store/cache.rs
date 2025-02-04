@@ -319,9 +319,9 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
                     // manifest, but this ID points to nothing according to the server :/
                     //
                     // That could means two things:
-                    // - the server is lying to us
-                    // - the client that have uploaded the parent folder/workspace manifest
-                    //   was buggy and include the ID of a not-yet-synchronized entry
+                    // - The server is lying to us.
+                    // - The client that has uploaded the parent folder/workspace manifest
+                    //   was buggy and included the ID of a not-yet-synchronized entry.
                     //
                     // In theory it would be good to do a self-healing here (e.g. remove
                     // the entry from the parent), but this is cumbersome and only possible
@@ -331,9 +331,9 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
                     // TODO: add warning log !
                     PopulateCacheFromLocalStorageOrServerError::EntryNotFound
                 }
-                // The realm doesn't exist on server side, hence we are it creator and
-                // it data only live on our local storage, which we have already checked.
                 FetchRemoteManifestError::RealmNotFound => {
+                    // The realm doesn't exist on server side, hence we are its creator and
+                    // it data only live on our local storage, which we have already checked.
                     PopulateCacheFromLocalStorageOrServerError::EntryNotFound
                 }
                 FetchRemoteManifestError::NoRealmAccess => {
