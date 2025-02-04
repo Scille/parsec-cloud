@@ -63,20 +63,20 @@ async def test_authenticated_block_create_ok(
         case unknown:
             assert False, unknown
 
+    realm_id = coolorg.wksp1_id
     block_id = BlockID.new()
     block = b"<block content>"
 
     expected_dump = await backend.block.test_dump_blocks(coolorg.organization_id)
     expected_dump[block_id] = (ANY, author.device_id, coolorg.wksp1_id, 1, len(block))
 
-    rep = await author.block_create(
-        block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
-    )
+    rep = await author.block_create(block_id=block_id, realm_id=realm_id, key_index=1, block=block)
     assert rep == authenticated_cmds.latest.block_create.RepOk()
 
     content = await backend.block.read(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        realm_id=realm_id,
         block_id=block_id,
     )
     assert isinstance(content, BlockReadResult)
@@ -90,18 +90,19 @@ async def test_authenticated_block_create_ok(
 async def test_authenticated_block_create_bad_key_index(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
+    realm_id = coolorg.wksp1_id
     block_id = BlockID.new()
     block = b"<block content>"
     wksp1_last_certificate_timestamp = get_last_realm_certificate_timestamp(
         testbed_template=coolorg.testbed_template,
-        realm_id=coolorg.wksp1_id,
+        realm_id=realm_id,
     )
 
     expected_dump = await backend.block.test_dump_blocks(coolorg.organization_id)
     expected_dump[block_id] = (ANY, coolorg.alice.device_id, coolorg.wksp1_id, 1, len(block))
 
     rep = await coolorg.alice.block_create(
-        block_id=block_id, realm_id=coolorg.wksp1_id, key_index=42, block=block
+        block_id=block_id, realm_id=realm_id, key_index=42, block=block
     )
 
     assert rep == authenticated_cmds.latest.block_create.RepBadKeyIndex(
@@ -112,6 +113,7 @@ async def test_authenticated_block_create_bad_key_index(
 async def test_authenticated_block_create_realm_not_found(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
+    realm_id = coolorg.wksp1_id
     block_id = BlockID.new()
     block = b"<block content>"
 
@@ -128,6 +130,7 @@ async def test_authenticated_block_create_realm_not_found(
     content = await backend.block.read(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        realm_id=realm_id,
         block_id=block_id,
     )
     assert content == BlockReadBadOutcome.BLOCK_NOT_FOUND
@@ -139,6 +142,7 @@ async def test_authenticated_block_create_realm_not_found(
 async def test_authenticated_block_create_block_already_exists(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
+    realm_id = coolorg.wksp1_id
     block_id = BlockID.new()
     block = b"<block content>"
 
@@ -147,7 +151,7 @@ async def test_authenticated_block_create_block_already_exists(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=block_id,
-        realm_id=coolorg.wksp1_id,
+        realm_id=realm_id,
         key_index=1,
         block=block,
     )
@@ -155,7 +159,7 @@ async def test_authenticated_block_create_block_already_exists(
     expected_dump = await backend.block.test_dump_blocks(coolorg.organization_id)
 
     rep = await coolorg.alice.block_create(
-        block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
+        block_id=block_id, realm_id=realm_id, key_index=1, block=block
     )
     assert rep == authenticated_cmds.latest.block_create.RepBlockAlreadyExists()
 
@@ -183,14 +187,13 @@ async def test_authenticated_block_create_author_not_allowed(
         case unknown:
             assert False, unknown
 
+    realm_id = coolorg.wksp1_id
     block_id = BlockID.new()
     block = b"<block content>"
 
     expected_dump = await backend.block.test_dump_blocks(coolorg.organization_id)
 
-    rep = await author.block_create(
-        block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
-    )
+    rep = await author.block_create(block_id=block_id, realm_id=realm_id, key_index=1, block=block)
     assert rep == authenticated_cmds.latest.block_create.RepAuthorNotAllowed()
 
     dump = await backend.block.test_dump_blocks(coolorg.organization_id)
@@ -200,6 +203,7 @@ async def test_authenticated_block_create_author_not_allowed(
 async def test_authenticated_block_create_store_unavailable(
     coolorg: CoolorgRpcClients, backend: Backend, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    realm_id = coolorg.wksp1_id
     block_id = BlockID.new()
     block = b"<block content>"
 
@@ -214,7 +218,7 @@ async def test_authenticated_block_create_store_unavailable(
     )
 
     rep = await coolorg.alice.block_create(
-        block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
+        block_id=block_id, realm_id=realm_id, key_index=1, block=block
     )
     assert rep == authenticated_cmds.latest.block_create.RepStoreUnavailable()
 
@@ -225,6 +229,7 @@ async def test_authenticated_block_create_store_unavailable(
     content = await backend.block.read(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        realm_id=realm_id,
         block_id=block_id,
     )
     assert content == BlockReadBadOutcome.BLOCK_NOT_FOUND

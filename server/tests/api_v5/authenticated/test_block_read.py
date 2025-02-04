@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec._parsec import BlockID, DateTime, RealmRole, authenticated_cmds
+from parsec._parsec import BlockID, DateTime, RealmRole, VlobID, authenticated_cmds
 from parsec.components.blockstore import BlockStoreReadBadOutcome
 from tests.common import (
     Backend,
@@ -63,6 +63,7 @@ async def test_authenticated_block_read_ok(
         case unknown:
             assert False, unknown
 
+    realm_id = coolorg.wksp1_id
     block_id = BlockID.new()
     block = b"<block content>"
 
@@ -71,12 +72,12 @@ async def test_authenticated_block_read_ok(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=block_id,
-        realm_id=coolorg.wksp1_id,
+        realm_id=realm_id,
         key_index=1,
         block=block,
     )
 
-    rep = await author.block_read(block_id)
+    rep = await author.block_read(realm_id, block_id)
     assert rep == authenticated_cmds.latest.block_read.RepOk(
         block=block,
         key_index=1,
@@ -84,12 +85,19 @@ async def test_authenticated_block_read_ok(
     )
 
 
-async def test_authenticated_block_read_block_not_found(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
+async def test_authenticated_block_read_realm_not_found(
+    coolorg: CoolorgRpcClients,
+):
+    realm_id = VlobID.new()
+    block_id = BlockID.new()
+    await coolorg.alice.block_read(realm_id, block_id)
+
+
+async def test_authenticated_block_read_block_not_found(coolorg: CoolorgRpcClients) -> None:
+    realm_id = coolorg.wksp1_id
     block_id = BlockID.new()
 
-    rep = await coolorg.alice.block_read(block_id)
+    rep = await coolorg.alice.block_read(realm_id, block_id)
     assert rep == authenticated_cmds.latest.block_read.RepBlockNotFound()
 
 
@@ -97,6 +105,7 @@ async def test_authenticated_block_read_block_not_found(
 async def test_authenticated_block_read_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
+    realm_id = coolorg.wksp1_id
     block_id = BlockID.new()
     block = b"<block content>"
 
@@ -105,7 +114,7 @@ async def test_authenticated_block_read_author_not_allowed(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=block_id,
-        realm_id=coolorg.wksp1_id,
+        realm_id=realm_id,
         key_index=1,
         block=block,
     )
@@ -123,7 +132,7 @@ async def test_authenticated_block_read_author_not_allowed(
         case unknown:
             assert False, unknown
 
-    rep = await author.block_read(block_id)
+    rep = await author.block_read(realm_id, block_id)
     assert rep == authenticated_cmds.latest.block_read.RepAuthorNotAllowed()
 
 
@@ -131,6 +140,7 @@ async def test_authenticated_block_read_author_not_allowed(
 async def test_authenticated_block_read_store_unavailable(
     coolorg: CoolorgRpcClients, backend: Backend, monkeypatch: pytest.MonkeyPatch, kind: str
 ) -> None:
+    realm_id = coolorg.wksp1_id
     block_id = BlockID.new()
     block = b"<block content>"
 
@@ -139,7 +149,7 @@ async def test_authenticated_block_read_store_unavailable(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=block_id,
-        realm_id=coolorg.wksp1_id,
+        realm_id=realm_id,
         key_index=1,
         block=block,
     )
@@ -160,7 +170,7 @@ async def test_authenticated_block_read_store_unavailable(
         "parsec.components.postgresql.block.PGBlockStoreComponent.read", mocked_blockstore_read
     )
 
-    rep = await coolorg.alice.block_read(block_id)
+    rep = await coolorg.alice.block_read(realm_id, block_id)
     assert rep == authenticated_cmds.latest.block_read.RepStoreUnavailable()
 
 
@@ -169,6 +179,7 @@ async def test_authenticated_block_read_http_common_errors(
     backend: Backend,
     authenticated_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:
+    realm_id = coolorg.wksp1_id
     block_id = BlockID.new()
     block = b"<block content>"
 
@@ -177,12 +188,12 @@ async def test_authenticated_block_read_http_common_errors(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=block_id,
-        realm_id=coolorg.wksp1_id,
+        realm_id=realm_id,
         key_index=1,
         block=block,
     )
 
     async def do():
-        await coolorg.alice.block_read(block_id)
+        await coolorg.alice.block_read(realm_id, block_id)
 
     await authenticated_http_common_errors_tester(do)
