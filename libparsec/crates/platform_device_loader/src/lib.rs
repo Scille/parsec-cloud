@@ -19,6 +19,10 @@ use native as platform;
 #[cfg(target_arch = "wasm32")]
 use web as platform;
 
+#[cfg(test)]
+#[path = "../tests/mod.rs"]
+mod tests;
+
 pub const ARGON2ID_DEFAULT_MEMLIMIT_KB: u32 = 128 * 1024; // 128 Mo
 pub const ARGON2ID_DEFAULT_OPSLIMIT: u32 = 3;
 // Be careful when changing parallelism: libsodium only supports 1 thread !
@@ -316,7 +320,6 @@ pub async fn export_recovery_device(
     (passphrase, file_content, recovery_device)
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn load_available_device_from_blob(
     path: PathBuf,
     blob: &[u8],
@@ -394,7 +397,6 @@ fn load_available_device_from_blob(
     })
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn encrypt_device(device: &LocalDevice, key: &SecretKey) -> Bytes {
     let mut cleartext = zeroize::Zeroizing::new(device.dump());
     let ciphertext = key.encrypt(&cleartext);
@@ -428,7 +430,6 @@ impl From<DecryptDeviceFileError> for ChangeAuthentificationError {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn decrypt_device_file(
     device_file: &DeviceFile,
     key: &SecretKey,
@@ -442,7 +443,6 @@ fn decrypt_device_file(
     res
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn new_default_pbkdf_algo() -> DeviceFilePasswordAlgorithm {
     DeviceFilePasswordAlgorithm::Argon2id {
         memlimit_kb: ARGON2ID_DEFAULT_MEMLIMIT_KB.into(),
@@ -452,7 +452,6 @@ fn new_default_pbkdf_algo() -> DeviceFilePasswordAlgorithm {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn secret_key_from_password(
     password: &Password,
     algorithm: &DeviceFilePasswordAlgorithm,
@@ -473,7 +472,6 @@ fn secret_key_from_password(
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn server_url_from_device(device: &LocalDevice) -> String {
     ParsecAddr::new(
         device.organization_addr.hostname().to_owned(),
