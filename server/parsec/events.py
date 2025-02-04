@@ -18,6 +18,7 @@ from parsec.types import (
     Base64Bytes,
     DateTimeField,
     DeviceIDField,
+    GreetingAttemptIDField,
     InvitationStatusField,
     InvitationTokenField,
     OrganizationIDField,
@@ -115,6 +116,37 @@ class EventInvitation(BaseModel, ClientBroadcastableEvent):
             authenticated_cmds.latest.events_listen.APIEventInvitation(
                 token=self.token,
                 invitation_status=self.status,
+            ),
+            self.event_id,
+        )
+
+
+class EventGreetingAttemptReady(BaseModel, ClientBroadcastableEvent):
+    """
+    Event used to inform a user that a claimer is waiting to be greeted.
+
+    More precisely, this event is sent each time the claimer polls the first step
+    (WAIT_PEER) of the corresponding greeting attempt.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
+    type: Literal["GREETING_ATTEMPT_READY"] = "GREETING_ATTEMPT_READY"
+    event_id: UUID = Field(default_factory=uuid4)
+    organization_id: OrganizationIDField
+    token: InvitationTokenField
+    greeter: UserIDField
+    greeting_attempt: GreetingAttemptIDField
+
+    @override
+    def is_event_for_client(self, client: RegisteredClient) -> bool:
+        return self.organization_id == client.organization_id and client.user_id == self.greeter
+
+    @override
+    def dump_as_apiv5_sse_payload(self) -> bytes:
+        return self._dump_as_apiv5_sse_payload(
+            authenticated_cmds.latest.events_listen.APIEventGreetingAttemptReady(
+                token=self.token,
+                greeting_attempt=self.greeting_attempt,
             ),
             self.event_id,
         )
@@ -436,6 +468,7 @@ class EventUserUpdated(BaseModel):
 type Event = (
     EventPinged
     | EventInvitation
+    | EventGreetingAttemptReady
     | EventPkiEnrollment
     | EventVlob
     | EventCommonCertificate

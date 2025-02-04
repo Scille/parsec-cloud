@@ -8,6 +8,7 @@ from .common import (
     IndexInt,
     InvitationStatus,
     InvitationToken,
+    GreetingAttemptID,
     SizeInt,
     Variant,
     VlobID,
@@ -63,6 +64,10 @@ class ClientEvent(Variant):
     class InvitationChanged:
         token: InvitationToken
         status: InvitationStatus
+
+    class GreetingAttemptReady:
+        token: InvitationToken
+        greeting_attempt: GreetingAttemptID
 
     class TooMuchDriftWithServerClock:
         server_timestamp: DateTime

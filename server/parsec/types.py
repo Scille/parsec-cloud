@@ -12,6 +12,7 @@ from parsec._parsec import (
     ActiveUsersLimit,
     DateTime,
     DeviceID,
+    GreetingAttemptID,
     InvitationStatus,
     InvitationToken,
     OrganizationID,
@@ -96,6 +97,13 @@ SequesterServiceIDField = Annotated[
 InvitationTokenField = Annotated[
     InvitationToken,
     PlainValidator(lambda x: x if isinstance(x, InvitationToken) else InvitationToken.from_hex(x)),
+    PlainSerializer(lambda x: x.hex, return_type=str),
+]
+GreetingAttemptIDField = Annotated[
+    GreetingAttemptID,
+    PlainValidator(
+        lambda x: x if isinstance(x, GreetingAttemptID) else GreetingAttemptID.from_hex(x)
+    ),
     PlainSerializer(lambda x: x.hex, return_type=str),
 ]
 InvitationStatusField = Annotated[

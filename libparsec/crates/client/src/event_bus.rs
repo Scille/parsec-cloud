@@ -365,6 +365,16 @@ impl_events!(
 
     /// This event is fired by the connection monitor.
     ///
+    /// It is used to inform the user that a claimer is waiting to be greeted.
+    /// More precisely, this event is sent each time the claimer polls the first step
+    /// (WAIT_PEER) of the corresponding greeting attempt.
+    GreetingAttemptReady {
+        token: InvitationToken,
+        greeting_attempt: GreetingAttemptID,
+    },
+
+    /// This event is fired by the connection monitor.
+    ///
     /// The PKI enrollments have changed on server side (e.g. a new enrollment
     /// is available).
     ///
