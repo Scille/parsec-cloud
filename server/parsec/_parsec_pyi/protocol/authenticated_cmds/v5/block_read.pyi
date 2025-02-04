@@ -4,13 +4,15 @@
 
 from __future__ import annotations
 
-from parsec._parsec import BlockID, DateTime
+from parsec._parsec import BlockID, DateTime, VlobID
 
 class Req:
-    def __init__(self, block_id: BlockID) -> None: ...
+    def __init__(self, block_id: BlockID, realm_id: VlobID) -> None: ...
     def dump(self) -> bytes: ...
     @property
     def block_id(self) -> BlockID: ...
+    @property
+    def realm_id(self) -> VlobID: ...
 
 class Rep:
     @staticmethod
@@ -34,6 +36,11 @@ class RepOk(Rep):
     def key_index(self) -> int: ...
     @property
     def needed_realm_certificate_timestamp(self) -> DateTime: ...
+
+class RepRealmNotFound(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
 
 class RepBlockNotFound(Rep):
     def __init__(
