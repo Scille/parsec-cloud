@@ -1778,6 +1778,7 @@
         "unknownFileType": "Impossible de prévisualiser ce type de fichier.",
         "noFolderPreview": "Impossible de prévisualiser les dossiers.",
         "genericError": "Impossible d'ouvrir le fichier.",
+        "mediaNotSupported": "Ce média ne peut pas être joué.",
         "controls": {
             "zoom": {
                 "in": "Zoomer",
