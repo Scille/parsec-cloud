@@ -99,7 +99,7 @@
                 :organization="currentOrganization"
               />
               <contracts-page
-                v-if="currentPage === ClientAreaPages.Contracts || ()"
+                v-if="currentPage === ClientAreaPages.Contracts"
                 :organization="currentOrganization"
                 @organization-selected="onOrganizationSelected"
               />
