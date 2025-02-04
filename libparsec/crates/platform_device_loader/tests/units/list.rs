@@ -3,8 +3,6 @@
 // `allow-unwrap-in-test` don't behave as expected, see:
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
-// TODO: Web support is not implemented
-#![cfg(not(target_arch = "wasm32"))]
 
 use crate::list_available_devices;
 use libparsec_testbed::TestbedEnv;
@@ -13,8 +11,14 @@ use libparsec_types::prelude::*;
 
 #[parsec_test]
 #[case::unknown_path(false)]
-#[case::existing_path(true)]
-async fn list_no_devices(tmp_path: TmpPath, #[case] path_exists: bool) {
+#[cfg_attr(not(target_arch = "wasm32"), case::existing_path(true))]
+async fn list_no_devices(
+    tmp_path: TmpPath,
+    #[case]
+    #[cfg_attr(target_arch = "wasm32", expect(unused_variables))]
+    path_exists: bool,
+) {
+    #[cfg(not(target_arch = "wasm32"))]
     if path_exists {
         std::fs::create_dir(tmp_path.join("devices")).unwrap();
     }
@@ -26,29 +30,15 @@ async fn list_no_devices(tmp_path: TmpPath, #[case] path_exists: bool) {
 #[parsec_test]
 async fn ignore_invalid_items(tmp_path: TmpPath) {
     let devices_dir = tmp_path.join("devices");
-    std::fs::create_dir(&devices_dir).unwrap();
 
     // Also add dummy stuff that should be ignored
 
-    // Empty folder
-    std::fs::File::create(devices_dir.join("bad1")).unwrap();
+    // Empty file
+    crate::tests::utils::create_device_file(&devices_dir.join("empty.keys"), b"");
     // Dummy file
-    std::fs::write(
-        devices_dir.join("1797e0d4507cf1b7d0706876840d8b3105edecd61066c3c6a9c3c194eeadea29.key"),
-        b"dummy",
-    )
-    .unwrap();
+    crate::tests::utils::create_device_file(&devices_dir.join("dummy.keys"), b"dummy");
     // Folder with dummy file
-    {
-        let dummy_dir =
-            devices_dir.join("1797e0d4507cf1b7d0706876840d8b3105edecd61066c3c6a9c3c194eeadea29");
-        std::fs::create_dir(&dummy_dir).unwrap();
-        std::fs::write(
-            dummy_dir.join("1797e0d4507cf1b7d0706876840d8b3105edecd61066c3c6a9c3c194eeadea29.key"),
-            b"dummy",
-        )
-        .unwrap();
-    }
+    crate::tests::utils::create_device_file(&devices_dir.join("dir/a_file.keys"), b"dummy");
 
     let devices = list_available_devices(&tmp_path).await;
     p_assert_eq!(devices, []);
@@ -273,10 +263,7 @@ async fn list_devices(tmp_path: TmpPath) {
         (&smartcard_path, smartcard_raw),
         (&recovery_path, recovery_raw),
     ] {
-        tokio::fs::create_dir_all(path.parent().unwrap())
-            .await
-            .unwrap();
-        tokio::fs::write(path, raw).await.unwrap();
+        crate::tests::utils::create_device_file(path, raw);
     }
 
     // 3. Actual test !

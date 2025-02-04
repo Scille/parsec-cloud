@@ -1,8 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// TODO: Web support is not implemented
-#![cfg(not(target_arch = "wasm32"))]
-
 use std::path::Path;
 
 use crate::{change_authentication, load_device, save_device};
@@ -10,6 +7,8 @@ use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
+
+use crate::tests::utils::key_present_in_system;
 
 #[parsec_test]
 async fn same_key_file(tmp_path: TmpPath) {
@@ -38,14 +37,14 @@ async fn same_key_file(tmp_path: TmpPath) {
     );
 
     // Sanity check
-    assert!(!key_file.exists());
+    assert!(!key_present_in_system(&key_file));
 
     TimeProvider::root_provider().mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
     let available1 = save_device(Path::new(""), &access, &device).await.unwrap();
     TimeProvider::root_provider().unmock_time();
 
     // Sanity check
-    assert!(key_file.exists());
+    assert!(key_present_in_system(&key_file));
     p_assert_eq!(
         available1.created_on,
         "2000-01-01T00:00:00Z".parse().unwrap()
@@ -66,7 +65,7 @@ async fn same_key_file(tmp_path: TmpPath) {
     TimeProvider::root_provider().unmock_time();
 
     // Sanity check
-    assert!(key_file.exists());
+    assert!(key_present_in_system(&key_file));
     let expected_available2 = {
         let mut expected = available1.clone();
         expected.protected_on = "2000-01-02T00:00:00Z".parse().unwrap();
@@ -109,12 +108,12 @@ async fn different_key_file(tmp_path: TmpPath) {
     );
 
     // Sanity check
-    assert!(!key_file.exists());
+    assert!(!key_present_in_system(&key_file));
 
     save_device(Path::new(""), &access, &device).await.unwrap();
 
     // Sanity check
-    assert!(key_file.exists());
+    assert!(key_present_in_system(&key_file));
 
     let new_key_file = tmp_path.join("devices/alice@dev2.keys");
     let new_access = DeviceAccessStrategy::Password {
@@ -127,8 +126,8 @@ async fn different_key_file(tmp_path: TmpPath) {
         .unwrap();
 
     // Sanity check
-    assert!(!key_file.exists());
-    assert!(new_key_file.exists());
+    assert!(!key_present_in_system(&key_file));
+    assert!(key_present_in_system(&new_key_file));
 
     p_assert_eq!(
         *load_device(Path::new(""), &new_access).await.unwrap(),

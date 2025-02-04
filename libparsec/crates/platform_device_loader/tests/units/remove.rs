@@ -3,10 +3,8 @@
 // `allow-unwrap-in-test` don't behave as expected, see:
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
-// TODO: Web support is not implemented
-#![cfg(not(target_arch = "wasm32"))]
 
-use crate::{remove_device, save_device};
+use crate::{remove_device, save_device, tests::utils::key_present_in_system};
 use libparsec_tests_fixtures::{parsec_test, tmp_path, TestbedEnv, TmpPath};
 use libparsec_types::DeviceAccessStrategy;
 
@@ -25,5 +23,8 @@ async fn remove_ok(tmp_path: TmpPath, env: &TestbedEnv) {
     remove_device(&key_file).await.unwrap();
 
     // 3. Check that the device as been removed.
-    assert!(!key_file.exists(), "Device file should have been removed");
+    assert!(
+        !key_present_in_system(&key_file),
+        "Device file should have been removed"
+    );
 }
