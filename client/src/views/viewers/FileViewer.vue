@@ -32,7 +32,7 @@
               <ion-button
                 class="file-viewer-topbar-buttons__item"
                 @click="openWithSystem(contentInfo.path)"
-                v-show="isDesktop()"
+                v-show="isDesktop() && !atDateTime"
               >
                 <ion-icon :icon="open" />
                 {{ $msTranslate('fileViewers.openWithDefault') }}
