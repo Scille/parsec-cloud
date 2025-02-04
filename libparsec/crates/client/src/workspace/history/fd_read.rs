@@ -76,6 +76,11 @@ pub async fn fd_read(
                 WorkspaceHistoryGetBlockError::BlockNotFound => {
                     WorkspaceHistoryFdReadError::BlockNotFound
                 }
+                WorkspaceHistoryGetBlockError::RealmNotFound => {
+                    // The realm doesn't exist on server side, hence we are its creator and
+                    // the block has never been uploaded to the server yet.
+                    WorkspaceHistoryFdReadError::BlockNotFound
+                }
                 WorkspaceHistoryGetBlockError::InvalidBlockAccess(err) => {
                     WorkspaceHistoryFdReadError::InvalidBlockAccess(err)
                 }
