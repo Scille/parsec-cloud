@@ -185,6 +185,8 @@ pub enum FetchRemoteBlockError {
     Stopped,
     #[error("Cannot reach the server")]
     Offline,
+    #[error("The realm's manifest doesn't exist on the server")]
+    RealmNotFound,
     #[error("The block doesn't exist on the server")]
     BlockNotFound,
     #[error("Not allowed to access this realm")]
@@ -221,6 +223,7 @@ pub(super) async fn fetch_block(
         use authenticated_cmds::latest::block_read::{Rep, Req};
 
         let req = Req {
+            realm_id,
             block_id: access.id,
         };
 
@@ -235,6 +238,7 @@ pub(super) async fn fetch_block(
             // Expected errors
             Rep::StoreUnavailable => Err(FetchRemoteBlockError::StoreUnavailable),
             Rep::AuthorNotAllowed => Err(FetchRemoteBlockError::NoRealmAccess),
+            Rep::RealmNotFound => Err(FetchRemoteBlockError::RealmNotFound),
             Rep::BlockNotFound => Err(FetchRemoteBlockError::BlockNotFound),
             // Unexpected errors :(
             rep @ Rep::UnknownStatus { .. } => {

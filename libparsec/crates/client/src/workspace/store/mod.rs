@@ -663,7 +663,21 @@ impl WorkspaceStore {
             FetchRemoteBlockError::Offline | FetchRemoteBlockError::StoreUnavailable => {
                 ReadChunkOrBlockError::Offline
             }
-            FetchRemoteBlockError::BlockNotFound => ReadChunkOrBlockError::ChunkNotFound,
+            FetchRemoteBlockError::BlockNotFound => {
+                // This is unexpected: we got a block ID from a file manifest,
+                // but this ID points to nothing according to the server :/
+                //
+                // That could means two things:
+                // - The server is lying to us.
+                // - The client that has uploaded the file manifest was buggy
+                //   and included the ID of a not-yet-synchronized block.
+                ReadChunkOrBlockError::ChunkNotFound
+            }
+            FetchRemoteBlockError::RealmNotFound => {
+                // The realm doesn't exist on server side, hence we are its creator and
+                // its data only live on our local storage, which we have already checked.
+                ReadChunkOrBlockError::ChunkNotFound
+            }
             FetchRemoteBlockError::NoRealmAccess => ReadChunkOrBlockError::NoRealmAccess,
             FetchRemoteBlockError::InvalidBlockAccess(err) => {
                 ReadChunkOrBlockError::InvalidBlockAccess(err)
