@@ -375,6 +375,16 @@ impl_events!(
 
     /// This event is fired by the connection monitor.
     ///
+    /// It is used to inform the user that a greeting attempt has been cancelled.
+    /// Note this event will be fired (i.e. the server pushes it to us) even if
+    /// we are at the origin of the change (e.g. we cancelled the greeting attempt).
+    GreetingAttemptCancelled {
+        token: InvitationToken,
+        greeting_attempt: GreetingAttemptID,
+    },
+
+    /// This event is fired by the connection monitor.
+    ///
     /// The PKI enrollments have changed on server side (e.g. a new enrollment
     /// is available).
     ///

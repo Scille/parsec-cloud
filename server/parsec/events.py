@@ -152,6 +152,34 @@ class EventGreetingAttemptReady(BaseModel, ClientBroadcastableEvent):
         )
 
 
+class EventGreetingAttemptCancelled(BaseModel, ClientBroadcastableEvent):
+    """
+    Event used to inform a user that a given greeting attempt has been cancelled.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
+    type: Literal["GREETING_ATTEMPT_CANCELLED"] = "GREETING_ATTEMPT_CANCELLED"
+    event_id: UUID = Field(default_factory=uuid4)
+    organization_id: OrganizationIDField
+    token: InvitationTokenField
+    greeter: UserIDField
+    greeting_attempt: GreetingAttemptIDField
+
+    @override
+    def is_event_for_client(self, client: RegisteredClient) -> bool:
+        return self.organization_id == client.organization_id and client.user_id == self.greeter
+
+    @override
+    def dump_as_apiv5_sse_payload(self) -> bytes:
+        return self._dump_as_apiv5_sse_payload(
+            authenticated_cmds.latest.events_listen.APIEventGreetingAttemptCancelled(
+                token=self.token,
+                greeting_attempt=self.greeting_attempt,
+            ),
+            self.event_id,
+        )
+
+
 class EventPkiEnrollment(BaseModel, ClientBroadcastableEvent):
     """
     Event broadcasted to the organization admins to inform them someone has submit
@@ -469,6 +497,7 @@ type Event = (
     EventPinged
     | EventInvitation
     | EventGreetingAttemptReady
+    | EventGreetingAttemptCancelled
     | EventPkiEnrollment
     | EventVlob
     | EventCommonCertificate

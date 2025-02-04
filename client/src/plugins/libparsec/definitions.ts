@@ -804,6 +804,7 @@ export type ClientDeleteShamirRecoveryError =
 // ClientEvent
 export enum ClientEventTag {
     ExpiredOrganization = 'ClientEventExpiredOrganization',
+    GreetingAttemptCancelled = 'ClientEventGreetingAttemptCancelled',
     GreetingAttemptReady = 'ClientEventGreetingAttemptReady',
     IncompatibleServer = 'ClientEventIncompatibleServer',
     InvitationChanged = 'ClientEventInvitationChanged',
@@ -826,6 +827,11 @@ export enum ClientEventTag {
 
 export interface ClientEventExpiredOrganization {
     tag: ClientEventTag.ExpiredOrganization
+}
+export interface ClientEventGreetingAttemptCancelled {
+    tag: ClientEventTag.GreetingAttemptCancelled
+    token: InvitationToken
+    greetingAttempt: GreetingAttemptID
 }
 export interface ClientEventGreetingAttemptReady {
     tag: ClientEventTag.GreetingAttemptReady
@@ -908,6 +914,7 @@ export interface ClientEventWorkspacesSelfListChanged {
 }
 export type ClientEvent =
   | ClientEventExpiredOrganization
+  | ClientEventGreetingAttemptCancelled
   | ClientEventGreetingAttemptReady
   | ClientEventIncompatibleServer
   | ClientEventInvitationChanged

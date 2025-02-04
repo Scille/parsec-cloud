@@ -741,6 +741,11 @@ export type ClientDeleteShamirRecoveryError =
 export interface ClientEventExpiredOrganization {
     tag: "ExpiredOrganization"
 }
+export interface ClientEventGreetingAttemptCancelled {
+    tag: "GreetingAttemptCancelled"
+    token: string
+    greeting_attempt: string
+}
 export interface ClientEventGreetingAttemptReady {
     tag: "GreetingAttemptReady"
     token: string
@@ -822,6 +827,7 @@ export interface ClientEventWorkspacesSelfListChanged {
 }
 export type ClientEvent =
   | ClientEventExpiredOrganization
+  | ClientEventGreetingAttemptCancelled
   | ClientEventGreetingAttemptReady
   | ClientEventIncompatibleServer
   | ClientEventInvitationChanged

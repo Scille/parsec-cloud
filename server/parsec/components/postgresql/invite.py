@@ -66,7 +66,7 @@ from parsec.components.postgresql.utils import (
 )
 from parsec.components.user import CheckDeviceBadOutcome, GetProfileForUserUserBadOutcome
 from parsec.config import BackendConfig
-from parsec.events import EventGreetingAttemptReady, EventInvitation
+from parsec.events import EventGreetingAttemptCancelled, EventGreetingAttemptReady, EventInvitation
 
 ShamirRecoveryRecipient: TypeAlias = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
 
@@ -2313,6 +2313,15 @@ class PGInviteComponent(BaseInviteComponent):
             conn, greeting_attempt_info.internal_id, GreeterOrClaimer.GREETER, reason, now
         )
 
+        await self._event_bus.send(
+            EventGreetingAttemptCancelled(
+                organization_id=organization_id,
+                token=invitation_info.token,
+                greeter=greeting_attempt_info.greeter,
+                greeting_attempt=greeting_attempt,
+            )
+        )
+
     @override
     @transaction
     async def claimer_cancel_greeting_attempt(
@@ -2372,6 +2381,15 @@ class PGInviteComponent(BaseInviteComponent):
 
         await self.cancel_greeting_attempt(
             conn, greeting_attempt_info.internal_id, GreeterOrClaimer.CLAIMER, reason, now
+        )
+
+        await self._event_bus.send(
+            EventGreetingAttemptCancelled(
+                organization_id=organization_id,
+                token=invitation_info.token,
+                greeter=greeting_attempt_info.greeter,
+                greeting_attempt=greeting_attempt,
+            )
         )
 
     @override
