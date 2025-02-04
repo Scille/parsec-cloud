@@ -42,6 +42,7 @@ enum DataType {
   CustomOrderDetails = 'custom-order-details',
   CreateCustomOrderRequest = 'create-custom-order-request',
   GetCustomOrderRequests = 'get-custom-order-requests',
+  CustomOrderInvoices = 'custom-order-invoices',
 }
 
 enum PaymentMethod {
@@ -168,6 +169,11 @@ interface CustomOrderDetailsResultData {
   storage: CustomOrderRow;
 }
 
+interface CustomOrderInvoicesResultData {
+  type: DataType.CustomOrderInvoices;
+  invoices: Array<CustomOrderDetailsResultData>;
+}
+
 interface InvoicesResultData {
   type: DataType.Invoices;
   invoices: Array<BmsInvoice>;
@@ -239,7 +245,8 @@ type ResultData =
   | BillingDetailsResultData
   | CustomOrderStatusResultData
   | CustomOrderDetailsResultData
-  | GetCustomOrderRequestsResultData;
+  | GetCustomOrderRequestsResultData
+  | CustomOrderInvoicesResultData;
 
 // Misc data
 interface BmsOrganization {
@@ -374,6 +381,7 @@ export {
   CreateCustomOrderRequestQueryData,
   CreateOrganizationQueryData,
   CustomOrderDetailsResultData,
+  CustomOrderInvoicesResultData,
   CustomOrderQueryData,
   CustomOrderRequestStatus,
   CustomOrderStatus,

@@ -351,6 +351,17 @@ class BmsAccess {
     return response;
   }
 
+  async getCustomOrderInvoices(organization: BmsOrganization): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    return await this.api.getCustomOrderInvoices(this.tokens.access, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
+      organization: organization,
+    });
+  }
+
   async rememberCredentials(): Promise<void> {
     this.storeCredentials = true;
     await this.storeAccess();
