@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 #![allow(clippy::unwrap_used)]
-// TODO: Web support is not implemented
-#![cfg(not(target_arch = "wasm32"))]
 
 use crate::{export_recovery_device, import_recovery_device, PlatformImportRecoveryDeviceError};
 use libparsec_tests_lite::p_assert_matches;
