@@ -10,6 +10,7 @@ In Parsec, your data is securely stored within **workspaces**.
 .. image:: screens/parsec_workspace.png
     :align: center
     :alt: Parsec workspace
+    :width: 300
 
 You can import your data into a Parsec workspace and manage your files and
 directories as you will do with a regular file explorer.
@@ -138,6 +139,42 @@ workspace.
   Strong cryptographic security prevents data recovery. If the workspace is
   not shared with others, and the user loses access to its device or cannot
   log in for any reason, data stored in the workspace will be lost forever.
+
+
+Copy the roles of one user to another
+-------------------------------------
+
+Assigning roles on multiple workspaces for a single user can become a bit tedious. This feature exists to help you copy the roles from one user to another on all workspaces.
+
+As an example, Mallory is an intern in your company, and uses Parsec. You shared four workspaces with her, two where she is a `Reader`, two where she is a `Contributor`. Bob is a newly hired intern, and you want to share with him the same workspaces you shared with Mallory, with the same roles. Instead of sharing each workspace one by one, you could instead go to ``Manage my organization`` in the top left corner and access the list of users. Right click on Mallory, and select ``Copy workspace roles to...``.
+
+.. image:: screens/batch_workspace_context_menu.png
+    :align: center
+    :width: 800
+    :alt: Batch workspace assignment screenshot
+
+A dialog opens, asking you to select the user whose roles you want to copy. Simply start typing their name or email address, and select the option the application will give you.
+
+.. image:: screens/batch_workspace_select_user.png
+    :align: center
+    :width: 400
+    :alt: Batch workspace select user screenshot
+
+Parsec gives you the list of updates that will be performed. If satisfied with the changes, click on ``Copy roles``.
+
+.. image:: screens/batch_workspace_summary.png
+    :align: center
+    :width: 400
+    :alt: Batch workspace select user screenshot
+
+A few things to note:
+
+* Usual rules still apply: a user with an `External` profile cannot be made `Manager` or `Owner`.
+* If the target user already has a higher role on the workspace, it will not be changed.
+* It will not change the roles the target user may have on other workspaces that are not shared with the source user.
+* Only workspaces both you and the source have access to will be changed.
+* Only the workspaces where you are either `Manager` or `Owner` will be changed.
+
 
 Browse workspace history and restore files
 ------------------------------------------
