@@ -1700,7 +1700,7 @@
                 "sent": "Votre demande a bien été envoyée.",
                 "details": "Détails de la demande",
                 "date": "Date de la demande",
-                "membersNeed": "Nombre de membres",
+                "usersNeed": "Nombre d'utilisateurs",
                 "dataNeeded": "Volume de données",
                 "startDate": "Date de début",
                 "endDate": "Date de fin"
@@ -1742,7 +1742,7 @@
                 "header": {
                     "orderNumber": "Numéro de commande",
                     "period": "Période",
-                    "members": "Nombre de membres",
+                    "users": "Users nombre",
                     "storage": "Volume de données",
                     "status": "Statut"
                 }

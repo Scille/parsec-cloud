@@ -34,7 +34,7 @@
 
     <!-- order details -->
     <div
-      v-if="open && contractDetails"
+      v-if="open && contractDetails?.type === DataType.CustomOrderDetails"
       class="order-content"
     >
       <div class="order-content-details">
@@ -45,7 +45,7 @@
           <div class="details-list-item">
             <ion-text class="details-list-item__title body-lg">
               <ion-icon :icon="people" />
-              {{ $msTranslate('clientArea.orders.new.membersNeed') }}
+              {{ $msTranslate('clientArea.orders.new.usersNeed') }}
             </ion-text>
             <ion-text class="details-list-item__data subtitles-normal">{{ getUserOptions(request.users) }}</ion-text>
           </div>
@@ -132,6 +132,11 @@ const contractDetails = ref<CustomOrderDetailsResultData | undefined>(undefined)
 const customOrderStatus = ref<CustomOrderStatus>(CustomOrderStatus.Unknown);
 const open = ref(false);
 
+const props = defineProps<{
+  request: CustomOrderRequest;
+  organization?: BmsOrganization;
+}>();
+
 function getUserOptions(user: number): Translatable {
   switch (user) {
     case 50:
@@ -162,11 +167,6 @@ function getStorageOptions(storage: number): Translatable {
   }
 }
 
-const props = defineProps<{
-  request: CustomOrderRequest;
-  organization: BmsOrganization;
-}>();
-
 interface CustomOrderRequest {
   id: string;
   describedNeeds: string;
@@ -184,9 +184,11 @@ interface RequestStatusStep {
 }
 
 onMounted(async () => {
-  if (isDefaultOrganization(props.organization)) {
-    querying.value = true;
-    return;
+  if (props.organization) {
+    if (isDefaultOrganization(props.organization)) {
+      querying.value = true;
+      return;
+    }
   }
 
   const orderRequestsRep = await MockedBmsApi.getCustomOrderRequests();
@@ -202,11 +204,13 @@ onMounted(async () => {
     error.value = 'clientArea.dashboard.processing.error.title';
   }
 
-  const orderDetailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
-  if (!orderDetailsRep.isError && orderDetailsRep.data && orderDetailsRep.data.type === DataType.CustomOrderDetails) {
-    contractDetails.value = orderDetailsRep.data;
-  } else {
-    error.value = 'clientArea.contracts.errors.noInfo';
+  if (props.organization) {
+    const orderDetailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
+    if (!orderDetailsRep.isError && orderDetailsRep.data && orderDetailsRep.data.type === DataType.CustomOrderDetails) {
+      contractDetails.value = orderDetailsRep.data;
+    } else {
+      error.value = 'clientArea.contracts.errors.noInfo';
+    }
   }
   const orderDetailsStatus = await MockedBmsApi.getCustomOrderStatus();
   if (!orderDetailsStatus.isError && orderDetailsStatus.data && orderDetailsStatus.data.type === DataType.CustomOrderStatus) {
@@ -341,33 +345,33 @@ function toggleOpen(): boolean {
     gap: 1rem;
 
     .order-tag {
-      color: var(--parsec-color-tags-indigo500);
+      color: var(--parsec-color-tags-indigo-500);
       padding: 0.15rem 0.5rem;
       border-radius: var(--parsec-radius-32);
 
       &-received {
-        background-color: var(--parsec-color-tags-indigo100);
-        color: var(--parsec-color-tags-indigo500);
+        background-color: var(--parsec-color-tags-indigo-50);
+        color: var(--parsec-color-tags-indigo-700);
       }
       &-processing {
         background-color: var(--parsec-color-light-secondary-premiere);
         color: var(--parsec-color-light-secondary-text);
       }
       &-finished {
-        background-color: var(--parsec-color-tags-blue100);
-        color: var(--parsec-color-tags-blue500);
+        background-color: var(--parsec-color-tags-blue-50);
+        color: var(--parsec-color-tags-blue-700);
       }
       &-invoice {
-        background-color: var(--parsec-color-tags-orange100);
-        color: var(--parsec-color-tags-orange500);
+        background-color: var(--parsec-color-tags-orange-50);
+        color: var(--parsec-color-tags-orange-700);
       }
       &-available {
         background-color: var(--parsec-color-light-success-50);
         color: var(--parsec-color-light-success-500);
       }
       &-standby {
-        background-color: var(--parsec-color-tags-orange100);
-        color: var(--parsec-color-tags-orange500);
+        background-color: var(--parsec-color-tags-orange-50);
+        color: var(--parsec-color-tags-orange-700);
       }
       &-cancelled {
         background-color: var(--parsec-color-light-danger-50);

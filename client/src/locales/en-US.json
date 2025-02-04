@@ -1700,7 +1700,7 @@
                 "sent": "Your request has been sent.",
                 "details": "Order details",
                 "date": "Date",
-                "membersNeed": "Amount of members",
+                "usersNeed": "Amount of users",
                 "dataNeeded": "Amount of data",
                 "startDate": "Starting date",
                 "endDate": "Ending date"
@@ -1742,7 +1742,7 @@
                 "header": {
                     "orderNumber": "Order number",
                     "period": "Period",
-                    "members": "Members number",
+                    "users": "Users number",
                     "storage": "Storage",
                     "status": "Status"
                 }

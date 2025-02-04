@@ -18,7 +18,7 @@
     </div>
 
     <!-- condition à ajouter v-if="orderInProgress" -->
-    <template v-if="contractRequests && !error">
+    <template v-if="contractRequests?.type === DataType.GetCustomOrderRequests && !error && organization">
       <order-in-progress
         v-for="order in contractRequests.requests"
         :key="order.id"
@@ -46,8 +46,8 @@
           <ion-item class="orders-done-header-list-item orders-date">
             <ion-text class="menu-active">{{ $msTranslate('clientArea.orders.passed.header.period') }}</ion-text>
           </ion-item>
-          <ion-item class="orders-done-header-list-item orders-members">
-            <ion-text class="menu-active">{{ $msTranslate('clientArea.orders.passed.header.members') }}</ion-text>
+          <ion-item class="orders-done-header-list-item orders-users">
+            <ion-text class="menu-active">{{ $msTranslate('clientArea.orders.passed.header.users') }}</ion-text>
           </ion-item>
           <ion-item class="orders-done-header-list-item orders-storage">
             <ion-text class="menu-active">{{ $msTranslate('clientArea.orders.passed.header.storage') }}</ion-text>
@@ -127,8 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonList, IonItem, IonIcon, IonButton, IonSkeletonText, modalController } from '@ionic/vue';
-import { arrowForward } from 'ionicons/icons';
+import { IonText, IonList, IonItem, IonButton, IonSkeletonText, modalController } from '@ionic/vue';
 import {
   BmsAccessInstance,
   BmsOrganization,
@@ -301,7 +300,7 @@ onMounted(async () => {
       max-width: var(--max-width-date);
     }
 
-    &-members {
+    &-users {
       width: 100%;
       max-width: var(--max-width-members);
     }
