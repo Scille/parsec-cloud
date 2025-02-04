@@ -609,7 +609,7 @@ secretservice
 sectionauthor
 seealso
 SeedBytes
-Sellsy,
+Sellsy
 sensorgestures
 Sequestery
 Serde
