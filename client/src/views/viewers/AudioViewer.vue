@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <file-viewer-wrapper>
+  <file-viewer-wrapper :error="error">
     <template #viewer>
       <audio
         v-if="src.length"
@@ -14,11 +14,15 @@
         @volumechange="updateMediaData"
         @ended="updateMediaData"
         @timeupdate="onTimeUpdate"
+        @error="onError"
       />
-      <file-viewer-background :icon="musicalNotes" />
+      <file-viewer-background
+        :icon="musicalNotes"
+        v-show="!error && !loading"
+      />
     </template>
     <template #controls>
-      <file-controls>
+      <file-controls v-show="!loading">
         <file-controls-playback
           :paused="progress.paused"
           :ended="ended"
@@ -52,6 +56,10 @@ const length = ref(0);
 const volume = ref(1);
 const ended = ref(false);
 const progress = ref<SliderState>({ progress: 0, paused: true });
+const error = ref('');
+// Not much to load, we just want to avoid a blinking effect in case
+// of invalid media
+const loading = ref(true);
 
 const cancelProgressWatch = watch(
   () => progress.value,
@@ -66,12 +74,18 @@ const cancelProgressWatch = watch(
 );
 
 onMounted(async () => {
+  loading.value = true;
   src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
 });
 
 onUnmounted(() => {
   cancelProgressWatch();
 });
+
+async function onError(): Promise<void> {
+  loading.value = false;
+  error.value = 'fileViewers.mediaNotSupported';
+}
 
 function onTimeUpdate(): void {
   if (!progress.value.paused && audioElement.value?.currentTime !== undefined) {
@@ -86,6 +100,7 @@ function togglePlayback(): void {
 }
 
 function updateMediaData(event: Event): void {
+  loading.value = false;
   volume.value = (event.target as HTMLAudioElement).volume;
   length.value = (event.target as HTMLVideoElement).duration * 100;
   progress.value.progress = (event.target as HTMLVideoElement).currentTime * 100;

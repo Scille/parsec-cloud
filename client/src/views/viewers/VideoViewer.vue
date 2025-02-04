@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <file-viewer-wrapper>
+  <file-viewer-wrapper :error="error">
     <template #viewer>
       <video
         class="video"
@@ -13,6 +13,7 @@
         @pause="updateMediaData"
         @ended="updateMediaData"
         @timeupdate="onTimeUpdate"
+        @error="onError"
       >
         <source
           :src="src"
@@ -59,6 +60,7 @@ const length = ref(0);
 const volume = ref(1);
 const ended = ref(false);
 const progress = ref<SliderState>({ progress: 0, paused: true });
+const error = ref('');
 
 const cancelProgressWatch = watch(
   () => progress.value,
@@ -79,6 +81,10 @@ onMounted(async () => {
 onUnmounted(() => {
   cancelProgressWatch();
 });
+
+async function onError(): Promise<void> {
+  error.value = 'fileViewers.mediaNotSupported';
+}
 
 function onTimeUpdate(): void {
   if (!progress.value.paused && videoElement.value && videoElement.value.currentTime !== undefined) {
@@ -103,11 +109,20 @@ async function toggleFullScreen(): Promise<void> {
 }
 
 function updateMediaData(event: Event): void {
-  volume.value = (event.target as HTMLVideoElement).volume;
-  ended.value = (event.target as HTMLVideoElement).ended;
-  length.value = (event.target as HTMLVideoElement).duration * 100;
-  progress.value.progress = (event.target as HTMLVideoElement).currentTime * 100;
-  progress.value.paused = (event.target as HTMLVideoElement).paused;
+  // in some cases, the `error` event is not emitted, probably
+  // because the video element waits for more data to make up
+  // its mind, even if there's no more data. So instead, when
+  // trying to update the media data, we check if the `duration`
+  // is set or not.
+  if (Number.isNaN((event.target as HTMLVideoElement).duration)) {
+    error.value = 'fileViewers.mediaNotSupported';
+  } else {
+    volume.value = (event.target as HTMLVideoElement).volume;
+    ended.value = (event.target as HTMLVideoElement).ended;
+    length.value = (event.target as HTMLVideoElement).duration * 100;
+    progress.value.progress = (event.target as HTMLVideoElement).currentTime * 100;
+    progress.value.paused = (event.target as HTMLVideoElement).paused;
+  }
 }
 </script>
 

@@ -1778,6 +1778,7 @@
         "unknownFileType": "Cannot preview this file type.",
         "noFolderPreview": "Cannot preview folders.",
         "genericError": "Failed to open the file.",
+        "mediaNotSupported": "This media is not supported.",
         "controls": {
             "zoom": {
                 "in": "Zoom in",
