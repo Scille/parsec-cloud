@@ -76,7 +76,7 @@ pub fn parsec_test(
         #[cfg_attr(
             target_arch = "wasm32",
             // FIXME: Workaround for rstest until https://github.com/la10736/rstest/issues/211 is resolved
-            ::libparsec_tests_lite::platform::test
+            ::libparsec_tests_lite::platform::test(crate = ::libparsec_tests_lite::platform::wasm_bindgen_test)
         )]
         #sig {
             #[cfg(not(target_arch = "wasm32"))]

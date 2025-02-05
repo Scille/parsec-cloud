@@ -2071,7 +2071,6 @@ dependencies = [
  "proptest-state-machine",
  "smallvec",
  "tokio",
- "wasm-bindgen-test",
 ]
 
 [[package]]
@@ -2095,7 +2094,6 @@ dependencies = [
  "reqwest-eventsource",
  "thiserror",
  "tokio",
- "wasm-bindgen-test",
 ]
 
 [[package]]
@@ -2148,7 +2146,6 @@ dependencies = [
  "tokio",
  "wasm-bindgen",
  "wasm-bindgen-futures",
- "wasm-bindgen-test",
  "web-sys",
 ]
 
@@ -2251,7 +2248,6 @@ dependencies = [
  "serde-wasm-bindgen",
  "sqlx",
  "tokio",
- "wasm-bindgen-test",
  "web-sys",
 ]
 

@@ -26,7 +26,8 @@ pub mod platform {
 #[cfg(target_arch = "wasm32")]
 pub mod platform {
     pub use console_log;
-    // Note `rstest` requires the tester attribute to be called `test`
+    pub use wasm_bindgen_test;
+    // NOTE: `rstest` requires the tester attribute to be called `test`
     // (see https://github.com/la10736/rstest/issues/211)
     pub use wasm_bindgen_test::wasm_bindgen_test as test;
     pub use wasm_bindgen_test::wasm_bindgen_test_configure;

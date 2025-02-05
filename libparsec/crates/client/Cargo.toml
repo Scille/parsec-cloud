@@ -11,6 +11,9 @@ repository.workspace = true
 [lints]
 workspace = true
 
+[features]
+expose-test-methods = []
+
 [dependencies]
 libparsec_client_connection = { workspace = true }
 libparsec_types = { workspace = true }
@@ -41,9 +44,3 @@ proptest-state-machine = { workspace = true }
 # Async stateful test currently relies on Tokio runtime, which is not available on web.
 # This is no big deal though, since the tested code is supposed to be platform agnostic.
 tokio = { workspace = true, features = ["rt"] }
-
-[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
-wasm-bindgen-test = { workspace = true }
-
-[features]
-expose-test-methods = []

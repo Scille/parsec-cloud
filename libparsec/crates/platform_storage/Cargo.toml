@@ -44,6 +44,3 @@ libparsec_tests_lite = { workspace = true }
 libparsec_tests_fixtures = { workspace = true, default-features = false, features = [
     "test-with-platform-storage-testbed",
 ] }
-
-[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
-wasm-bindgen-test = { workspace = true }
