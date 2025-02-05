@@ -44,8 +44,8 @@ msgid ""
 "\\2. **Recent workspaces and documents**: list of workspaces and documents "
 "you have accessed recently."
 msgstr ""
-"\\2. **Espaces et documents récents** : une liste des espaces de travail et des "
-"documents auxquels vous avez accédés récemment."
+"\\2. **Espaces et documents récents** : une liste des espaces de travail et "
+"des documents auxquels vous avez accédés récemment."
 
 #: ../../userguide/first_steps.rst:18
 msgid "\\3. **Main menu**: access application settings and your user profile."

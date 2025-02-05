@@ -141,26 +141,26 @@ workspace.
   log in for any reason, data stored in the workspace will be lost forever.
 
 
-Copy the roles of one user to another
--------------------------------------
+Copy user roles to another user
+-------------------------------
 
-Assigning roles on multiple workspaces for a single user can become a bit tedious. This feature exists to help you copy the roles from one user to another on all workspaces.
+You can assign the same roles to multiple users by copying roles from one user to another.
 
-As an example, Mallory is an intern in your company, and uses Parsec. You shared four workspaces with her, two where she is a `Reader`, two where she is a `Contributor`. Bob is a newly hired intern, and you want to share with him the same workspaces you shared with Mallory, with the same roles. Instead of sharing each workspace one by one, you could instead go to ``Manage my organization`` in the top left corner and access the list of users. Right click on Mallory, and select ``Copy workspace roles to...``.
+As an example, Mallory is an intern in your company with whom you have shared 4 workspaces: 2 as a `Reader`, 2 as a `Contributor`. Bob is a newly hired intern, and you want to share the same workspaces (and roles) you shared with Mallory. Instead of sharing each workspace one by one, go to ``Manage my organization`` in the top left corner and access the list of users. Right-click on Mallory, and select ``Copy workspace roles to...``.
 
 .. image:: screens/batch_workspace_context_menu.png
     :align: center
     :width: 800
     :alt: Batch workspace assignment screenshot
 
-A dialog opens, asking you to select the user whose roles you want to copy. Simply start typing their name or email address, and select the option the application will give you.
+A dialog opens, asking you to select the target user to copy the roles to. Simply start typing its name or email address, and select the desired user.
 
 .. image:: screens/batch_workspace_select_user.png
     :align: center
     :width: 400
     :alt: Batch workspace select user screenshot
 
-Parsec gives you the list of updates that will be performed. If satisfied with the changes, click on ``Copy roles``.
+Parsec displays the list of role changes that will be applied to the selected user. If satisfied with the changes, click on ``Copy roles``.
 
 .. image:: screens/batch_workspace_summary.png
     :align: center
@@ -169,11 +169,11 @@ Parsec gives you the list of updates that will be performed. If satisfied with t
 
 A few things to note:
 
-* Usual rules still apply: a user with an `External` profile cannot be made `Manager` or `Owner`.
+* A user with an `External` profile cannot be have the `Manager` or `Owner` role in a workspace.
 * If the target user already has a higher role on the workspace, it will not be changed.
 * It will not change the roles the target user may have on other workspaces that are not shared with the source user.
 * Only workspaces both you and the source have access to will be changed.
-* Only the workspaces where you are either `Manager` or `Owner` will be changed.
+* Only the workspaces where you are either `Manager` or `Owner` will be considered.
 
 
 Browse workspace history and restore files
