@@ -8,21 +8,19 @@
       class="back-button"
     >
       <ion-icon :icon="chevronBack" />
-      <ion-text class="title">
+      <ion-text class="button-medium">
         {{ parentHistory.slice(-1)[0].name }}
       </ion-text>
     </div>
-    <div
-      class="divider"
-      v-if="parentHistory.length > 0"
-    />
-    <file-controls-dropdown-item
-      v-for="(item, index) in displayedItems"
-      :key="index"
-      :is-active="item.isActive"
-      :item="item"
-      @click="onOptionClick"
-    />
+    <div class="dropdown-list-items">
+      <file-controls-dropdown-item
+        v-for="(item, index) in displayedItems"
+        :key="index"
+        :is-active="item.isActive"
+        :item="item"
+        @click="onOptionClick"
+      />
+    </div>
   </ion-list>
 </template>
 
@@ -69,28 +67,31 @@ async function onBackClicked(): Promise<void> {
 .file-controls-dropdown-popover {
   overflow-y: auto;
   max-height: 20em;
+  padding: 0;
 
   .back-button {
     display: flex;
     align-items: center;
-    margin: 0.5rem;
+    gap: 0.5em;
+    padding: 0.75rem;
     cursor: pointer;
     color: var(--parsec-color-light-secondary-hard-grey);
-
-    .title {
-      margin-left: 0.5rem;
-    }
+    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
 
     &:hover {
       color: var(--parsec-color-light-primary-700);
     }
-  }
 
-  .divider {
-    background-color: var(--parsec-color-light-secondary-background);
-    height: 2px;
-    width: 100%;
-    margin: 0.8rem 0;
+    ion-icon {
+      font-size: 0.875rem;
+    }
   }
+}
+
+.dropdown-list-items {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 </style>

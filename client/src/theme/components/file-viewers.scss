@@ -1,0 +1,117 @@
+/* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
+
+// Global
+.file-controls-button {
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+.download-icon {
+  --fill-color: var(--parsec-color-light-secondary-text);
+  width: 1rem !important;
+  height: 1rem !important;
+  margin-right: 0.5rem;
+  margin-left: 0 !important;
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+// Dropdown
+.file-controls-dropdown-item {
+  .left-icon svg {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+}
+
+// Spreadsheet
+.file-controls-spreadsheet-container {
+  .file-controls-button {
+    flex-direction: row-reverse;
+  }
+
+  .spreadsheet-dropdown-button {
+    .file-controls-button-icon {
+      rotate: 0deg;
+      transition: rotate 0.3s ease;
+      font-size: 1rem !important;
+      width: 1rem !important;
+      height: 1rem !important;
+    }
+
+    &:is(.dropdown-active) {
+      .file-controls-button-icon {
+        rotate: 180deg;
+      }
+    }
+  }
+}
+
+// Document Word
+.docx-page-wrapper {
+  background: var(--parsec-color-light-secondary-premiere) !important;
+}
+
+.docx-page-wrapper > section.docx-page {
+  box-shadow: var(--parsec-shadow-light) !important;
+}
+
+// Flux
+.slider {
+  background: var(--parsec-color-light-secondary-text);
+  height: fit-content !important;
+
+  .full {
+    background: var(--parsec-color-light-secondary-text) !important;
+    opacity: 0.2;
+    height: 5px !important;
+  }
+
+  &-hover .dot {
+    background: var(--parsec-color-light-secondary-text) !important;
+    outline: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
+    box-shadow: var(--parsec-shadow-toggle) !important;
+  }
+}
+
+// Spreadsheet - revo-grid
+revo-grid {
+  border-radius: var(--parsec-radius-8);
+  overflow: hidden !important;
+  box-shadow: var(--parsec-shadow-soft);
+
+  .rowHeaders,
+  revogr-header {
+    background-color: var(--parsec-color-light-secondary-background) !important;
+
+    .rgRow {
+      box-shadow: none !important;
+      font-weight: bold;
+      font-size: 14px;
+    }
+  }
+
+  .rgCol {
+    background-color: var(--parsec-color-light-secondary-inversed-contrast) !important;
+  }
+
+  .rgRow {
+    box-shadow: 0 -1px 0 0 var(--parsec-color-light-secondary-disabled) inset !important;
+  }
+}
+
+// monaco editor
+.monaco-editor {
+  border-radius: var(--parsec-radius-12);
+  box-shadow: var(--parsec-shadow-light);
+
+  .overflow-guard {
+    border-radius: var(--parsec-radius-8);
+    box-shadow: var(--parsec-shadow-light);
+  }
+}

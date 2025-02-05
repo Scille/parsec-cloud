@@ -28,6 +28,11 @@
           @change="onPaginationChange"
           :page="currentPage"
         />
+        <file-controls-button
+          class="file-controls-fullscreen"
+          @click="toggleFullScreen"
+          :icon="scan"
+        />
       </file-controls>
     </template>
   </file-viewer-wrapper>
@@ -37,7 +42,8 @@
 import { ref, onMounted, nextTick } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
-import { FileControls, FileControlsPagination, FileControlsZoom } from '@/components/viewers';
+import { scan } from 'ionicons/icons';
+import { FileControls, FileControlsButton, FileControlsPagination, FileControlsZoom } from '@/components/viewers';
 import { renderAsync } from 'docx-preview';
 import { MsSpinner } from 'megashark-lib';
 
@@ -116,14 +122,27 @@ function onScroll(): void {
     currentPage.value = currentPageIndex + 1;
   }
 }
+
+async function toggleFullScreen(): Promise<void> {
+  if (document.fullscreenElement) {
+    await document.exitFullscreen();
+    return;
+  }
+  await documentContainer.value!.requestFullscreen();
+}
 </script>
 
 <style scoped lang="scss">
 .document-container {
-  background-color: grey;
+  background-color: var(--parsec-color-light-secondary-premiere);
   width: 100%;
   height: 100%;
   overflow-y: auto;
+
+  &:fullscreen {
+    align-items: center;
+    height: 100%;
+  }
 }
 
 .document-content {

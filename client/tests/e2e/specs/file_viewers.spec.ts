@@ -25,11 +25,7 @@ msTest('File viewer page details', async ({ documents }) => {
   await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_.]+$/);
   const buttons = documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-button');
-  await expect(buttons.nth(1)).toHaveText('Details');
-  const detailsModal = documents.locator('.file-details-modal');
-  await expect(detailsModal).toBeHidden();
-  await buttons.nth(1).click();
-  await expect(detailsModal).toBeVisible();
+  await expect(buttons).toHaveCount(4);
 });
 
 msTest('Quick access loads correct document', async ({ documents }) => {
@@ -77,7 +73,8 @@ msTest('Audio viewer', async ({ documents }) => {
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.mp3$/);
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
-  const buttons = bottomBar.locator('.file-controls-button');
+  const volume = bottomBar.locator('.volume');
+  const playPause = documents.locator('.file-controls-playback');
   const wrapper = documents.locator('.file-viewer-wrapper');
   const audio = wrapper.locator('audio');
   const fluxBar = bottomBar.locator('.slider').nth(0);
@@ -92,7 +89,7 @@ msTest('Audio viewer', async ({ documents }) => {
   await expectMedia(audio).toHaveCurrentTime(0.0);
 
   // Volume control
-  const volumeButton = buttons.nth(1);
+  const volumeButton = volume.locator('.file-controls-button').nth(0);
   await expectMedia(audio).toHaveVolume(1);
   await volumeSlider.click();
   // commented out because the values are not consistent
@@ -103,9 +100,9 @@ msTest('Audio viewer', async ({ documents }) => {
   // await expectMedia(audio).toHaveVolume(0.48);
 
   // Stream control
-  await buttons.nth(0).click();
+  await playPause.click();
   await documents.waitForTimeout(500);
-  await buttons.nth(0).click();
+  await playPause.click();
   expect(await Media.getCurrentTime(audio)).toBeGreaterThan(0.1);
 
   await fluxBar.click();
@@ -119,13 +116,15 @@ msTest('Video viewer', async ({ documents }) => {
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.mp4$/);
 
   const bottomBar = documents.locator('.file-viewer-bottombar');
-  const buttons = bottomBar.locator('.file-controls-button');
+  const volume = bottomBar.locator('.volume');
+  const volumeButton = volume.locator('.file-controls-button').nth(0);
+  const buttons = bottomBar.locator('.file-controls-group');
   const wrapper = documents.locator('.file-viewer-wrapper');
   const video = wrapper.locator('video');
   const fluxBar = bottomBar.locator('.slider').nth(0);
   const volumeSlider = bottomBar.locator('.slider').nth(1);
 
-  await expect(buttons).toHaveCount(3);
+  await expect(buttons).toHaveCount(4);
 
   const readyState = await video.evaluate((videoEl) => {
     return (videoEl as HTMLMediaElement).readyState;
@@ -153,15 +152,15 @@ msTest('Video viewer', async ({ documents }) => {
   // Volume control
   await expectMedia(video).toHaveVolume(1);
   await volumeSlider.click();
-  await expectMedia(video).toHaveVolume(0.49);
-  await buttons.nth(1).click();
+  await expectMedia(video).toHaveVolume(0.5);
+  await volumeButton.click();
   await expectMedia(video).toHaveVolume(0);
-  await buttons.nth(1).click();
-  await expectMedia(video).toHaveVolume(0.49);
+  await volumeButton.click();
+  await expectMedia(video).toHaveVolume(0.5);
 
   // Stream control
   await fluxBar.click();
-  await expectMedia(video).toHaveCurrentTime(1.77);
+  await expectMedia(video).toHaveCurrentTime(1.78);
 });
 
 msTest('Text viewer', async ({ documents }) => {

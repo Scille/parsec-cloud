@@ -1,15 +1,15 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <span
+  <ion-text
     v-if="!editing"
-    class="file-controls-input text-only"
+    class="file-controls-input text-only subtitles-normal"
     @click="onTextClick"
   >
-    {{ $msTranslate(prefix) }}
+    <span v-if="prefix">{{ $msTranslate(prefix) }}</span>
     {{ modelValue }}
-    {{ $msTranslate(suffix) }}
-  </span>
+    <span v-if="suffix">{{ $msTranslate(suffix) }}</span>
+  </ion-text>
   <ion-input
     v-else
     class="file-controls-input editing-input"
@@ -26,12 +26,14 @@
     <span
       class="file-controls-input-prefix"
       slot="start"
+      v-if="prefix"
     >
       {{ $msTranslate(prefix) }}
     </span>
     <span
       class="file-controls-input-suffix"
       slot="end"
+      v-if="suffix"
     >
       {{ $msTranslate(suffix) }}
     </span>
@@ -39,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonInput } from '@ionic/vue';
+import { IonInput, IonText } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
 import { ref } from 'vue';
 
@@ -129,9 +131,8 @@ async function blur(): Promise<void> {
   margin-bottom: 0px;
   min-width: 3rem;
   text-align: center;
-  color: var(--parsec-color-light-primary-600);
-  opacity: 0.6;
-  transition: all 0.2s ease-in-out;
+  color: var(--parsec-color-light-secondary-soft-text);
+  transition: all 0.15ms ease-in-out;
 
   &.editing-input {
     --background: none !important;
@@ -141,16 +142,26 @@ async function blur(): Promise<void> {
     --padding-end: 0.5rem;
     --padding-start: 0.5rem;
     border-radius: var(--parsec-radius-6);
-    --border-color: var(--parsec-color-light-primary-600) !important;
-    --border-width: 1px !important;
+    --border-width: 0 !important;
+    outline: 1px solid var(--parsec-color-light-secondary-text);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
   }
 
   &.text-only {
     cursor: pointer;
+    background: var(--parsec-color-light-secondary-background);
+    padding: 0.5rem 0.625rem;
+    outline: 1px solid var(--parsec-color-light-secondary-premiere);
+    border-radius: var(--parsec-radius-6);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
   }
 
   &:hover {
-    opacity: 1;
+    outline: 1px solid var(--parsec-color-light-secondary-soft-grey);
   }
 
   &-prefix {

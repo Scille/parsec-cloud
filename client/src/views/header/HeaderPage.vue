@@ -325,14 +325,14 @@ async function openNotificationCenter(event: Event): Promise<void> {
   }
 
   #trigger-toggle-menu-button {
-    --fill-color: var(--parsec-color-light-secondary-text);
+    --fill-color: var(--parsec-color-light-secondary-grey);
     padding: 0.625rem;
     border-radius: var(--parsec-radius-12);
     cursor: pointer;
 
     &:hover {
       background: var(--parsec-color-light-secondary-premiere);
-      --fill-color: var(--parsec-color-light-secondary-contrast);
+      --fill-color: var(--parsec-color-light-secondary-hard-grey);
     }
   }
 }
