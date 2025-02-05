@@ -63,22 +63,57 @@ pub mod internal {
 pub async fn init_libparsec(
     #[cfg_attr(target_arch = "wasm32", allow(unused_variables))] config: ClientConfig,
 ) {
+    // 1) Initialize logger
+    #[cfg(not(target_arch = "wasm32"))]
+    init_logger(&config);
     log::debug!("Initializing libparsec");
 
-    // 1) Clean base home directory
-
+    // 2) Clean base home directory
     #[cfg(not(target_arch = "wasm32"))]
-    {
-        if let MountpointMountStrategy::Directory { base_dir } = config.mountpoint_mount_strategy {
-            if let Err(err) =
-                libparsec_platform_mountpoint::clean_base_mountpoint_dir(base_dir).await
-            {
-                log::error!("Failed to clean base home directory ({err})");
-            } else {
-                log::debug!("Cleaned base home directory");
-            }
-        };
-    }
+    if let MountpointMountStrategy::Directory { base_dir } = config.mountpoint_mount_strategy {
+        if let Err(err) = libparsec_platform_mountpoint::clean_base_mountpoint_dir(base_dir).await {
+            log::error!("Failed to clean base home directory ({err})");
+        } else {
+            log::debug!("Cleaned base home directory");
+        }
+    };
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn init_logger(config: &ClientConfig) {
+    let log_env = env_logger::Env::default()
+        // TODO: ClientConfig should provide the log level to use
+        // https://github.com/Scille/parsec-cloud/issues/9579
+        .filter_or("PARSEC_RUST_LOG", "info")
+        .write_style("PARSEC_RUST_LOG_STYLE");
+    let mut builder = env_logger::Builder::from_env(log_env);
+    let log_file_path = std::env::var_os("PARSEC_RUST_LOG_FILE")
+        .map(Into::into)
+        .unwrap_or_else(||
+            // TODO: ClientConfig should provide the log directory to use
+            // https://github.com/Scille/parsec-cloud/issues/9580
+            config.config_dir.join("libparsec.log"));
+    log_file_path
+        .parent()
+        .map(std::fs::create_dir_all)
+        .transpose()
+        .expect("Cannot create log directory");
+    let log_file = std::fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(&log_file_path)
+        .expect("Cannot open log file");
+    // FIXME: This is a workaround to be able to get logs from libparsec
+    // Since electron seems to block stderr writes from libparsec.
+    // But only on unix system, on windows it works fine the logs are display on cmd.
+    builder.target(env_logger::Target::Pipe(Box::new(log_file)));
+
+    if let Err(e) = builder.try_init() {
+        log::error!("Logging already initialized: {e}")
+    } else {
+        log::info!("Writing log to {}", log_file_path.display());
+    };
 }
 
 #[cfg(feature = "cli-tests")]

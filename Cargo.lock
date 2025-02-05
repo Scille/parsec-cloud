@@ -1980,6 +1980,7 @@ checksum = "4ec2a862134d2a7d32d7983ddcdd1c4923530833c9f2ea1a44fc5fa473989058"
 name = "libparsec"
 version = "3.2.5-a.0+dev"
 dependencies = [
+ "env_logger",
  "libparsec_client",
  "libparsec_client_connection",
  "libparsec_crypto",
@@ -2012,7 +2013,6 @@ dependencies = [
 name = "libparsec_bindings_electron"
 version = "3.2.5-a.0+dev"
 dependencies = [
- "env_logger",
  "lazy_static",
  "libparsec",
  "log",

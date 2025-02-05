@@ -44,3 +44,5 @@ log = { workspace = true }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libparsec_platform_mountpoint = { workspace = true }
 libparsec_platform_ipc = { workspace = true }
+
+env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }

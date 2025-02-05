@@ -19,7 +19,6 @@ crate-type = ["cdylib"]
 workspace = true
 
 [dependencies]
-env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
 lazy_static = { workspace = true }
 libparsec = { workspace = true }
 neon = { workspace = true, features = ["napi-8"] }
