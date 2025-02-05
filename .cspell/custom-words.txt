@@ -118,6 +118,7 @@ cupi
 cygpath
 CYGPATTERN
 Dalek
+datagrid
 Datelike
 datetimes
 DBPASS
@@ -566,6 +567,8 @@ Reqwest
 rerunfailures
 reseted
 retrier
+revogr
+revolist
 rexpect
 Richcmp
 Rlib

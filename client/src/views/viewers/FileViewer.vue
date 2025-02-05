@@ -4,7 +4,11 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <div class="container">
-        <ms-spinner v-show="!loaded" />
+        <ms-spinner
+          class="file-viewer"
+          title="fileViewers.retrievingFileContent"
+          v-show="!loaded"
+        />
         <div
           v-if="loaded && viewerComponent && contentInfo"
           @click.prevent="onClick"
@@ -128,6 +132,7 @@ async function loadFile(): Promise<void> {
   }
   const fileName = await Path.filename(path);
   if (!fileName) {
+    window.electronAPI.log('error', 'Failed to retrieve the file name');
     return;
   }
 
@@ -152,6 +157,7 @@ async function loadFile(): Promise<void> {
     statsResult = await entryStatAt(workspaceHandle, path, atDateTime.value);
   }
   if (!statsResult.ok || !statsResult.value.isFile()) {
+    window.electronAPI.log('error', 'Failed to stat the entry or entry is not a file');
     return;
   }
 

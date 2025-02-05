@@ -45,6 +45,7 @@
         "@ionic/storage": "^4.0.0",
         "@ionic/vue": "^7.6.4",
         "@ionic/vue-router": "^7.6.4",
+        "@revolist/vue3-datagrid": "^4.11.21",
         "@sentry/vue": "^8.33.1",
         "@types/luxon": "^3.3.4",
         "axios": "^1.7.4",
