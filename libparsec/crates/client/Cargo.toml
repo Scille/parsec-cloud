@@ -11,6 +11,9 @@ repository.workspace = true
 [lints]
 workspace = true
 
+[features]
+expose-test-methods = []
+
 [dependencies]
 libparsec_client_connection = { workspace = true }
 libparsec_types = { workspace = true }
@@ -38,9 +41,3 @@ proptest-state-machine = { workspace = true }
 # This is no big deal though, since the tested code is supposed to be platform agnostic.
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { workspace = true, features = ["rt"] }
-
-[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
-wasm-bindgen-test = { workspace = true }
-
-[features]
-expose-test-methods = []
