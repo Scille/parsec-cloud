@@ -4,13 +4,15 @@
   <file-viewer-wrapper :error="error">
     <template #viewer>
       <video
-        class="video"
         v-if="src.length"
         ref="videoElement"
+        class="video"
         @play="updateMediaData"
         @playing="updateMediaData"
         @canplay="updateMediaData"
         @pause="updateMediaData"
+        @volumechange="updateMediaData"
+        @muted="updateMediaData"
         @ended="updateMediaData"
         @timeupdate="onTimeUpdate"
         @error="onError"
@@ -22,17 +24,20 @@
       </video>
     </template>
     <template #controls>
-      <file-controls-flux
-        v-model="progress"
-        :length="length"
-      />
       <file-controls>
         <file-controls-playback
-          :paused="progress.paused"
+          :paused="fluxProgress.paused"
           :ended="ended"
           @click="togglePlayback"
         />
-        <file-controls-volume @on-volume-change="updateVolume" />
+        <file-controls-flux
+          v-model="fluxProgress"
+          :length="length"
+        />
+        <file-controls-volume
+          v-model="volume"
+          :muted="muted"
+        />
         <file-controls-button
           @click="toggleFullScreen"
           :icon="scan"
@@ -57,19 +62,29 @@ const props = defineProps<{
 const src = ref('');
 const videoElement = ref<HTMLVideoElement>();
 const length = ref(0);
-const volume = ref(1);
 const ended = ref(false);
-const progress = ref<SliderState>({ progress: 0, paused: true });
+const muted = ref(false);
+const fluxProgress = ref<SliderState>({ progress: 0, paused: true });
+const volume = ref<number>(1);
 const error = ref('');
 
-const cancelProgressWatch = watch(
-  () => progress.value,
+const cancelFluxProgressWatch = watch(
+  () => fluxProgress.value,
   () => {
     if (videoElement.value) {
-      videoElement.value.currentTime = progress.value.progress / 100;
-      if (videoElement.value.paused !== progress.value.paused) {
+      videoElement.value.currentTime = fluxProgress.value.progress / 100;
+      if (videoElement.value.paused !== fluxProgress.value.paused) {
         togglePlayback();
       }
+    }
+  },
+);
+
+const cancelVolumeWatch = watch(
+  () => volume.value,
+  () => {
+    if (videoElement.value) {
+      videoElement.value.volume = volume.value / 100;
     }
   },
 );
@@ -79,7 +94,8 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  cancelProgressWatch();
+  cancelFluxProgressWatch();
+  cancelVolumeWatch();
 });
 
 async function onError(): Promise<void> {
@@ -87,20 +103,14 @@ async function onError(): Promise<void> {
 }
 
 function onTimeUpdate(): void {
-  if (!progress.value.paused && videoElement.value && videoElement.value.currentTime !== undefined) {
-    progress.value.progress = videoElement.value.currentTime * 100;
+  if (!fluxProgress.value.paused && videoElement.value && videoElement.value.currentTime !== undefined) {
+    fluxProgress.value.progress = Math.floor(videoElement.value.currentTime * 100);
   }
 }
 
 function togglePlayback(): void {
   if (videoElement.value) {
     videoElement.value.paused ? videoElement.value.play() : videoElement.value.pause();
-  }
-}
-
-function updateVolume(value: number): void {
-  if (videoElement.value) {
-    videoElement.value.volume = value;
   }
 }
 
@@ -117,11 +127,12 @@ function updateMediaData(event: Event): void {
   if (Number.isNaN((event.target as HTMLVideoElement).duration)) {
     error.value = 'fileViewers.mediaNotSupported';
   } else {
-    volume.value = (event.target as HTMLVideoElement).volume;
+    volume.value = Math.floor((event.target as HTMLAudioElement).volume * 100);
+    muted.value = (event.target as HTMLAudioElement).muted;
     ended.value = (event.target as HTMLVideoElement).ended;
-    length.value = (event.target as HTMLVideoElement).duration * 100;
-    progress.value.progress = (event.target as HTMLVideoElement).currentTime * 100;
-    progress.value.paused = (event.target as HTMLVideoElement).paused;
+    length.value = Math.floor((event.target as HTMLVideoElement).duration * 100);
+    fluxProgress.value.progress = Math.floor((event.target as HTMLVideoElement).currentTime * 100);
+    fluxProgress.value.paused = (event.target as HTMLVideoElement).paused;
   }
 }
 </script>
