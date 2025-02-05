@@ -44,7 +44,7 @@ msgid ""
 "\\2. **Recent workspaces and documents**: list of workspaces and documents "
 "you have accessed recently."
 msgstr ""
-"**Espaces et documents récents** : une liste des espaces de travail et des "
+"\\2. **Espaces et documents récents** : une liste des espaces de travail et des "
 "documents auxquels vous avez accédés récemment."
 
 #: ../../userguide/first_steps.rst:18
