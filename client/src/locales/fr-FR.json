@@ -103,7 +103,7 @@
             "tagline": "Gardez le contrôle sur la confidentialité de vos données"
         },
         "topbar": {
-            "welcome": "Ravi de vous revoir,",
+            "welcome": "Ravi de vous revoir",
             "backToList": "Retour aux organisations",
             "backToLogin": "Retour à la connexion",
             "settings": "Paramètres",
@@ -193,7 +193,7 @@
             "invitationJoin": "Rejoindre",
             "subtitle": "Profitez d'une expérience du cloud avec la garantie que vos données vous appartiennent."
         },
-        "lostDevice": "Vous avez perdu votre session ?",
+        "lostDevice": "Vous avez perdu votre accès ?",
         "recoverDevice": "Récupérer ma session"
     },
     "CreateOrganization": {
@@ -304,6 +304,9 @@
     },
     "MenuPage": {
         "about": "À propos",
+        "contact": "Contact",
+        "documentation": "Documentation",
+        "settings": "Paramètres",
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
         "documentationLink": "https://docs.parsec.cloud/fr/{version}"

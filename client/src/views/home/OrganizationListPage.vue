@@ -30,7 +30,7 @@
               {{ $msTranslate('HomePage.noExistingOrganization.createOrganization') }}
             </ion-button>
             <div class="recovery-no-devices">
-              {{ $msTranslate('HomePage.lostDevice') }}
+              <ion-text class="body">{{ $msTranslate('HomePage.lostDevice') }}</ion-text>
               <ion-button
                 @click="$emit('recoverClick')"
                 fill="clear"
@@ -61,7 +61,7 @@
             <ion-button
               @click="onLinkClick(link)"
               size="large"
-              fill="default"
+              fill="clear"
               id="join-organization-button"
               :disabled="!linkRef || linkRef.validity !== Validity.Valid"
             >
@@ -93,14 +93,6 @@
             :sorter-labels="msSorterLabels"
             @change="onMsSorterChange"
           />
-          <ion-button
-            @click="togglePopover"
-            size="default"
-            id="create-organization-button"
-            class="button-default"
-          >
-            {{ $msTranslate('HomePage.noExistingOrganization.createOrJoin') }}
-          </ion-button>
         </div>
         <div class="organization-list">
           <ion-text
@@ -134,27 +126,16 @@
 
 <script setup lang="ts">
 import { claimAndBootstrapLinkValidator, bootstrapLinkValidator } from '@/common/validators';
-import {
-  MsImage,
-  NoOrganization,
-  MsSorter,
-  MsModalResult,
-  MsOptions,
-  MsSorterChangeEvent,
-  MsSearchInput,
-  MsInput,
-  Validity,
-} from 'megashark-lib';
+import { MsImage, NoOrganization, MsSorter, MsOptions, MsSorterChangeEvent, MsSearchInput, MsInput, Validity } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice, isDeviceLoggedIn, listAvailableDevices } from '@/parsec';
+import { AvailableDevice, isDeviceLoggedIn } from '@/parsec';
 import { Routes } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
-import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
-import { IonButton, IonIcon, IonText, IonTitle, popoverController } from '@ionic/vue';
+import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import { DateTime } from 'luxon';
-import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const emits = defineEmits<{
   (e: 'organizationSelect', device: AvailableDevice): void;
@@ -165,9 +146,9 @@ const emits = defineEmits<{
   (e: 'recoverClick'): void;
 }>();
 
-defineExpose({
-  refreshDeviceList,
-});
+const props = defineProps<{
+  deviceList: AvailableDevice[];
+}>();
 
 enum SortCriteria {
   UserName = 'user_name',
@@ -177,7 +158,6 @@ enum SortCriteria {
 
 const ORGANIZATION_LIST_DATA_KEY = 'OrganizationList';
 
-const deviceList: Ref<AvailableDevice[]> = ref([]);
 const storedDeviceDataDict = ref<{ [deviceId: string]: StoredDeviceData }>({});
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
@@ -211,50 +191,11 @@ const msSorterLabels = {
   desc: 'HomePage.organizationList.sortOrderDesc',
 };
 
-const isPopoverOpen = ref(false);
-
 async function onLinkClick(link: string): Promise<void> {
   if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
     emits('bootstrapOrganizationWithLinkClick', link);
   } else {
     emits('joinOrganizationWithLinkClick', link);
-  }
-}
-
-async function togglePopover(event: Event): Promise<void> {
-  isPopoverOpen.value = !isPopoverOpen.value;
-  openPopover(event);
-}
-
-async function openPopover(event: Event): Promise<void> {
-  const popover = await popoverController.create({
-    component: HomePageButtons,
-    cssClass: 'homepage-popover',
-    event: event,
-    showBackdrop: false,
-    alignment: 'end',
-    componentProps: {
-      replaceEmit: dismissPopover,
-    },
-  });
-  await popover.present();
-  const result = await popover.onWillDismiss();
-  await popover.dismiss();
-  if (result.role !== MsModalResult.Confirm) {
-    return;
-  }
-  onAction(result.data.action);
-}
-
-async function dismissPopover(action: HomePageAction): Promise<void> {
-  await popoverController.dismiss({ action: action }, MsModalResult.Confirm);
-}
-
-async function onAction(action: HomePageAction): Promise<void> {
-  if (action === HomePageAction.CreateOrganization) {
-    emits('createOrganizationClick');
-  } else if (action === HomePageAction.JoinOrganization) {
-    emits('joinOrganizationClick');
   }
 }
 
@@ -272,7 +213,6 @@ onMounted(async (): Promise<void> => {
   sortBy.value = storedData.sortBy;
   sortByAsc.value = storedData.sortByAsc;
   confLoaded.value = true;
-  await refreshDeviceList();
 });
 
 onUnmounted(async () => {
@@ -280,12 +220,6 @@ onUnmounted(async () => {
     hotkeyManager.unregister(hotkeys);
   }
 });
-
-async function refreshDeviceList(): Promise<void> {
-  querying.value = true;
-  deviceList.value = await listAvailableDevices();
-  querying.value = false;
-}
 
 async function onMsSorterChange(event: MsSorterChangeEvent): Promise<void> {
   sortBy.value = event.option.key;
@@ -298,7 +232,7 @@ async function onMsSorterChange(event: MsSorterChangeEvent): Promise<void> {
 }
 
 const filteredDevices = computed(() => {
-  return deviceList.value
+  return props.deviceList
     .filter((item) => {
       const lowerSearchString = searchQuery.value.toLocaleLowerCase();
       return (
@@ -357,7 +291,6 @@ const filteredDevices = computed(() => {
 <style lang="scss" scoped>
 .organization {
   background: none;
-  height: auto;
   width: 100%;
   max-width: var(--parsec-max-content-width);
   box-shadow: none;
@@ -365,6 +298,7 @@ const filteredDevices = computed(() => {
   margin: 0;
   flex-direction: column;
   gap: 2rem;
+  flex-grow: 1;
 
   &-title {
     padding: 0;
@@ -386,7 +320,7 @@ const filteredDevices = computed(() => {
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    max-width: 45rem;
+    max-width: 34.5rem;
 
     #search-input-organization:focus-within {
       outline: none;
@@ -395,12 +329,6 @@ const filteredDevices = computed(() => {
 
     #organization-filter-select {
       margin-left: auto;
-      margin-right: 1rem;
-    }
-
-    #create-organization-button {
-      --background: var(--parsec-color-light-secondary-text);
-      --background-hover: var(--parsec-color-light-secondary-contrast);
     }
   }
 
@@ -489,7 +417,7 @@ const filteredDevices = computed(() => {
     flex-direction: column;
     gap: 1.5rem;
     padding: 2rem 2rem 3rem;
-    background: var(--parsec-color-light-secondary-background);
+    border-top: 1px solid var(--parsec-color-light-secondary-medium);
 
     &__title {
       color: var(--parsec-color-light-primary-800);
@@ -508,7 +436,6 @@ const filteredDevices = computed(() => {
 
       #join-organization-button {
         padding-bottom: 0.125rem;
-        color: var(--parsec-color-light-secondary-white);
       }
     }
   }

@@ -103,7 +103,7 @@
             "tagline": "Keep control over your data confidentiality"
         },
         "topbar": {
-            "welcome": "Glad to see you back,",
+            "welcome": "Welcome to Parsec",
             "backToList": "Return to organizations",
             "backToLogin": "Return to login",
             "settings": "Settings",
@@ -193,7 +193,7 @@
             "invitationJoin": "Join",
             "subtitle": "Enjoy a cloud experience with the guarantee that your data belongs to you."
         },
-        "lostDevice": "Lost your session?",
+        "lostDevice": "Lost your access?",
         "recoverDevice": "Recover my session"
     },
     "CreateOrganization": {
@@ -304,6 +304,9 @@
     },
     "MenuPage": {
         "about": "About",
+        "contact": "Contact",
+        "documentation": "Documentation",
+        "settings": "Settings",
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
         "documentationLink": "https://docs.parsec.cloud/en/{version}"

@@ -169,7 +169,7 @@ export const msTest = base.extend<{
     await MockBms.mockGetInvoices(home);
     await MockBms.mockCreateCustomOrderRequest(home);
 
-    const button = home.locator('.topbar-buttons').locator('#trigger-customer-area-button');
+    const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');
     await button.click();
     await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
@@ -203,7 +203,7 @@ export const msTest = base.extend<{
     await MockBms.mockCustomOrderDetails(home);
     await MockBms.mockCreateCustomOrderRequest(home);
 
-    const button = home.locator('.topbar-buttons').locator('#trigger-customer-area-button');
+    const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');
     await button.click();
     await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);

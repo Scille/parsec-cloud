@@ -17,8 +17,11 @@
             @settings-click="openSettingsModal"
             @about-click="openAboutModal"
             @back-click="backToPreviousPage"
-            :back-button-title="getBackButtonTitle()"
             @customer-area-click="goToCustomerAreaLogin"
+            @create-organization-click="openCreateOrganizationModal"
+            @join-organization-click="onJoinOrganizationClicked"
+            :display-create-join="deviceList.length > 0"
+            :back-button-title="getBackButtonTitle()"
             :show-back-button="
               state === HomePageState.Login || state === HomePageState.ForgottenPassword || state === HomePageState.CustomerArea
             "
@@ -35,6 +38,7 @@
                 @join-organization-with-link-click="openJoinByLinkModal"
                 @bootstrap-organization-with-link-click="openCreateOrganizationModal"
                 @recover-click="onForgottenPasswordClicked"
+                :device-list="deviceList"
                 ref="organizationListRef"
               />
             </template>
@@ -128,6 +132,7 @@ const informationManager: InformationManager = injectionProvider.getDefault().in
 const loginInProgress = ref(false);
 const queryInProgress = ref(false);
 const organizationListRef = ref();
+const deviceList: Ref<AvailableDevice[]> = ref([]);
 
 const slidePositions = ref({ appearFrom: Position.Left, disappearTo: Position.Right });
 
@@ -171,6 +176,7 @@ onMounted(async () => {
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 
   await handleQuery();
+  await refreshDeviceList();
 });
 
 onUnmounted(() => {
@@ -180,6 +186,10 @@ onUnmounted(() => {
   routeWatchCancel();
   stateWatchCancel();
 });
+
+async function refreshDeviceList(): Promise<void> {
+  deviceList.value = await listAvailableDevices();
+}
 
 async function handleQuery(): Promise<void> {
   if (queryInProgress.value === true) {
@@ -555,6 +565,10 @@ function getBackButtonTitle(): string {
 
   // Should be edited later with responsive
   .homepage-sidebar {
+    @media screen and (max-width: 1920px) {
+      max-width: 35rem;
+    }
+
     @media screen and (max-width: 1500px) {
       max-width: 30rem;
 
@@ -563,6 +577,11 @@ function getBackButtonTitle(): string {
         max-height: 50vh;
       }
     }
+
+    @media screen and (max-width: 1200px) {
+      max-width: 22rem;
+    }
+
     @media screen and (max-width: 764px) {
       display: none;
     }
@@ -579,12 +598,11 @@ function getBackButtonTitle(): string {
   .homepage-content {
     width: 100%;
     height: 100%;
-    display: flex;
-    gap: 2rem;
-    flex-direction: column;
     position: relative;
     max-width: var(--parsec-max-content-width);
-    padding: 6.26rem 5rem 0;
+    padding: 2rem 5rem 0;
+    display: flex;
+    flex-direction: column;
 
     @media screen and (max-width: 764px) {
       padding: 4.26rem 1.5rem 0;

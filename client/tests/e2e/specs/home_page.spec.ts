@@ -157,12 +157,12 @@ msTest('Logout and go back to devices list', async ({ home }) => {
 });
 
 msTest('Check header buttons', async ({ home }) => {
-  await expect(home.locator('.topbar-buttons').locator('ion-button')).toHaveCount(5);
+  await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveCount(4);
 });
 
 msTest('Open documentation', async ({ home }) => {
   const newTabPromise = home.waitForEvent('popup');
-  await home.locator('.topbar-buttons').locator('ion-button').nth(1).click();
+  await home.locator('.menu-secondary-buttons').locator('ion-button').nth(1).click();
   const newTab = await newTabPromise;
   await newTab.waitForLoadState();
   await expect(newTab).toHaveURL(new RegExp('https://docs.parsec.cloud/(en|fr)/[a-z0-9-+.]+'));
@@ -170,7 +170,7 @@ msTest('Open documentation', async ({ home }) => {
 
 msTest('Open feedback', async ({ home }) => {
   const newTabPromise = home.waitForEvent('popup');
-  await home.locator('.topbar-buttons').locator('ion-button').nth(2).click();
+  await home.locator('.menu-secondary-buttons').locator('ion-button').nth(2).click();
   const newTab = await newTabPromise;
   await newTab.waitForLoadState();
   await expect(newTab).toHaveURL(new RegExp('https://sign(-dev)?.parsec.cloud/contact'));

@@ -19,7 +19,7 @@ import { IonText } from '@ionic/vue';
 .sidebar-container {
   background: var(--parsec-color-light-gradient);
   width: 100%;
-  max-width: 45rem;
+  max-width: 40rem;
   height: 100%;
   display: flex;
   flex-direction: column;

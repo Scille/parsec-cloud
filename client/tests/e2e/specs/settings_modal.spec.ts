@@ -32,7 +32,7 @@ async function checkModal(modal: Locator): Promise<void> {
 
 msTest('Settings modal on home page', async ({ home }) => {
   await expect(home.locator('.settings-modal')).toBeHidden();
-  await home.locator('.topbar').locator('#trigger-settings-button').click();
+  await home.locator('.menu-secondary').locator('#trigger-settings-button').click();
   const modal = home.locator('.settings-modal');
   await expect(modal).toBeVisible();
   await checkModal(modal);

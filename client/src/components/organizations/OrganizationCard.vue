@@ -14,7 +14,7 @@
       </ion-text>
       <ms-image
         v-else
-        :image="LogoIconGradient"
+        :image="LogoIconWhite"
         class="organization-card-header__logo"
       />
     </div>
@@ -44,15 +44,14 @@
         </div>
         <ion-text class="login-name body">({{ device.humanHandle.label }})</ion-text>
       </div>
-      <!-- trial expiration badge -->
-      <ion-text
-        v-if="expirationDuration"
-        class="organization-card-expiration button-small"
-        :class="{ expired: isExpired(expirationDuration) }"
-      >
-        {{ $msTranslate(formatExpirationTime(expirationDuration)) }}
-      </ion-text>
     </ion-card-content>
+    <!-- trial expiration badge -->
+    <ion-text
+      v-if="expirationDuration"
+      class="organization-card-expiration button-small"
+    >
+      {{ $msTranslate(formatExpirationTime(expirationDuration)) }}
+    </ion-text>
     <img
       src="@/assets/images/arrow-forward-circle.svg"
       class="organization-card-icon"
@@ -66,8 +65,8 @@ import { AvailableDevice, isDeviceLoggedIn } from '@/parsec';
 import { IonText, IonIcon, IonCardContent } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
 import { time } from 'ionicons/icons';
-import { MsImage, LogoIconGradient, formatTimeSince, I18n } from 'megashark-lib';
-import { formatExpirationTime, isExpired, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
+import { MsImage, formatTimeSince, I18n, LogoIconWhite } from 'megashark-lib';
+import { formatExpirationTime, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
 import { Duration, DateTime } from 'luxon';
 
 const isTrialOrg = ref(false);
@@ -102,9 +101,8 @@ function getLastLoginText(): string {
   border: 1px solid var(--parsec-color-light-secondary-medium);
   border-radius: var(--parsec-radius-12);
   width: 100%;
-  height: 100%;
   min-height: 5rem;
-  padding-right: 1.5rem;
+  padding-right: 4rem;
   display: flex;
   gap: 0.75rem;
   user-select: none;
@@ -112,6 +110,7 @@ function getLastLoginText(): string {
   overflow: hidden;
   cursor: pointer;
   transition: all 150ms linear;
+  position: relative;
 
   // when using the card as a header only
   &.header-only {
@@ -124,8 +123,11 @@ function getLastLoginText(): string {
 
   &:hover:not(.header-only) {
     box-shadow: var(--parsec-shadow-light);
-    padding-right: 1rem;
     border: 1px solid var(--parsec-color-light-primary-600);
+
+    .organization-card-icon {
+      right: 1rem;
+    }
   }
 
   &-header {
@@ -204,6 +206,7 @@ function getLastLoginText(): string {
       }
 
       .login-time {
+        color: var(--parsec-color-light-secondary-hard-grey);
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -218,21 +221,25 @@ function getLastLoginText(): string {
   }
 
   &-icon {
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
     width: 1.5rem;
     margin-left: auto;
     flex-shrink: 0;
+    transition: all 150ms linear;
   }
 }
 
 .organization-card-expiration {
   border-radius: var(--parsec-radius-12);
-  padding: 0.1875rem 0.375rem;
-  background: var(--parsec-color-light-primary-700);
+  padding: 0.1875rem 0.5rem;
+  width: fit-content;
+  align-self: center;
+  height: fit-content;
+  flex-shrink: 0;
+  background: var(--parsec-color-light-secondary-text);
   color: var(--parsec-color-light-secondary-white);
-
-  &.expired {
-    background: var(--parsec-color-light-secondary-text);
-    color: var(--parsec-color-light-secondary-white);
-  }
 }
 </style>
