@@ -118,3 +118,25 @@ ion-title {
 .flip-vertical-ion-icon > ion-icon {
   transform: scaleY(-1);
 }
+
+// revo-grid
+revo-grid {
+  .rowHeaders,
+  revogr-header {
+    background-color: var(--parsec-color-light-secondary-premiere) !important;
+
+    .rgRow {
+      box-shadow: none !important;
+      font-weight: bold;
+      font-size: 14px;
+    }
+  }
+
+  .rgCol {
+    background-color: var(--parsec-color-light-secondary-medium) !important;
+  }
+
+  .rgRow {
+    box-shadow: 0 -1px 0 0 var(--parsec-color-light-secondary-disabled) inset !important;
+  }
+}

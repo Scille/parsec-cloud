@@ -1779,6 +1779,7 @@
         "noFolderPreview": "Impossible de prévisualiser les dossiers.",
         "genericError": "Impossible d'ouvrir le fichier.",
         "mediaNotSupported": "Ce média ne peut pas être joué.",
+        "retrievingFileContent": "Récupération du contenu du fichier...",
         "controls": {
             "zoom": {
                 "in": "Zoomer",
@@ -1791,7 +1792,9 @@
         },
         "spreadsheet": {
             "loadSheetError": "Impossible de charger cette feuille.",
-            "loadDocumentError": "Impossible de charger ce document."
+            "loadDocumentError": "Impossible de charger ce document.",
+            "loadingDocument": "Chargement du document...",
+            "loadingSheet": "Chargement de la feuille `{page}`"
         },
         "pdf": {
             "loadDocumentError": "Impossible de charger ce document.",

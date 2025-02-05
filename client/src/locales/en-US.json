@@ -1779,6 +1779,7 @@
         "noFolderPreview": "Cannot preview folders.",
         "genericError": "Failed to open the file.",
         "mediaNotSupported": "This media is not supported.",
+        "retrievingFileContent": "Retrieving the file content...",
         "controls": {
             "zoom": {
                 "in": "Zoom in",
@@ -1791,7 +1792,9 @@
         },
         "spreadsheet": {
             "loadSheetError": "This sheet could not be loaded.",
-            "loadDocumentError": "Could not load this document."
+            "loadDocumentError": "Could not load this document.",
+            "loadingDocument": "Loading the document...",
+            "loadingSheet": "Loading the sheet `{page}`"
         },
         "pdf": {
             "loadDocumentError": "Could not load this PDF document.",

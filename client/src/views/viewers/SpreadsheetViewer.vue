@@ -3,6 +3,10 @@
 <template>
   <file-viewer-wrapper>
     <template #viewer>
+      <ms-spinner
+        :title="loadingLabel"
+        v-show="loading"
+      />
       <ms-report-text
         class="spreadsheet-error"
         :theme="MsReportTheme.Error"
@@ -10,16 +14,20 @@
       >
         {{ $msTranslate(error) }}
       </ms-report-text>
-      <ms-spinner v-show="loading" />
       <div
         class="spreadsheet-container"
-        v-show="!loading"
+        v-show="!loading && !error"
+        ref="gridContainer"
       >
-        <div
-          ref="spreadsheet"
-          v-show="!loading"
+        <revo-grid
           class="spreadsheet-content"
-          v-html="htmlContent"
+          :source="rows"
+          :columns="columns"
+          hide-attribution
+          :readonly="true"
+          theme="material"
+          :row-headers="true"
+          :resize="true"
         />
       </div>
     </template>
@@ -50,48 +58,81 @@
 
 <script setup lang="ts">
 import { MsSpinner, I18n, Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
-import { onBeforeMount, onMounted, Ref, ref } from 'vue';
+import { onMounted, onUnmounted, Ref, ref } from 'vue';
 import XLSX from 'xlsx';
 import { FileControls, FileControlsButton, FileControlsGroup, FileControlsZoom } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { scan } from 'ionicons/icons';
+import RevoGrid from '@revolist/vue3-datagrid';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
 }>();
 
 let workbook: XLSX.WorkBook | null = null;
-const htmlContent = ref('');
 const pages = ref<Array<string>>([]);
 const currentPage = ref('');
 const loading = ref(true);
 const error = ref('');
-let worker: Worker | null = null;
+let documentWorker: Worker;
+let pageWorker: Worker;
 const actions: Ref<Array<{ icon?: string; text?: Translatable; handler: () => void }>> = ref([]);
-const spreadsheet = ref();
 const zoomControl = ref();
 const zoomLevel = ref(1);
+const rows = ref<Array<any>>([]);
+const columns = ref<Array<{ prop: string; name: string }>>([]);
+const loadingLabel = ref<Translatable>('');
+const gridContainer = ref();
 
 onMounted(async () => {
-  try {
-    workbook = XLSX.read(props.contentInfo.data, { type: 'array' });
+  documentWorker = new Worker(new URL('@/views/viewers/workers/spreadsheet_document_loader.ts', import.meta.url));
+  pageWorker = new Worker(new URL('@/views/viewers/workers/spreadsheet_page_loader.ts', import.meta.url));
+
+  loading.value = true;
+  loadingLabel.value = 'fileViewers.spreadsheet.loadingDocument';
+  pages.value = [];
+  rows.value = [];
+  columns.value = [];
+  workbook = null;
+
+  documentWorker.onmessage = async function (e: MessageEvent): Promise<void> {
+    const result: { ok: boolean; error: any; value: XLSX.WorkBook } = e.data;
+    if (!result.ok) {
+      window.electronAPI.log('error', `Failed to load spreadsheet document: ${e.data.error.toString()}`);
+      error.value = 'fileViewers.spreadsheet.loadDocumentError';
+      loading.value = false;
+      return;
+    }
+    workbook = e.data.value as XLSX.WorkBook;
     pages.value = workbook.SheetNames;
-    await switchToPage(workbook.SheetNames[0]);
     for (const page of pages.value) {
       actions.value.push({ text: I18n.valueAsTranslatable(page), handler: () => switchToPage(page) });
     }
-  } catch (e: any) {
-    window.electronAPI.log('error', `Failed to load spreadsheet document: ${e}`);
-    error.value = 'fileViewers.spreadsheet.loadDocumentError';
+    await switchToPage(workbook.SheetNames[0]);
+  };
+
+  pageWorker.onmessage = async function (e: MessageEvent): Promise<void> {
+    currentPage.value = e.data.page;
+    const data: Array<any> = e.data.content;
+
+    columns.value = [];
+    if (data.length > 0) {
+      for (const name of Object.keys(data[0])) {
+        columns.value.push({ prop: name, name: name });
+      }
+    }
+    rows.value = data;
     loading.value = false;
-  }
+    loadingLabel.value = '';
+  };
+
+  documentWorker.postMessage(props.contentInfo.data);
 });
 
-onBeforeMount(async () => {
-  if (worker) {
-    worker.terminate();
-  }
+onUnmounted(() => {
+  documentWorker.terminate();
+  pageWorker.terminate();
 });
 
 async function switchToPage(page: string): Promise<void> {
@@ -99,27 +140,17 @@ async function switchToPage(page: string): Promise<void> {
     return;
   }
   const ws = workbook.Sheets[page];
+  rows.value = [];
+  columns.value = [];
   if (!ws) {
     error.value = 'fileViewers.spreadsheet.loadSheetError';
     currentPage.value = '';
-    htmlContent.value = '';
     return;
   }
   loading.value = true;
+  loadingLabel.value = { key: 'fileViewers.spreadsheet.loadingSheet', data: { page: page } };
   error.value = '';
-
-  if (worker) {
-    worker.terminate();
-  }
-
-  worker = new Worker(new URL('@/views/viewers/workers/spreadsheet_converter.ts', import.meta.url));
-  worker.onmessage = async function (e: MessageEvent): Promise<void> {
-    currentPage.value = page;
-    htmlContent.value = e.data as string;
-    loading.value = false;
-    worker = null;
-  };
-  worker.postMessage(ws);
+  pageWorker.postMessage(ws);
 }
 
 function onZoomLevelChange(value: number): void {
@@ -127,7 +158,9 @@ function onZoomLevelChange(value: number): void {
 }
 
 async function toggleFullScreen(): Promise<void> {
-  await spreadsheet.value.requestFullscreen();
+  if (gridContainer.value) {
+    await gridContainer.value.requestFullscreen();
+  }
 }
 </script>
 
@@ -145,18 +178,6 @@ async function toggleFullScreen(): Promise<void> {
   margin: auto;
   height: 100%;
   width: 100%;
-
-  :deep(table) {
-    width: 100%;
-
-    tr {
-      background-color: #eeeeee;
-
-      td {
-        border: 1px solid black;
-      }
-    }
-  }
 
   &:fullscreen {
     padding: 5rem;
