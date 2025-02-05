@@ -306,7 +306,7 @@ msgid ""
 msgstr ""
 "Une fenêtre s'ouvre, vous proposant de sélectionner un utilisateur à qui "
 "copier les rôles. Entrez les premières lettres de leur nom ou adresse email "
-"and sélectionnez l'utilisateur parmi les choix proposés par l'application."
+"et sélectionnez l'utilisateur parmi les choix proposés par l'application."
 
 #: ../../userguide/parsec_workspaces.rst:158
 #: ../../userguide/parsec_workspaces.rst:165
