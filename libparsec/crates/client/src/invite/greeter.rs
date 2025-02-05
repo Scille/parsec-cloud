@@ -6,7 +6,9 @@ use authenticated_cmds::latest::invite_greeter_step;
 use libparsec_client_connection::{
     protocol::authenticated_cmds, AuthenticatedCmds, ConnectionError,
 };
+use libparsec_platform_async::event::EventListener;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
+use libparsec_platform_async::select2_biased;
 use libparsec_types::prelude::*;
 
 use crate::invite::common::{Throttle, WAIT_PEER_MAX_ATTEMPTS};
@@ -320,6 +322,8 @@ pub enum GreetInProgressError {
         ballpark_client_early_offset: f64,
         ballpark_client_late_offset: f64,
     },
+    #[error("Operation cancelled")]
+    Cancelled,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -461,73 +465,35 @@ async fn run_greeter_step_until_ready(
 type MaybeGreetingAttemptID = Arc<AsyncMutex<Option<GreetingAttemptID>>>;
 
 #[derive(Debug)]
-enum GreetingAttemptAccess {
-    // For the initial contexts, the greeting attempt might not be available yet
-    MaybeAvailable(MaybeGreetingAttemptID),
-    // For the in-progress contexts, the greeting attempt is always available
-    // since it was obtained during the initial context
-    Available(GreetingAttemptID),
-}
-
-#[derive(Debug)]
 pub struct GreetCancellerCtx {
-    greeting_attempt_access: GreetingAttemptAccess,
+    greeting_attempt_id: GreetingAttemptID,
     cmds: Arc<AuthenticatedCmds>,
 }
 
 impl GreetCancellerCtx {
-    fn new_from_maybe_greeting_attempt(
-        maybe_greeting_attempt_id: MaybeGreetingAttemptID,
-        cmds: Arc<AuthenticatedCmds>,
-    ) -> Self {
+    fn new(greeting_attempt_id: GreetingAttemptID, cmds: Arc<AuthenticatedCmds>) -> Self {
         Self {
-            greeting_attempt_access: GreetingAttemptAccess::MaybeAvailable(
-                maybe_greeting_attempt_id,
-            ),
+            greeting_attempt_id,
             cmds,
-        }
-    }
-
-    fn new_from_greeting_attempt(
-        greeting_attempt_id: GreetingAttemptID,
-        cmds: Arc<AuthenticatedCmds>,
-    ) -> Self {
-        Self {
-            greeting_attempt_access: GreetingAttemptAccess::Available(greeting_attempt_id),
-            cmds,
-        }
-    }
-
-    async fn get_greeting_attempt(&self) -> Option<GreetingAttemptID> {
-        match &self.greeting_attempt_access {
-            GreetingAttemptAccess::Available(greeting_attempt_id) => Some(*greeting_attempt_id),
-            GreetingAttemptAccess::MaybeAvailable(maybe_greeting_attempt_id) => {
-                *maybe_greeting_attempt_id.lock().await
-            }
         }
     }
 
     pub async fn cancel(self) -> Result<(), GreetInProgressError> {
-        if let Some(greeting_attempt) = self.get_greeting_attempt().await {
-            cancel_greeting_attempt(
-                &self.cmds,
-                greeting_attempt,
-                CancelledGreetingAttemptReason::ManuallyCancelled,
-            )
-            .await?;
-        }
-        Ok(())
+        cancel_greeting_attempt(
+            &self.cmds,
+            self.greeting_attempt_id,
+            CancelledGreetingAttemptReason::ManuallyCancelled,
+        )
+        .await
     }
 
     pub async fn cancel_and_warn_on_error(self) {
-        if let Some(greeting_attempt) = self.get_greeting_attempt().await {
-            cancel_greeting_attempt_and_warn_on_error(
-                &self.cmds,
-                greeting_attempt,
-                CancelledGreetingAttemptReason::ManuallyCancelled,
-            )
-            .await
-        }
+        cancel_greeting_attempt_and_warn_on_error(
+            &self.cmds,
+            self.greeting_attempt_id,
+            CancelledGreetingAttemptReason::ManuallyCancelled,
+        )
+        .await
     }
 }
 
@@ -714,6 +680,35 @@ impl BaseGreetInitialCtx {
             shared_secret_key,
         ))
     }
+
+    pub async fn do_wait_peer_with_canceller_event(
+        self,
+        cancel_requested: EventListener,
+    ) -> Result<BaseGreetInProgress1Ctx, GreetInProgressError> {
+        let cmds = self.cmds.clone();
+        let maybe_greeting_attempt = self.maybe_greeting_attempt.clone();
+
+        let wait_cancellation = async {
+            cancel_requested.await;
+            maybe_greeting_attempt
+                .lock()
+                .await
+                .map(|greeting_attempt_id| GreetCancellerCtx::new(greeting_attempt_id, cmds))
+        };
+
+        // It's important to run `do_wait_peer()` and `wait_cancellation()` concurrently
+        // since the both lock the `maybe_greeting_attempt` async mutex.
+        let maybe_canceller_ctx = select2_biased!(
+            res = self.do_wait_peer() => return res,
+            maybe_canceller_ctx = wait_cancellation => maybe_canceller_ctx,
+        );
+
+        if let Some(canceller_ctx) = maybe_canceller_ctx {
+            canceller_ctx.cancel_and_warn_on_error().await;
+        }
+
+        Err(GreetInProgressError::Cancelled)
+    }
 }
 
 #[derive(Debug)]
@@ -729,15 +724,18 @@ impl UserGreetInitialCtx {
         UserGreetInitialCtx(BaseGreetInitialCtx::new(device, cmds, event_bus, token))
     }
 
-    pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_maybe_greeting_attempt(
-            self.0.maybe_greeting_attempt.clone(),
-            self.0.cmds.clone(),
-        )
-    }
-
     pub async fn do_wait_peer(self) -> Result<UserGreetInProgress1Ctx, GreetInProgressError> {
         self.0.do_wait_peer().await.map(UserGreetInProgress1Ctx)
+    }
+
+    pub async fn do_wait_peer_with_canceller_event(
+        self,
+        cancel_requested: EventListener,
+    ) -> Result<UserGreetInProgress1Ctx, GreetInProgressError> {
+        self.0
+            .do_wait_peer_with_canceller_event(cancel_requested)
+            .await
+            .map(UserGreetInProgress1Ctx)
     }
 }
 
@@ -754,15 +752,18 @@ impl DeviceGreetInitialCtx {
         Self(BaseGreetInitialCtx::new(device, cmds, event_bus, token))
     }
 
-    pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_maybe_greeting_attempt(
-            self.0.maybe_greeting_attempt.clone(),
-            self.0.cmds.clone(),
-        )
-    }
-
     pub async fn do_wait_peer(self) -> Result<DeviceGreetInProgress1Ctx, GreetInProgressError> {
         self.0.do_wait_peer().await.map(DeviceGreetInProgress1Ctx)
+    }
+
+    pub async fn do_wait_peer_with_canceller_event(
+        self,
+        cancel_requested: EventListener,
+    ) -> Result<DeviceGreetInProgress1Ctx, GreetInProgressError> {
+        self.0
+            .do_wait_peer_with_canceller_event(cancel_requested)
+            .await
+            .map(DeviceGreetInProgress1Ctx)
     }
 }
 
@@ -786,18 +787,24 @@ impl ShamirRecoveryGreetInitialCtx {
         }
     }
 
-    pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_maybe_greeting_attempt(
-            self.base.maybe_greeting_attempt.clone(),
-            self.base.cmds.clone(),
-        )
-    }
-
     pub async fn do_wait_peer(
         self,
     ) -> Result<ShamirRecoveryGreetInProgress1Ctx, GreetInProgressError> {
         self.base
             .do_wait_peer()
+            .await
+            .map(|base| ShamirRecoveryGreetInProgress1Ctx {
+                base,
+                share_data: self.share_data,
+            })
+    }
+
+    pub async fn do_wait_peer_with_canceller_event(
+        self,
+        cancel_requested: EventListener,
+    ) -> Result<ShamirRecoveryGreetInProgress1Ctx, GreetInProgressError> {
+        self.base
+            .do_wait_peer_with_canceller_event(cancel_requested)
             .await
             .map(|base| ShamirRecoveryGreetInProgress1Ctx {
                 base,
@@ -855,7 +862,7 @@ impl UserGreetInProgress1Ctx {
     }
 
     pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
+        GreetCancellerCtx::new(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_wait_peer_trust(self) -> Result<UserGreetInProgress2Ctx, GreetInProgressError> {
@@ -875,7 +882,7 @@ impl DeviceGreetInProgress1Ctx {
     }
 
     pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
+        GreetCancellerCtx::new(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_wait_peer_trust(
@@ -900,10 +907,7 @@ impl ShamirRecoveryGreetInProgress1Ctx {
     }
 
     pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_greeting_attempt(
-            self.base.greeting_attempt,
-            self.base.cmds.clone(),
-        )
+        GreetCancellerCtx::new(self.base.greeting_attempt, self.base.cmds.clone())
     }
 
     pub async fn do_wait_peer_trust(
@@ -983,7 +987,7 @@ impl UserGreetInProgress2Ctx {
     }
 
     pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
+        GreetCancellerCtx::new(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_deny_trust(self) -> Result<(), GreetInProgressError> {
@@ -1008,7 +1012,7 @@ impl DeviceGreetInProgress2Ctx {
     }
 
     pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
+        GreetCancellerCtx::new(self.0.greeting_attempt, self.0.cmds.clone())
     }
     pub async fn do_deny_trust(self) -> Result<(), GreetInProgressError> {
         self.0.do_deny_trust().await
@@ -1038,10 +1042,7 @@ impl ShamirRecoveryGreetInProgress2Ctx {
     }
 
     pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_greeting_attempt(
-            self.base.greeting_attempt,
-            self.base.cmds.clone(),
-        )
+        GreetCancellerCtx::new(self.base.greeting_attempt, self.base.cmds.clone())
     }
     pub async fn do_deny_trust(self) -> Result<(), GreetInProgressError> {
         self.base.do_deny_trust().await
@@ -1121,7 +1122,7 @@ pub struct UserGreetInProgress3Ctx(BaseGreetInProgress3Ctx);
 
 impl UserGreetInProgress3Ctx {
     pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
+        GreetCancellerCtx::new(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_get_claim_requests(
@@ -1165,7 +1166,7 @@ pub struct DeviceGreetInProgress3Ctx(BaseGreetInProgress3Ctx);
 
 impl DeviceGreetInProgress3Ctx {
     pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_greeting_attempt(self.0.greeting_attempt, self.0.cmds.clone())
+        GreetCancellerCtx::new(self.0.greeting_attempt, self.0.cmds.clone())
     }
 
     pub async fn do_get_claim_requests(
@@ -1210,10 +1211,7 @@ pub struct ShamirRecoveryGreetInProgress3Ctx {
 
 impl ShamirRecoveryGreetInProgress3Ctx {
     pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_greeting_attempt(
-            self.base.greeting_attempt,
-            self.base.cmds.clone(),
-        )
+        GreetCancellerCtx::new(self.base.greeting_attempt, self.base.cmds.clone())
     }
 
     pub async fn do_send_share(self) -> Result<(), GreetInProgressError> {
@@ -1412,7 +1410,7 @@ pub struct UserGreetInProgress4Ctx {
 
 impl UserGreetInProgress4Ctx {
     pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_greeting_attempt(self.greeting_attempt, self.cmds.clone())
+        GreetCancellerCtx::new(self.greeting_attempt, self.cmds.clone())
     }
 
     pub async fn do_create_new_user(
@@ -1572,7 +1570,7 @@ pub struct DeviceGreetInProgress4Ctx {
 
 impl DeviceGreetInProgress4Ctx {
     pub fn canceller_ctx(&self) -> GreetCancellerCtx {
-        GreetCancellerCtx::new_from_greeting_attempt(self.greeting_attempt, self.cmds.clone())
+        GreetCancellerCtx::new(self.greeting_attempt, self.cmds.clone())
     }
 
     pub async fn do_create_new_device(

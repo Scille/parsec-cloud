@@ -143,74 +143,7 @@ pub async fn bootstrap_organization(
  * Invitation claimer
  */
 
-#[derive(Debug, thiserror::Error)]
-pub enum ClaimInProgressError {
-    #[error("Cannot reach the server")]
-    Offline,
-    #[error("Organization has expired")]
-    OrganizationExpired,
-    #[error("Invitation not found")]
-    NotFound,
-    #[error("Invitation already used or deleted")]
-    AlreadyUsedOrDeleted,
-    #[error("Claim operation reset by peer")]
-    PeerReset,
-    #[error("Active users limit reached")]
-    ActiveUsersLimitReached,
-    #[error("The provided user is not allowed to greet this invitation")]
-    GreeterNotAllowed,
-    #[error("Greeting attempt cancelled by {origin:?} because {reason:?} on {timestamp}")]
-    GreetingAttemptCancelled {
-        origin: GreeterOrClaimer,
-        reason: CancelledGreetingAttemptReason,
-        timestamp: DateTime,
-    },
-    #[error(transparent)]
-    CorruptedConfirmation(DataError),
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-    // Additional error
-    #[error("Operation cancelled")]
-    Cancelled,
-}
-
-impl From<libparsec_client::ClaimInProgressError> for ClaimInProgressError {
-    fn from(value: libparsec_client::ClaimInProgressError) -> Self {
-        match value {
-            libparsec_client::ClaimInProgressError::Offline => ClaimInProgressError::Offline,
-            libparsec_client::ClaimInProgressError::OrganizationExpired => {
-                ClaimInProgressError::OrganizationExpired
-            }
-            libparsec_client::ClaimInProgressError::NotFound => ClaimInProgressError::NotFound,
-            libparsec_client::ClaimInProgressError::AlreadyUsedOrDeleted => {
-                ClaimInProgressError::AlreadyUsedOrDeleted
-            }
-            libparsec_client::ClaimInProgressError::PeerReset => ClaimInProgressError::PeerReset,
-            libparsec_client::ClaimInProgressError::ActiveUsersLimitReached => {
-                ClaimInProgressError::ActiveUsersLimitReached
-            }
-            libparsec_client::ClaimInProgressError::GreeterNotAllowed => {
-                ClaimInProgressError::GreeterNotAllowed
-            }
-            libparsec_client::ClaimInProgressError::GreetingAttemptCancelled {
-                origin,
-                reason,
-                timestamp,
-            } => ClaimInProgressError::GreetingAttemptCancelled {
-                origin,
-                reason,
-                timestamp,
-            },
-            libparsec_client::ClaimInProgressError::CorruptedConfirmation(x) => {
-                ClaimInProgressError::CorruptedConfirmation(x)
-            }
-            libparsec_client::ClaimInProgressError::Internal(x) => {
-                ClaimInProgressError::Internal(x)
-            }
-        }
-    }
-}
-
+pub use libparsec_client::ClaimInProgressError;
 pub use libparsec_client::ClaimerRetrieveInfoError;
 
 pub async fn claimer_retrieve_info(
@@ -300,15 +233,10 @@ pub async fn claimer_greeter_abort_operation(
         HandleItem::ShamirRecoveryClaimPickRecipient(_) => Ok(None),
         HandleItem::ShamirRecoveryClaimShare(_) => Ok(None),
         HandleItem::ShamirRecoveryClaimRecoverDevice(_) => Ok(None),
-        HandleItem::ShamirRecoveryClaimInitial(x) => Ok(Some(
-            EitherCancellerCtx::ClaimCancellerCtx(x.canceller_ctx()),
-        )),
-        HandleItem::UserClaimInitial(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
-            x.canceller_ctx(),
-        ))),
-        HandleItem::DeviceClaimInitial(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
-            x.canceller_ctx(),
-        ))),
+        // Nothing to cancel for inital ctxs since the `wait_peer` operation has not started yet
+        HandleItem::UserClaimInitial(_) => Ok(None),
+        HandleItem::DeviceClaimInitial(_) => Ok(None),
+        HandleItem::ShamirRecoveryClaimInitial(_) => Ok(None),
         HandleItem::UserClaimInProgress1(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
             x.canceller_ctx(),
         ))),
@@ -339,15 +267,10 @@ pub async fn claimer_greeter_abort_operation(
         HandleItem::UserClaimFinalize(_) => Ok(None),
         HandleItem::DeviceClaimFinalize(_) => Ok(None),
         HandleItem::ShamirRecoveryClaimFinalize(_) => Ok(None),
-        HandleItem::UserGreetInitial(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
-            x.canceller_ctx(),
-        ))),
-        HandleItem::DeviceGreetInitial(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
-            x.canceller_ctx(),
-        ))),
-        HandleItem::ShamirRecoveryGreetInitial(x) => Ok(Some(
-            EitherCancellerCtx::GreetCancellerCtx(x.canceller_ctx()),
-        )),
+        // Nothing to cancel for inital ctxs since the `wait_peer` operation has not started yet
+        HandleItem::UserGreetInitial(_) => Ok(None),
+        HandleItem::DeviceGreetInitial(_) => Ok(None),
+        HandleItem::ShamirRecoveryGreetInitial(_) => Ok(None),
         HandleItem::UserGreetInProgress1(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
             x.canceller_ctx(),
         ))),
@@ -460,37 +383,28 @@ pub async fn claimer_user_wait_all_peers(
         invalid => Err(invalid),
     })?;
     let initial_ctxs = ctx.list_initial_ctxs();
-    let cancellers = initial_ctxs
-        .iter()
-        .map(|ctx| ctx.canceller_ctx())
-        .collect::<Vec<_>>();
-
-    let work = async {
-        let ctx = UserClaimInitialCtx::do_wait_multiple_peer(initial_ctxs).await?;
-        let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
-        let greeter_sas = ctx.greeter_sas().to_owned();
-        let greeter_user_id = ctx.greeter_user_id().to_owned();
-        let greeter_human_handle = ctx.greeter_human_handle().to_owned();
-
-        let new_handle = register_handle(HandleItem::UserClaimInProgress1(ctx));
-
-        Ok(UserClaimInProgress1Info {
-            handle: new_handle,
-            greeter_user_id,
-            greeter_human_handle,
-            greeter_sas,
-            greeter_sas_choices,
-        })
-    };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2_biased!(
-        res = work => res,
-        _ = cancel_requested => {
-            join_all(cancellers.into_iter().map(|c| c.cancel_and_warn_on_error())).await;
-            Err(ClaimInProgressError::Cancelled)
-        },
+
+    let ctx = UserClaimInitialCtx::do_wait_multiple_peer_with_canceller_event(
+        initial_ctxs,
+        cancel_requested,
     )
+    .await?;
+    let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
+    let greeter_sas = ctx.greeter_sas().to_owned();
+    let greeter_user_id = ctx.greeter_user_id().to_owned();
+    let greeter_human_handle = ctx.greeter_human_handle().to_owned();
+
+    let new_handle = register_handle(HandleItem::UserClaimInProgress1(ctx));
+
+    Ok(UserClaimInProgress1Info {
+        handle: new_handle,
+        greeter_user_id,
+        greeter_human_handle,
+        greeter_sas,
+        greeter_sas_choices,
+    })
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -559,34 +473,25 @@ pub async fn claimer_user_initial_do_wait_peer(
         HandleItem::UserClaimInitial(ctx) => Ok(ctx),
         invalid => Err(invalid),
     })?;
-    let canceller_ctx = ctx.canceller_ctx();
-
-    let work = async {
-        let ctx = ctx.do_wait_peer().await?;
-        let greeter_user_id = ctx.greeter_user_id().to_owned();
-        let greeter_human_handle = ctx.greeter_human_handle().to_owned();
-        let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
-        let greeter_sas = ctx.greeter_sas().to_owned();
-
-        let new_handle = register_handle(HandleItem::UserClaimInProgress1(ctx));
-
-        Ok(UserClaimInProgress1Info {
-            handle: new_handle,
-            greeter_user_id,
-            greeter_human_handle,
-            greeter_sas,
-            greeter_sas_choices,
-        })
-    };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2_biased!(
-        res = work => res,
-        _ = cancel_requested => {
-            canceller_ctx.cancel_and_warn_on_error().await;
-            Err(ClaimInProgressError::Cancelled)
-        },
-    )
+    let ctx = ctx
+        .do_wait_peer_with_canceller_event(cancel_requested)
+        .await?;
+    let greeter_user_id = ctx.greeter_user_id().to_owned();
+    let greeter_human_handle = ctx.greeter_human_handle().to_owned();
+    let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
+    let greeter_sas = ctx.greeter_sas().to_owned();
+
+    let new_handle = register_handle(HandleItem::UserClaimInProgress1(ctx));
+
+    Ok(UserClaimInProgress1Info {
+        handle: new_handle,
+        greeter_user_id,
+        greeter_human_handle,
+        greeter_sas,
+        greeter_sas_choices,
+    })
 }
 
 pub async fn claimer_device_initial_do_wait_peer(
@@ -597,34 +502,24 @@ pub async fn claimer_device_initial_do_wait_peer(
         HandleItem::DeviceClaimInitial(ctx) => Ok(ctx),
         invalid => Err(invalid),
     })?;
-    let canceller_ctx = ctx.canceller_ctx();
-
-    let work = async {
-        let ctx = ctx.do_wait_peer().await?;
-        let greeter_user_id = ctx.greeter_user_id().to_owned();
-        let greeter_human_handle = ctx.greeter_human_handle().to_owned();
-        let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
-        let greeter_sas = ctx.greeter_sas().to_owned();
-
-        let new_handle = register_handle(HandleItem::DeviceClaimInProgress1(ctx));
-
-        Ok(DeviceClaimInProgress1Info {
-            handle: new_handle,
-            greeter_user_id,
-            greeter_human_handle,
-            greeter_sas,
-            greeter_sas_choices,
-        })
-    };
-
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2_biased!(
-        res = work => res,
-        _ = cancel_requested => {
-            canceller_ctx.cancel_and_warn_on_error().await;
-            Err(ClaimInProgressError::Cancelled)
-        },
-    )
+    let ctx = ctx
+        .do_wait_peer_with_canceller_event(cancel_requested)
+        .await?;
+    let greeter_user_id = ctx.greeter_user_id().to_owned();
+    let greeter_human_handle = ctx.greeter_human_handle().to_owned();
+    let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
+    let greeter_sas = ctx.greeter_sas().to_owned();
+
+    let new_handle = register_handle(HandleItem::DeviceClaimInProgress1(ctx));
+
+    Ok(DeviceClaimInProgress1Info {
+        handle: new_handle,
+        greeter_user_id,
+        greeter_human_handle,
+        greeter_sas,
+        greeter_sas_choices,
+    })
 }
 
 pub async fn claimer_shamir_recovery_initial_do_wait_peer(
@@ -635,34 +530,24 @@ pub async fn claimer_shamir_recovery_initial_do_wait_peer(
         HandleItem::ShamirRecoveryClaimInitial(ctx) => Ok(ctx),
         invalid => Err(invalid),
     })?;
-    let canceller_ctx = ctx.canceller_ctx();
-
-    let work = async {
-        let ctx = ctx.do_wait_peer().await?;
-        let greeter_user_id = ctx.greeter_user_id().to_owned();
-        let greeter_human_handle = ctx.greeter_human_handle().to_owned();
-        let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
-        let greeter_sas = ctx.greeter_sas().to_owned();
-
-        let new_handle = register_handle(HandleItem::ShamirRecoveryClaimInProgress1(ctx));
-
-        Ok(ShamirRecoveryClaimInProgress1Info {
-            handle: new_handle,
-            greeter_user_id,
-            greeter_human_handle,
-            greeter_sas,
-            greeter_sas_choices,
-        })
-    };
-
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2_biased!(
-        res = work => res,
-        _ = cancel_requested => {
-            canceller_ctx.cancel_and_warn_on_error().await;
-            Err(ClaimInProgressError::Cancelled)
-        },
-    )
+    let ctx = ctx
+        .do_wait_peer_with_canceller_event(cancel_requested)
+        .await?;
+    let greeter_user_id = ctx.greeter_user_id().to_owned();
+    let greeter_human_handle = ctx.greeter_human_handle().to_owned();
+    let greeter_sas_choices = ctx.generate_greeter_sas_choices(4);
+    let greeter_sas = ctx.greeter_sas().to_owned();
+
+    let new_handle = register_handle(HandleItem::ShamirRecoveryClaimInProgress1(ctx));
+
+    Ok(ShamirRecoveryClaimInProgress1Info {
+        handle: new_handle,
+        greeter_user_id,
+        greeter_human_handle,
+        greeter_sas,
+        greeter_sas_choices,
+    })
 }
 
 pub async fn claimer_user_in_progress_1_do_deny_trust(
@@ -1466,111 +1351,7 @@ pub async fn client_start_shamir_recovery_invitation_greet(
     Ok(ShamirRecoveryGreetInitialInfo { handle })
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum GreetInProgressError {
-    #[error("Cannot reach the server")]
-    Offline,
-    #[error("Invitation not found")]
-    NotFound,
-    #[error("Invitation already used or cancelled")]
-    AlreadyDeleted,
-    #[error("Greet operation reset by peer")]
-    PeerReset,
-    #[error("Active users limit reached")]
-    ActiveUsersLimitReached,
-    #[error("Claimer's nonce and hashed nonce don't match")]
-    NonceMismatch,
-    #[error("Human handle (i.e. email address) already taken")]
-    HumanHandleAlreadyTaken,
-    #[error("User already exists")]
-    UserAlreadyExists,
-    #[error("Device already exists")]
-    DeviceAlreadyExists,
-    #[error("Not allowed to create a user")]
-    UserCreateNotAllowed,
-    #[error("Not allowed to greet this invitation")]
-    GreeterNotAllowed,
-    #[error("Greeting attempt cancelled by {origin:?} because {reason:?} on {timestamp}")]
-    GreetingAttemptCancelled {
-        origin: GreeterOrClaimer,
-        reason: CancelledGreetingAttemptReason,
-        timestamp: DateTime,
-    },
-    #[error(transparent)]
-    CorruptedInviteUserData(DataError),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
-    TimestampOutOfBallpark {
-        server_timestamp: DateTime,
-        client_timestamp: DateTime,
-        ballpark_client_early_offset: f64,
-        ballpark_client_late_offset: f64,
-    },
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-    // Additional error
-    #[error("Operation cancelled")]
-    Cancelled,
-}
-
-impl From<libparsec_client::GreetInProgressError> for GreetInProgressError {
-    fn from(value: libparsec_client::GreetInProgressError) -> Self {
-        match value {
-            libparsec_client::GreetInProgressError::Offline => GreetInProgressError::Offline,
-            libparsec_client::GreetInProgressError::NotFound => GreetInProgressError::NotFound,
-            libparsec_client::GreetInProgressError::AlreadyDeleted => {
-                GreetInProgressError::AlreadyDeleted
-            }
-            libparsec_client::GreetInProgressError::PeerReset => GreetInProgressError::PeerReset,
-            libparsec_client::GreetInProgressError::ActiveUsersLimitReached => {
-                GreetInProgressError::ActiveUsersLimitReached
-            }
-            libparsec_client::GreetInProgressError::NonceMismatch => {
-                GreetInProgressError::NonceMismatch
-            }
-            libparsec_client::GreetInProgressError::HumanHandleAlreadyTaken => {
-                GreetInProgressError::HumanHandleAlreadyTaken
-            }
-            libparsec_client::GreetInProgressError::UserAlreadyExists => {
-                GreetInProgressError::UserAlreadyExists
-            }
-            libparsec_client::GreetInProgressError::DeviceAlreadyExists => {
-                GreetInProgressError::DeviceAlreadyExists
-            }
-            libparsec_client::GreetInProgressError::UserCreateNotAllowed => {
-                GreetInProgressError::UserCreateNotAllowed
-            }
-            libparsec_client::GreetInProgressError::GreeterNotAllowed => {
-                GreetInProgressError::GreeterNotAllowed
-            }
-            libparsec_client::GreetInProgressError::GreetingAttemptCancelled {
-                origin,
-                reason,
-                timestamp,
-            } => GreetInProgressError::GreetingAttemptCancelled {
-                origin,
-                reason,
-                timestamp,
-            },
-            libparsec_client::GreetInProgressError::CorruptedInviteUserData(err) => {
-                GreetInProgressError::CorruptedInviteUserData(err)
-            }
-            libparsec_client::GreetInProgressError::TimestampOutOfBallpark {
-                server_timestamp,
-                client_timestamp,
-                ballpark_client_early_offset,
-                ballpark_client_late_offset,
-            } => GreetInProgressError::TimestampOutOfBallpark {
-                server_timestamp,
-                client_timestamp,
-                ballpark_client_early_offset,
-                ballpark_client_late_offset,
-            },
-            libparsec_client::GreetInProgressError::Internal(err) => {
-                GreetInProgressError::Internal(err)
-            }
-        }
-    }
-}
+pub use libparsec_client::GreetInProgressError;
 
 pub struct UserGreetInitialInfo {
     pub handle: Handle,
