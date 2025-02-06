@@ -105,7 +105,7 @@ This profile allows a user to:
 Change the profile
 ------------------
 
-If you need to change the profile of a user, go to ``Manage my organization`` in the upper left corner. Either select the user or right click on them and select ``Change profile``.
+If you need to change the profile of a user, go to ``Manage my organization`` in the upper-left corner. Either select the user or right-click on them and select ``Change profile``.
 
 .. image:: screens/change_profile.png
     :align: center
@@ -126,7 +126,7 @@ You can change the profiles of multiple users at once by selecting them and clic
     :alt: change multiple profiles screenshot
     :width: 800
 
-You cannot change the profile from and to `External`. If an external user is present among the users you selected, the dialog will warn you and that user will not be among the affected users.
+You cannot change the profile from and to `External`. If there are users with `External` profile among the selected users, the dialog will warn you that their profile will not be affected.
 
 .. image:: screens/change_profile_external_warn.png
     :align: center

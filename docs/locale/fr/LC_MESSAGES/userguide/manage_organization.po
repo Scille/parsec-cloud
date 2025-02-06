@@ -8,17 +8,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-18 17:42+0200\n"
+"POT-Creation-Date: 2025-02-06 13:07+0100\n"
 "PO-Revision-Date: 2024-09-18 19:58+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
-"Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"Generated-By: Babel 2.15.0\n"
-"X-Generator: Poedit 3.5\n"
+"Generated-By: Babel 2.17.0\n"
 
 #: ../../userguide/manage_organization.rst:6
 msgid "Manage your organization"
@@ -73,7 +72,7 @@ msgstr ""
 "Un bouton jaune apparaît en haut, vous informant que vous avez une "
 "invitation qui attend d'être validée."
 
-#: ../../userguide/manage_organization.rst:23
+#: ../../userguide/manage_organization.rst:26
 msgid "Pending invitations"
 msgstr "Invitations en attente"
 
@@ -231,3 +230,58 @@ msgstr ""
 msgid "**Remove users from the organization, regardless of their profile.**"
 msgstr ""
 "**Supprimer les utilisateurs de l'organisation, quel que soit leur profil.**"
+
+#: ../../userguide/manage_organization.rst:106
+msgid "Change the profile"
+msgstr "Modifier le profil"
+
+#: ../../userguide/manage_organization.rst:108
+msgid ""
+"If you need to change the profile of a user, go to ``Manage my "
+"organization`` in the upper-left corner. Either select the user or right-"
+"click on them and select ``Change profile``."
+msgstr ""
+"Pour changer le profil d'un utilisateur, rendez vous dans ``Gérer mon "
+"organisation`` dans le coin supérieur gauche. Vous pouvez soit sélectionner "
+"l'utilisateur, ou faire un clic droit dessus et sélectionner ``Modifier le "
+"profil``."
+
+#: ../../userguide/manage_organization.rst:110
+msgid "change profile screenshot"
+msgstr "capture d'écran du changement de profil"
+
+#: ../../userguide/manage_organization.rst:115
+msgid "Select the user's new profile and click on ``Change``."
+msgstr ""
+"Choisissez le nouveau profil de l'utilisateur et cliquez sur ``Modifier``."
+
+#: ../../userguide/manage_organization.rst:117
+msgid "change profile dialog screenshot"
+msgstr "capture d'écran de la dialogue de changement de profil"
+
+#: ../../userguide/manage_organization.rst:122
+msgid ""
+"You can change the profiles of multiple users at once by selecting them and "
+"clicking on ``Change profiles``."
+msgstr ""
+"Vous pouvez changer les profils de plusieurs utilisateurs simultanément en "
+"les sélectionnant et en cliquant sur ``Modifier les profils``."
+
+#: ../../userguide/manage_organization.rst:124
+msgid "change multiple profiles screenshot"
+msgstr "capture d'écran du changement de plusieurs profils"
+
+#: ../../userguide/manage_organization.rst:129
+msgid ""
+"You cannot change the profile from and to `External`. If there are users "
+"with `External` profile among the selected users, the dialog will warn you "
+"that their profile will not be affected."
+msgstr ""
+"Il est impossible de changer un profil depuis et vers `Externe`. Si des "
+"utilisateurs avec le profil `Externe` figurent parmi les utilisateurs "
+"sélectionnés, la fenêtre vous avertira que leur profils ne seront pas "
+"changés."
+
+#: ../../userguide/manage_organization.rst:131
+msgid "change profile external warning screenshot"
+msgstr "capture d'écran de l'avertissement"
