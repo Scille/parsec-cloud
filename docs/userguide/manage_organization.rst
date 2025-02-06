@@ -83,7 +83,7 @@ This profile allows a user to:
   email of other users within the organization.
 
 Member profile
-^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 This profile allows a user to:
 
@@ -101,3 +101,34 @@ This profile allows a user to:
 - See the name and email of other users within the organization.
 - **Invite new users to join the organization, and set their profile.**
 - **Remove users from the organization, regardless of their profile.**
+
+Change the profile
+------------------
+
+If you need to change the profile of a user, go to ``Manage my organization`` in the upper left corner. Either select the user or right click on them and select ``Change profile``.
+
+.. image:: screens/change_profile.png
+    :align: center
+    :alt: change profile screenshot
+    :width: 800
+
+Select the user's new profile and click on ``Change``.
+
+.. image:: screens/change_profile_dialog.png
+    :align: center
+    :alt: change profile dialog screenshot
+    :width: 400
+
+You can change the profiles of multiple users at once by selecting them and clicking on ``Change profiles``.
+
+.. image:: screens/change_multiple_profiles.png
+    :align: center
+    :alt: change multiple profiles screenshot
+    :width: 800
+
+You cannot change the profile from and to `External`. If an external user is present among the users you selected, the dialog will warn you and that user will not be among the affected users.
+
+.. image:: screens/change_profile_external_warn.png
+    :align: center
+    :alt: change profile external warning screenshot
+    :width: 400
