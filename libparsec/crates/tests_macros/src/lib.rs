@@ -83,6 +83,8 @@ pub fn parsec_test(
             let _ = ::libparsec_tests_lite::platform::env_logger::builder().is_test(true).try_init();
             #[cfg(target_arch = "wasm32")]
             let _ = ::libparsec_tests_lite::platform::console_log::init_with_level(::libparsec_tests_lite::log::Level::Trace);
+            #[cfg(target_arch = "wasm32")]
+            ::libparsec_tests_lite::platform::console_error_panic_hook::set_once();
             #quote_block
         }
     }.into()

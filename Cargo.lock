@@ -2325,6 +2325,7 @@ dependencies = [
 name = "libparsec_tests_lite"
 version = "3.2.5-a.0+dev"
 dependencies = [
+ "console_error_panic_hook",
  "console_log",
  "env_logger",
  "hex-literal",
