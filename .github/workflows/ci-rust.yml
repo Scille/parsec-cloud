@@ -159,6 +159,11 @@ jobs:
         run: wasm-pack test --headless --firefox libparsec/crates/platform_storage
         timeout-minutes: 10
 
+      - name: Test platform-device-loader on wasm
+        if: inputs.run-wasm-tests
+        run: wasm-pack test --headless --firefox libparsec/crates/platform_device_loader
+        timeout-minutes: 10
+
       - name: Build CLI binary
         run: cargo build ${{ env.CARGO_CI_FLAGS }} --package parsec-cli
         timeout-minutes: 5

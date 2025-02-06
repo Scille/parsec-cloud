@@ -3,6 +3,8 @@
 // `allow-unwrap-in-test` don't behave as expected, see:
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
+// TODO: Web support is not implemented
+#![cfg(not(target_arch = "wasm32"))]
 
 use libparsec_platform_device_loader::{remove_device, save_device};
 use libparsec_tests_fixtures::{parsec_test, tmp_path, TestbedEnv, TmpPath};

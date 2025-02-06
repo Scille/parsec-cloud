@@ -1,5 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+// TODO: Web support is not implemented
+#![cfg(not(target_arch = "wasm32"))]
+
 use std::path::Path;
 
 use libparsec_platform_device_loader::{change_authentication, load_device, save_device};

@@ -53,6 +53,7 @@ blahaj = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 chrono = { workspace = true, features = ["wasmbind"] }
+uuid = { workspace = true, features = ["js"] }
 
 [dev-dependencies]
 libparsec_types = { workspace = true, features = ["test-fixtures"] }
