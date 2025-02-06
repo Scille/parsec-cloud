@@ -263,6 +263,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceHistoryStatEntryError::InvalidKeysBundle(_)
                     | WorkspaceHistoryStatEntryError::InvalidCertificate(_)
                     | WorkspaceHistoryStatEntryError::InvalidManifest(_)
+                    | WorkspaceHistoryStatEntryError::InvalidHistory(_)
                     | WorkspaceHistoryStatEntryError::Internal(_) => {
                         reply.manual().error(libc::EIO)
                     }
@@ -335,6 +336,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceHistoryStatEntryError::InvalidKeysBundle(_)
                     | WorkspaceHistoryStatEntryError::InvalidCertificate(_)
                     | WorkspaceHistoryStatEntryError::InvalidManifest(_)
+                    | WorkspaceHistoryStatEntryError::InvalidHistory(_)
                     | WorkspaceHistoryStatEntryError::Internal(_) => {
                         reply.manual().error(libc::EIO)
                     }
@@ -539,6 +541,7 @@ impl fuser::Filesystem for Filesystem {
                         | WorkspaceHistoryOpenFolderReaderError::InvalidKeysBundle(_)
                         | WorkspaceHistoryOpenFolderReaderError::InvalidCertificate(_)
                         | WorkspaceHistoryOpenFolderReaderError::InvalidManifest(_)
+                        | WorkspaceHistoryOpenFolderReaderError::InvalidHistory(_)
                         | WorkspaceHistoryOpenFolderReaderError::Internal(_) => {
                             reply.manual().error(libc::EIO)
                         }
@@ -615,6 +618,7 @@ impl fuser::Filesystem for Filesystem {
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidKeysBundle(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidCertificate(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidManifest(_)
+                            | WorkspaceHistoryFolderReaderStatEntryError::InvalidHistory(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::Internal(_) => {
                                 reply.manual().error(libc::EIO)
                             }
@@ -715,6 +719,7 @@ impl fuser::Filesystem for Filesystem {
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidKeysBundle(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidCertificate(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidManifest(_)
+                            | WorkspaceHistoryFolderReaderStatEntryError::InvalidHistory(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::Internal(_) => {
                                 reply.manual().error(libc::EIO)
                             }
