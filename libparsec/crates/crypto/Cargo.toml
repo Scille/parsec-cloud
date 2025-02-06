@@ -149,7 +149,7 @@ rmp-serde = { workspace = true }
 rstest = { workspace = true, features = ["async-timeout"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-
+uuid = { workspace = true, features = ["js"] }
 #
 # RustCrypto stuff
 #
