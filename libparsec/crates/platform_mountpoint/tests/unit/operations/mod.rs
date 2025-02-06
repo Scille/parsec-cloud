@@ -2,6 +2,7 @@
 
 mod create_folder;
 mod flush_file;
+mod history;
 mod list_directory;
 mod mount_unmount;
 mod move_entry;
