@@ -25,6 +25,7 @@ pub mod platform {
 
 #[cfg(target_arch = "wasm32")]
 pub mod platform {
+    pub use console_error_panic_hook;
     pub use console_log;
     // Note `rstest` requires the tester attribute to be called `test`
     // (see https://github.com/la10736/rstest/issues/211)
