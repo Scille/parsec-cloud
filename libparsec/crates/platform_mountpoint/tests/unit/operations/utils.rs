@@ -102,6 +102,73 @@ macro_rules! mount_and_test {
 
 pub(crate) use mount_and_test;
 
+macro_rules! mount_history_and_test {
+    ($env:expr, $mountpoint_base_dir:expr, $test:expr) => {
+        mount_history_and_test!(_internal, as "alice@dev1", $env, $mountpoint_base_dir, $test)
+    };
+    (at $at:expr, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {
+        mount_history_and_test!(_internal, as "alice@dev1", at Some($at), $env, $mountpoint_base_dir, $test)
+    };
+    (as $as:literal, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {
+        mount_history_and_test!(_internal, as $as, at None, $env, $mountpoint_base_dir, $test)
+    };
+    (as $as:literal, at $at:expr, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {
+        mount_history_and_test!(_internal, as $as, at Some($at), at None, $env, $mountpoint_base_dir, $test)
+    };
+    (_internal, as $start_as:literal, at $at:expr, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {{
+        let env = $env;
+
+        // Ensure we don't take ownership on TmpPath fixture, otherwise its drop will
+        // kick in too early and will shadow the real error.
+        let mountpoint_base_dir: &libparsec_tests_fixtures::TmpPath = $mountpoint_base_dir;
+        let mountpoint_base_dir: std::path::PathBuf = (*mountpoint_base_dir).to_owned();
+
+        let wksp1_id: libparsec_types::VlobID = *env.template.get_stuff("wksp1_id");
+        let client = $crate::operations::utils::start_client_with_mountpoint_base_dir(env, mountpoint_base_dir, $start_as).await;
+
+        // In server-based mode, `WorkspaceHistoryOps` starts by querying the server to
+        // fetch the workspace manifest v1.
+        use libparsec_client_connection::{
+            test_register_sequence_of_send_hooks,
+            test_send_hook_vlob_read_versions,
+            test_send_hook_realm_get_keys_bundle,
+        };
+        test_register_sequence_of_send_hooks!(
+            env.discriminant_dir,
+            test_send_hook_vlob_read_versions!(env, wksp1_id, (wksp1_id, 1)),
+            test_send_hook_realm_get_keys_bundle!(env, client.user_id(), wksp1_id),
+        );
+
+        let wksp1_history_ops = client.start_workspace_history(wksp1_id).await.unwrap();
+
+        if let Some(at) = $at {
+            wksp1_history_ops.set_timestamp_of_interest(at);
+        }
+
+        let test_result = {
+            let mountpoint = $crate::Mountpoint::mount_history(wksp1_history_ops.clone(), "wksp1_history".parse().unwrap())
+                .await
+                .unwrap();
+
+            let test_closure = $test;
+            let test_future = test_closure(client.clone(), wksp1_history_ops, mountpoint.path().to_owned());
+            let test_result = test_future.await;
+
+            mountpoint.unmount().await.unwrap();
+
+            test_result
+        };
+        client.stop().await;
+
+        // The idea for returning the test result is to delay the tests asserts
+        // until after the mountpoint is unmounted. This way a panic won't make
+        // the mountpoint hang.
+        test_result
+    }};
+}
+
+pub(crate) use mount_history_and_test;
+
 macro_rules! ops_cat {
     ($wksp_ops:expr, $path:expr) => {{
         let wksp_ops = $wksp_ops;
