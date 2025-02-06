@@ -73,6 +73,10 @@ class ClientEvent(Variant):
         token: InvitationToken
         greeting_attempt: GreetingAttemptID
 
+    class GreetingAttemptJoined:
+        token: InvitationToken
+        greeting_attempt: GreetingAttemptID
+
     class TooMuchDriftWithServerClock:
         server_timestamp: DateTime
         client_timestamp: DateTime

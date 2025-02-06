@@ -746,6 +746,11 @@ export interface ClientEventGreetingAttemptCancelled {
     token: string
     greeting_attempt: string
 }
+export interface ClientEventGreetingAttemptJoined {
+    tag: "GreetingAttemptJoined"
+    token: string
+    greeting_attempt: string
+}
 export interface ClientEventGreetingAttemptReady {
     tag: "GreetingAttemptReady"
     token: string
@@ -828,6 +833,7 @@ export interface ClientEventWorkspacesSelfListChanged {
 export type ClientEvent =
   | ClientEventExpiredOrganization
   | ClientEventGreetingAttemptCancelled
+  | ClientEventGreetingAttemptJoined
   | ClientEventGreetingAttemptReady
   | ClientEventIncompatibleServer
   | ClientEventInvitationChanged

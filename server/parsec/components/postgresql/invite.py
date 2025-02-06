@@ -66,7 +66,12 @@ from parsec.components.postgresql.utils import (
 )
 from parsec.components.user import CheckDeviceBadOutcome, GetProfileForUserUserBadOutcome
 from parsec.config import BackendConfig
-from parsec.events import EventGreetingAttemptCancelled, EventGreetingAttemptReady, EventInvitation
+from parsec.events import (
+    EventGreetingAttemptCancelled,
+    EventGreetingAttemptJoined,
+    EventGreetingAttemptReady,
+    EventInvitation,
+)
 
 ShamirRecoveryRecipient: TypeAlias = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
 
@@ -2457,6 +2462,16 @@ class PGInviteComponent(BaseInviteComponent):
             case self.StepOutcome.NOT_READY:
                 return NotReady()
             case Buffer() as data:
+                # When completing the `WAIT_PEER` step, send a `GreetingAttemptJoined` event
+                if step_index == 0:
+                    await self._event_bus.send(
+                        EventGreetingAttemptJoined(
+                            organization_id=org.organization_id,
+                            token=invitation_info.token,
+                            greeter=greeting_attempt_info.greeter,
+                            greeting_attempt=greeting_attempt,
+                        )
+                    )
                 return data
 
     @override
@@ -2525,7 +2540,7 @@ class PGInviteComponent(BaseInviteComponent):
             case self.StepOutcome.TOO_ADVANCED:
                 return InviteClaimerStepBadOutcome.STEP_TOO_ADVANCED
             case self.StepOutcome.NOT_READY:
-                # During the WAIT_PEER step, send an event to the greeter
+                # During the `WAIT_PEER` step, send a `GreetingAttemptReady` event to the greeter
                 if step_index == 0:
                     await self._event_bus.send(
                         EventGreetingAttemptReady(
