@@ -376,9 +376,25 @@ impl_events!(
     /// This event is fired by the connection monitor.
     ///
     /// It is used to inform the user that a greeting attempt has been cancelled.
+    /// It can be used to invalidate a previous `GreetingAttemptReady` event,
+    /// since this greeting attempt can no longer be joined.
+    ///
     /// Note this event will be fired (i.e. the server pushes it to us) even if
     /// we are at the origin of the change (e.g. we cancelled the greeting attempt).
     GreetingAttemptCancelled {
+        token: InvitationToken,
+        greeting_attempt: GreetingAttemptID,
+    },
+
+    /// This event is fired by the connection monitor.
+    ///
+    /// It is used to inform the user that a greeting attempt has been joined.
+    /// It can be used to invalidate a previous `GreetingAttemptReady` event,
+    /// since this greeting attempt can no longer be joined.
+    ///
+    /// Note this event will be fired (i.e. the server pushes it to us) even if
+    /// we are at the origin of the change (e.g. we cancelled the greeting attempt).
+    GreetingAttemptJoined {
         token: InvitationToken,
         greeting_attempt: GreetingAttemptID,
     },

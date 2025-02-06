@@ -92,6 +92,20 @@
                         ]
                     },
                     {
+                        "name": "GreetingAttemptJoined",
+                        "discriminant_value": "GREETING_ATTEMPT_JOINED",
+                        "fields": [
+                            {
+                                "name": "token",
+                                "type": "InvitationToken"
+                            },
+                            {
+                                "name": "greeting_attempt",
+                                "type": "GreetingAttemptID"
+                            }
+                        ]
+                    },
+                    {
                         "name": "PkiEnrollment",
                         "discriminant_value": "PKI_ENROLLMENT"
                     },

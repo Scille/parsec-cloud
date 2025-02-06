@@ -69,6 +69,11 @@ pub enum ClientEvent {
         greeting_attempt: GreetingAttemptID,
     },
 
+    GreetingAttemptJoined {
+        token: InvitationToken,
+        greeting_attempt: GreetingAttemptID,
+    },
+
     // Error from server & server-provided data
     ExpiredOrganization,
     RevokedSelfUser,
@@ -124,6 +129,8 @@ pub(crate) struct OnEventCallbackPlugged {
         EventBusConnectionLifetime<libparsec_client::EventGreetingAttemptReady>,
     _greeting_attempt_cancelled:
         EventBusConnectionLifetime<libparsec_client::EventGreetingAttemptCancelled>,
+    _greeting_attempt_joined:
+        EventBusConnectionLifetime<libparsec_client::EventGreetingAttemptJoined>,
     _expired_organization: EventBusConnectionLifetime<libparsec_client::EventExpiredOrganization>,
     _revoked_self_user: EventBusConnectionLifetime<libparsec_client::EventRevokedSelfUser>,
     _must_accept_tos: EventBusConnectionLifetime<libparsec_client::EventMustAcceptTos>,
@@ -333,6 +340,18 @@ impl OnEventCallbackPlugged {
                 );
             })
         };
+        let greeting_attempt_joined = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(move |e: &libparsec_client::EventGreetingAttemptJoined| {
+                (on_event_callback)(
+                    handle,
+                    ClientEvent::GreetingAttemptJoined {
+                        token: e.token,
+                        greeting_attempt: e.greeting_attempt,
+                    },
+                );
+            })
+        };
         let expired_organization = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |_: &libparsec_client::EventExpiredOrganization| {
@@ -416,6 +435,7 @@ impl OnEventCallbackPlugged {
             _invitation_changed: invitation_changed,
             _greeting_attempt_ready: greeting_attempt_ready,
             _greeting_attempt_cancelled: greeting_attempt_cancelled,
+            _greeting_attempt_joined: greeting_attempt_joined,
             _too_much_drift_with_server_clock: too_much_drift_with_server_clock,
             _expired_organization: expired_organization,
             _revoked_self_user: revoked_self_user,

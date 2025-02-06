@@ -4924,6 +4924,46 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                 greeting_attempt,
             })
         }
+        "ClientEventGreetingAttemptJoined" => {
+            let token = {
+                let js_val = Reflect::get(&obj, &"token".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::InvitationToken, _> {
+                                libparsec::InvitationToken::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+            };
+            let greeting_attempt = {
+                let js_val = Reflect::get(&obj, &"greetingAttempt".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::GreetingAttemptID, _> {
+                                libparsec::GreetingAttemptID::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid GreetingAttemptID"))?
+            };
+            Ok(libparsec::ClientEvent::GreetingAttemptJoined {
+                token,
+                greeting_attempt,
+            })
+        }
         "ClientEventGreetingAttemptReady" => {
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
@@ -5338,6 +5378,39 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &js_obj,
                 &"tag".into(),
                 &"ClientEventGreetingAttemptCancelled".into(),
+            )?;
+            let js_token = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"token".into(), &js_token)?;
+            let js_greeting_attempt = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::GreetingAttemptID| -> Result<String, &'static str> {
+                        Ok(x.hex())
+                    };
+                match custom_to_rs_string(greeting_attempt) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"greetingAttempt".into(), &js_greeting_attempt)?;
+        }
+        libparsec::ClientEvent::GreetingAttemptJoined {
+            token,
+            greeting_attempt,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventGreetingAttemptJoined".into(),
             )?;
             let js_token = JsValue::from_str({
                 let custom_to_rs_string =

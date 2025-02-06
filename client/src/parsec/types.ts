@@ -81,6 +81,7 @@ export type {
   ClientCreateWorkspaceError,
   ClientEvent,
   ClientEventGreetingAttemptCancelled,
+  ClientEventGreetingAttemptJoined,
   ClientEventGreetingAttemptReady,
   ClientEventInvitationChanged,
   ClientEventPing,

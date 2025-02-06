@@ -52,7 +52,12 @@ from parsec.components.memory.datamodel import (
     MemoryOrganization,
     MemoryUser,
 )
-from parsec.events import EventGreetingAttemptCancelled, EventGreetingAttemptReady, EventInvitation
+from parsec.events import (
+    EventGreetingAttemptCancelled,
+    EventGreetingAttemptJoined,
+    EventGreetingAttemptReady,
+    EventInvitation,
+)
 
 
 def _is_invitation_cancelled(org: MemoryOrganization, invitation: MemoryInvitation) -> bool:
@@ -986,6 +991,16 @@ class MemoryInviteComponent(BaseInviteComponent):
             case attempt.StepOutcome.NOT_READY:
                 return NotReady()
             case Buffer() as data:
+                # When completing the `WAIT_PEER` step, send a `GreetingAttemptJoined` event
+                if step_index == 0:
+                    await self._event_bus.send(
+                        EventGreetingAttemptJoined(
+                            organization_id=org.organization_id,
+                            token=invitation.token,
+                            greeter=attempt.greeter_id,
+                            greeting_attempt=greeting_attempt,
+                        )
+                    )
                 return data
 
     @override
@@ -1036,7 +1051,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             case attempt.StepOutcome.TOO_ADVANCED:
                 return InviteClaimerStepBadOutcome.STEP_TOO_ADVANCED
             case attempt.StepOutcome.NOT_READY:
-                # During the WAIT_PEER step, send an event to the greeter
+                # During the `WAIT_PEER` step, send a `GreetingAttemptReady` event to the greeter
                 if step_index == 0:
                     await self._event_bus.send(
                         EventGreetingAttemptReady(
