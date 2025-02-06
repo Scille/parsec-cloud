@@ -580,7 +580,7 @@ impl WorkspaceStore {
     ) -> Result<Bytes, ReadChunkOrBlockLocalOnlyError> {
         let found = self
             .data
-            .with_current_view_cache(|cache| cache.chunks.get(&chunk_view.id));
+            .with_current_view_cache(|cache| cache.chunks.get(&chunk_view.id).cloned());
         if let Some(data) = found {
             return Ok(data);
         }

@@ -12,36 +12,6 @@ use crate::{
 
 use super::per_manifest_update_lock::PerManifestUpdateLock;
 
-/// Very simple cache for chunks: we consider a chunk is most of the time much bigger
-/// than a typical kernel read (512ko vs 4ko), so it's a big win to just keep the
-/// chunks currently being read in memory.
-/// To approximate that, we just keep the last 16 chunks read in memory.
-/// More practical information in this issue: https://github.com/Scille/parsec-cloud/issues/7111
-#[derive(Debug)]
-pub(super) struct ChunksCache {
-    items: [Option<(ChunkID, Bytes)>; 16],
-    round_robin: usize,
-}
-
-impl ChunksCache {
-    pub fn new() -> Self {
-        Self {
-            items: Default::default(),
-            round_robin: 0,
-        }
-    }
-    pub fn push(&mut self, id: ChunkID, data: Bytes) {
-        self.items[self.round_robin] = Some((id, data));
-        self.round_robin = (self.round_robin + 1) % self.items.len();
-    }
-    pub fn get(&self, id: &ChunkID) -> Option<Bytes> {
-        self.items
-            .iter()
-            .find_map(|item| item.as_ref().filter(|(chunk_id, _)| chunk_id == id))
-            .map(|(_, data)| data.to_owned())
-    }
-}
-
 mod manifest_hash_map {
     use super::*;
 
@@ -164,7 +134,12 @@ pub(super) struct CurrentViewCache {
     /// Each manifest has a dedicated async lock to prevent concurrent update (ensuring
     /// consistency between cache and database).
     pub lock_update_manifests: PerManifestUpdateLock,
-    pub chunks: ChunksCache,
+    /// Very simple cache for chunks: we consider a chunk is most of the time much bigger
+    /// than a typical kernel read (512ko vs 4ko), so it's a big win to just keep the
+    /// chunks currently being read in memory.
+    /// To approximate that, we just keep the last 16 chunks read in memory.
+    /// More practical information in this issue: https://github.com/Scille/parsec-cloud/issues/7111
+    pub chunks: RoundRobinCache<ChunkID, Bytes, 16>,
 }
 
 impl CurrentViewCache {
@@ -172,7 +147,7 @@ impl CurrentViewCache {
         Self {
             manifests: ManifestsHashMap::new(root_manifest),
             lock_update_manifests: PerManifestUpdateLock::new(),
-            chunks: ChunksCache::new(),
+            chunks: Default::default(),
         }
     }
 }
