@@ -9,9 +9,10 @@ use std::{
 use libparsec_client::workspace::{
     EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, FolderReaderStatNextOutcome,
     MoveEntryMode, OpenOptions, WorkspaceCreateFolderError, WorkspaceFdCloseError,
-    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
-    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError, WorkspaceOps,
-    WorkspaceRemoveEntryError, WorkspaceStatEntryError,
+    WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
+    WorkspaceFdWriteError, WorkspaceMoveEntryError, WorkspaceOpenFileError,
+    WorkspaceOpenFolderReaderError, WorkspaceOps, WorkspaceRemoveEntryError,
+    WorkspaceStatEntryError,
 };
 use libparsec_types::prelude::*;
 
@@ -1265,13 +1266,13 @@ impl fuser::Filesystem for Filesystem {
                     reply.manual().ok();
                 }
                 Err(err) => match err {
-                    libparsec_client::workspace::WorkspaceFdFlushError::NotInWriteMode => {
+                    WorkspaceFdFlushError::NotInWriteMode => {
                         reply.manual().ok();
                     }
-                    libparsec_client::workspace::WorkspaceFdFlushError::Stopped
+                    WorkspaceFdFlushError::Stopped
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
-                    | libparsec_client::workspace::WorkspaceFdFlushError::BadFileDescriptor
-                    | libparsec_client::workspace::WorkspaceFdFlushError::Internal(_)
+                    | WorkspaceFdFlushError::BadFileDescriptor
+                    | WorkspaceFdFlushError::Internal(_)
                     => reply.manual().error(libc::EIO),
                 },
             }
@@ -1306,10 +1307,10 @@ impl fuser::Filesystem for Filesystem {
                     reply.manual().ok();
                 }
                 Err(err) => match err {
-                    libparsec_client::workspace::WorkspaceFdCloseError::Stopped
+                    WorkspaceFdCloseError::Stopped
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
-                    | libparsec_client::workspace::WorkspaceFdCloseError::BadFileDescriptor
-                    | libparsec_client::workspace::WorkspaceFdCloseError::Internal(_)
+                    | WorkspaceFdCloseError::BadFileDescriptor
+                    | WorkspaceFdCloseError::Internal(_)
                     => reply.manual().error(libc::EIO),
                 },
             }
@@ -1340,11 +1341,11 @@ impl fuser::Filesystem for Filesystem {
                     reply.manual().ok();
                 }
                 Err(err) => match err {
-                    libparsec_client::workspace::WorkspaceFdFlushError::NotInWriteMode => reply.manual().error(libc::EACCES),
-                    libparsec_client::workspace::WorkspaceFdFlushError::Stopped
+                    WorkspaceFdFlushError::NotInWriteMode => reply.manual().error(libc::EACCES),
+                    WorkspaceFdFlushError::Stopped
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
-                    | libparsec_client::workspace::WorkspaceFdFlushError::BadFileDescriptor
-                    | libparsec_client::workspace::WorkspaceFdFlushError::Internal(_)
+                    | WorkspaceFdFlushError::BadFileDescriptor
+                    | WorkspaceFdFlushError::Internal(_)
                     => reply.manual().error(libc::EIO),
                 },
             }
