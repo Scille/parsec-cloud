@@ -1,0 +1,1 @@
+User invitations are now shared between all administrators, and any available administrator can greet a new user.
