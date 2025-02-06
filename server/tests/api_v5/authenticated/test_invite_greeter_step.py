@@ -15,6 +15,7 @@ from parsec._parsec import (
     invited_cmds,
 )
 from parsec.components.invite import NotReady
+from parsec.events import EventGreetingAttemptJoined
 from tests.common import (
     Backend,
     CoolorgRpcClients,
@@ -297,6 +298,40 @@ async def test_authenticated_invite_greeter_step_with_deleted_shamir(
         greeter_step=authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber3GetNonce(),
     )
     assert rep == authenticated_cmds.latest.invite_greeter_step.RepInvitationCancelled()
+
+
+async def test_authenticated_invite_greeter_step_greeting_attempt_joined_event(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    greeting_attempt: GreetingAttemptID,
+    claimer_wait_peer_public_key: PublicKey,
+) -> None:
+    greeter_key = PrivateKey.generate()
+    greeter_step = authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber0WaitPeer(
+        public_key=greeter_key.public_key
+    )
+    expected_claimer_step = (
+        authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber0WaitPeer(
+            public_key=claimer_wait_peer_public_key
+        )
+    )
+
+    with backend.event_bus.spy() as spy:
+        rep = await coolorg.alice.invite_greeter_step(
+            greeting_attempt=greeting_attempt, greeter_step=greeter_step
+        )
+        assert rep == authenticated_cmds.latest.invite_greeter_step.RepOk(
+            claimer_step=expected_claimer_step
+        )
+
+        await spy.wait_event_occurred(
+            EventGreetingAttemptJoined(
+                organization_id=coolorg.organization_id,
+                greeter=coolorg.alice.user_id,
+                token=coolorg.invited_alice_dev3.token,
+                greeting_attempt=greeting_attempt,
+            )
+        )
 
 
 async def test_authenticated_invite_greeter_step_http_common_errors(

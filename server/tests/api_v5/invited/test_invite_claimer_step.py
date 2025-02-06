@@ -17,6 +17,7 @@ from parsec._parsec import (
     invited_cmds,
 )
 from parsec.components.invite import NotReady
+from parsec.events import EventGreetingAttemptReady
 from tests.common import (
     Backend,
     CoolorgRpcClients,
@@ -276,6 +277,51 @@ async def test_invited_invite_claimer_step_with_shamir_deleted(
         )
 
     await invited_greeting_with_deleted_shamir_tester(do)
+
+
+async def test_invited_invite_claimer_step_greeting_attempt_ready_event(
+    coolorg: CoolorgRpcClients,
+    greeting_attempt: GreetingAttemptID,
+    backend: Backend,
+) -> None:
+    greeter_key = PrivateKey.generate()
+    claimer_step = invited_cmds.latest.invite_claimer_step.ClaimerStepNumber0WaitPeer(
+        public_key=greeter_key.public_key
+    )
+    # Run once
+
+    with backend.event_bus.spy() as spy:
+        rep = await coolorg.invited_alice_dev3.invite_claimer_step(
+            greeting_attempt=greeting_attempt, claimer_step=claimer_step
+        )
+        assert rep == invited_cmds.latest.invite_claimer_step.RepNotReady()
+
+        await spy.wait_event_occurred(
+            EventGreetingAttemptReady(
+                organization_id=coolorg.organization_id,
+                greeter=coolorg.alice.user_id,
+                token=coolorg.invited_alice_dev3.token,
+                greeting_attempt=greeting_attempt,
+            )
+        )
+
+    # Run twice
+
+    with backend.event_bus.spy() as spy:
+        rep = await coolorg.invited_alice_dev3.invite_claimer_step(
+            greeting_attempt=greeting_attempt,
+            claimer_step=claimer_step,
+        )
+        assert rep == invited_cmds.latest.invite_claimer_step.RepNotReady()
+
+        await spy.wait_event_occurred(
+            EventGreetingAttemptReady(
+                organization_id=coolorg.organization_id,
+                greeter=coolorg.alice.user_id,
+                token=coolorg.invited_alice_dev3.token,
+                greeting_attempt=greeting_attempt,
+            )
+        )
 
 
 async def test_invited_invite_claimer_step_http_common_errors(
