@@ -92,8 +92,10 @@ async fn main() -> ExitCode {
             let client = Client::start(config, event_bus, alice).await.unwrap();
             let wksp1_history_ops = client.start_workspace_history(wksp1_id).await.unwrap();
 
-            let timestamp_of_interest =
-                wksp1_history_ops.set_timestamp_of_interest(timestamp_of_interest);
+            wksp1_history_ops
+                .set_timestamp_of_interest(timestamp_of_interest)
+                .await
+                .unwrap();
 
             {
                 let mountpoint_name_hint = format!("wksp1-{}", timestamp_of_interest.to_rfc3339())
