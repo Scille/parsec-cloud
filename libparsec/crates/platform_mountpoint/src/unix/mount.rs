@@ -32,29 +32,57 @@ impl Mountpoint {
     pub async fn mount(
         ops: Arc<libparsec_client::workspace::WorkspaceOps>,
     ) -> anyhow::Result<Self> {
+        let (workspace_name, self_role) = ops.get_current_name_and_self_role();
+        let is_read_only = !self_role.can_write();
+        let filesystem = super::filesystem::Filesystem::new(
+            ops.clone(),
+            tokio::runtime::Handle::current(),
+            is_read_only,
+        );
+        Self::do_mount(
+            &ops.config().mountpoint_mount_strategy,
+            filesystem,
+            workspace_name,
+            is_read_only,
+        )
+        .await
+    }
+
+    pub async fn mount_history(
+        ops: Arc<libparsec_client::workspace_history::WorkspaceHistoryOps>,
+        mountpoint_name_hint: EntryName,
+    ) -> anyhow::Result<Self> {
+        let filesystem =
+            super::history::Filesystem::new(ops.clone(), tokio::runtime::Handle::current());
+        Self::do_mount(
+            &ops.config().mountpoint_mount_strategy,
+            filesystem,
+            mountpoint_name_hint,
+            true,
+        )
+        .await
+    }
+
+    async fn do_mount<FS: fuser::Filesystem + Send + 'static>(
+        mount_strategy: &MountpointMountStrategy,
+        filesystem: FS,
+        workspace_name: EntryName,
+        is_read_only: bool,
+    ) -> anyhow::Result<Self> {
+        let mountpoint_base_dir = match mount_strategy {
+            MountpointMountStrategy::Directory { base_dir } => base_dir.clone(),
+            MountpointMountStrategy::DriveLetter => {
+                return Err(anyhow::anyhow!("Mount strategy not supported !"))
+            }
+            MountpointMountStrategy::Disabled => return Err(anyhow::anyhow!("Mount disabled !")),
+        };
+
         // Mount operation consist of blocking code, so run it in a thread
         tokio::task::spawn_blocking(move || {
-            let mountpoint_base_dir = match &ops.config().mountpoint_mount_strategy {
-                MountpointMountStrategy::Directory { base_dir } => base_dir,
-                MountpointMountStrategy::DriveLetter => {
-                    return Err(anyhow::anyhow!("Mount strategy not supported !"))
-                }
-                MountpointMountStrategy::Disabled => {
-                    return Err(anyhow::anyhow!("Mount disabled !"))
-                }
-            };
-
-            let (workspace_name, self_role) = ops.get_current_name_and_self_role();
             let (mountpoint_path, initial_st_dev) =
-                create_suitable_mountpoint_dir(mountpoint_base_dir, &workspace_name)
+                create_suitable_mountpoint_dir(&mountpoint_base_dir, &workspace_name)
                     .context("cannot create mountpoint dir")?;
 
-            let is_read_only = !self_role.can_write();
-            let filesystem = super::filesystem::Filesystem::new(
-                ops,
-                tokio::runtime::Handle::current(),
-                is_read_only,
-            );
             let options = [
                 fuser::MountOption::FSName("parsec".into()),
                 #[cfg(target_os = "macos")]
@@ -85,10 +113,16 @@ impl Mountpoint {
 
             // Poll the FS to check if the mountpoint has appeared
             // (`st_dev` is the device number of the filesystem, hence it will change after unmounting)
-            // Note we only wait for a limited amount of time to avoid ending up in a deadlock
-            // given this part is more of a best-effort mechanism to try to have the mountpoint ready
-            // when our function returns.
+            // Notes:
+            // - We only wait for a limited amount of time to avoid ending up in a deadlock
+            //   given this part is more of a best-effort mechanism to try to have the mountpoint ready
+            //   when our function returns.
+            // - Root folder of the workspace is guaranteed to be available in local, so we can
+            //   consider the poll operation always resolves fast (i.e. no manifest need to be
+            //   fetched from the server).
+
             for _ in 0..100 {
+                println!("polling for the start...");
                 if let Ok(new_st_dev) =
                     std::fs::metadata(&mountpoint_path).map(|stat| stat.st_dev())
                 {
@@ -98,6 +132,7 @@ impl Mountpoint {
                 }
                 std::thread::sleep(std::time::Duration::from_millis(30));
             }
+            println!("mountpoint is ready !");
 
             Ok(Mountpoint {
                 unmounter,
