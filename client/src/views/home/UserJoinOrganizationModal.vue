@@ -178,7 +178,7 @@
             v-show="waitingForHost || querying"
             class="spinner-container"
           >
-            <ms-spinner :title="!querying ? 'JoinOrganization.waitingForHost' : undefined" />
+            <ms-spinner :title="getSpinnerTitle()" />
           </div>
         </ion-buttons>
       </ion-footer>
@@ -339,16 +339,25 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
 }
 function getNextButtonText(): Translatable {
   switch (pageStep.value) {
+    case UserJoinOrganizationStep.WaitForHost:
+      return { key: 'JoinOrganization.continueWith', data: { greeter: claimer.value.greeter?.label } };
     case UserJoinOrganizationStep.GetUserInfo:
       return { key: 'JoinOrganization.validateUserInfo' };
     case UserJoinOrganizationStep.Authentication:
       return { key: 'JoinOrganization.createDevice' };
     case UserJoinOrganizationStep.Finish:
       return { key: 'JoinOrganization.logIn' };
-    case UserJoinOrganizationStep.WaitForHost:
-      return { key: 'JoinOrganization.continueWith', data: { greeter: claimer.value.greeter?.label } };
     default:
       return { key: '' };
+  }
+}
+
+function getSpinnerTitle(): Translatable | undefined {
+  switch (pageStep.value) {
+    case UserJoinOrganizationStep.WaitForHost:
+      return 'JoinOrganization.waitingForHost';
+    default:
+      return !querying.value ? 'JoinOrganization.waitingForHost' : undefined;
   }
 }
 
