@@ -13,6 +13,7 @@ from parsec._parsec import (
     authenticated_cmds,
     invited_cmds,
 )
+from parsec.events import EventGreetingAttemptCancelled
 from tests.common import (
     Backend,
     CoolorgRpcClients,
@@ -230,6 +231,28 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_with_deleted
         rep
         == authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepInvitationCancelled()
     )
+
+
+async def test_authenticated_invite_greeter_cancel_greeting_attempt_cancelled_event(
+    coolorg: CoolorgRpcClients,
+    greeting_attempt: GreetingAttemptID,
+    backend: Backend,
+) -> None:
+    with backend.event_bus.spy() as spy:
+        rep = await coolorg.alice.invite_greeter_cancel_greeting_attempt(
+            greeting_attempt=greeting_attempt,
+            reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+        )
+        assert rep == authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepOk()
+
+        await spy.wait_event_occurred(
+            EventGreetingAttemptCancelled(
+                organization_id=coolorg.organization_id,
+                greeting_attempt=greeting_attempt,
+                token=coolorg.invited_alice_dev3.token,
+                greeter=coolorg.alice.user_id,
+            )
+        )
 
 
 async def test_authenticated_invite_greeter_cancel_greeting_attempt_http_common_errors(
