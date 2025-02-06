@@ -356,11 +356,12 @@ impl fuser::Filesystem for Filesystem {
         };
 
         let ops = self.ops.clone();
+        log::debug!("[FUSE] ****  {:#x?} a: {:#x?} t: {:#x?}", flags & libc::O_ACCMODE, flags & libc::O_APPEND, flags & libc::O_TRUNC);
 
         match flags & libc::O_ACCMODE {
             libc::O_RDONLY => (),
             libc::O_WRONLY | libc::O_RDWR => {
-                reply.manual().error(libc::EACCES);
+                reply.manual().error(libc::EROFS);
                 return;
             }
             // Exactly one access mode flag must be specified
@@ -368,6 +369,10 @@ impl fuser::Filesystem for Filesystem {
                 reply.manual().error(libc::EINVAL);
                 return;
             }
+        }
+        if (flags & libc::O_APPEND | flags & libc::O_TRUNC) != 0 {
+            reply.manual().error(libc::EROFS);
+            return;
         }
 
         self.tokio_handle.spawn(async move {

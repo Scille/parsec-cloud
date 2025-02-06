@@ -61,6 +61,7 @@ pub(super) enum CachePopulateManifestEntry {
 }
 
 /// Stores the fact a manifest had a given version at a given time.
+#[derive(Debug)]
 enum ManifestAtResolution {
     Exists {
         at: DateTime,
@@ -79,7 +80,7 @@ pub(super) enum CachePopulateManifestAtError {
     InvalidHistory(#[from] Box<InvalidManifestHistoryError>),
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub(super) struct WorkspaceHistoryStoreCache {
     /// Very simple cache for blocks: we consider a block is most of the time much bigger
     /// than a typical kernel read (512ko vs 4ko), so it's a big win to just keep the

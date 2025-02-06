@@ -151,7 +151,7 @@ impl WorkspaceHistoryStore {
             access,
             timestamp_lower_bound,
             timestamp_higher_bound,
-            cache: Default::default(),
+            cache: Mutex::new(cache),
         };
 
         let initial_timestamp_of_interest = timestamp_lower_bound;

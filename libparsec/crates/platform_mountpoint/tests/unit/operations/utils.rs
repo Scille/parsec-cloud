@@ -104,18 +104,18 @@ pub(crate) use mount_and_test;
 
 macro_rules! mount_history_and_test {
     ($env:expr, $mountpoint_base_dir:expr, $test:expr) => {
-        mount_history_and_test!(_internal, as "alice@dev1", $env, $mountpoint_base_dir, $test)
+        mount_history_and_test!(_internal, as: "alice@dev1", at: None, $env, $mountpoint_base_dir, $test)
     };
-    (at $at:expr, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {
-        mount_history_and_test!(_internal, as "alice@dev1", at Some($at), $env, $mountpoint_base_dir, $test)
+    (at: $at:expr, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {
+        mount_history_and_test!(_internal, as: "alice@dev1", at: Some($at), $env, $mountpoint_base_dir, $test)
     };
-    (as $as:literal, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {
-        mount_history_and_test!(_internal, as $as, at None, $env, $mountpoint_base_dir, $test)
+    (as: $as:literal, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {
+        mount_history_and_test!(_internal, as: $as, at: None, $env, $mountpoint_base_dir, $test)
     };
-    (as $as:literal, at $at:expr, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {
-        mount_history_and_test!(_internal, as $as, at Some($at), at None, $env, $mountpoint_base_dir, $test)
+    (as: $as:literal, at: $at:expr, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {
+        mount_history_and_test!(_internal, as: $as, at: Some($at), at: None, $env, $mountpoint_base_dir, $test)
     };
-    (_internal, as $start_as:literal, at $at:expr, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {{
+    (_internal, as: $start_as:literal, at: $at:expr, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {{
         let env = $env;
 
         // Ensure we don't take ownership on TmpPath fixture, otherwise its drop will
@@ -130,6 +130,7 @@ macro_rules! mount_history_and_test {
         // fetch the workspace manifest v1.
         use libparsec_client_connection::{
             test_register_sequence_of_send_hooks,
+            test_send_hook_vlob_read_batch,
             test_send_hook_vlob_read_versions,
             test_send_hook_realm_get_keys_bundle,
         };
@@ -142,7 +143,15 @@ macro_rules! mount_history_and_test {
         let wksp1_history_ops = client.start_workspace_history(wksp1_id).await.unwrap();
 
         if let Some(at) = $at {
-            wksp1_history_ops.set_timestamp_of_interest(at);
+            test_register_sequence_of_send_hooks!(
+                env.discriminant_dir,
+                // Get back `/` manifest
+                test_send_hook_vlob_read_batch!(env, at: at, wksp1_id, wksp1_id),
+                // Note workspace key bundle has already been loaded at workspace history ops startup
+            );
+            wksp1_history_ops.set_timestamp_of_interest(at)
+                .await
+                .unwrap();
         }
 
         let test_result = {
