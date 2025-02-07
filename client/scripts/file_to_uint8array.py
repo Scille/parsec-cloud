@@ -20,7 +20,9 @@ if __name__ == "__main__":
 Generated automatically with {sys.argv[0]}
 */
 
-export const {args.name} = new Uint8Array([{array}]);
+const {args.name} = new Uint8Array([{array}]);
+
+export default {args.name};
 """
 
     if args.output is sys.stdout:

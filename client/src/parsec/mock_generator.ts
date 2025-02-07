@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { MockFiles } from '@/parsec/mock_files';
+import { MockFileType, getMockFileContent } from '@/parsec/mock_files';
 import { Path } from '@/parsec/path';
 import { EntryName, FileType, FsPath } from '@/parsec/types';
 import { DateTime } from 'luxon';
@@ -63,28 +63,28 @@ export async function generateFile(
 
   switch (ext) {
     case 'xlsx':
-      entry.size = MockFiles.XLSX.byteLength;
+      entry.size = (await getMockFileContent(MockFileType.XLSX)).byteLength;
       break;
     case 'png':
-      entry.size = MockFiles.PNG.byteLength;
+      entry.size = (await getMockFileContent(MockFileType.PNG)).byteLength;
       break;
     case 'docx':
-      entry.size = MockFiles.DOCX.byteLength;
+      entry.size = (await getMockFileContent(MockFileType.DOCX)).byteLength;
       break;
     case 'txt':
-      entry.size = MockFiles.TXT.byteLength;
+      entry.size = (await getMockFileContent(MockFileType.TXT)).byteLength;
       break;
     case 'py':
-      entry.size = MockFiles.PY.byteLength;
+      entry.size = (await getMockFileContent(MockFileType.PY)).byteLength;
       break;
     case 'pdf':
-      entry.size = MockFiles.PDF.byteLength;
+      entry.size = (await getMockFileContent(MockFileType.PDF)).byteLength;
       break;
     case 'mp3':
-      entry.size = MockFiles.MP3.byteLength;
+      entry.size = (await getMockFileContent(MockFileType.MP3)).byteLength;
       break;
     case 'mp4':
-      entry.size = MockFiles.MP4.byteLength;
+      entry.size = (await getMockFileContent(MockFileType.MP4)).byteLength;
       break;
     default:
       console.log('Using random file size');

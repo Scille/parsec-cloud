@@ -2,7 +2,7 @@
 
 import { needsMocks } from '@/parsec/environment';
 import { wait } from '@/parsec/internals';
-import { MockFiles } from '@/parsec/mock_files';
+import { MockFileType, getMockFileContent } from '@/parsec/mock_files';
 import { MockEntry, generateEntriesForEachFileType, generateFile, generateFolder } from '@/parsec/mock_generator';
 import { Path } from '@/parsec/path';
 import { getParsecHandle, getWorkspaceHandle } from '@/parsec/routing';
@@ -371,28 +371,28 @@ export async function readFile(
     switch (ext) {
       case 'xlsx':
         offset === 0 && console.log('Using XLSX content');
-        return { ok: true, value: MockFiles.XLSX.slice(offset, offset + size) };
+        return { ok: true, value: (await getMockFileContent(MockFileType.XLSX)).slice(offset, offset + size) };
       case 'png':
         offset === 0 && console.log('Using PNG content');
-        return { ok: true, value: MockFiles.PNG.slice(offset, offset + size) };
+        return { ok: true, value: (await getMockFileContent(MockFileType.PNG)).slice(offset, offset + size) };
       case 'docx':
         offset === 0 && console.log('Using DOCX content');
-        return { ok: true, value: MockFiles.DOCX.slice(offset, offset + size) };
+        return { ok: true, value: (await getMockFileContent(MockFileType.DOCX)).slice(offset, offset + size) };
       case 'txt':
         offset === 0 && console.log('Using TXT content');
-        return { ok: true, value: MockFiles.TXT.slice(offset, offset + size) };
+        return { ok: true, value: (await getMockFileContent(MockFileType.TXT)).slice(offset, offset + size) };
       case 'py':
         offset === 0 && console.log('Using PY content');
-        return { ok: true, value: MockFiles.PY.slice(offset, offset + size) };
+        return { ok: true, value: (await getMockFileContent(MockFileType.PY)).slice(offset, offset + size) };
       case 'pdf':
         offset === 0 && console.log('Using PDF content');
-        return { ok: true, value: MockFiles.PDF.slice(offset, offset + size) };
+        return { ok: true, value: (await getMockFileContent(MockFileType.PDF)).slice(offset, offset + size) };
       case 'mp3':
         offset === 0 && console.log('Using MP3 content');
-        return { ok: true, value: MockFiles.MP3.slice(offset, offset + size) };
+        return { ok: true, value: (await getMockFileContent(MockFileType.MP3)).slice(offset, offset + size) };
       case 'mp4':
         offset === 0 && console.log('Using MP4 content');
-        return { ok: true, value: MockFiles.MP4.slice(offset, offset + size) };
+        return { ok: true, value: (await getMockFileContent(MockFileType.MP4)).slice(offset, offset + size) };
     }
     console.log('Using default file content');
     return {
