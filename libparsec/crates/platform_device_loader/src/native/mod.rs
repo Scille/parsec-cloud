@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use itertools::Itertools as _;
 use keyring::Entry as KeyringEntry;
 use libparsec_platform_async::future::FutureExt as _;
 use std::{
-    ffi::OsStr,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -43,9 +43,8 @@ fn find_device_files(path: PathBuf) -> Vec<PathBuf> {
     // `fs::read_dir` fails if path doesn't exists, is not a folder or is not
     // accessible... In any case, there is not much we can do but to ignore it.
     if let Ok(children) = std::fs::read_dir(path) {
-        for child_dir in children.filter_map(|entry| entry.ok()) {
-            let path = child_dir.path();
-            if path.extension() == Some(OsStr::new(DEVICE_FILE_EXT)) {
+        for path in children.filter_map(|entry| entry.as_ref().map(std::fs::DirEntry::path).ok()) {
+            if path.extension() == Some(DEVICE_FILE_EXT.as_ref()) {
                 key_file_paths.push(path)
             } else if path.is_dir() {
                 key_file_paths.append(&mut find_device_files(path))
@@ -57,8 +56,6 @@ fn find_device_files(path: PathBuf) -> Vec<PathBuf> {
 }
 
 pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
-    let mut devices: Vec<AvailableDevice> = vec![];
-
     let key_file_paths = config_dir.join("devices");
 
     // Consider `.keys` files in devices directory
@@ -67,26 +64,24 @@ pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
     // Sort paths so the discovery order is deterministic
     // In the case of duplicate files, that means only the first discovered device is considered
     key_file_paths.sort();
+    log::trace!("Found the following device files: {key_file_paths:?}");
 
-    for key_file_path in key_file_paths {
-        let device = match load_available_device(key_file_path) {
-            // Load the device file
-            Ok(device) => device,
-            // Ignore invalid files
-            Err(_) => continue,
-        };
-
-        // Ignore duplicate files
-        for existing in &devices {
-            if existing.device_id == device.device_id {
-                continue;
-            }
-        }
-
-        devices.push(device);
-    }
-
-    devices
+    key_file_paths
+        .into_iter()
+        // List only valid devices.
+        .filter_map(|path| {
+            load_available_device(path.clone())
+                .inspect_err(|e| {
+                    log::debug!(
+                        "Failed to load device at {path} with {e}",
+                        path = path.display()
+                    )
+                })
+                .ok()
+        })
+        // Ignore duplicate devices
+        .unique_by(|v| v.device_id)
+        .collect()
 }
 
 #[derive(Debug, thiserror::Error)]
