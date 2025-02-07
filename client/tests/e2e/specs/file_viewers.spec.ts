@@ -2,7 +2,7 @@
 
 import { Media, expect, expectMedia, msTest, openFileType } from '@tests/e2e/helpers';
 
-msTest('Documents page default state', async ({ documents }) => {
+msTest('File viewer page default state', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
 
   await entries.nth(2).dblclick();
@@ -12,6 +12,24 @@ msTest('Documents page default state', async ({ documents }) => {
   await expect(documents).toBeViewerPage();
   await expect(documents).toHavePageTitle('File viewer');
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_.]+$/);
+});
+
+msTest('File viewer page details', async ({ documents }) => {
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+
+  await entries.nth(2).dblclick();
+  await expect(documents.locator('.ms-spinner-modal')).toBeVisible();
+  await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
+  await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
+  await expect(documents).toBeViewerPage();
+  await expect(documents).toHavePageTitle('File viewer');
+  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_.]+$/);
+  const buttons = documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-button');
+  await expect(buttons.nth(1)).toHaveText('Details');
+  const detailsModal = documents.locator('.file-details-modal');
+  await expect(detailsModal).toBeHidden();
+  await buttons.nth(1).click();
+  await expect(detailsModal).toBeVisible();
 });
 
 msTest('Quick access loads correct document', async ({ documents }) => {
@@ -50,38 +68,6 @@ msTest('Quick access loads correct document', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal').locator('.spinner-label__text')).toHaveText('Opening file...');
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(doc2Name);
-});
-
-msTest('Spreadsheet viewer', async ({ documents }) => {
-  await openFileType(documents, 'xlsx');
-  await expect(documents).toBeViewerPage();
-  await expect(documents).toHavePageTitle('File viewer');
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.xlsx$/);
-  const bottomBar = documents.locator('.file-viewer-bottombar');
-  const dropdown = bottomBar.locator('.file-controls-dropdown');
-  await expect(dropdown).toContainText('Sheet1');
-  const wrapper = documents.locator('.file-viewer-wrapper');
-  const spreadsheet = wrapper.locator('.inner-content-table').nth(1).locator('.content-wrapper');
-  await expect(spreadsheet.locator('.rgCell')).toHaveText(['A', '1', 'B', '2', 'C', '3', 'D', '4']);
-  await dropdown.click();
-  const popover = documents.locator('.file-controls-dropdown-popover');
-  await expect(popover.locator('.dropdown-item')).toHaveCount(2);
-  // Switch to second sheet
-  await popover.locator('.dropdown-item').nth(1).click();
-  await expect(spreadsheet.locator('.rgCell')).toHaveText(['E', '5', 'F', '6', 'G', '7', 'H', '8']);
-});
-
-msTest('Image viewer', async ({ documents }) => {
-  await openFileType(documents, 'png');
-  await expect(documents).toBeViewerPage();
-  await expect(documents).toHavePageTitle('File viewer');
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.png$/);
-
-  const wrapper = documents.locator('.file-viewer-wrapper');
-  await expect(wrapper.locator('img')).toBeVisible();
-  const bottomBar = documents.locator('.file-viewer-bottombar');
-  const zoom = bottomBar.locator('.file-controls-zoom');
-  await expect(zoom).toHaveCount(1);
 });
 
 msTest('Audio viewer', async ({ documents }) => {

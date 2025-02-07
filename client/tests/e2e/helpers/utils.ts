@@ -151,3 +151,10 @@ export async function openFileType(
     }
   }
 }
+
+export async function testFileViewerZoomLevel(fileWrapper: Locator, zoom: string): Promise<void> {
+  const value = await fileWrapper.evaluate((el) => {
+    return (el.attributes.getNamedItem('style') as Attr).value;
+  });
+  expect(value).toMatch(new RegExp(`^--[a-f0-9]+-zoomLevel: ${zoom};$`));
+}
