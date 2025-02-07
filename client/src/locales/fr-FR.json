@@ -1807,6 +1807,10 @@
         },
         "document": {
             "loadDocumentError": "Impossible de charger ce document."
+        },
+        "text": {
+            "loadDocumentError": "Impossible de charger ce document.",
+            "loadingDocument": "Chargement du document..."
         }
     }
 }

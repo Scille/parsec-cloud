@@ -3,28 +3,48 @@
 <template>
   <file-viewer-wrapper>
     <template #viewer>
+      <ms-spinner
+        :title="loadingLabel"
+        v-show="loading"
+      />
+      <ms-report-text
+        class="text-error"
+        :theme="MsReportTheme.Error"
+        v-if="error"
+      >
+        {{ $msTranslate(error) }}
+      </ms-report-text>
       <div
         ref="container"
+        v-show="!loading && !error"
         class="text-container"
       />
     </template>
     <template #controls>
-      <file-controls>
+      <file-controls v-show="!loading && !error">
         <file-controls-zoom
           @change="onZoomLevelChange"
           ref="zoomControl"
         />
+        <file-controls-group>
+          <file-controls-button
+            @click="toggleFullScreen"
+            :icon="scan"
+          />
+        </file-controls-group>
       </file-controls>
     </template>
   </file-viewer-wrapper>
 </template>
 
 <script setup lang="ts">
+import { MsSpinner, Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 import * as monaco from 'monaco-editor';
+import { scan } from 'ionicons/icons';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { FileViewerWrapper } from '@/views/viewers';
-import { FileControls, FileControlsZoom } from '@/components/viewers';
+import { FileControls, FileControlsZoom, FileControlsGroup, FileControlsButton } from '@/components/viewers';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -34,24 +54,45 @@ const container = ref();
 const editor = ref<monaco.editor.IStandaloneCodeEditor>();
 const zoomControl = ref();
 const zoomLevel = ref(1);
+const loading = ref(true);
+const error = ref<Translatable>('');
+const loadingLabel = ref<Translatable>('');
 
 onMounted(async () => {
   zoomLevel.value = 1;
-  const text = new TextDecoder().decode(props.contentInfo.data);
-  editor.value = monaco.editor.create(container.value, {
-    value: text,
-    readOnly: true,
-    fontSize: 16,
-    theme: 'vs-dark',
-    automaticLayout: true,
-    language: getLanguage(),
-    scrollbar: {
-      vertical: 'auto',
-      horizontal: 'auto',
-    },
-  });
+  loading.value = true;
+  loadingLabel.value = 'fileViewers.text.loadingDocument';
+
+  try {
+    const text = new TextDecoder().decode(props.contentInfo.data);
+    createEditor(text);
+  } catch (e) {
+    error.value = 'fileViewers.text.loadDocumentError';
+  } finally {
+    loading.value = false;
+  }
+  loadingLabel.value = '';
   updateEditorZoomLevel();
 });
+
+function createEditor(text: string): void {
+  if (container.value) {
+    editor.value = monaco.editor.create(container.value, {
+      value: text,
+      readOnly: true,
+      fontSize: 16,
+      theme: 'msEditorTheme',
+      automaticLayout: true,
+      language: getLanguage(),
+      scrollbar: {
+        vertical: 'auto',
+        horizontal: 'auto',
+        verticalScrollbarSize: 10,
+        horizontalScrollbarSize: 10,
+      },
+    });
+  }
+}
 
 function getLanguage(): string | undefined {
   const langs = new Map<string, string>([
@@ -106,11 +147,24 @@ function updateEditorZoomLevel(): void {
   const editorZoomLevel = (zoomLevel.value - 1) / 0.2;
   monaco.editor.EditorZoom.setZoomLevel(editorZoomLevel);
 }
+
+async function toggleFullScreen(): Promise<void> {
+  if (container.value) {
+    await container.value.requestFullscreen();
+  }
+}
 </script>
 
 <style scoped lang="scss">
 .text-container {
+  padding: 2rem;
+  border-radius: var(--parsec-radius-8);
+  box-shadow: var(--parsec-shadow-light);
   width: 100%;
   height: 100%;
+}
+
+.text-error {
+  width: 100%;
 }
 </style>

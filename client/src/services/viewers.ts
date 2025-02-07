@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import * as monaco from 'monaco-editor';
 import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 import cssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
 import htmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
@@ -13,6 +14,36 @@ async function _initPdf(): Promise<void> {
 }
 
 async function _initText(): Promise<void> {
+  /* MsTheme: Monaco editor custom theme */
+  monaco.editor.defineTheme('msEditorTheme', {
+    base: 'vs',
+    inherit: true,
+    rules: [
+      {
+        token: 'editor.border',
+        foreground: '#000000',
+        fontStyle: '1px solid',
+      },
+      {
+        token: 'editor.border',
+        foreground: '#000000',
+        fontStyle: '1px solid',
+      },
+    ],
+    colors: {
+      'editor.foreground': '#000000',
+      'editor.background': '#ffffff',
+      'editorCursor.foreground': '#0058cc',
+      'editor.lineHighlightBackground': '#f3f3f7',
+      'editorLineNumber.foreground': '#0058cc',
+      'editor.selectionBackground': '#99c5ff',
+      'editor.inactiveSelectionBackground': '#88000015',
+      'scrollbar.shadow': '#f3f3f7',
+      'scrollbarSlider.background': '#cce2ff',
+      'scrollbarSlider.hoverBackground': '#99c5ff',
+      'scrollbarSlider.activeBackground': '#66a8ff',
+    },
+  });
   self.MonacoEnvironment = {
     getWorker: function (_workerId, label): Worker {
       switch (label) {

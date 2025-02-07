@@ -140,3 +140,14 @@ revo-grid {
     box-shadow: 0 -1px 0 0 var(--parsec-color-light-secondary-disabled) inset !important;
   }
 }
+
+// monaco editor
+.monaco-editor {
+  border-radius: var(--parsec-radius-12);
+  box-shadow: var(--parsec-shadow-light);
+
+  .overflow-guard {
+    border-radius: var(--parsec-radius-8);
+    box-shadow: var(--parsec-shadow-light);
+  }
+}

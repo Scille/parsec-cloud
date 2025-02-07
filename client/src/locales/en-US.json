@@ -1798,7 +1798,7 @@
         "spreadsheet": {
             "loadSheetError": "This sheet could not be loaded.",
             "loadDocumentError": "Could not load this document.",
-            "loadingDocument": "Loading the document...",
+            "loadingDocument": "Loading document...",
             "loadingSheet": "Loading the sheet `{page}`"
         },
         "pdf": {
@@ -1807,6 +1807,10 @@
         },
         "document": {
             "loadDocumentError": "Could not load this document."
+        },
+        "text": {
+            "loadDocumentError": "Could not load this document.",
+            "loadingDocument": "Loading document..."
         }
     }
 }
