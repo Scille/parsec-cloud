@@ -33,7 +33,7 @@ jobs:
   version:
     needs: scheduled-nightly-build
     # Always run the job if `scheduled-nightly-build` job is skipped otherwise only if `scheduled-nightly-build` job was successful.
-    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && always() || success()
+    if: (github.event_name != 'schedule' && github.event_name != 'workflow_dispatch') && always() || success()
     uses: ./.github/workflows/_parse_version.yml
     with:
       version: >-
