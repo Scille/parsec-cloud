@@ -4,6 +4,7 @@
   <file-viewer-wrapper>
     <template #viewer>
       <ms-spinner
+        id="spreadsheet-spinner"
         :title="loadingLabel"
         v-show="loading"
       />
@@ -36,7 +37,7 @@
         <file-controls-group>
           <file-controls-dropdown
             :items="dropdownItems"
-            :title="I18n.valueAsTranslatable(currentPageName)"
+            :title="I18n.valueAsTranslatable(currentSheet)"
             :icon="chevronDown"
           />
         </file-controls-group>
@@ -78,8 +79,7 @@ const props = defineProps<{
 
 let workbook: XLSX.WorkBook | null = null;
 const pages = ref<Array<string>>([]);
-const currentPage = ref('');
-const currentPageName = ref('');
+const currentSheet = ref('');
 const loading = ref(true);
 const error = ref('');
 let documentWorker: Worker;
@@ -118,14 +118,17 @@ onMounted(async () => {
         label: I18n.valueAsTranslatable(page),
         callback: () => switchToPage(page),
         isActive: index === 0,
+        dismissPopover: true,
       });
     });
     await switchToPage(workbook.SheetNames[0]);
   };
 
   pageWorker.onmessage = async function (e: MessageEvent): Promise<void> {
-    currentPage.value = e.data.page;
     const data: Array<any> = e.data.content;
+    currentSheet.value = e.data.sheetName;
+    const currentIndex = pages.value.indexOf(currentSheet.value);
+    dropdownItems.value.forEach((item, index) => (item.isActive = index === currentIndex));
 
     columns.value = [];
     if (data.length > 0) {
@@ -146,26 +149,25 @@ onUnmounted(() => {
   pageWorker.terminate();
 });
 
-async function switchToPage(page: string): Promise<void> {
+async function switchToPage(sheet: string): Promise<void> {
   if (!workbook) {
     return;
   }
-  const ws = workbook.Sheets[page];
+  if (currentSheet.value === sheet) {
+    return;
+  }
+  const ws = workbook.Sheets[sheet];
   rows.value = [];
   columns.value = [];
   if (!ws) {
     error.value = 'fileViewers.spreadsheet.loadSheetError';
-    currentPage.value = '';
+    currentSheet.value = '';
     return;
   }
   loading.value = true;
-  loadingLabel.value = { key: 'fileViewers.spreadsheet.loadingSheet', data: { page: page } };
+  loadingLabel.value = { key: 'fileViewers.spreadsheet.loadingSheet', data: { page: sheet } };
   error.value = '';
-  pageWorker.postMessage(ws);
-
-  currentPageName.value = page;
-  const currentIndex = pages.value.indexOf(page);
-  dropdownItems.value.forEach((item, index) => (item.isActive = index === currentIndex));
+  pageWorker.postMessage({ sheetName: sheet, sheet: ws });
 }
 
 function onZoomLevelChange(value: number): void {
