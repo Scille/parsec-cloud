@@ -2154,6 +2154,8 @@ name = "libparsec_platform_device_loader"
 version = "3.3.0-rc.12+dev"
 dependencies = [
  "dirs",
+ "hex",
+ "itertools 0.12.1",
  "keyring",
  "libparsec_crypto",
  "libparsec_platform_async",
