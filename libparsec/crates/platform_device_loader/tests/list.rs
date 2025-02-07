@@ -55,143 +55,282 @@ async fn ignore_invalid_items(tmp_path: TmpPath) {
 }
 
 #[parsec_test]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 async fn list_devices(tmp_path: TmpPath) {
-    let alice_file_path = tmp_path
-        .join("devices/52e905dc5a505f068cbec94298768f877054016080c0a0d09992730385966db6.keys");
+    // 1. Generate raw data
+
+    // Keyring
+
+    let keyring_expected = DeviceFileKeyring {
+        created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
+        server_url: "https://parsec.invalid".to_string(),
+        organization_id: "CoolOrg".parse().unwrap(),
+        user_id: "alice".parse().unwrap(),
+        device_id: "alice@dev1".parse().unwrap(),
+        human_handle: "Alicey McAliceFace <alice@parsec.invalid>".parse().unwrap(),
+        device_label: "My dev1 machine".parse().unwrap(),
+        keyring_service: "keyring_service".to_string(),
+        keyring_user: "keyring_user".to_string(),
+        ciphertext: b"<ciphertext>".as_ref().into(),
+    };
+    println!(
+        "***expected: {:?}",
+        DeviceFile::Keyring(keyring_expected.clone()).dump()
+    );
+
+    // Generated from Parsec 3.3.0-rc.12+dev
+    // Content:
+    //   type: 'keyring'
+    //   created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
+    //   protected_on: ext(1, 946684801000000) i.e. 2000-01-01T01:00:01Z
+    //   server_url: 'https://parsec.invalid'
+    //   organization_id: 'CoolOrg'
+    //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+    //   device_id: ext(2, 0xde10a11cec0010000000000000000000)
+    //   human_handle: [ 'alice@parsec.invalid', 'Alicey McAliceFace', ]
+    //   device_label: 'My dev1 machine'
+    //   keyring_service: 'keyring_service'
+    //   keyring_user: 'keyring_user'
+    //   ciphertext: 0x3c636970686572746578743e
+    let keyring_raw: &[u8] = hex!(
+        "8ca474797065a76b657972696e67aa637265617465645f6f6ed70100035d013b37e000"
+        "ac70726f7465637465645f6f6ed70100035d013b472240aa7365727665725f75726cb6"
+        "68747470733a2f2f7061727365632e696e76616c6964af6f7267616e697a6174696f6e"
+        "5f6964a7436f6f6c4f7267a7757365725f6964d802a11cec0010000000000000000000"
+        "0000a96465766963655f6964d802de10a11cec0010000000000000000000ac68756d61"
+        "6e5f68616e646c6592b4616c696365407061727365632e696e76616c6964b2416c6963"
+        "6579204d63416c69636546616365ac6465766963655f6c6162656caf4d792064657631"
+        "206d616368696e65af6b657972696e675f73657276696365af6b657972696e675f7365"
+        "7276696365ac6b657972696e675f75736572ac6b657972696e675f75736572aa636970"
+        "68657274657874c40c3c636970686572746578743e"
+    )
+    .as_ref();
+
+    // Password
+
+    let password_expected = DeviceFilePassword {
+        created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
+        server_url: "https://parsec.invalid".to_string(),
+        organization_id: "CoolOrg".parse().unwrap(),
+        user_id: "bob".parse().unwrap(),
+        device_id: "bob@dev1".parse().unwrap(),
+        human_handle: "Boby McBobFace <bob@parsec.invalid>".parse().unwrap(),
+        device_label: "My dev2 machine".parse().unwrap(),
+        algorithm: DeviceFilePasswordAlgorithm::Argon2id {
+            salt: b"salt".as_ref().into(),
+            opslimit: 1,
+            memlimit_kb: 8,
+            parallelism: 1,
+        },
+        ciphertext: b"<ciphertext>".as_ref().into(),
+    };
+    println!(
+        "***expected: {:?}",
+        DeviceFile::Password(password_expected.clone()).dump()
+    );
+
+    // Generated from Parsec 3.3.0-rc.12+dev
+    // Content:
+    //   type: 'password'
+    //   created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
+    //   protected_on: ext(1, 946684801000000) i.e. 2000-01-01T01:00:01Z
+    //   server_url: 'https://parsec.invalid'
+    //   organization_id: 'CoolOrg'
+    //   user_id: ext(2, 0x808c0010000000000000000000000000)
+    //   device_id: ext(2, 0xde10808c001000000000000000000000)
+    //   human_handle: [ 'bob@parsec.invalid', 'Boby McBobFace', ]
+    //   device_label: 'My dev2 machine'
+    //   algorithm: { type: 'ARGON2ID', memlimit_kb: 8, opslimit: 1, parallelism: 1, salt: 0x73616c74, }
+    //   ciphertext: 0x3c636970686572746578743e
+    let password_raw: &[u8] = hex!(
+        "8ba474797065a870617373776f7264aa637265617465645f6f6ed70100035d013b37e0"
+        "00ac70726f7465637465645f6f6ed70100035d013b472240aa7365727665725f75726c"
+        "b668747470733a2f2f7061727365632e696e76616c6964af6f7267616e697a6174696f"
+        "6e5f6964a7436f6f6c4f7267a7757365725f6964d802808c0010000000000000000000"
+        "000000a96465766963655f6964d802de10808c001000000000000000000000ac68756d"
+        "616e5f68616e646c6592b2626f62407061727365632e696e76616c6964ae426f627920"
+        "4d63426f6246616365ac6465766963655f6c6162656caf4d792064657632206d616368"
+        "696e65a9616c676f726974686d85a474797065a84152474f4e324944ab6d656d6c696d"
+        "69745f6b6208a86f70736c696d697401ab706172616c6c656c69736d01a473616c74c4"
+        "0473616c74aa63697068657274657874c40c3c636970686572746578743e"
+    )
+    .as_ref();
+
+    // Smartcard
+
+    let smartcard_expected = DeviceFileSmartcard {
+        created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
+        server_url: "https://parsec.invalid".to_string(),
+        organization_id: "CoolOrg".parse().unwrap(),
+        user_id: "mallory".parse().unwrap(),
+        device_id: "mallory@dev1".parse().unwrap(),
+        human_handle: "Mallory McMalloryFace <mallory@parsec.invalid>"
+            .parse()
+            .unwrap(),
+        device_label: "PC1".parse().unwrap(),
+        certificate_id: "Mallory's certificate".to_string(),
+        certificate_sha1: Some(
+            hex!("4682e01bc3e22fdfff1c33b551dfad8e49295005")
+                .as_ref()
+                .into(),
+        ),
+        encrypted_key: hex!("de5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a")
+            .as_ref()
+            .into(),
+        ciphertext: b"<ciphertext>".as_ref().into(),
+    };
+    println!(
+        "***expected: {:?}",
+        DeviceFile::Smartcard(smartcard_expected.clone()).dump()
+    );
+
+    // Generated from Parsec 3.3.0-rc.12+dev
+    // Content:
+    //   type: 'smartcard'
+    //   created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
+    //   protected_on: ext(1, 946684801000000) i.e. 2000-01-01T01:00:01Z
+    //   server_url: 'https://parsec.invalid'
+    //   organization_id: 'CoolOrg'
+    //   user_id: ext(2, 0x3a11031c001000000000000000000000)
+    //   device_id: ext(2, 0xde103a11031c00100000000000000000)
+    //   human_handle: [ 'mallory@parsec.invalid', 'Mallory McMalloryFace', ]
+    //   device_label: 'PC1'
+    //   certificate_id: "Mallory's certificate"
+    //   certificate_sha1: 0x4682e01bc3e22fdfff1c33b551dfad8e49295005
+    //   encrypted_key: 0xde5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a
+    //   ciphertext: 0x3c636970686572746578743e
+    let smartcard_raw: &[u8] = hex!(
+        "8da474797065a9736d61727463617264aa637265617465645f6f6ed70100035d013b37"
+        "e000ac70726f7465637465645f6f6ed70100035d013b472240aa7365727665725f7572"
+        "6cb668747470733a2f2f7061727365632e696e76616c6964af6f7267616e697a617469"
+        "6f6e5f6964a7436f6f6c4f7267a7757365725f6964d8023a11031c0010000000000000"
+        "00000000a96465766963655f6964d802de103a11031c00100000000000000000ac6875"
+        "6d616e5f68616e646c6592b66d616c6c6f7279407061727365632e696e76616c6964b5"
+        "4d616c6c6f7279204d634d616c6c6f727946616365ac6465766963655f6c6162656ca3"
+        "504331ae63657274696669636174655f6964b54d616c6c6f7279277320636572746966"
+        "6963617465b063657274696669636174655f73686131c4144682e01bc3e22fdfff1c33"
+        "b551dfad8e49295005ad656e637279707465645f6b6579c420de5c59cfcc0c52bf9975"
+        "94e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19aaa63697068657274657874c40c"
+        "3c636970686572746578743e"
+    )
+    .as_ref();
+
+    // Recovery
+
+    let recovery_expected = DeviceFileRecovery {
+        created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2000-01-01T00:00:01Z".parse().unwrap(),
+        server_url: "https://parsec.invalid".to_string(),
+        organization_id: "CoolOrg".parse().unwrap(),
+        user_id: "mike".parse().unwrap(),
+        device_id: "mike@dev1".parse().unwrap(),
+        human_handle: "Mike <mike@parsec.invalid>".parse().unwrap(),
+        device_label: "My dev1 machine".parse().unwrap(),
+        ciphertext: b"<ciphertext>".as_ref().into(),
+    };
+    println!(
+        "***expected: {:?}",
+        DeviceFile::Recovery(recovery_expected.clone()).dump()
+    );
+
+    // Generated from Parsec 3.3.0-rc.12+dev
+    // Content:
+    //   type: 'recovery'
+    //   created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
+    //   protected_on: ext(1, 946684801000000) i.e. 2000-01-01T01:00:01Z
+    //   server_url: 'https://parsec.invalid'
+    //   organization_id: 'CoolOrg'
+    //   user_id: ext(2, 0x31cec001000000000000000000000000)
+    //   device_id: ext(2, 0xde1031cec00100000000000000000000)
+    //   human_handle: [ 'mike@parsec.invalid', 'Mike', ]
+    //   device_label: 'My dev1 machine'
+    //   ciphertext: 0x3c636970686572746578743e
+    let recovery_raw: &[u8] = hex!(
+        "8aa474797065a87265636f76657279aa637265617465645f6f6ed70100035d013b37e0"
+        "00ac70726f7465637465645f6f6ed70100035d013b472240aa7365727665725f75726c"
+        "b668747470733a2f2f7061727365632e696e76616c6964af6f7267616e697a6174696f"
+        "6e5f6964a7436f6f6c4f7267a7757365725f6964d80231cec001000000000000000000"
+        "000000a96465766963655f6964d802de1031cec00100000000000000000000ac68756d"
+        "616e5f68616e646c6592b36d696b65407061727365632e696e76616c6964a44d696b65"
+        "ac6465766963655f6c6162656caf4d792064657631206d616368696e65aa6369706865"
+        "7274657874c40c3c636970686572746578743e"
+    )
+    .as_ref();
+
+    // 2. Store the raws in files
+
+    let keyring_path = tmp_path.join("devices/94a8691e9765497984d63aad3c7df9e0.keys");
     // Device must have a .keys extension, but can be in nested directories with a random name
-    let bob_file_path = tmp_path.join("devices/foo/bar/spam/whatever.keys");
-    let mallory_file_path = tmp_path.join("devices/foo/whatever.keys");
+    let password_path = tmp_path.join("devices/foo/bar/spam/whatever.keys");
+    let smartcard_path = tmp_path.join("devices/foo/bar/spam/whatever2.keys");
+    let recovery_path = tmp_path.join("devices/foo/whatever.keys");
 
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
-    // Content:
-    //   type: "password"
-    //   ciphertext: b"ciphertext"
-    //   human_handle: ["alice@example.com", "Alicey McAliceFace"]
-    //   device_label: "My dev1 machine"
-    //   device_id: "alice@dev1"
-    //   organization_id: "CoolOrg"
-    //   slug: "f78292422e#CoolOrg#alice@dev1"
-    //   algorithm:
-    //     type: "ARGON2ID"
-    //     salt: b"salt"
-    //     opslimit: 1
-    //     memlimit_kb: 8
-    //     parallelism: 1
-    let alice_file_content = hex!(
-        "88a474797065a870617373776f7264aa63697068657274657874c40a63697068657274"
-        "657874ac68756d616e5f68616e646c6592b1616c696365406578616d706c652e636f6d"
-        "b2416c69636579204d63416c69636546616365ac6465766963655f6c6162656caf4d79"
-        "2064657631206d616368696e65a96465766963655f6964aa616c6963654064657631af"
-        "6f7267616e697a6174696f6e5f6964a7436f6f6c4f7267a4736c7567bd663738323932"
-        "3432326523436f6f6c4f726723616c6963654064657631a9616c676f726974686d85a4"
-        "74797065a84152474f4e324944a473616c74c40473616c74a86f70736c696d697401ab"
-        "6d656d6c696d69745f6b6208ab706172616c6c656c69736d01"
-    );
-    std::fs::create_dir_all(alice_file_path.parent().unwrap()).unwrap();
-    std::fs::write(&alice_file_path, alice_file_content).unwrap();
+    for (path, raw) in [
+        (&keyring_path, keyring_raw),
+        (&password_path, password_raw),
+        (&smartcard_path, smartcard_raw),
+        (&recovery_path, recovery_raw),
+    ] {
+        tokio::fs::create_dir_all(path.parent().unwrap())
+            .await
+            .unwrap();
+        tokio::fs::write(path, raw).await.unwrap();
+    }
 
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
-    // Content:
-    //   type: "smartcard"
-    //   encrypted_key: hex!("de5c59cfcc0c52bf997594e0fdd2c24ffee9465b6f25e30bac9238c2f83fd19a")
-    //   certificate_id: "Bob's certificate"
-    //   certificate_sha1: hex!("4682e01bc3e22fdfff1c33b551dfad8e49295005")
-    //   ciphertext: b"ciphertext"
-    //   human_handle: ["bob@example.com", "Boby McBobFace"]
-    //   device_label: "My dev1 machine"
-    //   device_id: "cc2578be6a174c9590a98b7d0d2c7e4f@6b92acd628294292a4b126b3e875c686"
-    //   organization_id: "CoolOrg"
-    //   slug: "f78292422e#CoolOrg#cc2578be6a174c9590a98b7d0d2c7e4f@6b92acd628294292a4b126b3e875c686"
-    let bob_file_content = hex!(
-        "8aa474797065a9736d61727463617264ad656e637279707465645f6b6579c440646535"
-        "6335396366636330633532626639393735393465306664643263323466666565393436"
-        "3562366632356533306261633932333863326638336664313961ae6365727469666963"
-        "6174655f6964b1426f622773206365727469666963617465b063657274696669636174"
-        "655f73686131c428343638326530316263336532326664666666316333336235353164"
-        "66616438653439323935303035aa63697068657274657874c40a636970686572746578"
-        "74ac68756d616e5f68616e646c6592af626f62406578616d706c652e636f6dae426f62"
-        "79204d63426f6246616365ac6465766963655f6c6162656caf4d792064657632206d61"
-        "6368696e65a96465766963655f6964d941636332353738626536613137346339353930"
-        "6139386237643064326337653466403662393261636436323832393432393261346231"
-        "323662336538373563363836af6f7267616e697a6174696f6e5f6964a7436f6f6c4f72"
-        "67a4736c7567d9546637383239323432326523436f6f6c4f7267236363323537386265"
-        "3661313734633935393061393862376430643263376534664036623932616364363238"
-        "32393432393261346231323662336538373563363836"
-    );
-    std::fs::create_dir_all(bob_file_path.parent().unwrap()).unwrap();
-    std::fs::write(&bob_file_path, bob_file_content).unwrap();
-
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
-    // Content:
-    //   type: "password"
-    //   ciphertext: b"ciphertext"
-    //   human_handle: ["mallory@example.com", "Mallory McMalloryFace"]
-    //   device_label: "My dev3 machine"
-    //   device_id: "mallory@dev3"
-    //   organization_id: "CoolOrg"
-    //   slug: "f78292422e#CoolOrg#mallory@dev3"
-    //   algorithm:
-    //     type: "ARGON2ID"
-    //     salt: b"salt"
-    //     opslimit: 1
-    //     memlimit_kb: 8
-    //     parallelism: 1
-    let mallory_file_content = hex!(
-        "88a474797065a870617373776f7264aa63697068657274657874c40a63697068657274"
-        "657874ac68756d616e5f68616e646c6592b36d616c6c6f7279406578616d706c652e63"
-        "6f6db54d616c6c6f7279204d634d616c6c6f727946616365ac6465766963655f6c6162"
-        "656caf4d792064657633206d616368696e65a96465766963655f6964ac6d616c6c6f72"
-        "794064657633af6f7267616e697a6174696f6e5f6964a7436f6f6c4f7267a4736c7567"
-        "bf6637383239323432326523436f6f6c4f7267236d616c6c6f72794064657633a9616c"
-        "676f726974686d85a474797065a84152474f4e324944a473616c74c40473616c74a86f"
-        "70736c696d697401ab6d656d6c696d69745f6b6208ab706172616c6c656c69736d01"
-    );
-    std::fs::create_dir_all(mallory_file_path.parent().unwrap()).unwrap();
-    std::fs::write(&mallory_file_path, mallory_file_content).unwrap();
+    // 3. Actual test !
 
     let devices = list_available_devices(&tmp_path).await;
 
     let expected_devices = Vec::from([
         AvailableDevice {
-            key_file_path: alice_file_path,
-            created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-            protected_on: "2000-01-10T00:00:00Z".parse().unwrap(),
-            server_url: "https://parsec.invalid".to_string(),
-            organization_id: "CoolOrg".parse().unwrap(),
-            user_id: "alice".parse().unwrap(),
-            device_id: "alice@dev1".parse().unwrap(),
-            human_handle: "Alicey McAliceFace <alice@example.com>".parse().unwrap(),
-            device_label: "My dev1 machine".parse().unwrap(),
+            key_file_path: keyring_path,
+            created_on: keyring_expected.created_on,
+            protected_on: keyring_expected.protected_on,
+            server_url: keyring_expected.server_url,
+            organization_id: keyring_expected.organization_id,
+            user_id: keyring_expected.user_id,
+            device_id: keyring_expected.device_id,
+            human_handle: keyring_expected.human_handle,
+            device_label: keyring_expected.device_label,
+            ty: DeviceFileType::Keyring,
+        },
+        AvailableDevice {
+            key_file_path: password_path,
+            created_on: password_expected.created_on,
+            protected_on: password_expected.protected_on,
+            server_url: password_expected.server_url,
+            organization_id: password_expected.organization_id,
+            user_id: password_expected.user_id,
+            device_id: password_expected.device_id,
+            human_handle: password_expected.human_handle,
+            device_label: password_expected.device_label,
             ty: DeviceFileType::Password,
         },
         AvailableDevice {
-            key_file_path: bob_file_path,
-            created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-            protected_on: "2000-01-10T00:00:00Z".parse().unwrap(),
-            server_url: "https://parsec.invalid".to_string(),
-            organization_id: "CoolOrg".parse().unwrap(),
-            user_id: "cc2578be6a174c9590a98b7d0d2c7e4f".parse().unwrap(),
-            device_id: "cc2578be6a174c9590a98b7d0d2c7e4f@6b92acd628294292a4b126b3e875c686"
-                .parse()
-                .unwrap(),
-            human_handle: "Boby McBobFace <bob@example.com>".parse().unwrap(),
-            device_label: "My dev2 machine".parse().unwrap(),
+            key_file_path: smartcard_path,
+            created_on: smartcard_expected.created_on,
+            protected_on: smartcard_expected.protected_on,
+            server_url: smartcard_expected.server_url,
+            organization_id: smartcard_expected.organization_id,
+            user_id: smartcard_expected.user_id,
+            device_id: smartcard_expected.device_id,
+            human_handle: smartcard_expected.human_handle,
+            device_label: smartcard_expected.device_label,
             ty: DeviceFileType::Smartcard,
         },
         AvailableDevice {
-            key_file_path: mallory_file_path,
-            created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-            protected_on: "2000-01-10T00:00:00Z".parse().unwrap(),
-            server_url: "https://parsec.invalid".to_string(),
-            organization_id: "CoolOrg".parse().unwrap(),
-            user_id: "mallory".parse().unwrap(),
-            device_id: "mallory@dev3".parse().unwrap(),
-            human_handle: "Mallory McMalloryFace <mallory@example.com>"
-                .parse()
-                .unwrap(),
-            device_label: "My dev3 machine".parse().unwrap(),
-            ty: DeviceFileType::Password,
+            key_file_path: recovery_path,
+            created_on: recovery_expected.created_on,
+            protected_on: recovery_expected.protected_on,
+            server_url: recovery_expected.server_url,
+            organization_id: recovery_expected.organization_id,
+            user_id: recovery_expected.user_id,
+            device_id: recovery_expected.device_id,
+            human_handle: recovery_expected.human_handle,
+            device_label: recovery_expected.device_label,
+            ty: DeviceFileType::Recovery,
         },
     ]);
 
