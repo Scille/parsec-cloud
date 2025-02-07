@@ -1,21 +1,34 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DOCX } from '@/parsec/mock_files/docx';
-import { PDF } from '@/parsec/mock_files/pdf';
-import { PNG } from '@/parsec/mock_files/png';
-import { PY } from '@/parsec/mock_files/py';
-import { TXT } from '@/parsec/mock_files/txt';
-import { XLSX } from '@/parsec/mock_files/xlsx';
-import { MP4 } from '@/parsec/mock_files/mp4';
-import { MP3 } from '@/parsec/mock_files/mp3';
+export enum MockFileType {
+  DOCX = 'DOCX',
+  PDF = 'PDF',
+  PNG = 'PNG',
+  PY = 'PY',
+  TXT = 'TXT',
+  XLSX = 'XLSX',
+  MP4 = 'MP4',
+  MP3 = 'MP3',
+}
 
-export const MockFiles = {
-  XLSX,
-  PNG,
-  DOCX,
-  TXT,
-  PY,
-  PDF,
-  MP3,
-  MP4,
-};
+// Import content dynamically so it's not loaded if not needed
+export async function getMockFileContent(type: MockFileType): Promise<Uint8Array> {
+  switch (type) {
+    case MockFileType.DOCX:
+      return (await import('@/parsec/mock_files/docx')).default;
+    case MockFileType.PDF:
+      return (await import('@/parsec/mock_files/pdf')).default;
+    case MockFileType.PNG:
+      return (await import('@/parsec/mock_files/png')).default;
+    case MockFileType.PY:
+      return (await import('@/parsec/mock_files/py')).default;
+    case MockFileType.TXT:
+      return (await import('@/parsec/mock_files/txt')).default;
+    case MockFileType.XLSX:
+      return (await import('@/parsec/mock_files/xlsx')).default;
+    case MockFileType.MP4:
+      return (await import('@/parsec/mock_files/mp4')).default;
+    case MockFileType.MP3:
+      return (await import('@/parsec/mock_files/mp3')).default;
+  }
+}
