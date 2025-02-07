@@ -462,8 +462,6 @@ async fn run_greeter_step_until_ready(
 
 // GreetCancellerCtx
 
-type MaybeGreetingAttemptID = Arc<AsyncMutex<Option<GreetingAttemptID>>>;
-
 #[derive(Debug)]
 pub struct GreetCancellerCtx {
     greeting_attempt_id: GreetingAttemptID,
@@ -505,15 +503,6 @@ struct BaseGreetInitialCtx {
     device: Arc<LocalDevice>,
     cmds: Arc<AuthenticatedCmds>,
     event_bus: EventBus,
-
-    // This field is used to expose the greeting attempt ID obtained during
-    // the `start_greeting_attempt` command. This way, the canceller can use
-    // it to cancel the greeting attempt if needed.
-    // We use an `AsyncMutex` here, which is allowing us to take the lock
-    // while sending the `start_greeting_attempt` request to the server
-    // so a concurrent canceller is able to wait for it to succeed and then
-    // send the `cancel_greeting_attempt` request.
-    maybe_greeting_attempt: MaybeGreetingAttemptID,
 }
 
 impl BaseGreetInitialCtx {
@@ -528,27 +517,31 @@ impl BaseGreetInitialCtx {
             device,
             cmds,
             event_bus,
-            maybe_greeting_attempt: Arc::new(AsyncMutex::new(None)),
         }
     }
 
-    async fn do_wait_peer(mut self) -> Result<BaseGreetInProgress1Ctx, GreetInProgressError> {
+    async fn _do_wait_peer(
+        self,
+        mut register_greeting_attempt: Arc<AsyncMutex<Option<GreetingAttemptID>>>,
+    ) -> Result<BaseGreetInProgress1Ctx, GreetInProgressError> {
         // Loop over wait peer attempts
         for attempt in 0.. {
-            let (greeting_attempt, greeter_sas, claimer_sas, shared_secret_key) =
-                match self._do_wait_peer().await {
-                    Ok(x) => x,
-                    // If the attempt was automatically cancelled by the other peer, try again (at most 8 times).
-                    // Previous attempts are automatically cancelled when a new start greeting attempt is made.
-                    // This way, the peers can synchronize themselves more easily during the wait-peer phase,
-                    // without requiring the front-end to deal with it.
-                    Err(GreetInProgressError::GreetingAttemptCancelled {
-                        origin: GreeterOrClaimer::Claimer,
-                        reason: CancelledGreetingAttemptReason::AutomaticallyCancelled,
-                        ..
-                    }) if attempt < WAIT_PEER_MAX_ATTEMPTS => continue,
-                    Err(err) => return Err(err),
-                };
+            let (greeting_attempt, greeter_sas, claimer_sas, shared_secret_key) = match self
+                ._do_wait_peer_single_attempt(&mut register_greeting_attempt)
+                .await
+            {
+                Ok(x) => x,
+                // If the attempt was automatically cancelled by the other peer, try again (at most 8 times).
+                // Previous attempts are automatically cancelled when a new start greeting attempt is made.
+                // This way, the peers can synchronize themselves more easily during the wait-peer phase,
+                // without requiring the front-end to deal with it.
+                Err(GreetInProgressError::GreetingAttemptCancelled {
+                    origin: GreeterOrClaimer::Claimer,
+                    reason: CancelledGreetingAttemptReason::AutomaticallyCancelled,
+                    ..
+                }) if attempt < WAIT_PEER_MAX_ATTEMPTS => continue,
+                Err(err) => return Err(err),
+            };
             // Move self into the next context
             return Ok(BaseGreetInProgress1Ctx {
                 token: self.token,
@@ -564,12 +557,13 @@ impl BaseGreetInitialCtx {
         unreachable!()
     }
 
-    async fn _do_wait_peer(
-        &mut self,
+    async fn _do_wait_peer_single_attempt(
+        &self,
+        register_greeting_attempt: &mut Arc<AsyncMutex<Option<GreetingAttemptID>>>,
     ) -> Result<(GreetingAttemptID, SASCode, SASCode, SecretKey), GreetInProgressError> {
         let greeting_attempt = {
             use authenticated_cmds::latest::invite_greeter_start_greeting_attempt::{Rep, Req};
-            let mut maybe_greeting_attempt_guard = self.maybe_greeting_attempt.lock().await;
+            let mut register_greeting_attempt_guard = register_greeting_attempt.lock().await;
             let rep = self.cmds.send(Req { token: self.token }).await?;
 
             let greeting_attempt = match rep {
@@ -582,8 +576,8 @@ impl BaseGreetInitialCtx {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
             }?;
-            // Update the `maybe_greeting_attempt` field
-            maybe_greeting_attempt_guard.replace(greeting_attempt);
+            // Register the new greeting attempt
+            register_greeting_attempt_guard.replace(greeting_attempt);
             greeting_attempt
         };
 
@@ -681,12 +675,26 @@ impl BaseGreetInitialCtx {
         ))
     }
 
+    async fn do_wait_peer(self) -> Result<BaseGreetInProgress1Ctx, GreetInProgressError> {
+        let register_greeting_attempt = Arc::new(AsyncMutex::new(None));
+        self._do_wait_peer(register_greeting_attempt).await
+    }
+
     pub async fn do_wait_peer_with_canceller_event(
         self,
         cancel_requested: EventListener,
     ) -> Result<BaseGreetInProgress1Ctx, GreetInProgressError> {
         let cmds = self.cmds.clone();
-        let maybe_greeting_attempt = self.maybe_greeting_attempt.clone();
+
+        // This mutex is used to expose the greeting attempt ID obtained during
+        // the `start_greeting_attempt` command. This way, this ID can retrieved
+        // and used for cancellation if needed.
+        // We use an `AsyncMutex` here, which is allowing us to take the lock
+        // while sending the `start_greeting_attempt` request to the server
+        // so a concurrent coroutine is able to wait for it to succeed and then
+        // return the greeting attempt ID for a future cancellation.
+        let register_greeting_attempt = Arc::new(AsyncMutex::new(None));
+        let maybe_greeting_attempt = register_greeting_attempt.clone();
 
         let wait_cancellation = async {
             cancel_requested.await;
@@ -697,9 +705,9 @@ impl BaseGreetInitialCtx {
         };
 
         // It's important to run `do_wait_peer()` and `wait_cancellation()` concurrently
-        // since the both lock the `maybe_greeting_attempt` async mutex.
+        // since the both lock the greeting attempt async mutex.
         let maybe_canceller_ctx = select2_biased!(
-            res = self.do_wait_peer() => return res,
+            res = self._do_wait_peer(register_greeting_attempt) => return res,
             maybe_canceller_ctx = wait_cancellation => maybe_canceller_ctx,
         );
 
