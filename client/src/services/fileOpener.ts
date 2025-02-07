@@ -20,9 +20,9 @@ const ENABLED_FILE_VIEWERS = [
   FileContentType.Image,
   FileContentType.PdfDocument,
   FileContentType.Document,
-  // FileContentType.Video,
-  // FileContentType.Spreadsheet,
-  // FileContentType.Text,
+  FileContentType.Video,
+  FileContentType.Spreadsheet,
+  FileContentType.Text,
 ];
 
 const OPEN_FILE_SIZE_LIMIT = 15_000_000;
