@@ -49,8 +49,12 @@ impl Mountpoint {
                 create_suitable_mountpoint_dir(mountpoint_base_dir, &workspace_name)
                     .context("cannot create mountpoint dir")?;
 
-            let filesystem =
-                super::filesystem::Filesystem::new(ops, tokio::runtime::Handle::current());
+            let is_read_only = !self_role.can_write();
+            let filesystem = super::filesystem::Filesystem::new(
+                ops,
+                tokio::runtime::Handle::current(),
+                is_read_only,
+            );
             let options = [
                 fuser::MountOption::FSName("parsec".into()),
                 #[cfg(target_os = "macos")]
@@ -64,10 +68,10 @@ impl Mountpoint {
                 fuser::MountOption::NoAtime,
                 fuser::MountOption::Exec,
                 // TODO: Should detect and re-mount when the workspace switched between read-only and read-write
-                if self_role.can_write() {
-                    fuser::MountOption::RW
-                } else {
+                if is_read_only {
                     fuser::MountOption::RO
+                } else {
+                    fuser::MountOption::RW
                 },
                 fuser::MountOption::NoDev,
             ];
