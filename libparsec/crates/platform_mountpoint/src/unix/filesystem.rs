@@ -33,9 +33,12 @@ const TTL: std::time::Duration = std::time::Duration::ZERO;
 const GENERATION: u64 = 0;
 /// The default block size, set to 512 KB.
 const BLOCK_SIZE: u64 = 512 * 1024;
-/// Default permissions for files and folders.
+/// Read-write permissions for files and folders.
 /// Equivalent to `chmod` flags `all=,u=rwx`.
-const PERMISSIONS: u16 = 0o700;
+const READ_WRITE_PERMISSIONS: u16 = 0o700;
+/// Read-only permissions for files and folders.
+/// Equivalent to `chmod` flags `all=,u=rx`.
+const READ_ONLY_PERMISSIONS: u16 = 0o500;
 
 fn os_name_to_entry_name(name: &OsStr) -> EntryNameResult<EntryName> {
     name.to_str()
@@ -43,9 +46,20 @@ fn os_name_to_entry_name(name: &OsStr) -> EntryNameResult<EntryName> {
         .ok_or(EntryNameError::InvalidName)?
 }
 
-fn file_stat_to_file_attr(stat: FileStat, inode: Inode, uid: u32, gid: u32) -> fuser::FileAttr {
+fn file_stat_to_file_attr(
+    stat: FileStat,
+    inode: Inode,
+    uid: u32,
+    gid: u32,
+    is_read_only: bool,
+) -> fuser::FileAttr {
     let created: std::time::SystemTime = stat.created.into();
     let updated: std::time::SystemTime = stat.updated.into();
+    let perm = if is_read_only {
+        READ_ONLY_PERMISSIONS
+    } else {
+        READ_WRITE_PERMISSIONS
+    };
     fuser::FileAttr {
         ino: inode,
         size: stat.size,
@@ -55,7 +69,7 @@ fn file_stat_to_file_attr(stat: FileStat, inode: Inode, uid: u32, gid: u32) -> f
         ctime: updated,
         crtime: created,
         kind: fuser::FileType::RegularFile,
-        perm: PERMISSIONS,
+        perm,
         nlink: 1,
         uid,
         gid,
@@ -65,7 +79,18 @@ fn file_stat_to_file_attr(stat: FileStat, inode: Inode, uid: u32, gid: u32) -> f
     }
 }
 
-fn entry_stat_to_file_attr(stat: EntryStat, inode: Inode, uid: u32, gid: u32) -> fuser::FileAttr {
+fn entry_stat_to_file_attr(
+    stat: EntryStat,
+    inode: Inode,
+    uid: u32,
+    gid: u32,
+    is_read_only: bool,
+) -> fuser::FileAttr {
+    let perm = if is_read_only {
+        READ_ONLY_PERMISSIONS
+    } else {
+        READ_WRITE_PERMISSIONS
+    };
     match stat {
         EntryStat::File {
             created,
@@ -84,7 +109,7 @@ fn entry_stat_to_file_attr(stat: EntryStat, inode: Inode, uid: u32, gid: u32) ->
                 ctime: updated,
                 crtime: created,
                 kind: fuser::FileType::RegularFile,
-                perm: PERMISSIONS,
+                perm,
                 nlink: 1,
                 uid,
                 gid,
@@ -108,7 +133,7 @@ fn entry_stat_to_file_attr(stat: EntryStat, inode: Inode, uid: u32, gid: u32) ->
                 ctime: updated,
                 crtime: created,
                 kind: fuser::FileType::Directory,
-                perm: PERMISSIONS,
+                perm,
                 nlink: 1,
                 uid,
                 gid,
@@ -124,19 +149,24 @@ pub(super) struct Filesystem {
     ops: Arc<WorkspaceOps>,
     tokio_handle: tokio::runtime::Handle,
     inodes: Arc<Mutex<InodesManager>>,
+    is_read_only: bool,
 }
 
 impl Filesystem {
-    pub fn new(ops: Arc<WorkspaceOps>, tokio_handle: tokio::runtime::Handle) -> Self {
+    pub fn new(
+        ops: Arc<WorkspaceOps>,
+        tokio_handle: tokio::runtime::Handle,
+        is_read_only: bool,
+    ) -> Self {
         Self {
             ops,
             tokio_handle,
             inodes: Arc::new(Mutex::new(InodesManager::new())),
+            is_read_only,
         }
     }
 }
 
-// TODO: should do lookup using the EntryId instead of the path
 async fn reply_with_lookup(
     ops: &WorkspaceOps,
     uid: u32,
@@ -144,6 +174,7 @@ async fn reply_with_lookup(
     inode: Inode,
     entry_id: VlobID,
     reply: fuser::ReplyEntry,
+    is_read_only: bool,
 ) {
     // Confinement point information is unused here so ignore it
     match ops
@@ -152,7 +183,7 @@ async fn reply_with_lookup(
     {
         Ok(stat) => reply.entry(
             &TTL,
-            &entry_stat_to_file_attr(stat, inode, uid, gid),
+            &entry_stat_to_file_attr(stat, inode, uid, gid, is_read_only),
             GENERATION,
         ),
         Err(err) => match err {
@@ -351,6 +382,7 @@ impl fuser::Filesystem for Filesystem {
         };
         let ops = self.ops.clone();
         let inodes = self.inodes.clone();
+        let is_read_only = self.is_read_only;
         self.tokio_handle.spawn(async move {
             let path = {
                 let inodes_guard = inodes.lock().expect("mutex is poisoned");
@@ -385,7 +417,7 @@ impl fuser::Filesystem for Filesystem {
                     let inode = inodes_guard.insert_path(path);
                     reply.manual().entry(
                         &TTL,
-                        &entry_stat_to_file_attr(stat, inode, uid, gid),
+                        &entry_stat_to_file_attr(stat, inode, uid, gid, is_read_only),
                         GENERATION,
                     )
                 }
@@ -448,8 +480,9 @@ impl fuser::Filesystem for Filesystem {
             .expect("mutex is poisoned")
             .get_path_or_panic(ino);
         let ops = self.ops.clone();
+        let is_read_only = self.is_read_only;
         self.tokio_handle.spawn(async move {
-            let res = getattr_from_path(&ops, path, ino, uid, gid).await;
+            let res = getattr_from_path(&ops, path, ino, uid, gid, is_read_only).await;
 
             match res {
                 Ok(stat) => reply.manual().attr(&TTL, &stat),
@@ -485,6 +518,7 @@ impl fuser::Filesystem for Filesystem {
         };
         let ops = self.ops.clone();
         let inodes = self.inodes.clone();
+        let is_read_only = self.is_read_only;
         self.tokio_handle.spawn(async move {
             let path = {
                 let inodes_guard = inodes.lock().expect("mutex is poisoned");
@@ -499,7 +533,16 @@ impl fuser::Filesystem for Filesystem {
                         inodes_guard.insert_path(path.clone())
                     };
 
-                    reply_with_lookup(&ops, uid, gid, inode, entry_id, reply.manual()).await;
+                    reply_with_lookup(
+                        &ops,
+                        uid,
+                        gid,
+                        inode,
+                        entry_id,
+                        reply.manual(),
+                        is_read_only,
+                    )
+                    .await;
                 }
                 Err(err) => match err {
                     WorkspaceCreateFolderError::EntryExists { .. } => {
@@ -853,6 +896,7 @@ impl fuser::Filesystem for Filesystem {
 
         let inodes = self.inodes.clone();
         let ops = self.ops.clone();
+        let is_read_only = self.is_read_only;
         self.tokio_handle.spawn(async move {
             let parent_path = {
                 let inodes_guard = inodes.lock().expect("mutex is poisoned");
@@ -944,7 +988,7 @@ impl fuser::Filesystem for Filesystem {
 
             reply.manual().created(
                 &TTL,
-                &file_stat_to_file_attr(stat, inode, uid, gid),
+                &file_stat_to_file_attr(stat, inode, uid, gid, is_read_only),
                 GENERATION,
                 fd.0.into(),
                 open_flags,
@@ -991,6 +1035,7 @@ impl fuser::Filesystem for Filesystem {
 
             if let Some(fh) = fh {
                 let ops = self.ops.clone();
+                let is_read_only = self.is_read_only;
                 self.tokio_handle.spawn(async move {
                     let fd = FileDescriptor(fh as u32);
                     match ops.fd_resize(fd, size, false).await {
@@ -1022,9 +1067,10 @@ impl fuser::Filesystem for Filesystem {
                         }
                     };
 
-                    reply
-                        .manual()
-                        .attr(&TTL, &file_stat_to_file_attr(stat, ino, uid, gid));
+                    reply.manual().attr(
+                        &TTL,
+                        &file_stat_to_file_attr(stat, ino, uid, gid, is_read_only),
+                    );
                 });
 
                 return;
@@ -1038,6 +1084,7 @@ impl fuser::Filesystem for Filesystem {
                 };
 
                 let ops = self.ops.clone();
+                let is_read_only = self.is_read_only;
                 self.tokio_handle.spawn(async move {
                     let options = OpenOptions {
                         read: false,
@@ -1105,9 +1152,10 @@ impl fuser::Filesystem for Filesystem {
                         }
                     }
 
-                    reply
-                        .manual()
-                        .attr(&TTL, &file_stat_to_file_attr(stat, ino, uid, gid));
+                    reply.manual().attr(
+                        &TTL,
+                        &file_stat_to_file_attr(stat, ino, uid, gid, is_read_only),
+                    );
                 });
 
                 return;
@@ -1129,9 +1177,10 @@ impl fuser::Filesystem for Filesystem {
         };
 
         let ops = self.ops.clone();
+        let is_read_only = self.is_read_only;
 
         self.tokio_handle.spawn(async move {
-            let res = getattr_from_path(&ops, path, ino, uid, gid).await;
+            let res = getattr_from_path(&ops, path, ino, uid, gid, is_read_only).await;
 
             match res {
                 Ok(attr) => reply.manual().attr(&TTL, &attr),
@@ -1452,6 +1501,7 @@ impl fuser::Filesystem for Filesystem {
         let gid = req.gid();
         let ops = self.ops.clone();
         let inodes = self.inodes.clone();
+        let is_read_only = self.is_read_only;
         self.tokio_handle.spawn(async move {
             let parent_path = &boxed_path_and_folder_reader.0;
             let folder_reader = &boxed_path_and_folder_reader.1;
@@ -1496,7 +1546,7 @@ impl fuser::Filesystem for Filesystem {
                         (offset + 1) as i64,
                         OsStr::new(child_name.as_ref()),
                         &TTL,
-                        &entry_stat_to_file_attr(child_stat, child_inode, uid, gid),
+                        &entry_stat_to_file_attr(child_stat, child_inode, uid, gid, is_read_only),
                         GENERATION,
                     ),
                     EntryStat::Folder { .. } => reply.borrow().add(
@@ -1504,7 +1554,7 @@ impl fuser::Filesystem for Filesystem {
                         (offset + 1) as i64,
                         OsStr::new(child_name.as_ref()),
                         &TTL,
-                        &entry_stat_to_file_attr(child_stat, child_inode, uid, gid),
+                        &entry_stat_to_file_attr(child_stat, child_inode, uid, gid, is_read_only),
                         GENERATION,
                     ),
                 };
@@ -1659,11 +1709,12 @@ async fn getattr_from_path(
     ino: u64,
     uid: u32,
     gid: u32,
+    is_read_only: bool,
 ) -> Result<fuser::FileAttr, i32> {
     match ops
         .stat_entry(&path)
         .await
-        .map(|stat| entry_stat_to_file_attr(stat, ino, uid, gid))
+        .map(|stat| entry_stat_to_file_attr(stat, ino, uid, gid, is_read_only))
         .inspect(|stat| log::trace!("File stat for {ino}: {stat:?}"))
         .inspect_err(|e| log::trace!("File stat for {ino} result in error: {e:?}"))
     {
