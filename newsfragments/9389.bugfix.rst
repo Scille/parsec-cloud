@@ -1,0 +1,1 @@
+Do not report write permissions on linux and macOS when a workspace is read-only.
