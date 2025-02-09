@@ -136,24 +136,48 @@ async fn reshape(
         let mut local_miss = false;
         let start = reshape.destination().start;
         for chunk_view in reshape.source().iter() {
-            let outcome = ops.store.get_chunk_or_block_local_only(chunk_view).await;
-            match outcome {
-                Ok(chunk_data) => {
+            let found = opened_file
+                .new_chunks
+                .iter()
+                .find_map(|(candidate_id, chunk_data)| {
+                    if *candidate_id == chunk_view.id {
+                        Some(chunk_data)
+                    } else {
+                        None
+                    }
+                });
+            match found {
+                Some(chunk_data) => {
                     chunk_view
-                        .copy_between_start_and_stop(&chunk_data, start, &mut buf, &mut buf_size)
-                        .expect("write on vec cannot fail");
+                        .copy_between_start_and_stop(chunk_data, start, &mut buf, &mut buf_size)
+                        .expect("prepare_read/buf/size are consistent");
                 }
-                Err(ReadChunkOrBlockLocalOnlyError::ChunkNotFound) => {
-                    // ...if some data are missing in local, this reshape operation is not possible
-                    // so we simply ignore it by not committing the changes in the manifest.
-                    local_miss = true;
-                    break;
-                }
-                Err(ReadChunkOrBlockLocalOnlyError::Stopped) => {
-                    return Err(ReshapeAndFlushError::Stopped)
-                }
-                Err(ReadChunkOrBlockLocalOnlyError::Internal(err)) => {
-                    return Err(err.context("cannot read chunks").into())
+                None => {
+                    let outcome = ops.store.get_chunk_or_block_local_only(chunk_view).await;
+                    match outcome {
+                        Ok(chunk_data) => {
+                            chunk_view
+                                .copy_between_start_and_stop(
+                                    &chunk_data,
+                                    start,
+                                    &mut buf,
+                                    &mut buf_size,
+                                )
+                                .expect("write on vec cannot fail");
+                        }
+                        Err(ReadChunkOrBlockLocalOnlyError::ChunkNotFound) => {
+                            // ...if some data are missing in local, this reshape operation is not possible
+                            // so we simply ignore it by not committing the changes in the manifest.
+                            local_miss = true;
+                            break;
+                        }
+                        Err(ReadChunkOrBlockLocalOnlyError::Stopped) => {
+                            return Err(ReshapeAndFlushError::Stopped)
+                        }
+                        Err(ReadChunkOrBlockLocalOnlyError::Internal(err)) => {
+                            return Err(err.context("cannot read chunks").into())
+                        }
+                    }
                 }
             }
         }

@@ -40,25 +40,52 @@ async fn write_then_flush(env: &TestbedEnv) {
     let mut spy = ops.event_bus.spy.start_expecting();
 
     ops.fd_write_start_eof(fd, b"new").await.unwrap();
-    ops.fd_flush(fd).await.unwrap();
 
-    // Flush makes metadata visible
+    // Write makes metadata visible
     let size = match ops.stat_entry_by_id(wksp1_bar_txt_id).await.unwrap() {
         EntryStat::File { size, .. } => size,
         EntryStat::Folder { .. } => unreachable!(),
     };
     p_assert_eq!(size, initial_size + 3);
 
+    // But the change hasn't been saved to the store yet
+    let manifest = ops.store.get_manifest(wksp1_bar_txt_id).await.unwrap();
+    let file_manifest_after_write = match manifest {
+        ArcLocalChildManifest::File(file_manifest) => file_manifest,
+        _ => unreachable!(),
+    };
+    p_assert_eq!(file_manifest_after_write.size, initial_size);
+
+    ops.fd_flush(fd).await.unwrap();
+
+    // Flush causes a reshape and writes the modification to the local storage
+    let manifest = ops.store.get_manifest(wksp1_bar_txt_id).await.unwrap();
+    let file_manifest_after_flush = match manifest {
+        ArcLocalChildManifest::File(file_manifest) => file_manifest,
+        _ => unreachable!(),
+    };
+    p_assert_eq!(file_manifest_after_flush.size, initial_size + 3);
+    assert!(file_manifest_after_flush.is_reshaped());
+
     // Additional flush is a noop
     ops.fd_flush(fd).await.unwrap();
 
-    spy.assert_no_events(); // Event is only triggered on file close
+    // Event is only triggered on file close
+    spy.assert_no_events();
 
     ops.fd_close(fd).await.unwrap();
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
         p_assert_eq!(e.realm_id, wksp1_id);
         p_assert_eq!(e.entry_id, wksp1_bar_txt_id);
     });
+
+    // The manifest is still the same after the close
+    let manifest = ops.store.get_manifest(wksp1_bar_txt_id).await.unwrap();
+    let file_manifest_after_close = match manifest {
+        ArcLocalChildManifest::File(file_manifest) => file_manifest,
+        _ => unreachable!(),
+    };
+    p_assert_eq!(file_manifest_after_close, file_manifest_after_flush);
 
     ops.stop().await.unwrap();
 }

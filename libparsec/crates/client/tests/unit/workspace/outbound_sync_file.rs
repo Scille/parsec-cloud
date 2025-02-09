@@ -12,7 +12,7 @@ use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
 use crate::{
-    workspace::{OpenOptions, OutboundSyncOutcome},
+    workspace::{InboundSyncOutcome, OpenOptions, OutboundSyncOutcome},
     EventWorkspaceOpsInboundSyncDone, EventWorkspaceOpsOutboundSyncAborted,
     EventWorkspaceOpsOutboundSyncDone, EventWorkspaceOpsOutboundSyncProgress,
     EventWorkspaceOpsOutboundSyncStarted, WorkspaceOps,
@@ -330,6 +330,14 @@ async fn entry_is_busy_after_local_retrieved(
             p_assert_eq!(event.realm_id, wksp1_id);
             p_assert_eq!(event.entry_id, wksp1_bar_txt_id);
         });
+        // The `NEW_DATA` block is being uploaded
+        spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncProgress| {
+            p_assert_eq!(event.realm_id, wksp1_id);
+            p_assert_eq!(event.entry_id, wksp1_bar_txt_id);
+            p_assert_eq!(event.block_index, 0);
+            p_assert_eq!(event.blocks, 1);
+            p_assert_eq!(event.blocksize, 512);
+        });
         spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncAborted| {
             p_assert_eq!(event.realm_id, wksp1_id);
             p_assert_eq!(event.entry_id, wksp1_bar_txt_id);
@@ -337,8 +345,10 @@ async fn entry_is_busy_after_local_retrieved(
     }
 
     // The outbound sync has failed. Since we injected the concurrent open at
-    // `Moment::OutboundSyncLocalRetrieved`, the failure occured during reshape,
-    // hence nothing has been uploaded to the server.
+    // `Moment::OutboundSyncLocalRetrieved` and the file was already reshaped,
+    // the corresponding block and manifest have been uploaded to the server.
+    // However, the manifest could not be updated locally to acknowledge the
+    // new remote version.
 
     // 3) The file is still opened, this time the sync cannot even start
 
@@ -350,7 +360,8 @@ async fn entry_is_busy_after_local_retrieved(
         spy.assert_no_events();
     }
 
-    // 4) Now close the file, the next sync should proceed
+    // 4) Now close the file, the next outbound sync should fail since the manifest
+    // has already been uploaded
 
     {
         concurrent_file_unlock_requested.notify(1);
@@ -360,22 +371,56 @@ async fn entry_is_busy_after_local_retrieved(
         let mut spy = wksp1_ops.event_bus.spy.start_expecting();
 
         let outcome = wksp1_ops.outbound_sync(wksp1_bar_txt_id).await.unwrap();
-
-        // Given nothing was uploaded on server in the previous sync, here we have
-        // a normal outbound sync that succeed
-
-        p_assert_matches!(outcome, OutboundSyncOutcome::Done);
+        p_assert_matches!(outcome, OutboundSyncOutcome::InboundSyncNeeded);
 
         spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncStarted| {
             p_assert_eq!(event.realm_id, wksp1_id);
             p_assert_eq!(event.entry_id, wksp1_bar_txt_id);
         });
-        spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncProgress| {
+        // The new `new_troubles` block is being uploaded
+        if concurrent_write {
+            spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncProgress| {
+                p_assert_eq!(event.realm_id, wksp1_id);
+                p_assert_eq!(event.entry_id, wksp1_bar_txt_id);
+                p_assert_eq!(event.block_index, 0);
+                p_assert_eq!(event.blocks, 1);
+                p_assert_eq!(event.blocksize, 512);
+            });
+        }
+        spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncAborted| {
             p_assert_eq!(event.realm_id, wksp1_id);
             p_assert_eq!(event.entry_id, wksp1_bar_txt_id);
-            p_assert_eq!(event.block_index, 0);
-            p_assert_eq!(event.blocks, 1);
-            p_assert_eq!(event.blocksize, 512);
+        });
+    }
+
+    // 5) Perform the inbound sync
+
+    {
+        let mut spy = wksp1_ops.event_bus.spy.start_expecting();
+
+        let outcome = wksp1_ops.inbound_sync(wksp1_bar_txt_id).await.unwrap();
+        p_assert_matches!(outcome, InboundSyncOutcome::Updated);
+
+        // Version 2 is acknowledged
+        assert_file(&wksp1_ops, wksp1_bar_txt_id, true, 2, expected_content).await;
+
+        spy.assert_next(|event: &EventWorkspaceOpsInboundSyncDone| {
+            p_assert_eq!(event.realm_id, wksp1_id);
+            p_assert_eq!(event.entry_id, wksp1_bar_txt_id);
+        });
+    }
+
+    // 6) Now the next outbound sync should work
+
+    {
+        let mut spy = wksp1_ops.event_bus.spy.start_expecting();
+
+        let outcome = wksp1_ops.outbound_sync(wksp1_bar_txt_id).await.unwrap();
+        p_assert_matches!(outcome, OutboundSyncOutcome::Done);
+
+        spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncStarted| {
+            p_assert_eq!(event.realm_id, wksp1_id);
+            p_assert_eq!(event.entry_id, wksp1_bar_txt_id);
         });
         spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncDone| {
             p_assert_eq!(event.realm_id, wksp1_id);
@@ -383,8 +428,8 @@ async fn entry_is_busy_after_local_retrieved(
         });
     }
 
-    // Check the manifest is no longer need sync
-    assert_file(&wksp1_ops, wksp1_bar_txt_id, false, 2, expected_content).await;
+    // Check the manifest is no longer need sync, and bumped to version 3
+    assert_file(&wksp1_ops, wksp1_bar_txt_id, false, 3, expected_content).await;
 
     wksp1_ops.stop().await.unwrap();
 }
