@@ -824,7 +824,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
         // removal of new changes (see the `cleanup` implementation for more info).
 
         self.tokio_handle.block_on(async move {
-            if !self.ops.get_current_name_and_self_role().1.can_write() {
+            if self.is_read_only {
                 // WinFSP lacks a proper read-only support, so we will receive write
                 // operations no matter what (see https://github.com/winfsp/winfsp/issues/84)
                 return Err(STATUS_MEDIA_WRITE_PROTECTED);
