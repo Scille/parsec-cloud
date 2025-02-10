@@ -48,6 +48,8 @@ enum Command {
     /// Contains subcommands related to shared recovery devices (shamir)
     #[command(subcommand)]
     SharedRecovery(shared_recovery::Group),
+    /// Mount a realm export as a workspace.
+    MountRealmExport(mount_realm_export::Args),
 }
 
 #[tokio::main]
@@ -69,6 +71,9 @@ async fn main() -> anyhow::Result<()> {
         Command::Tos(tos) => tos::dispatch_command(tos).await,
         Command::SharedRecovery(shared_recovery) => {
             shared_recovery::dispatch_command(shared_recovery).await
+        }
+        Command::MountRealmExport(mount_realm_export) => {
+            mount_realm_export::main(mount_realm_export).await
         }
     }
 }

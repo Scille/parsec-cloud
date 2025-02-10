@@ -25,9 +25,12 @@ libparsec_crypto = { workspace = true }
 libparsec_client = { workspace = true }
 libparsec_client_connection = { workspace = true }
 libparsec_platform_ipc = { workspace = true }
+libparsec_platform_mountpoint = { workspace = true }
 
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["default", "derive", "env"] }
+# `termination` feature enable handling of SIGHUP/SIGTERM on top of SIGINT
+ctrlc = { workspace = true, features = ["termination"] }
 dialoguer = { workspace = true, features = ["fuzzy-select"] }
 env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
 log = { workspace = true }
@@ -43,6 +46,7 @@ itertools = { workspace = true }
 
 [dev-dependencies]
 libparsec = { workspace = true, features = ["cli-tests"] }
+libparsec_tests_fixtures = { workspace = true }
 
 assert_cmd = { workspace = true }
 predicates = { workspace = true, features = ["regex"] }
