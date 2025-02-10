@@ -806,9 +806,9 @@ async def invited_greeting_with_deleted_shamir_tester(
         INVITATION_ALREADY_USED_OR_DELETED = 410
         with pytest.raises(RpcTransportError) as ctx:
             await do()
-        assert (
-            ctx.value.rep.status_code == INVITATION_ALREADY_USED_OR_DELETED
-        ), ctx.value.rep.status_code
+        assert ctx.value.rep.status_code == INVITATION_ALREADY_USED_OR_DELETED, (
+            ctx.value.rep.status_code
+        )
 
     yield _invited_http_common_errors_tester
 

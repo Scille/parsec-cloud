@@ -47,7 +47,7 @@ SELECT
 _q_get_realms_for_user = Q(
     f"""
 SELECT DISTINCT ON (realm)
-    { q_realm(_id="realm_user_role.realm", select="realm_id") } AS realm_id,
+    {q_realm(_id="realm_user_role.realm", select="realm_id")} AS realm_id,
     role,
     certified_on
 FROM realm_user_role

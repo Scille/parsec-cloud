@@ -412,7 +412,7 @@ SELECT
     human.label
 FROM human LEFT JOIN user_ ON human._id = user_.human
 WHERE
-    human.organization = { q_organization_internal_id("$organization_id") }
+    human.organization = {q_organization_internal_id("$organization_id")}
     AND user_.user_id = $user_id
 LIMIT 1
 """
@@ -455,7 +455,7 @@ SELECT
     token
 FROM invitation
 WHERE
-    invitation.organization = { q_organization_internal_id("$organization_id") }
+    invitation.organization = {q_organization_internal_id("$organization_id")}
     AND type = 'SHAMIR_RECOVERY'
     AND shamir_recovery = $shamir_recovery_setup
     AND deleted_on IS NULL
@@ -493,13 +493,13 @@ INSERT INTO invitation(
     created_on
 )
 VALUES (
-    { q_organization_internal_id("$organization_id") },
+    {q_organization_internal_id("$organization_id")},
     $token,
     $type,
     $user_invitation_claimer_email,
-    { q_user_internal_id(organization_id="$organization_id", user_id="$device_invitation_claimer_user_id") },
+    {q_user_internal_id(organization_id="$organization_id", user_id="$device_invitation_claimer_user_id")},
     $shamir_recovery_setup,
-    { q_device_internal_id(organization_id="$organization_id", device_id="$created_by") },
+    {q_device_internal_id(organization_id="$organization_id", device_id="$created_by")},
     $created_on
 )
 RETURNING _id, created_by_device
@@ -554,7 +554,7 @@ LEFT JOIN human AS shamir_recovery_human ON shamir_recovery_user.human = shamir_
 LEFT JOIN shamir_recovery_share ON shamir_recovery_share.shamir_recovery = shamir_recovery_setup._id
 LEFT JOIN user_ AS recipient_user_ ON shamir_recovery_share.recipient = recipient_user_._id
 WHERE
-    invitation.organization = { q_organization_internal_id("$organization_id") }
+    invitation.organization = {q_organization_internal_id("$organization_id")}
     -- Different invitation types have different filtering rules
     AND (
         (invitation.type = 'USER' AND $is_admin)
@@ -599,7 +599,7 @@ LEFT JOIN shamir_recovery_setup ON invitation.shamir_recovery = shamir_recovery_
 LEFT JOIN user_ AS shamir_recovery_user ON shamir_recovery_setup.user_ = shamir_recovery_user._id
 LEFT JOIN human AS shamir_recovery_human ON shamir_recovery_user.human = shamir_recovery_human._id
 WHERE
-    invitation.organization = { q_organization_internal_id("$organization_id") }
+    invitation.organization = {q_organization_internal_id("$organization_id")}
 ORDER BY created_on
 """
 )
@@ -703,7 +703,7 @@ SELECT
     user_.user_id
 FROM user_ LEFT JOIN human ON user_.human = human._id
 WHERE
-    user_.organization = { q_organization_internal_id("$organization_id") }
+    user_.organization = {q_organization_internal_id("$organization_id")}
     AND human.email = $email
     AND (user_.revoked_on IS NULL OR user_.revoked_on > $now)
 LIMIT 1
@@ -743,7 +743,7 @@ WITH result AS (
     INSERT INTO greeting_session(invitation, greeter)
     VALUES (
         $invitation_internal_id,
-        { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
+        {q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id")}
     )
     ON CONFLICT DO NOTHING
     RETURNING greeting_session._id
@@ -752,7 +752,7 @@ SELECT _id FROM result
 UNION ALL SELECT _id
 FROM greeting_session
 WHERE invitation = $invitation_internal_id
-AND greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
+AND greeter = {q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id")}
 LIMIT 1
 """
 )
@@ -766,7 +766,7 @@ WITH result AS (
         greeting_session
     )
     VALUES (
-        { q_organization_internal_id("$organization_id") },
+        {q_organization_internal_id("$organization_id")},
         $new_greeting_attempt_id,
         $greeting_session_id
     )

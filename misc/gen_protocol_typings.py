@@ -166,7 +166,7 @@ def gen_req(
         fields.append(("unit", unit_type_name))
 
     code = f"""class Req:
-    def __init__(self, {','.join(n + ': ' + t for n, t in fields)}) -> None: ...
+    def __init__(self, {",".join(n + ": " + t for n, t in fields)}) -> None: ...
 
     def dump(self) -> bytes: ...
 """
@@ -215,7 +215,7 @@ class RepUnknownStatus(Rep):
         code += f"""
 
 class {rep_cls_name}(Rep):
-    def __init__(self, {','.join(n + ': ' + t for n, t in fields)}) -> None: ...
+    def __init__(self, {",".join(n + ": " + t for n, t in fields)}) -> None: ...
 """
 
         for field_name, field_type in sorted(fields, key=lambda x: x[0]):
@@ -273,7 +273,7 @@ def gen_nested_type_variant(
 
             code += f"""
 class {subclass_name}({class_name}):
-    def __init__(self, {','.join(n + ': ' + t for n, t in fields)}) -> None: ...
+    def __init__(self, {",".join(n + ": " + t for n, t in fields)}) -> None: ...
 """
 
             for field_name, field_type in sorted(fields, key=lambda x: x[0]):
@@ -296,7 +296,7 @@ def gen_nested_type_struct(
     fields = [cook_field(f, field_parse_callback) for f in nested_type.get("fields", ())]
 
     code = f"""class {class_name}:
-    def __init__(self, {','.join(n + ': ' + t for n, t in fields)}) -> None: ...
+    def __init__(self, {",".join(n + ": " + t for n, t in fields)}) -> None: ...
 """
 
     for field_name, field_type in sorted(fields, key=lambda x: x[0]):
@@ -392,7 +392,7 @@ def gen_pyi_file_for_cmd_spec(
             collected_items[other_version][cmd_name] = reexported_items
             code = (
                 f"""
-from ..{first_version}.{cmd_name} import {', '.join(reexported_items)}
+from ..{first_version}.{cmd_name} import {", ".join(reexported_items)}
 
 
 __all__ = ["""
@@ -525,7 +525,7 @@ class ActiveUsersLimit:
 
 class AnyCmdReq:
     @classmethod
-    def load(cls, raw: bytes) -> {'|'.join(cmd + '.Req' for cmd in cmds_names)}: ...
+    def load(cls, raw: bytes) -> {"|".join(cmd + ".Req" for cmd in cmds_names)}: ...
 """
             version_code += (
                 '\n\n__all__ =["AnyCmdReq", ' + ", ".join(f'"{c}"' for c in cmds_names) + "]\n"

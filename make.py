@@ -185,7 +185,7 @@ class Cmd(Op):
         display_cmds = []
         display_extra_cmds = f" {' '.join(extra_cmd_args)}" if extra_cmd_args else ""
         display_cmds.append(f"{CYAN}{self.cmd}{display_extra_cmds}{NO_COLOR}")
-        return f"{display_extra_env} {' && '.join(display_cmds) }"
+        return f"{display_extra_env} {' && '.join(display_cmds)}"
 
     def run(self, cwd: Path, extra_cmd_args: Iterable[str]) -> None:
         args = self.cmd.split() + list(extra_cmd_args)

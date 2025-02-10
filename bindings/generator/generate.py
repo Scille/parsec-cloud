@@ -107,9 +107,9 @@ env = Environment(
 
 def _test_change_case_function(input: str, expected: str, func: Callable[[str], str]) -> None:
     camel_case = func(input)
-    assert (
-        camel_case == expected
-    ), f"expected `{expected}` but got `{camel_case}` (input = `{input}`, func = {func.__name__})"
+    assert camel_case == expected, (
+        f"expected `{expected}` but got `{camel_case}` (input = `{input}`, func = {func.__name__})"
+    )
 
 
 def snake_to_camel_case(s: str) -> str:
@@ -179,9 +179,9 @@ class BaseTypeInUse:
 
     @staticmethod
     def parse(param: type) -> "BaseTypeInUse":
-        assert not isinstance(
-            param, str
-        ), f"Bad param `{param!r}`, passing type as string is not supported"
+        assert not isinstance(param, str), (
+            f"Bad param `{param!r}`, passing type as string is not supported"
+        )
         origin = getattr(param, "__origin__", None)
         args = get_args(param)
         if origin is Union:  # Python resolves `Optional[Foo]` as `Union[Foo, None]`
@@ -288,9 +288,9 @@ class BaseTypeInUse:
 
         else:
             typespec = TYPES_DB.get(param)
-            assert (
-                typespec is not None
-            ), f"Bad param `{param!r}`, not a scalar/variant/struct/enum (bases={param.__bases__})"
+            assert typespec is not None, (
+                f"Bad param `{param!r}`, not a scalar/variant/struct/enum (bases={param.__bases__})"
+            )
             return typespec
 
 

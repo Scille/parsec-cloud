@@ -21,4 +21,4 @@ if match:
     ]
 
     if bad_commits:
-        raise SystemExit(f"""Invalid signatures in commits: {', '.join(bad_commits)}""")
+        raise SystemExit(f"""Invalid signatures in commits: {", ".join(bad_commits)}""")

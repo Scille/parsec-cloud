@@ -43,9 +43,9 @@ def test_each_cmd_req_rep_has_dedicated_test() -> None:
                             # Last chance: the command might have multiple tests and hence have its name used as prefix
                             tests = [x for x in dir(api_mod) if x.startswith(test_name)]
                             if tests:
-                                assert (
-                                    len(tests) > 1
-                                ), f"Test {tests[0]} should be simply named {test_name}"
+                                assert len(tests) > 1, (
+                                    f"Test {tests[0]} should be simply named {test_name}"
+                                )
                             else:
                                 missing.append(test_name)
 

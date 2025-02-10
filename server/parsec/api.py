@@ -65,9 +65,9 @@ def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:  # pyright: ignore[reportMissingTyp
     else:
         assert m_family == "anonymous_cmds"
         expected_type_name = "AnonymousClientContext"
-    assert types["client_ctx"] == ForwardRef(
-        expected_type_name
-    ), f"Expect `client_ctx` to be an `{expected_type_name}`"
+    assert types["client_ctx"] == ForwardRef(expected_type_name), (
+        f"Expect `client_ctx` to be an `{expected_type_name}`"
+    )
 
     fn._api_info = {  # type: ignore[attr-defined]
         "cmd": m_cmd,

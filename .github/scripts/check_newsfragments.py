@@ -50,7 +50,7 @@ def check_newsfragment(fragment: Path) -> Optional[bool]:
     else:
         # Sanity check: try to deserialize the response
         data = json.loads(response.read())
-        print(f"[{fragment_name}] Issue #{issue} => {data["title"]}")
+        print(f"[{fragment_name}] Issue #{issue} => {data['title']}")
         return True
 
 

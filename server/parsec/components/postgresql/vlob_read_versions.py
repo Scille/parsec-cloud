@@ -102,7 +102,7 @@ _q_get_vlob_at_version = Q(
     f"""
 SELECT
     vlob_atom.key_index,
-    { q_device(select="device_id", _id="author") } AS author,
+    {q_device(select="device_id", _id="author")} AS author,
     vlob_atom.version,
     vlob_atom.created_on,
     vlob_atom.blob

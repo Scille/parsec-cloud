@@ -43,7 +43,7 @@ _q_get_realm_current_participants = Q(
     f"""
 WITH per_user_last_role AS (
     SELECT DISTINCT ON(user_)
-        { q_user(_id="realm_user_role.user_", select="user_id") } AS user_id,
+        {q_user(_id="realm_user_role.user_", select="user_id")} AS user_id,
         role
     FROM  realm_user_role
     WHERE realm = $realm_internal_id
@@ -155,7 +155,7 @@ INSERT INTO realm_keys_bundle_access (
     access
 ) VALUES (
     $realm_internal_id,
-    { q_user_internal_id(organization="$organization_internal_id", user_id="$user_id") },
+    {q_user_internal_id(organization="$organization_internal_id", user_id="$user_id")},
     $realm_keys_bundle_internal_id,
     $access
 )
@@ -172,7 +172,7 @@ INSERT INTO realm_sequester_keys_bundle_access (
     access
 ) VALUES (
     $realm_internal_id,
-    { q_sequester_service_internal_id(organization="$organization_internal_id", service_id="$service_id") },
+    {q_sequester_service_internal_id(organization="$organization_internal_id", service_id="$service_id")},
     $realm_keys_bundle_internal_id,
     $access
 )

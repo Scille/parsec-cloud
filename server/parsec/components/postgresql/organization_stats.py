@@ -42,7 +42,7 @@ SELECT
                 )
             )
             FROM user_
-            WHERE organization = { q_organization_internal_id("$organization_id") }
+            WHERE organization = {q_organization_internal_id("$organization_id")}
             AND created_on <= $at
         )
     ) AS users,
@@ -51,7 +51,7 @@ SELECT
         FROM realm
         LEFT JOIN realm_user_role
         ON realm_user_role.realm = realm._id
-        WHERE realm.organization = { q_organization_internal_id("$organization_id") }
+        WHERE realm.organization = {q_organization_internal_id("$organization_id")}
         AND realm_user_role.certified_on <= $at
     ) AS realms,
     (
@@ -60,7 +60,7 @@ SELECT
         LEFT JOIN realm
         ON vlob_atom.realm = realm._id
         WHERE
-            realm.organization = { q_organization_internal_id("$organization_id") }
+            realm.organization = {q_organization_internal_id("$organization_id")}
             AND vlob_atom.created_on <= $at
             AND (vlob_atom.deleted_on IS NULL OR vlob_atom.deleted_on > $at)
     ) AS metadata_size,
@@ -68,7 +68,7 @@ SELECT
         SELECT COALESCE(SUM(size), 0)
         FROM block
         WHERE
-            organization = { q_organization_internal_id("$organization_id") }
+            organization = {q_organization_internal_id("$organization_id")}
             AND created_on <= $at
             AND (deleted_on IS NULL OR deleted_on > $at)
     ) AS data_size

@@ -44,7 +44,7 @@ my_human AS (
     SELECT
         COALESCE(
             (SELECT _id FROM new_human),
-            ({ q_human_internal_id(organization="$organization_internal_id", email="$email") })
+            ({q_human_internal_id(organization="$organization_internal_id", email="$email")})
         ) AS _id
 ),
 

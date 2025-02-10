@@ -184,9 +184,9 @@ def generate_invite_email(
     # mail settings
     message = MIMEMultipart("alternative")
     if greeter_name:
-        message["Subject"] = f"[Parsec] { greeter_name } invited you to { organization_id.str }"
+        message["Subject"] = f"[Parsec] {greeter_name} invited you to {organization_id.str}"
     else:
-        message["Subject"] = f"[Parsec] New device invitation to { organization_id.str }"
+        message["Subject"] = f"[Parsec] New device invitation to {organization_id.str}"
     message["From"] = from_addr
     message["To"] = to_addr
     if reply_to is not None and greeter_name is not None:
@@ -785,8 +785,7 @@ class BaseInviteComponent:
                 )
             case (
                 InvitationToken() as token,
-                SendEmailBadOutcome.BAD_SMTP_CONFIG
-                | SendEmailBadOutcome.SERVER_UNAVAILABLE,
+                SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE,
             ):
                 email_sent = authenticated_cmds.latest.invite_new_user.InvitationEmailSentStatus.SERVER_UNAVAILABLE
             case (InvitationToken() as token, SendEmailBadOutcome.RECIPIENT_REFUSED):
@@ -828,8 +827,7 @@ class BaseInviteComponent:
                 )
             case (
                 InvitationToken() as token,
-                SendEmailBadOutcome.BAD_SMTP_CONFIG
-                | SendEmailBadOutcome.SERVER_UNAVAILABLE,
+                SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE,
             ):
                 email_sent = authenticated_cmds.latest.invite_new_device.InvitationEmailSentStatus.SERVER_UNAVAILABLE
             case (InvitationToken() as token, SendEmailBadOutcome.RECIPIENT_REFUSED):
@@ -866,8 +864,7 @@ class BaseInviteComponent:
                 email_sent = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.SUCCESS
             case (
                 InvitationToken() as token,
-                SendEmailBadOutcome.BAD_SMTP_CONFIG
-                | SendEmailBadOutcome.SERVER_UNAVAILABLE,
+                SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE,
             ):
                 email_sent = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.SERVER_UNAVAILABLE
             case (InvitationToken() as token, SendEmailBadOutcome.RECIPIENT_REFUSED):

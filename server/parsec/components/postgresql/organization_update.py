@@ -49,7 +49,7 @@ def _q_update_factory(
         f"""
             UPDATE organization
             SET
-            { ", ".join(fields) }
+            {", ".join(fields)}
             WHERE organization_id = $organization_id
             RETURNING is_expired
         """

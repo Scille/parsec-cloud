@@ -102,7 +102,7 @@ _q_get_latest_vlob = Q(
     f"""
 SELECT
     key_index,
-    { q_device(select="device_id", _id="author") } AS author,
+    {q_device(select="device_id", _id="author")} AS author,
     version,
     created_on,
     blob
@@ -120,7 +120,7 @@ _q_get_vlob_at_timestamp = Q(
     f"""
 SELECT
     key_index,
-    { q_device(select="device_id", _id="author") } AS author,
+    {q_device(select="device_id", _id="author")} AS author,
     version,
     created_on,
     blob
