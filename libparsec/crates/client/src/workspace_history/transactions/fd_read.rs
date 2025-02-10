@@ -63,17 +63,17 @@ pub async fn fd_read(
     // - We do `ops.fd_read(fd, 100, 100, buf)`
     //
     // file start   ...  `offset`<----- `size` bytes ------->`end`  ...   file end
-    //     |0               |100                               |200           |300
-    //     [ block 1 ][   block 2 ]      [ block 3   ][  block 4  ][  block 5 ]
-    //     0         64           96    128          192          256         300
+    //     |0                 |100            |200           |300
+    //     [ block 1 ][ block 2 ][ block 3 ][ block 4 ][ block 5 ]
+    //     0         64         128        192        256         300
     //
     // - `offset` = 100
     // - `size` = 100
     // - `end` = 200
     // - `involved_blocks` = [block 2, block 3, block 4]
-    // - When reading block 2: `to_write_start` = 36, `to_write_size` = 64 (i.e. skip the beginning of the block)
-    // - When reading block 3: `to_write_start` = 0, `to_write_size` = 32 (i.e. write the whole block)
-    // - When reading block 4: `to_write_start` = 0, `to_write_size` = 64 (i.e. skip the end of the block)
+    // - When reading block 2: `to_write_start` = 36, `to_write_size` = 28 (i.e. skip the beginning of the block)
+    // - When reading block 3: `to_write_start` = 0, `to_write_size` = 64 (i.e. write the whole block)
+    // - When reading block 4: `to_write_start` = 0, `to_write_size` = 8 (i.e. skip the end of the block)
 
     // Sanitize size and offset to fit the manifest
     let offset = min(offset, manifest.size);
@@ -86,14 +86,12 @@ pub async fn fd_read(
     );
     let end = offset + size;
 
-    // File manifest is guaranteed to have its blocks sorted by offset, with no overlap
+    // File manifest blocks comes with two important guarantees:
+    // - The blocks are sorted by offset, with no overlap.
+    // - Each block has a `blocksize` size, except for the last one that can be smaller.
 
-    // TODO: Update this comment and the related code now that we are guaranteed
-    //       that block access size == block data len
-
-    // Note we cannot use `manifest.blocksize` to determine the range of indexes of
-    // involved blocks. This is because blocks can be of a different size than blocksize
-    // (for instance if the file grows a lot and the blocksize is increased).
+    // Note since zero-filled blocks are not stored, we cannot just use
+    // `manifest.blocksize` to determine the range of indexes of involved blocks.
     let involved_blocks = manifest
         .blocks
         .iter()
@@ -165,28 +163,13 @@ pub async fn fd_read(
                         err.context("cannot read chunk").into()
                     }
                 })?;
-        let block_data = &block_data[to_write_start as usize..];
 
-        match block_data.len().cmp(&to_write_size) {
-            Ordering::Equal => {
-                buf.write_all(block_data)
-                    .expect("write_all should not fail");
-            }
-            // Block is smaller than expected, pad with zeros.
-            Ordering::Less => {
-                buf.write_all(block_data)
-                    .expect("write_all should not fail");
-                let missing = to_write_size - block_data.len();
-                buf.write_all(&vec![0; missing])
-                    .expect("write_all should not fail");
-            }
-            // Block is bigger than expected (or this is the last block and we only
-            // need part of it), truncate.
-            Ordering::Greater => {
-                buf.write_all(&block_data[..to_write_size])
-                    .expect("write_all should not fail");
-            }
-        }
+        // Note `block_data` has been validated against `block_access`, and hence
+        // the data are guaranteed to have the size specified in the access.
+        let block_data =
+            &block_data[to_write_start as usize..to_write_start as usize + to_write_size];
+        buf.write_all(block_data)
+            .expect("write_all should not fail");
 
         current_position += to_write_size as u64;
         assert!(current_position <= end);

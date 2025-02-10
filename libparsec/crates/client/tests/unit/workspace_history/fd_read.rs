@@ -104,7 +104,6 @@ async fn ok(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "workspace_history")]
-#[ignore] // TODO: fix this test now that we are guaranteed that block access size == block data len
 async fn brute_force_read_combinaisons(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
@@ -139,84 +138,63 @@ async fn brute_force_read_combinaisons(env: &TestbedEnv) {
 
     let areas: Vec<Area> = env
         .customize(|builder| {
-            // `bar.txt` v3 is a 180 bytes file splitted into 5 blocks with a blocksize of 32 bytes:
+            // `bar.txt` v3 is a 180 bytes file splitted into 6 block slots with a blocksize of 32 bytes:
             //
-            //     0         32        60  64       96   100       128        160   180 192
-            //     |         |         |   |        |    |         |          |     |   |
-            //     [ block 1    ]
-            //         │     [ block 2 ]                 [ block 3 ][ block 4 ]
-            //         │       |                                              [ block 5 ]
-            //         │       └─ Block 2 is 28 bytes long                            |
-            //         │                                                              |
-            //         └─ Block 1 is 40 bytes long          Block 5 is 32 bytes long ─┘
-            //            but only its 32 first bytes       but only its 20 first bytes
-            //            are used.                         are used.
+            //     0         32        64        96         128        160     180 192
+            //     |         |         |         |          |          |       |   |
+            //       |         |       [ block 3 ][ block 4 ]          [block 6]
+            //       └─┬───────┘                                         |
+            //         └─ The file starts with zeros, so                 └ Block 6 is only 20 bytes long,
+            //            blocks 1 & 2 don't exist.                        which is allowed since it's
+            //                                                             the last one.
             //
-            // Note the block *data* can have different size than blocksize, however
-            // the block accesses in the manifest must all be aligned on the blocksize
-            // and have blocksize size (expect for the last block that can be smaller).
+            // Note that it is guaranteed that the block *data* have the same size than
+            // what is declared in the corresponding block access, and that size must
+            // be equal to the blocksize (except for the last block which can be smaller).
             //
             // In this test we want to do multiple reads with all possible combinaisons
             // of blocks involved.
 
-            // File offset 0 to 32
+            // Block slot 1 & 2 (file offset 0 to 64)
 
-            let block1_data = Bytes::from(b"1".repeat(40));
-            let block1_access = {
-                let mut block1_access = builder
-                    .create_block("bob@dev1", wksp1_id, block1_data.clone())
-                    .as_block_access(0);
-                block1_access.size = 32.try_into().unwrap();
-                block1_access
-            };
+            // Nothing to do here, since zero-filled block slots are simply omitted in the manifest
 
-            // File offset 32 to 64
+            // Block slot 3 (file offset 64 to 96)
 
-            let block2_data = Bytes::from(b"2".repeat(28));
-            let block2_access = builder
-                .create_block("bob@dev1", wksp1_id, block2_data.clone())
-                .as_block_access(32);
-
-            // File offset 64 to 96
-
-            // Note there is a hole between offset 60 and 100
-
-            // File offset 96 to 128
-
-            let block3_data = Bytes::from(b"3".repeat(28));
+            let block3_data = Bytes::from(b"3".repeat(32));
             let block3_access = builder
                 .create_block("bob@dev1", wksp1_id, block3_data.clone())
-                .as_block_access(100);
+                .as_block_access(64);
 
-            // File offset 128 to 160
+            // Block slot 4 (file offset 96 to 128)
 
             let block4_data = Bytes::from(b"4".repeat(32));
             let block4_access = builder
                 .create_block("bob@dev1", wksp1_id, block4_data.clone())
-                .as_block_access(128);
+                .as_block_access(96);
 
-            // File offset 128 to 180 (end of file)
+            // Block slot 5 (file offset 128 to 160)
 
-            let block5_data = Bytes::from(b"5".repeat(32));
-            let block5_access = {
-                let mut block5_access = builder
-                    .create_block("bob@dev1", wksp1_id, block5_data.clone())
-                    .as_block_access(160);
-                block5_access.size = 20.try_into().unwrap();
-                block5_access
-            };
+            // Nothing to do here, since zero-filled block slots are simply omitted in the manifest
+
+            // Block slot 6 (file offset 160 to 180, i.e. end of file)
+
+            let block6_data = Bytes::from(b"6".repeat(20));
+            let block6_access = builder
+                .create_block("bob@dev1", wksp1_id, block6_data.clone())
+                .as_block_access(160);
 
             let areas = vec![
-                Area::from_block_access("Block1", &block1_access, block1_data),
-                Area::from_block_access("Block2", &block2_access, block2_data),
-                Area::from_hole(
-                    "HoleBetweenBlocks2And3",
-                    block2_access.offset + block2_access.size.get(),
-                    block3_access.offset,
-                ),
+                Area::from_hole("BlockSlot1Hole", 0, 32),
+                Area::from_hole("BlockSlot2Hole", 32, block3_access.offset),
                 Area::from_block_access("Block3", &block3_access, block3_data),
                 Area::from_block_access("Block4", &block4_access, block4_data),
-                Area::from_block_access("Block5", &block5_access, block5_data),
+                Area::from_hole(
+                    "BlockSlot5Hole",
+                    block4_access.offset + block4_access.size.get(),
+                    block6_access.offset,
+                ),
+                Area::from_block_access("Block6", &block6_access, block6_data),
             ];
 
             builder
@@ -230,13 +208,7 @@ async fn brute_force_read_combinaisons(env: &TestbedEnv) {
                     let manifest = Arc::make_mut(&mut e.manifest);
                     manifest.size = 180;
                     manifest.blocksize = 32.try_into().unwrap();
-                    manifest.blocks = vec![
-                        block1_access,
-                        block2_access,
-                        block3_access,
-                        block4_access,
-                        block5_access,
-                    ];
+                    manifest.blocks = vec![block3_access, block4_access, block6_access];
                 });
 
             areas
@@ -266,25 +238,22 @@ async fn brute_force_read_combinaisons(env: &TestbedEnv) {
 
     // Each block is going to be fetched once then kept in cache, however it is
     // cumbersome to determine the order in which they are going to be fetched.
-    // So instead we just register the fact we are going to have 4 block fetch,
-    // and each one is allowed to fetch any of the 4 blocks.
+    // So instead we just register the fact we are going to have 3 block fetch,
+    // and each one is allowed to fetch any of the 3 blocks.
     macro_rules! test_send_hook_block_read_any_bar_txt_block {
         () => {
             test_send_hook_block_read!(env, wksp1_id, allowed: [
-                areas[0].block_id.unwrap(),
-                areas[1].block_id.unwrap(),
-                // Skip the hole as it is has no BlockID !
-                areas[3].block_id.unwrap(),
-                areas[4].block_id.unwrap(),
-                areas[5].block_id.unwrap(),
+                // Skip block slot 1 & 2 as they are holes
+                areas[2].block_id.unwrap(),  // Block 3
+                areas[3].block_id.unwrap(),  // Block 4
+                // Skip block slot 5 as it is a hole
+                areas[5].block_id.unwrap(),  // Block 5
             ])
         };
     }
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         // Get back all `bar.txt` blocks
-        test_send_hook_block_read_any_bar_txt_block!(),
-        test_send_hook_block_read_any_bar_txt_block!(),
         test_send_hook_block_read_any_bar_txt_block!(),
         test_send_hook_block_read_any_bar_txt_block!(),
         test_send_hook_block_read_any_bar_txt_block!(),
