@@ -75,6 +75,8 @@ _Q_RESET_POSTGRESQL_TESTBED = """
 TRUNCATE TABLE organization
 RESTART IDENTITY CASCADE;
 
+TRUNCATE TABLE block_data;
+
 -- Normally, all sequence starts at 0.
 -- However this means in the test we basically have all primary key with very low value
 -- since we don't insert much.
