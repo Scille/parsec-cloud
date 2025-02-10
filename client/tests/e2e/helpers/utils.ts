@@ -55,7 +55,7 @@ export async function fillInputModal(root: Locator | Page, text: string, clear?:
   const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
   await expect(okButton).toHaveDisabledAttribute();
   await fillIonInput(modal.locator('ion-input'), text);
-  await expect(okButton).not.toHaveDisabledAttribute();
+  await expect(okButton).toNotHaveDisabledAttribute();
   await okButton.click();
   await expect(modal).toBeHidden();
 }

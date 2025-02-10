@@ -29,7 +29,7 @@ msTest('Documents page default state', async ({ documents }) => {
   await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['New folder', 'Import']);
   await expect(actionBar.locator('.counter')).toHaveText('10 items', { useInnerText: true });
   await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
-  await expect(actionBar.locator('#grid-view')).not.toHaveDisabledAttribute();
+  await expect(actionBar.locator('#grid-view')).toNotHaveDisabledAttribute();
   await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
   const entries = documents.locator('.folder-container').locator('.file-list-item');
   await expect(entries).toHaveCount(10);
@@ -52,7 +52,7 @@ msTest('Documents page default state in a read only workspace', async ({ documen
   await expect(actionBar.locator('.right-side').locator('.label-role')).toHaveText('Reader');
   await expect(actionBar.locator('.counter')).toHaveText('10 items', { useInnerText: true });
   await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
-  await expect(actionBar.locator('#grid-view')).not.toHaveDisabledAttribute();
+  await expect(actionBar.locator('#grid-view')).toNotHaveDisabledAttribute();
   await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
   const entries = documentsReadOnly.locator('.folder-container').locator('.file-list-item');
   await expect(entries).toHaveCount(10);

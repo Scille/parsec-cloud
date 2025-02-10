@@ -75,7 +75,7 @@ msTest('User list default state', async ({ usersPage }) => {
   await expect(actionBar.locator('.counter')).toHaveText(`${USERS.length} users`, { useInnerText: true });
   await expect(usersPage.locator('.user-list-header').locator('ion-checkbox')).toHaveState('unchecked');
   await expect(actionBar.locator('#select-popover-button')).toHaveText('Profile');
-  await expect(actionBar.locator('.ms-grid-list-toggle').locator('#grid-view')).not.toHaveDisabledAttribute();
+  await expect(actionBar.locator('.ms-grid-list-toggle').locator('#grid-view')).toNotHaveDisabledAttribute();
   await expect(actionBar.locator('.ms-grid-list-toggle').locator('#list-view')).toHaveDisabledAttribute();
   await expect(usersPage.locator('#users-page-user-list').getByRole('listitem')).toHaveCount(USERS.length);
 });
@@ -618,7 +618,7 @@ msTest('Reassign workspace role', async ({ usersPage }) => {
   await dropdown.getByRole('listitem').nth(1).click();
   // cspell:disable-next-line
   await expect(input.locator('input')).toHaveValue('Karl Hungus (karlhungus@gmail.com)');
-  await expect(nextButton).not.toHaveDisabledAttribute();
+  await expect(nextButton).toNotHaveDisabledAttribute();
   await nextButton.click();
   await usersPage.waitForTimeout(1000);
   const newRoles = modal.locator('.workspace-list').getByRole('listitem');

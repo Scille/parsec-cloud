@@ -23,6 +23,21 @@ export const expect = baseExpect.extend({
     }
   },
 
+  async toNotHaveDisabledAttribute(locator: Locator): Promise<AssertReturnType> {
+    try {
+      await baseExpect(locator).not.toHaveAttribute('disabled');
+      return {
+        message: () => '',
+        pass: true,
+      };
+    } catch (error: any) {
+      return {
+        message: () => 'Has disabled attribute',
+        pass: false,
+      };
+    }
+  },
+
   async toHaveTheClass(locator: Locator, className: string): Promise<AssertReturnType> {
     const classList = await locator.evaluate((node) => Array.from(node.classList.values()));
     const pass = classList.includes(className);

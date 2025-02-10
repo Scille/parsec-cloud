@@ -57,7 +57,7 @@ msTest('Change password', async ({ home, myProfilePage }) => {
   await expect(changePasswordModal.locator('.inputs-container-item').nth(1).getByText('Do not match')).toBeVisible();
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
   await fillIonInput(passwordInputs.nth(2), 'New-P@ssw0rd.6786?6786');
-  await expect(changePasswordModal.locator('#next-button')).not.toHaveDisabledAttribute();
+  await expect(changePasswordModal.locator('#next-button')).toNotHaveDisabledAttribute();
   await changePasswordModal.locator('#next-button').click();
   await expect(changePasswordModal).toBeHidden();
   await expect(myProfilePage).toShowToast('Authentication has been updated.', 'Success');
