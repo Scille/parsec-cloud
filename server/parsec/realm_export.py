@@ -10,6 +10,8 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, AsyncGenerator, Callable, Literal
 
+import anyio
+
 from parsec._parsec import BlockID, DateTime, OrganizationID, VlobID
 from parsec.backend import Backend
 from parsec.ballpark import BALLPARK_CLIENT_LATE_OFFSET
@@ -367,10 +369,7 @@ type OutputDBSqliteJobCb[R] = tuple[Callable[[sqlite3.Connection], R], asyncio.Q
 
 
 class OutputDBConnection:
-    def __init__(
-        self, con: sqlite3.Connection, queries_queue: queue.Queue[OutputDBSqliteJobCb[Any]]
-    ):
-        self._con = con
+    def __init__(self, queries_queue: queue.Queue[OutputDBSqliteJobCb[Any]]):
         # Queue contains: (SQL query, parameters, oneshot queue to return result)
         self._queries_queue = queries_queue
 
@@ -388,13 +387,15 @@ class OutputDBConnection:
     ) -> AsyncGenerator[OutputDBConnection]:
         # Make this queue infinite to ensure we won't block the asyncio event loop
         queries_queue: queue.Queue[OutputDBSqliteJobCb[Any]] = queue.Queue(maxsize=0)
-        con_ready: asyncio.Queue[sqlite3.Connection] = asyncio.Queue(maxsize=1)
+        sqlite3_worker_ready = asyncio.Event()
         stop_requested = False
 
         asyncio_loop = asyncio.get_event_loop()
 
         def _sqlite3_worker():
-            nonlocal con_ready
+            nonlocal sqlite3_worker_ready
+            nonlocal stop_requested
+
             con = _sqlite_init_db(
                 output_db_path,
                 organization_id,
@@ -405,8 +406,8 @@ class OutputDBConnection:
                 blocks_total_bytes,
             )
             try:
-                asyncio_loop.call_soon_threadsafe(con_ready.put_nowait, con)
-                del con_ready
+                asyncio_loop.call_soon_threadsafe(sqlite3_worker_ready.set)
+                del sqlite3_worker_ready
 
                 while not stop_requested:
                     cb, result_queue = queries_queue.get()
@@ -424,15 +425,21 @@ class OutputDBConnection:
 
         try:
             async with asyncio.TaskGroup() as tg:
-                tg.create_task(asyncio.to_thread(_sqlite3_worker))
-                con = await con_ready.get()
+                sqlite3_worker_task = tg.create_task(asyncio.to_thread(_sqlite3_worker))
+                await sqlite3_worker_ready.wait()
 
                 try:
-                    yield cls(con, queries_queue)
+                    yield cls(queries_queue)
                 finally:
                     stop_requested = True
                     # Also push a dummy job to wake up the worker if no job is in the queue
                     queries_queue.put_nowait((lambda _: None, asyncio.Queue(maxsize=1)))
+                    # Ensure the SQLite3 worker has been properly stopped before leaving,
+                    # this is especially important during test to ensure the SQLite3 database
+                    # has been properly closed before retrying to use it (to avoid
+                    # `sqlite3.OperationalError: database is locked` error).
+                    with anyio.CancelScope(shield=True):
+                        await sqlite3_worker_task
 
         # `RealmExporterError` are our own error type, so if it occurs there most
         # likely won't be any other concurrent errors (and if there is, those errors
