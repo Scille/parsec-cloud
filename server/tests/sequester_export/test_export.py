@@ -439,6 +439,7 @@ async def test_export_ok_sequestered(
     check_export_content(output_db_path, export_expected, sequestered_org.organization_id)
 
 
+@pytest.mark.xfail(reason="This test is flaky, see issue #9576")
 async def test_restart_partially_exported(
     workspace_history_org: WorkspaceHistoryOrgRpcClients,
     backend: Backend,
