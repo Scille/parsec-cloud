@@ -1,1 +1,0 @@
-The CLI command ``invite cancel`` now take the token as an argument instead of an option
