@@ -344,6 +344,8 @@ jobs:
         run: npm run native:build -- --mode ${{ steps.version.outputs.type }}
         working-directory: client
         timeout-minutes: 5
+        env:
+          NODE_OPTIONS: --max-old-space-size=8092
 
       - name: Copy client build result to electron
         run: npm exec cap copy @capacitor-community/electron
