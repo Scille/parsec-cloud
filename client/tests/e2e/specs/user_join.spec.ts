@@ -36,7 +36,7 @@ msTest('Go through the join user process', async ({ home, userJoinModal }) => {
   await expect(userJoinModal.locator('#get-user-info').locator('ion-input').nth(1).locator('input')).toHaveValue(
     'shadowheart@swordcoast.faerun',
   );
-  await expect(nextButton).not.toHaveDisabledAttribute();
+  await expect(nextButton).toNotHaveDisabledAttribute();
   await nextButton.click();
   await expect(title).toHaveText('Authentication');
   await expect(userJoinModal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 3);
@@ -53,10 +53,10 @@ msTest('Go through the join user process', async ({ home, userJoinModal }) => {
   await expect(nextButton).toHaveDisabledAttribute();
   await fillIonInput(passwordChoice.locator('ion-input').nth(1), 'AVeryL0ngP@ssw0rd');
   await nextButton.scrollIntoViewIfNeeded();
-  await expect(nextButton).not.toHaveDisabledAttribute();
+  await expect(nextButton).toNotHaveDisabledAttribute();
   await nextButton.click();
   await expect(title).toHaveText('You have joined the organization Test!');
-  await expect(nextButton).not.toHaveDisabledAttribute();
+  await expect(nextButton).toNotHaveDisabledAttribute();
   await nextButton.click();
   await expect(userJoinModal).toBeHidden();
   await expect(home).toShowToast('You successfully joined the organization.', 'Success');

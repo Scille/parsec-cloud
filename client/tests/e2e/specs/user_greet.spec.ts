@@ -55,12 +55,12 @@ msTest('Go through the greet process', async ({ userGreetModal }) => {
   await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Member', 'External']);
   await profileDropdown.getByRole('listitem').nth(1).click();
   await expect(profileButton).toHaveText('Member');
-  await expect(nextButton).not.toHaveDisabledAttribute();
+  await expect(nextButton).toNotHaveDisabledAttribute();
   await expect(nextButton).toHaveText('Approve');
   await nextButton.click();
 
   await expect(title).toHaveText('User has been added successfully!');
-  await expect(nextButton).not.toHaveDisabledAttribute();
+  await expect(nextButton).toNotHaveDisabledAttribute();
   await expect(nextButton).toBeVisible();
   await expect(modalContent.locator('.final-step').locator('.person-name')).toHaveText('Gordon Freeman');
   await expect(modalContent.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText('gordon.freeman@blackmesa.nm');

@@ -99,7 +99,7 @@ msTest('Check join link', async ({ home }) => {
       await expect(confirmButton).toHaveDisabledAttribute();
     } else {
       await expect(errorForm).toBeHidden();
-      await expect(confirmButton).not.toHaveDisabledAttribute();
+      await expect(confirmButton).toNotHaveDisabledAttribute();
     }
   }
 });
@@ -111,7 +111,7 @@ msTest('Login', async ({ home }) => {
   await expect(loginButton).toHaveDisabledAttribute();
   const input = home.locator('#password-input').locator('ion-input');
   await fillIonInput(input, 'P@ssw0rd.');
-  await expect(loginButton).not.toHaveDisabledAttribute();
+  await expect(loginButton).toNotHaveDisabledAttribute();
   await loginButton.click();
   await expect(home).toBeWorkspacePage();
   await expect(home).toHaveHeader(['My workspaces'], false, false);
@@ -136,7 +136,7 @@ msTest('Login with invalid password', async ({ home }) => {
   await expect(home.locator('#password-input').locator('.form-error')).toBeHidden();
   const input = home.locator('#password-input').locator('ion-input');
   await fillIonInput(input, 'InvalidP@ssw0rd.');
-  await expect(loginButton).not.toHaveDisabledAttribute();
+  await expect(loginButton).toNotHaveDisabledAttribute();
   await loginButton.click();
   await expect(home.locator('#password-input').locator('.form-error')).toBeVisible();
   await expect(home.locator('#password-input').locator('.form-error')).toHaveText('Incorrect password.');

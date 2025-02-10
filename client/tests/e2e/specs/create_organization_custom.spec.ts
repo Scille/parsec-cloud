@@ -45,7 +45,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await fillIonInput(orgServerContainer.locator('ion-input').nth(0), DEFAULT_ORGANIZATION_INFORMATION.name);
   await expect(orgNext).toHaveDisabledAttribute();
   await fillIonInput(orgServerContainer.locator('ion-input').nth(1), DEFAULT_ORGANIZATION_INFORMATION.serverAddr);
-  await expect(orgNext).not.toBeDisabled();
+  await expect(orgNext).toNotHaveDisabledAttribute();
 
   // Wrong org name
   await fillIonInput(orgServerContainer.locator('ion-input').nth(0), 'Invalid Org N@me');
@@ -56,7 +56,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
 
   // Correct org name again
   await fillIonInput(orgServerContainer.locator('ion-input').nth(0), DEFAULT_ORGANIZATION_INFORMATION.name);
-  await expect(orgNext).not.toBeDisabled();
+  await expect(orgNext).toNotHaveDisabledAttribute();
   await expect(orgNameError).toBeHidden();
 
   // Now wrong server address
@@ -68,7 +68,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
 
   // And correct server address again
   await fillIonInput(orgServerContainer.locator('ion-input').nth(1), DEFAULT_ORGANIZATION_INFORMATION.serverAddr);
-  await expect(orgNext).not.toBeDisabled();
+  await expect(orgNext).toNotHaveDisabledAttribute();
   await expect(orgServerError).toBeHidden();
 
   await orgNext.click();
@@ -79,14 +79,14 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(orgServerContainer).toBeHidden();
   await expect(userInfoContainer).toBeVisible();
   await expect(userPrevious).toBeVisible();
-  await expect(userPrevious).not.toBeDisabled();
+  await expect(userPrevious).toNotHaveDisabledAttribute();
   await expect(userNext).toBeVisible();
   await expect(userNext).toHaveDisabledAttribute();
   await expect(userInfoContainer.locator('.modal-header-title__text')).toHaveText('Enter your personal information');
   await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
   await expect(userNext).toHaveDisabledAttribute();
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
-  await expect(userNext).not.toBeDisabled();
+  await expect(userNext).toNotHaveDisabledAttribute();
 
   // Try cancelling
   await cancelAndResume(home, userInfoContainer);
@@ -100,7 +100,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
 
   // And correct name again
   await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
-  await expect(userNext).not.toBeDisabled();
+  await expect(userNext).toNotHaveDisabledAttribute();
   await expect(userNameError).toBeHidden();
 
   // Now with bad email
@@ -112,7 +112,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
 
   // Correct email again
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
-  await expect(userNext).not.toBeDisabled();
+  await expect(userNext).toNotHaveDisabledAttribute();
   await expect(userNameError).toBeHidden();
 
   await userNext.click();
@@ -124,13 +124,13 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(userInfoContainer).toBeHidden();
   await expect(authContainer).toBeVisible();
   await expect(authPrevious).toBeVisible();
-  await expect(authPrevious).not.toBeDisabled();
+  await expect(authPrevious).toNotHaveDisabledAttribute();
   await expect(authNext).toBeVisible();
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await expect(authNext).not.toBeDisabled();
+  await expect(authNext).toNotHaveDisabledAttribute();
 
   // Try cancelling
   await cancelAndResume(home, authContainer);
@@ -141,7 +141,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
 
   // Back to complicated password
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
-  await expect(authNext).not.toBeDisabled();
+  await expect(authNext).toNotHaveDisabledAttribute();
 
   // Check does not match
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), `${DEFAULT_USER_INFORMATION.password}-extra`);
@@ -152,7 +152,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
 
   // Back to matching password
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await expect(authNext).not.toBeDisabled();
+  await expect(authNext).toNotHaveDisabledAttribute();
   await expect(matchError).toBeHidden();
 
   await authNext.click();
@@ -167,9 +167,9 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(summaryContainer).toBeVisible();
   await expect(summaryContainer.locator('.modal-header-title__text')).toHaveText('Overview of your organization');
   await expect(summaryPrevious).toBeVisible();
-  await expect(summaryPrevious).not.toBeDisabled();
+  await expect(summaryPrevious).toNotHaveDisabledAttribute();
   await expect(summaryNext).toBeVisible();
-  await expect(summaryNext).not.toBeDisabled();
+  await expect(summaryNext).toNotHaveDisabledAttribute();
 
   // Everything can be updated
   await expect(summaryEditButtons.nth(0)).toBeVisible();
@@ -219,7 +219,7 @@ msTest('Go through custom org creation process from bootstrap link', async ({ ho
   const orgPrevious = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(0);
   const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
   await expect(orgPrevious).toBeHidden();
-  await expect(orgNext).not.toBeDisabled();
+  await expect(orgNext).toNotHaveDisabledAttribute();
 
   await expect(orgServerContainer.locator('ion-input').nth(0)).toHaveTheClass('input-disabled');
   await expect(orgServerContainer.locator('ion-input').nth(0).locator('input')).toHaveValue(DEFAULT_ORGANIZATION_INFORMATION.name);
@@ -235,14 +235,14 @@ msTest('Go through custom org creation process from bootstrap link', async ({ ho
   await expect(orgServerContainer).toBeHidden();
   await expect(userInfoContainer).toBeVisible();
   await expect(userPrevious).toBeVisible();
-  await expect(userPrevious).not.toBeDisabled();
+  await expect(userPrevious).toNotHaveDisabledAttribute();
   await expect(userNext).toBeVisible();
   await expect(userNext).toHaveDisabledAttribute();
   await expect(userInfoContainer.locator('.modal-header-title__text')).toHaveText('Enter your personal information');
   await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
   await expect(userNext).toHaveDisabledAttribute();
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
-  await expect(userNext).not.toBeDisabled();
+  await expect(userNext).toNotHaveDisabledAttribute();
   await userNext.click();
 
   const authContainer = modal.locator('.authentication-page');
@@ -252,13 +252,13 @@ msTest('Go through custom org creation process from bootstrap link', async ({ ho
   await expect(userInfoContainer).toBeHidden();
   await expect(authContainer).toBeVisible();
   await expect(authPrevious).toBeVisible();
-  await expect(authPrevious).not.toBeDisabled();
+  await expect(authPrevious).toNotHaveDisabledAttribute();
   await expect(authNext).toBeVisible();
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await expect(authNext).not.toBeDisabled();
+  await expect(authNext).toNotHaveDisabledAttribute();
   await authNext.click();
 
   const summaryContainer = modal.locator('.summary-page');
@@ -271,9 +271,9 @@ msTest('Go through custom org creation process from bootstrap link', async ({ ho
   await expect(summaryContainer).toBeVisible();
   await expect(summaryContainer.locator('.modal-header-title__text')).toHaveText('Overview of your organization');
   await expect(summaryPrevious).toBeVisible();
-  await expect(summaryPrevious).not.toBeDisabled();
+  await expect(summaryPrevious).toNotHaveDisabledAttribute();
   await expect(summaryNext).toBeVisible();
-  await expect(summaryNext).not.toBeDisabled();
+  await expect(summaryNext).toNotHaveDisabledAttribute();
 
   // Name, email and authentication fields can be updated, server & org name cannot
   await expect(summaryEditButtons.nth(0)).not.toBeVisible();

@@ -60,7 +60,7 @@ msTest('Return to server selection after selecting server type', async ({ home }
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await expect(bmsNext).toHaveDisabledAttribute();
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await expect(bmsNext).not.toHaveDisabledAttribute();
+  await expect(bmsNext).toNotHaveDisabledAttribute();
   await bmsNext.click();
   await expect(bmsContainer).toBeHidden();
   await expect(modal.locator('.organization-name-page')).toBeVisible();

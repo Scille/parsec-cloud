@@ -37,7 +37,7 @@ msTest('Go through the greet process', async ({ deviceGreetModal }) => {
   await deviceGreetModal.page().waitForTimeout(200);
 
   await expect(title).toHaveText('New device added');
-  await expect(nextButton).not.toHaveDisabledAttribute();
+  await expect(nextButton).toNotHaveDisabledAttribute();
   await expect(nextButton).toBeVisible();
   await expect(nextButton).toHaveText('Finish');
   await nextButton.click();

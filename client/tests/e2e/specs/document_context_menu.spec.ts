@@ -222,7 +222,7 @@ for (const gridMode of [false, true]) {
     await expect(okButton).toHaveText('Move here');
     await expect(okButton).toHaveDisabledAttribute();
     await modal.locator('.folder-container').getByRole('listitem').nth(0).click();
-    await expect(okButton).not.toHaveDisabledAttribute();
+    await expect(okButton).toNotHaveDisabledAttribute();
     await okButton.click();
     await expect(modal).toBeHidden();
   });
