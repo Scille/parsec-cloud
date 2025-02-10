@@ -169,8 +169,8 @@ pub struct BlockAccess {
     pub offset: SizeInt,
     /// Size of the block.
     ///
-    /// Note the actual block data size might differ from this value, in which case
-    /// the block should be padded with zeroes.
+    /// Note the size is checked along with the hash digest when validating the
+    /// block integrity.
     pub size: NonZeroU64,
     pub digest: HashDigest,
 }
@@ -295,14 +295,15 @@ pub struct FileManifest {
     pub updated: DateTime,
     /// Total size of the file
     pub size: SizeInt,
-    /// Recommended size of a single block.
+    /// Size of a single block.
     ///
-    // Note blocks are not necessarily of `blocksize` size (nor aligned on `blocksize`),
-    // this is for three reasons:
-    // - Last block can be smaller than `blocksize`.
-    // - Ranges of zero-filled data in the file can be omitted.
-    // - If the total file size change significantly (e.g. file grows at lot),
-    //   `blocksize` can be updated to try to keep the number of blocks manageable.
+    /// Each block must have a size of `blocksize` except the last one (that is allowed
+    /// to be smaller).
+    ///
+    /// This implies:
+    /// - Each block access has an offset aligned on `blocksize`.
+    /// - If `blocksize` is updated (typically if the file grows too big, although not
+    ///   implemented at the moment), all blocks must be reshaped to match the new blocksize.
     pub blocksize: Blocksize,
     pub blocks: Vec<BlockAccess>,
 }
