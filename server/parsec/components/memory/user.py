@@ -546,6 +546,14 @@ class MemoryUserComponent(BaseUserComponent):
             for service in org.sequester_services.values():
                 if sequester_after is None or sequester_after < service.cooked.timestamp:
                     sequester_certificates.append(service.sequester_service_certificate)
+                if service.is_revoked:
+                    assert service.cooked_revoked is not None
+                    assert service.sequester_revoked_service_certificate is not None
+                    if (
+                        sequester_after is None
+                        or sequester_after < service.cooked_revoked.timestamp
+                    ):
+                        sequester_certificates.append(service.sequester_revoked_service_certificate)
 
         # 3) Realm certificates
 
