@@ -45,7 +45,7 @@ my_sequester AS (
 my_realms AS (
     SELECT
         'realm' AS topic,
-        { q_realm(select="realm_id", _id="realm_topic.realm") }::text AS discriminant,
+        {q_realm(select="realm_id", _id="realm_topic.realm")}::text AS discriminant,
         last_timestamp
     FROM realm_topic
     WHERE organization = (SELECT _id FROM my_organization)

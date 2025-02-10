@@ -58,9 +58,9 @@ def collect_data_patches() -> tuple[dict[int, str], dict[int, str]]:
     for file in importlib.resources.files(migrations_test_module).iterdir():
         file_name = file.name
         match = re.search(PATCH_FILE_PATTERN, file_name)
-        assert match or not file_name.endswith(
-            ".sql"
-        ), f"unknown file `{file_name}`, expects only `xxxx_[before|after].sql`"
+        assert match or not file_name.endswith(".sql"), (
+            f"unknown file `{file_name}`, expects only `xxxx_[before|after].sql`"
+        )
         if match:
             index = int(match.group("id"))
             if match.group("type") == "before":

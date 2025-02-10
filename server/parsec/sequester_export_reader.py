@@ -123,7 +123,7 @@ class RealmExportDb:
                 yield (
                     None,
                     RealmExportProgress.INCONSISTENT_CERTIFICATE,
-                    f"Ignoring invalid user certificate { row[0] } ({ exc })",
+                    f"Ignoring invalid user certificate {row[0]} ({exc})",
                 )
                 continue
 
@@ -138,7 +138,7 @@ class RealmExportDb:
                 yield (
                     None,
                     RealmExportProgress.INCONSISTENT_CERTIFICATE,
-                    f"Ignoring invalid user certificate { row[0] } ({ exc })",
+                    f"Ignoring invalid user certificate {row[0]} ({exc})",
                 )
 
     def load_device_certificates(
@@ -154,7 +154,7 @@ class RealmExportDb:
                 yield (
                     None,
                     RealmExportProgress.INCONSISTENT_CERTIFICATE,
-                    f"Ignoring invalid device certificate { row[0] } ({ exc })",
+                    f"Ignoring invalid device certificate {row[0]} ({exc})",
                 )
 
     def load_role_certificates(
@@ -170,7 +170,7 @@ class RealmExportDb:
                 yield (
                     None,
                     RealmExportProgress.INCONSISTENT_CERTIFICATE,
-                    f"Ignoring invalid realm role certificate { row[0] } ({ exc })",
+                    f"Ignoring invalid realm role certificate {row[0]} ({exc})",
                 )
 
 
@@ -303,7 +303,7 @@ class WorkspaceExport:
             yield (
                 fs_path,
                 RealmExportProgress.EXTRACT_IN_PROGRESS,
-                f"Extracting blocks {i+1}/{len(manifest.blocks)}",
+                f"Extracting blocks {i + 1}/{len(manifest.blocks)}",
             )
 
             row = self.db.con.execute(

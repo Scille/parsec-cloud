@@ -18,7 +18,7 @@ _q_dump_vlobs = Q(
 SELECT
     vlob_atom.vlob_id,
     realm.realm_id,
-    { q_device(_id="vlob_atom.author", select="device_id") } AS author,
+    {q_device(_id="vlob_atom.author", select="device_id")} AS author,
     vlob_atom.created_on,
     vlob_atom.blob
 FROM vlob_atom

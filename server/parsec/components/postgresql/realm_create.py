@@ -86,10 +86,10 @@ WITH new_realm_user_role AS (
         certified_on
     ) VALUES (
         $realm_internal_id,
-        { q_user_internal_id(organization="$organization_internal_id", user_id="$user_id") },
+        {q_user_internal_id(organization="$organization_internal_id", user_id="$user_id")},
         'OWNER',
         $certificate,
-        { q_device_internal_id(organization="$organization_internal_id", device_id="$certified_by") },
+        {q_device_internal_id(organization="$organization_internal_id", device_id="$certified_by")},
         $timestamp
     )
     RETURNING TRUE AS success

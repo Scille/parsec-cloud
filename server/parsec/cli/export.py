@@ -140,7 +140,7 @@ async def _export_realm(
         click.echo(f"Creating {output_db_display}")
 
     click.echo(
-        f"Use { click.style('^C', fg='yellow') } to stop the export,"
+        f"Use {click.style('^C', fg='yellow')} to stop the export,"
         " progress won't be lost when restarting the command"
     )
 

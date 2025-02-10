@@ -30,7 +30,7 @@ SELECT
 FROM user_
 INNER JOIN human ON human._id = user_.human
 WHERE
-    user_.organization = { q_organization_internal_id("$organization_id") }
+    user_.organization = {q_organization_internal_id("$organization_id")}
 """
 )
 
@@ -43,7 +43,7 @@ SELECT
 FROM device
 INNER JOIN user_ ON user_._id = device.user_
 WHERE
-    device.organization = { q_organization_internal_id("$organization_id") }
+    device.organization = {q_organization_internal_id("$organization_id")}
 ORDER BY device.created_on
 """
 )
@@ -57,7 +57,7 @@ SELECT
 FROM profile
 LEFT JOIN user_ ON user_._id = profile.user_
 WHERE
-    user_.organization = { q_organization_internal_id("$organization_id") }
+    user_.organization = {q_organization_internal_id("$organization_id")}
 ORDER BY profile.certified_on
 """
 )

@@ -327,9 +327,9 @@ def _test_parse_version_string(raw: str, expected: Version, git: bool = False) -
 
 def _test_format_version(version: Version, expected: str) -> None:
     s = str(version)
-    assert (
-        s == expected
-    ), f"Version {version!r} is not well formatted: got `{s}` but expected `{expected}`"
+    assert s == expected, (
+        f"Version {version!r} is not well formatted: got `{s}` but expected `{expected}`"
+    )
 
 
 _test_parse_version_string("1.2.3", Version(1, 2, 3))
@@ -435,9 +435,9 @@ def update_license_file(
             f"Licensed Work:  Parsec v{version}",
             half_updated_license_txt,
         )
-        assert (
-            updated_version_txt != half_updated_license_txt
-        ), f"The `Licensed Work` field should have changed, but hasn't (likely because the new version `{version}` correspond to the version written on the license file)"
+        assert updated_version_txt != half_updated_license_txt, (
+            f"The `Licensed Work` field should have changed, but hasn't (likely because the new version `{version}` correspond to the version written on the license file)"
+        )
     else:
         updated_version_txt = half_updated_license_txt
     BUSL_LICENSE_FILE.write_bytes(

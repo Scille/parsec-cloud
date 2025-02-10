@@ -836,9 +836,9 @@ async def _do_export_blocks_metadata(
             case int() as last_block_metadata_sequential_id:
                 pass
             case unknown:
-                assert (
-                    False
-                ), f"Unexpected value for `last_block_metadata_sequential_id`: {unknown!r}"
+                assert False, (
+                    f"Unexpected value for `last_block_metadata_sequential_id`: {unknown!r}"
+                )
         match row[1]:
             case None:
                 exported_bytes = 0

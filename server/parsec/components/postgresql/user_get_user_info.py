@@ -26,7 +26,7 @@ SELECT
 FROM user_
 INNER JOIN human ON user_.human = human._id
 WHERE
-    user_.organization = { q_organization_internal_id("$organization_id") }
+    user_.organization = {q_organization_internal_id("$organization_id")}
     AND {condition}
 """)
 

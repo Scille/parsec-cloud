@@ -71,7 +71,7 @@ FROM device
 INNER JOIN user_
 ON user_._id = device.user_
 WHERE
-    device.organization = { q_organization_internal_id("$organization_id") }
+    device.organization = {q_organization_internal_id("$organization_id")}
     AND device.device_id = $device_id
 """
 )
@@ -83,7 +83,7 @@ SELECT
     user_.revoked_on
 FROM user_
 WHERE
-    organization = { q_organization_internal_id("$organization_id") }
+    organization = {q_organization_internal_id("$organization_id")}
     AND user_id = $user_id
 """
 )

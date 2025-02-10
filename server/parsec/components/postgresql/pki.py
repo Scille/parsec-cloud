@@ -43,7 +43,7 @@ _q_get_last_pki_enrollment_from_certificate_sha1_for_update = Q(
     FROM
         pki_enrollment
     WHERE (
-        organization = { q_organization_internal_id("$organization_id") }
+        organization = {q_organization_internal_id("$organization_id")}
         AND submitter_der_x509_certificate_sha1=$submitter_der_x509_certificate_sha1
     )
     ORDER BY _id DESC LIMIT 1
@@ -63,7 +63,7 @@ _q_get_pki_enrollment_from_enrollment_id = Q(
     FROM
         pki_enrollment
     WHERE (
-        organization = { q_organization_internal_id("$organization_id") }
+        organization = {q_organization_internal_id("$organization_id")}
         AND enrollment_id=$enrollment_id
     )
     """
@@ -80,7 +80,7 @@ _q_get_pki_enrollment_for_update = Q(
     FROM
         pki_enrollment
     WHERE (
-        organization = { q_organization_internal_id("$organization_id") }
+        organization = {q_organization_internal_id("$organization_id")}
         AND enrollment_id=$enrollment_id
     )
     FOR UPDATE
@@ -98,7 +98,7 @@ _q_get_pki_enrollment_from_state = Q(
     FROM
         pki_enrollment
     WHERE (
-        organization = { q_organization_internal_id("$organization_id") }
+        organization = {q_organization_internal_id("$organization_id")}
         AND enrollment_state=$state
     )
     ORDER BY _id ASC
@@ -119,7 +119,7 @@ _q_submit_pki_enrollment = Q(
         submitted_on
     )
     VALUES(
-        { q_organization_internal_id("$organization_id") },
+        {q_organization_internal_id("$organization_id")},
         $enrollment_id,
         $submitter_der_x509_certificate,
         $submitter_der_x509_certificate_sha1,
@@ -139,7 +139,7 @@ _q_cancel_pki_enrollment = Q(
         enrollment_state=$enrollment_state,
         info_cancelled.cancelled_on=$cancelled_on
     WHERE (
-        organization = { q_organization_internal_id("$organization_id") }
+        organization = {q_organization_internal_id("$organization_id")}
         AND enrollment_id=$enrollment_id
     )
     """
@@ -153,7 +153,7 @@ _q_reject_pki_enrollment = Q(
         enrollment_state=$enrollment_state,
         info_rejected.rejected_on=$rejected_on
     WHERE (
-        organization = { q_organization_internal_id("$organization_id") }
+        organization = {q_organization_internal_id("$organization_id")}
         AND enrollment_id=$enrollment_id
     )
     """
@@ -172,7 +172,7 @@ _q_accept_pki_enrollment = Q(
         accepter={q_device_internal_id(organization_id="$organization_id", device_id="$accepter")},
         submitter_accepted_device={q_device_internal_id(organization_id="$organization_id", device_id="$accepted")}
     WHERE (
-        organization = { q_organization_internal_id("$organization_id") }
+        organization = {q_organization_internal_id("$organization_id")}
         AND enrollment_id=$enrollment_id
     )
     """
@@ -184,12 +184,12 @@ _q_get_user_from_device_id = Q(
     SELECT *
     FROM user_
     WHERE
-        user_.organization = { q_organization_internal_id("$organization_id") }
+        user_.organization = {q_organization_internal_id("$organization_id")}
         AND user_._id=(
             SELECT user_
             FROM device
             WHERE device._id=$device_id
-            AND device.organization = { q_organization_internal_id("$organization_id") }
+            AND device.organization = {q_organization_internal_id("$organization_id")}
         )
     FOR UPDATE
     LIMIT 1
@@ -201,7 +201,7 @@ _q_retrieve_active_human_by_email_for_update = Q(
         user_.user_id
     FROM user_ LEFT JOIN human ON user_.human=human._id
     WHERE
-        user_.organization = { q_organization_internal_id("$organization_id") }
+        user_.organization = {q_organization_internal_id("$organization_id")}
         AND human.email = $email
         AND user_.revoked_on IS NULL
     FOR UPDATE

@@ -93,7 +93,7 @@ _q_get_enabled_service_certificates_for_organization = Q(
     SELECT service_certificate
     FROM sequester_service
     WHERE
-        organization={ q_organization_internal_id("$organization_id") }
+        organization={q_organization_internal_id("$organization_id")}
         AND disabled_on IS NULL
     ORDER BY _id
     """

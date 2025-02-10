@@ -23,7 +23,7 @@ SELECT
 FROM user_
 INNER JOIN human ON human._id = user_.human
 WHERE
-    user_.organization = { q_organization_internal_id("$organization_id") }
+    user_.organization = {q_organization_internal_id("$organization_id")}
 ORDER BY user_.created_on
 """
 )
