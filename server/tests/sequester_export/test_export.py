@@ -439,7 +439,6 @@ async def test_export_ok_sequestered(
     check_export_content(output_db_path, export_expected, sequestered_org.organization_id)
 
 
-@pytest.mark.xfail(reason="This test is flaky, see issue #9576")
 async def test_restart_partially_exported(
     workspace_history_org: WorkspaceHistoryOrgRpcClients,
     backend: Backend,
@@ -454,21 +453,18 @@ async def test_restart_partially_exported(
     monkeypatch.setattr("parsec.realm_export.VLOB_EXPORT_BATCH_SIZE", 3)
     monkeypatch.setattr("parsec.realm_export.BLOCK_METADATA_EXPORT_BATCH_SIZE", 3)
 
-    steps_to_cancel = iter(
-        (
-            "certificates_start",
-            "certificates_done",
-            ("vlobs", 0, ANY),
-            lambda e: e[0] == "vlobs" and e[1] > 0,
-            ("blocks_metadata", 0, ANY),
-            lambda e: e[0] == "blocks_metadata" and e[1] > 0,
-            ("blocks_data", 0, ANY),
-            lambda e: e[0] == "blocks_data" and e[1] > 0,
-        )
-    )
-
-    while True:
-        cancel_on_event = next(steps_to_cancel, None)
+    for cancel_on_event in (
+        "certificates_start",
+        "certificates_done",
+        ("vlobs", 0, ANY),
+        lambda e: e[0] == "vlobs" and e[1] > 0,
+        ("blocks_metadata", 0, ANY),
+        lambda e: e[0] == "blocks_metadata" and e[1] > 0,
+        ("blocks_data", 0, ANY),
+        lambda e: e[0] == "blocks_data" and e[1] > 0,
+        # Finally we finished without being cancelled
+        None,
+    ):
         with anyio.CancelScope() as cancel_scope:
             # Cancel the export at multiple different steps
             def _on_progress(event: ExportProgressStep):
@@ -488,10 +484,11 @@ async def test_restart_partially_exported(
                 on_progress=_on_progress,
             )
 
-            # Finally we finished without being cancelled
-            break
+            if cancel_on_event is None:
+                assert not cancel_scope.cancel_called
+            else:
+                assert cancel_scope.cancel_called
 
-    assert next(steps_to_cancel, None) is None
     assert output_db_path.is_file()
 
     export_expected = extract_export_expected_from_template(
