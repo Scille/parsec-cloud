@@ -25,6 +25,7 @@ libparsec_crypto = { workspace = true }
 libparsec_client = { workspace = true }
 libparsec_client_connection = { workspace = true }
 libparsec_platform_ipc = { workspace = true }
+libparsec_platform_mountpoint = { workspace = true }
 
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["default", "derive", "env"] }

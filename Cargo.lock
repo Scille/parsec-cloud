@@ -2963,6 +2963,7 @@ dependencies = [
  "libparsec_client_connection",
  "libparsec_crypto",
  "libparsec_platform_ipc",
+ "libparsec_platform_mountpoint",
  "log",
  "predicates",
  "reqwest",
