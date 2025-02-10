@@ -769,7 +769,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         except KeyError:
             return RealmDumpRealmsGrantedRolesBadOutcome.ORGANIZATION_NOT_FOUND
 
-        granted_roles = []
+        granted_roles: list[RealmGrantedRole] = []
         for realm in org.realms.values():
             for role in realm.roles:
                 granted_roles.append(
@@ -876,23 +876,23 @@ class MemoryRealmComponent(BaseRealmComponent):
         if realm_id not in org.realms:
             return RealmExportDoCertificatesBadOutcome.REALM_NOT_FOUND
 
-        common_certificates = []
+        common_certificates: list[bytes] = []
         for ts, raw, _ in org.ordered_common_certificates():
             if ts > common_certificate_timestamp_upper_bound:
                 break
             common_certificates.append(raw)
-        # The organization has been bootstrapped, there *must* some common certificates
+        # The organization has been bootstrapped, there *must* be some common certificates
         assert common_certificates
 
-        realm_certificates = []
+        realm_certificates: list[bytes] = []
         for ts, raw, _ in org.ordered_realm_certificates(realm_id):
             if ts > realm_certificate_timestamp_upper_bound:
                 break
             realm_certificates.append(raw)
-        # The realm existence has already been checked, there *must* some realm certificates
+        # The realm existence has already been checked, there *must* be some realm certificates
         assert realm_certificates
 
-        sequester_certificates = []
+        sequester_certificates: list[bytes] = []
         if sequester_certificate_timestamp_upper_bound is not None:
             for ts, raw, _ in org.ordered_sequester_certificates():
                 if ts > sequester_certificate_timestamp_upper_bound:
@@ -921,7 +921,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         if realm_id not in org.realms:
             return RealmExportDoVlobsBatchBadOutcome.REALM_NOT_FOUND
 
-        items = []
+        items: list[RealmExportVlobsBatchItem] = []
         for sequential_row_id, row in org.simulate_postgresql_vlob_atom_table():
             # Skip already processed rows
             if sequential_row_id <= batch_offset_marker:
