@@ -78,6 +78,9 @@ const config: UserConfigExport = () => ({
       '@': path.resolve(__dirname, './src'),
       '@tests': path.resolve(__dirname, './tests'),
     },
+    fakeTimers: {
+      toFake: ['setTimeout', 'clearTimeout', 'Date'],
+    },
   },
   plugins: plugins,
   build: {
