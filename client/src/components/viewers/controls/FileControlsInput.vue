@@ -19,8 +19,8 @@
     @ion-blur="onFocusChanged(false)"
     @ion-focus="onFocusChanged(true)"
     @ion-input="onChange($event.detail.value || '')"
-    @keyup.enter="editing = false"
-    @keyup.esc="editing = false"
+    @keyup.enter="blur"
+    @keyup.esc="blur"
     :disabled="$props.disabled"
   >
     <span
@@ -78,9 +78,7 @@ async function setFocus(): Promise<void> {
 
 async function onFocusChanged(focus: boolean): Promise<void> {
   if (focus === false) {
-    lostFocus.value = true;
-    editing.value = false;
-    await onSubmittedValue(props.modelValue || '');
+    await blur();
   }
   emits('onFocusChanged', focus);
 }
@@ -115,6 +113,12 @@ async function onTextClick(): Promise<void> {
 
 function isEditing(): boolean {
   return editing.value;
+}
+
+async function blur(): Promise<void> {
+  lostFocus.value = true;
+  editing.value = false;
+  await onSubmittedValue(props.modelValue || '');
 }
 </script>
 
