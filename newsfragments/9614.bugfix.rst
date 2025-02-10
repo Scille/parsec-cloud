@@ -1,1 +1,0 @@
-Fix an issue causing the client to not synchronize properly after the user has accepted the Terms of Service
