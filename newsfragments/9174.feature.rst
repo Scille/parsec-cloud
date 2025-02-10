@@ -1,1 +1,0 @@
-Display the user role on a workspace in grid mode and while viewing files

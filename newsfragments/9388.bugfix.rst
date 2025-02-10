@@ -1,1 +1,0 @@
-Correctly refreshes the displayed size of a file when copying from the file explorer

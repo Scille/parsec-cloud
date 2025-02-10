@@ -1,1 +1,0 @@
-Fixed a rare bug that could occur when switching organizations
