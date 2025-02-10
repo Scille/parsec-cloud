@@ -228,23 +228,6 @@ class UserClaimInitialInfo(Structure):
     last_greeting_attempt_joined_on: Optional[DateTime]
 
 
-class UserClaimCreatedByUserAsGreeterError(ErrorVariant):
-    class CreatedByExternalService:
-        pass
-
-    class NotPartOfAdministrators:
-        pass
-
-    class Internal:
-        pass
-
-
-def claimer_user_get_created_by_user_initial_info(
-    handle: Handle,
-) -> Result[UserClaimInitialInfo, UserClaimCreatedByUserAsGreeterError]:
-    raise NotImplementedError
-
-
 class UserClaimListInitialInfosError(ErrorVariant):
     class Internal:
         pass

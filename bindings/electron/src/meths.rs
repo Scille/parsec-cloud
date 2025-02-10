@@ -11075,42 +11075,6 @@ fn variant_testbed_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// UserClaimCreatedByUserAsGreeterError
-
-#[allow(dead_code)]
-fn variant_user_claim_created_by_user_as_greeter_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::UserClaimCreatedByUserAsGreeterError,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::UserClaimCreatedByUserAsGreeterError::CreatedByExternalService { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "UserClaimCreatedByUserAsGreeterErrorCreatedByExternalService",
-            )
-            .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::UserClaimCreatedByUserAsGreeterError::Internal { .. } => {
-            let js_tag = JsString::try_new(cx, "UserClaimCreatedByUserAsGreeterErrorInternal")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::UserClaimCreatedByUserAsGreeterError::NotPartOfAdministrators { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "UserClaimCreatedByUserAsGreeterErrorNotPartOfAdministrators",
-            )
-            .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // UserClaimListInitialInfosError
 
 #[allow(dead_code)]
@@ -14190,45 +14154,6 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
             });
         });
 
-    Ok(promise)
-}
-
-// claimer_user_get_created_by_user_initial_info
-fn claimer_user_get_created_by_user_initial_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    crate::init_sentry();
-    let handle = {
-        let js_val = cx.argument::<JsNumber>(0)?;
-        {
-            let v = js_val.value(&mut cx);
-            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                cx.throw_type_error("Not an u32 number")?
-            }
-            let v = v as u32;
-            v
-        }
-    };
-    let ret = libparsec::claimer_user_get_created_by_user_initial_info(handle);
-    let js_ret = match ret {
-        Ok(ok) => {
-            let js_obj = JsObject::new(&mut cx);
-            let js_tag = JsBoolean::new(&mut cx, true);
-            js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_value = struct_user_claim_initial_info_rs_to_js(&mut cx, ok)?;
-            js_obj.set(&mut cx, "value", js_value)?;
-            js_obj
-        }
-        Err(err) => {
-            let js_obj = cx.empty_object();
-            let js_tag = JsBoolean::new(&mut cx, false);
-            js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_err =
-                variant_user_claim_created_by_user_as_greeter_error_rs_to_js(&mut cx, err)?;
-            js_obj.set(&mut cx, "error", js_err)?;
-            js_obj
-        }
-    };
-    let (deferred, promise) = cx.promise();
-    deferred.resolve(&mut cx, js_ret);
     Ok(promise)
 }
 
@@ -21997,10 +21922,6 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function(
         "claimerUserFinalizeSaveLocalDevice",
         claimer_user_finalize_save_local_device,
-    )?;
-    cx.export_function(
-        "claimerUserGetCreatedByUserInitialInfo",
-        claimer_user_get_created_by_user_initial_info,
     )?;
     cx.export_function(
         "claimerUserInProgress1DoDenyTrust",

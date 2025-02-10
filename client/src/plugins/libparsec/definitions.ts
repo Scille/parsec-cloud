@@ -2532,30 +2532,6 @@ export type TestbedError =
   | TestbedErrorDisabled
   | TestbedErrorInternal
 
-// UserClaimCreatedByUserAsGreeterError
-export enum UserClaimCreatedByUserAsGreeterErrorTag {
-    CreatedByExternalService = 'UserClaimCreatedByUserAsGreeterErrorCreatedByExternalService',
-    Internal = 'UserClaimCreatedByUserAsGreeterErrorInternal',
-    NotPartOfAdministrators = 'UserClaimCreatedByUserAsGreeterErrorNotPartOfAdministrators',
-}
-
-export interface UserClaimCreatedByUserAsGreeterErrorCreatedByExternalService {
-    tag: UserClaimCreatedByUserAsGreeterErrorTag.CreatedByExternalService
-    error: string
-}
-export interface UserClaimCreatedByUserAsGreeterErrorInternal {
-    tag: UserClaimCreatedByUserAsGreeterErrorTag.Internal
-    error: string
-}
-export interface UserClaimCreatedByUserAsGreeterErrorNotPartOfAdministrators {
-    tag: UserClaimCreatedByUserAsGreeterErrorTag.NotPartOfAdministrators
-    error: string
-}
-export type UserClaimCreatedByUserAsGreeterError =
-  | UserClaimCreatedByUserAsGreeterErrorCreatedByExternalService
-  | UserClaimCreatedByUserAsGreeterErrorInternal
-  | UserClaimCreatedByUserAsGreeterErrorNotPartOfAdministrators
-
 // UserClaimListInitialInfosError
 export enum UserClaimListInitialInfosErrorTag {
     Internal = 'UserClaimListInitialInfosErrorInternal',
@@ -3905,9 +3881,6 @@ export interface LibParsecPlugin {
         handle: Handle,
         save_strategy: DeviceSaveStrategy
     ): Promise<Result<AvailableDevice, ClaimInProgressError>>
-    claimerUserGetCreatedByUserInitialInfo(
-        handle: Handle
-    ): Promise<Result<UserClaimInitialInfo, UserClaimCreatedByUserAsGreeterError>>
     claimerUserInProgress1DoDenyTrust(
         canceller: Handle,
         handle: Handle

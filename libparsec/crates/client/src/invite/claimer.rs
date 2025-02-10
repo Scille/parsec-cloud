@@ -326,16 +326,6 @@ pub struct UserClaimListAdministratorsCtx {
     time_provider: TimeProvider,
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum UserClaimCreatedByUserAsGreeterError {
-    #[error("The invitation was created by an external service")]
-    CreatedByExternalService,
-    #[error("The invitation was created by a user that is not part of the administrators")]
-    NotPartOfAdministrators,
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
 impl UserClaimListAdministratorsCtx {
     pub fn new(
         config: Arc<ClientConfig>,
@@ -391,29 +381,6 @@ impl UserClaimListAdministratorsCtx {
                 )
             })
             .collect()
-    }
-
-    pub fn get_created_by_user_initial_ctx(
-        self,
-    ) -> Result<UserClaimInitialCtx, UserClaimCreatedByUserAsGreeterError> {
-        let user_id = match self.created_by {
-            InviteInfoInvitationCreatedBy::ExternalService { .. } => {
-                return Err(UserClaimCreatedByUserAsGreeterError::CreatedByExternalService)
-            }
-            InviteInfoInvitationCreatedBy::User { user_id, .. } => user_id,
-        };
-        let administrator = self
-            .administrators
-            .iter()
-            .find(|administrator| administrator.user_id == user_id)
-            .ok_or(UserClaimCreatedByUserAsGreeterError::NotPartOfAdministrators)?;
-        Ok(UserClaimInitialCtx::new(
-            self.config.clone(),
-            self.cmds.clone(),
-            self.claimer_email.clone(),
-            administrator.clone(),
-            self.time_provider.clone(),
-        ))
     }
 }
 

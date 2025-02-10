@@ -7,8 +7,7 @@ pub use libparsec_client::{
     ClientNewShamirRecoveryInvitationError, ClientNewUserInvitationError,
     ClientStartShamirRecoveryInvitationGreetError, InvitationEmailSentStatus, ListInvitationsError,
     ShamirRecoveryClaimAddShareError, ShamirRecoveryClaimPickRecipientError,
-    ShamirRecoveryClaimRecoverDeviceError, UserClaimCreatedByUserAsGreeterError,
-    UserClaimInitialCtx,
+    ShamirRecoveryClaimRecoverDeviceError, UserClaimInitialCtx,
 };
 pub use libparsec_platform_async::future::join_all;
 pub use libparsec_protocol::authenticated_cmds::latest::invite_list::InvitationCreatedBy as InviteListInvitationCreatedBy;
@@ -349,29 +348,6 @@ pub struct UserClaimInitialInfo {
     pub greeter_human_handle: HumanHandle,
     pub online_status: UserOnlineStatus,
     pub last_greeting_attempt_joined_on: Option<DateTime>,
-}
-
-pub fn claimer_user_get_created_by_user_initial_info(
-    handle: Handle,
-) -> Result<UserClaimInitialInfo, UserClaimCreatedByUserAsGreeterError> {
-    let ctx = take_and_close_handle(handle, |x| match x {
-        HandleItem::UserClaimListAdministrators(ctx) => Ok(ctx),
-        invalid => Err(invalid),
-    })?;
-    let ctx = ctx.get_created_by_user_initial_ctx()?;
-    let greeter_user_id = ctx.greeter_user_id().to_owned();
-    let greeter_human_handle = ctx.greeter_human_handle().to_owned();
-    let online_status = ctx.online_status().to_owned();
-    let last_greeting_attempt_joined_on = ctx.last_greeting_attempt_joined_on().to_owned();
-    let new_handle = register_handle(HandleItem::UserClaimInitial(ctx));
-
-    Ok(UserClaimInitialInfo {
-        handle: new_handle,
-        greeter_user_id,
-        greeter_human_handle,
-        online_status,
-        last_greeting_attempt_joined_on,
-    })
 }
 
 pub async fn claimer_user_wait_all_peers(
