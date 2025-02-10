@@ -88,6 +88,9 @@ pub async fn fd_read(
 
     // File manifest is guaranteed to have its blocks sorted by offset, with no overlap
 
+    // TODO: Update this comment and the related code now that we are guaranteed
+    //       that block access size == block data len
+
     // Note we cannot use `manifest.blocksize` to determine the range of indexes of
     // involved blocks. This is because blocks can be of a different size than blocksize
     // (for instance if the file grows a lot and the blocksize is increased).
