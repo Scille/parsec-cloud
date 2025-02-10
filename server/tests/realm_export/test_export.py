@@ -330,7 +330,6 @@ async def test_export_ok_non_sequestered(
     backend: Backend,
     tmp_path: Path,
     kind: str,
-    xfail_if_postgresql: None,
 ):
     match kind:
         case "current_snapshot":
@@ -396,7 +395,6 @@ async def test_export_ok_sequestered(
     backend: Backend,
     tmp_path: Path,
     kind: str,
-    xfail_if_postgresql: None,
 ):
     match kind:
         case "current_snapshot":
@@ -444,7 +442,6 @@ async def test_restart_partially_exported(
     backend: Backend,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
-    xfail_if_postgresql: None,
 ):
     expected_snapshot_timestamp = DateTime.now().subtract(seconds=BALLPARK_CLIENT_LATE_OFFSET)
 
@@ -503,7 +500,6 @@ async def test_re_export_is_noop(
     workspace_history_org: WorkspaceHistoryOrgRpcClients,
     backend: Backend,
     sample_export_db_path: Path,
-    xfail_if_postgresql: None,
 ):
     output_db_stat = sample_export_db_path.stat()
 
@@ -538,7 +534,6 @@ async def test_re_export_with_different_params(
     backend: Backend,
     sample_export_db_path: Path,
     kind: str,
-    xfail_if_postgresql: None,
 ):
     snapshot_timestamp = SAMPLE_EXPORT_SNAPSHOT_TIMESTAMP
     organization_id = workspace_history_org.organization_id
@@ -625,9 +620,7 @@ async def test_re_export_with_different_params(
     assert str(exc.value) == expected_error_msg
 
 
-async def test_export_organization_not_found(
-    backend: Backend, tmp_path: Path, xfail_if_postgresql: None
-):
+async def test_export_organization_not_found(backend: Backend, tmp_path: Path):
     output_db_path = tmp_path / "output.sqlite"
 
     with pytest.raises(RealmExporterInputError) as exc:
@@ -646,7 +639,6 @@ async def test_export_realm_not_found(
     workspace_history_org: WorkspaceHistoryOrgRpcClients,
     backend: Backend,
     tmp_path: Path,
-    xfail_if_postgresql: None,
 ):
     output_db_path = tmp_path / "output.sqlite"
 
@@ -671,7 +663,6 @@ async def test_export_snapshot_timestamp_in_the_future(
     backend: Backend,
     tmp_path: Path,
     kind: str,
-    xfail_if_postgresql: None,
 ):
     match kind:
         case "in_the_future":
@@ -703,7 +694,6 @@ async def test_export_snapshot_timestamp_older_than_realm_creation(
     workspace_history_org: WorkspaceHistoryOrgRpcClients,
     backend: Backend,
     tmp_path: Path,
-    xfail_if_postgresql: None,
 ):
     wksp1_created_on = next(
         (

@@ -20,6 +20,21 @@ from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.realm_create import realm_create
+from parsec.components.postgresql.realm_dump_realms_granted_roles import (
+    realm_dump_realms_granted_roles,
+)
+from parsec.components.postgresql.realm_export_do_base_info import (
+    realm_export_do_base_info,
+)
+from parsec.components.postgresql.realm_export_do_blocks_metadata_batch import (
+    realm_export_do_blocks_metadata_batch,
+)
+from parsec.components.postgresql.realm_export_do_certificates import (
+    realm_export_do_certificates,
+)
+from parsec.components.postgresql.realm_export_do_vlobs_batch import (
+    realm_export_do_vlobs_batch,
+)
 from parsec.components.postgresql.realm_get_current_realms_for_user import (
     realm_get_current_realms_for_user,
 )
@@ -40,8 +55,19 @@ from parsec.components.realm import (
     ParticipantMismatch,
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
+    RealmDumpRealmsGrantedRolesBadOutcome,
+    RealmExportBatchOffsetMarker,
+    RealmExportBlocksMetadataBatch,
+    RealmExportCertificates,
+    RealmExportDoBaseInfo,
+    RealmExportDoBaseInfoBadOutcome,
+    RealmExportDoBlocksBatchMetadataBadOutcome,
+    RealmExportDoCertificatesBadOutcome,
+    RealmExportDoVlobsBatchBadOutcome,
+    RealmExportVlobsBatch,
     RealmGetCurrentRealmsForUserBadOutcome,
     RealmGetKeysBundleBadOutcome,
+    RealmGrantedRole,
     RealmRenameStoreBadOutcome,
     RealmRenameValidateBadOutcome,
     RealmRotateKeyStoreBadOutcome,
@@ -240,3 +266,69 @@ class PGRealmComponent(BaseRealmComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID, user: UserID
     ) -> dict[VlobID, RealmRole] | RealmGetCurrentRealmsForUserBadOutcome:
         return await realm_get_current_realms_for_user(conn, organization_id, user)
+
+    @override
+    @no_transaction
+    async def dump_realms_granted_roles(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID
+    ) -> list[RealmGrantedRole] | RealmDumpRealmsGrantedRolesBadOutcome:
+        return await realm_dump_realms_granted_roles(conn, organization_id)
+
+    @override
+    @no_transaction
+    async def export_do_base_info(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        snapshot_timestamp: DateTime,
+    ) -> RealmExportDoBaseInfo | RealmExportDoBaseInfoBadOutcome:
+        return await realm_export_do_base_info(conn, organization_id, realm_id, snapshot_timestamp)
+
+    @override
+    @no_transaction
+    async def export_do_certificates(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        common_certificate_timestamp_upper_bound: DateTime,
+        realm_certificate_timestamp_upper_bound: DateTime,
+        sequester_certificate_timestamp_upper_bound: DateTime | None,
+    ) -> RealmExportCertificates | RealmExportDoCertificatesBadOutcome:
+        return await realm_export_do_certificates(
+            conn,
+            organization_id,
+            realm_id,
+            common_certificate_timestamp_upper_bound,
+            realm_certificate_timestamp_upper_bound,
+            sequester_certificate_timestamp_upper_bound,
+        )
+
+    @override
+    @no_transaction
+    async def export_do_vlobs_batch(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmExportBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmExportVlobsBatch | RealmExportDoVlobsBatchBadOutcome:
+        return await realm_export_do_vlobs_batch(
+            conn, organization_id, realm_id, batch_offset_marker, batch_size
+        )
+
+    @override
+    @no_transaction
+    async def export_do_blocks_metadata_batch(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmExportBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmExportBlocksMetadataBatch | RealmExportDoBlocksBatchMetadataBadOutcome:
+        return await realm_export_do_blocks_metadata_batch(
+            conn, organization_id, realm_id, batch_offset_marker, batch_size
+        )

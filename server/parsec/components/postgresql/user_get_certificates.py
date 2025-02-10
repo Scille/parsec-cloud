@@ -20,105 +20,129 @@ from parsec.components.user import (
     UserGetCertificatesAsUserBadOutcome,
 )
 
-_q_get_certificates = Q("""
-WITH all_common_certificates AS (
-    -- User certificate
-    (
-        SELECT
-            -- Certificates must be returned ordered by timestamp, however there is a trick
-            -- for the common certificates: when a new user is created, the corresponding
-            -- user and device certificates have the same timestamp, but we must return
-            -- the user certificate first (given device references the user).
-            -- Hence this priority field used to order with tuple (timestamp, priority).
-            0 AS priority,
-            created_on AS timestamp,
-            (CASE WHEN $redacted THEN redacted_user_certificate ELSE user_certificate END) AS certificate
-        FROM user_
-        WHERE organization = $organization_internal_id
-    )
-    UNION
-    -- Device certificate
-    (
-        SELECT
-            1 AS priority,
-            created_on AS timestamp,
-            (CASE WHEN $redacted THEN redacted_device_certificate ELSE device_certificate END) AS certificate
-        FROM device
-        WHERE organization = $organization_internal_id
-    )
-    UNION
-    -- User revoked certificate
-    (
-        SELECT
-            1 AS priority,
-            revoked_on AS timestamp,
-            revoked_user_certificate AS certificate
-        FROM user_
-        WHERE organization = $organization_internal_id
-        AND revoked_on IS NOT NULL
-    )
-    UNION
-    -- User update certificate
-    (
-        SELECT
-            1 AS priority,
-            profile.certified_on AS timestamp,
-            profile.profile_certificate AS certificate
-        FROM profile
-        INNER JOIN user_ ON profile.user_ = user_._id
-        WHERE user_.organization = $organization_internal_id
-    )
-),
+# Extract from the main query the the SQL fragment used to fetch all certificates.
+# This is because this operation is complexe (as it involves multiple tables and
+# must be updated whenever we add another type of certificate) and is also needed
+# in `realm_export_do_certificates`
 
-all_sequester_certificates AS (
-    (
-        SELECT
-            _bootstrapped_on AS timestamp,
-            sequester_authority_certificate AS certificate
-        FROM organization
-        WHERE
-            _id = $organization_internal_id
-            AND sequester_authority_certificate IS NOT NULL
+sql_fragment_all_common_certificates = """
+-- User certificate
+(
+    SELECT
+        -- Certificates must be returned ordered by timestamp, however there is a trick
+        -- for the common certificates: when a new user is created, the corresponding
+        -- user and device certificates have the same timestamp, but we must return
+        -- the user certificate first (given device references the user).
+        -- Hence this priority field used to order with tuple (timestamp, priority).
+        0 AS priority,
+        created_on AS timestamp,
+        (CASE WHEN $redacted THEN redacted_user_certificate ELSE user_certificate END) AS certificate
+    FROM user_
+    WHERE organization = $organization_internal_id
+)
+UNION
+-- Device certificate
+(
+    SELECT
+        1 AS priority,
+        created_on AS timestamp,
+        (CASE WHEN $redacted THEN redacted_device_certificate ELSE device_certificate END) AS certificate
+    FROM device
+    WHERE organization = $organization_internal_id
+)
+UNION
+-- User revoked certificate
+(
+    SELECT
+        1 AS priority,
+        revoked_on AS timestamp,
+        revoked_user_certificate AS certificate
+    FROM user_
+    WHERE organization = $organization_internal_id
+    AND revoked_on IS NOT NULL
+)
+UNION
+-- User update certificate
+(
+    SELECT
+        1 AS priority,
+        profile.certified_on AS timestamp,
+        profile.profile_certificate AS certificate
+    FROM profile
+    INNER JOIN user_ ON profile.user_ = user_._id
+    WHERE user_.organization = $organization_internal_id
+)
+"""
 
-    )
-    UNION
-    (
-        SELECT
-            created_on AS timestamp,
-            service_certificate AS certificate
-        FROM sequester_service
-        WHERE organization = $organization_internal_id
-    )
-),
 
-all_realm_certificates AS (
-    -- Realm role certificate
-    (
-        SELECT
-            realm,
-            certified_on AS timestamp,
-            certificate
-        FROM realm_user_role
-    )
-    UNION
-    -- Realm key rotation certificate
-    (
-        SELECT
-            realm,
-            certified_on AS timestamp,
-            realm_key_rotation_certificate AS certificate
-        FROM realm_keys_bundle
-    )
-    UNION
-    -- Realm name certificate
-    (
-        SELECT
-            realm,
-            certified_on AS timestamp,
-            realm_name_certificate AS certificate
-        FROM realm_name
-    )
-),
+sql_fragment_all_sequester_certificates = """
+(
+    SELECT
+        _bootstrapped_on AS timestamp,
+        sequester_authority_certificate AS certificate
+    FROM organization
+    WHERE
+        _id = $organization_internal_id
+        AND sequester_authority_certificate IS NOT NULL
+
+)
+UNION
+(
+    SELECT
+        created_on AS timestamp,
+        service_certificate AS certificate
+    FROM sequester_service
+    WHERE organization = $organization_internal_id
+)
+UNION
+(
+    SELECT
+        revoked_on AS timestamp,
+        sequester_revoked_service_certificate AS certificate
+    FROM sequester_service
+    WHERE
+        organization = $organization_internal_id
+        AND sequester_revoked_service_certificate IS NOT NULL
+)
+"""
+
+
+sql_fragment_all_realm_certificates = """
+-- Realm role certificate
+(
+    SELECT
+        realm,
+        certified_on AS timestamp,
+        certificate
+    FROM realm_user_role
+)
+UNION
+-- Realm key rotation certificate
+(
+    SELECT
+        realm,
+        certified_on AS timestamp,
+        realm_key_rotation_certificate AS certificate
+    FROM realm_keys_bundle
+)
+UNION
+-- Realm name certificate
+(
+    SELECT
+        realm,
+        certified_on AS timestamp,
+        realm_name_certificate AS certificate
+    FROM realm_name
+)
+"""
+
+
+_q_get_certificates = Q(f"""
+WITH
+    -- Note those fragments contain `$organization_internal_id` & `$redacted`
+    all_common_certificates AS ({sql_fragment_all_common_certificates}),
+    all_sequester_certificates AS ({sql_fragment_all_sequester_certificates}),
+    all_realm_certificates AS ({sql_fragment_all_realm_certificates}),
 
 -- Retrieve the last role for each realm the user is or used to be part of
 my_realms_last_roles AS (
