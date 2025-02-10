@@ -385,6 +385,9 @@ impl ChunkView {
         self.stop.get() - self.start
     }
 
+    /// Note `chunk_data` is expected to have a size compatible with the chunk view
+    /// (typically when chunk view correspond to a remote block, it has been created from
+    /// a block access that has been also used to validate the block data size).
     pub fn copy_between_start_and_stop(
         &self,
         chunk_data: &[u8],

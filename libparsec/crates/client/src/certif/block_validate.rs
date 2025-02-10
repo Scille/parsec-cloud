@@ -24,6 +24,15 @@ pub enum InvalidBlockAccessError {
         manifest_author: DeviceID,
         block_id: BlockID,
     },
+    #[error("Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): size mismatch !")]
+    SizeMismatch {
+        realm_id: VlobID,
+        manifest_id: VlobID,
+        manifest_version: VersionInt,
+        manifest_timestamp: DateTime,
+        manifest_author: DeviceID,
+        block_id: BlockID,
+    },
     #[error("Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): cannot be decrypted by key index {key_index} !")]
     CannotDecrypt {
         realm_id: VlobID,
@@ -187,6 +196,19 @@ pub(super) async fn validate_block(
             }
             CertifForReadWithRequirementsError::Internal(err) => err.into(),
         })??;
+
+    if block.len() != access.size.get() as usize {
+        return Err(CertifValidateBlockError::InvalidBlockAccess(Box::new(
+            InvalidBlockAccessError::SizeMismatch {
+                realm_id,
+                manifest_id: manifest.id,
+                manifest_version: manifest.version,
+                manifest_timestamp: manifest.timestamp,
+                manifest_author: manifest.author,
+                block_id: access.id,
+            },
+        )));
+    }
 
     if HashDigest::from_data(&block) != access.digest {
         return Err(CertifValidateBlockError::InvalidBlockAccess(Box::new(

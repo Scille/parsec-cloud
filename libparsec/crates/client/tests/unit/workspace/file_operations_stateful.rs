@@ -169,6 +169,12 @@ impl StateMachineTest for FileOperationStateMachine {
                 .manifest
                 .to_remote(state.device_id, state.time_provider.now())
                 .unwrap();
+            // Data size matches the block access size
+            for block_access in remote.blocks.iter() {
+                let chunk_id = ChunkID::from_hex(&block_access.id.hex()).unwrap();
+                let data_length = state.storage.0.get(&chunk_id).unwrap().len();
+                assert_eq!(block_access.size.get() as usize, data_length);
+            }
             LocalFileManifest::from_remote(remote)
                 .check_data_integrity()
                 .unwrap();
@@ -182,6 +188,11 @@ impl StateMachineTest for FileOperationStateMachine {
             .collect();
         let storage_ids: HashSet<_> = state.storage.0.keys().cloned().collect();
         assert_eq!(manifest_ids, storage_ids);
+        // 4. Data size matches metadata
+        for chunk_view in state.manifest.blocks.iter().flatten() {
+            let data_length = state.storage.0.get(&chunk_view.id).unwrap().len();
+            assert_eq!(chunk_view.raw_size.get() as usize, data_length);
+        }
     }
 }
 

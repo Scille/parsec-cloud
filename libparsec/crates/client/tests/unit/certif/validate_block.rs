@@ -202,6 +202,39 @@ async fn invalid_block_access_hash_digest_mismatch(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
+async fn invalid_block_access_size_mismatch(env: &TestbedEnv) {
+    let mut data = BaseData::extract(env);
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    test_register_send_hook(
+        &env.discriminant_dir,
+        test_send_hook_realm_get_keys_bundle!(env, alice.user_id, data.wksp1_id),
+    );
+
+    data.wksp1_bar_txt_block_access.size = (data.wksp1_bar_txt_block_access.size.get() - 1)
+        .try_into()
+        .unwrap();
+    let err = ops
+        .validate_block(
+            data.wksp1_last_realm_certificate_timestamp,
+            data.wksp1_id,
+            data.wksp1_last_key_index,
+            &data.wksp1_bar_txt_manifest,
+            &data.wksp1_bar_txt_block_access,
+            &data.wksp1_bar_txt_block_encrypted,
+        )
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(
+        err,
+        CertifValidateBlockError::InvalidBlockAccess(boxed)
+        if matches!(*boxed, InvalidBlockAccessError::SizeMismatch { .. })
+    );
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
 async fn invalid_block_access_cannot_decrypt(env: &TestbedEnv) {
     let data = BaseData::extract(env);
     let alice = env.local_device("alice@dev1");
