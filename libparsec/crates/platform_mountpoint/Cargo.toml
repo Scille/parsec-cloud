@@ -32,7 +32,8 @@ log = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 [dev-dependencies]
-ctrlc = { workspace = true }
+# `termination` feature enable handling of SIGHUP/SIGTERM on top of SIGINT
+ctrlc = { workspace = true, features = ["termination"] }
 env_logger = { workspace = true }
 libparsec_client_connection = { workspace = true }
 libparsec_tests_fixtures = { workspace = true, features = ["default"] }
