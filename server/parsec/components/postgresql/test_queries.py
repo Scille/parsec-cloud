@@ -97,7 +97,6 @@ deleted_realm_vlob_updates AS (
 deleted_block_datas AS (
     DELETE FROM block_data
     WHERE organization_id = $organization_id
-    OR block_id in (select block_id from deleted_blocks)
     RETURNING _id
 ),
 deleted_topics_common AS (
