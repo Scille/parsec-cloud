@@ -2,6 +2,7 @@ mod device;
 mod device_option;
 mod invitations;
 mod ls;
+mod mount_realm_export;
 mod organization;
 mod rm;
 mod server;
