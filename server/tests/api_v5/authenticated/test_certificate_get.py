@@ -33,12 +33,16 @@ from parsec._parsec import (
     VlobID,
     authenticated_cmds,
 )
+from parsec._parsec import (
+    testbed as tb,
+)
 from tests.common import (
     AsyncClient,
     AuthenticatedRpcClient,
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    SequesteredOrgRpcClients,
 )
 from tests.common.data import wksp1_alice_gives_role
 
@@ -359,6 +363,71 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     )
     assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
     assert rep.common_certificates == []
+
+
+async def test_authenticated_certificate_get_ok_sequester_certificates(
+    backend: Backend, sequestered_org: SequesteredOrgRpcClients
+) -> None:
+    all_sequester_certificates: list[tuple[DateTime, bytes]] = []
+    for event in sequestered_org.testbed_template.events:
+        match event:
+            case tb.TestbedEventBootstrapOrganization():
+                assert event.sequester_authority_raw_certificate is not None
+                all_sequester_certificates.append(
+                    (event.timestamp, event.sequester_authority_raw_certificate)
+                )
+            case tb.TestbedEventNewSequesterService():
+                all_sequester_certificates.append((event.timestamp, event.raw_certificate))
+            case tb.TestbedEventRevokeSequesterService():
+                all_sequester_certificates.append((event.timestamp, event.raw_certificate))
+            case _:
+                pass
+
+    # Oldest time: nothing occurred at this point
+    t0 = min(t for t, _ in all_sequester_certificates).add(days=-1)
+    t2, _ = all_sequester_certificates[2]
+    t99 = max(t for t, _ in all_sequester_certificates).add(days=1)
+
+    # 1) Get all certificates
+
+    rep = await sequestered_org.alice.certificate_get(
+        common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
+    )
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
+    assert rep.sequester_certificates == [c for _, c in all_sequester_certificates]
+
+    # 2) Get all certificates (with a timestamp too far in the past)
+
+    rep = await sequestered_org.alice.certificate_get(
+        common_after=None,
+        sequester_after=t0,
+        shamir_recovery_after=None,
+        realm_after={},
+    )
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
+    assert rep.sequester_certificates == [c for _, c in all_sequester_certificates]
+
+    # 3) Get a subset of the certificates
+
+    rep = await sequestered_org.alice.certificate_get(
+        common_after=None,
+        sequester_after=t2,
+        shamir_recovery_after=None,
+        realm_after={},
+    )
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
+    assert rep.sequester_certificates == [c for t, c in all_sequester_certificates if t > t2]
+
+    # 4) Get a subset of the certificates (no new certificates at all)
+
+    rep = await sequestered_org.alice.certificate_get(
+        common_after=None,
+        sequester_after=t99,
+        shamir_recovery_after=None,
+        realm_after={},
+    )
+    assert isinstance(rep, authenticated_cmds.latest.certificate_get.RepOk)
+    assert rep.sequester_certificates == []
 
 
 async def test_authenticated_certificate_get_ok_realm_certificates(
