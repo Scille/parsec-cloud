@@ -8,6 +8,7 @@ use crate::utils::*;
 enum AuthenticationMethod {
     Keyring,
     Password,
+    Biometrics,
 }
 
 crate::clap_parser_with_shared_opts_builder!(
@@ -40,6 +41,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             })?;
             DeviceSaveStrategy::Password { password }
         }
+        AuthenticationMethod::Biometrics => DeviceSaveStrategy::Biometrics,
     };
 
     // Update device access strategy

@@ -2,6 +2,7 @@
 
 import {
   ActiveUsersLimitTag,
+  DeviceAccessStrategyBiometrics,
   DeviceAccessStrategyKeyring,
   DeviceFileType,
   DeviceSaveStrategyKeyring,
@@ -430,6 +431,12 @@ export const AccessStrategy = {
   useKeyring(device: AvailableDevice): DeviceAccessStrategyKeyring {
     return {
       tag: DeviceAccessStrategyTag.Keyring,
+      keyFile: device.keyFilePath,
+    };
+  },
+  useBiometrics(device: AvailableDevice): DeviceAccessStrategyBiometrics {
+    return {
+      tag: DeviceAccessStrategyTag.Biometrics,
       keyFile: device.keyFilePath,
     };
   },

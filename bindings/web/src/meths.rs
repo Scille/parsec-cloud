@@ -83,6 +83,7 @@ fn enum_cancelled_greeting_attempt_reason_rs_to_js(
 #[allow(dead_code)]
 fn enum_device_file_type_js_to_rs(raw_value: &str) -> Result<libparsec::DeviceFileType, JsValue> {
     match raw_value {
+        "DeviceFileTypeBiometrics" => Ok(libparsec::DeviceFileType::Biometrics),
         "DeviceFileTypeKeyring" => Ok(libparsec::DeviceFileType::Keyring),
         "DeviceFileTypePassword" => Ok(libparsec::DeviceFileType::Password),
         "DeviceFileTypeRecovery" => Ok(libparsec::DeviceFileType::Recovery),
@@ -98,6 +99,7 @@ fn enum_device_file_type_js_to_rs(raw_value: &str) -> Result<libparsec::DeviceFi
 #[allow(dead_code)]
 fn enum_device_file_type_rs_to_js(value: libparsec::DeviceFileType) -> &'static str {
     match value {
+        libparsec::DeviceFileType::Biometrics => "DeviceFileTypeBiometrics",
         libparsec::DeviceFileType::Keyring => "DeviceFileTypeKeyring",
         libparsec::DeviceFileType::Password => "DeviceFileTypePassword",
         libparsec::DeviceFileType::Recovery => "DeviceFileTypeRecovery",
@@ -7322,6 +7324,24 @@ fn variant_device_access_strategy_js_to_rs(
         .as_string()
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
+        "DeviceAccessStrategyBiometrics" => {
+            let key_file = {
+                let js_val = Reflect::get(&obj, &"keyFile".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                            Ok(std::path::PathBuf::from(s))
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid Path"))?
+            };
+            Ok(libparsec::DeviceAccessStrategy::Biometrics { key_file })
+        }
         "DeviceAccessStrategyKeyring" => {
             let key_file = {
                 let js_val = Reflect::get(&obj, &"keyFile".into())?;
@@ -7402,6 +7422,26 @@ fn variant_device_access_strategy_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        libparsec::DeviceAccessStrategy::Biometrics { key_file, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeviceAccessStrategyBiometrics".into(),
+            )?;
+            let js_key_file = JsValue::from_str({
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
+        }
         libparsec::DeviceAccessStrategy::Keyring { key_file, .. } => {
             Reflect::set(
                 &js_obj,
@@ -7481,6 +7521,7 @@ fn variant_device_save_strategy_js_to_rs(
         .as_string()
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
+        "DeviceSaveStrategyBiometrics" => Ok(libparsec::DeviceSaveStrategy::Biometrics {}),
         "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring {}),
         "DeviceSaveStrategyPassword" => {
             let password = {
@@ -7512,6 +7553,13 @@ fn variant_device_save_strategy_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        libparsec::DeviceSaveStrategy::Biometrics { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"DeviceSaveStrategyBiometrics".into(),
+            )?;
+        }
         libparsec::DeviceSaveStrategy::Keyring { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"DeviceSaveStrategyKeyring".into())?;
         }
@@ -17944,6 +17992,16 @@ pub fn initLibparsec(config: Object) -> Promise {
 
         libparsec::init_libparsec(config).await;
         Ok(JsValue::NULL)
+    })
+}
+
+// is_biometrics_available
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn isBiometricsAvailable() -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::is_biometrics_available();
+        Ok(ret.into())
     })
 }
 

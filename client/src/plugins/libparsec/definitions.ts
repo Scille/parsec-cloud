@@ -19,6 +19,7 @@ export enum CancelledGreetingAttemptReason {
 }
 
 export enum DeviceFileType {
+    Biometrics = 'DeviceFileTypeBiometrics',
     Keyring = 'DeviceFileTypeKeyring',
     Password = 'DeviceFileTypePassword',
     Recovery = 'DeviceFileTypeRecovery',
@@ -1814,11 +1815,16 @@ export type ClientUserUpdateProfileError =
 
 // DeviceAccessStrategy
 export enum DeviceAccessStrategyTag {
+    Biometrics = 'DeviceAccessStrategyBiometrics',
     Keyring = 'DeviceAccessStrategyKeyring',
     Password = 'DeviceAccessStrategyPassword',
     Smartcard = 'DeviceAccessStrategySmartcard',
 }
 
+export interface DeviceAccessStrategyBiometrics {
+    tag: DeviceAccessStrategyTag.Biometrics
+    keyFile: Path
+}
 export interface DeviceAccessStrategyKeyring {
     tag: DeviceAccessStrategyTag.Keyring
     keyFile: Path
@@ -1833,17 +1839,22 @@ export interface DeviceAccessStrategySmartcard {
     keyFile: Path
 }
 export type DeviceAccessStrategy =
+  | DeviceAccessStrategyBiometrics
   | DeviceAccessStrategyKeyring
   | DeviceAccessStrategyPassword
   | DeviceAccessStrategySmartcard
 
 // DeviceSaveStrategy
 export enum DeviceSaveStrategyTag {
+    Biometrics = 'DeviceSaveStrategyBiometrics',
     Keyring = 'DeviceSaveStrategyKeyring',
     Password = 'DeviceSaveStrategyPassword',
     Smartcard = 'DeviceSaveStrategySmartcard',
 }
 
+export interface DeviceSaveStrategyBiometrics {
+    tag: DeviceSaveStrategyTag.Biometrics
+}
 export interface DeviceSaveStrategyKeyring {
     tag: DeviceSaveStrategyTag.Keyring
 }
@@ -1855,6 +1866,7 @@ export interface DeviceSaveStrategySmartcard {
     tag: DeviceSaveStrategyTag.Smartcard
 }
 export type DeviceSaveStrategy =
+  | DeviceSaveStrategyBiometrics
   | DeviceSaveStrategyKeyring
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
@@ -4589,6 +4601,8 @@ export interface LibParsecPlugin {
     initLibparsec(
         config: ClientConfig
     ): Promise<null>
+    isBiometricsAvailable(
+    ): Promise<boolean>
     isKeyringAvailable(
     ): Promise<boolean>
     listAvailableDevices(

@@ -20,6 +20,7 @@ export enum CancelledGreetingAttemptReason {
 }
 
 export enum DeviceFileType {
+    Biometrics = 'DeviceFileTypeBiometrics',
     Keyring = 'DeviceFileTypeKeyring',
     Password = 'DeviceFileTypePassword',
     Recovery = 'DeviceFileTypeRecovery',
@@ -1562,6 +1563,10 @@ export type ClientUserUpdateProfileError =
 
 
 // DeviceAccessStrategy
+export interface DeviceAccessStrategyBiometrics {
+    tag: "Biometrics"
+    key_file: string
+}
 export interface DeviceAccessStrategyKeyring {
     tag: "Keyring"
     key_file: string
@@ -1576,12 +1581,16 @@ export interface DeviceAccessStrategySmartcard {
     key_file: string
 }
 export type DeviceAccessStrategy =
+  | DeviceAccessStrategyBiometrics
   | DeviceAccessStrategyKeyring
   | DeviceAccessStrategyPassword
   | DeviceAccessStrategySmartcard
 
 
 // DeviceSaveStrategy
+export interface DeviceSaveStrategyBiometrics {
+    tag: "Biometrics"
+}
 export interface DeviceSaveStrategyKeyring {
     tag: "Keyring"
 }
@@ -1593,6 +1602,7 @@ export interface DeviceSaveStrategySmartcard {
     tag: "Smartcard"
 }
 export type DeviceSaveStrategy =
+  | DeviceSaveStrategyBiometrics
   | DeviceSaveStrategyKeyring
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
@@ -3890,6 +3900,8 @@ export function importRecoveryDevice(
 export function initLibparsec(
     config: ClientConfig
 ): Promise<null>
+export function isBiometricsAvailable(
+): Promise<boolean>
 export function isKeyringAvailable(
 ): Promise<boolean>
 export function listAvailableDevices(

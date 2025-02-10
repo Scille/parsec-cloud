@@ -79,6 +79,7 @@ fn enum_device_file_type_js_to_rs<'a>(
     raw_value: &str,
 ) -> NeonResult<libparsec::DeviceFileType> {
     match raw_value {
+        "DeviceFileTypeBiometrics" => Ok(libparsec::DeviceFileType::Biometrics),
         "DeviceFileTypeKeyring" => Ok(libparsec::DeviceFileType::Keyring),
         "DeviceFileTypePassword" => Ok(libparsec::DeviceFileType::Password),
         "DeviceFileTypeRecovery" => Ok(libparsec::DeviceFileType::Recovery),
@@ -92,6 +93,7 @@ fn enum_device_file_type_js_to_rs<'a>(
 #[allow(dead_code)]
 fn enum_device_file_type_rs_to_js(value: libparsec::DeviceFileType) -> &'static str {
     match value {
+        libparsec::DeviceFileType::Biometrics => "DeviceFileTypeBiometrics",
         libparsec::DeviceFileType::Keyring => "DeviceFileTypeKeyring",
         libparsec::DeviceFileType::Password => "DeviceFileTypePassword",
         libparsec::DeviceFileType::Recovery => "DeviceFileTypeRecovery",
@@ -6629,6 +6631,20 @@ fn variant_device_access_strategy_js_to_rs<'a>(
 ) -> NeonResult<libparsec::DeviceAccessStrategy> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
+        "DeviceAccessStrategyBiometrics" => {
+            let key_file = {
+                let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::DeviceAccessStrategy::Biometrics { key_file })
+        }
         "DeviceAccessStrategyKeyring" => {
             let key_file = {
                 let js_val: Handle<JsString> = obj.get(cx, "keyFile")?;
@@ -6692,6 +6708,23 @@ fn variant_device_access_strategy_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
+        libparsec::DeviceAccessStrategy::Biometrics { key_file, .. } => {
+            let js_tag = JsString::try_new(cx, "DeviceAccessStrategyBiometrics").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_key_file = JsString::try_new(cx, {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(key_file) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "keyFile", js_key_file)?;
+        }
         libparsec::DeviceAccessStrategy::Keyring { key_file, .. } => {
             let js_tag = JsString::try_new(cx, "DeviceAccessStrategyKeyring").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -6760,6 +6793,7 @@ fn variant_device_save_strategy_js_to_rs<'a>(
 ) -> NeonResult<libparsec::DeviceSaveStrategy> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
+        "DeviceSaveStrategyBiometrics" => Ok(libparsec::DeviceSaveStrategy::Biometrics {}),
         "DeviceSaveStrategyKeyring" => Ok(libparsec::DeviceSaveStrategy::Keyring {}),
         "DeviceSaveStrategyPassword" => {
             let password = {
@@ -6786,6 +6820,10 @@ fn variant_device_save_strategy_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
+        libparsec::DeviceSaveStrategy::Biometrics { .. } => {
+            let js_tag = JsString::try_new(cx, "DeviceSaveStrategyBiometrics").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::DeviceSaveStrategy::Keyring { .. } => {
             let js_tag = JsString::try_new(cx, "DeviceSaveStrategyKeyring").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -18981,6 +19019,16 @@ fn init_libparsec(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// is_biometrics_available
+fn is_biometrics_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let ret = libparsec::is_biometrics_available();
+    let js_ret = JsBoolean::new(&mut cx, ret);
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // is_keyring_available
 fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -24049,6 +24097,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("importRecoveryDevice", import_recovery_device)?;
     cx.export_function("initLibparsec", init_libparsec)?;
+    cx.export_function("isBiometricsAvailable", is_biometrics_available)?;
     cx.export_function("isKeyringAvailable", is_keyring_available)?;
     cx.export_function("listAvailableDevices", list_available_devices)?;
     cx.export_function("mountpointToOsPath", mountpoint_to_os_path)?;

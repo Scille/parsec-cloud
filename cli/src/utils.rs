@@ -233,6 +233,9 @@ pub async fn get_device_access_strategy(
                 password,
             }
         }
+        DeviceFileType::Biometrics => DeviceAccessStrategy::Biometrics {
+            key_file: device.key_file_path.clone(),
+        },
         DeviceFileType::Smartcard => DeviceAccessStrategy::Smartcard {
             key_file: device.key_file_path.clone(),
         },

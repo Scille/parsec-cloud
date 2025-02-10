@@ -16,7 +16,13 @@ use crate::{
     ARGON2ID_DEFAULT_OPSLIMIT, ARGON2ID_DEFAULT_PARALLELISM, DEVICE_FILE_EXT,
 };
 
+#[cfg(target_os = "windows")]
+mod biometrics;
+
 const KEYRING_SERVICE: &str = "parsec";
+
+#[cfg(target_os = "windows")]
+const BIOMETRICS_SERVICE: &str = "parsec";
 
 impl From<keyring::Error> for LoadDeviceError {
     fn from(value: keyring::Error) -> Self {
@@ -150,6 +156,17 @@ fn load_available_device(
             device.human_handle,
             device.device_label,
         ),
+        DeviceFile::Biometrics(device) => (
+            DeviceFileType::Biometrics,
+            device.created_on,
+            device.protected_on,
+            device.server_url,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
         DeviceFile::Smartcard(device) => (
             DeviceFileType::Smartcard,
             device.created_on,
@@ -265,6 +282,44 @@ pub async fn load_device(
                 }
                 // We are not expecting other type of device file
                 _ => return Err(LoadDeviceError::InvalidData),
+            }
+        }
+
+        DeviceAccessStrategy::Biometrics { key_file } => {
+            #[cfg(not(target_os = "windows"))]
+            {
+                return Err(LoadDeviceError::Internal(anyhow::anyhow!(
+                    "Biometrics are not available on this platform, cannot load path {key_file:?}"
+                )));
+            }
+            #[cfg(target_os = "windows")]
+            {
+                use biometrics::derive_key_from_biometrics;
+
+                // TODO: make file access on a worker thread !
+                let content =
+                    std::fs::read(key_file).map_err(|e| LoadDeviceError::InvalidPath(e.into()))?;
+
+                // Regular load
+                let device_file =
+                    DeviceFile::load(&content).map_err(|_| LoadDeviceError::InvalidData)?;
+
+                if let DeviceFile::Biometrics(x) = device_file {
+                    let key = derive_key_from_biometrics(&x.biometrics_service, x.device_id)
+                        .map_err(LoadDeviceError::Internal)?;
+                    let mut cleartext = key
+                        .decrypt(&x.ciphertext)
+                        .map_err(|_| LoadDeviceError::DecryptionFailed)?;
+
+                    let device =
+                        LocalDevice::load(&cleartext).map_err(|_| LoadDeviceError::InvalidData)?;
+
+                    cleartext.zeroize();
+
+                    (device, x.created_on)
+                } else {
+                    return Err(LoadDeviceError::InvalidData);
+                }
             }
         }
 
@@ -432,6 +487,40 @@ pub async fn save_device(
             save_content(key_file, &file_content)?;
         }
 
+        DeviceAccessStrategy::Biometrics { key_file } => {
+            #[cfg(not(target_os = "windows"))]
+            {
+                return Err(SaveDeviceError::Internal(anyhow::anyhow!(
+                    "Biometrics are not available on this platform, cannot save to path {key_file:?}"
+                )));
+            }
+            #[cfg(target_os = "windows")]
+            {
+                use biometrics::derive_key_from_biometrics;
+                let key = derive_key_from_biometrics(BIOMETRICS_SERVICE, device.device_id)
+                    .map_err(SaveDeviceError::Internal)?;
+                let cleartext = device.dump();
+                let ciphertext = key.encrypt(&cleartext);
+
+                let file_content = DeviceFile::Biometrics(DeviceFileBiometrics {
+                    created_on,
+                    protected_on,
+                    server_url: server_url.clone(),
+                    organization_id: device.organization_id().clone(),
+                    user_id: device.user_id,
+                    device_id: device.device_id,
+                    human_handle: device.human_handle.clone(),
+                    device_label: device.device_label.clone(),
+                    biometrics_service: BIOMETRICS_SERVICE.into(),
+                    ciphertext: ciphertext.into(),
+                });
+
+                let file_content = file_content.dump();
+
+                save_content(key_file, &file_content)?;
+            }
+        }
+
         DeviceAccessStrategy::Smartcard { .. } => {
             // TODO
             todo!()
@@ -526,3 +615,12 @@ pub fn is_keyring_available() -> bool {
         }
     }
 }
+
+#[cfg(not(target_os = "windows"))]
+#[allow(unused)]
+pub fn is_biometrics_available() -> bool {
+    false
+}
+
+#[cfg(target_os = "windows")]
+pub use biometrics::is_biometrics_available;

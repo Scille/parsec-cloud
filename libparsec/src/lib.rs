@@ -30,7 +30,8 @@ pub use invite::*;
 pub use libparsec_client::{ClientExportRecoveryDeviceError, ImportRecoveryDeviceError};
 pub use libparsec_client_connection::*;
 pub use libparsec_platform_device_loader::{
-    get_default_key_file, is_keyring_available, load_device, save_device, LoadDeviceError,
+    get_default_key_file, is_biometrics_available, is_keyring_available, load_device, save_device,
+    LoadDeviceError,
 };
 pub use libparsec_platform_storage as storage;
 pub use libparsec_protocol::*;
