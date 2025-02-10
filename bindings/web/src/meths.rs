@@ -12226,41 +12226,6 @@ fn variant_testbed_error_rs_to_js(rs_obj: libparsec::TestbedError) -> Result<JsV
     Ok(js_obj)
 }
 
-// UserClaimCreatedByUserAsGreeterError
-
-#[allow(dead_code)]
-fn variant_user_claim_created_by_user_as_greeter_error_rs_to_js(
-    rs_obj: libparsec::UserClaimCreatedByUserAsGreeterError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::UserClaimCreatedByUserAsGreeterError::CreatedByExternalService { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"UserClaimCreatedByUserAsGreeterErrorCreatedByExternalService".into(),
-            )?;
-        }
-        libparsec::UserClaimCreatedByUserAsGreeterError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"UserClaimCreatedByUserAsGreeterErrorInternal".into(),
-            )?;
-        }
-        libparsec::UserClaimCreatedByUserAsGreeterError::NotPartOfAdministrators { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"UserClaimCreatedByUserAsGreeterErrorNotPartOfAdministrators".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // UserClaimListInitialInfosError
 
 #[allow(dead_code)]
@@ -14952,31 +14917,6 @@ pub fn claimerUserFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) ->
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// claimer_user_get_created_by_user_initial_info
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn claimerUserGetCreatedByUserInitialInfo(handle: u32) -> Promise {
-    future_to_promise(async move {
-        let ret = libparsec::claimer_user_get_created_by_user_initial_info(handle);
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = struct_user_claim_initial_info_rs_to_js(value)?;
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_user_claim_created_by_user_as_greeter_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

@@ -2155,25 +2155,6 @@ export type TestbedError =
   | TestbedErrorInternal
 
 
-// UserClaimCreatedByUserAsGreeterError
-export interface UserClaimCreatedByUserAsGreeterErrorCreatedByExternalService {
-    tag: "CreatedByExternalService"
-    error: string
-}
-export interface UserClaimCreatedByUserAsGreeterErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface UserClaimCreatedByUserAsGreeterErrorNotPartOfAdministrators {
-    tag: "NotPartOfAdministrators"
-    error: string
-}
-export type UserClaimCreatedByUserAsGreeterError =
-  | UserClaimCreatedByUserAsGreeterErrorCreatedByExternalService
-  | UserClaimCreatedByUserAsGreeterErrorInternal
-  | UserClaimCreatedByUserAsGreeterErrorNotPartOfAdministrators
-
-
 // UserClaimListInitialInfosError
 export interface UserClaimListInitialInfosErrorInternal {
     tag: "Internal"
@@ -3284,9 +3265,6 @@ export function claimerUserFinalizeSaveLocalDevice(
     handle: number,
     save_strategy: DeviceSaveStrategy
 ): Promise<Result<AvailableDevice, ClaimInProgressError>>
-export function claimerUserGetCreatedByUserInitialInfo(
-    handle: number
-): Promise<Result<UserClaimInitialInfo, UserClaimCreatedByUserAsGreeterError>>
 export function claimerUserInProgress1DoDenyTrust(
     canceller: number,
     handle: number
