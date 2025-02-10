@@ -1,1 +1,0 @@
-Fix the ``/administration/stats`` endpoint when the provided ``at`` parameter corresponds to a date before the creation of an existing organization.

@@ -1,1 +1,0 @@
-Fix GUI sometime not updating folder view when new file/folder is being remotely added.
