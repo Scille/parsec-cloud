@@ -10,8 +10,8 @@ from parsec._parsec import (
     VerifyKey,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
-from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.events import send_signal
 from parsec.components.postgresql.queries import (
     AuthAndLockCommonOnlyBadOutcome,
     AuthAndLockCommonOnlyData,
@@ -102,7 +102,6 @@ SELECT
 
 
 async def realm_unshare(
-    event_bus: EventBus,
     conn: AsyncpgConnection,
     now: DateTime,
     organization_id: OrganizationID,
@@ -247,14 +246,15 @@ async def realm_unshare(
         case unknown:
             assert False, unknown
 
-    await event_bus.send(
+    await send_signal(
+        conn,
         EventRealmCertificate(
             organization_id=organization_id,
             timestamp=certif.timestamp,
             realm_id=certif.realm_id,
             user_id=certif.user_id,
             role_removed=True,
-        )
+        ),
     )
 
     return certif

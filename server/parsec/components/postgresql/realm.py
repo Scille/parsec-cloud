@@ -17,7 +17,6 @@ from parsec._parsec import (
     VlobID,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
-from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.realm_create import realm_create
 from parsec.components.postgresql.realm_dump_realms_granted_roles import (
@@ -84,10 +83,9 @@ from parsec.webhooks import WebhooksComponent
 
 
 class PGRealmComponent(BaseRealmComponent):
-    def __init__(self, pool: AsyncpgPool, event_bus: EventBus, webhooks: WebhooksComponent):
+    def __init__(self, pool: AsyncpgPool, webhooks: WebhooksComponent):
         super().__init__(webhooks)
         self.pool = pool
-        self.event_bus = event_bus
 
     @override
     @transaction
@@ -108,7 +106,6 @@ class PGRealmComponent(BaseRealmComponent):
         | RequireGreaterTimestamp
     ):
         return await realm_create(
-            self.event_bus,
             conn,
             now,
             organization_id,
@@ -139,7 +136,6 @@ class PGRealmComponent(BaseRealmComponent):
         | RequireGreaterTimestamp
     ):
         return await realm_share(
-            self.event_bus,
             conn,
             now,
             organization_id,
@@ -169,7 +165,6 @@ class PGRealmComponent(BaseRealmComponent):
         | RequireGreaterTimestamp
     ):
         return await realm_unshare(
-            self.event_bus,
             conn,
             now,
             organization_id,
@@ -199,7 +194,6 @@ class PGRealmComponent(BaseRealmComponent):
         | RequireGreaterTimestamp
     ):
         return await realm_rename(
-            self.event_bus,
             conn,
             now,
             organization_id,
@@ -236,7 +230,6 @@ class PGRealmComponent(BaseRealmComponent):
         | RejectedBySequesterService
     ):
         return await realm_rotate_key(
-            self.event_bus,
             conn,
             now,
             organization_id,

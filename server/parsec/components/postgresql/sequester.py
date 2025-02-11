@@ -38,9 +38,8 @@ from parsec.components.sequester import (
 
 
 class PGSequesterComponent(BaseSequesterComponent):
-    def __init__(self, pool: AsyncpgPool, event_bus: EventBus):
+    def __init__(self, pool: AsyncpgPool):
         self.pool = pool
-        self.event_bus = event_bus
 
     @override
     @transaction
@@ -58,7 +57,6 @@ class PGSequesterComponent(BaseSequesterComponent):
         | RequireGreaterTimestamp
     ):
         return await sequester_create_service(
-            self.event_bus,
             conn,
             now,
             organization_id,
@@ -97,7 +95,6 @@ class PGSequesterComponent(BaseSequesterComponent):
         | RequireGreaterTimestamp
     ):
         return await sequester_revoke_service(
-            self.event_bus,
             conn,
             now,
             organization_id,

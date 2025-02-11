@@ -16,7 +16,6 @@ from parsec._parsec import (
     VerifyKey,
 )
 from parsec.ballpark import TimestampOutOfBallpark
-from parsec.components.events import EventBus
 from parsec.components.organization import (
     BaseOrganizationComponent,
     Organization,
@@ -106,11 +105,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         pool: AsyncpgPool,
         webhooks: WebhooksComponent,
         config: BackendConfig,
-        event_bus: EventBus,
     ) -> None:
         super().__init__(webhooks, config)
         self.pool = pool
-        self.event_bus = event_bus
         self.user: PGUserComponent
 
     def register_components(self, user: PGUserComponent, **kwargs) -> None:
@@ -325,7 +322,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         return await organization_update(
-            self.event_bus,
             conn,
             now,
             id,

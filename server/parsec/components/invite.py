@@ -36,7 +36,6 @@ from parsec._parsec import (
 )
 from parsec.api import api
 from parsec.client_context import AuthenticatedClientContext, InvitedClientContext
-from parsec.components.events import EventBus
 from parsec.config import BackendConfig, EmailConfig, MockedEmailConfig, SmtpEmailConfig
 from parsec.logging import get_logger
 from parsec.templates import get_template
@@ -592,8 +591,7 @@ def process_claimer_step(
 
 
 class BaseInviteComponent:
-    def __init__(self, event_bus: EventBus, config: BackendConfig):
-        self._event_bus = event_bus
+    def __init__(self, config: BackendConfig):
         self._config = config
 
     # Used by `new_for_user` implementations
