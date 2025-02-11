@@ -17,7 +17,7 @@ from parsec.components.sequester import (
     SequesterGetOrganizationServicesBadOutcome,
     WebhookSequesterService,
 )
-from parsec.config import BaseDatabaseConfig, LogLevel, MockedBlockStoreConfig
+from parsec.config import BaseDatabaseConfig, DisabledBlockStoreConfig, LogLevel
 
 
 class DevOption(click.Option):
@@ -102,7 +102,7 @@ async def _list_services(
     organization_id: OrganizationID,
 ) -> None:
     # Can use a dummy blockstore config since we are not going to query it
-    blockstore_config = MockedBlockStoreConfig()
+    blockstore_config = DisabledBlockStoreConfig()
 
     async with start_backend(
         db_config=db_config,

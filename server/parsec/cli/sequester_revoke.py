@@ -27,7 +27,7 @@ from parsec.components.sequester import (
     SequesterRevokeServiceStoreBadOutcome,
     SequesterRevokeServiceValidateBadOutcome,
 )
-from parsec.config import BaseDatabaseConfig, LogLevel, MockedBlockStoreConfig
+from parsec.config import BaseDatabaseConfig, DisabledBlockStoreConfig, LogLevel
 
 SEQUESTER_SERVICE_REVOCATION_CERTIFICATE_PEM_HEADER = (
     "-----BEGIN PARSEC SEQUESTER SERVICE REVOCATION CERTIFICATE-----"
@@ -280,7 +280,7 @@ async def _revoke_service(
     service_revocation_certificate_pem: str,
 ) -> None:
     # Can use a dummy blockstore config since we are not going to query it
-    blockstore_config = MockedBlockStoreConfig()
+    blockstore_config = DisabledBlockStoreConfig()
 
     async with start_backend(
         db_config=db_config,
