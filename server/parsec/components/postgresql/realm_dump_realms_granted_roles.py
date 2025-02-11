@@ -12,7 +12,8 @@ from parsec._parsec import (
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import (
     Q,
-    q_realm,
+    q_device,
+    q_user,
 )
 from parsec.components.realm import (
     RealmDumpRealmsGrantedRolesBadOutcome,
@@ -34,12 +35,15 @@ LIMIT 1
 
 _q_get_realm_roles = Q(
     f"""
-SELECT DISTINCT ON (realm)
-    {q_realm(_id="realm_user_role.realm", select="realm_id")} AS realm_id,
+SELECT
+    realm.realm_id,
+    certificate,
+    {q_user(_id="realm_user_role.user_", select="user_id")} AS user_id,
     role,
+    {q_device(_id="realm_user_role.certified_by", select="device_id")} AS certified_by,
     certified_on
-FROM realm_user_role
-WHERE user_ = $user_internal_id
+FROM realm_user_role LEFT JOIN realm ON realm_user_role.realm = realm._id
+WHERE realm.organization = $organization_internal_id
 ORDER BY realm, certified_on DESC
 """
 )
@@ -68,15 +72,15 @@ async def realm_dump_realms_granted_roles(
             case unknown:
                 assert False, unknown
 
-        match row["realm_role_certificate"]:
-            case bytes() as realm_role_certificate:
+        match row["certificate"]:
+            case bytes() as certificate:
                 pass
             case unknown:
                 assert False, unknown
 
         match row["user_id"]:
-            case bytes() as raw_user_id:
-                user_id = UserID.from_bytes(raw_user_id)
+            case str() as raw_user_id:
+                user_id = UserID.from_hex(raw_user_id)
             case unknown:
                 assert False, unknown
 
@@ -86,14 +90,14 @@ async def realm_dump_realms_granted_roles(
             case unknown:
                 assert False, unknown
 
-        match row["granted_by"]:
-            case bytes() as raw_granted_by:
-                granted_by = DeviceID.from_bytes(raw_granted_by)
+        match row["certified_by"]:
+            case str() as raw_certified_by:
+                certified_by = DeviceID.from_hex(raw_certified_by)
             case unknown:
                 assert False, unknown
 
-        match row["granted_on"]:
-            case DateTime() as granted_on:
+        match row["certified_on"]:
+            case DateTime() as certified_on:
                 pass
             case unknown:
                 assert False, unknown
@@ -101,11 +105,11 @@ async def realm_dump_realms_granted_roles(
         granted_roles.append(
             RealmGrantedRole(
                 realm_id=realm_id,
-                certificate=realm_role_certificate,
+                certificate=certificate,
                 user_id=user_id,
                 role=role,
-                granted_by=granted_by,
-                granted_on=granted_on,
+                granted_by=certified_by,
+                granted_on=certified_on,
             )
         )
 
