@@ -93,7 +93,7 @@ async function detectFileContentTypeFromBuffer(buffer: Uint8Array, fileExt?: str
   if (IMAGES.includes(result.mime)) {
     return { type: FileContentType.Image, extension: fileExt ?? result.ext, mimeType: result.mime };
   }
-  if (SPREADSHEETS.includes(result.mime)) {
+  if (SPREADSHEETS.includes(result.mime) || (result.mime === 'application/zip' && fileExt === 'xlsx')) {
     return { type: FileContentType.Spreadsheet, extension: fileExt ?? result.ext, mimeType: result.mime };
   }
   if (DOCUMENTS.includes(result.mime) || (result.mime === 'application/zip' && fileExt === 'docx')) {
