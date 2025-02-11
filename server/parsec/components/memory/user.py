@@ -700,7 +700,7 @@ class MemoryUserComponent(BaseUserComponent):
                 devices=[
                     d.cooked.device_id for d in org.devices.values() if d.cooked.user_id == user_id
                 ],
-                profile_updates=[
+                profile_history=[
                     # Initial profile
                     (user.cooked.timestamp, user.cooked.profile),
                     # Subsequent profile updates

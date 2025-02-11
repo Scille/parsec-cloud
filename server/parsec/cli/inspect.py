@@ -182,7 +182,7 @@ async def _human_accesses(
             print(base_indent + f"User {display_user} ({user_info})")
             print(base_indent + f"\t{user.created_on}: Created with profile {user.initial_profile}")
 
-            for profile_update in user.profile_updates:
+            for profile_update in user.subsequent_profile_updates:
                 print(
                     base_indent + f"\t{profile_update[0]}: Updated to profile {profile_update[1]}"
                 )
