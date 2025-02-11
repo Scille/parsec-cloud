@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import Generator
+from typing import Generator, Literal
 
 import pytest
 import structlog
@@ -208,7 +208,13 @@ def no_logs_gte_error(caplog: LogCaptureFixture) -> Generator[None, None, None]:
 
     # The test should use `caplog.assert_occurred_once` to indicate a log was expected,
     # otherwise we consider error logs as *actual* errors.
-    asserted_records: set[logging.LogRecord] = getattr(caplog, "asserted_records", set())
+    asserted_records: set[logging.LogRecord] | Literal[True] = getattr(
+        caplog, "asserted_records", set()
+    )
+
+    if asserted_records is True:
+        return
+
     errors = [
         record
         for record in caplog.get_records("call")
@@ -216,6 +222,11 @@ def no_logs_gte_error(caplog: LogCaptureFixture) -> Generator[None, None, None]:
     ]
 
     assert not errors
+
+
+@pytest.fixture
+def disable_no_logs_gte_error_check(caplog: LogCaptureFixture) -> None:
+    caplog.asserted_records = True  # type: ignore
 
 
 # Other main fixtures
