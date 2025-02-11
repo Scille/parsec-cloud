@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Buffer
-from typing import Any, override
+from typing import override
 
 from parsec._parsec import (
     CancelledGreetingAttemptReason,
@@ -16,6 +16,7 @@ from parsec._parsec import (
     UserID,
     UserProfile,
 )
+from parsec.components.events import EventBus
 from parsec.components.invite import (
     BaseInviteComponent,
     DeviceInvitation,
@@ -52,6 +53,7 @@ from parsec.components.memory.datamodel import (
     MemoryOrganization,
     MemoryUser,
 )
+from parsec.config import BackendConfig
 from parsec.events import (
     EventGreetingAttemptCancelled,
     EventGreetingAttemptJoined,
@@ -76,10 +78,11 @@ class MemoryInviteComponent(BaseInviteComponent):
     def __init__(
         self,
         data: MemoryDatamodel,
-        *args: Any,
-        **kwargs: Any,
+        event_bus: EventBus,
+        config: BackendConfig,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(config)
+        self._event_bus = event_bus
         self._data = data
 
     def _get_shamir_recovery_invitation(

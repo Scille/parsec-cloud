@@ -8,13 +8,13 @@ from parsec._parsec import (
     DateTime,
     OrganizationID,
 )
-from parsec.components.events import EventBus
 from parsec.components.organization import (
     OrganizationUpdateBadOutcome,
     TosLocale,
     TosUrl,
 )
 from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.events import send_signal
 from parsec.components.postgresql.utils import (
     Q,
     SqlQueryParam,
@@ -57,7 +57,6 @@ def _q_update_factory(
 
 
 async def organization_update(
-    event_bus: EventBus,
     conn: AsyncpgConnection,
     now: DateTime,
     id: OrganizationID,
@@ -120,7 +119,7 @@ async def organization_update(
 
     # TODO: the event is triggered even if the orga was already expired, is this okay ?
     if now_is_expired:
-        await event_bus.send(EventOrganizationExpired(organization_id=id))
+        await send_signal(conn, EventOrganizationExpired(organization_id=id))
 
     if tos is not Unset:
-        await event_bus.send(EventOrganizationTosUpdated(organization_id=id))
+        await send_signal(conn, EventOrganizationTosUpdated(organization_id=id))

@@ -13,7 +13,6 @@ from parsec.ballpark import (
     RequireGreaterTimestamp,
     TimestampOutOfBallpark,
 )
-from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.utils import (
     Q,
@@ -58,12 +57,10 @@ class PGVlobComponent(BaseVlobComponent):
     def __init__(
         self,
         pool: AsyncpgPool,
-        event_bus: EventBus,
         webhooks: WebhooksComponent,
     ):
         super().__init__(webhooks)
         self.pool = pool
-        self.event_bus = event_bus
 
     async def _get_vlob_info(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, vlob_id: VlobID
@@ -102,7 +99,6 @@ class PGVlobComponent(BaseVlobComponent):
         | SequesterServiceUnavailable
     ):
         return await vlob_create(
-            self.event_bus,
             conn,
             now,
             organization_id,
@@ -139,7 +135,6 @@ class PGVlobComponent(BaseVlobComponent):
         | SequesterServiceUnavailable
     ):
         return await vlob_update(
-            self.event_bus,
             conn,
             now,
             organization_id,

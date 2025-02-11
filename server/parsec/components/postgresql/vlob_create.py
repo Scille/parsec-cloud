@@ -12,8 +12,8 @@ from parsec.ballpark import (
     TimestampOutOfBallpark,
     timestamps_in_the_ballpark,
 )
-from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.events import send_signal
 from parsec.components.postgresql.utils import (
     Q,
     RetryNeeded,
@@ -178,7 +178,6 @@ SELECT
 
 
 async def vlob_create(
-    event_bus: EventBus,
     conn: AsyncpgConnection,
     now: DateTime,
     organization_id: OrganizationID,
@@ -366,4 +365,4 @@ async def vlob_create(
         last_common_certificate_timestamp=last_common_certificate_timestamp,
         last_realm_certificate_timestamp=last_realm_certificate_timestamp,
     )
-    await event_bus.send(event)
+    await send_signal(conn, event)

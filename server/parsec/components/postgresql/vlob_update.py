@@ -12,8 +12,8 @@ from parsec.ballpark import (
     TimestampOutOfBallpark,
     timestamps_in_the_ballpark,
 )
-from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.events import send_signal
 from parsec.components.postgresql.utils import (
     Q,
     RetryNeeded,
@@ -128,7 +128,6 @@ SELECT
 
 
 async def vlob_update(
-    event_bus: EventBus,
     conn: AsyncpgConnection,
     now: DateTime,
     organization_id: OrganizationID,
@@ -320,7 +319,8 @@ async def vlob_update(
         case unknown:
             assert False, repr(unknown)
 
-    await event_bus.send(
+    await send_signal(
+        conn,
         EventVlob(
             organization_id=organization_id,
             author=author,
@@ -331,5 +331,5 @@ async def vlob_update(
             blob=blob if len(blob) < EVENT_VLOB_MAX_BLOB_SIZE else None,
             last_common_certificate_timestamp=last_common_certificate_timestamp,
             last_realm_certificate_timestamp=last_realm_certificate_timestamp,
-        )
+        ),
     )

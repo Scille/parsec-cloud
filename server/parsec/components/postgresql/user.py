@@ -17,7 +17,6 @@ from parsec._parsec import (
     VlobID,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
-from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.user_accept_tos import user_accept_tos
 from parsec.components.postgresql.user_create_device import user_create_device
@@ -105,10 +104,9 @@ _q_check_common_topic = _make_q_lock_common_topic(for_share=True)
 
 
 class PGUserComponent(BaseUserComponent):
-    def __init__(self, pool: AsyncpgPool, event_bus: EventBus) -> None:
+    def __init__(self, pool: AsyncpgPool) -> None:
         super().__init__()
         self.pool = pool
-        self.event_bus = event_bus
 
     async def _check_common_topic(
         self, conn: AsyncpgConnection, organization_id: OrganizationID
@@ -185,7 +183,6 @@ class PGUserComponent(BaseUserComponent):
         | RequireGreaterTimestamp
     ):
         return await user_create_user(
-            self.event_bus,
             conn,
             now,
             organization_id,
@@ -216,7 +213,6 @@ class PGUserComponent(BaseUserComponent):
         | RequireGreaterTimestamp
     ):
         return await user_create_device(
-            self.event_bus,
             conn,
             now,
             organization_id,
@@ -244,7 +240,6 @@ class PGUserComponent(BaseUserComponent):
         | RequireGreaterTimestamp
     ):
         return await user_update_user(
-            self.event_bus,
             conn,
             now,
             organization_id,
@@ -318,7 +313,6 @@ class PGUserComponent(BaseUserComponent):
         | RequireGreaterTimestamp
     ):
         return await user_revoke_user(
-            self.event_bus,
             conn,
             now,
             organization_id,
@@ -337,9 +331,7 @@ class PGUserComponent(BaseUserComponent):
         user_email: str | None,
         frozen: bool,
     ) -> UserInfo | UserFreezeUserBadOutcome:
-        return await user_freeze_user(
-            self.event_bus, conn, organization_id, user_id, user_email, frozen
-        )
+        return await user_freeze_user(conn, organization_id, user_id, user_email, frozen)
 
     @override
     @no_transaction

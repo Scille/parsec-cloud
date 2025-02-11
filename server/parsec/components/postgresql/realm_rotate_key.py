@@ -12,8 +12,8 @@ from parsec._parsec import (
     VerifyKey,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
-from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.events import send_signal
 from parsec.components.postgresql.queries import (
     AuthAndLockCommonOnlyBadOutcome,
     AuthAndLockCommonOnlyData,
@@ -181,7 +181,6 @@ INSERT INTO realm_sequester_keys_bundle_access (
 
 
 async def realm_rotate_key(
-    event_bus: EventBus,
     conn: AsyncpgConnection,
     now: DateTime,
     organization_id: OrganizationID,
@@ -381,14 +380,15 @@ async def realm_rotate_key(
             arg_gen(),
         )
 
-    await event_bus.send(
+    await send_signal(
+        conn,
         EventRealmCertificate(
             organization_id=organization_id,
             timestamp=certif.timestamp,
             realm_id=certif.realm_id,
             user_id=db_common.user_id,
             role_removed=False,
-        )
+        ),
     )
 
     return certif

@@ -9,8 +9,8 @@ from parsec._parsec import (
     VerifyKey,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
-from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.events import send_signal
 from parsec.components.postgresql.queries import (
     AuthAndLockCommonOnlyBadOutcome,
     AuthAndLockCommonOnlyData,
@@ -71,7 +71,6 @@ SELECT
 
 
 async def user_create_device(
-    event_bus: EventBus,
     conn: AsyncpgConnection,
     now: DateTime,
     organization_id: OrganizationID,
@@ -153,11 +152,12 @@ async def user_create_device(
         case unknown:
             assert False, unknown
 
-    await event_bus.send(
+    await send_signal(
+        conn,
         EventCommonCertificate(
             organization_id=organization_id,
             timestamp=certif.timestamp,
-        )
+        ),
     )
 
     return certif
