@@ -220,6 +220,9 @@ class EventBus:
     async def send(self, event: Event) -> None:
         raise NotImplementedError
 
+    async def test_send(self, event: Event) -> None:
+        raise NotImplementedError
+
 
 @dataclass(slots=True)
 class RegisteredClient:

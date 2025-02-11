@@ -163,7 +163,7 @@ async def test_authenticated_events_listen_ok(
         else:
             event = gen_event(organization_id=coolorg.organization_id)
 
-        await backend.event_bus.send(event)
+        await backend.event_bus.test_send(event)
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(expected)
 
@@ -292,7 +292,7 @@ async def test_self_vlob_events_skipped(
         )
 
         async def send_vlob_event(author: DeviceID, vlob_id: VlobID):
-            await backend.event_bus.send(
+            await backend.event_bus.test_send(
                 events.EventVlob(
                     organization_id=coolorg.organization_id,
                     author=author,
@@ -338,17 +338,17 @@ async def test_self_certificate_events_provided(
             )
         )
 
-        await backend.event_bus.send(
+        await backend.event_bus.test_send(
             events.EventCommonCertificate(
                 organization_id=minimalorg.organization_id, timestamp=TIMESTAMP
             )
         )
-        await backend.event_bus.send(
+        await backend.event_bus.test_send(
             events.EventSequesterCertificate(
                 organization_id=minimalorg.organization_id, timestamp=TIMESTAMP
             )
         )
-        await backend.event_bus.send(
+        await backend.event_bus.test_send(
             events.EventShamirRecoveryCertificate(
                 organization_id=minimalorg.organization_id,
                 timestamp=TIMESTAMP,
@@ -360,7 +360,7 @@ async def test_self_certificate_events_provided(
                 ),
             )
         )
-        await backend.event_bus.send(
+        await backend.event_bus.test_send(
             events.EventRealmCertificate(
                 organization_id=minimalorg.organization_id,
                 timestamp=TIMESTAMP,
@@ -409,7 +409,7 @@ async def test_receive_event_of_newly_shared_realm(
         )
 
         async def send_vlob_event(org: OrganizationID, version: int):
-            await backend.event_bus.send(
+            await backend.event_bus.test_send(
                 events.EventVlob(
                     organization_id=org,
                     author=OTHER_DEVICE_ID,
@@ -429,7 +429,7 @@ async def test_receive_event_of_newly_shared_realm(
         for org in orgs:
             # 1) Share for other user, should be ignored
 
-            await backend.event_bus.send(
+            await backend.event_bus.test_send(
                 events.EventRealmCertificate(
                     organization_id=org,
                     timestamp=TIMESTAMP,
@@ -442,7 +442,7 @@ async def test_receive_event_of_newly_shared_realm(
 
             # 2) Share for Alice, now events should be received
 
-            await backend.event_bus.send(
+            await backend.event_bus.test_send(
                 events.EventRealmCertificate(
                     organization_id=org,
                     timestamp=TIMESTAMP,
@@ -455,7 +455,7 @@ async def test_receive_event_of_newly_shared_realm(
 
             # 3) Unshare for other user, events should still be received
 
-            await backend.event_bus.send(
+            await backend.event_bus.test_send(
                 events.EventRealmCertificate(
                     organization_id=org,
                     timestamp=TIMESTAMP,
@@ -468,7 +468,7 @@ async def test_receive_event_of_newly_shared_realm(
 
             # 4) Unshare for Alice, now events should no longer be received
 
-            await backend.event_bus.send(
+            await backend.event_bus.test_send(
                 events.EventRealmCertificate(
                     organization_id=org,
                     timestamp=TIMESTAMP,
@@ -482,7 +482,7 @@ async def test_receive_event_of_newly_shared_realm(
             # 5) Event always received for Alice, once we have received this event
             # we know the previous one has been ignored as expected
 
-            await backend.event_bus.send(
+            await backend.event_bus.test_send(
                 events.EventCommonCertificate(
                     organization_id=org,
                     timestamp=TIMESTAMP,

@@ -26,6 +26,10 @@ class MemoryEventBus(EventBus):
     async def send(self, event: Event) -> None:
         await self._send_events_channel.send(event)
 
+    @override
+    async def test_send(self, event: Event) -> None:
+        await self.send(event)
+
 
 @asynccontextmanager
 async def event_bus_factory() -> AsyncIterator[MemoryEventBus]:

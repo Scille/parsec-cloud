@@ -114,7 +114,7 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
         mock_send_nowait = MagicMock(side_effect=anyio.WouldBlock)
         registered_clients[reg_client_id].channel_sender.send_nowait = mock_send_nowait
 
-        await backend.event_bus.send(
+        await backend.event_bus.test_send(
             EventPinged(
                 organization_id=minimalorg.organization_id,
                 ping="foo",
@@ -242,7 +242,7 @@ async def test_keep_alive_real_server(minimalorg: MinimalorgRpcClients, app: Asg
 
 async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backend) -> None:
     async def send_ping(ping: str) -> None:
-        await backend.event_bus.send(
+        await backend.event_bus.test_send(
             EventPinged(
                 organization_id=coolorg.organization_id,
                 ping=ping,
@@ -295,7 +295,7 @@ async def test_close_on_organization_tos_updated(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     async def send_ping(ping: str) -> None:
-        await backend.event_bus.send(
+        await backend.event_bus.test_send(
             EventPinged(
                 organization_id=coolorg.organization_id,
                 ping=ping,
