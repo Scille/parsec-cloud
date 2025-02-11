@@ -37,7 +37,7 @@ const SPREADSHEETS = ['application/vnd.openxmlformats-officedocument.spreadsheet
 const DOCUMENTS = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 const PDF_DOCUMENTS = ['application/pdf'];
 const AUDIOS = ['audio/x-wav', 'audio/mpeg'];
-const VIDEOS = ['video/mp4', 'video/mpeg'];
+const VIDEOS = ['video/mp4', 'video/mpeg', 'video/webm'];
 
 // For custom mimetypes
 const SPECIAL_TEXTS = new Map<string, string>([
