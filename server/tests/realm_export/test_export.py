@@ -442,6 +442,39 @@ async def test_restart_partially_exported(
     backend: Backend,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    # TODO: The cancel scope seems not to play nice with asyncpg, so we must disable error log checking :'(
+    #
+    # Long story:
+    #
+    # When running this test on PostgreSQL, we sometime end up with the following error log:
+    #
+    #     ERROR    asyncio:base_events.py:1785 Future exception was never retrieved
+    #     future: <Future finished exception=ConnectionError('unexpected connection_lost() call')>
+    #     ConnectionError: unexpected connection_lost() call
+    #
+    # Or, if the PostgreSQL URL contains `?sslmode=disable`:
+    #
+    #     ERROR    asyncio:base_events.py:1785 Future exception was never retrieved
+    #     future: <Future finished exception=ConnectionDoesNotExistError('connection was closed in the middle of operation')>
+    #     asyncpg.exceptions.ConnectionDoesNotExistError: connection was closed in the middle of operation
+    #
+    # This in turn makes the test fail due to the `no_logs_gte_error` fix checking for
+    # error logs (but not always, as this log sometime doesn't occur, and sometime occurs
+    # *after* the fixture has done its check...)
+    #
+    # I suspect the issue comes from a bug in asyncpg that forget to disconnect the future
+    # being called from the connection when the future's task group is cancelled.
+    # Then later on when the pool tries to re-use the connection, it discovers the
+    # connection is in a bad state and sets an exception on the connected future...
+    # However the task group is already done with the future, and hence there is
+    # nobody to wait for the exception, so asyncio calls the exception handler to
+    # know what to do with it.
+    #
+    # see:
+    # - https://github.com/Scille/parsec-cloud/issues/9576
+    # - https://github.com/MagicStack/asyncpg/issues/309
+    # - https://github.com/MagicStack/asyncpg/issues/1211
+    disable_no_logs_gte_error_check: None,
 ):
     expected_snapshot_timestamp = DateTime.now().subtract(seconds=BALLPARK_CLIENT_LATE_OFFSET)
 
