@@ -27,22 +27,24 @@ logger = get_logger()
 
 
 class PGEventBus(EventBus):
+    """The `EventBus.send` method is not implemented for the PostgreSQL event bus.
+
+    Events are typically sent after a change in the database, meaning that there is
+    always an open transaction to commit. For better concurrency handling, it makes
+    more sense to send the event as part of the transaction, i.e using:
+
+        await send_signal(conn, event)
+
+    instead of using another connection such as the notification connection used
+    in `test_send` for testing purposes.
+    """
+
     def __init__(self, conn: AsyncpgConnection):
         super().__init__()
         self._conn = conn
 
     @override
-    async def send(self, event: Event) -> None:
-        """This method is only here for testing purposes.
-
-        Events are typically sent after a change in the database, meaning that there is
-        always an open transaction to commit. For better concurrency handling, it makes
-        more sense to send the event as part of the transaction, i.e using:
-
-            await send_signal(conn, event)
-
-        instead of using another connection such as the notification one used here.
-        """
+    async def test_send(self, event: Event) -> None:
         await send_signal(self._conn, event)
 
 
@@ -65,7 +67,7 @@ async def event_bus_factory(pool: AsyncpgPool) -> AsyncIterator[PGEventBus]:
             )
             return
         logger.info_with_debug_extra(
-            "Received internal event",
+            "Dispatching event",
             type=event.type,
             event_id=event.event_id.hex,
             organization_id=event.organization_id.str,

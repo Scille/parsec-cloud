@@ -24,6 +24,6 @@ async def test_cross_server_event(backend_config: BackendConfig) -> None:
         event = EventPinged(organization_id=OrganizationID("Org"), ping="hello")
         b2.event_bus.connect(on_b2_receive_event)
 
-        await b1.event_bus.send(event)
+        await b1.event_bus.test_send(event)
         b2_event = await b2_received_events.get()
         assert b2_event == event
