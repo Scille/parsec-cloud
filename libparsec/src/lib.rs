@@ -95,11 +95,15 @@ fn init_logger(config: &ClientConfig) {
             // TODO: ClientConfig should provide the log directory to use
             // https://github.com/Scille/parsec-cloud/issues/9580
             config.config_dir.join("libparsec.log"));
-    log_file_path
-        .parent()
-        .map(std::fs::create_dir_all)
-        .transpose()
-        .expect("Cannot create log directory");
+    let parent = log_file_path.parent();
+    if let Err(e) = parent.map(std::fs::create_dir_all).transpose() {
+        eprintln!(
+            "Failed to create log directory {}: {e}",
+            parent.unwrap_or_else(|| std::path::Path::new("")).display()
+        );
+        eprintln!("The logger will be disabled");
+        return;
+    }
     let log_file = std::fs::OpenOptions::new()
         .create(true)
         .write(true)
