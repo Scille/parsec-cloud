@@ -69,7 +69,7 @@ class MockedDatabaseConfig(BaseDatabaseConfig):
 
 class BaseBlockStoreConfig:
     # Overloaded by children
-    type: Literal["RAID0", "RAID1", "RAID5", "S3", "SWIFT", "POSTGRESQL", "MOCKED"]
+    type: Literal["RAID0", "RAID1", "RAID5", "S3", "SWIFT", "POSTGRESQL", "MOCKED", "DISABLED"]
 
 
 @dataclass(slots=True)
@@ -137,6 +137,11 @@ class PostgreSQLBlockStoreConfig(BaseBlockStoreConfig):
 @dataclass(slots=True)
 class MockedBlockStoreConfig(BaseBlockStoreConfig):
     type = "MOCKED"
+
+
+@dataclass(slots=True)
+class DisabledBlockStoreConfig(BaseBlockStoreConfig):
+    type = "DISABLED"
 
 
 @dataclass(slots=True)

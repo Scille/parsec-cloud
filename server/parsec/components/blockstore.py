@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from parsec._parsec import BlockID, OrganizationID
 from parsec.config import (
     BaseBlockStoreConfig,
+    DisabledBlockStoreConfig,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
     RAID0BlockStoreConfig,
@@ -74,7 +75,10 @@ def blockstore_factory(
     postgresql_pool: AsyncpgPool | None = None,
     mocked_data: MemoryDatamodel | None = None,
 ) -> BaseBlockStoreComponent:
-    if isinstance(config, MockedBlockStoreConfig):
+    if isinstance(config, DisabledBlockStoreConfig):
+        return BaseBlockStoreComponent()
+
+    elif isinstance(config, MockedBlockStoreConfig):
         from parsec.components.memory import MemoryBlockStoreComponent
 
         if not mocked_data:
