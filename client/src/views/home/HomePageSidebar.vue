@@ -51,6 +51,7 @@ import { IonText } from '@ionic/vue';
     color: var(--parsec-color-light-secondary-white);
     text-align: center;
     margin-bottom: 20%;
+    margin-inline: 2rem;
   }
 }
 </style>
