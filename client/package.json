@@ -52,7 +52,7 @@
         "docx-preview": "^0.3.3",
         "file-type": "^19.6.0",
         "luxon": "^3.4.4",
-        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#a003d0f63ee7ba415adbba954110153ec849a31a",
+        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#bc02c447dfac704385567f14f2e83cf40a88526d",
         "monaco-editor": "^0.52.0",
         "native-file-system-adapter": "^3.0.1",
         "pdfjs-dist": "^4.8.69",
