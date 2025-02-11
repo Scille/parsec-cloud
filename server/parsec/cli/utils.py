@@ -272,7 +272,14 @@ async def start_backend(
     populate_with_template: str | None = None,
 ):
     """
-    Start backend for
+    Start backend for CLI usage.
+
+    This differs from server usage (i.e. `run` and `testbed`) in which CLI usage is:
+    - Short lived (run the command then exit, while server usage run forever).
+    - Don't need configuration for `administration_token`, `email_config` and `server_addr`.
+
+    Due to the short lived nature, `populate_with_template` can be used to easily
+    configure the state the backend should be on.
     """
 
     class CliBackendConfig(BackendConfig):
