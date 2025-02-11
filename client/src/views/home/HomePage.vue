@@ -39,6 +39,7 @@
                 @bootstrap-organization-with-link-click="openCreateOrganizationModal"
                 @recover-click="onForgottenPasswordClicked"
                 :device-list="deviceList"
+                :querying="querying"
                 ref="organizationListRef"
               />
             </template>
@@ -132,6 +133,7 @@ const informationManager: InformationManager = injectionProvider.getDefault().in
 const loginInProgress = ref(false);
 const queryInProgress = ref(false);
 const organizationListRef = ref();
+const querying = ref(true);
 const deviceList: Ref<AvailableDevice[]> = ref([]);
 
 const slidePositions = ref({ appearFrom: Position.Left, disappearTo: Position.Right });
@@ -155,6 +157,7 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 onMounted(async () => {
+  querying.value = true;
   hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
     { key: 'n', modifiers: Modifiers.Ctrl | Modifiers.Shift, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Home },
@@ -188,7 +191,9 @@ onUnmounted(() => {
 });
 
 async function refreshDeviceList(): Promise<void> {
+  querying.value = true;
   deviceList.value = await listAvailableDevices();
+  querying.value = false;
 }
 
 async function handleQuery(): Promise<void> {
