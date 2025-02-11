@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
+from typing import Iterable
 
 from parsec._parsec import (
     DateTime,
@@ -46,17 +47,21 @@ class UserDump:
     human_handle: HumanHandle
     created_on: DateTime
     revoked_on: DateTime | None
-    # Ordered oldest to newest
-    profile_updates: list[tuple[DateTime, UserProfile]]
+    # Initial profile + subsequent profile updates, ordered oldest to newest.
+    profile_history: list[tuple[DateTime, UserProfile]]
     devices: list[DeviceID]
 
     @property
     def current_profile(self) -> UserProfile:
-        return self.profile_updates[-1][1]
+        return self.profile_history[-1][1]
 
     @property
     def initial_profile(self) -> UserProfile:
-        return self.profile_updates[0][1]
+        return self.profile_history[0][1]
+
+    @property
+    def subsequent_profile_updates(self) -> Iterable[tuple[DateTime, UserProfile]]:
+        yield from self.profile_history[1:]
 
 
 @dataclass(slots=True)

@@ -77,7 +77,7 @@ async def user_test_dump_current_users(
             created_on=row["created_on"],
             revoked_on=row["revoked_on"],
             devices=[],
-            profile_updates=[(row["created_on"], UserProfile.from_str(row["initial_profile"]))],
+            profile_history=[(row["created_on"], UserProfile.from_str(row["initial_profile"]))],
         )
 
     rows = await conn.fetch(*_q_get_organization_devices(organization_id=organization_id.str))
@@ -102,6 +102,6 @@ async def user_test_dump_current_users(
         except KeyError:
             # A concurrent operation may have created a new user we don't know about
             continue
-        user.profile_updates.append((row["certified_on"], profile))
+        user.profile_history.append((row["certified_on"], profile))
 
     return items
