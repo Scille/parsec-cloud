@@ -17,7 +17,7 @@ from parsec.cli.testbed import if_testbed_available
 from parsec.cli.utils import cli_exception_handler, start_backend
 from parsec.components.realm import RealmGrantedRole
 from parsec.components.user import UserDump
-from parsec.config import BaseDatabaseConfig, LogLevel, MockedBlockStoreConfig
+from parsec.config import BaseDatabaseConfig, DisabledBlockStoreConfig, LogLevel
 
 
 class DevOption(click.Option):
@@ -93,7 +93,7 @@ async def _human_accesses(
     user_filter: str,
 ) -> None:
     # Can use a dummy blockstore config since we are not going to query it
-    blockstore_config = MockedBlockStoreConfig()
+    blockstore_config = DisabledBlockStoreConfig()
 
     async with start_backend(
         db_config=db_config,
