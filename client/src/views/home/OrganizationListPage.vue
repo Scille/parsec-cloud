@@ -148,6 +148,7 @@ const emits = defineEmits<{
 
 const props = defineProps<{
   deviceList: AvailableDevice[];
+  querying: boolean;
 }>();
 
 enum SortCriteria {
@@ -165,7 +166,6 @@ const sortBy = ref(SortCriteria.Organization);
 const sortByAsc = ref(true);
 const confLoaded = ref(false);
 const searchQuery = ref('');
-const querying = ref(true);
 const searchInputRef = ref();
 const linkRef = ref();
 const link = ref('');
@@ -203,7 +203,11 @@ onMounted(async (): Promise<void> => {
   hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
     { key: 'f', modifiers: Modifiers.Ctrl, platforms: Platforms.Web | Platforms.Desktop, disableIfModal: true, route: Routes.Home },
-    searchInputRef.value.setFocus,
+    async () => {
+      if (searchInputRef.value) {
+        searchInputRef.value.setFocus();
+      }
+    },
   );
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
   const storedData = await storageManager.retrieveComponentData<OrganizationListSavedData>(ORGANIZATION_LIST_DATA_KEY, {
