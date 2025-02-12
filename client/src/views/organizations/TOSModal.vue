@@ -82,7 +82,7 @@ function getLinkForLocale(): string {
     }
   }
 
-  const link = links.values().next().value;
+  const link = links.values().next().value ?? '';
   window.electronAPI.log(
     'info',
     `No terms of service link was found matching the locale \
@@ -95,7 +95,9 @@ using '${link}'`,
 
 onMounted(async () => {
   link.value = getLinkForLocale();
-  window.electronAPI.authorizeURL(link.value);
+  if (link.value) {
+    window.electronAPI.authorizeURL(link.value);
+  }
 });
 
 async function openTOS(): Promise<void> {
