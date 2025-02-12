@@ -204,11 +204,11 @@ impl From<LoadDeviceError> for LoadAndUnlockDeviceError {
     }
 }
 
-pub async fn load_and_unlock_device(
+pub async fn get_device_access_strategy(
     config_dir: &Path,
     device: Option<String>,
     password_stdin: bool,
-) -> Result<Arc<LocalDevice>, LoadAndUnlockDeviceError> {
+) -> Result<DeviceAccessStrategy, LoadAndUnlockDeviceError> {
     log::trace!(
         "Loading device {device} from {dir}",
         dir = config_dir.display(),
@@ -245,7 +245,15 @@ pub async fn load_and_unlock_device(
             ));
         }
     };
+    Ok(access_strategy)
+}
 
+pub async fn load_and_unlock_device(
+    config_dir: &Path,
+    device: Option<String>,
+    password_stdin: bool,
+) -> Result<Arc<LocalDevice>, LoadAndUnlockDeviceError> {
+    let access_strategy = get_device_access_strategy(config_dir, device, password_stdin).await?;
     let device = libparsec::load_device(config_dir, &access_strategy).await?;
 
     Ok(device)
