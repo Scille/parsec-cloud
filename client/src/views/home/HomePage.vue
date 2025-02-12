@@ -127,12 +127,12 @@ const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [deviceId: string]: StoredDeviceData }>({});
 const selectedDevice: Ref<AvailableDevice | undefined> = ref();
-const loginPageRef = ref();
+const loginPageRef = ref<typeof LoginPage>();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
 const loginInProgress = ref(false);
 const queryInProgress = ref(false);
-const organizationListRef = ref();
+const organizationListRef = ref<typeof OrganizationListPage>();
 const querying = ref(true);
 const deviceList: Ref<AvailableDevice[]> = ref([]);
 
@@ -316,7 +316,7 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
             }),
             PresentationMode.Toast,
           );
-          await organizationListRef.value.refreshDeviceList();
+          await refreshDeviceList();
           return;
         } else {
           informationManager.present(
@@ -343,7 +343,9 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
     selectedDevice.value = device;
     state.value = HomePageState.Login;
     await nextTick();
-    loginPageRef.value.setLoginError(error);
+    if (loginPageRef.value) {
+      loginPageRef.value.setLoginError(error);
+    }
   } else if (device.ty === DeviceFileType.Keyring) {
     if (error.tag === ClientStartErrorTag.LoadDeviceDecryptionFailed) {
       const answer = await askQuestion('HomePage.loginErrors.keyringFailedTitle', 'HomePage.loginErrors.keyringFailedQuestion', {
