@@ -2,7 +2,7 @@
 
 /* contextual menu button */
 
-.contextual-menu {
+.action-bar {
   .counter {
     flex-shrink: 0;
   }
@@ -11,18 +11,19 @@
   #search-input-users {
     height: auto;
     border: none;
-    padding: 0.25rem 0 0.25rem 0.75rem !important;
-    outline: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: 0.5rem 0 0.5rem 0.75rem !important;
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    outline: none;
     background: var(--parsec-color-light-secondary-white);
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
 
     &:hover {
-      border: none;
+      border: 1px solid var(--parsec-color-light-secondary-light);
     }
 
     &:focus-within {
-      outline: 2px solid var(--parsec-color-light-primary-200);
-      border: none;
+      border: 1px solid var(--parsec-color-light-primary-300);
+      outline: none;
     }
 
     .icon {
