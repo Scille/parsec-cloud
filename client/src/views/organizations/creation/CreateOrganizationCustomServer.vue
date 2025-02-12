@@ -212,11 +212,13 @@ async function onCreateClicked(): Promise<void> {
       currentError.value = 'CreateOrganization.errors.alreadyExists';
     } else if (result.error.tag === BootstrapOrganizationErrorTag.Offline) {
       currentError.value = 'CreateOrganization.errors.customOffline';
+    } else if (result.error.tag === BootstrapOrganizationErrorTag.Internal && result.error.error.includes('Unsupported API version')) {
+      currentError.value = 'CreateOrganization.errors.incompatibleServer';
     } else {
       currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: result.error.tag } };
     }
     step.value = Steps.Summary;
-    console.log('Failed to create organization', result.error);
+    window.electronAPI.log('error', `Failed to create organization: ${JSON.stringify(result.error)}`);
     return;
   }
   availableDevice.value = result.value;
