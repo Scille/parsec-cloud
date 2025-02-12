@@ -358,14 +358,16 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / "docs/hosting/install_cli.rst": {
         Tool.Parsec: [
             ReplaceRegex(
-                r".. _Parsec CLI v.*: https://github.com/Scille/parsec-cloud/releases/download/v.*/parsec-cli_.*_linux_x86_64",
-                ".. _Parsec CLI v{version}: https://github.com/Scille/parsec-cloud/releases/download/v{version}/parsec-cli_{version}_linux_x86_64",
+                r".. _Parsec CLI v.*: https://github.com/Scille/parsec-cloud/releases/download/v.*/parsec-cli_.*_linux-x86_64-musl",
+                ".. _Parsec CLI v{version}: https://github.com/Scille/parsec-cloud/releases/download/v{version}/parsec-cli_{version}_linux-x86_64-musl",
             ),
             ReplaceRegex(
                 r"`Parsec CLI v.*`_",
                 "`Parsec CLI v{version}`_",
             ),
-            ReplaceRegex(r"parsec-cli_.*_linux_x86_64", "parsec-cli_{version}_linux_x86_64"),
+            ReplaceRegex(
+                r"parsec-cli_.*_linux-x86_64-musl", "parsec-cli_{version}_linux-x86_64-musl"
+            ),
             ReplaceRegex(r"parsec-cli .*", "parsec-cli {version}"),
         ]
     },
