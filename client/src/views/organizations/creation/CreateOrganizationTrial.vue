@@ -180,9 +180,22 @@ async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<voi
     currentError.value = undefined;
     step.value = Steps.Created;
   } else {
+    window.electronAPI.log('error', `Failed to create organization: ${JSON.stringify(result.error)}`);
     switch (result.error.tag) {
       case BootstrapOrganizationErrorTag.Offline:
         currentError.value = 'CreateOrganization.errors.offline';
+        break;
+      case BootstrapOrganizationErrorTag.Internal:
+        if (result.error.error.includes('Unsupported API version')) {
+          currentError.value = 'CreateOrganization.errors.incompatibleServer';
+        } else {
+          currentError.value = {
+            key: 'CreateOrganization.errors.generic',
+            data: {
+              reason: result.error.tag,
+            },
+          };
+        }
         break;
       case BootstrapOrganizationErrorTag.TimestampOutOfBallpark:
         currentError.value = {
