@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import asyncio
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
@@ -482,6 +483,40 @@ async def test_restart_partially_exported(
 
     monkeypatch.setattr("parsec.realm_export.VLOB_EXPORT_BATCH_SIZE", 3)
     monkeypatch.setattr("parsec.realm_export.BLOCK_METADATA_EXPORT_BATCH_SIZE", 3)
+    # By default the block flush fetched blocks on disk for every 1Go of data, however
+    # we don't have that much data in the testbed template, so only the last flush would
+    # be triggered...
+    # So instead we change the threshold with a rough estimation (since there is no guarantee
+    # on block fetch order) to have a flush occurring sooner.
+    blocks_events = (
+        e
+        for e in workspace_history_org.testbed_template.events
+        if isinstance(e, (tb.TestbedEventCreateBlock, tb.TestbedEventCreateOpaqueBlock))
+    )
+    monkeypatch.setattr(
+        "parsec.realm_export.BLOCK_DATA_EXPORT_RAM_LIMIT",
+        len(next(blocks_events).encrypted) + len(next(blocks_events).encrypted),
+    )
+
+    # The block data fetch is done in a concurrent way, which doesn't play nice with
+    # the way we cancel the export in this test: since `on_progress` is synchronous
+    # and there is no guarantee on when the a cancelled coroutine is actually cancelled,
+    # we end up with multiple concurrent fetches calling the `on_progress` callback and
+    # maybe even flushing their fetched data to disk (which breaks the next `cancel_on_event`
+    # condition check !)
+    #
+    # So to solve this we only allow a single coroutine to actually fetch the block data,
+    # and allow another one only once the `on_progress` has been called. This way, if we
+    # detect in `on_progress` that a cancel is needed, we simply don't release the semaphore
+    # which makes the realm export stall until its coroutines are actually cancelled.
+    vanilla_blockstore_read = backend.blockstore.read
+    block_fetch_semaphore = asyncio.Semaphore(1)
+
+    async def patched_blocstore_read(*args, **kwargs):
+        await block_fetch_semaphore.acquire()
+        return await vanilla_blockstore_read(*args, **kwargs)
+
+    backend.blockstore.read = patched_blocstore_read
 
     for cancel_on_event in (
         "certificates_start",
@@ -498,12 +533,13 @@ async def test_restart_partially_exported(
         with anyio.CancelScope() as cancel_scope:
             # Cancel the export at multiple different steps
             def _on_progress(event: ExportProgressStep):
-                if cancel_on_event is None:
-                    return
+                if cancel_on_event == event:
+                    cancel_scope.cancel()
                 elif callable(cancel_on_event) and cancel_on_event(event):
                     cancel_scope.cancel()
-                elif cancel_on_event == event:
-                    cancel_scope.cancel()
+                else:
+                    if block_fetch_semaphore.locked():
+                        block_fetch_semaphore.release()
 
             await export_realm(
                 backend=backend,
