@@ -30,12 +30,6 @@
       <!-- eslint-enable vue/no-mutating-props -->
     </div>
     <div
-      v-if="user.isRevoked()"
-      class="user-revoked"
-    >
-      <user-status-tag :revoked="user.isRevoked()" />
-    </div>
-    <div
       class="card-option"
       v-show="isHovered || menuOpened"
       @click.stop="onOptionsClick($event)"
@@ -132,10 +126,8 @@ async function onOptionsClick(event: Event): Promise<void> {
 
 <style scoped lang="scss">
 .user-card-item {
-  --background: inherit;
-  --background-hover: none;
-
-  width: 14rem;
+  max-width: 15rem;
+  width: 100%;
   height: fit-content;
 
   &:hover:not(.revoked) {
