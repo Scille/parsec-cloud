@@ -31,7 +31,7 @@
           <ion-text
             id="batch-activate-button"
             @click="onBatchSharingActivate()"
-            v-show="ownRole === WorkspaceRole.Owner || ownRole === WorkspaceRole.Manager"
+            v-show="batchSharingEnabled"
             fill="clear"
             class="button-small"
           >
@@ -97,7 +97,7 @@
                 :indeterminate="someMembersSelected && !allMembersSelected"
                 :checked="allMembersSelected"
                 @change="selectAllMembers()"
-                v-show="showCheckboxes && filteredSharedUserRoles.length > 0"
+                v-show="showCheckboxes && selectableFilteredMembers.length > 0"
               />
               {{ $msTranslate({ key: 'workspaceRoles.members', data: { count: countSharedUsers }, count: countSharedUsers }) }}
             </ion-text>
@@ -121,6 +121,7 @@
               <ms-checkbox
                 id="member-checkbox"
                 v-show="showCheckboxes"
+                :disabled="!(entry.role && canSelectUser(entry.user.profile, entry.role))"
                 v-model="entry.isSelected"
               />
               <workspace-user-role
@@ -255,10 +256,18 @@ const filteredNotSharedUserRoles = computed(() => {
 const selectedUsers = computed(() => filteredUserRoles.value.filter((user) => user.isSelected === true));
 const countSharedUsers = computed(() => filteredSharedUserRoles.value.length + (clientInfo.value ? 1 : 0));
 const someUserSelected = computed(() => filteredUserRoles.value.some((user) => user.isSelected === true));
-const someMembersSelected = computed(() => filteredSharedUserRoles.value.some((user) => user.isSelected === true));
-const allMembersSelected = computed(() => filteredSharedUserRoles.value.every((user) => user.isSelected === true));
+const selectableFilteredMembers = computed(() => {
+  return filteredSharedUserRoles.value.filter((user) => user.role && canSelectUser(user.user.profile, user.role));
+});
+const someMembersSelected = computed(() => selectableFilteredMembers.value.some((user) => user.isSelected === true));
+const allMembersSelected = computed(() => selectableFilteredMembers.value.every((user) => user.isSelected === true));
 const orgHasExternalUsers = computed(() => userRoles.value.some((user) => user.user.profile === UserProfile.Outsider));
-
+const batchSharingEnabled = computed(() => {
+  return (
+    (props.ownRole === WorkspaceRole.Owner || props.ownRole === WorkspaceRole.Manager) &&
+    filteredNotSharedUserRoles.value.length + selectableFilteredMembers.value.length > 1
+  );
+});
 function currentUserMatchSearch(): boolean {
   const searchString = search.value.toLocaleLowerCase();
   if (!clientInfo.value) {
@@ -348,9 +357,13 @@ const options = computed((): MsOptions => {
   );
 });
 
+function canSelectUser(userProfile: UserProfile, userRole: WorkspaceRole): boolean {
+  return canChangeRole(ownProfile, userProfile, props.ownRole, userRole, userRole).authorized;
+}
+
 function selectAllMembers(): void {
   const value = !allMembersSelected.value;
-  for (const user of filteredSharedUserRoles.value) {
+  for (const user of selectableFilteredMembers.value) {
     user.isSelected = value;
   }
 }
