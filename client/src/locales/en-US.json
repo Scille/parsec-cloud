@@ -972,7 +972,8 @@
                 "invalidSasCode": "The host has selected the wrong code.",
                 "manuallyCancelled": "The host has cancelled the process.",
                 "automaticallyCancelled": "The process has been cancelled.",
-                "default": "An error has occurred. The process has been cancelled."
+                "default": "An error has occurred. The process has been cancelled.",
+                "deleted": "Invitation has already been used or has been deleted."
             }
         },
         "cancelConfirm": "Cancel the onboarding",
