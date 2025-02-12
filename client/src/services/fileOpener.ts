@@ -112,17 +112,7 @@ async function openPath(
     return;
   }
   if (isDesktop() && options.skipViewers) {
-    if (!options.onlyViewers) {
-      await openWithSystem(workspaceHandle, entry, informationManager);
-    } else {
-      await informationManager.present(
-        new Information({
-          message: 'FoldersPage.open.unknownFileType',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Modal,
-      );
-    }
+    await openWithSystem(workspaceHandle, entry, informationManager);
     return;
   }
 
@@ -137,6 +127,15 @@ async function openPath(
     if (!contentType || contentType.type === FileContentType.Unknown || (isDesktop() && !ENABLED_FILE_VIEWERS.includes(contentType.type))) {
       if (!options.onlyViewers) {
         await openWithSystem(workspaceHandle, entry, informationManager);
+      } else {
+        await modal.dismiss();
+        await informationManager.present(
+          new Information({
+            message: 'FoldersPage.open.unhandledFileType',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Modal,
+        );
       }
     } else {
       if ((entry as any).size > OPEN_FILE_SIZE_LIMIT) {
@@ -149,14 +148,6 @@ async function openPath(
         );
         if (!options.onlyViewers) {
           await openWithSystem(workspaceHandle, entry, informationManager);
-        } else {
-          await informationManager.present(
-            new Information({
-              message: 'FoldersPage.open.unknownType',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Modal,
-          );
         }
         return;
       }

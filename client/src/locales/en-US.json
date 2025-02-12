@@ -584,7 +584,8 @@
         "open": {
             "fileFailed": "Failed to open file `{name}`",
             "folderFailed": "Failed to open folder `{name}`",
-            "unavailableOnWeb": "This feature is not yet available in web mode."
+            "unavailableOnWeb": "This feature is not yet available in web mode.",
+            "unhandledFileType": "Cannot show a preview of this file."
         },
         "linkNotCopiedToClipboard": "Failed to copy link. Your browser or device does not seem to support copy/paste.",
         "linkCopiedToClipboard": "Link has been copied to clipboard.",
