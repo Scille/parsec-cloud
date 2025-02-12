@@ -127,7 +127,7 @@ import { checkmarkCircle, document as documentIcon, download, home, key, reload 
 import { inject, onMounted, ref } from 'vue';
 
 let code = '';
-let content = new Uint8Array();
+let content: Uint8Array = new Uint8Array();
 const downloadLink = ref();
 const recoveryKeyDownloaded = ref(false);
 const recoveryFileDownloaded = ref(false);
@@ -142,6 +142,7 @@ onMounted(async (): Promise<void> => {
   if (!result.ok) {
     return;
   }
+  orgId.value = result.value.organizationId;
   const exportResult = await exportRecoveryDevice();
   if (!exportResult.ok) {
     const notificationMsg = 'ExportRecoveryDevicePage.errors.exportFailed';
