@@ -18,9 +18,13 @@
   }
 
   &.selected {
-    --background: var(--parsec-color-light-primary-100);
+    --background: var(--parsec-color-light-primary-100) !important;
     --background-hover: var(--parsec-color-light-primary-100);
-    border: 1px solid var(--parsec-color-light-primary-200);
+    border: 1px solid var(--parsec-color-light-primary-100);
+
+    .file-card-last-update {
+      color: var(--parsec-color-light-secondary-soft-text);
+    }
   }
 }
 
