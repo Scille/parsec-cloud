@@ -1012,9 +1012,7 @@ ion-menu {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 0 1rem 1.5rem 1rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--parsec-color-light-primary-30-opacity15);
+  padding: 1.5rem 1rem;
 
   &__tag {
     color: var(--parsec-color-light-secondary-white);
