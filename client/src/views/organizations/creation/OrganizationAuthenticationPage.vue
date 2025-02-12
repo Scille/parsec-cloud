@@ -90,9 +90,6 @@ async function onFieldUpdated(): Promise<void> {
 
 <style scoped lang="scss">
 .authentication-page {
-  padding: 2.5rem;
-  display: flex;
-  height: auto;
-  width: 100%;
+  overflow: auto;
 }
 </style>
