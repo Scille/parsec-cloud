@@ -80,7 +80,8 @@ const TEXTS = [
   'po',
   'vue',
   'kt',
-  'ylm',
+  'yml',
+  'yaml',
 ];
 
 async function detectFileContentTypeFromBuffer(buffer: Uint8Array, fileExt?: string): Promise<DetectedFileType> {
