@@ -44,14 +44,12 @@ async def components_factory(
                 webhooks = WebhooksComponent(config, http_client)
                 events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)
                 ping = PGPingComponent(pool=pool)
-                organization = PGOrganizationComponent(
-                    pool=pool, webhooks=webhooks, config=config, event_bus=event_bus
-                )
+                organization = PGOrganizationComponent(pool=pool, webhooks=webhooks, config=config)
                 auth = PGAuthComponent(pool=pool, event_bus=event_bus, config=config)
-                invite = PGInviteComponent(pool=pool, event_bus=event_bus, config=config)
-                user = PGUserComponent(pool=pool, event_bus=event_bus)
-                vlob = PGVlobComponent(pool=pool, event_bus=event_bus, webhooks=webhooks)
-                realm = PGRealmComponent(pool=pool, event_bus=event_bus, webhooks=webhooks)
+                invite = PGInviteComponent(pool=pool, config=config)
+                user = PGUserComponent(pool=pool)
+                vlob = PGVlobComponent(pool=pool, webhooks=webhooks)
+                realm = PGRealmComponent(pool=pool, webhooks=webhooks)
                 blockstore = blockstore_factory(
                     config=config.blockstore_config, postgresql_pool=pool
                 )
@@ -59,7 +57,7 @@ async def components_factory(
                 shamir = PGShamirComponent(pool=pool)
 
                 pki = None
-                sequester = PGSequesterComponent(pool=pool, event_bus=event_bus)
+                sequester = PGSequesterComponent(pool=pool)
 
                 components = {
                     "event_bus": event_bus,

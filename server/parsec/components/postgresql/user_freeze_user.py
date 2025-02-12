@@ -8,8 +8,8 @@ from parsec._parsec import (
     OrganizationID,
     UserID,
 )
-from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.events import send_signal
 from parsec.components.postgresql.utils import (
     Q,
 )
@@ -105,7 +105,6 @@ SELECT
 
 
 async def user_freeze_user(
-    event_bus: EventBus,
     conn: AsyncpgConnection,
     organization_id: OrganizationID,
     user_id: UserID | None,
@@ -173,18 +172,20 @@ async def user_freeze_user(
     )
 
     if info.frozen:
-        await event_bus.send(
+        await send_signal(
+            conn,
             EventUserRevokedOrFrozen(
                 organization_id=organization_id,
                 user_id=info.user_id,
-            )
+            ),
         )
     else:
-        await event_bus.send(
+        await send_signal(
+            conn,
             EventUserUnfrozen(
                 organization_id=organization_id,
                 user_id=info.user_id,
-            )
+            ),
         )
 
     return info

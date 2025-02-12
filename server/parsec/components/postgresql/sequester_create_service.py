@@ -8,8 +8,8 @@ from parsec._parsec import (
     SequesterVerifyKeyDer,
 )
 from parsec.ballpark import RequireGreaterTimestamp
-from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.events import send_signal
 from parsec.components.postgresql.utils import Q
 from parsec.components.sequester import (
     SequesterCreateServiceStoreBadOutcome,
@@ -95,7 +95,6 @@ SELECT
 
 
 async def sequester_create_service(
-    event_bus: EventBus,
     conn: AsyncpgConnection,
     now: DateTime,
     organization_id: OrganizationID,
@@ -185,8 +184,8 @@ async def sequester_create_service(
         case unknown:
             assert False, repr(unknown)
 
-    await event_bus.send(
-        EventSequesterCertificate(organization_id=organization_id, timestamp=certif.timestamp)
+    await send_signal(
+        conn, EventSequesterCertificate(organization_id=organization_id, timestamp=certif.timestamp)
     )
 
     return certif

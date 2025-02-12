@@ -220,7 +220,7 @@ class EventBus:
     async def send(self, event: Event) -> None:
         raise NotImplementedError
 
-    def send_nowait(self, event: Event) -> None:
+    async def test_send(self, event: Event) -> None:
         raise NotImplementedError
 
 

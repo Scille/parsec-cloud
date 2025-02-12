@@ -27,8 +27,8 @@ class MemoryEventBus(EventBus):
         await self._send_events_channel.send(event)
 
     @override
-    def send_nowait(self, event: Event) -> None:
-        self._send_events_channel.send_nowait(event)
+    async def test_send(self, event: Event) -> None:
+        await self.send(event)
 
 
 @asynccontextmanager

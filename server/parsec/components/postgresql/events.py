@@ -1,11 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import math
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, override
+from typing import AsyncIterator, cast, override
 
 import anyio
-from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -29,44 +27,35 @@ logger = get_logger()
 
 
 class PGEventBus(EventBus):
-    def __init__(self, send_events_channel: MemoryObjectSendStream[Event]):
+    """The `EventBus.send` method is not implemented for the PostgreSQL event bus.
+
+    Events are typically sent after a change in the database, meaning that there is
+    always an open transaction to commit. For better concurrency handling, it makes
+    more sense to send the event as part of the transaction, i.e using:
+
+        await send_signal(conn, event)
+
+    instead of using another connection such as the notification connection used
+    in `test_send` for testing purposes.
+    """
+
+    def __init__(self, conn: AsyncpgConnection):
         super().__init__()
-        self._send_events_channel = send_events_channel
+        self._conn = conn
 
     @override
-    async def send(self, event: Event) -> None:
-        await self._send_events_channel.send(event)
-
-    @override
-    def send_nowait(self, event: Event) -> None:
-        self._send_events_channel.send_nowait(event)
+    async def test_send(self, event: Event) -> None:
+        await send_signal(self._conn, event)
 
 
 @asynccontextmanager
 async def event_bus_factory(pool: AsyncpgPool) -> AsyncIterator[PGEventBus]:
-    # TODO: add typing once use anyio>=4 (currently incompatible with fastapi)
-    send_events_channel, receive_events_channel = anyio.create_memory_object_stream(math.inf)
-    receive_events_channel: MemoryObjectReceiveStream[Event]
-
-    event_bus = PGEventBus(send_events_channel)
     _connection_lost = False
 
     def _on_notification_conn_termination(conn: object) -> None:
         nonlocal _connection_lost
         _connection_lost = True
-        task_group.cancel_scope.cancel()
-
-    async def _pump_events(notification_conn: AsyncpgConnection) -> None:
-        async for event in receive_events_channel:
-            logger.info_with_debug_extra(
-                "Received internal event",
-                type=event.type,
-                event_id=event.event_id.hex,
-                organization_id=event.organization_id.str,
-                debug_extra=event.model_dump(),
-            )
-
-            await send_signal(notification_conn, event)
+        cancel_scope.cancel()
 
     def _on_notification(conn: object, pid: int, channel: str, payload: object) -> None:
         assert isinstance(payload, str)
@@ -77,21 +66,28 @@ async def event_bus_factory(pool: AsyncpgPool) -> AsyncIterator[PGEventBus]:
                 "Invalid notif received", pid=pid, channel=channel, payload=payload, exc_info=exc
             )
             return
+        logger.info_with_debug_extra(
+            "Dispatching event",
+            type=event.type,
+            event_id=event.event_id.hex,
+            organization_id=event.organization_id.str,
+            debug_extra=event.model_dump(),
+        )
         event_bus._dispatch_incoming_event(event)
 
     try:
         async with pool.acquire() as notification_conn:
-            async with anyio.create_task_group() as task_group:
+            conn = cast(AsyncpgConnection, notification_conn)
+            event_bus = PGEventBus(conn)
+
+            with anyio.CancelScope() as cancel_scope:
                 notification_conn.add_termination_listener(_on_notification_conn_termination)
 
                 await notification_conn.add_listener("app_notification", _on_notification)
                 try:
-                    task_group.start_soon(_pump_events, notification_conn)
                     yield event_bus
                 finally:
                     await notification_conn.remove_listener("app_notification", _on_notification)
-
-                task_group.cancel_scope.cancel()
 
     finally:
         if _connection_lost:

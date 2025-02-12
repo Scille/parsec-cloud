@@ -23,7 +23,6 @@ from parsec._parsec import (
     UserProfile,
     invited_cmds,
 )
-from parsec.components.events import EventBus
 from parsec.components.invite import (
     BaseInviteComponent,
     DeviceInvitation,
@@ -55,6 +54,7 @@ from parsec.components.invite import (
 )
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
+from parsec.components.postgresql.events import send_signal
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user import PGUserComponent, UserInfo
 from parsec.components.postgresql.utils import (
@@ -1001,7 +1001,6 @@ async def query_retrieve_active_human_by_email(
 
 async def _send_invitation_event(
     conn: AsyncpgConnection,
-    event_bus: EventBus,
     organization_id: OrganizationID,
     invitation_info: InvitationInfo,
     status: InvitationStatus,
@@ -1010,7 +1009,6 @@ async def _send_invitation_event(
         case UserInvitationInfo():
             return await _send_invitation_event_for_user(
                 conn,
-                event_bus,
                 organization_id,
                 invitation_info.token,
                 status,
@@ -1018,7 +1016,6 @@ async def _send_invitation_event(
         case DeviceInvitationInfo():
             return await _send_invitation_event_for_device(
                 conn,
-                event_bus,
                 organization_id,
                 invitation_info.token,
                 invitation_info.claimer_user_id,
@@ -1027,7 +1024,6 @@ async def _send_invitation_event(
         case ShamirRecoveryInvitationInfo():
             return await _send_invitation_event_for_shamir_recovery(
                 conn,
-                event_bus,
                 organization_id,
                 invitation_info.token,
                 invitation_info.shamir_recovery_setup_internal_id,
@@ -1037,7 +1033,6 @@ async def _send_invitation_event(
 
 async def _send_invitation_event_for_user(
     conn: AsyncpgConnection,
-    event_bus: EventBus,
     organization_id: OrganizationID,
     token: InvitationToken,
     status: InvitationStatus,
@@ -1056,7 +1051,8 @@ async def _send_invitation_event_for_user(
             case unknown:
                 assert False, repr(unknown)
 
-    await event_bus.send(
+    await send_signal(
+        conn,
         EventInvitation(
             organization_id=organization_id,
             token=token,
@@ -1068,7 +1064,6 @@ async def _send_invitation_event_for_user(
 
 async def _send_invitation_event_for_device(
     conn: AsyncpgConnection,
-    event_bus: EventBus,
     organization_id: OrganizationID,
     token: InvitationToken,
     claimer_user_id: UserID,
@@ -1076,7 +1071,8 @@ async def _send_invitation_event_for_device(
 ) -> None:
     # Only the corresponding user can greet a device invitation
     possible_greeters = {claimer_user_id}
-    await event_bus.send(
+    await send_signal(
+        conn,
         EventInvitation(
             organization_id=organization_id,
             token=token,
@@ -1088,7 +1084,6 @@ async def _send_invitation_event_for_device(
 
 async def _send_invitation_event_for_shamir_recovery(
     conn: AsyncpgConnection,
-    event_bus: EventBus,
     organization_id: OrganizationID,
     token: InvitationToken,
     shamir_recovery_setup_internal_id: int,
@@ -1110,7 +1105,8 @@ async def _send_invitation_event_for_shamir_recovery(
             case unknown:
                 assert False, repr(unknown)
 
-    await event_bus.send(
+    await send_signal(
+        conn,
         EventInvitation(
             organization_id=organization_id,
             token=token,
@@ -1131,7 +1127,6 @@ async def _do_new_invitation(
     created_on: DateTime,
     invitation_type: InvitationType,
     suggested_token: InvitationToken,
-    event_bus: EventBus,
 ) -> InvitationToken:
     match invitation_type:
         case InvitationType.USER:
@@ -1181,7 +1176,6 @@ async def _do_new_invitation(
         case InvitationType.USER:
             await _send_invitation_event_for_user(
                 conn,
-                event_bus,
                 organization_id=organization_id,
                 token=token,
                 status=InvitationStatus.PENDING,
@@ -1189,7 +1183,6 @@ async def _do_new_invitation(
         case InvitationType.DEVICE:
             await _send_invitation_event_for_device(
                 conn,
-                event_bus,
                 organization_id=organization_id,
                 token=token,
                 claimer_user_id=author_user_id,
@@ -1199,7 +1192,6 @@ async def _do_new_invitation(
             assert shamir_recovery_setup is not None
             await _send_invitation_event_for_shamir_recovery(
                 conn,
-                event_bus,
                 organization_id=organization_id,
                 token=token,
                 shamir_recovery_setup_internal_id=shamir_recovery_setup,
@@ -1226,8 +1218,8 @@ async def _human_handle_from_user_id(
 
 
 class PGInviteComponent(BaseInviteComponent):
-    def __init__(self, pool: AsyncpgPool, event_bus: EventBus, config: BackendConfig) -> None:
-        super().__init__(event_bus, config)
+    def __init__(self, pool: AsyncpgPool, config: BackendConfig) -> None:
+        super().__init__(config)
         self.pool = pool
         self.organization: PGOrganizationComponent
 
@@ -1277,7 +1269,6 @@ class PGInviteComponent(BaseInviteComponent):
         suggested_token = force_token or InvitationToken.new()
         token = await _do_new_invitation(
             conn,
-            event_bus=self._event_bus,
             organization_id=organization_id,
             author_user_id=author_user_id,
             author_device_id=author,
@@ -1340,7 +1331,6 @@ class PGInviteComponent(BaseInviteComponent):
         suggested_token = force_token or InvitationToken.new()
         token = await _do_new_invitation(
             conn,
-            event_bus=self._event_bus,
             organization_id=organization_id,
             author_user_id=author_user_id,
             author_device_id=author,
@@ -1430,7 +1420,6 @@ class PGInviteComponent(BaseInviteComponent):
         suggested_token = force_token or InvitationToken.new()
         token = await _do_new_invitation(
             conn,
-            event_bus=self._event_bus,
             organization_id=organization_id,
             author_user_id=author_user_id,
             author_device_id=author,
@@ -1588,7 +1577,6 @@ class PGInviteComponent(BaseInviteComponent):
 
         await _send_invitation_event(
             conn,
-            self._event_bus,
             organization_id=organization_id,
             invitation_info=invitation_info,
             status=InvitationStatus.PENDING,
@@ -2318,13 +2306,14 @@ class PGInviteComponent(BaseInviteComponent):
             conn, greeting_attempt_info.internal_id, GreeterOrClaimer.GREETER, reason, now
         )
 
-        await self._event_bus.send(
+        await send_signal(
+            conn,
             EventGreetingAttemptCancelled(
                 organization_id=organization_id,
                 token=invitation_info.token,
                 greeter=greeting_attempt_info.greeter,
                 greeting_attempt=greeting_attempt,
-            )
+            ),
         )
 
     @override
@@ -2388,13 +2377,14 @@ class PGInviteComponent(BaseInviteComponent):
             conn, greeting_attempt_info.internal_id, GreeterOrClaimer.CLAIMER, reason, now
         )
 
-        await self._event_bus.send(
+        await send_signal(
+            conn,
             EventGreetingAttemptCancelled(
                 organization_id=organization_id,
                 token=invitation_info.token,
                 greeter=greeting_attempt_info.greeter,
                 greeting_attempt=greeting_attempt,
-            )
+            ),
         )
 
     @override
@@ -2464,13 +2454,14 @@ class PGInviteComponent(BaseInviteComponent):
             case Buffer() as data:
                 # When completing the `WAIT_PEER` step, send a `GreetingAttemptJoined` event
                 if step_index == 0:
-                    await self._event_bus.send(
+                    await send_signal(
+                        conn,
                         EventGreetingAttemptJoined(
                             organization_id=org.organization_id,
                             token=invitation_info.token,
                             greeter=greeting_attempt_info.greeter,
                             greeting_attempt=greeting_attempt,
-                        )
+                        ),
                     )
                 return data
 
@@ -2542,13 +2533,14 @@ class PGInviteComponent(BaseInviteComponent):
             case self.StepOutcome.NOT_READY:
                 # During the `WAIT_PEER` step, send a `GreetingAttemptReady` event to the greeter
                 if step_index == 0:
-                    await self._event_bus.send(
+                    await send_signal(
+                        conn,
                         EventGreetingAttemptReady(
                             organization_id=org.organization_id,
                             token=token,
                             greeter=greeting_attempt_info.greeter,
                             greeting_attempt=greeting_attempt,
-                        )
+                        ),
                     )
                 return NotReady()
             case Buffer() as data:
@@ -2618,7 +2610,6 @@ class PGInviteComponent(BaseInviteComponent):
 
         await _send_invitation_event(
             conn,
-            event_bus=self._event_bus,
             organization_id=organization_id,
             invitation_info=invitation_info,
             status=InvitationStatus.FINISHED,

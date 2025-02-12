@@ -8,8 +8,8 @@ from parsec._parsec import (
     SequesterVerifyKeyDer,
 )
 from parsec.ballpark import RequireGreaterTimestamp
-from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql.events import send_signal
 from parsec.components.postgresql.utils import Q
 from parsec.components.sequester import (
     SequesterRevokeServiceStoreBadOutcome,
@@ -97,7 +97,6 @@ SELECT
 
 
 async def sequester_revoke_service(
-    event_bus: EventBus,
     conn: AsyncpgConnection,
     now: DateTime,
     organization_id: OrganizationID,
@@ -180,14 +179,14 @@ async def sequester_revoke_service(
         case unknown:
             assert False, repr(unknown)
 
-    await event_bus.send(
-        EventSequesterCertificate(organization_id=organization_id, timestamp=certif.timestamp)
-    )
-
     match row["topic_updated"]:
         case True:
             pass
         case unknown:
             assert False, repr(unknown)
+
+    await send_signal(
+        conn, EventSequesterCertificate(organization_id=organization_id, timestamp=certif.timestamp)
+    )
 
     return certif
