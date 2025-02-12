@@ -156,6 +156,21 @@
     width: 100%;
   }
 
+  .authentication-page {
+    --height: 100%;
+    height: 100%;
+
+    @media only screen and (max-height: 768px) {
+      --height: 500px;
+      height: 500px;
+    }
+
+    @media only screen and (max-height: 500px) {
+      --height: 100vh;
+      height: 100vh;
+    }
+  }
+
   .authentication-page-footer,
   .summary-page-footer,
   .organization-name-and-server-page-footer,
