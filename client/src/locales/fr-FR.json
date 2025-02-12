@@ -972,7 +972,8 @@
                 "invalidSasCode": "L'inviteur n'a pas sélectionné le bon code.",
                 "manuallyCancelled": "L'inviteur a annulé le processus.",
                 "automaticallyCancelled": "Le processus a été annulé.",
-                "default": "Une erreur est survenue. Le processus a été annulé."
+                "default": "Une erreur est survenue. Le processus a été annulé.",
+                "deleted": "L'invitation a déjà été utilisée ou a été supprimée."
             }
         },
         "cancelConfirm": "Annulation",

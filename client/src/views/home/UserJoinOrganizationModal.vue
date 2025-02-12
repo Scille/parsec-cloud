@@ -539,6 +539,9 @@ async function startProcess(): Promise<void> {
       case ClaimInProgressErrorTag.GreetingAttemptCancelled:
         message = 'JoinOrganization.errors.greeter.default';
         break;
+      case ClaimInProgressErrorTag.AlreadyUsedOrDeleted:
+        message = 'JoinOrganization.errors.greeter.deleted';
+        break;
       default:
         message = { key: 'JoinOrganization.errors.unexpected', data: { reason: waitResult.error.tag } };
         break;
