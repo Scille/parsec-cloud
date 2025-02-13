@@ -448,8 +448,35 @@ CREATE TABLE realm_keys_bundle_access (
 
     access BYTEA NOT NULL,
 
-    UNIQUE (realm, user_, realm_keys_bundle)
+    -- Updated in migration 0010
+    -- There is two scenarios where a keys bundle access is provided:
+    -- - During key rotation, in which each member of the realm got a new access.
+    -- - When sharing with a user, in which case only he got a new access.
+    --
+    -- In practice this means there can be multiple accesses for a given user and
+    -- keys bundle pair, but only the most recent is used.
+    --
+    -- However we still want to keep the others accesses in database (instead of
+    -- just overwriting everything but the last one), given:
+    -- - It allows simple recovery in case of a bug/malicious client trying to
+    --   share with invalid accesses.
+    -- - A realm export contains all known accesses so they can all be tried when
+    --   decrypting data.
+    --
+    -- NULL if the keys bundle access comes from a key rotation.
+    from_sharing INTEGER REFERENCES realm_user_role (_id)
 );
+
+
+-- TODO: Replace this by a `UNIQUE NULLS NOT DISTINCT` once we upgrade to PostgreSQL 15
+CREATE UNIQUE INDEX realm_keys_bundle_access_index_from_sharing_not_null
+ON realm_keys_bundle_access (
+    realm, user_, realm_keys_bundle, from_sharing
+) WHERE from_sharing IS NOT NULL;
+CREATE UNIQUE INDEX realm_keys_bundle_access_index_from_sharing_null
+ON realm_keys_bundle_access (
+    realm, user_, realm_keys_bundle
+) WHERE from_sharing IS NULL;
 
 
 CREATE TABLE realm_sequester_keys_bundle_access (

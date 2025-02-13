@@ -748,7 +748,9 @@ class MemoryRealmVlobUpdate:
 class MemoryRealmKeyRotation:
     cooked: RealmKeyRotationCertificate
     realm_key_rotation_certificate: bytes = field(repr=False)
-    per_participant_keys_bundle_access: dict[UserID, bytes] = field(repr=False)
+    per_participant_keys_bundle_accesses: dict[UserID, list[tuple[DateTime, bytes]]] = field(
+        repr=False
+    )
     keys_bundle: bytes = field(repr=False)
     # None for non-sequestered organization
     per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None = field(
