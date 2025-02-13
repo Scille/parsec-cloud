@@ -19,6 +19,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::lock::{Mutex as AsyncMutex, RwLock};
 pub use libparsec_platform_storage::certificates::UpTo;
 use libparsec_platform_storage::certificates::{
@@ -95,8 +96,8 @@ pub enum CertifStoreError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifForReadWithRequirementsError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error(transparent)]
@@ -373,7 +374,9 @@ impl CertificatesStore {
             super::poll::poll_server_for_new_certificates(ops, store, Some(needed_timestamps))
                 .await
                 .map_err(|e| match e {
-                    CertifPollServerError::Offline => CertifForReadWithRequirementsError::Offline,
+                    CertifPollServerError::Offline(e) => {
+                        CertifForReadWithRequirementsError::Offline(e)
+                    }
                     CertifPollServerError::Stopped => CertifForReadWithRequirementsError::Stopped,
                     CertifPollServerError::InvalidCertificate(err) => {
                         CertifForReadWithRequirementsError::InvalidCertificate(err)

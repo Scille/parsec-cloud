@@ -72,8 +72,8 @@ pub enum WorkspaceHistorySetTimestampOfInterestError {
     OlderThanLowerBound,
     #[error("Provided timestamp is newer than the highest allowed bound")]
     NewerThanHigherBound,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -90,15 +90,6 @@ pub enum WorkspaceHistorySetTimestampOfInterestError {
     InvalidHistory(#[from] Box<InvalidManifestHistoryError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for WorkspaceHistorySetTimestampOfInterestError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 impl WorkspaceHistoryOps {
@@ -196,8 +187,8 @@ impl WorkspaceHistoryOps {
             .resolve_path(toi, &"/".parse().expect("valid path"))
             .await
             .map_err(|err| match err {
-                WorkspaceHistoryStoreResolvePathError::Offline => {
-                    WorkspaceHistorySetTimestampOfInterestError::Offline
+                WorkspaceHistoryStoreResolvePathError::Offline(e) => {
+                    WorkspaceHistorySetTimestampOfInterestError::Offline(e)
                 }
                 WorkspaceHistoryStoreResolvePathError::Stopped => {
                     WorkspaceHistorySetTimestampOfInterestError::Stopped

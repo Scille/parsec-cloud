@@ -429,7 +429,7 @@ async fn offline(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, ClientRenameWorkspaceError::Offline);
+    p_assert_matches!(err, ClientRenameWorkspaceError::Offline(_));
     spy.assert_no_events();
 }
 

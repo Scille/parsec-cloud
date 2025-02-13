@@ -374,7 +374,7 @@ async fn offline(env: &TestbedEnv) {
     let mut buff = vec![];
     p_assert_matches!(
         ops.fd_read(fd, 0, 1, &mut buff).await.unwrap_err(),
-        WorkspaceHistoryFdReadError::Offline
+        WorkspaceHistoryFdReadError::Offline(_)
     );
 }
 

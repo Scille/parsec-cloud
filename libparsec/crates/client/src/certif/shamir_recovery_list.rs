@@ -6,6 +6,7 @@ use std::{
     sync::Arc,
 };
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::{GetCertificateError, PerTopicLastTimestamps, UpTo};
 use libparsec_types::prelude::*;
 
@@ -361,8 +362,8 @@ pub enum CertifGetShamirRecoveryShareDataError {
     ShamirRecoveryUnusable,
     #[error(transparent)]
     CorruptedShareData(DataError),
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error(transparent)]
@@ -376,7 +377,7 @@ pub enum CertifGetShamirRecoveryShareDataError {
 impl From<CertifForReadWithRequirementsError> for CertifGetShamirRecoveryShareDataError {
     fn from(value: CertifForReadWithRequirementsError) -> Self {
         match value {
-            CertifForReadWithRequirementsError::Offline => Self::Offline,
+            CertifForReadWithRequirementsError::Offline(e) => Self::Offline(e),
             CertifForReadWithRequirementsError::Stopped => Self::Stopped,
             CertifForReadWithRequirementsError::InvalidCertificate(err) => {
                 Self::InvalidCertificate(err)

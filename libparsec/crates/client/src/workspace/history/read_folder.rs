@@ -13,8 +13,8 @@ use crate::certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidMani
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryOpenFolderReaderError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -33,19 +33,10 @@ pub enum WorkspaceHistoryOpenFolderReaderError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for WorkspaceHistoryOpenFolderReaderError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryFolderReaderStatEntryError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -58,15 +49,6 @@ pub enum WorkspaceHistoryFolderReaderStatEntryError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for WorkspaceHistoryFolderReaderStatEntryError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -128,8 +110,8 @@ impl WorkspaceHistoryFolderReader {
                     WorkspaceHistoryStatEntryError::EntryNotFound => {
                         return Ok(WorkspaceHistoryFolderReaderStatNextOutcome::InvalidChild)
                     }
-                    WorkspaceHistoryStatEntryError::Offline => {
-                        WorkspaceHistoryFolderReaderStatEntryError::Offline
+                    WorkspaceHistoryStatEntryError::Offline(e) => {
+                        WorkspaceHistoryFolderReaderStatEntryError::Offline(e)
                     }
                     WorkspaceHistoryStatEntryError::Stopped => {
                         WorkspaceHistoryFolderReaderStatEntryError::Stopped
@@ -180,8 +162,8 @@ impl WorkspaceHistoryFolderReader {
                     Err(err) => {
                         return Err(match err {
                             WorkspaceHistoryGetEntryError::EntryNotFound => continue,
-                            WorkspaceHistoryGetEntryError::Offline => {
-                                WorkspaceHistoryFolderReaderStatEntryError::Offline
+                            WorkspaceHistoryGetEntryError::Offline(e) => {
+                                WorkspaceHistoryFolderReaderStatEntryError::Offline(e)
                             }
                             WorkspaceHistoryGetEntryError::Stopped => {
                                 WorkspaceHistoryFolderReaderStatEntryError::Stopped
@@ -225,7 +207,9 @@ pub async fn open_folder_reader_by_id(
     entry_id: VlobID,
 ) -> Result<WorkspaceHistoryFolderReader, WorkspaceHistoryOpenFolderReaderError> {
     let manifest = ops.get_entry(at, entry_id).await.map_err(|err| match err {
-        WorkspaceHistoryGetEntryError::Offline => WorkspaceHistoryOpenFolderReaderError::Offline,
+        WorkspaceHistoryGetEntryError::Offline(e) => {
+            WorkspaceHistoryOpenFolderReaderError::Offline(e)
+        }
         WorkspaceHistoryGetEntryError::Stopped => WorkspaceHistoryOpenFolderReaderError::Stopped,
         WorkspaceHistoryGetEntryError::EntryNotFound => {
             WorkspaceHistoryOpenFolderReaderError::EntryNotFound
@@ -259,7 +243,9 @@ pub async fn open_folder_reader(
     path: &FsPath,
 ) -> Result<WorkspaceHistoryFolderReader, WorkspaceHistoryOpenFolderReaderError> {
     let manifest = ops.resolve_path(at, path).await.map_err(|err| match err {
-        WorkspaceHistoryResolvePathError::Offline => WorkspaceHistoryOpenFolderReaderError::Offline,
+        WorkspaceHistoryResolvePathError::Offline(e) => {
+            WorkspaceHistoryOpenFolderReaderError::Offline(e)
+        }
         WorkspaceHistoryResolvePathError::Stopped => WorkspaceHistoryOpenFolderReaderError::Stopped,
         WorkspaceHistoryResolvePathError::EntryNotFound => {
             WorkspaceHistoryOpenFolderReaderError::EntryNotFound
@@ -291,8 +277,8 @@ pub async fn open_folder_reader(
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryStatFolderChildrenError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -311,15 +297,6 @@ pub enum WorkspaceHistoryStatFolderChildrenError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for WorkspaceHistoryStatFolderChildrenError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
-}
-
 pub async fn stat_folder_children(
     ops: &WorkspaceHistoryOps,
     at: DateTime,
@@ -328,8 +305,8 @@ pub async fn stat_folder_children(
     let reader = open_folder_reader(ops, at, path)
         .await
         .map_err(|err| match err {
-            WorkspaceHistoryOpenFolderReaderError::Offline => {
-                WorkspaceHistoryStatFolderChildrenError::Offline
+            WorkspaceHistoryOpenFolderReaderError::Offline(e) => {
+                WorkspaceHistoryStatFolderChildrenError::Offline(e)
             }
             WorkspaceHistoryOpenFolderReaderError::Stopped => {
                 WorkspaceHistoryStatFolderChildrenError::Stopped
@@ -368,8 +345,8 @@ pub async fn stat_folder_children_by_id(
     let reader = open_folder_reader_by_id(ops, at, entry_id)
         .await
         .map_err(|err| match err {
-            WorkspaceHistoryOpenFolderReaderError::Offline => {
-                WorkspaceHistoryStatFolderChildrenError::Offline
+            WorkspaceHistoryOpenFolderReaderError::Offline(e) => {
+                WorkspaceHistoryStatFolderChildrenError::Offline(e)
             }
             WorkspaceHistoryOpenFolderReaderError::Stopped => {
                 WorkspaceHistoryStatFolderChildrenError::Stopped
@@ -414,8 +391,8 @@ async fn consume_reader(
             .stat_child(ops, index)
             .await
             .map_err(|err| match err {
-                WorkspaceHistoryFolderReaderStatEntryError::Offline => {
-                    WorkspaceHistoryStatFolderChildrenError::Offline
+                WorkspaceHistoryFolderReaderStatEntryError::Offline(e) => {
+                    WorkspaceHistoryStatFolderChildrenError::Offline(e)
                 }
                 WorkspaceHistoryFolderReaderStatEntryError::Stopped => {
                     WorkspaceHistoryStatFolderChildrenError::Stopped

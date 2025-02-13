@@ -14,8 +14,8 @@ use super::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifBootstrapWorkspaceError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Author not allowed")]
@@ -35,16 +35,6 @@ pub enum CertifBootstrapWorkspaceError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for CertifBootstrapWorkspaceError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 impl From<CertifStoreError> for CertifBootstrapWorkspaceError {
@@ -108,8 +98,8 @@ pub(super) async fn bootstrap_workspace(
         match outcome {
             Ok(_) => (),
             Err(err) => match err {
-                CertifEnsureRealmCreatedError::Offline => {
-                    return Err(CertifBootstrapWorkspaceError::Offline)
+                CertifEnsureRealmCreatedError::Offline(e) => {
+                    return Err(CertifBootstrapWorkspaceError::Offline(e))
                 }
                 CertifEnsureRealmCreatedError::Stopped => {
                     return Err(CertifBootstrapWorkspaceError::Stopped)
@@ -156,7 +146,7 @@ pub(super) async fn bootstrap_workspace(
         match outcome {
             Ok(_) => (),
             Err(err) => match err {
-                CertifRotateRealmKeyError::Offline => return Err(CertifBootstrapWorkspaceError::Offline),
+                CertifRotateRealmKeyError::Offline(e) => return Err(CertifBootstrapWorkspaceError::Offline(e)),
                 CertifRotateRealmKeyError::Stopped => return Err(CertifBootstrapWorkspaceError::Stopped),
                 CertifRotateRealmKeyError::AuthorNotAllowed => return Err(CertifBootstrapWorkspaceError::AuthorNotAllowed),
                 CertifRotateRealmKeyError::TimestampOutOfBallpark {
@@ -216,7 +206,7 @@ pub(super) async fn bootstrap_workspace(
                     ops.poll_server_for_new_certificates(None)
                         .await
                         .map_err(|e| match e {
-                            CertifPollServerError::Offline => CertifBootstrapWorkspaceError::Offline,
+                            CertifPollServerError::Offline(e) => CertifBootstrapWorkspaceError::Offline(e),
                             CertifPollServerError::Stopped => CertifBootstrapWorkspaceError::Stopped,
                             CertifPollServerError::InvalidCertificate(err) => {
                                 CertifBootstrapWorkspaceError::InvalidCertificate(err)
@@ -230,7 +220,7 @@ pub(super) async fn bootstrap_workspace(
 
                 // Other cases are proper errors that we propagate
 
-                CertifRenameRealmError::Offline => Err(CertifBootstrapWorkspaceError::Offline),
+                CertifRenameRealmError::Offline(e) => Err(CertifBootstrapWorkspaceError::Offline(e)),
                 CertifRenameRealmError::Stopped => Err(CertifBootstrapWorkspaceError::Stopped),
                 CertifRenameRealmError::AuthorNotAllowed => Err(CertifBootstrapWorkspaceError::AuthorNotAllowed),
                 CertifRenameRealmError::TimestampOutOfBallpark {

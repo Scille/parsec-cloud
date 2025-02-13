@@ -2,8 +2,8 @@
 
 use libparsec_client_connection::{
     test_register_low_level_send_hook, test_register_send_hook,
-    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle, HeaderMap,
-    ResponseMock, StatusCode,
+    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle, ConnectionError,
+    HeaderMap, ResponseMock, StatusCode,
 };
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
@@ -198,7 +198,7 @@ async fn invalid_keys_bundle(
     authenticated_cmds::latest::realm_share::Rep::RequireGreaterTimestamp {
         strictly_greater_than: "2000-01-02T00:00:00Z".parse().unwrap(),
     },
-    |err| p_assert_matches!(err, CertifShareRealmError::Offline),
+    |err| p_assert_matches!(err, CertifShareRealmError::Offline(_)),
 )]
 #[case::invalid_certificate(
     authenticated_cmds::latest::realm_share::Rep::InvalidCertificate,
@@ -208,7 +208,7 @@ async fn invalid_keys_bundle(
     authenticated_cmds::latest::realm_share::Rep::BadKeyIndex {
         last_realm_certificate_timestamp: "2000-01-02T00:00:00Z".parse().unwrap(),
     },
-    |err| p_assert_matches!(err, CertifShareRealmError::Offline),
+    |err| p_assert_matches!(err, CertifShareRealmError::Offline(_)),
 )]
 #[case::unknown_status(
     authenticated_cmds::latest::realm_share::Rep::UnknownStatus { unknown_status: "".into(), reason: None },
@@ -352,7 +352,7 @@ async fn offline(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, CertifShareRealmError::Offline);
+    p_assert_matches!(err, CertifShareRealmError::Offline(_));
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -391,7 +391,12 @@ async fn invalid_response(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, CertifShareRealmError::Internal(_));
+    p_assert_matches!(
+        err,
+        CertifShareRealmError::Offline(ConnectionError::InvalidResponseStatus(
+            StatusCode::IM_A_TEAPOT
+        ))
+    );
 }
 
 #[parsec_test(testbed = "minimal")]

@@ -14,8 +14,8 @@ use crate::EventTooMuchDriftWithServerClock;
 pub enum CertifRevokeUserError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Cannot revoke oneself")]
     UserIsSelf,
     #[error("User not found")]
@@ -37,16 +37,6 @@ pub enum CertifRevokeUserError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for CertifRevokeUserError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 impl From<CertifStoreError> for CertifRevokeUserError {

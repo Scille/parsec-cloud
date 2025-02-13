@@ -26,8 +26,8 @@ pub(crate) enum RemoveEntryExpect {
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceRemoveEntryError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Only have read access on this workspace")]
@@ -52,15 +52,6 @@ pub enum WorkspaceRemoveEntryError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for WorkspaceRemoveEntryError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub(crate) async fn remove_entry(
@@ -92,7 +83,7 @@ pub(crate) async fn remove_entry(
         .resolve_path_for_update_folder(&parent_path)
         .await
         .map_err(|err| match err {
-            ForUpdateFolderError::Offline => WorkspaceRemoveEntryError::Offline,
+            ForUpdateFolderError::Offline(e) => WorkspaceRemoveEntryError::Offline(e),
             ForUpdateFolderError::Stopped => WorkspaceRemoveEntryError::Stopped,
             ForUpdateFolderError::EntryNotFound => WorkspaceRemoveEntryError::EntryNotFound,
             ForUpdateFolderError::EntryNotAFolder => WorkspaceRemoveEntryError::EntryNotFound,
@@ -122,7 +113,7 @@ pub(crate) async fn remove_entry(
         .get_manifest(child_id)
         .await
         .map_err(|err| match err {
-            GetManifestError::Offline => WorkspaceRemoveEntryError::Offline,
+            GetManifestError::Offline(e) => WorkspaceRemoveEntryError::Offline(e),
             GetManifestError::Stopped => WorkspaceRemoveEntryError::Stopped,
             GetManifestError::EntryNotFound => WorkspaceRemoveEntryError::EntryNotFound,
             GetManifestError::NoRealmAccess => WorkspaceRemoveEntryError::NoRealmAccess,
@@ -174,8 +165,8 @@ pub(crate) async fn remove_entry(
                     .ensure_manifest_exists_with_parent(*maybe_grandchild_id, child_id)
                     .await
                     .map_err(|err| match err {
-                        EnsureManifestExistsWithParentError::Offline => {
-                            WorkspaceRemoveEntryError::Offline
+                        EnsureManifestExistsWithParentError::Offline(e) => {
+                            WorkspaceRemoveEntryError::Offline(e)
                         }
                         EnsureManifestExistsWithParentError::Stopped => {
                             WorkspaceRemoveEntryError::Stopped

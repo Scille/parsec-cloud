@@ -88,7 +88,7 @@ fn task_future_factory(user_ops: Arc<UserOps>, event_bus: EventBus) -> impl Futu
                             // choice but to also stop.
                             return;
                         }
-                        UserSyncError::Offline => {
+                        UserSyncError::Offline(_) => {
                             event_bus.wait_server_online().await;
                             continue;
                         }

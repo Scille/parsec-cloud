@@ -37,8 +37,8 @@ impl WorkspaceHistoryEntryStat {
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryStatEntryError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -55,22 +55,13 @@ pub enum WorkspaceHistoryStatEntryError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for WorkspaceHistoryStatEntryError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
-}
-
 pub(crate) async fn stat_entry_by_id(
     ops: &WorkspaceHistoryOps,
     at: DateTime,
     entry_id: VlobID,
 ) -> Result<WorkspaceHistoryEntryStat, WorkspaceHistoryStatEntryError> {
     let manifest = ops.get_entry(at, entry_id).await.map_err(|err| match err {
-        WorkspaceHistoryGetEntryError::Offline => WorkspaceHistoryStatEntryError::Offline,
+        WorkspaceHistoryGetEntryError::Offline(e) => WorkspaceHistoryStatEntryError::Offline(e),
         WorkspaceHistoryGetEntryError::Stopped => WorkspaceHistoryStatEntryError::Stopped,
         WorkspaceHistoryGetEntryError::EntryNotFound => {
             WorkspaceHistoryStatEntryError::EntryNotFound
@@ -117,7 +108,7 @@ pub(crate) async fn stat_entry(
     path: &FsPath,
 ) -> Result<WorkspaceHistoryEntryStat, WorkspaceHistoryStatEntryError> {
     let manifest = ops.resolve_path(at, path).await.map_err(|err| match err {
-        WorkspaceHistoryResolvePathError::Offline => WorkspaceHistoryStatEntryError::Offline,
+        WorkspaceHistoryResolvePathError::Offline(e) => WorkspaceHistoryStatEntryError::Offline(e),
         WorkspaceHistoryResolvePathError::Stopped => WorkspaceHistoryStatEntryError::Stopped,
         WorkspaceHistoryResolvePathError::EntryNotFound => {
             WorkspaceHistoryStatEntryError::EntryNotFound

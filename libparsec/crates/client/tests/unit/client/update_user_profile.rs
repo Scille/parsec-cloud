@@ -164,7 +164,7 @@ async fn offline(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, ClientUserUpdateProfileError::Offline);
+    p_assert_matches!(err, ClientUserUpdateProfileError::Offline(_));
     spy.assert_no_events();
 }
 

@@ -237,7 +237,7 @@ impl ParsecFileSystemInterface {
                     )),
                     Err(err) => Err(match err {
                         WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
-                        WorkspaceStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                        WorkspaceStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                         WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceStatEntryError::NoRealmAccess
                         | WorkspaceStatEntryError::InvalidKeysBundle(_)
@@ -297,7 +297,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                 Err(err) => {
                     return Err(match err {
                         WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
-                        WorkspaceStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                        WorkspaceStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                         WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceStatEntryError::NoRealmAccess
                         | WorkspaceStatEntryError::InvalidKeysBundle(_)
@@ -343,7 +343,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     .create_folder(parsec_file_name.clone())
                     .await
                     .map_err(|err| match err {
-                        WorkspaceCreateFolderError::Offline => STATUS_HOST_UNREACHABLE,
+                        WorkspaceCreateFolderError::Offline(_) => STATUS_HOST_UNREACHABLE,
                         WorkspaceCreateFolderError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceCreateFolderError::ParentNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
                         WorkspaceCreateFolderError::ParentNotAFolder => {
@@ -391,7 +391,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     .open_file_and_get_id(parsec_file_name.clone(), options)
                     .await
                     .map_err(|err| match err {
-                        WorkspaceOpenFileError::Offline => STATUS_HOST_UNREACHABLE,
+                        WorkspaceOpenFileError::Offline(_) => STATUS_HOST_UNREACHABLE,
                         WorkspaceOpenFileError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceOpenFileError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
                         WorkspaceOpenFileError::EntryNotAFile { .. } => STATUS_FILE_IS_A_DIRECTORY,
@@ -459,7 +459,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
             //         }))),
             //         Err(err) => Err(match err {
             //             WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
-            //             WorkspaceStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+            //             WorkspaceStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
             //             WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
             //             WorkspaceStatEntryError::NoRealmAccess
             //             | WorkspaceStatEntryError::InvalidKeysBundle(_)
@@ -494,7 +494,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         id: entry_id,
                         folder_reader: None,
                     }),
-                    WorkspaceOpenFileError::Offline => Err(STATUS_HOST_UNREACHABLE),
+                    WorkspaceOpenFileError::Offline(_) => Err(STATUS_HOST_UNREACHABLE),
                     WorkspaceOpenFileError::Stopped => Err(STATUS_NO_SUCH_DEVICE),
                     WorkspaceOpenFileError::EntryNotFound => Err(STATUS_OBJECT_NAME_NOT_FOUND),
                     // WinFSP lacks a proper read-only support, so we will receive write
@@ -642,7 +642,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     .fd_read(*fd, offset, buffer.len() as u64, &mut buffer)
                     .await
                     .map_err(|err| match err {
-                        WorkspaceFdReadError::Offline => STATUS_HOST_UNREACHABLE,
+                        WorkspaceFdReadError::Offline(_) => STATUS_HOST_UNREACHABLE,
                         WorkspaceFdReadError::NoRealmAccess => STATUS_ACCESS_DENIED,
                         WorkspaceFdReadError::Stopped => STATUS_NO_SUCH_DEVICE,
                         WorkspaceFdReadError::BadFileDescriptor => STATUS_INVALID_HANDLE,
@@ -854,7 +854,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                                 STATUS_OBJECT_NAME_NOT_FOUND
                             }
 
-                            WorkspaceOpenFolderReaderError::Offline => STATUS_HOST_UNREACHABLE,
+                            WorkspaceOpenFolderReaderError::Offline(_) => STATUS_HOST_UNREACHABLE,
                             WorkspaceOpenFolderReaderError::Stopped => STATUS_DEVICE_NOT_READY,
                             WorkspaceOpenFolderReaderError::EntryNotFound => {
                                 STATUS_OBJECT_NAME_NOT_FOUND
@@ -875,7 +875,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         .stat_child(&self.ops, index)
                         .await
                         .map_err(|err| match err {
-                            FolderReaderStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                            FolderReaderStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                             FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                             FolderReaderStatEntryError::NoRealmAccess
                             | FolderReaderStatEntryError::InvalidKeysBundle(_)
@@ -935,7 +935,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             STATUS_OBJECT_NAME_COLLISION
                         }
                     }
-                    WorkspaceMoveEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                    WorkspaceMoveEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                     WorkspaceMoveEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                     // WinFSP lacks a proper read-only support, so we will receive write
                     // operations no matter what (see https://github.com/winfsp/winfsp/issues/84)
@@ -978,7 +978,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             // Concurrent modification may have changed the type of the entry since it has been opened
                             WorkspaceOpenFolderReaderError::EntryIsFile => STATUS_NOT_A_DIRECTORY,
 
-                            WorkspaceOpenFolderReaderError::Offline => STATUS_HOST_UNREACHABLE,
+                            WorkspaceOpenFolderReaderError::Offline(_) => STATUS_HOST_UNREACHABLE,
                             WorkspaceOpenFolderReaderError::Stopped => STATUS_DEVICE_NOT_READY,
                             WorkspaceOpenFolderReaderError::EntryNotFound => {
                                 STATUS_OBJECT_NAME_NOT_FOUND
@@ -1033,7 +1033,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         .stat_entry_by_id_ignore_confinement_point(directory_parent_id)
                         .await
                         .map_err(|err| match err {
-                            WorkspaceStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                            WorkspaceStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                             WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                             WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
                             WorkspaceStatEntryError::NoRealmAccess
@@ -1059,7 +1059,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             .get_index_for_name(&self.ops, &marker)
                             .await
                             .map_err(|err| match err {
-                                FolderReaderStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                                FolderReaderStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                                 FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                                 FolderReaderStatEntryError::NoRealmAccess
                                 | FolderReaderStatEntryError::InvalidKeysBundle(_)
@@ -1083,7 +1083,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         .stat_child(&self.ops, index)
                         .await
                         .map_err(|err| match err {
-                            FolderReaderStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                            FolderReaderStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                             FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                             FolderReaderStatEntryError::NoRealmAccess
                             | FolderReaderStatEntryError::InvalidKeysBundle(_)
@@ -1146,7 +1146,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                 .await
                 .map_err(|err| match err {
                     WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
-                    WorkspaceStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                    WorkspaceStatEntryError::Offline(_) => STATUS_HOST_UNREACHABLE,
                     WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
                     WorkspaceStatEntryError::NoRealmAccess
                     | WorkspaceStatEntryError::InvalidKeysBundle(_)

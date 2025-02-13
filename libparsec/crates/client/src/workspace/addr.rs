@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
@@ -13,8 +14,8 @@ pub enum WorkspaceGeneratePathAddrError {
     /// it is needed by the wrapper `CertificateOps::encrypt_for_realm`.
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
     #[error("There is no key available in this realm for encryption")]
@@ -39,7 +40,7 @@ pub async fn generate_path_addr(
         .await
         .map_err(|err| match err {
             CertifEncryptForRealmError::Stopped => WorkspaceGeneratePathAddrError::Stopped,
-            CertifEncryptForRealmError::Offline => WorkspaceGeneratePathAddrError::Offline,
+            CertifEncryptForRealmError::Offline(e) => WorkspaceGeneratePathAddrError::Offline(e),
             CertifEncryptForRealmError::NotAllowed => WorkspaceGeneratePathAddrError::NotAllowed,
             CertifEncryptForRealmError::NoKey => WorkspaceGeneratePathAddrError::NoKey,
             CertifEncryptForRealmError::InvalidKeysBundle(err) => {
@@ -65,8 +66,8 @@ pub enum WorkspaceDecryptPathAddrError {
     /// it is needed by the wrapper `CertificateOps::encrypt_for_realm`.
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
     #[error("The referenced key doesn't exist yet in this realm")]
@@ -98,7 +99,7 @@ pub async fn decrypt_path_addr(
         .await
         .map_err(|err| match err {
             CertifDecryptForRealmError::Stopped => WorkspaceDecryptPathAddrError::Stopped,
-            CertifDecryptForRealmError::Offline => WorkspaceDecryptPathAddrError::Offline,
+            CertifDecryptForRealmError::Offline(e) => WorkspaceDecryptPathAddrError::Offline(e),
             CertifDecryptForRealmError::NotAllowed => WorkspaceDecryptPathAddrError::NotAllowed,
             CertifDecryptForRealmError::KeyNotFound => WorkspaceDecryptPathAddrError::KeyNotFound,
             CertifDecryptForRealmError::CorruptedKey => WorkspaceDecryptPathAddrError::CorruptedKey,

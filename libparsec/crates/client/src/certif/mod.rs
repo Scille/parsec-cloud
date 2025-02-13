@@ -442,7 +442,7 @@ impl CertificateOps {
             .await
             .map_err(|err| match err {
                 CertifPollServerError::Stopped => CertifDecryptForRealmError::Stopped,
-                CertifPollServerError::Offline => CertifDecryptForRealmError::Offline,
+                CertifPollServerError::Offline(e) => CertifDecryptForRealmError::Offline(e),
                 CertifPollServerError::InvalidCertificate(err) => {
                     CertifDecryptForRealmError::InvalidCertificate(err)
                 }

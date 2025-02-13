@@ -26,8 +26,8 @@ pub enum ClientShareWorkspaceError {
     AuthorNotAllowed,
     #[error("Role incompatible with the user, as it has profile OUTSIDER")]
     RoleIncompatibleWithOutsider,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
@@ -41,15 +41,6 @@ pub enum ClientShareWorkspaceError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for ClientShareWorkspaceError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub async fn share_workspace(
@@ -81,8 +72,8 @@ pub async fn share_workspace(
             CertifBootstrapWorkspaceError::AuthorNotAllowed => {
                 CertificateBasedActionOutcome::LocalIdempotent
             }
-            CertifBootstrapWorkspaceError::Offline => {
-                return Err(ClientShareWorkspaceError::Offline)
+            CertifBootstrapWorkspaceError::Offline(e) => {
+                return Err(ClientShareWorkspaceError::Offline(e))
             }
             CertifBootstrapWorkspaceError::Stopped => {
                 return Err(ClientShareWorkspaceError::Stopped)
@@ -130,7 +121,7 @@ pub async fn share_workspace(
                 .await
                 .map_err(|e| match e {
                     CertifPollServerError::Stopped => ClientShareWorkspaceError::Stopped,
-                    CertifPollServerError::Offline => ClientShareWorkspaceError::Offline,
+                    CertifPollServerError::Offline(e) => ClientShareWorkspaceError::Offline(e),
                     CertifPollServerError::InvalidCertificate(err) => {
                         ClientShareWorkspaceError::InvalidCertificate(err)
                     }
@@ -155,7 +146,7 @@ pub async fn share_workspace(
             CertifShareRealmError::RecipientRevoked => ClientShareWorkspaceError::RecipientRevoked,
             CertifShareRealmError::AuthorNotAllowed => ClientShareWorkspaceError::AuthorNotAllowed,
             CertifShareRealmError::RoleIncompatibleWithOutsider => ClientShareWorkspaceError::RoleIncompatibleWithOutsider,
-            CertifShareRealmError::Offline => ClientShareWorkspaceError::Offline,
+            CertifShareRealmError::Offline(e) => ClientShareWorkspaceError::Offline(e),
             CertifShareRealmError::TimestampOutOfBallpark {
                 server_timestamp,
                 client_timestamp,
@@ -190,7 +181,7 @@ pub async fn share_workspace(
         .await
         .map_err(|e| match e {
             CertifPollServerError::Stopped => ClientShareWorkspaceError::Stopped,
-            CertifPollServerError::Offline => ClientShareWorkspaceError::Offline,
+            CertifPollServerError::Offline(e) => ClientShareWorkspaceError::Offline(e),
             CertifPollServerError::InvalidCertificate(err) => {
                 ClientShareWorkspaceError::InvalidCertificate(err)
             }

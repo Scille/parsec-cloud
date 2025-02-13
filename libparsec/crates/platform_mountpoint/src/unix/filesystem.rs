@@ -188,7 +188,7 @@ async fn reply_with_lookup(
         ),
         Err(err) => match err {
             WorkspaceStatEntryError::EntryNotFound => reply.error(libc::ENOENT),
-            WorkspaceStatEntryError::Offline => reply.error(libc::EHOSTUNREACH),
+            WorkspaceStatEntryError::Offline(_) => reply.error(libc::EHOSTUNREACH),
             WorkspaceStatEntryError::NoRealmAccess => reply.error(libc::EPERM),
             WorkspaceStatEntryError::Stopped
             | WorkspaceStatEntryError::InvalidKeysBundle(_)
@@ -423,7 +423,7 @@ impl fuser::Filesystem for Filesystem {
                 }
                 Err(err) => match err {
                     WorkspaceStatEntryError::EntryNotFound => reply.manual().error(libc::ENOENT),
-                    WorkspaceStatEntryError::Offline => reply.manual().error(libc::EHOSTUNREACH),
+                    WorkspaceStatEntryError::Offline(_) => reply.manual().error(libc::EHOSTUNREACH),
                     WorkspaceStatEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
                     WorkspaceStatEntryError::Stopped
                     | WorkspaceStatEntryError::InvalidKeysBundle(_)
@@ -554,7 +554,9 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceCreateFolderError::ParentNotFound => {
                         reply.manual().error(libc::ENOENT)
                     }
-                    WorkspaceCreateFolderError::Offline => reply.manual().error(libc::EHOSTUNREACH),
+                    WorkspaceCreateFolderError::Offline(_) => {
+                        reply.manual().error(libc::EHOSTUNREACH)
+                    }
                     WorkspaceCreateFolderError::NoRealmAccess => reply.manual().error(libc::EPERM),
                     WorkspaceCreateFolderError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                     WorkspaceCreateFolderError::Stopped
@@ -607,7 +609,9 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceRemoveEntryError::EntryIsNonEmptyFolder => {
                         reply.manual().error(libc::ENOTEMPTY)
                     }
-                    WorkspaceRemoveEntryError::Offline => reply.manual().error(libc::EHOSTUNREACH),
+                    WorkspaceRemoveEntryError::Offline(_) => {
+                        reply.manual().error(libc::EHOSTUNREACH)
+                    }
                     WorkspaceRemoveEntryError::CannotRemoveRoot => {
                         reply.manual().error(libc::EPERM)
                     }
@@ -665,7 +669,9 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceRemoveEntryError::EntryIsNonEmptyFolder => {
                         reply.manual().error(libc::ENOTEMPTY)
                     }
-                    WorkspaceRemoveEntryError::Offline => reply.manual().error(libc::EHOSTUNREACH),
+                    WorkspaceRemoveEntryError::Offline(_) => {
+                        reply.manual().error(libc::EHOSTUNREACH)
+                    }
                     WorkspaceRemoveEntryError::CannotRemoveRoot => {
                         reply.manual().error(libc::EPERM)
                     }
@@ -770,7 +776,7 @@ impl fuser::Filesystem for Filesystem {
                         reply.manual().error(libc::EEXIST)
                     }
                     WorkspaceMoveEntryError::CannotMoveRoot => reply.manual().error(libc::EPERM),
-                    WorkspaceMoveEntryError::Offline => reply.manual().error(libc::EHOSTUNREACH),
+                    WorkspaceMoveEntryError::Offline(_) => reply.manual().error(libc::EHOSTUNREACH),
                     WorkspaceMoveEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
                     WorkspaceMoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EROFS),
                     WorkspaceMoveEntryError::Stopped
@@ -836,7 +842,9 @@ impl fuser::Filesystem for Filesystem {
                 Err(err) => {
                     return match err {
                         WorkspaceOpenFileError::EntryNotFound => reply.manual().error(libc::ENOENT),
-                        WorkspaceOpenFileError::Offline => reply.manual().error(libc::EHOSTUNREACH),
+                        WorkspaceOpenFileError::Offline(_) => {
+                            reply.manual().error(libc::EHOSTUNREACH)
+                        }
                         WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
                             reply.manual().error(libc::EEXIST)
                         }
@@ -949,7 +957,9 @@ impl fuser::Filesystem for Filesystem {
                 Err(err) => {
                     return match err {
                         WorkspaceOpenFileError::EntryNotFound => reply.manual().error(libc::ENOENT),
-                        WorkspaceOpenFileError::Offline => reply.manual().error(libc::EHOSTUNREACH),
+                        WorkspaceOpenFileError::Offline(_) => {
+                            reply.manual().error(libc::EHOSTUNREACH)
+                        }
                         WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
                             reply.manual().error(libc::EEXIST)
                         }
@@ -1100,7 +1110,7 @@ impl fuser::Filesystem for Filesystem {
                                 WorkspaceOpenFileError::EntryNotFound => {
                                     reply.manual().error(libc::ENOENT)
                                 }
-                                WorkspaceOpenFileError::Offline => {
+                                WorkspaceOpenFileError::Offline(_) => {
                                     reply.manual().error(libc::EHOSTUNREACH)
                                 }
                                 WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
@@ -1220,7 +1230,7 @@ impl fuser::Filesystem for Filesystem {
                     reply.manual().data(&buf);
                 }
                 Err(err) => match err {
-                    WorkspaceFdReadError::Offline => reply.manual().error(libc::EHOSTUNREACH),
+                    WorkspaceFdReadError::Offline(_) => reply.manual().error(libc::EHOSTUNREACH),
                     WorkspaceFdReadError::NotInReadMode => reply.manual().error(libc::EBADF),
                     WorkspaceFdReadError::NoRealmAccess => reply.manual().error(libc::EPERM),
                     WorkspaceFdReadError::Stopped
@@ -1443,7 +1453,7 @@ impl fuser::Filesystem for Filesystem {
                         WorkspaceOpenFolderReaderError::EntryIsFile => {
                             reply.manual().error(libc::ENOTDIR);
                         }
-                        WorkspaceOpenFolderReaderError::Offline => {
+                        WorkspaceOpenFolderReaderError::Offline(_) => {
                             reply.manual().error(libc::EHOSTUNREACH)
                         }
                         WorkspaceOpenFolderReaderError::NoRealmAccess => {
@@ -1518,7 +1528,7 @@ impl fuser::Filesystem for Filesystem {
                     }
                     Err(err) => {
                         return match err {
-                            FolderReaderStatEntryError::Offline => {
+                            FolderReaderStatEntryError::Offline(_) => {
                                 reply.manual().error(libc::EHOSTUNREACH)
                             }
                             FolderReaderStatEntryError::NoRealmAccess => {
@@ -1616,7 +1626,7 @@ impl fuser::Filesystem for Filesystem {
                     }
                     Err(err) => {
                         return match err {
-                            FolderReaderStatEntryError::Offline => {
+                            FolderReaderStatEntryError::Offline(_) => {
                                 reply.manual().error(libc::EHOSTUNREACH)
                             }
                             FolderReaderStatEntryError::NoRealmAccess => {
@@ -1721,7 +1731,7 @@ async fn getattr_from_path(
         Ok(stat) => Ok(stat),
         Err(err) => match err {
             WorkspaceStatEntryError::EntryNotFound => Err(libc::ENOENT),
-            WorkspaceStatEntryError::Offline => Err(libc::EHOSTUNREACH),
+            WorkspaceStatEntryError::Offline(_) => Err(libc::EHOSTUNREACH),
             WorkspaceStatEntryError::NoRealmAccess => Err(libc::EPERM),
             WorkspaceStatEntryError::Stopped
             | WorkspaceStatEntryError::InvalidKeysBundle(_)

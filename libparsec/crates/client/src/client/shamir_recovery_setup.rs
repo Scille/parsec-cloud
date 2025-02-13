@@ -29,7 +29,7 @@ pub async fn setup_shamir_recovery(
         .await
         .map_err(|e| match e {
             CertifPollServerError::Stopped => ClientSetupShamirRecoveryError::Stopped,
-            CertifPollServerError::Offline => ClientSetupShamirRecoveryError::Offline,
+            CertifPollServerError::Offline(e) => ClientSetupShamirRecoveryError::Offline(e),
             CertifPollServerError::InvalidCertificate(err) => {
                 ClientSetupShamirRecoveryError::InvalidCertificate(err)
             }

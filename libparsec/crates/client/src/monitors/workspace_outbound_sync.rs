@@ -92,7 +92,7 @@ fn task_future_factory(
                 macro_rules! handle_workspace_sync_error {
                     ($err:expr) => {
                         match $err {
-                            WorkspaceSyncError::Offline => {
+                            WorkspaceSyncError::Offline(_) => {
                                 event_bus.wait_server_online().await;
                             }
                             // We have lost read access to the workspace, the certificates

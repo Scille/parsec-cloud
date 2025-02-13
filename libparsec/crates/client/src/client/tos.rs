@@ -13,20 +13,10 @@ use crate::event_bus::EventShouldRetryConnectionNow;
 pub enum ClientGetTosError {
     #[error("There are no Terms of Service defined for the organization")]
     NoTos,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for ClientGetTosError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -65,20 +55,10 @@ pub enum ClientAcceptTosError {
     NoTos,
     #[error("The Terms of Service have changed on the server")]
     TosMismatch,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for ClientAcceptTosError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub async fn accept_tos(

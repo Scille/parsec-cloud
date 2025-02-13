@@ -8,8 +8,8 @@ use crate::certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidMani
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryOpenFileError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -28,22 +28,13 @@ pub enum WorkspaceHistoryOpenFileError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for WorkspaceHistoryOpenFileError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
-}
-
 pub async fn open_file(
     ops: &WorkspaceHistoryOps,
     at: DateTime,
     path: FsPath,
 ) -> Result<(FileDescriptor, VlobID), WorkspaceHistoryOpenFileError> {
     let manifest = ops.resolve_path(at, &path).await.map_err(|err| match err {
-        WorkspaceHistoryResolvePathError::Offline => WorkspaceHistoryOpenFileError::Offline,
+        WorkspaceHistoryResolvePathError::Offline(e) => WorkspaceHistoryOpenFileError::Offline(e),
         WorkspaceHistoryResolvePathError::Stopped => WorkspaceHistoryOpenFileError::Stopped,
         WorkspaceHistoryResolvePathError::EntryNotFound => {
             WorkspaceHistoryOpenFileError::EntryNotFound
@@ -87,7 +78,7 @@ pub async fn open_file_by_id(
     entry_id: VlobID,
 ) -> Result<FileDescriptor, WorkspaceHistoryOpenFileError> {
     let manifest = ops.get_entry(at, entry_id).await.map_err(|err| match err {
-        WorkspaceHistoryGetEntryError::Offline => WorkspaceHistoryOpenFileError::Offline,
+        WorkspaceHistoryGetEntryError::Offline(e) => WorkspaceHistoryOpenFileError::Offline(e),
         WorkspaceHistoryGetEntryError::Stopped => WorkspaceHistoryOpenFileError::Stopped,
         WorkspaceHistoryGetEntryError::EntryNotFound => {
             WorkspaceHistoryOpenFileError::EntryNotFound
