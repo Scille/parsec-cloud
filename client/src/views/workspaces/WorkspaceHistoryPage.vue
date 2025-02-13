@@ -143,7 +143,7 @@
 
 <script setup lang="ts">
 import { IonPage, IonList, IonLabel, IonButtons, IonIcon, IonButton, IonListHeader, IonContent, IonText } from '@ionic/vue';
-import { computed, onBeforeUnmount, onMounted, ref, Ref, inject } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, Ref, inject, onUnmounted } from 'vue';
 import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, statFolderChildrenAt, entryStatAt, EntryName } from '@/parsec';
 import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, I18n } from 'megashark-lib';
 import { DateTime } from 'luxon';
@@ -151,7 +151,7 @@ import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel, HistoryFileListItem } from '@/components/files';
 import { chevronBack, chevronForward, warning } from 'ionicons/icons';
-import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes } from '@/router';
+import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import { SortProperty } from '@/components/users';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
@@ -183,7 +183,14 @@ const someSelected = computed(() => {
   return entries.value.selectedCount() > 0;
 });
 
-onMounted(async () => {
+const cancelRouteWatch = watchRoute(async () => {
+  if (!currentRouteIs(Routes.History)) {
+    return;
+  }
+  await loadHistory();
+});
+
+async function loadHistory(): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
     const infoResult = await getWorkspaceInfo(workspaceHandle);
@@ -202,6 +209,10 @@ onMounted(async () => {
   }
 
   await listCurrentPath();
+}
+
+onMounted(async () => {
+  await loadHistory();
 });
 
 onBeforeUnmount(async () => {
@@ -209,6 +220,10 @@ onBeforeUnmount(async () => {
     window.clearTimeout(timeoutId);
     timeoutId = null;
   }
+});
+
+onUnmounted(async () => {
+  cancelRouteWatch();
 });
 
 async function onDateTimeChange(): Promise<void> {
