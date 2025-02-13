@@ -54,15 +54,19 @@ pub(super) async fn encrypt_for_sequester_services(
     let services = store
         .get_sequester_service_certificates(UpTo::Current)
         .await?;
-    let per_service_encrypted = services
-        .into_iter()
-        .map(|service| {
-            (
-                service.service_id,
-                service.encryption_key_der.encrypt(data).into(),
-            )
-        })
-        .collect();
+    let mut per_service_encrypted = vec![];
+    for service in services {
+        let maybe_revoked = store
+            .get_sequester_revoked_service_certificate(UpTo::Current, service.service_id)
+            .await?;
+        if maybe_revoked.is_some() {
+            continue;
+        }
+        per_service_encrypted.push((
+            service.service_id,
+            service.encryption_key_der.encrypt(data).into(),
+        ));
+    }
 
     Ok(Some(per_service_encrypted))
 }
