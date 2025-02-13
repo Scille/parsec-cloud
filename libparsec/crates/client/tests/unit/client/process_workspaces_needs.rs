@@ -55,14 +55,50 @@ async fn local_only_realm_noop(env: &TestbedEnv) {
     client.process_workspaces_needs().await.unwrap();
 }
 
-#[parsec_test(testbed = "coolorg")]
-async fn need_key_rotation_only(env: &TestbedEnv) {
+#[parsec_test(testbed = "sequestered")]
+async fn need_key_rotation_only(
+    #[values(
+        "user_unshared",
+        "sequester_service_created",
+        "sequester_service_revoked"
+    )]
+    kind: &str,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    env.customize(|builder| {
-        builder.share_realm(wksp1_id, "bob", None);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-    })
-    .await;
+    let sequester_service_2_id: SequesterServiceID =
+        *env.template.get_stuff("sequester_service_2_id");
+    let (expected_participants, expected_sequester_services) = env
+        .customize(|builder| {
+            let (mut expected_participants, mut expected_sequester_services) = match kind {
+                "user_unshared" => {
+                    builder.share_realm(wksp1_id, "bob", None);
+                    builder.certificates_storage_fetch_certificates("alice@dev1");
+                    (vec!["alice".parse().unwrap()], vec![sequester_service_2_id])
+                }
+                "sequester_service_created" => {
+                    let sequester_service_3_id = builder.new_sequester_service().map(|e| e.id);
+                    builder.certificates_storage_fetch_certificates("alice@dev1");
+                    (
+                        vec!["alice".parse().unwrap(), "bob".parse().unwrap()],
+                        vec![sequester_service_2_id, sequester_service_3_id],
+                    )
+                }
+                "sequester_service_revoked" => {
+                    builder.revoke_sequester_service(sequester_service_2_id);
+                    builder.certificates_storage_fetch_certificates("alice@dev1");
+                    (
+                        vec!["alice".parse().unwrap(), "bob".parse().unwrap()],
+                        vec![],
+                    )
+                }
+                unknown => panic!("Unknown kind: {}", unknown),
+            };
+            expected_participants.sort();
+            expected_sequester_services.sort();
+            (expected_participants, expected_sequester_services)
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;
@@ -75,7 +111,7 @@ async fn need_key_rotation_only(env: &TestbedEnv) {
             .await
             .unwrap(),
         RealmNeeds::KeyRotationOnly {
-            current_key_index: Some(1)
+            current_key_index: Some(3)
         },
     );
 
@@ -84,12 +120,20 @@ async fn need_key_rotation_only(env: &TestbedEnv) {
         test_send_hook_realm_get_keys_bundle!(env, "alice".parse().unwrap(), wksp1_id),
         {
             move |req: authenticated_cmds::latest::realm_rotate_key::Req| {
-                let participants: Vec<_> = req
+                let mut participants: Vec<_> = req
                     .per_participant_keys_bundle_access
                     .keys()
                     .copied()
                     .collect();
-                p_assert_eq!(participants, vec!["alice".parse().unwrap()]);
+                participants.sort();
+                p_assert_eq!(participants, expected_participants);
+
+                let sequester_services = req.per_sequester_service_keys_bundle_access.map(|e| {
+                    let mut sequester_services = e.keys().copied().collect::<Vec<_>>();
+                    sequester_services.sort();
+                    sequester_services
+                });
+                p_assert_eq!(sequester_services, Some(expected_sequester_services));
 
                 authenticated_cmds::latest::realm_rotate_key::Rep::Ok
             }

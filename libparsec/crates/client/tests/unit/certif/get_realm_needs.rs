@@ -40,6 +40,30 @@ async fn nothing(
     );
 }
 
+#[parsec_test(testbed = "sequestered")]
+async fn sequestered_nothing(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let sequester_service_2_id: SequesterServiceID =
+        *env.template.get_stuff("sequester_service_2_id");
+    env.customize(|builder| {
+        // New needs for the realm...
+        builder.new_sequester_service();
+        builder.revoke_sequester_service(sequester_service_2_id);
+        // ...but then they get fulfilled (and our certificates ops knows about it)
+        builder.rotate_key_realm(wksp1_id);
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+    })
+    .await;
+
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    p_assert_eq!(
+        ops.get_realm_needs(wksp1_id).await.unwrap(),
+        RealmNeeds::Nothing
+    );
+}
+
 #[parsec_test(testbed = "coolorg")]
 async fn key_rotation_only(
     #[values(
@@ -81,6 +105,48 @@ async fn key_rotation_only(
         ops.get_realm_needs(wksp1_id).await.unwrap(),
         RealmNeeds::KeyRotationOnly {
             current_key_index: Some(1)
+        }
+    );
+}
+
+#[parsec_test(testbed = "sequestered")]
+async fn sequestered_key_rotation_only(
+    #[values(
+        "new_sequester_service",
+        "revoked_sequester_service",
+        "same_sequester_service_created_then_revoked"
+    )]
+    kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let sequester_service_2_id: SequesterServiceID =
+        *env.template.get_stuff("sequester_service_2_id");
+    env.customize(|builder| {
+        match kind {
+            "new_sequester_service" => {
+                builder.new_sequester_service().map(|e| e.id);
+            }
+            "revoked_sequester_service" => {
+                builder.revoke_sequester_service(sequester_service_2_id);
+            }
+            "same_sequester_service_created_then_revoked" => {
+                let sequester_service3_id = builder.new_sequester_service().map(|e| e.id);
+                builder.revoke_sequester_service(sequester_service3_id);
+            }
+            unknown => panic!("Unknown kind: {}", unknown),
+        }
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+    })
+    .await;
+
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    p_assert_eq!(
+        ops.get_realm_needs(wksp1_id).await.unwrap(),
+        RealmNeeds::KeyRotationOnly {
+            current_key_index: Some(3)
         }
     );
 }
