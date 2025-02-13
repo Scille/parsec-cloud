@@ -180,10 +180,10 @@ ipcMain.on(PageToWindowChannel.CloseApp, async (_event) => {
 });
 
 ipcMain.on(PageToWindowChannel.OpenFile, async (_event, path: string) => {
-  const result = await shell.openPath(path);
-  if (result !== '') {
-    myCapacitorApp.sendEvent(WindowToPageChannel.OpenPathFailed, path, result);
+  if (!path.startsWith('file://')) {
+    path = `file://${path}`;
   }
+  await shell.openExternal(path);
 });
 
 ipcMain.on(PageToWindowChannel.SeeInExplorer, async (_event, path: string) => {
@@ -213,7 +213,7 @@ ipcMain.on(PageToWindowChannel.PageIsInitialized, async () => {
 });
 
 ipcMain.on(PageToWindowChannel.OpenConfigDir, async () => {
-  await shell.openPath(parsecConfigDir);
+  await shell.openExternal(parsecConfigDir.startsWith('file://') ? parsecConfigDir : `file://${parsecConfigDir}`);
 });
 
 ipcMain.on(PageToWindowChannel.AuthorizeURL, async (_event, url: string) => {
