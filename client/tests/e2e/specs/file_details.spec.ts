@@ -22,7 +22,7 @@ for (const testData of TEST_DATA) {
 
     await expect(connected.locator('.topbar-left__breadcrumb')).toContainText('The Copper Coronet');
     const files = connected.locator('.folder-container').getByRole('listitem');
-    await expect(files).toHaveCount(10);
+    await expect(files).toHaveCount(11);
     await expect(files.nth(testData.index).locator('.file-name').locator('.file-name__label')).toHaveText(new RegExp(`^${nameMatcher}$`));
     await expect(files.nth(testData.index).locator('.file-lastUpdate')).toHaveText(/^((?:one|\d{1,2}) minutes? ago|< 1 minute)$/);
     expect(connected.locator('.file-context-menu')).toBeHidden();
@@ -119,7 +119,7 @@ msTest('Show file details in grid mode', async ({ connected }) => {
 
   await connected.locator('#folders-ms-action-bar').locator('#grid-view').click();
   const files = connected.locator('.folders-container-grid').locator('.file-card-item');
-  await expect(files).toHaveCount(10);
+  await expect(files).toHaveCount(11);
   expect(connected.locator('.file-context-menu')).toBeHidden();
   expect(connected.locator('.file-details-modal')).toBeHidden();
   await files.nth(3).hover();

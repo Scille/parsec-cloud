@@ -20,19 +20,19 @@ const DIR_MATCHER = /^Dir_[a-z_]+$/;
 const TIME_MATCHER = /^(now|< 1 minute|(\d{1,2}|one) minutes? ago)$/;
 const SIZE_MATCHER = /^[0-9.]+ (K|M|G)?B$/;
 
-const NAME_MATCHER_ARRAY = new Array(2).fill(DIR_MATCHER).concat(new Array(8).fill(FILE_MATCHER));
-const TIME_MATCHER_ARRAY = new Array(10).fill(TIME_MATCHER);
-const SIZE_MATCHER_ARRAY = new Array(2).fill('').concat(new Array(8).fill(SIZE_MATCHER));
+const NAME_MATCHER_ARRAY = new Array(2).fill(DIR_MATCHER).concat(new Array(9).fill(FILE_MATCHER));
+const TIME_MATCHER_ARRAY = new Array(11).fill(TIME_MATCHER);
+const SIZE_MATCHER_ARRAY = new Array(2).fill('').concat(new Array(9).fill(SIZE_MATCHER));
 
 msTest('Documents page default state', async ({ documents }) => {
   const actionBar = documents.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['New folder', 'Import']);
-  await expect(actionBar.locator('.counter')).toHaveText('10 items', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('11 items', { useInnerText: true });
   await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
   await expect(actionBar.locator('#grid-view')).toNotHaveDisabledAttribute();
   await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
   const entries = documents.locator('.folder-container').locator('.file-list-item');
-  await expect(entries).toHaveCount(10);
+  await expect(entries).toHaveCount(11);
   await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
   await expect(entries.locator('.file-lastUpdate')).toHaveText(TIME_MATCHER_ARRAY);
   await expect(entries.locator('.file-size')).toHaveText(SIZE_MATCHER_ARRAY);
@@ -41,7 +41,7 @@ msTest('Documents page default state', async ({ documents }) => {
 msTest('Check documents in grid mode', async ({ documents }) => {
   await toggleViewMode(documents);
   const entries = documents.locator('.folder-container').locator('.file-card-item');
-  await expect(entries).toHaveCount(10);
+  await expect(entries).toHaveCount(11);
   await expect(entries.locator('.file-card__title')).toHaveText(NAME_MATCHER_ARRAY);
   await expect(entries.locator('.file-card-last-update')).toHaveText(TIME_MATCHER_ARRAY);
 });
@@ -50,12 +50,12 @@ msTest('Documents page default state in a read only workspace', async ({ documen
   const actionBar = documentsReadOnly.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(0);
   await expect(actionBar.locator('.right-side').locator('.label-role')).toHaveText('Reader');
-  await expect(actionBar.locator('.counter')).toHaveText('10 items', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('11 items', { useInnerText: true });
   await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
   await expect(actionBar.locator('#grid-view')).toNotHaveDisabledAttribute();
   await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
   const entries = documentsReadOnly.locator('.folder-container').locator('.file-list-item');
-  await expect(entries).toHaveCount(10);
+  await expect(entries).toHaveCount(11);
   await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
   await expect(entries.locator('.file-lastUpdate')).toHaveText(TIME_MATCHER_ARRAY);
   await expect(entries.locator('.file-size')).toHaveText(SIZE_MATCHER_ARRAY);
@@ -145,9 +145,9 @@ msTest('Selection in grid mode', async ({ documents }) => {
   }
   await entries.nth(1).locator('ion-checkbox').click();
   const actionBar = documents.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.counter')).toHaveText('9 selected items', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('10 selected items', { useInnerText: true });
   await entries.nth(3).locator('ion-checkbox').click();
-  await expect(actionBar.locator('.counter')).toHaveText('8 selected items', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('9 selected items', { useInnerText: true });
 
   await expect(entries.nth(0).locator('ion-checkbox')).toHaveState('checked');
   await expect(entries.nth(1).locator('ion-checkbox')).toHaveState('unchecked');
