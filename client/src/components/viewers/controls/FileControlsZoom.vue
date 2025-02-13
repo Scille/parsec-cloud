@@ -1,42 +1,44 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <file-controls-group class="file-controls-zoom">
+  <file-controls-group>
     <file-controls-button
-      :icon="resize"
+      :image="FitToScreenIcon"
       @click="resetZoom"
       :disabled="zoomLevel === defaultZoomLevel"
       :title="$msTranslate('fileViewers.controls.zoom.reset')"
+      id="reset-zoom"
     />
-    <file-controls-button
-      :icon="remove"
-      @click="zoomOut"
-      :disabled="zoomLevel === ZOOM_LEVELS[0]"
-      :title="$msTranslate('fileViewers.controls.zoom.out')"
-    />
-    <file-controls-input
-      class="zoom-level-input"
-      v-model="zoomLevel"
-      @on-submitted-value="onChange"
-      :restrict-change="validateZoomLevel"
-      :suffix="I18n.valueAsTranslatable('%')"
-      @keydown.up.prevent="zoomIn"
-      @keydown.down.prevent="zoomOut"
-      :maxlength="3"
-      ref="inputRef"
-    />
-    <file-controls-button
-      :icon="add"
-      @click="zoomIn"
-      :disabled="zoomLevel === ZOOM_LEVELS[ZOOM_LEVELS.length - 1]"
-      :title="$msTranslate('fileViewers.controls.zoom.in')"
-    />
+    <div class="zoom-controls">
+      <file-controls-button
+        :image="RemoveIcon"
+        @click="zoomOut"
+        :disabled="zoomLevel === ZOOM_LEVELS[0]"
+        :title="$msTranslate('fileViewers.controls.zoom.out')"
+      />
+      <file-controls-input
+        class="zoom-level-input"
+        v-model="zoomLevel"
+        @on-submitted-value="onChange"
+        :restrict-change="validateZoomLevel"
+        :suffix="I18n.valueAsTranslatable('%')"
+        @keydown.up.prevent="zoomIn"
+        @keydown.down.prevent="zoomOut"
+        :maxlength="3"
+        ref="inputRef"
+      />
+      <file-controls-button
+        :image="AddIcon"
+        @click="zoomIn"
+        :disabled="zoomLevel === ZOOM_LEVELS[ZOOM_LEVELS.length - 1]"
+        :title="$msTranslate('fileViewers.controls.zoom.in')"
+      />
+    </div>
   </file-controls-group>
 </template>
 
 <script setup lang="ts">
-import { I18n } from 'megashark-lib';
-import { add, remove, resize } from 'ionicons/icons';
+import { AddIcon, RemoveIcon, FitToScreenIcon, I18n } from 'megashark-lib';
 import { ref } from 'vue';
 import { FileControlsButton, FileControlsGroup, FileControlsInput } from '@/components/viewers';
 
@@ -124,6 +126,12 @@ async function validateZoomLevel(value: string): Promise<string> {
 
 <style scoped lang="scss">
 .zoom-level-input {
-  width: 4rem;
+  width: 4.5rem;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 </style>

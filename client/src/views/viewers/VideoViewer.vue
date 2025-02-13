@@ -3,25 +3,27 @@
 <template>
   <file-viewer-wrapper :error="error">
     <template #viewer>
-      <video
-        v-if="src.length"
-        ref="videoElement"
-        class="video"
-        @play="updateMediaData"
-        @playing="updateMediaData"
-        @canplay="updateMediaData"
-        @pause="updateMediaData"
-        @volumechange="updateMediaData"
-        @muted="updateMediaData"
-        @ended="updateMediaData"
-        @timeupdate="onTimeUpdate"
-        @error="onError"
-      >
-        <source
-          :src="src"
-          :type="contentInfo.mimeType"
-        />
-      </video>
+      <div class="video-container">
+        <video
+          v-if="src.length"
+          ref="videoElement"
+          class="video"
+          @play="updateMediaData"
+          @playing="updateMediaData"
+          @canplay="updateMediaData"
+          @pause="updateMediaData"
+          @volumechange="updateMediaData"
+          @muted="updateMediaData"
+          @ended="updateMediaData"
+          @timeupdate="onTimeUpdate"
+          @error="onError"
+        >
+          <source
+            :src="src"
+            :type="contentInfo.mimeType"
+          />
+        </video>
+      </div>
     </template>
     <template #controls>
       <file-controls>
@@ -241,8 +243,21 @@ function updateMediaData(event: Event): void {
 </script>
 
 <style scoped lang="scss">
-.video {
+.video-container {
   width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.video {
+  border-radius: var(--parsec-radius-8);
+  overflow: hidden;
+  width: fit-content;
+  height: fit-content;
   max-height: 100%;
+  box-shadow: var(--parsec-shadow-light);
 }
 </style>

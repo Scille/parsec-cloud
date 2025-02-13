@@ -34,11 +34,12 @@
     </template>
     <template #controls>
       <file-controls v-show="!loading && workbook">
-        <file-controls-group>
+        <file-controls-group class="file-controls-spreadsheet-container">
           <file-controls-dropdown
             :items="dropdownItems"
             :title="I18n.valueAsTranslatable(currentSheet)"
             :icon="chevronDown"
+            class="spreadsheet-dropdown-button"
           />
         </file-controls-group>
         <file-controls-zoom
@@ -183,7 +184,7 @@ async function toggleFullScreen(): Promise<void> {
 
 <style scoped lang="scss">
 .spreadsheet-container {
-  background-color: grey;
+  background-color: var(--parsec-color-light-secondary-inversed-contrast);
   width: 100%;
   height: 100%;
   overflow-y: auto;
@@ -195,16 +196,17 @@ async function toggleFullScreen(): Promise<void> {
   margin: auto;
   height: 100%;
   width: 100%;
-
-  &:fullscreen {
-    padding: 5rem;
-    align-items: center;
-    height: 100%;
-    background: var(--parsec-color-light-secondary-background);
-  }
 }
 
 .spreadsheet-error {
   width: 100%;
+}
+
+.file-controls-spreadsheet-container {
+  gap: 1rem;
+}
+
+.spreadsheet-dropdown-button {
+  padding: 0.25rem 0.5rem;
 }
 </style>

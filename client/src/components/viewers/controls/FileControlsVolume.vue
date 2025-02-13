@@ -5,6 +5,7 @@
       <file-controls-button
         :icon="getVolumeIcon()"
         @click="toggleVolume"
+        class="volume-button"
       />
       <ms-slider
         class="volume-slider"
@@ -100,6 +101,12 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .volume {
   display: flex;
+  gap: 0.5rem;
+
+  .volume-button:hover {
+    background-color: transparent;
+    box-shadow: none;
+  }
 
   &-slider {
     margin-right: 1rem;

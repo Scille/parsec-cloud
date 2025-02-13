@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import FolderSelectionModal from '@/components/files/FolderSelectionModal.vue';
-import { FsPath, Path, WorkspaceHandle } from '@/parsec';
+import { FsPath, Path, WorkspaceHandle, getPathLink } from '@/parsec';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { modalController } from '@ionic/vue';
-import { MsModalResult, Translatable } from 'megashark-lib';
+import { Clipboard, MsModalResult, Translatable } from 'megashark-lib';
 
 export interface FileImportTuple {
   file: File;
@@ -18,6 +19,47 @@ export interface FolderSelectionOptions {
   allowStartingPath?: boolean;
   excludePaths?: Array<FsPath>;
   okButtonLabel?: Translatable;
+}
+
+export async function copyPathLinkToClipboard(
+  path: FsPath,
+  workspaceHandle: WorkspaceHandle,
+  informationManager: InformationManager,
+): Promise<void> {
+  if (!workspaceHandle) {
+    window.electronAPI.log('error', 'Failed to retrieve workspace handle');
+    return;
+  }
+
+  const result = await getPathLink(workspaceHandle, path);
+
+  if (result.ok) {
+    if (!(await Clipboard.writeText(result.value))) {
+      informationManager.present(
+        new Information({
+          message: 'FoldersPage.linkNotCopiedToClipboard',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+    } else {
+      informationManager.present(
+        new Information({
+          message: 'FoldersPage.linkCopiedToClipboard',
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Toast,
+      );
+    }
+  } else {
+    informationManager.present(
+      new Information({
+        message: 'FoldersPage.getLinkError',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
 }
 
 export async function getFilesFromDrop(event: DragEvent, path: FsPath): Promise<FileImportTuple[]> {

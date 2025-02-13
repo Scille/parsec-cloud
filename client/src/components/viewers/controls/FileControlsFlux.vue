@@ -1,15 +1,20 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 <template>
-  <file-controls-group class="file-controls-flux">
-    <ms-slider
-      class="progress-slider"
-      v-model="sliderState"
-      @change="updateSliderState"
-      :max-value="length"
-      :increment-value="500"
-    />
-    <div class="progress-label">
-      {{ `${(sliderState.progress / 100).toFixed(0)} / ${(length / 100).toFixed(0)}` }}
+  <file-controls-group class="file-controls-flux-container">
+    <div class="file-controls-flux">
+      <div class="progress-label-start button-medium">
+        {{ `${(sliderState.progress / 100).toFixed(0)}` }}
+      </div>
+      <ms-slider
+        class="progress-slider"
+        v-model="sliderState"
+        @change="updateSliderState"
+        :max-value="length"
+        :increment-value="500"
+      />
+      <div class="progress-label-end button-medium">
+        {{ `${(length / 100).toFixed(0)}` }}
+      </div>
     </div>
   </file-controls-group>
 </template>
@@ -55,17 +60,34 @@ function updateSliderState(value: SliderState): void {
 </script>
 
 <style scoped lang="scss">
-.file-controls-flux {
+.file-controls-flux-container {
   justify-content: start;
   align-items: center;
-  gap: 1rem !important;
+
+  .file-controls-flux {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
 
   .progress-slider {
     width: 30rem;
   }
 
-  .progress-label {
-    text-align: center;
+  [class*='progress-label'] {
+    width: 3.5rem;
+    color: var(--parsec-color-light-secondary-text);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .progress-label-start {
+    text-align: right;
+  }
+
+  .progress-label-end {
+    text-align: left;
   }
 }
 </style>

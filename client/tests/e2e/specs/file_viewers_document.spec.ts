@@ -202,11 +202,11 @@ msTest('Document viewer: zoom', async ({ documents }) => {
   const documentContent = wrapper.locator('.document-content');
 
   // Zoom
-  const zoom = bottomBar.locator('.file-controls-zoom');
+  const zoom = bottomBar.locator('.zoom-controls');
   await expect(zoom).toHaveCount(1);
-  const zoomReset = zoom.locator('.file-controls-button').nth(0);
-  const zoomOut = zoom.locator('.file-controls-button').nth(1);
-  const zoomIn = zoom.locator('.file-controls-button').nth(2);
+  const zoomReset = bottomBar.locator('#reset-zoom');
+  const zoomOut = zoom.locator('.file-controls-button').nth(0);
+  const zoomIn = zoom.locator('.file-controls-button').nth(1);
   const zoomInput = zoom.locator('.file-controls-input');
 
   async function expectZoomLevel(expectedZoomLevel: number): Promise<void> {

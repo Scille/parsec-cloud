@@ -1,37 +1,20 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-button
-    class="file-controls-dropdown button-medium"
-    size="default"
+  <file-controls-button
     @click="openPopover($event)"
-  >
-    <span
-      class="file-controls-dropdown-label"
-      v-if="title"
-    >
-      {{ $msTranslate(title) }}
-    </span>
-    <ion-icon
-      class="file-controls-dropdown-icon"
-      :class="{ 'popover-is-open': isPopoverOpen }"
-      v-if="icon"
-      :icon="icon"
-    />
-    <ms-image
-      class="file-controls-dropdown-icon"
-      :class="{ 'popover-is-open': isPopoverOpen }"
-      v-if="!icon && image"
-      :image="image"
-    />
-  </ion-button>
+    class="file-controls-dropdown"
+    :class="{ 'dropdown-active': isPopoverOpen }"
+    :icon="icon || image"
+    :label="title"
+  />
 </template>
 
 <script setup lang="ts">
-import { FileControlsDropdownPopover, FileControlsDropdownItemContent } from '@/components/viewers';
+import { FileControlsDropdownPopover, FileControlsDropdownItemContent, FileControlsButton } from '@/components/viewers';
 import { Ref, ref } from 'vue';
-import { IonButton, IonIcon, popoverController } from '@ionic/vue';
-import { MsImage, Translatable } from 'megashark-lib';
+import { popoverController } from '@ionic/vue';
+import { Translatable } from 'megashark-lib';
 
 const isPopoverOpen = ref(false);
 const selectedOption: Ref<FileControlsDropdownItemContent | undefined> = ref(undefined);
@@ -72,46 +55,4 @@ async function onDidDismissPopover(popover: any): Promise<void> {
 }
 </script>
 
-<style lang="scss" scoped>
-ion-icon {
-  transition: transform ease-out 300ms;
-  font-size: 1.125rem;
-
-  &.popover-is-open {
-    transform: rotate(180deg);
-  }
-}
-
-.file-controls-dropdown {
-  --background: none !important;
-  --background-hover: none !important;
-  margin-inline: 0px;
-  margin-top: 0px;
-  margin-bottom: 0px;
-  --padding-top: 0;
-  --padding-end: 0;
-  --padding-bottom: 0;
-  --padding-start: 0;
-  height: 3em;
-  width: fit-content;
-  border-radius: 100%;
-  color: var(--parsec-color-light-primary-600);
-  opacity: 0.6;
-  scale: 1;
-  transition: all 0.2s ease-in-out;
-
-  &.button-disabled {
-    opacity: 0.3;
-  }
-
-  &:hover {
-    scale: 1.1;
-    opacity: 1;
-  }
-
-  &-icon,
-  &-label {
-    margin-inline: 0.625rem;
-  }
-}
-</style>
+<style lang="scss" scoped></style>
