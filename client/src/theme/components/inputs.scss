@@ -5,10 +5,16 @@
   bottom: -1.5rem;
 }
 
-// Sharing Modal : remove currentUser icon in dropdown
+// Workspace Sharing Modal
 .current-user {
+  // remove currentUser icon in dropdown
   .ms-dropdown-icon {
     display: none;
+  }
+
+  // set opacity to 1 for multiple selection
+  &.workspace-user-role .button-disabled {
+    opacity: 1;
   }
 }
 
