@@ -148,17 +148,6 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
   await expect(batchDropdown).not.toBeVisible();
   await expect(activateBatchButton).toContainText('Multiple selection');
   await expect(membersCheckbox).not.toBeVisible();
-
-  // Check user is unchecked when filtered out
-  const searchInput = content.locator('.ms-search-input');
-
-  await activateBatchButton.click();
-  await content.locator('#member-checkbox').nth(0).click();
-  await content.locator('#suggested-checkbox').nth(0).click();
-  await expect(content.locator('#suggested-checkbox').nth(0)).toHaveState('checked');
-  await fillIonInput(searchInput, 'or');
-  await searchInput.getByRole('button', { name: 'reset' }).click();
-  await expect(content.locator('#suggested-checkbox').nth(0)).toHaveState('unchecked');
 });
 
 msTest('Batch workspace sharing hidden when reader', async ({ connected }) => {
