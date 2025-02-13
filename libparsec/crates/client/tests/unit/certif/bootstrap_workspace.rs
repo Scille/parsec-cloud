@@ -5,8 +5,8 @@ use std::sync::{Arc, Mutex};
 
 use libparsec_client_connection::{
     test_register_low_level_send_hook, test_register_send_hook,
-    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle, HeaderMap,
-    ResponseMock, StatusCode,
+    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle, ConnectionError,
+    HeaderMap, ResponseMock, StatusCode,
 };
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
@@ -576,7 +576,7 @@ async fn ok_partial_bootstrap_initial_key_rotation_fetched(env: &TestbedEnv) {
     authenticated_cmds::latest::realm_rename::Rep::RequireGreaterTimestamp {
         strictly_greater_than: "2000-01-02T00:00:00Z".parse().unwrap(),
     },
-    |err| p_assert_matches!(err, CertifBootstrapWorkspaceError::Offline)
+    |err| p_assert_matches!(err, CertifBootstrapWorkspaceError::Offline(_))
 )]
 #[case::realm_not_found(
     authenticated_cmds::latest::realm_rename::Rep::RealmNotFound,
@@ -590,7 +590,7 @@ async fn ok_partial_bootstrap_initial_key_rotation_fetched(env: &TestbedEnv) {
     authenticated_cmds::latest::realm_rename::Rep::BadKeyIndex {
         last_realm_certificate_timestamp: "2000-01-02T00:00:00Z".parse().unwrap(),
     },
-    |err| p_assert_matches!(err, CertifBootstrapWorkspaceError::Offline)
+    |err| p_assert_matches!(err, CertifBootstrapWorkspaceError::Offline(_))
 )]
 #[case::unknown_status(
     authenticated_cmds::latest::realm_rename::Rep::UnknownStatus { unknown_status: "".into(), reason: None },
@@ -739,7 +739,7 @@ async fn offline(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, CertifBootstrapWorkspaceError::Offline);
+    p_assert_matches!(err, CertifBootstrapWorkspaceError::Offline(_));
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -770,7 +770,12 @@ async fn invalid_response(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, CertifBootstrapWorkspaceError::Internal(_));
+    p_assert_matches!(
+        err,
+        CertifBootstrapWorkspaceError::Offline(ConnectionError::InvalidResponseStatus(
+            StatusCode::IM_A_TEAPOT
+        ))
+    );
 }
 
 #[parsec_test(testbed = "minimal")]

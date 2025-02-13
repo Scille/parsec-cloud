@@ -34,7 +34,7 @@ pub async fn update_profile(
         .await
         .map_err(|e| match e {
             CertifPollServerError::Stopped => ClientUserUpdateProfileError::Stopped,
-            CertifPollServerError::Offline => ClientUserUpdateProfileError::Offline,
+            CertifPollServerError::Offline(e) => ClientUserUpdateProfileError::Offline(e),
             CertifPollServerError::InvalidCertificate(err) => {
                 ClientUserUpdateProfileError::InvalidCertificate(err)
             }

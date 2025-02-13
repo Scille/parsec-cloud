@@ -12,8 +12,8 @@ use crate::{greater_timestamp, EventTooMuchDriftWithServerClock, GreaterTimestam
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifEnsureRealmCreatedError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Author not allowed")]
@@ -29,16 +29,6 @@ pub enum CertifEnsureRealmCreatedError {
     },
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for CertifEnsureRealmCreatedError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 impl From<CertifStoreError> for CertifEnsureRealmCreatedError {

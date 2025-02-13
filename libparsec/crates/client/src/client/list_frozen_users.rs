@@ -7,22 +7,12 @@ use std::sync::Arc;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientListFrozenUsersError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
     #[error("author not allowed: must be admin to retrieve frozen users")]
     AuthorNotAllowed,
-}
-
-impl From<ConnectionError> for ClientListFrozenUsersError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub async fn list_frozen_users(

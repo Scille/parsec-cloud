@@ -220,7 +220,7 @@ async fn ok_noop(env: &TestbedEnv) {
 
     let err = client.refresh_workspaces_list().await.unwrap_err();
 
-    p_assert_matches!(err, ClientRefreshWorkspacesListError::Offline);
+    p_assert_matches!(err, ClientRefreshWorkspacesListError::Offline(_));
     spy.assert_no_events();
 
     let workspaces = client.list_workspaces().await;
@@ -236,7 +236,7 @@ async fn offline(env: &TestbedEnv) {
 
     let err = client.refresh_workspaces_list().await.unwrap_err();
 
-    p_assert_matches!(err, ClientRefreshWorkspacesListError::Offline);
+    p_assert_matches!(err, ClientRefreshWorkspacesListError::Offline(_));
     spy.assert_no_events();
 }
 

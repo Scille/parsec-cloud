@@ -44,7 +44,7 @@ async fn offline(env: &TestbedEnv) {
         .open_file_by_id(DateTime::now(), wksp1_bar_txt_id)
         .await
         .unwrap_err();
-    p_assert_matches!(outcome, WorkspaceHistoryOpenFileError::Offline);
+    p_assert_matches!(outcome, WorkspaceHistoryOpenFileError::Offline(_));
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]

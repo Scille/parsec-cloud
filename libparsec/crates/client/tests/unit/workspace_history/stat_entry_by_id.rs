@@ -110,7 +110,7 @@ async fn offline(env: &TestbedEnv) {
 
     p_assert_matches!(
         ops.stat_entry_by_id(wksp1_bar_txt_id).await.unwrap_err(),
-        WorkspaceHistoryStatEntryError::Offline
+        WorkspaceHistoryStatEntryError::Offline(_)
     );
 }
 

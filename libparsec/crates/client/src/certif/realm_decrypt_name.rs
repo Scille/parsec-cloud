@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{CertifDecryptForRealmError, EncrytionUsage};
@@ -45,8 +46,8 @@ pub enum InvalidEncryptedRealmNameError {
 pub enum CertifDecryptCurrentRealmNameError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Not allowed")]
     NotAllowed,
     #[error("Realm has no name certificate yet")]
@@ -93,7 +94,9 @@ pub(super) async fn decrypt_current_realm_name(
             .await
             .map_err(|err| match err {
                 CertifDecryptForRealmError::Stopped => CertifDecryptCurrentRealmNameError::Stopped,
-                CertifDecryptForRealmError::Offline => CertifDecryptCurrentRealmNameError::Offline,
+                CertifDecryptForRealmError::Offline(e) => {
+                    CertifDecryptCurrentRealmNameError::Offline(e)
+                }
                 CertifDecryptForRealmError::NotAllowed => {
                     CertifDecryptCurrentRealmNameError::NotAllowed
                 }

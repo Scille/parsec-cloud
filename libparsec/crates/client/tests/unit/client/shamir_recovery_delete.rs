@@ -118,5 +118,5 @@ async fn shamir_recovery_offline(env: &TestbedEnv) {
 
     let err = client.delete_shamir_recovery().await.unwrap_err();
 
-    p_assert_matches!(err, ClientDeleteShamirRecoveryError::Offline);
+    p_assert_matches!(err, ClientDeleteShamirRecoveryError::Offline(_));
 }

@@ -3,7 +3,8 @@
 use std::{collections::HashMap, sync::Arc};
 
 use libparsec_client_connection::{
-    test_register_low_level_send_hook, test_register_send_hook, HeaderMap, ResponseMock, StatusCode,
+    test_register_low_level_send_hook, test_register_send_hook, ConnectionError, HeaderMap,
+    ResponseMock, StatusCode,
 };
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
@@ -207,7 +208,7 @@ async fn offline(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, CertifPollServerError::Offline);
+    p_assert_matches!(err, CertifPollServerError::Offline(_));
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -229,5 +230,10 @@ async fn invalid_response(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, CertifPollServerError::Internal(..));
+    p_assert_matches!(
+        err,
+        CertifPollServerError::Offline(ConnectionError::InvalidResponseStatus(
+            StatusCode::IM_A_TEAPOT
+        ))
+    );
 }

@@ -53,8 +53,8 @@ impl OpenOptions {
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceOpenFileError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Only have read access on this workspace")]
@@ -75,15 +75,6 @@ pub enum WorkspaceOpenFileError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for WorkspaceOpenFileError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub async fn open_file(
@@ -123,7 +114,7 @@ pub async fn open_file(
                     // Concurrent operation has created the file in the meantime
                     WorkspaceCreateFileError::EntryExists { entry_id } => Ok(entry_id),
                     // Actual errors, republishing
-                    WorkspaceCreateFileError::Offline => Err(WorkspaceOpenFileError::Offline),
+                    WorkspaceCreateFileError::Offline(e) => Err(WorkspaceOpenFileError::Offline(e)),
                     WorkspaceCreateFileError::Stopped => Err(WorkspaceOpenFileError::Stopped),
                     WorkspaceCreateFileError::ReadOnlyRealm => {
                         Err(WorkspaceOpenFileError::ReadOnlyRealm)
@@ -154,7 +145,7 @@ pub async fn open_file(
             // Actual errors, republishing
             Err(err) => {
                 return match err {
-                    ResolvePathError::Offline => Err(WorkspaceOpenFileError::Offline),
+                    ResolvePathError::Offline(e) => Err(WorkspaceOpenFileError::Offline(e)),
                     ResolvePathError::Stopped => Err(WorkspaceOpenFileError::Stopped),
                     ResolvePathError::EntryNotFound => Err(WorkspaceOpenFileError::EntryNotFound),
                     ResolvePathError::NoRealmAccess => Err(WorkspaceOpenFileError::NoRealmAccess),
@@ -317,7 +308,7 @@ pub async fn open_file_by_id(
                 }
 
                 // Actual errors, republishing
-                ForUpdateFileError::Offline => return Err(WorkspaceOpenFileError::Offline),
+                ForUpdateFileError::Offline(e) => return Err(WorkspaceOpenFileError::Offline(e)),
                 ForUpdateFileError::Stopped => return Err(WorkspaceOpenFileError::Stopped),
                 ForUpdateFileError::EntryNotFound => {
                     return Err(WorkspaceOpenFileError::EntryNotFound)

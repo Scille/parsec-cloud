@@ -14,8 +14,8 @@ use crate::{
 pub enum ClientDeleteShamirRecoveryError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
@@ -29,16 +29,6 @@ pub enum ClientDeleteShamirRecoveryError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for ClientDeleteShamirRecoveryError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
-}
-
 pub async fn delete_shamir_recovery(
     client: &Client,
 ) -> Result<(), ClientDeleteShamirRecoveryError> {
@@ -48,7 +38,9 @@ pub async fn delete_shamir_recovery(
         .await
         .map_err(|err| match err {
             CertifDeleteShamirRecoveryError::Stopped => ClientDeleteShamirRecoveryError::Stopped,
-            CertifDeleteShamirRecoveryError::Offline => ClientDeleteShamirRecoveryError::Offline,
+            CertifDeleteShamirRecoveryError::Offline(e) => {
+                ClientDeleteShamirRecoveryError::Offline(e)
+            }
             CertifDeleteShamirRecoveryError::TimestampOutOfBallpark {
                 server_timestamp,
                 client_timestamp,
@@ -79,7 +71,9 @@ pub async fn delete_shamir_recovery(
                 .await
                 .map_err(|e| match e {
                     CertifPollServerError::Stopped => ClientDeleteShamirRecoveryError::Stopped,
-                    CertifPollServerError::Offline => ClientDeleteShamirRecoveryError::Offline,
+                    CertifPollServerError::Offline(e) => {
+                        ClientDeleteShamirRecoveryError::Offline(e)
+                    }
                     CertifPollServerError::InvalidCertificate(err) => {
                         ClientDeleteShamirRecoveryError::InvalidCertificate(err)
                     }

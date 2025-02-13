@@ -282,7 +282,7 @@ async fn offline(env: &TestbedEnv) {
     let client = client_factory(&env.discriminant_dir, alice).await;
 
     let err = client.process_workspaces_needs().await.unwrap_err();
-    p_assert_matches!(err, ClientProcessWorkspacesNeedsError::Offline);
+    p_assert_matches!(err, ClientProcessWorkspacesNeedsError::Offline(_));
 }
 
 #[parsec_test(testbed = "coolorg")]

@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
@@ -19,8 +20,8 @@ pub enum ClientRenameWorkspaceError {
     WorkspaceNotFound,
     #[error("Not allowed")]
     AuthorNotAllowed,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
@@ -64,7 +65,7 @@ pub async fn rename_workspace(
         .bootstrap_workspace(realm_id, &new_name)
         .await
         .map_err(|e| match e {
-            CertifBootstrapWorkspaceError::Offline => ClientRenameWorkspaceError::Offline,
+            CertifBootstrapWorkspaceError::Offline(e) => ClientRenameWorkspaceError::Offline(e),
             CertifBootstrapWorkspaceError::Stopped => ClientRenameWorkspaceError::Stopped,
             // Note that in case of author allowed, it means that workspace
             // has already been bootstrapped (since it is being shared with us).
@@ -110,7 +111,7 @@ pub async fn rename_workspace(
                 .await
                 .map_err(|e| match e {
                     CertifPollServerError::Stopped => ClientRenameWorkspaceError::Stopped,
-                    CertifPollServerError::Offline => ClientRenameWorkspaceError::Offline,
+                    CertifPollServerError::Offline(e) => ClientRenameWorkspaceError::Offline(e),
                     CertifPollServerError::InvalidCertificate(err) => {
                         ClientRenameWorkspaceError::InvalidCertificate(err)
                     }
@@ -131,7 +132,7 @@ pub async fn rename_workspace(
                 .await
                 .map_err(|e| match e {
                     CertifPollServerError::Stopped => ClientRenameWorkspaceError::Stopped,
-                    CertifPollServerError::Offline => ClientRenameWorkspaceError::Offline,
+                    CertifPollServerError::Offline(e) => ClientRenameWorkspaceError::Offline(e),
                     CertifPollServerError::InvalidCertificate(err) => {
                         ClientRenameWorkspaceError::InvalidCertificate(err)
                     }
@@ -153,7 +154,7 @@ pub async fn rename_workspace(
             .await
             .map_err(|e| match e {
                 CertifRenameRealmError::Stopped => ClientRenameWorkspaceError::Stopped,
-                CertifRenameRealmError::Offline => ClientRenameWorkspaceError::Offline,
+                CertifRenameRealmError::Offline(e) => ClientRenameWorkspaceError::Offline(e),
                 CertifRenameRealmError::UnknownRealm => {
                     ClientRenameWorkspaceError::WorkspaceNotFound
                 }
@@ -203,7 +204,7 @@ pub async fn rename_workspace(
             .await
             .map_err(|e| match e {
                 CertifPollServerError::Stopped => ClientRenameWorkspaceError::Stopped,
-                CertifPollServerError::Offline => ClientRenameWorkspaceError::Offline,
+                CertifPollServerError::Offline(e) => ClientRenameWorkspaceError::Offline(e),
                 CertifPollServerError::InvalidCertificate(err) => {
                     ClientRenameWorkspaceError::InvalidCertificate(err)
                 }
@@ -219,7 +220,7 @@ pub async fn rename_workspace(
         .refresh_workspaces_list()
         .await
         .map_err(|e| match e {
-            ClientRefreshWorkspacesListError::Offline => ClientRenameWorkspaceError::Offline,
+            ClientRefreshWorkspacesListError::Offline(e) => ClientRenameWorkspaceError::Offline(e),
             ClientRefreshWorkspacesListError::Stopped => ClientRenameWorkspaceError::Stopped,
             ClientRefreshWorkspacesListError::InvalidEncryptedRealmName(err) => {
                 ClientRenameWorkspaceError::InvalidEncryptedRealmName(err)

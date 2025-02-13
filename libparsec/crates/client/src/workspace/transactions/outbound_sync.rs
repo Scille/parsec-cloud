@@ -142,7 +142,7 @@ async fn outbound_sync_child(
             .bootstrap_workspace(ops.realm_id, &name)
             .await
             .map_err(|e| match e {
-                CertifBootstrapWorkspaceError::Offline => WorkspaceSyncError::Offline,
+                CertifBootstrapWorkspaceError::Offline(e) => WorkspaceSyncError::Offline(e),
                 CertifBootstrapWorkspaceError::Stopped => WorkspaceSyncError::Stopped,
                 CertifBootstrapWorkspaceError::AuthorNotAllowed => WorkspaceSyncError::NotAllowed,
                 CertifBootstrapWorkspaceError::TimestampOutOfBallpark {
@@ -429,7 +429,7 @@ async fn upload_manifest<M: RemoteManifest>(
             .await
             .map_err(|e| match e {
                 CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
-                CertifEncryptForRealmError::Offline => WorkspaceSyncError::Offline,
+                CertifEncryptForRealmError::Offline(e) => WorkspaceSyncError::Offline(e),
                 CertifEncryptForRealmError::NotAllowed => WorkspaceSyncError::NotAllowed,
                 CertifEncryptForRealmError::NoKey => WorkspaceSyncError::NoKey,
                 CertifEncryptForRealmError::InvalidKeysBundle(err) => {
@@ -476,7 +476,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 },
 
                 // TODO: provide a dedicated error for this exotic behavior ?
-                Rep::SequesterServiceUnavailable { .. } => Err(WorkspaceSyncError::Offline),
+                Rep::SequesterServiceUnavailable { service_id } => Err(anyhow::anyhow!("Sequester service {service_id} unavailable").into()),
                 // TODO: we should send a dedicated event for this, and return an according error
                 Rep::RejectedBySequesterService { .. } => todo!(),
                 // A key rotation occured concurrently, should poll for new certificates and retry
@@ -487,7 +487,7 @@ async fn upload_manifest<M: RemoteManifest>(
                         .await
                         .map_err(|err| match err {
                             CertifPollServerError::Stopped => WorkspaceSyncError::Stopped,
-                            CertifPollServerError::Offline => WorkspaceSyncError::Offline,
+                            CertifPollServerError::Offline(e) => WorkspaceSyncError::Offline(e),
                             CertifPollServerError::InvalidCertificate(err) => WorkspaceSyncError::InvalidCertificate(err),
                             CertifPollServerError::Internal(err) => err.context("Cannot poll server for new certificates").into(),
                         })?;
@@ -538,7 +538,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 },
 
                 // TODO: provide a dedicated error for this exotic behavior ?
-                Rep::SequesterServiceUnavailable { .. } => Err(WorkspaceSyncError::Offline),
+                Rep::SequesterServiceUnavailable { service_id } => Err(anyhow::anyhow!("Sequester service {service_id} unavailable").into()),
                 // TODO: we should send a dedicated event for this, and return an according error
                 Rep::RejectedBySequesterService { .. } => todo!(),
                 // A key rotation occured concurrently, should poll for new certificates and retry
@@ -549,7 +549,7 @@ async fn upload_manifest<M: RemoteManifest>(
                         .await
                         .map_err(|err| match err {
                             CertifPollServerError::Stopped => WorkspaceSyncError::Stopped,
-                            CertifPollServerError::Offline => WorkspaceSyncError::Offline,
+                            CertifPollServerError::Offline(e) => WorkspaceSyncError::Offline(e),
                             CertifPollServerError::InvalidCertificate(err) => WorkspaceSyncError::InvalidCertificate(err),
                             CertifPollServerError::Internal(err) => err.context("Cannot poll server for new certificates").into(),
                         })?;
@@ -664,7 +664,7 @@ async fn do_next_reshape_operation(
             }
             Err(err) => {
                 return Err(match err {
-                    ReadChunkOrBlockError::Offline => WorkspaceSyncError::Offline,
+                    ReadChunkOrBlockError::Offline(e) => WorkspaceSyncError::Offline(e),
                     ReadChunkOrBlockError::Stopped => WorkspaceSyncError::Stopped,
                     // TODO: manifest seems to contain invalid data (or the server is lying to us)
                     ReadChunkOrBlockError::ChunkNotFound => todo!(),
@@ -789,7 +789,7 @@ async fn upload_blocks(
                 .await
                 .map_err(|e| match e {
                     CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
-                    CertifEncryptForRealmError::Offline => WorkspaceSyncError::Offline,
+                    CertifEncryptForRealmError::Offline(e) => WorkspaceSyncError::Offline(e),
                     CertifEncryptForRealmError::NotAllowed => WorkspaceSyncError::NotAllowed,
                     CertifEncryptForRealmError::NoKey => WorkspaceSyncError::NoKey,
                     CertifEncryptForRealmError::InvalidKeysBundle(err) => {
@@ -824,7 +824,7 @@ async fn upload_blocks(
                             .await
                             .map_err(|err| match err {
                                 CertifPollServerError::Stopped => WorkspaceSyncError::Stopped,
-                                CertifPollServerError::Offline => WorkspaceSyncError::Offline,
+                                CertifPollServerError::Offline(e) => WorkspaceSyncError::Offline(e),
                                 CertifPollServerError::InvalidCertificate(err) => WorkspaceSyncError::InvalidCertificate(err),
                                 CertifPollServerError::Internal(err) => err.context("Cannot poll server for new certificates").into(),
                             })?;

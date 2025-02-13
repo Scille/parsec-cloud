@@ -18,8 +18,8 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceOpenFolderReaderError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -38,19 +38,10 @@ pub enum WorkspaceOpenFolderReaderError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for WorkspaceOpenFolderReaderError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum FolderReaderStatEntryError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -63,15 +54,6 @@ pub enum FolderReaderStatEntryError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for FolderReaderStatEntryError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -148,7 +130,7 @@ impl FolderReader {
                     WorkspaceStatEntryError::EntryNotFound => {
                         return Ok(FolderReaderStatNextOutcome::InvalidChild)
                     }
-                    WorkspaceStatEntryError::Offline => FolderReaderStatEntryError::Offline,
+                    WorkspaceStatEntryError::Offline(e) => FolderReaderStatEntryError::Offline(e),
                     WorkspaceStatEntryError::Stopped => FolderReaderStatEntryError::Stopped,
                     WorkspaceStatEntryError::NoRealmAccess => {
                         FolderReaderStatEntryError::NoRealmAccess
@@ -196,8 +178,8 @@ impl FolderReader {
                     .ensure_manifest_exists_with_parent(*child_id, self.manifest.base.id)
                     .await
                     .map_err(|err| match err {
-                        EnsureManifestExistsWithParentError::Offline => {
-                            FolderReaderStatEntryError::Offline
+                        EnsureManifestExistsWithParentError::Offline(e) => {
+                            FolderReaderStatEntryError::Offline(e)
                         }
                         EnsureManifestExistsWithParentError::Stopped => {
                             FolderReaderStatEntryError::Stopped
@@ -234,7 +216,7 @@ pub async fn open_folder_reader_by_id(
         .retrieve_path_from_id(entry_id)
         .await
         .map_err(|err| match err {
-            RetrievePathFromIDError::Offline => WorkspaceOpenFolderReaderError::Offline,
+            RetrievePathFromIDError::Offline(e) => WorkspaceOpenFolderReaderError::Offline(e),
             RetrievePathFromIDError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
             // RetrievePathFromIDError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
             RetrievePathFromIDError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
@@ -281,7 +263,7 @@ pub async fn open_folder_reader(
             .resolve_path(path)
             .await
             .map_err(|err| match err {
-                ResolvePathError::Offline => WorkspaceOpenFolderReaderError::Offline,
+                ResolvePathError::Offline(e) => WorkspaceOpenFolderReaderError::Offline(e),
                 ResolvePathError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
                 ResolvePathError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
                 ResolvePathError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
@@ -308,8 +290,8 @@ pub async fn open_folder_reader(
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceStatFolderChildrenError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -328,15 +310,6 @@ pub enum WorkspaceStatFolderChildrenError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for WorkspaceStatFolderChildrenError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
-}
-
 pub async fn stat_folder_children(
     ops: &WorkspaceOps,
     path: &FsPath,
@@ -344,7 +317,9 @@ pub async fn stat_folder_children(
     let reader = open_folder_reader(ops, path)
         .await
         .map_err(|err| match err {
-            WorkspaceOpenFolderReaderError::Offline => WorkspaceStatFolderChildrenError::Offline,
+            WorkspaceOpenFolderReaderError::Offline(e) => {
+                WorkspaceStatFolderChildrenError::Offline(e)
+            }
             WorkspaceOpenFolderReaderError::Stopped => WorkspaceStatFolderChildrenError::Stopped,
             WorkspaceOpenFolderReaderError::EntryNotFound => {
                 WorkspaceStatFolderChildrenError::EntryNotFound
@@ -379,7 +354,9 @@ pub async fn stat_folder_children_by_id(
     let reader = open_folder_reader_by_id(ops, entry_id)
         .await
         .map_err(|err| match err {
-            WorkspaceOpenFolderReaderError::Offline => WorkspaceStatFolderChildrenError::Offline,
+            WorkspaceOpenFolderReaderError::Offline(e) => {
+                WorkspaceStatFolderChildrenError::Offline(e)
+            }
             WorkspaceOpenFolderReaderError::Stopped => WorkspaceStatFolderChildrenError::Stopped,
             WorkspaceOpenFolderReaderError::EntryNotFound => {
                 WorkspaceStatFolderChildrenError::EntryNotFound
@@ -421,7 +398,9 @@ async fn consume_reader(
             .stat_child(ops, index)
             .await
             .map_err(|err| match err {
-                FolderReaderStatEntryError::Offline => WorkspaceStatFolderChildrenError::Offline,
+                FolderReaderStatEntryError::Offline(e) => {
+                    WorkspaceStatFolderChildrenError::Offline(e)
+                }
                 FolderReaderStatEntryError::Stopped => WorkspaceStatFolderChildrenError::Stopped,
                 FolderReaderStatEntryError::NoRealmAccess => {
                     WorkspaceStatFolderChildrenError::NoRealmAccess

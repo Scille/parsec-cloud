@@ -18,8 +18,8 @@ use super::{greater_timestamp, CertifPollServerError, CertifStoreError, GreaterT
 pub enum CertifSetupShamirRecoveryError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Threshold cannot be bigger than the total of share count")]
     ThresholdBiggerThanSumOfShares,
     #[error("There can be at most 255 shares")]
@@ -50,16 +50,6 @@ impl From<CertifStoreError> for CertifSetupShamirRecoveryError {
         match value {
             CertifStoreError::Stopped => Self::Stopped,
             CertifStoreError::Internal(err) => err.into(),
-        }
-    }
-}
-
-impl From<ConnectionError> for CertifSetupShamirRecoveryError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
         }
     }
 }
@@ -152,7 +142,9 @@ pub(super) async fn setup_shamir_recovery(
                     .await
                     .map_err(|e| match e {
                         CertifPollServerError::Stopped => CertifSetupShamirRecoveryError::Stopped,
-                        CertifPollServerError::Offline => CertifSetupShamirRecoveryError::Offline,
+                        CertifPollServerError::Offline(e) => {
+                            CertifSetupShamirRecoveryError::Offline(e)
+                        }
                         CertifPollServerError::InvalidCertificate(err) => {
                             CertifSetupShamirRecoveryError::InvalidCertificate(err)
                         }

@@ -100,6 +100,6 @@ async fn offline(env: &TestbedEnv) {
     p_assert_matches!(
         ops.set_timestamp_of_interest(wksp1_foo_v2_children_available_timestamp)
             .await,
-        Err(WorkspaceHistorySetTimestampOfInterestError::Offline)
+        Err(WorkspaceHistorySetTimestampOfInterestError::Offline(_))
     );
 }

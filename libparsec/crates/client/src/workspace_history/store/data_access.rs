@@ -2,16 +2,16 @@
 
 use std::sync::Arc;
 
-use libparsec_types::prelude::*;
-
 use crate::certif::{
     InvalidBlockAccessError, InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError,
 };
+use libparsec_client_connection::ConnectionError;
+use libparsec_types::prelude::*;
 
 #[derive(Debug, thiserror::Error)]
 pub enum DataAccessFetchManifestError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -32,8 +32,8 @@ pub enum DataAccessFetchManifestError {
 pub enum DataAccessFetchBlockError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("The block doesn't exist on the server")]
     BlockNotFound,
     #[error("Not allowed to access this realm")]

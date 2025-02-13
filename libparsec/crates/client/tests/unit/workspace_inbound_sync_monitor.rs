@@ -3,7 +3,7 @@
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
-use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
+use libparsec_client_connection::{AuthenticatedCmds, ConnectionError, ProxyConfig};
 use libparsec_platform_async::prelude::*;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -122,7 +122,9 @@ async fn refresh_realm_checkpoint_offline() {
                 side_effect: None,
             },
             InboundSyncMonitorEvent::WorkspaceOpsRefreshRealmCheckpoint {
-                outcome: Err(WorkspaceSyncError::Offline),
+                outcome: Err(WorkspaceSyncError::Offline(ConnectionError::NoResponse(
+                    None,
+                ))),
                 side_effect: None,
             },
         ],

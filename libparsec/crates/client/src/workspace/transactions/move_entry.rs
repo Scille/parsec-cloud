@@ -36,8 +36,8 @@ pub enum MoveEntryMode {
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceMoveEntryError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Source doesn't exist")]
@@ -60,15 +60,6 @@ pub enum WorkspaceMoveEntryError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for WorkspaceMoveEntryError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub(crate) async fn rename_entry_by_id(
@@ -100,7 +91,7 @@ pub(crate) async fn rename_entry_by_id(
         .for_update_folder(src_parent_id)
         .await
         .map_err(|err| match err {
-            ForUpdateFolderError::Offline => WorkspaceMoveEntryError::Offline,
+            ForUpdateFolderError::Offline(e) => WorkspaceMoveEntryError::Offline(e),
             ForUpdateFolderError::Stopped => WorkspaceMoveEntryError::Stopped,
             ForUpdateFolderError::EntryNotFound => WorkspaceMoveEntryError::SourceNotFound,
             // If the source's parent is not a folder... then the source cannot exist !
@@ -168,7 +159,7 @@ pub(crate) async fn move_entry(
             .resolve_path_for_update_folder(&src_parent_path)
             .await
             .map_err(|err| match err {
-                ForUpdateFolderError::Offline => WorkspaceMoveEntryError::Offline,
+                ForUpdateFolderError::Offline(e) => WorkspaceMoveEntryError::Offline(e),
                 ForUpdateFolderError::Stopped => WorkspaceMoveEntryError::Stopped,
                 ForUpdateFolderError::EntryNotFound => WorkspaceMoveEntryError::SourceNotFound,
                 // If the source's parent is not a folder... then the source cannot exist !
@@ -212,7 +203,7 @@ pub(crate) async fn move_entry(
             )
             .await
             .map_err(|err| match err {
-                ForUpdateReparentingError::Offline => WorkspaceMoveEntryError::Offline,
+                ForUpdateReparentingError::Offline(e) => WorkspaceMoveEntryError::Offline(e),
                 ForUpdateReparentingError::Stopped => WorkspaceMoveEntryError::Stopped,
                 ForUpdateReparentingError::SourceNotFound => {
                     WorkspaceMoveEntryError::SourceNotFound
@@ -262,7 +253,7 @@ async fn move_entry_same_parent(
         .ensure_manifest_exists_with_parent(child_id, parent_id)
         .await
         .map_err(|err| match err {
-            EnsureManifestExistsWithParentError::Offline => WorkspaceMoveEntryError::Offline,
+            EnsureManifestExistsWithParentError::Offline(e) => WorkspaceMoveEntryError::Offline(e),
             EnsureManifestExistsWithParentError::Stopped => WorkspaceMoveEntryError::Stopped,
             EnsureManifestExistsWithParentError::NoRealmAccess => {
                 WorkspaceMoveEntryError::NoRealmAccess
@@ -293,8 +284,8 @@ async fn move_entry_same_parent(
                 .ensure_manifest_exists_with_parent(dst_child_id, parent_id)
                 .await
                 .map_err(|err| match err {
-                    EnsureManifestExistsWithParentError::Offline => {
-                        WorkspaceMoveEntryError::Offline
+                    EnsureManifestExistsWithParentError::Offline(e) => {
+                        WorkspaceMoveEntryError::Offline(e)
                     }
                     EnsureManifestExistsWithParentError::Stopped => {
                         WorkspaceMoveEntryError::Stopped
@@ -432,8 +423,8 @@ async fn move_entry_different_parents<'a>(
                 .ensure_manifest_exists_with_parent(dst_child_id, dst_parent_id)
                 .await
                 .map_err(|err| match err {
-                    EnsureManifestExistsWithParentError::Offline => {
-                        WorkspaceMoveEntryError::Offline
+                    EnsureManifestExistsWithParentError::Offline(e) => {
+                        WorkspaceMoveEntryError::Offline(e)
                     }
                     EnsureManifestExistsWithParentError::Stopped => {
                         WorkspaceMoveEntryError::Stopped

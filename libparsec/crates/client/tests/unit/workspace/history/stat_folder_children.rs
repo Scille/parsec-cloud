@@ -203,7 +203,7 @@ async fn offline(env: &TestbedEnv) {
             .stat_folder_children(at, &"/".parse().unwrap())
             .await
             .unwrap_err(),
-        WorkspaceHistoryStatFolderChildrenError::Offline
+        WorkspaceHistoryStatFolderChildrenError::Offline(_)
     );
 }
 

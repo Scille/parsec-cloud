@@ -3,6 +3,7 @@
 use std::sync::{Arc, Mutex};
 
 use libparsec_client_connection::AuthenticatedCmds;
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use super::WorkspaceHistoryRealmExportDecryptor;
@@ -50,8 +51,8 @@ pub(super) struct WorkspaceHistoryStore {
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryStoreStartError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Workspace has not history yet (root manifest has never been synchronized)")]
@@ -113,8 +114,8 @@ impl WorkspaceHistoryStore {
                 .get_workspace_manifest_v1()
                 .await
                 .map_err(|err| match err {
-                    DataAccessFetchManifestError::Offline => {
-                        WorkspaceHistoryStoreStartError::Offline
+                    DataAccessFetchManifestError::Offline(e) => {
+                        WorkspaceHistoryStoreStartError::Offline(e)
                     }
                     DataAccessFetchManifestError::Stopped => {
                         WorkspaceHistoryStoreStartError::Stopped
