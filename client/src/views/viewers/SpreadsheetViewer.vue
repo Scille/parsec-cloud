@@ -191,6 +191,7 @@ async function toggleFullScreen(): Promise<void> {
 }
 
 .spreadsheet-content {
+  transition: all 0.3s ease-in-out;
   transform: scale(v-bind(zoomLevel));
   transform-origin: top left;
   margin: auto;
