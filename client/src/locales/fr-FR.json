@@ -348,6 +348,7 @@
             "reader": "Lecteur",
             "buttonSelect": "Sélection multiple",
             "buttonFinish": "Terminer",
+            "counter": "{count} utilisateur sélectionné | {count} utilisateurs sélectionnés",
             "chooseRole": "Choisir un rôle",
             "noChanges": "Les membres sélectionnés étaient déjà {role}.",
             "someFailed": "Certaines assignations de rôle ont échoué.",
