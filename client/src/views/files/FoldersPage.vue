@@ -219,7 +219,6 @@ import {
   MsSorter,
   MsSorterChangeEvent,
   Translatable,
-  Clipboard,
   asyncComputed,
   MsSpinner,
 } from 'megashark-lib';
@@ -239,6 +238,7 @@ import {
   ImportType,
   SortProperty,
   selectFolder,
+  copyPathLinkToClipboard,
   EntryModel,
 } from '@/components/files';
 import {
@@ -1024,34 +1024,9 @@ async function copyLink(entries: EntryModel[]): Promise<void> {
   }
   const entry = entries[0];
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
-  const result = await parsec.getPathLink(workspaceInfo.value.handle, filePath);
-  if (result.ok) {
-    if (!(await Clipboard.writeText(result.value))) {
-      informationManager.present(
-        new Information({
-          message: 'FoldersPage.linkNotCopiedToClipboard',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
-    } else {
-      informationManager.present(
-        new Information({
-          message: 'FoldersPage.linkCopiedToClipboard',
-          level: InformationLevel.Info,
-        }),
-        PresentationMode.Toast,
-      );
-    }
-  } else {
-    informationManager.present(
-      new Information({
-        message: { key: 'FoldersPage.getLinkError', data: { reason: result.error.tag } },
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  }
+  const workspaceHandle = workspaceInfo.value.handle;
+
+  copyPathLinkToClipboard(filePath, workspaceHandle, informationManager);
 }
 
 async function moveEntriesTo(entries: EntryModel[]): Promise<void> {

@@ -18,18 +18,7 @@ async function _initText(): Promise<void> {
   monaco.editor.defineTheme('msEditorTheme', {
     base: 'vs',
     inherit: true,
-    rules: [
-      {
-        token: 'editor.border',
-        foreground: '#000000',
-        fontStyle: '1px solid',
-      },
-      {
-        token: 'editor.border',
-        foreground: '#000000',
-        fontStyle: '1px solid',
-      },
-    ],
+    rules: [],
     colors: {
       'editor.foreground': '#000000',
       'editor.background': '#ffffff',

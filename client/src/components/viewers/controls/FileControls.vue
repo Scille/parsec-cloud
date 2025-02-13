@@ -10,23 +10,33 @@
 
 <style scoped lang="scss">
 .file-controls {
-  padding: 0.5rem 1rem;
+  margin: 0 1rem 1rem 1rem;
+  padding: 0.75rem 1.5rem;
   display: flex;
-  gap: 0.5em;
-  width: fit-content;
-  background: var(--parsec-color-light-primary-100);
-  border-radius: 5em;
-  box-shadow: var(--parsec-shadow-light);
-  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  background: var(--parsec-color-light-secondary-white);
+  border-radius: var(--parsec-radius-8);
+  box-shadow: var(--parsec-shadow-soft);
   --inner-padding-end: 0;
+  border-top: 1px solid var(--parsec-color-light-secondary-medium);
+  position: relative;
+  z-index: 200;
+  min-height: 3.75rem;
+  transition: all 0.2s ease-in-out;
 
   & > *:not(:last-child)::after {
     content: '';
     display: block;
     width: 2px;
-    height: 2em;
-    background: var(--parsec-color-light-primary-200);
-    opacity: 0.5;
+    height: 1rem;
+    background: var(--parsec-color-light-secondary-disabled);
+  }
+
+  &:hover {
+    box-shadow: var(--parsec-shadow-light);
   }
 }
 </style>

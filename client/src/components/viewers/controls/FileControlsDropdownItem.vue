@@ -2,18 +2,22 @@
 
 <template>
   <div
-    class="dropdown-item"
-    :class="isActive ? 'dropdown-item-active' : ''"
+    class="file-controls-dropdown-item"
+    :class="isActive ? 'file-controls-dropdown-item-active' : ''"
     @click="emits('click', item)"
   >
     <div class="left">
       <ion-icon
         v-if="item.icon"
         :icon="item.icon"
+        class="left-icon"
       />
-      <ion-text class="left-text">
-        {{ $msTranslate(item.label) }}
-      </ion-text>
+      <ms-image
+        v-if="item.image"
+        :image="item.image"
+        class="left-icon"
+      />
+      <ion-text class="left-text button-medium">{{ $msTranslate(item.label) }}</ion-text>
     </div>
     <ion-icon
       class="checkmark"
@@ -21,7 +25,7 @@
       :icon="checkmark"
     />
     <div
-      class="right-text"
+      class="right-text button-medium"
       v-if="item.children"
     >
       {{ $msTranslate(getActiveChildLabel()) }}
@@ -34,7 +38,7 @@
 import { FileControlsDropdownItemContent } from '@/components/viewers';
 import { IonIcon, IonText } from '@ionic/vue';
 import { checkmark, chevronForward } from 'ionicons/icons';
-import { Translatable } from 'megashark-lib';
+import { Translatable, MsImage } from 'megashark-lib';
 
 const emits = defineEmits<{
   (e: 'click', option: FileControlsDropdownItemContent): void;
@@ -58,29 +62,35 @@ function getActiveChildLabel(): Translatable {
 </script>
 
 <style lang="scss" scoped>
-.dropdown-item {
+.file-controls-dropdown-item {
   display: flex;
-  margin: 0.25rem 0.5rem;
   cursor: pointer;
-  height: 2em;
+  padding: 0.5rem 0.75rem;
+  justify-content: space-between;
+  align-items: center;
   border-radius: var(--parsec-radius-6);
 
   &-active {
-    background-color: var(--parsec-color-light-secondary-medium);
+    background-color: var(--parsec-color-light-primary-50);
   }
 
   &:hover:not(.dropdown-item-active) {
-    color: var(--parsec-color-light-primary-700);
+    color: var(--parsec-color-light-secondary-text);
     background-color: var(--parsec-color-light-secondary-background);
   }
 
   .left {
     display: flex;
     align-items: center;
-    margin-left: 0.5rem;
+    gap: 0.5rem;
+    color: var(--parsec-color-light-secondary-text);
 
-    &-text {
-      margin-left: 0.5rem;
+    &-icon {
+      font-size: 1.125rem;
+      width: 1.125rem;
+      height: 1.125rem;
+      color: var(--parsec-color-light-secondary-text);
+      --fill-color: var(--parsec-color-light-secondary-text);
     }
   }
 
@@ -88,13 +98,12 @@ function getActiveChildLabel(): Translatable {
     display: flex;
     align-items: center;
     color: var(--parsec-color-light-secondary-grey);
-    margin-left: auto;
-    margin-right: 0.5rem;
+    gap: 0.5rem;
   }
 
   .checkmark {
     color: var(--parsec-color-light-primary-600);
-    margin: auto 0.5rem auto auto;
+    font-size: 1rem;
   }
 }
 </style>

@@ -1,16 +1,24 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <file-controls-group>
+  <file-controls-group class="file-controls-playback">
+    <file-controls-button
+      :icon="playBack"
+      v-show="false"
+    />
     <file-controls-button
       :class="{ 'flip-horizontal-ion-icon': ended }"
       :icon="playbackIcon"
+    />
+    <file-controls-button
+      :icon="playForward"
+      v-show="false"
     />
   </file-controls-group>
 </template>
 
 <script setup lang="ts">
-import { refresh, play, pause } from 'ionicons/icons';
+import { refresh, play, pause, playForward, playBack } from 'ionicons/icons';
 import { FileControlsButton, FileControlsGroup } from '@/components/viewers';
 import { computed } from 'vue';
 
@@ -27,4 +35,8 @@ const playbackIcon = computed((): string => {
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.file-controls-playback::after {
+  display: none !important;
+}
+</style>

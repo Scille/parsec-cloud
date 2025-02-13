@@ -2,26 +2,28 @@
 
 <template>
   <ion-button
-    class="file-controls-button button-medium"
-    size="default"
+    class="file-controls-button-container button-medium"
+    fill="clear"
   >
-    <ion-icon
-      class="file-controls-button-icon"
-      v-if="icon"
-      slot="start"
-      :icon="icon"
-    />
-    <ms-image
-      class="file-controls-button-icon"
-      v-if="!icon && image"
-      :image="image"
-    />
-    <span
-      class="file-controls-button-label"
-      v-if="label"
-    >
-      {{ $msTranslate(label) }}
-    </span>
+    <div class="file-controls-button">
+      <ion-icon
+        class="file-controls-button-icon"
+        v-if="icon"
+        slot="start"
+        :icon="icon"
+      />
+      <ms-image
+        class="file-controls-button-icon"
+        v-if="!icon && image"
+        :image="image"
+      />
+      <span
+        class="file-controls-button-label"
+        v-if="label"
+      >
+        {{ $msTranslate(label) }}
+      </span>
+    </div>
   </ion-button>
 </template>
 
@@ -37,36 +39,59 @@ defineProps<{
 </script>
 
 <style lang="scss" scoped>
-.file-controls-button {
-  --background: none !important;
-  --background-hover: none !important;
-  margin-inline: 0px;
-  margin-top: 0px;
-  margin-bottom: 0px;
-  --padding-top: 0;
-  --padding-end: 0;
-  --padding-bottom: 0;
-  --padding-start: 0;
-  height: 3em;
-  width: fit-content;
-  border-radius: 100%;
-  color: var(--parsec-color-light-primary-600);
-  opacity: 0.6;
-  scale: 1;
+.file-controls-button-container {
+  --background: none;
+  --background-hover: none;
+  border-radius: var(--parsec-radius-6);
+  min-height: 0;
   transition: all 0.2s ease-in-out;
+  height: fit-content;
+
+  &::part(native) {
+    margin: 0;
+    padding: 0;
+  }
+
+  .file-controls-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    height: 100%;
+    width: 100%;
+    color: var(--parsec-color-light-secondary-text);
+    padding: 0.25rem;
+
+    &-icon {
+      font-size: 1.25rem;
+      width: 1.25rem;
+      height: 1.25rem;
+      display: flex;
+      flex-grow: 1;
+      --fill-color: var(--parsec-color-light-secondary-text);
+    }
+  }
 
   &.button-disabled {
     opacity: 0.3;
   }
 
   &:hover {
-    scale: 1.1;
-    opacity: 1;
+    background: var(--parsec-color-light-secondary-background);
+    box-shadow: var(--parsec-shadow-soft);
+    color: var(--parsec-color-light-primary-400);
+
+    .file-controls-button-icon {
+      color: var(--parsec-color-light-primary-400);
+      --fill-color: var(--parsec-color-light-primary-400);
+    }
+
+    .file-controls-button-label {
+      color: var(--parsec-color-light-primary-400);
+    }
   }
 
-  &-icon,
-  &-label {
-    margin-inline: 0.625rem;
+  &:active {
+    box-shadow: none;
   }
 }
 </style>

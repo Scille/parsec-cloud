@@ -13,6 +13,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 0.125em;
+  gap: 1.5rem;
 }
 </style>

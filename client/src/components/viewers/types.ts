@@ -6,6 +6,7 @@ export interface FileControlsDropdownItemContent {
   label: Translatable;
   callback?: () => Promise<any>;
   icon?: string;
+  image?: string;
   children?: FileControlsDropdownItemContent[];
   isActive?: boolean;
   dismissPopover?: boolean;

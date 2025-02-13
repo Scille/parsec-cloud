@@ -3,11 +3,18 @@
 <template>
   <file-viewer-wrapper>
     <template #viewer>
-      <img
-        v-if="src.length"
-        ref="imgElement"
-        :src="src"
-      />
+      <div
+        class="image-viewer-container"
+        ref="imageViewerContainer"
+      >
+        <div class="image-viewer">
+          <img
+            v-if="src.length"
+            ref="imgElement"
+            :src="src"
+          />
+        </div>
+      </div>
     </template>
     <template #controls>
       <file-controls>
@@ -39,6 +46,7 @@ const src = ref('');
 const zoomControl = ref();
 const zoomLevel = ref(1);
 const imgElement = ref();
+const imageViewerContainer = ref();
 
 onMounted(async () => {
   src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
@@ -50,22 +58,36 @@ function onChange(value: number): void {
 }
 
 async function toggleFullScreen(): Promise<void> {
-  await imgElement.value?.requestFullscreen();
+  if (document.fullscreenElement) {
+    await document.exitFullscreen();
+    return;
+  }
+  await imageViewerContainer.value!.requestFullscreen();
 }
 </script>
 
 <style scoped lang="scss">
+.image-viewer-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+  background: var(--parsec-color-light-secondary-premiere);
+}
+.image-viewer {
+  display: flex;
+  width: fit-content;
+  height: fit-content;
+  padding: 2rem;
+}
+
 img {
   transform: scale(v-bind(zoomLevel));
   transition: transform ease-in-out 0.3s;
   max-width: 100%;
   max-height: 100%;
-
-  &:fullscreen {
-    padding: 5rem;
-    align-items: center;
-    background: var(--parsec-color-light-secondary-background);
-    object-fit: none;
-  }
+  box-shadow: var(--parsec-shadow-light);
 }
 </style>

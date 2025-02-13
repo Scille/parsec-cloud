@@ -286,9 +286,9 @@ async function toggleFullScreen(): Promise<void> {
 
 <style scoped lang="scss">
 .pdf-container {
-  background-color: grey;
+  background-color: var(--parsec-color-light-secondary-premiere);
   width: 100%;
-  max-height: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: start;
@@ -300,12 +300,6 @@ async function toggleFullScreen(): Promise<void> {
   & * {
     transition: all 0.3s ease-in-out;
   }
-
-  &:fullscreen {
-    align-items: center;
-    height: 100%;
-    background: var(--parsec-color-light-secondary-background);
-  }
 }
 
 .pdf-error {
@@ -316,7 +310,8 @@ async function toggleFullScreen(): Promise<void> {
 .canvas {
   display: block;
   margin: 0 auto;
-  background: white;
+  background: var(--parsec-color-light-secondary-white);
+  box-shadow: var(--parsec-shadow-light);
 
   &.error {
     border-left: 3px solid var(--parsec-color-light-danger-700);

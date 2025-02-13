@@ -35,6 +35,32 @@
             <ion-buttons class="file-viewer-topbar-buttons">
               <ion-button
                 class="file-viewer-topbar-buttons__item"
+                @click="showDetails"
+                v-if="isDesktop()"
+              >
+                <ion-icon :icon="informationCircle" />
+                {{ $msTranslate('fileViewers.details') }}
+              </ion-button>
+              <ion-button
+                class="file-viewer-topbar-buttons__item"
+                @click="copyPath(contentInfo.path)"
+                v-if="isWeb()"
+              >
+                <ion-icon :icon="link" />
+                {{ $msTranslate('fileViewers.copyLink') }}
+              </ion-button>
+              <ion-button
+                class="file-viewer-topbar-buttons__item"
+                @click="downloadFile(contentInfo.path)"
+              >
+                <ms-image
+                  :image="Download"
+                  class="file-icon download-icon"
+                />
+                {{ $msTranslate('fileViewers.download') }}
+              </ion-button>
+              <ion-button
+                class="file-viewer-topbar-buttons__item"
                 @click="openWithSystem(contentInfo.path)"
                 v-show="isDesktop() && !atDateTime"
               >
@@ -42,11 +68,10 @@
                 {{ $msTranslate('fileViewers.openWithDefault') }}
               </ion-button>
               <ion-button
-                class="file-viewer-topbar-buttons__item"
-                @click="showDetails"
+                v-show="false"
+                class="file-viewer-topbar-buttons__item toggle-menu"
               >
-                <ion-icon :icon="informationCircle" />
-                {{ $msTranslate('fileViewers.details') }}
+                {{ $msTranslate('fileViewers.hideMenu') }}
               </ion-button>
             </ion-buttons>
           </div>
@@ -72,7 +97,9 @@ import {
   Path,
   readFile,
   getSystemPath,
+  createReadStream,
   isDesktop,
+  isWeb,
   entryStatAt,
   openFileAt,
   readHistoryFile,
@@ -80,8 +107,8 @@ import {
   DEFAULT_READ_SIZE,
 } from '@/parsec';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
-import { informationCircle, open } from 'ionicons/icons';
-import { Base64, MsSpinner, MsImage, I18n } from 'megashark-lib';
+import { link, informationCircle, open } from 'ionicons/icons';
+import { Base64, MsSpinner, MsImage, I18n, Download } from 'megashark-lib';
 import { ref, Ref, type Component, inject, onMounted, shallowRef, onUnmounted } from 'vue';
 import { ImageViewer, VideoViewer, SpreadsheetViewer, DocumentViewer, AudioViewer, TextViewer, PdfViewer } from '@/views/viewers';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -91,7 +118,9 @@ import { FileContentInfo } from '@/views/viewers/utils';
 import { Env } from '@/services/environment';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
+import { copyPathLinkToClipboard } from '@/components/files';
 import { FileDetailsModal } from '@/views/files';
+import { showSaveFilePicker } from 'native-file-system-adapter';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const viewerComponent: Ref<Component | null> = shallowRef(null);
@@ -286,6 +315,15 @@ async function openWithSystem(path: FsPath): Promise<boolean> {
   }
 }
 
+async function copyPath(path: FsPath): Promise<void> {
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    window.electronAPI.log('error', 'Failed to retrieve workspace handle');
+    return;
+  }
+  copyPathLinkToClipboard(path, workspaceHandle, informationManager);
+}
+
 async function showDetails(): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
@@ -324,35 +362,56 @@ async function onClick(event: MouseEvent): Promise<void> {
     }
   }
 }
+
+async function downloadFile(path: FsPath): Promise<void> {
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    window.electronAPI.log('error', 'Failed to retrieve workspace handle');
+    return;
+  }
+
+  if (!contentInfo.value) {
+    window.electronAPI.log('error', 'No content info when trying to download a file');
+    return;
+  }
+
+  try {
+    const saveHandle = await showSaveFilePicker({
+      _preferPolyfill: false,
+      suggestedName: contentInfo.value.fileName,
+    });
+
+    const stream = await createReadStream(workspaceHandle, path);
+    await stream.pipeTo(await saveHandle.createWritable());
+  } catch (e: any) {
+    window.electronAPI.log('error', `Failed to download file: ${e.toString()}`);
+  }
+}
 </script>
 
 <style scoped lang="scss">
 .container {
   height: 100%;
-  height: -webkit-fill-available;
-  height: stretch;
-  margin: 0 1em 1em 1em;
-  padding: 1.5em;
-  border-radius: var(--parsec-radius-12);
-  background-color: var(--parsec-color-light-secondary-background);
+  background-color: var(--parsec-color-light-secondary-premiere);
 
   .file-viewer {
     height: 100%;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 1.5rem;
 
     &-topbar {
       display: flex;
       align-items: center;
       gap: 1rem;
-      padding-bottom: 1rem;
+      padding: 1rem 2rem;
       border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+      background: var(--parsec-color-light-secondary-white);
 
       .file-icon {
-        width: 1.5rem;
-        height: 1.5rem;
+        width: 2rem;
+        height: 2rem;
+        margin-left: 0.5rem;
       }
 
       &__title {
@@ -360,46 +419,79 @@ async function onClick(event: MouseEvent): Promise<void> {
         flex-direction: column;
         gap: 0.25rem;
 
+        .title-h3 {
+          color: var(--parsec-color-light-secondary-text);
+        }
+
         .subtitles-sm {
           color: var(--parsec-color-light-secondary-grey);
         }
       }
 
-      .title-h3 {
-        color: var(--parsec-color-light-primary-700);
-      }
-
       &-buttons {
         margin-left: auto;
         display: flex;
-        gap: 1rem;
+        gap: 0.5rem;
 
         &:hover {
           border-color: var(--parsec-color-light-primary-100);
         }
 
         &__item {
-          background: var(--parsec-color-light-primary-100);
-          color: var(--parsec-color-light-primary-600);
-          border-radius: var(--parsec-radius-32);
+          background: none;
+          color: var(--parsec-color-light-secondary-text);
+          border-radius: var(--parsec-radius-8);
           transition: all 150ms linear;
 
           &::part(native) {
             --background-hover: none;
-            border-radius: var(--parsec-radius-32);
-            padding: 0.5rem 1rem;
+            padding: 0.75rem 1.125rem;
           }
 
           &:hover {
-            background: var(--parsec-color-light-primary-200);
-            color: var(--parsec-color-light-primary-700);
-            scale: 1.01;
-            box-shadow: var(--parsec-shadow-light);
+            background: var(--parsec-color-light-secondary-medium);
+            color: var(--parsec-color-light-secondary-text);
           }
 
           ion-icon {
-            font-size: 1.25rem;
+            font-size: 1rem;
             margin-right: 0.5rem;
+          }
+        }
+
+        .toggle-menu {
+          position: relative;
+          margin-left: 0.5rem;
+
+          &::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -0.5rem;
+            transform: translateY(-50%);
+            width: 1px;
+            height: 1.5rem;
+            background: var(--parsec-color-light-secondary-disabled);
+          }
+
+          &::after {
+            content: '';
+            position: absolute;
+            left: 1.125rem;
+            bottom: 0.25rem;
+            width: 0;
+            height: 1px;
+            background: var(--parsec-color-light-secondary-text);
+            transition: all 150ms linear;
+          }
+
+          &:hover {
+            background: none;
+
+            &::after {
+              background: var(--parsec-color-light-secondary-text);
+              width: calc(100% - 2.25rem);
+            }
           }
         }
       }
