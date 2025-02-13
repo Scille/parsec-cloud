@@ -43,8 +43,6 @@ defineProps<{
 <style scoped lang="scss">
 .file-viewer-wrapper {
   height: 100%;
-  height: -webkit-fill-available;
-  height: stretch;
   display: flex;
   justify-content: center;
   align-items: center;

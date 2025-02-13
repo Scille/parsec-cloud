@@ -115,7 +115,7 @@ msTest('PDF viewer: scroll', async ({ documents }) => {
   await expect(secondPage).not.toBeInViewport();
   await expect(thirdPage).toBeInViewport();
   await expect(fourthPage).not.toBeInViewport();
-  await expect(paginationElement).toHaveText('Page 4 / 4');
+  await expect(paginationElement).toHaveText('Page 3 / 4');
 
   await secondPage.scrollIntoViewIfNeeded();
   await expect(firstPage).not.toBeInViewport();
@@ -139,11 +139,11 @@ msTest('PDF viewer: zoom', async ({ documents }) => {
   const bottomBar = documents.locator('.file-viewer-bottombar');
 
   // Zoom
-  const zoom = bottomBar.locator('.file-controls-zoom');
+  const zoom = bottomBar.locator('.zoom-controls');
   await expect(zoom).toHaveCount(1);
-  const zoomReset = zoom.locator('.file-controls-button').nth(0);
-  const zoomOut = zoom.locator('.file-controls-button').nth(1);
-  const zoomIn = zoom.locator('.file-controls-button').nth(2);
+  const zoomReset = bottomBar.locator('#reset-zoom');
+  const zoomOut = zoom.locator('.file-controls-button').nth(0);
+  const zoomIn = zoom.locator('.file-controls-button').nth(1);
   const zoomInput = zoom.locator('.file-controls-input');
 
   let initialHeight = 0;
@@ -220,9 +220,10 @@ msTest('PDF viewer: progressive loading', async ({ documents }) => {
   await openFileType(documents, 'pdf');
   const wrapper = documents.locator('.file-viewer-wrapper');
   const bottomBar = documents.locator('.file-viewer-bottombar');
-  const zoom = bottomBar.locator('.file-controls-zoom');
-  const zoomReset = zoom.locator('.file-controls-button').nth(0);
-  const zoomIn = zoom.locator('.file-controls-button').nth(2);
+  const zoom = bottomBar.locator('.zoom-controls');
+  await expect(zoom).toHaveCount(1);
+  const zoomReset = bottomBar.locator('#reset-zoom');
+  const zoomIn = zoom.locator('.file-controls-button').nth(1);
   const pagination = bottomBar.locator('.file-controls-pagination');
   const paginationElement = pagination.locator('.file-controls-input');
   const pages = wrapper.locator('.pdf-container').locator('canvas');

@@ -23,12 +23,19 @@ defineProps<{
 .file-viewer-background {
   height: 100%;
   width: 100%;
+  max-height: 37.5rem;
+  max-width: 75rem;
+  padding: 2rem;
+  display: flex;
 
   img {
     height: 100%;
+    margin: auto;
     width: 100%;
-    object-fit: cover;
     border-radius: var(--parsec-radius-12);
+    overflow: hidden;
+    box-shadow: var(--parsec-shadow-light);
+    object-fit: cover;
   }
 
   &-icon {
@@ -37,8 +44,8 @@ defineProps<{
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 7vw;
-    max-width: 8rem;
-    max-height: 8rem;
+    max-width: 5rem;
+    max-height: 5rem;
     min-width: 3rem;
     min-height: 3rem;
     padding: 1vw;

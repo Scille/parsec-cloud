@@ -1778,8 +1778,12 @@
         "date": "Preview date:"
     },
     "fileViewers": {
-        "openWithDefault": "Open with default application",
+        "openWithDefault": "Open",
         "details": "Details",
+        "copyLink": "Copy link",
+        "download": "Download",
+        "hideMenu": "Hide menu",
+        "showMenu": "Show menu",
         "openingFile": "Opening file...",
         "fileTooBig": "File is too big to be opened using a viewer.",
         "unknownFileType": "Cannot preview this file type.",
