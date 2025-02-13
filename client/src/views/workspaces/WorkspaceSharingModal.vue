@@ -25,9 +25,14 @@
           class="modal-head-content__search"
           v-model="search"
           :placeholder="'WorkspaceSharing.searchPlaceholder'"
-          @change="updateSelectedUsers()"
         />
         <div class="modal-head-content-right">
+          <ion-text
+            class="selected-counter"
+            v-show="showCheckboxes && selectedUsers.length > 0"
+          >
+            {{ $msTranslate({ key: 'WorkspaceSharing.batchSharing.counter', data: { count: selectedUsers.length } }) }}
+          </ion-text>
           <ion-text
             id="batch-activate-button"
             @click="onBatchSharingActivate()"
@@ -42,7 +47,7 @@
             ref="dropdownRef"
             class="dropdown"
             :options="options"
-            :disabled="!someUserSelected"
+            :disabled="selectedUsers.length === 0"
             :label="'WorkspaceSharing.batchSharing.chooseRole'"
             :appearance="MsAppearance.Outline"
             @change="onBatchRoleChange($event.option)"
@@ -126,7 +131,8 @@
               />
               <workspace-user-role
                 class="workspace-user-role"
-                :disabled="isSelectDisabled(entry.role)"
+                :class="showCheckboxes ? 'current-user' : ''"
+                :disabled="isSelectDisabled(entry.role) || showCheckboxes"
                 :user="entry.user"
                 :role="entry.role"
                 :client-profile="ownProfile"
@@ -158,7 +164,8 @@
               />
               <workspace-user-role
                 class="workspace-user-role"
-                :disabled="isSelectDisabled(entry.role)"
+                :class="showCheckboxes ? 'current-user' : ''"
+                :disabled="isSelectDisabled(entry.role) || showCheckboxes"
                 :user="entry.user"
                 :role="entry.role"
                 :client-profile="ownProfile"
@@ -231,16 +238,6 @@ const filteredUserRoles = computed(() => {
   });
 });
 
-const filteredOutUserRoles = computed(() => {
-  const searchString = search.value.toLocaleLowerCase();
-  return userRoles.value.filter((userRole: UserRole) => {
-    return (
-      !userRole.user.humanHandle.email.toLocaleLowerCase().includes(searchString) &&
-      !userRole.user.humanHandle.label.toLocaleLowerCase().includes(searchString)
-    );
-  });
-});
-
 const filteredSharedUserRoles = computed(() => {
   return filteredUserRoles.value
     .filter((userRole: UserRole) => userRole.role !== null)
@@ -253,9 +250,8 @@ const filteredNotSharedUserRoles = computed(() => {
     .sort((item1, item2) => item1.user.humanHandle.label.localeCompare(item2.user.humanHandle.label));
 });
 
-const selectedUsers = computed(() => filteredUserRoles.value.filter((user) => user.isSelected === true));
+const selectedUsers = computed(() => userRoles.value.filter((user) => user.isSelected === true));
 const countSharedUsers = computed(() => filteredSharedUserRoles.value.length + (clientInfo.value ? 1 : 0));
-const someUserSelected = computed(() => filteredUserRoles.value.some((user) => user.isSelected === true));
 const selectableFilteredMembers = computed(() => {
   return filteredSharedUserRoles.value.filter((user) => user.role && canSelectUser(user.user.profile, user.role));
 });
@@ -268,6 +264,7 @@ const batchSharingEnabled = computed(() => {
     filteredNotSharedUserRoles.value.length + selectableFilteredMembers.value.length > 1
   );
 });
+
 function currentUserMatchSearch(): boolean {
   const searchString = search.value.toLocaleLowerCase();
   if (!clientInfo.value) {
@@ -294,15 +291,6 @@ function isSelectDisabled(role: WorkspaceRole | null): boolean {
   }
 
   return false;
-}
-
-function updateSelectedUsers(): void {
-  if (!showCheckboxes.value) {
-    return;
-  }
-  for (const userRole of filteredOutUserRoles.value) {
-    userRole.isSelected = false;
-  }
 }
 
 async function onBatchSharingActivate(): Promise<void> {
@@ -620,6 +608,13 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
         background: var(--parsec-color-light-secondary-medium);
       }
     }
+  }
+
+  .selected-counter {
+    color: var(--parsec-color-light-secondary-grey);
+    font-size: 0.9em;
+    margin: auto;
+    text-align: center;
   }
 }
 
