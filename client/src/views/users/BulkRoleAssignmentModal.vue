@@ -52,7 +52,7 @@
 
       <div
         class="modal-content"
-        v-if="currentPage === Steps.Summary && targetUser"
+        v-if="[Steps.Summary, Steps.End].includes(currentPage) && targetUser"
       >
         <div class="chosen-users">
           <user-avatar-name
@@ -64,13 +64,17 @@
             :icon="arrowForward"
             class="arrow-icon"
           />
-          <div class="chosen-users-target">
+          <div
+            class="chosen-users-target"
+            :class="currentPage === Steps.Summary ? 'chosen-users-target-active' : ''"
+          >
             <user-avatar-name
               :user-avatar="targetUser.humanHandle.label"
               :user-name="targetUser.humanHandle.label"
             />
             <ion-icon
               :icon="pencil"
+              v-show="currentPage !== Steps.End"
               @click="currentPage = Steps.SelectUser"
             />
           </div>
@@ -131,6 +135,7 @@
             fill="clear"
             size="default"
             @click="cancel"
+            v-if="currentPage !== Steps.End"
           >
             {{ $msTranslate('MyProfilePage.cancelButton') }}
           </ion-button>
@@ -310,15 +315,19 @@ async function assignNewRoles(): Promise<void> {
 }
 
 async function nextStep(): Promise<void> {
-  if (currentPage.value === Steps.SelectUser) {
-    currentPage.value = Steps.Processing;
-    await findWorkspaces();
-  } else if (currentPage.value === Steps.Summary) {
-    if (roleUpdates.value.length === 0 || finished.value) {
-      await modalController.dismiss(null, MsModalResult.Confirm);
-    } else {
+  switch (currentPage.value) {
+    case Steps.SelectUser:
+      currentPage.value = Steps.Processing;
+      await findWorkspaces();
+      break;
+    case Steps.Summary:
       await assignNewRoles();
-    }
+      if (roleUpdates.value.length === 0 || finished.value) {
+        currentPage.value = Steps.End;
+      }
+      break;
+    case Steps.End:
+      await modalController.dismiss(null, MsModalResult.Confirm);
   }
 }
 
@@ -328,16 +337,12 @@ async function cancel(): Promise<void> {
 
 function getNextButtonText(): string {
   switch (currentPage.value) {
-    case Steps.SelectUser: {
+    case Steps.SelectUser:
       return 'UsersPage.assignRoles.select';
-    }
-    case Steps.Summary: {
-      if (roleUpdates.value.length === 0 || finished.value) {
-        return 'UsersPage.assignRoles.close';
-      } else {
-        return 'UsersPage.assignRoles.okButton';
-      }
-    }
+    case Steps.Summary:
+      return 'UsersPage.assignRoles.okButton';
+    case Steps.End:
+      return 'UsersPage.assignRoles.close';
     default:
       return '';
   }
@@ -365,7 +370,7 @@ function getNextButtonText(): string {
     flex-grow: 1;
   }
 
-  .chosen-users-target {
+  .chosen-users-target-active {
     justify-content: space-between;
     cursor: pointer;
     transition: background 150ms ease-in-out;
