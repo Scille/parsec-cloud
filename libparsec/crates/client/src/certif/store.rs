@@ -1214,6 +1214,31 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        pub async fn get_sequester_revoked_service_certificates(
+            &mut self,
+            up_to: UpTo,
+        ) -> anyhow::Result<Vec<Arc<SequesterRevokedServiceCertificate>>> {
+            let query = GetCertificateQuery::sequester_revoked_service_certificates();
+            let maybe_authority = self.get_sequester_authority_certificate().await?;
+            let authority = match maybe_authority {
+                Some(authority) => authority,
+                // Not a sequestered organization
+                None => return Ok(vec![]),
+            };
+            let items = self
+                .storage
+                .get_multiple_certificates_encrypted(query, up_to, None, None)
+                .await?;
+            get_multiple_sequester_authority_signed_certificates_from_encrypted(
+                &self.store,
+                &authority.verify_key_der,
+                items,
+                SequesterRevokedServiceCertificate::verify_and_load,
+            )
+            .await
+        }
+
+        #[allow(unused)]
         pub async fn get_sequester_revoked_service_certificate(
             &mut self,
             up_to: UpTo,
