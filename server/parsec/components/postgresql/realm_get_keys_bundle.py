@@ -50,9 +50,13 @@ my_keys_bundle AS (
 my_keys_bundle_access AS (
     SELECT access
     FROM realm_keys_bundle_access
+    LEFT JOIN realm_keys_bundle ON realm_keys_bundle_access.realm_keys_bundle = realm_keys_bundle._id
+    LEFT JOIN realm_user_role ON realm_keys_bundle_access.from_sharing = realm_user_role._id
     WHERE
-        realm_keys_bundle = (SELECT _id FROM my_keys_bundle)
-        AND user_ = $user_internal_id
+        realm_keys_bundle._id = (SELECT _id FROM my_keys_bundle)
+        AND realm_keys_bundle_access.user_ = $user_internal_id
+    ORDER BY COALESCE(realm_user_role.certified_on, realm_keys_bundle.certified_on) DESC
+    LIMIT 1
 )
 
 SELECT
@@ -96,9 +100,13 @@ my_keys_bundle AS (
 my_keys_bundle_access AS (
     SELECT access
     FROM realm_keys_bundle_access
+    LEFT JOIN realm_keys_bundle ON realm_keys_bundle_access.realm_keys_bundle = realm_keys_bundle._id
+    LEFT JOIN realm_user_role ON realm_keys_bundle_access.from_sharing = realm_user_role._id
     WHERE
-        realm_keys_bundle = (SELECT _id FROM my_keys_bundle)
-        AND user_ = $user_internal_id
+        realm_keys_bundle._id = (SELECT _id FROM my_keys_bundle)
+        AND realm_keys_bundle_access.user_ = $user_internal_id
+    ORDER BY COALESCE(realm_user_role.certified_on, realm_keys_bundle.certified_on) DESC
+    LIMIT 1
 )
 
 SELECT

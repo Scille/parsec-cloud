@@ -110,18 +110,15 @@ new_realm_keys_bundle_access AS (
         realm,
         user_,
         realm_keys_bundle,
-        access
+        access,
+        from_sharing
     ) VALUES (
         $realm_internal_id,
         $recipient_internal_id,
         $keys_bundle_internal_id,
-        $keys_bundle_access
+        $keys_bundle_access,
+        (SELECT _id FROM new_realm_user_role)
     )
-    -- Overwriting the previous keys bundle access, this way a corrupted access
-    -- can be corrected by re-sharing.
-    ON CONFLICT (realm, user_, realm_keys_bundle) DO
-        UPDATE SET
-            access = excluded.access
 ),
 
 updated_realm_topic AS (
