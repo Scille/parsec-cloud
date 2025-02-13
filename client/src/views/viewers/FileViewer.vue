@@ -52,6 +52,7 @@
               <ion-button
                 class="file-viewer-topbar-buttons__item"
                 @click="downloadFile(contentInfo.path)"
+                v-if="isWeb()"
               >
                 <ms-image
                   :image="Download"
