@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
@@ -85,8 +86,8 @@ pub enum InvalidManifestError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifValidateManifestError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -155,7 +156,9 @@ pub(super) async fn validate_user_manifest(
         })
         .await
         .map_err(|err| match err {
-            CertifForReadWithRequirementsError::Offline => CertifValidateManifestError::Offline,
+            CertifForReadWithRequirementsError::Offline(e) => {
+                CertifValidateManifestError::Offline(e)
+            }
             CertifForReadWithRequirementsError::Stopped => CertifValidateManifestError::Stopped,
             CertifForReadWithRequirementsError::InvalidCertificate(err) => {
                 CertifValidateManifestError::InvalidCertificate(err)
@@ -206,7 +209,7 @@ pub(super) async fn validate_workspace_manifest(
             .await
             .map_err(|err| match err {
                 CertifDecryptForRealmError::Stopped => CertifValidateManifestError::Stopped,
-                CertifDecryptForRealmError::Offline => CertifValidateManifestError::Offline,
+                CertifDecryptForRealmError::Offline(e) => CertifValidateManifestError::Offline(e),
                 CertifDecryptForRealmError::NotAllowed => CertifValidateManifestError::NotAllowed,
                 CertifDecryptForRealmError::KeyNotFound => {
                     CertifValidateManifestError::InvalidManifest(Box::new(
@@ -271,7 +274,9 @@ pub(super) async fn validate_workspace_manifest(
         })
         .await
         .map_err(|err| match err {
-            CertifForReadWithRequirementsError::Offline => CertifValidateManifestError::Offline,
+            CertifForReadWithRequirementsError::Offline(e) => {
+                CertifValidateManifestError::Offline(e)
+            }
             CertifForReadWithRequirementsError::Stopped => CertifValidateManifestError::Stopped,
             CertifForReadWithRequirementsError::InvalidCertificate(err) => {
                 CertifValidateManifestError::InvalidCertificate(err)
@@ -321,7 +326,7 @@ pub(super) async fn validate_child_manifest(
             .await
             .map_err(|err| match err {
                 CertifDecryptForRealmError::Stopped => CertifValidateManifestError::Stopped,
-                CertifDecryptForRealmError::Offline => CertifValidateManifestError::Offline,
+                CertifDecryptForRealmError::Offline(e) => CertifValidateManifestError::Offline(e),
                 CertifDecryptForRealmError::NotAllowed => CertifValidateManifestError::NotAllowed,
                 CertifDecryptForRealmError::KeyNotFound => {
                     CertifValidateManifestError::InvalidManifest(Box::new(
@@ -386,7 +391,9 @@ pub(super) async fn validate_child_manifest(
         })
         .await
         .map_err(|err| match err {
-            CertifForReadWithRequirementsError::Offline => CertifValidateManifestError::Offline,
+            CertifForReadWithRequirementsError::Offline(e) => {
+                CertifValidateManifestError::Offline(e)
+            }
             CertifForReadWithRequirementsError::Stopped => CertifValidateManifestError::Stopped,
             CertifForReadWithRequirementsError::InvalidCertificate(err) => {
                 CertifValidateManifestError::InvalidCertificate(err)

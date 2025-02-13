@@ -2,6 +2,7 @@
 
 use std::{collections::HashMap, sync::Arc};
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::workspace::{PopulateManifestOutcome, UpdateManifestData};
 use libparsec_types::prelude::*;
 
@@ -217,8 +218,8 @@ pub(super) async fn populate_cache_from_local_storage(
 
 #[derive(Debug, thiserror::Error)]
 pub(super) enum PopulateCacheFromLocalStorageOrServerError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -286,8 +287,8 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
                 ServerFetchManifestError::Stopped => {
                     PopulateCacheFromLocalStorageOrServerError::Stopped
                 }
-                ServerFetchManifestError::Offline => {
-                    PopulateCacheFromLocalStorageOrServerError::Offline
+                ServerFetchManifestError::Offline(e) => {
+                    PopulateCacheFromLocalStorageOrServerError::Offline(e)
                 }
                 ServerFetchManifestError::VlobNotFound => {
                     // This is unexpected: we got an entry ID from a parent folder/workspace

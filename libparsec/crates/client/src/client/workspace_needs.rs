@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use super::Client;
@@ -11,8 +12,8 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientProcessWorkspacesNeedsError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
@@ -93,7 +94,7 @@ async fn process_workspace_needs(
                     // Valid errors
 
                     CertifShareRealmError::Stopped => return Err(ClientProcessWorkspacesNeedsError::Stopped),
-                    CertifShareRealmError::Offline => return Err(ClientProcessWorkspacesNeedsError::Offline),
+                    CertifShareRealmError::Offline(e) => return Err(ClientProcessWorkspacesNeedsError::Offline(e)),
                     // A concurrent operation has changed our rights to the workspace,
                     // hence we can no longer process its needs !
                     CertifShareRealmError::AuthorNotAllowed => return Ok(()),
@@ -153,7 +154,7 @@ async fn process_workspace_needs(
             .await
             .map_err(|err| match err {
                 CertifPollServerError::Stopped => ClientProcessWorkspacesNeedsError::Stopped,
-                CertifPollServerError::Offline => ClientProcessWorkspacesNeedsError::Offline,
+                CertifPollServerError::Offline(e) => ClientProcessWorkspacesNeedsError::Offline(e),
                 CertifPollServerError::InvalidCertificate(err) => {
                     ClientProcessWorkspacesNeedsError::InvalidCertificate(err)
                 }
@@ -175,8 +176,8 @@ async fn process_workspace_needs(
             Ok(_) => (),
             Err(err) => match err {
                 // Valid errors
-                CertifRotateRealmKeyError::Offline => {
-                    return Err(ClientProcessWorkspacesNeedsError::Offline)
+                CertifRotateRealmKeyError::Offline(e) => {
+                    return Err(ClientProcessWorkspacesNeedsError::Offline(e))
                 }
                 CertifRotateRealmKeyError::Stopped => {
                     return Err(ClientProcessWorkspacesNeedsError::Stopped)

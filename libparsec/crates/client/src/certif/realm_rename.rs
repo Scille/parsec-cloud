@@ -19,8 +19,8 @@ use crate::{
 pub enum CertifRenameRealmError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Unknown realm ID")]
     UnknownRealm,
     #[error("Not allowed")]
@@ -40,16 +40,6 @@ pub enum CertifRenameRealmError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for CertifRenameRealmError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 impl From<CertifStoreError> for CertifRenameRealmError {
@@ -89,7 +79,7 @@ async fn rename_realm_internal(
             .await
             .map_err(|e| match e {
                 CertifEncryptForRealmError::Stopped => CertifRenameRealmError::Stopped,
-                CertifEncryptForRealmError::Offline => CertifRenameRealmError::Offline,
+                CertifEncryptForRealmError::Offline(e) => CertifRenameRealmError::Offline(e),
                 CertifEncryptForRealmError::NotAllowed => CertifRenameRealmError::AuthorNotAllowed,
                 CertifEncryptForRealmError::NoKey => CertifRenameRealmError::NoKey,
                 CertifEncryptForRealmError::InvalidKeysBundle(err) => {
@@ -144,7 +134,7 @@ async fn rename_realm_internal(
                     .await
                     .map_err(|e| match e {
                         CertifPollServerError::Stopped => CertifRenameRealmError::Stopped,
-                        CertifPollServerError::Offline => CertifRenameRealmError::Offline,
+                        CertifPollServerError::Offline(e) => CertifRenameRealmError::Offline(e),
                         CertifPollServerError::InvalidCertificate(err) => {
                             CertifRenameRealmError::InvalidCertificate(err)
                         }

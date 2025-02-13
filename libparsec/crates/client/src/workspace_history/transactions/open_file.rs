@@ -13,8 +13,8 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryOpenFileError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -35,15 +35,6 @@ pub enum WorkspaceHistoryOpenFileError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for WorkspaceHistoryOpenFileError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
-}
-
 pub async fn open_file(
     ops: &WorkspaceHistoryOps,
     at: DateTime,
@@ -54,8 +45,8 @@ pub async fn open_file(
         .resolve_path(at, &path)
         .await
         .map_err(|err| match err {
-            WorkspaceHistoryStoreResolvePathError::Offline => {
-                WorkspaceHistoryOpenFileError::Offline
+            WorkspaceHistoryStoreResolvePathError::Offline(e) => {
+                WorkspaceHistoryOpenFileError::Offline(e)
             }
             WorkspaceHistoryStoreResolvePathError::Stopped => {
                 WorkspaceHistoryOpenFileError::Stopped
@@ -109,7 +100,9 @@ pub async fn open_file_by_id(
         .get_entry(at, entry_id)
         .await
         .map_err(|err| match err {
-            WorkspaceHistoryStoreGetEntryError::Offline => WorkspaceHistoryOpenFileError::Offline,
+            WorkspaceHistoryStoreGetEntryError::Offline(e) => {
+                WorkspaceHistoryOpenFileError::Offline(e)
+            }
             WorkspaceHistoryStoreGetEntryError::Stopped => WorkspaceHistoryOpenFileError::Stopped,
             WorkspaceHistoryStoreGetEntryError::EntryNotFound => {
                 WorkspaceHistoryOpenFileError::EntryNotFound

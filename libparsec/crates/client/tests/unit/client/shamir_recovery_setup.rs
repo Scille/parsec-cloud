@@ -89,7 +89,7 @@ async fn offline(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, CertifSetupShamirRecoveryError::Offline);
+    p_assert_matches!(err, CertifSetupShamirRecoveryError::Offline(_));
 }
 
 #[parsec_test(testbed = "coolorg")]

@@ -119,7 +119,7 @@ async fn offline(env: &TestbedEnv) {
             .get_workspace_manifest_v1_timestamp()
             .await
             .unwrap_err(),
-        WorkspaceHistoryGetWorkspaceManifestV1TimestampError::Offline
+        WorkspaceHistoryGetWorkspaceManifestV1TimestampError::Offline(_)
     );
 }
 

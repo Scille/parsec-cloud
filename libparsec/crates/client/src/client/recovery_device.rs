@@ -41,7 +41,7 @@ pub async fn export_recovery_device(
         .await
         .map_err(|e| match e {
             CertifPollServerError::Stopped => ClientExportRecoveryDeviceError::Stopped,
-            CertifPollServerError::Offline => ClientExportRecoveryDeviceError::Offline,
+            CertifPollServerError::Offline(e) => ClientExportRecoveryDeviceError::Offline(e),
             CertifPollServerError::InvalidCertificate(err) => {
                 ClientExportRecoveryDeviceError::InvalidCertificate(err)
             }
@@ -56,8 +56,8 @@ pub async fn export_recovery_device(
 pub enum ClientExportRecoveryDeviceError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 
@@ -76,7 +76,7 @@ impl From<RegisterNewDeviceError> for ClientExportRecoveryDeviceError {
     fn from(value: RegisterNewDeviceError) -> Self {
         match value {
             RegisterNewDeviceError::Stopped => ClientExportRecoveryDeviceError::Stopped,
-            RegisterNewDeviceError::Offline => ClientExportRecoveryDeviceError::Offline,
+            RegisterNewDeviceError::Offline(e) => ClientExportRecoveryDeviceError::Offline(e),
             RegisterNewDeviceError::Internal(error) => {
                 ClientExportRecoveryDeviceError::Internal(error)
             }
@@ -102,8 +102,8 @@ impl From<RegisterNewDeviceError> for ClientExportRecoveryDeviceError {
 pub enum ImportRecoveryDeviceError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 
@@ -146,7 +146,7 @@ impl From<RegisterNewDeviceError> for ImportRecoveryDeviceError {
     fn from(value: RegisterNewDeviceError) -> Self {
         match value {
             RegisterNewDeviceError::Stopped => ImportRecoveryDeviceError::Stopped,
-            RegisterNewDeviceError::Offline => ImportRecoveryDeviceError::Offline,
+            RegisterNewDeviceError::Offline(e) => ImportRecoveryDeviceError::Offline(e),
             RegisterNewDeviceError::Internal(error) => ImportRecoveryDeviceError::Internal(error),
             RegisterNewDeviceError::TimestampOutOfBallpark {
                 server_timestamp,
@@ -245,8 +245,8 @@ pub(crate) fn generate_new_device_certificates(
 pub enum RegisterNewDeviceError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
@@ -258,15 +258,6 @@ pub enum RegisterNewDeviceError {
     },
     #[error(transparent)]
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
-}
-
-impl From<ConnectionError> for RegisterNewDeviceError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 #[derive(Debug)]

@@ -147,7 +147,7 @@ async fn offline(env: &TestbedEnv) {
             .stat_entry_by_id(at, wksp1_id)
             .await
             .unwrap_err(),
-        WorkspaceHistoryStatEntryError::Offline
+        WorkspaceHistoryStatEntryError::Offline(_)
     );
 }
 

@@ -42,8 +42,8 @@ impl WorkspaceHistoryEntryStat {
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryStatEntryError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -62,15 +62,6 @@ pub enum WorkspaceHistoryStatEntryError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for WorkspaceHistoryStatEntryError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
-}
-
 pub(crate) async fn stat_entry_by_id(
     ops: &WorkspaceHistoryOps,
     at: DateTime,
@@ -81,7 +72,9 @@ pub(crate) async fn stat_entry_by_id(
         .get_entry(at, entry_id)
         .await
         .map_err(|err| match err {
-            WorkspaceHistoryStoreGetEntryError::Offline => WorkspaceHistoryStatEntryError::Offline,
+            WorkspaceHistoryStoreGetEntryError::Offline(e) => {
+                WorkspaceHistoryStatEntryError::Offline(e)
+            }
             WorkspaceHistoryStoreGetEntryError::Stopped => WorkspaceHistoryStatEntryError::Stopped,
             WorkspaceHistoryStoreGetEntryError::EntryNotFound => {
                 WorkspaceHistoryStatEntryError::EntryNotFound
@@ -137,8 +130,8 @@ pub(crate) async fn stat_entry(
         .resolve_path(at, path)
         .await
         .map_err(|err| match err {
-            WorkspaceHistoryStoreResolvePathError::Offline => {
-                WorkspaceHistoryStatEntryError::Offline
+            WorkspaceHistoryStoreResolvePathError::Offline(e) => {
+                WorkspaceHistoryStatEntryError::Offline(e)
             }
             WorkspaceHistoryStoreResolvePathError::Stopped => {
                 WorkspaceHistoryStatEntryError::Stopped

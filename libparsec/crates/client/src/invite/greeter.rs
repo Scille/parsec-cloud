@@ -28,23 +28,14 @@ pub enum InvitationEmailSentStatus {
 
 #[derive(Debug, thiserror::Error)]
 pub enum NewUserInvitationError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Not allowed to invite a user")]
     NotAllowed,
     #[error("A non-revoked user already exists with this email")]
     AlreadyMember,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for NewUserInvitationError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub async fn new_user_invitation(
@@ -89,19 +80,10 @@ pub async fn new_user_invitation(
 
 #[derive(Debug, thiserror::Error)]
 pub enum NewDeviceInvitationError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for NewDeviceInvitationError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub async fn new_device_invitation(
@@ -140,23 +122,14 @@ pub async fn new_device_invitation(
 
 #[derive(Debug, thiserror::Error)]
 pub enum NewShamirRecoveryInvitationError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Author not part of the user's current recipients")]
     NotAllowed,
     #[error("Provided user not found")]
     UserNotFound,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for NewShamirRecoveryInvitationError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub async fn new_shamir_recovery_invitation(
@@ -201,8 +174,8 @@ pub async fn new_shamir_recovery_invitation(
 
 #[derive(Debug, thiserror::Error)]
 pub enum CancelInvitationError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Invitation not found")]
     NotFound,
     #[error("Author not allowed")]
@@ -213,15 +186,6 @@ pub enum CancelInvitationError {
     Completed,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for CancelInvitationError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub async fn cancel_invitation(
@@ -251,19 +215,10 @@ pub async fn cancel_invitation(
 
 #[derive(Debug, thiserror::Error)]
 pub enum ListInvitationsError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for ListInvitationsError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub use authenticated_cmds::latest::invite_list::InviteListItem;
@@ -285,8 +240,8 @@ pub async fn list_invitations(
 
 #[derive(Debug, thiserror::Error)]
 pub enum GreetInProgressError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Invitation not found")]
     NotFound,
     #[error("Invitation already used or cancelled")]
@@ -326,15 +281,6 @@ pub enum GreetInProgressError {
     Cancelled,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for GreetInProgressError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 // Cancel greeting attempt helper

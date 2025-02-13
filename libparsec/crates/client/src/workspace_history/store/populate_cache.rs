@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError};
@@ -11,8 +12,8 @@ use super::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum PopulateManifestCacheError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -34,7 +35,7 @@ pub enum PopulateManifestCacheError {
 impl From<DataAccessFetchManifestError> for PopulateManifestCacheError {
     fn from(err: DataAccessFetchManifestError) -> Self {
         match err {
-            DataAccessFetchManifestError::Offline => PopulateManifestCacheError::Offline,
+            DataAccessFetchManifestError::Offline(e) => PopulateManifestCacheError::Offline(e),
             DataAccessFetchManifestError::Stopped => PopulateManifestCacheError::Stopped,
             DataAccessFetchManifestError::EntryNotFound => {
                 PopulateManifestCacheError::EntryNotFound

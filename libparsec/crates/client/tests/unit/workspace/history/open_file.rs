@@ -69,7 +69,7 @@ async fn offline(#[values("open", "open_and_get_id")] kind: &str, env: &TestbedE
             .unwrap_err(),
         unknown => panic!("Unknown kind: {}", unknown),
     };
-    p_assert_matches!(outcome, WorkspaceHistoryOpenFileError::Offline);
+    p_assert_matches!(outcome, WorkspaceHistoryOpenFileError::Offline(_));
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]

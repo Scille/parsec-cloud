@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use super::Client;
@@ -44,8 +45,8 @@ pub enum ClientStartShamirRecoveryInvitationGreetError {
     CorruptedShareData(DataError),
     #[error(transparent)]
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error(transparent)]
@@ -55,7 +56,9 @@ pub enum ClientStartShamirRecoveryInvitationGreetError {
 impl From<ListInvitationsError> for ClientStartShamirRecoveryInvitationGreetError {
     fn from(value: ListInvitationsError) -> Self {
         match value {
-            ListInvitationsError::Offline => ClientStartShamirRecoveryInvitationGreetError::Offline,
+            ListInvitationsError::Offline(e) => {
+                ClientStartShamirRecoveryInvitationGreetError::Offline(e)
+            }
             ListInvitationsError::Internal(e) => {
                 ClientStartShamirRecoveryInvitationGreetError::Internal(e)
             }
@@ -81,8 +84,8 @@ impl From<CertifGetShamirRecoveryShareDataError> for ClientStartShamirRecoveryIn
             CertifGetShamirRecoveryShareDataError::CorruptedShareData(e) => {
                 ClientStartShamirRecoveryInvitationGreetError::CorruptedShareData(e)
             }
-            CertifGetShamirRecoveryShareDataError::Offline => {
-                ClientStartShamirRecoveryInvitationGreetError::Offline
+            CertifGetShamirRecoveryShareDataError::Offline(e) => {
+                ClientStartShamirRecoveryInvitationGreetError::Offline(e)
             }
             CertifGetShamirRecoveryShareDataError::Stopped => {
                 ClientStartShamirRecoveryInvitationGreetError::Stopped

@@ -11,8 +11,8 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryGetWorkspaceManifestV1TimestampError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -25,15 +25,6 @@ pub enum WorkspaceHistoryGetWorkspaceManifestV1TimestampError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for WorkspaceHistoryGetWorkspaceManifestV1TimestampError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 /// Earliest date we can go back.
@@ -78,8 +69,8 @@ pub async fn get_workspace_manifest_v1_timestamp(
                 ServerFetchVersionsManifestError::Stopped => {
                     Err(WorkspaceHistoryGetWorkspaceManifestV1TimestampError::Stopped)
                 }
-                ServerFetchVersionsManifestError::Offline => {
-                    Err(WorkspaceHistoryGetWorkspaceManifestV1TimestampError::Offline)
+                ServerFetchVersionsManifestError::Offline(e) => {
+                    Err(WorkspaceHistoryGetWorkspaceManifestV1TimestampError::Offline(e))
                 }
                 ServerFetchVersionsManifestError::NoRealmAccess => {
                     Err(WorkspaceHistoryGetWorkspaceManifestV1TimestampError::NoRealmAccess)

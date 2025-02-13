@@ -692,7 +692,7 @@ impl ShamirRecoveryClaimRecoverDeviceCtx {
             // Success
             Ok(_) => Ok(()),
             // Offline, let the caller retry the operation later
-            Err(RegisterNewDeviceError::Offline) => {
+            Err(RegisterNewDeviceError::Offline(_)) => {
                 return Ok(ShamirRecoveryClaimMaybeFinalizeCtx::Offline(self))
             }
             // Unrecoverable error, propagate it

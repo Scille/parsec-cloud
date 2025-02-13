@@ -16,6 +16,7 @@ use std::{
 };
 
 use libparsec_client_connection::AuthenticatedCmds;
+use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_platform_storage::workspace::{UpdateManifestData, WorkspaceStorage};
 use libparsec_types::prelude::*;
@@ -66,8 +67,8 @@ pub(super) enum ReadChunkOrBlockLocalOnlyError {
 
 #[derive(Debug, thiserror::Error)]
 pub(super) enum ReadChunkOrBlockError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Chunk doesn't exist")]
@@ -86,8 +87,8 @@ pub(super) enum ReadChunkOrBlockError {
 
 #[derive(Debug, thiserror::Error)]
 pub(super) enum EnsureManifestExistsWithParentError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -442,7 +443,9 @@ impl WorkspaceStore {
             Err(err) => {
                 return match err {
                     GetManifestError::EntryNotFound => Ok(None),
-                    GetManifestError::Offline => Err(EnsureManifestExistsWithParentError::Offline),
+                    GetManifestError::Offline(e) => {
+                        Err(EnsureManifestExistsWithParentError::Offline(e))
+                    }
                     GetManifestError::Stopped => Err(EnsureManifestExistsWithParentError::Stopped),
                     GetManifestError::NoRealmAccess => {
                         Err(EnsureManifestExistsWithParentError::NoRealmAccess)
@@ -659,8 +662,9 @@ impl WorkspaceStore {
         .await
         .map_err(|err| match err {
             ServerFetchBlockError::Stopped => ReadChunkOrBlockError::Stopped,
-            ServerFetchBlockError::Offline | ServerFetchBlockError::StoreUnavailable => {
-                ReadChunkOrBlockError::Offline
+            ServerFetchBlockError::Offline(e) => ReadChunkOrBlockError::Offline(e),
+            ServerFetchBlockError::StoreUnavailable => {
+                anyhow::anyhow!("Cannot fetch block from server: store unavailable").into()
             }
             ServerFetchBlockError::BlockNotFound => {
                 // This is unexpected: we got a block ID from a file manifest,

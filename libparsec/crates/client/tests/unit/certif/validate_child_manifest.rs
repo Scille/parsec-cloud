@@ -2,7 +2,7 @@
 
 use libparsec_client_connection::{
     test_register_low_level_send_hook, test_register_send_hook,
-    test_send_hook_realm_get_keys_bundle, HeaderMap, ResponseMock, StatusCode,
+    test_send_hook_realm_get_keys_bundle, ConnectionError, HeaderMap, ResponseMock, StatusCode,
 };
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
@@ -86,7 +86,7 @@ async fn offline(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, CertifValidateManifestError::Offline);
+    p_assert_matches!(err, CertifValidateManifestError::Offline(_));
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -684,7 +684,12 @@ async fn invalid_response(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, CertifValidateManifestError::Internal(_));
+    p_assert_matches!(
+        err,
+        CertifValidateManifestError::Offline(ConnectionError::InvalidResponseStatus(
+            StatusCode::IM_A_TEAPOT
+        ))
+    );
 }
 
 #[parsec_test(testbed = "minimal")]

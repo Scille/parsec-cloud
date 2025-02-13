@@ -10,8 +10,8 @@ pub(crate) type WorkspaceHistoryStoreGetBlockError = DataAccessFetchBlockError;
 // pub enum WorkspaceHistoryStoreGetBlockError {
 //     #[error("Component has stopped")]
 //     Stopped,
-//     #[error("Cannot reach the server")]
-//     Offline,
+//     #[error("Cannot communicate with the server: {0}")]
+//     Offline(#[from] ConnectionError),
 //     #[error("The block doesn't exist on the server")]
 //     BlockNotFound,
 //     #[error("Not allowed to access this realm")]
@@ -26,15 +26,6 @@ pub(crate) type WorkspaceHistoryStoreGetBlockError = DataAccessFetchBlockError;
 //     InvalidCertificate(#[from] Box<InvalidCertificateError>),
 //     #[error(transparent)]
 //     Internal(#[from] anyhow::Error),
-// }
-
-// impl From<ConnectionError> for WorkspaceHistoryStoreGetBlockError {
-//     fn from(value: ConnectionError) -> Self {
-//         match value {
-//             ConnectionError::NoResponse(_) => Self::Offline,
-//             err => Self::Internal(err.into()),
-//         }
-//     }
 // }
 
 pub(super) async fn get_block(

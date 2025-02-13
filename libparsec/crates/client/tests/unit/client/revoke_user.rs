@@ -186,7 +186,7 @@ async fn offline(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, ClientRevokeUserError::Offline);
+    p_assert_matches!(err, ClientRevokeUserError::Offline(_));
     spy.assert_no_events();
 }
 

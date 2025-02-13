@@ -129,7 +129,7 @@ async fn decrypt_missing_key_and_offline(env: &TestbedEnv) {
     };
 
     let err = ops.decrypt_path_addr(&link).await.unwrap_err();
-    p_assert_matches!(err, WorkspaceDecryptPathAddrError::Offline);
+    p_assert_matches!(err, WorkspaceDecryptPathAddrError::Offline(_));
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]

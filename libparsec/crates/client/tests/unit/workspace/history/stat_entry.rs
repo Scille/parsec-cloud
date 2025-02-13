@@ -151,7 +151,7 @@ async fn offline(env: &TestbedEnv) {
             .stat_entry(at, &"/".parse().unwrap())
             .await
             .unwrap_err(),
-        WorkspaceHistoryStatEntryError::Offline
+        WorkspaceHistoryStatEntryError::Offline(_)
     );
 }
 

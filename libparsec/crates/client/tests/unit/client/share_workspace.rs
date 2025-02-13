@@ -366,7 +366,7 @@ async fn offline(env: &TestbedEnv) {
         )
         .await
         .unwrap_err();
-    p_assert_matches!(err, ClientShareWorkspaceError::Offline);
+    p_assert_matches!(err, ClientShareWorkspaceError::Offline(_));
 }
 
 #[parsec_test(testbed = "coolorg", with_server)]

@@ -155,7 +155,7 @@ async fn offline(env: &TestbedEnv) {
 
     p_assert_matches!(
         ops.stat_folder_children_by_id(wksp1_id).await.unwrap_err(),
-        WorkspaceHistoryStatFolderChildrenError::Offline
+        WorkspaceHistoryStatFolderChildrenError::Offline(_)
     );
 }
 

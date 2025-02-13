@@ -38,7 +38,7 @@ async fn offline(env: &TestbedEnv) {
     let ops = workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id).await;
 
     let outcome = ops.open_file_by_id(wksp1_bar_txt_id).await.unwrap_err();
-    p_assert_matches!(outcome, WorkspaceHistoryOpenFileError::Offline);
+    p_assert_matches!(outcome, WorkspaceHistoryOpenFileError::Offline(_));
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]

@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use super::Client;
@@ -14,8 +15,8 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientRefreshWorkspacesListError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error(transparent)]
@@ -92,7 +93,7 @@ pub async fn refresh_workspaces_list(
             }
             Err(e) => match e {
                 CertifDecryptCurrentRealmNameError::Stopped => Err(ClientRefreshWorkspacesListError::Stopped),
-                CertifDecryptCurrentRealmNameError::Offline => Err(ClientRefreshWorkspacesListError::Offline),
+                CertifDecryptCurrentRealmNameError::Offline(e) => Err(ClientRefreshWorkspacesListError::Offline(e)),
                 // We have lost access to the workspace concurrently, ignore it
                 CertifDecryptCurrentRealmNameError::NotAllowed => continue,
                 // This workspace is not fully bootstrapped yet (this is unlikely, as workspace
