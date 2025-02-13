@@ -581,7 +581,8 @@ new_realm_keys_bundle_access AS (
         realm,
         user_,
         realm_keys_bundle,
-        access
+        access,
+        from_sharing
     )
     SELECT
         (
@@ -603,7 +604,14 @@ new_realm_keys_bundle_access AS (
                 WHERE _id = realm_keys_bundle
             )
         ),
-        access
+        access,
+        (
+            SELECT _id FROM realm_user_role
+            WHERE certificate = (
+                SELECT certificate FROM realm_user_role
+                WHERE _id = from_sharing
+            )
+        )
     FROM realm_keys_bundle_access
     INNER JOIN realm ON realm._id = realm_keys_bundle_access.realm
     WHERE realm.organization = {q_organization_internal_id("$source_id")}
