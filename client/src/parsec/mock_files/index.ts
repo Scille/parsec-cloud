@@ -4,6 +4,7 @@ export enum MockFileType {
   DOCX = 'DOCX',
   PDF = 'PDF',
   PNG = 'PNG',
+  JPG = 'JPG',
   PY = 'PY',
   TXT = 'TXT',
   XLSX = 'XLSX',
@@ -20,6 +21,8 @@ export async function getMockFileContent(type: MockFileType): Promise<Uint8Array
       return (await import('@/parsec/mock_files/pdf')).default;
     case MockFileType.PNG:
       return (await import('@/parsec/mock_files/png')).default;
+    case MockFileType.JPG:
+      return (await import('@/parsec/mock_files/jpg')).default;
     case MockFileType.PY:
       return (await import('@/parsec/mock_files/py')).default;
     case MockFileType.TXT:

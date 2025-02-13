@@ -7,12 +7,18 @@
         class="image-viewer-container"
         ref="imageViewerContainer"
       >
-        <div class="image-viewer">
-          <img
+        <div
+          class="image-viewer"
+        >
+          <ms-draggable
             v-if="src.length"
-            ref="imgElement"
-            :src="src"
-          />
+            :disabled="!isZoomedMoreThanViewport"
+          >
+            <img
+              ref="imgElement"
+              :src="src"
+            />
+          </ms-draggable>
         </div>
       </div>
     </template>
@@ -32,10 +38,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { FileControls, FileControlsButton, FileControlsZoom } from '@/components/viewers';
 import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
+import MsDraggable from '@/components/viewers/MsDraggable.vue';
 import { scan } from 'ionicons/icons';
 
 const props = defineProps<{
@@ -47,11 +54,39 @@ const zoomControl = ref();
 const zoomLevel = ref(1);
 const imgElement = ref();
 const imageViewerContainer = ref();
+const isZoomedMoreThanViewport = ref(false);
+
+function checkZoomLevel(): void {
+  if (imgElement.value && imageViewerContainer.value) {
+    const imgRect = imgElement.value.getBoundingClientRect();
+    const containerRect = imageViewerContainer.value.getBoundingClientRect();
+    isZoomedMoreThanViewport.value =
+      imgRect.width > containerRect.width || imgRect.height > containerRect.height;
+  }
+}
 
 onMounted(async () => {
   src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
   zoomLevel.value = zoomControl.value.getZoom() / 100;
+  checkZoomLevel();
+
+  // const observer = new IntersectionObserver((entries) => {
+  //   const entry = entries[0];
+  //   if (entry.intersectionRatio > 0) {
+  //     // console.log(entry.target.innerHTML + " is visible");
+  //     entry.target.classList.add('animate');
+  //   } else {
+  //     entry.target.classList.remove('animate');
+  //   }
+  //   if (entry.isIntersecting) {
+  //     console.log('entry is intersecting');
+  //     // zoomControl.value.setZoom(zoomLevel.value * 100);
+  //   }
+  // });
+  // observer.observe(imgElement.value!);
 });
+
+watch(zoomLevel, checkZoomLevel);
 
 function onChange(value: number): void {
   zoomLevel.value = value / 100;
@@ -73,7 +108,7 @@ async function toggleFullScreen(): Promise<void> {
   align-items: center;
   height: 100%;
   width: 100%;
-  overflow: auto;
+  // overflow: auto;
   background: var(--parsec-color-light-secondary-premiere);
 }
 .image-viewer {
@@ -84,10 +119,12 @@ async function toggleFullScreen(): Promise<void> {
 }
 
 img {
-  transform: scale(v-bind(zoomLevel));
-  transition: transform ease-in-out 0.3s;
+  position: relative;
+  transition: all ease-in-out;
   max-width: 100%;
   max-height: 100%;
   box-shadow: var(--parsec-shadow-light);
+  transform: scale(v-bind(zoomLevel));
+  user-select: none;
 }
 </style>
