@@ -4,6 +4,17 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.3.0-rc.7 (2025-02-13)
+-------------------------------
+
+Features
+~~~~~~~~
+
+* Update global user interface for file viewers
+  (`#9571 <https://github.com/Scille/parsec-cloud/issues/9571>`__)
+
+
+
 Parsec v3.3.0-rc.6 (2025-02-10)
 -------------------------------
 
