@@ -8,7 +8,7 @@
         "license": "BUSL-1.1",
         "licenseLink": "https://raw.githubusercontent.com/Scille/parsec-cloud/{version}/LICENSE",
         "history": "https://docs.parsec.cloud/en/{version}/history.html",
-        "pricingLink": "https://parsec.cloud/en/tarification/"
+        "pricingLink": "https://parsec.cloud/en/pricing/"
     },
     "quit": {
         "title": "Exit Parsec",
