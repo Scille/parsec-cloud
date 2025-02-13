@@ -204,7 +204,7 @@ class TestbedEventRotateKeyRealm:
     realm: VlobID
     key_index: int
     per_participant_keys_bundle_access: dict[UserID, bytes]
-    per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes]
+    per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None
     keys_bundle: bytes
 
     certificate: RealmKeyRotationCertificate
