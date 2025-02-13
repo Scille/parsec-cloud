@@ -1,0 +1,67 @@
+name: PR targeting releases branch is closed
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - releases/*
+
+jobs:
+  close-linked-issues-when-merged:
+    name: Close linked issues when merged
+    # Only run the job if the PR is merged.
+    if: github.event.pull_request.merged
+    permissions:
+      # Need write permissions to close issues.
+      issues: write
+      pull-requests: read
+    runs-on: ubuntu-24.04
+    env:
+      PR_INFO: ${{ runner.temp }}/pr-info.json
+    steps:
+      # Github REST Api does not provide access to linked issues for a PR.
+      # But we can access that data by using the graphql object `PullRequest.closingIssuesReferences`.
+      #
+      # Links:
+      #
+      # - [`PullRequest`](https://docs.github.com/en/graphql/reference/objects#pullrequest)
+      # - [`IssueConnection`](https://docs.github.com/en/graphql/reference/objects#issueconnection)
+      # - [`Issue`](https://docs.github.com/en/graphql/reference/objects#issue)
+      - name: Get information about linked issues
+        shell: bash -e -o pipefail {0}
+        run: |
+          gh api graphql \
+            -f id='${{ github.event.pull_request.node_id }}' \
+            -f query='
+              query($id: ID!) {
+                node(id: $id) {
+                  ... on PullRequest {
+                    title
+                    number
+                    closingIssuesReferences(first: 100) {
+                      nodes {
+                        number
+                      }
+                    }
+                  }
+                }
+              }
+            ' \
+            | jq .data.node \
+            | tee "${{ env.PR_INFO }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Close linked issues
+        run: |
+          PR_TITLE="$(jq .title "${{ env.PR_INFO }}")"
+          PR_NUMBER="$(jq .number "${{ env.PR_INFO }}")"
+
+          echo "Closing issues linked to PR #${PR_NUMBER} named '${PR_TITLE}'"
+          for issue in $(jq '.closingIssuesReferences.nodes[].number' "${{ env.PR_INFO }}"); do
+            echo "Closing issue #${issue}"
+            gh issue close "${issue}" --reason complete --comment "Fixed by #${PR_NUMBER}"
+          done
+        env:
+          GH_TOKEN: ${{ github.token }}
