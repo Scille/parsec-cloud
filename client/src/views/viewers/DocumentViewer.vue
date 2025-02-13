@@ -146,6 +146,7 @@ async function toggleFullScreen(): Promise<void> {
 }
 
 .document-content {
+  transition: all 0.3s ease-in-out;
   transform: scale(v-bind(zoomLevel));
   transform-origin: top left;
   width: fit-content;
