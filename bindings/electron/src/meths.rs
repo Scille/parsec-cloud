@@ -6483,63 +6483,6 @@ fn variant_client_start_workspace_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// ClientStartWorkspaceHistory2Error
-
-#[allow(dead_code)]
-fn variant_client_start_workspace_history2_error_rs_to_js<'a>(
-    cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ClientStartWorkspaceHistory2Error,
-) -> NeonResult<Handle<'a, JsObject>> {
-    let js_obj = cx.empty_object();
-    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
-    js_obj.set(cx, "error", js_display)?;
-    match rs_obj {
-        libparsec::ClientStartWorkspaceHistory2Error::Internal { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ClientStartWorkspaceHistory2ErrorInternal").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientStartWorkspaceHistory2Error::InvalidCertificate { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ClientStartWorkspaceHistory2ErrorInvalidCertificate")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientStartWorkspaceHistory2Error::InvalidKeysBundle { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ClientStartWorkspaceHistory2ErrorInvalidKeysBundle")
-                    .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientStartWorkspaceHistory2Error::InvalidManifest { .. } => {
-            let js_tag = JsString::try_new(cx, "ClientStartWorkspaceHistory2ErrorInvalidManifest")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientStartWorkspaceHistory2Error::NoHistory { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ClientStartWorkspaceHistory2ErrorNoHistory").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientStartWorkspaceHistory2Error::NoRealmAccess { .. } => {
-            let js_tag = JsString::try_new(cx, "ClientStartWorkspaceHistory2ErrorNoRealmAccess")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientStartWorkspaceHistory2Error::Offline { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ClientStartWorkspaceHistory2ErrorOffline").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::ClientStartWorkspaceHistory2Error::Stopped { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ClientStartWorkspaceHistory2ErrorStopped").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // ClientStopError
 
 #[allow(dead_code)]
@@ -12220,6 +12163,112 @@ fn variant_workspace_history2_open_file_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WorkspaceHistory2RealmExportDecryptor
+
+#[allow(dead_code)]
+fn variant_workspace_history2_realm_export_decryptor_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::WorkspaceHistory2RealmExportDecryptor> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "WorkspaceHistory2RealmExportDecryptorSequesterService" => {
+            let sequester_service_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "sequesterServiceId")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::SequesterServiceID, _> {
+                            libparsec::SequesterServiceID::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let private_key_pem_path = {
+                let js_val: Handle<JsString> = obj.get(cx, "privateKeyPemPath")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(
+                libparsec::WorkspaceHistory2RealmExportDecryptor::SequesterService {
+                    sequester_service_id,
+                    private_key_pem_path,
+                },
+            )
+        }
+        "WorkspaceHistory2RealmExportDecryptorUser" => {
+            let access = {
+                let js_val: Handle<JsObject> = obj.get(cx, "access")?;
+                variant_device_access_strategy_js_to_rs(cx, js_val)?
+            };
+            Ok(libparsec::WorkspaceHistory2RealmExportDecryptor::User { access })
+        }
+        _ => cx.throw_type_error("Object is not a WorkspaceHistory2RealmExportDecryptor"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_workspace_history2_realm_export_decryptor_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceHistory2RealmExportDecryptor,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::WorkspaceHistory2RealmExportDecryptor::SequesterService {
+            sequester_service_id,
+            private_key_pem_path,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistory2RealmExportDecryptorSequesterService")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_sequester_service_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::SequesterServiceID| -> Result<String, &'static str> {
+                        Ok(x.hex())
+                    };
+                match custom_to_rs_string(sequester_service_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "sequesterServiceId", js_sequester_service_id)?;
+            let js_private_key_pem_path = JsString::try_new(cx, {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(private_key_pem_path) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "privateKeyPemPath", js_private_key_pem_path)?;
+        }
+        libparsec::WorkspaceHistory2RealmExportDecryptor::User { access, .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistory2RealmExportDecryptorUser").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_access = variant_device_access_strategy_rs_to_js(cx, access)?;
+            js_obj.set(cx, "access", js_access)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceHistory2SetTimestampOfInterestError
 
 #[allow(dead_code)]
@@ -12313,6 +12362,93 @@ fn variant_workspace_history2_set_timestamp_of_interest_error_rs_to_js<'a>(
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistory2SetTimestampOfInterestErrorStopped")
                     .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceHistory2StartError
+
+#[allow(dead_code)]
+fn variant_workspace_history2_start_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceHistory2StartError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceHistory2StartError::CannotOpenRealmExportDatabase { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceHistory2StartErrorCannotOpenRealmExportDatabase",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistory2StartError::IncompleteRealmExportDatabase { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceHistory2StartErrorIncompleteRealmExportDatabase",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistory2StartError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistory2StartErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistory2StartError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceHistory2StartErrorInvalidCertificate")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistory2StartError::InvalidKeysBundle { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceHistory2StartErrorInvalidKeysBundle")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistory2StartError::InvalidManifest { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistory2StartErrorInvalidManifest").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistory2StartError::InvalidRealmExportDatabase { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistory2StartErrorInvalidRealmExportDatabase")
+                    .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistory2StartError::NoHistory { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistory2StartErrorNoHistory").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistory2StartError::NoRealmAccess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistory2StartErrorNoRealmAccess").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistory2StartError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistory2StartErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistory2StartError::Stopped { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceHistory2StartErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistory2StartError::UnsupportedRealmExportDatabaseVersion {
+            ..
+        } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceHistory2StartErrorUnsupportedRealmExportDatabaseVersion",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -17531,8 +17667,7 @@ fn client_start_workspace_history2(mut cx: FunctionContext) -> JsResult<JsPromis
                         let js_obj = cx.empty_object();
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
-                        let js_err =
-                            variant_client_start_workspace_history2_error_rs_to_js(&mut cx, err)?;
+                        let js_err = variant_workspace_history2_start_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -21391,6 +21526,79 @@ fn workspace_history2_set_timestamp_of_interest(mut cx: FunctionContext) -> JsRe
     Ok(promise)
 }
 
+// workspace_history2_start_with_realm_export
+fn workspace_history2_start_with_realm_export(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let export_db_path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let decryptors = {
+        let js_val = cx.argument::<JsArray>(2)?;
+        {
+            let size = js_val.len(&mut cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsObject> = js_val.get(&mut cx, i)?;
+                v.push(variant_workspace_history2_realm_export_decryptor_js_to_rs(
+                    &mut cx, js_item,
+                )?);
+            }
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_history2_start_with_realm_export(
+                config,
+                export_db_path,
+                decryptors,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_history2_start_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // workspace_history2_stat_entry
 fn workspace_history2_stat_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -24126,6 +24334,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function(
         "workspaceHistory2SetTimestampOfInterest",
         workspace_history2_set_timestamp_of_interest,
+    )?;
+    cx.export_function(
+        "workspaceHistory2StartWithRealmExport",
+        workspace_history2_start_with_realm_export,
     )?;
     cx.export_function("workspaceHistory2StatEntry", workspace_history2_stat_entry)?;
     cx.export_function(
