@@ -12873,6 +12873,13 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorStopped".into(),
             )?;
         }
+        libparsec::WorkspaceFdReadError::StoreUnavailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFdReadErrorStoreUnavailable".into(),
+            )?;
+        }
     }
     Ok(js_obj)
 }

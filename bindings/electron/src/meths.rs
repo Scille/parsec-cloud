@@ -11600,6 +11600,11 @@ fn variant_workspace_fd_read_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceFdReadError::StoreUnavailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFdReadErrorStoreUnavailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
     }
     Ok(js_obj)
 }
