@@ -6,6 +6,7 @@ mod fd_stat;
 // mod get_workspace_manifest_v1_timestamp;
 mod open_file;
 mod open_file_by_id;
+mod start;
 mod stat_entry;
 mod stat_entry_by_id;
 mod stat_folder_children;

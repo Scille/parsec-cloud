@@ -2059,6 +2059,7 @@ dependencies = [
  "libparsec_client_connection",
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
+ "libparsec_platform_realm_export",
  "libparsec_platform_storage",
  "libparsec_protocol",
  "libparsec_tests_fixtures",
@@ -2216,6 +2217,19 @@ dependencies = [
  "windows-sys 0.59.0",
  "winfsp_wrs",
  "winfsp_wrs_build",
+]
+
+[[package]]
+name = "libparsec_platform_realm_export"
+version = "3.2.5-a.0+dev"
+dependencies = [
+ "libparsec_platform_async",
+ "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
+ "libparsec_types",
+ "libsqlite3-sys",
+ "sqlx",
+ "tokio",
 ]
 
 [[package]]
