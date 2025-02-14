@@ -112,6 +112,9 @@ pub(crate) fn unsupported_api_version_from_headers(
                 .filter_map(|x| ApiVersion::try_from(x).ok())
                 .collect(),
         },
-        None => ConnectionError::MissingSupportedApiVersions,
+        None => {
+            log::error!("Missing Supported-Api-Versions header");
+            ConnectionError::MissingSupportedApiVersions
+        }
     }
 }
