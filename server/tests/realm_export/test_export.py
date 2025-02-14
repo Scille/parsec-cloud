@@ -75,7 +75,9 @@ class ExportExpected:
     vlobs: list[tuple[VlobID, int, int, bytes, int, DeviceID, DateTime]]
     # List of (block_id, author, size, key_index, data)
     blocks: list[tuple[BlockID, DeviceID, int, int, bytes]]
-    # Key are (user_id, key_index), values are list of accesses
+    # List of (key_index, keys_bundle)
+    realm_keys_bundle: list[tuple[int, bytes]]
+    # List of (user_id, key_index, access)
     realm_keys_bundle_access: list[tuple[UserID, int, bytes]]
     # List of (sequester_service_id, key_index, access)
     realm_sequester_keys_bundle_access: list[tuple[SequesterServiceID, int, bytes]]
@@ -92,6 +94,7 @@ def extract_export_expected_from_template(
     realm_certificates: list[bytes] = []
     vlobs: list[tuple[VlobID, int, int, bytes, int, DeviceID, DateTime]] = []
     blocks: list[tuple[BlockID, DeviceID, int, int, bytes]] = []
+    realm_keys_bundle: list[tuple[int, bytes]] = []
     realm_keys_bundle_access: list[tuple[UserID, int, bytes]] = []
     realm_sequester_keys_bundle_access: list[tuple[SequesterServiceID, int, bytes]] = []
 
@@ -142,6 +145,7 @@ def extract_export_expected_from_template(
             case tb.TestbedEventRotateKeyRealm():
                 if event.realm == realm_id and event.timestamp <= snapshot_timestamp:
                     realm_certificates.append(event.raw_certificate)
+                    realm_keys_bundle.append((event.key_index, event.keys_bundle))
                     for user_id, access in event.per_participant_keys_bundle_access.items():
                         realm_keys_bundle_access.append((user_id, event.key_index, access))
                     if event.per_sequester_service_keys_bundle_access:
@@ -211,6 +215,7 @@ def extract_export_expected_from_template(
         common_certificates=common_certificates,
         sequester_certificates=sequester_certificates,
         realm_certificates=realm_certificates,
+        realm_keys_bundle=sorted(realm_keys_bundle),
         realm_keys_bundle_access=sorted(realm_keys_bundle_access),
         realm_sequester_keys_bundle_access=sorted(realm_sequester_keys_bundle_access),
         vlobs=vlobs,
@@ -273,6 +278,11 @@ def check_export_content(
 
     rows = con.execute("SELECT certificate FROM realm_certificate").fetchall()
     assert [row[0] for row in rows] == export_expected.realm_certificates
+
+    rows = con.execute(
+        "SELECT key_index, keys_bundle FROM realm_keys_bundle ORDER BY key_index ASC"
+    ).fetchall()
+    assert rows == export_expected.realm_keys_bundle
 
     rows = con.execute(
         "SELECT user_id, key_index, access FROM realm_keys_bundle_access ORDER BY key_index ASC, user_id ASC"
