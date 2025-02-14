@@ -183,7 +183,9 @@ CREATE TABLE vlob_atom (
     -- in fact to the timestamp field in the API ! So we stick with the latter.
     -- On top of that, unlike PostgreSQL, SQLite doesn't have a TIMESTAMPZ type out
     -- of the box so we have to roll our own integer-based format.
-    timestamp INTEGER NOT NULL  -- us since UNIX epoch
+    timestamp INTEGER NOT NULL,  -- us since UNIX epoch
+
+    UNIQUE(vlob_id, timestamp)
 );
 
 
@@ -197,7 +199,7 @@ CREATE TABLE block (
     -- This means the blocks are ordered according to how they got added in the server
     -- in the first place.
     sequential_id INTEGER PRIMARY KEY,
-    block_id BLOB NOT NULL,
+    block_id BLOB NOT NULL UNIQUE,
     author BLOB NOT NULL,  -- DeviceID
     size INTEGER NOT NULL,
     key_index INTEGER NOT NULL
