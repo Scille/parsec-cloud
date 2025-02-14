@@ -218,7 +218,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                                 // Shouldn't occur in practice given the monitors are expected
                                 // to be stopped before the opses. In any case we have no
                                 // choice but to also stop.
-                                log::warn!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                                log::error!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
                                 return;
                             },
                             err @ (
@@ -236,7 +236,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                                 | WorkspaceSyncError::Internal(_)
                                 | WorkspaceSyncError::TimestampOutOfBallpark { .. }
                             ) => {
-                                log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
+                                log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                                 return;
                             },
                         },
@@ -253,11 +253,11 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                                 // Shouldn't occur in practice given the monitors are expected
                                 // to be stopped before the opses. In any case we have no
                                 // choice but to also stop.
-                                log::warn!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                                log::error!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
                                 return;
                             }
                             WorkspaceGetNeedInboundSyncEntriesError::Internal(err) => {
-                                log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
+                                log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                                 return;
                             }
                         }
@@ -305,7 +305,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                             // Shouldn't occur in practice given the monitors are expected
                             // to be stopped before the opses. In any case we have no
                             // choice but to also stop.
-                            log::warn!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                            log::error!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
                             return;
                         }
                         err @ (
@@ -319,13 +319,13 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                             | WorkspaceSyncError::TimestampOutOfBallpark { .. }
                         )
                         => {
-                            log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
+                            log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                             return;
                         }
 
                         WorkspaceSyncError::Internal(err) => {
                             // Unexpected error occured, better stop the monitor
-                            log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
+                            log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                             let event = EventMonitorCrashed {
                                 monitor: WORKSPACE_INBOUND_SYNC_MONITOR_NAME,
                                 workspace_id: Some(realm_id),

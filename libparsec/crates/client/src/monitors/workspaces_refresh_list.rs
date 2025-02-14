@@ -90,13 +90,13 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
 
                         err @ (ClientRefreshWorkspacesListError::InvalidEncryptedRealmName(_)
                         | ClientRefreshWorkspacesListError::InvalidKeysBundle(_)) => {
-                            log::warn!("Stopping workspaces refresh list monitor due to unexpected outcome: {}", err);
+                            log::error!("Stopping workspaces refresh list monitor due to unexpected outcome: {}", err);
                             return;
                         }
 
                         ClientRefreshWorkspacesListError::Internal(err) => {
                             // Unexpected error occured, better stop the monitor
-                            log::warn!("Workspaces bootstrap monitor has crashed: {}", err);
+                            log::error!("Workspaces bootstrap monitor has crashed: {}", err);
                             let event = EventMonitorCrashed {
                                 monitor: WORKSPACES_REFRESH_LIST_MONITOR_NAME,
                                 workspace_id: None,
