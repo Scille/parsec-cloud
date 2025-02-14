@@ -142,6 +142,11 @@ CREATE TABLE realm_certificate (
 -- Note Shamir recovery and other realms' certificates are not exported
 -- since they are unrelated to the realm being exported.
 
+CREATE TABLE realm_keys_bundle (
+    key_index INTEGER PRIMARY KEY,
+    keys_bundle BLOB NOT NULL
+);
+
 -- Note there can be multiple entries with the same (user_id, key_index) pair
 -- as a new access is provided by every new sharing.
 CREATE TABLE realm_keys_bundle_access (
@@ -663,6 +668,10 @@ async def _do_export_certificates(
         con.executemany(
             "INSERT INTO sequester_certificate (_id, certificate) VALUES (?, ?)",
             enumerate(certificates.sequester_certificates),
+        )
+        con.executemany(
+            "INSERT INTO realm_keys_bundle (key_index, keys_bundle) VALUES (?, ?)",
+            certificates.realm_keys_bundles,
         )
         con.executemany(
             "INSERT INTO realm_keys_bundle_access (_id, user_id, key_index, access) VALUES (?, ?, ?, ?)",

@@ -908,11 +908,13 @@ class MemoryRealmComponent(BaseRealmComponent):
                     break
                 sequester_certificates.append(raw)
 
+        realm_keys_bundles: list[tuple[int, bytes]] = []
         realm_keys_bundle_user_accesses: list[tuple[UserID, int, bytes]] = []
         realm_keys_bundle_sequester_accesses: list[tuple[SequesterServiceID, int, bytes]] = []
         for key_rotation in realm.key_rotations:
             if key_rotation.cooked.timestamp > realm_certificate_timestamp_upper_bound:
                 break
+            realm_keys_bundles.append((key_rotation.cooked.key_index, key_rotation.keys_bundle))
             for user_id, accesses in key_rotation.per_participant_keys_bundle_accesses.items():
                 for access_timestamp, access in accesses:
                     if access_timestamp > realm_certificate_timestamp_upper_bound:
@@ -933,6 +935,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             common_certificates=common_certificates,
             sequester_certificates=sequester_certificates,
             realm_certificates=realm_certificates,
+            realm_keys_bundles=realm_keys_bundles,
             realm_keys_bundle_user_accesses=realm_keys_bundle_user_accesses,
             realm_keys_bundle_sequester_accesses=realm_keys_bundle_sequester_accesses,
         )
