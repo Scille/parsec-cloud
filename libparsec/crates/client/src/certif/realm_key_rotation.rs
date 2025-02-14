@@ -155,7 +155,7 @@ pub(super) async fn rotate_realm_key_idempotent(
             // TODO: provide a dedicated error for this exotic behavior ?
             Rep::SequesterServiceUnavailable { service_id } => Err(anyhow::anyhow!("Sequester service {service_id} is unavailable").into()),
             // TODO: we should send a dedicated event for this, and return an according error
-            Rep::RejectedBySequesterService { .. } => { todo!() }
+            Rep::RejectedBySequesterService { service_id, reason } => Err(anyhow::anyhow!("Rejected by sequester service {service_id} ({reason:?})").into()),
             // Sequester services has changed concurrently, should poll for new certificates and retry
             Rep::SequesterServiceMismatch { last_sequester_certificate_timestamp } => {
                 let latest_known_timestamps = PerTopicLastTimestamps::new_for_sequester(last_sequester_certificate_timestamp);
