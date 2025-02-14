@@ -584,6 +584,7 @@
         "moveAlreadyExistReplace": "Replace | Replace All",
         "open": {
             "fileFailed": "Failed to open file `{name}`",
+            "fileFailedGeneric": "Failed to open this file.",
             "folderFailed": "Failed to open folder `{name}`",
             "unavailableOnWeb": "This feature is not yet available in web mode.",
             "unhandledFileType": "Cannot show a preview of this file."
@@ -1792,6 +1793,7 @@
         "genericError": "Failed to open the file.",
         "mediaNotSupported": "This media is not supported.",
         "retrievingFileContent": "Retrieving the file content...",
+        "statsFailed": "Can not get file information.",
         "controls": {
             "zoom": {
                 "in": "Zoom in",

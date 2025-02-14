@@ -87,7 +87,7 @@ async function openPath(
   if (!statsResult.ok) {
     await informationManager.present(
       new Information({
-        message: 'FoldersPage.open.fileFailed',
+        message: 'FoldersPage.open.fileFailedGeneric',
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,
