@@ -22,7 +22,7 @@ class APIEventPinged(APIEvent):
     @property
     def ping(self) -> str: ...
 
-class APIEventServerConfig(APIEvent):
+class APIEventOrganizationConfig(APIEvent):
     def __init__(
         self, user_profile_outsider_allowed: bool, active_users_limit: ActiveUsersLimit
     ) -> None: ...
