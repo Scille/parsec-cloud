@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 pub use libparsec_client::{
     workspace_history::{
@@ -14,7 +14,7 @@ pub use libparsec_client::{
         WorkspaceHistoryStatEntryError as WorkspaceHistory2StatEntryError,
         WorkspaceHistoryStatFolderChildrenError as WorkspaceHistory2StatFolderChildrenError,
     },
-    ClientStartWorkspaceHistoryError as ClientStartWorkspaceHistory2Error,
+    WorkspaceHistoryOpsStartError as WorkspaceHistory2StartError,
 };
 use libparsec_types::prelude::*;
 
@@ -41,19 +41,19 @@ fn borrow_workspace_history(
 pub async fn client_start_workspace_history2(
     client: Handle,
     realm_id: VlobID,
-) -> Result<Handle, ClientStartWorkspaceHistory2Error> {
+) -> Result<Handle, WorkspaceHistory2StartError> {
     // 1. Register the start of the workspace history
 
     // Unlike for `WorkspaceOps`, it is totally possible to have multiple
     // `WorkspaceHistoryOps` concurrently for the same realm.
     // For this reason `register_handle_with_init` is used in a special way:
     // - We still need it to correctly handle client shutdown (i.e. a client stop
-    //   must way for the completion of a concurrent workspace history start in order
+    //   must wait for the completion of a concurrent workspace history start in order
     //   to close its handle right away).
     // - We consider each workspace history start totally isolated from each other,
     //   hance having an always succeeding precondition.
     let initializing = register_handle_with_init(
-        HandleItem::StartingWorkspaceHistory {
+        HandleItem::StartingClientWorkspaceHistory {
             client,
             to_wake_on_done: vec![],
         },
@@ -77,12 +77,12 @@ pub async fn client_start_workspace_history2(
         let starting = std::mem::replace(
             item,
             HandleItem::WorkspaceHistory {
-                client: client_handle,
+                client: Some(client_handle),
                 workspace_history_ops,
             },
         );
         match starting {
-            HandleItem::StartingWorkspaceHistory {
+            HandleItem::StartingClientWorkspaceHistory {
                 to_wake_on_done, ..
             } => {
                 for event in to_wake_on_done {
@@ -94,6 +94,108 @@ pub async fn client_start_workspace_history2(
     });
 
     Ok(workspace_history_handle)
+}
+
+pub enum WorkspaceHistory2RealmExportDecryptor {
+    User {
+        access: super::DeviceAccessStrategy,
+    },
+    SequesterService {
+        sequester_service_id: SequesterServiceID,
+        private_key_pem_path: PathBuf,
+    },
+}
+
+pub async fn workspace_history2_start_with_realm_export(
+    #[allow(unused_variables)] config: super::ClientConfig,
+    #[allow(unused_variables)] export_db_path: PathBuf,
+    #[allow(unused_variables)] decryptors: Vec<WorkspaceHistory2RealmExportDecryptor>,
+) -> Result<Handle, WorkspaceHistory2StartError> {
+    // Realm export database support is not available on web.
+    #[cfg(target_arch = "wasm32")]
+    {
+        Err(WorkspaceHistory2StartError::Internal(anyhow::anyhow!(
+            "Realm export database support is not available on web"
+        )))
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        use crate::handle::register_handle;
+
+        // No need to start by registering the start of the init here !
+        // This is because each realm export based workspace history works in isolation,
+        // even if they share the same underlying realm export database (since the said
+        // database is only accessed in read-only).
+
+        let config: Arc<libparsec_client::ClientConfig> = config.into();
+
+        let mut cooked_decryptors = Vec::with_capacity(decryptors.len());
+        for raw_decryptor in decryptors {
+            let cooked_decryptor = match raw_decryptor {
+                WorkspaceHistory2RealmExportDecryptor::User { access } => {
+                    let device =
+                        libparsec_platform_device_loader::load_device(&config.config_dir, &access)
+                            .await
+                            .map_err(|e| {
+                                WorkspaceHistory2StartError::Internal(
+                                    anyhow::Error::new(e).context("Cannot load device"),
+                                )
+                            })?;
+
+                    libparsec_client::WorkspaceHistoryRealmExportDecryptor::User {
+                        user_id: device.user_id,
+                        private_key: Box::new(device.private_key.clone()),
+                    }
+                }
+
+                WorkspaceHistory2RealmExportDecryptor::SequesterService {
+                    sequester_service_id,
+                    private_key_pem_path,
+                } => {
+                    let private_key_pem =
+                        std::fs::read_to_string(private_key_pem_path).map_err(|e| {
+                            WorkspaceHistory2StartError::Internal(
+                                anyhow::Error::new(e)
+                                    .context("Cannot load sequester private key PEM file"),
+                            )
+                        })?;
+
+                    let private_key =
+                        libparsec_crypto::SequesterPrivateKeyDer::load_pem(&private_key_pem)
+                            .map_err(|e| {
+                                WorkspaceHistory2StartError::Internal(
+                                    anyhow::Error::new(e)
+                                        .context("Cannot load sequester private key PEM file"),
+                                )
+                            })?;
+
+                    libparsec_client::WorkspaceHistoryRealmExportDecryptor::SequesterService {
+                        sequester_service_id,
+                        private_key: Box::new(private_key),
+                    }
+                }
+            };
+
+            cooked_decryptors.push(cooked_decryptor);
+        }
+
+        let workspace_history_ops =
+            libparsec_client::workspace_history::WorkspaceHistoryOps::start_with_realm_export(
+                config,
+                &export_db_path,
+                cooked_decryptors,
+            )
+            .await
+            .map(Arc::new)?;
+
+        let handle = register_handle(HandleItem::WorkspaceHistory {
+            client: None,
+            workspace_history_ops,
+        });
+
+        Ok(handle)
+    }
 }
 
 /*
