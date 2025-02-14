@@ -251,7 +251,6 @@ fn handle_sse_error(
         | ConnectionError::MissingSupportedApiVersions
         | ConnectionError::FrozenUser
         | ConnectionError::AuthenticationTokenExpired
-        | ConnectionError::Serialization(_)
         | ConnectionError::WrongApiVersion(_)
         | ConnectionError::InvalidSSEEventID(_)) => {
             let event =

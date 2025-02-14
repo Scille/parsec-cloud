@@ -88,7 +88,7 @@ impl AuthenticatedCmds {
             }
         };
 
-        let request_body = request.api_dump()?;
+        let request_body = request.api_dump().expect("Unexpected serialization error");
 
         let url = match T::FAMILY {
             ProtocolFamily::Authenticated => self.url.clone(),

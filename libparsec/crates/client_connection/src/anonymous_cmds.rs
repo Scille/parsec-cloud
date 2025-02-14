@@ -73,7 +73,7 @@ impl AnonymousCmds {
             }
         };
 
-        let request_body = request.api_dump()?;
+        let request_body = request.api_dump().expect("Unexpected serialization error");
 
         // Split non-generic code out of `send` to limit the amount of code generated
         // by monomorphization

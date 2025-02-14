@@ -71,10 +71,6 @@ pub enum ConnectionError {
     #[error("Authentication token has expired")]
     AuthenticationTokenExpired,
 
-    /// Failed to serialize the request
-    #[error("{0}")]
-    Serialization(ProtocolEncodeError),
-
     /// The version is not supported
     #[error("Unsupported API version: {api_version}, supported versions are: {supported_api_versions:?}")]
     UnsupportedApiVersion {
@@ -99,12 +95,6 @@ impl From<ProtocolDecodeError> for ConnectionError {
 impl From<reqwest::Error> for ConnectionError {
     fn from(e: reqwest::Error) -> Self {
         Self::NoResponse(Some(e))
-    }
-}
-
-impl From<ProtocolEncodeError> for ConnectionError {
-    fn from(e: ProtocolEncodeError) -> Self {
-        Self::Serialization(e)
     }
 }
 
