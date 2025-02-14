@@ -80,7 +80,7 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                     Ok(_) => break,
                     Err(err) => match err {
                         ClientProcessWorkspacesNeedsError::Offline(_) => {
-                            event_bus.wait_server_online().await;
+                            event_bus.wait_server_reconnect().await;
                             continue;
                         }
                         ClientProcessWorkspacesNeedsError::Stopped => {

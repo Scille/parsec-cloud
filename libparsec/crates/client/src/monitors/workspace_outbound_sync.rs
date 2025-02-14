@@ -93,7 +93,7 @@ fn task_future_factory(
                     ($err:expr) => {
                         match $err {
                             WorkspaceSyncError::Offline(_) => {
-                                event_bus.wait_server_online().await;
+                                event_bus.wait_server_reconnect().await;
                             }
                             // We have lost read access to the workspace, the certificates
                             // ops should soon be notified and work accordingly (typically
