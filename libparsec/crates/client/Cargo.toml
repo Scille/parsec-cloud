@@ -34,10 +34,8 @@ libparsec_client = { workspace = true, features = ["expose-test-methods"] }
 # Proptest depends on `wait-timeout` which is not available on web.
 proptest = { workspace = true, features = ["default"] }
 proptest-state-machine = { workspace = true }
-
 # Async stateful test currently relies on Tokio runtime, which is not available on web.
 # This is no big deal though, since the tested code is supposed to be platform agnostic.
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { workspace = true, features = ["rt"] }
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
