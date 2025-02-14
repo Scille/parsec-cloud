@@ -177,14 +177,14 @@ let {{ param_name }} = {
 {% elif type.kind == "list" %}
 let mut {{ param_name }}_converted = Vec::with_capacity({{ param_name }}.len());
 for js_elem in {{ param_name }}.iter() {
-    let rs_elem = {{ render_js_value_to_rs("js_elem", type.elem) }};
+    let rs_elem = {{ render_js_value_to_rs("js_elem.into()", type.elem) }};
     {{ param_name }}_converted.push(rs_elem);
 }
 let {{ param_name }} = {{ param_name }}_converted;
 {% elif type.kind == "set" %}
 let mut {{ param_name }}_converted = Vec::with_capacity({{ param_name }}.len());
 for js_elem in {{ param_name }}.iter() {
-    let rs_elem = {{ render_js_value_to_rs("js_elem", type.elem) }};
+    let rs_elem = {{ render_js_value_to_rs("js_elem.into()", type.elem) }};
     {{ param_name }}_converted.push(rs_elem);
 }
 let {{ param_name }} = {{ param_name }}_converted.into_iter().collect();
