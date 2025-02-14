@@ -6,6 +6,8 @@ use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
+// Realm export database support is not available on web.
+#[cfg(not(target_arch = "wasm32"))]
 use super::WorkspaceHistoryRealmExportDecryptor;
 use crate::certif::{
     CertificateOps, InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError,
@@ -13,6 +15,8 @@ use crate::certif::{
 
 mod cache;
 mod data_access;
+// Realm export database support is not available on web.
+#[cfg(not(target_arch = "wasm32"))]
 mod data_access_realm_export;
 mod data_access_server;
 mod get_block;
@@ -24,6 +28,8 @@ mod retrieve_path_from_id;
 pub(super) use cache::InvalidManifestHistoryError;
 use cache::*;
 use data_access::*;
+// Realm export database support is not available on web.
+#[cfg(not(target_arch = "wasm32"))]
 use data_access_realm_export::*;
 use data_access_server::*;
 pub(super) use get_block::*;
@@ -33,6 +39,7 @@ pub(super) use resolve_path::*;
 pub(super) use retrieve_path_from_id::*;
 
 pub(super) struct WorkspaceHistoryStore {
+    organization_id: OrganizationID,
     realm_id: VlobID,
     cache: Mutex<WorkspaceHistoryStoreCache>,
     access: DataAccess,
@@ -51,11 +58,12 @@ pub(super) struct WorkspaceHistoryStore {
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryStoreStartError {
+    // All those errors are for server access mode
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
-    #[error("Workspace has not history yet (root manifest has never been synchronized)")]
+    #[error("Workspace has no history yet (root manifest has never been synchronized)")]
     NoHistory,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
@@ -67,6 +75,16 @@ pub enum WorkspaceHistoryStoreStartError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
+
+    // Those errors are for realm export access mode
+    #[error("Cannot open the realm export database: {0}")]
+    CannotOpenRealmExportDatabase(anyhow::Error),
+    #[error("The database is not a valid realm export: {0}")]
+    InvalidRealmExportDatabase(anyhow::Error),
+    #[error("Unsupported realm export format version `{found}` (supported: `{supported}`)")]
+    UnsupportedRealmExportDatabaseVersion { supported: u32, found: u32 },
+    #[error("The database contains an incomplete realm export")]
+    IncompleteRealmExportDatabase,
 }
 
 impl WorkspaceHistoryStore {
@@ -82,6 +100,7 @@ impl WorkspaceHistoryStore {
     pub async fn start_with_server_access(
         cmds: Arc<AuthenticatedCmds>,
         certificates_ops: Arc<CertificateOps>,
+        organization_id: OrganizationID,
         realm_id: VlobID,
     ) -> Result<(Self, DateTime), WorkspaceHistoryStoreStartError> {
         let access = DataAccess::Server(data_access_server::ServerDataAccess::new(
@@ -90,25 +109,53 @@ impl WorkspaceHistoryStore {
             realm_id,
         ));
 
-        Self::start(realm_id, access).await
+        let timestamp_higher_bound = DateTime::now();
+        Self::start(organization_id, realm_id, access, timestamp_higher_bound).await
     }
 
+    // Realm export database support is not available on web.
+    #[cfg(not(target_arch = "wasm32"))]
     pub async fn start_with_realm_export(
-        export_db_path: std::path::PathBuf,
+        export_db_path: &std::path::Path,
         decryptors: Vec<WorkspaceHistoryRealmExportDecryptor>,
     ) -> Result<(Self, DateTime), WorkspaceHistoryStoreStartError> {
-        let (access, realm_id) =
+        let (access, organization_id, realm_id, timestamp_higher_bound) =
             data_access_realm_export::RealmExportDataAccess::start(export_db_path, decryptors)
-                .await;
+                .await
+                .map_err(|e| match e {
+                    RealmExportDataAccessStartError::CannotOpenDatabase(error) => {
+                        WorkspaceHistoryStoreStartError::CannotOpenRealmExportDatabase(error)
+                    }
+                    RealmExportDataAccessStartError::InvalidDatabase(error) => {
+                        WorkspaceHistoryStoreStartError::InvalidRealmExportDatabase(error)
+                    }
+                    RealmExportDataAccessStartError::UnsupportedDatabaseVersion {
+                        supported,
+                        found,
+                    } => WorkspaceHistoryStoreStartError::UnsupportedRealmExportDatabaseVersion {
+                        supported,
+                        found,
+                    },
+                    RealmExportDataAccessStartError::IncompleteRealmExport => {
+                        WorkspaceHistoryStoreStartError::IncompleteRealmExportDatabase
+                    }
+                })?;
 
-        Self::start(realm_id, DataAccess::RealmExport(access)).await
+        Self::start(
+            organization_id,
+            realm_id,
+            DataAccess::RealmExport(access),
+            timestamp_higher_bound,
+        )
+        .await
     }
 
     async fn start(
+        organization_id: OrganizationID,
         realm_id: VlobID,
         access: DataAccess,
+        timestamp_higher_bound: DateTime,
     ) -> Result<(Self, DateTime), WorkspaceHistoryStoreStartError> {
-        let timestamp_higher_bound = DateTime::now();
         let workspace_manifest_v1 =
             access
                 .get_workspace_manifest_v1()
@@ -148,6 +195,7 @@ impl WorkspaceHistoryStore {
             .expect("empty cache cannot fail");
 
         let ops = Self {
+            organization_id,
             realm_id,
             access,
             timestamp_lower_bound,
@@ -158,6 +206,10 @@ impl WorkspaceHistoryStore {
         let initial_timestamp_of_interest = timestamp_lower_bound;
 
         Ok((ops, initial_timestamp_of_interest))
+    }
+
+    pub fn organization_id(&self) -> &OrganizationID {
+        &self.organization_id
     }
 
     pub fn realm_id(&self) -> VlobID {
