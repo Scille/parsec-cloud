@@ -14,8 +14,11 @@ from .common import (
     VersionInt,
     VlobID,
     Structure,
+    Path,
+    SequesterServiceID,
 )
 from .workspace import FileDescriptor
+from .client import ClientConfig, DeviceAccessStrategy
 
 
 #
@@ -23,7 +26,7 @@ from .workspace import FileDescriptor
 #
 
 
-class ClientStartWorkspaceHistory2Error(ErrorVariant):
+class WorkspaceHistory2StartError(ErrorVariant):
     class Offline:
         pass
 
@@ -48,11 +51,40 @@ class ClientStartWorkspaceHistory2Error(ErrorVariant):
     class Internal:
         pass
 
+    class CannotOpenRealmExportDatabase:
+        pass
+
+    class InvalidRealmExportDatabase:
+        pass
+
+    class UnsupportedRealmExportDatabaseVersion:
+        pass
+
+    class IncompleteRealmExportDatabase:
+        pass
+
 
 async def client_start_workspace_history2(
     client: Handle,
     realm_id: VlobID,
-) -> Result[Handle, ClientStartWorkspaceHistory2Error]:
+) -> Result[Handle, WorkspaceHistory2StartError]:
+    raise NotImplementedError
+
+
+class WorkspaceHistory2RealmExportDecryptor(Variant):
+    class User:
+        access: DeviceAccessStrategy
+
+    class SequesterService:
+        sequester_service_id: SequesterServiceID
+        private_key_pem_path: Path
+
+
+async def workspace_history2_start_with_realm_export(
+    config: ClientConfig,
+    export_db_path: Path,
+    decryptors: list[WorkspaceHistory2RealmExportDecryptor],
+) -> Result[Handle, WorkspaceHistory2StartError]:
     raise NotImplementedError
 
 
