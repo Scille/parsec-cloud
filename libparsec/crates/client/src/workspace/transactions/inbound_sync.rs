@@ -101,6 +101,8 @@ pub type WorkspaceGetNeedInboundSyncEntriesError = WorkspaceStoreOperationError;
 pub enum WorkspaceSyncError {
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
+    #[error("Block access is temporary unavailable on the server")]
+    StoreUnavailable,
     #[error("Client has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
