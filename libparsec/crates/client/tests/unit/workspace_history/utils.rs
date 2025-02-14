@@ -50,7 +50,13 @@ pub(crate) async fn workspace_history_ops_with_server_access_factory(
         test_send_hook_realm_get_keys_bundle!(env, device.user_id, realm_id),
     );
 
-    WorkspaceHistoryOps::start_with_server_access(config.clone(), cmds, certificates_ops, realm_id)
-        .await
-        .unwrap()
+    WorkspaceHistoryOps::start_with_server_access(
+        config.clone(),
+        cmds,
+        certificates_ops,
+        device.organization_id().to_owned(),
+        realm_id,
+    )
+    .await
+    .unwrap()
 }
