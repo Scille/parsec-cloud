@@ -148,7 +148,7 @@ async def test_authenticated_events_listen_ok(
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -174,7 +174,7 @@ async def test_receive_server_config_as_first_event(
     async with minimalorg.alice.events_listen() as alice_sse:
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -204,7 +204,7 @@ async def test_user_not_receive_event_before_listen(
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -242,7 +242,7 @@ async def test_conn_closed_on_bad_outcome(
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -285,7 +285,7 @@ async def test_self_vlob_events_skipped(
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -332,7 +332,7 @@ async def test_self_certificate_events_provided(
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -402,7 +402,7 @@ async def test_receive_event_of_newly_shared_realm(
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -545,7 +545,7 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -569,7 +569,7 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )

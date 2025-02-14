@@ -71,7 +71,7 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -98,7 +98,7 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -143,7 +143,7 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -268,7 +268,7 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
         # Bob still receives the ServerConfig event
         event = await bob_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )
@@ -316,7 +316,7 @@ async def test_close_on_organization_tos_updated(
         # Bob still receives the ServerConfig event
         event = await bob_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
             )

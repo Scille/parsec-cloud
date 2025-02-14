@@ -227,7 +227,7 @@ async fn sse_ok_mocked(env: &TestbedEnv) {
     p_assert_eq!(
         sse.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
-            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+            authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true
             }
@@ -292,7 +292,7 @@ async fn sse_ok_with_server(env: &TestbedEnv) {
     p_assert_eq!(
         sse.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
-            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+            authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true
             }
@@ -650,7 +650,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
     p_assert_eq!(
         first_event.message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
-            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+            authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true
             }
@@ -703,7 +703,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
     p_assert_eq!(
         sse_alice.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
-            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+            authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true
             }
@@ -744,7 +744,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
     p_assert_eq!(
         sse_alice.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
-            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+            authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true
             }
