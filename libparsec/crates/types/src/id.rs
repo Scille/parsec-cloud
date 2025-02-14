@@ -455,7 +455,7 @@ mod user_device_ids {
     }
 }
 
-pub use user_device_ids::{DeviceID, UserID};
+pub use user_device_ids::{DeviceID, InvalidDeviceID, InvalidUserID, UserID};
 
 /*
  * DeviceLabel
