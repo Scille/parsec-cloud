@@ -478,7 +478,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 // TODO: provide a dedicated error for this exotic behavior ?
                 Rep::SequesterServiceUnavailable { service_id } => Err(anyhow::anyhow!("Sequester service {service_id} unavailable").into()),
                 // TODO: we should send a dedicated event for this, and return an according error
-                Rep::RejectedBySequesterService { .. } => todo!(),
+                Rep::RejectedBySequesterService { service_id, reason } => Err(anyhow::anyhow!("Rejected by sequester service {service_id} ({reason:?})").into()),
                 // A key rotation occured concurrently, should poll for new certificates and retry
                 Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
                     let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);
@@ -540,7 +540,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 // TODO: provide a dedicated error for this exotic behavior ?
                 Rep::SequesterServiceUnavailable { service_id } => Err(anyhow::anyhow!("Sequester service {service_id} unavailable").into()),
                 // TODO: we should send a dedicated event for this, and return an according error
-                Rep::RejectedBySequesterService { .. } => todo!(),
+                Rep::RejectedBySequesterService { service_id, reason } => Err(anyhow::anyhow!("Rejected by sequester service {service_id} ({reason:?})").into()),
                 // A key rotation occured concurrently, should poll for new certificates and retry
                 Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
                     let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);
