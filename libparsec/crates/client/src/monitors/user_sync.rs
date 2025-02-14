@@ -123,7 +123,7 @@ fn task_future_factory(user_ops: Arc<UserOps>, event_bus: EventBus) -> impl Futu
                         }
                         UserSyncError::Internal(err) => {
                             // Unexpected error occured, better stop the monitor
-                            log::warn!("Certificate monitor has crashed: {}", err);
+                            log::error!("Certificate monitor has crashed: {}", err);
                             let event = EventMonitorCrashed {
                                 monitor: USER_SYNC_MONITOR_NAME,
                                 workspace_id: None,

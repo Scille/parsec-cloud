@@ -103,7 +103,7 @@ fn task_future_factory(
                                 return
                             },
                             WorkspaceSyncError::Stopped => {
-                                log::warn!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                                log::error!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
                                 return;
                             }
                             err @ (
@@ -117,12 +117,12 @@ fn task_future_factory(
                                 | WorkspaceSyncError::TimestampOutOfBallpark { .. }
                             )
                             => {
-                                log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
+                                log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                                 return;
                             }
                             WorkspaceSyncError::Internal(err) => {
                                 // Unexpected error occured, better stop the monitor
-                                log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
+                                log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                                 let event = EventMonitorCrashed {
                                     monitor: WORKSPACE_OUTBOUND_SYNC_MONITOR_NAME,
                                     workspace_id: Some(workspace_ops.realm_id()),
@@ -208,11 +208,11 @@ fn task_future_factory(
                             // Shouldn't occur in practice given the monitors are expected
                             // to be stopped before the opses. In any case we have no
                             // choice but to also stop.
-                            log::warn!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                            log::error!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
                             return;
                         }
                         WorkspaceGetNeedOutboundSyncEntriesError::Internal(err) => {
-                            log::warn!(
+                            log::error!(
                                 "Workspace {realm_id}: stopping due to unexpected error: {err:?}"
                             );
                             return;
