@@ -102,6 +102,17 @@ ORDER BY timestamp ASC, priority ASC
 """)
 
 
+_q_get_realm_keys_bundles = Q("""
+SELECT
+    key_index,
+    keys_bundle
+FROM realm_keys_bundle
+WHERE
+    realm = $realm_internal_id
+    AND certified_on <= $realm_certificate_timestamp_upper_bound
+""")
+
+
 _q_get_realm_keys_bundle_user_accesses = Q(f"""
 SELECT
     {q_user(_id="realm_keys_bundle_access.user_", select="user_id")} AS user_id,
@@ -197,6 +208,30 @@ async def realm_export_do_certificates(
                 assert False, row
 
     rows = await conn.fetch(
+        *_q_get_realm_keys_bundles(
+            realm_internal_id=realm_internal_id,
+            realm_certificate_timestamp_upper_bound=realm_certificate_timestamp_upper_bound,
+        )
+    )
+    assert rows is not None
+
+    realm_keys_bundles: list[tuple[int, bytes]] = []
+    for row in rows:
+        match row["key_index"]:
+            case int() as key_index:
+                pass
+            case _:
+                assert False, row
+
+        match row["keys_bundle"]:
+            case bytes() as keys_bundle:
+                pass
+            case _:
+                assert False, row
+
+        realm_keys_bundles.append((key_index, keys_bundle))
+
+    rows = await conn.fetch(
         *_q_get_realm_keys_bundle_user_accesses(
             realm_internal_id=realm_internal_id,
             realm_certificate_timestamp_upper_bound=realm_certificate_timestamp_upper_bound,
@@ -261,6 +296,7 @@ async def realm_export_do_certificates(
         common_certificates=common_certificates,
         sequester_certificates=sequester_certificates,
         realm_certificates=realm_certificates,
+        realm_keys_bundles=realm_keys_bundles,
         realm_keys_bundle_user_accesses=realm_keys_bundle_user_accesses,
         realm_keys_bundle_sequester_accesses=realm_keys_bundle_sequester_accesses,
     )

@@ -375,6 +375,7 @@ class RealmExportCertificates:
     common_certificates: list[bytes]
     sequester_certificates: list[bytes]
     realm_certificates: list[bytes]
+    realm_keys_bundles: list[tuple[int, bytes]]
     realm_keys_bundle_user_accesses: list[tuple[UserID, int, bytes]]
     realm_keys_bundle_sequester_accesses: list[tuple[SequesterServiceID, int, bytes]]
 
