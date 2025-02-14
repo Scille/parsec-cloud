@@ -90,7 +90,7 @@ fn task_future_factory(
             let device = device.clone();
             async move {
                 macro_rules! handle_workspace_sync_error {
-                    ($err:expr) => {
+                    ($err:expr, $entry_id:expr) => {
                         match $err {
                             WorkspaceSyncError::Offline(_) => {
                                 event_bus.wait_server_reconnect().await;
@@ -120,6 +120,17 @@ fn task_future_factory(
                                 log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                                 return;
                             }
+                            WorkspaceSyncError::StoreUnavailable => {
+                                // Re-enqueue to retry later
+                                let entry_id = $entry_id;
+                                log::info!("Workspace {realm_id}: {entry_id} sync failed due to server block store unavailable, aborting sync and waiting {}s", SERVER_STORE_UNAVAILABLE_WAIT.num_seconds());
+                                let _ = tx.send(entry_id);
+                                device
+                                    .time_provider
+                                    .sleep(SERVER_STORE_UNAVAILABLE_WAIT)
+                                    .await;
+                                break;
+                            }
                             WorkspaceSyncError::Internal(err) => {
                                 // Unexpected error occured, better stop the monitor
                                 log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
@@ -147,16 +158,6 @@ fn task_future_factory(
                         match outcome {
                             Ok(OutboundSyncOutcome::Done) => break,
                             Ok(OutboundSyncOutcome::InboundSyncNeeded) => (),
-                            Ok(OutboundSyncOutcome::ServerStoreUnavailable) => {
-                                // Re-enqueue to retry later
-                                log::info!("Workspace {realm_id}: {entry_id} sync failed due to server block store unavailable, aborting sync and waiting {}s", SERVER_STORE_UNAVAILABLE_WAIT.num_seconds());
-                                let _ = tx.send(entry_id);
-                                device
-                                    .time_provider
-                                    .sleep(SERVER_STORE_UNAVAILABLE_WAIT)
-                                    .await;
-                                break;
-                            }
                             Ok(OutboundSyncOutcome::EntryIsBusy) => {
                                 // Re-enqueue to retry later
                                 // Note the send may fail if the syncer sub task has crashed,
@@ -165,7 +166,7 @@ fn task_future_factory(
                                 let _ = tx.send(entry_id);
                                 break;
                             }
-                            Err(err) => handle_workspace_sync_error!(err),
+                            Err(err) => handle_workspace_sync_error!(err, entry_id),
                         }
 
                         let outcome = workspace_ops.inbound_sync(entry_id).await;
@@ -180,7 +181,7 @@ fn task_future_factory(
                                 break;
                             }
                             Ok(InboundSyncOutcome::Updated | InboundSyncOutcome::NoChange) => (),
-                            Err(err) => handle_workspace_sync_error!(err),
+                            Err(err) => handle_workspace_sync_error!(err, entry_id),
                         }
                     }
                 }

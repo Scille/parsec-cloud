@@ -67,9 +67,6 @@ pub enum OutboundSyncOutcome {
     /// Hence now is not the right time to sync it given we will need to re-sync
     /// it after the modification is done. Instead we should just retry later.
     EntryIsBusy,
-    /// The server cannot communicate with the blockstore (e.g. AWS S3) to store
-    /// our blocks. Our only solution is to wait, pray, and retry later.
-    ServerStoreUnavailable,
 }
 
 async fn outbound_sync_child(
@@ -211,9 +208,6 @@ async fn outbound_sync_file(
     let local = match outcome {
         ReshapeAndUploadBlocksOutcome::Done(local_reshaped) => local_reshaped,
         ReshapeAndUploadBlocksOutcome::EntryIsBusy => return Ok(OutboundSyncOutcome::EntryIsBusy),
-        ReshapeAndUploadBlocksOutcome::ServerStoreUnavailable => {
-            return Ok(OutboundSyncOutcome::ServerStoreUnavailable)
-        }
     };
 
     #[cfg(test)]
@@ -575,7 +569,6 @@ async fn upload_manifest<M: RemoteManifest>(
 enum ReshapeAndUploadBlocksOutcome {
     Done(Arc<LocalFileManifest>),
     EntryIsBusy,
-    ServerStoreUnavailable,
 }
 
 async fn reshape_and_upload_blocks(
@@ -614,12 +607,7 @@ async fn reshape_and_upload_blocks(
 
     upload_blocks(ops, &manifest)
         .await
-        .map(move |outcome| match outcome {
-            UploadBlocksOutcome::Done => ReshapeAndUploadBlocksOutcome::Done(manifest),
-            UploadBlocksOutcome::ServerStoreUnavailable => {
-                ReshapeAndUploadBlocksOutcome::ServerStoreUnavailable
-            }
-        })
+        .map(move |_| ReshapeAndUploadBlocksOutcome::Done(manifest))
 }
 
 enum DoNextReshapeOperationOutcome {
@@ -665,6 +653,7 @@ async fn do_next_reshape_operation(
             Err(err) => {
                 return Err(match err {
                     ReadChunkOrBlockError::Offline(e) => WorkspaceSyncError::Offline(e),
+                    ReadChunkOrBlockError::StoreUnavailable => WorkspaceSyncError::StoreUnavailable,
                     ReadChunkOrBlockError::Stopped => WorkspaceSyncError::Stopped,
                     // TODO: manifest seems to contain invalid data (or the server is lying to us)
                     ReadChunkOrBlockError::ChunkNotFound => todo!(),
@@ -736,15 +725,10 @@ async fn do_next_reshape_operation(
     Ok(DoNextReshapeOperationOutcome::Done(manifest))
 }
 
-enum UploadBlocksOutcome {
-    Done,
-    ServerStoreUnavailable,
-}
-
 async fn upload_blocks(
     ops: &WorkspaceOps,
     manifest: &LocalFileManifest,
-) -> Result<UploadBlocksOutcome, WorkspaceSyncError> {
+) -> Result<(), WorkspaceSyncError> {
     for (block_index, block) in manifest.blocks.iter().enumerate() {
         assert!(block.len() == 1); // Sanity check: the manifest is guaranteed to be reshaped
         let chunk_view = &block[0];
@@ -815,7 +799,7 @@ async fn upload_blocks(
                 | Rep::BlockAlreadyExists => (),
                 Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
                 // Nothing we can do if server is not ready to store our data, retry later
-                Rep::StoreUnavailable => return Ok(UploadBlocksOutcome::ServerStoreUnavailable),
+                Rep::StoreUnavailable => return Err(WorkspaceSyncError::StoreUnavailable),
                     // A key rotation occurred concurrently, should poll for new certificates and retry
                     Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
                         let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);
@@ -857,5 +841,5 @@ async fn upload_blocks(
             })?;
     }
 
-    Ok(UploadBlocksOutcome::Done)
+    Ok(())
 }
