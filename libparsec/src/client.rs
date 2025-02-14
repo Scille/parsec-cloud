@@ -251,7 +251,8 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
                 client: x_client, ..
             }
             | HandleItem::WorkspaceHistory {
-                client: x_client, ..
+                client: Some(x_client),
+                ..
             }
             | HandleItem::Mountpoint {
                 client: x_client, ..
@@ -264,7 +265,7 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
                 to_wake_on_done,
                 ..
             }
-            | HandleItem::StartingWorkspaceHistory {
+            | HandleItem::StartingClientWorkspaceHistory {
                 client: x_client,
                 to_wake_on_done,
                 ..
