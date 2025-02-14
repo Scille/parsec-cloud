@@ -444,7 +444,7 @@ class EventOrganizationConfig(BaseModel):
 
     def dump_as_apiv5_sse_payload(self) -> bytes:
         return ClientBroadcastableEvent._dump_as_apiv5_sse_payload(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 user_profile_outsider_allowed=self.user_profile_outsider_allowed,
                 active_users_limit=self.active_users_limit,
             ),

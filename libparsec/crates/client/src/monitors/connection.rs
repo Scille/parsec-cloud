@@ -66,7 +66,7 @@ pub(crate) async fn start_connection_monitor(
 fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
     match event {
         APIEvent::Pinged { .. } => (),
-        APIEvent::ServerConfig {
+        APIEvent::OrganizationConfig {
             active_users_limit,
             user_profile_outsider_allowed,
         } => {
