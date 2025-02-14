@@ -2473,6 +2473,10 @@ export interface WorkspaceFdReadErrorStopped {
     tag: "Stopped"
     error: string
 }
+export interface WorkspaceFdReadErrorStoreUnavailable {
+    tag: "StoreUnavailable"
+    error: string
+}
 export type WorkspaceFdReadError =
   | WorkspaceFdReadErrorBadFileDescriptor
   | WorkspaceFdReadErrorInternal
@@ -2483,6 +2487,7 @@ export type WorkspaceFdReadError =
   | WorkspaceFdReadErrorNotInReadMode
   | WorkspaceFdReadErrorOffline
   | WorkspaceFdReadErrorStopped
+  | WorkspaceFdReadErrorStoreUnavailable
 
 
 // WorkspaceFdResizeError

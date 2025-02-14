@@ -2887,6 +2887,7 @@ export enum WorkspaceFdReadErrorTag {
     NotInReadMode = 'WorkspaceFdReadErrorNotInReadMode',
     Offline = 'WorkspaceFdReadErrorOffline',
     Stopped = 'WorkspaceFdReadErrorStopped',
+    StoreUnavailable = 'WorkspaceFdReadErrorStoreUnavailable',
 }
 
 export interface WorkspaceFdReadErrorBadFileDescriptor {
@@ -2925,6 +2926,10 @@ export interface WorkspaceFdReadErrorStopped {
     tag: WorkspaceFdReadErrorTag.Stopped
     error: string
 }
+export interface WorkspaceFdReadErrorStoreUnavailable {
+    tag: WorkspaceFdReadErrorTag.StoreUnavailable
+    error: string
+}
 export type WorkspaceFdReadError =
   | WorkspaceFdReadErrorBadFileDescriptor
   | WorkspaceFdReadErrorInternal
@@ -2935,6 +2940,7 @@ export type WorkspaceFdReadError =
   | WorkspaceFdReadErrorNotInReadMode
   | WorkspaceFdReadErrorOffline
   | WorkspaceFdReadErrorStopped
+  | WorkspaceFdReadErrorStoreUnavailable
 
 // WorkspaceFdResizeError
 export enum WorkspaceFdResizeErrorTag {
