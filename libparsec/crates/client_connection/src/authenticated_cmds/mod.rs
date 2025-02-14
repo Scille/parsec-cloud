@@ -144,7 +144,7 @@ impl AuthenticatedCmds {
 
         let request_builder = self
             .client
-            .post(url)
+            .post(url.clone())
             .headers(content_headers)
             .body(request_body);
 
@@ -166,7 +166,12 @@ impl AuthenticatedCmds {
             404 => Err(ConnectionError::OrganizationNotFound),
             406 => Err(ConnectionError::BadAcceptType),
             // No 410: no invitation here
-            415 => Err(ConnectionError::BadContent),
+            status @ 415 => {
+                // Log this error as it is indicative of an incompatibility
+                // that has not been caught by the API version check.
+                log::error!("Authenticated command to {url} failed with BadContent (status code {status})");
+                Err(ConnectionError::BadContent)
+            }
             422 => Err(crate::error::unsupported_api_version_from_headers(
                 *api_version, resp.headers(),
             )),
@@ -190,7 +195,12 @@ impl AuthenticatedCmds {
 
             // Finally all other HTTP codes are not supposed to occur (well except if
             // an HTTP proxy starts modifying the response, but that's another story...)
-            _ => Err(ConnectionError::InvalidResponseStatus(resp.status())),
+            _ => {
+                // Log this error as it is indicative of an unknown status code
+                // that should at least be described and handled.
+                log::error!("Authenticated command to {url} failed with status code {}", resp.status());
+                Err(ConnectionError::InvalidResponseStatus(resp.status()))
+            }
         }
     }
 }
