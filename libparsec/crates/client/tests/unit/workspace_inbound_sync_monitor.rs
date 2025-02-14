@@ -407,8 +407,8 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
             expected => panic!("The unexpected occured ! Expected {:?}", expected),
         }
     }
-    async fn event_bus_wait_server_online(&self) {
-        println!(">>> event_bus_wait_server_online()");
+    async fn event_bus_wait_server_reconnect(&self) {
+        println!(">>> event_bus_wait_server_reconnect()");
         let next_expected_events = self.pop_next_expected_event().await;
         match next_expected_events {
             InboundSyncMonitorEvent::EventBusWaitServerOnline { side_effect } => {

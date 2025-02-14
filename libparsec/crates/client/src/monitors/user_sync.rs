@@ -89,7 +89,7 @@ fn task_future_factory(user_ops: Arc<UserOps>, event_bus: EventBus) -> impl Futu
                             return;
                         }
                         UserSyncError::Offline(_) => {
-                            event_bus.wait_server_online().await;
+                            event_bus.wait_server_reconnect().await;
                             continue;
                         }
                         UserSyncError::AuthorNotAllowed => {

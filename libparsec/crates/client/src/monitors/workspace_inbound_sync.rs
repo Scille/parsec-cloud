@@ -60,7 +60,7 @@ enum WaitForNextIncomingEventOutcome {
 trait InboundSyncManagerIO: Send + Sync + 'static {
     async fn wait_for_next_incoming_event(&self) -> WaitForNextIncomingEventOutcome;
     async fn retry_later_busy_entry(&mut self, entry_id: VlobID);
-    async fn event_bus_wait_server_online(&self);
+    async fn event_bus_wait_server_reconnect(&self);
     async fn event_bus_send(&self, event: &impl Broadcastable);
     fn workspace_ops_refresh_realm_checkpoint(
         &self,
@@ -151,8 +151,8 @@ impl InboundSyncManagerIO for RealInboundSyncManagerIO {
             .send(IncomingEvent::RemoteChange { entry_id });
     }
 
-    async fn event_bus_wait_server_online(&self) {
-        let fut = self.event_bus.wait_server_online();
+    async fn event_bus_wait_server_reconnect(&self) {
+        let fut = self.event_bus.wait_server_reconnect();
         pretend_future_is_send_on_web(fut).await
     }
 
@@ -211,7 +211,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                         Ok(()) => break,
                         Err(err) => match err {
                             WorkspaceSyncError::Offline(_) => {
-                                io.event_bus_wait_server_online().await;
+                                io.event_bus_wait_server_reconnect().await;
                                 continue;
                             },
                             WorkspaceSyncError::Stopped => {
@@ -291,7 +291,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                     }
                     Err(err) => match err {
                         WorkspaceSyncError::Offline(_) => {
-                            io.event_bus_wait_server_online().await;
+                            io.event_bus_wait_server_reconnect().await;
                             continue;
                         }
                         // We have lost read access to the workspace, the certificates

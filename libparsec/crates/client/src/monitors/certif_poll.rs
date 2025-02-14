@@ -72,7 +72,7 @@ fn task_future_factory(
                 {
                     match err {
                         CertifPollServerError::Offline(_) => {
-                            event_bus.wait_server_online().await;
+                            event_bus.wait_server_reconnect().await;
                             continue;
                         }
                         CertifPollServerError::Stopped => {
