@@ -68,7 +68,7 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
             )
         )
 
-        # First event is always ServiceConfig
+        # First event is always OrganizationConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
@@ -77,6 +77,16 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
                 sse_keepalive=30,
             )
         )
+
+        # Check field conversions
+        assert isinstance(event, authenticated_cmds.latest.events_listen.RepOk)
+        inner_event = event.unit
+        assert isinstance(
+            inner_event, authenticated_cmds.latest.events_listen.APIEventOrganizationConfig
+        )
+        assert inner_event.active_users_limit == ActiveUsersLimit.NO_LIMIT
+        assert inner_event.user_profile_outsider_allowed is True
+        assert inner_event.sse_keepalive == 30.0
 
         # Backend should inform that some events were missed and we could not retrieve them
         event = await anext(alice_sse._iter_events)
