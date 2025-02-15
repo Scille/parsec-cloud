@@ -46,6 +46,10 @@
                             {
                                 "name": "active_users_limit",
                                 "type": "ActiveUsersLimit"
+                            },
+                            {
+                                "name": "sse_keepalive",
+                                "type": "RequiredOption<Duration>"
                             }
                         ]
                     },
