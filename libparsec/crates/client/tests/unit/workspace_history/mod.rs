@@ -3,7 +3,6 @@
 mod fd_close;
 mod fd_read;
 mod fd_stat;
-// mod get_workspace_manifest_v1_timestamp;
 mod open_file;
 mod open_file_by_id;
 mod start;
