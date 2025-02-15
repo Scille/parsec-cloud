@@ -174,9 +174,9 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
         revoked: usersResult.value.filter((user) => user.isRevoked()).length,
         active: usersResult.value.filter((user) => !user.isRevoked()).length,
         total: usersResult.value.length,
-        admins: usersResult.value.filter((user) => user.currentProfile === UserProfile.Admin).length,
-        standards: usersResult.value.filter((user) => user.currentProfile === UserProfile.Standard).length,
-        outsiders: usersResult.value.filter((user) => user.currentProfile === UserProfile.Outsider).length,
+        admins: usersResult.value.filter((user) => user.currentProfile === UserProfile.Admin && !user.isRevoked()).length,
+        standards: usersResult.value.filter((user) => user.currentProfile === UserProfile.Standard && !user.isRevoked()).length,
+        outsiders: usersResult.value.filter((user) => user.currentProfile === UserProfile.Outsider && !user.isRevoked()).length,
       },
       size: {
         metadata: 14_234_953,
