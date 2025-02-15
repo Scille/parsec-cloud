@@ -21,7 +21,7 @@ msTest('User list default state', async ({ organizationPage }) => {
   await expect(usersContainer.locator('.user-active-header').locator('.user-active-header__title')).toHaveText('Active');
   await expect(usersContainer.locator('.user-active-header').locator('.title-h4')).toHaveText('5');
   await expect(usersContainer.locator('.user-active-list').locator('.label-profile')).toHaveText(['Administrator', 'Member', 'External']);
-  await expect(usersContainer.locator('.user-active-list').locator('.user-active-list-item__value')).toHaveText(['3', '3', '2']);
+  await expect(usersContainer.locator('.user-active-list').locator('.user-active-list-item__value')).toHaveText(['2', '2', '1']);
   await expect(usersContainer.locator('.user-revoked-header').locator('.user-revoked-header__title')).toHaveText('Revoked');
   await expect(usersContainer.locator('.user-revoked-header').locator('.title-h4')).toHaveText('3');
 });
