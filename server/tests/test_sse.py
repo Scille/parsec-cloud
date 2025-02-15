@@ -74,6 +74,7 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 
@@ -101,6 +102,7 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 
@@ -146,6 +148,7 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 
@@ -271,6 +274,7 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 
@@ -319,6 +323,7 @@ async def test_close_on_organization_tos_updated(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 

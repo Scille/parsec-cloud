@@ -60,16 +60,18 @@ pub fn rep_ok() {
             //   status: 'ok'
             //   event: 'ORGANIZATION_CONFIG'
             //   active_users_limit: 8
+            //   sse_keepalive: [ 30, 0, ]
             //   user_profile_outsider_allowed: True
             &hex!(
-                "84a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
-                "4947b26163746976655f75736572735f6c696d697408bd757365725f70726f66696c65"
-                "5f6f757473696465725f616c6c6f776564c3"
+                "85a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
+                "4947b26163746976655f75736572735f6c696d697408ad7373655f6b656570616c6976"
+                "65921e00bd757365725f70726f66696c655f6f757473696465725f616c6c6f776564c3"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                     active_users_limit: ActiveUsersLimit::LimitedTo(8),
                     user_profile_outsider_allowed: true,
+                    sse_keepalive: Some(Duration::seconds(30)),
                 },
             ),
         ),
@@ -79,16 +81,18 @@ pub fn rep_ok() {
             //   status: 'ok'
             //   event: 'ORGANIZATION_CONFIG'
             //   active_users_limit: None
+            //   sse_keepalive: None
             //   user_profile_outsider_allowed: False
             &hex!(
-                "84a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
-                "4947b26163746976655f75736572735f6c696d6974c0bd757365725f70726f66696c65"
-                "5f6f757473696465725f616c6c6f776564c2"
+                "85a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
+                "4947b26163746976655f75736572735f6c696d6974c0ad7373655f6b656570616c6976"
+                "65c0bd757365725f70726f66696c655f6f757473696465725f616c6c6f776564c2"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                     active_users_limit: ActiveUsersLimit::NoLimit,
                     user_profile_outsider_allowed: false,
+                    sse_keepalive: None,
                 },
             ),
         ),
