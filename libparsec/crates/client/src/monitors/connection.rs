@@ -344,7 +344,7 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
     // As last monitor to start, we send this event to wake up all the other monitors
     event_bus.send(&EventMissedServerEvents);
 
-    loop {
+    'connection_loop: loop {
         // Note we listen on `retry_now_rx`
         let should_reset_backoff = select2_biased!(
             _ = backoff.wait() => false,
@@ -364,7 +364,7 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
             Ok(stream) => stream,
             Err(err) => match handle_sse_error(&mut state, &event_bus, err) {
                 HandleSseErrorOutcome::WaitForOnline
-                | HandleSseErrorOutcome::WaitForTosAccepted => continue,
+                | HandleSseErrorOutcome::WaitForTosAccepted => continue 'connection_loop,
                 HandleSseErrorOutcome::StopMonitor => return,
             },
         };
@@ -408,7 +408,7 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
                 }
                 Err(err) => match handle_sse_error(&mut state, &event_bus, err) {
                     HandleSseErrorOutcome::WaitForOnline
-                    | HandleSseErrorOutcome::WaitForTosAccepted => continue,
+                    | HandleSseErrorOutcome::WaitForTosAccepted => continue 'connection_loop,
                     HandleSseErrorOutcome::StopMonitor => return,
                 },
             }
