@@ -142,10 +142,10 @@ async fn brute_force_read_combinaisons(env: &TestbedEnv) {
             //
             //     0         32        64        96         128        160     180 192
             //     |         |         |         |          |          |       |   |
-            //       |         |       [ block 3 ][ block 4 ]          [block 6]
-            //       └─┬───────┘                                         |
-            //         └─ The file starts with zeros, so                 └ Block 6 is only 20 bytes long,
-            //            blocks 1 & 2 don't exist.                        which is allowed since it's
+            //     |         |         [ block 3 ][ block 4 ]          [block 6]
+            //     └─┬───────┘                                           |
+            //       └─ The file starts with zeros, so                   └ Block 6 is only 20 bytes long,
+            //          blocks 1 & 2 don't exist.                          which is allowed since it's
             //                                                             the last one.
             //
             // Note that it is guaranteed that the block *data* have the same size than
