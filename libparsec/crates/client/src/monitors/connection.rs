@@ -69,6 +69,7 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
         APIEvent::OrganizationConfig {
             active_users_limit,
             user_profile_outsider_allowed,
+            sse_keepalive: _,
         } => {
             let event = EventServerConfigNotified {
                 active_users_limit,

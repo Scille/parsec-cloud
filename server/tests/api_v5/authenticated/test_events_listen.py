@@ -151,6 +151,7 @@ async def test_authenticated_events_listen_ok(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 
@@ -177,6 +178,7 @@ async def test_receive_server_config_as_first_event(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 
@@ -207,6 +209,7 @@ async def test_user_not_receive_event_before_listen(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 
@@ -245,6 +248,7 @@ async def test_conn_closed_on_bad_outcome(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 
@@ -288,6 +292,7 @@ async def test_self_vlob_events_skipped(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 
@@ -335,6 +340,7 @@ async def test_self_certificate_events_provided(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 
@@ -405,6 +411,7 @@ async def test_receive_event_of_newly_shared_realm(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 
@@ -548,6 +555,7 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 
@@ -572,6 +580,7 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive=30,
             )
         )
 

@@ -24,10 +24,15 @@ class APIEventPinged(APIEvent):
 
 class APIEventOrganizationConfig(APIEvent):
     def __init__(
-        self, user_profile_outsider_allowed: bool, active_users_limit: ActiveUsersLimit
+        self,
+        user_profile_outsider_allowed: bool,
+        active_users_limit: ActiveUsersLimit,
+        sse_keepalive: float | None,
     ) -> None: ...
     @property
     def active_users_limit(self) -> ActiveUsersLimit: ...
+    @property
+    def sse_keepalive(self) -> float | None: ...
     @property
     def user_profile_outsider_allowed(self) -> bool: ...
 

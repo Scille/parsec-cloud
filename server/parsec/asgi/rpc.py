@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
@@ -813,7 +814,12 @@ class StreamingResponseMiddleware(StreamingResponse):
         # away so the client knows it is correctly connected without delay.
         # Fortunately we just have the right thing for that: the organization
         # config (given it may have changed since the last time the client connected).
-        yield self.initial_organization_config_event.dump_as_apiv5_sse_payload()
+        sse_keepalive = (
+            None
+            if self.backend.config.sse_keepalive is math.inf
+            else self.backend.config.sse_keepalive
+        )
+        yield self.initial_organization_config_event.dump_as_apiv5_sse_payload(sse_keepalive)
 
         while True:
             next_event = None
