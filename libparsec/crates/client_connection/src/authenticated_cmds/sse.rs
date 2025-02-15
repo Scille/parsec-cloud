@@ -168,7 +168,15 @@ impl RateLimiter {
     pub async fn wait(&mut self) {
         let duration_to_wait = self.get_duration_to_wait();
         self.attempt += 1;
+        if duration_to_wait.is_zero() {
+            return;
+        }
+        log::info!(
+            "Retrying in SSE connection in {} seconds",
+            duration_to_wait.as_secs()
+        );
         libparsec_platform_async::sleep(duration_to_wait).await;
+        log::info!("Retrying SSE connection");
     }
 
     fn get_duration_to_wait(&self) -> Duration {
