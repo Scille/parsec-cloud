@@ -816,7 +816,7 @@ class StreamingResponseMiddleware(StreamingResponse):
         # config (given it may have changed since the last time the client connected).
         sse_keepalive = (
             None
-            if self.backend.config.sse_keepalive is math.inf
+            if self.backend.config.sse_keepalive == math.inf
             else self.backend.config.sse_keepalive
         )
         yield self.initial_organization_config_event.dump_as_apiv5_sse_payload(sse_keepalive)
@@ -836,7 +836,14 @@ class StreamingResponseMiddleware(StreamingResponse):
 
             if scope.cancel_called:
                 self.client_ctx.logger.debug("SSE keepalive")
-                yield b":keepalive\n\n"
+                # The keepalive event is sent as an actual event and not a `:keepalive` event.
+                # This is because the client uses the absence of this event to detect a loss of
+                # connection.
+                #
+                # Even if it is empty, `data` field must be provided or SSE
+                # client will silently ignore the event.
+                # (cf. https://html.spec.whatwg.org/multipage/server-sent-events.html#dispatchMessage)
+                yield b"event:keepalive\ndata:\n\n"
 
             else:
                 if next_event is None:
@@ -845,7 +852,7 @@ class StreamingResponseMiddleware(StreamingResponse):
                     # provided by the client is too old. In this case we have to
                     # notify the client with a special `missed_events` message
                     #
-                    # Event if it is empty, `data` field must be provided or SSE
+                    # Even if it is empty, `data` field must be provided or SSE
                     # client will silently ignore the event.
                     # (cf. https://html.spec.whatwg.org/multipage/server-sent-events.html#dispatchMessage)
                     yield b"event:missed_events\ndata:\n\n"

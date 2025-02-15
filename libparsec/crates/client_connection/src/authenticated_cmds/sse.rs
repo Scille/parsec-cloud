@@ -88,6 +88,7 @@ where
     T::Response: Debug + PartialEq,
 {
     let message = match event.event.as_ref() {
+        "keepalive" => SSEResponseOrMissedEvents::Empty,
         "missed_events" => SSEResponseOrMissedEvents::MissedEvents,
         "message" if event.data.is_empty() => SSEResponseOrMissedEvents::Empty,
         "message" => {
@@ -106,7 +107,10 @@ where
         }
 
         // Unknown event should still be returned given it can modify `retry` param
-        _ => SSEResponseOrMissedEvents::Empty,
+        _ => {
+            log::warn!("Unknown event type: {}", event.event);
+            SSEResponseOrMissedEvents::Empty
+        }
     };
 
     std::task::Poll::Ready(Ok(SSEEvent {
