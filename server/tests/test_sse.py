@@ -169,7 +169,7 @@ async def test_keep_alive(minimalorg: MinimalorgRpcClients, backend: Backend) ->
         async for line in raw_sse_stream.aiter_lines():
             line = line.rstrip("\n")
 
-            if line == ":keepalive":
+            if line == "event:keepalive":
                 got_keepalive = True
                 break
 
@@ -236,7 +236,7 @@ async def test_keep_alive_real_server(minimalorg: MinimalorgRpcClients, app: Asg
             async for line in raw_sse_stream.aiter_lines():
                 line = line.rstrip("\n")
 
-                if line == ":keepalive":
+                if line == "event:keepalive":
                     got_keepalive = True
                     break
 
