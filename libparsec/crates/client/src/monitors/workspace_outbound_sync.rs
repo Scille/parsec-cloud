@@ -3,7 +3,7 @@
 use std::{collections::HashMap, future::Future, pin::pin, sync::Arc};
 
 use libparsec_platform_async::{
-    channel, event, pretend_future_is_send_on_web, select3_biased, spawn,
+    channel, event, pretend_future_is_send_on_web, select2_biased, select3_biased, spawn,
 };
 use libparsec_types::prelude::*;
 
@@ -58,6 +58,7 @@ fn task_future_factory(
 
     let request_stop = event::Event::new();
     let stop_requested = request_stop.listen();
+    let syncer_stop_requested = request_stop.listen();
 
     let stop_cb = Box::new(move || {
         request_stop.notify(usize::MAX);
@@ -89,11 +90,16 @@ fn task_future_factory(
             let tx = tx.clone();
             let device = device.clone();
             async move {
+                let mut syncer_stop_requested = pin!(syncer_stop_requested);
                 macro_rules! handle_workspace_sync_error {
                     ($err:expr, $entry_id:expr) => {
                         match $err {
                             WorkspaceSyncError::Offline(_) => {
-                                event_bus.wait_server_reconnect().await;
+                                // Make sure we do not block the stopping of the monitor here
+                                select2_biased!(
+                                    _ = event_bus.wait_server_reconnect() => {},
+                                    _ = &mut syncer_stop_requested => {},
+                                )
                             }
                             // We have lost read access to the workspace, the certificates
                             // ops should soon be notified and work accordingly (typically
