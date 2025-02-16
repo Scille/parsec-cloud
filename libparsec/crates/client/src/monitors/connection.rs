@@ -69,7 +69,7 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
         APIEvent::OrganizationConfig {
             active_users_limit,
             user_profile_outsider_allowed,
-            sse_keepalive: _,
+            sse_keepalive_seconds: _,
         } => {
             let event = EventServerConfigNotified {
                 active_users_limit,
@@ -303,17 +303,17 @@ impl KeepaliveTracking {
         if let Some(Ok(SSEEvent {
             message:
                 SSEResponseOrMissedEvents::Response(Rep::Ok(APIEvent::OrganizationConfig {
-                    sse_keepalive,
+                    sse_keepalive_seconds,
                     ..
                 })),
             ..
         })) = result
         {
-            self.sse_keepalive = sse_keepalive.and_then(|x| x.to_std().ok());
+            self.sse_keepalive = sse_keepalive_seconds.map(|x| Duration::from_secs(x.get()));
             match self.sse_keepalive {
                 Some(keepalive) => log::info!(
-                    "Set expected keepalive duration: {:.3} seconds",
-                    keepalive.as_secs_f32()
+                    "Set expected keepalive duration: {} seconds",
+                    keepalive.as_secs()
                 ),
                 None => log::info!("Unset expected keepalive duration"),
             }

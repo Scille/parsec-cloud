@@ -1076,14 +1076,18 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         FieldType::NonRequiredOption(nested) => {
             let nested_name = format_ident!("x");
             let nested_conversion = internal_quote_field_as_fn_new_conversion(&nested_name, nested);
-            quote! { #field_name.map(|x| #nested_conversion) }
+            quote! { match #field_name {
+                None => None,
+                Some(x) => Some(#nested_conversion),
+            }}
         }
         FieldType::RequiredOption(nested) => {
             let nested_name = format_ident!("x");
             let nested_conversion = internal_quote_field_as_fn_new_conversion(&nested_name, nested);
-            quote! {
-                #field_name.map(|x| #nested_conversion)
-            }
+            quote! { match #field_name {
+                None => None,
+                Some(x) => Some(#nested_conversion),
+            }}
         }
         FieldType::Tuple(items) => {
             let (xs, xs_conversions): (Vec<_>, Vec<_>) = items
