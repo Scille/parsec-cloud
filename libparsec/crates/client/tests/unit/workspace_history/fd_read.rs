@@ -9,11 +9,15 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::workspace_history_ops_with_server_access_factory;
+use super::utils::{workspace_history_ops_with_server_access_factory, DataAccessStrategy};
 use crate::workspace_history::WorkspaceHistoryFdReadError;
 
 #[parsec_test(testbed = "workspace_history")]
-async fn ok(env: &TestbedEnv) {
+async fn ok(
+    #[values(DataAccessStrategy::Server, DataAccessStrategy::RealmExport)]
+    strategy: DataAccessStrategy,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_bar_txt_v1_timestamp: DateTime =
@@ -26,45 +30,52 @@ async fn ok(env: &TestbedEnv) {
         env.template.get_stuff("wksp1_bar_txt_v2_block1_access");
     let wksp1_bar_txt_v2_block2_access: &BlockAccess =
         env.template.get_stuff("wksp1_bar_txt_v2_block2_access");
-    let alice = env.local_device("alice@dev1");
-    let ops = workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id).await;
+    let ops = strategy.start_workspace_history_ops(env).await;
 
     // 0) Open `bar.txt` v1 and v2
 
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        // Get back `/` manifest
-        test_send_hook_vlob_read_batch!(env, at: wksp1_bar_txt_v1_timestamp, wksp1_id, wksp1_id),
-        // Note workspace key bundle has already been loaded at workspace history ops startup
-    );
+    if matches!(strategy, DataAccessStrategy::Server) {
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            // Get back `/` manifest
+            test_send_hook_vlob_read_batch!(env, at: wksp1_bar_txt_v1_timestamp, wksp1_id, wksp1_id),
+            // Note workspace key bundle has already been loaded at workspace history ops startup
+        );
+    }
     ops.set_timestamp_of_interest(wksp1_bar_txt_v1_timestamp)
         .await
         .unwrap();
 
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        // Get back the `bar.txt` manifest
-        test_send_hook_vlob_read_batch!(env, at: wksp1_bar_txt_v1_timestamp, wksp1_id, wksp1_bar_txt_id),
-        // Note workspace key bundle has already been loaded at workspace history ops startup
-    );
+    if matches!(strategy, DataAccessStrategy::Server) {
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            // Get back the `bar.txt` manifest
+            test_send_hook_vlob_read_batch!(env, at: wksp1_bar_txt_v1_timestamp, wksp1_id, wksp1_bar_txt_id),
+            // Note workspace key bundle has already been loaded at workspace history ops startup
+        );
+    }
     let fd_v1 = ops.open_file_by_id(wksp1_bar_txt_id).await.unwrap();
 
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        // Get back `/` manifest
-        test_send_hook_vlob_read_batch!(env, at: wksp1_bar_txt_v2_timestamp, wksp1_id, wksp1_id),
-        // Note workspace key bundle has already been loaded at workspace history ops startup
-    );
+    if matches!(strategy, DataAccessStrategy::Server) {
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            // Get back `/` manifest
+            test_send_hook_vlob_read_batch!(env, at: wksp1_bar_txt_v2_timestamp, wksp1_id, wksp1_id),
+            // Note workspace key bundle has already been loaded at workspace history ops startup
+        );
+    }
     ops.set_timestamp_of_interest(wksp1_bar_txt_v2_timestamp)
         .await
         .unwrap();
 
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        // 1) Get back the `bar.txt` manifest
-        test_send_hook_vlob_read_batch!(env, at: wksp1_bar_txt_v2_timestamp, wksp1_id, wksp1_bar_txt_id),
-        // (workspace keys bundle already fetched)
-    );
+    if matches!(strategy, DataAccessStrategy::Server) {
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            // 1) Get back the `bar.txt` manifest
+            test_send_hook_vlob_read_batch!(env, at: wksp1_bar_txt_v2_timestamp, wksp1_id, wksp1_bar_txt_id),
+            // (workspace keys bundle already fetched)
+        );
+    }
     let fd_v2 = ops.open_file_by_id(wksp1_bar_txt_id).await.unwrap();
 
     macro_rules! assert_fd_read {
@@ -77,10 +88,12 @@ async fn ok(env: &TestbedEnv) {
 
     // 1) Access bar.txt's v1
 
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        test_send_hook_block_read!(env, wksp1_id, wksp1_bar_txt_v1_block_access.id),
-    );
+    if matches!(strategy, DataAccessStrategy::Server) {
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            test_send_hook_block_read!(env, wksp1_id, wksp1_bar_txt_v1_block_access.id),
+        );
+    }
 
     assert_fd_read!(fd_v1, 0, 100, b"Hello v1");
     assert_fd_read!(fd_v1, 0, 1, b"H");
@@ -89,11 +102,13 @@ async fn ok(env: &TestbedEnv) {
 
     // 2) Access bar.txt's v2
 
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        test_send_hook_block_read!(env, wksp1_id, wksp1_bar_txt_v2_block1_access.id),
-        test_send_hook_block_read!(env, wksp1_id, wksp1_bar_txt_v2_block2_access.id),
-    );
+    if matches!(strategy, DataAccessStrategy::Server) {
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            test_send_hook_block_read!(env, wksp1_id, wksp1_bar_txt_v2_block1_access.id),
+            test_send_hook_block_read!(env, wksp1_id, wksp1_bar_txt_v2_block2_access.id),
+        );
+    }
 
     assert_fd_read!(fd_v2, 0, 100, b"Hello v2 world");
     assert_fd_read!(fd_v2, 100, 1, b"");
@@ -215,8 +230,14 @@ async fn brute_force_read_combinaisons(env: &TestbedEnv) {
         })
         .await;
 
-    let alice = env.local_device("alice@dev1");
-    let ops = workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id).await;
+    // We only run this test with the server-based access since:
+    // - The test itself is not about the server access, but the upper layer
+    //   that stitches together the manifests & blocks to complete a read.
+    // - It would be really cumbersome to have a realm export database containing
+    //   the test data.
+    let ops = DataAccessStrategy::Server
+        .start_workspace_history_ops(env)
+        .await;
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
@@ -316,11 +337,13 @@ async fn brute_force_read_combinaisons(env: &TestbedEnv) {
     }
 }
 
-#[parsec_test(testbed = "minimal_client_ready")]
-async fn bad_file_descriptor(env: &TestbedEnv) {
-    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let alice = env.local_device("alice@dev1");
-    let ops = workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id).await;
+#[parsec_test(testbed = "workspace_history")]
+async fn bad_file_descriptor(
+    #[values(DataAccessStrategy::Server, DataAccessStrategy::RealmExport)]
+    strategy: DataAccessStrategy,
+    env: &TestbedEnv,
+) {
+    let ops = strategy.start_workspace_history_ops(env).await;
 
     let mut buff = vec![];
     p_assert_matches!(
@@ -331,19 +354,27 @@ async fn bad_file_descriptor(env: &TestbedEnv) {
     );
 }
 
-#[parsec_test(testbed = "minimal_client_ready")]
-async fn reuse_after_close(env: &TestbedEnv) {
+#[parsec_test(testbed = "workspace_history")]
+async fn reuse_after_close(
+    #[values(DataAccessStrategy::Server, DataAccessStrategy::RealmExport)]
+    strategy: DataAccessStrategy,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
-    let alice = env.local_device("alice@dev1");
-    let ops = workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id).await;
+    let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
+    let ops = strategy
+        .start_workspace_history_ops_at(env, wksp1_v2_timestamp)
+        .await;
 
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        // Get back the `bar.txt` manifest
-        test_send_hook_vlob_read_batch!(env, at: ops.timestamp_of_interest(), wksp1_id, wksp1_bar_txt_id),
-        // Note workspace key bundle has already been loaded at workspace history ops startup
-    );
+    if matches!(strategy, DataAccessStrategy::Server) {
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            // Get back the `bar.txt` manifest
+            test_send_hook_vlob_read_batch!(env, at: ops.timestamp_of_interest(), wksp1_id, wksp1_bar_txt_id),
+            // Note workspace key bundle has already been loaded at workspace history ops startup
+        );
+    }
 
     let fd = ops.open_file_by_id(wksp1_bar_txt_id).await.unwrap();
     ops.fd_close(fd).unwrap();
@@ -355,17 +386,19 @@ async fn reuse_after_close(env: &TestbedEnv) {
     );
 }
 
-#[parsec_test(testbed = "minimal_client_ready")]
-async fn offline(env: &TestbedEnv) {
+#[parsec_test(testbed = "workspace_history")]
+async fn server_only_offline(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
-    let alice = env.local_device("alice@dev1");
-    let ops = workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id).await;
+    let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
+    let ops = DataAccessStrategy::Server
+        .start_workspace_history_ops_at(env, wksp1_v2_timestamp)
+        .await;
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         // Get back the `bar.txt` manifest
-        test_send_hook_vlob_read_batch!(env, at: ops.timestamp_of_interest(), wksp1_id, wksp1_bar_txt_id),
+        test_send_hook_vlob_read_batch!(env, at: wksp1_v2_timestamp, wksp1_id, wksp1_bar_txt_id),
         // Note workspace key bundle has already been loaded at workspace history ops startup
     );
 
@@ -414,8 +447,7 @@ async fn stopped(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-#[ignore] // TODO: `WorkspaceHistoryOps::start` does server access that crash the test...
-async fn no_realm_access(env: &TestbedEnv) {
+async fn server_only_no_realm_access(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_bar_txt_block_access: &BlockAccess =
@@ -447,31 +479,60 @@ async fn no_realm_access(env: &TestbedEnv) {
     );
 }
 
-#[parsec_test(testbed = "minimal_client_ready")]
-async fn block_not_found(env: &TestbedEnv) {
+#[parsec_test(testbed = "workspace_history")]
+async fn block_not_found(
+    #[values(DataAccessStrategy::Server, DataAccessStrategy::RealmExport)]
+    strategy: DataAccessStrategy,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
-    let wksp1_bar_txt_block_access: &BlockAccess =
-        env.template.get_stuff("wksp1_bar_txt_block_access");
-    let alice = env.local_device("alice@dev1");
-    let ops = workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id).await;
+    let wksp1_bar_txt_v1_block_access: &BlockAccess =
+        env.template.get_stuff("wksp1_bar_txt_v1_block_access");
+    let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
+    let ops = strategy
+        .start_workspace_history_ops_at(env, wksp1_v2_timestamp)
+        .await;
 
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        // Get back the `bar.txt` manifest
-        test_send_hook_vlob_read_batch!(env, at: ops.timestamp_of_interest(), wksp1_id, wksp1_bar_txt_id),
-        // Note workspace key bundle has already been loaded at workspace history ops startup
-    );
+    if matches!(strategy, DataAccessStrategy::RealmExport) {
+        // We need to modify the realm export database to remove the block...
+        // so we do it with a bit of help from our best friend Python ;-)
+        std::process::Command::new("python")
+            .arg("-c")
+            .arg(
+                "\
+                import sqlite3; \
+                c = sqlite3.connect('./workspace_history_export.sqlite'); \
+                c.execute('DELETE FROM block'); \
+                c.execute('DELETE FROM block_data'); \
+                c.commit(); \
+            ",
+            )
+            .current_dir(ops.tmp_path().expect("always defined for realm export"))
+            .status()
+            .unwrap();
+    }
+
+    if matches!(strategy, DataAccessStrategy::Server) {
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            // Get back the `bar.txt` manifest
+            test_send_hook_vlob_read_batch!(env, at: wksp1_v2_timestamp, wksp1_id, wksp1_bar_txt_id),
+            // Note workspace key bundle has already been loaded at workspace history ops startup
+        );
+    }
 
     let fd = ops.open_file_by_id(wksp1_bar_txt_id).await.unwrap();
 
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        move |req: authenticated_cmds::latest::block_read::Req| {
-            p_assert_eq!(req.block_id, wksp1_bar_txt_block_access.id);
-            authenticated_cmds::latest::block_read::Rep::BlockNotFound
-        }
-    );
+    if matches!(strategy, DataAccessStrategy::Server) {
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            move |req: authenticated_cmds::latest::block_read::Req| {
+                p_assert_eq!(req.block_id, wksp1_bar_txt_v1_block_access.id);
+                authenticated_cmds::latest::block_read::Rep::BlockNotFound
+            }
+        );
+    }
 
     let mut buff = vec![];
     p_assert_matches!(

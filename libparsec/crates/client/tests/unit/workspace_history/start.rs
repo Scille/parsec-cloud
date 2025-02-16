@@ -3,17 +3,30 @@
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::workspace_history_ops_with_server_access_factory;
+use super::utils::DataAccessStrategy;
 
 #[parsec_test(testbed = "workspace_history")]
-async fn ok(env: &TestbedEnv) {
+async fn ok(
+    #[values(DataAccessStrategy::Server, DataAccessStrategy::RealmExport)]
+    strategy: DataAccessStrategy,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let alice = env.local_device("alice@dev1");
-    let ops = workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id).await;
+    let ops = strategy.start_workspace_history_ops(env).await;
 
-    p_assert_eq!(ops.realm_id(), wksp1_id,);
+    p_assert_eq!(ops.realm_id(), wksp1_id);
 
-    p_assert_eq!(ops.organization_id(), alice.organization_id(),);
+    let expected_organization_id = match &strategy {
+        DataAccessStrategy::Server => {
+            let alice = env.local_device("alice@dev1");
+            alice.organization_id().to_owned()
+        }
+        DataAccessStrategy::RealmExport => {
+            // Always the same name since it is written in the realm export database file
+            "Org1".parse().unwrap()
+        }
+    };
+    p_assert_eq!(ops.organization_id(), &expected_organization_id);
 
     let timestamp_lower_bound = ops.timestamp_lower_bound();
     let timestamp_higher_bound = ops.timestamp_higher_bound();
