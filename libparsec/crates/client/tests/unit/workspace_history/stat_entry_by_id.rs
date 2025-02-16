@@ -7,28 +7,22 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::workspace_history_ops_with_server_access_factory;
+use super::utils::{workspace_history_ops_with_server_access_factory, DataAccessStrategy};
 use crate::workspace_history::{WorkspaceHistoryEntryStat, WorkspaceHistoryStatEntryError};
 
 #[parsec_test(testbed = "workspace_history")]
-async fn ok_folder(env: &TestbedEnv) {
+async fn ok_folder(
+    #[values(DataAccessStrategy::Server, DataAccessStrategy::RealmExport)]
+    strategy: DataAccessStrategy,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_v2_children_available_timestamp: DateTime = *env
         .template
         .get_stuff("wksp1_foo_v2_children_available_timestamp");
-    let alice = env.local_device("alice@dev1");
-    let ops =
-        workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id.to_owned()).await;
-
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        // Get back `/` manifest
-        test_send_hook_vlob_read_batch!(env, at: wksp1_foo_v2_children_available_timestamp, wksp1_id, wksp1_id),
-        // Note workspace key bundle has already been loaded at workspace history ops startup
-    );
-    ops.set_timestamp_of_interest(wksp1_foo_v2_children_available_timestamp)
-        .await
-        .unwrap();
+    let ops = strategy
+        .start_workspace_history_ops_at(env, wksp1_foo_v2_children_available_timestamp)
+        .await;
 
     // `/` manifest is already in cache, no need for `test_register_sequence_of_send_hooks` here
     p_assert_matches!(
@@ -52,32 +46,28 @@ async fn ok_folder(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "workspace_history")]
-async fn ok_file(env: &TestbedEnv) {
+async fn ok_file(
+    #[values(DataAccessStrategy::Server, DataAccessStrategy::RealmExport)]
+    strategy: DataAccessStrategy,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_foo_v2_children_available_timestamp: DateTime = *env
         .template
         .get_stuff("wksp1_foo_v2_children_available_timestamp");
-    let alice = env.local_device("alice@dev1");
-    let ops =
-        workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id.to_owned()).await;
+    let ops = strategy
+        .start_workspace_history_ops_at(env, wksp1_foo_v2_children_available_timestamp)
+        .await;
 
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        // Get back `/` manifest
-        test_send_hook_vlob_read_batch!(env, at: wksp1_foo_v2_children_available_timestamp, wksp1_id, wksp1_id),
-        // Note workspace key bundle has already been loaded at workspace history ops startup
-    );
-    ops.set_timestamp_of_interest(wksp1_foo_v2_children_available_timestamp)
-        .await
-        .unwrap();
-
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        // Get back the `bar.txt` manifest
-        test_send_hook_vlob_read_batch!(env, at: wksp1_foo_v2_children_available_timestamp, wksp1_id, wksp1_bar_txt_id),
-        // Note workspace key bundle has already been loaded at workspace history ops startup
-    );
+    if matches!(strategy, DataAccessStrategy::Server) {
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            // Get back the `bar.txt` manifest
+            test_send_hook_vlob_read_batch!(env, at: wksp1_foo_v2_children_available_timestamp, wksp1_id, wksp1_bar_txt_id),
+            // Note workspace key bundle has already been loaded at workspace history ops startup
+        );
+    }
 
     p_assert_matches!(
         ops.stat_entry_by_id(wksp1_bar_txt_id).await,
@@ -102,7 +92,7 @@ async fn ok_file(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn offline(env: &TestbedEnv) {
+async fn server_only_offline(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let alice = env.local_device("alice@dev1");
@@ -138,7 +128,7 @@ async fn stopped(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn no_realm_access(env: &TestbedEnv) {
+async fn server_only_no_realm_access(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let alice = env.local_device("alice@dev1");
@@ -158,19 +148,34 @@ async fn no_realm_access(env: &TestbedEnv) {
     );
 }
 
-#[parsec_test(testbed = "minimal_client_ready")]
-async fn entry_not_found(env: &TestbedEnv) {
+#[parsec_test(testbed = "workspace_history")]
+async fn entry_not_found(
+    #[values(DataAccessStrategy::Server, DataAccessStrategy::RealmExport)]
+    strategy: DataAccessStrategy,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let dummy_id = VlobID::default();
-    let alice = env.local_device("alice@dev1");
-    let ops = workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id).await;
+    let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
+    let ops = strategy
+        .start_workspace_history_ops_at(env, wksp1_v2_timestamp)
+        .await;
 
-    test_register_sequence_of_send_hooks!(
-        &env.discriminant_dir,
-        // Try to get back the dummy manifest... and fail since it doesn't exist !
-        test_send_hook_vlob_read_batch!(env, at: ops.timestamp_of_interest(), wksp1_id, dummy_id),
+    if matches!(strategy, DataAccessStrategy::Server) {
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            // Try to get back the dummy manifest... and fail since it doesn't exist !
+            test_send_hook_vlob_read_batch!(env, at: ops.timestamp_of_interest(), wksp1_id, dummy_id),
+        );
+    }
+
+    p_assert_matches!(
+        ops.stat_entry_by_id(dummy_id).await.unwrap_err(),
+        WorkspaceHistoryStatEntryError::EntryNotFound
     );
 
+    // The fact this ID was not found is kept in cache, so no further
+    // server access is needed if we try to access it again.
     p_assert_matches!(
         ops.stat_entry_by_id(dummy_id).await.unwrap_err(),
         WorkspaceHistoryStatEntryError::EntryNotFound
