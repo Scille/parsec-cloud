@@ -18,8 +18,8 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceCreateFolderError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Only have read access on this workspace")]
@@ -40,15 +40,6 @@ pub enum WorkspaceCreateFolderError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for WorkspaceCreateFolderError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub(crate) async fn create_folder(
@@ -82,7 +73,7 @@ pub(crate) async fn create_folder(
         .resolve_path_for_update_folder(&parent_path)
         .await
         .map_err(|err| match err {
-            ForUpdateFolderError::Offline => WorkspaceCreateFolderError::Offline,
+            ForUpdateFolderError::Offline(e) => WorkspaceCreateFolderError::Offline(e),
             ForUpdateFolderError::Stopped => WorkspaceCreateFolderError::Stopped,
             ForUpdateFolderError::EntryNotFound => WorkspaceCreateFolderError::ParentNotFound,
             ForUpdateFolderError::EntryNotAFolder => WorkspaceCreateFolderError::ParentNotAFolder,
@@ -109,7 +100,9 @@ pub(crate) async fn create_folder(
             .ensure_manifest_exists_with_parent(entry_id, parent_manifest.base.id)
             .await
             .map_err(|err| match err {
-                EnsureManifestExistsWithParentError::Offline => WorkspaceCreateFolderError::Offline,
+                EnsureManifestExistsWithParentError::Offline(e) => {
+                    WorkspaceCreateFolderError::Offline(e)
+                }
                 EnsureManifestExistsWithParentError::Stopped => WorkspaceCreateFolderError::Stopped,
                 EnsureManifestExistsWithParentError::NoRealmAccess => {
                     WorkspaceCreateFolderError::NoRealmAccess

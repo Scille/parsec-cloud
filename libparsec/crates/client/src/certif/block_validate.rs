@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
@@ -88,8 +89,8 @@ pub enum InvalidBlockAccessError {
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifValidateBlockError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -130,7 +131,7 @@ pub(super) async fn validate_block(
             .await
             .map_err(|err| match err {
                 CertifDecryptForRealmError::Stopped => CertifValidateBlockError::Stopped,
-                CertifDecryptForRealmError::Offline => CertifValidateBlockError::Offline,
+                CertifDecryptForRealmError::Offline(e) => CertifValidateBlockError::Offline(e),
                 CertifDecryptForRealmError::NotAllowed => CertifValidateBlockError::NotAllowed,
                 CertifDecryptForRealmError::KeyNotFound => {
                     CertifValidateBlockError::InvalidBlockAccess(Box::new(
@@ -182,7 +183,7 @@ pub(super) async fn validate_block(
         })
         .await
         .map_err(|err| match err {
-            CertifForReadWithRequirementsError::Offline => CertifValidateBlockError::Offline,
+            CertifForReadWithRequirementsError::Offline(e) => CertifValidateBlockError::Offline(e),
             CertifForReadWithRequirementsError::Stopped => CertifValidateBlockError::Stopped,
             CertifForReadWithRequirementsError::InvalidCertificate(err) => {
                 CertifValidateBlockError::InvalidCertificate(err)

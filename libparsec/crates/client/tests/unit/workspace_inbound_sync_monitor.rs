@@ -3,7 +3,7 @@
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
-use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
+use libparsec_client_connection::{AuthenticatedCmds, ConnectionError, ProxyConfig};
 use libparsec_platform_async::prelude::*;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -122,7 +122,9 @@ async fn refresh_realm_checkpoint_offline() {
                 side_effect: None,
             },
             InboundSyncMonitorEvent::WorkspaceOpsRefreshRealmCheckpoint {
-                outcome: Err(WorkspaceSyncError::Offline),
+                outcome: Err(WorkspaceSyncError::Offline(ConnectionError::NoResponse(
+                    None,
+                ))),
                 side_effect: None,
             },
         ],
@@ -405,8 +407,8 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
             expected => panic!("The unexpected occured ! Expected {:?}", expected),
         }
     }
-    async fn event_bus_wait_server_online(&self) {
-        println!(">>> event_bus_wait_server_online()");
+    async fn event_bus_wait_server_reconnect(&self) {
+        println!(">>> event_bus_wait_server_reconnect()");
         let next_expected_events = self.pop_next_expected_event().await;
         match next_expected_events {
             InboundSyncMonitorEvent::EventBusWaitServerOnline { side_effect } => {

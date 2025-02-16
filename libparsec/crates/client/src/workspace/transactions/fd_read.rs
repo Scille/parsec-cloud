@@ -10,8 +10,10 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceFdReadError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
+    #[error("Block access is temporary unavailable on the server")]
+    ServerBlockstoreUnavailable,
     #[error("Component has stopped")]
     Stopped,
     #[error("File descriptor not found")]
@@ -28,15 +30,6 @@ pub enum WorkspaceFdReadError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for WorkspaceFdReadError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub async fn fd_read(
@@ -98,7 +91,10 @@ pub async fn fd_read(
                     .get_chunk_or_block(&chunk_view, &opened_file.manifest.base)
                     .await
                     .map_err(|err| match err {
-                        ReadChunkOrBlockError::Offline => WorkspaceFdReadError::Offline,
+                        ReadChunkOrBlockError::Offline(e) => WorkspaceFdReadError::Offline(e),
+                        ReadChunkOrBlockError::ServerBlockstoreUnavailable => {
+                            WorkspaceFdReadError::ServerBlockstoreUnavailable
+                        }
                         ReadChunkOrBlockError::Stopped => WorkspaceFdReadError::Stopped,
                         ReadChunkOrBlockError::NoRealmAccess => WorkspaceFdReadError::NoRealmAccess,
                         ReadChunkOrBlockError::InvalidBlockAccess(err) => {

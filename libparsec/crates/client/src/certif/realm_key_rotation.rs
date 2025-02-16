@@ -26,8 +26,8 @@ pub enum CertifRotateRealmKeyError {
     UnknownRealm,
     #[error("Not allowed")]
     AuthorNotAllowed,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     // TODO: This error should be `CurrentKeysBundleCorruptedAndUnrecoverable`, given
@@ -47,16 +47,6 @@ pub enum CertifRotateRealmKeyError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for CertifRotateRealmKeyError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 impl From<CertifStoreError> for CertifRotateRealmKeyError {
@@ -117,7 +107,7 @@ pub(super) async fn rotate_realm_key_idempotent(
                 )
                     .await
                     .map_err(|e| match e {
-                        CertifPollServerError::Offline => CertifRotateRealmKeyError::Offline,
+                        CertifPollServerError::Offline(e) => CertifRotateRealmKeyError::Offline(e),
                         CertifPollServerError::Stopped => CertifRotateRealmKeyError::Stopped,
                         CertifPollServerError::InvalidCertificate(err) => {
                             CertifRotateRealmKeyError::InvalidCertificate(err)
@@ -163,9 +153,9 @@ pub(super) async fn rotate_realm_key_idempotent(
             }
 
             // TODO: provide a dedicated error for this exotic behavior ?
-            Rep::SequesterServiceUnavailable { .. } => Err(CertifRotateRealmKeyError::Offline),
+            Rep::SequesterServiceUnavailable { service_id } => Err(anyhow::anyhow!("Sequester service {service_id} is unavailable").into()),
             // TODO: we should send a dedicated event for this, and return an according error
-            Rep::RejectedBySequesterService { .. } => { todo!() }
+            Rep::RejectedBySequesterService { service_id, reason } => Err(anyhow::anyhow!("Rejected by sequester service {service_id} ({reason:?})").into()),
             // Sequester services has changed concurrently, should poll for new certificates and retry
             Rep::SequesterServiceMismatch { last_sequester_certificate_timestamp } => {
                 let latest_known_timestamps = PerTopicLastTimestamps::new_for_sequester(last_sequester_certificate_timestamp);
@@ -174,7 +164,7 @@ pub(super) async fn rotate_realm_key_idempotent(
                     .await
                     .map_err(|err| match err {
                         CertifPollServerError::Stopped => CertifRotateRealmKeyError::Stopped,
-                        CertifPollServerError::Offline => CertifRotateRealmKeyError::Offline,
+                        CertifPollServerError::Offline(e) => CertifRotateRealmKeyError::Offline(e),
                         CertifPollServerError::InvalidCertificate(err) => CertifRotateRealmKeyError::InvalidCertificate(err),
                         CertifPollServerError::Internal(err) => err.context("Cannot poll server for new certificates").into(),
                     })?;
@@ -211,8 +201,8 @@ async fn generate_realm_rotate_key_req(
                 realm_keys_bundle::generate_next_keys_bundle_for_realm(ops, store, realm_id)
                     .await
                     .map_err(|err| match err {
-                        GenerateNextKeyBundleForRealmError::Offline => {
-                            CertifRotateRealmKeyError::Offline
+                        GenerateNextKeyBundleForRealmError::Offline(e) => {
+                            CertifRotateRealmKeyError::Offline(e)
                         }
                         GenerateNextKeyBundleForRealmError::NotAllowed => {
                             CertifRotateRealmKeyError::AuthorNotAllowed

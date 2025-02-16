@@ -33,13 +33,13 @@
 /// So we choose (for the moment at least !) the pragmatic approach of considering
 /// SSE errors are the only important ones, so that only the connection monitor have
 /// to deal with events.
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use libparsec_client_connection::{
-    AuthenticatedCmds, ConnectionError, RateLimiter, SSEResponseOrMissedEvents,
+    AuthenticatedCmds, ConnectionError, RateLimiter, SSEEvent, SSEResponseOrMissedEvents, SSEStream,
 };
 use libparsec_platform_async::{
-    channel, pretend_future_is_send_on_web, select2_biased, stream::StreamExt,
+    channel, pretend_future_is_send_on_web, select2_biased, sleep, stream::StreamExt,
 };
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_protocol::authenticated_cmds::latest::events_listen::{APIEvent, Rep, Req};
@@ -66,9 +66,10 @@ pub(crate) async fn start_connection_monitor(
 fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
     match event {
         APIEvent::Pinged { .. } => (),
-        APIEvent::ServerConfig {
+        APIEvent::OrganizationConfig {
             active_users_limit,
             user_profile_outsider_allowed,
+            sse_keepalive_seconds: _,
         } => {
             let event = EventServerConfigNotified {
                 active_users_limit,
@@ -251,7 +252,6 @@ fn handle_sse_error(
         | ConnectionError::MissingSupportedApiVersions
         | ConnectionError::FrozenUser
         | ConnectionError::AuthenticationTokenExpired
-        | ConnectionError::Serialization(_)
         | ConnectionError::WrongApiVersion(_)
         | ConnectionError::InvalidSSEEventID(_)) => {
             let event =
@@ -268,8 +268,63 @@ enum ConnectionState {
     Online,
 }
 
+#[derive(Debug, Default)]
+struct KeepaliveTracking {
+    sse_keepalive: Option<Duration>,
+}
+
+impl KeepaliveTracking {
+    // Add 20% to the keepalive duration to avoid a false positive on
+    // the timeout if the server is a bit late to send the next event.
+    const TIMEOUT_FACTOR: f32 = 1.2;
+
+    async fn next_event(
+        &mut self,
+        stream: &mut SSEStream<Req>,
+    ) -> Option<Result<SSEEvent<Req>, ConnectionError>> {
+        let result = match self.sse_keepalive {
+            // No keepalive duration, just wait for the next event
+            None => stream.next().await,
+            // We have a keepalive duration, use it as a timeout
+            Some(keepalive) => {
+                let timeout = keepalive.mul_f32(Self::TIMEOUT_FACTOR);
+                select2_biased!(
+                    res = stream.next() => res,
+                    // In case of a timeout, return a `ConnectionError::NoResponse`
+                    // to get the same behavior as if the server was unreachable.
+                    _ = sleep(timeout) => {
+                        log::info!("Keepalive timeout after {:?}", timeout);
+                        Some(Err(ConnectionError::NoResponse(None)))
+                    }
+                )
+            }
+        };
+        // Update the keepalive duration if we received an `OrganizationConfig` event
+        if let Some(Ok(SSEEvent {
+            message:
+                SSEResponseOrMissedEvents::Response(Rep::Ok(APIEvent::OrganizationConfig {
+                    sse_keepalive_seconds,
+                    ..
+                })),
+            ..
+        })) = result
+        {
+            self.sse_keepalive = sse_keepalive_seconds.map(|x| Duration::from_secs(x.get()));
+            match self.sse_keepalive {
+                Some(keepalive) => log::info!(
+                    "Set expected keepalive duration: {} seconds",
+                    keepalive.as_secs()
+                ),
+                None => log::info!("Unset expected keepalive duration"),
+            }
+        }
+        result
+    }
+}
+
 async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) {
     let mut state = ConnectionState::Offline;
+    let mut keepalive_tracking = KeepaliveTracking::default();
     let mut last_event_id = None;
     // Backoff is used to wait longer and longer after each failed connection
     // the server.
@@ -289,7 +344,7 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
     // As last monitor to start, we send this event to wake up all the other monitors
     event_bus.send(&EventMissedServerEvents);
 
-    loop {
+    'connection_loop: loop {
         // Note we listen on `retry_now_rx`
         let should_reset_backoff = select2_biased!(
             _ = backoff.wait() => false,
@@ -309,14 +364,14 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
             Ok(stream) => stream,
             Err(err) => match handle_sse_error(&mut state, &event_bus, err) {
                 HandleSseErrorOutcome::WaitForOnline
-                | HandleSseErrorOutcome::WaitForTosAccepted => continue,
+                | HandleSseErrorOutcome::WaitForTosAccepted => continue 'connection_loop,
                 HandleSseErrorOutcome::StopMonitor => return,
             },
         };
 
         backoff.reset();
 
-        while let Some(res) = stream.next().await {
+        while let Some(res) = keepalive_tracking.next_event(&mut stream).await {
             match res {
                 Ok(event) => {
                     if let Some(retry) = event.retry {
@@ -353,7 +408,7 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
                 }
                 Err(err) => match handle_sse_error(&mut state, &event_bus, err) {
                     HandleSseErrorOutcome::WaitForOnline
-                    | HandleSseErrorOutcome::WaitForTosAccepted => continue,
+                    | HandleSseErrorOutcome::WaitForTosAccepted => continue 'connection_loop,
                     HandleSseErrorOutcome::StopMonitor => return,
                 },
             }

@@ -16,8 +16,8 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum UserSyncError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Author not allowed")]
@@ -42,19 +42,10 @@ pub enum UserSyncError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for UserSyncError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum FetchRemoteUserManifestError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Server has no such version for this user manifest")]
@@ -65,15 +56,6 @@ pub enum FetchRemoteUserManifestError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for FetchRemoteUserManifestError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub async fn sync(ops: &UserOps) -> Result<(), UserSyncError> {
@@ -133,7 +115,7 @@ async fn upload_manifest(
                 }
                 // Timeout is about sequester service webhook not being available, no need
                 // for a custom handling of such an exotic error
-                Rep::SequesterServiceUnavailable { .. } => Err(UserSyncError::Offline),
+                Rep::SequesterServiceUnavailable { service_id } => Err(anyhow::anyhow!("Sequester service {service_id} unavailable").into()),
                 Rep::RejectedBySequesterService {
                     service_id,
                     reason,
@@ -186,7 +168,7 @@ async fn upload_manifest(
                 }
                 // Timeout is about sequester service webhook not being available, no need
                 // for a custom handling of such an exotic error
-                Rep::SequesterServiceUnavailable { .. } => Err(UserSyncError::Offline),
+                Rep::SequesterServiceUnavailable { service_id } => Err(anyhow::anyhow!("Sequester service {service_id} unavailable").into()),
                 Rep::RejectedBySequesterService {
                     service_id,
                     reason,
@@ -238,7 +220,7 @@ async fn outbound_sync_inner(ops: &UserOps) -> Result<OutboundSyncOutcome, UserS
             .await
             .map_err(|err| match err {
                 CertifEnsureRealmCreatedError::Stopped => UserSyncError::Stopped,
-                CertifEnsureRealmCreatedError::Offline => UserSyncError::Offline,
+                CertifEnsureRealmCreatedError::Offline(e) => UserSyncError::Offline(e),
                 CertifEnsureRealmCreatedError::AuthorNotAllowed => UserSyncError::AuthorNotAllowed,
                 CertifEnsureRealmCreatedError::TimestampOutOfBallpark {
                     server_timestamp,
@@ -325,8 +307,8 @@ async fn find_last_valid_manifest(
             Err(FetchRemoteUserManifestError::Stopped) => {
                 return Err(UserSyncError::Stopped);
             }
-            Err(FetchRemoteUserManifestError::Offline) => {
-                return Err(UserSyncError::Offline)
+            Err(FetchRemoteUserManifestError::Offline(e)) => {
+                return Err(UserSyncError::Offline(e))
             }
             Err(FetchRemoteUserManifestError::InvalidCertificate(err)) => {
                 return Err(UserSyncError::InvalidCertificate(err))
@@ -406,8 +388,8 @@ async fn inbound_sync(ops: &UserOps) -> Result<(), UserSyncError> {
             return Err(UserSyncError::Stopped);
         }
 
-        Err(FetchRemoteUserManifestError::Offline) => {
-            return Err(UserSyncError::Offline);
+        Err(FetchRemoteUserManifestError::Offline(e)) => {
+            return Err(UserSyncError::Offline(e));
         }
 
         // We didn't specify a `version` argument in the request
@@ -489,7 +471,7 @@ async fn fetch_last_remote_user_manifest(
         CertifValidateManifestError::InvalidManifest(err) => {
             FetchRemoteUserManifestError::InvalidManifest(err)
         }
-        CertifValidateManifestError::Offline => FetchRemoteUserManifestError::Offline,
+        CertifValidateManifestError::Offline(e) => FetchRemoteUserManifestError::Offline(e),
         CertifValidateManifestError::Stopped => FetchRemoteUserManifestError::Stopped,
         err @ CertifValidateManifestError::Internal(_) => {
             FetchRemoteUserManifestError::Internal(err.into())
@@ -555,7 +537,7 @@ async fn fetch_old_remote_user_manifest(
         CertifValidateManifestError::InvalidManifest(err) => {
             FetchRemoteUserManifestError::InvalidManifest(err)
         }
-        CertifValidateManifestError::Offline => FetchRemoteUserManifestError::Offline,
+        CertifValidateManifestError::Offline(e) => FetchRemoteUserManifestError::Offline(e),
         CertifValidateManifestError::Stopped => FetchRemoteUserManifestError::Stopped,
         err @ CertifValidateManifestError::Internal(_) => {
             FetchRemoteUserManifestError::Internal(err.into())

@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError};
@@ -10,8 +11,8 @@ use super::cache::{
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum GetManifestError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -44,7 +45,7 @@ pub(super) async fn get_manifest(
     let manifest = populate_cache_from_local_storage_or_server(store, entry_id)
         .await
         .map_err(|err| match err {
-            PopulateCacheFromLocalStorageOrServerError::Offline => GetManifestError::Offline,
+            PopulateCacheFromLocalStorageOrServerError::Offline(e) => GetManifestError::Offline(e),
             PopulateCacheFromLocalStorageOrServerError::Stopped => GetManifestError::Stopped,
             PopulateCacheFromLocalStorageOrServerError::EntryNotFound => {
                 GetManifestError::EntryNotFound

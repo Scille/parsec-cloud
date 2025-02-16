@@ -8,8 +8,8 @@ use crate::{InvalidBlockAccessError, InvalidCertificateError, InvalidKeysBundleE
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceHistoryFdReadError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("File descriptor not found")]
@@ -26,15 +26,6 @@ pub enum WorkspaceHistoryFdReadError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for WorkspaceHistoryFdReadError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub async fn fd_read(
@@ -65,9 +56,11 @@ pub async fn fd_read(
             .get_block(access, &manifest.base)
             .await
             .map_err(|err| match err {
-                WorkspaceHistoryGetBlockError::Offline => WorkspaceHistoryFdReadError::Offline,
+                WorkspaceHistoryGetBlockError::Offline(e) => {
+                    WorkspaceHistoryFdReadError::Offline(e)
+                }
                 WorkspaceHistoryGetBlockError::Stopped
-                | WorkspaceHistoryGetBlockError::StoreUnavailable => {
+                | WorkspaceHistoryGetBlockError::ServerBlockstoreUnavailable => {
                     WorkspaceHistoryFdReadError::Stopped
                 }
                 WorkspaceHistoryGetBlockError::NoRealmAccess => {

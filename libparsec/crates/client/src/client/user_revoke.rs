@@ -27,7 +27,7 @@ pub async fn revoke_user(client_ops: &Client, user: UserID) -> Result<(), Client
         .await
         .map_err(|e| match e {
             CertifPollServerError::Stopped => ClientRevokeUserError::Stopped,
-            CertifPollServerError::Offline => ClientRevokeUserError::Offline,
+            CertifPollServerError::Offline(e) => ClientRevokeUserError::Offline(e),
             CertifPollServerError::InvalidCertificate(err) => {
                 ClientRevokeUserError::InvalidCertificate(err)
             }

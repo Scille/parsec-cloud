@@ -71,8 +71,8 @@ fn task_future_factory(
                     .await
                 {
                     match err {
-                        CertifPollServerError::Offline => {
-                            event_bus.wait_server_online().await;
+                        CertifPollServerError::Offline(_) => {
+                            event_bus.wait_server_reconnect().await;
                             continue;
                         }
                         CertifPollServerError::Stopped => {
@@ -86,7 +86,7 @@ fn task_future_factory(
                         CertifPollServerError::InvalidCertificate(_) => (),
                         CertifPollServerError::Internal(err) => {
                             // Unexpected error occured, better stop the monitor
-                            log::warn!("Certificate monitor has crashed: {}", err);
+                            log::error!("Certificate monitor has crashed: {}", err);
                             let event = EventMonitorCrashed {
                                 monitor: CERTIF_POLL_MONITOR_NAME,
                                 workspace_id: None,

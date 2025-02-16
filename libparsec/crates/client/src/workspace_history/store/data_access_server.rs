@@ -73,8 +73,8 @@ impl ServerDataAccess {
             Err(ServerFetchManifestError::Stopped) => {
                 return Err(DataAccessFetchManifestError::Stopped);
             }
-            Err(ServerFetchManifestError::Offline) => {
-                return Err(DataAccessFetchManifestError::Offline);
+            Err(ServerFetchManifestError::Offline(e)) => {
+                return Err(DataAccessFetchManifestError::Offline(e));
             }
             // The realm doesn't exist on server side, hence we are it creator and
             // it data only live on our local storage, which we have already checked.
@@ -116,7 +116,7 @@ impl ServerDataAccess {
         .await
         .map_err(|err| match err {
             ServerFetchBlockError::Stopped => DataAccessFetchBlockError::Stopped,
-            ServerFetchBlockError::Offline => DataAccessFetchBlockError::Offline,
+            ServerFetchBlockError::Offline(e) => DataAccessFetchBlockError::Offline(e),
             // The realm doesn't exist on server side, hence there is no history !
             // Note we shouldn't end up here under normal circumstances, since
             // `get_workspace_manifest_v1` should have been called first during
@@ -124,7 +124,9 @@ impl ServerDataAccess {
             ServerFetchBlockError::RealmNotFound => DataAccessFetchBlockError::BlockNotFound,
             ServerFetchBlockError::BlockNotFound => DataAccessFetchBlockError::BlockNotFound,
             ServerFetchBlockError::NoRealmAccess => DataAccessFetchBlockError::NoRealmAccess,
-            ServerFetchBlockError::StoreUnavailable => DataAccessFetchBlockError::StoreUnavailable,
+            ServerFetchBlockError::ServerBlockstoreUnavailable => {
+                DataAccessFetchBlockError::ServerBlockstoreUnavailable
+            }
             ServerFetchBlockError::InvalidBlockAccess(err) => {
                 DataAccessFetchBlockError::InvalidBlockAccess(err)
             }
@@ -166,8 +168,8 @@ impl ServerDataAccess {
                     ServerFetchVersionsManifestError::Stopped => {
                         Err(DataAccessFetchManifestError::Stopped)
                     }
-                    ServerFetchVersionsManifestError::Offline => {
-                        Err(DataAccessFetchManifestError::Offline)
+                    ServerFetchVersionsManifestError::Offline(e) => {
+                        Err(DataAccessFetchManifestError::Offline(e))
                     }
                     ServerFetchVersionsManifestError::NoRealmAccess => {
                         Err(DataAccessFetchManifestError::NoRealmAccess)

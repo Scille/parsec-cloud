@@ -11596,6 +11596,11 @@ fn variant_workspace_fd_read_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceFdReadError::ServerBlockstoreUnavailable { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorServerBlockstoreUnavailable")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceFdReadError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;

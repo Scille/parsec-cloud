@@ -2,6 +2,7 @@
 
 use std::collections::HashSet;
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use super::{
@@ -16,8 +17,8 @@ use crate::{
 
 #[derive(Debug, thiserror::Error)]
 pub(super) enum WorkspaceHistoryResolvePathError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -73,8 +74,8 @@ pub(super) async fn resolve_path(
                 populate_cache_from_server(ops, at, cache_miss_entry_id)
                     .await
                     .map_err(|err| match err {
-                        PopulateCacheFromServerError::Offline => {
-                            WorkspaceHistoryResolvePathError::Offline
+                        PopulateCacheFromServerError::Offline(e) => {
+                            WorkspaceHistoryResolvePathError::Offline(e)
                         }
                         PopulateCacheFromServerError::Stopped => {
                             WorkspaceHistoryResolvePathError::Stopped
@@ -300,8 +301,8 @@ pub(super) async fn retrieve_path_from_id(
                 populate_cache_from_server(ops, at, cache_miss_entry_id)
                     .await
                     .map_err(|err| match err {
-                        PopulateCacheFromServerError::Offline => {
-                            WorkspaceHistoryResolvePathError::Offline
+                        PopulateCacheFromServerError::Offline(e) => {
+                            WorkspaceHistoryResolvePathError::Offline(e)
                         }
                         PopulateCacheFromServerError::Stopped => {
                             WorkspaceHistoryResolvePathError::Stopped

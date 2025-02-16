@@ -64,7 +64,7 @@ async fn get_tos_offline(env: &TestbedEnv) {
     let client = client_factory(&env.discriminant_dir, alice).await;
 
     let outcome = client.get_tos().await;
-    p_assert_matches!(outcome, Err(ClientGetTosError::Offline));
+    p_assert_matches!(outcome, Err(ClientGetTosError::Offline(_)));
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -73,7 +73,7 @@ async fn get_tos_stopped(env: &TestbedEnv) {
     let client = client_factory(&env.discriminant_dir, alice).await;
 
     let outcome = client.get_tos().await;
-    p_assert_matches!(outcome, Err(ClientGetTosError::Offline));
+    p_assert_matches!(outcome, Err(ClientGetTosError::Offline(_)));
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -152,7 +152,7 @@ async fn accept_tos_offline(env: &TestbedEnv) {
     let outcome = client
         .accept_tos("2000-01-01T00:00:00Z".parse().unwrap())
         .await;
-    p_assert_matches!(outcome, Err(ClientAcceptTosError::Offline));
+    p_assert_matches!(outcome, Err(ClientAcceptTosError::Offline(_)));
 
     spy.assert_no_events();
 }

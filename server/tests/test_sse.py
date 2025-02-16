@@ -68,14 +68,25 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
             )
         )
 
-        # First event is always ServiceConfig
+        # First event is always OrganizationConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive_seconds=30,
             )
         )
+
+        # Check field conversions
+        assert isinstance(event, authenticated_cmds.latest.events_listen.RepOk)
+        inner_event = event.unit
+        assert isinstance(
+            inner_event, authenticated_cmds.latest.events_listen.APIEventOrganizationConfig
+        )
+        assert inner_event.active_users_limit == ActiveUsersLimit.NO_LIMIT
+        assert inner_event.user_profile_outsider_allowed is True
+        assert inner_event.sse_keepalive_seconds == 30
 
         # Backend should inform that some events were missed and we could not retrieve them
         event = await anext(alice_sse._iter_events)
@@ -98,9 +109,10 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive_seconds=30,
             )
         )
 
@@ -143,9 +155,10 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive_seconds=30,
             )
         )
 
@@ -156,17 +169,17 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
         )
 
 
-@pytest.mark.timeout(2)
+@pytest.mark.timeout(3)
 async def test_keep_alive(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
-    # Reduce keepalive to 0.1s to speed up the test
-    backend.config.sse_keepalive = 0.1
+    # Reduce keepalive to 1s to speed up the test
+    backend.config.sse_keepalive = 1
     got_keepalive = False
 
     async with minimalorg.alice.raw_sse_connection() as raw_sse_stream:
         async for line in raw_sse_stream.aiter_lines():
             line = line.rstrip("\n")
 
-            if line == ":keepalive":
+            if line == "event:keepalive":
                 got_keepalive = True
                 break
 
@@ -218,10 +231,10 @@ def fork_process_to_run_asgi_server(app: AsgiApp) -> Iterator[tuple[str, int]]:
     proc.join()
 
 
-@pytest.mark.timeout(2)
+@pytest.mark.timeout(3)
 async def test_keep_alive_real_server(minimalorg: MinimalorgRpcClients, app: AsgiApp) -> None:
     assert isinstance(app.state.backend, Backend)
-    app.state.backend.config.sse_keepalive = 0.1
+    app.state.backend.config.sse_keepalive = 1
 
     got_keepalive = False
 
@@ -233,7 +246,7 @@ async def test_keep_alive_real_server(minimalorg: MinimalorgRpcClients, app: Asg
             async for line in raw_sse_stream.aiter_lines():
                 line = line.rstrip("\n")
 
-                if line == ":keepalive":
+                if line == "event:keepalive":
                     got_keepalive = True
                     break
 
@@ -268,9 +281,10 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
         # Bob still receives the ServerConfig event
         event = await bob_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive_seconds=30,
             )
         )
 
@@ -316,9 +330,10 @@ async def test_close_on_organization_tos_updated(
         # Bob still receives the ServerConfig event
         event = await bob_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
-            authenticated_cmds.latest.events_listen.APIEventServerConfig(
+            authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
+                sse_keepalive_seconds=30,
             )
         )
 

@@ -90,7 +90,7 @@ async fn offline(env: &TestbedEnv) {
         .rotate_realm_key_idempotent(wksp1_id, 2)
         .await
         .unwrap_err();
-    p_assert_matches!(err, CertifRotateRealmKeyError::Offline,);
+    p_assert_matches!(err, CertifRotateRealmKeyError::Offline(_));
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]

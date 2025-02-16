@@ -2886,6 +2886,7 @@ export enum WorkspaceFdReadErrorTag {
     NoRealmAccess = 'WorkspaceFdReadErrorNoRealmAccess',
     NotInReadMode = 'WorkspaceFdReadErrorNotInReadMode',
     Offline = 'WorkspaceFdReadErrorOffline',
+    ServerBlockstoreUnavailable = 'WorkspaceFdReadErrorServerBlockstoreUnavailable',
     Stopped = 'WorkspaceFdReadErrorStopped',
 }
 
@@ -2921,6 +2922,10 @@ export interface WorkspaceFdReadErrorOffline {
     tag: WorkspaceFdReadErrorTag.Offline
     error: string
 }
+export interface WorkspaceFdReadErrorServerBlockstoreUnavailable {
+    tag: WorkspaceFdReadErrorTag.ServerBlockstoreUnavailable
+    error: string
+}
 export interface WorkspaceFdReadErrorStopped {
     tag: WorkspaceFdReadErrorTag.Stopped
     error: string
@@ -2934,6 +2939,7 @@ export type WorkspaceFdReadError =
   | WorkspaceFdReadErrorNoRealmAccess
   | WorkspaceFdReadErrorNotInReadMode
   | WorkspaceFdReadErrorOffline
+  | WorkspaceFdReadErrorServerBlockstoreUnavailable
   | WorkspaceFdReadErrorStopped
 
 // WorkspaceFdResizeError

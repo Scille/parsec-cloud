@@ -36,8 +36,8 @@
                     },
                     {
                         // This event is always fired first upon SSE connection
-                        "name": "ServerConfig",
-                        "discriminant_value": "SERVER_CONFIG",
+                        "name": "OrganizationConfig",
+                        "discriminant_value": "ORGANIZATION_CONFIG",
                         "fields": [
                             {
                                 "name": "user_profile_outsider_allowed",
@@ -46,6 +46,10 @@
                             {
                                 "name": "active_users_limit",
                                 "type": "ActiveUsersLimit"
+                            },
+                            {
+                                "name": "sse_keepalive_seconds",
+                                "type": "RequiredOption<NonZeroInteger>"
                             }
                         ]
                     },

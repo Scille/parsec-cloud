@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
@@ -35,8 +36,8 @@ pub(crate) enum ForUpdateSyncLocalOnlyError {
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum ForUpdateSyncError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -61,8 +62,8 @@ pub(crate) enum IntoSyncConflictUpdaterError {
     ParentIsNotAFolder,
     #[error("Parent is already being updated")]
     WouldBlock,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -184,7 +185,9 @@ pub(super) async fn for_update_sync(
         super::resolve_path::retrieve_path_from_id_and_lock_for_update(store, entry_id, wait)
             .await
             .map_err(|err| match err {
-                RetrievePathFromIdAndLockForUpdateError::Offline => ForUpdateSyncError::Offline,
+                RetrievePathFromIdAndLockForUpdateError::Offline(e) => {
+                    ForUpdateSyncError::Offline(e)
+                }
                 RetrievePathFromIdAndLockForUpdateError::Stopped => ForUpdateSyncError::Stopped,
                 RetrievePathFromIdAndLockForUpdateError::NoRealmAccess => {
                     ForUpdateSyncError::NoRealmAccess
@@ -444,8 +447,8 @@ impl<'a> SyncUpdater<'a> {
                     Ok(ok) => ok,
                     Err(err) => {
                         let err = match err {
-                            PopulateCacheFromLocalStorageOrServerError::Offline => {
-                                IntoSyncConflictUpdaterError::Offline
+                            PopulateCacheFromLocalStorageOrServerError::Offline(e) => {
+                                IntoSyncConflictUpdaterError::Offline(e)
                             }
                             PopulateCacheFromLocalStorageOrServerError::Stopped => {
                                 IntoSyncConflictUpdaterError::Stopped

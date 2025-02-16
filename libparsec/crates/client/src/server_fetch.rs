@@ -17,8 +17,8 @@ use crate::{
 pub(crate) enum ServerFetchManifestError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("The manifest's realm doesn't exist on the server")]
     RealmNotFound,
     #[error("This manifest doesn't exist on the server")]
@@ -33,15 +33,6 @@ pub(crate) enum ServerFetchManifestError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for ServerFetchManifestError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub(crate) async fn server_fetch_child_manifest(
@@ -67,7 +58,7 @@ pub(crate) async fn server_fetch_child_manifest(
         )
         .await
         .map_err(|err| match err {
-            CertifValidateManifestError::Offline => ServerFetchManifestError::Offline,
+            CertifValidateManifestError::Offline(e) => ServerFetchManifestError::Offline(e),
             CertifValidateManifestError::Stopped => ServerFetchManifestError::Stopped,
             CertifValidateManifestError::NotAllowed => ServerFetchManifestError::NoRealmAccess,
             CertifValidateManifestError::InvalidManifest(err) => {
@@ -107,7 +98,7 @@ pub(super) async fn server_fetch_workspace_manifest(
         )
         .await
         .map_err(|err| match err {
-            CertifValidateManifestError::Offline => ServerFetchManifestError::Offline,
+            CertifValidateManifestError::Offline(e) => ServerFetchManifestError::Offline(e),
             CertifValidateManifestError::Stopped => ServerFetchManifestError::Stopped,
             CertifValidateManifestError::NotAllowed => ServerFetchManifestError::NoRealmAccess,
             CertifValidateManifestError::InvalidManifest(err) => {
@@ -183,8 +174,8 @@ async fn fetch_vlob(
 pub enum ServerFetchBlockError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("The realm's manifest doesn't exist on the server")]
     RealmNotFound,
     #[error("The block doesn't exist on the server")]
@@ -192,7 +183,7 @@ pub enum ServerFetchBlockError {
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
     #[error("Block access is temporary unavailable on the server")]
-    StoreUnavailable,
+    ServerBlockstoreUnavailable,
     #[error(transparent)]
     InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
     #[error(transparent)]
@@ -201,15 +192,6 @@ pub enum ServerFetchBlockError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for ServerFetchBlockError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub(crate) async fn server_fetch_block(
@@ -236,7 +218,7 @@ pub(crate) async fn server_fetch_block(
                 block,
             } => Ok((needed_realm_certificate_timestamp, key_index, block)),
             // Expected errors
-            Rep::StoreUnavailable => Err(ServerFetchBlockError::StoreUnavailable),
+            Rep::StoreUnavailable => Err(ServerFetchBlockError::ServerBlockstoreUnavailable),
             Rep::AuthorNotAllowed => Err(ServerFetchBlockError::NoRealmAccess),
             Rep::RealmNotFound => Err(ServerFetchBlockError::RealmNotFound),
             Rep::BlockNotFound => Err(ServerFetchBlockError::BlockNotFound),
@@ -258,7 +240,7 @@ pub(crate) async fn server_fetch_block(
         )
         .await
         .map_err(|err| match err {
-            CertifValidateBlockError::Offline => ServerFetchBlockError::Offline,
+            CertifValidateBlockError::Offline(e) => ServerFetchBlockError::Offline(e),
             CertifValidateBlockError::Stopped => ServerFetchBlockError::Stopped,
             CertifValidateBlockError::NotAllowed => ServerFetchBlockError::NoRealmAccess,
             CertifValidateBlockError::InvalidBlockAccess(err) => {
@@ -283,8 +265,8 @@ pub(crate) async fn server_fetch_block(
 pub enum ServerFetchVersionsManifestError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("The manifest's realm doesn't exist on the server")]
     RealmNotFound,
     #[error("Not allowed to access this realm")]
@@ -297,15 +279,6 @@ pub enum ServerFetchVersionsManifestError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for ServerFetchVersionsManifestError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub(crate) async fn server_fetch_versions_workspace_manifest(
@@ -340,7 +313,9 @@ pub(crate) async fn server_fetch_versions_workspace_manifest(
             )
             .await
             .map_err(|err| match err {
-                CertifValidateManifestError::Offline => ServerFetchVersionsManifestError::Offline,
+                CertifValidateManifestError::Offline(e) => {
+                    ServerFetchVersionsManifestError::Offline(e)
+                }
                 CertifValidateManifestError::Stopped => ServerFetchVersionsManifestError::Stopped,
                 CertifValidateManifestError::NotAllowed => {
                     ServerFetchVersionsManifestError::NoRealmAccess

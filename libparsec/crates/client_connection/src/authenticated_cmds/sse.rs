@@ -88,6 +88,7 @@ where
     T::Response: Debug + PartialEq,
 {
     let message = match event.event.as_ref() {
+        "keepalive" => SSEResponseOrMissedEvents::Empty,
         "missed_events" => SSEResponseOrMissedEvents::MissedEvents,
         "message" if event.data.is_empty() => SSEResponseOrMissedEvents::Empty,
         "message" => {
@@ -106,7 +107,10 @@ where
         }
 
         // Unknown event should still be returned given it can modify `retry` param
-        _ => SSEResponseOrMissedEvents::Empty,
+        _ => {
+            log::warn!("Unknown event type: {}", event.event);
+            SSEResponseOrMissedEvents::Empty
+        }
     };
 
     std::task::Poll::Ready(Ok(SSEEvent {
@@ -164,7 +168,15 @@ impl RateLimiter {
     pub async fn wait(&mut self) {
         let duration_to_wait = self.get_duration_to_wait();
         self.attempt += 1;
+        if duration_to_wait.is_zero() {
+            return;
+        }
+        log::info!(
+            "Retrying in SSE connection in {} seconds",
+            duration_to_wait.as_secs()
+        );
         libparsec_platform_async::sleep(duration_to_wait).await;
+        log::info!("Retrying SSE connection");
     }
 
     fn get_duration_to_wait(&self) -> Duration {

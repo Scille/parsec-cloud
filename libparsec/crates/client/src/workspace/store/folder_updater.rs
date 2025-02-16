@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::EventListener;
 use libparsec_types::prelude::*;
 
@@ -21,8 +22,8 @@ pub(super) type UpdateFolderManifestError = super::WorkspaceStoreOperationError;
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum ForUpdateFolderError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -108,8 +109,8 @@ pub(super) async fn for_update_folder(
         let outcome = populate_cache_from_local_storage_or_server(store, entry_id)
             .await
             .map_err(|err| match err {
-                PopulateCacheFromLocalStorageOrServerError::Offline => {
-                    ForUpdateFolderError::Offline
+                PopulateCacheFromLocalStorageOrServerError::Offline(e) => {
+                    ForUpdateFolderError::Offline(e)
                 }
                 PopulateCacheFromLocalStorageOrServerError::Stopped => {
                     ForUpdateFolderError::Stopped
@@ -176,7 +177,7 @@ pub async fn resolve_path_for_update_folder<'a>(
         super::resolve_path::resolve_path_and_lock_for_update(store, path)
             .await
             .map_err(|err| match err {
-                ResolvePathError::Offline => ForUpdateFolderError::Offline,
+                ResolvePathError::Offline(e) => ForUpdateFolderError::Offline(e),
                 ResolvePathError::Stopped => ForUpdateFolderError::Stopped,
                 ResolvePathError::EntryNotFound => ForUpdateFolderError::EntryNotFound,
                 ResolvePathError::NoRealmAccess => ForUpdateFolderError::NoRealmAccess,

@@ -99,8 +99,10 @@ pub type WorkspaceGetNeedInboundSyncEntriesError = WorkspaceStoreOperationError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceSyncError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
+    #[error("Block access is temporary unavailable on the server")]
+    ServerBlockstoreUnavailable,
     #[error("Client has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -128,15 +130,6 @@ pub enum WorkspaceSyncError {
     },
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for WorkspaceSyncError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 pub async fn refresh_realm_checkpoint(ops: &WorkspaceOps) -> Result<(), WorkspaceSyncError> {
@@ -577,7 +570,7 @@ async fn handle_conflict_and_update_store(
                 }
 
                 // Actual errors
-                IntoSyncConflictUpdaterError::Offline => Err(WorkspaceSyncError::Offline),
+                IntoSyncConflictUpdaterError::Offline(e) => Err(WorkspaceSyncError::Offline(e)),
                 IntoSyncConflictUpdaterError::Stopped => Err(WorkspaceSyncError::Stopped),
                 IntoSyncConflictUpdaterError::NoRealmAccess => Err(WorkspaceSyncError::NotAllowed),
                 IntoSyncConflictUpdaterError::InvalidKeysBundle(err) => {
@@ -967,7 +960,7 @@ async fn fetch_remote_manifest_last_version<M: RemoteManifest>(
             CertifValidateManifestError::InvalidManifest(err) => {
                 Ok(FetchRemoteManifestOutcome::Invalid(err))
             }
-            CertifValidateManifestError::Offline => Err(WorkspaceSyncError::Offline),
+            CertifValidateManifestError::Offline(e) => Err(WorkspaceSyncError::Offline(e)),
             CertifValidateManifestError::Stopped => Err(WorkspaceSyncError::Stopped),
             CertifValidateManifestError::NotAllowed => Err(WorkspaceSyncError::NotAllowed),
             CertifValidateManifestError::InvalidCertificate(err) => {
@@ -1045,7 +1038,7 @@ async fn fetch_remote_manifest_version<M: RemoteManifest>(
             CertifValidateManifestError::InvalidManifest(err) => {
                 Ok(FetchRemoteManifestOutcome::Invalid(err))
             }
-            CertifValidateManifestError::Offline => Err(WorkspaceSyncError::Offline),
+            CertifValidateManifestError::Offline(e) => Err(WorkspaceSyncError::Offline(e)),
             CertifValidateManifestError::Stopped => Err(WorkspaceSyncError::Stopped),
             CertifValidateManifestError::NotAllowed => Err(WorkspaceSyncError::NotAllowed),
             CertifValidateManifestError::InvalidCertificate(err) => {

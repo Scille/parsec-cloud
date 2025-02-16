@@ -3,7 +3,7 @@
 use std::{collections::HashMap, future::Future, pin::pin, sync::Arc};
 
 use libparsec_platform_async::{
-    channel, event, pretend_future_is_send_on_web, select3_biased, spawn,
+    channel, event, pretend_future_is_send_on_web, select2_biased, select3_biased, spawn,
 };
 use libparsec_types::prelude::*;
 
@@ -58,6 +58,7 @@ fn task_future_factory(
 
     let request_stop = event::Event::new();
     let stop_requested = request_stop.listen();
+    let syncer_stop_requested = request_stop.listen();
 
     let stop_cb = Box::new(move || {
         request_stop.notify(usize::MAX);
@@ -89,11 +90,16 @@ fn task_future_factory(
             let tx = tx.clone();
             let device = device.clone();
             async move {
+                let mut syncer_stop_requested = pin!(syncer_stop_requested);
                 macro_rules! handle_workspace_sync_error {
-                    ($err:expr) => {
+                    ($err:expr, $entry_id:expr) => {
                         match $err {
-                            WorkspaceSyncError::Offline => {
-                                event_bus.wait_server_online().await;
+                            WorkspaceSyncError::Offline(_) => {
+                                // Make sure we do not block the stopping of the monitor here
+                                select2_biased!(
+                                    _ = event_bus.wait_server_reconnect() => {},
+                                    _ = &mut syncer_stop_requested => {},
+                                )
                             }
                             // We have lost read access to the workspace, the certificates
                             // ops should soon be notified and work accordingly (typically
@@ -103,7 +109,7 @@ fn task_future_factory(
                                 return
                             },
                             WorkspaceSyncError::Stopped => {
-                                log::warn!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                                log::error!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
                                 return;
                             }
                             err @ (
@@ -117,12 +123,23 @@ fn task_future_factory(
                                 | WorkspaceSyncError::TimestampOutOfBallpark { .. }
                             )
                             => {
-                                log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
+                                log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                                 return;
+                            }
+                            WorkspaceSyncError::ServerBlockstoreUnavailable => {
+                                // Re-enqueue to retry later
+                                let entry_id = $entry_id;
+                                log::info!("Workspace {realm_id}: {entry_id} sync failed due to server block store unavailable, aborting sync and waiting {}s", SERVER_STORE_UNAVAILABLE_WAIT.num_seconds());
+                                let _ = tx.send(entry_id);
+                                device
+                                    .time_provider
+                                    .sleep(SERVER_STORE_UNAVAILABLE_WAIT)
+                                    .await;
+                                break;
                             }
                             WorkspaceSyncError::Internal(err) => {
                                 // Unexpected error occured, better stop the monitor
-                                log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
+                                log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                                 let event = EventMonitorCrashed {
                                     monitor: WORKSPACE_OUTBOUND_SYNC_MONITOR_NAME,
                                     workspace_id: Some(workspace_ops.realm_id()),
@@ -147,16 +164,6 @@ fn task_future_factory(
                         match outcome {
                             Ok(OutboundSyncOutcome::Done) => break,
                             Ok(OutboundSyncOutcome::InboundSyncNeeded) => (),
-                            Ok(OutboundSyncOutcome::ServerStoreUnavailable) => {
-                                // Re-enqueue to retry later
-                                log::info!("Workspace {realm_id}: {entry_id} sync failed due to server block store unavailable, aborting sync and waiting {}s", SERVER_STORE_UNAVAILABLE_WAIT.num_seconds());
-                                let _ = tx.send(entry_id);
-                                device
-                                    .time_provider
-                                    .sleep(SERVER_STORE_UNAVAILABLE_WAIT)
-                                    .await;
-                                break;
-                            }
                             Ok(OutboundSyncOutcome::EntryIsBusy) => {
                                 // Re-enqueue to retry later
                                 // Note the send may fail if the syncer sub task has crashed,
@@ -165,7 +172,7 @@ fn task_future_factory(
                                 let _ = tx.send(entry_id);
                                 break;
                             }
-                            Err(err) => handle_workspace_sync_error!(err),
+                            Err(err) => handle_workspace_sync_error!(err, entry_id),
                         }
 
                         let outcome = workspace_ops.inbound_sync(entry_id).await;
@@ -180,7 +187,7 @@ fn task_future_factory(
                                 break;
                             }
                             Ok(InboundSyncOutcome::Updated | InboundSyncOutcome::NoChange) => (),
-                            Err(err) => handle_workspace_sync_error!(err),
+                            Err(err) => handle_workspace_sync_error!(err, entry_id),
                         }
                     }
                 }
@@ -208,11 +215,11 @@ fn task_future_factory(
                             // Shouldn't occur in practice given the monitors are expected
                             // to be stopped before the opses. In any case we have no
                             // choice but to also stop.
-                            log::warn!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                            log::error!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
                             return;
                         }
                         WorkspaceGetNeedOutboundSyncEntriesError::Internal(err) => {
-                            log::warn!(
+                            log::error!(
                                 "Workspace {realm_id}: stopping due to unexpected error: {err:?}"
                             );
                             return;

@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
@@ -37,8 +38,8 @@ pub(crate) struct EntryWatchers {
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceWatchEntryOneShotError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -67,7 +68,7 @@ pub async fn watch_entry_oneshot(
         .await
         .map(|(manifest, _)| manifest.id())
         .map_err(|err| match err {
-            ResolvePathError::Offline => WorkspaceWatchEntryOneShotError::Offline,
+            ResolvePathError::Offline(e) => WorkspaceWatchEntryOneShotError::Offline(e),
             ResolvePathError::Stopped => WorkspaceWatchEntryOneShotError::Stopped,
             ResolvePathError::EntryNotFound => WorkspaceWatchEntryOneShotError::EntryNotFound,
             ResolvePathError::NoRealmAccess => WorkspaceWatchEntryOneShotError::NoRealmAccess,

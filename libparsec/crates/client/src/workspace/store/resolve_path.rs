@@ -2,6 +2,7 @@
 
 use std::{collections::HashSet, sync::Arc};
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::EventListener;
 use libparsec_types::prelude::*;
 
@@ -39,8 +40,8 @@ impl From<PathConfinementPoint> for Option<VlobID> {
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum ResolvePathError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -145,8 +146,8 @@ async fn resolve_path_maybe_lock_for_update(
                 populate_cache_from_local_storage_or_server(store, cache_miss_entry_id)
                     .await
                     .map_err(|err| match err {
-                        PopulateCacheFromLocalStorageOrServerError::Offline => {
-                            ResolvePathError::Offline
+                        PopulateCacheFromLocalStorageOrServerError::Offline(e) => {
+                            ResolvePathError::Offline(e)
                         }
                         PopulateCacheFromLocalStorageOrServerError::Stopped => {
                             ResolvePathError::Stopped
@@ -332,8 +333,8 @@ pub(crate) struct ResolvePathForReparenting {
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum ResolvePathForReparentingError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Source doesn't exist")]
@@ -637,8 +638,8 @@ pub(crate) async fn resolve_path_for_reparenting(
                 populate_cache_from_local_storage_or_server(store, cache_miss_entry_id)
                     .await
                     .map_err(|err| match err {
-                        PopulateCacheFromLocalStorageOrServerError::Offline => {
-                            ResolvePathForReparentingError::Offline
+                        PopulateCacheFromLocalStorageOrServerError::Offline(e) => {
+                            ResolvePathForReparentingError::Offline(e)
                         }
                         PopulateCacheFromLocalStorageOrServerError::Stopped => {
                             ResolvePathForReparentingError::Stopped
@@ -838,8 +839,8 @@ fn cache_only_retrieve_path_from_id(
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum RetrievePathFromIDError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -856,8 +857,8 @@ pub(crate) enum RetrievePathFromIDError {
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum RetrievePathFromIdAndLockForUpdateError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Not allowed to access this realm")]
@@ -965,8 +966,8 @@ pub(crate) async fn retrieve_path_from_id_and_lock_for_update(
                         last_not_found_during_populate = Some(cache_miss_entry_id);
                     }
                     // Other errors
-                    Err(PopulateCacheFromLocalStorageOrServerError::Offline) => {
-                        return Err(RetrievePathFromIdAndLockForUpdateError::Offline)
+                    Err(PopulateCacheFromLocalStorageOrServerError::Offline(e)) => {
+                        return Err(RetrievePathFromIdAndLockForUpdateError::Offline(e))
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::Stopped) => {
                         return Err(RetrievePathFromIdAndLockForUpdateError::Stopped)
@@ -1047,8 +1048,8 @@ pub(crate) async fn retrieve_path_from_id(
                         last_not_found_during_populate = Some(cache_miss_entry_id);
                     }
                     // Other errors
-                    Err(PopulateCacheFromLocalStorageOrServerError::Offline) => {
-                        return Err(RetrievePathFromIDError::Offline)
+                    Err(PopulateCacheFromLocalStorageOrServerError::Offline(e)) => {
+                        return Err(RetrievePathFromIDError::Offline(e))
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::Stopped) => {
                         return Err(RetrievePathFromIDError::Stopped)

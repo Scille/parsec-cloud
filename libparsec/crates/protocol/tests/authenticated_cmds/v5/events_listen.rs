@@ -55,39 +55,46 @@ pub fn rep_ok() {
             ),
         ),
         (
-            // Generated from Rust implementation (Parsec v3.0.0+dev)
+            // Generated from Parsec 3.2.5-a.0+dev
             // Content:
-            //   event: "SERVER_CONFIG"
+            //   status: 'ok'
+            //   event: 'ORGANIZATION_CONFIG'
             //   active_users_limit: 8
-            //   user_profile_outsider_allowed: true
-            //   status: "ok"
+            //   sse_keepalive_seconds: 30
+            //   user_profile_outsider_allowed: True
             &hex!(
-                "84a6737461747573a26f6ba56576656e74ad5345525645525f434f4e464947b2616374"
-                "6976655f75736572735f6c696d697408bd757365725f70726f66696c655f6f75747369"
-                "6465725f616c6c6f776564c3"
+                "85a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
+                "4947b26163746976655f75736572735f6c696d697408b57373655f6b656570616c6976"
+                "655f7365636f6e64731ebd757365725f70726f66696c655f6f757473696465725f616c"
+                "6c6f776564c3"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
-                authenticated_cmds::events_listen::APIEvent::ServerConfig {
+                authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                     active_users_limit: ActiveUsersLimit::LimitedTo(8),
                     user_profile_outsider_allowed: true,
+                    sse_keepalive_seconds: Some(30.try_into().unwrap()),
                 },
             ),
         ),
         (
-            // Generated from Rust implementation (Parsec v3.0.0+dev)
+            // Generated from Parsec 3.2.5-a.0+dev
             // Content:
-            //   event: "SERVER_CONFIG"
-            //   user_profile_outsider_allowed: false
-            //   status: "ok"
+            //   status: 'ok'
+            //   event: 'ORGANIZATION_CONFIG'
+            //   active_users_limit: None
+            //   sse_keepalive_seconds: None
+            //   user_profile_outsider_allowed: False
             &hex!(
-                "84a6737461747573a26f6ba56576656e74ad5345525645525f434f4e464947b2616374"
-                "6976655f75736572735f6c696d6974c0bd757365725f70726f66696c655f6f75747369"
-                "6465725f616c6c6f776564c2"
+                "85a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
+                "4947b26163746976655f75736572735f6c696d6974c0b57373655f6b656570616c6976"
+                "655f7365636f6e64731ebd757365725f70726f66696c655f6f757473696465725f616c"
+                "6c6f776564c2"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
-                authenticated_cmds::events_listen::APIEvent::ServerConfig {
+                authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                     active_users_limit: ActiveUsersLimit::NoLimit,
                     user_profile_outsider_allowed: false,
+                    sse_keepalive_seconds: Some(30.try_into().unwrap()),
                 },
             ),
         ),

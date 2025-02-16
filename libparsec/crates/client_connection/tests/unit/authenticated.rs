@@ -211,7 +211,7 @@ async fn sse_ok_mocked(env: &TestbedEnv) {
             headers,
             "\
             :keepalive\n\n\
-            data:hKZzdGF0dXOib2ulZXZlbnStU0VSVkVSX0NPTkZJR7JhY3RpdmVfdXNlcnNfbGltaXTAvXVzZXJfcHJvZmlsZV9vdXRzaWRlcl9hbGxvd2Vkww==\nid:832ea0c75e0d4ca8aedf123a89b3fcc7\n\n\
+            data:haZzdGF0dXOib2ulZXZlbnSzT1JHQU5JWkFUSU9OX0NPTkZJR7JhY3RpdmVfdXNlcnNfbGltaXTAvXVzZXJfcHJvZmlsZV9vdXRzaWRlcl9hbGxvd2Vkw7Vzc2Vfa2VlcGFsaXZlX3NlY29uZHMe\nid:832ea0c75e0d4ca8aedf123a89b3fcc7\n\n\
             event:missed_events\ndata:\n\n\
             data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\nid:4fe5b6ddf29f4c159e6002da2132d80f\n\n\
             :keepalive\n\n\
@@ -227,9 +227,10 @@ async fn sse_ok_mocked(env: &TestbedEnv) {
     p_assert_eq!(
         sse.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
-            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+            authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
-                user_profile_outsider_allowed: true
+                user_profile_outsider_allowed: true,
+                sse_keepalive_seconds: Some(30.try_into().unwrap()),
             }
         ))
     );
@@ -292,9 +293,10 @@ async fn sse_ok_with_server(env: &TestbedEnv) {
     p_assert_eq!(
         sse.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
-            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+            authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
-                user_profile_outsider_allowed: true
+                user_profile_outsider_allowed: true,
+                sse_keepalive_seconds: Some(30.try_into().unwrap()),
             }
         ))
     );
@@ -650,9 +652,10 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
     p_assert_eq!(
         first_event.message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
-            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+            authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
-                user_profile_outsider_allowed: true
+                user_profile_outsider_allowed: true,
+                sse_keepalive_seconds: Some(30.try_into().unwrap()),
             }
         ))
     );
@@ -703,9 +706,10 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
     p_assert_eq!(
         sse_alice.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
-            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+            authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
-                user_profile_outsider_allowed: true
+                user_profile_outsider_allowed: true,
+                sse_keepalive_seconds: Some(30.try_into().unwrap()),
             }
         ))
     );
@@ -744,9 +748,10 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
     p_assert_eq!(
         sse_alice.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
-            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+            authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
-                user_profile_outsider_allowed: true
+                user_profile_outsider_allowed: true,
+                sse_keepalive_seconds: Some(30.try_into().unwrap()),
             }
         ))
     );

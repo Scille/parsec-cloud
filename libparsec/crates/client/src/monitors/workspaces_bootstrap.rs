@@ -75,8 +75,8 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
 
                 match outcome {
                     Ok(_) => break,
-                    Err(ClientEnsureWorkspacesBootstrappedError::Offline) => {
-                        event_bus.wait_server_online().await;
+                    Err(ClientEnsureWorkspacesBootstrappedError::Offline(_)) => {
+                        event_bus.wait_server_reconnect().await;
                         continue;
                     }
                     Err(ClientEnsureWorkspacesBootstrappedError::Stopped) => {
@@ -104,7 +104,7 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                     }
                     Err(ClientEnsureWorkspacesBootstrappedError::Internal(err)) => {
                         // Unexpected error occured, better stop the monitor
-                        log::warn!("Workspaces bootstrap monitor has crashed: {}", err);
+                        log::error!("Workspaces bootstrap monitor has crashed: {}", err);
                         let event = EventMonitorCrashed {
                             monitor: WORKSPACES_BOOTSTRAP_MONITOR_NAME,
                             workspace_id: None,

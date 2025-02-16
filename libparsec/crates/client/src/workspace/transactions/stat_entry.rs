@@ -64,8 +64,8 @@ impl EntryStat {
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceStatEntryError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -82,15 +82,6 @@ pub enum WorkspaceStatEntryError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for WorkspaceStatEntryError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            err => Self::Internal(err.into()),
-        }
-    }
-}
-
 pub(crate) async fn stat_entry_by_id(
     ops: &WorkspaceOps,
     entry_id: VlobID,
@@ -103,7 +94,7 @@ pub(crate) async fn stat_entry_by_id(
                 .get_manifest(entry_id)
                 .await
                 .map_err(|err| match err {
-                    GetManifestError::Offline => WorkspaceStatEntryError::Offline,
+                    GetManifestError::Offline(e) => WorkspaceStatEntryError::Offline(e),
                     GetManifestError::Stopped => WorkspaceStatEntryError::Stopped,
                     GetManifestError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
                     GetManifestError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
@@ -126,7 +117,7 @@ pub(crate) async fn stat_entry_by_id(
                     .retrieve_path_from_id(entry_id)
                     .await
                     .map_err(|err| match err {
-                        RetrievePathFromIDError::Offline => WorkspaceStatEntryError::Offline,
+                        RetrievePathFromIDError::Offline(e) => WorkspaceStatEntryError::Offline(e),
                         RetrievePathFromIDError::Stopped => WorkspaceStatEntryError::Stopped,
                         RetrievePathFromIDError::NoRealmAccess => {
                             WorkspaceStatEntryError::NoRealmAccess
@@ -215,7 +206,7 @@ pub(crate) async fn stat_entry(
             .resolve_path(path)
             .await
             .map_err(|err| match err {
-                ResolvePathError::Offline => WorkspaceStatEntryError::Offline,
+                ResolvePathError::Offline(e) => WorkspaceStatEntryError::Offline(e),
                 ResolvePathError::Stopped => WorkspaceStatEntryError::Stopped,
                 ResolvePathError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
                 ResolvePathError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,

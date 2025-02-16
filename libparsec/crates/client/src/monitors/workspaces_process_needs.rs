@@ -79,8 +79,8 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                 match outcome {
                     Ok(_) => break,
                     Err(err) => match err {
-                        ClientProcessWorkspacesNeedsError::Offline => {
-                            event_bus.wait_server_online().await;
+                        ClientProcessWorkspacesNeedsError::Offline(_) => {
+                            event_bus.wait_server_reconnect().await;
                             continue;
                         }
                         ClientProcessWorkspacesNeedsError::Stopped => {
@@ -91,12 +91,12 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                             ..
                         }
                         | ClientProcessWorkspacesNeedsError::InvalidCertificate(_)) => {
-                            log::warn!("Stopping workspaces process needs monitor due to unexpected outcome: {}", err);
+                            log::error!("Stopping workspaces process needs monitor due to unexpected outcome: {}", err);
                             return;
                         }
                         ClientProcessWorkspacesNeedsError::Internal(err) => {
                             // Unexpected error occured, better stop the monitor
-                            log::warn!("Workspaces bootstrap monitor has crashed: {}", err);
+                            log::error!("Workspaces bootstrap monitor has crashed: {}", err);
                             let event = EventMonitorCrashed {
                                 monitor: WORKSPACES_PROCESS_NEEDS_MONITOR_NAME,
                                 workspace_id: None,

@@ -2,21 +2,21 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use libparsec_types::prelude::*;
-
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     server_fetch::{
         server_fetch_child_manifest, server_fetch_workspace_manifest, ServerFetchManifestError,
     },
 };
+use libparsec_client_connection::ConnectionError;
+use libparsec_types::prelude::*;
 
 use super::CacheResolvedEntry;
 
 #[derive(Debug, thiserror::Error)]
 pub(super) enum PopulateCacheFromServerError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -75,8 +75,8 @@ pub(super) async fn populate_cache_from_server(
         Err(ServerFetchManifestError::Stopped) => {
             return Err(PopulateCacheFromServerError::Stopped);
         }
-        Err(ServerFetchManifestError::Offline) => {
-            return Err(PopulateCacheFromServerError::Offline);
+        Err(ServerFetchManifestError::Offline(e)) => {
+            return Err(PopulateCacheFromServerError::Offline(e));
         }
         // The realm doesn't exist on server side, hence we are it creator and
         // it data only live on our local storage, which we have already checked.

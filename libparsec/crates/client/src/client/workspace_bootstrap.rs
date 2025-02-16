@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::certif::{
@@ -10,8 +11,8 @@ use super::Client;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientEnsureWorkspacesBootstrappedError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     // Note the is no `InvalidManifest` here, this is because we self-repair in case of
@@ -66,8 +67,8 @@ pub(crate) async fn ensure_workspaces_bootstrapped(
                 // In any case, we can just ignore the error.
                 CertifBootstrapWorkspaceError::AuthorNotAllowed => Ok(()),
                 // Propagate the other errors
-                CertifBootstrapWorkspaceError::Offline => {
-                    Err(ClientEnsureWorkspacesBootstrappedError::Offline)
+                CertifBootstrapWorkspaceError::Offline(e) => {
+                    Err(ClientEnsureWorkspacesBootstrappedError::Offline(e))
                 }
                 CertifBootstrapWorkspaceError::Stopped => {
                     Err(ClientEnsureWorkspacesBootstrappedError::Stopped)

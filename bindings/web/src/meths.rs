@@ -12866,6 +12866,13 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorOffline".into(),
             )?;
         }
+        libparsec::WorkspaceFdReadError::ServerBlockstoreUnavailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFdReadErrorServerBlockstoreUnavailable".into(),
+            )?;
+        }
         libparsec::WorkspaceFdReadError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,

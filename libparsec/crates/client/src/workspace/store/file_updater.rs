@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::event::EventListener;
 use libparsec_types::prelude::*;
 
@@ -20,8 +21,8 @@ pub(super) type UpdateFileManifestAndContinueError = super::WorkspaceStoreOperat
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum ForUpdateFileError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
     Stopped,
     #[error("Path doesn't exist")]
@@ -116,7 +117,9 @@ pub(super) async fn for_update_file(
         let outcome = populate_cache_from_local_storage_or_server(store, entry_id)
             .await
             .map_err(|err| match err {
-                PopulateCacheFromLocalStorageOrServerError::Offline => ForUpdateFileError::Offline,
+                PopulateCacheFromLocalStorageOrServerError::Offline(e) => {
+                    ForUpdateFileError::Offline(e)
+                }
                 PopulateCacheFromLocalStorageOrServerError::Stopped => ForUpdateFileError::Stopped,
                 PopulateCacheFromLocalStorageOrServerError::EntryNotFound => {
                     ForUpdateFileError::EntryNotFound

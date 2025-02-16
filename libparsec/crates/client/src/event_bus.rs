@@ -7,7 +7,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use libparsec_platform_async::lock::Mutex as AsyncMutex;
+use libparsec_platform_async::{lock::Mutex as AsyncMutex, sleep};
 use libparsec_types::prelude::*;
 
 macro_rules! impl_any_spied_event_type {
@@ -801,6 +801,17 @@ impl EventBus {
             .wait_for(|state| matches!(*state, ServerState::Online))
             .await
             .expect("Same lifetime for senders&receiver");
+    }
+
+    /// This method is used in the monitors when a request has failed due
+    /// to a connection error. That means we also expect the SSE connection
+    /// to be down, or that it will be down soon. Waiting for a couple of
+    /// seconds for the server state to be offline allows us to avoid hard
+    /// polling the server in case the connection error only affects the RPC
+    /// but not the SSE connection.
+    pub async fn wait_server_reconnect(&self) {
+        sleep(std::time::Duration::from_secs(3)).await;
+        self.wait_server_online().await;
     }
 }
 

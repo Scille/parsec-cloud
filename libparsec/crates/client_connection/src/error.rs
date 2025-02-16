@@ -71,10 +71,6 @@ pub enum ConnectionError {
     #[error("Authentication token has expired")]
     AuthenticationTokenExpired,
 
-    /// Failed to serialize the request
-    #[error("{0}")]
-    Serialization(ProtocolEncodeError),
-
     /// The version is not supported
     #[error("Unsupported API version: {api_version}, supported versions are: {supported_api_versions:?}")]
     UnsupportedApiVersion {
@@ -102,12 +98,6 @@ impl From<reqwest::Error> for ConnectionError {
     }
 }
 
-impl From<ProtocolEncodeError> for ConnectionError {
-    fn from(e: ProtocolEncodeError) -> Self {
-        Self::Serialization(e)
-    }
-}
-
 pub(crate) fn unsupported_api_version_from_headers(
     api_version: ApiVersion,
     headers: &reqwest::header::HeaderMap,
@@ -122,6 +112,9 @@ pub(crate) fn unsupported_api_version_from_headers(
                 .filter_map(|x| ApiVersion::try_from(x).ok())
                 .collect(),
         },
-        None => ConnectionError::MissingSupportedApiVersions,
+        None => {
+            log::error!("Missing Supported-Api-Versions header");
+            ConnectionError::MissingSupportedApiVersions
+        }
     }
 }

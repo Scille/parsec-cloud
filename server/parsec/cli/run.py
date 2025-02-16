@@ -327,7 +327,7 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     callback=lambda ctx, param, value: math.inf if value is None or value <= 0 else value,
     envvar="PARSEC_SSE_KEEPALIVE",
     show_envvar=True,
-    help="Keep SSE connection open by sending keepalive messages to client (pass <= 0 to disable)",
+    help="Keep SSE connection open by sending keepalive messages to client, in seconds (pass <= 0 to disable)",
 )
 # Add --debug & --version
 @debug_config_options
@@ -337,7 +337,7 @@ def run_cmd(
     db: BaseDatabaseConfig,
     db_min_connections: int,
     db_max_connections: int,
-    sse_keepalive: float,
+    sse_keepalive: int | None,
     maximum_database_connection_attempts: int,
     pause_before_retry_database_connection: float,
     blockstore: BaseBlockStoreConfig,

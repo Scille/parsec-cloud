@@ -31,8 +31,8 @@ pub enum CertifShareRealmError {
     AuthorNotAllowed,
     #[error("Role incompatible with the user, as it has profile OUTSIDER")]
     RoleIncompatibleWithOutsider,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
@@ -48,16 +48,6 @@ pub enum CertifShareRealmError {
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for CertifShareRealmError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 impl From<CertifStoreError> for CertifShareRealmError {
@@ -125,7 +115,7 @@ pub(super) async fn share_realm(
                     .await
                     .map_err(|e| match e {
                         CertifPollServerError::Stopped => CertifShareRealmError::Stopped,
-                        CertifPollServerError::Offline => CertifShareRealmError::Offline,
+                        CertifPollServerError::Offline(e) => CertifShareRealmError::Offline(e),
                         CertifPollServerError::InvalidCertificate(err) => {
                             CertifShareRealmError::InvalidCertificate(err)
                         }
@@ -259,7 +249,9 @@ async fn share_do_server_command(
         })
         .await?
         .map_err(|e| match e {
-            EncryptRealmKeysBundleAccessForUserError::Offline => CertifShareRealmError::Offline,
+            EncryptRealmKeysBundleAccessForUserError::Offline(e) => {
+                CertifShareRealmError::Offline(e)
+            }
             EncryptRealmKeysBundleAccessForUserError::NotAllowed => {
                 CertifShareRealmError::AuthorNotAllowed
             }

@@ -15,8 +15,8 @@ use super::{
 pub enum CertifDeleteShamirRecoveryError {
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
@@ -33,16 +33,6 @@ impl From<CertifStoreError> for CertifDeleteShamirRecoveryError {
         match value {
             CertifStoreError::Stopped => Self::Stopped,
             CertifStoreError::Internal(err) => err.into(),
-        }
-    }
-}
-
-impl From<ConnectionError> for CertifDeleteShamirRecoveryError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
         }
     }
 }

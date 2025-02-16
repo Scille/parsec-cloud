@@ -2,8 +2,8 @@
 
 use libparsec_client_connection::{
     test_register_low_level_send_hook, test_register_send_hook,
-    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle, HeaderMap,
-    ResponseMock, StatusCode,
+    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle, ConnectionError,
+    HeaderMap, ResponseMock, StatusCode,
 };
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
@@ -78,7 +78,7 @@ async fn ok(env: &TestbedEnv) {
     authenticated_cmds::latest::realm_rename::Rep::RequireGreaterTimestamp {
         strictly_greater_than: "2000-01-02T00:00:00Z".parse().unwrap()
     },
-    |err| p_assert_matches!(err, CertifRenameRealmError::Offline)
+    |err| p_assert_matches!(err, CertifRenameRealmError::Offline(_))
 )]
 #[case::invalid_certificate(
     authenticated_cmds::latest::realm_rename::Rep::InvalidCertificate,
@@ -92,7 +92,7 @@ async fn ok(env: &TestbedEnv) {
     authenticated_cmds::latest::realm_rename::Rep::BadKeyIndex {
         last_realm_certificate_timestamp: "2000-01-02T00:00:00Z".parse().unwrap()
     },
-    |err| p_assert_matches!(err, CertifRenameRealmError::Offline)
+    |err| p_assert_matches!(err, CertifRenameRealmError::Offline(_))
 )]
 #[case::unknown_status(
     authenticated_cmds::latest::realm_rename::Rep::UnknownStatus { unknown_status: "".into(), reason: None },
@@ -183,7 +183,7 @@ async fn server_initial_name_already_exists(env: &TestbedEnv) {
         keys_bundle: env.get_last_realm_keys_bundle(realm_id),
         keys_bundle_access: env.get_last_realm_keys_bundle_access_for(realm_id, user_id),
     },
-    |err| p_assert_matches!(err, CertifRenameRealmError::Offline)
+    |err| p_assert_matches!(err, CertifRenameRealmError::Offline(_))
 )]
 #[case::invalid_keys_bundle(
     |env: &TestbedEnv, realm_id, user_id: UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
@@ -282,7 +282,12 @@ async fn invalid_response(env: &TestbedEnv) {
         .await
         .unwrap_err();
 
-    p_assert_matches!(err, CertifRenameRealmError::Internal(_));
+    p_assert_matches!(
+        err,
+        CertifRenameRealmError::Offline(ConnectionError::InvalidResponseStatus(
+            StatusCode::IM_A_TEAPOT
+        ))
+    );
 }
 
 #[parsec_test(testbed = "minimal")]

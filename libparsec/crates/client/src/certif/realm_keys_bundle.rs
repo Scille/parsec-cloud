@@ -149,8 +149,8 @@ impl RealmKeys {
 
 #[derive(Debug, thiserror::Error)]
 enum LoadLastKeysBundleError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
     #[error("The realm doesn't have any key yet")]
@@ -159,16 +159,6 @@ enum LoadLastKeysBundleError {
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for LoadLastKeysBundleError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 /// Load the keys from the last keys bundle for the given realm.
@@ -285,8 +275,8 @@ pub enum KeysBundleHealingOutcome {
 
 #[derive(Debug, thiserror::Error)]
 pub(super) enum AttemptRealmKeysBundleHealingError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
     // TODO: finish key bundle healing !
@@ -295,16 +285,6 @@ pub(super) enum AttemptRealmKeysBundleHealingError {
     NoKey,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for AttemptRealmKeysBundleHealingError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 // /// Recursively load all keys bundle the user has access to in order to recover
@@ -504,8 +484,8 @@ async fn recover_realm_keys_from_previous_bundles(
 
 #[derive(Debug, thiserror::Error)]
 pub enum EncryptRealmKeysBundleAccessForUserError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
     #[error("User not found")]
@@ -527,7 +507,9 @@ pub(super) async fn encrypt_realm_keys_bundle_access_for_user(
     let realm_keys = load_last_realm_keys_bundle(ops, store, realm_id)
         .await
         .map_err(|e| match e {
-            LoadLastKeysBundleError::Offline => EncryptRealmKeysBundleAccessForUserError::Offline,
+            LoadLastKeysBundleError::Offline(e) => {
+                EncryptRealmKeysBundleAccessForUserError::Offline(e)
+            }
             LoadLastKeysBundleError::NotAllowed => {
                 EncryptRealmKeysBundleAccessForUserError::NotAllowed
             }
@@ -851,8 +833,8 @@ pub enum CertifEncryptForRealmError {
     /// it is needed by the wrapper `CertificateOps::encrypt_for_realm`.
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
     #[error("There is no key available in this realm for encryption")]
@@ -873,7 +855,7 @@ pub(super) async fn encrypt_for_realm(
     let realm_keys = load_last_realm_keys_bundle(ops, store, realm_id)
         .await
         .map_err(|e| match e {
-            LoadLastKeysBundleError::Offline => CertifEncryptForRealmError::Offline,
+            LoadLastKeysBundleError::Offline(e) => CertifEncryptForRealmError::Offline(e),
             LoadLastKeysBundleError::NotAllowed => CertifEncryptForRealmError::NotAllowed,
             LoadLastKeysBundleError::NoKey => CertifEncryptForRealmError::NoKey,
             LoadLastKeysBundleError::InvalidKeysBundle(err) => {
@@ -901,8 +883,8 @@ pub enum CertifDecryptForRealmError {
     /// it is needed by the wrapper `CertificateOps::encrypt_for_realm`.
     #[error("Component has stopped")]
     Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
     #[error("The referenced key doesn't exist yet in this realm")]
@@ -933,7 +915,7 @@ pub(super) async fn decrypt_for_realm(
     let realm_keys = load_last_realm_keys_bundle(ops, store, realm_id)
         .await
         .map_err(|e| match e {
-            LoadLastKeysBundleError::Offline => CertifDecryptForRealmError::Offline,
+            LoadLastKeysBundleError::Offline(e) => CertifDecryptForRealmError::Offline(e),
             LoadLastKeysBundleError::NotAllowed => CertifDecryptForRealmError::NotAllowed,
             LoadLastKeysBundleError::NoKey => CertifDecryptForRealmError::KeyNotFound,
             LoadLastKeysBundleError::InvalidKeysBundle(err) => {
@@ -957,8 +939,8 @@ pub(super) async fn decrypt_for_realm(
 
 #[derive(Debug, thiserror::Error)]
 pub enum GenerateNextKeyBundleForRealmError {
-    #[error("Cannot reach the server")]
-    Offline,
+    #[error("Cannot communicate with the server: {0}")]
+    Offline(#[from] ConnectionError),
     #[error("Not allowed to access this realm")]
     NotAllowed,
     #[error(transparent)]
@@ -984,8 +966,8 @@ pub(super) async fn generate_next_keys_bundle_for_realm(
         Err(err) => match err {
             LoadLastKeysBundleError::NoKey => None,
 
-            LoadLastKeysBundleError::Offline => {
-                return Err(GenerateNextKeyBundleForRealmError::Offline)
+            LoadLastKeysBundleError::Offline(e) => {
+                return Err(GenerateNextKeyBundleForRealmError::Offline(e))
             }
             LoadLastKeysBundleError::NotAllowed => {
                 return Err(GenerateNextKeyBundleForRealmError::NotAllowed)
