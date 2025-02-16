@@ -107,7 +107,7 @@ fn init_logger(config: &ClientConfig) {
     let log_file = std::fs::OpenOptions::new()
         .create(true)
         .write(true)
-        .truncate(true)
+        .truncate(false)
         .open(&log_file_path)
         .expect("Cannot open log file");
     // FIXME: This is a workaround to be able to get logs from libparsec
