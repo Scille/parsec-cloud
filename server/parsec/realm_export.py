@@ -206,7 +206,7 @@ CREATE TABLE block (
 );
 
 CREATE TABLE block_data (
-    block INTEGER PRIMARY KEY REFERENCES block(_id),
+    block INTEGER PRIMARY KEY REFERENCES block(sequential_id),
     data BLOB NOT NULL
 );
 """
