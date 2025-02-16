@@ -29,6 +29,10 @@ fn set_focus(window: HWND) {
     // SAFETY:
     // Many calls to windows unsafe API
     unsafe {
+        // TODO: This Alt key hack has been recently removed from bitwarden:
+        //   https://github.com/bitwarden/clients/pull/12255
+        // We should investigate if it's still necessary, or if the approach can be improved.
+
         // Simulate holding down Alt key to bypass windows limitations
         //  https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getasynckeystate#return-value
         //  The most significant bit indicates if the key is currently being pressed. This means the
@@ -86,6 +90,15 @@ pub fn is_biometrics_available() -> bool {
 pub fn get_key_credential(service: &str) -> Result<KeyCredential> {
     let service_name = HSTRING::from(service);
 
+    // TODO: The approach here is to create a new key credential if it doesn't exist.
+    // This allows us to expose only a single `derive_key_from_biometrics` API for
+    // both loading and saving.
+    // However, this means we cannot detect when an existing key credential has been
+    // removed from the system (e.g when the pin code has been removed and recreated).
+    // Another approach would be to retrieve the corresponding public key when saving
+    // a new device using `KeyCredential::RetrievePublicKey()`. This way, this information
+    // could be stored in the device key file and use it to detect when the key credential
+    // has been removed or changed.
     let result = KeyCredentialManager::RequestCreateAsync(
         &service_name,
         KeyCredentialCreationOption::FailIfExists,
@@ -103,7 +116,12 @@ pub fn get_key_credential(service: &str) -> Result<KeyCredential> {
     Ok(credential)
 }
 
+// TODO: this function is synchronous but will block the thread while waiting for the
+// user to enter this pin code. Either this function should be async or we make sure
+// the caller uses `tokio::task::spawn_blocking`
 pub fn derive_key_from_biometrics(service: &str, device_id: DeviceID) -> Result<SecretKey> {
+    // TODO: Is this the formatting we want for the challenge?
+    // Is the device ID the right thing to use here?
     let challenge = format!("BIOMETRICS_CHALLENGE:{}", device_id.hex());
     let challenge_bytes = challenge.as_bytes();
     let challenge_buffer = CryptographicBuffer::CreateFromByteArray(challenge_bytes)?;
