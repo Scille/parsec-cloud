@@ -183,7 +183,7 @@ pub enum ServerFetchBlockError {
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
     #[error("Block access is temporary unavailable on the server")]
-    StoreUnavailable,
+    ServerBlockstoreUnavailable,
     #[error(transparent)]
     InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
     #[error(transparent)]
@@ -218,7 +218,7 @@ pub(crate) async fn server_fetch_block(
                 block,
             } => Ok((needed_realm_certificate_timestamp, key_index, block)),
             // Expected errors
-            Rep::StoreUnavailable => Err(ServerFetchBlockError::StoreUnavailable),
+            Rep::StoreUnavailable => Err(ServerFetchBlockError::ServerBlockstoreUnavailable),
             Rep::AuthorNotAllowed => Err(ServerFetchBlockError::NoRealmAccess),
             Rep::RealmNotFound => Err(ServerFetchBlockError::RealmNotFound),
             Rep::BlockNotFound => Err(ServerFetchBlockError::BlockNotFound),

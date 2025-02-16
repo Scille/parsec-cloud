@@ -1231,7 +1231,7 @@ impl fuser::Filesystem for Filesystem {
                 }
                 Err(err) => match err {
                     WorkspaceFdReadError::Offline(_) => reply.manual().error(libc::EHOSTUNREACH),
-                    WorkspaceFdReadError::StoreUnavailable => reply.manual().error(libc::EHOSTUNREACH),
+                    WorkspaceFdReadError::ServerBlockstoreUnavailable => reply.manual().error(libc::EHOSTUNREACH),
                     WorkspaceFdReadError::NotInReadMode => reply.manual().error(libc::EBADF),
                     WorkspaceFdReadError::NoRealmAccess => reply.manual().error(libc::EPERM),
                     WorkspaceFdReadError::Stopped

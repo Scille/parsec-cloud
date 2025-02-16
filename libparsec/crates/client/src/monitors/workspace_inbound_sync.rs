@@ -210,7 +210,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                     match outcome {
                         Ok(()) => break,
                         Err(err) => match err {
-                            WorkspaceSyncError::Offline(_) | WorkspaceSyncError::StoreUnavailable => {
+                            WorkspaceSyncError::Offline(_) | WorkspaceSyncError::ServerBlockstoreUnavailable => {
                                 io.event_bus_wait_server_reconnect().await;
                                 continue;
                             },
@@ -290,7 +290,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                         break;
                     }
                     Err(err) => match err {
-                        WorkspaceSyncError::Offline(_) | WorkspaceSyncError::StoreUnavailable => {
+                        WorkspaceSyncError::Offline(_) | WorkspaceSyncError::ServerBlockstoreUnavailable => {
                             io.event_bus_wait_server_reconnect().await;
                             continue;
                         }

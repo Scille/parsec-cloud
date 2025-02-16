@@ -653,7 +653,9 @@ async fn do_next_reshape_operation(
             Err(err) => {
                 return Err(match err {
                     ReadChunkOrBlockError::Offline(e) => WorkspaceSyncError::Offline(e),
-                    ReadChunkOrBlockError::StoreUnavailable => WorkspaceSyncError::StoreUnavailable,
+                    ReadChunkOrBlockError::ServerBlockstoreUnavailable => {
+                        WorkspaceSyncError::ServerBlockstoreUnavailable
+                    }
                     ReadChunkOrBlockError::Stopped => WorkspaceSyncError::Stopped,
                     // TODO: manifest seems to contain invalid data (or the server is lying to us)
                     ReadChunkOrBlockError::ChunkNotFound => todo!(),
@@ -799,7 +801,7 @@ async fn upload_blocks(
                 | Rep::BlockAlreadyExists => (),
                 Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
                 // Nothing we can do if server is not ready to store our data, retry later
-                Rep::StoreUnavailable => return Err(WorkspaceSyncError::StoreUnavailable),
+                Rep::StoreUnavailable => return Err(WorkspaceSyncError::ServerBlockstoreUnavailable),
                     // A key rotation occurred concurrently, should poll for new certificates and retry
                     Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
                         let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);

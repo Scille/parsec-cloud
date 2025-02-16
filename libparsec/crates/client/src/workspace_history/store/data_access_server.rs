@@ -124,7 +124,9 @@ impl ServerDataAccess {
             ServerFetchBlockError::RealmNotFound => DataAccessFetchBlockError::BlockNotFound,
             ServerFetchBlockError::BlockNotFound => DataAccessFetchBlockError::BlockNotFound,
             ServerFetchBlockError::NoRealmAccess => DataAccessFetchBlockError::NoRealmAccess,
-            ServerFetchBlockError::StoreUnavailable => DataAccessFetchBlockError::StoreUnavailable,
+            ServerFetchBlockError::ServerBlockstoreUnavailable => {
+                DataAccessFetchBlockError::ServerBlockstoreUnavailable
+            }
             ServerFetchBlockError::InvalidBlockAccess(err) => {
                 DataAccessFetchBlockError::InvalidBlockAccess(err)
             }
