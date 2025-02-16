@@ -152,12 +152,14 @@ INSERT INTO realm_keys_bundle_access (
     realm,
     user_,
     realm_keys_bundle,
-    access
+    access,
+    from_sharing
 ) VALUES (
     $realm_internal_id,
     {q_user_internal_id(organization="$organization_internal_id", user_id="$user_id")},
     $realm_keys_bundle_internal_id,
-    $access
+    $access,
+    NULL
 )
 """
 )

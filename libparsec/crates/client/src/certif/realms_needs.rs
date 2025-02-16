@@ -27,6 +27,10 @@ impl From<CertifStoreError> for CertifGetRealmNeedsError {
 #[derive(Debug, PartialEq, Eq)]
 pub enum RealmNeeds {
     Nothing,
+    /// The need for a key rotation are:
+    /// - The workspace is no longer shared with an user.
+    /// - A new sequester service has been created.
+    /// - A sequester service has been revoked.
     KeyRotationOnly {
         current_key_index: Option<IndexInt>,
     },
@@ -55,7 +59,12 @@ pub async fn get_realm_needs(
             let last_key_rotation = store
                 .get_realm_last_key_rotation_certificate(UpTo::Current, realm_id)
                 .await?;
-            let current_key_index = last_key_rotation.as_ref().map(|x| x.key_index);
+            let current_key_index = last_key_rotation.as_ref().map(|r| r.key_index);
+            let more_recent_than_last_key_rotation = |timestamp: DateTime| match &last_key_rotation
+            {
+                Some(last_key_rotation) => last_key_rotation.timestamp < timestamp,
+                None => true,
+            };
 
             let roles = store.get_realm_roles(UpTo::Current, realm_id).await?;
             let mut current_users_with_role = HashSet::new();
@@ -69,17 +78,8 @@ pub async fn get_realm_needs(
                     }
                     None => {
                         current_users_with_role.remove(&role.user_id);
-
-                        match &last_key_rotation {
-                            Some(last_key_rotation)
-                                if last_key_rotation.timestamp < role.timestamp =>
-                            {
-                                needs = RealmNeeds::KeyRotationOnly { current_key_index };
-                            }
-                            None => {
-                                needs = RealmNeeds::KeyRotationOnly { current_key_index };
-                            }
-                            _ => (),
+                        if more_recent_than_last_key_rotation(role.timestamp) {
+                            needs = RealmNeeds::KeyRotationOnly { current_key_index };
                         }
                     }
                 }
@@ -107,6 +107,30 @@ pub async fn get_realm_needs(
             // The use of `HashSet` makes our output non-deterministic, so we fix it here
             if let RealmNeeds::UnshareThenKeyRotation { revoked_users, .. } = &mut needs {
                 revoked_users.sort();
+            }
+
+            if matches!(needs, RealmNeeds::Nothing) {
+                let sequester_services = store
+                    .get_sequester_service_certificates(UpTo::Current)
+                    .await?;
+                for sequester_service in sequester_services {
+                    if more_recent_than_last_key_rotation(sequester_service.timestamp) {
+                        needs = RealmNeeds::KeyRotationOnly { current_key_index };
+                        break;
+                    }
+                }
+            }
+
+            if matches!(needs, RealmNeeds::Nothing) {
+                let revoked_sequester_services = store
+                    .get_sequester_revoked_service_certificates(UpTo::Current)
+                    .await?;
+                for revoked_sequester_service in revoked_sequester_services {
+                    if more_recent_than_last_key_rotation(revoked_sequester_service.timestamp) {
+                        needs = RealmNeeds::KeyRotationOnly { current_key_index };
+                        break;
+                    }
+                }
             }
 
             Ok(needs)

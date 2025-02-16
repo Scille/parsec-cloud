@@ -123,25 +123,45 @@ CREATE TABLE IF NOT EXISTS info (
 
 -- Common certificates provided in-order
 CREATE TABLE common_certificate (
-  _id INTEGER PRIMARY KEY,
-  certificate BLOB NOT NULL
+    _id INTEGER PRIMARY KEY,
+    certificate BLOB NOT NULL
 );
 
 -- Sequester certificates provided in-order
 CREATE TABLE sequester_certificate (
-  _id INTEGER PRIMARY KEY,
-  certificate BLOB NOT NULL
+    _id INTEGER PRIMARY KEY,
+    certificate BLOB NOT NULL
 );
 
 -- Realm's certificates provided in-order
 CREATE TABLE realm_certificate (
-  _id INTEGER PRIMARY KEY,
-  certificate BLOB NOT NULL
+    _id INTEGER PRIMARY KEY,
+    certificate BLOB NOT NULL
 );
 
 -- Note Shamir recovery and other realms' certificates are not exported
 -- since they are unrelated to the realm being exported.
 
+CREATE TABLE realm_keys_bundle (
+    key_index INTEGER PRIMARY KEY,
+    keys_bundle BLOB NOT NULL
+);
+
+-- Note there can be multiple entries with the same (user_id, key_index) pair
+-- as a new access is provided by every new sharing.
+CREATE TABLE realm_keys_bundle_access (
+    _id INTEGER PRIMARY KEY,
+    user_id BLOB NOT NULL,
+    key_index INTEGER NOT NULL,
+    access BLOB NOT NULL
+);
+
+CREATE TABLE realm_sequester_keys_bundle_access (
+    _id INTEGER PRIMARY KEY,
+    sequester_service_id BLOB NOT NULL,
+    key_index INTEGER NOT NULL,
+    access BLOB NOT NULL
+);
 
 -------------------------------------------------------------------------
 -- Vlobs export
@@ -648,6 +668,28 @@ async def _do_export_certificates(
         con.executemany(
             "INSERT INTO sequester_certificate (_id, certificate) VALUES (?, ?)",
             enumerate(certificates.sequester_certificates),
+        )
+        con.executemany(
+            "INSERT INTO realm_keys_bundle (key_index, keys_bundle) VALUES (?, ?)",
+            certificates.realm_keys_bundles,
+        )
+        con.executemany(
+            "INSERT INTO realm_keys_bundle_access (_id, user_id, key_index, access) VALUES (?, ?, ?, ?)",
+            (
+                (i, user_id.bytes, key_index, access)
+                for i, (user_id, key_index, access) in enumerate(
+                    certificates.realm_keys_bundle_user_accesses
+                )
+            ),
+        )
+        con.executemany(
+            "INSERT INTO realm_sequester_keys_bundle_access (_id, sequester_service_id, key_index, access) VALUES (?, ?, ?, ?)",
+            (
+                (i, sequester_service_id.bytes, key_index, access)
+                for i, (sequester_service_id, key_index, access) in enumerate(
+                    certificates.realm_keys_bundle_sequester_accesses
+                )
+            ),
         )
         con.execute(
             "UPDATE info SET certificates_export_done = 1",

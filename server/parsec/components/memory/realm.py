@@ -290,8 +290,10 @@ class MemoryRealmComponent(BaseRealmComponent):
                     )
                 )
 
-                last_key_rotation.per_participant_keys_bundle_access[certif.user_id] = (
-                    recipient_keys_bundle_access
+                if certif.user_id not in last_key_rotation.per_participant_keys_bundle_accesses:
+                    last_key_rotation.per_participant_keys_bundle_accesses[certif.user_id] = []
+                last_key_rotation.per_participant_keys_bundle_accesses[certif.user_id].append(
+                    (certif.timestamp, recipient_keys_bundle_access)
                 )
 
                 await self._event_bus.send(
@@ -664,7 +666,10 @@ class MemoryRealmComponent(BaseRealmComponent):
                     MemoryRealmKeyRotation(
                         cooked=certif,
                         realm_key_rotation_certificate=realm_key_rotation_certificate,
-                        per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+                        per_participant_keys_bundle_accesses={
+                            k: [(certif.timestamp, v)]
+                            for k, v in per_participant_keys_bundle_access.items()
+                        },
                         per_sequester_service_keys_bundle_access=per_sequester_service_keys_bundle_access,
                         keys_bundle=keys_bundle,
                     )
@@ -730,7 +735,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             return RealmGetKeysBundleBadOutcome.BAD_KEY_INDEX
 
         try:
-            keys_bundle_access = key_rotation.per_participant_keys_bundle_access[author_user_id]
+            _, keys_bundle_access = key_rotation.per_participant_keys_bundle_accesses[
+                author_user_id
+            ][-1]
         except KeyError:
             return RealmGetKeysBundleBadOutcome.ACCESS_NOT_AVAILABLE_FOR_AUTHOR
 
@@ -873,7 +880,9 @@ class MemoryRealmComponent(BaseRealmComponent):
         except KeyError:
             return RealmExportDoCertificatesBadOutcome.ORGANIZATION_NOT_FOUND
 
-        if realm_id not in org.realms:
+        try:
+            realm = org.realms[realm_id]
+        except KeyError:
             return RealmExportDoCertificatesBadOutcome.REALM_NOT_FOUND
 
         common_certificates: list[bytes] = []
@@ -899,10 +908,36 @@ class MemoryRealmComponent(BaseRealmComponent):
                     break
                 sequester_certificates.append(raw)
 
+        realm_keys_bundles: list[tuple[int, bytes]] = []
+        realm_keys_bundle_user_accesses: list[tuple[UserID, int, bytes]] = []
+        realm_keys_bundle_sequester_accesses: list[tuple[SequesterServiceID, int, bytes]] = []
+        for key_rotation in realm.key_rotations:
+            if key_rotation.cooked.timestamp > realm_certificate_timestamp_upper_bound:
+                break
+            realm_keys_bundles.append((key_rotation.cooked.key_index, key_rotation.keys_bundle))
+            for user_id, accesses in key_rotation.per_participant_keys_bundle_accesses.items():
+                for access_timestamp, access in accesses:
+                    if access_timestamp > realm_certificate_timestamp_upper_bound:
+                        break
+                    realm_keys_bundle_user_accesses.append(
+                        (user_id, key_rotation.cooked.key_index, access)
+                    )
+            if key_rotation.per_sequester_service_keys_bundle_access is not None:
+                for (
+                    sequester_id,
+                    access,
+                ) in key_rotation.per_sequester_service_keys_bundle_access.items():
+                    realm_keys_bundle_sequester_accesses.append(
+                        (sequester_id, key_rotation.cooked.key_index, access)
+                    )
+
         return RealmExportCertificates(
             common_certificates=common_certificates,
             sequester_certificates=sequester_certificates,
             realm_certificates=realm_certificates,
+            realm_keys_bundles=realm_keys_bundles,
+            realm_keys_bundle_user_accesses=realm_keys_bundle_user_accesses,
+            realm_keys_bundle_sequester_accesses=realm_keys_bundle_sequester_accesses,
         )
 
     @override

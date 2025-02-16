@@ -20,6 +20,17 @@ async fn ok(env: &TestbedEnv) {
     p_assert_matches!(outcome, CertificateBasedActionOutcome::Uploaded { .. });
 }
 
+#[parsec_test(testbed = "sequestered", with_server)]
+async fn sequestered_ok(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    let outcome = ops.rotate_realm_key_idempotent(wksp1_id, 4).await.unwrap();
+    p_assert_matches!(outcome, CertificateBasedActionOutcome::Uploaded { .. });
+}
+
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn noop(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
