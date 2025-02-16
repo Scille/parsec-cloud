@@ -4,6 +4,22 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.3.0-rc.8 (2025-02-16)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix an issue causing the client to not synchronize properly after the user has
+  accepted the Terms of Service
+  (`#9614 <https://github.com/Scille/parsec-cloud/issues/9614>`__)
+
+* Detect when the client is no longer receiving events from the server and
+  report an offline status
+  (`#8359 <https://github.com/Scille/parsec-cloud/issues/8359>`__)
+
+
+
 Parsec v3.3.0-rc.7 (2025-02-13)
 -------------------------------
 
