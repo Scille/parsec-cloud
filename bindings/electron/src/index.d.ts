@@ -2469,12 +2469,12 @@ export interface WorkspaceFdReadErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceFdReadErrorStopped {
-    tag: "Stopped"
+export interface WorkspaceFdReadErrorServerBlockstoreUnavailable {
+    tag: "ServerBlockstoreUnavailable"
     error: string
 }
-export interface WorkspaceFdReadErrorStoreUnavailable {
-    tag: "StoreUnavailable"
+export interface WorkspaceFdReadErrorStopped {
+    tag: "Stopped"
     error: string
 }
 export type WorkspaceFdReadError =
@@ -2486,8 +2486,8 @@ export type WorkspaceFdReadError =
   | WorkspaceFdReadErrorNoRealmAccess
   | WorkspaceFdReadErrorNotInReadMode
   | WorkspaceFdReadErrorOffline
+  | WorkspaceFdReadErrorServerBlockstoreUnavailable
   | WorkspaceFdReadErrorStopped
-  | WorkspaceFdReadErrorStoreUnavailable
 
 
 // WorkspaceFdResizeError

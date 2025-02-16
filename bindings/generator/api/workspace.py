@@ -593,7 +593,7 @@ class WorkspaceFdReadError(ErrorVariant):
     class Offline:
         pass
 
-    class StoreUnavailable:
+    class ServerBlockstoreUnavailable:
         pass
 
     class Stopped:

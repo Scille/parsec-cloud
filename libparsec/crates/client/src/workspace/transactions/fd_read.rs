@@ -13,7 +13,7 @@ pub enum WorkspaceFdReadError {
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
     #[error("Block access is temporary unavailable on the server")]
-    StoreUnavailable,
+    ServerBlockstoreUnavailable,
     #[error("Component has stopped")]
     Stopped,
     #[error("File descriptor not found")]
@@ -92,8 +92,8 @@ pub async fn fd_read(
                     .await
                     .map_err(|err| match err {
                         ReadChunkOrBlockError::Offline(e) => WorkspaceFdReadError::Offline(e),
-                        ReadChunkOrBlockError::StoreUnavailable => {
-                            WorkspaceFdReadError::StoreUnavailable
+                        ReadChunkOrBlockError::ServerBlockstoreUnavailable => {
+                            WorkspaceFdReadError::ServerBlockstoreUnavailable
                         }
                         ReadChunkOrBlockError::Stopped => WorkspaceFdReadError::Stopped,
                         ReadChunkOrBlockError::NoRealmAccess => WorkspaceFdReadError::NoRealmAccess,

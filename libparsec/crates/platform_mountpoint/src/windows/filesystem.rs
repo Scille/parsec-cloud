@@ -643,7 +643,9 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     .await
                     .map_err(|err| match err {
                         WorkspaceFdReadError::Offline(_) => STATUS_HOST_UNREACHABLE,
-                        WorkspaceFdReadError::StoreUnavailable => STATUS_HOST_UNREACHABLE,
+                        WorkspaceFdReadError::ServerBlockstoreUnavailable => {
+                            STATUS_HOST_UNREACHABLE
+                        }
                         WorkspaceFdReadError::NoRealmAccess => STATUS_ACCESS_DENIED,
                         WorkspaceFdReadError::Stopped => STATUS_NO_SUCH_DEVICE,
                         WorkspaceFdReadError::BadFileDescriptor => STATUS_INVALID_HANDLE,
