@@ -1,0 +1,1 @@
+Detect when the client is no longer receiving events from the server and report an offline status
