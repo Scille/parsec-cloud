@@ -211,7 +211,7 @@ async fn sse_ok_mocked(env: &TestbedEnv) {
             headers,
             "\
             :keepalive\n\n\
-            data:haZzdGF0dXOib2ulZXZlbnSzT1JHQU5JWkFUSU9OX0NPTkZJR7JhY3RpdmVfdXNlcnNfbGltaXTAvXVzZXJfcHJvZmlsZV9vdXRzaWRlcl9hbGxvd2Vkw61zc2Vfa2VlcGFsaXZlkh4A\nid:832ea0c75e0d4ca8aedf123a89b3fcc7\n\n\
+            data:haZzdGF0dXOib2ulZXZlbnSzT1JHQU5JWkFUSU9OX0NPTkZJR7JhY3RpdmVfdXNlcnNfbGltaXTAvXVzZXJfcHJvZmlsZV9vdXRzaWRlcl9hbGxvd2Vkw7Vzc2Vfa2VlcGFsaXZlX3NlY29uZHMe\nid:832ea0c75e0d4ca8aedf123a89b3fcc7\n\n\
             event:missed_events\ndata:\n\n\
             data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\nid:4fe5b6ddf29f4c159e6002da2132d80f\n\n\
             :keepalive\n\n\
@@ -230,7 +230,7 @@ async fn sse_ok_mocked(env: &TestbedEnv) {
             authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
-                sse_keepalive: Some(Duration::seconds(30)),
+                sse_keepalive_seconds: Some(30.try_into().unwrap()),
             }
         ))
     );
@@ -296,7 +296,7 @@ async fn sse_ok_with_server(env: &TestbedEnv) {
             authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
-                sse_keepalive: Some(Duration::seconds(30)),
+                sse_keepalive_seconds: Some(30.try_into().unwrap()),
             }
         ))
     );
@@ -655,7 +655,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
             authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
-                sse_keepalive: Some(Duration::seconds(30)),
+                sse_keepalive_seconds: Some(30.try_into().unwrap()),
             }
         ))
     );
@@ -709,7 +709,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
             authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
-                sse_keepalive: Some(Duration::seconds(30)),
+                sse_keepalive_seconds: Some(30.try_into().unwrap()),
             }
         ))
     );
@@ -751,7 +751,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
             authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
-                sse_keepalive: Some(Duration::seconds(30)),
+                sse_keepalive_seconds: Some(30.try_into().unwrap()),
             }
         ))
     );

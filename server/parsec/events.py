@@ -442,12 +442,12 @@ class EventOrganizationConfig(BaseModel):
     def is_event_for_client(self, client: RegisteredClient) -> bool:
         return self.organization_id == client.organization_id
 
-    def dump_as_apiv5_sse_payload(self, sse_keepalive: float | None) -> bytes:
+    def dump_as_apiv5_sse_payload(self, sse_keepalive: int | None) -> bytes:
         return ClientBroadcastableEvent._dump_as_apiv5_sse_payload(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 user_profile_outsider_allowed=self.user_profile_outsider_allowed,
                 active_users_limit=self.active_users_limit,
-                sse_keepalive=sse_keepalive,
+                sse_keepalive_seconds=sse_keepalive,
             ),
             None,
         )

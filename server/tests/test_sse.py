@@ -74,7 +74,7 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
-                sse_keepalive=30,
+                sse_keepalive_seconds=30,
             )
         )
 
@@ -86,7 +86,7 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
         )
         assert inner_event.active_users_limit == ActiveUsersLimit.NO_LIMIT
         assert inner_event.user_profile_outsider_allowed is True
-        assert inner_event.sse_keepalive == 30.0
+        assert inner_event.sse_keepalive_seconds == 30
 
         # Backend should inform that some events were missed and we could not retrieve them
         event = await anext(alice_sse._iter_events)
@@ -112,7 +112,7 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
-                sse_keepalive=30,
+                sse_keepalive_seconds=30,
             )
         )
 
@@ -158,7 +158,7 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
-                sse_keepalive=30,
+                sse_keepalive_seconds=30,
             )
         )
 
@@ -169,10 +169,10 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
         )
 
 
-@pytest.mark.timeout(2)
+@pytest.mark.timeout(3)
 async def test_keep_alive(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
-    # Reduce keepalive to 0.1s to speed up the test
-    backend.config.sse_keepalive = 0.1
+    # Reduce keepalive to 1s to speed up the test
+    backend.config.sse_keepalive = 1
     got_keepalive = False
 
     async with minimalorg.alice.raw_sse_connection() as raw_sse_stream:
@@ -231,10 +231,10 @@ def fork_process_to_run_asgi_server(app: AsgiApp) -> Iterator[tuple[str, int]]:
     proc.join()
 
 
-@pytest.mark.timeout(2)
+@pytest.mark.timeout(3)
 async def test_keep_alive_real_server(minimalorg: MinimalorgRpcClients, app: AsgiApp) -> None:
     assert isinstance(app.state.backend, Backend)
-    app.state.backend.config.sse_keepalive = 0.1
+    app.state.backend.config.sse_keepalive = 1
 
     got_keepalive = False
 
@@ -284,7 +284,7 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
-                sse_keepalive=30,
+                sse_keepalive_seconds=30,
             )
         )
 
@@ -333,7 +333,7 @@ async def test_close_on_organization_tos_updated(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
-                sse_keepalive=30,
+                sse_keepalive_seconds=30,
             )
         )
 

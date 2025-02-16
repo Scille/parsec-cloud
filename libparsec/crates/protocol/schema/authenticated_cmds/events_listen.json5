@@ -48,8 +48,8 @@
                                 "type": "ActiveUsersLimit"
                             },
                             {
-                                "name": "sse_keepalive",
-                                "type": "RequiredOption<Duration>"
+                                "name": "sse_keepalive_seconds",
+                                "type": "RequiredOption<NonZeroInteger>"
                             }
                         ]
                     },
