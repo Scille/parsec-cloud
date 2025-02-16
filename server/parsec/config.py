@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import math
 from dataclasses import dataclass, field, fields
 from enum import Enum
 from typing import TYPE_CHECKING, Literal
@@ -200,8 +199,8 @@ class BackendConfig:
     administration_token: str
 
     # Amount of time (in seconds) before a keep alive message is sent to an SSE
-    # connection. Set to `math.inf` to disable keep alive messages.
-    sse_keepalive: float = math.inf
+    # connection. Set to `None` to disable keep alive messages.
+    sse_keepalive: int | None = None
 
     # Comma separated list of IP Addresses, IP Networks, or literals (e.g. UNIX Socket path) to trust with proxy headers
     # Use "*" to trust all proxies. If not provided, the gunicorn/uvicorn `FORWARDED_ALLOW_IPS`
