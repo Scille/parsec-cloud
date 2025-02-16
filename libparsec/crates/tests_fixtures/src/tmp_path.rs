@@ -9,6 +9,18 @@ use libparsec_tests_lite::prelude::*;
 /// A temporary path that will be removed on drop.
 pub struct TmpPath(PathBuf);
 
+impl TmpPath {
+    pub fn create() -> Self {
+        let mut path = std::env::temp_dir();
+
+        path.extend(["parsec-tests", &Uuid::new_v4().to_string()]);
+
+        std::fs::create_dir_all(&path).expect("Cannot create tmp_path dir");
+
+        TmpPath(path)
+    }
+}
+
 impl std::ops::Deref for TmpPath {
     type Target = PathBuf;
     fn deref(&self) -> &Self::Target {
@@ -54,11 +66,5 @@ impl Drop for TmpPath {
 
 #[fixture]
 pub fn tmp_path() -> TmpPath {
-    let mut path = std::env::temp_dir();
-
-    path.extend(["parsec-tests", &Uuid::new_v4().to_string()]);
-
-    std::fs::create_dir_all(&path).expect("Cannot create tmp_path dir");
-
-    TmpPath(path)
+    TmpPath::create()
 }
