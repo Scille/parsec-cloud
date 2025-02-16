@@ -88,8 +88,8 @@ use crate::{
     workspace::{
         merge::{MergeLocalFileManifestOutcome, MergeLocalFolderManifestOutcome},
         store::{
-            ForUpdateSyncLocalOnlyError, IntoSyncConflictUpdaterError, SyncUpdater, WorkspaceStore,
-            WorkspaceStoreOperationError,
+            ForUpdateSyncError, IntoSyncConflictUpdaterError, RetrievePathFromIDEntry, SyncUpdater,
+            WorkspaceStore, WorkspaceStoreOperationError,
         },
     },
     EventWorkspaceOpsInboundSyncDone, InvalidBlockAccessError,
@@ -282,23 +282,35 @@ pub async fn inbound_sync(
     // Now merge the remote with the current local manifest
 
     let (updater, local_manifest) = {
-        let outcome = ops.store.for_update_sync_local_only(entry_id).await;
+        let outcome = ops.store.for_update_sync(entry_id, false).await;
         match outcome {
-            // Nothing to sync
-            Ok((updater, local_manifest)) => {
-                abort_if_file_opened!();
-                (updater, local_manifest)
+            Ok((updater, RetrievePathFromIDEntry::Missing)) => (updater, None),
+            Ok((updater, RetrievePathFromIDEntry::Reachable { manifest, .. })) => {
+                (updater, Some(manifest))
             }
-            Err(ForUpdateSyncLocalOnlyError::WouldBlock) => {
-                return Ok(InboundSyncOutcome::EntryIsBusy)
+            Ok((updater, RetrievePathFromIDEntry::Unreachable { manifest })) => {
+                (updater, Some(manifest))
             }
-            Err(ForUpdateSyncLocalOnlyError::Stopped) => return Err(WorkspaceSyncError::Stopped),
-            Err(ForUpdateSyncLocalOnlyError::Internal(err)) => {
+            Err(ForUpdateSyncError::WouldBlock) => return Ok(InboundSyncOutcome::EntryIsBusy),
+            Err(ForUpdateSyncError::Offline) => return Err(WorkspaceSyncError::Offline),
+            Err(ForUpdateSyncError::InvalidKeysBundle(e)) => {
+                return Err(WorkspaceSyncError::InvalidKeysBundle(e))
+            }
+            Err(ForUpdateSyncError::InvalidCertificate(e)) => {
+                return Err(WorkspaceSyncError::InvalidCertificate(e))
+            }
+            Err(ForUpdateSyncError::InvalidManifest(e)) => {
+                return Err(WorkspaceSyncError::InvalidManifest(e))
+            }
+            Err(ForUpdateSyncError::NoRealmAccess) => return Err(WorkspaceSyncError::NotAllowed),
+            Err(ForUpdateSyncError::Stopped) => return Err(WorkspaceSyncError::Stopped),
+            Err(ForUpdateSyncError::Internal(err)) => {
                 return Err(err.context("cannot lock entry for update").into())
             }
         }
     };
 
+    abort_if_file_opened!();
     let outcome =
         merge_manifest_and_update_store(ops, updater, local_manifest, remote_manifest).await?;
 

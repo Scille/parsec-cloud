@@ -12,7 +12,8 @@ use crate::certif::{
     CertifBootstrapWorkspaceError, CertifEncryptForRealmError, CertifPollServerError,
 };
 use crate::workspace::store::{
-    ForUpdateSyncLocalOnlyError, ReadChunkOrBlockError, WorkspaceStoreOperationError,
+    ForUpdateSyncError, ForUpdateSyncLocalOnlyError, ReadChunkOrBlockError,
+    RetrievePathFromIDEntry, WorkspaceStoreOperationError,
 };
 use crate::{
     greater_timestamp, EncrytionUsage, EventWorkspaceOpsOutboundSyncAborted,
@@ -76,16 +77,26 @@ async fn outbound_sync_child(
     // 1) Ensure the sync is needed
 
     let local = {
-        let outcome = ops.store.for_update_sync_local_only(entry_id).await;
+        let outcome = ops.store.for_update_sync(entry_id, false).await;
         match outcome {
-            // Nothing to sync
-            Ok((_, None)) => return Ok(OutboundSyncOutcome::Done),
-            Ok((_, Some(manifest))) => manifest,
-            Err(ForUpdateSyncLocalOnlyError::WouldBlock) => {
-                return Ok(OutboundSyncOutcome::EntryIsBusy)
+            Ok((_, RetrievePathFromIDEntry::Missing)) => return Ok(OutboundSyncOutcome::Done),
+            Ok((_, RetrievePathFromIDEntry::Reachable { manifest, .. })) => manifest,
+            Ok((_, RetrievePathFromIDEntry::Unreachable { manifest })) => manifest,
+            Err(ForUpdateSyncError::WouldBlock) => return Ok(OutboundSyncOutcome::EntryIsBusy),
+            Err(ForUpdateSyncError::Offline) => return Err(WorkspaceSyncError::Offline),
+            Err(ForUpdateSyncError::InvalidKeysBundle(e)) => {
+                return Err(WorkspaceSyncError::InvalidKeysBundle(e))
             }
-            Err(ForUpdateSyncLocalOnlyError::Stopped) => return Err(WorkspaceSyncError::Stopped),
-            Err(ForUpdateSyncLocalOnlyError::Internal(err)) => {
+            Err(ForUpdateSyncError::InvalidCertificate(e)) => {
+                return Err(WorkspaceSyncError::InvalidCertificate(e))
+            }
+            Err(ForUpdateSyncError::InvalidManifest(e)) => {
+                return Err(WorkspaceSyncError::InvalidManifest(e))
+            }
+            Err(ForUpdateSyncError::NoRealmAccess) => return Err(WorkspaceSyncError::NotAllowed),
+
+            Err(ForUpdateSyncError::Stopped) => return Err(WorkspaceSyncError::Stopped),
+            Err(ForUpdateSyncError::Internal(err)) => {
                 return Err(err.context("cannot acces entry in store").into())
             }
         }
