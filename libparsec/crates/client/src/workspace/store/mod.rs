@@ -548,7 +548,6 @@ impl WorkspaceStore {
     ///
     /// This is because this method is expected to be used to synchronize this very
     /// entry from/to the server.
-    #[allow(unused)] // TODO: to be used
     pub async fn for_update_sync(
         &self,
         entry_id: VlobID,
