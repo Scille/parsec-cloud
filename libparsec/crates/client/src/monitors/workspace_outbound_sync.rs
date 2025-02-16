@@ -120,7 +120,7 @@ fn task_future_factory(
                                 log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                                 return;
                             }
-                            WorkspaceSyncError::StoreUnavailable => {
+                            WorkspaceSyncError::ServerBlockstoreUnavailable => {
                                 // Re-enqueue to retry later
                                 let entry_id = $entry_id;
                                 log::info!("Workspace {realm_id}: {entry_id} sync failed due to server block store unavailable, aborting sync and waiting {}s", SERVER_STORE_UNAVAILABLE_WAIT.num_seconds());

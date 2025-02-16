@@ -70,7 +70,7 @@ pub(super) enum ReadChunkOrBlockError {
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
     #[error("Block access is temporary unavailable on the server")]
-    StoreUnavailable,
+    ServerBlockstoreUnavailable,
     #[error("Component has stopped")]
     Stopped,
     #[error("Chunk doesn't exist")]
@@ -665,7 +665,9 @@ impl WorkspaceStore {
         .map_err(|err| match err {
             ServerFetchBlockError::Stopped => ReadChunkOrBlockError::Stopped,
             ServerFetchBlockError::Offline(e) => ReadChunkOrBlockError::Offline(e),
-            ServerFetchBlockError::StoreUnavailable => ReadChunkOrBlockError::StoreUnavailable,
+            ServerFetchBlockError::ServerBlockstoreUnavailable => {
+                ReadChunkOrBlockError::ServerBlockstoreUnavailable
+            }
             ServerFetchBlockError::BlockNotFound => {
                 // This is unexpected: we got a block ID from a file manifest,
                 // but this ID points to nothing according to the server :/

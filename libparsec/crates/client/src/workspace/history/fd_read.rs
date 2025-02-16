@@ -60,7 +60,7 @@ pub async fn fd_read(
                     WorkspaceHistoryFdReadError::Offline(e)
                 }
                 WorkspaceHistoryGetBlockError::Stopped
-                | WorkspaceHistoryGetBlockError::StoreUnavailable => {
+                | WorkspaceHistoryGetBlockError::ServerBlockstoreUnavailable => {
                     WorkspaceHistoryFdReadError::Stopped
                 }
                 WorkspaceHistoryGetBlockError::NoRealmAccess => {
