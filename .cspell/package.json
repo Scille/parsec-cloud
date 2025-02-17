@@ -9,11 +9,11 @@
     "suggestions": "cspell suggestions --config=cspell.config.yml"
   },
   "dependencies": {
-    "@cspell/dict-bash": "^4.1.8",
+    "@cspell/dict-bash": "^4.2.0",
     "@cspell/dict-fr-fr": "^2.2.5",
-    "@cspell/dict-fr-reforme": "^2.2.5",
+    "@cspell/dict-fr-reforme": "^2.2.6",
     "@cspell/dict-shell": "^1.0.10",
-    "@cspell/dict-win32": "^2.0.6",
-    "cspell": "^8.16.1"
+    "@cspell/dict-win32": "^2.0.7",
+    "cspell": "^8.17.3"
   }
 }
