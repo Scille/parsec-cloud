@@ -2,6 +2,7 @@ mod device;
 mod device_option;
 mod invitations;
 mod ls;
+mod mount_realm_export;
 mod organization;
 mod rm;
 mod server;
@@ -17,11 +18,11 @@ use std::{
 };
 
 use crate::utils::*;
-use libparsec::LocalDevice;
 use libparsec::{
     ClientConfig, OrganizationID, ParsecAddr, TmpPath, PARSEC_BASE_CONFIG_DIR,
     PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
 };
+use libparsec::{LocalDevice, SequesterVerifyKeyDer};
 use std::sync::Arc;
 
 use crate::testenv_utils::DEFAULT_DEVICE_PASSWORD;
@@ -71,6 +72,7 @@ async fn run_local_organization(
     tmp_dir: &Path,
     source_file: Option<PathBuf>,
     config: TestenvConfig,
+    sequester_key: Option<SequesterVerifyKeyDer>,
 ) -> anyhow::Result<(ParsecAddr, TestOrganization, OrganizationID)> {
     let url = new_environment(tmp_dir, source_file, config, false)
         .await?
@@ -78,9 +80,14 @@ async fn run_local_organization(
 
     println!("Initializing test organization to {url}");
     let org_id = unique_org_id();
-    initialize_test_organization(ClientConfig::default(), url.clone(), org_id.clone())
-        .await
-        .map(|v| (url, v, org_id))
+    initialize_test_organization(
+        ClientConfig::default(),
+        url.clone(),
+        org_id.clone(),
+        sequester_key,
+    )
+    .await
+    .map(|v| (url, v, org_id))
 }
 
 fn wait_for(mut reader: impl BufRead, buf: &mut String, text: &str) {
@@ -99,7 +106,22 @@ async fn bootstrap_cli_test(
     let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
-    let (url, devices, org_id) = run_local_organization(tmp_path, None, config).await?;
+    let (url, devices, org_id) = run_local_organization(tmp_path, None, config, None).await?;
+
+    set_env(tmp_path_str, &url);
+    Ok((url, devices, org_id))
+}
+
+// Same as above, but with sequester
+async fn bootstrap_cli_test_with_sequester(
+    tmp_path: &TmpPath,
+    sequester_key: SequesterVerifyKeyDer,
+) -> anyhow::Result<(ParsecAddr, TestOrganization, OrganizationID)> {
+    let _ = env_logger::builder().is_test(true).try_init();
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, devices, org_id) =
+        run_local_organization(tmp_path, None, config, Some(sequester_key)).await?;
 
     set_env(tmp_path_str, &url);
     Ok((url, devices, org_id))
@@ -147,6 +169,7 @@ macro_rules! assert_cmd_failure {
 }
 
 /// Creates a std `Command` to be run with the `parsec-cli` binary.
+/// No comma after the last argument
 #[macro_export]
 macro_rules! std_cmd {
     ($($args:expr),*) => {

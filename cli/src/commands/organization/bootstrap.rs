@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use libparsec::{
     AvailableDevice, ClientConfig, DeviceLabel, DeviceSaveStrategy, HumanHandle,
-    ParsecOrganizationBootstrapAddr, Password,
+    ParsecOrganizationBootstrapAddr, Password, SequesterVerifyKeyDer,
 };
 
 use crate::utils::*;
@@ -35,6 +35,7 @@ pub async fn bootstrap_organization_req(
     device_label: DeviceLabel,
     human_handle: HumanHandle,
     password: Password,
+    sequester_key: Option<SequesterVerifyKeyDer>,
 ) -> anyhow::Result<AvailableDevice> {
     log::trace!(
         "Bootstrapping organization (confdir={}, datadir={})",
@@ -51,8 +52,7 @@ pub async fn bootstrap_organization_req(
         DeviceSaveStrategy::Password { password },
         human_handle,
         device_label,
-        // TODO: handle sequestered organization
-        None,
+        sequester_key,
     )
     .await?)
 }
@@ -86,6 +86,8 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         device_label,
         human_handle,
         password,
+        // TODO handle sequester
+        None,
     )
     .await?;
 

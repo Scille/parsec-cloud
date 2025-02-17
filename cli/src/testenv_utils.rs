@@ -6,12 +6,12 @@ use std::{
 };
 
 use libparsec::{
-    authenticated_cmds::{latest::device_create, latest::user_create},
+    authenticated_cmds::latest::{device_create, user_create},
     AuthenticatedCmds, Bytes, CertificateSignerOwned, ClientConfig, DateTime, DeviceAccessStrategy,
     DeviceCertificate, DeviceID, DeviceLabel, DevicePurpose, HumanHandle, LocalDevice,
-    MaybeRedacted, OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey,
-    SigningKeyAlgorithm, UserCertificate, UserProfile, PARSEC_BASE_CONFIG_DIR,
-    PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
+    MaybeRedacted, OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig,
+    SequesterVerifyKeyDer, SigningKey, SigningKeyAlgorithm, UserCertificate, UserProfile,
+    PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
 };
 
 use crate::{
@@ -39,6 +39,7 @@ pub async fn initialize_test_organization(
     client_config: ClientConfig,
     addr: ParsecAddr,
     organization_id: OrganizationID,
+    sequester_key: Option<SequesterVerifyKeyDer>,
 ) -> anyhow::Result<TestOrganization> {
     // Create organization
     let organization_addr =
@@ -51,6 +52,7 @@ pub async fn initialize_test_organization(
         "laptop".parse().expect("Unreachable"),
         HumanHandle::new("alice@example.com", "Alice").expect("Unreachable"),
         DEFAULT_DEVICE_PASSWORD.to_string().into(),
+        sequester_key,
     )
     .await?;
 
