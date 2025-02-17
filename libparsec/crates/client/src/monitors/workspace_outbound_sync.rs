@@ -237,6 +237,10 @@ fn task_future_factory(
                         );
                         match outcome {
                             Ok(
+                                // If the entry is unreachable in the path-space, it seems better to not
+                                // synchronize it since we don't even know what it is. Just treat it as
+                                // if it was done, it will likely come back since it tagged as `need_sync`
+                                // but we will ignore it again.
                                 OutboundSyncOutcome::Done | OutboundSyncOutcome::EntryIsUnreachable,
                             ) => {
                                 // Unregister the confinement point
@@ -280,8 +284,7 @@ fn task_future_factory(
                             Ok(
                                 InboundSyncOutcome::Updated
                                 | InboundSyncOutcome::NoChange
-                                | InboundSyncOutcome::EntryIsConfined(_)
-                                | InboundSyncOutcome::EntryIsUnreachable,
+                                | InboundSyncOutcome::EntryIsConfined(_),
                             ) => (),
                             Err(err) => handle_workspace_sync_error!(err, entry_id),
                         }

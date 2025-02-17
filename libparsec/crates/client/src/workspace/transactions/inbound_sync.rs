@@ -195,8 +195,6 @@ pub enum InboundSyncOutcome {
     /// Hence now is not the right time to sync it given our incoming changes will
     /// be overwritten by the ongoing modification. Instead we should just retry later.
     EntryIsBusy,
-    /// The entry is unreachable, this is typically because the entry has been deleted.
-    EntryIsUnreachable,
     /// The entry is confined
     EntryIsConfined(VlobID),
 }
@@ -306,8 +304,14 @@ pub async fn inbound_sync(
             )) => {
                 return Ok(InboundSyncOutcome::EntryIsConfined(confinement));
             }
-            Ok((_, RetrievePathFromIDEntry::Unreachable { .. })) => {
-                return Ok(InboundSyncOutcome::EntryIsUnreachable);
+            Ok((updater, RetrievePathFromIDEntry::Unreachable { manifest })) => {
+                // The entry is unreachable in our path-space.
+                // This might happen because a file has been removed but then re-appeared.
+                // If the child is synchronized before the parent, then we might find that
+                // the entry is unreachable, although it will soon be reachable again.
+                // In this case we might as well acknowledge the new version (since it
+                // wasn't part of our confined files, otherwise it would have had a path).
+                (updater, Some(manifest))
             }
             Err(ForUpdateSyncError::WouldBlock) => return Ok(InboundSyncOutcome::EntryIsBusy),
             Err(ForUpdateSyncError::Offline(e)) => return Err(WorkspaceSyncError::Offline(e)),
