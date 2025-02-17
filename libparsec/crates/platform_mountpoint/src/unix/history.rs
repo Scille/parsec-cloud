@@ -439,9 +439,9 @@ impl fuser::Filesystem for Filesystem {
                     reply.manual().data(&buf);
                 }
                 Err(err) => match err {
-                    WorkspaceHistoryFdReadError::Offline(_) => reply.manual().error(libc::EHOSTUNREACH),
+                    WorkspaceHistoryFdReadError::Offline(_)
+                    | WorkspaceHistoryFdReadError::ServerBlockstoreUnavailable => reply.manual().error(libc::EHOSTUNREACH),
                     WorkspaceHistoryFdReadError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                    WorkspaceHistoryFdReadError::BlockNotFound => reply.manual().error(libc::EBADF),  // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     WorkspaceHistoryFdReadError::Stopped
                     | WorkspaceHistoryFdReadError::InvalidBlockAccess(_)
                     | WorkspaceHistoryFdReadError::InvalidKeysBundle(_)
