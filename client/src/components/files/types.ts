@@ -114,6 +114,7 @@ export class EntryCollection<Model extends EntryModel> {
         existing.needSync = entry.needSync;
         existing.tag = entry.tag;
         existing.updated = entry.updated;
+        existing.path = entry.path;
         if (existing.isFile()) {
           (existing as FileModel).size = (entry as FileModel).size;
         }

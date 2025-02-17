@@ -584,6 +584,7 @@
         "moveAlreadyExistReplace": "Remplacer | Tout remplacer",
         "open": {
             "fileFailed": "Le fichier `{name}` n'a pas pu être ouvert.",
+            "fileFailedGeneric": "Impossible d'ouvrir ce fichier.",
             "folderFailed": "Le dossier `{name}` n'a pas pu être ouvert.",
             "unavailableOnWeb": "Cette fonctionnalité n'est pas encore disponible en mode web.",
             "unhandledFileType": "Impossible d'afficher le contenu de ce fichier."
@@ -1792,6 +1793,7 @@
         "genericError": "Impossible d'ouvrir le fichier.",
         "mediaNotSupported": "Ce média ne peut pas être joué.",
         "retrievingFileContent": "Récupération du contenu du fichier...",
+        "statsFailed": "Impossible de récupérer les informations du fichier.",
         "controls": {
             "zoom": {
                 "in": "Zoomer",
