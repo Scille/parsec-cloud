@@ -107,6 +107,7 @@ async fn dst_parent_exists_as_file(tmp_path: TmpPath, env: &TestbedEnv) {
             {
                 let src_utf16 = super::utils::to_null_terminated_utf16(&src.to_string_lossy());
                 let dst_utf16 = super::utils::to_null_terminated_utf16(&dst.to_string_lossy());
+                // SAFETY: Calling Win32 C++ API
                 let ret = unsafe {
                     windows_sys::Win32::Storage::FileSystem::MoveFileExW(
                         src_utf16.as_ptr(),
