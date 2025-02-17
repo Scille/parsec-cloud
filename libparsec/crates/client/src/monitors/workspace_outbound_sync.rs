@@ -23,18 +23,21 @@ use crate::{
 };
 
 const WORKSPACE_OUTBOUND_SYNC_MONITOR_NAME: &str = "workspace_outbound_sync";
-const MIN_SYNC_WAIT: Duration = match Duration::try_seconds(1) {
-    Some(v) => v,
-    None => panic!("Invalid duration"),
-};
-const MAX_SYNC_WAIT: Duration = match Duration::try_minutes(1) {
-    Some(v) => v,
-    None => panic!("Invalid duration"),
-};
-const SERVER_STORE_UNAVAILABLE_WAIT: Duration = match Duration::try_minutes(1) {
-    Some(v) => v,
-    None => panic!("Invalid duration"),
-};
+
+// Test constants are 10 times faster than production ones
+#[cfg(test)]
+const MIN_SYNC_WAIT: Duration = Duration::milliseconds(100);
+#[cfg(test)]
+const MAX_SYNC_WAIT: Duration = Duration::seconds(6);
+#[cfg(test)]
+const SERVER_STORE_UNAVAILABLE_WAIT: Duration = Duration::seconds(6);
+
+#[cfg(not(test))]
+const MIN_SYNC_WAIT: Duration = Duration::seconds(1);
+#[cfg(not(test))]
+const MAX_SYNC_WAIT: Duration = Duration::minutes(1);
+#[cfg(not(test))]
+const SERVER_STORE_UNAVAILABLE_WAIT: Duration = Duration::minutes(1);
 
 pub(crate) async fn start_workspace_outbound_sync_monitor(
     workspace_ops: Arc<WorkspaceOps>,
