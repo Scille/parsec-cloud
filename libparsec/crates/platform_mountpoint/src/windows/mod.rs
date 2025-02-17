@@ -2,6 +2,7 @@
 
 mod drive_letter;
 mod filesystem;
+mod history;
 mod mount;
 mod volume_label;
 mod winify;
