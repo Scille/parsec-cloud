@@ -299,12 +299,13 @@ async function openWithSystem(path: FsPath): Promise<boolean> {
     return false;
   }
 
+  const fileName = (await Path.filename(path)) ?? '';
   const result = await getSystemPath(workspaceHandle, path);
 
   if (!result.ok) {
     await informationManager.present(
       new Information({
-        message: 'FoldersPage.open.fileFailed',
+        message: fileName ? { key: 'FoldersPage.open.fileFailed', data: { name: fileName } } : 'FoldersPage.open.fileFailedGeneric',
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,
@@ -332,7 +333,7 @@ async function showDetails(): Promise<void> {
     if (!entry.ok) {
       await informationManager.present(
         new Information({
-          message: 'FoldersPage.open.fileFailed',
+          message: 'fileViewers.statsFailed',
           level: InformationLevel.Error,
         }),
         PresentationMode.Modal,
