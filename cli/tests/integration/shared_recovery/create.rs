@@ -1,6 +1,6 @@
 use libparsec::{tmp_path, TmpPath};
 
-use crate::integration_tests::{bootstrap_cli_test, spawn_interactive_command};
+use crate::integration_tests::bootstrap_cli_test;
 use crate::std_cmd;
 use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
 
@@ -88,6 +88,7 @@ async fn create_shared_recovery_inexistent_email(tmp_path: TmpPath) {
     .stderr(predicates::str::contains("A user is missing"));
 }
 
+#[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
 async fn create_shared_recovery_default(tmp_path: TmpPath) {
@@ -99,7 +100,7 @@ async fn create_shared_recovery_default(tmp_path: TmpPath) {
         &bob.device_id.hex()
     );
 
-    let mut p = spawn_interactive_command(cmd, Some(1500)).unwrap();
+    let mut p = crate::integration_tests::spawn_interactive_command(cmd, Some(1500)).unwrap();
 
     p.exp_string("Enter password for the device:").unwrap();
     p.send_line(DEFAULT_DEVICE_PASSWORD).unwrap();

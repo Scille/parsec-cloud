@@ -46,11 +46,14 @@ libparsec = { workspace = true, features = ["cli-tests"] }
 
 assert_cmd = { workspace = true }
 predicates = { workspace = true, features = ["regex"] }
-rexpect = { workspace = true }
 rstest = { workspace = true }
 uuid = { workspace = true, features = ["v6", "std", "rng"] }
 
 criterion = { workspace = true }
+
+[target.'cfg(target_family = "unix")'.dev-dependencies]
+# rexpect doesn't support Windows (see https://github.com/rust-cli/rexpect/issues/11)
+rexpect = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
 winfsp_wrs_build = { workspace = true }
