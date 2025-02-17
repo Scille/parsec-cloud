@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import math
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -323,8 +322,8 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     "--sse-keepalive",
     default=30,
     show_default=True,
-    type=float,
-    callback=lambda ctx, param, value: math.inf if value is None or value <= 0 else value,
+    type=int,
+    callback=lambda ctx, param, value: None if value is None or value <= 0 else value,
     envvar="PARSEC_SSE_KEEPALIVE",
     show_envvar=True,
     help="Keep SSE connection open by sending keepalive messages to client, in seconds (pass <= 0 to disable)",
