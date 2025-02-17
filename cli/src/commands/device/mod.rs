@@ -1,3 +1,4 @@
+pub mod change_authentication;
 pub mod export_recovery_device;
 pub mod import_recovery_device;
 pub mod list;
@@ -13,6 +14,8 @@ pub enum Group {
     ExportRecoveryDevice(export_recovery_device::Args),
     /// Import recovery device
     ImportRecoveryDevice(import_recovery_device::Args),
+    /// Change authentication
+    ChangeAuthentication(change_authentication::Args),
 }
 
 pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
@@ -21,5 +24,6 @@ pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
         Group::List(args) => list::main(args).await,
         Group::ExportRecoveryDevice(args) => export_recovery_device::main(args).await,
         Group::ImportRecoveryDevice(args) => import_recovery_device::main(args).await,
+        Group::ChangeAuthentication(args) => change_authentication::main(args).await,
     }
 }

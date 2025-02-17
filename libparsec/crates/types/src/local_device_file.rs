@@ -110,6 +110,38 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "DeviceFileBiometricsData", from = "DeviceFileBiometricsData")]
+pub struct DeviceFileBiometrics {
+    pub created_on: DateTime,
+    pub protected_on: DateTime,
+    pub server_url: String,
+    pub organization_id: OrganizationID,
+    pub user_id: UserID,
+    pub device_id: DeviceID,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
+    pub biometrics_service: String,
+    pub ciphertext: Bytes,
+}
+
+parsec_data!("schema/local_device/device_file_biometrics.json5");
+
+impl_transparent_data_format_conversion!(
+    DeviceFileBiometrics,
+    DeviceFileBiometricsData,
+    created_on,
+    protected_on,
+    server_url,
+    organization_id,
+    user_id,
+    device_id,
+    human_handle,
+    device_label,
+    biometrics_service,
+    ciphertext,
+);
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileSmartcardData", from = "DeviceFileSmartcardData")]
 pub struct DeviceFileSmartcard {
     pub created_on: DateTime,
@@ -151,6 +183,7 @@ pub enum DeviceFile {
     Keyring(DeviceFileKeyring),
     Password(DeviceFilePassword),
     Recovery(DeviceFileRecovery),
+    Biometrics(DeviceFileBiometrics),
     Smartcard(DeviceFileSmartcard),
 }
 
@@ -171,6 +204,7 @@ pub enum DeviceFileType {
     Password,
     Recovery,
     Smartcard,
+    Biometrics,
 }
 
 impl DeviceFileType {
@@ -188,6 +222,7 @@ pub enum DeviceSaveStrategy {
     Keyring,
     Password { password: Password },
     Smartcard,
+    Biometrics,
 }
 
 impl DeviceSaveStrategy {
@@ -198,6 +233,7 @@ impl DeviceSaveStrategy {
                 DeviceAccessStrategy::Password { key_file, password }
             }
             DeviceSaveStrategy::Smartcard => DeviceAccessStrategy::Smartcard { key_file },
+            DeviceSaveStrategy::Biometrics => DeviceAccessStrategy::Biometrics { key_file },
         }
     }
 }
@@ -215,6 +251,9 @@ pub enum DeviceAccessStrategy {
     Smartcard {
         key_file: PathBuf,
     },
+    Biometrics {
+        key_file: PathBuf,
+    },
     // Future API that will be use for parsec-web
     // ServerSide{
     //     url: ParsecOrganizationAddr,
@@ -229,6 +268,7 @@ impl DeviceAccessStrategy {
             Self::Keyring { key_file } => key_file,
             Self::Password { key_file, .. } => key_file,
             Self::Smartcard { key_file } => key_file,
+            Self::Biometrics { key_file } => key_file,
         }
     }
 
@@ -237,6 +277,7 @@ impl DeviceAccessStrategy {
             Self::Keyring { .. } => DeviceFileType::Keyring,
             Self::Password { .. } => DeviceFileType::Password,
             Self::Smartcard { .. } => DeviceFileType::Smartcard,
+            Self::Biometrics { .. } => DeviceFileType::Biometrics,
         }
     }
 }

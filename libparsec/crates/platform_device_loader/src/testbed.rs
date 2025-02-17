@@ -270,6 +270,7 @@ pub(crate) fn maybe_load_device(
                         let decryption_success = password.as_str() == KEY_FILE_PASSWORD;
                         decryption_success
                     }
+                    DeviceAccessStrategy::Biometrics { .. } => true,
                     DeviceAccessStrategy::Smartcard { .. } => true,
                 };
                 // We don't try to resolve the path of `key_file` into an absolute one here !

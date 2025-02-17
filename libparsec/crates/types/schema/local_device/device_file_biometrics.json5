@@ -1,0 +1,51 @@
+{
+    "label": "DeviceFileBiometrics",
+    "type": "biometrics",
+    "other_fields": [
+        {
+            // This refers to when the device file has been originally created.
+            "name": "created_on",
+            "type": "DateTime"
+        },
+        {
+            // This field gets updated every time the device file changes its protection.
+            "name": "protected_on",
+            "type": "DateTime"
+        },
+        {
+            // Url to the server in the format `https://parsec.example.com:443`.
+            // Note we don't use the `parsec3://` scheme here to avoid compatibility
+            // issue if we later decide to change the scheme.
+            "name": "server_url",
+            "type": "String"
+        },
+        {
+            "name": "organization_id",
+            "type": "OrganizationID"
+        },
+        {
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
+            "name": "device_id",
+            "type": "DeviceID"
+        },
+        {
+            "name": "human_handle",
+            "type": "HumanHandle"
+        },
+        {
+            "name": "device_label",
+            "type": "DeviceLabel"
+        },
+        {
+            "name": "biometrics_service",
+            "type": "String"
+        },
+        {
+            "name": "ciphertext",
+            "type": "Bytes"
+        }
+    ]
+}

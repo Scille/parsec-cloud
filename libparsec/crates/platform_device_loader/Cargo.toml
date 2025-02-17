@@ -39,6 +39,17 @@ tokio = { workspace = true, features = ["fs"] }
 web-sys = { workspace = true, features = ["Window", "Storage"] }
 serde_json = { workspace = true, features = ["std"] }
 
+[target.'cfg(target_os = "windows")'.dependencies]
+sha2 = { workspace = true, features = ["std"] }
+windows = { version = "=0.54.0", features = [
+    "Security_Credentials_UI",
+    "Security_Cryptography",
+    "Storage_Streams",
+    "Win32_Security_Credentials",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }
 # Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature

@@ -217,6 +217,14 @@ pub fn is_keyring_available() -> bool {
     native::is_keyring_available()
 }
 
+pub fn is_biometrics_available() -> bool {
+    #[cfg(target_arch = "wasm32")]
+    return false;
+
+    #[cfg(not(target_arch = "wasm32"))]
+    native::is_biometrics_available()
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ArchiveDeviceError {
     #[error(transparent)]

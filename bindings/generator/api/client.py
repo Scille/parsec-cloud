@@ -57,6 +57,9 @@ class DeviceAccessStrategy(Variant):
     class Smartcard:
         key_file: Path
 
+    class Biometrics:
+        key_file: Path
+
 
 class ClientStartError(ErrorVariant):
     class DeviceUsedByAnotherProcess:
@@ -456,6 +459,10 @@ async def client_share_workspace(
 
 
 def is_keyring_available() -> bool:
+    raise NotImplementedError
+
+
+def is_biometrics_available() -> bool:
     raise NotImplementedError
 
 

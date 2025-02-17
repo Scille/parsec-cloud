@@ -326,6 +326,8 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
     }
     if (device.ty === DeviceFileType.Keyring) {
       await login(device, AccessStrategy.useKeyring(device));
+    } else if (device.ty === DeviceFileType.Biometrics) {
+      await login(device, AccessStrategy.useBiometrics(device));
     } else {
       selectedDevice.value = device;
       state.value = HomePageState.Login;

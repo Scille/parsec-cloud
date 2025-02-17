@@ -24,6 +24,7 @@ class DeviceFileType(Enum):
     Password = EnumItemUnit
     Recovery = EnumItemUnit
     Smartcard = EnumItemUnit
+    Biometrics = EnumItemUnit
 
 
 class DeviceSaveStrategy(Variant):
@@ -34,6 +35,9 @@ class DeviceSaveStrategy(Variant):
         password: Password
 
     class Smartcard:
+        pass
+
+    class Biometrics:
         pass
 
 
