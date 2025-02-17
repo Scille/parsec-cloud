@@ -452,7 +452,6 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
         &self,
         limit: u32,
     ) -> Result<Vec<VlobID>, WorkspaceGetNeedInboundSyncEntriesError> {
-        println!(">>> workspace_ops_get_need_inbound_sync({})", limit);
         let next_expected_events = self.pop_next_expected_event().await;
         match next_expected_events {
             InboundSyncMonitorEvent::WorkspaceOpsGetNeedInboundSync {
