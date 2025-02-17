@@ -1,14 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
-use winfsp_wrs::{filetime_now, u16cstr, FileSystem, Params, U16CStr, U16CString, VolumeParams};
+use std::{path::PathBuf, sync::Arc};
+use winfsp_wrs::{
+    filetime_now, u16cstr, FileSystem, FileSystemInterface, Params, U16CStr, U16CString,
+    VolumeParams,
+};
 
-use libparsec_client::{MountpointMountStrategy, WorkspaceOps};
+use libparsec_client::{MountpointMountStrategy, WorkspaceHistoryOps, WorkspaceOps};
 use libparsec_types::prelude::*;
 
 use super::{
-    drive_letter::sorted_drive_letters, filesystem::ParsecFileSystemInterface,
-    volume_label::generate_volume_label, winify::winify_entry_name,
+    drive_letter::sorted_drive_letters, volume_label::generate_volume_label,
+    winify::winify_entry_name,
 };
 
 const FILE_SYSTEM_NAME: &U16CStr = u16cstr!("parsec");
@@ -20,10 +23,9 @@ const FILE_SYSTEM_NAME: &U16CStr = u16cstr!("parsec");
 /// see: https://github.com/winfsp/winfsp/issues/240#issuecomment-518629301
 const SECTOR_SIZE: u16 = 512;
 
-#[derive(Debug)]
 pub struct Mountpoint {
-    path: std::path::PathBuf,
-    filesystem: Option<FileSystem<ParsecFileSystemInterface>>,
+    path: PathBuf,
+    filesystem: Option<FileSystem>,
 }
 
 impl Mountpoint {
@@ -38,14 +40,21 @@ impl Mountpoint {
     }
 
     pub async fn mount(ops: Arc<WorkspaceOps>) -> anyhow::Result<Self> {
-        winfsp_wrs::init()
-            .map_err(|err| anyhow::anyhow!("Cannot load the WinFSP DLL: error {}", err))?;
-
         let (workspace_name, self_role) = ops.get_current_name_and_self_role();
+        let is_read_only = !self_role.can_write();
+        let volume_label = generate_volume_label(&workspace_name);
+
+        let filesystem_interface = super::filesystem::ParsecFileSystemInterface::new(
+            is_read_only,
+            ops.clone(),
+            tokio::runtime::Handle::current(),
+            volume_label,
+        );
 
         let mountpoint_path = match &ops.config().mountpoint_mount_strategy {
             MountpointMountStrategy::Directory { base_dir } => {
-                find_suitable_mountpoint_dir(base_dir, &ops)?
+                let (workspace_name, _) = ops.get_current_name_and_self_role();
+                find_suitable_mountpoint_dir(base_dir, &workspace_name)?
             }
             MountpointMountStrategy::DriveLetter => {
                 let (index, total) = ops.get_workspace_index_and_total_workspaces();
@@ -57,11 +66,49 @@ impl Mountpoint {
             }
             MountpointMountStrategy::Disabled => return Err(anyhow::anyhow!("Mount disabled !")),
         };
+
+        Self::do_mount(filesystem_interface, is_read_only, mountpoint_path).await
+    }
+
+    pub async fn mount_history(
+        ops: Arc<WorkspaceHistoryOps>,
+        mountpoint_name_hint: EntryName,
+    ) -> anyhow::Result<Self> {
+        let volume_label = generate_volume_label(&mountpoint_name_hint);
+
+        let filesystem_interface = super::history::ParsecFileSystemInterface::new(
+            ops.clone(),
+            tokio::runtime::Handle::current(),
+            volume_label,
+        );
+
+        let mountpoint_path = match &ops.config().mountpoint_mount_strategy {
+            MountpointMountStrategy::Directory { base_dir } => {
+                find_suitable_mountpoint_dir(base_dir, &mountpoint_name_hint)?
+            }
+            MountpointMountStrategy::DriveLetter => {
+                let maybe_drive = find_suitable_drive_letter(0, 1);
+                match maybe_drive {
+                    None => return Err(anyhow::anyhow!("No more available drive letter")),
+                    Some(drive) => drive,
+                }
+            }
+            MountpointMountStrategy::Disabled => return Err(anyhow::anyhow!("Mount disabled !")),
+        };
+
+        Self::do_mount(filesystem_interface, true, mountpoint_path).await
+    }
+
+    async fn do_mount<FS: FileSystemInterface + Send + 'static>(
+        filesystem_interface: FS,
+        is_read_only: bool,
+        mountpoint_path: PathBuf,
+    ) -> anyhow::Result<Self> {
+        winfsp_wrs::init()
+            .map_err(|err| anyhow::anyhow!("Cannot load the WinFSP DLL: error {}", err))?;
+
         let mountpoint_path_u16cstr =
             U16CString::from_os_str(mountpoint_path.as_os_str()).expect("Unreachable, valid OsStr");
-
-        let is_read_only = !self_role.can_write();
-        let volume_label = generate_volume_label(&workspace_name);
 
         let params = {
             // See https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-getvolumeinformationa
@@ -113,14 +160,9 @@ impl Mountpoint {
             }
         };
 
-        let context = ParsecFileSystemInterface::new(
-            is_read_only,
-            ops,
-            tokio::runtime::Handle::current(),
-            volume_label,
-        );
-        let filesystem = FileSystem::new(params, Some(&mountpoint_path_u16cstr), context)
-            .map_err(|status| anyhow::anyhow!("Failed to init FileSystem {status}"))?;
+        let filesystem =
+            FileSystem::start(params, Some(&mountpoint_path_u16cstr), filesystem_interface)
+                .map_err(|status| anyhow::anyhow!("Failed to init FileSystem {status}"))?;
 
         Ok(Self {
             path: mountpoint_path,
@@ -157,14 +199,16 @@ impl Drop for Mountpoint {
 // changes on the mountpoint path.
 fn find_suitable_mountpoint_dir(
     base_mountpoint_path: &std::path::Path,
-    ops: &WorkspaceOps,
+    workspace_name: &EntryName,
 ) -> anyhow::Result<std::path::PathBuf> {
     // Ensure the mountpoint base directory exists
     std::fs::create_dir_all(base_mountpoint_path).context("cannot create base mountpoint dir")?;
 
-    let (workspace_name, _) = ops.get_current_name_and_self_role();
-
-    for tentative in 1.. {
+    // It is most likely the suitable directory is found on the first tentative,
+    // and the likelihood of finding a suitable directory exponentially decreases
+    // with each new tentative, hence we limit the number of tentatives to avoid
+    // infinite loop.
+    for tentative in 1..=100 {
         let mountpoint_path = if tentative == 1 {
             base_mountpoint_path.join(workspace_name.as_ref())
         } else {
@@ -172,7 +216,9 @@ fn find_suitable_mountpoint_dir(
         };
 
         // For WinFSP, mounting target must NOT exists
-        match mountpoint_path.try_exists() {
+        let outcome = mountpoint_path.try_exists();
+        match outcome {
+            // match mountpoint_path.try_exists() {
             // The mountpoint already exists, so we must find another one :/
             // Note we don't try to reuse empty directory (like it is done with FUSE), this
             // is because for this we would have to first remove the empty directory which
@@ -208,7 +254,7 @@ fn find_suitable_mountpoint_dir(
         return Ok(mountpoint_path);
     }
 
-    unreachable!()
+    Err(anyhow::anyhow!("Cannot find a suitable mountpoint path"))
 }
 
 pub(crate) fn find_suitable_drive_letter(
