@@ -2221,7 +2221,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_realm_export"
-version = "3.2.5-a.0+dev"
+version = "3.3.0-rc.11+dev"
 dependencies = [
  "libparsec_platform_async",
  "libparsec_tests_fixtures",
