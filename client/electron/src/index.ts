@@ -70,6 +70,14 @@ const capacitorFileConfig: CapacitorElectronConfig = getCapacitorElectronConfig(
 // Initialize our app. You can pass menu templates into the app here.
 const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig, appMenuBarMenuTemplate);
 
+function openLink(link: string): void {
+  if (myCapacitorApp.pageIsInitialized) {
+    myCapacitorApp.sendEvent(WindowToPageChannel.OpenLink, link);
+  } else {
+    myCapacitorApp.storedLink = link;
+  }
+}
+
 const lock = app.requestSingleInstanceLock();
 
 if (!lock) {
@@ -124,7 +132,7 @@ if (!lock) {
       const lastArg = commandLine.at(-1);
       // We're only interested in potential Parsec links
       if (lastArg.startsWith('parsec3://')) {
-        myCapacitorApp.sendEvent(WindowToPageChannel.OpenLink, lastArg);
+        openLink(lastArg);
       }
     }
   });
@@ -133,14 +141,7 @@ if (!lock) {
 // Protocol handler for osx
 app.on('open-url', (_event, url) => {
   if (url.length > 0 && url.startsWith('parsec3://')) {
-    // Timeout is set if the app is opened with a link, in which case we
-    // wait for it to load
-    setTimeout(
-      () => {
-        myCapacitorApp.sendEvent(WindowToPageChannel.OpenLink, url);
-      },
-      app.isReady() ? 0 : 1000,
-    );
+    openLink(url);
   }
 });
 
@@ -209,7 +210,13 @@ ipcMain.on(PageToWindowChannel.Log, async (_event, level: 'debug' | 'info' | 'wa
 });
 
 ipcMain.on(PageToWindowChannel.PageIsInitialized, async () => {
+  myCapacitorApp.pageIsInitialized = true;
   myCapacitorApp.sendEvent(WindowToPageChannel.IsDevMode, electronIsDev);
+
+  if (myCapacitorApp.storedLink) {
+    myCapacitorApp.sendEvent(WindowToPageChannel.OpenLink, myCapacitorApp.storedLink);
+    myCapacitorApp.storedLink = '';
+  }
 });
 
 ipcMain.on(PageToWindowChannel.OpenConfigDir, async () => {
