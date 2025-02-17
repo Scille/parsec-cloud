@@ -3045,22 +3045,18 @@ export type WorkspaceHistory2FdCloseError =
 // WorkspaceHistory2FdReadError
 export enum WorkspaceHistory2FdReadErrorTag {
     BadFileDescriptor = 'WorkspaceHistory2FdReadErrorBadFileDescriptor',
-    BlockNotFound = 'WorkspaceHistory2FdReadErrorBlockNotFound',
     Internal = 'WorkspaceHistory2FdReadErrorInternal',
     InvalidBlockAccess = 'WorkspaceHistory2FdReadErrorInvalidBlockAccess',
     InvalidCertificate = 'WorkspaceHistory2FdReadErrorInvalidCertificate',
     InvalidKeysBundle = 'WorkspaceHistory2FdReadErrorInvalidKeysBundle',
     NoRealmAccess = 'WorkspaceHistory2FdReadErrorNoRealmAccess',
     Offline = 'WorkspaceHistory2FdReadErrorOffline',
+    ServerBlockstoreUnavailable = 'WorkspaceHistory2FdReadErrorServerBlockstoreUnavailable',
     Stopped = 'WorkspaceHistory2FdReadErrorStopped',
 }
 
 export interface WorkspaceHistory2FdReadErrorBadFileDescriptor {
     tag: WorkspaceHistory2FdReadErrorTag.BadFileDescriptor
-    error: string
-}
-export interface WorkspaceHistory2FdReadErrorBlockNotFound {
-    tag: WorkspaceHistory2FdReadErrorTag.BlockNotFound
     error: string
 }
 export interface WorkspaceHistory2FdReadErrorInternal {
@@ -3087,19 +3083,23 @@ export interface WorkspaceHistory2FdReadErrorOffline {
     tag: WorkspaceHistory2FdReadErrorTag.Offline
     error: string
 }
+export interface WorkspaceHistory2FdReadErrorServerBlockstoreUnavailable {
+    tag: WorkspaceHistory2FdReadErrorTag.ServerBlockstoreUnavailable
+    error: string
+}
 export interface WorkspaceHistory2FdReadErrorStopped {
     tag: WorkspaceHistory2FdReadErrorTag.Stopped
     error: string
 }
 export type WorkspaceHistory2FdReadError =
   | WorkspaceHistory2FdReadErrorBadFileDescriptor
-  | WorkspaceHistory2FdReadErrorBlockNotFound
   | WorkspaceHistory2FdReadErrorInternal
   | WorkspaceHistory2FdReadErrorInvalidBlockAccess
   | WorkspaceHistory2FdReadErrorInvalidCertificate
   | WorkspaceHistory2FdReadErrorInvalidKeysBundle
   | WorkspaceHistory2FdReadErrorNoRealmAccess
   | WorkspaceHistory2FdReadErrorOffline
+  | WorkspaceHistory2FdReadErrorServerBlockstoreUnavailable
   | WorkspaceHistory2FdReadErrorStopped
 
 // WorkspaceHistory2FdStatError
