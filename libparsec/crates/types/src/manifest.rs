@@ -617,6 +617,15 @@ impl From<Arc<FolderManifest>> for ArcChildManifest {
     }
 }
 
+impl From<ChildManifest> for ArcChildManifest {
+    fn from(value: ChildManifest) -> Self {
+        match value {
+            ChildManifest::File(file) => ArcChildManifest::File(Arc::new(file)),
+            ChildManifest::Folder(folder) => ArcChildManifest::Folder(Arc::new(folder)),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum ChildManifest {

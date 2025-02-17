@@ -218,6 +218,13 @@ class FsPath(StrBasedType):
     )
 
 
+class SequesterServiceID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::SequesterServiceID, _> { libparsec::SequesterServiceID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::SequesterServiceID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    )
+
+
 class SequesterVerifyKeyDer(BytesBasedType):
     pass
 

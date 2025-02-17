@@ -91,6 +91,7 @@ export type ParsecWorkspacePathAddr = string
 export type Password = string
 export type Path = string
 export type SASCode = string
+export type SequesterServiceID = string
 export type UserID = string
 export type VlobID = string
 export type SequesterVerifyKeyDer = Uint8Array
@@ -1686,60 +1687,6 @@ export type ClientStartWorkspaceError =
   | ClientStartWorkspaceErrorInternal
   | ClientStartWorkspaceErrorWorkspaceNotFound
 
-// ClientStartWorkspaceHistory2Error
-export enum ClientStartWorkspaceHistory2ErrorTag {
-    Internal = 'ClientStartWorkspaceHistory2ErrorInternal',
-    InvalidCertificate = 'ClientStartWorkspaceHistory2ErrorInvalidCertificate',
-    InvalidKeysBundle = 'ClientStartWorkspaceHistory2ErrorInvalidKeysBundle',
-    InvalidManifest = 'ClientStartWorkspaceHistory2ErrorInvalidManifest',
-    NoHistory = 'ClientStartWorkspaceHistory2ErrorNoHistory',
-    NoRealmAccess = 'ClientStartWorkspaceHistory2ErrorNoRealmAccess',
-    Offline = 'ClientStartWorkspaceHistory2ErrorOffline',
-    Stopped = 'ClientStartWorkspaceHistory2ErrorStopped',
-}
-
-export interface ClientStartWorkspaceHistory2ErrorInternal {
-    tag: ClientStartWorkspaceHistory2ErrorTag.Internal
-    error: string
-}
-export interface ClientStartWorkspaceHistory2ErrorInvalidCertificate {
-    tag: ClientStartWorkspaceHistory2ErrorTag.InvalidCertificate
-    error: string
-}
-export interface ClientStartWorkspaceHistory2ErrorInvalidKeysBundle {
-    tag: ClientStartWorkspaceHistory2ErrorTag.InvalidKeysBundle
-    error: string
-}
-export interface ClientStartWorkspaceHistory2ErrorInvalidManifest {
-    tag: ClientStartWorkspaceHistory2ErrorTag.InvalidManifest
-    error: string
-}
-export interface ClientStartWorkspaceHistory2ErrorNoHistory {
-    tag: ClientStartWorkspaceHistory2ErrorTag.NoHistory
-    error: string
-}
-export interface ClientStartWorkspaceHistory2ErrorNoRealmAccess {
-    tag: ClientStartWorkspaceHistory2ErrorTag.NoRealmAccess
-    error: string
-}
-export interface ClientStartWorkspaceHistory2ErrorOffline {
-    tag: ClientStartWorkspaceHistory2ErrorTag.Offline
-    error: string
-}
-export interface ClientStartWorkspaceHistory2ErrorStopped {
-    tag: ClientStartWorkspaceHistory2ErrorTag.Stopped
-    error: string
-}
-export type ClientStartWorkspaceHistory2Error =
-  | ClientStartWorkspaceHistory2ErrorInternal
-  | ClientStartWorkspaceHistory2ErrorInvalidCertificate
-  | ClientStartWorkspaceHistory2ErrorInvalidKeysBundle
-  | ClientStartWorkspaceHistory2ErrorInvalidManifest
-  | ClientStartWorkspaceHistory2ErrorNoHistory
-  | ClientStartWorkspaceHistory2ErrorNoRealmAccess
-  | ClientStartWorkspaceHistory2ErrorOffline
-  | ClientStartWorkspaceHistory2ErrorStopped
-
 // ClientStopError
 export enum ClientStopErrorTag {
     Internal = 'ClientStopErrorInternal',
@@ -3251,6 +3198,25 @@ export type WorkspaceHistory2OpenFileError =
   | WorkspaceHistory2OpenFileErrorOffline
   | WorkspaceHistory2OpenFileErrorStopped
 
+// WorkspaceHistory2RealmExportDecryptor
+export enum WorkspaceHistory2RealmExportDecryptorTag {
+    SequesterService = 'WorkspaceHistory2RealmExportDecryptorSequesterService',
+    User = 'WorkspaceHistory2RealmExportDecryptorUser',
+}
+
+export interface WorkspaceHistory2RealmExportDecryptorSequesterService {
+    tag: WorkspaceHistory2RealmExportDecryptorTag.SequesterService
+    sequesterServiceId: SequesterServiceID
+    privateKeyPemPath: Path
+}
+export interface WorkspaceHistory2RealmExportDecryptorUser {
+    tag: WorkspaceHistory2RealmExportDecryptorTag.User
+    access: DeviceAccessStrategy
+}
+export type WorkspaceHistory2RealmExportDecryptor =
+  | WorkspaceHistory2RealmExportDecryptorSequesterService
+  | WorkspaceHistory2RealmExportDecryptorUser
+
 // WorkspaceHistory2SetTimestampOfInterestError
 export enum WorkspaceHistory2SetTimestampOfInterestErrorTag {
     EntryNotFound = 'WorkspaceHistory2SetTimestampOfInterestErrorEntryNotFound',
@@ -3322,6 +3288,84 @@ export type WorkspaceHistory2SetTimestampOfInterestError =
   | WorkspaceHistory2SetTimestampOfInterestErrorOffline
   | WorkspaceHistory2SetTimestampOfInterestErrorOlderThanLowerBound
   | WorkspaceHistory2SetTimestampOfInterestErrorStopped
+
+// WorkspaceHistory2StartError
+export enum WorkspaceHistory2StartErrorTag {
+    CannotOpenRealmExportDatabase = 'WorkspaceHistory2StartErrorCannotOpenRealmExportDatabase',
+    IncompleteRealmExportDatabase = 'WorkspaceHistory2StartErrorIncompleteRealmExportDatabase',
+    Internal = 'WorkspaceHistory2StartErrorInternal',
+    InvalidCertificate = 'WorkspaceHistory2StartErrorInvalidCertificate',
+    InvalidKeysBundle = 'WorkspaceHistory2StartErrorInvalidKeysBundle',
+    InvalidManifest = 'WorkspaceHistory2StartErrorInvalidManifest',
+    InvalidRealmExportDatabase = 'WorkspaceHistory2StartErrorInvalidRealmExportDatabase',
+    NoHistory = 'WorkspaceHistory2StartErrorNoHistory',
+    NoRealmAccess = 'WorkspaceHistory2StartErrorNoRealmAccess',
+    Offline = 'WorkspaceHistory2StartErrorOffline',
+    Stopped = 'WorkspaceHistory2StartErrorStopped',
+    UnsupportedRealmExportDatabaseVersion = 'WorkspaceHistory2StartErrorUnsupportedRealmExportDatabaseVersion',
+}
+
+export interface WorkspaceHistory2StartErrorCannotOpenRealmExportDatabase {
+    tag: WorkspaceHistory2StartErrorTag.CannotOpenRealmExportDatabase
+    error: string
+}
+export interface WorkspaceHistory2StartErrorIncompleteRealmExportDatabase {
+    tag: WorkspaceHistory2StartErrorTag.IncompleteRealmExportDatabase
+    error: string
+}
+export interface WorkspaceHistory2StartErrorInternal {
+    tag: WorkspaceHistory2StartErrorTag.Internal
+    error: string
+}
+export interface WorkspaceHistory2StartErrorInvalidCertificate {
+    tag: WorkspaceHistory2StartErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceHistory2StartErrorInvalidKeysBundle {
+    tag: WorkspaceHistory2StartErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface WorkspaceHistory2StartErrorInvalidManifest {
+    tag: WorkspaceHistory2StartErrorTag.InvalidManifest
+    error: string
+}
+export interface WorkspaceHistory2StartErrorInvalidRealmExportDatabase {
+    tag: WorkspaceHistory2StartErrorTag.InvalidRealmExportDatabase
+    error: string
+}
+export interface WorkspaceHistory2StartErrorNoHistory {
+    tag: WorkspaceHistory2StartErrorTag.NoHistory
+    error: string
+}
+export interface WorkspaceHistory2StartErrorNoRealmAccess {
+    tag: WorkspaceHistory2StartErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceHistory2StartErrorOffline {
+    tag: WorkspaceHistory2StartErrorTag.Offline
+    error: string
+}
+export interface WorkspaceHistory2StartErrorStopped {
+    tag: WorkspaceHistory2StartErrorTag.Stopped
+    error: string
+}
+export interface WorkspaceHistory2StartErrorUnsupportedRealmExportDatabaseVersion {
+    tag: WorkspaceHistory2StartErrorTag.UnsupportedRealmExportDatabaseVersion
+    error: string
+}
+export type WorkspaceHistory2StartError =
+  | WorkspaceHistory2StartErrorCannotOpenRealmExportDatabase
+  | WorkspaceHistory2StartErrorIncompleteRealmExportDatabase
+  | WorkspaceHistory2StartErrorInternal
+  | WorkspaceHistory2StartErrorInvalidCertificate
+  | WorkspaceHistory2StartErrorInvalidKeysBundle
+  | WorkspaceHistory2StartErrorInvalidManifest
+  | WorkspaceHistory2StartErrorInvalidRealmExportDatabase
+  | WorkspaceHistory2StartErrorNoHistory
+  | WorkspaceHistory2StartErrorNoRealmAccess
+  | WorkspaceHistory2StartErrorOffline
+  | WorkspaceHistory2StartErrorStopped
+  | WorkspaceHistory2StartErrorUnsupportedRealmExportDatabaseVersion
 
 // WorkspaceHistory2StatEntryError
 export enum WorkspaceHistory2StatEntryErrorTag {
@@ -4496,7 +4540,7 @@ export interface LibParsecPlugin {
     clientStartWorkspaceHistory2(
         client: Handle,
         realm_id: VlobID
-    ): Promise<Result<Handle, ClientStartWorkspaceHistory2Error>>
+    ): Promise<Result<Handle, WorkspaceHistory2StartError>>
     clientStop(
         client: Handle
     ): Promise<Result<null, ClientStopError>>
@@ -4766,6 +4810,11 @@ export interface LibParsecPlugin {
         workspace_history: Handle,
         toi: DateTime
     ): Promise<Result<null, WorkspaceHistory2SetTimestampOfInterestError>>
+    workspaceHistory2StartWithRealmExport(
+        config: ClientConfig,
+        export_db_path: Path,
+        decryptors: Array<WorkspaceHistory2RealmExportDecryptor>
+    ): Promise<Result<Handle, WorkspaceHistory2StartError>>
     workspaceHistory2StatEntry(
         workspace_history: Handle,
         path: FsPath

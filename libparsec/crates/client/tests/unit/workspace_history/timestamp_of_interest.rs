@@ -8,15 +8,17 @@ use libparsec_types::prelude::*;
 
 use crate::WorkspaceHistorySetTimestampOfInterestError;
 
-use super::utils::workspace_history_ops_with_server_access_factory;
+use super::utils::{workspace_history_ops_with_server_access_factory, DataAccessStrategy};
 
 #[parsec_test(testbed = "workspace_history")]
-async fn ok(env: &TestbedEnv) {
+async fn ok(
+    #[values(DataAccessStrategy::Server, DataAccessStrategy::RealmExport)]
+    strategy: DataAccessStrategy,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let alice = env.local_device("alice@dev1");
     let t0 = DateTime::now();
-    let ops =
-        workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id.to_owned()).await;
+    let ops = strategy.start_workspace_history_ops(env).await;
 
     // Lower timestamp bound is the upload of workspace manifest v1
 
@@ -29,7 +31,17 @@ async fn ok(env: &TestbedEnv) {
     // Higher timestamp bound is current time for server-based workspace history
 
     let timestamp_higher_bound = ops.timestamp_higher_bound();
-    p_assert_matches!(timestamp_higher_bound, timestamp_higher_bound if timestamp_higher_bound > t0);
+    match strategy {
+        DataAccessStrategy::Server => {
+            assert!(timestamp_higher_bound >= t0);
+        }
+        DataAccessStrategy::RealmExport => {
+            p_assert_eq!(
+                timestamp_higher_bound,
+                "2025-02-15T22:16:26.601990Z".parse().unwrap()
+            );
+        }
+    }
 
     let default_timestamp_of_interest = ops.timestamp_of_interest();
     p_assert_eq!(default_timestamp_of_interest, timestamp_lower_bound);
@@ -54,11 +66,12 @@ async fn ok(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "workspace_history")]
-async fn older_than_lower_bound(env: &TestbedEnv) {
-    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let alice = env.local_device("alice@dev1");
-    let ops =
-        workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id.to_owned()).await;
+async fn older_than_lower_bound(
+    #[values(DataAccessStrategy::Server, DataAccessStrategy::RealmExport)]
+    strategy: DataAccessStrategy,
+    env: &TestbedEnv,
+) {
+    let ops = strategy.start_workspace_history_ops(env).await;
 
     let timestamp_lower_bound = ops.timestamp_lower_bound();
 
@@ -71,11 +84,12 @@ async fn older_than_lower_bound(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "workspace_history")]
-async fn newer_than_higher_bound(env: &TestbedEnv) {
-    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let alice = env.local_device("alice@dev1");
-    let ops =
-        workspace_history_ops_with_server_access_factory(env, &alice, wksp1_id.to_owned()).await;
+async fn newer_than_higher_bound(
+    #[values(DataAccessStrategy::Server, DataAccessStrategy::RealmExport)]
+    strategy: DataAccessStrategy,
+    env: &TestbedEnv,
+) {
+    let ops = strategy.start_workspace_history_ops(env).await;
 
     let timestamp_higher_bound = ops.timestamp_higher_bound();
 
@@ -88,7 +102,7 @@ async fn newer_than_higher_bound(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "workspace_history")]
-async fn offline(env: &TestbedEnv) {
+async fn server_only_offline(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_v2_children_available_timestamp: DateTime = *env
         .template

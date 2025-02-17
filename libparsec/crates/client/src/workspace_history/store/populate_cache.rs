@@ -12,6 +12,7 @@ use super::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum PopulateManifestCacheError {
+    // All those errors are for server access mode
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
     #[error("Component has stopped")]
@@ -28,6 +29,8 @@ pub enum PopulateManifestCacheError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     InvalidHistory(#[from] Box<InvalidManifestHistoryError>),
+
+    /// `Internal` error is use by both server access and realm export access mode
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -52,9 +55,7 @@ impl From<DataAccessFetchManifestError> for PopulateManifestCacheError {
             DataAccessFetchManifestError::InvalidManifest(err) => {
                 PopulateManifestCacheError::InvalidManifest(err)
             }
-            DataAccessFetchManifestError::Internal(err) => {
-                PopulateManifestCacheError::Internal(err)
-            }
+            DataAccessFetchManifestError::Internal(err) => err.into(),
         }
     }
 }
@@ -76,20 +77,21 @@ pub(super) async fn populate_manifest_cache(
 ) -> Result<ArcChildManifest, PopulateManifestCacheError> {
     // 1) Server lookup
 
-    let maybe_manifest = ops.access.fetch_manifest(at, entry_id).await?;
+    let outcome = ops.access.fetch_manifest(at, entry_id).await;
 
     // 2) We got our manifest, update cache with it
 
     let mut cache = ops.cache.lock().expect("Mutex is poisoned");
 
-    match maybe_manifest {
-        Some(manifest) => {
+    match outcome {
+        Ok(manifest) => {
             cache.populate_manifest_at(at, CachePopulateManifestEntry::Exists(manifest.clone()))?;
             Ok(manifest)
         }
-        None => {
+        Err(DataAccessFetchManifestError::EntryNotFound) => {
             cache.populate_manifest_at(at, CachePopulateManifestEntry::NotFound(entry_id))?;
             Err(PopulateManifestCacheError::EntryNotFound)
         }
+        Err(err) => Err(err.into()),
     }
 }

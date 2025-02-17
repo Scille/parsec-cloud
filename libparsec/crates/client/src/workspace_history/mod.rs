@@ -53,6 +53,8 @@ pub struct WorkspaceHistoryOps {
     store: store::WorkspaceHistoryStore,
 }
 
+// Realm export database support is not available on web.
+#[cfg(not(target_arch = "wasm32"))]
 pub enum WorkspaceHistoryRealmExportDecryptor {
     SequesterService {
         sequester_service_id: SequesterServiceID,
@@ -99,11 +101,17 @@ impl WorkspaceHistoryOps {
         config: Arc<ClientConfig>,
         cmds: Arc<AuthenticatedCmds>,
         certificates_ops: Arc<CertificateOps>,
+        organization_id: OrganizationID,
         realm_id: VlobID,
     ) -> Result<Self, WorkspaceHistoryOpsStartError> {
         let (store, initial_timestamp_of_interest) =
-            WorkspaceHistoryStore::start_with_server_access(cmds, certificates_ops, realm_id)
-                .await?;
+            WorkspaceHistoryStore::start_with_server_access(
+                cmds,
+                certificates_ops,
+                organization_id,
+                realm_id,
+            )
+            .await?;
         Ok(Self {
             config,
             store,
@@ -113,9 +121,11 @@ impl WorkspaceHistoryOps {
         })
     }
 
+    // Realm export database support is not available on web.
+    #[cfg(not(target_arch = "wasm32"))]
     pub async fn start_with_realm_export(
         config: Arc<ClientConfig>,
-        export_db_path: std::path::PathBuf,
+        export_db_path: &std::path::Path,
         decryptors: Vec<WorkspaceHistoryRealmExportDecryptor>,
     ) -> Result<Self, WorkspaceHistoryOpsStartError> {
         let (store, initial_timestamp_of_interest) =
@@ -137,6 +147,14 @@ impl WorkspaceHistoryOps {
         &self.config
     }
 
+    /// Only useful when accessing from a realm export, since we don't known
+    /// beforehand the organization and realm IDs.
+    pub fn organization_id(&self) -> &OrganizationID {
+        self.store.organization_id()
+    }
+
+    /// Only useful when accessing from a realm export, since we don't known
+    /// beforehand the organization and realm IDs.
     pub fn realm_id(&self) -> VlobID {
         self.store.realm_id()
     }

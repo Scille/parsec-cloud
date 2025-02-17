@@ -36,7 +36,7 @@ impl ServerDataAccess {
         &self,
         at: DateTime,
         entry_id: VlobID,
-    ) -> Result<Option<ArcChildManifest>, DataAccessFetchManifestError> {
+    ) -> Result<ArcChildManifest, DataAccessFetchManifestError> {
         let outcome = if self.realm_id == entry_id {
             server_fetch_workspace_manifest(
                 &self.cmds,
@@ -57,48 +57,47 @@ impl ServerDataAccess {
             .await
         };
 
-        let maybe_manifest = match outcome {
-            Ok(ChildManifest::File(manifest)) => Some(Arc::new(manifest).into()),
-            Ok(ChildManifest::Folder(manifest)) => Some(Arc::new(manifest).into()),
-            // This is unexpected: we got an entry ID from a parent folder/workspace
-            // manifest, but this ID points to nothing according to the server :/
-            //
-            // That could means two things:
-            // - the server is lying to us
-            // - the client that have uploaded the parent folder/workspace manifest
-            //   was buggy and include the ID of a not-yet-synchronized entry
-            //
-            // We just pretend the entry doesn't exist
-            Err(ServerFetchManifestError::VlobNotFound) => None,
-            Err(ServerFetchManifestError::Stopped) => {
-                return Err(DataAccessFetchManifestError::Stopped);
-            }
-            Err(ServerFetchManifestError::Offline(e)) => {
-                return Err(DataAccessFetchManifestError::Offline(e));
-            }
-            // The realm doesn't exist on server side, hence we are it creator and
-            // it data only live on our local storage, which we have already checked.
-            Err(ServerFetchManifestError::RealmNotFound) => {
-                return Err(DataAccessFetchManifestError::EntryNotFound);
-            }
-            Err(ServerFetchManifestError::NoRealmAccess) => {
-                return Err(DataAccessFetchManifestError::NoRealmAccess);
-            }
-            Err(ServerFetchManifestError::InvalidKeysBundle(err)) => {
-                return Err(DataAccessFetchManifestError::InvalidKeysBundle(err));
-            }
-            Err(ServerFetchManifestError::InvalidCertificate(err)) => {
-                return Err(DataAccessFetchManifestError::InvalidCertificate(err));
-            }
-            Err(ServerFetchManifestError::InvalidManifest(err)) => {
-                return Err(DataAccessFetchManifestError::InvalidManifest(err));
-            }
-            Err(ServerFetchManifestError::Internal(err)) => {
-                return Err(err.context("cannot fetch from server").into());
-            }
-        };
-
-        Ok(maybe_manifest)
+        outcome
+            .map(|manifest| match manifest {
+                ChildManifest::File(manifest) => Arc::new(manifest).into(),
+                ChildManifest::Folder(manifest) => Arc::new(manifest).into(),
+            })
+            .map_err(|err| match err {
+                // This is unexpected: we got an entry ID from a parent folder/workspace
+                // manifest, but this ID points to nothing according to the server :/
+                //
+                // That could means two things:
+                // - the server is lying to us
+                // - the client that have uploaded the parent folder/workspace manifest
+                //   was buggy and include the ID of a not-yet-synchronized entry
+                //
+                // We just pretend the entry doesn't exist
+                ServerFetchManifestError::VlobNotFound => {
+                    DataAccessFetchManifestError::EntryNotFound
+                }
+                ServerFetchManifestError::Stopped => DataAccessFetchManifestError::Stopped,
+                ServerFetchManifestError::Offline(e) => DataAccessFetchManifestError::Offline(e),
+                // The realm doesn't exist on server side, hence we are it creator and
+                // it data only live on our local storage, which we have already checked.
+                ServerFetchManifestError::RealmNotFound => {
+                    DataAccessFetchManifestError::EntryNotFound
+                }
+                ServerFetchManifestError::NoRealmAccess => {
+                    DataAccessFetchManifestError::NoRealmAccess
+                }
+                ServerFetchManifestError::InvalidKeysBundle(err) => {
+                    DataAccessFetchManifestError::InvalidKeysBundle(err)
+                }
+                ServerFetchManifestError::InvalidCertificate(err) => {
+                    DataAccessFetchManifestError::InvalidCertificate(err)
+                }
+                ServerFetchManifestError::InvalidManifest(err) => {
+                    DataAccessFetchManifestError::InvalidManifest(err)
+                }
+                ServerFetchManifestError::Internal(err) => {
+                    err.context("cannot fetch from server").into()
+                }
+            })
     }
 
     pub async fn fetch_block(

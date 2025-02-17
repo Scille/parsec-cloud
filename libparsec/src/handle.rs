@@ -52,12 +52,22 @@ pub(crate) enum HandleItem {
         #[cfg(not(target_arch = "wasm32"))]
         mountpoint: libparsec_platform_mountpoint::Mountpoint,
     },
-    StartingWorkspaceHistory {
+    /// Workspace history is a read-only stuff, so it has no trouble being started
+    /// multiple times concurrently.
+    ///
+    /// However starting a workspace history impacts its related client at shutdown
+    /// time (i.e. a client stop must wait for the completion of a concurrent workspace
+    /// history start in order to close its handle right away).
+    ///
+    /// Also note this is only needed for workspace history relying on a client (i.e.
+    /// the server-based ones), not the ones relying instead on a realm export database.
+    StartingClientWorkspaceHistory {
         client: Handle,
         to_wake_on_done: Vec<Event>,
     },
     WorkspaceHistory {
-        client: Handle,
+        /// `None` if the workspace history uses a realm export database
+        client: Option<Handle>,
         workspace_history_ops: Arc<libparsec_client::WorkspaceHistoryOps>,
     },
 
