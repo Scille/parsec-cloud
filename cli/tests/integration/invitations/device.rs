@@ -1,3 +1,5 @@
+#![cfg_attr(target_family = "windows", allow(unused_imports))]
+
 use std::sync::{Arc, Mutex};
 
 use libparsec::{
