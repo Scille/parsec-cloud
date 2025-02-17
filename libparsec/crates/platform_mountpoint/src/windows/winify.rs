@@ -23,7 +23,7 @@ static RE: OnceCell<Regex> = OnceCell::new();
 
 pub(crate) fn winify_entry_name(name: &EntryName) -> String {
     // Tilde is not a reserved character but it is used to escape reserved characters
-    let ord_reserved = '~' as u8;
+    let ord_reserved = b'~';
     let mut name = name.as_ref().replace('~', &format!("~{ord_reserved:02x}"));
 
     let (prefix, suffix) = name.split_once('.').unwrap_or((&name, ""));
