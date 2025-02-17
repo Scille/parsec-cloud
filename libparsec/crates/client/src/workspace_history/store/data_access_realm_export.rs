@@ -20,6 +20,7 @@ pub(super) struct RealmExportDataAccess {
     realm_id: VlobID,
     per_device_verify_key: HashMap<DeviceID, VerifyKey>,
     realm_keys: HashMap<IndexInt, KeyDerivation>,
+    latest_key_index: IndexInt,
 }
 
 pub(super) type RealmExportDataAccessStartError = RealmExportDBStartError;
@@ -232,7 +233,7 @@ async fn load_realm_keys(
     db: &mut RealmExportDB,
     per_device_verify_key: &HashMap<DeviceID, VerifyKey>,
     decryptors: &[WorkspaceHistoryRealmExportDecryptor],
-) -> Result<HashMap<IndexInt, KeyDerivation>, RealmExportDataAccessStartError> {
+) -> Result<(HashMap<IndexInt, KeyDerivation>, u64), RealmExportDataAccessStartError> {
     // First we need to retrieve all the realm key rotation certificates
 
     let raw_certificates = db.fetch_realm_certificates().await.map_err(|e| match e {
@@ -272,6 +273,11 @@ async fn load_realm_keys(
 
         key_rotation_certificates.push(certificate);
     }
+
+    let latest_key_index = key_rotation_certificates
+        .last()
+        .map(|c| c.key_index)
+        .unwrap_or(0);
 
     // Each key rotation add one new key, our goal here is to retrieve as much as possible.
     // Note:
@@ -336,7 +342,7 @@ async fn load_realm_keys(
         }
     }
 
-    Ok(per_index_key)
+    Ok((per_index_key, latest_key_index))
 }
 
 impl RealmExportDataAccess {
@@ -348,7 +354,8 @@ impl RealmExportDataAccess {
             RealmExportDB::start(export_db_path).await?;
 
         let per_device_verify_key = load_device_verify_keys(&mut db, &root_verify_key).await?;
-        let realm_keys = load_realm_keys(&mut db, &per_device_verify_key, &decryptors).await?;
+        let (realm_keys, latest_key_index) =
+            load_realm_keys(&mut db, &per_device_verify_key, &decryptors).await?;
 
         Ok((
             Self {
@@ -356,6 +363,7 @@ impl RealmExportDataAccess {
                 realm_id,
                 per_device_verify_key,
                 realm_keys,
+                latest_key_index,
             },
             organization_id,
             realm_id,
@@ -462,12 +470,23 @@ impl RealmExportDataAccess {
             Option<VersionInt>,
         ) -> DataResult<M>,
     ) -> Result<M, DataAccessFetchManifestError> {
+        if key_index > self.latest_key_index {
+            return Err(DataAccessFetchManifestError::InvalidManifest(Box::new(
+                InvalidManifestError::NonExistentKeyIndex {
+                    realm: self.realm_id,
+                    vlob: entry_id,
+                    version,
+                    author,
+                    timestamp,
+                    key_index,
+                },
+            )));
+        }
+
         let key = match self.realm_keys.get(&key_index) {
             None => {
                 return Err(DataAccessFetchManifestError::InvalidManifest(Box::new(
-                    // Note here we don't know if the key index doesn't exist or if
-                    // we couldn't retrieve it.
-                    InvalidManifestError::NonExistentKeyIndex {
+                    InvalidManifestError::CorruptedKey {
                         realm: self.realm_id,
                         vlob: entry_id,
                         version,

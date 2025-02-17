@@ -77,7 +77,7 @@ async fn decrypt_with(
         p_assert_matches!(
             outcome,
             Err(WorkspaceHistoryStatEntryError::InvalidManifest(boxed))
-            if matches!(*boxed, InvalidManifestError::NonExistentKeyIndex { .. })
+            if matches!(*boxed, InvalidManifestError::CorruptedKey { .. })
         );
     }
 }
