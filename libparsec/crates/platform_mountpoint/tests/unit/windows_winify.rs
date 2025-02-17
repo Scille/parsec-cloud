@@ -59,5 +59,5 @@ fn test_winify(#[case] name: EntryName, #[case] expected: String) {
 #[case::tilde_zero("foo~\0bar")]
 #[case::tilde_slash("foo~/bar")]
 fn unwinify_forbidden_chars(#[case] bad: &str) {
-    p_assert_matches!(unwinify_entry_name(&bad), Err(EntryNameError::InvalidName));
+    p_assert_matches!(unwinify_entry_name(bad), Err(EntryNameError::InvalidName));
 }
