@@ -265,6 +265,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceHistoryStatEntryError::InvalidManifest(_)
                     | WorkspaceHistoryStatEntryError::InvalidHistory(_)
                     | WorkspaceHistoryStatEntryError::Internal(_) => {
+                        log::warn!("FUSE `lookup` operation cannot complete: {:?}", err);
                         reply.manual().error(libc::EIO)
                     }
                 },
@@ -338,6 +339,7 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceHistoryStatEntryError::InvalidManifest(_)
                     | WorkspaceHistoryStatEntryError::InvalidHistory(_)
                     | WorkspaceHistoryStatEntryError::Internal(_) => {
+                        log::warn!("FUSE `getattr` operation cannot complete: {:?}", err);
                         reply.manual().error(libc::EIO)
                     }
                 },
@@ -393,6 +395,7 @@ impl fuser::Filesystem for Filesystem {
                         | WorkspaceHistoryOpenFileError::InvalidManifest(_)
                         | WorkspaceHistoryOpenFileError::InvalidHistory(_)
                         | WorkspaceHistoryOpenFileError::Internal(_) => {
+                            log::warn!("FUSE `open` operation cannot complete: {:?}", err);
                             reply.manual().error(libc::EIO)
                         }
                     }
@@ -446,7 +449,10 @@ impl fuser::Filesystem for Filesystem {
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
                     | WorkspaceHistoryFdReadError::BadFileDescriptor
                     | WorkspaceHistoryFdReadError::Internal(_)
-                    => reply.manual().error(libc::EIO),
+                    => {
+                        log::warn!("FUSE `read` operation cannot complete: {:?}", err);
+                        reply.manual().error(libc::EIO)
+                    }
                 },
             }
         });
@@ -482,7 +488,10 @@ impl fuser::Filesystem for Filesystem {
                 Err(err) => match err {
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
                     WorkspaceHistoryFdCloseError::BadFileDescriptor
-                    | WorkspaceHistoryFdCloseError::Internal(_) => reply.manual().error(libc::EIO),
+                    | WorkspaceHistoryFdCloseError::Internal(_) => {
+                        log::warn!("FUSE `release` operation cannot complete: {:?}", err);
+                        reply.manual().error(libc::EIO)
+                    }
                 },
             }
         });
@@ -543,6 +552,7 @@ impl fuser::Filesystem for Filesystem {
                         | WorkspaceHistoryOpenFolderReaderError::InvalidManifest(_)
                         | WorkspaceHistoryOpenFolderReaderError::InvalidHistory(_)
                         | WorkspaceHistoryOpenFolderReaderError::Internal(_) => {
+                            log::warn!("FUSE `opendir` operation cannot complete: {:?}", err);
                             reply.manual().error(libc::EIO)
                         }
                     }
@@ -620,6 +630,10 @@ impl fuser::Filesystem for Filesystem {
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidManifest(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidHistory(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::Internal(_) => {
+                                log::warn!(
+                                    "FUSE `readdirplus` operation cannot complete: {:?}",
+                                    err
+                                );
                                 reply.manual().error(libc::EIO)
                             }
                         }
@@ -721,6 +735,7 @@ impl fuser::Filesystem for Filesystem {
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidManifest(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::InvalidHistory(_)
                             | WorkspaceHistoryFolderReaderStatEntryError::Internal(_) => {
+                                log::warn!("FUSE `readdir` operation cannot complete: {:?}", err);
                                 reply.manual().error(libc::EIO)
                             }
                         }
