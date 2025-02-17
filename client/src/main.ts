@@ -149,7 +149,6 @@ async function setupApp(): Promise<void> {
 
     // Libparsec initialization
     await libparsec.initLibparsec(getClientConfig());
-
     if (locale) {
       I18n.changeLocale(locale);
     }
@@ -176,8 +175,111 @@ async function setupApp(): Promise<void> {
       }
     }
 
-    window.electronAPI.pageIsInitialized();
     preventRightClick();
+
+    if (isElectron()) {
+      if ((await libparsec.getPlatform()) === Platform.Windows) {
+        const mountpoint = await libparsec.getDefaultMountpointBaseDir();
+        window.electronAPI.sendMountpointFolder(mountpoint);
+      }
+
+      window.electronAPI.log('info', `BMS Url: ${Env.getBmsUrl()}`);
+      window.electronAPI.log('info', `Parsec Sign Url: ${Env.getSignUrl()}`);
+      window.electronAPI.log('info', `Stripe API Key: ${Env.getStripeApiKey().key}`);
+
+      let isQuitDialogOpen = false;
+
+      window.electronAPI.receive('parsec-close-request', async (force: boolean = false) => {
+        let quit = true;
+        if (force === false) {
+          if (isQuitDialogOpen) {
+            return;
+          }
+          isQuitDialogOpen = true;
+          const answer = await askQuestion('quit.title', 'quit.subtitle', {
+            yesText: 'quit.yes',
+            noText: 'quit.no',
+          });
+          isQuitDialogOpen = false;
+          quit = answer === Answer.Yes;
+        }
+        if (quit) {
+          await cleanBeforeQuitting(injectionProvider);
+          window.electronAPI.closeApp();
+        }
+      });
+      window.electronAPI.receive('parsec-open-link', async (link: string) => {
+        const currentInformationManager = getCurrentInformationManager(injectionProvider);
+        if (await modalController.getTop()) {
+          currentInformationManager.present(
+            new Information({
+              message: 'link.appIsBusy',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Toast,
+          );
+          return;
+        }
+        if (await popoverController.getTop()) {
+          await popoverController.dismiss();
+        }
+        if ((await claimLinkValidator(link)).validity === Validity.Valid) {
+          await handleJoinLink(link);
+        } else if ((await fileLinkValidator(link)).validity === Validity.Valid) {
+          await handleFileLink(link, currentInformationManager);
+        } else if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
+          await handleBootstrapLink(link);
+        } else {
+          await currentInformationManager.present(
+            new Information({
+              message: 'link.invalid',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Modal,
+          );
+        }
+      });
+      window.electronAPI.receive('parsec-open-path-failed', async (path: string, _error: string) => {
+        getCurrentInformationManager(injectionProvider).present(
+          new Information({
+            message: { key: 'globalErrors.openFileFailed', data: { path: path } },
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+      });
+      window.electronAPI.receive('parsec-update-availability', async (updateAvailable: boolean, version?: string) => {
+        injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: updateAvailable, version: version });
+        if (updateAvailable && version) {
+          injectionProvider.notifyAll(
+            new Information({
+              message: '',
+              level: InformationLevel.Info,
+              unique: true,
+              data: { type: InformationDataType.NewVersionAvailable, newVersion: version },
+            }),
+            PresentationMode.Notification,
+          );
+        }
+      });
+      window.electronAPI.receive('parsec-clean-up-before-update', async () => {
+        await cleanBeforeQuitting(injectionProvider);
+        window.electronAPI.updateApp();
+      });
+      window.electronAPI.receive('parsec-is-dev-mode', async (devMode) => {
+        window.isDev = (): boolean => devMode;
+        if (devMode) {
+          Sentry.disable();
+        } else {
+          config.enableTelemetry ? Sentry.enable() : Sentry.disable();
+        }
+      });
+      window.electronAPI.receive('parsec-print-to-console', async (level: LogLevel, message: string) => {
+        console[level](message);
+      });
+
+      window.electronAPI.pageIsInitialized();
+    }
   };
 
   // We can start the app with different cases :
@@ -223,108 +325,6 @@ async function setupApp(): Promise<void> {
       router.push('/test');
     };
     x(); // Fire-and-forget call
-  }
-
-  if (isElectron()) {
-    if ((await libparsec.getPlatform()) === Platform.Windows) {
-      const mountpoint = await libparsec.getDefaultMountpointBaseDir();
-      window.electronAPI.sendMountpointFolder(mountpoint);
-    }
-
-    window.electronAPI.log('info', `BMS Url: ${Env.getBmsUrl()}`);
-    window.electronAPI.log('info', `Parsec Sign Url: ${Env.getSignUrl()}`);
-    window.electronAPI.log('info', `Stripe API Key: ${Env.getStripeApiKey().key}`);
-
-    let isQuitDialogOpen = false;
-
-    window.electronAPI.receive('parsec-close-request', async (force: boolean = false) => {
-      let quit = true;
-      if (force === false) {
-        if (isQuitDialogOpen) {
-          return;
-        }
-        isQuitDialogOpen = true;
-        const answer = await askQuestion('quit.title', 'quit.subtitle', {
-          yesText: 'quit.yes',
-          noText: 'quit.no',
-        });
-        isQuitDialogOpen = false;
-        quit = answer === Answer.Yes;
-      }
-      if (quit) {
-        await cleanBeforeQuitting(injectionProvider);
-        window.electronAPI.closeApp();
-      }
-    });
-    window.electronAPI.receive('parsec-open-link', async (link: string) => {
-      const currentInformationManager = getCurrentInformationManager(injectionProvider);
-      if (await modalController.getTop()) {
-        currentInformationManager.present(
-          new Information({
-            message: 'link.appIsBusy',
-            level: InformationLevel.Error,
-          }),
-          PresentationMode.Toast,
-        );
-        return;
-      }
-      if (await popoverController.getTop()) {
-        await popoverController.dismiss();
-      }
-      if ((await claimLinkValidator(link)).validity === Validity.Valid) {
-        await handleJoinLink(link);
-      } else if ((await fileLinkValidator(link)).validity === Validity.Valid) {
-        await handleFileLink(link, currentInformationManager);
-      } else if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
-        await handleBootstrapLink(link);
-      } else {
-        await currentInformationManager.present(
-          new Information({
-            message: 'link.invalid',
-            level: InformationLevel.Error,
-          }),
-          PresentationMode.Modal,
-        );
-      }
-    });
-    window.electronAPI.receive('parsec-open-path-failed', async (path: string, _error: string) => {
-      getCurrentInformationManager(injectionProvider).present(
-        new Information({
-          message: { key: 'globalErrors.openFileFailed', data: { path: path } },
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
-    });
-    window.electronAPI.receive('parsec-update-availability', async (updateAvailable: boolean, version?: string) => {
-      injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: updateAvailable, version: version });
-      if (updateAvailable && version) {
-        injectionProvider.notifyAll(
-          new Information({
-            message: '',
-            level: InformationLevel.Info,
-            unique: true,
-            data: { type: InformationDataType.NewVersionAvailable, newVersion: version },
-          }),
-          PresentationMode.Notification,
-        );
-      }
-    });
-    window.electronAPI.receive('parsec-clean-up-before-update', async () => {
-      await cleanBeforeQuitting(injectionProvider);
-      window.electronAPI.updateApp();
-    });
-    window.electronAPI.receive('parsec-is-dev-mode', async (devMode) => {
-      window.isDev = (): boolean => devMode;
-      if (devMode) {
-        Sentry.disable();
-      } else {
-        config.enableTelemetry ? Sentry.enable() : Sentry.disable();
-      }
-    });
-    window.electronAPI.receive('parsec-print-to-console', async (level: LogLevel, message: string) => {
-      console[level](message);
-    });
   }
 }
 

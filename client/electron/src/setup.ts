@@ -79,6 +79,8 @@ export class ElectronCapacitorApp {
   public macOSForceQuit: boolean = false;
   private APP_GUID = '2f56a772-db54-4a32-b264-28c42970f684';
   private winRegistry: WinRegistry | null = null;
+  public pageIsInitialized = false;
+  public storedLink = '';
   updater?: AppUpdater;
 
   constructor(capacitorFileConfig: CapacitorElectronConfig, appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]) {
@@ -106,6 +108,23 @@ export class ElectronCapacitorApp {
     } else {
       log.transports.file.level = 'debug';
       log.transports.console.level = 'debug';
+    }
+
+    for (let i = 1; i < process.argv.length; i++) {
+      const arg = process.argv.at(i);
+      // We're only interested in potential Parsec links
+      if (arg.startsWith('parsec3://')) {
+        if (this.storedLink) {
+          log.info('Multiple links were passed as arguments, using only the first.');
+        } else {
+          this.storedLink = arg;
+        }
+      }
+      if (arg === '--log-debug') {
+        log.transports.file.level = 'debug';
+        log.transports.console.level = 'debug';
+        log.debug('Setting log level to DEBUG');
+      }
     }
 
     if (appMenuBarMenuTemplate) {
@@ -339,6 +358,7 @@ export class ElectronCapacitorApp {
     });
     // Setup preload script path and construct our main window.
     const preloadPath = join(app.getAppPath(), 'build', 'src', 'preload.js');
+
     this.MainWindow = new BrowserWindow({
       icon: appIcon,
       show: false,
@@ -480,21 +500,6 @@ export class ElectronCapacitorApp {
           this.MainWindow.webContents.openDevTools();
         }
         CapElectronEventEmitter.emit('CAPELECTRON_DeeplinkListenerInitialized', '');
-        // Send process arguments to renderer
-
-        for (let i = 1; i < process.argv.length; i++) {
-          const arg = process.argv.at(i);
-
-          // We're only interested in potential Parsec links
-          if (arg.startsWith('parsec3://')) {
-            this.sendEvent(WindowToPageChannel.OpenLink, arg);
-            break;
-          } else if (arg === '--log-debug') {
-            log.transports.file.level = 'debug';
-            log.transports.console.level = 'debug';
-            log.debug('Setting log level to DEBUG');
-          }
-        }
       }, 400);
     });
   }
