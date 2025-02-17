@@ -37,6 +37,10 @@ wasm-bindgen-test = { workspace = true }
 web-sys = { workspace = true, features = ["console"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-# `time` feature is not compatible with web (since it depends on a timer
-# API that is not provided by `wasm32-unknown-unknown`).
-tokio = { workspace = true, features = ["time"] }
+tokio = { workspace = true, features = [
+    # `time` feature is not compatible with web (since it depends on a timer
+    # API that is not provided by `wasm32-unknown-unknown`).
+    "time",
+    # `rt` feature is required to be able to spawn tasks in background.
+    "rt",
+] }
