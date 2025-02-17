@@ -162,7 +162,11 @@ fn task_future_factory(
                             "Workspace {realm_id}: outbound sync {entry_id}, outcome: {outcome:?}"
                         );
                         match outcome {
-                            Ok(OutboundSyncOutcome::Done) => break,
+                            Ok(
+                                OutboundSyncOutcome::Done | OutboundSyncOutcome::EntryIsUnreachable,
+                            ) => break,
+                            // TODO: register the confinement point
+                            Ok(OutboundSyncOutcome::EntryIsConfined(_)) => break,
                             Ok(OutboundSyncOutcome::InboundSyncNeeded) => (),
                             Ok(OutboundSyncOutcome::EntryIsBusy) => {
                                 // Re-enqueue to retry later
@@ -186,7 +190,12 @@ fn task_future_factory(
                                 let _ = tx.send(entry_id);
                                 break;
                             }
-                            Ok(InboundSyncOutcome::Updated | InboundSyncOutcome::NoChange) => (),
+                            Ok(
+                                InboundSyncOutcome::Updated
+                                | InboundSyncOutcome::NoChange
+                                | InboundSyncOutcome::EntryIsConfined(_)
+                                | InboundSyncOutcome::EntryIsUnreachable,
+                            ) => (),
                             Err(err) => handle_workspace_sync_error!(err, entry_id),
                         }
                     }

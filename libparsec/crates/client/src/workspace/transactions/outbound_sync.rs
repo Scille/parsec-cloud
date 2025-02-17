@@ -12,7 +12,7 @@ use crate::certif::{
     CertifBootstrapWorkspaceError, CertifEncryptForRealmError, CertifPollServerError,
 };
 use crate::workspace::store::{
-    ForUpdateSyncError, ForUpdateSyncLocalOnlyError, ReadChunkOrBlockError,
+    ForUpdateSyncError, ForUpdateSyncLocalOnlyError, PathConfinementPoint, ReadChunkOrBlockError,
     RetrievePathFromIDEntry, WorkspaceStoreOperationError,
 };
 use crate::{
@@ -68,6 +68,10 @@ pub enum OutboundSyncOutcome {
     /// Hence now is not the right time to sync it given we will need to re-sync
     /// it after the modification is done. Instead we should just retry later.
     EntryIsBusy,
+    /// The entry is unreachable, this is typically because the entry has been deleted.
+    EntryIsUnreachable,
+    /// The entry is confined
+    EntryIsConfined(VlobID),
 }
 
 async fn outbound_sync_child(
@@ -80,10 +84,26 @@ async fn outbound_sync_child(
         let outcome = ops.store.for_update_sync(entry_id, false).await;
         match outcome {
             Ok((_, RetrievePathFromIDEntry::Missing)) => return Ok(OutboundSyncOutcome::Done),
-            Ok((_, RetrievePathFromIDEntry::Reachable { manifest, .. })) => manifest,
-            Ok((_, RetrievePathFromIDEntry::Unreachable { manifest })) => manifest,
+            Ok((
+                _,
+                RetrievePathFromIDEntry::Reachable {
+                    manifest,
+                    confinement_point: PathConfinementPoint::NotConfined,
+                    ..
+                },
+            )) => manifest,
+            Ok((
+                _,
+                RetrievePathFromIDEntry::Reachable {
+                    confinement_point: PathConfinementPoint::Confined(confinement),
+                    ..
+                },
+            )) => return Ok(OutboundSyncOutcome::EntryIsConfined(confinement)),
+            Ok((_, RetrievePathFromIDEntry::Unreachable { .. })) => {
+                return Ok(OutboundSyncOutcome::EntryIsUnreachable)
+            }
             Err(ForUpdateSyncError::WouldBlock) => return Ok(OutboundSyncOutcome::EntryIsBusy),
-            Err(ForUpdateSyncError::Offline) => return Err(WorkspaceSyncError::Offline),
+            Err(ForUpdateSyncError::Offline(e)) => return Err(WorkspaceSyncError::Offline(e)),
             Err(ForUpdateSyncError::InvalidKeysBundle(e)) => {
                 return Err(WorkspaceSyncError::InvalidKeysBundle(e))
             }

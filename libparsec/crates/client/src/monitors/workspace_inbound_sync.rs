@@ -283,7 +283,13 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                 let outcome = io.workspace_ops_inbound_sync(entry_id).await;
                 log::debug!("Workspace {realm_id}: inbound sync {entry_id}, outcome: {outcome:?}");
                 match outcome {
-                    Ok(InboundSyncOutcome::NoChange | InboundSyncOutcome::Updated) => break,
+                    Ok(
+                        InboundSyncOutcome::NoChange
+                        | InboundSyncOutcome::Updated
+                        | InboundSyncOutcome::EntryIsUnreachable,
+                    ) => break,
+                    // TODO: register the confinement point
+                    Ok(InboundSyncOutcome::EntryIsConfined(_)) => break,
                     Ok(InboundSyncOutcome::EntryIsBusy) => {
                         // Re-enqueue to retry later
                         io.retry_later_busy_entry(entry_id).await;

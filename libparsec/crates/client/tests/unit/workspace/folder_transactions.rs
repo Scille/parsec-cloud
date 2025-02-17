@@ -7,7 +7,7 @@ use libparsec_types::prelude::*;
 
 use super::utils::{ls, workspace_ops_factory, workspace_ops_with_prevent_sync_pattern_factory};
 use crate::{
-    workspace::{EntryStat, MoveEntryMode},
+    workspace::{EntryStat, MoveEntryMode, OutboundSyncOutcome},
     EventWorkspaceOpsOutboundSyncNeeded, WorkspaceOps,
 };
 
@@ -306,9 +306,7 @@ async fn add_confined_entry(
         confined_child_id,
         stat,
         ExpectedValues {
-            // TODO: need_sync should be true, i.e the confined file should not have been synced
-            // See: https://github.com/Scille/parsec-cloud/issues/8198
-            need_sync: false,
+            need_sync: true,
             confinement_point: Some(parent_id),
         },
     );
@@ -615,13 +613,28 @@ fn check_need_sync_parent(
 }
 
 async fn ops_outbound_sync(ops: &WorkspaceOps) {
+    let mut confined_entries = HashSet::new();
     loop {
         let entries = ops.get_need_outbound_sync(32).await.unwrap();
-        if entries.is_empty() {
+        if confined_entries == entries.iter().cloned().collect() {
             break;
         }
         for entry in entries {
-            ops.outbound_sync(entry).await.unwrap();
+            match ops.outbound_sync(entry).await.unwrap() {
+                OutboundSyncOutcome::Done => {}
+                OutboundSyncOutcome::InboundSyncNeeded => {
+                    panic!("Inbound sync needed")
+                }
+                OutboundSyncOutcome::EntryIsBusy => {
+                    panic!("Entry is busy")
+                }
+                OutboundSyncOutcome::EntryIsConfined(_) => {
+                    confined_entries.insert(entry);
+                }
+                OutboundSyncOutcome::EntryIsUnreachable => {
+                    panic!("Entry is unreachable")
+                }
+            }
         }
     }
 }

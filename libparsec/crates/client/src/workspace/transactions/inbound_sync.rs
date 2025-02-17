@@ -88,8 +88,8 @@ use crate::{
     workspace::{
         merge::{MergeLocalFileManifestOutcome, MergeLocalFolderManifestOutcome},
         store::{
-            ForUpdateSyncError, IntoSyncConflictUpdaterError, RetrievePathFromIDEntry, SyncUpdater,
-            WorkspaceStore, WorkspaceStoreOperationError,
+            ForUpdateSyncError, IntoSyncConflictUpdaterError, PathConfinementPoint,
+            RetrievePathFromIDEntry, SyncUpdater, WorkspaceStore, WorkspaceStoreOperationError,
         },
     },
     EventWorkspaceOpsInboundSyncDone, InvalidBlockAccessError,
@@ -195,6 +195,10 @@ pub enum InboundSyncOutcome {
     /// Hence now is not the right time to sync it given our incoming changes will
     /// be overwritten by the ongoing modification. Instead we should just retry later.
     EntryIsBusy,
+    /// The entry is unreachable, this is typically because the entry has been deleted.
+    EntryIsUnreachable,
+    /// The entry is confined
+    EntryIsConfined(VlobID),
 }
 
 /// Download and merge remote changes from the server.
@@ -285,14 +289,28 @@ pub async fn inbound_sync(
         let outcome = ops.store.for_update_sync(entry_id, false).await;
         match outcome {
             Ok((updater, RetrievePathFromIDEntry::Missing)) => (updater, None),
-            Ok((updater, RetrievePathFromIDEntry::Reachable { manifest, .. })) => {
-                (updater, Some(manifest))
+            Ok((
+                updater,
+                RetrievePathFromIDEntry::Reachable {
+                    manifest,
+                    confinement_point: PathConfinementPoint::NotConfined,
+                    ..
+                },
+            )) => (updater, Some(manifest)),
+            Ok((
+                _,
+                RetrievePathFromIDEntry::Reachable {
+                    confinement_point: PathConfinementPoint::Confined(confinement),
+                    ..
+                },
+            )) => {
+                return Ok(InboundSyncOutcome::EntryIsConfined(confinement));
             }
-            Ok((updater, RetrievePathFromIDEntry::Unreachable { manifest })) => {
-                (updater, Some(manifest))
+            Ok((_, RetrievePathFromIDEntry::Unreachable { .. })) => {
+                return Ok(InboundSyncOutcome::EntryIsUnreachable);
             }
             Err(ForUpdateSyncError::WouldBlock) => return Ok(InboundSyncOutcome::EntryIsBusy),
-            Err(ForUpdateSyncError::Offline) => return Err(WorkspaceSyncError::Offline),
+            Err(ForUpdateSyncError::Offline(e)) => return Err(WorkspaceSyncError::Offline(e)),
             Err(ForUpdateSyncError::InvalidKeysBundle(e)) => {
                 return Err(WorkspaceSyncError::InvalidKeysBundle(e))
             }
