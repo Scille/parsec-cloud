@@ -25,7 +25,11 @@ from parsec.config import (
     BaseDatabaseConfig,
     LogLevel,
 )
-from parsec.realm_export import ExportProgressStep, get_earliest_allowed_snapshot_timestamp
+from parsec.realm_export import (
+    ExportProgressStep,
+    default_realm_export_db_name,
+    get_earliest_allowed_snapshot_timestamp,
+)
 from parsec.realm_export import export_realm as do_export_realm
 
 
@@ -123,9 +127,8 @@ async def _export_realm(
 
     if output.is_dir():
         # Output is pointing to a directory, use a default name for the database extract
-        output_db_path = (
-            output
-            / f"parsec-export-{organization_id.str}-realm-{realm_id.hex}-{snapshot_timestamp.to_rfc3339()}.sqlite"
+        output_db_path = output / default_realm_export_db_name(
+            organization_id, realm_id, snapshot_timestamp
         )
 
     else:
