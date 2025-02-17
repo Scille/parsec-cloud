@@ -38,7 +38,7 @@
         "@sentry/cli": "^2.33.1",
         "axios": "^1.7.4",
         "commander": "^12.0.0",
-        "electron": "^34.1.1",
+        "electron": "^34.2.0",
         "electron-builder": "~25.1.8",
         "typescript": "~5.4.5"
     },
