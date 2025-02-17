@@ -26,6 +26,7 @@ use crate::TestbedTemplate;
 /// - `sequester_service_1` is revoked
 /// - Alice does a key rotation on `wksp1` (key index becomes 3)
 /// - `sequester_service_2` is created
+/// - Alice uploads file manifest `bar.txt` in v3 (containing "Hello v3")
 /// - Alice upload workspace manifest in v3 with renames `/bar.txt` -> `/bar3.txt`
 pub(crate) fn generate() -> Arc<TestbedTemplate> {
     // If you change something here:
@@ -147,6 +148,28 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
 
     let sequester_service_2_id = builder.new_sequester_service().map(|e| e.id);
     builder.store_stuff("sequester_service_2_id", &sequester_service_2_id);
+
+    // Alice uploads file manifest `bar.txt` in v3 (containing "Hello v3")
+
+    let bar_txt_v3_content = b"Hello v3";
+
+    let bar_txt_v3_block_access = builder
+        .create_block("alice@dev1", wksp1_id, bar_txt_v3_content.as_ref())
+        .as_block_access(0);
+    builder.store_stuff("wksp1_bar_txt_v3_block_access", &bar_txt_v3_block_access);
+
+    builder
+        .create_or_update_file_manifest_vlob(
+            "alice@dev1",
+            wksp1_id,
+            Some(wksp1_bar_txt_id),
+            wksp1_id,
+        )
+        .customize(|e| {
+            let manifest = Arc::make_mut(&mut e.manifest);
+            manifest.size = bar_txt_v3_block_access.size.get();
+            manifest.blocks = vec![bar_txt_v3_block_access];
+        });
 
     // Alice upload workspace manifest in v3 with renames `/bar.txt` -> `/bar3.txt`
 
