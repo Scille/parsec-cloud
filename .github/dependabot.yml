@@ -42,6 +42,10 @@ updates:
       - dependency-name: console_error_panic_hook
         versions:
           - 0.1.7
+      # Ignore rand dependency above `0.9` since our crypto crates don't support it at the moment.
+      - dependency-name: rand
+        versions:
+          - ">=0.9"
     schedule:
       interval: weekly
       day: monday
