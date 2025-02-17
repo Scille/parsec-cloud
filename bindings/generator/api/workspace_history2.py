@@ -360,7 +360,7 @@ class WorkspaceHistory2FdReadError(ErrorVariant):
     class NoRealmAccess:
         pass
 
-    class BlockNotFound:
+    class ServerBlockstoreUnavailable:
         pass
 
     class InvalidBlockAccess:
