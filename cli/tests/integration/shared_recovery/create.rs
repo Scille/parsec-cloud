@@ -1,7 +1,6 @@
 use libparsec::{tmp_path, TmpPath};
 
 use crate::integration_tests::bootstrap_cli_test;
-use crate::std_cmd;
 use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
 
 #[rstest::rstest]
@@ -93,7 +92,7 @@ async fn create_shared_recovery_inexistent_email(tmp_path: TmpPath) {
 #[tokio::test]
 async fn create_shared_recovery_default(tmp_path: TmpPath) {
     let (_, TestOrganization { bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
-    let cmd = std_cmd!(
+    let cmd = crate::std_cmd!(
         "shared-recovery",
         "create",
         "--device",
