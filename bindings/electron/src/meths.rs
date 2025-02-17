@@ -12009,11 +12009,6 @@ fn variant_workspace_history2_fd_read_error_rs_to_js<'a>(
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceHistory2FdReadError::BlockNotFound { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "WorkspaceHistory2FdReadErrorBlockNotFound").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
         libparsec::WorkspaceHistory2FdReadError::Internal { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistory2FdReadErrorInternal").or_throw(cx)?;
@@ -12042,6 +12037,14 @@ fn variant_workspace_history2_fd_read_error_rs_to_js<'a>(
         libparsec::WorkspaceHistory2FdReadError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceHistory2FdReadErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceHistory2FdReadError::ServerBlockstoreUnavailable { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "WorkspaceHistory2FdReadErrorServerBlockstoreUnavailable",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::WorkspaceHistory2FdReadError::Stopped { .. } => {

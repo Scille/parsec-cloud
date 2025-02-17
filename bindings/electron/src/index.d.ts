@@ -2574,10 +2574,6 @@ export interface WorkspaceHistory2FdReadErrorBadFileDescriptor {
     tag: "BadFileDescriptor"
     error: string
 }
-export interface WorkspaceHistory2FdReadErrorBlockNotFound {
-    tag: "BlockNotFound"
-    error: string
-}
 export interface WorkspaceHistory2FdReadErrorInternal {
     tag: "Internal"
     error: string
@@ -2602,19 +2598,23 @@ export interface WorkspaceHistory2FdReadErrorOffline {
     tag: "Offline"
     error: string
 }
+export interface WorkspaceHistory2FdReadErrorServerBlockstoreUnavailable {
+    tag: "ServerBlockstoreUnavailable"
+    error: string
+}
 export interface WorkspaceHistory2FdReadErrorStopped {
     tag: "Stopped"
     error: string
 }
 export type WorkspaceHistory2FdReadError =
   | WorkspaceHistory2FdReadErrorBadFileDescriptor
-  | WorkspaceHistory2FdReadErrorBlockNotFound
   | WorkspaceHistory2FdReadErrorInternal
   | WorkspaceHistory2FdReadErrorInvalidBlockAccess
   | WorkspaceHistory2FdReadErrorInvalidCertificate
   | WorkspaceHistory2FdReadErrorInvalidKeysBundle
   | WorkspaceHistory2FdReadErrorNoRealmAccess
   | WorkspaceHistory2FdReadErrorOffline
+  | WorkspaceHistory2FdReadErrorServerBlockstoreUnavailable
   | WorkspaceHistory2FdReadErrorStopped
 
 
