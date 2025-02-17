@@ -1,6 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 use libparsec_types::prelude::*;
@@ -12,7 +15,8 @@ use crate::{
         InboundSyncOutcome, WorkspaceGetNeedInboundSyncEntriesError, WorkspaceOps,
         WorkspaceSyncError,
     },
-    EventBusConnectionLifetime, EventMonitorCrashed,
+    EventBusConnectionLifetime, EventMonitorCrashed, EventWorkspaceOpsInboundSyncDone,
+    EventWorkspaceOpsOutboundSyncNeeded,
 };
 
 const WORKSPACE_INBOUND_SYNC_MONITOR_NAME: &str = "workspace_inbound_sync";
@@ -40,6 +44,7 @@ pub(crate) async fn start_workspace_inbound_sync_monitor(
 #[derive(Debug)]
 enum IncomingEvent {
     RemoteChange { entry_id: VlobID },
+    LocalEntryChange { entry_id: VlobID },
     MissedServerEvents,
 }
 
@@ -88,6 +93,8 @@ struct RealInboundSyncManagerIO {
     _incoming_events_connection_lifetimes: (
         EventBusConnectionLifetime<EventMissedServerEvents>,
         EventBusConnectionLifetime<EventRealmVlobUpdated>,
+        EventBusConnectionLifetime<EventWorkspaceOpsOutboundSyncNeeded>,
+        EventBusConnectionLifetime<EventWorkspaceOpsInboundSyncDone>,
     ),
 }
 
@@ -123,6 +130,30 @@ impl RealInboundSyncManagerIO {
             })
         };
 
+        let event_outbound_sync_needed_lifetime = {
+            let tx = tx.clone();
+            let realm_id = workspace_ops.realm_id();
+            event_bus.connect(move |e: &EventWorkspaceOpsOutboundSyncNeeded| {
+                if e.realm_id == realm_id {
+                    let _ = tx.send(IncomingEvent::LocalEntryChange {
+                        entry_id: e.entry_id,
+                    });
+                }
+            })
+        };
+
+        let event_inbound_sync_done_lifetime = {
+            let tx = tx.clone();
+            let realm_id = workspace_ops.realm_id();
+            event_bus.connect(move |e: &EventWorkspaceOpsInboundSyncDone| {
+                if e.realm_id == realm_id {
+                    let _ = tx.send(IncomingEvent::LocalEntryChange {
+                        entry_id: e.entry_id,
+                    });
+                }
+            })
+        };
+
         Self {
             workspace_ops,
             event_bus,
@@ -131,6 +162,8 @@ impl RealInboundSyncManagerIO {
             _incoming_events_connection_lifetimes: (
                 event_missed_server_events_lifetime,
                 event_realm_vlob_updated_lifetime,
+                event_outbound_sync_needed_lifetime,
+                event_inbound_sync_done_lifetime,
             ),
         }
     }
@@ -182,12 +215,56 @@ impl InboundSyncManagerIO for RealInboundSyncManagerIO {
     }
 }
 
+#[derive(Default, Debug)]
+struct ConfinedEntriesTracker {
+    confinement_point_to_confined_entries: HashMap<VlobID, HashSet<VlobID>>,
+    confined_entry_to_confinement_point: HashMap<VlobID, VlobID>,
+}
+
+impl ConfinedEntriesTracker {
+    fn register_confined_entry(&mut self, confinement_point: VlobID, confined_entry: VlobID) {
+        self.confinement_point_to_confined_entries
+            .entry(confinement_point)
+            .or_default()
+            .insert(confined_entry);
+        self.confined_entry_to_confinement_point
+            .insert(confined_entry, confinement_point);
+    }
+
+    fn unregister_confined_entry(&mut self, confined_entry: VlobID) {
+        if let Some(confinement_point) = self
+            .confined_entry_to_confinement_point
+            .remove(&confined_entry)
+        {
+            if let Some(confined_entries) = self
+                .confinement_point_to_confined_entries
+                .get_mut(&confinement_point)
+            {
+                confined_entries.remove(&confined_entry);
+                if confined_entries.is_empty() {
+                    self.confinement_point_to_confined_entries
+                        .remove(&confinement_point);
+                }
+            }
+        }
+    }
+
+    fn get_confined_entries(&self, confinement_point: VlobID) -> Vec<VlobID> {
+        self.confinement_point_to_confined_entries
+            .get(&confinement_point)
+            .map(|confined_entries| confined_entries.iter().copied().collect())
+            .unwrap_or_default()
+    }
+}
+
 async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncManagerIO) {
     // TODO:
     // - Get the realm checkpoint
     // - For each inbound sync event, ensure it is for the next realm checkpoint
     // - If ok, do a inbound sync and provide the new realm checkpoint to be updated in storage
     // - If not ok, consider it is a missed server event
+
+    let mut confined_entries_tracker = ConfinedEntriesTracker::default();
 
     loop {
         let incoming_event = match io.wait_for_next_incoming_event().await {
@@ -270,6 +347,10 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                 // sync can be done with no other server request
                 vec![entry_id]
             }
+            IncomingEvent::LocalEntryChange { entry_id } => {
+                // Reschedule the confined entries that might depend on this one
+                confined_entries_tracker.get_confined_entries(entry_id)
+            }
         };
 
         // TODO: pretty poor implementation:
@@ -287,9 +368,17 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                         InboundSyncOutcome::NoChange
                         | InboundSyncOutcome::Updated
                         | InboundSyncOutcome::EntryIsUnreachable,
-                    ) => break,
-                    // TODO: register the confinement point
-                    Ok(InboundSyncOutcome::EntryIsConfined(_)) => break,
+                    ) => {
+                        // Unregister the entry from the list of confined entries if it was there
+                        confined_entries_tracker.unregister_confined_entry(entry_id);
+                        break;
+                    }
+                    Ok(InboundSyncOutcome::EntryIsConfined(confinement_point)) => {
+                        // Add the entry to the list of confined entries
+                        confined_entries_tracker
+                            .register_confined_entry(confinement_point, entry_id);
+                        break;
+                    }
                     Ok(InboundSyncOutcome::EntryIsBusy) => {
                         // Re-enqueue to retry later
                         io.retry_later_busy_entry(entry_id).await;
