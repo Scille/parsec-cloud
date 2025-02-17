@@ -364,11 +364,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                 let outcome = io.workspace_ops_inbound_sync(entry_id).await;
                 log::debug!("Workspace {realm_id}: inbound sync {entry_id}, outcome: {outcome:?}");
                 match outcome {
-                    Ok(
-                        InboundSyncOutcome::NoChange
-                        | InboundSyncOutcome::Updated
-                        | InboundSyncOutcome::EntryIsUnreachable,
-                    ) => {
+                    Ok(InboundSyncOutcome::NoChange | InboundSyncOutcome::Updated) => {
                         // Unregister the entry from the list of confined entries if it was there
                         confined_entries_tracker.unregister_confined_entry(entry_id);
                         break;
