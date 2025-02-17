@@ -44,6 +44,7 @@ itertools = { workspace = true }
 
 [dev-dependencies]
 libparsec = { workspace = true, features = ["cli-tests"] }
+libparsec_tests_fixtures = { workspace = true }
 
 assert_cmd = { workspace = true }
 predicates = { workspace = true, features = ["regex"] }

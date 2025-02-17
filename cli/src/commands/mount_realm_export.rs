@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{fs::File, io::Read, path::PathBuf, sync::Arc};
 
 use dialoguer::Confirm;
 use libparsec::{DateTime, SequesterPrivateKeyDer, SequesterServiceID};
@@ -13,7 +13,7 @@ crate::clap_parser_with_shared_opts_builder!(
         /// Path to the DB
         export_db_path: PathBuf,
         /// sequester private key
-        decryptor_sequester_private_key: String,
+        decryptor_sequester_private_key_path: PathBuf,
         /// workspace name
         workspace: String,
         /// sequester id
@@ -26,7 +26,7 @@ crate::clap_parser_with_shared_opts_builder!(
 pub async fn main(args: Args) -> anyhow::Result<()> {
     let Args {
         export_db_path,
-        decryptor_sequester_private_key,
+        decryptor_sequester_private_key_path,
         //timestamp_of_interest,
         workspace,
         sequester_service_id,
@@ -34,11 +34,14 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     } = args;
 
     let config = Arc::new(default_client_config());
+    let mut file = File::open(decryptor_sequester_private_key_path)?;
+    let mut decryptor_sequester_private_key = Vec::<u8>::new();
+    file.read_to_end(&mut decryptor_sequester_private_key)?;
 
     let decryptors = vec![WorkspaceHistoryRealmExportDecryptor::SequesterService {
         sequester_service_id: SequesterServiceID::from_hex(&sequester_service_id)?,
         private_key: Box::new(SequesterPrivateKeyDer::try_from(
-            &decryptor_sequester_private_key.into_bytes()[..],
+            &decryptor_sequester_private_key[..],
         )?),
     }];
 

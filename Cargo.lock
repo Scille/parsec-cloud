@@ -2964,6 +2964,7 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_platform_ipc",
  "libparsec_platform_mountpoint",
+ "libparsec_tests_fixtures",
  "log",
  "predicates",
  "reqwest",
