@@ -168,6 +168,7 @@ impl Filesystem {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn reply_with_lookup(
     ops: &WorkspaceOps,
     uid: u32,
@@ -176,6 +177,7 @@ async fn reply_with_lookup(
     entry_id: VlobID,
     reply: fuser::ReplyEntry,
     is_read_only: bool,
+    operation_name: &str,
 ) {
     // Confinement point information is unused here so ignore it
     match ops
@@ -195,7 +197,10 @@ async fn reply_with_lookup(
             | WorkspaceStatEntryError::InvalidKeysBundle(_)
             | WorkspaceStatEntryError::InvalidCertificate(_)
             | WorkspaceStatEntryError::InvalidManifest(_)
-            | WorkspaceStatEntryError::Internal(_) => reply.error(libc::EIO),
+            | WorkspaceStatEntryError::Internal(_) => {
+                log::warn!("FUSE `{}` operation failed: {:?}", operation_name, err);
+                reply.error(libc::EIO)
+            }
         },
     }
 }
@@ -430,7 +435,10 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceStatEntryError::InvalidKeysBundle(_)
                     | WorkspaceStatEntryError::InvalidCertificate(_)
                     | WorkspaceStatEntryError::InvalidManifest(_)
-                    | WorkspaceStatEntryError::Internal(_) => reply.manual().error(libc::EIO),
+                    | WorkspaceStatEntryError::Internal(_) => {
+                        log::warn!("FUSE `lookup` operation cannot complete: {:?}", err);
+                        reply.manual().error(libc::EIO)
+                    }
                 },
             }
         });
@@ -542,6 +550,7 @@ impl fuser::Filesystem for Filesystem {
                         entry_id,
                         reply.manual(),
                         is_read_only,
+                        "mkdir",
                     )
                     .await;
                 }
@@ -564,7 +573,10 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceCreateFolderError::InvalidKeysBundle(_)
                     | WorkspaceCreateFolderError::InvalidCertificate(_)
                     | WorkspaceCreateFolderError::InvalidManifest(_)
-                    | WorkspaceCreateFolderError::Internal(_) => reply.manual().error(libc::EIO),
+                    | WorkspaceCreateFolderError::Internal(_) => {
+                        log::warn!("FUSE `mkdir` operation cannot complete: {:?}", err);
+                        reply.manual().error(libc::EIO)
+                    }
                 },
             }
         });
@@ -622,7 +634,10 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceRemoveEntryError::InvalidKeysBundle(_)
                     | WorkspaceRemoveEntryError::InvalidCertificate(_)
                     | WorkspaceRemoveEntryError::InvalidManifest(_)
-                    | WorkspaceRemoveEntryError::Internal(_) => reply.manual().error(libc::EIO),
+                    | WorkspaceRemoveEntryError::Internal(_) => {
+                        log::warn!("FUSE `rmdir` operation cannot complete: {:?}", err);
+                        reply.manual().error(libc::EIO)
+                    }
                     // Never returned given we *are* removing a folder
                     WorkspaceRemoveEntryError::EntryIsFolder => unreachable!(),
                 },
@@ -682,7 +697,10 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceRemoveEntryError::InvalidKeysBundle(_)
                     | WorkspaceRemoveEntryError::InvalidCertificate(_)
                     | WorkspaceRemoveEntryError::InvalidManifest(_)
-                    | WorkspaceRemoveEntryError::Internal(_) => reply.manual().error(libc::EIO),
+                    | WorkspaceRemoveEntryError::Internal(_) => {
+                        log::warn!("FUSE `unlink` operation cannot complete: {:?}", err);
+                        reply.manual().error(libc::EIO)
+                    }
                     // Never returned given we *are* removing a file
                     WorkspaceRemoveEntryError::EntryIsFile => unreachable!(),
                 },
@@ -784,7 +802,10 @@ impl fuser::Filesystem for Filesystem {
                     | WorkspaceMoveEntryError::InvalidKeysBundle(_)
                     | WorkspaceMoveEntryError::InvalidCertificate(_)
                     | WorkspaceMoveEntryError::InvalidManifest(_)
-                    | WorkspaceMoveEntryError::Internal(_) => reply.manual().error(libc::EIO),
+                    | WorkspaceMoveEntryError::Internal(_) => {
+                        log::warn!("FUSE `rename` operation cannot complete: {:?}", err);
+                        reply.manual().error(libc::EIO)
+                    }
                 },
             }
         });
@@ -858,7 +879,10 @@ impl fuser::Filesystem for Filesystem {
                         | WorkspaceOpenFileError::InvalidKeysBundle(_)
                         | WorkspaceOpenFileError::InvalidCertificate(_)
                         | WorkspaceOpenFileError::InvalidManifest(_)
-                        | WorkspaceOpenFileError::Internal(_) => reply.manual().error(libc::EIO),
+                        | WorkspaceOpenFileError::Internal(_) => {
+                            log::warn!("FUSE `open` operation cannot complete: {:?}", err);
+                            reply.manual().error(libc::EIO)
+                        }
                     }
                 }
             };
@@ -973,7 +997,10 @@ impl fuser::Filesystem for Filesystem {
                         | WorkspaceOpenFileError::InvalidKeysBundle(_)
                         | WorkspaceOpenFileError::InvalidCertificate(_)
                         | WorkspaceOpenFileError::InvalidManifest(_)
-                        | WorkspaceOpenFileError::Internal(_) => reply.manual().error(libc::EIO),
+                        | WorkspaceOpenFileError::Internal(_) => {
+                            log::warn!("FUSE `create` operation cannot complete: {:?}", err);
+                            reply.manual().error(libc::EIO)
+                        }
                     }
                 }
             };
@@ -1131,6 +1158,10 @@ impl fuser::Filesystem for Filesystem {
                                 | WorkspaceOpenFileError::InvalidCertificate(_)
                                 | WorkspaceOpenFileError::InvalidManifest(_)
                                 | WorkspaceOpenFileError::Internal(_) => {
+                                    log::warn!(
+                                        "FUSE `setattr` operation cannot complete: {:?}",
+                                        err
+                                    );
                                     reply.manual().error(libc::EIO)
                                 }
                             }
@@ -1144,6 +1175,10 @@ impl fuser::Filesystem for Filesystem {
                                 // Unexpected: we have just opened the file !
                                 WorkspaceFdStatError::BadFileDescriptor
                                 | WorkspaceFdStatError::Internal(_) => {
+                                    log::warn!(
+                                        "FUSE `setattr` operation cannot complete: {:?}",
+                                        err
+                                    );
                                     reply.manual().error(libc::EIO)
                                 }
                             };
@@ -1158,7 +1193,10 @@ impl fuser::Filesystem for Filesystem {
                             // Unexpected: we have just opened the file !
                             | WorkspaceFdCloseError::BadFileDescriptor
                             | WorkspaceFdCloseError::Internal(_)
-                            => reply.manual().error(libc::EIO),
+                            => {
+                                log::warn!("FUSE `setattr` operation cannot complete: {:?}", err);
+                                reply.manual().error(libc::EIO)
+                            }
                         };
                         }
                     }
@@ -1242,7 +1280,10 @@ impl fuser::Filesystem for Filesystem {
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
                     | WorkspaceFdReadError::BadFileDescriptor
                     | WorkspaceFdReadError::Internal(_)
-                    => reply.manual().error(libc::EIO),
+                    => {
+                        log::warn!("FUSE `read` operation cannot complete: {:?}", err);
+                        reply.manual().error(libc::EIO)
+                    }
                 },
             }
         });
@@ -1283,7 +1324,10 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceFdWriteError::NotInWriteMode => reply.manual().error(libc::EBADF),
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
                     WorkspaceFdWriteError::BadFileDescriptor
-                    | WorkspaceFdWriteError::Internal(_) => reply.manual().error(libc::EIO),
+                    | WorkspaceFdWriteError::Internal(_) => {
+                        log::warn!("FUSE `write` operation cannot complete: {:?}", err);
+                        reply.manual().error(libc::EIO)
+                    }
                 },
             }
         });
@@ -1333,7 +1377,10 @@ impl fuser::Filesystem for Filesystem {
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
                     | WorkspaceFdFlushError::BadFileDescriptor
                     | WorkspaceFdFlushError::Internal(_)
-                    => reply.manual().error(libc::EIO),
+                    => {
+                        log::warn!("FUSE `flush` operation cannot complete: {:?}", err);
+                        reply.manual().error(libc::EIO)
+                    }
                 },
             }
         });
@@ -1371,7 +1418,10 @@ impl fuser::Filesystem for Filesystem {
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
                     | WorkspaceFdCloseError::BadFileDescriptor
                     | WorkspaceFdCloseError::Internal(_)
-                    => reply.manual().error(libc::EIO),
+                    => {
+                        log::warn!("FUSE `release` operation cannot complete: {:?}", err);
+                        reply.manual().error(libc::EIO)
+                    }
                 },
             }
         });
@@ -1406,7 +1456,10 @@ impl fuser::Filesystem for Filesystem {
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
                     | WorkspaceFdFlushError::BadFileDescriptor
                     | WorkspaceFdFlushError::Internal(_)
-                    => reply.manual().error(libc::EIO),
+                    => {
+                        log::warn!("FUSE `fsync` operation cannot complete: {:?}", err);
+                        reply.manual().error(libc::EIO)
+                    }
                 },
             }
         });
@@ -1466,6 +1519,7 @@ impl fuser::Filesystem for Filesystem {
                         | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
                         | WorkspaceOpenFolderReaderError::InvalidManifest(_)
                         | WorkspaceOpenFolderReaderError::Internal(_) => {
+                            log::warn!("FUSE `opendir` operation cannot complete: {:?}", err);
                             reply.manual().error(libc::EIO)
                         }
                     }
@@ -1541,6 +1595,10 @@ impl fuser::Filesystem for Filesystem {
                             | FolderReaderStatEntryError::InvalidCertificate(_)
                             | FolderReaderStatEntryError::InvalidManifest(_)
                             | FolderReaderStatEntryError::Internal(_) => {
+                                log::warn!(
+                                    "FUSE `readdirplus` operation cannot complete: {:?}",
+                                    err
+                                );
                                 reply.manual().error(libc::EIO)
                             }
                         }
@@ -1639,6 +1697,7 @@ impl fuser::Filesystem for Filesystem {
                             | FolderReaderStatEntryError::InvalidCertificate(_)
                             | FolderReaderStatEntryError::InvalidManifest(_)
                             | FolderReaderStatEntryError::Internal(_) => {
+                                log::warn!("FUSE `readdir` operation cannot complete: {:?}", err);
                                 reply.manual().error(libc::EIO)
                             }
                         }
@@ -1739,7 +1798,13 @@ async fn getattr_from_path(
             | WorkspaceStatEntryError::InvalidKeysBundle(_)
             | WorkspaceStatEntryError::InvalidCertificate(_)
             | WorkspaceStatEntryError::InvalidManifest(_)
-            | WorkspaceStatEntryError::Internal(_) => Err(libc::EIO),
+            | WorkspaceStatEntryError::Internal(_) => {
+                log::warn!(
+                    "FUSE `getattr_from_path` operation cannot complete: {:?}",
+                    err
+                );
+                Err(libc::EIO)
+            }
         },
     }
 }
