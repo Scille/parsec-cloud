@@ -491,6 +491,19 @@ type ExportProgressStep = (
 type ProgressReportCallback = Callable[[ExportProgressStep], None]
 
 
+def default_realm_export_db_name(
+    organization_id: OrganizationID, realm_id: VlobID, snapshot_timestamp: DateTime
+) -> str:
+    # The obvious choice would be to put the timestamp in the filename as RFC3339, however:
+    # - The format contains `:` characters that don't play nice with Windows file system.
+    # - The format is pretty verbose, and the file name is already long enough.
+    # So instead we just use a custom `yyyymmddThhmmssZ` format.
+    display_date = snapshot_timestamp.to_rfc3339().replace("-", "").replace(":", "")
+    if "." in display_date:
+        display_date = display_date.split(".", 1)[0] + "Z"
+    return f"parsec-export-{organization_id.str}-realm-{realm_id.hex}-{display_date}.sqlite"
+
+
 def get_earliest_allowed_snapshot_timestamp() -> DateTime:
     """
     The very first step we do when exporting a realm is to determine what should be
