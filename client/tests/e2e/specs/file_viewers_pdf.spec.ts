@@ -145,8 +145,20 @@ msTest('PDF viewer: zoom', async ({ documents }) => {
   const zoomOut = zoom.locator('.file-controls-button').nth(1);
   const zoomIn = zoom.locator('.file-controls-button').nth(2);
   const zoomInput = zoom.locator('.file-controls-input');
-  const initialHeight = Number(await canvas.nth(0).getAttribute('height'));
-  const initialWidth = Number(await canvas.nth(0).getAttribute('width'));
+
+  let initialHeight = 0;
+  let initialWidth = 0;
+  let i = 0;
+
+  while ((initialHeight === 0 || initialWidth === 0) && i < 10) {
+    initialHeight = Number(await canvas.nth(0).getAttribute('height'));
+    initialWidth = Number(await canvas.nth(0).getAttribute('width'));
+    i++;
+    await documents.waitForTimeout(50);
+  }
+
+  expect(initialHeight).toBeGreaterThan(0);
+  expect(initialWidth).toBeGreaterThan(0);
 
   async function expectZoomLevel(expectedZoomLevel: number): Promise<void> {
     for (const page of await canvas.all()) {
