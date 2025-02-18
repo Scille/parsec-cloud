@@ -86,7 +86,12 @@ impl ConfinedEntriesTracker {
             .unwrap_or_default()
     }
 
-    fn register_confined_entry(&mut self, confinement_point: VlobID, confined_entry: VlobID) {
+    fn register_confined_entry(
+        &mut self,
+        confinement_point: VlobID,
+        _entry_chain: &[VlobID],
+        confined_entry: VlobID,
+    ) {
         self.confinement_point_to_confined_entries
             .entry(confinement_point)
             .or_default()
@@ -282,7 +287,10 @@ fn task_future_factory(
                                     .unregister_confined_entry(entry_id);
                                 break;
                             }
-                            Ok(OutboundSyncOutcome::EntryIsConfined(confinement_point)) => {
+                            Ok(OutboundSyncOutcome::EntryIsConfined {
+                                confinement_point,
+                                entry_chain,
+                            }) => {
                                 // The confinement point has changed while we were syncing, try again
                                 if recorded_local_changes.contains(&confinement_point) {
                                     continue;
@@ -291,7 +299,11 @@ fn task_future_factory(
                                 confined_entries_tracker
                                     .lock()
                                     .expect("Mutex is poisoned")
-                                    .register_confined_entry(confinement_point, entry_id);
+                                    .register_confined_entry(
+                                        confinement_point,
+                                        &entry_chain,
+                                        entry_id,
+                                    );
                                 break;
                             }
                             Ok(OutboundSyncOutcome::InboundSyncNeeded) => (),
@@ -320,7 +332,7 @@ fn task_future_factory(
                             Ok(
                                 InboundSyncOutcome::Updated
                                 | InboundSyncOutcome::NoChange
-                                | InboundSyncOutcome::EntryIsConfined(_),
+                                | InboundSyncOutcome::EntryIsConfined { .. },
                             ) => (),
                             Err(err) => handle_workspace_sync_error!(err, entry_id),
                         }

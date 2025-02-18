@@ -26,10 +26,12 @@ async fn ok(env: &TestbedEnv) {
         RetrievePathFromIDEntry::Reachable {
             ref manifest,
             path,
-            confinement_point
+            confinement_point,
+            entry_chain
         } if confinement_point == PathConfinementPoint::NotConfined
             && path == "/".parse().unwrap()
             && matches!(manifest, ArcLocalChildManifest::Folder(manifest) if manifest.base.id == wksp1_id)
+            && entry_chain == vec![wksp1_id]
     );
 
     // Resolve child folder
@@ -38,10 +40,12 @@ async fn ok(env: &TestbedEnv) {
         RetrievePathFromIDEntry::Reachable {
             ref manifest,
             path,
-            confinement_point
+            confinement_point,
+            entry_chain
     } if confinement_point == PathConfinementPoint::NotConfined
     && path == "/foo".parse().unwrap()
     && matches!(manifest, ArcLocalChildManifest::Folder(manifest) if manifest.base.id == wksp1_foo_id)
+    && entry_chain == vec![wksp1_id, wksp1_foo_id]
     );
 
     // Resolve child file
@@ -50,10 +54,12 @@ async fn ok(env: &TestbedEnv) {
         RetrievePathFromIDEntry::Reachable {
             ref manifest,
             path,
-            confinement_point
+            confinement_point,
+            entry_chain
     } if confinement_point == PathConfinementPoint::NotConfined
     && path == "/foo/egg.txt".parse().unwrap()
     && matches!(manifest, ArcLocalChildManifest::File(manifest) if manifest.base.id == wksp1_foo_egg_txt_id)
+    && entry_chain == vec![wksp1_id, wksp1_foo_id, wksp1_foo_egg_txt_id]
     );
 }
 
@@ -89,37 +95,41 @@ async fn ok_with_confinement(env: &TestbedEnv) {
     // Resolve root
     p_assert_matches!(
         ops.store.retrieve_path_from_id(wksp1_id).await.unwrap(),
-        RetrievePathFromIDEntry::Reachable { ref manifest, path, confinement_point }
+        RetrievePathFromIDEntry::Reachable { ref manifest, path, confinement_point, entry_chain }
         if confinement_point == PathConfinementPoint::NotConfined
         && path == "/".parse().unwrap()
         && matches!(manifest, ArcLocalChildManifest::Folder(manifest) if manifest.base.id == wksp1_id)
+        && entry_chain == vec![wksp1_id]
     );
 
     // Resolve foo folder
     p_assert_matches!(
         ops.store.retrieve_path_from_id(wksp1_foo_id).await.unwrap(),
-        RetrievePathFromIDEntry::Reachable { ref manifest, path, confinement_point }
+        RetrievePathFromIDEntry::Reachable { ref manifest, path, confinement_point, entry_chain }
         if confinement_point == PathConfinementPoint::Confined(wksp1_id)
         && path == "/foo.tmp".parse().unwrap()
         && matches!(manifest, ArcLocalChildManifest::Folder(manifest) if manifest.base.id == wksp1_foo_id)
+        && entry_chain == vec![wksp1_id, wksp1_foo_id]
     );
 
     // Resolve spam folder
     p_assert_matches!(
         ops.store.retrieve_path_from_id(wksp1_foo_spam_id).await.unwrap(),
-        RetrievePathFromIDEntry::Reachable { ref manifest, path, confinement_point }
+        RetrievePathFromIDEntry::Reachable { ref manifest, path, confinement_point, entry_chain }
         if confinement_point == PathConfinementPoint::Confined(wksp1_id)
         && path == "/foo.tmp/spam.tmp".parse().unwrap()
         && matches!(manifest, ArcLocalChildManifest::Folder(manifest) if manifest.base.id == wksp1_foo_spam_id)
+        && entry_chain == vec![wksp1_id, wksp1_foo_id, wksp1_foo_spam_id]
     );
 
     // Resolve egg file
     p_assert_matches!(
         ops.store.retrieve_path_from_id(wksp1_foo_spam_egg_id).await.unwrap(),
-        RetrievePathFromIDEntry::Reachable { ref manifest, path, confinement_point }
+        RetrievePathFromIDEntry::Reachable { ref manifest, path, confinement_point, entry_chain }
         if confinement_point == PathConfinementPoint::Confined(wksp1_id)
         && path == "/foo.tmp/spam.tmp/egg.txt".parse().unwrap()
         && matches!(manifest, ArcLocalChildManifest::File(manifest) if manifest.base.id == wksp1_foo_spam_egg_id)
+        && entry_chain == vec![wksp1_id, wksp1_foo_id, wksp1_foo_spam_id, wksp1_foo_spam_egg_id]
     );
 }
 
@@ -184,10 +194,11 @@ async fn base_path_mismatch_is_ok(env: &TestbedEnv) {
 
     p_assert_matches!(
         ops.store.retrieve_path_from_id(wksp1_bar_txt_id).await.unwrap(),
-        RetrievePathFromIDEntry::Reachable { ref manifest, path, confinement_point }
+        RetrievePathFromIDEntry::Reachable { ref manifest, path, confinement_point, entry_chain }
         if confinement_point == PathConfinementPoint::NotConfined
         && path == "/bar.txt".parse().unwrap()
         && matches!(manifest, ArcLocalChildManifest::File(manifest) if manifest.base.id == wksp1_bar_txt_id)
+        && entry_chain == vec![wksp1_id, wksp1_bar_txt_id]
     );
 }
 
@@ -273,9 +284,13 @@ async fn inconsistent_path_recursive_by_children(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
     let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
-    let (recursive_target_id, expected_path) = match kind {
-        "root" => (wksp1_id, "/".parse().unwrap()),
-        "child" => (wksp1_foo_id, "/foo".parse().unwrap()),
+    let (recursive_target_id, expected_path, expected_entry_chain) = match kind {
+        "root" => (wksp1_id, "/".parse().unwrap(), vec![wksp1_id]),
+        "child" => (
+            wksp1_foo_id,
+            "/foo".parse().unwrap(),
+            vec![wksp1_id, wksp1_foo_id],
+        ),
         unknown => panic!("Unknown kind: {}", unknown),
     };
 
@@ -301,10 +316,11 @@ async fn inconsistent_path_recursive_by_children(
 
     p_assert_matches!(
         ops.store.retrieve_path_from_id(recursive_target_id).await.unwrap(),
-        RetrievePathFromIDEntry::Reachable { ref manifest, path, confinement_point }
+        RetrievePathFromIDEntry::Reachable { ref manifest, path, confinement_point, entry_chain }
         if confinement_point == PathConfinementPoint::NotConfined
         && path == expected_path
         && matches!(manifest, ArcLocalChildManifest::Folder(manifest) if manifest.base.id == recursive_target_id)
+        && entry_chain == expected_entry_chain
     );
 }
 

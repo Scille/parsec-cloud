@@ -196,7 +196,10 @@ pub enum InboundSyncOutcome {
     /// be overwritten by the ongoing modification. Instead we should just retry later.
     EntryIsBusy,
     /// The entry is confined
-    EntryIsConfined(VlobID),
+    EntryIsConfined {
+        confinement_point: VlobID,
+        entry_chain: Vec<VlobID>,
+    },
 }
 
 /// Download and merge remote changes from the server.
@@ -298,11 +301,15 @@ pub async fn inbound_sync(
             Ok((
                 _,
                 RetrievePathFromIDEntry::Reachable {
-                    confinement_point: PathConfinementPoint::Confined(confinement),
+                    confinement_point: PathConfinementPoint::Confined(confinement_point),
+                    entry_chain,
                     ..
                 },
             )) => {
-                return Ok(InboundSyncOutcome::EntryIsConfined(confinement));
+                return Ok(InboundSyncOutcome::EntryIsConfined {
+                    confinement_point,
+                    entry_chain,
+                });
             }
             Ok((updater, RetrievePathFromIDEntry::Unreachable { manifest })) => {
                 // The entry is unreachable in our path-space.

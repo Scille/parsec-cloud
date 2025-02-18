@@ -744,6 +744,7 @@ fn cache_only_retrieve_path_from_id(
     let mut current_entry_id = entry_id;
     let mut current_parent_id = entry_manifest.parent();
     let mut seen: HashSet<VlobID> = HashSet::from_iter([current_entry_id]);
+    let mut entry_chain = vec![current_entry_id];
 
     // Loop until we reach the root
     while current_entry_id != root_entry_id {
@@ -813,6 +814,7 @@ fn cache_only_retrieve_path_from_id(
         // Update the loop state
         current_entry_id = current_parent_id;
         current_parent_id = parent_manifest.parent;
+        entry_chain.push(current_entry_id);
 
         // Protect against circular paths
         if !seen.insert(current_entry_id) {
@@ -827,11 +829,13 @@ fn cache_only_retrieve_path_from_id(
 
     // Reverse the parts to get the path
     parts.reverse();
+    entry_chain.reverse();
     CacheOnlyPathRetrievalOutcome::Done {
         entry: RetrievePathFromIDEntry::Reachable {
             manifest: entry_manifest.to_owned(),
             path: FsPath::from_parts(parts),
             confinement_point: confinement,
+            entry_chain,
         },
         maybe_update_lock_guard: maybe_take_update_lock_guard_for_entry!(),
     }
@@ -887,6 +891,7 @@ pub(crate) enum RetrievePathFromIDEntry {
         #[allow(unused)]
         path: FsPath,
         confinement_point: PathConfinementPoint,
+        entry_chain: Vec<VlobID>,
     },
 }
 

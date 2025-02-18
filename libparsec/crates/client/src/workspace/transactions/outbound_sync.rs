@@ -71,7 +71,10 @@ pub enum OutboundSyncOutcome {
     /// The entry is unreachable, this is typically because the entry has been deleted.
     EntryIsUnreachable,
     /// The entry is confined
-    EntryIsConfined(VlobID),
+    EntryIsConfined {
+        confinement_point: VlobID,
+        entry_chain: Vec<VlobID>,
+    },
 }
 
 async fn outbound_sync_child(
@@ -95,10 +98,16 @@ async fn outbound_sync_child(
             Ok((
                 _,
                 RetrievePathFromIDEntry::Reachable {
-                    confinement_point: PathConfinementPoint::Confined(confinement),
+                    confinement_point: PathConfinementPoint::Confined(confinement_point),
+                    entry_chain,
                     ..
                 },
-            )) => return Ok(OutboundSyncOutcome::EntryIsConfined(confinement)),
+            )) => {
+                return Ok(OutboundSyncOutcome::EntryIsConfined {
+                    confinement_point,
+                    entry_chain,
+                })
+            }
             Ok((_, RetrievePathFromIDEntry::Unreachable { .. })) => {
                 return Ok(OutboundSyncOutcome::EntryIsUnreachable)
             }

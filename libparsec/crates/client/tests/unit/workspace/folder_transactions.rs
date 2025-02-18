@@ -628,7 +628,7 @@ async fn ops_outbound_sync(ops: &WorkspaceOps) {
                 OutboundSyncOutcome::EntryIsBusy => {
                     panic!("Entry is busy")
                 }
-                OutboundSyncOutcome::EntryIsConfined(_) => {
+                OutboundSyncOutcome::EntryIsConfined { .. } => {
                     confined_entries.insert(entry);
                 }
                 OutboundSyncOutcome::EntryIsUnreachable => {
