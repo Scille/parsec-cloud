@@ -29,6 +29,55 @@ export const msTest = base.extend<{
 
     await page.addInitScript(() => {
       (window as any).TESTING = true;
+      (window as any).showSaveFilePicker = async (): Promise<FileSystemFileHandle> => {
+        console.log('Show save file Picker');
+        return {
+          kind: 'file',
+          name: 'downloadedFile.tmp',
+          createWritable: async () => ({
+            write: async (data: Uint8Array): Promise<any> => {
+              if ((window as any).__downloadedFiles === undefined) {
+                (window as any).__downloadedFiles = {
+                  default: data,
+                };
+              } else {
+                (window as any).__downloadedFiles.default = data;
+              }
+            },
+            close: async (): Promise<any> => {},
+          }),
+        } as FileSystemFileHandle;
+      };
+      (window as any).showDirectoryPicker = async (): Promise<FileSystemDirectoryHandle> => {
+        return {
+          kind: 'directory',
+          name: 'folder',
+          getFileHandle: async (name: string, _options?: FileSystemGetFileOptions): Promise<FileSystemFileHandle> => {
+            return {
+              kind: 'file',
+              name: name,
+              createWritable: async () => ({
+                write: async (data: Uint8Array): Promise<any> => {
+                  if ((window as any).__downloadedFiles === undefined) {
+                    (window as any).__downloadedFiles = {
+                      [name]: data,
+                    };
+                  } else {
+                    (window as any).__downloadedFiles[name] = data;
+                  }
+                },
+                close: async (): Promise<any> => {},
+              }),
+            } as FileSystemFileHandle;
+          },
+          getDirectoryHandle: async (_name: string, _options?: FileSystemGetDirectoryOptions): Promise<FileSystemDirectoryHandle> => {
+            return {} as FileSystemDirectoryHandle;
+          },
+          removeEntry: async (_name: string, _options?: FileSystemRemoveOptions): Promise<void> => {},
+          resolve: async (_descendant: FileSystemHandle): Promise<string[] | null> => null,
+          isSameEntry: async (_other: FileSystemHandle): Promise<boolean> => false,
+        };
+      };
     });
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');

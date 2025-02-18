@@ -17,6 +17,7 @@ import {
   WorkspaceOpenFileErrorTag,
   closeFile,
   createFolder,
+  createReadStream,
   deleteFile,
   entryStat,
   entryStatAt,
@@ -32,6 +33,7 @@ import {
 } from '@/parsec';
 import { wait } from '@/parsec/internals';
 import { DateTime } from 'luxon';
+import { FileSystemFileHandle } from 'native-file-system-adapter';
 import { v4 as uuid4 } from 'uuid';
 
 const MAX_SIMULTANEOUS_OPERATIONS = 3;
@@ -62,6 +64,10 @@ enum FileOperationState {
   RestoreStarted,
   RestoreFailed,
   EntryRestored,
+  DownloadAdded,
+  DownloadStarted,
+  DownloadFailed,
+  EntryDownloaded,
 }
 
 export interface OperationProgressStateData {
@@ -127,6 +133,7 @@ export enum FileOperationDataType {
   Copy,
   Move,
   Restore,
+  Download,
 }
 
 interface IFileOperationDataType {
@@ -211,6 +218,29 @@ class RestoreData extends FileOperationData {
   }
 }
 
+class DownloadData extends FileOperationData {
+  path: FsPath;
+  dateTime?: DateTime;
+  saveHandle: FileSystemFileHandle;
+
+  constructor(
+    workspaceHandle: WorkspaceHandle,
+    workspaceId: WorkspaceID,
+    path: FsPath,
+    saveHandle: FileSystemFileHandle,
+    dateTime?: DateTime,
+  ) {
+    super(workspaceHandle, workspaceId);
+    this.saveHandle = saveHandle;
+    this.path = path;
+    this.dateTime = dateTime;
+  }
+
+  getDataType(): FileOperationDataType {
+    return FileOperationDataType.Download;
+  }
+}
+
 class FileOperationManager {
   private fileOperationData: Array<FileOperationData>;
   private callbacks: Array<[string, FileOperationCallback]>;
@@ -276,6 +306,21 @@ class FileOperationManager {
     }
     const newData = new RestoreData(workspaceHandle, workspaceId, path, dateTime);
     await this.sendState(FileOperationState.RestoreAdded, newData);
+    this.fileOperationData.unshift(newData);
+  }
+
+  async downloadEntry(
+    workspaceHandle: WorkspaceHandle,
+    workspaceId: WorkspaceID,
+    saveStream: FileSystemFileHandle,
+    path: FsPath,
+    dateTime?: DateTime,
+  ): Promise<void> {
+    if (!this.isRunning) {
+      this.start();
+    }
+    const newData = new DownloadData(workspaceHandle, workspaceId, path, saveStream, dateTime);
+    await this.sendState(FileOperationState.DownloadAdded, newData);
     this.fileOperationData.unshift(newData);
   }
 
@@ -687,6 +732,71 @@ class FileOperationManager {
     await this.sendState(FileOperationState.EntryRestored, data);
   }
 
+  private async doDownload(data: DownloadData): Promise<void> {
+    await this.sendState(FileOperationState.DownloadStarted, data);
+    await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
+
+    // First, get the file size
+    const statsResult = await entryStat(data.workspaceHandle, data.path);
+    if (!statsResult.ok || !statsResult.value.isFile()) {
+      await this.sendState(FileOperationState.DownloadFailed);
+      return;
+    }
+    const fileSize = (statsResult.value as EntryStatFile).size;
+    let writtenSize = 0;
+
+    const rStream = await createReadStream(data.workspaceHandle, data.path);
+    const wStream = await data.saveHandle.createWritable();
+    const reader = rStream.getReader();
+    let cancelled = false;
+
+    try {
+      const start = DateTime.now();
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        // Check if the download has been cancelled
+        let shouldCancel = false;
+        const index = this.cancelList.findIndex((item) => item === data.id);
+
+        if (index !== -1) {
+          // Remove from cancel list
+          this.cancelList.splice(index, 1);
+          shouldCancel = true;
+        }
+        if (shouldCancel) {
+          cancelled = true;
+          throw Error('cancelled');
+        }
+
+        const { done, value } = await reader.read();
+        if (done) {
+          break;
+        } else {
+          const chunk = value as Uint8Array;
+          await wStream.write(chunk);
+          writtenSize += chunk.byteLength;
+          await this.sendState(FileOperationState.OperationProgress, data, { progress: (writtenSize / (fileSize || 1)) * 100 });
+        }
+      }
+      wStream.close();
+      const end = DateTime.now();
+      const diff = end.toMillis() - start.toMillis();
+
+      if (diff < MIN_OPERATION_TIME_MS) {
+        await wait(MIN_OPERATION_TIME_MS - diff);
+      }
+      await this.sendState(FileOperationState.EntryDownloaded, data);
+    } catch (e: any) {
+      await wStream.abort();
+      if (cancelled) {
+        await this.sendState(FileOperationState.Cancelled, data);
+      } else {
+        window.electronAPI.log('warn', `Error while downloading file: ${e?.toString()}`);
+        await this.sendState(FileOperationState.DownloadFailed, data);
+      }
+    }
+  }
+
   private async doImport(data: ImportData): Promise<void> {
     await this.sendState(FileOperationState.ImportStarted, data);
     const reader = data.file.stream().getReader();
@@ -848,6 +958,8 @@ class FileOperationManager {
           job = this.doCopy(elem as CopyData);
         } else if (elem.getDataType() === FileOperationDataType.Restore) {
           job = this.doRestore(elem as RestoreData);
+        } else if (elem.getDataType() === FileOperationDataType.Download) {
+          job = this.doDownload(elem as DownloadData);
         } else {
           console.warn(`Unhandled file operation '${elem.getDataType()}'`);
           continue;
@@ -870,4 +982,4 @@ class FileOperationManager {
   }
 }
 
-export { CopyData, FileOperationData, FileOperationManager, FileOperationState, ImportData, MoveData, RestoreData };
+export { CopyData, DownloadData, FileOperationData, FileOperationManager, FileOperationState, ImportData, MoveData, RestoreData };

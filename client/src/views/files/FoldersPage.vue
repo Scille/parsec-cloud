@@ -53,6 +53,13 @@
             @click="deleteEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
+            id="button-download"
+            v-show="parsec.isWeb()"
+            button-label="FoldersPage.fileContextMenu.actionDownload"
+            :icon="download"
+            @click="downloadEntries(getSelectedEntries())"
+          />
+          <ms-action-bar-button
             id="button-details"
             :button-label="'FoldersPage.fileContextMenu.actionDetails'"
             :icon="informationCircle"
@@ -86,6 +93,13 @@
             :button-label="'FoldersPage.fileContextMenu.actionDelete'"
             :icon="trashBin"
             @click="deleteEntries(getSelectedEntries())"
+          />
+          <ms-action-bar-button
+            id="button-download"
+            v-show="parsec.isWeb()"
+            button-label="FoldersPage.fileContextMenu.actionDownload"
+            :icon="download"
+            @click="downloadEntries(getSelectedEntries())"
           />
         </div>
         <div class="right-side">
@@ -274,12 +288,12 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { FileDetailsModal, FileContextMenu, FileAction, FolderGlobalContextMenu, FolderGlobalAction } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
-import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
+import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin, download } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
-import { showSaveFilePicker } from 'native-file-system-adapter';
+import { showDirectoryPicker, showSaveFilePicker } from 'native-file-system-adapter';
 
 interface FoldersPageSavedData {
   displayState?: DisplayState;
@@ -1145,24 +1159,83 @@ async function copyEntries(entries: EntryModel[]): Promise<void> {
 }
 
 async function downloadEntries(entries: EntryModel[]): Promise<void> {
-  if (entries.length !== 1) {
-    return;
-  }
   if (!workspaceInfo.value) {
     window.electronAPI.log('error', 'No workspace info when trying to download a file');
     return;
   }
+  if (entries.length < 1) {
+    return;
+  }
+  const filesOnly = entries.filter((e) => e.isFile());
 
-  try {
-    const saveHandle = await showSaveFilePicker({
-      _preferPolyfill: false,
-      suggestedName: entries[0].name,
-    });
+  // Only folders selected, abort
+  if (filesOnly.length === 0) {
+    informationManager.present(
+      new Information({
+        message: 'FoldersPage.DownloadFile.cannotDownloadFolders',
+        level: InformationLevel.Warning,
+      }),
+      PresentationMode.Toast,
+    );
+    return;
+  }
+  // Some folders selected, inform the user
+  if (filesOnly.length !== entries.length) {
+    informationManager.present(
+      new Information({
+        message: 'FoldersPage.DownloadFile.foldersNotDownloaded',
+        level: InformationLevel.Warning,
+      }),
+      PresentationMode.Toast,
+    );
+  }
 
-    const stream = await parsec.createReadStream(workspaceInfo.value.handle, entries[0].path);
-    await stream.pipeTo(await saveHandle.createWritable());
-  } catch (e: any) {
-    window.electronAPI.log('error', `Failed to download file: ${e.toString()}`);
+  if (filesOnly.length === 1) {
+    // Only one, we can use the showSaveFilePicker to get a handle
+    try {
+      const saveHandle = await showSaveFilePicker({
+        _preferPolyfill: false,
+        suggestedName: filesOnly[0].name,
+      });
+      await fileOperationManager.downloadEntry(workspaceInfo.value.handle, workspaceInfo.value.id, saveHandle, filesOnly[0].path);
+    } catch (e: any) {
+      window.electronAPI.log('error', `Failed to select destination file: ${e.toString()}`);
+    }
+  } else {
+    // Multiple, we use the showDirectoryPicker and get multiple handles
+    try {
+      let errors = 0;
+      const directoryHandle = await showDirectoryPicker({ _preferPolyfill: false });
+      for (const entry of filesOnly) {
+        try {
+          const saveHandle = await directoryHandle.getFileHandle(entry.name, { create: true });
+          await fileOperationManager.downloadEntry(workspaceInfo.value.handle, workspaceInfo.value.id, saveHandle, entry.path);
+        } catch (e: any) {
+          // Will probably happen if not enough permission
+          window.electronAPI.log('error', `Failed to get a file handle: ${e.toString()}`);
+          errors += 1;
+        }
+      }
+      if (errors === filesOnly.length) {
+        informationManager.present(
+          new Information({
+            message: 'FoldersPage.DownloadFile.allFailed',
+            level: InformationLevel.Info,
+          }),
+          PresentationMode.Toast,
+        );
+      } else if (errors > 0) {
+        informationManager.present(
+          new Information({
+            message: 'FoldersPage.DownloadFile.allFailed',
+            level: InformationLevel.Info,
+          }),
+          PresentationMode.Toast,
+        );
+      }
+    } catch (e: any) {
+      window.electronAPI.log('error', `Failed to select destination folder: ${e.toString()}`);
+    }
   }
 }
 

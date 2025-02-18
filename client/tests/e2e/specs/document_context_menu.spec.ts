@@ -112,8 +112,8 @@ for (const gridMode of [false, true]) {
     await expect(documents.locator('.file-context-menu')).toBeVisible();
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(1);
-    await expect(popover.getByRole('listitem')).toHaveCount(4);
-    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Move to', 'Make a copy', 'Delete']);
+    await expect(popover.getByRole('listitem')).toHaveCount(5);
+    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Move to', 'Make a copy', 'Delete', 'Download']);
   });
 
   msTest(`Popover with right click on empty space in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
