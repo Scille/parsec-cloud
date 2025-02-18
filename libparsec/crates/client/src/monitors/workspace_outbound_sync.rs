@@ -64,13 +64,52 @@ struct ConfinedEntriesTracker {
     recording: Option<HashSet<VlobID>>,
 }
 
+enum ConfinedEntriesTrackerStatusAfterInboundSync {
+    EntryIsConfinedButConcurrentChangeDetected,
+    KeepGoing,
+}
+
 impl ConfinedEntriesTracker {
     fn record_local_changes(&mut self) {
         self.recording = Some(HashSet::new());
     }
 
-    fn stop_recording_local_changes(&mut self) -> HashSet<VlobID> {
-        self.recording.take().unwrap_or_default()
+    fn stop_recording_local_changes_and_process_outcome(
+        &mut self,
+        entry_id: VlobID,
+        outcome: &Result<OutboundSyncOutcome, WorkspaceSyncError>,
+    ) -> ConfinedEntriesTrackerStatusAfterInboundSync {
+        // Consume the recording
+        let recording = self.recording.take().unwrap_or_default();
+
+        // Process the outcome here while we have the lock to avoid race conditions
+        match outcome {
+            Ok(OutboundSyncOutcome::Done | OutboundSyncOutcome::EntryIsUnreachable) => {
+                // Unregister the confined entry since it is no longer confined
+                self.unregister_confined_entry(entry_id)
+            }
+            Ok(OutboundSyncOutcome::EntryIsConfined {
+                confinement_point,
+                entry_chain,
+            }) => {
+                // The confinement members are all the entries between the confinement point and the entry
+                let confinement_members: HashSet<_> = entry_chain
+                    .iter()
+                    .skip_while(|&x| x != confinement_point)
+                    .filter(|&x| x != &entry_id)
+                    .copied()
+                    .collect();
+                // A confinement member has changed while we were syncing, try again
+                if !recording.is_disjoint(&confinement_members) {
+                    return ConfinedEntriesTrackerStatusAfterInboundSync::EntryIsConfinedButConcurrentChangeDetected;
+                }
+                // Register the confined entry
+                self.register_confined_entry(entry_id, confinement_members);
+            }
+            // For any other outcome, there is nothing to do
+            _ => (),
+        }
+        ConfinedEntriesTrackerStatusAfterInboundSync::KeepGoing
     }
 
     fn get_confined_entries_after_local_change(
@@ -268,10 +307,16 @@ fn task_future_factory(
                             .expect("Mutex is poisoned")
                             .record_local_changes();
                         let outcome = workspace_ops.outbound_sync(entry_id).await;
-                        let recorded_local_changes = confined_entries_tracker
+                        match confined_entries_tracker
                             .lock()
                             .expect("Mutex is poisoned")
-                            .stop_recording_local_changes();
+                            .stop_recording_local_changes_and_process_outcome(entry_id, &outcome) {
+                            ConfinedEntriesTrackerStatusAfterInboundSync::EntryIsConfinedButConcurrentChangeDetected => {
+                                // A concurrent change has been detected, try again
+                                continue;
+                            }
+                            ConfinedEntriesTrackerStatusAfterInboundSync::KeepGoing => (),
+                        }
                         log::debug!(
                             "Workspace {realm_id}: outbound sync {entry_id}, outcome: {outcome:?}"
                         );
@@ -283,33 +328,13 @@ fn task_future_factory(
                                 // but we will ignore it again.
                                 OutboundSyncOutcome::Done | OutboundSyncOutcome::EntryIsUnreachable,
                             ) => {
-                                // Unregister the confinement point
-                                confined_entries_tracker
-                                    .lock()
-                                    .expect("Mutex is poisoned")
-                                    .unregister_confined_entry(entry_id);
+                                // The tracking of the confined entries has already by done by
+                                // `stop_recording_local_changes_and_process_outcome` at this point.
                                 break;
                             }
-                            Ok(OutboundSyncOutcome::EntryIsConfined {
-                                confinement_point,
-                                entry_chain,
-                            }) => {
-                                // The confinement members are all the entries between the confinement point and the entry
-                                let confinement_members: HashSet<_> = entry_chain
-                                    .iter()
-                                    .skip_while(|&x| x != &confinement_point)
-                                    .filter(|&x| x != &entry_id)
-                                    .copied()
-                                    .collect();
-                                // A confinement member has changed while we were syncing, try again
-                                if !recorded_local_changes.is_disjoint(&confinement_members) {
-                                    continue;
-                                }
-                                // Register the confined entry
-                                confined_entries_tracker
-                                    .lock()
-                                    .expect("Mutex is poisoned")
-                                    .register_confined_entry(entry_id, confinement_members);
+                            Ok(OutboundSyncOutcome::EntryIsConfined { .. }) => {
+                                // The tracking of the confined entries has already by done by
+                                // `stop_recording_local_changes_and_process_outcome` at this point.
                                 break;
                             }
                             Ok(OutboundSyncOutcome::InboundSyncNeeded) => (),
