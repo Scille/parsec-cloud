@@ -417,6 +417,8 @@ async fn multi_devices_with_confinement(env: &TestbedEnv) {
     assert!(stat.is_empty());
 
     // 5) Alice1 rename the file so it's no longer confined
+    // But wait a bit first, to make sure the sync monitor have time to be in a resting state
+    libparsec_platform_async::sleep(std::time::Duration::from_millis(200)).await;
     alice1_workspace
         .move_entry(
             foo_bar_tmp_path.clone(),
@@ -617,6 +619,8 @@ async fn multi_devices_with_move_out_of_confinement(env: &TestbedEnv) {
     p_assert_matches!(stat, WorkspaceStatEntryError::EntryNotFound);
 
     // 5) Alice1 move the inner directory so it's no longer confined
+    // But wait a bit first, to make sure the sync monitor have time to be in a resting state
+    libparsec_platform_async::sleep(std::time::Duration::from_millis(200)).await;
     alice1_workspace
         .move_entry(
             "/foo.tmp/a/b".parse().unwrap(),
