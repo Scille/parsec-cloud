@@ -98,7 +98,9 @@ fn task_future_factory(
                                 // Make sure we do not block the stopping of the monitor here
                                 select2_biased!(
                                     _ = event_bus.wait_server_reconnect() => {},
-                                    _ = &mut syncer_stop_requested => {},
+                                    // `syncer_stop_requested` doesn't need to be fused (i.e. won't be
+                                    // polled once completed) given we return right away here.
+                                    _ = &mut syncer_stop_requested => return,
                                 )
                             }
                             // We have lost read access to the workspace, the certificates
