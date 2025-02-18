@@ -94,7 +94,7 @@
 
         <ion-item
           button
-          v-if="!multipleFiles && !isDesktop() && isFile"
+          v-if="!isDesktop() && isFile"
           @click="onClick(FileAction.Download)"
           class="ion-no-padding list-group-item"
         >

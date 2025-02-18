@@ -158,3 +158,22 @@ export async function testFileViewerZoomLevel(fileWrapper: Locator, zoom: string
   });
   expect(value).toMatch(new RegExp(`^--[a-f0-9]+-zoomLevel: ${zoom};$`));
 }
+
+export async function addDownloadedFile(win: Window, data: Uint8Array, name: string = 'default'): Promise<void> {
+  if ((win as any).__downloadedFiles === undefined) {
+    (win as any).__downloadedFiles = {
+      [name]: data,
+    };
+  } else {
+    (win as any).__downloadedFiles[name] = data;
+  }
+}
+
+export async function getDownloadedFile(page: Page, name: string = 'default'): Promise<Uint8Array | undefined> {
+  return await page.evaluate((name) => {
+    if ((window as any).__downloadedFiles && (window as any).__downloadedFiles[name]) {
+      return Array.from((window as any).__downloadedFiles[name]) as unknown as Uint8Array;
+    }
+    return undefined;
+  }, name);
+}

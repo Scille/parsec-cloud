@@ -634,6 +634,12 @@
             "failed": "failed",
             "failedDetails": "Could not restore this file or folder."
         },
+        "DownloadFile": {
+            "cannotDownloadFolders": "Cannot download folders.",
+            "foldersNotDownloaded": "Folders will not be downloaded.",
+            "allFailed": "Could not start the download of any file.",
+            "someFailed": "Could not start the download of some files."
+        },
         "uploadsLeft": "{amount} imports pending",
         "copiesLeft": "{amount} copies pending",
         "movesLeft": "{amount} moves pending",

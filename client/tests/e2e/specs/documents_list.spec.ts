@@ -80,8 +80,8 @@ msTest('Select all documents', async ({ documents }) => {
   }
 
   const actionBar = documents.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(3);
-  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['Move to', 'Make a copy', 'Delete']);
+  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(4);
+  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['Move to', 'Make a copy', 'Delete', 'Download']);
   await expect(actionBar.locator('.counter')).toHaveText(/\d+ selected items/, { useInnerText: true });
 
   await entries.nth(1).locator('ion-checkbox').click();

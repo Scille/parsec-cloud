@@ -19,30 +19,29 @@ msTest('Export recovery device', async ({ myProfilePage }) => {
   await expect(fileContainer.locator('ion-button')).toHaveText('Download');
   await expect(passphraseContainer.locator('ion-button')).toHaveText('Download');
 
-  /* Can't get the download to work properly */
-  // const fileDownloadPromise = myProfilePage.waitForEvent('download');
-  // await fileContainer.locator('ion-button').click();
-  // const fileDownload = await fileDownloadPromise;
-  // expect(fileDownload.suggestedFilename()).toBe('Parsec_Recovery_File_MyOrg.psrk');
-  // const fileStream = await fileDownload.createReadStream();
-  // fileStream.on('readable', async () => {
-  //   fileStream.setEncoding('utf-8');
-  //   expect(fileStream.read()).toBe('Q2lnYXJlQU1vdXN0YWNoZQ==');
-  //   await fileDownload.delete();
-  // });
+  const fileDownloadPromise = myProfilePage.waitForEvent('download');
   await fileContainer.locator('ion-button').click();
+  const fileDownload = await fileDownloadPromise;
+  // expect(fileDownload.suggestedFilename()).toBe('XX');
+  const fileStream = await fileDownload.createReadStream();
+  let fileContent = '';
+  for await (const chunk of fileStream) {
+    fileContent += chunk.toString();
+  }
+  expect(fileContent).toBe('meow');
+  await fileDownload.delete();
   await expect(myProfilePage).toShowToast('The recovery file was successfully downloaded', 'Success');
 
-  // const passphraseDownloadPromise = myProfilePage.waitForEvent('download');
-  // const passphraseDownload = await passphraseDownloadPromise;
-  // expect(passphraseDownload.suggestedFilename()).toBe('Recovery.psrk');
-  // const passphraseStream = await passphraseDownload.createReadStream();
-  // passphraseStream.on('readable', async () => {
-  //   passphraseStream.setEncoding('utf-8');
-  //   expect(passphraseStream.read()).toBe('ABCDEF');
-  // });
-
+  const passphraseDownloadPromise = myProfilePage.waitForEvent('download');
   await passphraseContainer.locator('ion-button').click();
+  const passphraseDownload = await passphraseDownloadPromise;
+  // expect(passphraseDownload.suggestedFilename()).toBe('XX');
+  const passphraseStream = await passphraseDownload.createReadStream();
+  let codeContent = '';
+  for await (const chunk of passphraseStream) {
+    codeContent += chunk.toString();
+  }
+  expect(codeContent).toBe('ABCDEF');
   await expect(myProfilePage).toShowToast('The secret key was successfully downloaded', 'Success');
 
   await expect(fileContainer.locator('ion-button')).toHaveText('Download again');

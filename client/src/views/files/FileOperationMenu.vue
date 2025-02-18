@@ -157,6 +157,7 @@ import {
   FileMoveItem,
   FileUploadItem,
   FileRestoreItem,
+  FileDownloadItem,
 } from '@/components/files';
 import { navigateToWorkspace } from '@/router';
 import useUploadMenu from '@/services/fileUploadMenu';
@@ -168,6 +169,7 @@ import {
   FileOperationState,
   StateData,
   FileOperationDataType,
+  DownloadData,
 } from '@/services/fileOperationManager';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { chevronDown, close } from 'ionicons/icons';
@@ -194,6 +196,7 @@ const queuedCopyItems = ref<Array<OperationItem>>([]);
 const queuedMoveItems = ref<Array<OperationItem>>([]);
 const queuedUploadItems = ref<Array<OperationItem>>([]);
 const queuedRestoreItems = ref<Array<OperationItem>>([]);
+const queuedDownloadItems = ref<Array<OperationItem>>([]);
 const doneItems = ref(new FIFO<OperationItem>(MAX_DONE_ERROR_ITEMS));
 const errorItems = ref(new FIFO<OperationItem>(MAX_DONE_ERROR_ITEMS));
 const doneItemsCount = ref<number>(0);
@@ -205,7 +208,8 @@ const inProgressAndQueuedLength = computed(() => {
     queuedUploadItems.value.length +
     queuedCopyItems.value.length +
     queuedMoveItems.value.length +
-    queuedRestoreItems.value.length
+    queuedRestoreItems.value.length +
+    queuedDownloadItems.value.length
   );
 });
 
@@ -247,6 +251,8 @@ function getFileOperationComponent(item: OperationItem): Component | undefined {
       return FileMoveItem;
     case FileOperationDataType.Restore:
       return FileRestoreItem;
+    case FileOperationDataType.Download:
+      return FileDownloadItem;
   }
 }
 
@@ -286,6 +292,13 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
             inProgressItems.value.push(item);
           }
           break;
+        case FileOperationDataType.Download:
+          index = queuedDownloadItems.value.findIndex((op) => op.data.id === data.id);
+          if (queuedDownloadItems.value[index]) {
+            const item = queuedDownloadItems.value.splice(index, 1)[0];
+            inProgressItems.value.push(item);
+          }
+          break;
       }
     }
   }
@@ -307,6 +320,10 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
         break;
       case FileOperationDataType.Restore:
         currentOperationArray = queuedRestoreItems.value;
+        break;
+      case FileOperationDataType.Download:
+        currentOperationArray = queuedDownloadItems.value;
+        break;
     }
     index = currentOperationArray.findIndex((op) => op.data.id === data.id);
   }
@@ -322,6 +339,7 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
         FileOperationState.EntryMoved,
         FileOperationState.EntryCopied,
         FileOperationState.EntryRestored,
+        FileOperationState.EntryDownloaded,
       ].includes(state)
     ) {
       operation.finishedDate = DateTime.now();
@@ -335,6 +353,7 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
         FileOperationState.CopyFailed,
         FileOperationState.Cancelled,
         FileOperationState.RestoreFailed,
+        FileOperationState.DownloadFailed,
       ].includes(state)
     ) {
       operation.finishedDate = DateTime.now();
@@ -347,11 +366,15 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
 }
 
 async function onOperationFinishedClick(operationData: FileOperationData, state: FileOperationState): Promise<void> {
-  if (state !== FileOperationState.FileImported) {
+  if (state !== FileOperationState.FileImported && state !== FileOperationState.EntryDownloaded) {
     return;
   }
   if (operationData.getDataType() === FileOperationDataType.Import) {
     await navigateToWorkspace(operationData.workspaceHandle, (operationData as ImportData).path, (operationData as ImportData).file.name);
+  } else if (operationData.getDataType() === FileOperationDataType.Download) {
+    const file = await (operationData as DownloadData).saveHandle.getFile();
+    const url = URL.createObjectURL(file);
+    window.open(url);
   }
   menu.minimize();
 }
@@ -425,6 +448,14 @@ async function onFileOperationEvent(
       });
       scrollToTop();
       break;
+    case FileOperationState.DownloadAdded:
+      queuedDownloadItems.value.push({
+        data: fileOperationData as FileOperationData,
+        state: state,
+        stateData: stateData,
+      });
+      scrollToTop();
+      break;
     case FileOperationState.OperationProgress:
       updateImportState(fileOperationData as FileOperationData, state, stateData);
       break;
@@ -432,12 +463,14 @@ async function onFileOperationEvent(
     case FileOperationState.EntryMoved:
     case FileOperationState.EntryCopied:
     case FileOperationState.EntryRestored:
+    case FileOperationState.EntryDownloaded:
       updateImportState(fileOperationData as FileOperationData, state, stateData);
       break;
     case FileOperationState.CreateFailed:
     case FileOperationState.MoveFailed:
     case FileOperationState.CopyFailed:
     case FileOperationState.RestoreFailed:
+    case FileOperationState.DownloadFailed:
       updateImportState(fileOperationData as FileOperationData, state, stateData);
       break;
     case FileOperationState.Cancelled:

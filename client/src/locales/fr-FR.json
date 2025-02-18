@@ -634,6 +634,12 @@
             "failed": "échoué",
             "failedDetails": "Impossible de restaurer ce fichier ou dossier."
         },
+        "DownloadFile": {
+            "cannotDownloadFolders": "Impossible de télécharger des dossiers.",
+            "foldersNotDownloaded": "Les dossiers ne seront pas téléchargés.",
+            "allFailed": "Impossible de démarrer le téléchargement des fichiers.",
+            "someFailed": "Impossible de démarrer le téléchargement de certains fichiers."
+        },
         "uploadsLeft": "{amount} imports en attente",
         "copiesLeft": "{amount} copies en attente",
         "movesLeft": "{amount} déplacements en attente",

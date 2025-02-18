@@ -5,6 +5,7 @@ import FileAggregateQueuedItem from '@/components/files/FileAggregateQueuedItem.
 import FileCard from '@/components/files/FileCard.vue';
 import FileCardProcessing from '@/components/files/FileCardProcessing.vue';
 import FileCopyItem from '@/components/files/FileCopyItem.vue';
+import FileDownloadItem from '@/components/files/FileDownloadItem.vue';
 import FileDropZone from '@/components/files/FileDropZone.vue';
 import FileGridDisplay from '@/components/files/FileGridDisplay.vue';
 import FileImportPopover from '@/components/files/FileImportPopover.vue';
@@ -35,6 +36,7 @@ export {
   FileCard,
   FileCardProcessing,
   FileCopyItem,
+  FileDownloadItem,
   FileDropZone,
   FileGridDisplay,
   FileImportPopover,

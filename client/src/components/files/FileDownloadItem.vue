@@ -4,9 +4,9 @@
   <div
     class="element-container"
     :class="{
-      waiting: state === FileOperationState.FileAdded,
+      waiting: state === FileOperationState.DownloadAdded,
       progress: state === FileOperationState.OperationProgress,
-      done: state === FileOperationState.FileImported,
+      done: state === FileOperationState.EntryDownloaded,
       cancelled: state === FileOperationState.Cancelled,
       failed: state === FileOperationState.CreateFailed,
     }"
@@ -18,17 +18,22 @@
       <div class="element-type">
         <div class="element-type__icon">
           <ms-image
-            :image="getFileIcon(fileCache.name)"
+            :image="getFileIcon(entryName)"
             class="file-icon"
           />
         </div>
       </div>
       <div class="element-details">
         <ion-text class="element-details__name body">
-          {{ shortenFileName(fileCache.name, { suffixLength: 4, maxLength: 42 }) }}
+          {{ shortenFileName(entryName, { suffixLength: 4, maxLength: 42 }) }}
         </ion-text>
         <ion-label class="element-details-info body-sm">
-          <span class="default-state element-details-info__size">{{ $msTranslate(formatFileSize(fileCache.size)) }}</span>
+          <span
+            v-if="entrySize"
+            class="default-state element-details-info__size"
+          >
+            {{ $msTranslate(formatFileSize(entrySize)) }}
+          </span>
           <span
             class="default-state element-details-info__workspace"
             v-if="workspaceName"
@@ -37,7 +42,7 @@
           </span>
           <span
             class="hover-state"
-            v-show="state === FileOperationState.FileImported"
+            v-show="state === FileOperationState.EntryDownloaded"
           >
             {{ $msTranslate('FoldersPage.ImportFile.browse') }}
           </span>
@@ -48,7 +53,7 @@
       <div class="waiting-info">
         <ion-text
           class="waiting-text body"
-          v-if="state === FileOperationState.FileAdded"
+          v-if="state === FileOperationState.DownloadAdded"
         >
           {{ $msTranslate('FoldersPage.ImportFile.waiting') }}
         </ion-text>
@@ -56,7 +61,7 @@
           fill="clear"
           size="small"
           class="cancel-button"
-          v-if="state === FileOperationState.FileAdded"
+          v-if="state === FileOperationState.DownloadAdded"
           @click="$emit('cancel', operationData.id)"
         >
           <ion-icon
@@ -85,12 +90,12 @@
       <!-- done -->
       <ion-icon
         class="checkmark-icon default-state"
-        v-show="state === FileOperationState.FileImported"
+        v-show="state === FileOperationState.EntryDownloaded"
         :icon="checkmarkCircle"
       />
       <ion-icon
         class="arrow-icon hover-state"
-        v-show="state === FileOperationState.FileImported"
+        v-show="state === FileOperationState.EntryDownloaded"
         :icon="arrowForward"
       />
 
@@ -105,7 +110,7 @@
       <!-- failed -->
       <div
         class="failed-content"
-        v-if="state === FileOperationState.CreateFailed"
+        v-if="state === FileOperationState.DownloadFailed"
       >
         <ion-text class="failed-text body">
           {{ $msTranslate('FoldersPage.ImportFile.failed') }}
@@ -127,25 +132,23 @@
 </template>
 
 <script setup lang="ts">
-import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
+import { getFileIcon, shortenFileName, formatFileSize } from '@/common/file';
 import { MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance } from 'megashark-lib';
-import { getWorkspaceName } from '@/parsec';
-import { ImportData, FileOperationState, StateData, OperationProgressStateData } from '@/services/fileOperationManager';
+import { EntryName, entryStat, EntryStatFile, getWorkspaceName } from '@/parsec';
+import { FileOperationState, StateData, OperationProgressStateData, DownloadData } from '@/services/fileOperationManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { arrowForward, checkmarkCircle, closeCircle } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
+import { onMounted, Ref, ref } from 'vue';
 
 const props = defineProps<{
-  operationData: ImportData;
+  operationData: DownloadData;
   state: FileOperationState;
   stateData?: StateData;
 }>();
 
-// Props get refreshed for every event but the file name or size
-// will never change, so we cache them.
-const fileCache = structuredClone(props.operationData.file);
-
 const workspaceName = ref('');
+const entryName: Ref<EntryName> = ref('');
+const entrySize = ref<number>();
 
 defineExpose({
   props,
@@ -153,10 +156,15 @@ defineExpose({
 
 onMounted(async () => {
   workspaceName.value = await getWorkspaceName(props.operationData.workspaceHandle);
+  const statsResult = await entryStat(props.operationData.workspaceHandle, props.operationData.path);
+  if (statsResult.ok && statsResult.value.isFile()) {
+    entryName.value = statsResult.value.name;
+    entrySize.value = (statsResult.value as EntryStatFile).size;
+  }
 });
 
 function getProgress(): number {
-  if (props.state === FileOperationState.Cancelled || props.state === FileOperationState.FileImported) {
+  if (props.state === FileOperationState.Cancelled || props.state === FileOperationState.EntryDownloaded) {
     return 100;
   } else if (props.state === FileOperationState.OperationProgress && props.stateData) {
     return (props.stateData as OperationProgressStateData).progress;
@@ -166,7 +174,7 @@ function getProgress(): number {
 
 defineEmits<{
   (event: 'cancel', id: string): void;
-  (event: 'click', operationData: ImportData, state: FileOperationState): void;
+  (event: 'click', operationData: DownloadData, state: FileOperationState): void;
 }>();
 </script>
 
