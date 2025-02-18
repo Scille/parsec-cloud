@@ -61,9 +61,31 @@ pub(crate) async fn start_workspace_outbound_sync_monitor(
 struct ConfinedEntriesTracker {
     confinement_point_to_confined_entries: HashMap<VlobID, HashSet<VlobID>>,
     confined_entry_to_confinement_point: HashMap<VlobID, VlobID>,
+    recording: Option<HashSet<VlobID>>,
 }
 
 impl ConfinedEntriesTracker {
+    fn record_local_changes(&mut self) {
+        self.recording = Some(HashSet::new());
+    }
+
+    fn stop_recording_local_changes(&mut self) -> HashSet<VlobID> {
+        self.recording.take().unwrap_or_default()
+    }
+
+    fn get_confined_entries_after_local_change(
+        &mut self,
+        confinement_point: VlobID,
+    ) -> Vec<VlobID> {
+        if let Some(recording) = self.recording.as_mut() {
+            recording.insert(confinement_point);
+        }
+        self.confinement_point_to_confined_entries
+            .get(&confinement_point)
+            .map(|confined_entries| confined_entries.iter().copied().collect())
+            .unwrap_or_default()
+    }
+
     fn register_confined_entry(&mut self, confinement_point: VlobID, confined_entry: VlobID) {
         self.confinement_point_to_confined_entries
             .entry(confinement_point)
@@ -89,13 +111,6 @@ impl ConfinedEntriesTracker {
                 }
             }
         }
-    }
-
-    fn get_confined_entries(&self, confinement_point: VlobID) -> Vec<VlobID> {
-        self.confinement_point_to_confined_entries
-            .get(&confinement_point)
-            .map(|confined_entries| confined_entries.iter().copied().collect())
-            .unwrap_or_default()
     }
 }
 
@@ -234,7 +249,15 @@ fn task_future_factory(
                         Err(_) => return,
                     };
                     loop {
+                        confined_entries_tracker
+                            .lock()
+                            .expect("Mutex is poisoned")
+                            .record_local_changes();
                         let outcome = workspace_ops.outbound_sync(entry_id).await;
+                        let recorded_local_changes = confined_entries_tracker
+                            .lock()
+                            .expect("Mutex is poisoned")
+                            .stop_recording_local_changes();
                         log::debug!(
                             "Workspace {realm_id}: outbound sync {entry_id}, outcome: {outcome:?}"
                         );
@@ -254,6 +277,10 @@ fn task_future_factory(
                                 break;
                             }
                             Ok(OutboundSyncOutcome::EntryIsConfined(confinement_point)) => {
+                                // The confinement point has changed while we were syncing, try again
+                                if recorded_local_changes.contains(&confinement_point) {
+                                    continue;
+                                }
                                 // Register the confinement point
                                 confined_entries_tracker
                                     .lock()
@@ -444,7 +471,7 @@ fn task_future_factory(
                         confined_entries_tracker
                             .lock()
                             .expect("Mutex is poisoned")
-                            .get_confined_entries(entry_id),
+                            .get_confined_entries_after_local_change(entry_id),
                     );
                     let now = device.now();
                     for entry_id in entries_to_schedule {
