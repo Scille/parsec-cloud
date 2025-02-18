@@ -3,19 +3,14 @@
 use keyring::Entry as KeyringEntry;
 use libparsec_platform_async::future::FutureExt as _;
 use std::{
-    ffi::OsStr,
     path::{Path, PathBuf},
     sync::Arc,
 };
 use uuid::Uuid;
-use zeroize::{Zeroize, Zeroizing};
 
 use libparsec_types::prelude::*;
 
-use crate::{
-    ChangeAuthentificationError, LoadDeviceError, SaveDeviceError, ARGON2ID_DEFAULT_MEMLIMIT_KB,
-    ARGON2ID_DEFAULT_OPSLIMIT, ARGON2ID_DEFAULT_PARALLELISM, DEVICE_FILE_EXT,
-};
+use crate::{ChangeAuthentificationError, LoadDeviceError, SaveDeviceError, DEVICE_FILE_EXT};
 
 const KEYRING_SERVICE: &str = "parsec";
 
@@ -43,9 +38,8 @@ fn find_device_files(path: PathBuf) -> Vec<PathBuf> {
     // `fs::read_dir` fails if path doesn't exists, is not a folder or is not
     // accessible... In any case, there is not much we can do but to ignore it.
     if let Ok(children) = std::fs::read_dir(path) {
-        for child_dir in children.filter_map(|entry| entry.ok()) {
-            let path = child_dir.path();
-            if path.extension() == Some(OsStr::new(DEVICE_FILE_EXT)) {
+        for path in children.filter_map(|entry| entry.as_ref().map(std::fs::DirEntry::path).ok()) {
+            if path.extension() == Some(DEVICE_FILE_EXT.as_ref()) {
                 key_file_paths.push(path)
             } else if path.is_dir() {
                 key_file_paths.append(&mut find_device_files(path))
@@ -148,13 +142,7 @@ pub async fn load_device(
         _ => Err(LoadDeviceError::InvalidData),
     }?;
 
-    let mut cleartext = key
-        .decrypt(device_file.ciphertext())
-        .map_err(|_| LoadDeviceError::DecryptionFailed)?;
-
-    let device = LocalDevice::load(&cleartext).map_err(|_| LoadDeviceError::InvalidData)?;
-
-    cleartext.zeroize();
+    let device = super::decrypt_device_file(&device_file, &key)?;
 
     Ok((Arc::new(device), created_on))
 }
@@ -223,15 +211,7 @@ pub async fn save_device(
     created_on: DateTime,
 ) -> Result<AvailableDevice, SaveDeviceError> {
     let protected_on = device.now();
-    let server_url = {
-        ParsecAddr::new(
-            device.organization_addr.hostname().to_owned(),
-            Some(device.organization_addr.port()),
-            device.organization_addr.use_ssl(),
-        )
-        .to_http_url(None)
-        .to_string()
-    };
+    let server_url = super::server_url_from_device(device);
 
     match access {
         DeviceAccessStrategy::Keyring { key_file } => {
@@ -257,8 +237,7 @@ pub async fn save_device(
                 None => generate_keyring_user(&keyring_user_path).await?,
             };
 
-            let cleartext = device.dump();
-            let ciphertext = key.encrypt(&cleartext);
+            let ciphertext = super::encrypt_device(device, &key);
 
             let file_content = DeviceFile::Keyring(DeviceFileKeyring {
                 created_on,
@@ -271,7 +250,7 @@ pub async fn save_device(
                 device_label: device.device_label.clone(),
                 keyring_service: KEYRING_SERVICE.into(),
                 keyring_user,
-                ciphertext: ciphertext.into(),
+                ciphertext,
             });
 
             let file_content = file_content.dump();
@@ -280,25 +259,11 @@ pub async fn save_device(
         }
 
         DeviceAccessStrategy::Password { key_file, password } => {
-            let salt = SecretKey::generate_salt();
-            let opslimit = ARGON2ID_DEFAULT_OPSLIMIT;
-            let memlimit_kb = ARGON2ID_DEFAULT_MEMLIMIT_KB;
-            let parallelism = ARGON2ID_DEFAULT_PARALLELISM;
+            let key_algo = super::new_default_pbkdf_algo();
+            let key = super::secret_key_from_password(password, &key_algo)
+                .expect("Salt has the correct length");
 
-            let key = SecretKey::from_argon2id_password(
-                password,
-                &salt,
-                opslimit,
-                memlimit_kb,
-                parallelism,
-            )
-            .expect("Salt has the correct length");
-
-            let ciphertext = {
-                let cleartext = Zeroizing::new(device.dump());
-                let ciphertext = key.encrypt(&cleartext);
-                ciphertext.into()
-            };
+            let ciphertext = super::encrypt_device(device, &key);
 
             let file_content = DeviceFile::Password(DeviceFilePassword {
                 created_on,
@@ -309,12 +274,7 @@ pub async fn save_device(
                 device_id: device.device_id,
                 human_handle: device.human_handle.to_owned(),
                 device_label: device.device_label.to_owned(),
-                algorithm: DeviceFilePasswordAlgorithm::Argon2id {
-                    salt: salt.into(),
-                    opslimit: opslimit.into(),
-                    memlimit_kb: memlimit_kb.into(),
-                    parallelism: parallelism.into(),
-                },
+                algorithm: key_algo,
                 ciphertext,
             });
 
