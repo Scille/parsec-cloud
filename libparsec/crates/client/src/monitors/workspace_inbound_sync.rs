@@ -217,46 +217,57 @@ impl InboundSyncManagerIO for RealInboundSyncManagerIO {
 
 #[derive(Default, Debug)]
 struct ConfinedEntriesTracker {
-    confinement_point_to_confined_entries: HashMap<VlobID, HashSet<VlobID>>,
-    confined_entry_to_confinement_point: HashMap<VlobID, VlobID>,
+    confinement_member_to_confined_entries: HashMap<VlobID, HashSet<VlobID>>,
+    confined_entry_to_confinement_members: HashMap<VlobID, HashSet<VlobID>>,
 }
 
 impl ConfinedEntriesTracker {
     fn register_confined_entry(
         &mut self,
-        confinement_point: VlobID,
-        _entry_chain: &[VlobID],
         confined_entry: VlobID,
+        confinement_point: VlobID,
+        entry_chain: &[VlobID],
     ) {
-        self.confinement_point_to_confined_entries
-            .entry(confinement_point)
-            .or_default()
-            .insert(confined_entry);
-        self.confined_entry_to_confinement_point
-            .insert(confined_entry, confinement_point);
+        // The confinement members are all the entries between the confinement point and the entry
+        let confinement_members: HashSet<_> = entry_chain
+            .iter()
+            .skip_while(|&x| x != &confinement_point)
+            .filter(|&x| x != &confined_entry)
+            .copied()
+            .collect();
+        for confinement_member in confinement_members.iter() {
+            self.confinement_member_to_confined_entries
+                .entry(*confinement_member)
+                .or_default()
+                .insert(confined_entry);
+        }
+        self.confined_entry_to_confinement_members
+            .insert(confined_entry, confinement_members);
     }
 
     fn unregister_confined_entry(&mut self, confined_entry: VlobID) {
-        if let Some(confinement_point) = self
-            .confined_entry_to_confinement_point
+        if let Some(confinement_members) = self
+            .confined_entry_to_confinement_members
             .remove(&confined_entry)
         {
-            if let Some(confined_entries) = self
-                .confinement_point_to_confined_entries
-                .get_mut(&confinement_point)
-            {
-                confined_entries.remove(&confined_entry);
-                if confined_entries.is_empty() {
-                    self.confinement_point_to_confined_entries
-                        .remove(&confinement_point);
+            for confinement_member in confinement_members {
+                if let Some(confined_entries) = self
+                    .confinement_member_to_confined_entries
+                    .get_mut(&confinement_member)
+                {
+                    confined_entries.remove(&confined_entry);
+                    if confined_entries.is_empty() {
+                        self.confinement_member_to_confined_entries
+                            .remove(&confinement_member);
+                    }
                 }
             }
         }
     }
 
-    fn get_confined_entries(&self, confinement_point: VlobID) -> Vec<VlobID> {
-        self.confinement_point_to_confined_entries
-            .get(&confinement_point)
+    fn get_confined_entries(&self, confinement_member: VlobID) -> Vec<VlobID> {
+        self.confinement_member_to_confined_entries
+            .get(&confinement_member)
             .map(|confined_entries| confined_entries.iter().copied().collect())
             .unwrap_or_default()
     }
@@ -380,9 +391,9 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                     }) => {
                         // Add the entry to the list of confined entries
                         confined_entries_tracker.register_confined_entry(
+                            entry_id,
                             confinement_point,
                             &entry_chain,
-                            entry_id,
                         );
                         break;
                     }

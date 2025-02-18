@@ -59,8 +59,8 @@ pub(crate) async fn start_workspace_outbound_sync_monitor(
 
 #[derive(Default, Debug)]
 struct ConfinedEntriesTracker {
-    confinement_point_to_confined_entries: HashMap<VlobID, HashSet<VlobID>>,
-    confined_entry_to_confinement_point: HashMap<VlobID, VlobID>,
+    confinement_member_to_confined_entries: HashMap<VlobID, HashSet<VlobID>>,
+    confined_entry_to_confinement_members: HashMap<VlobID, HashSet<VlobID>>,
     recording: Option<HashSet<VlobID>>,
 }
 
@@ -75,44 +75,47 @@ impl ConfinedEntriesTracker {
 
     fn get_confined_entries_after_local_change(
         &mut self,
-        confinement_point: VlobID,
+        confinement_member: VlobID,
     ) -> Vec<VlobID> {
         if let Some(recording) = self.recording.as_mut() {
-            recording.insert(confinement_point);
+            recording.insert(confinement_member);
         }
-        self.confinement_point_to_confined_entries
-            .get(&confinement_point)
+        self.confinement_member_to_confined_entries
+            .get(&confinement_member)
             .map(|confined_entries| confined_entries.iter().copied().collect())
             .unwrap_or_default()
     }
 
     fn register_confined_entry(
         &mut self,
-        confinement_point: VlobID,
-        _entry_chain: &[VlobID],
         confined_entry: VlobID,
+        confinement_members: HashSet<VlobID>,
     ) {
-        self.confinement_point_to_confined_entries
-            .entry(confinement_point)
-            .or_default()
-            .insert(confined_entry);
-        self.confined_entry_to_confinement_point
-            .insert(confined_entry, confinement_point);
+        for confinement_member in confinement_members.iter() {
+            self.confinement_member_to_confined_entries
+                .entry(*confinement_member)
+                .or_default()
+                .insert(confined_entry);
+        }
+        self.confined_entry_to_confinement_members
+            .insert(confined_entry, confinement_members);
     }
 
     fn unregister_confined_entry(&mut self, confined_entry: VlobID) {
-        if let Some(confinement_point) = self
-            .confined_entry_to_confinement_point
+        if let Some(confinement_members) = self
+            .confined_entry_to_confinement_members
             .remove(&confined_entry)
         {
-            if let Some(confined_entries) = self
-                .confinement_point_to_confined_entries
-                .get_mut(&confinement_point)
-            {
-                confined_entries.remove(&confined_entry);
-                if confined_entries.is_empty() {
-                    self.confinement_point_to_confined_entries
-                        .remove(&confinement_point);
+            for confinement_member in confinement_members {
+                if let Some(confined_entries) = self
+                    .confinement_member_to_confined_entries
+                    .get_mut(&confinement_member)
+                {
+                    confined_entries.remove(&confined_entry);
+                    if confined_entries.is_empty() {
+                        self.confinement_member_to_confined_entries
+                            .remove(&confinement_member);
+                    }
                 }
             }
         }
@@ -291,19 +294,22 @@ fn task_future_factory(
                                 confinement_point,
                                 entry_chain,
                             }) => {
-                                // The confinement point has changed while we were syncing, try again
-                                if recorded_local_changes.contains(&confinement_point) {
+                                // The confinement members are all the entries between the confinement point and the entry
+                                let confinement_members: HashSet<_> = entry_chain
+                                    .iter()
+                                    .skip_while(|&x| x != &confinement_point)
+                                    .filter(|&x| x != &entry_id)
+                                    .copied()
+                                    .collect();
+                                // A confinement member has changed while we were syncing, try again
+                                if !recorded_local_changes.is_disjoint(&confinement_members) {
                                     continue;
                                 }
-                                // Register the confinement point
+                                // Register the confined entry
                                 confined_entries_tracker
                                     .lock()
                                     .expect("Mutex is poisoned")
-                                    .register_confined_entry(
-                                        confinement_point,
-                                        &entry_chain,
-                                        entry_id,
-                                    );
+                                    .register_confined_entry(entry_id, confinement_members);
                                 break;
                             }
                             Ok(OutboundSyncOutcome::InboundSyncNeeded) => (),
