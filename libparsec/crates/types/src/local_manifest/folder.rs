@@ -419,6 +419,7 @@ impl UnconfinedLocalFolderManifest {
                 if existing_local_manifest
                     .local_confinement_points
                     .contains(entry_id)
+                    && new_entry_ids.get(entry_id) != Some(&name)
                 {
                     // Perform a rename if the entry id is already present in the new manifest
                     if let Some(&previous_name) = new_entry_ids.get(entry_id) {
