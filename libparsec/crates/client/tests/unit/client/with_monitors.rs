@@ -13,6 +13,8 @@ use crate::{
     WorkspaceStorageCacheSize,
 };
 
+// Those tests are quite heavy and might be flaky, due to hard-polling for events.
+// Do not hesitate to ignore them using `#[ignore]` if they happen to make the CI fail.
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn multi_devices(env: &TestbedEnv) {
     let alice1 = env.local_device("alice@dev1");
@@ -131,6 +133,8 @@ async fn multi_devices(env: &TestbedEnv) {
     alice2_client.stop().await;
 }
 
+// Those tests are quite heavy and might be flaky, due to hard-polling for events.
+// Do not hesitate to ignore them using `#[ignore]` if they happen to make the CI fail.
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn sharing(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
@@ -260,6 +264,8 @@ async fn wait_workspace_in_sync(workspace1: &WorkspaceOps, workspace2: &Workspac
     }
 }
 
+// Those tests are quite heavy and might be flaky, due to hard-polling for events.
+// Do not hesitate to ignore them using `#[ignore]` if they happen to make the CI fail.
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn multi_devices_with_confinement(env: &TestbedEnv) {
     let alice1 = env.local_device("alice@dev1");
@@ -448,6 +454,8 @@ async fn multi_devices_with_confinement(env: &TestbedEnv) {
     }
 }
 
+// Those tests are quite heavy and might be flaky, due to hard-polling for events.
+// Do not hesitate to ignore them using `#[ignore]` if they happen to make the CI fail.
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn multi_devices_with_move_out_of_confinement(env: &TestbedEnv) {
     let alice1 = env.local_device("alice@dev1");
