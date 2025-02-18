@@ -6,8 +6,11 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    workspace::EntryStat, workspace::OpenOptions, workspace::WorkspaceOps, Client, ClientConfig,
-    EventBus, MountpointMountStrategy, WorkspaceInfo, WorkspaceStorageCacheSize,
+    workspace::{
+        EntryStat, OpenOptions, WorkspaceOpenFileError, WorkspaceOps, WorkspaceStatEntryError,
+    },
+    Client, ClientConfig, EventBus, MountpointMountStrategy, WorkspaceInfo,
+    WorkspaceStorageCacheSize,
 };
 
 #[parsec_test(testbed = "coolorg", with_server)]
@@ -418,9 +421,142 @@ async fn multi_devices_with_confinement(env: &TestbedEnv) {
         .unwrap();
 
     // Alice2 sees the file again, with the new content
+    loop {
+        let result = alice2_workspace
+            .open_file(foo_bar_txt_path.clone(), OpenOptions::read_only())
+            .await;
+        let fd = match result {
+            Ok(fd) => fd,
+            Err(WorkspaceOpenFileError::EntryNotFound) => {
+                // Not found, wait a bit and retry
+                libparsec_platform_async::sleep(std::time::Duration::from_millis(50)).await;
+                continue;
+            }
+            Err(err) => panic!("Unexpected error: {:?}", err),
+        };
+        let mut result = vec![];
+        alice2_workspace
+            .fd_read(fd, 0, 1024, &mut result)
+            .await
+            .unwrap();
+        alice2_workspace.fd_close(fd).await.unwrap();
+        if result == b"Second write" {
+            break;
+        };
+        // Not the right data, wait a bit and retry
+        libparsec_platform_async::sleep(std::time::Duration::from_millis(50)).await;
+    }
+}
+
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn multi_devices_with_move_out_of_confinement(env: &TestbedEnv) {
+    let alice1 = env.local_device("alice@dev1");
+    let alice2 = env.local_device("alice@dev2");
+
+    let alice1_config = Arc::new(ClientConfig {
+        config_dir: env.discriminant_dir.clone(),
+        data_base_dir: env.discriminant_dir.clone(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
+        workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
+        proxy: libparsec_client_connection::ProxyConfig::default(),
+        with_monitors: true,
+        prevent_sync_pattern: PreventSyncPattern::from_glob("*.tmp").unwrap(),
+    });
+    let alice2_config = Arc::new(ClientConfig {
+        config_dir: env.discriminant_dir.clone(),
+        data_base_dir: env.discriminant_dir.clone(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
+        workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
+        proxy: libparsec_client_connection::ProxyConfig::default(),
+        with_monitors: true,
+        prevent_sync_pattern: PreventSyncPattern::empty(),
+    });
+    let alice1_event_bus = EventBus::default();
+    let alice2_event_bus = EventBus::default();
+
+    // 1) Start Alice clients
+
+    let alice1_client = Client::start(alice1_config, alice1_event_bus, alice1)
+        .await
+        .unwrap();
+    let alice2_client = Client::start(alice2_config, alice2_event_bus, alice2.clone())
+        .await
+        .unwrap();
+
+    // 2a) Alice1 creates a workspace...
+
+    let wid = alice1_client
+        .create_workspace("new workspace".parse().unwrap())
+        .await
+        .unwrap();
+
+    // 2b) ...then Alice2 eventually gets notified about it
+
+    // TODO: use event instead of this ugly polling loop !
+    loop {
+        let workspaces = alice2_client.list_workspaces().await;
+        let found = workspaces.into_iter().find(|entry| {
+            entry.id == wid && entry.current_name == "new workspace".parse().unwrap()
+        });
+        if let Some(entry) = found {
+            let WorkspaceInfo {
+                id,
+                current_name,
+                current_self_role,
+                is_started,
+                is_bootstrapped,
+            } = entry;
+            p_assert_eq!(id, wid);
+            p_assert_eq!(current_name, "new workspace".parse().unwrap());
+            p_assert_eq!(current_self_role, RealmRole::Owner);
+            p_assert_eq!(is_started, false);
+            p_assert_eq!(is_bootstrapped, true);
+            break;
+        }
+        // Not found, wait a bit and retry
+        libparsec_platform_async::sleep(std::time::Duration::from_millis(50)).await;
+    }
+
+    // 3a) Alice1 creates a new file in the workspace...
+
+    let alice1_workspace = alice1_client.start_workspace(wid).await.unwrap();
+    alice1_workspace
+        .create_folder("/foo".parse().unwrap())
+        .await
+        .unwrap();
+    alice1_workspace
+        .create_folder("/baz".parse().unwrap())
+        .await
+        .unwrap();
+    alice1_workspace
+        .create_folder("/foo/a".parse().unwrap())
+        .await
+        .unwrap();
+    alice1_workspace
+        .create_folder("/foo/a/b".parse().unwrap())
+        .await
+        .unwrap();
+    let foo_bar_txt_path: FsPath = "/foo/a/b/bar.txt".parse().unwrap();
+    alice1_workspace
+        .create_file(foo_bar_txt_path.clone())
+        .await
+        .unwrap();
+    let fd = alice1_workspace
+        .open_file(foo_bar_txt_path.clone(), OpenOptions::read_write())
+        .await
+        .unwrap();
+    alice1_workspace
+        .fd_write(fd, 0, b"First write")
+        .await
+        .unwrap();
+    alice1_workspace.fd_close(fd).await.unwrap();
+
+    // 3b) ...then Alice2 can start its workspace and access it too !
+
+    let alice2_workspace = alice2_client.start_workspace(wid).await.unwrap();
     wait_workspace_in_sync(&alice1_workspace, &alice2_workspace).await;
     let fd = alice2_workspace
-        .open_file(foo_bar_txt_path, OpenOptions::read_only())
+        .open_file(foo_bar_txt_path.clone(), OpenOptions::read_only())
         .await
         .unwrap();
     let mut result = vec![];
@@ -429,5 +565,84 @@ async fn multi_devices_with_confinement(env: &TestbedEnv) {
         .await
         .unwrap();
     alice2_workspace.fd_close(fd).await.unwrap();
-    p_assert_eq!(result, b"Second write");
+    p_assert_eq!(result, b"First write");
+
+    // 4) Alice confine the file and update it
+    alice1_workspace
+        .move_entry(
+            "/foo".parse().unwrap(),
+            "/foo.tmp".parse().unwrap(),
+            crate::workspace::MoveEntryMode::NoReplace,
+        )
+        .await
+        .unwrap();
+    let foo_bar_tmp_path: FsPath = "/foo.tmp/a/b/bar.txt".parse().unwrap();
+    let fd = alice1_workspace
+        .open_file(foo_bar_tmp_path.clone(), OpenOptions::read_write())
+        .await
+        .unwrap();
+    alice1_workspace
+        .fd_write(fd, 0, b"Second write")
+        .await
+        .unwrap();
+    alice1_workspace.fd_close(fd).await.unwrap();
+
+    // The file is confined and not synced anymore on Alice1 side
+    wait_workspace_in_sync(&alice1_workspace, &alice2_workspace).await;
+    let stat = alice1_workspace
+        .stat_entry(&foo_bar_tmp_path.clone())
+        .await
+        .unwrap();
+    p_assert_matches!(
+        stat,
+        EntryStat::File {
+            need_sync: true,
+            ..
+        }
+    );
+
+    // Alice2 doesn't see the file anymore
+    let stat = alice2_workspace
+        .stat_entry(&"/foo".parse().unwrap())
+        .await
+        .unwrap_err();
+    p_assert_matches!(stat, WorkspaceStatEntryError::EntryNotFound);
+
+    // 5) Alice1 move the inner directory so it's no longer confined
+    alice1_workspace
+        .move_entry(
+            "/foo.tmp/a/b".parse().unwrap(),
+            "/baz/b".parse().unwrap(),
+            crate::workspace::MoveEntryMode::NoReplace,
+        )
+        .await
+        .unwrap();
+
+    // Alice2 sees the file again, with the new content
+
+    loop {
+        let result = alice2_workspace
+            .open_file("/baz/b/bar.txt".parse().unwrap(), OpenOptions::read_only())
+            .await;
+        let fd = match result {
+            Ok(fd) => fd,
+            Err(WorkspaceOpenFileError::EntryNotFound) => {
+                // Not found, wait a bit and retry
+                libparsec_platform_async::sleep(std::time::Duration::from_millis(50)).await;
+                continue;
+            }
+            Err(err) => panic!("Unexpected error: {:?}", err),
+        };
+        let mut result = vec![];
+        alice2_workspace
+            .fd_read(fd, 0, 1024, &mut result)
+            .await
+            .unwrap();
+        alice2_workspace.fd_close(fd).await.unwrap();
+        if result == b"Second write" {
+            break;
+        };
+        // Not the right data, wait a bit and retry
+        libparsec_platform_async::sleep(std::time::Duration::from_millis(50)).await;
+    }
 }
