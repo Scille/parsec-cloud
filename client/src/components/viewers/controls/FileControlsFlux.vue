@@ -63,15 +63,18 @@ function updateSliderState(value: SliderState): void {
 .file-controls-flux-container {
   justify-content: start;
   align-items: center;
+  max-width: 30rem;
+  width: 100%;
 
   .file-controls-flux {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    width: 100%;
   }
 
   .progress-slider {
-    width: 30rem;
+    width: 100%;
   }
 
   [class*='progress-label'] {

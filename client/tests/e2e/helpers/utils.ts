@@ -130,6 +130,11 @@ export const Media = {
       return (el as HTMLVideoElement).currentTime;
     });
   },
+  async getPausedState(media: Locator): Promise<boolean> {
+    return await media.evaluate((el) => {
+      return (el as HTMLVideoElement).paused;
+    });
+  },
 };
 
 // eslint-disable-next-line
@@ -176,4 +181,11 @@ export async function getDownloadedFile(page: Page, name: string = 'default'): P
     }
     return undefined;
   }, name);
+}
+
+export async function sliderClick(page: Page, slider: Locator, progressPercent: number): Promise<void> {
+  const box = await slider.boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + (box.width * progressPercent) / 100, box.y);
+  }
 }

@@ -1855,6 +1855,20 @@
         "text": {
             "loadDocumentError": "Could not load this document.",
             "loadingDocument": "Loading document..."
+        },
+        "players": {
+            "playback": {
+                "title": "Playback speed",
+                "speed": {
+                    "0_25": "x0.25",
+                    "0_5": "x0.5",
+                    "1": "x1",
+                    "1_5": "x1.5",
+                    "2": "x2"
+                }
+            },
+            "pip": "Picture in Picture",
+            "loop": "Loop"
         }
     }
 }
