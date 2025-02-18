@@ -249,6 +249,10 @@ fn task_future_factory(
                         Err(_) => return,
                     };
                     loop {
+                        // Sleep a bit to avoid busy loops
+                        // TODO: investigate why this fixes issue #9752
+                        #[cfg(test)]
+                        device.time_provider.sleep(Duration::milliseconds(1)).await;
                         confined_entries_tracker
                             .lock()
                             .expect("Mutex is poisoned")

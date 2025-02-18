@@ -10,7 +10,6 @@ use crate::{
     EventBus, MountpointMountStrategy, WorkspaceInfo, WorkspaceStorageCacheSize,
 };
 
-#[ignore]
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn multi_devices(env: &TestbedEnv) {
     let alice1 = env.local_device("alice@dev1");
