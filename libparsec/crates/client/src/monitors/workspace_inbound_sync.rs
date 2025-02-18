@@ -377,6 +377,10 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
         for entry_id in to_sync {
             // Need a loop here to retry the operation in case the server is not available
             loop {
+                // Sleep a bit to avoid busy loops
+                // TODO: investigate why this fixes issue #9752
+                #[cfg(test)]
+                libparsec_platform_async::sleep(std::time::Duration::from_millis(1)).await;
                 let outcome = io.workspace_ops_inbound_sync(entry_id).await;
                 log::debug!("Workspace {realm_id}: inbound sync {entry_id}, outcome: {outcome:?}");
                 match outcome {
