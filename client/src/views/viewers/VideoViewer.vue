@@ -17,6 +17,8 @@
           @ended="updateMediaData"
           @timeupdate="onTimeUpdate"
           @error="onError"
+          @enterpictureinpicture="onTogglePictureInPicture(true)"
+          @leavepictureinpicture="onTogglePictureInPicture(false)"
         >
           <source
             :src="src"
@@ -41,10 +43,12 @@
           :muted="muted"
         />
         <file-controls-group>
-          <!-- <file-controls-dropdown
+          <file-controls-dropdown
             :items="dropdownItems"
             :icon="cog"
-          /> -->
+          />
+        </file-controls-group>
+        <file-controls-group>
           <file-controls-button
             @click="toggleFullScreen"
             :icon="scan"
@@ -56,11 +60,13 @@
 </template>
 
 <script setup lang="ts">
-import { scan } from 'ionicons/icons';
-import { FileContentInfo } from '@/views/viewers/utils';
+import { cog, infinite, scan, timer } from 'ionicons/icons';
+import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/viewers/utils';
 import {
   FileControls,
   FileControlsButton,
+  FileControlsDropdown,
+  FileControlsDropdownItemContent,
   FileControlsFlux,
   FileControlsGroup,
   FileControlsPlayback,
@@ -68,7 +74,7 @@ import {
 } from '@/components/viewers';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
-import { SliderState } from 'megashark-lib';
+import { SliderState, PipIcon } from 'megashark-lib';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -104,95 +110,37 @@ const cancelVolumeWatch = watch(
   },
 );
 
-// FIXME Dropdown items are left as an example for future implementation
-
-// const pipState = ref(false);
-// const loopState = ref(false);
-// const dropdownItems = ref<FileControlsDropdownItemContent[]>([
-//   {
-//     label: 'Quality',
-//     icon: cog,
-//     children: [
-//       { label: '480p', callback: (): Promise<void> => changeResolution(0) },
-//       { label: '720p', callback: (): Promise<void> => changeResolution(1) },
-//       { label: '1080p', callback: (): Promise<void> => changeResolution(2), isActive: true },
-//       { label: '2160p', callback: (): Promise<void> => changeResolution(3) },
-//     ],
-//   },
-//   {
-//     label: 'Playback speed',
-//     icon: cog,
-//     children: [
-//       { label: 'x0.25', callback: (): Promise<void> => changePlaybackSpeed(0) },
-//       { label: 'x0.5', callback: (): Promise<void> => changePlaybackSpeed(1) },
-//       { label: 'x1', callback: (): Promise<void> => changePlaybackSpeed(2), isActive: true },
-//       { label: 'x1.25', callback: (): Promise<void> => changePlaybackSpeed(3) },
-//       { label: 'x1.5', callback: (): Promise<void> => changePlaybackSpeed(4) },
-//       { label: 'x2', callback: (): Promise<void> => changePlaybackSpeed(5) },
-//     ],
-//   },
-//   {
-//     label: 'Picture in picture',
-//     icon: cog,
-//     callback: changePip,
-//   },
-//   {
-//     label: 'Loop',
-//     icon: cog,
-//     callback: changeLoop,
-//   },
-//   {
-//     label: 'Language',
-//     icon: cog,
-//     children: [
-//       { label: 'English', callback: (): Promise<void> => changeAudioLanguage(0), isActive: true },
-//       { label: 'French', callback: (): Promise<void> => changeAudioLanguage(1) },
-//     ],
-//   },
-//   {
-//     label: 'Subtitles',
-//     icon: cog,
-//     children: [
-//       { label: 'None', callback: (): Promise<void> => changeSubtitlesLanguage(0), isActive: true },
-//       { label: 'English', callback: (): Promise<void> => changeSubtitlesLanguage(1) },
-//       { label: 'French', callback: (): Promise<void> => changeSubtitlesLanguage(2) },
-//     ],
-//   },
-// ]);
-
-// async function changePip(): Promise<void> {
-//   pipState.value = !pipState.value;
-//   dropdownItems.value[2].isActive = pipState.value;
-// }
-
-// async function changeLoop(): Promise<void> {
-//   loopState.value = !loopState.value;
-//   dropdownItems.value[3].isActive = loopState.value;
-// }
-
-// async function changeResolution(option: number): Promise<void> {
-//   dropdownItems.value[0].children?.forEach((item, index) => {
-//     item.isActive = option === index;
-//   });
-// }
-
-// async function changePlaybackSpeed(option: number): Promise<void> {
-//   dropdownItems.value[1].children?.forEach((item, index) => {
-//     item.isActive = option === index;
-//   });
-// }
-
-// async function changeAudioLanguage(option: number): Promise<void> {
-//   dropdownItems.value[4].children?.forEach((item, index) => {
-//     item.isActive = option === index;
-//   });
-// }
-
-// async function changeSubtitlesLanguage(option: number): Promise<void> {
-//   dropdownItems.value[5].children?.forEach((item, index) => {
-//     item.isActive = option === index;
-//   });
-// }
+const loopState = ref(false);
+const pipState = ref(false);
+const dropdownItems = ref<FileControlsDropdownItemContent[]>([
+  {
+    label: 'fileViewers.players.playback.title',
+    icon: timer,
+    children: [
+      { label: 'fileViewers.players.playback.speed.0_25', callback: (): Promise<void> => changePlaybackSpeed(PlaybackSpeed.Speed_0_25) },
+      { label: 'fileViewers.players.playback.speed.0_5', callback: (): Promise<void> => changePlaybackSpeed(PlaybackSpeed.Speed_0_5) },
+      {
+        label: 'fileViewers.players.playback.speed.1',
+        callback: (): Promise<void> => changePlaybackSpeed(PlaybackSpeed.Speed_1),
+        isActive: true,
+      },
+      { label: 'fileViewers.players.playback.speed.1_5', callback: (): Promise<void> => changePlaybackSpeed(PlaybackSpeed.Speed_1_5) },
+      { label: 'fileViewers.players.playback.speed.2', callback: (): Promise<void> => changePlaybackSpeed(PlaybackSpeed.Speed_2) },
+    ],
+  },
+  {
+    label: 'fileViewers.players.pip',
+    image: PipIcon,
+    callback: togglePictureInPicture,
+    isActive: false,
+  },
+  {
+    label: 'fileViewers.players.loop',
+    icon: infinite,
+    callback: toggleLoop,
+    isActive: false,
+  },
+]);
 
 onMounted(async () => {
   src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
@@ -221,6 +169,40 @@ function togglePlayback(): void {
 
 async function toggleFullScreen(): Promise<void> {
   await videoElement.value?.requestFullscreen();
+}
+
+function onTogglePictureInPicture(value: boolean): void {
+  pipState.value = value;
+  dropdownItems.value[1].isActive = value;
+}
+
+async function togglePictureInPicture(): Promise<void> {
+  if (pipState.value === false) {
+    await videoElement.value?.requestPictureInPicture();
+  } else {
+    try {
+      document.exitPictureInPicture();
+    } catch (error: any) {
+      console.warn(error);
+    }
+  }
+}
+
+async function changePlaybackSpeed(value: number): Promise<void> {
+  if (videoElement.value) {
+    videoElement.value.playbackRate = PlaybackSpeeds[value];
+    dropdownItems.value[0].children?.forEach((item, index) => {
+      item.isActive = value === index;
+    });
+  }
+}
+
+async function toggleLoop(): Promise<void> {
+  if (videoElement.value) {
+    loopState.value = !loopState.value;
+    videoElement.value.loop = loopState.value;
+    dropdownItems.value[2].isActive = loopState.value;
+  }
 }
 
 function updateMediaData(event: Event): void {

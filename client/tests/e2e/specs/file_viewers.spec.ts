@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Media, expect, expectMedia, msTest, openFileType } from '@tests/e2e/helpers';
+import { Media, expect, expectMedia, msTest, openFileType, sliderClick } from '@tests/e2e/helpers';
 
 msTest('File viewer page default state', async ({ documents }) => {
   const entries = documents.locator('.folder-container').locator('.file-list-item');
@@ -91,13 +91,12 @@ msTest('Audio viewer', async ({ documents }) => {
   // Volume control
   const volumeButton = volume.locator('.file-controls-button').nth(0);
   await expectMedia(audio).toHaveVolume(1);
-  await volumeSlider.click();
-  // commented out because the values are not consistent
-  // await expectMedia(audio).toHaveVolume(0.48);
+  await sliderClick(documents, volumeSlider, 70);
+  await expectMedia(audio).toHaveVolume(0.7);
   await volumeButton.click();
   await expectMedia(audio).toHaveVolume(0);
   await volumeButton.click();
-  // await expectMedia(audio).toHaveVolume(0.48);
+  await expectMedia(audio).toHaveVolume(0.7);
 
   // Stream control
   await playPause.click();
@@ -105,8 +104,62 @@ msTest('Audio viewer', async ({ documents }) => {
   await playPause.click();
   expect(await Media.getCurrentTime(audio)).toBeGreaterThan(0.1);
 
-  await fluxBar.click();
-  // await expectMedia(audio).toHaveCurrentTime(3.98);
+  await sliderClick(documents, fluxBar, 90);
+  expect(await Media.getCurrentTime(audio)).toBeGreaterThan(7.1);
+  expect(await Media.getCurrentTime(audio)).toBeLessThan(7.3);
+
+  // Dropdown menu
+  const dropdownButton = documents.locator('.file-controls-dropdown');
+  await dropdownButton.click();
+  const popover = documents.locator('.file-controls-dropdown-popover');
+  await expect(popover).toBeVisible();
+  const popoverButtons = popover.locator('.file-controls-dropdown-item');
+  await expect(popoverButtons).toHaveCount(2);
+
+  // Loop
+  await expect(popoverButtons.nth(1)).not.toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  await popoverButtons.nth(1).click();
+  await expect(popoverButtons.nth(1)).toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  await documents.locator('#ion-overlay-2 ion-backdrop').click();
+  await playPause.click();
+  expect(await Media.getPausedState(audio)).toBe(false);
+  await documents.waitForTimeout(2000);
+  expect(await Media.getPausedState(audio)).toBe(false);
+
+  await dropdownButton.click();
+  await popoverButtons.nth(1).click();
+  await documents.locator('#ion-overlay-3 ion-backdrop').click();
+  await sliderClick(documents, fluxBar, 90);
+  await documents.waitForTimeout(1000);
+  await expectMedia(audio).toHaveCurrentTime(7.967347);
+  expect(await Media.getPausedState(audio)).toBe(true);
+
+  // Playback speed
+  await dropdownButton.click();
+  await popoverButtons.nth(0).click();
+  await expect(popoverButtons).toHaveCount(5);
+  await expect(popoverButtons.nth(2)).toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  // x0.25
+  await popoverButtons.nth(0).click();
+  await expect(popoverButtons.nth(2)).not.toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  await expect(popoverButtons.nth(0)).toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  await documents.locator('#ion-overlay-4 ion-backdrop').click();
+  await playPause.click();
+  await documents.waitForTimeout(2000);
+  await playPause.click();
+  expect(await Media.getCurrentTime(audio)).toBeLessThan(0.6);
+  // FIXME Dropdown currently goes out of viewport when expanding
+  // // x2
+  // await dropdownButton.click();
+  // await popoverButtons.nth(0).click();
+  // await popoverButtons.nth(4).click();
+  // await expect(popoverButtons.nth(0)).not.toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  // await expect(popoverButtons.nth(4)).toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  // await documents.locator('#ion-overlay-5 ion-backdrop').click();
+  // await playPause.click();
+  // await documents.waitForTimeout(4000);
+  // await expectMedia(audio).toHaveCurrentTime(7.967347);
+  // expect(await Media.getPausedState(audio)).toBe(true);
 });
 
 msTest('Video viewer', async ({ documents }) => {
@@ -124,7 +177,7 @@ msTest('Video viewer', async ({ documents }) => {
   const fluxBar = bottomBar.locator('.slider').nth(0);
   const volumeSlider = bottomBar.locator('.slider').nth(1);
 
-  await expect(buttons).toHaveCount(4);
+  await expect(buttons).toHaveCount(5);
 
   const readyState = await video.evaluate((videoEl) => {
     return (videoEl as HTMLMediaElement).readyState;
@@ -149,18 +202,79 @@ msTest('Video viewer', async ({ documents }) => {
   await buttons.nth(0).click();
   expect(await Media.getCurrentTime(video)).toBeGreaterThan(0.1);
 
+  await buttons.nth(0).click();
+  expect(await Media.getPausedState(video)).toBe(false);
+  await documents.waitForTimeout(4000);
+  expect(await Media.getCurrentTime(video)).toBe(3.562646);
+  expect(await Media.getPausedState(video)).toBe(true);
+
   // Volume control
   await expectMedia(video).toHaveVolume(1);
-  await volumeSlider.click();
-  await expectMedia(video).toHaveVolume(0.5);
+  await sliderClick(documents, volumeSlider, 40);
+  await expectMedia(video).toHaveVolume(0.4);
   await volumeButton.click();
   await expectMedia(video).toHaveVolume(0);
   await volumeButton.click();
-  await expectMedia(video).toHaveVolume(0.5);
+  await expectMedia(video).toHaveVolume(0.4);
 
   // Stream control
-  await fluxBar.click();
-  await expectMedia(video).toHaveCurrentTime(1.78);
+  await sliderClick(documents, fluxBar, 90);
+  expect(await Media.getCurrentTime(video)).toBeGreaterThan(3.1);
+  expect(await Media.getCurrentTime(video)).toBeLessThan(3.3);
+
+  // Dropdown menu
+  const dropdownButton = buttons.nth(3);
+  await dropdownButton.click();
+  const popover = documents.locator('.file-controls-dropdown-popover');
+  await expect(popover).toBeVisible();
+  const popoverButtons = popover.locator('.file-controls-dropdown-item');
+  await expect(popoverButtons).toHaveCount(3);
+
+  // Loop
+  await expect(popoverButtons.nth(2)).not.toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  await popoverButtons.nth(2).click();
+  await expect(popoverButtons.nth(2)).toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  await documents.locator('#ion-overlay-2 ion-backdrop').click();
+  await buttons.nth(0).click();
+  expect(await Media.getPausedState(video)).toBe(false);
+  await documents.waitForTimeout(500);
+  expect(await Media.getPausedState(video)).toBe(false);
+
+  await dropdownButton.click();
+  await popoverButtons.nth(2).click();
+  await documents.locator('#ion-overlay-3 ion-backdrop').click();
+  await sliderClick(documents, fluxBar, 90);
+  await documents.waitForTimeout(500);
+  expect(await Media.getCurrentTime(video)).toBe(3.562646);
+  expect(await Media.getPausedState(video)).toBe(true);
+
+  // Playback speed
+  await dropdownButton.click();
+  await popoverButtons.nth(0).click();
+  await expect(popoverButtons).toHaveCount(5);
+  await expect(popoverButtons.nth(2)).toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  // x0.25
+  await popoverButtons.nth(0).click();
+  await expect(popoverButtons.nth(2)).not.toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  await expect(popoverButtons.nth(0)).toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  await documents.locator('#ion-overlay-4 ion-backdrop').click();
+  await buttons.nth(0).click();
+  await documents.waitForTimeout(2000);
+  await buttons.nth(0).click();
+  expect(await Media.getCurrentTime(video)).toBeLessThan(0.6);
+
+  // FIXME Dropdown currently goes out of viewport when expanding
+  // // x2
+  // await dropdownButton.click();
+  // await popoverButtons.nth(0).click();
+  // await popoverButtons.nth(4).click();
+  // await expect(popoverButtons.nth(0)).not.toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  // await expect(popoverButtons.nth(4)).toHaveClass('file-controls-dropdown-item file-controls-dropdown-item-active');
+  // await documents.locator('#ion-overlay-5 ion-backdrop').click();
+  // await buttons.nth(0).click();
+  // await documents.waitForTimeout(2000);
+  // expect(await Media.getCurrentTime(video)).toBe(3.562646);
+  // expect(await Media.getPausedState(video)).toBe(true);
 });
 
 msTest('Text viewer', async ({ documents }) => {

@@ -1855,6 +1855,20 @@
         "text": {
             "loadDocumentError": "Impossible de charger ce document.",
             "loadingDocument": "Chargement du document..."
+        },
+        "players": {
+            "playback": {
+                "title": "Vitesse de lecture",
+                "speed": {
+                    "0_25": "x0,25",
+                    "0_5": "x0,5",
+                    "1": "x1",
+                    "1_5": "x1,5",
+                    "2": "x2"
+                }
+            },
+            "pip": "Picture in Picture",
+            "loop": "Lecture en boucle"
         }
     }
 }
