@@ -37,6 +37,10 @@
           v-model="volume"
           :muted="muted"
         />
+        <file-controls-dropdown
+          :items="dropdownItems"
+          :icon="cog"
+        />
       </file-controls>
     </template>
   </file-viewer-wrapper>
@@ -44,10 +48,18 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { musicalNotes } from 'ionicons/icons';
+import { cog, infinite, musicalNotes, timer } from 'ionicons/icons';
 import { FileViewerWrapper } from '@/views/viewers';
-import { FileContentInfo } from '@/views/viewers/utils';
-import { FileControls, FileControlsFlux, FileControlsPlayback, FileControlsVolume, FileViewerBackground } from '@/components/viewers';
+import { FileContentInfo, PlaybackSpeed, PlaybackSpeeds } from '@/views/viewers/utils';
+import {
+  FileControls,
+  FileControlsDropdown,
+  FileControlsDropdownItemContent,
+  FileControlsFlux,
+  FileControlsPlayback,
+  FileControlsVolume,
+  FileViewerBackground,
+} from '@/components/viewers';
 import { SliderState } from 'megashark-lib';
 
 const props = defineProps<{
@@ -87,6 +99,31 @@ const cancelVolumeWatch = watch(
   },
 );
 
+const loopState = ref(false);
+const dropdownItems = ref<FileControlsDropdownItemContent[]>([
+  {
+    label: 'fileViewers.players.playback.title',
+    icon: timer,
+    children: [
+      { label: 'fileViewers.players.playback.speed.0_25', callback: (): Promise<void> => changePlaybackSpeed(PlaybackSpeed.Speed_0_25) },
+      { label: 'fileViewers.players.playback.speed.0_5', callback: (): Promise<void> => changePlaybackSpeed(PlaybackSpeed.Speed_0_5) },
+      {
+        label: 'fileViewers.players.playback.speed.1',
+        callback: (): Promise<void> => changePlaybackSpeed(PlaybackSpeed.Speed_1),
+        isActive: true,
+      },
+      { label: 'fileViewers.players.playback.speed.1_5', callback: (): Promise<void> => changePlaybackSpeed(PlaybackSpeed.Speed_1_5) },
+      { label: 'fileViewers.players.playback.speed.2', callback: (): Promise<void> => changePlaybackSpeed(PlaybackSpeed.Speed_2) },
+    ],
+  },
+  {
+    label: 'fileViewers.players.loop',
+    icon: infinite,
+    callback: toggleLoop,
+    isActive: false,
+  },
+]);
+
 onMounted(async () => {
   loading.value = true;
   src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
@@ -111,6 +148,23 @@ function onTimeUpdate(): void {
 function togglePlayback(): void {
   if (audioElement.value) {
     audioElement.value.paused ? audioElement.value.play() : audioElement.value.pause();
+  }
+}
+
+async function changePlaybackSpeed(value: number): Promise<void> {
+  if (audioElement.value) {
+    audioElement.value.playbackRate = PlaybackSpeeds[value];
+    dropdownItems.value[0].children?.forEach((item, index) => {
+      item.isActive = value === index;
+    });
+  }
+}
+
+async function toggleLoop(): Promise<void> {
+  if (audioElement.value) {
+    loopState.value = !loopState.value;
+    audioElement.value.loop = loopState.value;
+    dropdownItems.value[1].isActive = loopState.value;
   }
 }
 

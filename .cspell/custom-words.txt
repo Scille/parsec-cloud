@@ -163,6 +163,7 @@ EINVAL
 endlocal
 endmacro
 enmascarado
+enterpictureinpicture
 eurosys
 everytime
 excalidraw
@@ -275,6 +276,7 @@ latexmk
 LATEXMKOPTS
 latexpdf
 latexpdfja
+leavepictureinpicture
 letterpaper
 levelno
 libappindicator
