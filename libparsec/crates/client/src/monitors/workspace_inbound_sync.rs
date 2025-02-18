@@ -222,7 +222,12 @@ struct ConfinedEntriesTracker {
 }
 
 impl ConfinedEntriesTracker {
-    fn register_confined_entry(&mut self, confinement_point: VlobID, confined_entry: VlobID) {
+    fn register_confined_entry(
+        &mut self,
+        confinement_point: VlobID,
+        _entry_chain: &[VlobID],
+        confined_entry: VlobID,
+    ) {
         self.confinement_point_to_confined_entries
             .entry(confinement_point)
             .or_default()
@@ -369,10 +374,16 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                         confined_entries_tracker.unregister_confined_entry(entry_id);
                         break;
                     }
-                    Ok(InboundSyncOutcome::EntryIsConfined(confinement_point)) => {
+                    Ok(InboundSyncOutcome::EntryIsConfined {
+                        confinement_point,
+                        entry_chain,
+                    }) => {
                         // Add the entry to the list of confined entries
-                        confined_entries_tracker
-                            .register_confined_entry(confinement_point, entry_id);
+                        confined_entries_tracker.register_confined_entry(
+                            confinement_point,
+                            &entry_chain,
+                            entry_id,
+                        );
                         break;
                     }
                     Ok(InboundSyncOutcome::EntryIsBusy) => {
