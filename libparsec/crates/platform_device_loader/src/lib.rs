@@ -122,8 +122,7 @@ pub enum LoadDeviceError {
 
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn load_device(
-    // TODO: Should we set under testbed feature ?
-    #[allow(unused)] config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
     access: &DeviceAccessStrategy,
 ) -> Result<Arc<LocalDevice>, LoadDeviceError> {
     #[cfg(feature = "test-with-testbed")]
@@ -146,7 +145,7 @@ pub enum SaveDeviceError {
 
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn save_device(
-    #[allow(unused)] config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
     access: &DeviceAccessStrategy,
     device: &LocalDevice,
 ) -> Result<AvailableDevice, SaveDeviceError> {
@@ -194,7 +193,7 @@ impl From<SaveDeviceError> for ChangeAuthentificationError {
 
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn change_authentication(
-    #[allow(unused)] config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
 ) -> Result<AvailableDevice, ChangeAuthentificationError> {
@@ -396,6 +395,60 @@ fn load_available_device_from_blob(
 }
 
 #[cfg_attr(target_arch = "wasm32", expect(dead_code))]
+fn encrypt_device(device: &LocalDevice, key: &SecretKey) -> Bytes {
+    let cleartext = zeroize::Zeroizing::new(device.dump());
+    key.encrypt(&cleartext).into()
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum DecryptDeviceFileError {
+    #[error("Failed to decrypt device file: {0}")]
+    Decrypt(CryptoError),
+    #[error("Failed to load device: {0}")]
+    Load(&'static str),
+}
+
+impl From<DecryptDeviceFileError> for LoadDeviceError {
+    fn from(value: DecryptDeviceFileError) -> Self {
+        match value {
+            DecryptDeviceFileError::Decrypt(_) => LoadDeviceError::DecryptionFailed,
+            DecryptDeviceFileError::Load(_) => LoadDeviceError::InvalidData,
+        }
+    }
+}
+
+impl From<DecryptDeviceFileError> for ChangeAuthentificationError {
+    fn from(value: DecryptDeviceFileError) -> Self {
+        match value {
+            DecryptDeviceFileError::Decrypt(_) => ChangeAuthentificationError::DecryptionFailed,
+            DecryptDeviceFileError::Load(_) => ChangeAuthentificationError::InvalidData,
+        }
+    }
+}
+
+#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
+fn decrypt_device_file(
+    device_file: &DeviceFile,
+    key: &SecretKey,
+) -> Result<LocalDevice, DecryptDeviceFileError> {
+    let cleartext = key
+        .decrypt(device_file.ciphertext())
+        .map_err(DecryptDeviceFileError::Decrypt)
+        .map(zeroize::Zeroizing::new)?;
+    LocalDevice::load(&cleartext).map_err(DecryptDeviceFileError::Load)
+}
+
+#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
+fn generate_default_password_algorithm_parameters() -> DeviceFilePasswordAlgorithm {
+    DeviceFilePasswordAlgorithm::Argon2id {
+        memlimit_kb: ARGON2ID_DEFAULT_MEMLIMIT_KB.into(),
+        opslimit: ARGON2ID_DEFAULT_OPSLIMIT.into(),
+        parallelism: ARGON2ID_DEFAULT_PARALLELISM.into(),
+        salt: SecretKey::generate_salt().into(),
+    }
+}
+
+#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn secret_key_from_password(
     password: &Password,
     algorithm: &DeviceFilePasswordAlgorithm,
@@ -414,4 +467,15 @@ fn secret_key_from_password(
             (*parallelism).try_into().or(Err(CryptoError::DataSize))?,
         ),
     }
+}
+
+#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
+fn server_url_from_device(device: &LocalDevice) -> String {
+    ParsecAddr::new(
+        device.organization_addr.hostname().to_owned(),
+        Some(device.organization_addr.port()),
+        device.organization_addr.use_ssl(),
+    )
+    .to_http_url(None)
+    .to_string()
 }
