@@ -1,3 +1,5 @@
+#![cfg_attr(target_family = "windows", allow(unused_imports))]
+
 use std::sync::{Arc, Mutex};
 
 use libparsec::{
@@ -6,7 +8,7 @@ use libparsec::{
 };
 
 use crate::{
-    integration_tests::{bootstrap_cli_test, spawn_interactive_command},
+    integration_tests::bootstrap_cli_test,
     std_cmd,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
@@ -26,6 +28,7 @@ async fn invite_device(tmp_path: TmpPath) {
     .stdout(predicates::str::contains("Invitation URL:"));
 }
 
+#[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_device_dance(tmp_path: TmpPath) {
@@ -68,7 +71,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
     );
 
     let p_greeter = Arc::new(Mutex::new(
-        spawn_interactive_command(program_greeter, Some(1000)).unwrap(),
+        crate::integration_tests::spawn_interactive_command(program_greeter, Some(1000)).unwrap(),
     ));
 
     // spawn claimer thread
@@ -76,7 +79,8 @@ async fn invite_device_dance(tmp_path: TmpPath) {
     let program_claimer = std_cmd!("invite", "claim", invitation_addr.to_url().as_ref());
 
     let p_claimer = Arc::new(Mutex::new(
-        spawn_interactive_command(dbg!(program_claimer), Some(10_000)).unwrap(),
+        crate::integration_tests::spawn_interactive_command(dbg!(program_claimer), Some(10_000))
+            .unwrap(),
     ));
 
     // retrieve greeter code

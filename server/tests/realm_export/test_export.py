@@ -27,6 +27,7 @@ from parsec.realm_export import (
     ExportProgressStep,
     RealmExporterInputError,
     RealmExporterOutputDbError,
+    default_realm_export_db_name,
     export_realm,
 )
 from tests.common import (
@@ -46,9 +47,10 @@ WORKSPACE_HISTORY_EXPORT_REALM_ID = VlobID.from_hex("f00000000000000000000000000
 def workspace_history_export_db_path(
     workspace_history_org: WorkspaceHistoryOrgRpcClients, tmp_path: Path
 ) -> Path:
-    output_db_path = (
-        tmp_path
-        / f"parsec-export-{workspace_history_org.organization_id.str}-realm-{WORKSPACE_HISTORY_EXPORT_REALM_ID.hex}-{WORKSPACE_HISTORY_EXPORT_SNAPSHOT_TIMESTAMP.to_rfc3339()}.sqlite"
+    output_db_path = tmp_path / default_realm_export_db_name(
+        workspace_history_org.organization_id,
+        WORKSPACE_HISTORY_EXPORT_REALM_ID,
+        WORKSPACE_HISTORY_EXPORT_SNAPSHOT_TIMESTAMP,
     )
 
     # We copy the file before providing it to the test to ensure the original file is not modified
@@ -72,9 +74,10 @@ SEQUESTERED_EXPORT_REALM_ID = VlobID.from_hex("f0000000000000000000000000000003"
 
 @pytest.fixture
 def sequestered_export_db_path(sequestered_org: SequesteredOrgRpcClients, tmp_path: Path) -> Path:
-    output_db_path = (
-        tmp_path
-        / f"parsec-export-{sequestered_org.organization_id.str}-realm-{SEQUESTERED_EXPORT_REALM_ID.hex}-{SEQUESTERED_EXPORT_SNAPSHOT_TIMESTAMP.to_rfc3339()}.sqlite"
+    output_db_path = tmp_path / default_realm_export_db_name(
+        sequestered_org.organization_id,
+        SEQUESTERED_EXPORT_REALM_ID,
+        SEQUESTERED_EXPORT_SNAPSHOT_TIMESTAMP,
     )
 
     # We copy the file before providing it to the test to ensure the original file is not modified
@@ -121,6 +124,26 @@ async def test_sequestered_export_is_valid(
         export_expected,
         SEQUESTERED_EXPORT_ORGANIZATION_ID,
         ignore_unstable_items=True,
+    )
+
+
+def test_default_realm_export_db_name():
+    assert (
+        default_realm_export_db_name(
+            SEQUESTERED_EXPORT_ORGANIZATION_ID,
+            SEQUESTERED_EXPORT_REALM_ID,
+            DateTime(2222, 11, 22, 1, 2, 3, 456789),
+        )
+        == "parsec-export-Org1-realm-f0000000000000000000000000000003-22221122T010203Z.sqlite"
+    )
+
+    assert (
+        default_realm_export_db_name(
+            SEQUESTERED_EXPORT_ORGANIZATION_ID,
+            SEQUESTERED_EXPORT_REALM_ID,
+            DateTime(1, 2, 3, 23, 59, 59, 0),
+        )
+        == "parsec-export-Org1-realm-f0000000000000000000000000000003-00010203T235959Z.sqlite"
     )
 
 

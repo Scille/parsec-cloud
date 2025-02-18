@@ -76,6 +76,7 @@ async fn already_exists(
             {
                 let new_dir_utf16 =
                     super::utils::to_null_terminated_utf16(&new_dir.to_string_lossy());
+                // SAFETY: Calling Win32 C++ API
                 let ret = unsafe {
                     windows_sys::Win32::Storage::FileSystem::CreateDirectoryW(
                         new_dir_utf16.as_ptr(),
@@ -142,6 +143,7 @@ async fn parent_doesnt_exist(tmp_path: TmpPath, env: &TestbedEnv) {
             {
                 let new_dir_utf16 =
                     super::utils::to_null_terminated_utf16(&new_dir.to_string_lossy());
+                // SAFETY: Calling Win32 C++ API
                 let ret = unsafe {
                     windows_sys::Win32::Storage::FileSystem::CreateDirectoryW(
                         new_dir_utf16.as_ptr(),

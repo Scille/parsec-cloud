@@ -2,6 +2,7 @@ mod device;
 mod device_option;
 mod invitations;
 mod ls;
+mod mount_realm_export;
 mod organization;
 mod rm;
 mod server;
@@ -228,6 +229,7 @@ fn shared_recovery_create(
     )));
 }
 
+#[cfg(target_family = "unix")] // rexpect doesn't support Windows
 /// Spawns `command` in the background with the given `timeout`
 /// and returns a session to interact with the started process.
 fn spawn_interactive_command(

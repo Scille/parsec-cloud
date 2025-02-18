@@ -211,7 +211,11 @@ impl ParsecFileSystemInterface {
 }
 
 impl ParsecFileSystemInterface {
-    async fn get_file_info_async(&self, file_context: &OpenedObj) -> Result<FileInfo, NTSTATUS> {
+    async fn get_file_info_async(
+        &self,
+        file_context: &OpenedObj,
+        operation_name: &str,
+    ) -> Result<FileInfo, NTSTATUS> {
         match file_context {
             OpenedObj::File { fd, .. } => {
                 let outcome = self.ops.fd_stat(*fd).await;
@@ -219,7 +223,14 @@ impl ParsecFileSystemInterface {
                     Ok(stat) => Ok(parsec_file_stat_to_winfsp_file_info(&stat)),
                     Err(err) => Err(match err {
                         WorkspaceFdStatError::BadFileDescriptor => STATUS_INVALID_HANDLE,
-                        WorkspaceFdStatError::Internal(_) => STATUS_ACCESS_DENIED,
+                        WorkspaceFdStatError::Internal(_) => {
+                            log::warn!(
+                                "WinFSP `{}` operation cannot complete: {:?}",
+                                operation_name,
+                                err
+                            );
+                            STATUS_ACCESS_DENIED
+                        }
                     }),
                 }
             }
@@ -243,7 +254,14 @@ impl ParsecFileSystemInterface {
                         | WorkspaceStatEntryError::InvalidKeysBundle(_)
                         | WorkspaceStatEntryError::InvalidCertificate(_)
                         | WorkspaceStatEntryError::InvalidManifest(_)
-                        | WorkspaceStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                        | WorkspaceStatEntryError::Internal(_) => {
+                            log::warn!(
+                                "WinFSP `{}` operation cannot complete: {:?}",
+                                operation_name,
+                                err
+                            );
+                            STATUS_ACCESS_DENIED
+                        }
                     }),
                 }
             }
@@ -303,7 +321,13 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         | WorkspaceStatEntryError::InvalidKeysBundle(_)
                         | WorkspaceStatEntryError::InvalidCertificate(_)
                         | WorkspaceStatEntryError::InvalidManifest(_)
-                        | WorkspaceStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                        | WorkspaceStatEntryError::Internal(_) => {
+                            log::warn!(
+                                "WinFSP `get_security_by_name` operation cannot complete: {:?}",
+                                err
+                            );
+                            STATUS_ACCESS_DENIED
+                        }
                     })
                 }
             };
@@ -365,7 +389,10 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         | WorkspaceCreateFolderError::InvalidKeysBundle(_)
                         | WorkspaceCreateFolderError::InvalidCertificate(_)
                         | WorkspaceCreateFolderError::InvalidManifest(_)
-                        | WorkspaceCreateFolderError::Internal(_) => STATUS_ACCESS_DENIED,
+                        | WorkspaceCreateFolderError::Internal(_) => {
+                            log::warn!("WinFSP `create_ex` operation cannot complete: {:?}", err);
+                            STATUS_ACCESS_DENIED
+                        }
                     })?;
 
                 let opened_obj = OpenedObj::Folder {
@@ -373,7 +400,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     id,
                     folder_reader: None,
                 };
-                let file_info = self.get_file_info_async(&opened_obj).await?;
+                let file_info = self.get_file_info_async(&opened_obj, "create_ex").await?;
                 let file_context = Arc::new(Mutex::new(opened_obj));
 
                 Ok((file_context, file_info))
@@ -411,7 +438,10 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         | WorkspaceOpenFileError::InvalidKeysBundle(_)
                         | WorkspaceOpenFileError::InvalidCertificate(_)
                         | WorkspaceOpenFileError::InvalidManifest(_)
-                        | WorkspaceOpenFileError::Internal(_) => STATUS_ACCESS_DENIED,
+                        | WorkspaceOpenFileError::Internal(_) => {
+                            log::warn!("WinFSP `create_ex` operation cannot complete: {:?}", err);
+                            STATUS_ACCESS_DENIED
+                        }
                     })?;
 
                 let opened_obj = OpenedObj::File {
@@ -419,7 +449,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     id,
                     fd,
                 };
-                let file_info = self.get_file_info_async(&opened_obj).await?;
+                let file_info = self.get_file_info_async(&opened_obj, "create_ex").await?;
                 let file_context = Arc::new(Mutex::new(opened_obj));
 
                 Ok((file_context, file_info))
@@ -465,7 +495,10 @@ impl FileSystemInterface for ParsecFileSystemInterface {
             //             | WorkspaceStatEntryError::InvalidKeysBundle(_)
             //             | WorkspaceStatEntryError::InvalidCertificate(_)
             //             | WorkspaceStatEntryError::InvalidManifest(_)
-            //             | WorkspaceStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+            //             | WorkspaceStatEntryError::Internal(_) => {
+            //                  log::warn!("WinFSP `open` operation cannot complete: {:?}", err);
+            //                  STATUS_ACCESS_DENIED
+            //              }
             //         }),
             //     };
             // }
@@ -504,12 +537,15 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     | WorkspaceOpenFileError::InvalidKeysBundle(_)
                     | WorkspaceOpenFileError::InvalidCertificate(_)
                     | WorkspaceOpenFileError::InvalidManifest(_)
-                    | WorkspaceOpenFileError::Internal(_) => Err(STATUS_ACCESS_DENIED),
+                    | WorkspaceOpenFileError::Internal(_) => {
+                        log::warn!("WinFSP `open` operation cannot complete: {:?}", err);
+                        Err(STATUS_ACCESS_DENIED)
+                    }
                     WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => unreachable!(),
                 },
             }?;
 
-            let file_info = self.get_file_info_async(&opened_obj).await?;
+            let file_info = self.get_file_info_async(&opened_obj, "open").await?;
             let file_context = Arc::new(Mutex::new(opened_obj));
 
             Ok((file_context, file_info))
@@ -527,7 +563,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
     ) -> Result<FileInfo, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
         log::debug!(
-            "[WinFSP] overwrite(file_context: {:?}, file_attributes: {:?}, replace_file_attributes: {:?}, allocation_size: {:?}, buffer_size: {})",
+            "[WinFSP] overwrite_ex(file_context: {:?}, file_attributes: {:?}, replace_file_attributes: {:?}, allocation_size: {:?}, buffer_size: {})",
             fc, file_attributes, replace_file_attributes, allocation_size, buffer.len()
         );
 
@@ -541,10 +577,16 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     .map_err(|err| match err {
                         WorkspaceFdResizeError::BadFileDescriptor => STATUS_INVALID_HANDLE,
                         WorkspaceFdResizeError::NotInWriteMode => STATUS_ACCESS_DENIED,
-                        WorkspaceFdResizeError::Internal(_) => STATUS_ACCESS_DENIED,
+                        WorkspaceFdResizeError::Internal(_) => {
+                            log::warn!(
+                                "WinFSP `overwrite_ex` operation cannot complete: {:?}",
+                                err
+                            );
+                            STATUS_ACCESS_DENIED
+                        }
                     })?;
 
-                self.get_file_info_async(&fc).await
+                self.get_file_info_async(&fc, "overwrite_ex").await
             } else {
                 Err(STATUS_FILE_IS_A_DIRECTORY)
             }
@@ -653,7 +695,10 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                         WorkspaceFdReadError::InvalidBlockAccess(_)
                         | WorkspaceFdReadError::InvalidKeysBundle(_)
                         | WorkspaceFdReadError::InvalidCertificate(_)
-                        | WorkspaceFdReadError::Internal(_) => STATUS_ACCESS_DENIED,
+                        | WorkspaceFdReadError::Internal(_) => {
+                            log::warn!("WinFSP `read` operation cannot complete: {:?}", err);
+                            STATUS_ACCESS_DENIED
+                        }
                     })
                     .map(|read| read as usize)
             } else {
@@ -694,11 +739,14 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     .map_err(|err| match err {
                         WorkspaceFdWriteError::BadFileDescriptor => STATUS_INVALID_HANDLE,
                         WorkspaceFdWriteError::NotInWriteMode => STATUS_ACCESS_DENIED,
-                        WorkspaceFdWriteError::Internal(_) => STATUS_ACCESS_DENIED,
+                        WorkspaceFdWriteError::Internal(_) => {
+                            log::warn!("WinFSP `write` operation cannot complete: {:?}", err);
+                            STATUS_ACCESS_DENIED
+                        }
                     })
                     .map(|written| written as usize)?;
 
-                let file_info = self.get_file_info_async(&fc).await?;
+                let file_info = self.get_file_info_async(&fc, "write").await?;
 
                 Ok((written, file_info))
             } else {
@@ -720,10 +768,13 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     WorkspaceFdFlushError::Stopped => STATUS_NO_SUCH_DEVICE,
                     WorkspaceFdFlushError::BadFileDescriptor => STATUS_INVALID_HANDLE,
                     WorkspaceFdFlushError::NotInWriteMode => STATUS_ACCESS_DENIED,
-                    WorkspaceFdFlushError::Internal(_) => STATUS_ACCESS_DENIED,
+                    WorkspaceFdFlushError::Internal(_) => {
+                        log::warn!("WinFSP `flush` operation cannot complete: {:?}", err);
+                        STATUS_ACCESS_DENIED
+                    }
                 })?;
 
-                self.get_file_info_async(&fc).await
+                self.get_file_info_async(&fc, "flush").await
             } else {
                 Err(STATUS_FILE_IS_A_DIRECTORY)
             }
@@ -736,7 +787,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
         log::debug!("[WinFSP] get_file_info(file_context: {:?})", fc);
 
         self.tokio_handle
-            .block_on(async move { self.get_file_info_async(&fc).await })
+            .block_on(async move { self.get_file_info_async(&fc, "get_file_info").await })
     }
 
     const SET_BASIC_INFO_DEFINED: bool = true;
@@ -765,7 +816,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
         // when copying some directory (see https://github.com/Scille/parsec-cloud/issues/7640).
 
         self.tokio_handle
-            .block_on(async move { self.get_file_info_async(&fc).await })
+            .block_on(async move { self.get_file_info_async(&fc, "set_basic_info").await })
     }
 
     const SET_FILE_SIZE_DEFINED: bool = true;
@@ -793,16 +844,28 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     .map_err(|err| match err {
                         WorkspaceFdResizeError::BadFileDescriptor => STATUS_INVALID_HANDLE,
                         WorkspaceFdResizeError::NotInWriteMode => STATUS_ACCESS_DENIED,
-                        WorkspaceFdResizeError::Internal(_) => STATUS_ACCESS_DENIED,
+                        WorkspaceFdResizeError::Internal(_) => {
+                            log::warn!(
+                                "WinFSP `set_file_size` operation cannot complete: {:?}",
+                                err
+                            );
+                            STATUS_ACCESS_DENIED
+                        }
                     })?;
                 self.ops.fd_flush(*fd).await.map_err(|err| match err {
                     WorkspaceFdFlushError::Stopped => STATUS_DEVICE_NOT_READY,
                     WorkspaceFdFlushError::BadFileDescriptor => STATUS_INVALID_HANDLE,
                     WorkspaceFdFlushError::NotInWriteMode => STATUS_ACCESS_DENIED,
-                    WorkspaceFdFlushError::Internal(_) => STATUS_ACCESS_DENIED,
+                    WorkspaceFdFlushError::Internal(_) => {
+                        log::warn!(
+                            "WinFSP `set_file_size` operation cannot complete: {:?}",
+                            err
+                        );
+                        STATUS_ACCESS_DENIED
+                    }
                 })?;
 
-                self.get_file_info_async(&fc).await
+                self.get_file_info_async(&fc, "set_file_size").await
             } else {
                 Err(STATUS_FILE_IS_A_DIRECTORY)
             }
@@ -866,7 +929,13 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             | WorkspaceOpenFolderReaderError::InvalidKeysBundle(_)
                             | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
                             | WorkspaceOpenFolderReaderError::InvalidManifest(_)
-                            | WorkspaceOpenFolderReaderError::Internal(_) => STATUS_ACCESS_DENIED,
+                            | WorkspaceOpenFolderReaderError::Internal(_) => {
+                                log::warn!(
+                                    "WinFSP `can_delete` operation cannot complete: {:?}",
+                                    err
+                                );
+                                STATUS_ACCESS_DENIED
+                            }
                         })?
                 }
             };
@@ -884,7 +953,13 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             | FolderReaderStatEntryError::InvalidKeysBundle(_)
                             | FolderReaderStatEntryError::InvalidCertificate(_)
                             | FolderReaderStatEntryError::InvalidManifest(_)
-                            | FolderReaderStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                            | FolderReaderStatEntryError::Internal(_) => {
+                                log::warn!(
+                                    "WinFSP `can_delete` operation cannot complete: {:?}",
+                                    err
+                                );
+                                STATUS_ACCESS_DENIED
+                            }
                         })?;
                 match outcome {
                     FolderReaderStatNextOutcome::NoMoreEntries => break Ok(()),
@@ -947,7 +1022,10 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     | WorkspaceMoveEntryError::InvalidKeysBundle(_)
                     | WorkspaceMoveEntryError::InvalidCertificate(_)
                     | WorkspaceMoveEntryError::InvalidManifest(_)
-                    | WorkspaceMoveEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                    | WorkspaceMoveEntryError::Internal(_) => {
+                        log::warn!("WinFSP `rename` operation cannot complete: {:?}", err);
+                        STATUS_ACCESS_DENIED
+                    }
                 })
         })
     }
@@ -990,7 +1068,10 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             | WorkspaceOpenFolderReaderError::InvalidKeysBundle(_)
                             | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
                             | WorkspaceOpenFolderReaderError::InvalidManifest(_)
-                            | WorkspaceOpenFolderReaderError::Internal(_) => STATUS_ACCESS_DENIED,
+                            | WorkspaceOpenFolderReaderError::Internal(_) => {
+                                log::warn!("WinFSP `read_directory` operation cannot complete: {:?}", err);
+                                STATUS_ACCESS_DENIED
+                            }
                         })?;
                     *folder_reader = Some(reader);
                     (
@@ -1043,7 +1124,10 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             | WorkspaceStatEntryError::InvalidKeysBundle(_)
                             | WorkspaceStatEntryError::InvalidCertificate(_)
                             | WorkspaceStatEntryError::InvalidManifest(_)
-                            | WorkspaceStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                            | WorkspaceStatEntryError::Internal(_) => {
+                                log::warn!("WinFSP `read_directory` operation cannot complete: {:?}", err);
+                                STATUS_ACCESS_DENIED
+                            }
                         })?;
 
                     if !add_dir_info(DirInfo::new(
@@ -1068,7 +1152,10 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                                 | FolderReaderStatEntryError::InvalidKeysBundle(_)
                                 | FolderReaderStatEntryError::InvalidCertificate(_)
                                 | FolderReaderStatEntryError::InvalidManifest(_)
-                                | FolderReaderStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                                | FolderReaderStatEntryError::Internal(_) => {
+                                    log::warn!("WinFSP `read_directory` operation cannot complete: {:?}", err);
+                                    STATUS_ACCESS_DENIED
+                                }
                             })?;
                         match outcome {
                             Some(previous_index) => previous_index + 1,
@@ -1092,7 +1179,10 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             | FolderReaderStatEntryError::InvalidKeysBundle(_)
                             | FolderReaderStatEntryError::InvalidCertificate(_)
                             | FolderReaderStatEntryError::InvalidManifest(_)
-                            | FolderReaderStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                            | FolderReaderStatEntryError::Internal(_) => {
+                                log::warn!("WinFSP `read_directory` operation cannot complete: {:?}", err);
+                                STATUS_ACCESS_DENIED
+                            }
                         })?;
 
                 let (child_name, child_stat) = match maybe_child_stat {
@@ -1155,7 +1245,13 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     | WorkspaceStatEntryError::InvalidKeysBundle(_)
                     | WorkspaceStatEntryError::InvalidCertificate(_)
                     | WorkspaceStatEntryError::InvalidManifest(_)
-                    | WorkspaceStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                    | WorkspaceStatEntryError::Internal(_) => {
+                        log::warn!(
+                            "WinFSP `get_dir_info_by_name` operation cannot complete: {:?}",
+                            err
+                        );
+                        STATUS_ACCESS_DENIED
+                    }
                 })?;
 
             Ok(parsec_entry_stat_to_winfsp_file_info(

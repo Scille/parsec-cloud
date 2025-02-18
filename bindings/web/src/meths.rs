@@ -13328,13 +13328,6 @@ fn variant_workspace_history2_fd_read_error_rs_to_js(
                 &"WorkspaceHistory2FdReadErrorBadFileDescriptor".into(),
             )?;
         }
-        libparsec::WorkspaceHistory2FdReadError::BlockNotFound { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"WorkspaceHistory2FdReadErrorBlockNotFound".into(),
-            )?;
-        }
         libparsec::WorkspaceHistory2FdReadError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -13375,6 +13368,13 @@ fn variant_workspace_history2_fd_read_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceHistory2FdReadErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceHistory2FdReadError::ServerBlockstoreUnavailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceHistory2FdReadErrorServerBlockstoreUnavailable".into(),
             )?;
         }
         libparsec::WorkspaceHistory2FdReadError::Stopped { .. } => {

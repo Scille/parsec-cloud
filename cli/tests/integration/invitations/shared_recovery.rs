@@ -1,3 +1,5 @@
+#![cfg_attr(target_family = "windows", allow(unused_imports))]
+
 use std::sync::{Arc, Mutex};
 
 use libparsec::{
@@ -6,17 +8,18 @@ use libparsec::{
 };
 
 use crate::{
-    integration_tests::{bootstrap_cli_test, shared_recovery_create, spawn_interactive_command},
+    integration_tests::bootstrap_cli_test,
     std_cmd,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
+#[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
     let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    shared_recovery_create(&alice, &bob, None);
+    crate::integration_tests::shared_recovery_create(&alice, &bob, None);
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
         bob.clone(),
@@ -58,7 +61,8 @@ async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
     );
 
     let p_greeter = Arc::new(Mutex::new(
-        spawn_interactive_command(dbg!(program_greeter), Some(1000)).unwrap(),
+        crate::integration_tests::spawn_interactive_command(dbg!(program_greeter), Some(1000))
+            .unwrap(),
     ));
 
     // spawn claimer thread
@@ -66,7 +70,8 @@ async fn invite_shared_recovery_dance(tmp_path: TmpPath) {
     let program_claimer = std_cmd!("invite", "claim", invitation_addr.to_url().as_ref());
 
     let p_claimer = Arc::new(Mutex::new(
-        spawn_interactive_command(dbg!(program_claimer), Some(10_000)).unwrap(),
+        crate::integration_tests::spawn_interactive_command(dbg!(program_claimer), Some(10_000))
+            .unwrap(),
     ));
 
     // retrieve greeter code

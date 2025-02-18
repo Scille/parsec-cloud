@@ -20,8 +20,8 @@ pub enum WorkspaceHistoryFdReadError {
     BadFileDescriptor,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
-    #[error("Block doesn't exist on the server")]
-    BlockNotFound,
+    #[error("Block access is temporary unavailable on the server")]
+    ServerBlockstoreUnavailable,
     #[error(transparent)]
     InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
     #[error(transparent)]
@@ -139,7 +139,7 @@ pub async fn fd_read(
                         WorkspaceHistoryFdReadError::NoRealmAccess
                     }
                     WorkspaceHistoryStoreGetBlockError::BlockNotFound => {
-                        WorkspaceHistoryFdReadError::BlockNotFound
+                        WorkspaceHistoryFdReadError::ServerBlockstoreUnavailable
                     }
                     WorkspaceHistoryStoreGetBlockError::InvalidBlockAccess(err) => {
                         WorkspaceHistoryFdReadError::InvalidBlockAccess(err)
