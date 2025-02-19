@@ -48,7 +48,6 @@ pub(super) enum ManifestUpdateLockTakeOutcome {
 #[derive(Debug)] // Note this should not be made `Clone` !
 pub(super) struct ManifestUpdateLockGuard {
     entry_id: VlobID,
-    is_released: bool,
 }
 
 // We use this drop to detect misuse of the guard (i.e. not releasing it properly).
@@ -59,12 +58,12 @@ pub(super) struct ManifestUpdateLockGuard {
 // error is this panic message instead of the original error :/
 impl Drop for ManifestUpdateLockGuard {
     fn drop(&mut self) {
-        if !self.is_released {
-            log::error!(
-                "Manifest `{}` guard dropped without being released !",
-                self.entry_id
-            );
-        }
+        // We use `std::mem::forget` to avoid running this guard drop when
+        // the release is done properly.
+        log::error!(
+            "Manifest `{}` guard dropped without being released !",
+            self.entry_id
+        );
     }
 }
 
@@ -90,10 +89,7 @@ impl PerManifestUpdateLock {
             None => {
                 self.per_manifest_lock
                     .push((entry_id, EntryLockState::Taken));
-                let guard = ManifestUpdateLockGuard {
-                    entry_id,
-                    is_released: false,
-                };
+                let guard = ManifestUpdateLockGuard { entry_id };
                 // It's official: we are now the one and only updating this manifest !
                 ManifestUpdateLockTakeOutcome::Taken(guard)
             }
@@ -130,10 +126,7 @@ impl PerManifestUpdateLock {
             None => {
                 self.per_manifest_lock
                     .push((entry_id, EntryLockState::Taken));
-                let guard = ManifestUpdateLockGuard {
-                    entry_id,
-                    is_released: false,
-                };
+                let guard = ManifestUpdateLockGuard { entry_id };
                 // It's official: we are now the one and only updating this manifest !
                 Some(guard)
             }
@@ -143,7 +136,7 @@ impl PerManifestUpdateLock {
         }
     }
 
-    pub(super) fn release(&mut self, mut guard: ManifestUpdateLockGuard) {
+    pub(super) fn release(&mut self, guard: ManifestUpdateLockGuard) {
         let (index, (_, state)) = self
             .per_manifest_lock
             .iter()
@@ -161,8 +154,9 @@ impl PerManifestUpdateLock {
         // We remove the entry altogether, this is the way to signify it is free to take now
         self.per_manifest_lock.swap_remove(index);
 
-        // Finally mark the guard as released to pass the sanity check in it drop
-        guard.is_released = true;
+        // Finally forget about the guard to avoid running its drop (since it
+        // is expected to be called only when the guard is improperly dropped).
+        std::mem::forget(guard);
     }
 
     // See `WorkspaceDataStorageChildManifestUpdater`'s drop for the release part
