@@ -211,6 +211,7 @@ export class UserGreet {
       this.handle = null;
       return result;
     } else {
+      await wait(500);
       this.handle = null;
       return { ok: true, value: null };
     }

@@ -362,7 +362,9 @@ function getStepperIndex(): number {
 }
 
 const nextButtonIsVisible = computed(() => {
-  if (pageStep.value === GreetUserStep.WaitForGuest && waitingForGuest.value) {
+  if (querying.value) {
+    return false;
+  } else if (pageStep.value === GreetUserStep.WaitForGuest && waitingForGuest.value) {
     return false;
   } else if (pageStep.value === GreetUserStep.ProvideHostSasCode) {
     return false;
@@ -428,7 +430,9 @@ async function nextStep(): Promise<void> {
     await modalController.dismiss({}, MsModalResult.Confirm);
     return;
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo && profile.value) {
+    querying.value = true;
     const result = await greeter.value.createUser({ label: guestInfoPage.value.fullName, email: guestInfoPage.value.email }, profile.value);
+    querying.value = false;
     if (!result.ok) {
       await showErrorAndRestart('UsersPage.greet.errors.createUserFailed');
       return;
