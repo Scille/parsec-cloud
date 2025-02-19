@@ -242,9 +242,16 @@ jobs:
             extension: exe
             os_alias: win
             artifact_tag: windows-exe
-          - name: 🍎 macOS
+          - name: 🍎 macOS x86
             platform: macos
             os: macos-13
+            raw_latest_file: latest-mac.yml
+            extension: "*" # Use wildcard to match dmg and zip extension
+            os_alias: mac
+            artifact_tag: macos-dmg
+          - name: 🍎 macOS ARM
+            platform: macos
+            os: macos-15
             raw_latest_file: latest-mac.yml
             extension: "*" # Use wildcard to match dmg and zip extension
             os_alias: mac
@@ -256,7 +263,7 @@ jobs:
             os_alias: linux
             extension: AppImage
             artifact_tag: linux-appimage
-    name: "${{matrix.name }}: ⚡ Package electron"
+    name: "${{ matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
