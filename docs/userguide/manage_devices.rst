@@ -94,7 +94,7 @@ When you access your profile, in the ``Organization recovery`` page, click on ``
     :width: 250
     :alt: Access your profile
 
-.. image:: screens/profile_add_recovery_device.png
+.. image:: screens/export_recovery_device_page.png
     :align: center
     :width: 650
     :alt: Create a recovery file
