@@ -22,6 +22,11 @@ pub fn sleep(duration: std::time::Duration) -> impl crate::future::Future<Output
     tokio::time::sleep(duration)
 }
 
+#[inline(always)]
+pub fn yield_now() -> impl crate::future::Future<Output = ()> {
+    tokio::task::yield_now()
+}
+
 #[derive(Debug)]
 pub struct JoinHandle<T>(tokio::task::JoinHandle<T>);
 
