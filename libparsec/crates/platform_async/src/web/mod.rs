@@ -16,3 +16,8 @@ pub async fn sleep(duration: std::time::Duration) {
     let not_send_future = gloo_timers::future::sleep(duration);
     pretend_future_is_send_on_web(not_send_future).await
 }
+
+#[inline(always)]
+pub async fn yield_now() {
+    sleep(std::time::Duration::from_secs(0)).await
+}
