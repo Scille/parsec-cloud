@@ -3,7 +3,7 @@
 use std::{collections::HashMap, future::Future, pin::pin, sync::Arc};
 
 use libparsec_platform_async::{
-    channel, event, pretend_future_is_send_on_web, select2_biased, select3_biased, spawn,
+    channel, event, pretend_future_is_send_on_web, select2_biased, select3_biased, spawn, yield_now,
 };
 use libparsec_types::prelude::*;
 
@@ -168,10 +168,23 @@ fn task_future_factory(
                             Ok(OutboundSyncOutcome::InboundSyncNeeded) => (),
                             Ok(OutboundSyncOutcome::EntryIsBusy) => {
                                 // Re-enqueue to retry later
+
+                                // We are playing a dangerous game here: `flume::Receiver::recv_async`
+                                // doesn't yield to the executor if it contains an item, and we send
+                                // the event from the very same coroutine that will receive it.
+                                // This means we can end up in a busy-loop if another coroutine locks
+                                // the entry and our executor is mono-threaded !
+                                //
+                                // The solution to avoid this is simple: we just explicitly yield
+                                // before re-enqueueing.
+                                yield_now().await;
+
                                 // Note the send may fail if the syncer sub task has crashed,
                                 // in which case there is nothing we can do :(
                                 log::info!("Workspace {realm_id}: {entry_id} is busy so aborting sync to retry later");
+
                                 let _ = tx.send(entry_id);
+
                                 break;
                             }
                             Err(err) => handle_workspace_sync_error!(err, entry_id),
@@ -184,8 +197,23 @@ fn task_future_factory(
                         match outcome {
                             Ok(InboundSyncOutcome::EntryIsBusy) => {
                                 // Re-enqueue to retry later
+
+                                // We are playing a dangerous game here: `flume::Receiver::recv_async`
+                                // doesn't yield to the executor if it contains an item, and we send
+                                // the event from the very same coroutine that will receive it.
+                                // This means we can end up in a busy-loop if another coroutine locks
+                                // the entry and our executor is mono-threaded !
+                                //
+                                // The solution to avoid this is simple: we just explicitly yield
+                                // before re-enqueueing.
+                                yield_now().await;
+
+                                // Note the send may fail if the syncer sub task has crashed,
+                                // in which case there is nothing we can do :(
                                 log::info!("Workspace {realm_id}: {entry_id} is busy so aborting sync to retry later");
+
                                 let _ = tx.send(entry_id);
+
                                 break;
                             }
                             Ok(InboundSyncOutcome::Updated | InboundSyncOutcome::NoChange) => (),

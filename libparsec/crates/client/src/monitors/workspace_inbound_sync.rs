@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
+use libparsec_platform_async::{channel, pretend_future_is_send_on_web, yield_now};
 use libparsec_types::prelude::*;
 
 use super::Monitor;
@@ -286,7 +286,19 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                     Ok(InboundSyncOutcome::NoChange | InboundSyncOutcome::Updated) => break,
                     Ok(InboundSyncOutcome::EntryIsBusy) => {
                         // Re-enqueue to retry later
+
+                        // We are playing a dangerous game here: `flume::Receiver::recv_async`
+                        // doesn't yield to the executor if it contains an item, and we send
+                        // the event from the very same coroutine that will receive it.
+                        // This means we can end up in a busy-loop if another coroutine locks
+                        // the entry and our executor is mono-threaded !
+                        //
+                        // The solution to avoid this is simple: we just explicitly yield
+                        // before re-enqueueing.
+                        yield_now().await;
+
                         io.retry_later_busy_entry(entry_id).await;
+
                         break;
                     }
                     Err(err) => match err {
