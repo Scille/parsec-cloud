@@ -76,6 +76,91 @@ interface MockRouteOptions {
   POST?: MockMethodOptions;
 }
 
+interface MockCustomOrderDetailsOverload {
+  created?: DateTime;
+  amountWithTaxes?: number;
+  amountWithoutTaxes?: number;
+  amountDue?: number;
+  licenseStart?: DateTime;
+  licenseEnd?: DateTime;
+  adminAmountWithTaxes?: number;
+  outsiderAmountWithTaxes?: number;
+  standardAmountWithTaxes?: number;
+  storageAmountWithTaxes?: number;
+  adminOrdered?: number;
+  standardOrdered?: number;
+  outsiderOrdered?: number;
+  storageOrdered?: number;
+}
+
+function createCustomOrderInvoices(count: number = 1, overload: MockCustomOrderDetailsOverload = {}): Array<any> {
+  const invoices: Array<any> = [];
+
+  for (let i = 1; i < count + 1; i++) {
+    invoices.push({
+      id: `custom_order_id${i}`,
+      created: overload.created ? overload.created.toISO() : '1988-04-07T00:00:00+00:00',
+      number: `FACT00${i}`,
+      amounts: {
+        total_excl_tax: overload.amountWithoutTaxes ? overload.amountWithoutTaxes.toString() : '42.00',
+        // x10, damn government
+        total_incl_tax: overload.amountWithTaxes ? overload.amountWithTaxes.toString() : '420.00',
+        total_remaining_due_incl_tax: overload.amountDue ? overload.amountDue.toString() : '420.00',
+      },
+      pdf_link: `https://parsec.cloud/invoices/${i}`,
+      rows: [
+        {
+          reference: 'Psc_D0_Adm_M',
+          amount_tax_inc: overload.adminAmountWithTaxes ? overload.adminAmountWithTaxes.toString() : '160.00',
+        },
+        {
+          reference: 'Psc_D0_Std_User_M',
+          amount_tax_inc: overload.standardAmountWithTaxes ? overload.standardAmountWithTaxes.toString() : '200.00',
+        },
+        {
+          reference: 'Psc_D0_Ext_User_M',
+          amount_tax_inc: overload.outsiderAmountWithTaxes ? overload.outsiderAmountWithTaxes.toString() : '80.00',
+        },
+        {
+          // cspell:disable-next-line
+          reference: 'Psc_Stck_100_Go_M',
+          amount_tax_inc: overload.storageAmountWithTaxes ? overload.storageAmountWithTaxes.toString() : '120.00',
+        },
+      ],
+      _embed: {
+        custom_fields: [
+          {
+            code: 'parsec-saas-custom-order-start-date',
+            value: overload.licenseStart ? overload.licenseStart.toISO() : '1988-04-07T00:00:00+00:00',
+          },
+          {
+            code: 'parsec-saas-custom-order-end-date',
+            value: overload.licenseStart ? overload.licenseStart.toISO() : DateTime.now().plus({ year: 1 }).toISO(),
+          },
+          {
+            code: 'parsec-saas-custom-order-admin-license-count',
+            value: overload.adminOrdered ? overload.adminOrdered.toString() : '32',
+          },
+          {
+            code: 'parsec-saas-custom-order-outsider-license-count',
+            value: overload.outsiderOrdered ? overload.outsiderOrdered.toString() : '100',
+          },
+          {
+            code: 'parsec-saas-custom-order-standard-license-count',
+            value: overload.standardOrdered ? overload.standardOrdered.toString() : '50',
+          },
+          {
+            code: 'parsec-saas-custom-order-storage-license-count',
+            value: overload.storageOrdered ? overload.storageOrdered.toString() : '2',
+          },
+        ],
+      },
+    });
+  }
+
+  return invoices;
+}
+
 async function mockLogin(page: Page, options?: MockRouteOptions): Promise<void> {
   const TOKEN_RAW = {
     email: DEFAULT_USER_INFORMATION.email,
@@ -498,23 +583,6 @@ async function mockChangePassword(page: Page, options?: MockRouteOptions): Promi
   });
 }
 
-interface MockCustomOrderDetailsOverload {
-  created?: DateTime;
-  amountWithTaxes?: number;
-  amountWithoutTaxes?: number;
-  amountDue?: number;
-  licenseStart?: DateTime;
-  licenseEnd?: DateTime;
-  adminAmountWithTaxes?: number;
-  outsiderAmountWithTaxes?: number;
-  standardAmountWithTaxes?: number;
-  storageAmountWithTaxes?: number;
-  adminOrdered?: number;
-  standardOrdered?: number;
-  outsiderOrdered?: number;
-  storageOrdered?: number;
-}
-
 async function mockCustomOrderDetails(
   page: Page,
   overload: MockCustomOrderDetailsOverload = {},
@@ -529,65 +597,7 @@ async function mockCustomOrderDetails(
       await route.fulfill({
         status: 200,
         json: {
-          [DEFAULT_ORGANIZATION_INFORMATION.name]: {
-            id: 'custom_order_id',
-            created: overload.created ? overload.created.toISO() : '1988-04-07T00:00:00+00:00',
-            number: 'FACT001',
-            amounts: {
-              total_excl_tax: overload.amountWithoutTaxes ? overload.amountWithoutTaxes.toString() : '42.00',
-              // x10, damn government
-              total_incl_tax: overload.amountWithTaxes ? overload.amountWithTaxes.toString() : '420.00',
-              total_remaining_due_incl_tax: overload.amountDue ? overload.amountDue.toString() : '420.00',
-            },
-            pdf_link: 'https://parsec.cloud',
-            rows: [
-              {
-                reference: 'Psc_D0_Adm_M',
-                amount_tax_inc: overload.adminAmountWithTaxes ? overload.adminAmountWithTaxes.toString() : '160.00',
-              },
-              {
-                reference: 'Psc_D0_Std_User_M',
-                amount_tax_inc: overload.standardAmountWithTaxes ? overload.standardAmountWithTaxes.toString() : '200.00',
-              },
-              {
-                reference: 'Psc_D0_Ext_User_M',
-                amount_tax_inc: overload.outsiderAmountWithTaxes ? overload.outsiderAmountWithTaxes.toString() : '80.00',
-              },
-              {
-                // cspell:disable-next-line
-                reference: 'Psc_Stck_100_Go_M',
-                amount_tax_inc: overload.storageAmountWithTaxes ? overload.storageAmountWithTaxes.toString() : '120.00',
-              },
-            ],
-            _embed: {
-              custom_fields: [
-                {
-                  code: 'parsec-saas-custom-order-start-date',
-                  value: overload.licenseStart ? overload.licenseStart.toISO() : '1988-04-07T00:00:00+00:00',
-                },
-                {
-                  code: 'parsec-saas-custom-order-end-date',
-                  value: overload.licenseStart ? overload.licenseStart.toISO() : DateTime.now().plus({ year: 1 }).toISO(),
-                },
-                {
-                  code: 'parsec-saas-custom-order-admin-license-count',
-                  value: overload.adminOrdered ? overload.adminOrdered.toString() : '32',
-                },
-                {
-                  code: 'parsec-saas-custom-order-outsider-license-count',
-                  value: overload.outsiderOrdered ? overload.outsiderOrdered.toString() : '100',
-                },
-                {
-                  code: 'parsec-saas-custom-order-standard-license-count',
-                  value: overload.standardOrdered ? overload.standardOrdered.toString() : '50',
-                },
-                {
-                  code: 'parsec-saas-custom-order-storage-license-count',
-                  value: overload.storageOrdered ? overload.storageOrdered.toString() : '2',
-                },
-              ],
-            },
-          },
+          [DEFAULT_ORGANIZATION_INFORMATION.name]: createCustomOrderInvoices(1, overload)[0],
         },
       });
     },
@@ -654,6 +664,26 @@ async function mockGetCustomOrderRequests(page: Page, options?: MockRouteOptions
   });
 }
 
+async function mockGetCustomOrderInvoices(
+  page: Page,
+  options?: MockRouteOptions,
+  overload: MockCustomOrderDetailsOverload = {},
+): Promise<void> {
+  await mockRoute(
+    page,
+    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/custom_order_invoices`,
+    options,
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          [DEFAULT_ORGANIZATION_INFORMATION.name]: createCustomOrderInvoices(12, overload),
+        },
+      });
+    },
+  );
+}
+
 export const MockBms = {
   mockLogin,
   mockUserRoute,
@@ -674,4 +704,5 @@ export const MockBms = {
   mockUpdateEmailSendCode,
   mockCreateCustomOrderRequest,
   mockGetCustomOrderRequests,
+  mockGetCustomOrderInvoices,
 };
