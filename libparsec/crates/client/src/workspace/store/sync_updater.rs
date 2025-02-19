@@ -472,6 +472,9 @@ impl<'a> SyncUpdater<'a> {
                                 err.context("cannot populate cache").into()
                             }
                         };
+                        self.store.data.with_current_view_cache(|cache| {
+                            cache.lock_update_manifests.release(parent_update_guard)
+                        });
                         return Err((self, err));
                     }
                 };
@@ -486,8 +489,9 @@ impl<'a> SyncUpdater<'a> {
             }
         };
 
-        // `update_guard` is always set when building `SyncUpdater`, then only set to `None`
-        // either here or in the drop.
+        // `update_guard` is always set when building `SyncUpdater`, then only set to
+        // `None` either in the drop or here (where we have ownership over `self`, so
+        // it is going to be dropped and hence will never be reused).
         let child_update_guard = self.update_guard.take().expect("always present");
 
         let updater = SyncConflictUpdater {
