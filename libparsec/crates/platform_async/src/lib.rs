@@ -129,7 +129,7 @@ macro_rules! select3_biased {
 
 pub use platform::{
     pretend_future_is_send_on_web, pretend_stream_is_send_on_web, sleep, spawn, try_task_id,
-    AbortHandle, Instant, JoinHandle, TaskID,
+    yield_now, AbortHandle, Instant, JoinHandle, TaskID,
 };
 pub use std::time::Duration; // Re-exposed to simplify use of `sleep`
 
