@@ -91,7 +91,7 @@ function createCustomOrderInvoices(count: number = 1): CustomOrderDetailsResultD
     invoices.push({
       type: DataType.CustomOrderDetails,
       id: i,
-      link: 'https://unknown/link1.pdf',
+      link: `https://unknown/link${i}.pdf`,
       number: `${i}`,
       amountWithTaxes: 62.0 + (i % 2) * 16,
       amountWithoutTaxes: 16.0 + (i % 2) * 4,
@@ -103,7 +103,7 @@ function createCustomOrderInvoices(count: number = 1): CustomOrderDetailsResultD
         .plus({ days: 5 }),
       licenseStart: DateTime.now().minus({ months: count + 2 }),
       licenseEnd: DateTime.now().plus({ months: 2, days: 7 }),
-      status: InvoiceStatus.Open,
+      status: i === count ? InvoiceStatus.Open : InvoiceStatus.Paid,
       administrators: {
         quantityOrdered: 3 + (i % 2),
         amountWithTaxes: 21.0 + (i % 2) * 4,
