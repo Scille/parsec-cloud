@@ -891,6 +891,8 @@ pub(crate) enum RetrievePathFromIDEntry {
         #[allow(unused)]
         path: FsPath,
         confinement_point: PathConfinementPoint,
+        // The chain of entry IDs from the root to the provided entry
+        // (both the root and the provided entry are included in the chain).
         entry_chain: Vec<VlobID>,
     },
 }
