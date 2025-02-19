@@ -73,6 +73,8 @@ pub enum OutboundSyncOutcome {
     /// The entry is confined
     EntryIsConfined {
         confinement_point: VlobID,
+        // The chain of entry IDs from the root to the provided entry
+        // (both the root and the provided entry are included in the chain).
         entry_chain: Vec<VlobID>,
     },
 }
