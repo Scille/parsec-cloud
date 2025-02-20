@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use libparsec::{
     AvailableDevice, ClientConfig, DeviceLabel, DeviceSaveStrategy, HumanHandle,
-    ParsecOrganizationBootstrapAddr, Password,
+    ParsecOrganizationBootstrapAddr, Password, SequesterVerifyKeyDer,
 };
 
 use crate::utils::*;
@@ -24,6 +24,9 @@ pub struct Args {
     /// User email
     #[arg(short, long)]
     email: String,
+    /// Sequester authority verify key path
+    #[arg(long)]
+    sequester_key: Option<PathBuf>,
     /// Read the password from stdin instead of TTY
     #[arg(long, default_value_t)]
     password_stdin: bool,
@@ -35,6 +38,7 @@ pub async fn bootstrap_organization_req(
     device_label: DeviceLabel,
     human_handle: HumanHandle,
     password: Password,
+    sequester_key: Option<SequesterVerifyKeyDer>,
 ) -> anyhow::Result<AvailableDevice> {
     log::trace!(
         "Bootstrapping organization (confdir={}, datadir={})",
@@ -51,8 +55,7 @@ pub async fn bootstrap_organization_req(
         DeviceSaveStrategy::Password { password },
         human_handle,
         device_label,
-        // TODO: handle sequestered organization
-        None,
+        sequester_key,
     )
     .await?)
 }
@@ -64,6 +67,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         addr,
         device_label,
         password_stdin,
+        sequester_key,
     } = args;
     log::trace!("Bootstrapping organization (addr={addr})");
 
@@ -78,6 +82,14 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         }
     })?;
 
+    let sequester_verify_key = if let Some(path) = sequester_key {
+        let raw = tokio::fs::read_to_string(path).await?;
+        let key = SequesterVerifyKeyDer::load_pem(&raw)?;
+        Some(key)
+    } else {
+        None
+    };
+
     let mut handle = start_spinner("Bootstrapping organization in the server".into());
 
     bootstrap_organization_req(
@@ -86,6 +98,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         device_label,
         human_handle,
         password,
+        sequester_verify_key,
     )
     .await?;
 

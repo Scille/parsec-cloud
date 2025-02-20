@@ -126,6 +126,7 @@ async fn multiple_device_found(tmp_path: TmpPath) {
             crate::testenv_utils::DEFAULT_DEVICE_PASSWORD
                 .to_string()
                 .into(),
+            None,
         )
         .await
         .unwrap();
