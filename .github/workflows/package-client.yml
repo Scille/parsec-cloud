@@ -388,6 +388,8 @@ jobs:
             export CSC_KEY_PASSWORD='${{ secrets.MACOS_CERT_PASSWD }}'
             export CSC_NAME='${{ secrets.MACOS_CERT_COMMON_NAME }}'
             export CSC_IDENTITY_AUTO_DISCOVERY=true
+            # If FirelightFlagboy trigger the build, sign the dmg
+            export CSC_FOR_PULL_REQUEST='${{ github.actor == 'FirelightFlagboy' }}'
             export CSC_KEYCHAIN=build.keychain
             export APPLE_TEAM_ID='${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}'
             export APPLE_ID='${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}'
@@ -418,7 +420,7 @@ jobs:
           tool: syft@0.84.0
 
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.artifact_tag }}.spdx.json .
+        run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.artifact_tag }}-${{ runner.arch }}.spdx.json .
 
       - name: Debug dist folder
         if: runner.debug || false
