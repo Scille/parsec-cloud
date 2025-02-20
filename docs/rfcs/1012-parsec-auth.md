@@ -111,7 +111,7 @@ sequenceDiagram
 
 At the end of the process, the server should save the following information in a new entry:
 
-- A UUID
+- A UUID (`user_id`)
 - The email of the user
 - The secret of the authentication method (`AUTH_SECRET`)
 
