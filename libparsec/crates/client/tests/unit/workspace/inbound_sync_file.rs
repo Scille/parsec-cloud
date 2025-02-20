@@ -1,16 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use libparsec_client_connection::{
     protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
-    test_send_hook_realm_get_keys_bundle,
+    test_send_hook_realm_get_keys_bundle, test_send_hook_vlob_read_batch,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
-use crate::EventWorkspaceOpsInboundSyncDone;
+use crate::{
+    workspace::{InboundSyncOutcome, OpenOptions},
+    EventWorkspaceOpsInboundSyncDone,
+};
 
 enum RemoteModification {
     Nothing,
@@ -443,6 +446,141 @@ async fn non_placeholder(
     }
 
     wksp1_ops.stop().await.unwrap();
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn entry_busy(
+    #[values(
+        "locked_from_the_start",
+        "opened_from_the_start",
+        "locked_after_remote_fetched",
+        "conflict_and_parent_locked"
+    )]
+    kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
+
+    env.customize(|builder| {
+        builder.new_user("bob"); // bob@dev1
+        builder.share_realm(wksp1_id, "bob", RealmRole::Contributor);
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+
+        let bar_txt_v2_block_data = b"v2";
+        let bar_txt_v2_block_access = builder
+            .create_block("bob@dev1", wksp1_id, bar_txt_v2_block_data.as_ref())
+            .as_block_access(0);
+        builder
+            .create_or_update_file_manifest_vlob("bob@dev1", wksp1_id, wksp1_bar_txt_id, None)
+            .customize(|e| {
+                let manifest = Arc::make_mut(&mut e.manifest);
+                manifest.size = bar_txt_v2_block_data.len() as SizeInt;
+                manifest.blocks = vec![bar_txt_v2_block_access];
+            });
+
+        if kind == "conflict_and_parent_locked" {
+            let local_chunk_data = b"local changes";
+            let local_chunk_id = builder
+                .workspace_data_storage_chunk_create(
+                    "alice@dev1",
+                    wksp1_id,
+                    local_chunk_data.as_ref(),
+                )
+                .map(|e| e.chunk_id);
+            builder
+                .workspace_data_storage_local_file_manifest_create_or_update(
+                    "alice@dev1",
+                    wksp1_id,
+                    wksp1_bar_txt_id,
+                    None,
+                )
+                .customize(|e| {
+                    let manifest = Arc::make_mut(&mut e.local_manifest);
+                    let mut chunk =
+                        ChunkView::new(0, (local_chunk_data.len() as SizeInt).try_into().unwrap());
+                    chunk.id = local_chunk_id;
+                    manifest.size = local_chunk_data.len() as SizeInt;
+                    manifest.blocks = vec![vec![chunk]];
+                });
+        }
+    })
+    .await;
+
+    let alice = env.local_device("alice@dev1");
+    let wksp1_ops = Arc::new(workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await);
+
+    let manual_entry_locks = Arc::new(Mutex::new(vec![]));
+    match kind {
+        "locked_from_the_start" => {
+            let guard = wksp1_ops
+                .store
+                .test_manual_lock_entry(wksp1_bar_txt_id)
+                .unwrap();
+            manual_entry_locks.lock().unwrap().push(guard);
+        }
+
+        "opened_from_the_start" => {
+            wksp1_ops
+                .open_file_by_id(wksp1_bar_txt_id, OpenOptions::read_write())
+                .await
+                .unwrap();
+            // The file stays open until the workspace ops is dropped as we never close it
+        }
+
+        "locked_after_remote_fetched" => {
+            test_register_sequence_of_send_hooks!(
+                &env.discriminant_dir,
+                // 1) Read the file manifest's vlob
+                test_send_hook_vlob_read_batch!(env, wksp1_id, wksp1_bar_txt_id),
+                // 2) Fetch workspace keys bundle to decrypt the vlob
+                test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
+            );
+
+            let manual_entry_locks = manual_entry_locks.clone();
+            let wksp1_ops = wksp1_ops.clone();
+            libparsec_tests_fixtures::moment_inject_hook(
+                Moment::InboundSyncRemoteFetched,
+                async move {
+                    let guard = wksp1_ops
+                        .store
+                        .test_manual_lock_entry(wksp1_bar_txt_id)
+                        .unwrap();
+                    manual_entry_locks.lock().unwrap().push(guard);
+                },
+            );
+        }
+
+        "conflict_and_parent_locked" => {
+            test_register_sequence_of_send_hooks!(
+                &env.discriminant_dir,
+                // 1) Read the file manifest's vlob
+                test_send_hook_vlob_read_batch!(env, wksp1_id, wksp1_bar_txt_id),
+                // 2) Fetch workspace keys bundle to decrypt the vlob
+                test_send_hook_realm_get_keys_bundle!(env, alice.user_id, wksp1_id),
+            );
+
+            let manual_entry_locks = manual_entry_locks.clone();
+            let wksp1_ops = wksp1_ops.clone();
+            libparsec_tests_fixtures::moment_inject_hook(
+                Moment::InboundSyncRemoteFetched,
+                async move {
+                    let guard = wksp1_ops.store.test_manual_lock_entry(wksp1_id).unwrap();
+                    manual_entry_locks.lock().unwrap().push(guard);
+                },
+            );
+        }
+        unknown => panic!("Unknown kind: {}", unknown),
+    }
+
+    p_assert_matches!(
+        wksp1_ops.inbound_sync(wksp1_bar_txt_id).await,
+        Ok(InboundSyncOutcome::EntryIsBusy)
+    );
+
+    for guard in manual_entry_locks.lock().unwrap().drain(..) {
+        wksp1_ops.store.test_manual_unlock_entry(guard);
+    }
 }
 
 // TODO: test inbound sync on an opened file: the sync should be rejected
