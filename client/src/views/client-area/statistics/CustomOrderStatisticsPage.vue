@@ -366,7 +366,7 @@ const storagePercentage = computed(() =>
   organizationStats.value ? Math.min(Math.round((totalData.value / storageSize.value) * 100), 100) : 0,
 );
 const storageWidth = computed(() => `${storagePercentage.value}%`);
-const remainingStorageSize = computed(() => (contractDetails.value ? storageSize.value - totalData.value : 0));
+const remainingStorageSize = computed(() => (contractDetails.value ? Math.max(storageSize.value - totalData.value, 0) : 0));
 const totalData = ref<number>(0);
 const querying = ref(true);
 const error = ref('');
