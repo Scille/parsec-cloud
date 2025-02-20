@@ -25,6 +25,12 @@ function isStripeDisabled(): boolean {
   return import.meta.env[STRIPE_DISABLE_ENV_VARIABLE] === 'true';
 }
 
+const SENTRY_DISABLE_ENV_VARIABLE = 'PARSEC_APP_DISABLE_SENTRY';
+
+function isSentryDisabled(): boolean {
+  return import.meta.env[SENTRY_DISABLE_ENV_VARIABLE] === 'true';
+}
+
 const BMS_ENV_VARIABLE = 'PARSEC_APP_BMS_API_URL';
 const DEFAULT_BMS_URL = 'https://bms-dev.parsec.cloud';
 
@@ -113,6 +119,7 @@ export const Env = {
   getSaasServers,
   getTrialServers,
   isStripeDisabled,
+  isSentryDisabled,
   Links: {
     openDocumentationLink,
     openContactLink,

@@ -11,6 +11,7 @@ import { electronIsDev } from './utils';
 import fs from 'fs';
 import path from 'path';
 import { PageToWindowChannel, WindowToPageChannel } from './communicationChannels';
+import { Env } from './envVariables';
 import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } from './setup';
 
 const PARSEC_CONFIG_DIR_NAME = 'parsec3';
@@ -31,14 +32,18 @@ function initSentry(): void {
   if (!sentry_dsn && !electronIsDev) {
     sentry_dsn = SENTRY_DSN_GUI_ELECTRON_DEFAULT;
   }
-  if (sentry_dsn) {
+  if (sentry_dsn && !Env.DISABLE_SENTRY) {
     console.log('Configuring Sentry...');
     Sentry.init({
       dsn: sentry_dsn,
       integrations: [Sentry.captureConsoleIntegration({ levels: ['warn', 'error', 'assert'] })],
     });
   } else {
-    console.log('Sentry not configured ("SENTRY_DSN_GUI_ELECTRON" env variable was not set).');
+    if (Env.DISABLE_SENTRY) {
+      console.log('Sentry is disabled');
+    } else {
+      console.log('Sentry not configured ("SENTRY_DSN_GUI_ELECTRON" env variable was not set).');
+    }
   }
 }
 
