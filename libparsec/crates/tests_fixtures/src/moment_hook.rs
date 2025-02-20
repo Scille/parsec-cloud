@@ -22,6 +22,11 @@ pub enum Moment {
     /// manifest with the reshaped block.
     /// This moment occurs right after the blocks has been uploaded.
     OutboundSyncFileReshapedAndBlockUploaded,
+    /// `WorkspaceOps::inbound_sync` first check if the entry is already locked, then
+    /// fetches its corresponding remote manifest, and only then locks the entry to
+    /// merge local and remote contents.
+    /// This moment occurs right after the remote manifest is fetched.
+    InboundSyncRemoteFetched,
     /// Before actual stop of the workspace ops, all currently opened files must be
     /// closed so that they change get flushed to database.
     /// This moment occurs in `WorkspaceOps::stop` right after the files has been closed.

@@ -288,6 +288,12 @@ pub async fn inbound_sync(
 
     // Now merge the remote with the current local manifest
 
+    #[cfg(test)]
+    libparsec_tests_fixtures::moment_define_inject_point(
+        libparsec_tests_fixtures::Moment::InboundSyncRemoteFetched,
+    )
+    .await;
+
     let (updater, local_manifest) = {
         let outcome = ops.store.for_update_sync(entry_id, false).await;
         match outcome {

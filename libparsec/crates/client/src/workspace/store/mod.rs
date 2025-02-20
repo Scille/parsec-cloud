@@ -38,6 +38,8 @@ pub(crate) use resolve_path::{
 pub(crate) use sync_updater::{
     ForUpdateSyncError, ForUpdateSyncLocalOnlyError, IntoSyncConflictUpdaterError, SyncUpdater,
 };
+#[cfg(test)]
+pub(super) struct TestManualEntryLock(per_manifest_update_lock::ManifestUpdateLockGuard);
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceStoreOperationError {
@@ -576,6 +578,28 @@ impl WorkspaceStore {
     pub async fn is_entry_locked(&self, entry_id: VlobID) -> bool {
         self.data
             .with_current_view_cache(|cache| cache.lock_update_manifests.is_taken(entry_id))
+    }
+
+    #[cfg(test)]
+    /// For test only !
+    ///
+    /// Entry locking is normally done through the `for_update_*` methods, however they
+    /// are designed around the fact the lock should be taken for a limited amount of
+    /// time and hence have lifetime constraints.
+    ///
+    /// However it is convenient for testing purpose to have a simple way to lock an
+    /// entry for an arbitrary amount of time.
+    pub(super) fn test_manual_lock_entry(&self, entry_id: VlobID) -> Option<TestManualEntryLock> {
+        self.data
+            .with_current_view_cache(|cache| cache.lock_update_manifests.try_take(entry_id))
+            .map(TestManualEntryLock)
+    }
+
+    #[cfg(test)]
+    pub(super) fn test_manual_unlock_entry(&self, guard: TestManualEntryLock) {
+        let TestManualEntryLock(guard) = guard;
+        self.data
+            .with_current_view_cache(|cache| cache.lock_update_manifests.release(guard))
     }
 
     pub async fn get_chunk_or_block_local_only(
