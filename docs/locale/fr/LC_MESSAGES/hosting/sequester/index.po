@@ -1,0 +1,205 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.3.0-rc.12+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-02-26 23:45-0300\n"
+"PO-Revision-Date: 2025-02-26 23:56-0300\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.5\n"
+
+#: ../../hosting/sequester/index.rst:9
+msgid "Sequester service"
+msgstr "Service du Séquestre"
+
+#: ../../hosting/sequester/index.rst:11
+msgid ""
+"The sequester service allows to recover all data from an organization. It "
+"can only be activated during the organization bootstrap and not afterwards."
+msgstr ""
+"Le service de séquestre permet de récupérer toutes les données d'une "
+"organisation. Il ne peut être activé que lors du démarrage de l'organisation "
+"et non après."
+
+#: ../../hosting/sequester/index.rst:14
+msgid ""
+"The typical use case for this service is to respond to an investigation "
+"carried out by an inspection service requiring access to data stored on the "
+"workspaces of the person(s) involved in the investigation."
+msgstr ""
+"Le cas d'utilisation typique de ce service est la réponse à une enquête "
+"menée par un service d'inspection nécessitant l'accès aux données stockées "
+"sur les espaces de travail de la (des) personne(s) impliquée(s) dans "
+"l'enquête."
+
+#: ../../hosting/sequester/index.rst:18
+msgid ""
+"The service is managed by an *authority key* and a *service key*. Note that "
+"the secret parts of both authority and service keys are only used in an off-"
+"line mode (i.e. no direct communication with the Parsec server is required), "
+"so that they can be stored in a secure location."
+msgstr ""
+"Le service est géré par une *clé d'autorité* et une *clé de service*. Notez "
+"que les parties secrètes des clés d'autorité et de service ne sont utilisées "
+"qu'en mode hors ligne (c'est-à-dire qu'aucune communication directe avec le "
+"serveur Parsec n'est nécessaire), de sorte qu'elles peuvent être stockées "
+"dans un endroit sûr."
+
+#: ../../hosting/sequester/index.rst:23
+msgid ""
+"The environment in which the sequester service is used can be controlled as "
+"much as possible."
+msgstr ""
+"L'environnement dans lequel le service de séquestre est utilisé peut être "
+"contrôlé autant que possible."
+
+#: ../../hosting/sequester/index.rst:27
+msgid "Security considerations"
+msgstr "Considérations de sécurité"
+
+#: ../../hosting/sequester/index.rst:29
+msgid ""
+"The sequester service uses AES-256 keys which are the most sensitive "
+"elements because they are used to decrypt the exported data."
+msgstr ""
+"Le service de séquestre utilise des clés AES-256 qui sont les éléments les "
+"plus sensibles car elles sont utilisées pour décrypter les données exportées."
+
+#: ../../hosting/sequester/index.rst:32
+msgid ""
+"These keys must therefore be backed up and stored on a physically protected "
+"external medium (safe) and all decryption operations must be carried out on "
+"an off-line workstation."
+msgstr ""
+"Ces clés doivent donc être sauvegardées et stockées sur un support externe "
+"physiquement protégé (coffre-fort) et toutes les opérations de décryptage "
+"doivent être effectuées sur un poste de travail hors ligne."
+
+#: ../../hosting/sequester/index.rst:37
+msgid "Requirements"
+msgstr "Prérequis"
+
+#: ../../hosting/sequester/index.rst:39
+msgid "In order to use the Sequester service you need:"
+msgstr "Pour utiliser le service de séquestre, vous devez :"
+
+#: ../../hosting/sequester/index.rst:41
+msgid "OpenSSL, for key generation"
+msgstr "OpenSSL, pour la génération de clés"
+
+#: ../../hosting/sequester/index.rst:42
+msgid "Parsec CLI (`parsec-cli`)"
+msgstr "Parsec CLI (`parsec-cli`)"
+
+#: ../../hosting/sequester/index.rst:43
+msgid "Parsec server CLI (from pypi `pip install parsec-cloud`)"
+msgstr "CLI du serveur Parsec (from pypi `pip install parsec-cloud`)"
+
+#: ../../hosting/sequester/index.rst:46
+msgid "Authority key"
+msgstr "Clé d'autorité"
+
+#: ../../hosting/sequester/index.rst:48
+msgid "You can create the authority key with the following commands:"
+msgstr "Vous pouvez créer la clé d'autorité à l'aide des commandes suivantes :"
+
+#: ../../hosting/sequester/index.rst:56
+msgid "Create and bootstrap organization with sequester authority"
+msgstr "Création et démarrage d'une organisation avec l'autorité de séquestre"
+
+#: ../../hosting/sequester/index.rst:64
+msgid "Sequester service key and certificate"
+msgstr "Séquestrer la clé de service et le certificat"
+
+#: ../../hosting/sequester/index.rst:66
+msgid ""
+"You can create the service key and certificate with the following commands:"
+msgstr ""
+"Vous pouvez créer la clé de service et le certificat à l'aide des commandes "
+"suivantes :"
+
+#: ../../hosting/sequester/index.rst:81
+msgid "Enable sequester service"
+msgstr "Activer le service de séquestre"
+
+#: ../../hosting/sequester/index.rst:89
+msgid "Exporting data with sequester service"
+msgstr "Exportation de données avec le service séquestre"
+
+#: ../../hosting/sequester/index.rst:91
+msgid ""
+"Realm vs Workspace: In Parsec vocabulary, workspace and realm are two sides "
+"of the same coin. In a nutshell, the realm is a server-side concept that "
+"references the big pile of encrypted data, while the workspace is the client-"
+"side concept that reference those data once decrypted."
+msgstr ""
+"Realm vs Espace de travail : Dans le vocabulaire Parsec, Espace de travail "
+"et Realm sont les deux faces d'une même pièce. En résumé, le realm est un "
+"concept côté serveur qui fait référence à la grosse pile de données "
+"cryptées, tandis que l'espace de travail est le concept côté client qui fait "
+"référence à ces données une fois décryptées."
+
+#: ../../hosting/sequester/index.rst:96
+msgid ""
+"Hence the \"realm export\" is the operation of exporting from the server all "
+"the encrypted data that, when used with the right decryption keys, will "
+"allow us to have a full read access on a workspace at any point in time up "
+"to the export date."
+msgstr ""
+"Par conséquent, l'« exportation de realm » est l'opération qui consiste à "
+"exporter du serveur toutes les données cryptées qui, lorsqu'elles sont "
+"utilisées avec les bonnes clés de décryptage, nous permettent d'avoir un "
+"accès en lecture complet à un espace de travail à tout moment jusqu'à la "
+"date d'exportation."
+
+#: ../../hosting/sequester/index.rst:100
+msgid "Overview:"
+msgstr "Vue d'ensemble :"
+
+#: ../../hosting/sequester/index.rst:102
+msgid "An organization exists with a workspace"
+msgstr "Une organisation existe avec un espace de travail"
+
+#: ../../hosting/sequester/index.rst:103
+msgid ""
+"Form the server CLI, a realm is exported. This generates a large `.sqlite` "
+"file containing all encrypted data belonging to this realm."
+msgstr ""
+"Un realm est exporté à l'aide de l'interface CLI du serveur. Cela génère un "
+"grand fichier `.sqlite` contenant toutes les données cryptées appartenant à "
+"ce realm."
+
+#: ../../hosting/sequester/index.rst:105
+msgid ""
+"The realm export file is transferred to a machine containing the decryption "
+"keys:"
+msgstr ""
+"Le fichier d'exportation du realm est transféré vers une machine contenant "
+"les clés de décryptage :"
+
+#: ../../hosting/sequester/index.rst:107
+msgid "Sequestered service key in case of a sequestered organization."
+msgstr "Clé de service du séquestré dans le cas d'une organisation séquestrée."
+
+#: ../../hosting/sequester/index.rst:108
+msgid ""
+"Device key otherwise (i.e. decrypt the realm export from a machine normally "
+"used to run the Parsec client)."
+msgstr ""
+"Clé de l'appareil, sinon (c'est-à-dire décrypter l'exportation du realm à "
+"partir d'une machine normalement utilisée pour exécuter le client Parsec)."
+
+#: ../../hosting/sequester/index.rst:119
+msgid "Using exported data"
+msgstr "Utilisation des données exportées"
