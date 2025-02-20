@@ -14,7 +14,7 @@
     @click="$emit('click', $event, user)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
-    ref="itemRef"
+    @contextmenu="onOptionsClick"
   >
     <div
       class="card-checkbox"
@@ -84,12 +84,11 @@ import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserModel } from '@/components/users/types';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { MsCheckbox, formatTimeSince } from 'megashark-lib';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
-const itemRef = ref();
 
 const emits = defineEmits<{
   (e: 'click', event: Event, user: UserModel): void;
@@ -104,14 +103,6 @@ const props = defineProps<{
 
 defineExpose({
   isHovered,
-});
-
-onMounted(async () => {
-  itemRef.value.$el.addEventListener('contextmenu', onOptionsClick);
-});
-
-onBeforeUnmount(async () => {
-  itemRef.value.$el.removeEventListener('contextmenu');
 });
 
 async function onOptionsClick(event: Event): Promise<void> {

@@ -7,7 +7,7 @@
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
-    ref="itemRef"
+    @contextmenu="onOptionsClick"
   >
     <!-- favorites -->
     <div
@@ -110,12 +110,11 @@ import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import { UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
 import { IonAvatar, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
 import { business, cloudDone, cloudOffline, ellipsisHorizontal, star, time, cloudUpload, personAdd, eye } from 'ionicons/icons';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { WorkspaceTagRole } from '@/components/workspaces';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
-const itemRef = ref();
 
 const props = defineProps<{
   workspace: WorkspaceInfo;
@@ -129,14 +128,6 @@ const emits = defineEmits<{
   (e: 'menuClick', workspace: WorkspaceInfo, event: Event, onFinished: () => void): void;
   (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
-
-onMounted(() => {
-  itemRef.value.addEventListener('contextmenu', onOptionsClick);
-});
-
-onBeforeUnmount(async () => {
-  itemRef.value.removeEventListener('contextmenu');
-});
 
 async function onOptionsClick(event: Event): Promise<void> {
   event.preventDefault();

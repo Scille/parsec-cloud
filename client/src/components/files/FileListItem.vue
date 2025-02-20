@@ -21,7 +21,7 @@
       @dblclick="$emit('click', $event, entry)"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
-      ref="itemRef"
+      @contextmenu="onOptionsClick"
     >
       <div class="file-selected">
         <!-- eslint-disable vue/no-mutating-props -->
@@ -109,7 +109,7 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { FsPath, Path } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
-import { Ref, onMounted, ref, onBeforeUnmount } from 'vue';
+import { Ref, onMounted, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
@@ -135,7 +135,6 @@ defineExpose({
 });
 
 const currentPath: Ref<FsPath> = ref('/');
-const itemRef = ref();
 
 onMounted(async () => {
   if (props.entry.isFile()) {
@@ -143,11 +142,6 @@ onMounted(async () => {
   } else {
     currentPath.value = props.entry.path;
   }
-  itemRef.value.$el.addEventListener('contextmenu', onOptionsClick);
-});
-
-onBeforeUnmount(async () => {
-  itemRef.value.$el.removeEventListener('contextmenu');
 });
 
 function isFileSynced(): boolean {
