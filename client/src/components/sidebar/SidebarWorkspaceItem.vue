@@ -7,7 +7,7 @@
     @click="$emit('workspaceClicked', workspace)"
     :class="currentRouteIsWorkspaceRoute(workspace.handle) ? 'item-selected' : 'item-not-selected'"
     class="sidebar-item button-medium ion-no-padding"
-    ref="itemRef"
+    @contextmenu="onContextMenu"
   >
     <div class="sidebar-item-workspace">
       <ion-text class="sidebar-item-workspace__label">{{ workspace.currentName }}</ion-text>
@@ -26,7 +26,6 @@ import { IonItem, IonText, IonIcon } from '@ionic/vue';
 import { WorkspaceInfo } from '@/parsec';
 import { ellipsisHorizontal } from 'ionicons/icons';
 import { currentRouteIsWorkspaceRoute } from '@/router';
-import { onMounted, onBeforeUnmount, ref } from 'vue';
 
 defineProps<{
   workspace: WorkspaceInfo;
@@ -37,18 +36,10 @@ const emits = defineEmits<{
   (e: 'contextMenuRequested', event: Event): void;
 }>();
 
-const itemRef = ref();
-
-onMounted(async () => {
-  itemRef.value.$el.addEventListener('contextmenu', (event: Event) => {
-    event.preventDefault();
-    emits('contextMenuRequested', event);
-  });
-});
-
-onBeforeUnmount(async () => {
-  itemRef.value.$el.removeEventListener('contextmenu');
-});
+async function onContextMenu(event: Event): Promise<void> {
+  event.preventDefault();
+  emits('contextMenuRequested', event);
+}
 </script>
 
 <style scoped lang="scss">

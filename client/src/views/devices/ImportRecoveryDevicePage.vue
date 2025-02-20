@@ -194,7 +194,7 @@ async function onInputChange(_event: Event): Promise<void> {
   if (hiddenInput.value.files.length === 1) {
     recoveryFile.value = hiddenInput.value.files[0];
   }
-  hiddenInput.value.removeEventListener('change');
+  hiddenInput.value.removeEventListener('change', onInputChange);
 }
 
 async function importButtonClick(): Promise<void> {

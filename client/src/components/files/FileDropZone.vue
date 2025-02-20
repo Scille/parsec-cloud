@@ -2,12 +2,12 @@
 
 <template>
   <div
-    ref="dropZone"
     class="drop-zone"
     :class="isActive ? 'drop-zone-active' : 'drop-zone-inactive'"
     @drop.prevent="onDrop"
     @dragenter.prevent="onDragEnter()"
     @dragleave.prevent="onDragLeave()"
+    @contextmenu="onContextMenu"
   >
     <slot />
     <div
@@ -55,7 +55,6 @@ const emits = defineEmits<{
 }>();
 
 const dragEnterCount = ref(0);
-const dropZone = ref();
 
 const isActive = computed(() => {
   return !props.disabled && !props.isReader && dragEnterCount.value > 0;
@@ -69,10 +68,6 @@ onMounted(() => {
     window.document.body.addEventListener('dragleave', preventDefaults);
     window.document.body.addEventListener('drop', preventDefaults);
   }
-  dropZone.value.addEventListener('contextmenu', (event: Event) => {
-    event.preventDefault();
-    emits('globalMenuClick', event);
-  });
 });
 
 onBeforeUnmount(() => {
@@ -83,8 +78,12 @@ onBeforeUnmount(() => {
     window.document.body.removeEventListener('dragleave', preventDefaults);
     window.document.body.removeEventListener('drop', preventDefaults);
   }
-  dropZone.value.removeEventListener('contextmenu');
 });
+
+async function onContextMenu(event: Event): Promise<void> {
+  event.preventDefault();
+  emits('globalMenuClick', event);
+}
 
 async function onDrop(event: DragEvent): Promise<void> {
   if (props.isReader) {
