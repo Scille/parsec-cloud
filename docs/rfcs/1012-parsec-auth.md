@@ -37,7 +37,8 @@ How to ensure that the client is not compromised.
 
 ## Design
 
-The authentication service would be a used before connecting to the parsec-cloud server to retrieve the device of the user that will then be used to authenticate to parsec-cloud.
+The authentication service would be used before connecting to the parsec-cloud server to retrieve the device of the user.
+The device that will then be used to authenticate to parsec-cloud.
 
 <!-- Device stored on a third-party service -->
 ```mermaid
