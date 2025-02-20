@@ -51,6 +51,7 @@ pub async fn initialize_test_organization(
         "laptop".parse().expect("Unreachable"),
         HumanHandle::new("alice@example.com", "Alice").expect("Unreachable"),
         DEFAULT_DEVICE_PASSWORD.to_string().into(),
+        None,
     )
     .await?;
 
