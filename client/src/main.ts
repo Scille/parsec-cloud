@@ -102,7 +102,9 @@ async function setupApp(): Promise<void> {
     .use(router)
     .use(megasharkPlugin);
 
-  await Sentry.init(app, router);
+  if (!Env.isSentryDisabled()) {
+    await Sentry.init(app, router);
+  }
 
   app.provide(StorageManagerKey, storageManager);
   app.provide(InjectionProviderKey, injectionProvider);
