@@ -9,7 +9,7 @@
     >
       <ion-icon :icon="chevronBack" />
       <ion-text class="button-medium">
-        {{ parentHistory.slice(-1)[0].name }}
+        {{ $msTranslate(parentHistory.slice(-1)[0].name) }}
       </ion-text>
     </div>
     <div class="dropdown-list-items">

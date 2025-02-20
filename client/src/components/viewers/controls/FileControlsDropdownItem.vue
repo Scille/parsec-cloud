@@ -38,7 +38,7 @@
 import { FileControlsDropdownItemContent } from '@/components/viewers';
 import { IonIcon, IonText } from '@ionic/vue';
 import { checkmark, chevronForward } from 'ionicons/icons';
-import { Translatable, MsImage } from 'megashark-lib';
+import { MsImage, Translatable } from 'megashark-lib';
 
 const emits = defineEmits<{
   (e: 'click', option: FileControlsDropdownItemContent): void;

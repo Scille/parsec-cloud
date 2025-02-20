@@ -130,6 +130,11 @@ export const Media = {
       return (el as HTMLVideoElement).currentTime;
     });
   },
+  async getPausedState(media: Locator): Promise<boolean> {
+    return await media.evaluate((el) => {
+      return (el as HTMLVideoElement).paused;
+    });
+  },
 };
 
 // eslint-disable-next-line
@@ -157,4 +162,11 @@ export async function testFileViewerZoomLevel(fileWrapper: Locator, zoom: string
     return (el.attributes.getNamedItem('style') as Attr).value;
   });
   expect(value).toMatch(new RegExp(`^--[a-f0-9]+-zoomLevel: ${zoom};$`));
+}
+
+export async function sliderClick(page: Page, slider: Locator, progressPercent: number): Promise<void> {
+  const box = await slider.boundingBox();
+  if (box) {
+    await page.mouse.click(box.x + (box.width * progressPercent / 100), box.y);
+  }
 }
