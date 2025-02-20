@@ -11,6 +11,7 @@ import windowStateKeeper from 'electron-window-state';
 import fs from 'fs';
 import { join } from 'path';
 import { WindowToPageChannel } from './communicationChannels';
+import { Env } from './envVariables';
 import AppUpdater, { UpdaterState, createAppUpdater } from './updater';
 import { electronIsDev } from './utils';
 import { WinRegistry } from './winRegistry';
@@ -140,7 +141,7 @@ export class ElectronCapacitorApp {
       scheme: this.customScheme,
     });
 
-    if (process.env.GUI_DISABLE_UPDATES === 'true') {
+    if (Env.DISABLE_UPDATES) {
       log['info']('Updates are disabled');
     } else {
       this.updater = createAppUpdater();
