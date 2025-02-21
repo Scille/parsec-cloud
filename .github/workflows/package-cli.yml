@@ -173,11 +173,11 @@ jobs:
 
       - name: Load version config
         id: version
-        run: Get-Content ${{ runner.temp }}\version.patch\version.ini | tee "$GITHUB_OUTPUT"
+        run: Get-Content "${{ runner.temp }}\version.patch\version.ini" | tee -FilePath "$env:GITHUB_OUTPUT"
         timeout-minutes: 1
 
       - name: Apply version.patch
-        run: git apply --allow-empty ${{ runner.temp }}\version.patch\version.patch
+        run: git apply --allow-empty "${{ runner.temp }}\version.patch\version.patch"
         timeout-minutes: 1
 
       - name: Build CLI
