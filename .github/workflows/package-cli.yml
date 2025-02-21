@@ -222,7 +222,8 @@ jobs:
 
       - name: Generate fake package.json for sign script
         run: >-
-          "{ \"version\": \"${{ steps.version.outputs.full }}\" }" | Tee-Object -FilePath "${{ runner.temp }}\package.json"
+          $jsonContent = '{ "version": "${{ steps.version.outputs.full }}" }'
+          $jsonContent | Tee-Object -FilePath "${{ runner.temp }}\package.json"
 
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # pin v4.6.0
         with:
