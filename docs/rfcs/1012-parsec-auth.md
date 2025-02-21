@@ -294,14 +294,29 @@ That require managing a new service that will store the devices of the user.
 
 Consideration should be taken about the method used to save the device on the remote server.
 The service would need to identify the user so we will need to have some information about the user (email mostly).
+
 ### Consideration on PBKDF algorithms
 
 The `PBKDF_A` (used to derive a secret from the password) and `PBKDF_B` (used to derive the private key from the password) output should be different in order to avoid leaking the private key.
 
-> TODO: explain how to get different output and/or what should be considered for that.
+To make the output different, we could:
+
+- Use different algorithms (e.g.: `argon2id`, `scrypt`)
+- Choose different salt (but they need to be deterministic from the information provided by the user only).
+- Use different parameters (but that may reduce the security)
+
 ## Risks
 
 The devices are not stored securely to only allow the user to access them.
+In the case of using a password to login and to generate the asymmetric key pair,
+consideration should be taken to ensure that we obtain the key pair from the derivation of the password.
+
+In [Account creation](<#Account creation>), we use the password to generate 2 things:
+
+- An intermediate secret using `PBKDF_A` provided as is to the server.
+- The key pair using `PBKDF_B`.
+
+We have the section [Consideration of PBKDF algorithms](<#Consideration on PBKDF algorithms>) that state some of the requirement.
 
 ## Remarks & open questions
 
