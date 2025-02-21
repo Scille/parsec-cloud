@@ -5,11 +5,6 @@
 #[macro_use]
 extern crate lazy_static;
 
-// See https://github.com/la10736/rstest/tree/v0.18.2/rstest_reuse#cavelets
-#[allow(clippy::single_component_path_imports)]
-#[cfg(test)]
-use rstest_reuse;
-
 // Convenient dependencies we are going to need everywhere
 /// ThisError vs Anyhow ?
 /// `anyhow::Error` is your friend: the idea is when calling a function we can have 3 outcomes:
