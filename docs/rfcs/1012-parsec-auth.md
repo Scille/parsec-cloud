@@ -8,7 +8,7 @@ This RFC will discuss the implementation of a new service to store the user's de
 
 > [!NOTE]
 > The creation of Parsec devices is not discussed in this RFC
-> as this is still performed as usual by the client application. 
+> as this is still performed as usual by the client application.
 
 ## Background & Motivation
 
@@ -118,6 +118,9 @@ sequenceDiagram
 At the end of the process, the server should save the following information in a new entry:
 
 - A UUID (`user_id`)
+
+  > It's not related to a `user_id` inside a parsec organization.
+
 - The email of the user
 - The secret of the authentication method (`AUTH_SECRET`)
 
@@ -194,7 +197,7 @@ The list returned by the authenticated service will contain only the IDs of the 
 
 ### Retrieve a specific device
 
-The server provides an API to retrieve the blob `ENC_DEV` of a device for a user and a given organization. 
+The server provides an API to retrieve the blob `ENC_DEV` of a device for a user and a given organization.
 The client application can then decrypt the blob on its side to obtain the device.
 
 ### Adding a new authentication method
@@ -208,8 +211,8 @@ To add a new authentication method, it requires the client application to:
 5. Upload `enc'(SYM_KEY)`, `PUB_AUTH_KEY_B` and the secret of the new authentication method to the server.
 
 > [!NOTE]
-> Since the symmetric key `SYM_KEY` does not change, 
-> devices already stored in the server do not need to be re-encrypted. 
+> Since the symmetric key `SYM_KEY` does not change,
+> devices already stored in the server do not need to be re-encrypted.
 
 ```mermaid
 sequenceDiagram
