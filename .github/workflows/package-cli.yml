@@ -175,7 +175,7 @@ jobs:
 
       - name: Load version config
         id: version
-        run: Get-Content "${{ runner.temp }}\version.patch\version.ini" | tee -FilePath "$env:GITHUB_OUTPUT"
+        run: Get-Content "${{ runner.temp }}\version.patch\version.ini" | Tee-Object -FilePath "$env:GITHUB_OUTPUT"
         timeout-minutes: 1
 
       - name: Apply version.patch
@@ -214,11 +214,10 @@ jobs:
 
       - name: Rename CLI artifact
         id: rename
-        shell: bash
         run: |
-          FINAL_ARTIFACT_NAME="parsec-cli_${{ steps.version.outputs.full }}_${{ matrix.suffix }}.exe"
-          cp -v target/${{ matrix.target }}/release/parsec-cli.exe ${{ runner.temp }}/$FINAL_ARTIFACT_NAME
-          echo "artifact_name=$FINAL_ARTIFACT_NAME" >> $GITHUB_OUTPUT
+          $FINAL_ARTIFACT_NAME = "parsec-cli_${{ steps.version.outputs.full }}_${{ matrix.suffix }}.exe"
+          Copy-Item -Path "target\${{ matrix.target }}\release\parsec-cli.exe" -Destination "${{ runner.temp }}\$FINAL_ARTIFACT_NAME"
+          "artifact_name=$FINAL_ARTIFACT_NAME" | Tee-Object -FilePath $env:GITHUB_OUTPUT -Append
         timeout-minutes: 1
 
       - name: Generate fake package.json for sign script
