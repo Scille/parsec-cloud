@@ -135,7 +135,7 @@ At the end of the process, the server should save the following information in a
 
 To be able to authenticate the user, it will need to provide the following information:
 
-- Its email
+- Their email
 - The secret for the chosen authentication method (`AUTH_SECRET`)
 
 The server then verifies the provided information and return a token `AUTH_TOKEN` if the information is correct.
