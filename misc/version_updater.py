@@ -249,6 +249,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / ".github/workflows/package-cli.yml": {
         Tool.Cross: [ReplaceRegex(r"cross-version: .*", "cross-version: {version}")],
+        Tool.WinFSP: [CI_WINFSP_VERSION],
     },
     ROOT_DIR / ".github/workflows/package-client.yml": {
         Tool.Node: [NODE_GA_VERSION],
