@@ -1,44 +1,49 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
-# Save parsec device on a remote server
+# Store Parsec device on a remote server
 
 ## Overview
 
-This RFC will discuss the implementation of a new service that will keep the user's devices remotely while still ensuring that only the user can use them.
+This RFC will discuss the implementation of a new service to store the user's devices remotely while still ensuring that only the user can use them.
+
+> [!NOTE]
+> The creation of Parsec devices is not discussed in this RFC
+> as this is still performed as usual by the client application. 
 
 ## Background & Motivation
 
-During our reflection about providing a client that could run in a web-browser came the questions:
+During our discussions about providing a client application that could run in a web-browser, came up the following questions:
 
 - How should we store the device in the browser?.
 
-  Some concern where raised about the persistence of a parsec device in the browser.
+  Some concerns were raised about the persistence of a Parsec device in the browser.
 
 - What would the user experience be like?
 
   - What should happen when the user uses a different browser?
-  - What the user is expecting when using another machine?
+  - What is the user expecting when using another computer?
 
-  We assume that the user expect to be able to connect from any browser/machine.
+  We assume that the user should be able to connect from any browser/computer.
 
-That how we came to the idea of storing the device on a remote server:
+That is how we came to the idea of storing the device on a remote server.
 
-- That solve the issue where the browser may clean its data.
-- The device would be accessible anywhere (given a network connection).
+- That will solve the issue of the browser cleaning its data.
+- The devices would be accessible from anywhere (given the user is online).
 
 ## Goals
 
-How would a user would store/access its devices from a remote service.
-What are the API that would be needed to implement this feature.
+1. Describe how to store/access the user devices on a remote service.
+2. Propose an API to implement this feature.
 
 ## Non-Goals
 
-How to ensure that the client is not compromised.
+- Discuss security concerns regarding the web client application.
 
 ## Design
 
-The authentication service would be used before connecting to the parsec-cloud server to retrieve the device of the user.
-The device that will then be used to authenticate to parsec-cloud.
+### General principles
+
+An authentication service (Parsec Auth) would be used to store user devices. This service will be requested before connecting to the metadata server (Parsec server) in order to retrieve a specific user device. The device will then be used to authenticate to the metadata server.
 
 <!-- Device stored on a third-party service -->
 ```mermaid
@@ -54,20 +59,20 @@ sequenceDiagram
   Client  ->> S_Data: Exchange with the server
 ```
 
-### Creation of a user account on the service
+### Account creation
 
 Creating the account for a user will require some information for the system to work:
 
 - An identifier for the user (email)
 
-  The service need to verify that the user as access to the email (using a code or sending a link to continue the process).
+  The service needs to verify that the user has access to the email (using a code or sending a link to continue the process).
 
 - A secret to identify the user (password, Fido2, ...)
 
   For the password, it's not used as is, but it's derived to create a new secret using the function `PBKDF_A` (this operation is done on the client side to not leak the master password).
   The new secret will be provided as is to the server (like a password).
 
-  In the Fido2 case we just use the included challenge since the private key is not shared with the server.
+  In the FIDO2 case the included challenge is used as is since the private key is not shared with the server.
 
 - An asymmetric key pair (`PUB_AUTH_KEY`, `PRIV_AUTH_KEY`)
 
@@ -77,12 +82,12 @@ Creating the account for a user will require some information for the system to 
   > Another approach would be to use the password as a symmetric key to encrypt a randomly generated private key that is sent alongside the public key.
   > But we would lose that property.
 
-  For Fido2, the private already exists in the fido2 device so we use it directly.
+  For FIDO2, the private key already exists in the FIDO2 device so we can use it directly.
 
   > [!NOTE]
   > Should verify if it's possible to use fido2 to encrypt random blob of data.
 
-- A symmetric key (`SYM_KEY`) that is generated during the account creation at the end by the client.
+- A symmetric key (`SYM_KEY`) that is generated client-side at the final step of the account creation.
   It's encrypted with `PUB_AUTH_KEY` and then uploaded to the service.
 
 > [!CAUTION]
@@ -99,15 +104,15 @@ sequenceDiagram
   S ->> Alice: Send an email with a unique code need to continue the process
   alt Choose between password or fido2
     Alice ->> Alice: Choose a password
-    Alice ->> Alice: Derivate the password with `PBKDF_A`
+    Alice ->> Alice: Derive a secret using the password and `PBKDF_A`
     Alice ->> Alice: Create `PRIV_AUTH_KEY`, `PUB_AUTH_KEY` using the password and `PBKDF_B`
   else
-    Alice ->> Alice: Use the public key of the fido2 device as `PUB_AUTH_KEY`
+    Alice ->> Alice: Use the public key of the FIDO2 device as `PUB_AUTH_KEY`, the private key of FIDO2 device as `PRIV_AUTH_KEY`
   end
 
   Alice ->> Alice: Create the symmetric key `SYM_KEY`
   Alice ->> Alice: Encrypt the key `SYM_KEY` with `PUB_AUTH_KEY`
-  Alice ->> S: Send the require data to finalise the account creation (`enc(SYM_KEY)`, `PUB_AUTH_KEY`, ..)
+  Alice ->> S: Send the require data to finish the account creation (`enc(SYM_KEY)`, `PUB_AUTH_KEY`, `AUTH_SECRET`, email)
 ```
 
 At the end of the process, the server should save the following information in a new entry:
@@ -131,9 +136,9 @@ At the end of the process, the server should save the following information in a
 To be able to authenticate the user, it will need to provide the following information:
 
 - Its email
-- The secret of is authentication method (`AUTH_SECRET`)
+- The secret for the chosen authentication method (`AUTH_SECRET`)
 
-The server then verify the provided information and return a token `AUTH_TOKEN` if the information is correct.
+The server then verifies the provided information and return a token `AUTH_TOKEN` if the information is correct.
 That token would need to be provided to each request requiring to be authenticated.
 
 ```mermaid
@@ -155,14 +160,15 @@ sequenceDiagram
 
 To upload a new device, the user would need to:
 
+0. Authenticate on the server to obtain the `AUTH_TOKEN` (see previous section).
 1. Retrieve the symmetric key `enc(SYM_KEY)` from the server.
 2. Decrypt the key with `PRIV_AUTH_KEY`.
 3. Encrypt the new device with `SYM_KEY` (`ENC_DEV`).
 4. Upload the encrypted device (`ENC_DEV`) and the ID of the organization (`org_id`) to the server.
 
-The server create an entry whose primary key is the tuple `user_id` and `org_id`.
+The server creates an entry whose primary key is the tuple `user_id` and `org_id`.
 
-> That mean a single device per user per organization.
+> That means a single device per user per organization.
 
 ```mermaid
 sequenceDiagram
@@ -178,26 +184,32 @@ sequenceDiagram
   Alice ->> S: Upload `ENC_DEV` + `org_id` to the server
 ```
 
-### List available device on the service
+### List available devices
 
-Once authenticated, the user can list the device associated to the account.
+Once authenticated, the user can list the devices associated to its account.
 
-> That list does not contain the blob `ENC_DEV`.
+The list returned by the authenticated service will contain only the IDs of the organizations for which the user has uploaded a device.
 
-### Retrieve a device from the service
+> Note that the list should not contain the associated blobs `ENC_DEV` because most of the time the user will only need one device (a specific API is proposed for that in the next section).
 
-The server provide an API to retrieve the blob `ENC_DEV` of a device.
-The user can then decrypt the blob on its side.
+### Retrieve a specific device
+
+The server provides an API to retrieve the blob `ENC_DEV` of a device for a user and a given organization. 
+The client application can then decrypt the blob on its side to obtain the device.
 
 ### Adding a new authentication method
 
-To add a new authentication method, it requires the user to:
+To add a new authentication method, it requires the client application to:
 
 1. Create a new asymmetric key pair (`PUB_AUTH_KEY_B`, `PRIV_AUTH_KEY_B`) from the new method.
 2. Retrieve the symmetric key `enc(SYM_KEY)` from the server.
 3. Decrypt the key with `PRIV_AUTH_KEY`.
 4. Encrypt the symmetric key with `PUB_AUTH_KEY_B` (`enc'(SYM_KEY)`).
 5. Upload `enc'(SYM_KEY)`, `PUB_AUTH_KEY_B` and the secret of the new authentication method to the server.
+
+> [!NOTE]
+> Since the symmetric key `SYM_KEY` does not change, 
+> devices already stored in the server do not need to be re-encrypted. 
 
 ```mermaid
 sequenceDiagram
@@ -216,7 +228,7 @@ sequenceDiagram
 
 ### Removing an authentication method
 
-To remove an authentication method from a user, it requires the user to:
+To remove an authentication method from a user, it requires the client application to:
 
 1. Retrieve all `PUB_AUTH_KEY` except the one to remove.
 2. Retrieve `enc(SYM_KEY)` related to the current authentication method.
@@ -257,7 +269,7 @@ sequenceDiagram
   Alice ->> S: Remove the authentication method from the server
 ```
 
-### Using the service alongside the parsec-cloud server
+### Integration with the Parsec server
 
 The parsec client would use the authentication service to store a special device, who will only be used to create a new local device.
 
@@ -277,11 +289,15 @@ That require managing a new service that will store the devices of the user.
 
 Consideration should be taken about the method used to save the device on the remote server.
 The service would need to identify the user so we will need to have some information about the user (email mostly).
+### Consideration on PBKDF algorithms
 
+The `PBKDF_A` (used to derive a secret from the password) and `PBKDF_B` (used to derive the private key from the password) output should be different in order to avoid leaking the private key.
+
+> TODO: explain how to get different output and/or what should be considered for that.
 ## Risks
 
 The devices are not stored securely to only allow the user to access them.
 
 ## Remarks & open questions
 
-Should a client API be integrated in `libparsec` to communicate with the service is needed? Or it's the JS side that handle that?
+- The client application will need to communicate with the authentication service: should this be integrated into `libparsec`? Or it's the JS side that handle that?
