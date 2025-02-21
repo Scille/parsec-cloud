@@ -49,7 +49,7 @@ jobs:
       version: ${{ inputs.version }}
       commit_sha: ${{ inputs.commit_sha }}
 
-  package-cli:
+  package-cli-linux:
     needs: version
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
     if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
@@ -135,6 +135,77 @@ jobs:
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # pin v4.6.0
         with:
           name: ${{ runner.os }}-${{ matrix.target }}-cli
+          path: |
+            ${{ runner.temp }}/${{ steps.rename.outputs.artifact_name }}
+          if-no-files-found: error
+        timeout-minutes: 5
+
+  package-cli-windows:
+    needs: version
+    # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
+    if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
+    name: 📦 Packaging CLI for Windows 🪟
+    runs-on: windows-2025
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            suffix: windows-x86_64-msvc
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
+        with:
+          ref: ${{ inputs.commit_sha }}
+        timeout-minutes: 5
+
+      - name: Retrieve runner specs
+        id: runner-specs
+        uses: ./.github/actions/system-info
+        timeout-minutes: 1
+
+      - name: Download version.patch artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # pin v4.1.8
+        with:
+          name: version.patch
+          path: ${{ runner.temp }}/version.patch
+          run-id: ${{ inputs.version_patch_run_id || github.run_id }}
+        timeout-minutes: 2
+
+      - name: Load version config
+        id: version
+        run: tee "$GITHUB_OUTPUT" < ${{ runner.temp }}/version.patch/version.ini
+        timeout-minutes: 1
+
+      - name: Apply version.patch
+        run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
+        timeout-minutes: 1
+
+      - name: Build CLI
+        shell: bash -o pipefail -eux {0}
+        run: >-
+          cargo build -p parsec-cli
+          --target=${{ matrix.target }}
+          $(python make.py cli-release-cargo-flags --quiet)
+        timeout-minutes: 15
+
+      - name: Debug target folder
+        if: runner.debug || true
+        shell: bash
+        run: tree target
+        timeout-minutes: 1
+
+      - name: Rename CLI artifact
+        id: rename
+        shell: bash
+        run: |
+          FINAL_ARTIFACT_NAME="parsec-cli_${{ steps.version.outputs.full }}_${{ matrix.suffix }}.exe"
+          cp -v target/${{ matrix.target }}/release/parsec-cli.exe ${{ runner.temp }}/$FINAL_ARTIFACT_NAME
+          echo "artifact_name=$FINAL_ARTIFACT_NAME" >> $GITHUB_OUTPUT
+        timeout-minutes: 1
+
+      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # pin v4.6.0
+        with:
+          name: ${{ runner.os }}-${{ matrix.target }}-cli-pre-build
           path: |
             ${{ runner.temp }}/${{ steps.rename.outputs.artifact_name }}
           if-no-files-found: error
