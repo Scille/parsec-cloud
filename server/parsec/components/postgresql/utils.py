@@ -5,7 +5,8 @@ import importlib
 import re
 import traceback
 from functools import wraps
-from typing import Any, Callable, Coroutine, Iterable, Protocol, TypeVar, cast
+from types import CoroutineType
+from typing import Any, Callable, Iterable, Protocol, TypeVar, cast
 
 from typing_extensions import Concatenate, ParamSpec
 
@@ -282,8 +283,8 @@ class WithPool(Protocol):
 
 
 def transaction[**P, T, S: WithPool](
-    func: Callable[Concatenate[S, AsyncpgConnection, P], Coroutine[Any, Any, T]],
-) -> Callable[Concatenate[S, P], Coroutine[Any, Any, T]]:
+    func: Callable[Concatenate[S, AsyncpgConnection, P], CoroutineType[Any, Any, T]],
+) -> Callable[Concatenate[S, P], CoroutineType[Any, Any, T]]:
     """
     This is used to decorate an API method that needs to be executed in a transaction.
 
@@ -312,8 +313,8 @@ def transaction[**P, T, S: WithPool](
 
 
 def no_transaction[**P, T, S: WithPool](
-    func: Callable[Concatenate[S, AsyncpgConnection, P], Coroutine[Any, Any, T]],
-) -> Callable[Concatenate[S, P], Coroutine[Any, Any, T]]:
+    func: Callable[Concatenate[S, AsyncpgConnection, P], CoroutineType[Any, Any, T]],
+) -> Callable[Concatenate[S, P], CoroutineType[Any, Any, T]]:
     """
     This is used to decorate an API method that needs to request the database
     without transaction (i.e. for query that doesn't do write operations).
@@ -333,8 +334,8 @@ class RetryNeeded(BaseException):
 
 
 def retryable[S, **P, T](
-    func: Callable[Concatenate[S, P], Coroutine[Any, Any, T]],
-) -> Callable[Concatenate[S, P], Coroutine[Any, Any, T]]:
+    func: Callable[Concatenate[S, P], CoroutineType[Any, Any, T]],
+) -> Callable[Concatenate[S, P], CoroutineType[Any, Any, T]]:
     @wraps(func)
     async def wrapper(self: S, *args: P.args, **kwargs: P.kwargs) -> T:
         while True:
