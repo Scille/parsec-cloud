@@ -209,8 +209,7 @@ jobs:
 
       - name: Debug target folder
         if: runner.debug || true
-        shell: bash
-        run: tree target
+        run: Get-ChildItem -Recurse target
         timeout-minutes: 1
 
       - name: Rename CLI artifact
