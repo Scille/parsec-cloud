@@ -4,6 +4,29 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.3.0-rc.12.dev.20140+f0a3e31 (2025-02-21)
+--------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Update user interface to regroup any user profile and settings in a single
+  tabbed view.
+  (`#9470 <https://github.com/Scille/parsec-cloud/issues/9470>`__)
+
+* Port the sequester feature (with realm export and mount) and expose it through
+  the CLI.
+  (`#6407 <https://github.com/Scille/parsec-cloud/issues/6407>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Only count active users in organization stats
+  (`#9723 <https://github.com/Scille/parsec-cloud/issues/9723>`__)
+
+
+
 Parsec v3.3.0-rc.11 (2025-02-17)
 --------------------------------
 
