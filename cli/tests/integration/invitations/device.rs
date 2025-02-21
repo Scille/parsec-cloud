@@ -25,6 +25,7 @@ async fn invite_device(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex()
     )
+    .stdout(predicates::str::contains("Invitation token:"))
     .stdout(predicates::str::contains("Invitation URL:"));
 }
 
