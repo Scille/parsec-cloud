@@ -208,7 +208,7 @@ jobs:
         timeout-minutes: 15
 
       - name: Debug target folder
-        if: runner.debug || true
+        if: runner.debug
         run: Get-ChildItem -Recurse target
         timeout-minutes: 1
 
@@ -221,7 +221,6 @@ jobs:
         timeout-minutes: 1
 
       - name: Generate fake package.json for sign script
-        shell: bash
         run: >-
           '{ "version": "${{ steps.version.outputs.full }}" }' | Tee-Object -FilePath "${{ runner.temp }}\package.json"
 
