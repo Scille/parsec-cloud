@@ -203,10 +203,16 @@ jobs:
           echo "artifact_name=$FINAL_ARTIFACT_NAME" >> $GITHUB_OUTPUT
         timeout-minutes: 1
 
+      - name: Generate fake package.json for sign script
+        shell: bash
+        run: >-
+          echo '{ "version": "${{ steps.version.outputs.full }}" }' | tee ${{ runner.temp }}/package.json
+
       - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # pin v4.6.0
         with:
           name: ${{ runner.os }}-${{ matrix.target }}-cli-pre-build
           path: |
             ${{ runner.temp }}/${{ steps.rename.outputs.artifact_name }}
+            ${{ runner.temp }}/package.json
           if-no-files-found: error
         timeout-minutes: 5
