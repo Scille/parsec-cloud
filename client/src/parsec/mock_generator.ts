@@ -21,7 +21,7 @@ export interface MockEntry {
 
 const FOLDER_PREFIX = 'Dir_';
 const FILE_PREFIX = 'File_';
-const EXTENSIONS = ['.mp4', '.docx', '.pdf', '.png', '.mp3', '.xlsx', '.txt', '.py'];
+const EXTENSIONS = ['.mp4', '.docx', '.pdf', '.png', '.jpg', '.mp3', '.xlsx', '.txt', '.py'];
 
 function generateEntryName(prefix: string = '', addExtension = false, extension = ''): EntryName {
   const ext = addExtension && extension.length === 0 ? EXTENSIONS[Math.floor(Math.random() * EXTENSIONS.length)] : extension;
@@ -67,6 +67,9 @@ export async function generateFile(
       break;
     case 'png':
       entry.size = (await getMockFileContent(MockFileType.PNG)).byteLength;
+      break;
+    case 'jpg':
+      entry.size = (await getMockFileContent(MockFileType.JPG)).byteLength;
       break;
     case 'docx':
       entry.size = (await getMockFileContent(MockFileType.DOCX)).byteLength;
@@ -142,7 +145,7 @@ export async function generateEntriesForEachFileType(
   folderCount = 2,
   filePrefix = FILE_PREFIX,
   folderPrefix = FOLDER_PREFIX,
-  extensions = ['.pdf', '.mp4', '.mp3', '.png', '.docx', '.xlsx', '.py', '.txt'],
+  extensions = ['.pdf', '.mp4', '.mp3', '.png', '.jpg', '.docx', '.xlsx', '.py', '.txt'],
 ): Promise<Array<MockEntry>> {
   const items: Array<MockEntry> = [];
   const parentId = crypto.randomUUID().toString();

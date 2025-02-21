@@ -146,6 +146,9 @@ export async function readHistoryFile(
       case 'png':
         offset === 0 && console.log('Using PNG content');
         return { ok: true, value: (await getMockFileContent(MockFileType.PNG)).slice(offset, offset + size) };
+      case 'jpg':
+        offset === 0 && console.log('Using JPG content');
+        return { ok: true, value: (await getMockFileContent(MockFileType.JPG)).slice(offset, offset + size) };
       case 'docx':
         offset === 0 && console.log('Using DOCX content');
         return { ok: true, value: (await getMockFileContent(MockFileType.DOCX)).slice(offset, offset + size) };
