@@ -221,7 +221,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Generate fake package.json for sign script
-        run: >-
+        run: |
           $jsonContent = '{ "version": "${{ steps.version.outputs.full }}" }'
           $jsonContent | Tee-Object -FilePath "${{ runner.temp }}\package.json"
 
