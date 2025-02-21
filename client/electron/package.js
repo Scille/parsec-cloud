@@ -89,6 +89,9 @@ const WIN_SIGN_OPTIONS = {
   signtoolOptions: {
     certificateSubjectName: 'Scille',
     certificateSha1: '4505A81975EF724601813DF296AB74A07ECFA991',
+    timeStampServer: 'http://time.certum.pl',
+    rfc3161TimeStampServer: 'http://time.certum.pl',
+    signingHashAlgorithms: ['sha256'],
   },
 };
 
