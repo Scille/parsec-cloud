@@ -276,9 +276,11 @@ sequenceDiagram
 
 ### Integration with the Parsec server
 
-The parsec client would use the authentication service to store a special device, who will only be used to create a new local device.
+The parsec client would use the authentication service to store a special device (let's call it remote device), who will only be used to create a new local device.
+That new device would be stored on the local storage and if the storage happens to be cleaned, the user could still re-create a new device from the remote device.
 
-That new device would be stored on the local storage and if the storage happens to be cleaned, the user could still re-create a new device from the special one stored on the service.
+We could directly use the remote device to communicate with the metadata server, but we choose the same approach used by the recovery device where it's only used to create new devices.
+One advantage is it provide a list of connected browsers/computers.
 
 For already existing organizations and devices, the client could create and upload a special device to the service (cf [Uploading a new device](#uploading-a-new-device)).
 
