@@ -173,6 +173,7 @@ jobs:
 
       - name: Load version config
         id: version
+        shell: bash
         run: tee "$GITHUB_OUTPUT" < ${{ runner.temp }}/version.patch/version.ini
         timeout-minutes: 1
 
