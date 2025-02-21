@@ -122,13 +122,27 @@ The script will:
 
   The script will require confirmation before pushing.
 
-#### After the release build script
+#### After the release build script: outcome
 
 After the script has finished and pushed the release branch & tag to the repository,
 this will trigger the `releaser` workflow that will:
 
-1. Package the application in python wheels (for now we don't have any client ready).
-2. Create the release as a draft in <https://github.com/Scille/parsec-cloud/releases>.
+1. Create the release as a draft in <https://github.com/Scille/parsec-cloud/releases>.
+2. Package the server code in Python wheels.
+3. Package the client code in multiple formats (Linux: AppImage/Snap, Windows: unsigned MSI, MacOS: DMG)
+
+#### After the release build script: Windows signing
+
+Once the workflow done Windows builds require to be manually signed. This is done by running a script:
+
+```shell
+python misc/sign_windows_release.py --version 3.2.0
+```
+
+This command will download the GUI & CLI artifacts, sign them (you obviously need to have
+the signing certificate on your machine !), and finally re-upload the result on the release.
+
+#### After the release build script: publishing
 
 With the release published, this will trigger the workflow `publish` that will upload the generated python wheels to `pypi`.
 
