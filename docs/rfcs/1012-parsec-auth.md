@@ -274,6 +274,30 @@ sequenceDiagram
   Alice ->> S: Remove the authentication method from the server
 ```
 
+### Removing the account
+
+If the user wants to remove its account, it will require to:
+
+- Provide `AUTH_SECRET` (so to be authenticated).
+- Provide the secret of the authentication method.
+
+  > This is to mimic "Enter your password to confirm the deletion of your account".
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Alice
+  participant S as Authentification server
+
+  Note over Alice,S: Alice is already authenticated to the server
+
+  Alice ->> S: Provide the session token `AUTH_TOKEN` and the secret of the authentication method
+  S ->> S: Remove the account and it's associated data (stored devices)
+```
+
+> [!IMPORTANT]
+> We only delete the account in parsec-auth, no data are deleted in the metadata server.
+
 ### Integration with the Parsec server
 
 The parsec client would use the authentication service to store a special device (let's call it remote device), who will only be used to create a new local device.
@@ -323,3 +347,5 @@ We have the section [Consideration of PBKDF algorithms](<#Consideration on PBKDF
 ## Remarks & open questions
 
 - The client application will need to communicate with the authentication service: should this be integrated into `libparsec`? Or it's the JS side that handle that?
+- What to do when a user is revoked from an organization?
+  Should we remove the device, or should we just provide the information that the device for the given organization is revoked?
