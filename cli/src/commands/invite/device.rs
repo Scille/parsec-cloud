@@ -30,7 +30,9 @@ pub async fn invite_device(_args: Args, client: &StartedClient) -> anyhow::Resul
     )
     .to_url();
 
-    handle.stop_with_message(format!("Invitation URL: {YELLOW}{url}{RESET}"));
+    handle.stop_with_message(format!(
+        "Invitation token: {YELLOW}{token}{RESET}\nInvitation URL: {YELLOW}{url}{RESET}"
+    ));
 
     Ok(())
 }

@@ -13,6 +13,25 @@ use crate::{
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
 };
 
+#[rstest::rstest]
+#[tokio::test]
+async fn invite_shared_recovery(tmp_path: TmpPath) {
+    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+
+    crate::integration_tests::shared_recovery_create(&alice, &bob, None);
+
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "invite",
+        "shared-recovery",
+        "--device",
+        &bob.device_id.hex(),
+        "alice@example.com"
+    )
+    .stdout(predicates::str::contains("Invitation token:"))
+    .stdout(predicates::str::contains("Invitation URL:"));
+}
+
 #[cfg(target_family = "unix")] // rexpect doesn't support Windows
 #[rstest::rstest]
 #[tokio::test]

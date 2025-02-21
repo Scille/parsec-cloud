@@ -32,7 +32,7 @@ pub async fn invite_shared_recovery(args: Args, client: &StartedClient) -> anyho
         .ok_or_else(|| anyhow::anyhow!("User with email {} not found", email))?;
 
     let mut handle = start_spinner("Creating a shared recovery invitation".into());
-    let (url, email_sent_status) = match client
+    let (url, email_sent_status, token) = match client
         .new_shamir_recovery_invitation(user_info.id, send_email)
         .await
     {
@@ -45,6 +45,7 @@ pub async fn invite_shared_recovery(args: Args, client: &StartedClient) -> anyho
             )
             .to_url(),
             email_sent_status,
+            token,
         ),
         Err(e) => {
             return Err(anyhow::anyhow!(
@@ -53,7 +54,9 @@ pub async fn invite_shared_recovery(args: Args, client: &StartedClient) -> anyho
         }
     };
 
-    handle.stop_with_message(format!("Invitation URL: {YELLOW}{url}{RESET}"));
+    handle.stop_with_message(format!(
+        "Invitation token: {YELLOW}{token}{RESET}\nInvitation URL: {YELLOW}{url}{RESET}"
+    ));
 
     if send_email {
         match email_sent_status {
