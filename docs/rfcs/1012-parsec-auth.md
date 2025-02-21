@@ -171,6 +171,8 @@ To upload a new device, the user would need to:
 
 The server creates an entry whose primary key is the tuple `user_id` and `org_id`.
 
+> `user_id` is the ID of the account in the service not the organization.
+
 > That means a single device per user per organization.
 
 ```mermaid
