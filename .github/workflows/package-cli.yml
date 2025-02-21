@@ -49,7 +49,7 @@ jobs:
       version: ${{ inputs.version }}
       commit_sha: ${{ inputs.commit_sha }}
 
-  package-cli:
+  package-cli-linux:
     needs: version
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
     if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
@@ -139,5 +139,99 @@ jobs:
           path: |
             ${{ runner.temp }}/${{ steps.rename.outputs.artifact_name }}
             ${{ runner.temp }}/artifacts.yml
+          if-no-files-found: error
+        timeout-minutes: 5
+
+  package-cli-windows:
+    needs: version
+    # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
+    if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
+    name: 📦 Packaging CLI for Windows 🪟
+    runs-on: windows-2025
+    env:
+      WINFSP_VERSION: 2.0.23075
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            suffix: windows-x86_64-msvc
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
+        with:
+          ref: ${{ inputs.commit_sha }}
+        timeout-minutes: 5
+
+      - name: Retrieve runner specs
+        id: runner-specs
+        uses: ./.github/actions/system-info
+        timeout-minutes: 1
+
+      - name: Download version.patch artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # pin v4.1.8
+        with:
+          name: version.patch
+          path: ${{ runner.temp }}/version.patch
+          run-id: ${{ inputs.version_patch_run_id || github.run_id }}
+        timeout-minutes: 2
+
+      - name: Load version config
+        id: version
+        run: Get-Content "${{ runner.temp }}\version.patch\version.ini" | Tee-Object -FilePath "$env:GITHUB_OUTPUT"
+        timeout-minutes: 1
+
+      - name: Apply version.patch
+        run: git apply --allow-empty "${{ runner.temp }}\version.patch\version.patch"
+        timeout-minutes: 1
+
+      # Building OpenSSL requires a perl interpreter.
+      # The default one does not provide windows-style filesystem
+      # paths so we have to switch to Strawberry.
+      - name: Use strawberry perl
+        shell: bash
+        run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+        timeout-minutes: 1
+
+      - name: Install winfsp
+        shell: bash -eux {0}
+        run: |
+          choco install winfsp -y --version=${{ env.WINFSP_VERSION }}
+          curl -L https://github.com/winfsp/winfsp/releases/download/v2.0/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o D:/a/_temp/winfsp-tests.zip
+          unzip D:/a/_temp/winfsp-tests.zip -d D:/a/_temp/
+          mv 'D:/a/_temp/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
+        timeout-minutes: 5
+
+      - name: Build CLI
+        shell: bash -o pipefail -eux {0}
+        run: >-
+          cargo build -p parsec-cli
+          --target=${{ matrix.target }}
+          $(python make.py cli-release-cargo-flags --quiet)
+        timeout-minutes: 15
+
+      - name: Debug target folder
+        if: runner.debug
+        run: Get-ChildItem -Recurse target
+        timeout-minutes: 1
+
+      - name: Rename CLI artifact
+        id: rename
+        run: |
+          $FINAL_ARTIFACT_NAME = "parsec-cli_${{ steps.version.outputs.full }}_${{ matrix.suffix }}.exe"
+          Copy-Item -Path "target\${{ matrix.target }}\release\parsec-cli.exe" -Destination "${{ runner.temp }}\$FINAL_ARTIFACT_NAME"
+          "artifact_name=$FINAL_ARTIFACT_NAME" | Tee-Object -FilePath $env:GITHUB_OUTPUT -Append
+        timeout-minutes: 1
+
+      - name: Generate fake package.json for sign script
+        run: |
+          $jsonContent = '{ "version": "${{ steps.version.outputs.full }}" }'
+          $jsonContent | Tee-Object -FilePath "${{ runner.temp }}\package.json"
+
+      - uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # pin v4.6.0
+        with:
+          name: ${{ runner.os }}-${{ matrix.target }}-cli-pre-build
+          path: |
+            ${{ runner.temp }}/${{ steps.rename.outputs.artifact_name }}
+            ${{ runner.temp }}/package.json
           if-no-files-found: error
         timeout-minutes: 5
