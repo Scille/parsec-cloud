@@ -4,6 +4,8 @@
 # This is meant to be run in the `client/electron` directory.
 
 # Stop at first error
+# Note this only works for shell commands, executables return code must still
+# be checked manually :/
 $ErrorActionPreference = "Stop"
 
 # Check node version
@@ -23,6 +25,9 @@ npm clean-install
 
 # Build and sign the release
 npm run electron:sign
+if ($LastExitCode -ne 0) {
+    exit $LastExitCode
+}
 
 # Create a fresh upload directory
 if (Test-Path -Path upload) {
