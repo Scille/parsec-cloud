@@ -48,6 +48,7 @@ You can also use the search function in the top left corner.
     hosting/deployment/index
     hosting/maintenance/index
     hosting/administration/index
+    hosting/sequester/index
 
 
 .. toctree::
