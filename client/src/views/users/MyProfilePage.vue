@@ -85,8 +85,7 @@
               </div>
             </ion-text>
             <!-- Help & comments -->
-            <ion-radio
-              slot="start"
+            <ion-text
               @click="openFeedbackPopover"
               class="menu-list__item"
             >
@@ -97,7 +96,7 @@
                 </ion-text>
                 <ion-icon :icon="open" />
               </div>
-            </ion-radio>
+            </ion-text>
             <!-- About -->
             <ion-radio
               slot="start"
