@@ -57,7 +57,7 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: '/sidebar',
-        component: () => import('@/views/sidebar-menu/SidebarMenuPage.vue'),
+        component: () => import('@/views/menu/MenuPage.vue'),
         children: [
           {
             path: '/header',
@@ -139,8 +139,39 @@ const router: Router = createRouter({
   routes,
 });
 
+const visitedLastHistory = new Map<Routes, RouteBackup>();
+
+router.beforeEach((to, from, next) => {
+  // Clearing history if we come from a page that has no handle.
+  // Not taking any risk.
+  if (!to.params.handle || !from.params.handle) {
+    visitedLastHistory.clear();
+  }
+  if (!to.name || !to.params.handle) {
+    next();
+    return;
+  }
+  const routeName = to.name as Routes;
+  if (visitedLastHistory.has(to.name as Routes)) {
+    visitedLastHistory.delete(routeName);
+  }
+  visitedLastHistory.set(routeName, {
+    handle: Number(to.params.handle),
+    data: {
+      route: routeName,
+      params: to.params,
+      query: to.query,
+    },
+  });
+  next();
+});
+
 export function getRouter(): Router {
   return router;
+}
+
+export function getVisitedLastHistory(): Map<Routes, RouteBackup> {
+  return visitedLastHistory;
 }
 
 export function getCurrentRoute(): Ref<RouteLocationNormalizedLoaded> {
