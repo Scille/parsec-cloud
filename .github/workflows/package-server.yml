@@ -65,7 +65,7 @@ jobs:
       matrix:
         include:
           - name: 🐧 Linux
-            platform: linux
+            platform: linux-gnu
             os: ubuntu-22.04
           - name: 🍎 macOS
             platform: macos
@@ -97,6 +97,11 @@ jobs:
       - name: Apply version.patch
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
+      - name: Windows > Install yq
+        if: matrix.platform == 'windows'
+        run: choco install yq
+        timeout-minutes: 2
+
       - name: Build wheel
         uses: pypa/cibuildwheel@ee63bf16da6cddfb925f542f2c7b59ad50e93969  # pin v2.22.0
         with:
@@ -109,6 +114,11 @@ jobs:
 
       - name: Generate requirements & constraints infos
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
+
+      - name: Generate artifacts.yml file
+        shell: bash -eux -o pipefail {0}
+        run: |
+          yq --null-input ".${{ matrix.platform }}.$(uname -m).server = \"$(cd dist; ls *.whl | head -n 1)\"" | tee dist/artifacts.yml
 
       # Install syft
       - uses: taiki-e/install-action@e03236526ace47fa2e04bebcfc6da471ebd4690c # pin v2.49.0

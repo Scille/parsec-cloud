@@ -61,13 +61,13 @@ jobs:
       fail-fast: false
       # Parsec CLI has three potential dynamic dependencies: `libc`, `fuse3` and `openssl`, hence we have two build strategy here:
       matrix:
-        include:
+        arch: [x86_64]
+        vendor: [unknown]
+        os:
           # The MUSL target provide a statically linked CLI
-          - target: x86_64-unknown-linux-musl
-            suffix: linux-x86_64-musl
+          - linux-musl
           # The GNU target provide a dynamically linked CLI
-          - target: x86_64-unknown-linux-gnu
-            suffix: linux-x86_64-gnu
+          - linux-gnu
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
@@ -111,10 +111,10 @@ jobs:
         shell: bash -o pipefail -eux {0}
         run: >-
           cross build -p parsec-cli
-          --target=${{ matrix.target }}
+          --target=${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}
           $(python make.py cli-release-cargo-flags --quiet)
         env:
-          LIBPARSEC_FORCE_VENDORED_LIBS: ${{ matrix.target == 'x86_64-unknown-linux-musl' && 'true' || 'false' }}
+          LIBPARSEC_FORCE_VENDORED_LIBS: ${{ matrix.os == 'linux-musl' && 'true' || 'false' }}
         timeout-minutes: 15
 
       - name: Debug target folder
@@ -125,17 +125,19 @@ jobs:
 
       - name: Rename CLI artifact
         id: rename
-        shell: bash
+        shell: bash -eux -o pipefail {0}
         run: |
-          FINAL_ARTIFACT_NAME="parsec-cli_${{ steps.version.outputs.full }}_${{ matrix.suffix }}"
-          cp -v target/${{ matrix.target }}/release/parsec-cli ${{ runner.temp }}/$FINAL_ARTIFACT_NAME
+          FINAL_ARTIFACT_NAME="parsec-cli-${{ steps.version.outputs.full }}-${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}"
+          cp -v target/${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}/release/parsec-cli ${{ runner.temp }}/$FINAL_ARTIFACT_NAME
           echo "artifact_name=$FINAL_ARTIFACT_NAME" >> $GITHUB_OUTPUT
+          yq --null-input ".${{ matrix.os }}.${{ matrix.arch }}.cli = \"$FINAL_ARTIFACT_NAME\"" | tee ${{ runner.temp }}/artifacts.yml
         timeout-minutes: 1
 
       - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # pin v4.6.1
         with:
-          name: ${{ runner.os }}-${{ matrix.target }}-cli
+          name: cli-${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}
           path: |
             ${{ runner.temp }}/${{ steps.rename.outputs.artifact_name }}
+            ${{ runner.temp }}/artifacts.yml
           if-no-files-found: error
         timeout-minutes: 5
