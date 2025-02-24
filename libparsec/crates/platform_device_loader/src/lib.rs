@@ -19,6 +19,10 @@ use native as platform;
 #[cfg(target_arch = "wasm32")]
 use web as platform;
 
+#[cfg(test)]
+#[path = "../tests/mod.rs"]
+mod tests;
+
 pub const ARGON2ID_DEFAULT_MEMLIMIT_KB: u32 = 128 * 1024; // 128 Mo
 pub const ARGON2ID_DEFAULT_OPSLIMIT: u32 = 3;
 // Be careful when changing parallelism: libsodium only supports 1 thread !
@@ -122,8 +126,7 @@ pub enum LoadDeviceError {
 
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn load_device(
-    // TODO: Should we set under testbed feature ?
-    #[allow(unused)] config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
     access: &DeviceAccessStrategy,
 ) -> Result<Arc<LocalDevice>, LoadDeviceError> {
     #[cfg(feature = "test-with-testbed")]
@@ -145,9 +148,8 @@ pub enum SaveDeviceError {
 }
 
 /// Note `config_dir` is only used as discriminant for the testbed here
-#[allow(unused)]
 pub async fn save_device(
-    config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
     access: &DeviceAccessStrategy,
     device: &LocalDevice,
 ) -> Result<AvailableDevice, SaveDeviceError> {
@@ -195,7 +197,7 @@ impl From<SaveDeviceError> for ChangeAuthentificationError {
 
 /// Note `config_dir` is only used as discriminant for the testbed here
 pub async fn change_authentication(
-    #[allow(unused)] config_dir: &Path,
+    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
 ) -> Result<AvailableDevice, ChangeAuthentificationError> {
@@ -232,7 +234,7 @@ pub enum RemoveDeviceError {
 }
 
 pub use platform::remove_device;
-use zeroize::Zeroizing;
+use zeroize::{Zeroize as _, Zeroizing};
 
 #[derive(Debug, thiserror::Error)]
 pub enum PlatformImportRecoveryDeviceError {
@@ -318,7 +320,6 @@ pub async fn export_recovery_device(
     (passphrase, file_content, recovery_device)
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn load_available_device_from_blob(
     path: PathBuf,
     blob: &[u8],
@@ -396,7 +397,61 @@ fn load_available_device_from_blob(
     })
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
+fn encrypt_device(device: &LocalDevice, key: &SecretKey) -> Bytes {
+    let mut cleartext = zeroize::Zeroizing::new(device.dump());
+    let ciphertext = key.encrypt(&cleartext);
+    cleartext.zeroize();
+    ciphertext.into()
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum DecryptDeviceFileError {
+    #[error("Failed to decrypt device file: {0}")]
+    Decrypt(CryptoError),
+    #[error("Failed to load device: {0}")]
+    Load(&'static str),
+}
+
+impl From<DecryptDeviceFileError> for LoadDeviceError {
+    fn from(value: DecryptDeviceFileError) -> Self {
+        match value {
+            DecryptDeviceFileError::Decrypt(_) => LoadDeviceError::DecryptionFailed,
+            DecryptDeviceFileError::Load(_) => LoadDeviceError::InvalidData,
+        }
+    }
+}
+
+impl From<DecryptDeviceFileError> for ChangeAuthentificationError {
+    fn from(value: DecryptDeviceFileError) -> Self {
+        match value {
+            DecryptDeviceFileError::Decrypt(_) => ChangeAuthentificationError::DecryptionFailed,
+            DecryptDeviceFileError::Load(_) => ChangeAuthentificationError::InvalidData,
+        }
+    }
+}
+
+fn decrypt_device_file(
+    device_file: &DeviceFile,
+    key: &SecretKey,
+) -> Result<LocalDevice, DecryptDeviceFileError> {
+    let mut cleartext = key
+        .decrypt(device_file.ciphertext())
+        .map_err(DecryptDeviceFileError::Decrypt)
+        .map(zeroize::Zeroizing::new)?;
+    let res = LocalDevice::load(&cleartext).map_err(DecryptDeviceFileError::Load);
+    cleartext.zeroize();
+    res
+}
+
+fn new_default_pbkdf_algo() -> DeviceFilePasswordAlgorithm {
+    DeviceFilePasswordAlgorithm::Argon2id {
+        memlimit_kb: ARGON2ID_DEFAULT_MEMLIMIT_KB.into(),
+        opslimit: ARGON2ID_DEFAULT_OPSLIMIT.into(),
+        parallelism: ARGON2ID_DEFAULT_PARALLELISM.into(),
+        salt: SecretKey::generate_salt().into(),
+    }
+}
+
 fn secret_key_from_password(
     password: &Password,
     algorithm: &DeviceFilePasswordAlgorithm,
@@ -415,4 +470,14 @@ fn secret_key_from_password(
             (*parallelism).try_into().or(Err(CryptoError::DataSize))?,
         ),
     }
+}
+
+fn server_url_from_device(device: &LocalDevice) -> String {
+    ParsecAddr::new(
+        device.organization_addr.hostname().to_owned(),
+        Some(device.organization_addr.port()),
+        device.organization_addr.use_ssl(),
+    )
+    .to_http_url(None)
+    .to_string()
 }
