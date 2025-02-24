@@ -18,6 +18,10 @@
   - [Follow the major/minor guide](#follow-the-majorminor-guide)
   - [All done](#all-done)
 
+> [!IMPORTANT]
+> If you need to create a release (i.e. create a release branch and a tag),
+> you need to be a part of `Parsec-Deploy` GitHub team else you will get blocked when trying to push the branch and tag.
+
 ## Major/minor vs patch versions
 
 When the need for release comes, the obvious question is:
