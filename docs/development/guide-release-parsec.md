@@ -237,11 +237,26 @@ To include some fixes for the patch version, you can do that in 2 different ways
 
 You know the drill, creating the release:
 
-```shell
-python misc/releaser.py build --version 3.2.1-rc.0
-```
+> [!CAUTION]
+> For the following steps, your current git branch **MUST** be `releases/3.2`.
 
-> For the step above, your current git branch MUST be `releases/3.2`.
+- Creating the first release candidate:
+
+  ```shell
+  python misc/releaser.py build --version 3.2.1-rc.0
+  ```
+
+- Iterating on the release candidates:
+
+  ```shell
+  python misc/releaser.py build --current
+  ```
+
+- Finally, releasing the patch version:
+
+  ```shell
+  python misc/releaser.py build --version 3.2.1
+  ```
 
 ### All done
 
