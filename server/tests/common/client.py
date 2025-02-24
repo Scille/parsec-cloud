@@ -217,18 +217,7 @@ class InvitedRpcClient(BaseInvitedRpcClient):
 @dataclass(slots=True)
 class CoolorgRpcClients:
     """
-    Coolorg contains:
-    - 3 users: `alice` (admin), `bob` (regular) and `mallory` (outsider)
-    - devices `alice@dev1`, `bob@dev1` and `mallory@dev1` whose storages are up to date
-    - devices `alice@dev2` and `bob@dev2` whose storages are empty
-    - 1 workspace `wksp1` shared between alice (owner) and bob (reader)
-    - `wksp1` is bootstrapped (i.e. has it initial key rotation and name certificates).
-    - Alice & Bob have their user realm created and user manifest v1 synced with `wksp1` in it
-    - Mallory has no user realm created
-    - 1 pending invitation from Alice for a new user with email `zack@example.invalid`
-    - 1 pending invitation for a new device for Alice
-
-    See `libparsec/crates/testbed/src/templates/coolorg.rs` for it actual definition.
+    See `libparsec/crates/testbed/src/templates/coolorg.rs`.
     """
 
     raw_client: AsyncClient
@@ -468,21 +457,7 @@ async def minimalorg(
 @dataclass(slots=True)
 class ShamirOrgRpcClients:
     """
-    Shamir org contains:
-    - 4 users: `alice` (admin), `bob` (standard), `mallory` (outsider) and `mike` (standard)
-    - Alice has two devices: `alice@dev1` and `alice@dev2`
-    - Bob has two devices: `bob@dev1` and `bob@dev2`
-    - Mallory has two devices: `mallory@dev1` and `mallory@dev2`
-    - Mike only has one device: `mike@dev1`
-    - Alice has a shamir recovery setup (threshold: 2, recipients: Bob with 2 shares,
-      Mallory & Mike with 1 share each)
-    - Bob has a deleted shamir recovery (used to be threshold: 1, recipients: Alice & Mallory)
-    - Mallory has a shamir recovery setup (threshold: 1, recipients: only Mike)
-    - Bob has invited Alice to do a Shamir recovery
-    - devices `alice@dev1`/`bob@dev1`/`mallory@dev1`/`mike@dev1` starts with up-to-date storages
-    - devices `alice@dev2` and `bob@dev2` whose storages are empty
-
-    See `libparsec/crates/testbed/src/templates/shamir.rs` for it actual definition.
+    See `libparsec/crates/testbed/src/templates/shamir.rs`.
     """
 
     raw_client: AsyncClient
@@ -714,29 +689,7 @@ async def shamirorg(
 @dataclass(slots=True)
 class SequesteredOrgRpcClients:
     """
-    Sequestered org contains:
-    - A sequestered organization obviously !
-    - 2 sequester services: `sequester_service_1` (revoked) and `sequester_service_2` (active)
-    - 2 users: `alice` (admin) and `bob` (regular)
-    - 2 devices: `alice@dev1` and `bob@dev1` (both device has its local storage
-      up-to-date regarding the certificates)
-    - 1 workspace `wksp1` shared between alice (owner) and bob (reader) containing a file `bar.txt`
-
-    The timeline regarding workspace and sequester services is as follows:
-    - Alice creates and bootstraps workspace `wksp1`
-    - Alice shares `wksp1` with Bob
-    - Alice uploads file manifest `bar.txt` in v1 (containing "Hello v1")
-    - Alice uploads workspace manifest in v1 (containing `bar.txt`)
-    - `sequester_service_1` is created
-    - Alice upload workspace manifest in v2 with renames `/bar.txt` -> `/bar2.txt`
-    - Alice does a key rotation on `wksp1` (key index becomes 2)
-    - Alice uploads file manifest `bar.txt` in v2 (containing "Hello v2")
-    - `sequester_service_1` is revoked
-    - Alice does a key rotation on `wksp1` (key index becomes 3)
-    - `sequester_service_2` is created
-    - Alice upload workspace manifest in v3 with renames `/bar.txt` -> `/bar3.txt`
-
-    See `libparsec/crates/testbed/src/templates/sequestered.rs` for it actual definition.
+    See `libparsec/crates/testbed/src/templates/sequestered.rs`.
     """
 
     raw_client: AsyncClient
@@ -892,49 +845,7 @@ async def sequestered_org(
 @dataclass(slots=True)
 class WorkspaceHistoryOrgRpcClients:
     """
-    WorkspaceHistory contains:
-    - 3 users: `alice` (admin), `bob` (regular) and `mallory` (regular)
-    - 3 devices: `alice@dev1`, `bob@dev1` and `mallory@dev1` (every device has its local
-      storage up-to-date regarding the certificates)
-    - On 2001-01-01, Alice creates and bootstraps workspace `wksp1`
-    - On 2001-01-02, Alice uploads workspace manifest in v1 (empty)
-    - On 2001-01-03T01:00:00, Alice uploads file manifest `bar.txt` in v1 (containing "Hello v1")
-    - On 2001-01-03T02:00:00, Alice uploads folder manifest `foo` in v1 (empty)
-    - On 2001-01-03T03:00:00, Alice uploads workspace manifest in v2 (containing `foo` and `bar.txt`)
-    - On 2001-01-04, Alice gives Bob access to the workspace (as OWNER)
-    - On 2001-01-05, Alice gives Mallory access to the workspace (as CONTRIBUTOR)
-    - On 2001-01-06, Bob removes access to the workspace from Alice
-    - On 2001-01-07, Mallory uploads file manifest `bar.txt` in v2 (containing "Hello v2 world", stored on 2 blocks)
-    - On 2001-01-08T01:00:00, Mallory uploads folder manifest `foo` in v2 (containing `spam` and `egg.txt`)
-    - On 2001-01-08T02:00:00, Mallory uploads file manifest `foo/egg.txt` in v1 (empty file)
-    - On 2001-01-08T03:00:00, Mallory uploads folder manifest `foo/spam` in v1 (empty)
-    - On 2001-01-09, Bob uploads workspace manifest in v3 with renames `foo`->`foo2` and `bar.txt`->`bar2.txt`
-    - On 2001-01-10, Bob uploads file manifest `bar.txt` (now named `bar2.txt`) in v3 with content "Hello v3"
-    - On 2001-01-11, Bob uploads file manifest `foo/egg.txt` in v2 with content "v2"
-    - On 2001-01-12, Bob uploads folder manifest `foo` (now named `foo2`) in v3 with rename `egg.txt`->`egg2.txt` and removed `spam`
-    - On 2001-01-30, Bob gives back access to the workspace to Alice (as READER)
-
-    In the end we have the following per-entry history:
-      - `/`
-        - 2001-01-02: v1 from Alice, content: []
-        - 2001-01-03T03:00:00: v2 from Alice, content: ["foo", "bar.txt"]
-        - 2001-01-09: v3 from Bob, content: ["foo2", "bar2.txt"]
-    - `bar.txt`:
-      - 2001-01-03T01:00:00: v1 from Alice, content: "Hello v1"
-      - 2001-01-07: v2 from Alice, content: "Hello v2 world"
-      - 2001-01-10: v3 from Bob, content "Hello v3"
-    - `foo`:
-      - 2001-01-03T02:00:00: v1 from Alice, content: []
-      - 2001-01-08T01:00:00: v2 from Mallory, content ["spam", "egg.txt"],
-        with children not existing themselves yet !
-      - 2001-01-12: v3 from Bob, content ["egg2.txt"]
-    - `foo/egg.txt`:
-      - 2001-01-08T02:00:00: v1 from Mallory, content ""
-      - 2001-01-11: v2 from Bob, content "v2"
-    - `foo/spam`:
-      - 2001-01-08T03:00:00: v1 from Mallory, content: []
-
-    See `libparsec/crates/testbed/src/templates/workspace_history.rs` for it actual definition.
+    See `libparsec/crates/testbed/src/templates/workspace_history.rs`.
     """
 
     raw_client: AsyncClient
