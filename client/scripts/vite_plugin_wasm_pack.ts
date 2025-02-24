@@ -79,7 +79,7 @@ function vitePluginWasmPack(
       }
     },
 
-    async resolveId(source: string, importer: string | undefined): Promise<string|null> {
+    async resolveId(source: string, importer: string | undefined): Promise<string | null> {
       // Handle import of the crate itself (e.g. `import * from 'libparsec_bindings_web'`)
       const crate = retrieveCrate(source);
       if (crate) {
@@ -99,7 +99,7 @@ function vitePluginWasmPack(
       return null;
     },
 
-    async load(id: string): Promise<string|null> {
+    async load(id: string): Promise<string | null> {
       if (id.indexOf(prefix) === 0) {
         const source = id.replace(prefix, '');
         const splitted = source.split('@');
@@ -168,8 +168,8 @@ function vitePluginWasmPack(
       );
       return () => {
         middlewares.use((req, res, next) => {
-          if (typeof req.url === 'string') {
-            const basename = path.basename(req.url);
+          if (typeof req.originalUrl === 'string') {
+            const basename = path.basename(req.originalUrl);
             const wasmFilePath = targets.get(basename);
             if (wasmFilePath) {
               res.setHeader(
