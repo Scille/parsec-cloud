@@ -736,6 +736,19 @@
         "goToHome": "Mes espaces",
         "recentDocuments": "Documents récents",
         "back": "Retour",
+        "tabbar": {
+            "workspaces": "Espaces de travail",
+            "files": "Fichiers",
+            "organization": "Organisation",
+            "myProfile": "Mon profil",
+            "newWorkspace": "Créer un espace de travail",
+            "newFolder": "Nouveau dossier",
+            "importFile": "Importer un fichier",
+            "importFolder": "Importer un dossier",
+            "scanDocument": "Scanner un document",
+            "importPhoto": "Importer une photo",
+            "addUser": "Ajouter un utilisateur"
+        },
         "trial": {
             "tag": "Version d'essai",
             "description": "Vous êtes actuellement sur la version d'essai gratuite.",
