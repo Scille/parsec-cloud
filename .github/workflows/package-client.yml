@@ -205,10 +205,12 @@ jobs:
         timeout-minutes: 30
 
       - name: Rename artifacts
-        shell: bash
+        shell: bash -eux -o pipefail {0}
         run: |
           ARCH=$(uname -m)
-          mv -v parsec_*_*.snap Parsec_${{ steps.version.outputs.full }}_linux_$ARCH.snap
+          FINAL_ARTIFACT_NAME="Parsec_${{ steps.version.outputs.full }}_linux_$ARCH.snap"
+          mv -v parsec_*_*.snap $FINAL_ARTIFACT_NAME
+          yq --null-input ".linux-gnu.$ARCH.client.snap = \"$FINAL_ARTIFACT_NAME\"" | tee artifacts.yml
 
       # Install syft
       - uses: taiki-e/install-action@e03236526ace47fa2e04bebcfc6da471ebd4690c # pin v2.49.0
@@ -224,6 +226,7 @@ jobs:
           path: |
             Parsec_${{ steps.version.outputs.full }}_linux_*.snap
             Parsec-SBOM-*.spdx.json
+            artifacts.yml
           if-no-files-found: error
         timeout-minutes: 10
 
@@ -239,22 +242,22 @@ jobs:
             platform: windows
             os: windows-2022
             raw_latest_file: latest.yml
-            extension: exe
+            extensions: exe
             os_alias: win
             artifact_tag: windows-exe
           - name: 🍎 macOS
             platform: macos
             os: macos-13
             raw_latest_file: latest-mac.yml
-            extension: "*" # Use wildcard to match dmg and zip extension
+            extensions: dmg zip
             os_alias: mac
             artifact_tag: macos-dmg
           - name: 🐧 AppImage 4 Linux
-            platform: linux
+            platform: linux-gnu
             os: ubuntu-22.04
             raw_latest_file: latest-linux.yml
             os_alias: linux
-            extension: AppImage
+            extensions: AppImage
             artifact_tag: linux-appimage
     name: "${{matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
@@ -298,13 +301,18 @@ jobs:
           mv 'D:/a/_temp/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
         timeout-minutes: 2
 
+      - name: Windows > Install yq
+        if: matrix.platform == 'windows'
+        run: choco install yq
+        timeout-minutes: 2
+
       - name: MacOS > Install macFUSE
         if: matrix.platform == 'macos'
         run: brew install --cask macfuse
         timeout-minutes: 5
 
       - name: Linux > Install system dependencies
-        if: matrix.platform == 'linux'
+        if: matrix.platform == 'linux-gnu'
         run: |
           sudo apt-get install -y fuse3 libfuse3-dev libdbus-1-dev
         timeout-minutes: 2
@@ -387,8 +395,8 @@ jobs:
             export APPLE_APP_SPECIFIC_PASSWORD='${{ secrets.MACOS_NOTARIZATION_PASSWD }}'
           fi
           npm run electron:release \
-            ${{ (matrix.platform == 'linux' || inputs.nightly_build || matrix.platform == 'macos') && '--' || '' }} \
-            ${{ matrix.platform == 'linux' && 'appimage' || '' }} \
+            ${{ (matrix.platform == 'linux-gnu' || inputs.nightly_build || matrix.platform == 'macos') && '--' || '' }} \
+            ${{ matrix.platform == 'linux-gnu' && 'appimage' || '' }} \
             ${{ inputs.nightly_build && '--nightly' || '' }} \
             ${{ matrix.platform == 'macos' && '--sign' || ''}}
         env:
@@ -417,39 +425,57 @@ jobs:
         if: runner.debug || false
         run: ls client/electron/dist
 
-      - name: Build info
+      - name: Build info & validate
         id: build-info
-        shell: bash
+        shell: bash -eux -o pipefail {0}
         run: |
           arch=$(uname -m)
-          app_file="Parsec_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}${{ (matrix.platform == 'windows' || matrix.platform == 'linux') && '.unsigned' || '' }}.${{ matrix.extension }}"
+          app_file_no_ext="Parsec_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}${{ (matrix.platform == 'windows' || matrix.platform == 'linux-gnu') && '.unsigned' || '' }}"
           latest_file="latest-${{ matrix.os_alias }}-${arch}.yml"
+          artifact_file=artifacts.yml
 
+          EOF="EOF-$(dd if=/dev/urandom bs=15 count=1 status=none | base64)"
           cat << EOF | tee -a $GITHUB_OUTPUT
           arch=$arch
-          app_file=$app_file
           latest_file=$latest_file
+          files_to_upload<<$EOF
+          client/electron/dist/$latest_file
+          client/electron/dist/$artifact_file
           EOF
 
-      - name: Rename "latest" file
-        shell: bash
-        run: mv -v "${{ matrix.raw_latest_file }}" "${{ steps.build-info.outputs.latest_file }}"
-        working-directory: client/electron/dist
+          mv -v "${{ matrix.raw_latest_file }}" "${latest_file}"
 
-      - name: Sanity check that "latest" file contain the correct application file
-        shell: bash
-        run: |
-          cat "${{ steps.build-info.outputs.latest_file }}"
-          grep -q -e "${{ steps.build-info.outputs.app_file }}" "${{ steps.build-info.outputs.latest_file }}"
+          touch $artifact_file
+          for ext in ${{ matrix.extensions }}; do
+            app_file=${app_file_no_ext}.${ext}
+
+            # Sanity check that latest_file refer app_file
+            grep -q -e "${app_file}" "${latest_file}"
+
+            # Update artifact file
+            yq -i ".${{ matrix.platform }}.${arch}.client.${ext} = \"${app_file}\"" $artifact_file
+
+            # Add to files_to_upload
+            # cat << EOF | tee -a $GITHUB_OUTPUT
+            # client/electron/dist/$app_file
+            # client/electron/dist/$app_file.blockmap
+            # EOF
+            echo client/electron/dist/$app_file | tee -a $GITHUB_OUTPUT
+            echo client/electron/dist/$app_file.blockmap | tee -a $GITHUB_OUTPUT
+          done
+
+          # Print artifact file
+          cat $artifact_file
+
+          # Close files_to_upload multiline variable
+          echo $EOF >> $GITHUB_OUTPUT
         working-directory: client/electron/dist
 
       - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # pin v4.6.1
         with:
           name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron
           path: |
-            client/electron/dist/${{ steps.build-info.outputs.app_file }}
-            client/electron/dist/${{ steps.build-info.outputs.app_file }}.blockmap
-            client/electron/dist/${{ steps.build-info.outputs.latest_file }}
+            ${{ steps.build-info.outputs.files_to_upload }}
             client/electron/dist/Parsec-SBOM-*.spdx.json
           if-no-files-found: error
         timeout-minutes: 10
