@@ -136,16 +136,6 @@
           />
         </div>
       </div>
-      <ion-fab
-        v-if="isPlatform('mobile')"
-        vertical="bottom"
-        horizontal="end"
-        slot="fixed"
-      >
-        <ion-fab-button @click="openCreateWorkspaceModal()">
-          <ion-icon :icon="addCircle" />
-        </ion-fab-button>
-      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
@@ -198,19 +188,7 @@ import { EventData, EventDistributor, EventDistributorKey, Events } from '@/serv
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import {
-  IonButton,
-  IonContent,
-  IonFab,
-  IonFabButton,
-  IonIcon,
-  IonLabel,
-  IonList,
-  IonListHeader,
-  IonPage,
-  IonText,
-  isPlatform,
-} from '@ionic/vue';
+import { IonButton, IonContent, IonIcon, IonLabel, IonList, IonListHeader, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import { recentDocumentManager } from '@/services/recentDocuments';

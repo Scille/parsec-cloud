@@ -736,6 +736,19 @@
         "goToHome": "My workspaces",
         "recentDocuments": "Recent documents",
         "back": "Back",
+        "tabbar": {
+            "workspaces": "Workspaces",
+            "files": "Files",
+            "organization": "Organization",
+            "myProfile": "My profile",
+            "newWorkspace": "New workspace",
+            "newFolder": "New folder",
+            "importFile": "Import file",
+            "importFolder": "Import folder",
+            "scanDocument": "Scan document",
+            "importPhoto": "Import photo",
+            "addUser": "Add user"
+        },
         "trial": {
             "tag": "Trial version",
             "description": "You are currently on the free trial version.",

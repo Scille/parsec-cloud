@@ -2,7 +2,7 @@
 
 import { WorkspaceHandle } from '@/parsec';
 import { getConnectionHandle, getWorkspaceHandle } from '@/router/params';
-import { Routes, getRouter } from '@/router/types';
+import { RouteBackup, Routes, getRouter, getVisitedLastHistory } from '@/router/types';
 
 export function isLoggedIn(): boolean {
   return getConnectionHandle() !== null;
@@ -54,6 +54,16 @@ export function currentRouteIsOrganizationManagementRoute(): boolean {
 
 export function currentRouteIsFileRoute(): boolean {
   return currentRouteIsOneOf([Routes.Documents, Routes.Workspaces]);
+}
+
+export function getLastVisited(route: Routes): RouteBackup | undefined {
+  const history = getVisitedLastHistory();
+
+  return history.get(route);
+}
+
+export function hasVisited(route: Routes): boolean {
+  return getLastVisited(route) !== undefined;
 }
 
 export function currentRouteIsLoggedRoute(): boolean {
