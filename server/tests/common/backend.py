@@ -43,6 +43,7 @@ def backend_config(
         email_config=MockedEmailConfig("no-reply@parsec.com", tmpdir),
         blockstore_config=blockstore_config,
         administration_token="s3cr3t",
+        service_token="P4ssw0rd",
         organization_spontaneous_bootstrap=False,
         organization_bootstrap_webhook_url=None,
         backend_mocked_data=backend_mocked_data,
