@@ -145,7 +145,6 @@ pub enum SaveDeviceError {
 }
 
 /// Note `config_dir` is only used as discriminant for the testbed here
-#[allow(unused)]
 pub async fn save_device(
     config_dir: &Path,
     access: &DeviceAccessStrategy,
