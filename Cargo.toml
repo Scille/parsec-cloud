@@ -107,7 +107,7 @@ libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 
 # Third parties
 android_logger = { version = "0.13", default-features = false }
-anyhow = { version = "1.0.95", default-features = false }
+anyhow = { version = "1.0.96", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.0.16", default-features = false }
 async-broadcast = { version = "0.5.1", default-features = false }
@@ -117,7 +117,7 @@ base64 = { version = "0.22.1", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.10.0", default-features = false }
 chrono = { version = "0.4.39", default-features = false }
-clap = { version = "4.5.29", default-features = false }
+clap = { version = "4.5.30", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
 crc32fast = { version = "1.4.2", default-features = false }
@@ -151,10 +151,10 @@ jni = { version = "0.21.1", default-features = false }
 js-sys = { version = "0.3.70", default-features = false }
 keyring = { version = "3.6.1", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
-libc = { version = "0.2.169", default-features = false }
+libc = { version = "0.2.170", default-features = false }
 libsodium-sys = { version = "0.2.7", default-features = false }
 libsqlite3-sys = { version = "0.26.0", default-features = false }
-log = { version = "0.4.25", default-features = false }
+log = { version = "0.4.26", default-features = false }
 miniserde = { version = "0.1.41", default-features = false }
 neon = { version = "1.0.0", default-features = false }
 once_cell = { version = "1.20.3", default-features = false }
@@ -185,10 +185,10 @@ rstest_reuse = { version = "0.7.0", default-features = false }
 ruzstd = { version = "0.7.3", default-features = true }
 sentry = { version = "0.34.0", default-features = false }
 sentry-log = { version = "0.34.0", default-features = false }
-serde = { version = "1.0.217", default-features = false }
+serde = { version = "1.0.218", default-features = false }
 serde-wasm-bindgen = { version = "0.6.4", default-features = false }
 serde_bytes = { version = "0.11.15", default-features = false }
-serde_json = { version = "1.0.138", default-features = false }
+serde_json = { version = "1.0.139", default-features = false }
 serde_test = { version = "1.0.177", default-features = false }
 serde_with = { version = "3.12.0", default-features = false }
 sha1 = { version = "0.10.6", default-features = false }
@@ -203,7 +203,7 @@ thiserror = { version = "1.0.69", default-features = false }
 tokio = { version = "1.43.0", default-features = false }
 unicode-normalization = { version = "0.1.24", default-features = false }
 url = { version = "2.5.4", default-features = false }
-uuid = { version = "1.13.1", default-features = false }
+uuid = { version = "1.14.0", default-features = false }
 wasm-bindgen = { version = "0.2.97", default-features = false }
 wasm-bindgen-futures = { version = "0.4.47", default-features = false }
 wasm-bindgen-test = { version = "0.3.47", default-features = false, features = ["std"] }
@@ -215,7 +215,7 @@ winfsp_wrs = { version = "0.4.0", default-features = false }
 winfsp_wrs_build = { version = "0.4.0", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
 zeroize = { version = "1.8.1", default-features = false }
-zstd = { version = "0.13.2", default-features = false }
+zstd = { version = "0.13.3", default-features = false }
 
 [workspace.dependencies.criterion]
 default-features = false
