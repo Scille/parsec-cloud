@@ -57,6 +57,7 @@
     <ion-list class="settings-list">
       <!-- open config dir -->
       <settings-option
+        v-if="isDesktop() && !usesTestbed()"
         title="SettingsModal.configDir.label"
         description="SettingsModal.configDir.description"
       >
@@ -95,7 +96,7 @@
 
 <script setup lang="ts">
 import SettingsOption from '@/components/settings/SettingsOption.vue';
-import { isMacOS, isDesktop } from '@/parsec/environment';
+import { isMacOS, isDesktop, usesTestbed } from '@/parsec/environment';
 import { Config, StorageManager, StorageManagerKey, ThemeManagerKey } from '@/services/storageManager';
 import { MsOptions, MsDropdown, Locale, I18n, ThemeManager, Theme, LocaleOptions } from 'megashark-lib';
 import { IonList, IonToggle, isPlatform, IonButton } from '@ionic/vue';
