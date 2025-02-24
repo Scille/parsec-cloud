@@ -30,7 +30,6 @@ interface Token {
 class BmsAccess {
   private tokens: Token | null = null;
   private customerInformation: PersonalInformationResultData | null = null;
-  private storeCredentials: boolean = true;
   public reloadKey: number = 0;
   private api: typeof BmsApi;
 
@@ -45,9 +44,7 @@ class BmsAccess {
 
   async tryAutoLogin(): Promise<boolean> {
     this.reloadKey += 1;
-    if (this.storeCredentials) {
-      await this.restoreAccess();
-    }
+    await this.restoreAccess();
     if (!this.tokens) {
       return false;
     }
@@ -64,7 +61,7 @@ class BmsAccess {
     return false;
   }
 
-  async login(email: string, password: string): Promise<{ ok: boolean; errors?: Array<BmsError> }> {
+  async login(email: string, password: string, storeCredentials = false): Promise<{ ok: boolean; errors?: Array<BmsError> }> {
     this.reloadKey += 1;
     const response = await this.api.login({ email: email, password: password });
     if (!response.isError && response.data && response.data.type === DataType.Login) {
@@ -78,7 +75,7 @@ class BmsAccess {
     } else {
       this.tokens = null;
     }
-    if (this.storeCredentials) {
+    if (storeCredentials) {
       await this.storeAccess();
     }
     return { ok: true };
@@ -360,16 +357,6 @@ class BmsAccess {
       clientId: this.customerInformation.clientId,
       organization: organization,
     });
-  }
-
-  async rememberCredentials(): Promise<void> {
-    this.storeCredentials = true;
-    await this.storeAccess();
-  }
-
-  async forgetCredentials(): Promise<void> {
-    this.storeCredentials = false;
-    await this.clearStoredAccess();
   }
 
   async clearStoredAccess(): Promise<void> {

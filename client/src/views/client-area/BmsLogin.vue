@@ -5,7 +5,7 @@
     <ion-buttons
       slot="end"
       class="closeBtn-container"
-      v-if="!hideHeader"
+      v-show="!hideHeader"
     >
       <ion-button
         slot="icon-only"
@@ -27,7 +27,7 @@
         :hide-close-button="true"
       />
       <ion-text
-        v-if="hideHeader"
+        v-show="hideHeader"
         class="saas-login__title title-h2"
       >
         {{ $msTranslate('clientArea.app.titleLogin') }}
@@ -36,7 +36,7 @@
       <div class="saas-login-content">
         <!-- email -->
         <ms-input
-          v-if="!loading"
+          v-show="!loading"
           class="saas-login-content__input"
           ref="emailInputRef"
           v-model="email"
@@ -45,7 +45,7 @@
           :validator="emailValidator"
         />
         <div
-          v-else
+          v-show="loading"
           class="input-skeleton"
         >
           <ion-skeleton-text
@@ -60,7 +60,7 @@
         <!-- password -->
         <div
           class="input-password"
-          v-if="!loading"
+          v-show="!loading"
         >
           <ms-password-input
             class="saas-login-content__input"
@@ -71,7 +71,7 @@
           />
         </div>
         <div
-          v-else
+          v-show="loading"
           class="input-skeleton"
         >
           <ion-skeleton-text
@@ -91,20 +91,26 @@
         <!-- forgotten password && remember me checkbox-->
         <div class="saas-login-link">
           <ms-checkbox
-            v-model="checkboxValue"
+            v-show="!loading"
+            v-model="storeCredentials"
             class="saas-login-link__checkbox"
             label-placement="end"
-            @click="!checkboxValue"
           >
             <ion-text class="body">{{ $msTranslate('clientArea.app.saveLogin') }}</ion-text>
           </ms-checkbox>
+          <ion-skeleton-text v-show="loading" />
           <ion-text
+            v-show="!loading"
             class="saas-login-link__forgotten-password button-small"
             target="_blank"
             @click="$emit('forgottenPasswordClicked')"
           >
             {{ $msTranslate('clientArea.app.forgottenPassword') }}
           </ion-text>
+          <ion-skeleton-text
+            v-show="loading"
+            class="button-small"
+          />
         </div>
 
         <!-- back and login buttons -->
@@ -120,7 +126,7 @@
             {{ $msTranslate('clientArea.app.backButton') }}
           </ion-text>
           <ion-button
-            v-if="!loading"
+            v-show="!loading"
             :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || !password.length || querying"
             @click="onLoginClicked"
             class="saas-login-button__item"
@@ -129,7 +135,7 @@
             {{ $msTranslate('clientArea.app.login') }}
           </ion-button>
           <ion-skeleton-text
-            v-else
+            v-show="loading"
             class="skeleton-login-button"
             :animated="true"
           />
@@ -151,7 +157,7 @@
       <ion-footer class="saas-login-footer">
         <div
           class="create-account"
-          v-if="!loading"
+          v-show="!loading"
         >
           <ion-text class="create-account__text body">{{ $msTranslate('clientArea.app.noAccount') }}</ion-text>
           <a
@@ -165,7 +171,7 @@
           </a>
         </div>
         <div
-          v-else
+          v-show="loading"
           class="create-account-skeleton"
         >
           <ion-skeleton-text
@@ -218,9 +224,10 @@ const passwordInputRef = ref();
 const querying = ref(false);
 const loginError = ref<Translatable>('');
 const loading = ref(true);
-const checkboxValue = ref<boolean>(false);
+const storeCredentials = ref<boolean>(false);
 
 onMounted(async () => {
+  loading.value = true;
   if (BmsAccessInstance.get().isLoggedIn()) {
     emits('loginSuccess', await BmsAccessInstance.get().getToken(), BmsAccessInstance.get().getPersonalInformation());
     return;
@@ -228,6 +235,7 @@ onMounted(async () => {
   const loggedIn = await BmsAccessInstance.get().tryAutoLogin();
   if (loggedIn) {
     emits('loginSuccess', await BmsAccessInstance.get().getToken(), BmsAccessInstance.get().getPersonalInformation());
+    return;
   }
 
   if (emailInputRef.value) {
@@ -246,11 +254,10 @@ async function onLoginClicked(): Promise<void> {
     return;
   }
   querying.value = true;
-  const response = await BmsAccessInstance.get().login(email.value.toLowerCase(), password.value);
+  const response = await BmsAccessInstance.get().login(email.value.toLowerCase(), password.value, storeCredentials.value);
 
   if (response.ok) {
     emits('loginSuccess', await BmsAccessInstance.get().getToken(), BmsAccessInstance.get().getPersonalInformation());
-    querying.value = false;
     return;
   }
   loginError.value = 'clientArea.app.networkFailed';
