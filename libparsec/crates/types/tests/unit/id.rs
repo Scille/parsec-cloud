@@ -1,151 +1,118 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// TODO !!!^
+use libparsec_tests_lite::prelude::*;
 
-// use libparsec_tests_lite::prelude::*;
+use super::*;
 
-// use super::*;
+#[rstest]
+#[case::text_32_long("This_one_is_exactly_32_char_long")]
+#[case::alphanum("01239AbcdDEFA")]
+#[case::with_underscore("hello_World")]
+#[case::with_hyphen("hello-World")]
+// cspell:disable-next-line
+#[case::with_unicode_1("ªµºÖØøˆˠˬˮ\u{301}ͶͽͿΆΊ")]
+#[case::with_unicode_2("ΌΎΣҁ\u{484}Աՙֈ\u{5c7}\u{5bf}\u{5c1}\u{5af}\u{5c4}")]
+#[case::with_unicode_3("ת\u{5ef}\u{610}٩ۓە")]
+#[case::with_unicode_4("\u{6ea}\u{6df}ۿܐݍ߀ߺ\u{7fd}ࠀࡀ")]
+// cspell:disable-next-line
+#[case::hello("𝔅𝔬𝔫𝔧𝔬𝔲𝔯")]
+fn organization_id_ok(#[case] raw: &str) {
+    use unicode_normalization::UnicodeNormalization;
 
-// #[test]
-// fn from_str() {
-//     let too_long = "a".repeat(33);
+    let nfc_raw = raw.nfc().collect::<String>();
+    p_assert_eq!(raw, nfc_raw, "raw != nfc_raw (expected `{:#?}`)", nfc_raw);
 
-//     assert!(too_long.parse::<DeviceName>().is_err());
-//     assert!("pc1".parse::<DeviceName>().is_ok());
+    let organization_id = OrganizationID::from_str(raw).unwrap();
+    p_assert_eq!(organization_id.to_string(), raw);
+    p_assert_eq!(organization_id.as_ref(), raw);
+    p_assert_eq!(organization_id, OrganizationID::from_str(raw).unwrap());
+}
 
-//     assert!(too_long.parse::<UserID>().is_err());
-//     assert!("alice".parse::<UserID>().is_ok());
+#[rstest]
+#[case::text_33_long("This_text_is_exactly_33_char_long")]
+#[case::empty("")]
+#[case::invalid_tilde("F~o")]
+#[case::invalid_space("f o")]
+fn organization_id_ko(#[case] raw: &str) {
+    p_assert_matches!(OrganizationID::from_str(raw), Err(InvalidOrganizationID));
+}
 
-//     assert!("dummy".parse::<DeviceID>().is_err());
-//     assert!(format!("alice@{}", too_long).parse::<DeviceID>().is_err());
-//     assert!("alice@pc1".parse::<DeviceID>().is_ok());
-// }
+#[rstest]
+#[case::valid("john.doe@example.com", "John Doe")]
+#[case::parenthesis_allowed("a@b.c", "()")]
+#[case::max_size_email_and_label(&format!("{}@x.y", "a".repeat(250)), &"x".repeat(254))]
+fn human_handle_ok(#[case] email: &str, #[case] label: &str) {
+    let human_handle = HumanHandle::new(email, label).unwrap();
+    p_assert_eq!(human_handle.label(), label);
+    p_assert_eq!(human_handle.email(), email);
+    p_assert_eq!(human_handle.as_ref(), format!("{label} <{email}>"));
 
-// #[rstest]
-// #[case::valid("john.doe@example.com", "John Doe", true)]
-// #[case::invalid_email("test", "test", false)]
-// #[case::invalid_email("a@b..c", "test", false)]
-// #[case::invalid_email("@b.c", "test", false)]
-// #[case::parenthesis_allowed("a@b.c", "()", true)]
-// #[case::invalid_name_with_backslash("a@b", "hell\\o", false)]
-// #[case::switched("John Doe", "john.doe@example.com", false)]
-// #[case::empty_email("", "foo", false)]
-// #[case::max_size_email_and_label(&format!("{}@x.y", "a".repeat(250)), &"x".repeat(254), true)]
-// #[case::too_long_email(&"x".repeat(255), "foo", false)]
-// #[case::empty_label("foo@example.com", "", false)]
-// #[case::too_long_label("foo@example.com", &"x".repeat(255), false)]
-// #[case::redacted_reserved_domain("john.doe@redacted.invalid", "John Doe", false)]
-// fn human_handle(#[case] email: &str, #[case] label: &str, #[case] is_ok: bool) {
-//     p_assert_eq!(HumanHandle::new(email, label).is_ok(), is_ok);
-//     p_assert_eq!(
-//         HumanHandle::from_str(&format!("{label} <{email}>")).is_ok(),
-//         is_ok
-//     );
-//     if is_ok {
-//         let human_handle = HumanHandle::new(email, label).unwrap();
-//         p_assert_eq!(human_handle.label(), label);
-//         p_assert_eq!(human_handle.email(), email);
-//         p_assert_eq!(human_handle.as_ref(), format!("{label} <{email}>"));
-//     }
-// }
+    let human_handle2 = HumanHandle::from_str(&format!("{label} <{email}>")).unwrap();
+    p_assert_eq!(human_handle, human_handle2);
+}
 
-// #[test]
-// fn device_id_to_user_id_and_device_name() {
-//     let device_id = "john@pc1".parse::<DeviceID>().unwrap();
+#[rstest]
+#[case::invalid_email("test", "test", HumanHandleParseError::InvalidEmail)]
+#[case::invalid_email("a@b..c", "test", HumanHandleParseError::InvalidEmail)]
+#[case::invalid_email("@b.c", "test", HumanHandleParseError::InvalidEmail)]
+#[case::invalid_name_with_backslash("a@b", "hell\\o", HumanHandleParseError::InvalidLabel)]
+#[case::switched(
+    "John Doe",
+    "john.doe@example.com",
+    HumanHandleParseError::InvalidEmail
+)]
+#[case::empty_email("", "foo", HumanHandleParseError::InvalidEmail)]
+#[case::too_long_email(&"x".repeat(255), "foo", HumanHandleParseError::InvalidEmail)]
+#[case::empty_label("foo@example.com", "", HumanHandleParseError::InvalidLabel)]
+#[case::too_long_label("foo@example.com", &"x".repeat(255), HumanHandleParseError::InvalidLabel)]
+#[case::redacted_reserved_domain(
+    "john.doe@redacted.invalid",
+    "John Doe",
+    HumanHandleParseError::InvalidEmail
+)]
+fn human_handle_ko(
+    #[case] email: &str,
+    #[case] label: &str,
+    #[case] expected_error: HumanHandleParseError,
+) {
+    let assert_match_against_expected_error = |error| match expected_error {
+        HumanHandleParseError::MissingEmail => {
+            p_assert_matches!(error, Err(HumanHandleParseError::MissingEmail))
+        }
+        HumanHandleParseError::InvalidEmail => {
+            p_assert_matches!(error, Err(HumanHandleParseError::InvalidEmail))
+        }
+        HumanHandleParseError::InvalidLabel => {
+            p_assert_matches!(error, Err(HumanHandleParseError::InvalidLabel))
+        }
+    };
 
-//     let (user_id, device_name) = device_id.into();
+    assert_match_against_expected_error(HumanHandle::new(email, label));
+    assert_match_against_expected_error(HumanHandle::from_str(&format!("{label} <{email}>")));
+}
 
-//     p_assert_eq!(user_id, "john".parse::<UserID>().unwrap());
+#[test]
+fn human_handle_from_string_with_missing_email() {
+    p_assert_matches!(
+        HumanHandle::from_str("John Doe"),
+        Err(HumanHandleParseError::MissingEmail)
+    );
+}
 
-//     p_assert_eq!(device_name, "pc1".parse::<DeviceName>().unwrap());
-// }
+#[rstest]
+#[case::simple("PC1")]
+#[case::minimal("1")]
+#[case::text_255_long(&"x".repeat(255))]
+#[case::with_unicode("三国")]
+fn device_label_ok(#[case] raw: &str) {
+    let label = DeviceLabel::from_str(raw).unwrap();
+    p_assert_eq!(label.as_ref(), raw);
+}
 
-// #[test]
-// fn display() {
-//     let user_id = "john".parse::<UserID>().unwrap();
-//     p_assert_eq!(format!("{}", user_id), "john");
-
-//     let device_name = "pc1".parse::<DeviceName>().unwrap();
-//     p_assert_eq!(format!("{}", device_name), "pc1");
-
-//     let device_id = "john@pc1".parse::<DeviceID>().unwrap();
-//     p_assert_eq!(format!("{}", device_id), "john@pc1");
-// }
-
-// #[test]
-// fn device_label_bad_size() {
-//     DeviceLabel::from_str("").unwrap_err();
-// }
-
-// #[rstest]
-// #[case::text_32_long("This_one_is_exactly_32_char_long")]
-// #[case::alphanum("01239AbcdDEFA")]
-// #[case::with_underscore("hello_World")]
-// #[case::with_hyphen("hello-World")]
-// // cspell:disable-next-line
-// #[case::with_unicode_1("ªµºÖØøˆˠˬˮ\u{301}ͶͽͿΆΊ")]
-// #[case::with_unicode_2("ΌΎΣҁ\u{484}Աՙֈ\u{5c7}\u{5bf}\u{5c1}\u{5af}\u{5c4}")]
-// #[case::with_unicode_3("ת\u{5ef}\u{610}٩ۓە")]
-// #[case::with_unicode_4("\u{6ea}\u{6df}ۿܐݍ߀ߺ\u{7fd}ࠀࡀ")]
-// // cspell:disable-next-line
-// #[case::hello("𝔅𝔬𝔫𝔧𝔬𝔲𝔯")]
-// fn organization_id_user_id_and_device_name(#[case] raw: &str) {
-//     use unicode_normalization::UnicodeNormalization;
-
-//     let nfc_raw = raw.nfc().collect::<String>();
-//     p_assert_eq!(raw, nfc_raw, "raw != nfc_raw (expected `{:#?}`)", nfc_raw);
-
-//     let organization_id = OrganizationID::from_str(raw).unwrap();
-//     p_assert_eq!(organization_id.to_string(), raw);
-//     p_assert_eq!(organization_id.as_ref(), raw);
-//     p_assert_eq!(organization_id, OrganizationID::from_str(raw).unwrap());
-
-//     let user_id = UserID::from_str(raw).unwrap();
-//     p_assert_eq!(user_id.to_string(), raw);
-//     p_assert_eq!(user_id.as_ref(), raw);
-//     p_assert_eq!(user_id, UserID::from_str(raw).unwrap());
-
-//     let device_name = DeviceName::from_str(raw).unwrap();
-//     p_assert_eq!(device_name.to_string(), raw);
-//     p_assert_eq!(device_name.as_ref(), raw);
-//     p_assert_eq!(device_name, DeviceName::from_str(raw).unwrap());
-// }
-
-// #[rstest]
-// #[case::text_33_long("This_text_is_exactly_33_char_long")]
-// #[case::empty("")]
-// #[case::invalid_tilde("F~o")]
-// #[case::invalid_space("f o")]
-// fn bad_organization_id_user_id_and_device_name(#[case] raw: &str) {
-//     OrganizationID::from_str(raw).unwrap_err();
-//     UserID::from_str(raw).unwrap_err();
-//     DeviceName::from_str(raw).unwrap_err();
-// }
-
-// #[rstest]
-// #[case("ali-c_e@d-e_v")]
-// #[case("ALICE@DEV")]
-// #[case("a@x")]
-// #[case(&("a".repeat(32) + "@" + &"b".repeat(32)))]
-// #[case("关羽@三国")]
-// fn device_id(#[case] raw: &str) {
-//     let (user_id, device_name) = raw.split_once('@').unwrap();
-//     let device_id = DeviceID::from_str(raw).unwrap();
-
-//     p_assert_eq!(device_id, DeviceID::from_str(raw).unwrap());
-//     p_assert_eq!(device_id.user_id, &UserID::from_str(user_id).unwrap());
-//     p_assert_eq!(
-//         device_id.device_name(),
-//         &DeviceName::from_str(device_name).unwrap()
-//     );
-// }
-
-// #[rstest]
-// #[case("a")]
-// #[case(&("a".repeat(33) + "@" + &"x".repeat(32)))]
-// #[case(&("a".repeat(32) + "@" + &"x".repeat(33)))]
-// #[case("a@@x")]
-// #[case("a@1@x")]
-// fn bad_device_id(#[case] raw: &str) {
-//     DeviceID::from_str(raw).unwrap_err();
-// }
+#[rstest]
+#[case::empty("")]
+#[case::text_256_long(&"x".repeat(256))]
+#[case::text_256_long_with_wide_codepoint(&("x".repeat(254) + "国"))]
+fn device_label_ko(#[case] raw: &str) {
+    p_assert_matches!(DeviceLabel::from_str(raw), Err(InvalidDeviceLabel));
+}
