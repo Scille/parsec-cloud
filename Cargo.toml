@@ -63,7 +63,7 @@ publish = false
 repository = "https://github.com/Scille/parsec-cloud"
 # We use the same version for all crates.
 # This comment is used to prevent `taplo` from adding multiple spaces between the version and the comment.
-version = "3.3.0-rc.12+dev" # __PARSEC_VERSION__
+version = "3.3.1-a.0+dev" # __PARSEC_VERSION__
 
 [workspace.lints.clippy]
 undocumented_unsafe_blocks = "deny"
