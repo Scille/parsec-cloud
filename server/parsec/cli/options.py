@@ -178,7 +178,7 @@ def debug_config_options(fn: Callable[P, R]) -> Callable[Concatenate[bool, P], R
     return cast(Callable[Concatenate[bool, P], R], fn)
 
 
-DEFAULT_DB_MIN_CONNECTIONS = 5
+DEFAULT_DB_MIN_CONNECTIONS = 1
 DEFAULT_DB_MAX_CONNECTIONS = 7
 
 
@@ -291,9 +291,7 @@ Allowed values:
             show_default=True,
             envvar="PARSEC_DB_MIN_CONNECTIONS",
             show_envvar=True,
-            # 1 connection always used for listening to PostgreSQL events,
-            # and at least 1 required to be used in the requests.
-            type=click.IntRange(min=2),
+            type=int,
             help="Minimal number of connections to the database if using PostgreSQL",
         ),
         click.option(
@@ -303,7 +301,9 @@ Allowed values:
             show_default=True,
             envvar="PARSEC_DB_MAX_CONNECTIONS",
             show_envvar=True,
-            type=int,
+            # 1 connection always used for listening to PostgreSQL events,
+            # and at least 1 required to be used in the requests.
+            type=click.IntRange(min=2),
             help="Maximum number of connections to the database if using PostgreSQL",
         ),
     ]
