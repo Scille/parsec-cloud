@@ -263,6 +263,18 @@ def user_update_user_validate(
     return data
 
 
+@dataclass
+class UserInvitationInfo:
+    organization: OrganizationID
+    """The organization ID of the invitation."""
+
+    created_by: str
+    """Email of the user who created the invitation."""
+
+    created_on: DateTime
+    """Date when the invitation was created."""
+
+
 class UserCreateUserStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
@@ -487,6 +499,12 @@ class BaseUserComponent:
     async def list_frozen_users(
         self, organization_id: OrganizationID, device_id: DeviceID
     ) -> list[UserID] | UserListFrozenUsersBadOutcome:
+        raise NotImplementedError
+
+    async def list_user_invitations(self, email: str) -> list[UserInvitationInfo]:
+        """
+        List invitations for a given email that are still active.
+        """
         raise NotImplementedError
 
     #

@@ -28,6 +28,7 @@ from parsec.components.postgresql.user_get_user_info import (
     user_get_user_info_from_email,
 )
 from parsec.components.postgresql.user_list_frozen_users import user_list_frozen_users
+from parsec.components.postgresql.user_list_invitations import list_user_invitations
 from parsec.components.postgresql.user_list_users import user_list_users
 from parsec.components.postgresql.user_revoke_user import user_revoke_user
 from parsec.components.postgresql.user_test_dump_current_users import user_test_dump_current_users
@@ -53,6 +54,7 @@ from parsec.components.user import (
     UserFreezeUserBadOutcome,
     UserGetCertificatesAsUserBadOutcome,
     UserInfo,
+    UserInvitationInfo,
     UserListFrozenUsersBadOutcome,
     UserListUsersBadOutcome,
     UserRevokeUserStoreBadOutcome,
@@ -357,3 +359,9 @@ class PGUserComponent(BaseUserComponent):
             author,
             tos_updated_on,
         )
+
+    @override
+    async def list_user_invitations(
+        self, conn: AsyncpgConnection, email: str
+    ) -> list[UserInvitationInfo]:
+        return await list_user_invitations(self.pool, email)

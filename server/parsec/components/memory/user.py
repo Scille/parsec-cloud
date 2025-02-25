@@ -9,6 +9,7 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
+    InvitationType,
     OrganizationID,
     RevokedUserCertificate,
     UserCertificate,
@@ -20,6 +21,7 @@ from parsec._parsec import (
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
+from parsec.components.invite import InvitationCreatedByExternalService, InvitationCreatedByUser
 from parsec.components.memory.datamodel import (
     MemoryDatamodel,
     MemoryDevice,
@@ -40,6 +42,7 @@ from parsec.components.user import (
     UserGetActiveDeviceVerifyKeyBadOutcome,
     UserGetCertificatesAsUserBadOutcome,
     UserInfo,
+    UserInvitationInfo,
     UserListFrozenUsersBadOutcome,
     UserListUsersBadOutcome,
     UserRevokeUserStoreBadOutcome,
@@ -844,3 +847,29 @@ class MemoryUserComponent(BaseUserComponent):
             return UserAcceptTosBadOutcome.TOS_MISMATCH
 
         user.tos_accepted_on = now
+
+    async def list_user_invitations(self, email: str) -> list[UserInvitationInfo]:
+        items = []
+        for orga_id, orga in self._data.organizations.items():
+            for invitation in orga.invitations.values():
+                if (
+                    invitation.claimer_email != email
+                    or invitation.deleted_on is not None
+                    or invitation.type != InvitationType.USER
+                ):
+                    continue
+
+                match invitation.created_by:
+                    case InvitationCreatedByUser() as by_user:
+                        created_by = by_user.human_handle.email
+                    case InvitationCreatedByExternalService() as by_device:
+                        created_by = by_device.service_label
+
+                items.append(
+                    UserInvitationInfo(
+                        organization=orga_id,
+                        created_on=invitation.created_on,
+                        created_by=created_by,
+                    )
+                )
+        return items
