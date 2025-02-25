@@ -210,28 +210,47 @@ pub enum ClientStopError {
 
 pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
     let client_handle = client;
-    let (client, on_event, device_in_use_guard) =
-        take_and_close_handle(client_handle, |x| match x {
-            HandleItem::Client {
-                client,
-                on_event,
-                #[cfg(not(target_arch = "wasm32"))]
-                device_in_use_guard,
-            } => {
-                #[cfg(target_arch = "wasm32")]
-                let device_in_use_guard = ();
-                Ok((client, on_event, device_in_use_guard))
-            }
-            // Note we consider an error if the handle is in `HandleItem::StartingClient` state
-            // this is because at that point this is not a legit use of the handle given it
-            // has never been yet provided to the caller in the first place !
-            // On top of that it simplifies the start logic (given it guarantees nothing will
-            // concurrently close the handle)
-            invalid => Err(invalid),
-        })?;
 
-    // Note stopping the client also stop all it related workspace ops
+    // Stopping the client is divided into two steps:
+    // - First actually stopping the client
+    // - And only then cleaning up the handles related to the client
+    //
+    // The order is important here: if we remove the client handle before
+    // stopping the client, then we open the door for a concurrent start
+    // of a client using the same device (which is not allowed).
+
+    // 1. Stop the client
+
+    let client = borrow_client(client_handle)?;
+
+    // Notes:
+    // - Stop is idempotent.
+    // - We may have concurrent (or even subsequent given the client handle is still
+    //   usable !) operations currently using the client, this is fine as those
+    //   operations will simply receive a `Stopped` error.
+    // - Stopping the client also stop all it related workspace ops.
     client.stop().await;
+
+    // 2. Cleanup the handles related to the client
+
+    let (on_event, device_in_use_guard) = take_and_close_handle(client_handle, |x| match x {
+        HandleItem::Client {
+            on_event,
+            #[cfg(not(target_arch = "wasm32"))]
+            device_in_use_guard,
+            ..
+        } => {
+            #[cfg(target_arch = "wasm32")]
+            let device_in_use_guard = ();
+            Ok((on_event, device_in_use_guard))
+        }
+        // Note we consider an error if the handle is in `HandleItem::StartingClient` state
+        // this is because at that point this is not a legit use of the handle given it
+        // has never been yet provided to the caller in the first place !
+        // On top of that it simplifies the start logic (given it guarantees nothing will
+        // concurrently close the handle)
+        invalid => Err(invalid),
+    })?;
 
     // Wait until after the client is closed to disconnect the event bus to ensure
     // we don't miss any event fired during client teardown
