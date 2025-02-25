@@ -8,17 +8,17 @@ from parsec.components.user import UserInvitationInfo
 _q_list_user_invitations = Q(
     """
 SELECT
-    invit.organization AS organization_id,
+    invitation.organization AS organization_id,
     human.email AS created_by,
-    invit.created_on AS created_on
-FROM invitation AS invit
+    invitation.created_on AS created_on
+FROM invitation
 INNER JOIN device ON device._id = invitation.created_by_device
 INNER JOIN user ON user._id = device.user_
 INNER JOIN human ON human._id = user.human
 WHERE
-    invit.deleted_on is NULL
-    AND invit.user_invitation_claimer_email = $email
-    AND invit.type = "USER"
+    invitation.deleted_on is NULL
+    AND invitation.user_invitation_claimer_email = $email
+    AND invitation.type = 'USER'
 """
 )
 
