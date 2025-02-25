@@ -361,6 +361,7 @@ class PGUserComponent(BaseUserComponent):
         )
 
     @override
+    @no_transaction
     async def list_user_invitations(
         self, conn: AsyncpgConnection, email: str
     ) -> list[UserInvitationInfo]:
