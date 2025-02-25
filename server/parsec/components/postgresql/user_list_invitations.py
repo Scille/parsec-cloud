@@ -12,13 +12,13 @@ SELECT
     human.email AS created_by,
     invitation.created_on AS created_on
 FROM invitation
+INNER JOIN device ON device._id = invitation.created_by_device
+INNER JOIN user ON user._id = device.user_
+INNER JOIN human ON human._id = user.human
 WHERE
     invitation.deleted_on is NULL
     AND invitation.user_invitation_claimer_email = $email
     AND invitation.type = "USER"
-INNER JOIN device ON device._id = invitation.created_by_device
-INNER JOIN user ON user._id = device.user_
-INNER JOIN human ON human._id = user.human
 """
 )
 
