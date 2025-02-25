@@ -1,3 +1,5 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from parsec._parsec import DateTime, OrganizationID
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import Q
