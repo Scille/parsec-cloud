@@ -4,6 +4,27 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.3.0 (2025-02-25)
+--------------------------
+
+No significant changes.
+
+
+Parsec v3.3.0-rc.12 (2025-02-25)
+--------------------------------
+
+Features
+~~~~~~~~
+
+* Port the sequester feature (with realm export and mount) and expose it through
+  the CLI.
+  (`#6407 <https://github.com/Scille/parsec-cloud/issues/6407>`__)
+
+* Provide the CLI for windows
+  (`#9771 <https://github.com/Scille/parsec-cloud/issues/9771>`__)
+
+
+
 Parsec v3.3.0-rc.11 (2025-02-17)
 --------------------------------
 
