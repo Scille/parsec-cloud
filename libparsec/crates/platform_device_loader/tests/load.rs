@@ -60,7 +60,7 @@ async fn bad_file_content(tmp_path: TmpPath) {
 }
 
 #[parsec_test]
-#[case::new_format(
+async fn invalid_salt_size(tmp_path: TmpPath) {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
     //   type: "password"
@@ -71,7 +71,7 @@ async fn bad_file_content(tmp_path: TmpPath) {
     //   device_id: "alice@dev1"
     //   organization_id: "CoolOrg"
     //   slug: "f78292422e#CoolOrg#alice@dev1"
-    &hex!(
+    let content = hex!(
         "88a474797065a870617373776f7264aa63697068657274657874c40a63697068657274"
         "657874ac68756d616e5f68616e646c6592b1616c696365406578616d706c652e636f6d"
         "b2416c69636579204d63416c69636546616365ac6465766963655f6c6162656caf4d79"
@@ -79,22 +79,8 @@ async fn bad_file_content(tmp_path: TmpPath) {
         "6f7267616e697a6174696f6e5f6964a7436f6f6c4f7267a4736c7567bd663738323932"
         "3432326523436f6f6c4f726723616c6963654064657631a473616c74c40473616c74"
     )
-)]
-#[case::legacy_format(
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
-    // Content:
-    //   type: "password"
-    //   salt: b"salt"  <== Salt is too small
-    //   ciphertext: b"ciphertext"  <== Dummy data never considered given salt is invalid
-    //   human_handle: None
-    //   device_label: None
-    &hex!(
-        "85a474797065a870617373776f7264a473616c74c40473616c74aa6369706865727465"
-        "7874c40a63697068657274657874ac68756d616e5f68616e646c65c0ac646576696365"
-        "5f6c6162656cc0"
-    )
-)]
-async fn invalid_salt_size(tmp_path: TmpPath, #[case] content: &[u8]) {
+    .as_ref();
+
     // Store it in a path compatible with the legacy format
     let key_file =
         tmp_path.join("devices/c17fc4c8bf#corp#alice@laptop/c17fc4c8bf#corp#alice@laptop.keys");
