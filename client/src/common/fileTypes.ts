@@ -33,7 +33,10 @@ interface DetectedFileType {
 }
 
 const IMAGES = ['image/png', 'image/webp', 'image/jpeg', 'image/svg+xml', 'image/bmp', 'image/gif'];
-const SPREADSHEETS = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+const SPREADSHEETS = [
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.oasis.opendocument.spreadsheet',
+];
 const DOCUMENTS = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
 const PDF_DOCUMENTS = ['application/pdf'];
 const AUDIOS = ['audio/x-wav', 'audio/mpeg'];
@@ -94,7 +97,11 @@ async function detectFileContentTypeFromBuffer(buffer: Uint8Array, fileExt?: str
   if (IMAGES.includes(result.mime)) {
     return { type: FileContentType.Image, extension: fileExt ?? result.ext, mimeType: result.mime };
   }
-  if (SPREADSHEETS.includes(result.mime) || (result.mime === 'application/zip' && fileExt === 'xlsx')) {
+  if (
+    SPREADSHEETS.includes(result.mime) ||
+    (result.mime === 'application/zip' && fileExt === 'xlsx') ||
+    (result.mime === 'application/x-cfb' && fileExt === 'xls')
+  ) {
     return { type: FileContentType.Spreadsheet, extension: fileExt ?? result.ext, mimeType: result.mime };
   }
   if (DOCUMENTS.includes(result.mime) || (result.mime === 'application/zip' && fileExt === 'docx')) {
