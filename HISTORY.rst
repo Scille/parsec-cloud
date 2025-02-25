@@ -4,6 +4,39 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.3.0-rc.12.dev.20144+fffa1b0 (2025-02-25)
+--------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Update user interface to regroup any user profile and settings in a single
+  tabbed view.
+  (`#9470 <https://github.com/Scille/parsec-cloud/issues/9470>`__)
+
+* Port the sequester feature (with realm export and mount) and expose it through
+  the CLI.
+  (`#6407 <https://github.com/Scille/parsec-cloud/issues/6407>`__)
+
+* Added picture in picture, loop and playback speed options to video and audio
+  viewers
+  (`#9750 <https://github.com/Scille/parsec-cloud/issues/9750>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed "Remember me" login for customer area
+  (`#9616 <https://github.com/Scille/parsec-cloud/issues/9616>`__)
+
+* Only count active users in organization stats
+  (`#9723 <https://github.com/Scille/parsec-cloud/issues/9723>`__)
+
+* Added a minimal window size
+  (`#9674 <https://github.com/Scille/parsec-cloud/issues/9674>`__)
+
+
+
 Parsec v3.3.0-rc.11 (2025-02-17)
 --------------------------------
 
