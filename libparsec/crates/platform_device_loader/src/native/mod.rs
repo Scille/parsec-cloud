@@ -261,7 +261,7 @@ pub async fn save_device(
         DeviceAccessStrategy::Password { key_file, password } => {
             let key_algo = super::new_default_pbkdf_algo();
             let key = super::secret_key_from_password(password, &key_algo)
-                .expect("Salt has the correct length");
+                .expect("Failed to derive key from password");
 
             let ciphertext = super::encrypt_device(device, &key);
 
