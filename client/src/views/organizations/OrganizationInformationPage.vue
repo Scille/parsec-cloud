@@ -326,6 +326,7 @@ ion-title {
       justify-content: space-between;
       display: flex;
       align-items: center;
+      gap: 1rem;
     }
   }
 
