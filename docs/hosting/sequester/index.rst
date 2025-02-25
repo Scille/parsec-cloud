@@ -68,12 +68,12 @@ You can create the service key and certificate with the following commands:
     openssl rsa -in sequester_key.private -out sequester_key_private_decrypted.pem
     openssl rsa -in sequester_key.private -out sequester_key.pub -pubout -outform PEM
     # With Parsec server CLI
-    # Certificate must be generated AFTER organization bootstraped
+    # Certificate must be generated AFTER organization bootstrapped
     python -m parsec sequester generate_service_certificate --service-label="Sequester service" \
     --service-public-key=./sequester_key.pub --authority-private-key=./authority_key.private
 
 Enable sequester service
-***********************
+************************
 
   .. code-block:: bash
 
@@ -114,5 +114,5 @@ Using exported data
 
   .. code-block:: bash
 
-    # This command mount a disk drive with decryted data
+    # This command mount a disk drive with decrypted data
     ./parsec-cli mount-realm-export parsec-export-organization-sequester-test-realm-f749b8035f6e4bd88e96ae557828a583-20250225T135312Z.sqlite -d sequester:7bd707ce86df42288634f2a78db7f10e:./sequester_key.private
