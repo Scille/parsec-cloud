@@ -364,4 +364,4 @@ class PGUserComponent(BaseUserComponent):
     async def list_user_invitations(
         self, conn: AsyncpgConnection, email: str
     ) -> list[UserInvitationInfo]:
-        return await list_user_invitations(self.pool, email)
+        return await list_user_invitations(conn, email)
