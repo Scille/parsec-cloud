@@ -3,7 +3,7 @@
 import { needsMocks } from '@/parsec/environment';
 import { wait } from '@/parsec/internals';
 import { MockFileType, getMockFileContent } from '@/parsec/mock_files';
-import { generateEntries, generateFile, generateFolder } from '@/parsec/mock_generator';
+import { generateEntriesForEachFileType, generateFile, generateFolder } from '@/parsec/mock_generator';
 import { Path } from '@/parsec/path';
 import { getParsecHandle } from '@/parsec/routing';
 import {
@@ -188,7 +188,7 @@ export class WorkspaceHistory {
     }
     // Take some time to load
     await wait(1500);
-    const items = (await generateEntries(path)).map((entry) => {
+    const items = (await generateEntriesForEachFileType(path)).map((entry) => {
       return entry as any as WorkspaceHistoryEntryStat;
     });
     return { ok: true, value: items };
