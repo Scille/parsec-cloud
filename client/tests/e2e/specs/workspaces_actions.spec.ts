@@ -20,7 +20,7 @@ async function toggleViewMode(page: Page): Promise<void> {
 async function openContextMenu(page: Page, mode: Mode): Promise<void> {
   if (mode === 'grid') {
     const wk = page.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(1);
-    await wk.locator('.card-option').click();
+    await wk.locator('.icon-option').nth(1).click();
   } else if (mode === 'list') {
     await toggleViewMode(page);
     const wk = page.locator('.workspaces-container').locator('.workspace-list-item').nth(1);
@@ -154,7 +154,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     let wk;
     if (await isInGridMode(connected)) {
       wk = connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
-      await expect(wk.locator('.workspace-card__title')).toHaveText('Trademeet');
+      await expect(wk.locator('.workspace-card-content__title')).toHaveText('Trademeet');
     } else {
       wk = connected.locator('.workspaces-container').locator('.workspace-list-item').nth(0);
       await expect(wk.locator('.workspace-name')).toHaveText('Trademeet');

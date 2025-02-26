@@ -233,8 +233,6 @@ async function onOptionsClick(event: Event): Promise<void> {
   flex-grow: 0;
   margin-left: auto;
   align-items: center;
-  position: absolute;
-  right: 0;
 
   ion-button::part(native) {
     padding: 0;

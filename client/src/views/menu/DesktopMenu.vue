@@ -816,6 +816,10 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     flex-direction: column;
     padding: 0 0.75rem;
   }
+
+  .organization-workspaces:has(.current-workspace) .workspaces {
+    margin: 0;
+  }
 }
 
 .organization-card {
