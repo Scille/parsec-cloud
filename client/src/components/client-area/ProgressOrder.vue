@@ -238,8 +238,7 @@ onMounted(async () => {
     .dot-todo {
       width: 0.5rem;
       height: 0.5rem;
-      background-color: var(--parsec-color-light-primary-600);
-      border-radius: 50%;
+      border-radius: var(--parsec-radius-circle);
       position: relative;
       background-color: var(--parsec-color-light-secondary-light);
     }
@@ -247,8 +246,7 @@ onMounted(async () => {
     .dot-active {
       width: 0.5rem;
       height: 0.5rem;
-      background-color: var(--parsec-color-light-primary-600);
-      border-radius: 50%;
+      border-radius: var(--parsec-radius-circle);
       position: relative;
       background-color: var(--parsec-color-light-primary-600);
 
