@@ -615,6 +615,7 @@ secretservice
 sectionauthor
 seealso
 SeedBytes
+Sellsy
 sensorgestures
 Sequestery
 Serde
