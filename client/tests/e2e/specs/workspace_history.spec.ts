@@ -46,7 +46,7 @@ msTest('Test workspace history page', async ({ connected }) => {
   await expect(restoreButton).toHaveText('Restore');
   await expect(restoreButton).toBeTrulyDisabled();
   const folderList = container.locator('.folder-list-main');
-  await expect(folderList.locator('.file-list-item')).toHaveCount(4);
+  await expect(folderList.locator('.file-list-item')).toHaveCount(11);
   await folderList.locator('.file-list-item').nth(0).dblclick();
   await expect(breadcrumbs).toHaveText([' Trademeet /', /^ Dir_.+$/]);
 
@@ -60,4 +60,43 @@ This will overwrite any current version but you can still retrieve it in the His
     expectedPositiveText: 'Restore',
     expectedNegativeText: 'Cancel',
   });
+  const uploadMenu = connected.locator('.upload-menu');
+  await expect(uploadMenu).toBeVisible();
+  const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
+  await expect(tabs.locator('.text-counter')).toHaveText(['0', '1', '0']);
+  await expect(tabs.nth(0)).not.toHaveTheClass('active');
+  await expect(tabs.nth(1)).toHaveTheClass('active');
+  await expect(tabs.nth(2)).not.toHaveTheClass('active');
+
+  const opContainer = uploadMenu.locator('.element-container');
+  const elements = opContainer.locator('.element');
+  await expect(elements).toHaveCount(1);
+  await expect(elements.locator('.element-details__name')).toHaveText(/^Restoration of File_[a-z0-9_.]+$/);
+});
+
+msTest('Test viewer in history', async ({ connected }) => {
+  await connected.locator('.workspace-card-item').nth(1).locator('.card-option').click();
+  const contextMenu = connected.locator('.workspace-context-menu');
+  await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
+  await expect(connected.locator('.topbar-left').locator('.topbar-left__title')).toHaveText('History');
+  const container = connected.locator('.history-container');
+  await expect(container.locator('.head-content__title')).toHaveText('Workspace: Trademeet');
+  const folderList = container.locator('.folder-list-main');
+  await expect(folderList.locator('.file-list-item')).toHaveCount(11);
+
+  for (const entry of await folderList.locator('.file-list-item').all()) {
+    const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
+    if (entryName.endsWith('.txt')) {
+      await entry.dblclick();
+      break;
+    }
+  }
+  await expect(connected).toBeViewerPage();
+  await expect(connected).toHavePageTitle('File viewer');
+  await expect(connected.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text').nth(0)).toHaveText(
+    /^File_[a-z0-9_]+\.txt$/,
+  );
+  const textContainer = connected.locator('.file-viewer').locator('.text-container');
+  await expect(textContainer.locator('.margin').locator('.line-numbers')).toHaveCount(2);
+  await expect(textContainer.locator('.editor-scrollable')).toHaveText('A simple text file');
 });
