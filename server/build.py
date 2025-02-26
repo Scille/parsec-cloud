@@ -8,8 +8,12 @@ import tempfile
 import zipfile
 from typing import Any
 
+
 # The profile we pass to `make.py` to get the flags (cargo profile & features) for cargo build
-DEFAULT_BUILD_PROFILE = "release"
+DEFAULT_LIBPARSEC_BUILD_PROFILE = "release"
+
+DEFAULT_LIBPARSEC_BUILD_STRATEGY = "always_build"
+DEFAULT_CLIENT_WEB_APP_BUILD_STRATEGY = "always_build"
 
 
 def display(line: str) -> None:
@@ -31,7 +35,7 @@ def run(cmd: str, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
     return ret
 
 
-def build() -> None:
+def build_libparsec() -> None:
     run(f"{PYTHON_EXECUTABLE_PATH} --version")
     run("maturin --version")
 
@@ -46,7 +50,9 @@ def build() -> None:
         libparsec_path = "parsec/_parsec.cpython-312-x86_64-linux-gnu.so"
 
     build_strategy = (
-        os.environ.get("POETRY_LIBPARSEC_BUILD_STRATEGY", "always_build").strip().lower()
+        os.environ.get("POETRY_LIBPARSEC_BUILD_STRATEGY", DEFAULT_LIBPARSEC_BUILD_STRATEGY)
+        .strip()
+        .lower()
     )
     if build_strategy == "no_build":
         display("Skipping maturin build: POETRY_LIBPARSEC_BUILD_STRATEGY set to `no_build`")
@@ -61,7 +67,9 @@ def build() -> None:
     # The idea here is to have the per-profile options centralized at the same place
     # (i.e. within `make.py`) to have a readable single source of truth (including
     # when compiling bindings unrelated to Python) on this sensible piece of configuration.
-    build_profile = os.environ.get("POETRY_LIBPARSEC_BUILD_PROFILE", DEFAULT_BUILD_PROFILE)
+    build_profile = os.environ.get(
+        "POETRY_LIBPARSEC_BUILD_PROFILE", DEFAULT_LIBPARSEC_BUILD_PROFILE
+    )
     ret = run(
         f"{PYTHON_EXECUTABLE_PATH} {BASEDIR.parent}/make.py --quiet python-{build_profile}-libparsec-cargo-flags",
         stdout=subprocess.PIPE,
@@ -117,6 +125,39 @@ def build() -> None:
                     wheel.extract(item, path=BASEDIR)
 
 
+def client_web_app_build():
+    client_web_app_path = BASEDIR / "parsec/static_client_web_app"
+    build_strategy = (
+        os.environ.get(
+            "POETRY_CLIENT_WEB_APP_BUILD_STRATEGY", DEFAULT_CLIENT_WEB_APP_BUILD_STRATEGY
+        )
+        .strip()
+        .lower()
+    )
+    if build_strategy == "no_build":
+        display(
+            "Skipping client web app build: POETRY_CLIENT_WEB_APP_BUILD_STRATEGY set to `no_build`"
+        )
+        return
+    elif build_strategy == "build_if_missing" and client_web_app_path.exists():
+        display(
+            f"Skipping maturin build: POETRY_CLIENT_WEB_APP_BUILD_STRATEGY set to `build_if_missing` and {client_web_app_path} already exists"
+        )
+        return
+
+    # 1. Build the libparsec web bindings
+
+    run(
+        f"{PYTHON_EXECUTABLE_PATH} {BASEDIR.parent}/make.py web-release-install",
+    )
+
+    # 2. Build the client web app (that itself bundles the libparsec web bindings)
+
+    cmd = f"npx vite build --base '/client' --outDir {client_web_app_path.absolute()} --emptyOutDir --clearScreen false"
+    run(cmd, cwd=BASEDIR / "../client")
+
+
 if __name__ == "__main__":
     display("Launching poetry build.py script")
-    build()
+    build_libparsec()
+    client_web_app_build()
