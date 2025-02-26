@@ -300,13 +300,6 @@ function getTitleByPage(): Translatable {
   height: 100%;
 }
 
-// -------- sidebar ------------
-ion-split-pane {
-  --side-min-width: var(--parsec-sidebar-menu-min-width);
-  --side-max-width: var(--parsec-sidebar-menu-max-width);
-  --side-width: v-bind(sidebarWidthProperty);
-}
-
 .resize-divider {
   width: 0.25rem;
   height: 100%;
@@ -332,6 +325,9 @@ ion-split-pane {
 }
 
 .sidebar {
+  --side-min-width: var(--parsec-sidebar-menu-min-width);
+  --side-max-width: var(--parsec-sidebar-menu-max-width);
+  --side-width: v-bind(sidebarWidthProperty);
   --background: var(--parsec-color-light-secondary-background);
   border-right: 1px solid var(--parsec-color-light-secondary-disabled);
   user-select: none;
