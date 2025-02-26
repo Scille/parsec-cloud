@@ -1,0 +1,1 @@
+Slightly improve the workspace card UI.

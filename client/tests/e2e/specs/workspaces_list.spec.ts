@@ -46,51 +46,10 @@ for (const workspace of workspaces) {
     const workspaceCard = connected.locator('.workspace-card-item', { hasText: workspace.name });
     await expect(workspaceCard).toContainText(workspace.name);
     expect(workspaceCard).toBeDefined();
-    const workspaceInfo = workspaceCard.locator('.workspace-info');
-    if (workspace.sharedWith.length === 0) {
-      await expect(workspaceInfo.locator('.shared-group')).toBeHidden();
-      await expect(workspaceInfo.locator('.not-shared-label')).toBeVisible();
-      await expect(workspaceInfo.locator('.not-shared-label')).toHaveText('Not shared');
-    } else {
-      await expect(workspaceInfo.locator('.shared-group')).toBeVisible();
-      await expect(workspaceInfo.locator('.not-shared-label')).toBeHidden();
-      await expect(workspaceInfo.locator('.shared-group').locator('.person-avatar')).toHaveCount(workspace.sharedWith.length);
-      await expect(workspaceInfo.locator('.shared-group').locator('.person-avatar')).toHaveText(workspace.sharedWith);
-    }
-    const workspaceRole = workspaceCard.locator('.card-bottom');
-    await expect(workspaceRole.locator('.card-bottom__role')).toHaveText(/^(Reader|Manager|Owner|Contributor)$/);
-    const role = await workspaceRole.locator('.card-bottom__role').textContent();
-    const icons = workspaceRole.locator('.card-bottom__icons').locator('ion-icon');
-    await expect(icons).toHaveCount(3);
-
-    switch (role) {
-      case 'Reader': {
-        await expect(icons.nth(0)).toHaveTheClass('icon-disabled');
-        await expect(icons.nth(1)).toHaveTheClass('icon-disabled');
-        await expect(icons.nth(2)).not.toHaveTheClass('icon-disabled');
-        break;
-      }
-      case 'Manager': {
-        await expect(icons.nth(0)).not.toHaveTheClass('icon-disabled');
-        await expect(icons.nth(1)).not.toHaveTheClass('icon-disabled');
-        await expect(icons.nth(2)).not.toHaveTheClass('icon-disabled');
-        break;
-      }
-      case 'Contributor': {
-        await expect(icons.nth(0)).toHaveTheClass('icon-disabled');
-        await expect(icons.nth(1)).not.toHaveTheClass('icon-disabled');
-        await expect(icons.nth(2)).not.toHaveTheClass('icon-disabled');
-        break;
-      }
-      case 'Owner': {
-        await expect(icons.nth(0)).not.toHaveTheClass('icon-disabled');
-        await expect(icons.nth(1)).not.toHaveTheClass('icon-disabled');
-        await expect(icons.nth(2)).not.toHaveTheClass('icon-disabled');
-        break;
-      }
-      default:
-        break;
-    }
+    const workspaceRole = workspaceCard.locator('.workspace-card-bottom');
+    await expect(workspaceRole.locator('.workspace-card-bottom__role')).toHaveText(/^(Reader|Manager|Owner|Contributor)$/);
+    const icons = workspaceRole.locator('.workspace-card-bottom__icons').locator('ion-icon');
+    await expect(icons).toHaveCount(2);
   });
 }
 
@@ -102,7 +61,7 @@ for (const gridMode of [false, true]) {
     // Order by name asc (default)
     let names = workspaces.map((w) => w.name).sort((wName1, wName2) => wName1.localeCompare(wName2));
     if (gridMode) {
-      await expect(connected.locator('.workspaces-container').locator('.workspace-card__title')).toHaveText(names);
+      await expect(connected.locator('.workspaces-container').locator('.workspace-card-content__title')).toHaveText(names);
     } else {
       await expect(connected.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
     }
@@ -128,7 +87,7 @@ for (const gridMode of [false, true]) {
     names = workspaces.map((w) => w.name).sort((wName1, wName2) => wName2.localeCompare(wName1));
     await sortSelector.click();
     if (gridMode) {
-      await expect(connected.locator('.workspaces-container').locator('.workspace-card__title')).toHaveText(names);
+      await expect(connected.locator('.workspaces-container').locator('.workspace-card-content__title')).toHaveText(names);
     } else {
       await expect(connected.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
     }
@@ -157,7 +116,7 @@ async function ensureFavorite(page: Page, favoritesCount: number): Promise<void>
 }
 
 msTest('Checks favorites', async ({ connected }) => {
-  await expect(connected.locator('.workspace-card-item').locator('.workspace-card__title')).toHaveText([
+  await expect(connected.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
     'The Copper Coronet',
     'Trademeet',
     "Watcher's Keep",
@@ -165,7 +124,7 @@ msTest('Checks favorites', async ({ connected }) => {
   await ensureFavorite(connected, 0);
   await connected.locator('.workspace-card-item').nth(1).locator('.workspace-favorite-icon').click();
   // Put favorite in first
-  await expect(connected.locator('.workspace-card-item').locator('.workspace-card__title')).toHaveText([
+  await expect(connected.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
     'Trademeet',
     'The Copper Coronet',
     "Watcher's Keep",
@@ -201,7 +160,7 @@ for (const gridMode of [false, true]) {
     }
     const searchInput = connected.locator('#workspaces-ms-action-bar').locator('#search-input-workspace').locator('ion-input');
     const container = connected.locator('.workspaces-container');
-    const titles = gridMode ? container.locator('.workspace-card__title') : container.locator('.workspace-name__label');
+    const titles = gridMode ? container.locator('.workspace-card-content__title') : container.locator('.workspace-name__label');
 
     await expect(titles).toHaveText(['The Copper Coronet', 'Trademeet', "Watcher's Keep"]);
     await fillIonInput(searchInput, 'ee');

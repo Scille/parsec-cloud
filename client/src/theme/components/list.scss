@@ -125,10 +125,13 @@
 
 // Allow to keep hover when context menu is open
 .file-hovered,
-.workspace-hovered,
 .user-hovered:not(.revoked) {
   --background: var(--parsec-color-light-primary-30) !important;
   background-color: var(--parsec-color-light-primary-30) !important;
+}
+
+.workspace-hovered {
+  box-shadow: var(--parsec-shadow-light) !important;
 }
 
 // List of files/folders

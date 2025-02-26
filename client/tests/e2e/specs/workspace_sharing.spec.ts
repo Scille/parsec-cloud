@@ -151,7 +151,14 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
 });
 
 msTest('Batch workspace sharing hidden when reader', async ({ connected }) => {
-  await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(2).locator('.not-shared-label').click();
+  await connected
+    .locator('.workspaces-container-grid')
+    .locator('.workspace-card-item')
+    .nth(2)
+    .locator('.workspace-card-bottom__icons')
+    .locator('.icon-option')
+    .nth(0)
+    .click();
   const modal = connected.locator('.workspace-sharing-modal');
   await expect(modal).toBeVisible();
   const content = modal.locator('.ms-modal-content');

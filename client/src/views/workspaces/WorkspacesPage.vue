@@ -519,6 +519,8 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
 </script>
 
 <style lang="scss" scoped>
+@import '@/theme/responsive-mixin';
+
 .no-workspaces {
   max-width: 30rem;
   color: var(--parsec-color-light-secondary-grey);
@@ -586,10 +588,9 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
   }
 
   .label-space {
-    min-width: 4rem;
+    width: 4rem;
     flex-grow: 0;
     margin-left: auto;
-    margin-right: 1rem;
   }
 }
 
@@ -597,6 +598,16 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
   display: flex;
   flex-wrap: wrap;
   gap: 1.5em;
-  overflow-y: auto;
+  overflow: visible;
+  padding-bottom: 2rem;
+
+  @include breakpoint('sm') {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include breakpoint('xs') {
+    grid-template-columns: repeat(1, 1fr);
+  }
 }
 </style>

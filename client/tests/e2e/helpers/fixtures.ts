@@ -235,7 +235,14 @@ export const msTest = debugTest.extend<{
   },
 
   workspaceSharingModal: async ({ connected }, use) => {
-    await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(1).locator('.shared-group').click();
+    await connected
+      .locator('.workspaces-container-grid')
+      .locator('.workspace-card-item')
+      .nth(1)
+      .locator('.workspace-card-bottom__icons')
+      .locator('.icon-option')
+      .nth(0)
+      .click();
     const modal = connected.locator('.workspace-sharing-modal');
     await expect(modal).toBeVisible();
     await use(modal);
