@@ -94,39 +94,29 @@ const props = defineProps<{
 
 const steps = [
   {
-    id: 1,
+    ...getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Received),
     statusBms: CustomOrderStatus.NothingLinked,
     statusRequest: CustomOrderRequestStatus.Received,
-    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Received).title,
-    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Received).description,
   },
   {
-    id: 2,
+    ...getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Processing),
     statusBms: CustomOrderStatus.NothingLinked,
     statusRequest: CustomOrderRequestStatus.Processing,
-    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Processing).title,
-    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Processing).description,
   },
   {
-    id: 3,
+    ...getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Finished),
     statusBms: CustomOrderStatus.NothingLinked,
     statusRequest: CustomOrderRequestStatus.Finished,
-    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Finished).title,
-    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Finished).description,
   },
   {
-    id: 4,
+    ...getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoiceToBePaid, CustomOrderRequestStatus.Finished),
     statusBms: CustomOrderStatus.InvoiceToBePaid,
     statusRequest: CustomOrderRequestStatus.Finished,
-    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoiceToBePaid, CustomOrderRequestStatus.Finished).title,
-    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoiceToBePaid, CustomOrderRequestStatus.Finished).description,
   },
   {
-    id: 5,
+    ...getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoicePaid, CustomOrderRequestStatus.Finished),
     statusBms: CustomOrderStatus.InvoicePaid,
     statusRequest: CustomOrderRequestStatus.Finished,
-    title: getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoicePaid, CustomOrderRequestStatus.Finished).title,
-    description: getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoicePaid, CustomOrderRequestStatus.Finished).description,
   },
 ];
 
@@ -141,20 +131,28 @@ const CustomOrderStatusSteps = {
 
 function getStep(customOrderStatus: CustomOrderStatus, customOrderRequestStatus: CustomOrderRequestStatus): number {
   const key = `${customOrderStatus}-${customOrderRequestStatus}`;
-  console.log(key);
   return CustomOrderStatusSteps[key as keyof typeof CustomOrderStatusSteps] ?? 0;
 }
 
 onMounted(async () => {
+  querying.value = true;
   if (isDefaultOrganization(props.organization)) {
-    querying.value = true;
     return;
   }
 
-  const orgStatusResponse = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
+  const customOrderBmsStatusResponse = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
+  const customOrderSellsyStatusResponse = await BmsAccessInstance.get().getCustomOrderRequestStatus(props.organization);
 
-  if (!orgStatusResponse.isError && orgStatusResponse.data && orgStatusResponse.data.type === DataType.CustomOrderStatus) {
-    customOrderBmsStatus.value = orgStatusResponse.data.status;
+  if (!customOrderBmsStatusResponse.isError && customOrderBmsStatusResponse.data &&
+    customOrderBmsStatusResponse.data.type === DataType.CustomOrderStatus) {
+    customOrderBmsStatus.value = customOrderBmsStatusResponse.data.status;
+  } else {
+    error.value = 'clientArea.dashboard.processing.error.title';
+  }
+
+  if (!customOrderSellsyStatusResponse.isError && customOrderSellsyStatusResponse.data &&
+    customOrderSellsyStatusResponse.data.type === DataType.CustomOrderRequestStatus) {
+    customOrderSellsyStatus.value = customOrderSellsyStatusResponse.data.status;
   } else {
     error.value = 'clientArea.dashboard.processing.error.title';
   }

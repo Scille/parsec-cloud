@@ -79,38 +79,37 @@ export function getCustomOrderStatusTranslationKey(
   statusSellsy: CustomOrderRequestStatus,
 ): CustomOrderStatusTranslations {
   const key = `${statusBms}-${statusSellsy}`;
-  const locale = 'clientArea.dashboard.step';
 
   switch (key) {
     case `${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Received}`:
       return {
-        title: `${locale}.requestSent.title`,
-        description: `${locale}.requestSent.description`,
+        title: 'clientArea.dashboard.step.requestSent.title',
+        description: 'clientArea.dashboard.step.requestSent.description',
       };
     case `${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Processing}`:
       return {
-        title: `${locale}.processing.title`,
-        description: `${locale}.processing.description`,
+        title: 'clientArea.dashboard.step.processing.title',
+        description: 'clientArea.dashboard.step.processing.description',
       };
     case `${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Finished}`:
       return {
-        title: `${locale}.validate.title`,
-        description: `${locale}.validate.description`,
+        title: 'clientArea.dashboard.step.validate.title',
+        description: 'clientArea.dashboard.step.validate.description',
       };
     case `${CustomOrderStatus.InvoiceToBePaid}-${CustomOrderRequestStatus.Finished}`:
       return {
-        title: `${locale}.invoiceToBePaid.title`,
-        description: `${locale}.invoiceToBePaid.description`,
+        title: 'clientArea.dashboard.step.invoiceToBePaid.title',
+        description: 'clientArea.dashboard.step.invoiceToBePaid.description',
       };
     case `${CustomOrderStatus.InvoicePaid}-${CustomOrderRequestStatus.Finished}`:
       return {
-        title: `${locale}.organizationAvailable.title`,
-        description: `${locale}.organizationAvailable.description`,
+        title: 'clientArea.dashboard.step.organizationAvailable.title',
+        description: 'clientArea.dashboard.step.organizationAvailable.description',
       };
     default:
       return {
-        title: `${locale}.error.title`,
-        description: `${locale}.error.description`,
+        title: 'clientArea.dashboard.step.error.title',
+        description: 'clientArea.dashboard.step.error.description',
       };
   }
 }
