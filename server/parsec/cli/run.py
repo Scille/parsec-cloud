@@ -10,8 +10,7 @@ import click
 
 from parsec._parsec import ActiveUsersLimit, ParsecAddr
 from parsec._version import __version__ as server_version
-from parsec.asgi import app as parsec_app
-from parsec.asgi import serve_parsec_asgi_app
+from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import backend_factory
 from parsec.cli.options import (
     _split_with_escaping,
@@ -489,7 +488,7 @@ async def _run_backend(
                 retry_policy.success()
 
                 # Serve backend through TCP
-                parsec_app.state.backend = backend
+                parsec_app = app_factory(backend)
                 await serve_parsec_asgi_app(
                     app=parsec_app,
                     host=host,

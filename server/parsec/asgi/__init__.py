@@ -25,7 +25,7 @@ templates = Jinja2Templates(
 )
 
 
-def app_factory() -> AsgiApp:
+def app_factory(backend: Backend) -> AsgiApp:
     app = FastAPI(
         title="Parsec Server",
         version=parsec_version,
@@ -35,8 +35,7 @@ def app_factory() -> AsgiApp:
         openapi_url=None,
     )
 
-    # Must be overwritten before the app is started !
-    app.state.backend = None
+    app.state.backend = backend
 
     app.mount("/static", StaticFiles(packages=[("parsec", "static")]))
 
@@ -57,9 +56,6 @@ def app_factory() -> AsgiApp:
     app.include_router(administration_router)
 
     return app
-
-
-app: AsgiApp = app_factory()
 
 
 class Server(uvicorn.Server):
