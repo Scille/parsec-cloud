@@ -19,7 +19,7 @@ from typing import (
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -763,3 +763,22 @@ async def administration_organization_sequester_service_update_config(
         status_code=200,
         content={},
     )
+
+
+class ListUserInvitationIn(BaseModel):
+    model_config = ConfigDict(strict=True)
+    email: EmailStr
+
+
+@administration_router.get("/administration/users/invitations")
+@log_request
+async def administration_list_user_invitations(
+    request: Request,
+    auth: Annotated[None, Depends(check_service_auth)],
+    body: ListUserInvitationIn,
+) -> Response:
+    backend: Backend = request.app.state.backend
+
+    invitations = await backend.user.list_user_invitations(email=body.email)
+
+    return JSONResponse(status_code=200, content=invitations)
