@@ -197,6 +197,9 @@ class BackendConfig:
 
     # Bearer token used to authenticate the administration API
     administration_token: str
+    # Bearer token used to authenticate the service API
+    # If not defined, the API is not accessible
+    service_token: str | None = None
 
     # Amount of time (in seconds) before a keep alive message is sent to an SSE
     # connection. Set to `None` to disable keep alive messages.
