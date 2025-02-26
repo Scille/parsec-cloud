@@ -6,7 +6,8 @@ from typing import cast
 
 import anyio
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.types import Receive, Scope, Send
@@ -25,7 +26,7 @@ templates = Jinja2Templates(
 )
 
 
-def app_factory(backend: Backend) -> AsgiApp:
+def app_factory(backend: Backend, with_client_web_app: bool = False) -> AsgiApp:
     app = FastAPI(
         title="Parsec Server",
         version=parsec_version,
@@ -37,16 +38,23 @@ def app_factory(backend: Backend) -> AsgiApp:
 
     app.state.backend = backend
 
-    app.mount("/static", StaticFiles(packages=[("parsec", "static")]))
+    if with_client_web_app:
 
-    @app.get("/")
-    # pyright isn't able to see that root is used by FastAPI (cf: https://github.com/microsoft/pylance-release/issues/3622)
-    def root(request: Request):  # pyright: ignore[reportUnusedFunction]
-        return templates.TemplateResponse("index.html", {"request": request})
+        def root(request: Request) -> Response:
+            return RedirectResponse(url="/client", status_code=301)
+    else:
+
+        def root(request: Request) -> Response:
+            return templates.TemplateResponse(request, "index.html")
+
+    app.get("/")(root)
+
+    app.mount("/static", StaticFiles(packages=[("parsec", "static")]))
+    app.mount("/client", StaticFiles(packages=[("parsec", "static_client_web_app")], html=True))
 
     async def page_not_found(scope: Scope, receive: Receive, send: Send) -> None:
         request = Request(scope)
-        response = templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+        response = templates.TemplateResponse(request, "404.html", status_code=404)
         await response(scope, receive, send)
 
     app.router.default = page_not_found
