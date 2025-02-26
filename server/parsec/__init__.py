@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from parsec._version import __version__
-from parsec.asgi import app
+from parsec.asgi import AsgiApp, app_factory
 from parsec.backend import Backend, backend_factory
 from parsec.config import (
     ActiveUsersLimit,
@@ -19,6 +19,7 @@ from parsec.config import (
 
 __all__ = (
     "ActiveUsersLimit",
+    "AsgiApp",
     "Backend",
     "BackendConfig",
     "MockedBlockStoreConfig",
@@ -29,6 +30,6 @@ __all__ = (
     "S3BlockStoreConfig",
     "SmtpEmailConfig",
     "__version__",
-    "app",
+    "app_factory",
     "backend_factory",
 )
