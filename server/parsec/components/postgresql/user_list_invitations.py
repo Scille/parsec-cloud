@@ -8,10 +8,11 @@ from parsec.components.user import UserInvitationInfo
 _q_list_user_invitations = Q(
     """
 SELECT
-    invitation.organization AS organization_id,
+    organization.organization_id AS organization_id,
     human.email AS created_by,
     invitation.created_on AS created_on
 FROM invitation
+INNER JOIN organization ON organization._id = invitation.organization
 INNER JOIN device ON device._id = invitation.created_by_device
 INNER JOIN user_ ON user_._id = device.user_
 INNER JOIN human ON human._id = user_.human
@@ -27,10 +28,12 @@ async def list_user_invitations(conn: AsyncpgConnection, email: str) -> list[Use
     rows = await conn.fetch(*_q_list_user_invitations(email=email))
     items = []
     for row in rows:
+        print(row)
         match row["organization_id"]:
             case str() as raw_organization_id:
                 organization_id = OrganizationID(raw_organization_id)
             case unknown:
+                print(type(unknown))
                 assert False, unknown
 
         match row["created_by"]:
@@ -52,4 +55,4 @@ async def list_user_invitations(conn: AsyncpgConnection, email: str) -> list[Use
                 created_on=created_on,
             )
         )
-    return [UserInvitationInfo(**row) for row in rows]
+    return items
