@@ -7,6 +7,17 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --defaul
 export PATH="/root/.cargo/bin:$PATH"
 cargo --version
 
+# Install Node (to build the client web app)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+\. "$HOME/.nvm/nvm.sh"
+nvm install 18.12.0
+node --version
+npm --version
+
+# Install wasm-pack (to build the client web app)
+curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+wasm-pack --version
+
 # Install Poetry
 curl -sSL https://install.python-poetry.org | python - --version=1.5.1
 export PATH="/root/.local/bin:$PATH"
@@ -31,6 +42,8 @@ pip install -r ./requirements.txt
 # ...and our project
 # Compile in release mode
 # Also don't bundle OpenSSL shared library (it is already in the Docker image !)
+# And, last but not least, note this command is going to also build the client
+# web app (including installing npm dependencies and building libparsec bindings).
 POETRY_LIBPARSEC_BUILD_PROFILE=release \
 POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false \
 pip install ./server

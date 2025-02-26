@@ -10,7 +10,7 @@ WORKDIR /server
 
 # Map source, cannot just do `ADD --link . .` otherwise modifying the current
 # file will invalidate the cache.
-# Dockerfile must be move in the root directory prior to being run
+# Dockerfile must be moved in the root directory prior to being run
 ADD --link \
     README.rst \
     rust-toolchain.toml \
@@ -18,11 +18,13 @@ ADD --link \
     Cargo.toml \
     make.py \
     server/packaging/server/in-docker-build.sh \
-    .
+    ./
 ADD --link libparsec/ libparsec/
 ADD --link server/ server/
 ADD --link bindings/ bindings/
 ADD --link cli/ cli/
+# We also include the client code given the server hosts the client web app
+ADD --link client/ client/
 
 RUN bash in-docker-build.sh
 

@@ -410,6 +410,12 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
                 "curl -sSL https://install.python-poetry.org | python - --version={version}",
             )
         ],
+        Tool.Node: [
+            ReplaceRegex(
+                r"nvm install [0-9.]+",
+                "nvm install {version}",
+            )
+        ],
     },
     ROOT_DIR / "server/packaging/server/server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},
     ROOT_DIR / "server/packaging/testbed-server/in-docker-build.sh": {
