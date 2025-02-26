@@ -145,6 +145,7 @@ async function setupApp(): Promise<void> {
       window.usesTestbed = (): boolean => true;
       window.getConfigDir = (): string => testbedDiscriminantPath;
       window.getDataBaseDir = (): string => testbedDiscriminantPath;
+      window.isDev = (): boolean => true;
     } else {
       window.usesTestbed = (): boolean => false;
     }
@@ -176,8 +177,6 @@ async function setupApp(): Promise<void> {
         Sentry.disable();
       }
     }
-
-    preventRightClick();
 
     if (isElectron()) {
       if ((await libparsec.getPlatform()) === Platform.Windows) {
@@ -282,6 +281,7 @@ async function setupApp(): Promise<void> {
 
       window.electronAPI.pageIsInitialized();
     }
+    preventRightClick();
   };
 
   // We can start the app with different cases :
