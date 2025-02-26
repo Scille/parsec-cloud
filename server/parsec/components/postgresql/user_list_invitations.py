@@ -14,7 +14,7 @@ SELECT
 FROM invitation
 INNER JOIN device ON device._id = invitation.created_by_device
 INNER JOIN user_ ON user_._id = device.user_
-INNER JOIN human ON human._id = user.human
+INNER JOIN human ON human._id = user_.human
 WHERE
     invitation.deleted_on is NULL
     AND invitation.user_invitation_claimer_email = $email
