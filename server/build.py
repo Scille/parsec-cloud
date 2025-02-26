@@ -29,9 +29,12 @@ PYTHON_EXECUTABLE_PATH = sys.executable
 display(f"PYTHON_EXECUTABLE_PATH={PYTHON_EXECUTABLE_PATH}")
 
 
-def run(cmd: str, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
-    display(f">>> {cmd}")
-    ret = subprocess.run(cmd, shell=True, check=True, **kwargs)
+def run(cmd: str, cwd: pathlib.Path|None = None, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
+    if cwd:
+        display(f">>> cd {cwd} && {cmd}")
+    else:
+        display(f">>> {cmd}")
+    ret = subprocess.run(cmd, shell=True, check=True, cwd=cwd, **kwargs)
     return ret
 
 
@@ -147,11 +150,15 @@ def client_web_app_build():
 
     # 1. Build the libparsec web bindings
 
+    run("npm clean-install", cwd=BASEDIR / "../bindings/web")
+
     run(
         f"{PYTHON_EXECUTABLE_PATH} {BASEDIR.parent}/make.py web-release-install",
     )
 
     # 2. Build the client web app (that itself bundles the libparsec web bindings)
+
+    run("npm clean-install", cwd=BASEDIR / "../client")
 
     cmd = f"npx vite build --base '/client' --outDir {client_web_app_path.absolute()} --emptyOutDir --clearScreen false"
     run(cmd, cwd=BASEDIR / "../client")

@@ -10,7 +10,7 @@ WORKDIR /testbed
 
 # Map source, cannot just do `ADD --link . .` otherwise modifying the current
 # file will invalidate the cache.
-# Dockerfile must be move in the root directory prior to being run
+# Dockerfile must be moved in the root directory prior to being run
 ADD --link \
     README.rst \
     rust-toolchain.toml \
