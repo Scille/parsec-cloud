@@ -459,8 +459,7 @@
             }
         },
         "Workspace": {
-            "lastUpdate": "Last updated:",
-            "notShared": "Not shared"
+            "lastUpdate": "Last updated:"
         },
         "listDisplayTitles": {
             "name": "Name",
