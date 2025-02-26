@@ -26,7 +26,9 @@ much as possible.
 Security considerations
 ***********************
 
-TODO: general recommendations about how to create and store the generated keys.
+The sequester service uses aes256 keys, which are the most sensitive elements because they can be used to decrypt any exported data.
+
+These keys must therefore be backed up and stored on a physically protected external medium (safe) and Decryption operations must be carried out on an off-line workstation.
 
 Requirements
 ************
