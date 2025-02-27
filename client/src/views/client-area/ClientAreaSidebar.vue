@@ -242,6 +242,19 @@
           />
           {{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}
         </ion-item>
+        <ion-item
+          button
+          lines="none"
+          class="button-medium menu-client-list-item"
+          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderInvoices }"
+          @click="goToPageClicked(ClientAreaPages.CustomOrderInvoices)"
+        >
+          <ion-icon
+            class="menu-client-list-item__icon"
+            :icon="idCard"
+          />
+          {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
+        </ion-item>
       </ion-list>
     </div>
 

@@ -16,6 +16,7 @@ import {
   DataType,
   InvoiceStatus,
   OrganizationQueryData,
+  SellsyInvoice,
 } from '@/services/bms/types';
 import { DateTime } from 'luxon';
 
@@ -85,14 +86,14 @@ function getMockParameters(functionName: string): MockParameters {
 }
 
 function createCustomOrderInvoices(count: number = 1): CustomOrderDetailsResultData | CustomOrderInvoicesResultData {
-  const invoices: Array<CustomOrderDetailsResultData> = [];
+  const invoices: Array<SellsyInvoice> = [];
 
   for (let i = 1; i < count + 1; i++) {
-    invoices.push({
+    const customOrderInvoice: CustomOrderDetailsResultData = {
       type: DataType.CustomOrderDetails,
       id: i,
       link: `https://unknown/link${i}.pdf`,
-      number: `${i}`,
+      number: `Invoice_${i}`,
       amountWithTaxes: 62.0 + (i % 2) * 16,
       amountWithoutTaxes: 16.0 + (i % 2) * 4,
       amountDue: 62.0 + (i % 2) * 16,
@@ -120,11 +121,13 @@ function createCustomOrderInvoices(count: number = 1): CustomOrderDetailsResultD
         quantityOrdered: 1 + (i % 2),
         amountWithTaxes: 22.0 + (i % 2) * 5,
       },
-    });
+      organizationId: 'CustomOrderOrg',
+    };
+    invoices.push(new SellsyInvoice(customOrderInvoice));
   }
 
   if (count === 1) {
-    return invoices[0];
+    return invoices[0].invoice;
   }
   return {
     type: DataType.CustomOrderInvoices,
@@ -192,7 +195,7 @@ export const MockedBmsApi = {
     };
   }),
   getOrganizationStatus: createMockFunction('getOrganizationStatus'),
-  getInvoices: createMockFunction('getInvoices'),
+  getMonthlySubscriptionInvoices: createMockFunction('getMonthlySubscriptionInvoices'),
   refreshToken: createMockFunction('refreshToken'),
   getBillingDetails: createMockFunction('getBillingDetails'),
   addPaymentMethod: createMockFunction('addPaymentMethod'),

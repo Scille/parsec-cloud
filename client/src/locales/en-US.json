@@ -1585,6 +1585,10 @@
                     "title": "Amount",
                     "amount": " €{count}"
                 },
+                "contractPeriod": {
+                    "title": "Contract period",
+                    "fromTo": "from {fromDate} to {toDate}"
+                },
                 "status": "Status",
                 "download": "Download"
             },

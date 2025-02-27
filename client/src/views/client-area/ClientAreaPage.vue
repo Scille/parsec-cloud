@@ -113,6 +113,10 @@
                 v-if="currentPage === ClientAreaPages.CustomOrderBillingDetails"
                 :organization="currentOrganization"
               />
+              <custom-order-invoices-page
+                v-if="currentPage === ClientAreaPages.CustomOrderInvoices"
+                :organization="currentOrganization"
+              />
               <custom-order-processing-page v-if="currentPage === ClientAreaPages.CustomOrderProcessing" />
             </div>
           </div>
@@ -145,6 +149,7 @@ import { ClientAreaQuery, getCurrentRouteQuery, navigateTo, Routes } from '@/rou
 import { InformationManager } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import CustomOrderProcessingPage from '@/views/client-area/dashboard/CustomOrderProcessingPage.vue';
+import CustomOrderInvoicesPage from '@/views/client-area/invoices/CustomOrderInvoicesPage.vue';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
@@ -274,6 +279,7 @@ function getTitleByPage(): Translatable {
     case ClientAreaPages.Dashboard:
       return 'clientArea.header.titles.dashboard';
     case ClientAreaPages.Invoices:
+    case ClientAreaPages.CustomOrderInvoices:
       return 'clientArea.header.titles.invoices';
     case ClientAreaPages.PaymentMethods:
       return 'clientArea.header.titles.paymentMethods';
