@@ -195,6 +195,10 @@ export class UserCollection {
     });
   }
 
+  hasInactive(): boolean {
+    return this.users.some((u) => u.isRevoked() || u.isFrozen());
+  }
+
   getCurrentUser(): UserModel | undefined {
     const users = this.users.filter((u) => u.isCurrent);
     return users.length ? users[0] : undefined;
