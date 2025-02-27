@@ -184,18 +184,20 @@ interface RefreshTokenResultData {
   token: AuthenticationToken;
 }
 
+interface CustomOrderRequest {
+  id: string;
+  organizationId?: string;
+  describedNeeds: string;
+  users: number;
+  storage: number;
+  status: CustomOrderRequestStatus;
+  comment: string;
+  orderDate: DateTime;
+}
+
 interface GetCustomOrderRequestsResultData {
   type: DataType.GetCustomOrderRequests;
-  requests: Array<{
-    id: string;
-    organizationId?: string;
-    describedNeeds: string;
-    users: number;
-    storage: number;
-    status: CustomOrderRequestStatus;
-    comment: string;
-    orderDate: DateTime;
-  }>;
+  requests: Array<CustomOrderRequest>;
 }
 
 interface BmsAddress {
@@ -383,6 +385,7 @@ export {
   CustomOrderDetailsResultData,
   CustomOrderInvoicesResultData,
   CustomOrderQueryData,
+  CustomOrderRequest,
   CustomOrderRequestStatus,
   CustomOrderStatus,
   CustomOrderStatusResultData,

@@ -29,24 +29,24 @@
         v-for="(step, index) in steps"
         :key="index"
         :class="{
-          'process-step-todo': getStep(customOrderBmsStatus, customOrderSellsyStatus) < getStep(step.statusBms, step.statusRequest),
-          'process-step-active': getStep(customOrderBmsStatus, customOrderSellsyStatus) === getStep(step.statusBms, step.statusRequest),
-          'process-step-done': getStep(customOrderBmsStatus, customOrderSellsyStatus) > getStep(step.statusBms, step.statusRequest),
+          'process-step-todo': customOrderIndex < index,
+          'process-step-active': customOrderIndex === index,
+          'process-step-done': customOrderIndex > index,
         }"
       >
         <div class="process-step-icon">
           <div
             class="dot-todo"
-            v-if="getStep(customOrderBmsStatus, customOrderSellsyStatus) < getStep(step.statusBms, step.statusRequest)"
+            v-if="customOrderIndex < index"
           />
           <div
             class="dot-active"
-            v-if="getStep(customOrderBmsStatus, customOrderSellsyStatus) === getStep(step.statusBms, step.statusRequest)"
+            v-if="customOrderIndex === index"
           />
           <ion-icon
             class="process-step-icon__item"
             :icon="checkmarkCircle"
-            v-if="getStep(customOrderBmsStatus, customOrderSellsyStatus) > getStep(step.statusBms, step.statusRequest)"
+            v-if="customOrderIndex > index"
           />
         </div>
         <div class="process-step-text">
@@ -55,7 +55,7 @@
           </ion-text>
           <ion-text
             class="process-step-text__info body"
-            v-if="getStep(customOrderBmsStatus, customOrderSellsyStatus) === getStep(step.statusBms, step.statusRequest)"
+            v-if="customOrderIndex === index"
           >
             {{ $msTranslate(step.description) }}
           </ion-text>
@@ -76,7 +76,14 @@
 <script setup lang="ts">
 import { IonIcon, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { BmsAccessInstance, DataType, BmsOrganization, CustomOrderStatus, CustomOrderRequestStatus } from '@/services/bms';
+import {
+  BmsAccessInstance,
+  DataType,
+  BmsOrganization,
+  CustomOrderStatus,
+  CustomOrderRequestStatus,
+  CustomOrderRequest,
+} from '@/services/bms';
 import { isDefaultOrganization } from '@/views/client-area/types';
 import { ref, onMounted } from 'vue';
 import { MsSpinner, MsReportText, MsReportTheme } from 'megashark-lib';
@@ -84,12 +91,14 @@ import { getCustomOrderStatusTranslationKey } from '@/services/translation';
 
 const customOrderBmsStatus = ref<CustomOrderStatus>(CustomOrderStatus.Unknown);
 const customOrderSellsyStatus = ref<CustomOrderRequestStatus>(CustomOrderRequestStatus.Received);
+const customOrderIndex = ref<number>(0);
 
 const querying = ref(true);
 const error = ref('');
 
 const props = defineProps<{
   organization: BmsOrganization;
+  request: CustomOrderRequest;
 }>();
 
 const steps = [
@@ -120,20 +129,6 @@ const steps = [
   },
 ];
 
-const CustomOrderStatusSteps = {
-  [`${CustomOrderStatus.NothingLinked}-${CustomOrderStatus.Unknown}`]: 0,
-  [`${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Received}`]: 1,
-  [`${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Processing}`]: 2,
-  [`${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Finished}`]: 3,
-  [`${CustomOrderStatus.InvoiceToBePaid}-${CustomOrderRequestStatus.Finished}`]: 4,
-  [`${CustomOrderStatus.InvoicePaid}-${CustomOrderRequestStatus.Finished}`]: 5,
-};
-
-function getStep(customOrderStatus: CustomOrderStatus, customOrderRequestStatus: CustomOrderRequestStatus): number {
-  const key = `${customOrderStatus}-${customOrderRequestStatus}`;
-  return CustomOrderStatusSteps[key as keyof typeof CustomOrderStatusSteps] ?? 0;
-}
-
 onMounted(async () => {
   querying.value = true;
   if (isDefaultOrganization(props.organization)) {
@@ -141,21 +136,17 @@ onMounted(async () => {
   }
 
   const customOrderBmsStatusResponse = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
-  const customOrderSellsyStatusResponse = await BmsAccessInstance.get().getCustomOrderRequests();
 
   if (!customOrderBmsStatusResponse.isError && customOrderBmsStatusResponse.data &&
     customOrderBmsStatusResponse.data.type === DataType.CustomOrderStatus) {
     customOrderBmsStatus.value = customOrderBmsStatusResponse.data.status;
   } else {
-    error.value = 'clientArea.dashboard.error';
+    error.value = 'clientArea.dashboard.processing.error.title';
   }
 
-  if (!customOrderSellsyStatusResponse.isError && customOrderSellsyStatusResponse.data &&
-    customOrderSellsyStatusResponse.data.type === DataType.GetCustomOrderRequests) {
-    customOrderSellsyStatus.value = customOrderSellsyStatusResponse.data.requests[0].status;
-  } else {
-    error.value = 'clientArea.dashboard.error';
-  }
+  customOrderIndex.value = steps.findIndex((step) =>
+    step.statusBms === customOrderBmsStatus.value && step.statusRequest === customOrderSellsyStatus.value,
+  );
 
   querying.value = false;
 });
