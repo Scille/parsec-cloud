@@ -14,8 +14,8 @@ Shared recovery
   via Parsec CLI. For a user friendly way to recover access to your organization
   see :ref:`Recovery files<doc_userguide_recovery_files>`.
 
-The shared recovery allows a user to recover access to its organization by
-distributing the information required to recover its account (the "secret")
+The shared recovery allows a user to recover access to their organization by
+distributing the information required to recover their account (the "secret")
 among a group of users of the organization. The information is divided into parts
 (the "shares") from which the secret can be reassembled only when quorum is
 achieved, i.e. a sufficient number of shares (the "threshold") are combined,
@@ -70,7 +70,7 @@ Recover access with shared recovery
 -----------------------------------
 
 The shared recovery process must be initiated by one of the recipients, so the
-user needs to contact them and ask them for an invitation to recover its account.
+user needs to contact them and ask them for an invitation to recover their account.
 
 A recipient can create an invitation by using the user's email:
 
@@ -126,7 +126,7 @@ So Bob's shared recovery is all setup.
 Oh no! Bob has lost access to their device. It must contact an Alice or Arnold in
 order to be invited again through a shared recovery process.
 
-Alice creates the invitation and share the URL with Bob.
+Alice creates the invitation and shares the URL with Bob.
 
   .. code-block:: bash
 
