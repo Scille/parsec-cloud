@@ -55,11 +55,11 @@ pub enum ConnectionError {
     #[error("Failed to retrieving the response: {}", .0.as_ref().map(reqwest::Error::to_string).unwrap_or_else(|| "Server unavailable".into()))]
     NoResponse(Option<reqwest::Error>),
 
-    /// The user has beed revoked
+    /// The user has been revoked
     #[error("User has been revoked")]
     RevokedUser,
 
-    /// The user has beed frozen (i.e. similar to revoked, but can be unfrozen)
+    /// The user has been frozen (i.e. similar to revoked, but can be unfrozen)
     #[error("User has been frozen")]
     FrozenUser,
 
