@@ -158,7 +158,7 @@ jobs:
             # Get the leaf values of the artifacts.yml file.
             # This correspond to filename that need to be uploaded.
             # But we need to add the prefix `release-files`
-            yq . artifacts.yml -o json | jq -r '"release-files/" + (.. | scalars)'
+            yq . artifacts.yml -o json | jq -r '"release-files/" + (.. | scalars)' | grep -v 'Parsec_.*_win_.*.unsigned.exe'
             echo 'EOF_files_to_upload'
           ) | tee -a $GITHUB_OUTPUT
 
