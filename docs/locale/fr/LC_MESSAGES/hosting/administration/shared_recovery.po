@@ -1,0 +1,276 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.3.0-rc.12+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-02-27 01:28-0300\n"
+"PO-Revision-Date: 2025-02-27 01:29-0300\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.5\n"
+
+#: ../../hosting/administration/shared_recovery.rst:9
+msgid "Shared recovery"
+msgstr "Récupération partagée"
+
+#: ../../hosting/administration/shared_recovery.rst:13
+msgid ""
+"This section describes an advanced function that is currently only available "
+"via Parsec CLI. For a user friendly way to recover access to your "
+"organization see :ref:`Recovery files<doc_userguide_recovery_files>`."
+msgstr ""
+"Cette section décrit une fonction avancée qui n'est actuellement disponible "
+"que via le CLI de Parsec. Pour une méthode conviviale de récupération de "
+"l'accès à votre organisation, voir :ref:`Fichiers de "
+"récupération<doc_guide_utilisateur_fichiers_de_récupération>`."
+
+#: ../../hosting/administration/shared_recovery.rst:17
+msgid ""
+"The shared recovery allows a user to recover access to its organization by "
+"distributing the information required to recover its account (the "
+"\"secret\") among a group of users of the organization. The information is "
+"divided into parts (the \"shares\") from which the secret can be reassembled "
+"only when quorum is achieved, i.e. a sufficient number of shares (the "
+"\"threshold\") are combined, therefore enabling the recovery of the user "
+"account."
+msgstr ""
+"La récupération partagée permet à un utilisateur de récupérer l'accès à son "
+"organisation en distribuant les informations nécessaires à la récupération "
+"de son compte (le « secret ») parmi un groupe d'utilisateurs de "
+"l'organisation. Les informations sont divisées en parties (les « parts ») à "
+"partir desquelles le secret ne peut être reconstitué que lorsque le quorum "
+"est atteint, c'est-à-dire lorsqu'un nombre suffisant de parts (le « seuil ») "
+"sont combinées, ce qui permet de récupérer le compte de l'utilisateur."
+
+#: ../../hosting/administration/shared_recovery.rst:24
+msgid ""
+"This is based on *Shamir's secret sharing algorithm*. The idea is that even "
+"if an attacker steals some shares, it is impossible for the attacker to "
+"reconstruct the secret unless they have stolen the quorum number of shares."
+msgstr ""
+"Il est basé sur *l'algorithme de partage de clé secrète de Shamir*. L'idée "
+"est que même si un attaquant vole quelques parts, il lui est impossible de "
+"reconstituer le secret s'il n'a pas volé le nombre de parts correspondant au "
+"quorum."
+
+#: ../../hosting/administration/shared_recovery.rst:30
+msgid "Overview"
+msgstr "Vue d'ensemble"
+
+#: ../../hosting/administration/shared_recovery.rst:32
+msgid "The shared recovery process involves the following steps:"
+msgstr "Le processus de récupération partagée comprend les étapes suivantes :"
+
+#: ../../hosting/administration/shared_recovery.rst:34
+msgid "the user creates a shared recovery setup by choosing"
+msgstr ""
+"l'utilisateur crée une configuration de récupération partagée en choisissant"
+
+#: ../../hosting/administration/shared_recovery.rst:36
+msgid "the list of users to send shares (*recipients*)"
+msgstr "la liste des utilisateurs à qui envoyer des actions (*recipients*)"
+
+#: ../../hosting/administration/shared_recovery.rst:37
+msgid "the number of shares for each recipient (*weight*)"
+msgstr "le nombre d'actions pour chaque bénéficiaire (*weight*)"
+
+#: ../../hosting/administration/shared_recovery.rst:38
+msgid "the number of shares required to recover the account (*threshold*)"
+msgstr "le nombre d'actions nécessaires pour récupérer le compte (*threshold*)"
+
+#: ../../hosting/administration/shared_recovery.rst:40
+msgid ""
+"any of the recipient sends an invitation to the user to recover their account"
+msgstr ""
+"l'un des destinataires envoie une invitation à l'utilisateur pour qu'il "
+"récupère son compte"
+
+#: ../../hosting/administration/shared_recovery.rst:41
+msgid ""
+"the user contacts the recipients one by one until the threshold is reached"
+msgstr ""
+"l'utilisateur contacte les destinataires un par un jusqu'à ce que le seuil "
+"soit atteint"
+
+#: ../../hosting/administration/shared_recovery.rst:43
+msgid ""
+"The ``<DEVICE_ID>`` mentioned in the commands below always refer to the "
+"device of the user running the command (user or administrator). You can find "
+"out which is your device ID by running:"
+msgstr ""
+"Le ``<DEVICE_ID>`` mentionné dans les commandes ci-dessous fait toujours "
+"référence à l'appareil de l'utilisateur qui exécute la commande (utilisateur "
+"ou administrateur). Vous pouvez connaître l'ID de votre appareil en lançant "
+"la commande :"
+
+#: ../../hosting/administration/shared_recovery.rst:52
+msgid "Shared recovery creation"
+msgstr "Création d'une récupération partagée"
+
+#: ../../hosting/administration/shared_recovery.rst:54
+msgid "To setup shared recovery for a device, run the following command:"
+msgstr ""
+"Pour configurer la récupération partagée pour un périphérique, exécutez la "
+"commande suivante :"
+
+#: ../../hosting/administration/shared_recovery.rst:60
+msgid "Run the help of this command to know all the options."
+msgstr "Lancez l'aide de cette commande pour connaître toutes les options."
+
+#: ../../hosting/administration/shared_recovery.rst:62
+msgid ""
+"When no recipient is specified, all the Administrations of the organization "
+"will be recipients with a single share. Note that users with External "
+"profile are not able to choose their recipients as they do not have access "
+"to the organization user list."
+msgstr ""
+"Si aucun destinataire n'est spécifié, tous les administrateurs de "
+"l'organisation seront destinataires d'un seul partage. Notez que les "
+"utilisateurs ayant un profil externe ne peuvent pas choisir leurs "
+"destinataires car ils n'ont pas accès à la liste des utilisateurs de "
+"l'organisation."
+
+#: ../../hosting/administration/shared_recovery.rst:67
+msgid "If the threshold is not specified, it will be asked interactively."
+msgstr ""
+"Si le seuil n'est pas spécifié, il sera demandé de manière interactive."
+
+#: ../../hosting/administration/shared_recovery.rst:70
+msgid "Recover access with shared recovery"
+msgstr "Récupérer l'accès avec la récupération partagée"
+
+#: ../../hosting/administration/shared_recovery.rst:72
+msgid ""
+"The shared recovery process must be initiated by one of the recipients, so "
+"the user needs to contact them and ask them for an invitation to recover its "
+"account."
+msgstr ""
+"Le processus de récupération partagée doit être initié par l'un des "
+"destinataires. L'utilisateur doit donc le contacter et lui demander une "
+"invitation à récupérer son compte."
+
+#: ../../hosting/administration/shared_recovery.rst:75
+msgid "A recipient can create an invitation by using the user's email:"
+msgstr ""
+"Un destinataire peut créer une invitation en utilisant l'adresse "
+"électronique de l'utilisateur :"
+
+#: ../../hosting/administration/shared_recovery.rst:81
+msgid ""
+"The user will receive an email with the invitation url, and will be able to "
+"claim the invitation with the following command:"
+msgstr ""
+"L'utilisateur recevra un courriel contenant l'adresse URL de l'invitation et "
+"pourra réclamer l'invitation à l'aide de la commande suivante :"
+
+#: ../../hosting/administration/shared_recovery.rst:88
+msgid ""
+"The user will have to select recipients one by one, performing the SAS code "
+"exchange, until until enough shares have been gathered. At which point the "
+"new device is registered and access is fully recovered."
+msgstr ""
+"L'utilisateur devra sélectionner les destinataires un par un, en procédant à "
+"l'échange de codes SAS, jusqu'à ce qu'un nombre suffisant d'actions ait été "
+"recueilli. Le nouveau dispositif est alors enregistré et l'accès est "
+"entièrement rétabli."
+
+#: ../../hosting/administration/shared_recovery.rst:93
+msgid "An example scenario"
+msgstr "Un scénario d'exemple"
+
+#: ../../hosting/administration/shared_recovery.rst:95
+msgid ""
+"The following is a simple scenario to show you the shared recovery process. "
+"All commands are executed in the same machine for simplicity."
+msgstr ""
+"Voici un scénario simple pour vous montrer le processus de récupération "
+"partagée. Pour des raisons de simplicité, toutes les commandes sont "
+"exécutées sur la même machine."
+
+#: ../../hosting/administration/shared_recovery.rst:98
+msgid "Given an organization with the following users:"
+msgstr "Étant donné une organisation avec les utilisateurs suivants :"
+
+#: ../../hosting/administration/shared_recovery.rst:107
+msgid ""
+"Bob is a Member of the organization. Alice and Arnold are Administrators."
+msgstr ""
+"Bob est membre de l'organisation. Alice et Arnold sont administrateurs."
+
+#: ../../hosting/administration/shared_recovery.rst:109
+msgid "First Bob needs to create their shared recovery setup."
+msgstr "Bob doit d'abord créer sa configuration de récupération partagée."
+
+#: ../../hosting/administration/shared_recovery.rst:122
+msgid ""
+"All the Administrators (Alice and Arnold) are recipients, as no recipients "
+"was provided. Bob chooses interactively the threshold. So Bob's shared "
+"recovery is all setup."
+msgstr ""
+"Tous les administrateurs (Alice et Arnold) sont des destinataires, car aucun "
+"destinataire n'a été fourni. Bob choisit interactivement le seuil. La "
+"récupération partagée de Bob est donc entièrement configurée."
+
+#: ../../hosting/administration/shared_recovery.rst:126
+msgid ""
+"Oh no! Bob has lost access to their device. It must contact an Alice or "
+"Arnold in order to be invited again through a shared recovery process."
+msgstr ""
+"Oh non ! Bob a perdu l'accès à son appareil. Il doit contacter une Alice ou "
+"un Arnold afin d'être invité à nouveau par le biais d'un processus de "
+"récupération partagé."
+
+#: ../../hosting/administration/shared_recovery.rst:129
+msgid "Alice creates the invitation and share the URL with Bob."
+msgstr "Alice crée l'invitation et partage l'URL avec Bob."
+
+#: ../../hosting/administration/shared_recovery.rst:138
+msgid "Bob can now start the invitation process."
+msgstr "Bob peut maintenant lancer le processus d'invitation."
+
+#: ../../hosting/administration/shared_recovery.rst:150
+msgid "Bob must choose a person to contact first. Let's choose Alice first."
+msgstr ""
+"Bob doit choisir une personne à contacter en premier. Choisissons d'abord "
+"Alice."
+
+#: ../../hosting/administration/shared_recovery.rst:153
+msgid ""
+"In the meantime, Alice must be ready to greet Bob. First, retrieve the "
+"invitation token."
+msgstr ""
+"Entre-temps, Alice doit être prête à accueillir Bob. Tout d'abord, elle "
+"récupère le jeton d'invitation."
+
+#: ../../hosting/administration/shared_recovery.rst:164
+msgid "Then it can be use to greet Bob. And proceed to a SAS code exchange."
+msgstr ""
+"Il peut ensuite être utilisé pour accueillir Bob. Et procéder à un échange "
+"de codes SAS."
+
+#: ../../hosting/administration/shared_recovery.rst:178
+msgid ""
+"Now Bob has one share of the two they need. So they can repeat the process "
+"with Arnold."
+msgstr ""
+"Maintenant, Bob a une part des deux dont ils ont besoin. Ils peuvent donc "
+"répéter le processus avec Arnold."
+
+#: ../../hosting/administration/shared_recovery.rst:199
+msgid ""
+"Once the SAS codes are exchanged, Bob can setup their new device with a "
+"label and password. And so the shared recovery process is fully completed."
+msgstr ""
+"Une fois les codes SAS échangés, Bob peut configurer son nouvel appareil à "
+"l'aide d'une étiquette et d'un mot de passe. Le processus de récupération "
+"partagée est ainsi entièrement achevé."

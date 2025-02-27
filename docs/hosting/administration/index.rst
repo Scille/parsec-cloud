@@ -12,3 +12,4 @@ Server Administration
     stats_server
     stats_organization
     freeze_users
+    shared_recovery
