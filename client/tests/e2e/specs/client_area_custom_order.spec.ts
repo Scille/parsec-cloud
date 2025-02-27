@@ -11,6 +11,7 @@ msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
     { button: 'Statistics', title: 'Statistics', url: 'custom-order-statistics' },
     { button: 'Orders', title: 'Orders', url: 'orders' },
     { button: 'Billing details', title: 'Billing details', url: 'custom-order-billing-details' },
+    { button: 'Invoices', title: 'Invoices', url: 'custom-order-invoices' },
   ];
 
   await expect(clientAreaCustomOrder.locator('.sidebar-header').locator('.card-header-title')).toBeVisible();

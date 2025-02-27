@@ -15,6 +15,7 @@ export enum ClientAreaPages {
   Orders = 'orders',
   CustomOrderStatistics = 'custom-order-statistics',
   CustomOrderProcessing = 'custom-order-processing',
+  CustomOrderInvoices = 'custom-order-invoices',
 }
 
 export const DefaultBmsOrganization: BmsOrganization = {
