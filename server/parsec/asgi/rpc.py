@@ -27,25 +27,34 @@ from pydantic_core import core_schema
 from starlette.requests import ClientDisconnect
 
 from parsec._parsec import (
+    AccountToken,
     ApiVersion,
     DateTime,
     InvitationToken,
     OrganizationID,
+    anonymous_account_cmds,
     anonymous_cmds,
+    authenticated_account_cmds,
     authenticated_cmds,
     invited_cmds,
     tos_cmds,
 )
 from parsec.backend import Backend
 from parsec.client_context import (
+    AnonymousAccountClientContext,
     AnonymousClientContext,
+    AuthenticatedAccountClientContext,
     AuthenticatedClientContext,
     InvitedClientContext,
 )
 from parsec.components.auth import (
+    AnonymousAccountAuthInfo,
     AnonymousAuthInfo,
+    AuthAnonymousAccountAuthBadOutcome,
     AuthAnonymousAuthBadOutcome,
+    AuthAuthenticatedAccountAuthBadOutcome,
     AuthAuthenticatedAuthBadOutcome,
+    AuthenticatedAccountAuthInfo,
     AuthenticatedAuthInfo,
     AuthenticatedToken,
     AuthInvitedAuthBadOutcome,
@@ -119,6 +128,16 @@ INVITED_CMDS_LOAD_FN = {
 ANONYMOUS_CMDS_LOAD_FN = {
     int(v_version[1:]): getattr(anonymous_cmds, v_version).AnyCmdReq.load
     for v_version in dir(anonymous_cmds)
+    if v_version.startswith("v")
+}
+ANONYMOUS_ACCOUNT_CMDS_LOAD_FN = {
+    int(v_version[1:]): getattr(anonymous_account_cmds, v_version).AnyCmdReq.load
+    for v_version in dir(anonymous_account_cmds)
+    if v_version.startswith("v")
+}
+AUTHENTICATED_ACCOUNT_CMDS_LOAD_FN = {
+    int(v_version[1:]): getattr(authenticated_account_cmds, v_version).AnyCmdReq.load
+    for v_version in dir(authenticated_account_cmds)
     if v_version.startswith("v")
 }
 TOS_CMDS_LOAD_FN = {
@@ -296,13 +315,14 @@ def _handshake_abort_bad_content(api_version: ApiVersion) -> NoReturn:
 
 @dataclass
 class ParsedAuthHeaders:
-    organization_id: OrganizationID
+    organization_id: OrganizationID | None  # None only if account family
     settled_api_version: ApiVersion
     client_api_version: ApiVersion
     user_agent: str
     authenticated_token: AuthenticatedToken | None
     invited_token: InvitationToken | None
     last_event_id: UUID | None
+    account_token: AccountToken | None
 
 
 def _parse_auth_headers_or_abort(
@@ -311,9 +331,12 @@ def _parse_auth_headers_or_abort(
     # (see https://github.com/tiangolo/fastapi/pull/10109)
     # Organization ID is not strictly part of the headers, but it's convenient
     # to handle it there !
-    raw_organization_id: str,
+    raw_organization_id: str | None,
+    # account family does not have org id
+    is_account_family: bool,
     with_authenticated_headers: bool,
     with_invited_headers: bool,
+    with_account_headers: bool,
     with_sse_headers: bool,
     expected_content_type: str | None,
     expected_accept_type: str | None,
@@ -338,13 +361,17 @@ def _parse_auth_headers_or_abort(
     # From now on the version is settled, our reply must have the `Api-Version` header
 
     # 2) Check organization ID
-    try:
-        organization_id = OrganizationID(raw_organization_id)
-    except ValueError:
-        _handshake_abort(
-            CustomHttpStatus.OrganizationNotFound,
-            api_version=settled_api_version,
-        )
+    if not is_account_family:
+        assert raw_organization_id
+        try:
+            organization_id = OrganizationID(raw_organization_id)
+        except ValueError:
+            _handshake_abort(
+                CustomHttpStatus.OrganizationNotFound,
+                api_version=settled_api_version,
+            )
+    else:
+        organization_id = None
 
     # 3) Check User-Agent, Content-Type & Accept
     user_agent = headers.get("User-Agent", "unknown")
@@ -398,6 +425,28 @@ def _parse_auth_headers_or_abort(
                 CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
             )
 
+    # 6) Check account token
+
+    if not with_account_headers:
+        account_token = None
+    else:
+        try:
+            raw_authorization = headers["Authorization"]
+        except KeyError:
+            _handshake_abort(
+                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
+            )
+
+        try:
+            expected_bearer, raw_account_token = raw_authorization.split()
+            account_token = AccountToken.from_hex(raw_account_token)
+            if expected_bearer.lower() != "bearer":
+                raise ValueError
+        except ValueError:
+            _handshake_abort(
+                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
+            )
+
     if not with_sse_headers:
         last_event_id = None
     else:
@@ -416,12 +465,17 @@ def _parse_auth_headers_or_abort(
         last_event_id=last_event_id,
         authenticated_token=authenticated_token,
         invited_token=invited_token,
+        account_token=account_token,
     )
 
 
 async def run_request(
     backend: Backend,
-    client_ctx: AuthenticatedClientContext | InvitedClientContext | AnonymousClientContext,
+    client_ctx: AuthenticatedClientContext
+    | InvitedClientContext
+    | AnonymousClientContext
+    | AnonymousAccountClientContext
+    | AuthenticatedAccountClientContext,
     request: object,
 ) -> object:
     cmd_func = backend.apis[type(request)]
@@ -467,14 +521,17 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
         raw_organization_id=raw_organization_id,
         with_authenticated_headers=False,
         with_invited_headers=False,
+        with_account_headers=False,
         with_sse_headers=False,
         expected_accept_type=None,
         expected_content_type=CONTENT_TYPE_MSGPACK,
+        is_account_family=False,
     )
 
     spontaneous_bootstrap = (
         request.method == "POST" and backend.config.organization_spontaneous_bootstrap
     )
+    assert parsed.organization_id is not None
 
     outcome = await backend.auth.anonymous_auth(
         DateTime.now(), parsed.organization_id, spontaneous_bootstrap
@@ -523,6 +580,107 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
     return _rpc_rep(rep, parsed.settled_api_version)
 
 
+@rpc_router.post("/anonymous_account")
+async def anonymous_account_api(request: Request) -> Response:
+    backend: Backend = request.app.state.backend
+
+    parsed = _parse_auth_headers_or_abort(
+        headers=request.headers,
+        raw_organization_id=None,
+        with_authenticated_headers=False,
+        with_invited_headers=False,
+        with_sse_headers=False,
+        with_account_headers=False,
+        expected_accept_type=None,
+        expected_content_type=CONTENT_TYPE_MSGPACK,
+        is_account_family=True,
+    )
+
+    outcome = await backend.auth.anonymous_account_auth(DateTime.now())
+    match outcome:
+        case AnonymousAccountAuthInfo():  # TODO as auth_info:
+            pass
+        case AuthAnonymousAccountAuthBadOutcome():
+            _handshake_abort(
+                CustomHttpStatus.OrganizationNotFound,  # TODO
+                api_version=parsed.settled_api_version,
+            )
+
+    # Handshake is done
+
+    client_ctx = AnonymousAccountClientContext(
+        client_api_version=parsed.client_api_version,
+        settled_api_version=parsed.settled_api_version,
+    )
+
+    # Reply to GET
+    if request.method == "GET":
+        return Response(
+            status_code=200,
+            headers={
+                "Api-Version": str(parsed.settled_api_version),
+                "Content-Type": CONTENT_TYPE_MSGPACK,
+            },
+        )
+
+    body: bytes = await _rpc_get_body_with_limit_check(request)
+
+    try:
+        req = ANONYMOUS_ACCOUNT_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
+    except ValueError:
+        _handshake_abort_bad_content(api_version=parsed.settled_api_version)
+
+    rep = await run_request(backend, client_ctx, req)
+
+    return _rpc_rep(rep, parsed.settled_api_version)
+
+
+@rpc_router.post("/authenticated_account")
+async def authenticated_account_api(request: Request) -> Response:
+    backend: Backend = request.app.state.backend
+    parsed = _parse_auth_headers_or_abort(
+        headers=request.headers,
+        raw_organization_id=None,
+        with_authenticated_headers=False,
+        with_invited_headers=False,
+        with_account_headers=True,
+        with_sse_headers=False,
+        expected_accept_type=None,
+        expected_content_type=CONTENT_TYPE_MSGPACK,
+        is_account_family=True,
+    )
+    assert parsed.account_token is not None
+
+    outcome = await backend.auth.authenticated_account_auth(DateTime.now(), parsed.account_token)
+    match outcome:
+        case AuthenticatedAccountAuthInfo() as auth_info:
+            pass
+        case AuthAuthenticatedAccountAuthBadOutcome():
+            _handshake_abort(
+                CustomHttpStatus.OrganizationNotFound,  # TODO
+                api_version=parsed.settled_api_version,
+            )
+
+    # Handshake is done
+
+    client_ctx = AuthenticatedAccountClientContext(
+        client_api_version=parsed.client_api_version,
+        settled_api_version=parsed.settled_api_version,
+        token=auth_info.token,
+    )
+
+    body: bytes = await _rpc_get_body_with_limit_check(request)
+
+    try:
+        req = AUTHENTICATED_ACCOUNT_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
+    except ValueError:
+        _handshake_abort_bad_content(api_version=parsed.settled_api_version)
+
+    rep = await run_request(backend, client_ctx, req)
+
+    return _rpc_rep(rep, parsed.settled_api_version)
+
+
 @rpc_router.post("/invited/{raw_organization_id}")
 async def invited_api(raw_organization_id: str, request: Request) -> Response:
     backend: Backend = request.app.state.backend
@@ -531,11 +689,14 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
         raw_organization_id=raw_organization_id,
         with_authenticated_headers=False,
         with_invited_headers=True,
+        with_account_headers=False,
         with_sse_headers=False,
         expected_accept_type=None,
         expected_content_type=CONTENT_TYPE_MSGPACK,
+        is_account_family=False,
     )
     assert parsed.invited_token is not None
+    assert parsed.organization_id is not None
 
     outcome = await backend.auth.invited_auth(
         DateTime.now(), parsed.organization_id, parsed.invited_token
@@ -596,11 +757,14 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
         raw_organization_id=raw_organization_id,
         with_authenticated_headers=True,
         with_invited_headers=False,
+        with_account_headers=False,
         with_sse_headers=False,
         expected_accept_type=None,
         expected_content_type=CONTENT_TYPE_MSGPACK,
+        is_account_family=False,
     )
     assert parsed.authenticated_token is not None
+    assert parsed.organization_id is not None
 
     body: bytes = await _rpc_get_body_with_limit_check(request)
     outcome = await backend.auth.authenticated_auth(
@@ -681,12 +845,15 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
         raw_organization_id=raw_organization_id,
         with_authenticated_headers=True,
         with_invited_headers=False,
+        with_account_headers=False,
         with_sse_headers=True,
         expected_accept_type=ACCEPT_TYPE_SSE,
         # We don't care of Content-Type given the request has no body
         expected_content_type=None,
+        is_account_family=False,
     )
     assert parsed.authenticated_token is not None
+    assert parsed.organization_id is not None
 
     outcome = await backend.auth.authenticated_auth(
         now=DateTime.now(),
@@ -955,11 +1122,14 @@ async def tos_api(raw_organization_id: str, request: Request) -> Response:
         raw_organization_id=raw_organization_id,
         with_authenticated_headers=True,
         with_invited_headers=False,
+        with_account_headers=False,
         with_sse_headers=False,
         expected_accept_type=None,
         expected_content_type=CONTENT_TYPE_MSGPACK,
+        is_account_family=False,
     )
     assert parsed.authenticated_token is not None
+    assert parsed.organization_id is not None
 
     body: bytes = await _rpc_get_body_with_limit_check(request)
     outcome = await backend.auth.authenticated_auth(
