@@ -6,7 +6,7 @@
 // TODO: Web support is not implemented
 #![cfg(not(target_arch = "wasm32"))]
 
-use libparsec_platform_device_loader::{load_device, LoadDeviceError};
+use crate::{load_device, LoadDeviceError};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
