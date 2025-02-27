@@ -177,11 +177,10 @@
 import { chevronDown, calendar, close } from 'ionicons/icons';
 import { IonText, IonIcon, popoverController, IonSkeletonText } from '@ionic/vue';
 import { BmsAccessInstance, BmsInvoice, BmsOrganization, DataType } from '@/services/bms';
-import TimeFilterPopover from '@/components/client-area/TimeFilterPopover.vue';
 import { ref, onMounted } from 'vue';
 import { Info } from 'luxon';
 import { isDefaultOrganization } from '@/views/client-area/types';
-import InvoicesContainer from '@/components/client-area/InvoicesContainer.vue';
+import { InvoicesContainer, TimeFilterPopover } from '@/components/client-area';
 import { MsOptions, Translatable, I18n } from 'megashark-lib';
 
 const props = defineProps<{
