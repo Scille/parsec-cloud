@@ -292,9 +292,8 @@ jobs:
           body: ${{ steps.summary.outputs.output }}
           prerelease: ${{ needs.version.outputs.pre != '' || needs.version.outputs.dev != '' || needs.version.outputs.local != '' }}
           name: ${{ steps.info.outputs.release_name }}
-          # release-files/Parsec_${{ needs.version.outputs.full }}_win_*.exe*
           files: |
-            ${{ steps.artifacts.output.files_to_upload }}
+            ${{ steps.artifacts.outputs.files_to_upload }}
             release-files/python-*-requirements.txt
             release-files/latest-*.yml
             release-files/Parsec-SBOM-*.spdx.json
