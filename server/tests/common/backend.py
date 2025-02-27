@@ -1,13 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import asyncio
-from typing import AsyncIterator, Awaitable, Callable, Iterator, TypeAlias
+from typing import AsyncIterator, Awaitable, Callable, TypeAlias
 
 import pytest
 
 from parsec._parsec import DateTime, ParsecAddr
-from parsec.asgi import AsgiApp
-from parsec.asgi import app as asgi_app
+from parsec.asgi import AsgiApp, app_factory
 from parsec.backend import Backend, backend_factory
 from parsec.cli.testbed import TestbedBackend, TestbedTemplate
 from parsec.components.memory.organization import MemoryOrganization, OrganizationID
@@ -95,12 +94,22 @@ async def backend(
         should_stop.set()
 
 
+# Fastapi's ASGI app object is very costly to build: the tests are basically
+# 2x slower without this caching optimisation !
+__backend_cache = None
+
+
 @pytest.fixture
-def app(backend: Backend, monkeypatch: pytest.MonkeyPatch) -> Iterator[AsgiApp]:
-    # `FastAPI.state` stays between runs, so must clean it manually
-    asgi_app.state._state.clear()
-    asgi_app.state.backend = backend
-    yield asgi_app
+def app(backend: Backend, monkeypatch: pytest.MonkeyPatch) -> AsgiApp:
+    global __backend_cache
+    if __backend_cache is None:
+        asgi_app = __backend_cache = app_factory(backend)
+    else:
+        # `FastAPI.state` stays between runs, so must clean it manually
+        asgi_app = __backend_cache
+        asgi_app.state._state.clear()
+        asgi_app.state.backend = backend
+    return asgi_app
 
 
 # TODO: Replace with `type` once the linter supports it

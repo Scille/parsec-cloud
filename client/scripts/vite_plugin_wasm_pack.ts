@@ -141,15 +141,21 @@ function vitePluginWasmPack(
             wasmFileName = `${crate.name}_bg-${generateDigest(content)}.wasm`;
           }
 
-          const regex = /input = new URL\('(.+)'.+;/g;
+          const regex = /module_or_path = new URL\('(.+)'.+;/g;
+          let found = false;
           code = code.replace(regex, (_match, _group1) => {
             const assetUrl = path.posix.join(
               configBase,
               configAssetsDir,
               wasmFileName
             );
-            return `input = "${assetUrl}";`;
+            found = true;
+            return `module_or_path = "${assetUrl}";`;
           });
+
+          if (!found) {
+            throw new Error(`Can't find the URL path in the JS entrypoint of \`${crate.name}\``);
+          }
 
           return code;
         }

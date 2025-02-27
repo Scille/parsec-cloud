@@ -10,7 +10,7 @@ from typing import Any, AsyncIterator, Callable, TypeAlias
 import anyio
 import click
 import structlog
-from fastapi import BackgroundTasks, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from parsec._parsec import OrganizationID, ParsecAddr
@@ -27,7 +27,7 @@ except ImportError:
     TestbedTemplate: TypeAlias = tuple[OrganizationID, int, Any]  # pyright: ignore[reportRedeclaration]
     TestbedTemplateContent: TypeAlias = Any  # pyright: ignore[reportRedeclaration]
 
-from parsec.asgi import app_factory, serve_parsec_asgi_app
+from parsec.asgi import AsgiApp, app_factory, serve_parsec_asgi_app
 from parsec.backend import Backend, backend_factory
 from parsec.cli.options import debug_config_options, logging_config_options
 from parsec.cli.utils import cli_exception_handler
@@ -131,33 +131,38 @@ class TestbedBackend:
         del self.template_per_org[id]
 
 
-app = app_factory()
+testbed_router = APIRouter()
 
 
-# Testbed server often runs in background, so it output on crash is often
-# not visible (e.g. on the CI). Hence it's convenient to have the client
-# print the stacktrace on our behalf.
-# Note the testbed server is only meant to be run for tests and on a local
-# local machine so this has no security implication.
-app.debug = True
+def testbed_app_factory(testbed: TestbedBackend) -> AsgiApp:
+    app = app_factory(testbed.backend)
 
+    # Testbed server often runs in background, so it output on crash is often
+    # not visible (e.g. on the CI). Hence it's convenient to have the client
+    # print the stacktrace on our behalf.
+    # Note the testbed server is only meant to be run for tests and on a local
+    # local machine so this has no security implication.
+    app.debug = True
 
-# Must be overwritten before the app is started !
-app.state.testbed = None
+    app.state.testbed = testbed
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    app.include_router(testbed_router)
+
+    return app
 
 
 # We don't use json in the /testbed/... routes, this is to simplify
 # as much as possible implementation on the client side
 
 
-@app.post("/testbed/new/{template}")
+@testbed_router.post("/testbed/new/{template}")
 async def test_new(template: str, request: Request, background_tasks: BackgroundTasks) -> Response:
     testbed: TestbedBackend = request.app.state.testbed
 
@@ -197,7 +202,7 @@ async def test_new(template: str, request: Request, background_tasks: Background
     )
 
 
-@app.post("/testbed/customize/{raw_organization_id}")
+@testbed_router.post("/testbed/customize/{raw_organization_id}")
 async def test_customize(raw_organization_id: str, request: Request) -> Response:
     testbed: TestbedBackend = request.app.state.testbed
 
@@ -212,7 +217,7 @@ async def test_customize(raw_organization_id: str, request: Request) -> Response
     return Response(status_code=200, content=b"")
 
 
-@app.post("/testbed/drop/{raw_organization_id}")
+@testbed_router.post("/testbed/drop/{raw_organization_id}")
 async def test_drop(raw_organization_id: str, request: Request) -> Response:
     testbed: TestbedBackend = request.app.state.testbed
 
@@ -349,8 +354,7 @@ def testbed_cmd(
                     fg="magenta",
                 )
 
-                app.state.testbed = testbed
-                app.state.backend = testbed.backend
+                app = testbed_app_factory(testbed)
                 await serve_parsec_asgi_app(
                     host=host,
                     port=port,
