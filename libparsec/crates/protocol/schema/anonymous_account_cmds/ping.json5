@@ -1,0 +1,27 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "ping",
+        "req": {
+            "fields": [
+                {
+                    "name": "ping",
+                    "type": "String"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "pong",
+                        "type": "String"
+                    }
+                ]
+            }
+        ]
+    }
+]

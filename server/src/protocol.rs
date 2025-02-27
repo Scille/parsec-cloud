@@ -74,12 +74,20 @@ python_bindings_parsec_protocol_cmds_family!(
     "../libparsec/crates/protocol/schema/authenticated_cmds"
 );
 python_bindings_parsec_protocol_cmds_family!("../libparsec/crates/protocol/schema/anonymous_cmds");
+python_bindings_parsec_protocol_cmds_family!(
+    "../libparsec/crates/protocol/schema/anonymous_account_cmds"
+);
+python_bindings_parsec_protocol_cmds_family!(
+    "../libparsec/crates/protocol/schema/authenticated_account_cmds"
+);
 python_bindings_parsec_protocol_cmds_family!("../libparsec/crates/protocol/schema/tos_cmds");
 
 pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     invited_cmds_populate_mod(py, m)?;
     authenticated_cmds_populate_mod(py, m)?;
     anonymous_cmds_populate_mod(py, m)?;
+    anonymous_account_cmds_populate_mod(py, m)?;
+    authenticated_account_cmds_populate_mod(py, m)?;
     tos_cmds_populate_mod(py, m)?;
 
     m.add_class::<ActiveUsersLimit>()?;

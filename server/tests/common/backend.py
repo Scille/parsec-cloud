@@ -95,7 +95,7 @@ async def backend(
 
 
 # Fastapi's ASGI app object is very costly to build: the tests are basically
-# 2x slower without this caching optimisation !
+# 2x slower without this caching optimization !
 __backend_cache = None
 
 

@@ -170,6 +170,7 @@ pub enum TestbedEvent {
     CreateOpaqueBlock(TestbedEventCreateOpaqueBlock),
     FreezeUser(TestbedEventFreezeUser),
     UpdateOrganization(TestbedEventUpdateOrganization),
+    AddAccount(TestbedEventAddAccount),
 
     // 3) Client-side only events
     CertificatesStorageFetchCertificates(TestbedEventCertificatesStorageFetchCertificates),
@@ -232,6 +233,7 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(x) => {
                 x.crc_hash(hasher)
             }
+            TestbedEvent::AddAccount(x) => x.crc_hash(hasher),
         }
     }
 }
@@ -395,9 +397,8 @@ impl TestbedEvent {
             | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
             | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_)
             | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)
-            | TestbedEvent::WorkspaceDataStorageChunkCreate(_) => {
-                TestbedEventCertificatesIterator::Other
-            }
+            | TestbedEvent::WorkspaceDataStorageChunkCreate(_)
+            | TestbedEvent::AddAccount(_) => TestbedEventCertificatesIterator::Other,
         }
     }
 
@@ -427,7 +428,8 @@ impl TestbedEvent {
             | TestbedEvent::CreateBlock(_)
             | TestbedEvent::CreateOpaqueBlock(_)
             | TestbedEvent::FreezeUser(_)
-            | TestbedEvent::UpdateOrganization(_) => false,
+            | TestbedEvent::UpdateOrganization(_)
+            | TestbedEvent::AddAccount(_) => false,
 
             TestbedEvent::CertificatesStorageFetchCertificates(_)
             | TestbedEvent::UserStorageFetchUserVlob(_)
@@ -2433,6 +2435,33 @@ impl TestbedEventNewDeviceInvitation {
         Self {
             created_on: builder.counters.next_timestamp(),
             created_by,
+            token,
+        }
+    }
+}
+
+/*
+ * TestbedEventAddAccount
+ */
+
+no_certificate_event!(
+    TestbedEventAddAccount,
+    [
+        created_on: DateTime,
+        created_by_email: String,
+        token: AccountToken,
+    ]
+);
+
+impl TestbedEventAddAccount {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        created_by_email: String,
+    ) -> Self {
+        let token = builder.counters.next_account_token();
+        Self {
+            created_on: builder.counters.next_timestamp(),
+            created_by_email,
             token,
         }
     }
