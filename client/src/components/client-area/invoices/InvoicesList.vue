@@ -2,9 +2,7 @@
 
 <template>
   <!-- row header -->
-  <ion-list
-    class="invoices-year-header-list ion-no-padding"
-  >
+  <ion-list class="invoices-year-header-list ion-no-padding">
     <ion-item class="invoices-year-header-list-item invoices-date">
       <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.date') }}</ion-text>
     </ion-item>
@@ -17,29 +15,58 @@
     <ion-item class="invoices-year-header-list-item invoices-amount">
       <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.price.title') }}</ion-text>
     </ion-item>
+    <ion-item
+      v-if="invoicesData.type === DataType.CustomOrderDetails"
+      class="invoices-year-header-list-item invoices-contract-period"
+    >
+      <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.contractPeriod.title') }}</ion-text>
+    </ion-item>
     <ion-item class="invoices-year-header-list-item invoices-status">
       <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.status') }}</ion-text>
     </ion-item>
   </ion-list>
 
   <!-- row invoices -->
-  <ion-list
-    class="invoices-year-content-list ion-no-padding"
-  >
+  <ion-list class="invoices-year-content-list ion-no-padding">
     <ion-item
       class="invoices-year-content-list-item ion-no-padding"
-      v-for="invoice in invoices"
+      v-for="invoice in invoicesData.invoices"
       :key="invoice.id"
-      v-show="monthsFilter === undefined || monthsFilter.length === 0 || monthsFilter.includes(invoice.start.month)"
+      v-show="monthsFilter === undefined || monthsFilter.length === 0 || monthsFilter.includes(invoice.date.month)"
     >
       <ion-text class="invoices-year-content-list-item__data invoices-date subtitles-sm">
-        {{ $msTranslate(I18n.formatDate(invoice.start, 'narrow')) }}
+        {{ $msTranslate(I18n.formatDate(invoice.date, 'narrow')) }}
       </ion-text>
       <ion-text class="invoices-year-content-list-item__data invoices-number body">{{ invoice.number }}</ion-text>
       <ion-text class="invoices-year-content-list-item__data invoices-organization body">{{ invoice.organizationId }}</ion-text>
       <ion-text class="invoices-year-content-list-item__data invoices-amount body">
-        {{ $msFormatCurrency(invoice.total) }}
+        {{ $msFormatCurrency(invoice.price) }}
       </ion-text>
+      <template v-if="invoicesData.type === DataType.CustomOrderDetails">
+        <ion-text
+          class="invoices-year-content-list-item__data invoices-contract-period body"
+          v-if="invoice.licenseStart && invoice.licenseEnd"
+        >
+          {{
+            $msTranslate({
+              key: 'clientArea.invoices.cell.contractPeriod.from',
+              data: { date: $msTranslate(I18n.formatDate(invoice.licenseStart, 'narrow')) },
+            })
+          }}
+          {{
+            $msTranslate({
+              key: 'clientArea.invoices.cell.contractPeriod.to',
+              data: { date: $msTranslate(I18n.formatDate(invoice.licenseEnd, 'narrow')) },
+            })
+          }}
+        </ion-text>
+        <ion-text
+          v-else
+          class="subtitles-sm"
+        >
+          /
+        </ion-text>
+      </template>
       <ion-text class="invoices-year-content-list-item__data invoices-status">
         <span
           class="badge-status body-sm"
@@ -49,7 +76,7 @@
         </span>
         <a
           class="custom-button custom-button-ghost button-medium"
-          :href="invoice.pdfLink"
+          :href="invoice.link"
           download
         >
           <ms-image
@@ -64,13 +91,14 @@
 </template>
 
 <script setup lang="ts">
-import { BmsInvoice } from '@/services/bms';
+import { DataType } from '@/services/bms';
 import { getInvoiceStatusTranslationKey } from '@/services/translation';
 import { IonItem, IonList, IonText } from '@ionic/vue';
 import { MsImage, Download as downloaded, I18n } from 'megashark-lib';
+import { InvoicesData } from '@/components/client-area/invoices/types';
 
 defineProps<{
-  invoices: Array<BmsInvoice>;
+  invoicesData: InvoicesData;
   monthsFilter?: Array<number>;
 }>();
 </script>
@@ -193,6 +221,11 @@ defineProps<{
   &-amount {
     width: 100%;
     max-width: var(--max-width-amount);
+  }
+
+  &-contract-period {
+    width: 100%;
+    max-width: var(--max-width-contract-period);
   }
 
   &-status {

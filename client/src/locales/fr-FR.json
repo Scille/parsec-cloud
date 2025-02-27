@@ -1585,6 +1585,11 @@
                     "title": "Montant",
                     "amount": "{count} €"
                 },
+                "contractPeriod": {
+                    "title": "Période du contrat",
+                    "from": "Du {date}",
+                    "to": "au {date}"
+                },
                 "status": "Status",
                 "download": "Télécharger"
             },

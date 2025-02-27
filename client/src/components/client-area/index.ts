@@ -2,8 +2,10 @@
 
 // invoices
 import InvoicesContainer from '@/components/client-area/invoices/InvoicesContainer.vue';
+import YearInvoiceList from '@/components/client-area/invoices/YearInvoiceList.vue';
+export * from '@/components/client-area/invoices/types';
 
 // others
 import TimeFilterPopover from '@/components/client-area/TimeFilterPopover.vue';
 
-export { InvoicesContainer, TimeFilterPopover };
+export { InvoicesContainer, TimeFilterPopover, YearInvoiceList };

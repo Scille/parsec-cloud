@@ -21,23 +21,23 @@
 
     <!-- invoices list -->
     <invoices-list
-      v-if="invoices.length > 0 && isVisible"
-      :invoices="invoices"
+      v-if="invoicesData.invoices.length > 0 && isVisible"
+      :invoices-data="invoicesData"
       :months-filter="monthsFilter"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { BmsInvoice } from '@/services/bms';
 import { IonText, IonIcon } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
 import { Translatable } from 'megashark-lib';
 import InvoicesList from '@/components/client-area/invoices/InvoicesList.vue';
 import { ref } from 'vue';
+import { InvoicesData } from '@/components/client-area/invoices/types';
 
 defineProps<{
-  invoices: Array<BmsInvoice>;
+  invoicesData: InvoicesData;
   title: Translatable;
   monthsFilter?: Array<number>;
 }>();
@@ -56,6 +56,7 @@ const isVisible = ref(true);
   --max-width-date: 12rem;
   --max-width-number: 12rem;
   --max-width-organization: 20rem;
+  --max-width-contract-period: 20rem;
   --max-width-amount: 10rem;
   transition: padding 0.2s;
 

@@ -320,6 +320,7 @@ async function getInvoices(token: AuthenticationToken, query: ClientQueryData): 
         type: DataType.Invoices,
         invoices: axiosResponse.data.results.map((invoice: any) => {
           return {
+            type: DataType.BmsInvoice,
             id: invoice.id,
             pdfLink: invoice.pdf,
             start: DateTime.fromISO(invoice.period_start, { zone: 'utc' }),

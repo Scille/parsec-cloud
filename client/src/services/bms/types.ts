@@ -43,6 +43,7 @@ enum DataType {
   CreateCustomOrderRequest = 'create-custom-order-request',
   GetCustomOrderRequests = 'get-custom-order-requests',
   CustomOrderInvoices = 'custom-order-invoices',
+  BmsInvoice = 'bms-invoice',
 }
 
 enum PaymentMethod {
@@ -261,6 +262,7 @@ interface BmsOrganization {
 }
 
 interface BmsInvoice {
+  type: DataType.BmsInvoice;
   id: string;
   pdfLink: string;
   start: DateTime;
