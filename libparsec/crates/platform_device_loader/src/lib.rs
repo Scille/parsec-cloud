@@ -473,7 +473,7 @@ fn secret_key_from_password(
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
+#[cfg_attr(all(target_arch = "wasm32", not(test)), expect(dead_code))]
 fn server_url_from_device(device: &LocalDevice) -> String {
     ParsecAddr::new(
         device.organization_addr.hostname().to_owned(),
