@@ -100,7 +100,7 @@ jobs:
       - name: Windows > Install yq
         if: matrix.platform == 'windows'
         run: choco install yq
-        timeout-minutes: 2
+        timeout-minutes: 3
 
       - name: Build wheel
         uses: pypa/cibuildwheel@ee63bf16da6cddfb925f542f2c7b59ad50e93969  # pin v2.22.0
