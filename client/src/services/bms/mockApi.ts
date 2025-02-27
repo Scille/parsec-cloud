@@ -92,7 +92,7 @@ function createCustomOrderInvoices(count: number = 1): CustomOrderDetailsResultD
       type: DataType.CustomOrderDetails,
       id: i,
       link: `https://unknown/link${i}.pdf`,
-      number: `${i}`,
+      number: `Invoice_${i}`,
       amountWithTaxes: 62.0 + (i % 2) * 16,
       amountWithoutTaxes: 16.0 + (i % 2) * 4,
       amountDue: 62.0 + (i % 2) * 16,
