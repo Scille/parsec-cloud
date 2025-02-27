@@ -141,20 +141,20 @@ onMounted(async () => {
   }
 
   const customOrderBmsStatusResponse = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
-  const customOrderSellsyStatusResponse = await BmsAccessInstance.get().getCustomOrderRequestStatus(props.organization);
+  const customOrderSellsyStatusResponse = await BmsAccessInstance.get().getCustomOrderRequests();
 
   if (!customOrderBmsStatusResponse.isError && customOrderBmsStatusResponse.data &&
     customOrderBmsStatusResponse.data.type === DataType.CustomOrderStatus) {
     customOrderBmsStatus.value = customOrderBmsStatusResponse.data.status;
   } else {
-    error.value = 'clientArea.dashboard.processing.error.title';
+    error.value = 'clientArea.dashboard.error';
   }
 
   if (!customOrderSellsyStatusResponse.isError && customOrderSellsyStatusResponse.data &&
-    customOrderSellsyStatusResponse.data.type === DataType.CustomOrderRequestStatus) {
-    customOrderSellsyStatus.value = customOrderSellsyStatusResponse.data.status;
+    customOrderSellsyStatusResponse.data.type === DataType.GetCustomOrderRequests) {
+    customOrderSellsyStatus.value = customOrderSellsyStatusResponse.data.requests[0].status;
   } else {
-    error.value = 'clientArea.dashboard.processing.error.title';
+    error.value = 'clientArea.dashboard.error';
   }
 
   querying.value = false;

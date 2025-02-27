@@ -19,8 +19,6 @@
   </div>
 </template>
 
-<script></script>
-
 <script setup lang="ts">
 import { IonText, IonButton, modalController } from '@ionic/vue';
 import { BmsAccessInstance, BmsOrganization, CustomOrderDetailsResultData, DataType } from '@/services/bms';

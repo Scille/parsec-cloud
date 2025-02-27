@@ -1738,7 +1738,8 @@
                     "title": "Failed to retrieve the information.",
                     "description": "An error occurred while processing your order. Please contact us."
                 }
-            }
+            },
+            "error": "Failed to retrieve the information"
         },
         "billingDetailsPage": {
             "placeholders": {
