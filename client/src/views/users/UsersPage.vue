@@ -232,12 +232,14 @@ async function onDisplayStateChange(): Promise<void> {
   await storeComponentData();
 }
 
-const msSorterOptions: MsOptions = new MsOptions([
+const ALL_SORT_OPTIONS = [
   { label: 'UsersPage.sort.byName', key: SortProperty.Name },
   { label: 'UsersPage.sort.byJoined', key: SortProperty.JoinedDate },
   { label: 'UsersPage.sort.byProfile', key: SortProperty.Profile },
   { label: 'UsersPage.sort.byStatus', key: SortProperty.Status },
-]);
+];
+
+const msSorterOptions = ref<MsOptions>(new MsOptions(ALL_SORT_OPTIONS));
 
 const msSorterLabels = {
   asc: 'UsersPage.sort.asc',
@@ -591,6 +593,16 @@ async function refreshUserList(): Promise<void> {
       }),
       PresentationMode.Toast,
     );
+  }
+  const hasInactive = users.value.hasInactive();
+  if (!hasInactive && currentSortProperty.value === SortProperty.Status) {
+    currentSortProperty.value = SortProperty.Name;
+  }
+
+  if (!hasInactive) {
+    msSorterOptions.value = new MsOptions(ALL_SORT_OPTIONS.filter((opt) => opt.key !== SortProperty.Status));
+  } else {
+    msSorterOptions.value = new MsOptions(ALL_SORT_OPTIONS);
   }
   users.value.sort(currentSortProperty.value, currentSortOrder.value);
 }
