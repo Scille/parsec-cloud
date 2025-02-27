@@ -4,7 +4,7 @@
 // TODO: Web support is not implemented
 #![cfg(not(target_arch = "wasm32"))]
 
-use libparsec_platform_device_loader::{
+use crate::{
     export_recovery_device, import_recovery_device, PlatformImportRecoveryDeviceError,
 };
 use libparsec_tests_lite::p_assert_matches;

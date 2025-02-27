@@ -8,7 +8,7 @@
 
 use std::path::PathBuf;
 
-use libparsec_platform_device_loader::{
+use crate::{
     load_device, save_device, LoadDeviceError, SaveDeviceError,
 };
 use libparsec_tests_fixtures::prelude::*;

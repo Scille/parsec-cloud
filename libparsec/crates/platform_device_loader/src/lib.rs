@@ -8,6 +8,10 @@ mod web;
 #[cfg(feature = "test-with-testbed")]
 mod testbed;
 
+#[path = "../tests/units/mod.rs"]
+#[cfg(test)]
+mod tests;
+
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
