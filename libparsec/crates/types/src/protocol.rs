@@ -102,6 +102,10 @@ pub enum ProtocolFamily {
     Anonymous,
     /// Family used by an invitation claimer in order to obtain a device.
     Invited,
+    /// Family used for account anonymous operations. (ex: create account)
+    AnonymousAccount,
+    /// Family used for token protected account operations (ex: list organization for human)
+    AuthenticatedAccount,
 }
 
 pub trait ProtocolRequest<const V: u32> {
