@@ -90,7 +90,7 @@ Exporting data with sequester service
 
 Realm vs Workspace: In Parsec vocabulary, workspace and realm are two sides of the same
 coin. In a nutshell, the realm is a server-side concept that references the big pile of
-encrypted data, while the workspace is the client-side concept that reference those
+encrypted data, while the workspace is the client-side concept that references those
 data once decrypted.
 
 Hence the "realm export" is the operation of exporting from the server all the encrypted
@@ -100,7 +100,7 @@ access on a workspace at any point in time up to the export date.
 Overview:
 
 - An organization exists with a workspace
-- Form the server CLI, a realm is exported. This generates a large `.sqlite` file
+- From the server CLI, a realm is exported. This generates a large `.sqlite` file
   containing all encrypted data belonging to this realm.
 - The realm export file is transferred to a machine containing the decryption keys:
 
