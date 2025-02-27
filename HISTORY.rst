@@ -7,12 +7,6 @@ History
 Parsec v3.3.0 (2025-02-25)
 --------------------------
 
-No significant changes.
-
-
-Parsec v3.3.0-rc.12 (2025-02-25)
---------------------------------
-
 Features
 ~~~~~~~~
 
@@ -23,58 +17,8 @@ Features
 * Provide the CLI for windows
   (`#9771 <https://github.com/Scille/parsec-cloud/issues/9771>`__)
 
-
-
-Parsec v3.3.0-rc.11 (2025-02-17)
---------------------------------
-
-No significant changes.
-
-
-Parsec v3.3.0-rc.10 (2025-02-17)
---------------------------------
-
-No significant changes.
-
-
-Parsec v3.3.0-rc.9 (2025-02-16)
--------------------------------
-
-No significant changes.
-
-
-Parsec v3.3.0-rc.8 (2025-02-16)
--------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Fix an issue causing the client to not synchronize properly after the user has
-  accepted the Terms of Service
-  (`#9614 <https://github.com/Scille/parsec-cloud/issues/9614>`__)
-
-* Detect when the client is no longer receiving events from the server and
-  report an offline status
-  (`#8359 <https://github.com/Scille/parsec-cloud/issues/8359>`__)
-
-
-
-Parsec v3.3.0-rc.7 (2025-02-13)
--------------------------------
-
-Features
-~~~~~~~~
-
 * Update global user interface for file viewers
   (`#9571 <https://github.com/Scille/parsec-cloud/issues/9571>`__)
-
-
-
-Parsec v3.3.0-rc.6 (2025-02-10)
--------------------------------
-
-Features
-~~~~~~~~
 
 * Rename the option ``--organization-id`` to ``--organization`` in the CLI
   command ``organization status``
@@ -166,9 +110,16 @@ Features
 * Added the option to update a user's profile
   (`#8248 <https://github.com/Scille/parsec-cloud/issues/8248>`__)
 
-
 Bugfixes
 ~~~~~~~~
+
+* Fix an issue causing the client to not synchronize properly after the user has
+  accepted the Terms of Service
+  (`#9614 <https://github.com/Scille/parsec-cloud/issues/9614>`__)
+
+* Detect when the client is no longer receiving events from the server and
+  report an offline status
+  (`#8359 <https://github.com/Scille/parsec-cloud/issues/8359>`__)
 
 * Fix file changed timestamp (ctime) on Unix systems
   (`#8942 <https://github.com/Scille/parsec-cloud/issues/8942>`__)
