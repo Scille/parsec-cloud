@@ -2,7 +2,7 @@
 
 <template>
   <div class="client-page-invoices">
-    <year-invoice-list
+    <year-invoices-list
       :querying="querying"
       :invoices="invoices"
       title="clientArea.invoices.title"
@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { BmsAccessInstance, BmsOrganization, CustomOrderDetailsResultData, DataType } from '@/services/bms';
-import { YearInvoiceList } from '@/components/client-area';
+import { YearInvoicesList } from '@/components/client-area';
 import { ref, onMounted } from 'vue';
 
 const props = defineProps<{

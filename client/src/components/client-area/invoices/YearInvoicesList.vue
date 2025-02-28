@@ -79,7 +79,7 @@
   <!-- invoices -->
   <template v-if="invoices.length > 0 || querying">
     <div class="invoices-container">
-      <invoices-container
+      <year-invoices-list-item
         v-for="year in years"
         v-show="selectedYears.length === 0 || selectedYears.includes(year)"
         :key="year"
@@ -116,7 +116,7 @@ import { ref, onMounted, watch } from 'vue';
 import { chevronDown, calendar, close } from 'ionicons/icons';
 import { I18n, MsOptions, Translatable } from 'megashark-lib';
 import TimeFilterPopover from '@/components/client-area/TimeFilterPopover.vue';
-import { InvoicesContainer, InvoicesData } from '@/components/client-area';
+import { YearInvoicesListItem, InvoicesData } from '@/components/client-area';
 import InvoicesListSkeleton from '@/components/client-area/invoices/InvoicesListSkeleton.vue';
 import { Info } from 'luxon';
 

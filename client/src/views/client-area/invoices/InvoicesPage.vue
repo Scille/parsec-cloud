@@ -2,7 +2,7 @@
 
 <template>
   <div class="client-page-invoices">
-    <year-invoice-list
+    <year-invoices-list
       :querying="querying"
       :invoices="invoices"
       title="clientArea.invoices.title"
@@ -15,7 +15,7 @@
 import { BmsAccessInstance, BmsInvoice, BmsOrganization, DataType } from '@/services/bms';
 import { ref, onMounted } from 'vue';
 import { isDefaultOrganization } from '@/views/client-area/types';
-import { YearInvoiceList } from '@/components/client-area';
+import { YearInvoicesList } from '@/components/client-area';
 
 const props = defineProps<{
   organization: BmsOrganization;
