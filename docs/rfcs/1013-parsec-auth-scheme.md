@@ -28,7 +28,7 @@ mod AccountCreation {
     ErrInternal
   }
 
-  struct Step2AccountCreationBaseReq {
+  struct Step2AccountCreationData {
     email: Email,
     email_validation_token: EmailValidationToken,
     enc_sym_key: EncSymKey,
