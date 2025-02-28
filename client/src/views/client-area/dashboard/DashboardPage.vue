@@ -105,23 +105,23 @@
               <ion-item
                 class="invoices-list-item ion-no-padding"
                 v-for="invoice in invoices"
-                :key="invoice.id"
+                :key="invoice.getId()"
               >
                 <ion-text class="invoices-list-item__data invoices-date subtitles-sm">
-                  {{ $msTranslate(formatTimeSince(invoice.start, '--', 'short')) }}
+                  {{ $msTranslate(formatTimeSince(invoice.getDate(), '--', 'short')) }}
                 </ion-text>
-                <ion-text class="invoices-list-item__data invoices-organization body">{{ invoice.organizationId }}</ion-text>
-                <ion-text class="invoices-list-item__data invoices-amount body">{{ $msFormatCurrency(invoice.total) }}</ion-text>
+                <ion-text class="invoices-list-item__data invoices-organization body">{{ invoice.getOrganizationId() }}</ion-text>
+                <ion-text class="invoices-list-item__data invoices-amount body">{{ $msFormatCurrency(invoice.getAmount()) }}</ion-text>
                 <ion-text class="invoices-list-item__data invoices-status">
                   <span
                     class="badge-status body-sm"
-                    :class="invoice.status"
+                    :class="invoice.getStatus()"
                   >
-                    {{ $msTranslate(getInvoiceStatusTranslationKey(invoice.status)) }}
+                    {{ $msTranslate(getInvoiceStatusTranslationKey(invoice.getStatus())) }}
                   </span>
                   <a
                     class="custom-button custom-button-ghost button-medium"
-                    :href="invoice.pdfLink"
+                    :href="invoice.getLink()"
                     download
                   >
                     <ms-image
@@ -215,9 +215,9 @@ import {
   DataType,
   BmsOrganization,
   OrganizationStatsResultData,
-  BmsInvoice,
   BillingDetailsPaymentMethodCard,
   PaymentMethod,
+  StripeInvoice,
 } from '@/services/bms';
 import {
   MsInformationTooltip,
@@ -241,7 +241,7 @@ defineEmits<{
 }>();
 
 const stats = ref<OrganizationStatsResultData | undefined>(undefined);
-const invoices = ref<Array<BmsInvoice>>([]);
+const invoices = ref<Array<StripeInvoice>>([]);
 const defaultCard = ref<MsPaymentMethod.Card | undefined>(undefined);
 const currentDate = DateTime.now();
 const querying = ref(false);
@@ -257,11 +257,11 @@ onMounted(async () => {
     }
   }
 
-  const invoicesResponse = await BmsAccessInstance.get().getInvoices();
-  if (!invoicesResponse.isError && invoicesResponse.data && invoicesResponse.data.type === DataType.Invoices) {
+  const invoicesResponse = await BmsAccessInstance.get().getMonthlySubscriptionInvoices();
+  if (!invoicesResponse.isError && invoicesResponse.data && invoicesResponse.data.type === DataType.MonthlySubscriptionInvoices) {
     invoices.value = invoicesResponse.data.invoices
-      .filter((invoice) => isDefaultOrganization(props.organization) || invoice.organizationId === props.organization.parsecId)
-      .sort((invoice1, invoice2) => invoice2.start.toMillis() - invoice1.start.toMillis())
+      .filter((invoice) => isDefaultOrganization(props.organization) || invoice.getOrganizationId() === props.organization.parsecId)
+      .sort((invoice1, invoice2) => invoice2.getDate().toMillis() - invoice1.getDate().toMillis())
       .slice(0, 3);
   }
 

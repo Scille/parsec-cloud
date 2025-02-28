@@ -12,28 +12,25 @@
 </template>
 
 <script setup lang="ts">
-import { BmsAccessInstance, BmsOrganization, DataType, StripeInvoice } from '@/services/bms';
-import { ref, onMounted } from 'vue';
-import { isDefaultOrganization } from '@/views/client-area/types';
+import { BmsAccessInstance, BmsOrganization, DataType, SellsyInvoice } from '@/services/bms';
 import { YearInvoicesList } from '@/components/client-area';
+import { ref, onMounted } from 'vue';
 
 const props = defineProps<{
   organization: BmsOrganization;
 }>();
 
-const invoices = ref<Array<StripeInvoice>>([]);
-const error = ref<string>('');
+const invoices = ref<Array<SellsyInvoice>>([]);
 const querying = ref(true);
+const error = ref<string>('');
 
 onMounted(async () => {
   querying.value = true;
-  const response = await BmsAccessInstance.get().getMonthlySubscriptionInvoices();
-  if (!response.isError && response.data && response.data.type === DataType.MonthlySubscriptionInvoices) {
-    invoices.value = response.data.invoices
-      .filter((invoice) => isDefaultOrganization(props.organization) || invoice.getOrganizationId() === props.organization.parsecId)
-      .sort((invoice1, invoice2) => {
-        return invoice2.getDate().diff(invoice1.getDate()).toMillis();
-      });
+  const response = await BmsAccessInstance.get().getCustomOrderInvoices(props.organization);
+  if (!response.isError && response.data && response.data.type === DataType.CustomOrderInvoices) {
+    invoices.value = response.data.invoices.sort((invoice1, invoice2) => {
+      return invoice2.getDate().diff(invoice1.getDate()).toMillis();
+    });
   } else {
     error.value = 'clientArea.invoices.retrieveError';
   }
@@ -42,6 +39,10 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+* {
+  transition: all 0.2s ease;
+}
+
 .client-page-invoices {
   display: flex;
   flex-direction: column;
