@@ -15,6 +15,7 @@
 
 use std::{
     collections::HashMap,
+    ops::AsyncFnOnce,
     path::Path,
     sync::{Arc, Mutex},
 };
@@ -199,13 +200,10 @@ impl CertificatesStore {
 
     /// Lock the store for writing purpose, this is an exclusive lock so no
     /// other read/write operation can occur.
-    pub async fn for_write<T, E, Fut>(
+    pub async fn for_write<T, E>(
         &self,
-        cb: impl FnOnce(&'static mut CertificatesStoreWriteGuard) -> Fut,
-    ) -> Result<Result<T, E>, CertifStoreError>
-    where
-        Fut: std::future::Future<Output = Result<T, E>>,
-    {
+        cb: impl AsyncFnOnce(&mut CertificatesStoreWriteGuard<'_>) -> Result<T, E>,
+    ) -> Result<Result<T, E>, CertifStoreError> {
         let _guard = self.lock.write().await;
 
         let mut maybe_storage = self.storage.lock().await;
@@ -220,26 +218,7 @@ impl CertificatesStore {
             storage: updater,
         };
 
-        unsafe fn pretend_static(
-            src: &mut CertificatesStoreWriteGuard<'_>,
-        ) -> &'static mut CertificatesStoreWriteGuard<'static> {
-            std::mem::transmute(src)
-        }
-        // SAFETY: It is not currently possible to express the fact the lifetime
-        // of a Future returned by a closure depends on the closure parameter if
-        // they are references.
-        // Here things are even worst because we have references coming from
-        // `for_write` body and from `cb` closure (so workarounds as boxed future
-        // don't work).
-        // However in practice all our references have a lifetime bound to the
-        // parent (i.e. `for_write`) or the grand-parent (i.e.
-        // `CertificateOps::add_certificates_batch`) which are going to poll this
-        // future directly, so the references' lifetimes *are* long enough.
-        // TODO: Remove this once async closure are available
-        let static_write_guard_mut_ref = unsafe { pretend_static(&mut write_guard) };
-
-        let fut = cb(static_write_guard_mut_ref);
-        let outcome = fut.await;
+        let outcome = cb(&mut write_guard).await;
 
         // The cache may have been updated during the write operations, and those new cache
         // entries might be for items that have been added by the current write operation.
@@ -277,13 +256,10 @@ impl CertificatesStore {
     /// dropped when the user switch from/to OUTSIDER).
     ///
     /// Also note the lock is shared with other read operations.
-    pub async fn for_read<T, E, Fut>(
+    pub async fn for_read<T, E>(
         &self,
-        cb: impl FnOnce(&'static mut CertificatesStoreReadGuard) -> Fut,
-    ) -> Result<Result<T, E>, CertifStoreError>
-    where
-        Fut: std::future::Future<Output = Result<T, E>>,
-    {
+        cb: impl AsyncFnOnce(&mut CertificatesStoreReadGuard) -> Result<T, E>,
+    ) -> Result<Result<T, E>, CertifStoreError> {
         let _guard = self.lock.read().await;
 
         let mut maybe_storage = self.storage.lock().await;
@@ -297,18 +273,7 @@ impl CertificatesStore {
             storage,
         };
 
-        unsafe fn pretend_static(
-            src: &mut CertificatesStoreReadGuard<'_>,
-        ) -> &'static mut CertificatesStoreReadGuard<'static> {
-            std::mem::transmute(src)
-        }
-        // SAFETY: It is not currently possible to express the fact the lifetime
-        // of a Future returned by a closure depends on the closure parameter if
-        // they are references (see `for_write` code).
-        // TODO: Remove this once async closure are available
-        let static_read_guard_mut_ref = unsafe { pretend_static(&mut read_guard) };
-
-        let fut = cb(static_read_guard_mut_ref);
+        let fut = cb(&mut read_guard);
         let outcome = fut.await;
 
         Ok(outcome)
@@ -319,15 +284,14 @@ impl CertificatesStore {
     ///
     /// This is typically useful when validation data received from the server (as
     /// the server provides us with the certificates requirements to do the validation).
-    pub async fn for_read_with_requirements<C, T, E, Fut>(
+    pub async fn for_read_with_requirements<C, T, E>(
         &self,
         ops: &CertificateOps,
         needed_timestamps: &PerTopicLastTimestamps,
         cb: C,
     ) -> Result<Result<T, E>, CertifForReadWithRequirementsError>
     where
-        C: FnOnce(&'static mut CertificatesStoreReadGuard) -> Fut,
-        Fut: std::future::Future<Output = Result<T, E>>,
+        C: AsyncFnOnce(&mut CertificatesStoreReadGuard) -> Result<T, E>,
     {
         enum ForReadOutcome<C, T1, E1> {
             StoredTimestampOutdated(C),
@@ -336,7 +300,7 @@ impl CertificatesStore {
 
         // Factorize the code in a closure to retry the operation after a server poll
         let try_with_requirements = |cb| {
-            self.for_read(|store: &mut CertificatesStoreReadGuard| async move {
+            self.for_read(async |store: &mut CertificatesStoreReadGuard| {
                 // Make sure we have all the needed certificates
 
                 let last_stored_timestamps = store
@@ -370,7 +334,7 @@ impl CertificatesStore {
         };
 
         // We were lacking some certificates, do a server poll and retry
-        self.for_write(|store| async move {
+        self.for_write(async |store| {
             super::poll::poll_server_for_new_certificates(ops, store, Some(needed_timestamps))
                 .await
                 .map_err(|e| match e {

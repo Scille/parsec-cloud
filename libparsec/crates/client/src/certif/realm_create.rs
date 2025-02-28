@@ -46,7 +46,7 @@ pub(super) async fn ensure_realm_created(
 ) -> Result<CertificateBasedActionOutcome, CertifEnsureRealmCreatedError> {
     let realm_state = ops
         .store
-        .for_read(|store| async move { store.get_realm_bootstrap_state(realm_id).await })
+        .for_read(async |store| store.get_realm_bootstrap_state(realm_id).await)
         .await??;
     if matches!(realm_state, RealmBootstrapState::CreatedInServer) {
         return Ok(CertificateBasedActionOutcome::LocalIdempotent);

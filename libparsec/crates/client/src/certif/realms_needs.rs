@@ -49,7 +49,7 @@ pub async fn get_realm_needs(
     realm_id: VlobID,
 ) -> Result<RealmNeeds, CertifGetRealmNeedsError> {
     ops.store
-        .for_read(|store| async move {
+        .for_read(async |store| {
             // TODO: This implementation is not efficient, as it fetches all the roles
             //       and users certificates. However this should be good enough for now,
             //       and optimization requires a complex API changes in the storage.

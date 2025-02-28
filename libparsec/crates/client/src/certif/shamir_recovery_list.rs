@@ -71,7 +71,7 @@ pub async fn get_self_shamir_recovery(
     ops: &CertificateOps,
 ) -> Result<SelfShamirRecoveryInfo, CertifGetSelfShamirRecoveryError> {
     ops.store
-        .for_read(|store| async move {
+        .for_read(async |store| {
             // 1. Retrieve the shamir recovery and it potential deletion
 
             let brief = match store
@@ -205,7 +205,7 @@ pub async fn list_shamir_recoveries_for_others(
     ops: &CertificateOps,
 ) -> Result<Vec<OtherShamirRecoveryInfo>, CertifListShamirRecoveriesForOthersError> {
     ops.store
-        .for_read(|store| async move {
+        .for_read(async |store| {
             let mut per_user_last_shamir: HashMap<
                 UserID,
                 (
@@ -395,7 +395,7 @@ pub async fn get_shamir_recovery_share_data(
 ) -> Result<ShamirRecoveryShareData, CertifGetShamirRecoveryShareDataError> {
     let needed_timestamps = PerTopicLastTimestamps::new_for_shamir(shamir_recovery_created_on);
     ops.store
-        .for_read_with_requirements(ops, &needed_timestamps, |store| async move {
+        .for_read_with_requirements(ops, &needed_timestamps, async |store| {
 
             // 1. Check that the corresponding shamir recovery has not been deleted
 

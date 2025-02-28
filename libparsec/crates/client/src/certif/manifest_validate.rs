@@ -121,7 +121,7 @@ pub(super) async fn validate_user_manifest(
     );
 
     ops.store
-        .for_read_with_requirements(ops, &needed_timestamps, |store| async move {
+        .for_read_with_requirements(ops, &needed_timestamps, async |store| {
             // 1) Decrypt the vlob
 
             let cleartext = &ops.device.user_realm_key.decrypt(encrypted).map_err(|_| {
@@ -195,7 +195,7 @@ pub(super) async fn validate_workspace_manifest(
     );
 
     ops.store
-        .for_read_with_requirements(ops, &needed_timestamps, |store| async move {
+        .for_read_with_requirements(ops, &needed_timestamps, async |store| {
             // 1) Decrypt the vlob
 
             let cleartext = realm_keys_bundle::decrypt_for_realm(
@@ -312,7 +312,7 @@ pub(super) async fn validate_child_manifest(
     );
 
     ops.store
-        .for_read_with_requirements(ops, &needed_timestamps, |store| async move {
+        .for_read_with_requirements(ops, &needed_timestamps, async |store| {
             // 1) Decrypt the vlob
 
             let cleartext = realm_keys_bundle::decrypt_for_realm(

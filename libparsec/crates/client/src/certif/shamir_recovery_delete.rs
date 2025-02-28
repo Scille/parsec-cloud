@@ -47,7 +47,7 @@ pub(super) async fn delete_shamir_recovery(
     let last_shamir_recovery = ops
         .store
         .for_read({
-            |store| async move {
+            async |store| {
                 store
                     .get_last_shamir_recovery_for_author(UpTo::Current, author_user_id)
                     .await

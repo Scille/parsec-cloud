@@ -119,7 +119,7 @@ pub(super) async fn validate_block(
 
     let block = ops
         .store
-        .for_read_with_requirements(ops, &needed_timestamps, |store| async move {
+        .for_read_with_requirements(ops, &needed_timestamps, async |store| {
             realm_keys_bundle::decrypt_for_realm(
                 ops,
                 store,

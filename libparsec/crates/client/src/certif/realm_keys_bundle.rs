@@ -305,7 +305,7 @@ pub(super) enum AttemptRealmKeysBundleHealingError {
 //     realm_id: VlobID,
 // ) -> Result<KeysBundleHealingOutcome, AttemptRealmKeysBundleHealingError> {
 //     loop {
-//         let outcome = ops.store.for_read(|store| async move {
+//         let outcome = ops.store.for_read(async |store| {
 //             recover_realm_keys_from_previous_bundles(ops, realm_id).await
 //         }).await??;
 
