@@ -17,10 +17,4 @@ proc-macro = true
 [dependencies]
 proc-macro2 = { workspace = true, features = ["proc-macro"] }
 quote = { workspace = true, features = ["proc-macro"] }
-syn = { workspace = true, features = [
-    "derive",
-    "parsing",
-    "printing",
-    "clone-impls",
-    "proc-macro",
-] }
+syn = { workspace = true, features = ["parsing", "printing", "clone-impls", "proc-macro", "full"] }
