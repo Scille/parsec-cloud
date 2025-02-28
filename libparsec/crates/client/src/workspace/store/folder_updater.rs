@@ -217,7 +217,7 @@ pub(crate) struct FolderUpdater<'a> {
     entry_id: VlobID,
 }
 
-impl<'a> FolderUpdater<'a> {
+impl FolderUpdater<'_> {
     pub async fn update_folder_manifest(
         self,
         manifest: Arc<LocalFolderManifest>,

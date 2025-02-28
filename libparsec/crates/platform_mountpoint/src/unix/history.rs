@@ -56,7 +56,7 @@ fn entry_stat_to_file_attr(
             fuser::FileAttr {
                 ino: inode,
                 size,
-                blocks: (size + BLOCK_SIZE - 1) / BLOCK_SIZE,
+                blocks: size.div_ceil(BLOCK_SIZE),
                 atime: updated,
                 mtime: updated,
                 ctime: created,

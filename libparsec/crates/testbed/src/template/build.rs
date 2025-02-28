@@ -483,7 +483,7 @@ macro_rules! impl_customize_field_meth {
 
 impl_event_builder!(BootstrapOrganization, [first_user: UserID]);
 
-impl<'a> TestbedEventBootstrapOrganizationBuilder<'a> {
+impl TestbedEventBootstrapOrganizationBuilder<'_> {
     pub fn and_set_sequestered_organization(self) -> Self {
         self.customize(|event| {
             event.sequester_authority = Some(TestbedEventBootstrapOrganizationSequesterAuthority {
@@ -505,7 +505,7 @@ impl<'a> TestbedEventBootstrapOrganizationBuilder<'a> {
 
 impl_event_builder!(NewSequesterService);
 
-impl<'a> TestbedEventNewSequesterServiceBuilder<'a> {
+impl TestbedEventNewSequesterServiceBuilder<'_> {
     impl_customize_field_meth!(id, SequesterServiceID);
     impl_customize_field_meth!(label, String);
 }
@@ -522,7 +522,7 @@ impl_event_builder!(RevokeSequesterService, [service_id: SequesterServiceID]);
 
 impl_event_builder!(NewUser, [user: UserID]);
 
-impl<'a> TestbedEventNewUserBuilder<'a> {
+impl TestbedEventNewUserBuilder<'_> {
     impl_customize_field_meth!(author, DeviceID);
     impl_customize_field_meth!(human_handle, HumanHandle);
     impl_customize_field_meth!(first_device_id, DeviceID);
@@ -538,7 +538,7 @@ impl<'a> TestbedEventNewUserBuilder<'a> {
 
 impl_event_builder!(NewDevice, [user: UserID]);
 
-impl<'a> TestbedEventNewDeviceBuilder<'a> {
+impl TestbedEventNewDeviceBuilder<'_> {
     impl_customize_field_meth!(author, DeviceID);
     impl_customize_field_meth!(device_id, DeviceID);
     impl_customize_field_meth!(device_label, DeviceLabel);
@@ -551,7 +551,7 @@ impl<'a> TestbedEventNewDeviceBuilder<'a> {
 
 impl_event_builder!(UpdateUserProfile, [user: UserID, profile: UserProfile]);
 
-impl<'a> TestbedEventUpdateUserProfileBuilder<'a> {
+impl TestbedEventUpdateUserProfileBuilder<'_> {
     impl_customize_field_meth!(author, DeviceID);
 }
 
@@ -561,7 +561,7 @@ impl<'a> TestbedEventUpdateUserProfileBuilder<'a> {
 
 impl_event_builder!(RevokeUser, [user: UserID]);
 
-impl<'a> TestbedEventRevokeUserBuilder<'a> {
+impl TestbedEventRevokeUserBuilder<'_> {
     impl_customize_field_meth!(author, DeviceID);
 }
 
@@ -571,7 +571,7 @@ impl<'a> TestbedEventRevokeUserBuilder<'a> {
 
 impl_event_builder!(NewDeviceInvitation, [created_by: DeviceID]);
 
-impl<'a> TestbedEventNewDeviceInvitationBuilder<'a> {
+impl TestbedEventNewDeviceInvitationBuilder<'_> {
     impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
     impl_customize_field_meth!(token, InvitationToken);
@@ -583,7 +583,7 @@ impl<'a> TestbedEventNewDeviceInvitationBuilder<'a> {
 
 impl_event_builder!(NewUserInvitation, [claimer_email: String]);
 
-impl<'a> TestbedEventNewUserInvitationBuilder<'a> {
+impl TestbedEventNewUserInvitationBuilder<'_> {
     impl_customize_field_meth!(claimer_email, String);
     impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
@@ -596,7 +596,7 @@ impl<'a> TestbedEventNewUserInvitationBuilder<'a> {
 
 impl_event_builder!(NewShamirRecoveryInvitation, [claimer: UserID]);
 
-impl<'a> TestbedEventNewShamirRecoveryInvitationBuilder<'a> {
+impl TestbedEventNewShamirRecoveryInvitationBuilder<'_> {
     impl_customize_field_meth!(claimer, UserID);
     impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
@@ -766,7 +766,7 @@ impl_event_builder!(
     ]
 );
 
-impl<'a> TestbedEventRenameRealmBuilder<'a> {
+impl TestbedEventRenameRealmBuilder<'_> {
     impl_customize_field_meth!(author, DeviceID);
     impl_customize_field_meth!(key_index, IndexInt);
     impl_customize_field_meth!(key, SecretKey);
@@ -783,7 +783,7 @@ impl_event_builder!(
     ]
 );
 
-impl<'a> TestbedEventRotateKeyRealmBuilder<'a> {
+impl TestbedEventRotateKeyRealmBuilder<'_> {
     impl_customize_field_meth!(author, DeviceID);
     impl_customize_field_meth!(key_index, IndexInt);
     impl_customize_field_meth!(hash_algorithm, HashAlgorithm);
@@ -803,7 +803,7 @@ impl_event_builder!(
     ]
 );
 
-impl<'a> TestbedEventArchiveRealmBuilder<'a> {
+impl TestbedEventArchiveRealmBuilder<'_> {
     impl_customize_field_meth!(author, DeviceID);
 }
 
@@ -821,7 +821,7 @@ impl_event_builder!(
     ]
 );
 
-impl<'a> TestbedEventNewShamirRecoveryBuilder<'a> {
+impl TestbedEventNewShamirRecoveryBuilder<'_> {
     impl_customize_field_meth!(author, DeviceID);
 }
 
@@ -836,7 +836,7 @@ impl_event_builder!(
     ]
 );
 
-impl<'a> TestbedEventDeleteShamirRecoveryBuilder<'a> {
+impl TestbedEventDeleteShamirRecoveryBuilder<'_> {
     impl_customize_field_meth!(author, DeviceID);
     impl_customize_field_meth!(setup_to_delete_timestamp, DateTime);
     impl_customize_field_meth!(share_recipients, HashSet<UserID>);
@@ -857,7 +857,7 @@ impl_event_builder!(
     [device: DeviceID, realm: VlobID, vlob: Option<VlobID>, parent: Option<VlobID>]
 );
 
-impl<'a> TestbedEventCreateOrUpdateFileManifestVlobBuilder<'a> {
+impl TestbedEventCreateOrUpdateFileManifestVlobBuilder<'_> {
     impl_customize_field_meth!(key_index, IndexInt);
     impl_customize_field_meth!(key, SecretKey);
 }
@@ -871,7 +871,7 @@ impl_event_builder!(
     [device: DeviceID, realm: VlobID, vlob: Option<VlobID>, parent: Option<VlobID>]
 );
 
-impl<'a> TestbedEventCreateOrUpdateFolderManifestVlobBuilder<'a> {
+impl TestbedEventCreateOrUpdateFolderManifestVlobBuilder<'_> {
     pub fn customize_children(
         self,
         children: impl Iterator<Item = (impl TryInto<EntryName>, Option<VlobID>)>,
@@ -895,7 +895,7 @@ impl<'a> TestbedEventCreateOrUpdateFolderManifestVlobBuilder<'a> {
     }
 }
 
-impl<'a> TestbedEventCreateOrUpdateFolderManifestVlobBuilder<'a> {
+impl TestbedEventCreateOrUpdateFolderManifestVlobBuilder<'_> {
     impl_customize_field_meth!(key_index, IndexInt);
     impl_customize_field_meth!(key, SecretKey);
 }
@@ -909,7 +909,7 @@ impl_event_builder!(
     [device: DeviceID, realm: VlobID, cleartext: Bytes]
 );
 
-impl<'a> TestbedEventCreateBlockBuilder<'a> {
+impl TestbedEventCreateBlockBuilder<'_> {
     pub fn as_block_access(self, offset: SizeInt) -> BlockAccess {
         let event = self.get_event();
         let size = NonZeroU64::new(event.cleartext.len() as u64).expect("block is not empty");
@@ -987,7 +987,7 @@ impl_event_builder!(UserStorageFetchRealmCheckpoint, [device: DeviceID]);
 
 impl_event_builder!(UserStorageLocalUpdate, [device: DeviceID]);
 
-impl<'a> TestbedEventUserStorageLocalUpdateBuilder<'a> {
+impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
     /// If the `workspace_id` is already present, replace its name by a placeholder
     /// (i.e. `role` field is left as-is).
     ///
@@ -1202,7 +1202,7 @@ impl_event_builder!(
     [device: DeviceID, realm: VlobID, vlob: Option<VlobID>, parent: Option<VlobID>]
 );
 
-impl<'a> TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilder<'a> {
+impl TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilder<'_> {
     pub fn customize_children(
         self,
         children: impl Iterator<Item = (impl TryInto<EntryName>, Option<VlobID>)>,

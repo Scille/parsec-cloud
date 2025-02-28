@@ -379,7 +379,7 @@ async fn move_entry_same_parent(
     Ok(())
 }
 
-async fn move_entry_different_parents<'a>(
+async fn move_entry_different_parents(
     ops: &WorkspaceOps,
     mut updater: ReparentingUpdater<'_>,
     src_child_name: EntryName,

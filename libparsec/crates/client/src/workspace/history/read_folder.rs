@@ -86,8 +86,8 @@ impl WorkspaceHistoryFolderReader {
     }
 
     /// Note children are listed in arbitrary order, and there is no '.' and '..'  special entries.
-    pub async fn stat_child<'a>(
-        &'a self,
+    pub async fn stat_child(
+        &self,
         ops: &WorkspaceHistoryOps,
         index: usize,
     ) -> Result<

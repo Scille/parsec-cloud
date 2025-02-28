@@ -701,18 +701,18 @@ impl CertificatesStorage {
     }
 
     /// Note if multiple results are possible, the latest certificate is kept
-    pub async fn get_certificate_encrypted<'a>(
+    pub async fn get_certificate_encrypted(
         &mut self,
-        query: GetCertificateQuery<'a>,
+        query: GetCertificateQuery<'_>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         self.platform.get_certificate_encrypted(query, up_to).await
     }
 
     /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
-    pub async fn get_multiple_certificates_encrypted<'a>(
+    pub async fn get_multiple_certificates_encrypted(
         &mut self,
-        query: GetCertificateQuery<'a>,
+        query: GetCertificateQuery<'_>,
         up_to: UpTo,
         offset: Option<u32>,
         limit: Option<u32>,
@@ -734,7 +734,7 @@ pub struct CertificatesStorageUpdater<'a> {
     platform: PlatformCertificatesStorageForUpdateGuard<'a>,
 }
 
-impl<'a> CertificatesStorageUpdater<'a> {
+impl CertificatesStorageUpdater<'_> {
     /// Finish the update and commit the underlying transaction to database.
     /// If the guard is dropped without calling this method, the transaction
     /// is rollback.
@@ -769,18 +769,18 @@ impl<'a> CertificatesStorageUpdater<'a> {
     }
 
     /// Note if multiple results are possible, the latest certificate is kept
-    pub async fn get_certificate_encrypted<'b>(
+    pub async fn get_certificate_encrypted(
         &mut self,
-        query: GetCertificateQuery<'b>,
+        query: GetCertificateQuery<'_>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         self.platform.get_certificate_encrypted(query, up_to).await
     }
 
     /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
-    pub async fn get_multiple_certificates_encrypted<'b>(
+    pub async fn get_multiple_certificates_encrypted(
         &mut self,
-        query: GetCertificateQuery<'b>,
+        query: GetCertificateQuery<'_>,
         up_to: UpTo,
         offset: Option<u32>,
         limit: Option<u32>,

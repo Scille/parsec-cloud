@@ -94,8 +94,8 @@ impl FolderReader {
     }
 
     /// Note children are listed in arbitrary order, and there is no '.' and '..'  special entries.
-    pub async fn stat_child<'a>(
-        &'a self,
+    pub async fn stat_child(
+        &self,
         ops: &WorkspaceOps,
         index: usize,
     ) -> Result<FolderReaderStatNextOutcome, FolderReaderStatEntryError> {

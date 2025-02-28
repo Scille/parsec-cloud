@@ -136,7 +136,7 @@ pub struct UserForUpdateLocalWorkspacesUpdater<'a> {
     manifest: Arc<LocalUserManifest>,
 }
 
-impl<'a> UserForUpdateLocalWorkspacesUpdater<'a> {
+impl UserForUpdateLocalWorkspacesUpdater<'_> {
     pub fn workspaces(&self) -> &[LocalUserManifestWorkspaceEntry] {
         &self.manifest.local_workspaces
     }
@@ -182,7 +182,7 @@ pub struct UserStoreUpdater<'a> {
     _update_guard: AsyncMutexGuard<'a, ()>,
 }
 
-impl<'a> UserStoreUpdater<'a> {
+impl UserStoreUpdater<'_> {
     pub async fn set_user_manifest(
         mut self,
         manifest: Arc<LocalUserManifest>,

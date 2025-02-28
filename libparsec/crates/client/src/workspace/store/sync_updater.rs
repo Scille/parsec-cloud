@@ -535,7 +535,7 @@ pub(crate) struct SyncConflictUpdater<'a> {
     original_child_manifest: ArcLocalChildManifest,
 }
 
-impl<'a> SyncConflictUpdater<'a> {
+impl SyncConflictUpdater<'_> {
     pub async fn update_manifests(
         self,
         child_manifest: ArcLocalChildManifest,
