@@ -78,12 +78,23 @@ class Artifact:
     version: str
 
 
+@dataclass(frozen=True, slots=True)
+class Artifacts:
+    name: str
+    items: tuple[Artifact]
+    # Number of artifacts matching the `name`, but which have been omitted
+    # when querying Github API given they are too old.
+    omitted: int
+
+
 @lru_cache
-def get_artifacts(base_url: str, token: str, version: None | str = None) -> tuple[Artifact]:
-    url = f"{base_url}/actions/artifacts?per_page=100"
+def get_artifacts(base_url: str, token: str, name: str) -> Artifacts:
+    per_page = 100  # Max allowed by Github API
+    url = f"{base_url}/actions/artifacts?name={name}&per_page={per_page}"
     response = get(url, token)
     artifacts = []
-    for raw in json.loads(response.read())["artifacts"]:
+    body = json.loads(response.read())
+    for raw in body["artifacts"]:
         head = raw["workflow_run"]["head_branch"]
         if not head.startswith("v"):
             continue
@@ -96,19 +107,29 @@ def get_artifacts(base_url: str, token: str, version: None | str = None) -> tupl
                 version=head,
             )
         )
-    return tuple(artifacts)
+    return Artifacts(
+        name=name,
+        items=tuple(artifacts),
+        omitted=body["total_count"] - per_page,
+    )
 
 
-@lru_cache
 def get_artifact(
     artifact_name: str, base_url: str, token: str, version: None | str = None
 ) -> Artifact:
-    for artifact in get_artifacts(base_url, token, version):
-        if artifact.name != artifact_name:
-            continue
+    artifacts = get_artifacts(base_url, token, artifact_name)
+    for artifact in artifacts.items:
         if version is not None and artifact.version != version:
             continue
         return artifact
+
+    # Since we filter the artifact by name and are only interested into signing recent
+    # releases, it is unlikely that what we are looking for is among the omitted items
+    # (more likely we are looking for something that doesn't exist).
+    if artifacts.omitted:
+        print(
+            f"WARNING: {artifacts.omitted} older items correspond to `{artifact_name}` artifact have been omitted"
+        )
 
     if version is None:
         raise RuntimeError(f"Artifact {artifact_name} not found")
