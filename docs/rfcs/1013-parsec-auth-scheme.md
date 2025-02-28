@@ -15,209 +15,190 @@ For simplicity, we will skip the fido2 part that will be defined in a later RFC.
 
 ### Account creation
 
-```rust
-mod AccountCreation {
-  struct Step1EmailValidationReq {
-    email: Email,
-  }
+To start the account creation, the client start by sending its email.
 
-  enum Step1EmailValidationRes {
-    Ok,
-    ErrInvalidEmail,
-    ErrEmailAlreadyExists,
-    ErrInternal
-  }
-
-  struct Step2AccountCreationData {
-    email: Email,
-    email_validation_token: EmailValidationToken,
-    enc_sym_key: EncSymKey,
-  }
-
-  struct Step2AccountCreationPasswordReq {
-    base: Step2AccountCreationBaseReq,
-    secret: DerivedPassword,
-    public_key: PublicKey,
-  }
-
-  enum Step2AccountCreationPasswordRes {
-    Ok(AuthToken),
-    ErrInvalidEmail,
-    ErrEmailAlreadyExists,
-    ErrInvalidValidationToken,
-    ErrInternal
-  }
-}
+```yml
+account_creation_step1_email_validation:
+  req-fields:
+   email: Email
+  reps:
+    - status: ok
+    - status: invalid_email
+    - status: email_already_exists
 ```
+
+On `ok`, the server would have sent a mail with a unique token used for next the request used to register the authentication method:
+
+```yml
+account_creation_step2_password:
+  req-fields:
+    email: Email
+    email_validation_token: EmailValidationToken
+    enc_sym_key: EncSymKey
+    secret: DerivedPassword
+    public_key: PublicKey
+  reps:
+    - status: ok
+      auth_token: AuthToken
+    - status: invalid_email
+    - status: email_already_exists
+    - status: invalid_validation_token
+```
+
+`EncSymKey`, `DerivedPassword` and `PublicKey` are specialized `Bytes` types.
 
 ### Authentication
 
-```rust
-mod Authentication {
-  struct AuthenticationPasswordReq {
-    email: Email,
-    secret: DerivedPassword
-  }
+To retrieve a `AuthToken`, the client sent its email and derived password:
 
-  enum AuthenticationPasswordRes {
-    Ok(AuthToken),
-    /// Either the email does not exist or the secret is invalid.
-    ErrInvalidCredentials,
-    ErrInternal
-  }
-}
+```yml
+authenticaton_password:
+  req-fields:
+    email: Email
+    secret: DerivedPassword
+  reps:
+    - status: ok
+      auth_token: AuthToken
+    # Either the email does not exist or the secret is invalid.
+    - status: invalid_credentials
+    - status: internal_error
 ```
 
 ### Uploading a new device
 
-```rust
-mod AccountInfo {
-  #[use_auth_token]
-  struct GetEncSymKeyReq {
-    public_key: PublicKey,
-  }
+To upload a new device, the client first need to retrieve the current symmetric key:
 
-  enum GetEncSymKeyRes {
-    Ok(EncSymKey),
-    ErrUnauthenticated,
-    ErrUnknownPublicKey,
-    ErrInternal
-  }
-}
+```yml
+get_enc_sym_key:
+  use_auth_token: true
+  req-fields:
+    public_key: PublicKey
+  reps:
+    - status: ok
+      enc_sym_key: EncSymKey
+    - status: unauthenticated
+    - status: unknown_public_key
 ```
 
-```rust
-mod UploadDevice {
-  #[use_auth_token]
-  struct UploadDeviceReq {
-    organization_id: OrganizationId,
-    encrypted_device: EncryptedDevice,
-  }
+Now that the client can encrypt the device with the symmetric key, it can upload it:
 
-  enum UploadDeviceRes {
-    Ok,
-    ErrUnauthenticated,
-    ErrInternal
-  }
-}
+```yml
+upload_device:
+  use_auth_token: true
+  req-fields:
+    organization_id: OrganizationId
+    encrypted_device: EncryptedDevice
+  reps:
+    - status: ok
+    - status: unauthenticated
 ```
 
 ### List available devices
 
-```rust
-mod ListDevices {
-  #[use_auth_token]
-  struct ListDevicesReq {}
+To list the organization that have a registered device, the client only need the auth-token:
 
-  enum ListDevicesRes {
-    Ok(Vec<OrganizationId>),
-    ErrUnauthenticated,
-    ErrInternal
-  }
-}
+```yml
+list_devices:
+  use_auth_token: true
+  req-fields: {}
+  reps:
+    - status: ok
+      organization_ids: Vec<OrganizationId>
+    - status: unauthenticated
 ```
 
 ### Retrieve device
 
-```rust
-mod GetDevice {
-  #[use_auth_token]
-  struct GetDeviceReq {
-    organization_id: OrganizationId,
-  }
+To retrieve the encrypted device, the client simply has to provide the organization ID:
 
-  enum GetDeviceRes {
-    Ok(EncryptedDevice),
-    ErrUnauthenticated,
-    ErrDeviceNotFound,
-    ErrInternal
-  }
-}
+```yml
+get_enc_device:
+  use_auth_token: true
+  req-fields:
+    organization_id: OrganizationId
+  reps:
+    - status: ok
+      encrypted_device: EncryptedDevice
+    - status: unauthenticated
+    - status: device_not_found
 ```
 
 ### Adding a new authentication method
 
-```rust
-mod AddAuthMethod {
-  #[use_auth_token]
-  struct AddAuthMethodPasswordReq {
-    secret: DerivedPassword,
-    public_key: PublicKey,
-    enc_sym_key: EncSymKey,
-  }
+To add a new authentication method, the client just needs to provide the required information:
 
-  enum AddAuthMethodRes {
-    Ok,
-    ErrUnauthenticated,
-    ErrInternal
-  }
-}
+```yml
+add_auth_method_password:
+  use_auth_token: true
+  req-fields:
+    secret: DerivedPassword
+    public_key: PublicKey
+    enc_sym_key: EncSymKey
+  reps:
+    # We do not return a new auth token since the client already has one.
+    - status: ok
+    - status: unauthenticated
 ```
 
 ### Removing an authentication method
 
-```rust
-mod GetDevice {
-  #[use_auth_token]
-  struct GetAllDeviceReq {
-  }
+To remove an authentication method, the client needs to re-encrypt all the devices.
+The first step is to retrieve the said devices:
 
-  enum GetAllDeviceRes {
-    Ok(HashMap<OrganizationId, EncryptedDevice>),
-    ErrUnauthenticated,
-    ErrInternal
-}
+```yml
+get_all_enc_devices:
+  use_auth_token: true
+  req-fields: {}
+  reps:
+    - status: ok
+      devices: HashMap<OrganizationId, EncryptedDevice>
+    - status: unauthenticated
 ```
 
-```rust
-mod AccountInfo {
-  #[use_auth_token]
-  struct ListEncSymKeysReq {
-  }
+The second step is to get all encrypted symmetric keys (the client will need to filter out the one associated with the removed auth method):
 
-  enum ListEncSymKeysRes {
-    Ok(HashMap<PublicKey, EncSymKey>),
-    ErrUnauthenticated,
-    ErrInternal
-  }
-}
+```yml
+get_all_enc_sym_keys:
+  use_auth_token: true
+  req-fields: {}
+  reps:
+    - status: ok
+      enc_sym_keys: HashMap<PublicKey, EncSymKey>
+    - status: unauthenticated
+
 ```
 
-```rust
-mod RemoveAuthMethod {
-  #[use_auth_token]
-  struct RemoveAuthMethodPasswordReq {
-    auth_method_to_remove: public_key,
-    devices: HashMap<OrganizationId, EncryptedDevice>,
-    /// Some validations should be done on the server side:
-    /// - The auth method to remove should be in the list.
-    /// - The list should not have new public keys.
-    /// - The list should not be empty.
-    enc_sym_keys: HashMap<PublicKey, EncSymKey>,
-  }
+Now the client has everything to re-encrypt the devices and re-upload them:
 
-  enum RemoveAuthMethodRes {
-    Ok,
-    ErrUnauthenticated,
-    ErrInternal
-  }
-}
+```yml
+remove_auth_method_password:
+  use_auth_token: true
+  req-fields:
+    auth_method_to_remove: PublicKey
+    # Some validations should be done, no devices should be added or removed.
+    devices: HashMap<OrganizationId, EncryptedDevice>
+    # Some validations should be done on the server side:
+    # - The auth method to remove should be in the list.
+    # - The list should not have new public keys.
+    # - The list should not be empty.
+    enc_sym_keys: HashMap<PublicKey, EncSymKey>
+  reps:
+    - status: ok
+    - status: unauthenticated
+
 ```
 
 ### Deleting the account
 
-```rust
-mod AccountDeletion {
-  #[use_auth_token]
-  struct AccountDeletionPasswordReq {
-    secret: DerivedPassword,
-  }
+To delete the account, the client needs to be authenticated and provide the derived password:
 
-  enum AccountDeletionRes {
-    Ok,
-    ErrUnauthenticated,
-    ErrInvalidCredentials,
-    ErrInternal
-  }
-}
+```yml
+delete_account:
+  use_auth_token: true
+  req-fields:
+    secret: DerivedPassword
+  reps:
+    - status: ok
+    - status: unauthenticated
+    - status: invalid_credentials
 ```
