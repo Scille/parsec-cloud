@@ -84,5 +84,5 @@ fn try_flock_exclusive(file: &File) -> std::io::Result<()> {
 }
 
 fn error_is_would_block(err: &std::io::Error) -> bool {
-    err.raw_os_error().map_or(false, |x| x == libc::EWOULDBLOCK)
+    err.raw_os_error() == Some(libc::EWOULDBLOCK)
 }

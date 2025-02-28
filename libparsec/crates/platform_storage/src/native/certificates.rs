@@ -258,14 +258,14 @@ pub(crate) struct PlatformCertificatesStorageForUpdateGuard<'a> {
     transaction: Transaction<'a, Sqlite>,
 }
 
-impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
+impl PlatformCertificatesStorageForUpdateGuard<'_> {
     pub async fn commit(self) -> anyhow::Result<()> {
         self.transaction.commit().await.map_err(|e| e.into())
     }
 
-    pub async fn get_certificate_encrypted<'b>(
+    pub async fn get_certificate_encrypted(
         &mut self,
-        query: GetCertificateQuery<'b>,
+        query: GetCertificateQuery<'_>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         // Handling `up_to` with a timestamp is a bit tricky:
@@ -348,9 +348,9 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
     }
 
     /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
-    pub async fn get_multiple_certificates_encrypted<'b>(
+    pub async fn get_multiple_certificates_encrypted(
         &mut self,
-        query: GetCertificateQuery<'b>,
+        query: GetCertificateQuery<'_>,
         up_to: UpTo,
         offset: Option<u32>,
         limit: Option<u32>,
@@ -682,9 +682,9 @@ impl PlatformCertificatesStorage {
         update.get_last_timestamps().await
     }
 
-    pub async fn get_certificate_encrypted<'b>(
+    pub async fn get_certificate_encrypted(
         &mut self,
-        query: GetCertificateQuery<'b>,
+        query: GetCertificateQuery<'_>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         // TODO: transaction shouldn't be needed here (but it's currently easier to implement this way)
@@ -692,9 +692,9 @@ impl PlatformCertificatesStorage {
         update.get_certificate_encrypted(query, up_to).await
     }
 
-    pub async fn get_multiple_certificates_encrypted<'b>(
+    pub async fn get_multiple_certificates_encrypted(
         &mut self,
-        query: GetCertificateQuery<'b>,
+        query: GetCertificateQuery<'_>,
         up_to: UpTo,
         offset: Option<u32>,
         limit: Option<u32>,

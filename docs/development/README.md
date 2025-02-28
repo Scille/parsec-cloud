@@ -33,13 +33,13 @@ To start hacking, follow the basic steps detailed below:
        cd parsec-cloud
        ```
 
-    2. [`Rust v1.81.0`](https://www.rust-lang.org/fr/learn/get-started)
+    2. [`Rust v1.85.0`](https://www.rust-lang.org/fr/learn/get-started)
 
        > We use a `rust-toolchain.toml` file, so you can just install `rustup` and `cargo`
        > The required toolchain will be install automatically.
 
        ```shell
-       curl --proto '=https' --tlsv1.2 -sSL https://sh.rustup.rs | sh -s -- --default-toolchain none # You can replace `none` with `1.81.0`
+       curl --proto '=https' --tlsv1.2 -sSL https://sh.rustup.rs | sh -s -- --default-toolchain none # You can replace `none` with `1.85.0`
        ```
 
        > You then need to add the installation path to your `PATH` variable (or equivalent).

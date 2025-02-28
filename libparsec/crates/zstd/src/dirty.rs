@@ -77,11 +77,11 @@ where
     let content_checksum_flag: u8 = 0x0; // No checksum at the end of the frame
     let dictionary_id_flag: u8 = 0; // No dictionary
 
-    let frame_header_descriptor: u8 = frame_content_size_flag << 6
-        | single_segment_flag << 5
+    let frame_header_descriptor: u8 = (frame_content_size_flag << 6)
+        | (single_segment_flag << 5)
         // bit 4 is unused
         // bit 3 is reserved
-        | content_checksum_flag << 2
+        | (content_checksum_flag << 2)
         | dictionary_id_flag;
 
     destination.write_all(&[frame_header_descriptor])?;

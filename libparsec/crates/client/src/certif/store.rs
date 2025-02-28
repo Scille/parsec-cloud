@@ -1543,7 +1543,7 @@ pub(super) struct CertificatesStoreReadGuard<'a> {
     storage: &'a mut CertificatesStorage,
 }
 
-impl<'a> CertificatesStoreReadGuard<'a> {
+impl CertificatesStoreReadGuard<'_> {
     impl_read_methods!();
 }
 
@@ -1553,7 +1553,7 @@ pub(super) struct CertificatesStoreWriteGuard<'a> {
     storage: CertificatesStorageUpdater<'a>,
 }
 
-impl<'a> CertificatesStoreWriteGuard<'a> {
+impl CertificatesStoreWriteGuard<'_> {
     pub async fn forget_all_certificates(&mut self) -> anyhow::Result<()> {
         self.storage.forget_all_certificates().await?;
         self.store

@@ -162,20 +162,20 @@ impl std::str::FromStr for EntryName {
 
 pub struct EntryNameRef<'a>(&'a str);
 
-impl<'a> std::convert::AsRef<str> for EntryNameRef<'a> {
+impl std::convert::AsRef<str> for EntryNameRef<'_> {
     #[inline]
     fn as_ref(&self) -> &str {
         self.0
     }
 }
 
-impl<'a> std::fmt::Display for EntryNameRef<'a> {
+impl std::fmt::Display for EntryNameRef<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-impl<'a> std::fmt::Debug for EntryNameRef<'a> {
+impl std::fmt::Debug for EntryNameRef<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let display = self.to_string();
         f.debug_tuple("EntryNameRef").field(&display).finish()

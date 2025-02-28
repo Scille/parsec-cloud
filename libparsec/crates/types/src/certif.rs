@@ -219,7 +219,7 @@ impl From<CertificateSignerOwned> for Option<DeviceID> {
     }
 }
 
-impl<'a> std::cmp::PartialEq<CertificateSignerOwned> for CertificateSignerRef<'a> {
+impl std::cmp::PartialEq<CertificateSignerOwned> for CertificateSignerRef<'_> {
     fn eq(&self, other: &CertificateSignerOwned) -> bool {
         match (self, other) {
             (CertificateSignerRef::Root, CertificateSignerOwned::Root) => true,

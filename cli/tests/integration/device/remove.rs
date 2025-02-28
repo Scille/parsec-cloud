@@ -13,7 +13,7 @@ use crate::{
 async fn remove_device(tmp_path: TmpPath) {
     let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    let process = std::process::Command::cargo_bin("parsec-cli")
+    let mut process = std::process::Command::cargo_bin("parsec-cli")
         .unwrap()
         .args(["device", "remove", "--device", &alice.device_id.hex()])
         .stdin(std::process::Stdio::piped())
@@ -22,8 +22,8 @@ async fn remove_device(tmp_path: TmpPath) {
         .spawn()
         .unwrap();
 
-    let mut stdout = BufReader::new(process.stdout.unwrap());
-    let mut stdin = process.stdin.unwrap();
+    let mut stdout = BufReader::new(process.stdout.as_mut().unwrap());
+    let stdin = process.stdin.as_mut().unwrap();
     let mut buf = String::new();
 
     let alice_device_file = tmp_path
@@ -36,6 +36,7 @@ async fn remove_device(tmp_path: TmpPath) {
     stdin.write_all(b"y\n").unwrap();
 
     wait_for(&mut stdout, &mut buf, "The device has been removed");
+    process.wait().unwrap();
 
     assert!(!alice_device_file.exists());
 }

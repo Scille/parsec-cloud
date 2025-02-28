@@ -70,7 +70,7 @@ pub fn prepare_read(
     // Find proper block indexes
     let blocksize = u64::from(manifest.blocksize);
     let start_block = offset / blocksize;
-    let stop_block = (offset + size + blocksize - 1) / blocksize;
+    let stop_block = (offset + size).div_ceil(blocksize);
 
     // Loop over blocks
     let chunks = (start_block..stop_block)
@@ -216,7 +216,7 @@ pub fn prepare_write(
     // Find proper block indexes
     let blocksize = u64::from(manifest.blocksize);
     let start_block = offset / blocksize;
-    let stop_block = (offset + size + blocksize - 1) / blocksize;
+    let stop_block = (offset + size).div_ceil(blocksize);
 
     // Loop over blocks
     for block in start_block..stop_block {
@@ -308,7 +308,7 @@ fn prepare_truncate(
     if chunk_index == 0 {
         // No need to split the last block
         manifest.blocks.truncate(block);
-        while manifest.blocks.last().map_or(false, |x| x.is_empty()) {
+        while manifest.blocks.last().is_some_and(|x| x.is_empty()) {
             manifest.blocks.pop();
         }
     } else {
