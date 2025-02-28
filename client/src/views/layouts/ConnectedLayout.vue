@@ -8,7 +8,16 @@
 </template>
 
 <script lang="ts" setup>
-import { getConnectionInfo, getTOS, needsMocks, logout as parsecLogout, acceptTOS, mockLoggedInDevice, WorkspaceRole } from '@/parsec';
+import {
+  getConnectionInfo,
+  getTOS,
+  needsMocks,
+  logout as parsecLogout,
+  acceptTOS,
+  mockLoggedInDevice,
+  WorkspaceRole,
+  getClientInfo,
+} from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
@@ -36,11 +45,13 @@ const lastAccepted: Ref<DateTime | null> = ref(null);
 onMounted(async () => {
   const handle = getConnectionHandle();
 
+  // No handle
   if (!handle) {
     window.electronAPI.log('error', 'Failed to retrieve connection handle while logged in');
     await navigateTo(Routes.Home, { replace: true, skipHandle: true });
     return;
   }
+
   // When in dev mode, we often open directly a connected page,
   // so a few states are not properly set.
   if (needsMocks()) {
@@ -50,10 +61,19 @@ onMounted(async () => {
     mockLoggedInDevice();
   }
   injections = injectionProvider.getInjections(handle);
+
   // Provide the injections to children
   provide(FileOperationManagerKey, injections.fileOperationManager);
   provide(InformationManagerKey, injections.informationManager);
   provide(EventDistributorKey, injections.eventDistributor);
+
+  const clientInfoResult = await getClientInfo(handle);
+  // The handle is invalid
+  if (!clientInfoResult.ok) {
+    window.electronAPI.log('error', `Failed to retrieve client info: ${clientInfoResult.error.tag} (${clientInfoResult.error.error})`);
+    await navigateTo(Routes.Home, { replace: true, skipHandle: true });
+    return;
+  }
 
   callbackId = await injections.eventDistributor.registerCallback(
     Events.TOSAcceptRequired | Events.LogoutRequested,

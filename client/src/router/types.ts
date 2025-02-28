@@ -34,6 +34,12 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/home/HomePage.vue'),
   },
   {
+    path: '/:unknown(.*)*',
+    redirect: (): any => {
+      return { path: '/', query: {} };
+    },
+  },
+  {
     path: `/${Routes.Loading}`,
     name: Routes.Loading,
     component: () => import('@/views/layouts/LoadingLayout.vue'),
@@ -87,6 +93,12 @@ const routes: Array<RouteRecordRaw> = [
               {
                 path: '/:handle(\\d+)',
                 redirect: { name: Routes.Workspaces },
+              },
+              {
+                path: '/:handle(\\d+)/:unknown(.+)',
+                redirect: (to): any => {
+                  return { path: `/${to.params.handle}`, query: {} };
+                },
               },
               {
                 path: `/:handle(\\d+)/${Routes.Users}`,
