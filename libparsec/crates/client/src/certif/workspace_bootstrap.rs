@@ -63,7 +63,7 @@ pub(super) async fn bootstrap_workspace(
 
     let mut bootstrap_state = ops
         .store
-        .for_read(|store| async move {
+        .for_read(async |store| {
             // Only OWNER can do the bootstrap
 
             let current_role = store.get_self_user_realm_role(realm_id).await?;

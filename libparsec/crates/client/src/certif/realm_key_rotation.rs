@@ -192,7 +192,7 @@ async fn generate_realm_rotate_key_req(
 ) -> Result<(authenticated_cmds::latest::realm_rotate_key::Req, IndexInt), CertifRotateRealmKeyError>
 {
     ops.store
-        .for_read(|store| async move {
+        .for_read(async |store| {
             // 1) Generate the next keys bundle
 
             // Note that given this function is idempotent, this new keys bundle might get

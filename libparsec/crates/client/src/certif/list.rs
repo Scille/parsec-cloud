@@ -18,7 +18,7 @@ pub(super) async fn get_current_self_profile(
     ops: &CertificateOps,
 ) -> Result<UserProfile, CertifGetCurrentSelfProfileError> {
     ops.store
-        .for_read(|store| store.get_current_self_profile())
+        .for_read(async |store| store.get_current_self_profile().await)
         .await?
         .map_err(|err| err.into())
 }
@@ -29,7 +29,11 @@ pub(super) async fn get_current_self_realms_role(
     // TODO: cache !
     let certifs = ops
         .store
-        .for_read(|store| store.get_user_realms_roles(UpTo::Current, ops.device.user_id))
+        .for_read(async |store| {
+            store
+                .get_user_realms_roles(UpTo::Current, ops.device.user_id)
+                .await
+        })
         .await??;
 
     // Replay the history of all changes
@@ -58,7 +62,7 @@ pub(super) async fn get_current_self_realm_role(
 ) -> Result<Option<Option<RealmRole>>, CertifGetCurrentSelfRealmRoleError> {
     let role = ops
         .store
-        .for_read(|store| async move { store.get_self_user_realm_role(realm_id).await })
+        .for_read(async |store| store.get_self_user_realm_role(realm_id).await)
         .await??;
     Ok(role)
 }
@@ -87,7 +91,7 @@ pub(super) async fn list_users(
     limit: Option<u32>,
 ) -> Result<Vec<UserInfo>, CertifListUsersError> {
     ops.store
-        .for_read(|store| async move {
+        .for_read(async |store| {
             let certifs = {
                 // If `skip_revoked` is enabled, we cannot limit the number of users
                 // certificates to fetch given we will then filter out the ones corresponding
@@ -163,7 +167,11 @@ pub(super) async fn list_user_devices(
 ) -> Result<Vec<DeviceInfo>, CertifListUserDevicesError> {
     let certifs = ops
         .store
-        .for_read(|store| store.get_user_devices_certificates(UpTo::Current, user_id))
+        .for_read(async |store| {
+            store
+                .get_user_devices_certificates(UpTo::Current, user_id)
+                .await
+        })
         .await??;
 
     let items = certifs
@@ -211,7 +219,7 @@ pub(super) async fn get_user_device(
     device_id: DeviceID,
 ) -> Result<(UserInfo, DeviceInfo), CertifGetUserDeviceError> {
     ops.store
-        .for_read(|store| async move {
+        .for_read(async |store| {
             let device_certif = match store.get_device_certificate(UpTo::Current, device_id).await {
                 Ok(certif) => certif,
                 Err(GetCertificateError::ExistButTooRecent { .. }) => {
@@ -319,7 +327,7 @@ pub(super) async fn list_workspace_users(
     let mut infos = Vec::new();
 
     ops.store
-        .for_read(|store| async move {
+        .for_read(async |store| {
             let per_user_certifs = store
                 .get_realm_current_users_roles(UpTo::Current, realm_id)
                 .await?;

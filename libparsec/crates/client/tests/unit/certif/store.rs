@@ -20,8 +20,7 @@ async fn add_user_certificate(env: &TestbedEnv) {
 
     macro_rules! store_get_certif {
         ($store:ident) => {{
-            let alice_user_id = alice_user_id;
-            $store.for_read(move |store| async move {
+            $store.for_read(async |store| {
                 store
                     .get_user_certificate(UpTo::Current, alice_user_id)
                     .await
@@ -39,7 +38,7 @@ async fn add_user_certificate(env: &TestbedEnv) {
     store
         .for_write({
             let alice_certif = alice_certif.clone();
-            |store| async move {
+            async |store| {
                 store
                     .add_next_common_certificate(
                         CommonTopicArcCertificate::User(alice_certif),
@@ -75,14 +74,13 @@ async fn add_device_certificate(env: &TestbedEnv) {
     let (alice_dev1_certif, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
 
     macro_rules! store_get_certif {
-        ($store:ident) => {{
-            let alice_device_id = alice_device_id;
-            $store.for_read(move |store| async move {
+        ($store:ident) => {
+            $store.for_read(async |store| {
                 store
                     .get_device_certificate(UpTo::Current, alice_device_id)
                     .await
             })
-        }};
+        };
     }
 
     // Check that certificate is absent
@@ -95,7 +93,7 @@ async fn add_device_certificate(env: &TestbedEnv) {
     store
         .for_write({
             let alice_dev1_certif = alice_dev1_certif.clone();
-            |store| async move {
+            async |store| {
                 store
                     .add_next_common_certificate(
                         CommonTopicArcCertificate::Device(alice_dev1_certif),
@@ -139,14 +137,13 @@ async fn add_user_update_certificate(env: &TestbedEnv) {
     let (alice_update_certif, alice_update_signed) = env.get_last_user_update_certificate("alice");
 
     macro_rules! store_get_certif {
-        ($store:ident) => {{
-            let alice_user_id = alice_user_id;
-            $store.for_read(move |store| async move {
+        ($store:ident) => {
+            $store.for_read(async |store| {
                 store
                     .get_last_user_update_certificate(UpTo::Current, alice_user_id)
                     .await
             })
-        }};
+        };
     }
 
     // Check that certificate is absent
@@ -159,7 +156,7 @@ async fn add_user_update_certificate(env: &TestbedEnv) {
     store
         .for_write({
             let alice_update_certif = alice_update_certif.clone();
-            |store| async move {
+            async |store| {
                 store
                     .add_next_common_certificate(
                         CommonTopicArcCertificate::UserUpdate(alice_update_certif),
@@ -201,14 +198,13 @@ async fn add_revoked_user_certificate(env: &TestbedEnv) {
     let (bob_revoked_certif, bob_revoked_signed) = env.get_revoked_certificate("bob");
 
     macro_rules! store_get_certif {
-        ($store:ident) => {{
-            let bob_user_id = bob_user_id;
-            $store.for_read(move |store| async move {
+        ($store:ident) => {
+            $store.for_read(async |store| {
                 store
                     .get_revoked_user_certificate(UpTo::Current, bob_user_id)
                     .await
             })
-        }};
+        };
     }
 
     // Check that certificate is absent
@@ -221,7 +217,7 @@ async fn add_revoked_user_certificate(env: &TestbedEnv) {
     store
         .for_write({
             let bob_revoked_certif = bob_revoked_certif.clone();
-            |store| async move {
+            async |store| {
                 store
                     .add_next_common_certificate(
                         CommonTopicArcCertificate::RevokedUser(bob_revoked_certif),
@@ -261,11 +257,9 @@ async fn add_realm_role_certificate(env: &TestbedEnv) {
         env.get_last_realm_role_certificate("alice", realm_id);
 
     macro_rules! store_get_certif {
-        ($store:ident) => {{
-            $store.for_read(
-                |store| async move { store.get_realm_roles(UpTo::Current, realm_id).await },
-            )
-        }};
+        ($store:ident) => {
+            $store.for_read(async |store| store.get_realm_roles(UpTo::Current, realm_id).await)
+        };
     }
 
     // Check that certificate is absent
@@ -278,7 +272,7 @@ async fn add_realm_role_certificate(env: &TestbedEnv) {
     store
         .for_write({
             let alice_realm_role_certif = alice_realm_role_certif.clone();
-            |store| async move {
+            async |store| {
                 store
                     .add_next_realm_x_certificate(
                         RealmTopicArcCertificate::RealmRole(alice_realm_role_certif),
@@ -329,7 +323,7 @@ async fn get_realm_current_users_roles(env: &TestbedEnv) {
     let store = certificates_store_factory(env, &alice).await;
 
     let last_user_roles = store
-        .for_read(|store| async move {
+        .for_read(async |store| {
             store
                 .get_realm_current_users_roles(UpTo::Current, realm_id)
                 .await
@@ -370,8 +364,7 @@ async fn add_sequester_authority_certificate(env: &TestbedEnv) {
 
     macro_rules! store_get_certif {
         ($store:ident) => {
-            $store
-                .for_read(|store| async move { store.get_sequester_authority_certificate().await })
+            $store.for_read(async |store| store.get_sequester_authority_certificate().await)
         };
     }
 
@@ -385,7 +378,7 @@ async fn add_sequester_authority_certificate(env: &TestbedEnv) {
     store
         .for_write({
             let authority_certif = authority_certif.clone();
-            |store| async move {
+            async |store| {
                 store
                     .add_next_sequester_certificate(
                         SequesterTopicArcCertificate::SequesterAuthority(authority_certif),
@@ -432,7 +425,7 @@ async fn add_sequester_service_certificate(env: &TestbedEnv) {
 
     macro_rules! store_get_service_certif {
         ($store:ident) => {
-            $store.for_read(|store| async move {
+            $store.for_read(async |store| {
                 store
                     .get_sequester_service_certificates(UpTo::Current)
                     .await
@@ -446,7 +439,7 @@ async fn add_sequester_service_certificate(env: &TestbedEnv) {
     macro_rules! ensure_authority_certif_in_store_hasnt_changed {
         ($store:ident) => {
             let got = $store
-                .for_read(|store| async move { store.get_sequester_authority_certificate().await })
+                .for_read(async |store| store.get_sequester_authority_certificate().await)
                 .await
                 .unwrap()
                 .unwrap();
@@ -465,7 +458,7 @@ async fn add_sequester_service_certificate(env: &TestbedEnv) {
     store
         .for_write({
             let service_certif = service_certif.clone();
-            |store| async move {
+            async |store| {
                 store
                     .add_next_sequester_certificate(
                         SequesterTopicArcCertificate::SequesterService(service_certif),
@@ -503,7 +496,7 @@ async fn get_last_timestamps_common(env: &TestbedEnv) {
 
     macro_rules! store_get_last_timestamps {
         ($store:ident) => {
-            $store.for_read(|store| async move { store.get_last_timestamps().await })
+            $store.for_read(async |store| store.get_last_timestamps().await)
         };
     }
 
@@ -521,7 +514,7 @@ async fn get_last_timestamps_common(env: &TestbedEnv) {
     store
         .for_write({
             let certif = certif.clone();
-            |store| async move {
+            async |store| {
                 store
                     .add_next_common_certificate(CommonTopicArcCertificate::User(certif), &signed)
                     .await
@@ -577,7 +570,7 @@ async fn get_last_timestamps_sequester(env: &TestbedEnv) {
 
     macro_rules! store_get_last_timestamps {
         ($store:ident) => {
-            $store.for_read(|store| async move { store.get_last_timestamps().await })
+            $store.for_read(async |store| store.get_last_timestamps().await)
         };
     }
 
@@ -595,7 +588,7 @@ async fn get_last_timestamps_sequester(env: &TestbedEnv) {
     store
         .for_write({
             let certif = certif.clone();
-            |store| async move {
+            async |store| {
                 store
                     .add_next_sequester_certificate(
                         SequesterTopicArcCertificate::SequesterAuthority(certif),
@@ -651,7 +644,7 @@ async fn get_last_timestamps_realm(env: &TestbedEnv) {
 
     macro_rules! store_get_last_timestamps {
         ($store:ident) => {
-            $store.for_read(|store| async move { store.get_last_timestamps().await })
+            $store.for_read(async |store| store.get_last_timestamps().await)
         };
     }
 
@@ -669,7 +662,7 @@ async fn get_last_timestamps_realm(env: &TestbedEnv) {
     store
         .for_write({
             let certif = certif.clone();
-            |store| async move {
+            async |store| {
                 store
                     .add_next_realm_x_certificate(
                         RealmTopicArcCertificate::RealmRole(certif),
@@ -724,7 +717,7 @@ async fn get_self_user_realm_role(env: &TestbedEnv) {
 
     macro_rules! get_self_user_realm_role {
         ($store:ident, $realm_id:expr) => {
-            $store.for_read(|store| async move { store.get_self_user_realm_role($realm_id).await })
+            $store.for_read(async |store| store.get_self_user_realm_role($realm_id).await)
         };
     }
 
@@ -752,7 +745,7 @@ async fn get_self_user_realm_role(env: &TestbedEnv) {
     store
         .for_write({
             let certif = certif.clone();
-            |store| async move {
+            async |store| {
                 store
                     .add_next_realm_x_certificate(
                         RealmTopicArcCertificate::RealmRole(certif),
@@ -808,7 +801,7 @@ async fn get_realm_bootstrap_state(env: &TestbedEnv) {
 
     macro_rules! get_realm_bootstrap_state {
         ($store:ident, $realm_id:expr) => {
-            $store.for_read(|store| async move { store.get_realm_bootstrap_state($realm_id).await })
+            $store.for_read(async |store| store.get_realm_bootstrap_state($realm_id).await)
         };
     }
 
@@ -859,7 +852,7 @@ async fn get_realm_bootstrap_state(env: &TestbedEnv) {
     };
     store
         .for_write({
-            |store| async move {
+            async |store| {
                 store
                     .add_next_realm_x_certificate(
                         RealmTopicArcCertificate::RealmKeyRotation(certif),
@@ -926,7 +919,7 @@ async fn get_last_timestamps_shamir(env: &TestbedEnv) {
 
     macro_rules! store_get_last_timestamps {
         ($store:ident) => {
-            $store.for_read(|store| async move { store.get_last_timestamps().await })
+            $store.for_read(async |store| store.get_last_timestamps().await)
         };
     }
 
@@ -944,7 +937,7 @@ async fn get_last_timestamps_shamir(env: &TestbedEnv) {
     store
         .for_write({
             let certif = certif.clone();
-            |store| async move {
+            async |store| {
                 store
                     .add_next_shamir_recovery_certificate(
                         ShamirRecoveryTopicArcCertificate::ShamirRecoveryBrief(certif),

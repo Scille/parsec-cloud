@@ -65,7 +65,7 @@ pub(super) async fn decrypt_current_realm_name(
     realm_id: VlobID,
 ) -> Result<(EntryName, DateTime), CertifDecryptCurrentRealmNameError> {
     ops.store
-        .for_read(|store| async move {
+        .for_read(async |store| {
             // 1) Retrieve the realm name certificate
 
             let maybe_certif = store

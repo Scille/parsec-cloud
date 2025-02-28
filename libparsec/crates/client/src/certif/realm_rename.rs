@@ -195,7 +195,7 @@ pub(super) async fn ensure_realm_initial_rename(
 
     let has_initial_rename = ops
         .store
-        .for_read(|store| async move {
+        .for_read(async |store| {
             store
                 .get_realm_last_name_certificate(UpTo::Current, realm_id)
                 .await

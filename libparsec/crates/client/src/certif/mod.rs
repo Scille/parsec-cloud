@@ -219,7 +219,7 @@ impl CertificateOps {
         realm_certificates: &std::collections::HashMap<VlobID, Vec<Bytes>>,
     ) -> Result<MaybeRedactedSwitch, CertifAddCertificatesBatchError> {
         self.store
-            .for_write(move |store| async move {
+            .for_write(async |store| {
                 add::add_certificates_batch(
                     self,
                     store,
@@ -261,7 +261,7 @@ impl CertificateOps {
     // ) -> anyhow::Result<()> {
     //     use crate::certif::realm_keys_bundle::RealmKeys;
 
-    //     self.store.for_read(|store| async move {
+    //     self.store.for_read(async |store| {
     //         let keys = Arc::new(RealmKeys {
     //             realm_id,
     //             keys
@@ -280,7 +280,7 @@ impl CertificateOps {
         latest_known_timestamps: Option<&PerTopicLastTimestamps>,
     ) -> Result<(), CertifPollServerError> {
         self.store
-            .for_write(|store| async move {
+            .for_write(async |store| {
                 poll::poll_server_for_new_certificates(self, store, latest_known_timestamps).await
             })
             .await?
@@ -392,7 +392,7 @@ impl CertificateOps {
         data: &[u8],
     ) -> Result<(Vec<u8>, IndexInt), CertifEncryptForRealmError> {
         self.store
-            .for_read(|store| async move {
+            .for_read(async |store| {
                 realm_keys_bundle::encrypt_for_realm(self, store, usage, realm_id, data).await
             })
             .await
@@ -418,7 +418,7 @@ impl CertificateOps {
     ) -> Result<Vec<u8>, CertifDecryptForRealmError> {
         let outcome = self
             .store
-            .for_read(|store| async move {
+            .for_read(async |store| {
                 realm_keys_bundle::decrypt_for_realm(
                     self, store, usage, realm_id, key_index, encrypted,
                 )
@@ -450,7 +450,7 @@ impl CertificateOps {
             })?;
 
         self.store
-            .for_read(|store| async move {
+            .for_read(async |store| {
                 realm_keys_bundle::decrypt_for_realm(
                     self, store, usage, realm_id, key_index, encrypted,
                 )
@@ -470,9 +470,7 @@ impl CertificateOps {
     ) -> Result<Option<Vec<(SequesterServiceID, Bytes)>>, CertifEncryptForSequesterServicesError>
     {
         self.store
-            .for_read(
-                |store| async move { encrypt::encrypt_for_sequester_services(store, data).await },
-            )
+            .for_read(async |store| encrypt::encrypt_for_sequester_services(store, data).await)
             .await
             .map_err(|e| match e {
                 CertifStoreError::Stopped => CertifEncryptForSequesterServicesError::Stopped,

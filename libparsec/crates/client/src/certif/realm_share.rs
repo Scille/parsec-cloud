@@ -240,7 +240,7 @@ async fn share_do_server_command(
     let (encrypted_keys_bundle_access, key_index) = ops
         .store
         .for_read({
-            |store| async move {
+            async |store| {
                 super::realm_keys_bundle::encrypt_realm_keys_bundle_access_for_user(
                     ops, store, realm_id, recipient,
                 )

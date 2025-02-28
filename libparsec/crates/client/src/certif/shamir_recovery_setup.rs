@@ -175,7 +175,7 @@ async fn check_against_local_certificates(
     let author_user_id = ops.device.user_id;
     ops.store
         .for_read({
-            |store| async move {
+            async |store| {
                 // 1. Shamir already exists ?
 
                 match store
