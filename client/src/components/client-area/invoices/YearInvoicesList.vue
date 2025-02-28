@@ -83,14 +83,14 @@
         v-for="year in years"
         v-show="selectedYears.length === 0 || selectedYears.includes(year)"
         :key="year"
-        :invoices-data="filterInvoicesByYear(year)"
+        :invoices="filterInvoicesByYear(year)"
         :title="{ key: 'common.date.asIs', data: { date: year.toString() } }"
         :months-filter="selectedMonths"
       />
     </div>
 
     <!-- skeleton invoices -->
-    <invoices-list-skeleton
+    <year-invoices-list-skeleton
       v-if="querying"
     />
   </template>
@@ -111,17 +111,17 @@
 
 <script setup lang="ts">
 import { IonText, IonIcon, popoverController } from '@ionic/vue';
-import { BmsInvoice, CustomOrderDetailsResultData, DataType } from '@/services/bms';
+import { Invoice } from '@/services/bms';
 import { ref, onMounted, watch } from 'vue';
 import { chevronDown, calendar, close } from 'ionicons/icons';
 import { I18n, MsOptions, Translatable } from 'megashark-lib';
 import TimeFilterPopover from '@/components/client-area/TimeFilterPopover.vue';
-import { YearInvoicesListItem, InvoicesData } from '@/components/client-area';
-import InvoicesListSkeleton from '@/components/client-area/invoices/InvoicesListSkeleton.vue';
+import YearInvoicesListItem from '@/components/client-area/invoices/YearInvoicesListItem.vue';
+import YearInvoicesListSkeleton from '@/components/client-area/invoices/YearInvoicesListSkeleton.vue';
 import { Info } from 'luxon';
 
 const props = defineProps<{
-  invoices: Array<BmsInvoice> | Array<CustomOrderDetailsResultData>;
+  invoices: Array<Invoice>;
   title: Translatable;
   querying: boolean;
   error?: Translatable;
@@ -130,61 +130,20 @@ const props = defineProps<{
 const years = ref<Array<number>>([]);
 const selectedYears = ref<Array<number>>([]);
 const selectedMonths = ref<Array<number>>([]);
-const invoicesData = ref<InvoicesData | null>(null);
 
 watch(() => props.invoices, () => {
   if (props.invoices.length > 0) {
-    loadInvoicesData();
+    years.value = props.invoices.map((invoice) => invoice.getDate().year);
+    years.value = Array.from(new Set(years.value));
   }
 });
 
 onMounted(() => {
   if (props.invoices.length > 0) {
-    invoicesData.value = {
-      type: props.invoices[0].type,
-      invoices: [],
-    };
-    loadInvoicesData();
-  }
-});
-
-function loadInvoicesData(): void {
-  const invoices = [];
-  for (const invoice of props.invoices) {
-    if (invoice.type === DataType.CustomOrderDetails) {
-      invoices.push({
-        type: invoice.type,
-        id: invoice.id.toString(),
-        date: invoice.created,
-        number: invoice.number,
-        organizationId: 'organizationId',
-        price: invoice.amountWithTaxes,
-        licenseStart: invoice.licenseStart,
-        licenseEnd: invoice.licenseEnd,
-        status: invoice.status,
-        link: invoice.link,
-      });
-    }
-    if (invoice.type === DataType.BmsInvoice) {
-      invoices.push({
-        type: invoice.type,
-        id: invoice.id,
-        date: invoice.start,
-        number: invoice.number,
-        organizationId: invoice.organizationId,
-        price: invoice.total,
-        status: invoice.status,
-        link: invoice.pdfLink,
-      });
-    }
-    invoicesData.value = {
-      type: invoice.type,
-      invoices,
-    };
-    years.value = invoicesData.value.invoices.map((invoice) => invoice.date.year);
+    years.value = props.invoices.map((invoice) => invoice.getDate().year);
     years.value = Array.from(new Set(years.value));
   }
-}
+});
 
 async function openYearFilterPopover(event: Event): Promise<void> {
   event.stopPropagation();
@@ -240,11 +199,8 @@ async function openMonthFilterPopover(event: Event): Promise<void> {
   await popover.dismiss();
 }
 
-function filterInvoicesByYear(year: number): InvoicesData {
-  return {
-    type: invoicesData.value!.type,
-    invoices: invoicesData.value!.invoices.filter((invoice) => invoice.date.year === year),
-  };
+function filterInvoicesByYear(year: number): Array<Invoice> {
+  return props.invoices.filter((invoice) => invoice.getDate().year === year);
 }
 
 function getMonthName(month: number): Translatable | undefined {

@@ -172,12 +172,12 @@ interface CustomOrderDetailsResultData {
 
 interface CustomOrderInvoicesResultData {
   type: DataType.CustomOrderInvoices;
-  invoices: Array<CustomOrderDetailsResultData>;
+  invoices: Array<SellsyInvoice>;
 }
 
 interface MonthlySubscriptionInvoicesResultData {
   type: DataType.MonthlySubscriptionInvoices;
-  invoices: Array<BmsInvoice>;
+  invoices: Array<StripeInvoice>;
 }
 
 interface RefreshTokenResultData {
@@ -498,6 +498,7 @@ export {
   DeletePaymentMethodQueryData,
   Invoice,
   InvoiceStatus,
+  InvoiceType,
   ListOrganizationsResultData,
   LoginQueryData,
   LoginResultData,

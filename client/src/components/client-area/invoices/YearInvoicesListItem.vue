@@ -21,8 +21,8 @@
 
     <!-- invoices list -->
     <invoices-list
-      v-if="invoicesData.invoices.length > 0 && isVisible"
-      :invoices-data="invoicesData"
+      v-if="invoices.length > 0 && isVisible"
+      :invoices="invoices"
       :months-filter="monthsFilter"
     />
   </div>
@@ -31,13 +31,13 @@
 <script setup lang="ts">
 import { IonText, IonIcon } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
+import { Invoice } from '@/services/bms';
 import { Translatable } from 'megashark-lib';
 import InvoicesList from '@/components/client-area/invoices/InvoicesList.vue';
 import { ref } from 'vue';
-import { InvoicesData } from '@/components/client-area/invoices/types';
 
 defineProps<{
-  invoicesData: InvoicesData;
+  invoices: Array<Invoice>;
   title: Translatable;
   monthsFilter?: Array<number>;
 }>();

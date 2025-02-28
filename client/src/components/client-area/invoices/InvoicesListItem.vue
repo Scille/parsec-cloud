@@ -5,28 +5,28 @@
     class="invoices-year-content-list-item ion-no-padding"
   >
     <ion-text class="invoices-year-content-list-item__data invoices-date subtitles-sm">
-      {{ $msTranslate(I18n.formatDate(invoice.date, 'narrow')) }}
+      {{ $msTranslate(I18n.formatDate(invoice.getDate(), 'narrow')) }}
     </ion-text>
-    <ion-text class="invoices-year-content-list-item__data invoices-number body">{{ invoice.number }}</ion-text>
-    <ion-text class="invoices-year-content-list-item__data invoices-organization body">{{ invoice.organizationId }}</ion-text>
+    <ion-text class="invoices-year-content-list-item__data invoices-number body">{{ invoice.getNumber() }}</ion-text>
+    <ion-text class="invoices-year-content-list-item__data invoices-organization body">{{ invoice.getOrganizationId() }}</ion-text>
     <ion-text class="invoices-year-content-list-item__data invoices-amount body">
-      {{ $msFormatCurrency(invoice.price) }}
+      {{ $msFormatCurrency(invoice.getAmount()) }}
     </ion-text>
-    <template v-if="invoice.type === DataType.CustomOrderDetails">
+    <template v-if="invoice.getType() === InvoiceType.Sellsy">
       <ion-text
         class="invoices-year-content-list-item__data invoices-contract-period body"
-        v-if="invoice.licenseStart && invoice.licenseEnd"
+        v-if="(invoice as SellsyInvoice).getLicenseStart() && (invoice as SellsyInvoice).getLicenseEnd()"
       >
         {{
           $msTranslate({
             key: 'clientArea.invoices.cell.contractPeriod.from',
-            data: { date: $msTranslate(I18n.formatDate(invoice.licenseStart, 'narrow')) },
+            data: { date: $msTranslate(I18n.formatDate((invoice as SellsyInvoice).getLicenseStart()!, 'narrow')) },
           })
         }}
         {{
           $msTranslate({
             key: 'clientArea.invoices.cell.contractPeriod.to',
-            data: { date: $msTranslate(I18n.formatDate(invoice.licenseEnd, 'narrow')) },
+            data: { date: $msTranslate(I18n.formatDate((invoice as SellsyInvoice).getLicenseEnd()!, 'narrow')) },
           })
         }}
       </ion-text>
@@ -40,13 +40,13 @@
     <ion-text class="invoices-year-content-list-item__data invoices-status">
       <span
         class="badge-status body-sm"
-        :class="invoice.status"
+        :class="invoice.getStatus()"
       >
-        {{ $msTranslate(getInvoiceStatusTranslationKey(invoice.status)) }}
+        {{ $msTranslate(getInvoiceStatusTranslationKey(invoice.getStatus())) }}
       </span>
       <a
         class="custom-button custom-button-ghost button-medium"
-        :href="invoice.link"
+        :href="invoice.getLink()"
         download
       >
         <ms-image
@@ -60,14 +60,13 @@
 </template>
 
 <script setup lang="ts">
-import { DataType } from '@/services/bms';
+import { Invoice, InvoiceType, SellsyInvoice } from '@/services/bms';
 import { getInvoiceStatusTranslationKey } from '@/services/translation';
 import { IonItem, IonText } from '@ionic/vue';
 import { MsImage, Download as downloaded, I18n } from 'megashark-lib';
-import { InvoiceData } from '@/components/client-area/invoices/types';
 
 defineProps<{
-  invoice: InvoiceData;
+  invoice: Invoice;
 }>();
 </script>
 

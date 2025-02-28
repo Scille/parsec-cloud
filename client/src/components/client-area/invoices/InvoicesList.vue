@@ -16,7 +16,7 @@
       <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.price.title') }}</ion-text>
     </ion-item>
     <ion-item
-      v-if="invoicesData.type === DataType.CustomOrderDetails"
+      v-if="invoices.some(invoice => invoice.getType() === InvoiceType.Sellsy)"
       class="invoices-year-header-list-item invoices-contract-period"
     >
       <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.contractPeriod.title') }}</ion-text>
@@ -29,22 +29,21 @@
   <!-- row invoices -->
   <ion-list class="invoices-year-content-list ion-no-padding">
     <invoices-list-item
-      v-for="invoice in invoicesData.invoices"
+      v-for="invoice in invoices"
       :invoice="invoice"
-      :key="invoice.id"
-      v-show="monthsFilter === undefined || monthsFilter.length === 0 || monthsFilter.includes(invoice.date.month)"
+      :key="invoice.getId()"
+      v-show="monthsFilter === undefined || monthsFilter.length === 0 || monthsFilter.includes(invoice.getDate().month)"
     />
   </ion-list>
 </template>
 
 <script setup lang="ts">
-import { DataType } from '@/services/bms';
+import { Invoice, InvoiceType } from '@/services/bms';
 import { IonItem, IonList, IonText } from '@ionic/vue';
-import { InvoicesData } from '@/components/client-area/invoices/types';
 import InvoicesListItem from '@/components/client-area/invoices/InvoicesListItem.vue';
 
 defineProps<{
-  invoicesData: InvoicesData;
+  invoices: Array<Invoice>;
   monthsFilter?: Array<number>;
 }>();
 </script>

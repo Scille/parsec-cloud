@@ -5,6 +5,7 @@ import {
   AuthenticationToken,
   BillingSystem,
   BmsError,
+  BmsInvoice,
   BmsOrganization,
   BmsResponse,
   CONNECTION_ERROR_STATUS,
@@ -18,7 +19,9 @@ import {
   LoginQueryData,
   OrganizationQueryData,
   PaymentMethod,
+  SellsyInvoice,
   SetDefaultPaymentMethodQueryData,
+  StripeInvoice,
   UpdateAuthenticationQueryData,
   UpdateBillingDetailsQueryData,
   UpdateEmailQueryData,
@@ -319,7 +322,7 @@ async function getMonthlySubscriptionInvoices(token: AuthenticationToken, query:
       data: {
         type: DataType.MonthlySubscriptionInvoices,
         invoices: axiosResponse.data.results.map((invoice: any) => {
-          return {
+          const bmsInvoice: BmsInvoice = {
             type: DataType.BmsInvoice,
             id: invoice.id,
             pdfLink: invoice.pdf,
@@ -331,6 +334,8 @@ async function getMonthlySubscriptionInvoices(token: AuthenticationToken, query:
             number: invoice.number,
             receiptNumber: invoice.receipt_number,
           };
+
+          return new StripeInvoice(bmsInvoice);
         }),
       },
     };
@@ -697,7 +702,10 @@ async function getCustomOrderInvoices(token: AuthenticationToken, query: CustomO
       isError: false,
       data: {
         type: DataType.CustomOrderInvoices,
-        invoices: orgDataArray.map((value) => parseCustomOrderInvoice(value)),
+        invoices: orgDataArray.map((value) => {
+          const customOrderInvoice = parseCustomOrderInvoice(value);
+          return new SellsyInvoice(customOrderInvoice);
+        }),
       },
     };
   });

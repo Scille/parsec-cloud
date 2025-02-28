@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { BmsAccessInstance, BmsOrganization, CustomOrderDetailsResultData, DataType } from '@/services/bms';
+import { BmsAccessInstance, BmsOrganization, DataType, SellsyInvoice } from '@/services/bms';
 import { YearInvoicesList } from '@/components/client-area';
 import { ref, onMounted } from 'vue';
 
@@ -20,7 +20,7 @@ const props = defineProps<{
   organization: BmsOrganization;
 }>();
 
-const invoices = ref<Array<CustomOrderDetailsResultData>>([]);
+const invoices = ref<Array<SellsyInvoice>>([]);
 const querying = ref(true);
 const error = ref<string>('');
 
@@ -28,7 +28,9 @@ onMounted(async () => {
   querying.value = true;
   const response = await BmsAccessInstance.get().getCustomOrderInvoices(props.organization);
   if (!response.isError && response.data && response.data.type === DataType.CustomOrderInvoices) {
-    invoices.value = response.data.invoices.sort((invoice1, invoice2) => invoice2.created.diff(invoice1.created).toMillis());
+    invoices.value = response.data.invoices.sort((invoice1, invoice2) => {
+      return invoice2.getDate().diff(invoice1.getDate()).toMillis();
+    });
   } else {
     error.value = 'clientArea.invoices.retrieveError';
   }
