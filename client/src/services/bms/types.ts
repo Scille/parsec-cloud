@@ -30,7 +30,7 @@ enum DataType {
   ListOrganizations = 'list-organizations',
   OrganizationStats = 'organization-stats',
   OrganizationStatus = 'organization-status',
-  Invoices = 'invoices',
+  MonthlySubscriptionInvoices = 'monthly-subscription-invoices',
   RefreshToken = 'refresh-token',
   BillingDetails = 'billing-details',
   AddPaymentMethod = 'add-payment-method',
@@ -175,8 +175,8 @@ interface CustomOrderInvoicesResultData {
   invoices: Array<CustomOrderDetailsResultData>;
 }
 
-interface InvoicesResultData {
-  type: DataType.Invoices;
+interface MonthlySubscriptionInvoicesResultData {
+  type: DataType.MonthlySubscriptionInvoices;
   invoices: Array<BmsInvoice>;
 }
 
@@ -241,7 +241,7 @@ type ResultData =
   | ListOrganizationsResultData
   | OrganizationStatsResultData
   | OrganizationStatusResultData
-  | InvoicesResultData
+  | MonthlySubscriptionInvoicesResultData
   | RefreshTokenResultData
   | BillingDetailsResultData
   | CustomOrderStatusResultData

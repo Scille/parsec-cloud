@@ -258,7 +258,7 @@ onMounted(async () => {
   }
 
   const invoicesResponse = await BmsAccessInstance.get().getMonthlySubscriptionInvoices();
-  if (!invoicesResponse.isError && invoicesResponse.data && invoicesResponse.data.type === DataType.Invoices) {
+  if (!invoicesResponse.isError && invoicesResponse.data && invoicesResponse.data.type === DataType.MonthlySubscriptionInvoices) {
     invoices.value = invoicesResponse.data.invoices
       .filter((invoice) => isDefaultOrganization(props.organization) || invoice.organizationId === props.organization.parsecId)
       .sort((invoice1, invoice2) => invoice2.start.toMillis() - invoice1.start.toMillis())

@@ -317,7 +317,7 @@ async function getMonthlySubscriptionInvoices(token: AuthenticationToken, query:
       status: axiosResponse.status,
       isError: false,
       data: {
-        type: DataType.Invoices,
+        type: DataType.MonthlySubscriptionInvoices,
         invoices: axiosResponse.data.results.map((invoice: any) => {
           return {
             type: DataType.BmsInvoice,
