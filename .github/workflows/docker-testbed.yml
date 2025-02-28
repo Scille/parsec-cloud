@@ -71,6 +71,22 @@ jobs:
         with:
           images:
             ghcr.io/scille/parsec-cloud/parsec-testbed-server
+          # Manually set some labels:
+          # - The title to be more specific than just the repo name.
+          # - The license label as it's not correctly detect by the action
+          #   (internally it use the detected license from github but itself does not support our license)
+          # - The version labels to the full version.
+          #
+          # We use the spec defined here: https://github.com/opencontainers/image-spec/blob/main/annotations.md
+          labels: |
+            org.opencontainers.image.title=The Parsec-Cloud testbed server
+            org.opencontainers.image.licenses=BUSL-1.1
+            org.opencontainers.image.version=${{ steps.version.outputs.full }}
+          # We set the same values as labels for annotations
+          annotations: |
+            manifest:org.opencontainers.image.title=The Parsec-Cloud testbed server
+            manifest:org.opencontainers.image.licenses=BUSL-1.1
+            manifest:org.opencontainers.image.version=${{ steps.version.outputs.full }}
           tags: |
             type=raw,value=${{ steps.version.outputs.docker }}
           flavor: |
