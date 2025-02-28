@@ -257,7 +257,7 @@ onMounted(async () => {
     }
   }
 
-  const invoicesResponse = await BmsAccessInstance.get().getInvoices();
+  const invoicesResponse = await BmsAccessInstance.get().getMonthlySubscriptionInvoices();
   if (!invoicesResponse.isError && invoicesResponse.data && invoicesResponse.data.type === DataType.Invoices) {
     invoices.value = invoicesResponse.data.invoices
       .filter((invoice) => isDefaultOrganization(props.organization) || invoice.organizationId === props.organization.parsecId)

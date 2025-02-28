@@ -306,7 +306,7 @@ async function getOrganizationStatus(token: AuthenticationToken, query: Organiza
   });
 }
 
-async function getInvoices(token: AuthenticationToken, query: ClientQueryData): Promise<BmsResponse> {
+async function getMonthlySubscriptionInvoices(token: AuthenticationToken, query: ClientQueryData): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http.getInstance().get(`/users/${query.userId}/clients/${query.clientId}/invoices`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -713,7 +713,7 @@ export const BmsApi = {
   listOrganizations,
   getOrganizationStats,
   getOrganizationStatus,
-  getInvoices,
+  getMonthlySubscriptionInvoices,
   refreshToken,
   getBillingDetails,
   addPaymentMethod,

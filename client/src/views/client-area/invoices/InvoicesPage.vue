@@ -27,7 +27,7 @@ const querying = ref(true);
 
 onMounted(async () => {
   querying.value = true;
-  const response = await BmsAccessInstance.get().getInvoices();
+  const response = await BmsAccessInstance.get().getMonthlySubscriptionInvoices();
   if (!response.isError && response.data && response.data.type === DataType.Invoices) {
     invoices.value = response.data.invoices
       .filter((invoice) => isDefaultOrganization(props.organization) || invoice.organizationId === props.organization.parsecId)

@@ -192,7 +192,7 @@ export const MockedBmsApi = {
     };
   }),
   getOrganizationStatus: createMockFunction('getOrganizationStatus'),
-  getInvoices: createMockFunction('getInvoices'),
+  getMonthlySubscriptionInvoices: createMockFunction('getMonthlySubscriptionInvoices'),
   refreshToken: createMockFunction('refreshToken'),
   getBillingDetails: createMockFunction('getBillingDetails'),
   addPaymentMethod: createMockFunction('addPaymentMethod'),

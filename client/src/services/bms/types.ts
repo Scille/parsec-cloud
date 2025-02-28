@@ -271,6 +271,7 @@ interface BmsInvoice {
   status: InvoiceStatus;
   organizationId: OrganizationID;
   number: string;
+  receiptNumber: string;
 }
 
 enum InvoiceStatus {
@@ -366,6 +367,111 @@ interface CreateCustomOrderRequestQueryData {
   organizationName?: string;
 }
 
+enum InvoiceType {
+  Sellsy = 'sellsy',
+  Stripe = 'stripe',
+}
+
+interface Invoice {
+  getType(): InvoiceType;
+  getId(): string;
+  getDate(): DateTime;
+  getNumber(): string;
+  getAmount(): number;
+  getOrganizationId(): string;
+  getStatus(): InvoiceStatus;
+  getLink(): string;
+}
+
+class SellsyInvoice implements Invoice {
+  invoice: CustomOrderDetailsResultData;
+
+  constructor(invoice: CustomOrderDetailsResultData) {
+    this.invoice = invoice;
+  }
+
+  getType(): InvoiceType {
+    return InvoiceType.Sellsy;
+  }
+
+  getId(): string {
+    return this.invoice.id.toString();
+  }
+
+  getDate(): DateTime {
+    return this.invoice.created;
+  }
+
+  getNumber(): string {
+    return this.invoice.number;
+  }
+
+  getAmount(): number {
+    return this.invoice.amountWithTaxes;
+  }
+
+  // TODO: Replace with real organization ID
+  getOrganizationId(): string {
+    return 'organizationId';
+  }
+
+  getStatus(): InvoiceStatus {
+    return this.invoice.status;
+  }
+
+  getLink(): string {
+    return this.invoice.link;
+  }
+
+  getLicenseStart(): DateTime | undefined {
+    return this.invoice.licenseStart;
+  }
+
+  getLicenseEnd(): DateTime | undefined {
+    return this.invoice.licenseEnd;
+  }
+}
+
+class StripeInvoice implements Invoice {
+  invoice: BmsInvoice;
+
+  constructor(invoice: BmsInvoice) {
+    this.invoice = invoice;
+  }
+
+  getType(): InvoiceType {
+    return InvoiceType.Stripe;
+  }
+
+  getId(): string {
+    return this.invoice.id;
+  }
+
+  getDate(): DateTime {
+    return this.invoice.start;
+  }
+
+  getNumber(): string {
+    return this.invoice.number;
+  }
+
+  getAmount(): number {
+    return this.invoice.total;
+  }
+
+  getOrganizationId(): string {
+    return this.invoice.organizationId;
+  }
+
+  getStatus(): InvoiceStatus {
+    return this.invoice.status;
+  }
+
+  getLink(): string {
+    return this.invoice.pdfLink;
+  }
+}
+
 export {
   AddPaymentMethodQueryData,
   AuthenticationToken,
@@ -390,6 +496,7 @@ export {
   CustomOrderStatusResultData,
   DataType,
   DeletePaymentMethodQueryData,
+  Invoice,
   InvoiceStatus,
   ListOrganizationsResultData,
   LoginQueryData,
@@ -399,7 +506,9 @@ export {
   OrganizationStatusResultData,
   PaymentMethod,
   PersonalInformationResultData,
+  SellsyInvoice,
   SetDefaultPaymentMethodQueryData,
+  StripeInvoice,
   UpdateAuthenticationQueryData,
   UpdateBillingDetailsQueryData,
   UpdateEmailQueryData,
