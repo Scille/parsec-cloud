@@ -124,9 +124,13 @@ jobs:
           cp ${CP_ARGS} artifacts/linux-appimage-X64-electron/Parsec_${{ needs.version.outputs.full }}_linux_*.AppImage release-files
           cp ${CP_ARGS} artifacts/linux-appimage-X64-electron/latest-linux-*.yml release-files
 
-          # DMG & ZIP
+          # macos DMG & ZIP for x86 architecture
           cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/Parsec_${{ needs.version.outputs.full }}_mac_*.{dmg,zip}{,.blockmap} release-files
           cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/latest-mac-*.yml release-files
+
+          # macos DMG & ZIP for arm architecture
+          cp ${CP_ARGS} artifacts/macos-dmg-ARM64-electron/Parsec_${{ needs.version.outputs.full }}_mac_*.{dmg,zip}{,.blockmap} release-files
+          cp ${CP_ARGS} artifacts/macos-dmg-ARM64-electron/latest-mac-*.yml release-files
 
           # TODO: Currently, Windows electron client is not signed by the CI, thus
           # it should not be uploaded when creating the draft release.
@@ -145,7 +149,7 @@ jobs:
           BASH_XTRACEFD: 1
 
       - name: Copy SBOM files
-        run: cp -v artifacts/**/Parsec-SBOM-*.spdx.json release-files
+        run: cp -v --no-clobber artifacts/**/Parsec-SBOM-*.spdx.json release-files
 
       - name: Merge artifacts files
         id: artifacts
