@@ -1,0 +1,1 @@
+Updated how the new version available notification looks

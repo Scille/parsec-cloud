@@ -102,7 +102,6 @@ import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vu
 import { Translatable, MsModalResult } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
 import { Env } from '@/services/environment';
-import { needsMocks } from '@/parsec';
 import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
 import { APP_VERSION } from '@/services/environment';
 
@@ -156,10 +155,6 @@ onMounted(async () => {
     }
   });
   window.electronAPI.getUpdateAvailability();
-  if (needsMocks()) {
-    // Dispatch dummy update event to be able to debug the UpdateAppModal
-    eventDistributor.dispatchEvent(Events.UpdateAvailability, { updateAvailable: true, version: 'v3.1.0' });
-  }
 });
 
 onUnmounted(async () => {

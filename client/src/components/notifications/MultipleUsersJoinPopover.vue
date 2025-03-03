@@ -28,6 +28,7 @@
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { UserInfo, WorkspaceRole, getUserInfo } from '@/parsec';
+import { EventDistributor } from '@/services/eventDistributor';
 import { MultipleUsersJoinWorkspaceData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonItem, IonList } from '@ionic/vue';
@@ -36,6 +37,7 @@ import { Ref, onMounted, ref } from 'vue';
 const userRoles: Ref<{ info: UserInfo; role: WorkspaceRole }[]> = ref([]);
 const props = defineProps<{
   notification: Notification;
+  eventDistributor: EventDistributor;
 }>();
 
 onMounted(async () => {

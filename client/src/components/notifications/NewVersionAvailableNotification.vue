@@ -33,28 +33,42 @@
 </template>
 
 <script setup lang="ts">
-import { Answer, askQuestion, formatTimeSince } from 'megashark-lib';
+import { formatTimeSince, MsModalResult } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import { Notification } from '@/services/notificationManager';
 import { NewVersionAvailableData } from '@/services/informationManager';
-import { IonIcon, IonText, popoverController } from '@ionic/vue';
+import { IonIcon, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowForward, sparkles } from 'ionicons/icons';
-import { navigateTo, Routes } from '@/router';
+import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
+import { APP_VERSION } from '@/services/environment';
+import { EventDistributor, Events } from '@/services/eventDistributor';
 
 const props = defineProps<{
   notification: Notification;
+  eventDistributor: EventDistributor;
 }>();
 
 const data: NewVersionAvailableData = props.notification.getData<NewVersionAvailableData>();
 
 async function update(): Promise<void> {
   await popoverController.dismiss();
-  const answer = await askQuestion('HomePage.topbar.updateConfirmTitle', 'HomePage.topbar.updateConfirmQuestion', {
-    yesText: 'HomePage.topbar.updateYes',
-    noText: 'HomePage.topbar.updateNo',
+
+  const modal = await modalController.create({
+    component: UpdateAppModal,
+    canDismiss: true,
+    cssClass: 'update-app-modal',
+    backdropDismiss: false,
+    componentProps: {
+      currentVersion: APP_VERSION,
+      targetVersion: data.newVersion,
+    },
   });
-  if (answer === Answer.Yes) {
-    await navigateTo(Routes.Home, { replace: true, skipHandle: true });
+  await modal.present();
+  const { role } = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  if (role === MsModalResult.Confirm) {
+    await props.eventDistributor.dispatchEvent(Events.LogoutRequested);
     window.electronAPI.prepareUpdate();
   }
 }

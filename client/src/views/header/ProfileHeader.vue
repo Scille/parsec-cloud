@@ -39,12 +39,14 @@ import { UserProfile, getConnectionInfo } from '@/parsec';
 import { Routes, navigateTo, ProfilePages } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
-import { Answer, askQuestion } from 'megashark-lib';
+import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
-import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
+import { IonIcon, IonItem, IonText, modalController, popoverController } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 import { Env } from '@/services/environment';
+import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
+import { APP_VERSION } from '@/services/environment';
 
 const isOnline = ref(false);
 const isPopoverOpen = ref(false);
@@ -111,12 +113,22 @@ async function openPopover(event: Event): Promise<void> {
     return;
   }
   if (data.option === ProfilePopoverOption.Update) {
-    const answer = await askQuestion('HomePage.topbar.updateConfirmTitle', 'HomePage.topbar.updateConfirmQuestion', {
-      yesText: 'HomePage.topbar.updateYes',
-      noText: 'HomePage.topbar.updateNo',
+    const modal = await modalController.create({
+      component: UpdateAppModal,
+      canDismiss: true,
+      cssClass: 'update-app-modal',
+      backdropDismiss: false,
+      componentProps: {
+        currentVersion: APP_VERSION,
+        targetVersion: updateAvailability.value.version,
+      },
     });
-    if (answer === Answer.Yes) {
-      await navigateTo(Routes.Home, { replace: true, skipHandle: true });
+    await modal.present();
+    const { role } = await modal.onWillDismiss();
+    await modal.dismiss();
+
+    if (role === MsModalResult.Confirm) {
+      await eventDistributor.dispatchEvent(Events.LogoutRequested);
       window.electronAPI.prepareUpdate();
     }
   } else if (data.option === ProfilePopoverOption.LogOut) {

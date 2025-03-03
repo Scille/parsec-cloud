@@ -92,6 +92,9 @@ onMounted(async () => {
 
   initialized.value = true;
 
+  // Making sure we get a notification as soon as possible
+  window.electronAPI.getUpdateAvailability();
+
   const connInfo = getConnectionInfo();
   if (connInfo && connInfo.shouldAcceptTos) {
     await showTOSModal();

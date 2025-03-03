@@ -32,6 +32,7 @@
           :is="getComponentType(notification)"
           :key="notification.information.id"
           :notification="notification"
+          :event-distributor="eventDistributor"
           @mouse-over="onNotificationMouseOver($event)"
         />
       </ion-list>
@@ -46,9 +47,11 @@ import { InformationDataType } from '@/services/informationManager';
 import { Notification, NotificationManager } from '@/services/notificationManager';
 import { IonList, IonText, IonToggle } from '@ionic/vue';
 import { Ref, computed, ref, type Component } from 'vue';
+import { EventDistributor } from '@/services/eventDistributor';
 
 const props = defineProps<{
   notificationManager: NotificationManager;
+  eventDistributor: EventDistributor;
 }>();
 
 const unreadCount = props.notificationManager.getUnreadCount();

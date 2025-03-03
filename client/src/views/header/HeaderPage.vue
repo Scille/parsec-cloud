@@ -152,6 +152,7 @@ import {
 } from '@ionic/vue';
 import { home, notifications, search } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
+import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
@@ -161,6 +162,7 @@ const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
 const notificationPopoverIsVisible: Ref<boolean> = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const notificationCenterButton = ref();
 
 const routeWatchCancel = watchRoute(async () => {
@@ -299,6 +301,7 @@ async function openNotificationCenter(event: Event): Promise<void> {
     showBackdrop: false,
     componentProps: {
       notificationManager: informationManager.notificationManager,
+      eventDistributor: eventDistributor,
     },
   });
   await popover.present();
