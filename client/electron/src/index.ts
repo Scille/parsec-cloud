@@ -181,10 +181,23 @@ ipcMain.on(PageToWindowChannel.CloseApp, async (_event) => {
 });
 
 ipcMain.on(PageToWindowChannel.OpenFile, async (_event, path: string) => {
-  if (!path.startsWith('file://')) {
-    path = `file://${path}`;
+  // Try the recommanded way first
+  const error = await shell.openPath(path);
+
+  if (error) {
+    try {
+      let updatedPath = path;
+      // Add a `file://`
+      if (!updatedPath.startsWith('file://')) {
+        updatedPath = `file://${updatedPath}`;
+      }
+      // Encode the URI to handle spaces and other characters
+      updatedPath = encodeURI(updatedPath);
+      await shell.openExternal(updatedPath);
+    } catch (e: any) {
+      myCapacitorApp.sendEvent(WindowToPageChannel.OpenPathFailed, path, error);
+    }
   }
-  await shell.openExternal(path);
 });
 
 ipcMain.on(PageToWindowChannel.SeeInExplorer, async (_event, path: string) => {
