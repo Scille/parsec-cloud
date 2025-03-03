@@ -16,14 +16,14 @@
             v-model="line1"
             :maxlength="256"
             label="clientArea.billingDetailsPage.placeholders.line1"
-            @on-enter-keyup="submit"
+            :disabled="!isEditing"
           />
           <ms-input
             class="form-item"
             v-model="line2"
             :maxlength="256"
             :placeholder="'clientArea.billingDetailsPage.placeholders.line2'"
-            @on-enter-keyup="submit"
+            :disabled="!isEditing"
           />
         </div>
         <div class="form-row">
@@ -36,7 +36,7 @@
               v-model="postalCode"
               :maxlength="32"
               label="clientArea.billingDetailsPage.placeholders.postalCode"
-              @on-enter-keyup="submit"
+              :disabled="!isEditing"
             />
           </div>
           <div
@@ -47,7 +47,7 @@
               v-model="city"
               :maxlength="128"
               label="clientArea.billingDetailsPage.placeholders.city"
-              @on-enter-keyup="submit"
+              :disabled="!isEditing"
             />
           </div>
         </div>
@@ -56,12 +56,28 @@
           v-model="country"
           :maxlength="128"
           label="clientArea.billingDetailsPage.placeholders.country"
-          @on-enter-keyup="submit"
+          :disabled="!isEditing"
         />
       </div>
 
       <div class="form-submit">
         <ion-button
+          v-show="!isEditing"
+          @click="isEditing = true"
+          class="toggle-button"
+        >
+          {{ $msTranslate('clientArea.billingDetailsPage.update') }}
+        </ion-button>
+        <ion-button
+          v-show="isEditing"
+          @click="onCancelEdit"
+          class="cancel-button"
+          fill="outline"
+        >
+          {{ $msTranslate('clientArea.billingDetailsPage.cancel') }}
+        </ion-button>
+        <ion-button
+          v-show="isEditing"
           @click="submit"
           class="submit-button"
           :disabled="!isFormValid"
@@ -93,24 +109,38 @@ const line2 = ref<string | undefined>(undefined);
 const postalCode = ref<string>('');
 const city = ref<string>('');
 const country = ref<string>('');
-
+const isEditing = ref(false);
+const currentAddress = ref();
 const isFormValid = computed(() => {
-  return new Boolean(line1.value && postalCode.value && city.value && country.value);
+  return line1.value.length > 0 && postalCode.value.length > 0 && city.value.length > 0 && country.value.length > 0;
 });
 
 onMounted(async () => {
   const response = await BmsAccessInstance.get().getBillingDetails();
-
   if (!response.isError && response.data && response.data.type === DataType.BillingDetails) {
-    line1.value = response.data.address.line1;
-    line2.value = response.data.address.line2;
-    postalCode.value = response.data.address.postalCode;
-    city.value = response.data.address.city;
-    country.value = response.data.address.country;
+    currentAddress.value = response.data.address;
+    assignCurrentAddress();
   }
 });
 
+function assignCurrentAddress(): void {
+  line1.value = currentAddress.value.line1;
+  line2.value = currentAddress.value.line2;
+  postalCode.value = currentAddress.value.postalCode;
+  city.value = currentAddress.value.city;
+  country.value = currentAddress.value.country;
+}
+
+function updateCurrentAddress(): void {
+  currentAddress.value.line1 = line1.value;
+  currentAddress.value.line2 = line2.value;
+  currentAddress.value.postalCode = postalCode.value;
+  currentAddress.value.city = city.value;
+  currentAddress.value.country = country.value;
+}
+
 async function submit(): Promise<void> {
+  isEditing.value = false;
   const response = await BmsAccessInstance.get().updateBillingAddress({
     line1: line1.value,
     line2: line2.value,
@@ -135,6 +165,12 @@ async function submit(): Promise<void> {
       PresentationMode.Toast,
     );
   }
+  updateCurrentAddress();
+}
+
+async function onCancelEdit(): Promise<void> {
+  isEditing.value = false;
+  assignCurrentAddress();
 }
 </script>
 
@@ -186,6 +222,14 @@ async function submit(): Promise<void> {
 
   #city {
     flex: 1;
+  }
+
+  &-submit {
+    display: flex;
+
+    .submit-button {
+      margin-left: auto;
+    }
   }
 }
 </style>

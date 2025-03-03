@@ -1,0 +1,1 @@
+Slightly reworked the billing info page in client area to make billing address modifications more intuitive
