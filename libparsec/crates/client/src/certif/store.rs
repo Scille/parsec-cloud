@@ -211,44 +211,47 @@ impl CertificatesStore {
             None => return Err(CertifStoreError::Stopped),
             Some(storage) => storage,
         };
-        let updater = storage.for_update().await?;
 
-        let mut write_guard = CertificatesStoreWriteGuard {
-            store: self,
-            storage: updater,
-        };
+        storage
+            .for_update(async |updater| {
+                let mut write_guard = CertificatesStoreWriteGuard {
+                    store: self,
+                    storage: updater,
+                };
 
-        let outcome = cb(&mut write_guard).await;
+                let outcome = cb(&mut write_guard).await;
 
-        // The cache may have been updated during the write operations, and those new cache
-        // entries might be for items that have been added by the current write operation.
-        // If something goes wrong the database is rolled back, but this cannot be done
-        // for the cache, so we simply clear it instead.
-        let reset_cache = || {
-            self.current_view_cache
-                .lock()
-                .expect("Mutex is poisoned !")
-                .clear();
-        };
+                // The cache may have been updated during the write operations, and those new cache
+                // entries might be for items that have been added by the current write operation.
+                // If something goes wrong the database is rolled back, but this cannot be done
+                // for the cache, so we simply clear it instead.
+                let reset_cache = || {
+                    self.current_view_cache
+                        .lock()
+                        .expect("Mutex is poisoned !")
+                        .clear();
+                };
 
-        if outcome.is_ok() {
-            // Commit the operations to database, without this the changes will
-            // be rollback on drop.
-            match write_guard.storage.commit().await {
-                Err(commit_err) => {
+                if outcome.is_ok() {
+                    // Commit the operations to database, without this the changes will
+                    // be rollback on drop.
+                    match write_guard.storage.commit().await {
+                        Err(commit_err) => {
+                            reset_cache();
+                            Err(commit_err.into())
+                        }
+                        Ok(_) => {
+                            // Ok(Ok(...))
+                            Ok(outcome)
+                        }
+                    }
+                } else {
                     reset_cache();
-                    Err(commit_err.into())
-                }
-                Ok(_) => {
-                    // Ok(Ok(...))
+                    // Ok(Err(...))
                     Ok(outcome)
                 }
-            }
-        } else {
-            reset_cache();
-            // Ok(Err(...))
-            Ok(outcome)
-        }
+            })
+            .await?
     }
 
     /// Lock the store for reading purpose, this lock guarantee the certificates
