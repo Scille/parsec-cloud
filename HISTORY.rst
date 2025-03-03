@@ -4,6 +4,45 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.3.1-a.0.dev.20150+a3b0fd8 (2025-03-03)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Update user interface to regroup any user profile and settings in a single
+  tabbed view.
+  (`#9470 <https://github.com/Scille/parsec-cloud/issues/9470>`__)
+
+* Added picture in picture, loop and playback speed options to video and audio
+  viewers
+  (`#9750 <https://github.com/Scille/parsec-cloud/issues/9750>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed "Remember me" login for customer area
+  (`#9616 <https://github.com/Scille/parsec-cloud/issues/9616>`__)
+
+* Only count active users in organization stats
+  (`#9723 <https://github.com/Scille/parsec-cloud/issues/9723>`__)
+
+* Added a minimal window size
+  (`#9674 <https://github.com/Scille/parsec-cloud/issues/9674>`__)
+
+* Fixes file opening and correctly displays an error message if it fails
+  (`#9849 <https://github.com/Scille/parsec-cloud/issues/9849>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Prevent sorting users by Status if all users are active
+  (`#9621 <https://github.com/Scille/parsec-cloud/issues/9621>`__)
+
+
+
 Parsec v3.3.0 (2025-02-25)
 --------------------------
 
