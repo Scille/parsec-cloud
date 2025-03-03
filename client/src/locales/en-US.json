@@ -1711,11 +1711,13 @@
             "placeholders": {
                 "line1": "Street number, address",
                 "line2": "Additional address details",
-                "postalCode": "Postal code",
+                "postalCode": "ZIP code",
                 "city": "City",
                 "country": "Country"
             },
-            "submit": "Update",
+            "update": "Update",
+            "cancel": "Cancel",
+            "submit": "Confirm new address",
             "error": "Could not update the information.",
             "success": "The information have been updated.",
             "title": "Billing address"

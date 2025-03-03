@@ -1715,7 +1715,9 @@
                 "city": "Ville",
                 "country": "Pays"
             },
-            "submit": "Mettre à jour",
+            "update": "Mettre à jour",
+            "cancel": "Annuler",
+            "submit": "Confirmer la nouvelle adresse",
             "error": "Impossible de mettre à jour les informations.",
             "success": "Les informations ont été mises à jour.",
             "title": "Adresse de facturation"
