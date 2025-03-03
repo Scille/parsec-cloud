@@ -4,6 +4,17 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.3.1-rc.0 (2025-03-03)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fixes file opening and correctly displays an error message if it fails
+  (`#9849 <https://github.com/Scille/parsec-cloud/issues/9849>`__)
+
+
+
 Parsec v3.3.0 (2025-02-25)
 --------------------------
 
