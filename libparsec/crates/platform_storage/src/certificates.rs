@@ -687,11 +687,18 @@ impl CertificatesStorage {
         self.platform.stop().await
     }
 
-    pub async fn for_update(&mut self) -> anyhow::Result<CertificatesStorageUpdater> {
+    pub async fn for_update<R>(
+        &mut self,
+        cb: impl AsyncFnOnce(CertificatesStorageUpdater) -> R,
+    ) -> anyhow::Result<R> {
         self.platform
-            .for_update()
+            .for_update(async |platform_updater| {
+                let updater = CertificatesStorageUpdater {
+                    platform: platform_updater,
+                };
+                cb(updater).await
+            })
             .await
-            .map(|platform| CertificatesStorageUpdater { platform })
     }
 
     /// Return the last certificate timestamp we know about for the given topic, or `None`

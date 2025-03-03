@@ -76,7 +76,6 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
                 let mut storage = CertificatesStorage::no_populate_start(data_base_dir, device)
                     .await
                     .unwrap();
-                let mut update = storage.for_update().await.unwrap();
 
                 let certifs = env.template.certificates().take_while(|c| {
                     let certif_timestamp = match &c.certificate {
@@ -97,83 +96,90 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
                     };
                     certif_timestamp <= up_to
                 });
-                for (offset, certif) in certifs.enumerate() {
-                    let signed = if need_redacted {
-                        &certif.signed_redacted
-                    } else {
-                        &certif.signed
-                    };
-                    let encrypted = device.local_symkey.encrypt(signed);
-                    match &certif.certificate {
-                        AnyArcCertificate::User(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
-                        AnyArcCertificate::Device(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
-                        AnyArcCertificate::UserUpdate(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
-                        AnyArcCertificate::RevokedUser(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
 
-                        // In theory we should skip the certificates related to realm we are not part of,
-                        // but in practice it has no impact since we don't have any operation that crawls
-                        // all the realm in the certificate storage (i.e. we always provide a realm ID when
-                        // querying for realm-related certificates).
-                        AnyArcCertificate::RealmRole(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
-                        AnyArcCertificate::RealmName(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
-                        AnyArcCertificate::RealmKeyRotation(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
-                        AnyArcCertificate::RealmArchiving(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
+                storage
+                    .for_update(async |mut updater| {
+                        for (offset, certif) in certifs.enumerate() {
+                            let signed = if need_redacted {
+                                &certif.signed_redacted
+                            } else {
+                                &certif.signed
+                            };
+                            let encrypted = device.local_symkey.encrypt(signed);
+                            match &certif.certificate {
+                                AnyArcCertificate::User(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
+                                AnyArcCertificate::Device(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
+                                AnyArcCertificate::UserUpdate(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
+                                AnyArcCertificate::RevokedUser(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
 
-                        // Just like for realm, we should in theory skip the shamir certificates not meant to us.
-                        // We do have operations that crawl the whole shamir certificates, but they are aware of
-                        // this shortcoming and deal with them accordingly.
-                        AnyArcCertificate::ShamirRecoveryBrief(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
-                        AnyArcCertificate::ShamirRecoveryShare(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
-                        AnyArcCertificate::ShamirRecoveryDeletion(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
+                                // In theory we should skip the certificates related to realm we are not part of,
+                                // but in practice it has no impact since we don't have any operation that crawls
+                                // all the realm in the certificate storage (i.e. we always provide a realm ID when
+                                // querying for realm-related certificates).
+                                AnyArcCertificate::RealmRole(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
+                                AnyArcCertificate::RealmName(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
+                                AnyArcCertificate::RealmKeyRotation(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
+                                AnyArcCertificate::RealmArchiving(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
 
-                        AnyArcCertificate::SequesterAuthority(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
-                        AnyArcCertificate::SequesterService(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
-                        AnyArcCertificate::SequesterRevokedService(certif) => update
-                            .add_certificate(certif.deref(), encrypted)
-                            .await
-                            .unwrap(),
-                    }
-                }
-                update.commit().await.unwrap();
+                                // Just like for realm, we should in theory skip the shamir certificates not meant to us.
+                                // We do have operations that crawl the whole shamir certificates, but they are aware of
+                                // this shortcoming and deal with them accordingly.
+                                AnyArcCertificate::ShamirRecoveryBrief(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
+                                AnyArcCertificate::ShamirRecoveryShare(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
+                                AnyArcCertificate::ShamirRecoveryDeletion(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
+
+                                AnyArcCertificate::SequesterAuthority(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
+                                AnyArcCertificate::SequesterService(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
+                                AnyArcCertificate::SequesterRevokedService(certif) => updater
+                                    .add_certificate(certif.deref(), encrypted)
+                                    .await
+                                    .unwrap(),
+                            }
+                        }
+
+                        updater.commit().await.unwrap();
+                    })
+                    .await
+                    .unwrap();
 
                 storage.stop().await;
             }

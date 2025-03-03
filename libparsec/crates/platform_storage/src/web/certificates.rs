@@ -302,18 +302,18 @@ impl PlatformCertificatesStorage {
         Ok(())
     }
 
-    pub async fn for_update(
+    pub async fn for_update<R>(
         &mut self,
-    ) -> anyhow::Result<PlatformCertificatesStorageForUpdateGuard> {
-        Ok(PlatformCertificatesStorageForUpdateGuard {
-            transaction: Certificate::write(&self.conn)?,
-        })
+        cb: impl AsyncFnOnce(PlatformCertificatesStorageForUpdateGuard) -> R,
+    ) -> anyhow::Result<R> {
+        let transaction = Certificate::write(&self.conn)?;
+        Ok(cb(PlatformCertificatesStorageForUpdateGuard { transaction }).await)
     }
 
     pub async fn get_last_timestamps(&mut self) -> anyhow::Result<PerTopicLastTimestamps> {
         // TODO: transaction shouldn't be needed here (but it's currently easier to implement this way)
-        let mut update = self.for_update().await?;
-        update.get_last_timestamps().await
+        self.for_update(async |mut updater| updater.get_last_timestamps().await)
+            .await?
     }
 
     pub async fn get_certificate_encrypted<'b>(
@@ -322,8 +322,8 @@ impl PlatformCertificatesStorage {
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         // TODO: transaction shouldn't be needed here (but it's currently easier to implement this way)
-        let mut update = self.for_update().await?;
-        update.get_certificate_encrypted(query, up_to).await
+        self.for_update(async |mut updater| updater.get_certificate_encrypted(query, up_to).await)
+            .await?
     }
 
     pub async fn get_multiple_certificates_encrypted<'b>(
@@ -334,16 +334,18 @@ impl PlatformCertificatesStorage {
         limit: Option<u32>,
     ) -> anyhow::Result<Vec<(DateTime, Vec<u8>)>> {
         // TODO: transaction shouldn't be needed here (but it's currently easier to implement this way)
-        let mut update = self.for_update().await?;
-        update
-            .get_multiple_certificates_encrypted(query, up_to, offset, limit)
-            .await
+        self.for_update(async |mut updater| {
+            updater
+                .get_multiple_certificates_encrypted(query, up_to, offset, limit)
+                .await
+        })
+        .await?
     }
 
     /// Only used for debugging tests
     #[cfg(any(test, feature = "expose-test-methods"))]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
-        let mut update = self.for_update().await?;
-        update.debug_dump().await
+        self.for_update(async |mut updater| updater.debug_dump().await)
+            .await?
     }
 }
