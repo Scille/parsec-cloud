@@ -45,11 +45,13 @@ import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { people } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
+import { EventDistributor } from '@/services/eventDistributor';
 
 const workspaceName = ref('');
 
 const props = defineProps<{
   notification: Notification;
+  eventDistributor: EventDistributor;
 }>();
 
 onMounted(async () => {

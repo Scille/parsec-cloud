@@ -206,6 +206,12 @@ export class ElectronCapacitorApp {
    * If an update is available, an event will be sent to the web app.
    */
   async checkForUpdates(): Promise<void> {
+    if (electronIsDev) {
+      setTimeout(() => {
+        this.sendEvent(WindowToPageChannel.UpdateAvailability, true, '42.00');
+      }, 10000);
+    }
+
     if (this.updater) {
       await this.updater.checkForUpdates();
     }

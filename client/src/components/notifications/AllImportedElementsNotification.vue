@@ -38,11 +38,13 @@ import useUploadMenu from '@/services/fileUploadMenu';
 import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { arrowForward, checkmarkCircle } from 'ionicons/icons';
+import { EventDistributor } from '@/services/eventDistributor';
 
 const menu = useUploadMenu();
 
 defineProps<{
   notification: Notification;
+  eventDistributor: EventDistributor;
 }>();
 
 async function openImportedMenu(): Promise<void> {

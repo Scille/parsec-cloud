@@ -60,12 +60,14 @@ import { UserSharedDocumentData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonText, popoverController } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
+import { EventDistributor } from '@/services/eventDistributor';
 
 const userInfo: Ref<UserInfo | null> = ref(null);
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 
 const props = defineProps<{
   notification: Notification;
+  eventDistributor: EventDistributor;
 }>();
 
 onMounted(async () => {

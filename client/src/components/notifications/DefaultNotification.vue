@@ -34,9 +34,11 @@ import { InformationLevel } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonLabel, IonText } from '@ionic/vue';
 import { alertCircle, checkmarkCircle, informationCircle, warning } from 'ionicons/icons';
+import { EventDistributor } from '@/services/eventDistributor';
 
 const props = defineProps<{
   notification: Notification;
+  eventDistributor: EventDistributor;
 }>();
 
 function getIcon(): string {

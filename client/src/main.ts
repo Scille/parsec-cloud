@@ -91,10 +91,6 @@ async function setupApp(): Promise<void> {
   });
   await megasharkPlugin.init();
 
-  if (!isElectron()) {
-    setupMockElectronAPI();
-  }
-
   const app = createApp(App)
     .use(IonicVue, {
       rippleEffect: false,
@@ -109,6 +105,10 @@ async function setupApp(): Promise<void> {
   app.provide(StorageManagerKey, storageManager);
   app.provide(InjectionProviderKey, injectionProvider);
   app.provide(HotkeyManagerKey, hotkeyManager);
+
+  if (!isElectron()) {
+    setupMockElectronAPI(injectionProvider);
+  }
 
   await initViewers();
 
@@ -330,7 +330,7 @@ async function setupApp(): Promise<void> {
   }
 }
 
-function setupMockElectronAPI(): void {
+function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
   window.electronAPI = {
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     sendConfig: (_config: Config): void => {},
@@ -347,7 +347,20 @@ function setupMockElectronAPI(): void {
       console.log('SetMountpointFolder: Not available.');
     },
     getUpdateAvailability: (): void => {
-      console.log('GetUpdateAvailability: Not available.');
+      // Wait for a bit so it seems more natural
+      setTimeout(async () => {
+        injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '13.37' });
+        injectionProvider.notifyAll(
+          new Information({
+            message: '',
+            level: InformationLevel.Info,
+            unique: true,
+            data: { type: InformationDataType.NewVersionAvailable, newVersion: '13.37' },
+          }),
+          PresentationMode.Notification,
+        );
+      }, 5000);
+      console.log('GetUpdateAvailability: MOCKED');
     },
     updateApp: (): void => {
       console.log('UpdateApp: Not available.');

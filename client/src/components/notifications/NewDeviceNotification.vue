@@ -36,9 +36,11 @@ import { Routes, navigateTo } from '@/router';
 import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { arrowForward, desktop } from 'ionicons/icons';
+import { EventDistributor } from '@/services/eventDistributor';
 
 defineProps<{
   notification: Notification;
+  eventDistributor: EventDistributor;
 }>();
 
 async function navigateToDevices(): Promise<void> {

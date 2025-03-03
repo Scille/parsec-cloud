@@ -36,12 +36,14 @@ import { UserJoinWorkspaceData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonText } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
+import { EventDistributor } from '@/services/eventDistributor';
 
 const userInfo: Ref<UserInfo | null> = ref(null);
 const workspaceName = ref('');
 
 const props = defineProps<{
   notification: Notification;
+  eventDistributor: EventDistributor;
 }>();
 
 onMounted(async () => {
