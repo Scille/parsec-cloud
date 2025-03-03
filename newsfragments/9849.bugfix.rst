@@ -1,0 +1,1 @@
+Fixes file opening and correctly displays an error message if it fails
