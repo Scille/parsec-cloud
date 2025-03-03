@@ -186,13 +186,14 @@ ipcMain.on(PageToWindowChannel.OpenFile, async (_event, path: string) => {
 
   if (error) {
     try {
-      // Encode the URI to handle spaces and other characters
-      path = encodeURI(path);
+      let updatedPath = path;
       // Add a `file://`
-      if (!path.startsWith('file://')) {
-        path = `file://${path}`;
+      if (!updatedPath.startsWith('file://')) {
+        updatedPath = `file://${updatedPath}`;
       }
-      await shell.openExternal(path);
+      // Encode the URI to handle spaces and other characters
+      updatedPath = encodeURI(updatedPath);
+      await shell.openExternal(updatedPath);
     } catch (e: any) {
       myCapacitorApp.sendEvent(WindowToPageChannel.OpenPathFailed, path, error);
     }
