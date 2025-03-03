@@ -211,19 +211,24 @@ impl CertificatesStore {
             None => return Err(CertifStoreError::Stopped),
             Some(storage) => storage,
         };
-        let updater = storage.for_update().await?;
 
-        let mut write_guard = CertificatesStoreWriteGuard {
-            store: self,
-            storage: updater,
-        };
+        let outcome = storage
+            .for_update(async |updater| {
+                let mut write_guard = CertificatesStoreWriteGuard {
+                    store: self,
+                    storage: updater,
+                };
 
-        let outcome = cb(&mut write_guard).await;
+                cb(&mut write_guard).await
+            })
+            .await;
 
         // The cache may have been updated during the write operations, and those new cache
         // entries might be for items that have been added by the current write operation.
-        // If something goes wrong the database is rolled back, but this cannot be done
-        // for the cache, so we simply clear it instead.
+        // If something goes wrong, `CertificateStorage::for_update` takes care of rolling back
+        // the database, thus making the cache inconsistent with the database.
+        // Hence we must clear the cache in case of error.
+
         let reset_cache = || {
             self.current_view_cache
                 .lock()
@@ -231,23 +236,18 @@ impl CertificatesStore {
                 .clear();
         };
 
-        if outcome.is_ok() {
-            // Commit the operations to database, without this the changes will
-            // be rollback on drop.
-            match write_guard.storage.commit().await {
-                Err(commit_err) => {
-                    reset_cache();
-                    Err(commit_err.into())
-                }
-                Ok(_) => {
-                    // Ok(Ok(...))
-                    Ok(outcome)
-                }
+        match outcome {
+            Ok(Ok(res)) => Ok(Ok(res)),
+            // Error from `cb`
+            Ok(Err(err)) => {
+                reset_cache();
+                Ok(Err(err))
             }
-        } else {
-            reset_cache();
-            // Ok(Err(...))
-            Ok(outcome)
+            // Error from `CertificateStorage::for_update` (e.g. commit)
+            Err(err) => {
+                reset_cache();
+                Err(err.into())
+            }
         }
     }
 

@@ -687,11 +687,22 @@ impl CertificatesStorage {
         self.platform.stop().await
     }
 
-    pub async fn for_update(&mut self) -> anyhow::Result<CertificatesStorageUpdater> {
+    /// Get an exclusive access on the storage to perform modifications.
+    ///
+    /// Note all changes are done in a transaction, and `cb`'s result is used to
+    /// determine if the transaction should be committed or rolled back.
+    pub async fn for_update<R, E>(
+        &mut self,
+        cb: impl AsyncFnOnce(CertificatesStorageUpdater) -> Result<R, E>,
+    ) -> anyhow::Result<Result<R, E>> {
         self.platform
-            .for_update()
+            .for_update(async |platform_updater| {
+                let updater = CertificatesStorageUpdater {
+                    platform: platform_updater,
+                };
+                cb(updater).await
+            })
             .await
-            .map(|platform| CertificatesStorageUpdater { platform })
     }
 
     /// Return the last certificate timestamp we know about for the given topic, or `None`
@@ -735,13 +746,6 @@ pub struct CertificatesStorageUpdater<'a> {
 }
 
 impl CertificatesStorageUpdater<'_> {
-    /// Finish the update and commit the underlying transaction to database.
-    /// If the guard is dropped without calling this method, the transaction
-    /// is rollback.
-    pub async fn commit(self) -> anyhow::Result<()> {
-        self.platform.commit().await
-    }
-
     /// Remove all certificates from the database
     /// There is no data loss from this as certificates can be re-obtained from
     /// the server, however it is only needed when switching from/to redacted

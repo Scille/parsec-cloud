@@ -255,14 +255,21 @@ fn build_get_certificate_query<'a: 'b, 'b>(
 
 #[derive(Debug)]
 pub(crate) struct PlatformCertificatesStorageForUpdateGuard<'a> {
-    transaction: Transaction<'a, Sqlite>,
+    /// Don't trust the `'static` lifetimes, it should be `&'b mut Transaction<'a, Sqlite>` here !
+    ///
+    /// This means you should under no circumstances make this field public or
+    /// copy it outside of the struct !
+    transaction: &'static mut Transaction<'static, Sqlite>,
+    /// Capture the `'a` lifetime that should in theory parametrize the `Transaction` type.
+    ///
+    /// We cannot do that due to a limitation in the Rust compiler when inferring if
+    /// a closure containing a reference is `Send`.
+    ///
+    /// See https://users.rust-lang.org/t/implementation-of-fnonce-is-not-general-enough/78006/3
+    _phantom: std::marker::PhantomData<&'a ()>,
 }
 
 impl PlatformCertificatesStorageForUpdateGuard<'_> {
-    pub async fn commit(self) -> anyhow::Result<()> {
-        self.transaction.commit().await.map_err(|e| e.into())
-    }
-
     pub async fn get_certificate_encrypted(
         &mut self,
         query: GetCertificateQuery<'_>,
@@ -287,7 +294,7 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
 
         let maybe_row = query_builder
             .build()
-            .fetch_optional(&mut *self.transaction)
+            .fetch_optional(&mut **self.transaction)
             .await
             .map_err(|err| GetCertificateError::Internal(err.into()))?;
 
@@ -318,7 +325,7 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
         let mut query_builder = build_get_certificate_query(&query, UpTo::Current);
         let maybe_row = query_builder
             .build()
-            .fetch_optional(&mut *self.transaction)
+            .fetch_optional(&mut **self.transaction)
             .await
             .map_err(|err| GetCertificateError::Internal(err.into()))?;
 
@@ -384,7 +391,7 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
 
         let rows = query_builder
             .build()
-            .fetch_all(&mut *self.transaction)
+            .fetch_all(&mut **self.transaction)
             .await?;
 
         let mut items = Vec::with_capacity(rows.len());
@@ -402,7 +409,7 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
             // No WHERE clause, we delete every certificate !
             "DELETE FROM certificates",
         )
-        .execute(&mut *self.transaction)
+        .execute(&mut **self.transaction)
         .await
         .map(|_| ())
         .map_err(|err| err.into())
@@ -450,7 +457,7 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
         };
 
         builder
-            .execute(&mut *self.transaction)
+            .execute(&mut **self.transaction)
             .await
             .map(|_| ())
             .map_err(|err| err.into())
@@ -469,7 +476,7 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
             "
         );
         let maybe_row = sqlx::query(SQL_COMMON_LAST_TIMESTAMP)
-            .fetch_optional(&mut *self.transaction)
+            .fetch_optional(&mut **self.transaction)
             .await?;
         let common_last_timestamp = if let Some(row) = maybe_row {
             let raw_dt = row.try_get::<i64, _>(0)?;
@@ -490,7 +497,7 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
             "
         );
         let maybe_row = sqlx::query(SQL_SEQUESTER_LAST_TIMESTAMP)
-            .fetch_optional(&mut *self.transaction)
+            .fetch_optional(&mut **self.transaction)
             .await?;
         let sequester_last_timestamp = if let Some(row) = maybe_row {
             let raw_dt = row.try_get::<i64, _>(0)?;
@@ -514,7 +521,7 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
             "
         );
         let rows = sqlx::query(SQL_PER_REALM_LAST_TIMESTAMPS)
-            .fetch_all(&mut *self.transaction)
+            .fetch_all(&mut **self.transaction)
             .await?;
         let mut per_realm_last_timestamps = HashMap::with_capacity(rows.len());
         for row in rows {
@@ -537,7 +544,7 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
             "
         );
         let maybe_row = sqlx::query(SQL_SHAMIR_RECOVERY_LAST_TIMESTAMP)
-            .fetch_optional(&mut *self.transaction)
+            .fetch_optional(&mut **self.transaction)
             .await?;
         let shamir_recovery_last_timestamp = if let Some(row) = maybe_row {
             let raw_dt = row.try_get::<i64, _>(0)?;
@@ -567,7 +574,7 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
             FROM certificates \
             ",
         )
-        .fetch_all(&mut *self.transaction)
+        .fetch_all(&mut **self.transaction)
         .await?;
 
         let mut output = "[\n".to_owned();
@@ -673,17 +680,58 @@ impl PlatformCertificatesStorage {
         self.conn.close().await.map_err(|e| e.into())
     }
 
-    pub async fn for_update(
+    pub async fn for_update<R, E>(
         &mut self,
-    ) -> anyhow::Result<PlatformCertificatesStorageForUpdateGuard> {
-        let transaction = self.conn.begin().await?;
-        Ok(PlatformCertificatesStorageForUpdateGuard { transaction })
+        cb: impl AsyncFnOnce(PlatformCertificatesStorageForUpdateGuard) -> Result<R, E>,
+    ) -> anyhow::Result<Result<R, E>> {
+        // The idea here is to provide the transaction object to the callback, then
+        // use the transaction to commit or rollback the changes according to the
+        // callback outcome.
+        //
+        // To do that there is two approaches:
+        // 1. Pass the ownership of the transaction to the callback, then have the
+        //    callback returning the transaction back.
+        // 2. Pass a reference to the transaction.
+        //
+        // The trick is this `PlatformCertificatesStorage::for_update` method is itself
+        // used by another `CertificatesStorage::for_update`... which in turn is used
+        // in a similar fashioned `CertificatesStore::for_write` !
+        // So any of the two approaches would have a cascading effect.
+        //
+        // In theory the right thing to do would be to go with approach 2, but we would
+        // end up with a hard to read soup of lifetimes (i.e. structs with fields like
+        // `updater: &'a mut Updater<'b, 'c>`) that the Rust compiler fail to understand
+        // when used in a `async` closure required `Send` (see
+        // https://users.rust-lang.org/t/implementation-of-fnonce-is-not-general-enough/78006/3)
+        //
+        // So we rely on a hack to tweak the lifetime of the transaction to be `'static`,
+        // which avoid the lifetime soup, make the compiler happy and save us from the
+        // extensive modifications approach 1 would have required in the higher layers.
+
+        let mut transaction = self.conn.begin().await?;
+        // SAFETY: `transaction` is kept private and has a longer lifetime than `updater`,
+        // so we can pretend its lifetime is static.
+        let transaction_mut_ref: &'static mut _ = unsafe { std::mem::transmute(&mut transaction) };
+        let updater = PlatformCertificatesStorageForUpdateGuard {
+            transaction: transaction_mut_ref,
+            _phantom: std::marker::PhantomData,
+        };
+        match cb(updater).await {
+            Ok(result) => {
+                transaction.commit().await?;
+                Ok(Ok(result))
+            }
+            Err(err) => {
+                transaction.rollback().await?;
+                Ok(Err(err))
+            }
+        }
     }
 
     pub async fn get_last_timestamps(&mut self) -> anyhow::Result<PerTopicLastTimestamps> {
         // TODO: transaction shouldn't be needed here (but it's currently easier to implement this way)
-        let mut update = self.for_update().await?;
-        update.get_last_timestamps().await
+        self.for_update(async |mut updater| updater.get_last_timestamps().await)
+            .await?
     }
 
     pub async fn get_certificate_encrypted(
@@ -692,8 +740,8 @@ impl PlatformCertificatesStorage {
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         // TODO: transaction shouldn't be needed here (but it's currently easier to implement this way)
-        let mut update = self.for_update().await?;
-        update.get_certificate_encrypted(query, up_to).await
+        self.for_update(async |mut updater| updater.get_certificate_encrypted(query, up_to).await)
+            .await?
     }
 
     pub async fn get_multiple_certificates_encrypted(
@@ -704,18 +752,20 @@ impl PlatformCertificatesStorage {
         limit: Option<u32>,
     ) -> anyhow::Result<Vec<(DateTime, Vec<u8>)>> {
         // TODO: transaction shouldn't be needed here (but it's currently easier to implement this way)
-        let mut update = self.for_update().await?;
-        update
-            .get_multiple_certificates_encrypted(query, up_to, offset, limit)
-            .await
+        self.for_update(async |mut updater| {
+            updater
+                .get_multiple_certificates_encrypted(query, up_to, offset, limit)
+                .await
+        })
+        .await?
     }
 
     /// Only used for debugging tests
     #[cfg(any(test, feature = "expose-test-methods"))]
     #[allow(unused)]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
-        let mut update = self.for_update().await?;
-        update.debug_dump().await
+        self.for_update(async |mut updater| updater.debug_dump().await)
+            .await?
     }
 }
 
