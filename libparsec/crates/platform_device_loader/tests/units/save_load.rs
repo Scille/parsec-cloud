@@ -1,8 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// TODO: implement web
-#![cfg(not(target_arch = "wasm32"))]
-
 use std::path::Path;
 
 use crate::{load_device, save_device};
@@ -11,7 +8,12 @@ use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
 #[parsec_test]
-async fn save_load(#[values("keyring", "password")] kind: &str, tmp_path: TmpPath) {
+#[case::password(DeviceFileType::Password)]
+// TODO: support keyring device on web
+#[cfg_attr(not(target_arch = "wasm32"), case::keyring(DeviceFileType::Keyring))]
+async fn save_load(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
+    use crate::tests::utils::key_present_in_system;
+
     let key_file = tmp_path.join("keyring_file");
     let url = ParsecOrganizationAddr::from_any(
         // cspell:disable-next-line
@@ -33,7 +35,7 @@ async fn save_load(#[values("keyring", "password")] kind: &str, tmp_path: TmpPat
     );
 
     let (access, expected_available_device) = match kind {
-        "keyring" => {
+        DeviceFileType::Keyring => {
             let access = DeviceAccessStrategy::Keyring {
                 key_file: key_file.clone(),
             };
@@ -51,7 +53,7 @@ async fn save_load(#[values("keyring", "password")] kind: &str, tmp_path: TmpPat
             };
             (access, expected_available_device)
         }
-        "password" => {
+        DeviceFileType::Password => {
             let access = DeviceAccessStrategy::Password {
                 key_file: key_file.clone(),
                 password: "P@ssw0rd.".to_string().into(),
@@ -70,10 +72,10 @@ async fn save_load(#[values("keyring", "password")] kind: &str, tmp_path: TmpPat
             };
             (access, expected_available_device)
         }
-        unknown => panic!("Unknown kind: {}", unknown),
+        unknown => panic!("Unknown kind: {unknown:?}"),
     };
 
-    assert!(!key_file.exists());
+    assert!(!key_present_in_system(&key_file));
 
     device
         .time_provider
@@ -82,7 +84,7 @@ async fn save_load(#[values("keyring", "password")] kind: &str, tmp_path: TmpPat
     device.time_provider.unmock_time();
 
     p_assert_eq!(available_device, expected_available_device);
-    assert!(key_file.exists());
+    assert!(key_present_in_system(&key_file));
 
     let res = load_device(Path::new(""), &access).await.unwrap();
 
