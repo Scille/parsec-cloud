@@ -116,8 +116,8 @@ base32 = { version = "0.4.0", default-features = false }
 base64 = { version = "0.22.1", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.10.0", default-features = false }
-chrono = { version = "0.4.39", default-features = false }
-clap = { version = "4.5.30", default-features = false }
+chrono = { version = "0.4.40", default-features = false }
+clap = { version = "4.5.31", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
 crc32fast = { version = "1.4.2", default-features = false }
@@ -134,7 +134,7 @@ email-address-parser = { version = "2.0.0", default-features = false }
 env_logger = { version = "0.10.2", default-features = false }
 event-listener = { version = "5.4.0", default-features = false }
 eventsource-stream = { version = "0.2.3", default-features = false }
-flate2 = { version = "1.0.35", features = ["rust_backend"], default-features = false }
+flate2 = { version = "1.1.0", features = ["rust_backend"], default-features = false }
 flume = { version = "0.11.1", default-features = false }
 fnmatch-regex = { version = "0.2.1", default-features = false }
 fuser = { version = "0.15.1", default-features = false }
@@ -149,7 +149,7 @@ indexed_db_futures = { version = "0.5.0", default-features = false }
 itertools = { version = "0.12.1", default-features = false }
 jni = { version = "0.21.1", default-features = false }
 js-sys = { version = "0.3.70", default-features = false }
-keyring = { version = "3.6.1", default-features = false }
+keyring = { version = "3.6.2", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
 libc = { version = "0.2.170", default-features = false }
 libsodium-sys = { version = "0.2.7", default-features = false }
@@ -203,7 +203,7 @@ thiserror = { version = "1.0.69", default-features = false }
 tokio = { version = "1.43.0", default-features = false }
 unicode-normalization = { version = "0.1.24", default-features = false }
 url = { version = "2.5.4", default-features = false }
-uuid = { version = "1.14.0", default-features = false }
+uuid = { version = "1.15.1", default-features = false }
 wasm-bindgen = { version = "0.2.97", default-features = false }
 wasm-bindgen-futures = { version = "0.4.47", default-features = false }
 wasm-bindgen-test = { version = "0.3.47", default-features = false, features = ["std"] }
