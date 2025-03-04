@@ -4,14 +4,25 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.3.2 (2025-03-04)
+--------------------------
+
+bugfixes
+~~~~~~~~
+
+* Fix internal build issues
+  (`#9849 <https://github.com/scille/parsec-cloud/issues/9854>`__)
+
+
+
 Parsec v3.3.1 (2025-03-04)
 --------------------------
 
-Bugfixes
+bugfixes
 ~~~~~~~~
 
-* Fixes file opening and correctly displays an error message if it fails
-  (`#9849 <https://github.com/Scille/parsec-cloud/issues/9849>`__)
+* fixes file opening and correctly displays an error message if it fails
+  (`#9849 <https://github.com/scille/parsec-cloud/issues/9849>`__)
 
 
 
