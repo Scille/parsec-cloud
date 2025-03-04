@@ -45,8 +45,9 @@
         <!-- No organization created at this step, users and storage estimation -->
         <div
           class="details-list"
-          v-if="getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Received ||
-            getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Processing
+          v-if="
+            getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Received ||
+              getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Processing
           "
         >
           <div class="details-list-item">
@@ -70,7 +71,9 @@
           class="details-list"
           v-if="
             (getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Confirmed ||
-              getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Available) && orderDetails"
+              getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Available) &&
+              orderDetails
+          "
         >
           <div class="details-list-item">
             <ion-text class="details-list-item__title body-lg">
@@ -211,8 +214,10 @@
 
         <!-- invoice details -->
         <div
-          v-if="getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Confirmed ||
-            (getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.InvoiceToBePaid && orderDetails)"
+          v-if="
+            getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Confirmed ||
+              (getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.InvoiceToBePaid && orderDetails)
+          "
           class="details-invoice"
         >
           <div class="details-invoice-text">
