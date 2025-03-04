@@ -19,7 +19,7 @@ import {
 } from '@/services/bms/types';
 import { DateTime } from 'luxon';
 
-const REQUEST_WAIT_TIME = 1500;
+const REQUEST_WAIT_TIME = Number(import.meta.env.PARSEC_APP_BMS_MOCK_WAIT_DURATION) ?? 1000;
 
 interface MockParameters {
   isMocked: boolean;
@@ -140,7 +140,6 @@ export const MockedBmsApi = {
   changePassword: createMockFunction('changePassword'),
   createOrganization: createMockFunction('createOrganization'),
   listOrganizations: createMockFunction('listOrganizations', async (_token: AuthenticationToken, _query: ClientQueryData) => {
-    await wait(2000);
     const orgs: Array<BmsOrganization> = [1, 2, 3].map((index) => {
       return {
         bmsId: `BmsId${index}`,
@@ -163,7 +162,6 @@ export const MockedBmsApi = {
     };
   }),
   getOrganizationStats: createMockFunction('getOrganizationStats', async (_token: AuthenticationToken, _query: OrganizationQueryData) => {
-    await wait(2000);
     return {
       status: 200,
       isError: false,
@@ -201,7 +199,6 @@ export const MockedBmsApi = {
   updateAuthentication: createMockFunction('updateAuthentication'),
   updateBillingDetails: createMockFunction('updateBillingDetails'),
   getCustomOrderStatus: createMockFunction('getCustomOrderStatus', async (_token: AuthenticationToken, _query: CustomOrderQueryData) => {
-    await wait(3000);
     return {
       status: 200,
       isError: false,
@@ -212,7 +209,6 @@ export const MockedBmsApi = {
     };
   }),
   getCustomOrderDetails: createMockFunction('getCustomOrderDetails', async (_token: AuthenticationToken, _query: CustomOrderQueryData) => {
-    await wait(8000);
     return {
       status: 200,
       isError: false,
@@ -225,7 +221,6 @@ export const MockedBmsApi = {
   createCustomOrderRequest: createMockFunction(
     'createCustomOrderRequest',
     async (_token: AuthenticationToken, _query: CreateCustomOrderRequestQueryData) => {
-      await wait(2000);
       return {
         status: 204,
         isError: false,
@@ -241,7 +236,6 @@ export const MockedBmsApi = {
   getCustomOrderRequests: createMockFunction(
     'getCustomOrderRequests',
     async (_token: AuthenticationToken) => {
-      await wait(8000);
       return {
         status: 200,
         isError: false,
@@ -298,7 +292,6 @@ export const MockedBmsApi = {
   getCustomOrderInvoices: createMockFunction(
     'getCustomOrderInvoices',
     async (_token: AuthenticationToken, _query: CustomOrderQueryData) => {
-      await wait(12000);
       return {
         status: 200,
         isError: false,
