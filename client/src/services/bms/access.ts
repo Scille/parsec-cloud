@@ -348,6 +348,13 @@ class BmsAccess {
     return response;
   }
 
+  async getCustomOrderRequests(): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    return await this.api.getCustomOrderRequests(this.tokens.access);
+  }
+
   async getCustomOrderInvoices(organization: BmsOrganization): Promise<BmsResponse> {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);

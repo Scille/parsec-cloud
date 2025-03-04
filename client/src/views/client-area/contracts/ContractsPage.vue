@@ -10,7 +10,10 @@
     </span>
 
     <template v-if="organizationStats && contractDetails">
-      <div class="error-message">
+      <div
+        class="error-message"
+        v-if="errorExceededStorage || errorExceededUsers"
+      >
         <ms-report-text
           :theme="MsReportTheme.Error"
           v-if="errorExceededUsers"
