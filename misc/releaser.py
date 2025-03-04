@@ -765,11 +765,16 @@ def build_main(args: argparse.Namespace) -> None:
             release_version = current_version.evolve(local=None)
             same_version = True
         elif not args.version:
-            raise SystemExit("version is required for build command")
+            raise SystemExit(
+                "Either `--version VERSION` or `--current` is required for build command"
+            )
         else:
             release_version = args.version
 
-            if release_version <= current_version:
+            if current_version.evolve(local=None) == release_version:
+                same_version = True
+
+            elif release_version <= current_version:
                 raise ReleaseError(
                     f"Current version is greater or equal that the new version ({COLOR_YELLOW}{current_version}{COLOR_END} >= {COLOR_YELLOW}{release_version}{COLOR_END}).\n"
                     "If you want to create a new release using the current version, use the `--current` flag instead of `--version <VERSION>`."
@@ -1008,7 +1013,14 @@ def cli(description: str) -> argparse.Namespace:
     build_exclusion.add_argument(
         "--nightly", action="store_true", help="Prepare for a new nightly release"
     )
-    build_exclusion.add_argument("--current", help="Use the current version", action="store_true")
+    build_exclusion.add_argument(
+        "--current",
+        help=(
+            "Use the current version (i.e. if `libparsec/version` contains `3.3.1-a.0+dev`,"
+            " this is equivalent of doing `--version=3.3.1-a.0`)"
+        ),
+        action="store_true",
+    )
     build.add_argument("-y", "--yes", help="Reply `yes` to asked question", action="store_true")
     build.add_argument(
         "--no-gpg-sign", dest="gpg_sign", action="store_false", help="Do not sign the commit or tag"
