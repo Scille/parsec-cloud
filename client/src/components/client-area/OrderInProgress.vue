@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/html-indent -->
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
@@ -45,10 +46,7 @@
         <!-- No organization created at this step, users and storage estimation -->
         <div
           class="details-list"
-          v-if="
-            getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Received ||
-              getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Processing
-          "
+          v-if="getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === (StatusStep.Received || StatusStep.Processing)"
         >
           <div class="details-list-item">
             <ion-text class="details-list-item__title body-lg">
@@ -70,9 +68,8 @@
         <div
           class="details-list"
           v-if="
-            (getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Confirmed ||
-              getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Available) &&
-              orderDetails
+            getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === (StatusStep.Confirmed || StatusStep.Available) &&
+            orderDetails
           "
         >
           <div class="details-list-item">
@@ -215,8 +212,8 @@
         <!-- invoice details -->
         <div
           v-if="
-            getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Confirmed ||
-              (getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.InvoiceToBePaid && orderDetails)
+            getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === (StatusStep.Confirmed || StatusStep.InvoiceToBePaid) &&
+            orderDetails
           "
           class="details-invoice"
         >
