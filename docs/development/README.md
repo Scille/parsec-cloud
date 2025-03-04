@@ -16,7 +16,7 @@
 
 ## Get the sources
 
-Source code is available on [github](https://github.com/Scille/parsec-cloud).
+Source code is available on [GitHub](https://github.com/Scille/parsec-cloud).
 
 ## Shared requirements
 
@@ -36,10 +36,10 @@ To start hacking, follow the basic steps detailed below:
     2. [`Rust v1.81.0`](https://www.rust-lang.org/fr/learn/get-started)
 
        > We use a `rust-toolchain.toml` file, so you can just install `rustup` and `cargo`
-       > The required toolchain will be install automatically.
+       > The required toolchain will be installed automatically.
 
        ```shell
-       curl --proto '=https' --tlsv1.2 -sSL https://sh.rustup.rs | sh -s -- --default-toolchain none # You can replace `none` with `1.81.0`
+       curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.81.0
        ```
 
        > You then need to add the installation path to your `PATH` variable (or equivalent).

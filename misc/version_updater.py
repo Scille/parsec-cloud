@@ -71,6 +71,10 @@ TESTBED_VERSION = ReplaceRegex(
     r"ghcr.io/scille/parsec-cloud/parsec-testbed-server:[^\s]+",
     "ghcr.io/scille/parsec-cloud/parsec-testbed-server:{version}",
 )
+RUSTUP_INSTALL = ReplaceRegex(
+    r"curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \| sh -s -- -y --default-toolchain [0-9.]+",
+    "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain {version}",
+)
 
 
 @enum.unique
@@ -307,10 +311,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / "docs/development/README.md": {
         Tool.Rust: [
             ReplaceRegex(r"Rust v[0-9.]+", "Rust v{version}"),
-            ReplaceRegex(
-                r"--default-toolchain none # You can replace `none` with `[0-9.]+`",
-                "--default-toolchain none # You can replace `none` with `{version}`",
-            ),
+            RUSTUP_INSTALL,
         ],
         Tool.Python: [
             ReplaceRegex(r"python v[0-9.]+", hide_patch_version("python v{version}")),
@@ -367,7 +368,8 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
                 "`Parsec CLI v{version}`_",
             ),
             ReplaceRegex(
-                r"parsec-cli_.*_linux-x86_64-musl", "parsec-cli_{version}_linux-x86_64-musl"
+                r"parsec-cli_.*_linux-x86_64-musl",
+                "parsec-cli_{version}_linux-x86_64-musl",
             ),
             ReplaceRegex(r"parsec-cli .*", "parsec-cli {version}"),
         ]
@@ -396,7 +398,11 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         tool: [ReplaceRegex(rf'^{tool.value} = ".*"', f'{tool.value} = "{{version}}"')]
         for tool in Tool
     },
+    ROOT_DIR / "misc/setup-rust.sh": {
+        Tool.Rust: [RUSTUP_INSTALL],
+    },
     ROOT_DIR / "server/packaging/server/in-docker-build.sh": {
+        Tool.Rust: [RUSTUP_INSTALL],
         Tool.Poetry: [
             ReplaceRegex(
                 r"curl -sSL https://install.python-poetry.org \| python - --version=[0-9.]+",
@@ -406,6 +412,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / "server/packaging/server/server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},
     ROOT_DIR / "server/packaging/testbed-server/in-docker-build.sh": {
+        Tool.Rust: [RUSTUP_INSTALL],
         Tool.Python: [PYTHON_SMALL_VERSION],
         Tool.Poetry: [
             ReplaceRegex(
