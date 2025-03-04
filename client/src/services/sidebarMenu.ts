@@ -3,7 +3,7 @@
 import { ref } from 'vue';
 
 const defaultWidth = 300;
-const hiddenWidth = 2;
+const hiddenWidth = 0;
 const computedWidth = ref<number>(defaultWidth);
 const storedWidth = ref<number>(defaultWidth);
 

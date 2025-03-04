@@ -69,6 +69,7 @@ const emits = defineEmits<{
     padding: 0.25rem 0.5rem;
     opacity: 0.8;
     cursor: pointer;
+    width: 100%;
 
     &:hover {
       opacity: 1;
@@ -83,16 +84,20 @@ const emits = defineEmits<{
       color: var(--parsec-color-light-secondary-inversed-contrast);
       display: flex;
       align-items: center;
+      overflow: hidden;
 
       &__icon {
-        font-size: 1rem;
         margin-right: 0.5rem;
+        flex-shrink: 0;
+        padding: 0.125rem;
+        font-size: 1rem;
       }
 
       &__text {
-        margin-right: 0.5rem;
-        line-height: auto;
         user-select: none;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
       }
     }
   }
@@ -103,6 +108,7 @@ const emits = defineEmits<{
     font-size: 1rem;
     border-radius: var(--parsec-radius-6);
     color: var(--parsec-color-light-secondary-inversed-contrast);
+    flex-shrink: 0;
   }
 
   &-content {
