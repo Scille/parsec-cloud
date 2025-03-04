@@ -215,11 +215,11 @@ class BmsAccess {
     });
   }
 
-  async getInvoices(): Promise<BmsResponse> {
+  async getMonthlySubscriptionInvoices(): Promise<BmsResponse> {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await this.api.getInvoices(this.tokens.access, {
+    return await this.api.getMonthlySubscriptionInvoices(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
     });
@@ -348,6 +348,7 @@ class BmsAccess {
     return response;
   }
 
+  // TODO: Update to add multi-organization support
   async getCustomOrderInvoices(organization: BmsOrganization): Promise<BmsResponse> {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);

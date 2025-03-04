@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { OrganizationID } from '@/parsec';
 import { CustomOrderDetailsResultData, DataType } from '@/services/bms/types';
 import { DateTime } from 'luxon';
 
@@ -20,7 +21,7 @@ enum CustomOrderFieldName {
   StorageCount = 'parsec-saas-custom-order-storage-license-count',
 }
 
-export function parseCustomOrderInvoice(data: any): CustomOrderDetailsResultData {
+export function parseCustomOrderInvoice(data: any, organizationId: OrganizationID = ''): CustomOrderDetailsResultData {
   const adminRow = data.rows?.find((row: any) => row.reference === CustomOrderRowName.Administrator);
   const standardRow = data.rows?.find((row: any) => row.reference === CustomOrderRowName.Standard);
   const outsiderRow = data.rows?.find((row: any) => row.reference === CustomOrderRowName.Outsider);
@@ -64,5 +65,6 @@ export function parseCustomOrderInvoice(data: any): CustomOrderDetailsResultData
       quantityOrdered: storageField ? parseInt(storageField.value) : 0,
       amountWithTaxes: storageRow ? parseInt(storageRow.amount_tax_inc) : 0,
     },
+    organizationId: organizationId,
   };
 }

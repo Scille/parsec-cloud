@@ -5,6 +5,7 @@ import {
   AuthenticationToken,
   BillingSystem,
   BmsError,
+  BmsInvoice,
   BmsOrganization,
   BmsResponse,
   CONNECTION_ERROR_STATUS,
@@ -18,7 +19,9 @@ import {
   LoginQueryData,
   OrganizationQueryData,
   PaymentMethod,
+  SellsyInvoice,
   SetDefaultPaymentMethodQueryData,
+  StripeInvoice,
   UpdateAuthenticationQueryData,
   UpdateBillingDetailsQueryData,
   UpdateEmailQueryData,
@@ -306,7 +309,7 @@ async function getOrganizationStatus(token: AuthenticationToken, query: Organiza
   });
 }
 
-async function getInvoices(token: AuthenticationToken, query: ClientQueryData): Promise<BmsResponse> {
+async function getMonthlySubscriptionInvoices(token: AuthenticationToken, query: ClientQueryData): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http.getInstance().get(`/users/${query.userId}/clients/${query.clientId}/invoices`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -317,9 +320,9 @@ async function getInvoices(token: AuthenticationToken, query: ClientQueryData): 
       status: axiosResponse.status,
       isError: false,
       data: {
-        type: DataType.Invoices,
+        type: DataType.MonthlySubscriptionInvoices,
         invoices: axiosResponse.data.results.map((invoice: any) => {
-          return {
+          const bmsInvoice: BmsInvoice = {
             id: invoice.id,
             pdfLink: invoice.pdf,
             start: DateTime.fromISO(invoice.period_start, { zone: 'utc' }),
@@ -330,6 +333,8 @@ async function getInvoices(token: AuthenticationToken, query: ClientQueryData): 
             number: invoice.number,
             receiptNumber: invoice.receipt_number,
           };
+
+          return new StripeInvoice(bmsInvoice);
         }),
       },
     };
@@ -669,6 +674,7 @@ async function getCustomOrderRequests(token: AuthenticationToken): Promise<BmsRe
   });
 }
 
+// TODO: Update to add multi-organization support
 async function getCustomOrderInvoices(token: AuthenticationToken, query: CustomOrderQueryData): Promise<BmsResponse> {
   return wrapQuery(async () => {
     const axiosResponse = await http.getInstance().post(
@@ -696,7 +702,10 @@ async function getCustomOrderInvoices(token: AuthenticationToken, query: CustomO
       isError: false,
       data: {
         type: DataType.CustomOrderInvoices,
-        invoices: orgDataArray.map((value) => parseCustomOrderInvoice(value)),
+        invoices: orgDataArray.map((value) => {
+          const customOrderInvoice = parseCustomOrderInvoice(value, query.organization.parsecId);
+          return new SellsyInvoice(customOrderInvoice);
+        }),
       },
     };
   });
@@ -712,7 +721,7 @@ export const BmsApi = {
   listOrganizations,
   getOrganizationStats,
   getOrganizationStatus,
-  getInvoices,
+  getMonthlySubscriptionInvoices,
   refreshToken,
   getBillingDetails,
   addPaymentMethod,
