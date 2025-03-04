@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, fillIonInput, msTest } from '@tests/e2e/helpers';
+import { Page } from '@playwright/test';
+import { expect, fillIonInput, msTest, selectDropdown } from '@tests/e2e/helpers';
 
 msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
@@ -12,6 +13,37 @@ msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(devices.locator('.label-id')).toHaveText([/^Technical ID: device\d$/, /^Technical ID: device\d$/]);
   await expect(devices.nth(0).locator('.badge')).toBeVisible();
   await expect(devices.nth(1).locator('.badge')).toBeHidden();
+});
+
+async function checkMenuItem(
+  myProfilePage: Page,
+  index: number,
+  expectedText: string,
+  expectedHeaderText?: string,
+  expectedUrlParam?: string,
+): Promise<void> {
+  await expect(myProfilePage.locator('.menu-list__item').nth(index)).toHaveText(expectedText);
+  await myProfilePage.locator('.menu-list__item').nth(index).click();
+  if (expectedHeaderText) {
+    await expect(myProfilePage.locator('.item-header__title')).toHaveText(expectedHeaderText);
+  }
+  if (expectedUrlParam) {
+    await expect(myProfilePage).toHaveURL(new RegExp(`\\?profilePage=${expectedUrlParam}`));
+  }
+}
+
+msTest('Check if each tab is displayed', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('.profile-menu').locator('.menu-list__item')).toHaveCount(7);
+  await expect(myProfilePage.locator('.menu-list__title').nth(0)).toHaveText('My account');
+  await expect(myProfilePage.locator('.menu-list__title').nth(1)).toHaveText('Support');
+
+  await checkMenuItem(myProfilePage, 0, 'Settings', 'Settings', 'settings');
+  await checkMenuItem(myProfilePage, 1, 'My devices', 'My devices', 'devices');
+  await checkMenuItem(myProfilePage, 2, 'Authentication', 'Authentication', 'authentication');
+  await checkMenuItem(myProfilePage, 3, 'Organization recovery', 'Organization recovery files', 'recovery');
+  await expect(myProfilePage.locator('.item-container__text').nth(5)).toHaveText('Feedback');
+  await expect(myProfilePage.locator('.item-container__text').nth(6)).toHaveText('About');
+  await checkMenuItem(myProfilePage, 6, 'About', 'About', 'about');
 });
 
 msTest('Open authentication section', async ({ myProfilePage }) => {
@@ -68,4 +100,47 @@ msTest('Change password', async ({ home, myProfilePage }) => {
   await changePasswordModal.locator('#next-button').click();
   await expect(changePasswordModal).toBeHidden();
   await expect(myProfilePage).toShowToast('Authentication has been updated.', 'Success');
+});
+
+msTest('Check settings section', async ({ myProfilePage }) => {
+  await checkMenuItem(myProfilePage, 0, 'Settings', 'Settings');
+  const settings = myProfilePage.locator('.settings-list-container');
+  const options = settings.locator('.settings-option');
+  await expect(options).toHaveCount(4);
+  const lang = options.nth(0);
+  await expect(lang.locator('.settings-option__content').locator('.title')).toHaveText('Language');
+  await expect(lang.locator('.settings-option__content').locator('.description')).toHaveText('Choose application language');
+  await expect(lang.locator('.dropdown-container')).toHaveText('English');
+  await expect(lang.locator('.settings-option__content').locator('.title')).toHaveText('Language');
+  await expect(lang.locator('.settings-option__content').locator('.description')).toHaveText('Choose application language');
+  await expect(lang.locator('.dropdown-container').locator('.input-text')).toHaveText('English');
+  await selectDropdown(lang.locator('ion-button'), 'Français', 'English');
+  await expect(lang.locator('.dropdown-container').locator('.input-text')).toHaveText('Français');
+  const theme = options.nth(1);
+  // Now we're in French
+  await expect(theme.locator('.settings-option__content').locator('.title')).toHaveText('Thème');
+  await expect(theme.locator('.settings-option__content').locator('.description')).toHaveText("Choisir l'apparence de l'application");
+  await expect(theme.locator('.dropdown-container')).toHaveText('Clair');
+
+  const telemetry = options.nth(2);
+  await expect(telemetry.locator('.settings-option__content').locator('.title')).toHaveText("Envoyer les rapports d'erreur");
+  await expect(telemetry.locator('.settings-option__content').locator('.description')).toHaveText(
+    "Les rapports d'erreur aident à améliorer Parsec",
+  );
+});
+
+msTest('Open documentation', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('.item-container__text').nth(4)).toHaveText('Documentation');
+  await myProfilePage.locator('.item-container__text').nth(4).click();
+  const newTab = await myProfilePage.waitForEvent('popup');
+  await newTab.waitForLoadState();
+  await expect(newTab).toHaveURL(new RegExp('https://docs.parsec.cloud/(en|fr)/[a-z0-9-+.]+'));
+});
+
+msTest('Open feedback', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('.item-container__text').nth(5)).toHaveText('Feedback');
+  await myProfilePage.locator('.item-container__text').nth(5).click();
+  const newTab = await myProfilePage.waitForEvent('popup');
+  await newTab.waitForLoadState();
+  await expect(newTab).toHaveURL(new RegExp('https://sign(-dev)?.parsec.cloud/contact'));
 });
