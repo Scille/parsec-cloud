@@ -41,7 +41,9 @@ from parsec.components.user import (
     UserGetCertificatesAsUserBadOutcome,
     UserInfo,
     UserListFrozenUsersBadOutcome,
+    UserListOrganizationsBadOutcome,
     UserListUsersBadOutcome,
+    UserOrgInfo,
     UserRevokeUserStoreBadOutcome,
     UserRevokeUserValidateBadOutcome,
     UserUpdateUserStoreBadOutcome,
@@ -844,3 +846,19 @@ class MemoryUserComponent(BaseUserComponent):
             return UserAcceptTosBadOutcome.TOS_MISMATCH
 
         user.tos_accepted_on = now
+
+    @override
+    async def list_organizations(
+        self, user_email: str
+    ) -> list[UserOrgInfo] | UserListOrganizationsBadOutcome:
+        info = []
+        for org_id, org in self._data.organizations.items():
+            for _, user in org.users.items():
+                if user.cooked.human_handle.email == user_email:
+                    info.append(
+                        UserOrgInfo(
+                            org_id=org_id,
+                        ),
+                    )
+
+        return info
