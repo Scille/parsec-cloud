@@ -7,7 +7,30 @@ import { DEFAULT_ORGANIZATION_INFORMATION, DEFAULT_USER_INFORMATION, UserData } 
 import { dropTestbed, newTestbed } from '@tests/e2e/helpers/testbed';
 import { fillInputModal, fillIonInput } from '@tests/e2e/helpers/utils';
 
-export const msTest = base.extend<{
+const debugTest = base.extend({
+  ...(process.env.PWDEBUG && {
+    browser: [
+      async ({ playwright, browserName }, use): Promise<any> => {
+        const args = [];
+        if (browserName.toLowerCase().includes('chrom')) {
+          args.push('--auto-open-devtools-for-tabs');
+        }
+        const browser = await playwright[browserName].launch({
+          headless: false,
+          args: args,
+        });
+        await use(browser);
+        await browser.close();
+      },
+      {
+        scope: 'worker',
+        timeout: 0,
+      },
+    ],
+  }),
+});
+
+export const msTest = debugTest.extend<{
   home: Page;
   connected: Page;
   documents: Page;
@@ -252,6 +275,7 @@ export const msTest = base.extend<{
     await MockBms.mockCustomOrderStatus(home);
     await MockBms.mockCustomOrderDetails(home);
     await MockBms.mockCreateCustomOrderRequest(home);
+    await MockBms.mockGetCustomOrderInvoices(home);
 
     const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');
