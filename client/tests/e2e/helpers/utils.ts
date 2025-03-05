@@ -189,3 +189,18 @@ export async function sliderClick(page: Page, slider: Locator, progressPercent: 
     await page.mouse.click(box.x + (box.width * progressPercent) / 100, box.y);
   }
 }
+
+export async function clientAreaSwitchOrganization(page: Page, organization: string | 'all'): Promise<void> {
+  const selector = page.locator('.sidebar-header').locator('.organization-card-header');
+  await selector.click();
+  const popover = page.locator('#organization-switch-popover');
+  await expect(popover).toBeVisible();
+  const items = popover.locator('.organization-list__item').locator('.organization-name');
+  for (const item of await items.all()) {
+    const text = await item.textContent();
+    if (text === organization || (text === 'All organizations' && organization === 'all')) {
+      await item.click();
+    }
+  }
+  await expect(popover).toBeHidden();
+}
