@@ -3,6 +3,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use super::utils::client_factory;
+use libparsec_platform_async::future;
 use libparsec_protocol::invited_cmds::latest::invite_info::ShamirRecoveryRecipient;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -117,7 +118,8 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
         .await
         .unwrap();
 
-    let (first, second) = tokio::join!(alice_with_mike_ctx.do_wait_peer(), mike_ctx.do_wait_peer());
+    let (first, second) =
+        future::join(alice_with_mike_ctx.do_wait_peer(), mike_ctx.do_wait_peer()).await;
     let alice_with_mike_ctx = first.unwrap();
     let mike_ctx = second.unwrap();
 
@@ -126,10 +128,11 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
         .generate_greeter_sas_choices(4)
         .contains(mike_ctx.greeter_sas()));
 
-    let (first, second) = tokio::join!(
+    let (first, second) = future::join(
         alice_with_mike_ctx.do_signify_trust(),
-        mike_ctx.do_wait_peer_trust()
-    );
+        mike_ctx.do_wait_peer_trust(),
+    )
+    .await;
     let alice_with_mike_ctx = first.unwrap();
     let mike_ctx = second.unwrap();
 
@@ -138,17 +141,19 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
         .generate_claimer_sas_choices(4)
         .contains(alice_with_mike_ctx.claimer_sas()));
 
-    let (first, second) = tokio::join!(
+    let (first, second) = future::join(
         alice_with_mike_ctx.do_wait_peer_trust(),
-        mike_ctx.do_signify_trust()
-    );
+        mike_ctx.do_signify_trust(),
+    )
+    .await;
     let alice_with_mike_ctx = first.unwrap();
     let mike_ctx = second.unwrap();
 
-    let (first, second) = tokio::join!(
+    let (first, second) = future::join(
         alice_with_mike_ctx.do_recover_share(),
-        mike_ctx.do_send_share()
-    );
+        mike_ctx.do_send_share(),
+    )
+    .await;
     let alice_share_ctx = first.unwrap();
     second.unwrap();
 
@@ -171,7 +176,8 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
         .await
         .unwrap();
 
-    let (first, second) = tokio::join!(alice_with_bob_ctx.do_wait_peer(), bob_ctx.do_wait_peer());
+    let (first, second) =
+        future::join(alice_with_bob_ctx.do_wait_peer(), bob_ctx.do_wait_peer()).await;
     let alice_with_bob_ctx = first.unwrap();
     let bob_ctx = second.unwrap();
 
@@ -180,10 +186,11 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
         .generate_greeter_sas_choices(4)
         .contains(bob_ctx.greeter_sas()));
 
-    let (first, second) = tokio::join!(
+    let (first, second) = future::join(
         alice_with_bob_ctx.do_signify_trust(),
-        bob_ctx.do_wait_peer_trust()
-    );
+        bob_ctx.do_wait_peer_trust(),
+    )
+    .await;
     let alice_with_bob_ctx = first.unwrap();
     let bob_ctx = second.unwrap();
 
@@ -192,17 +199,19 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
         .generate_claimer_sas_choices(4)
         .contains(alice_with_bob_ctx.claimer_sas()));
 
-    let (first, second) = tokio::join!(
+    let (first, second) = future::join(
         alice_with_bob_ctx.do_wait_peer_trust(),
-        bob_ctx.do_signify_trust()
-    );
+        bob_ctx.do_signify_trust(),
+    )
+    .await;
     let alice_with_bob_ctx = first.unwrap();
     let bob_ctx = second.unwrap();
 
-    let (first, second) = tokio::join!(
+    let (first, second) = future::join(
         alice_with_bob_ctx.do_recover_share(),
-        bob_ctx.do_send_share()
-    );
+        bob_ctx.do_send_share(),
+    )
+    .await;
     let alice_share_ctx = first.unwrap();
     second.unwrap();
 
@@ -512,7 +521,8 @@ async fn already_picked_recipient(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    let (first, second) = tokio::join!(alice_with_mike_ctx.do_wait_peer(), mike_ctx.do_wait_peer());
+    let (first, second) =
+        future::join(alice_with_mike_ctx.do_wait_peer(), mike_ctx.do_wait_peer()).await;
     let alice_with_mike_ctx = first.unwrap();
     let mike_ctx = second.unwrap();
 
@@ -521,10 +531,11 @@ async fn already_picked_recipient(env: &TestbedEnv) {
         .generate_greeter_sas_choices(4)
         .contains(mike_ctx.greeter_sas()));
 
-    let (first, second) = tokio::join!(
+    let (first, second) = future::join(
         alice_with_mike_ctx.do_signify_trust(),
-        mike_ctx.do_wait_peer_trust()
-    );
+        mike_ctx.do_wait_peer_trust(),
+    )
+    .await;
     let alice_with_mike_ctx = first.unwrap();
     let mike_ctx = second.unwrap();
 
@@ -533,17 +544,19 @@ async fn already_picked_recipient(env: &TestbedEnv) {
         .generate_claimer_sas_choices(4)
         .contains(alice_with_mike_ctx.claimer_sas()));
 
-    let (first, second) = tokio::join!(
+    let (first, second) = future::join(
         alice_with_mike_ctx.do_wait_peer_trust(),
-        mike_ctx.do_signify_trust()
-    );
+        mike_ctx.do_signify_trust(),
+    )
+    .await;
     let alice_with_mike_ctx = first.unwrap();
     let mike_ctx = second.unwrap();
 
-    let (first, second) = tokio::join!(
+    let (first, second) = future::join(
         alice_with_mike_ctx.do_recover_share(),
-        mike_ctx.do_send_share()
-    );
+        mike_ctx.do_send_share(),
+    )
+    .await;
     let alice_share_ctx = first.unwrap();
     second.unwrap();
 
@@ -683,7 +696,8 @@ async fn add_share_is_idempotent(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    let (first, second) = tokio::join!(alice_with_mike_ctx.do_wait_peer(), mike_ctx.do_wait_peer());
+    let (first, second) =
+        future::join(alice_with_mike_ctx.do_wait_peer(), mike_ctx.do_wait_peer()).await;
     let alice_with_mike_ctx = first.unwrap();
     let mike_ctx = second.unwrap();
 
@@ -692,10 +706,11 @@ async fn add_share_is_idempotent(env: &TestbedEnv) {
         .generate_greeter_sas_choices(4)
         .contains(mike_ctx.greeter_sas()));
 
-    let (first, second) = tokio::join!(
+    let (first, second) = future::join(
         alice_with_mike_ctx.do_signify_trust(),
-        mike_ctx.do_wait_peer_trust()
-    );
+        mike_ctx.do_wait_peer_trust(),
+    )
+    .await;
     let alice_with_mike_ctx = first.unwrap();
     let mike_ctx = second.unwrap();
 
@@ -704,17 +719,19 @@ async fn add_share_is_idempotent(env: &TestbedEnv) {
         .generate_claimer_sas_choices(4)
         .contains(alice_with_mike_ctx.claimer_sas()));
 
-    let (first, second) = tokio::join!(
+    let (first, second) = future::join(
         alice_with_mike_ctx.do_wait_peer_trust(),
-        mike_ctx.do_signify_trust()
-    );
+        mike_ctx.do_signify_trust(),
+    )
+    .await;
     let alice_with_mike_ctx = first.unwrap();
     let mike_ctx = second.unwrap();
 
-    let (first, second) = tokio::join!(
+    let (first, second) = future::join(
         alice_with_mike_ctx.do_recover_share(),
-        mike_ctx.do_send_share()
-    );
+        mike_ctx.do_send_share(),
+    )
+    .await;
     let alice_share_ctx = first.unwrap();
     second.unwrap();
 
