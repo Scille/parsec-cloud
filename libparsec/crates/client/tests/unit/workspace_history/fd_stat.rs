@@ -6,7 +6,7 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::DataAccessStrategy;
+use super::utils::{DataAccessStrategy, StartWorkspaceHistoryOpsError};
 use crate::workspace_history::{WorkspaceHistoryFdStatError, WorkspaceHistoryFileStat};
 
 #[parsec_test(testbed = "workspace_history")]
@@ -21,7 +21,10 @@ async fn ok(
         *env.template.get_stuff("wksp1_bar_txt_v1_timestamp");
     let wksp1_bar_txt_v2_timestamp: DateTime =
         *env.template.get_stuff("wksp1_bar_txt_v2_timestamp");
-    let ops = strategy.start_workspace_history_ops(env).await;
+    let ops = match strategy.start_workspace_history_ops(env).await {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     // 0) Open `bar.txt` v1 and v2
 
@@ -119,7 +122,10 @@ async fn bad_file_descriptor(
     strategy: DataAccessStrategy,
     env: &TestbedEnv,
 ) {
-    let ops = strategy.start_workspace_history_ops(env).await;
+    let ops = match strategy.start_workspace_history_ops(env).await {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     p_assert_matches!(
         ops.fd_stat(FileDescriptor(42)).await.unwrap_err(),
@@ -136,9 +142,13 @@ async fn reuse_after_close(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
-    let ops = strategy
+    let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_v2_timestamp)
-        .await;
+        .await
+    {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     if matches!(strategy, DataAccessStrategy::Server) {
         test_register_sequence_of_send_hooks!(
