@@ -1782,6 +1782,7 @@
             "from": "Depuis",
             "to": "Jusqu'au",
             "amount": "Montant",
+            "multipleOrganizations": "Vous possédez plusieurs organisations. Veuillez en choisir une en utilisant le bouton dans le coin supérieur gauche ou sélectionnez-là ci-dessous pour voir le contrat.",
             "selectAnOrganization": "Veuillez sélectionner une organisation",
             "errors": {
                 "noOrganizations": "Impossible de lister vos organisations",

@@ -1,11 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, msTest } from '@tests/e2e/helpers';
+import { clientAreaSwitchOrganization, expect, msTest } from '@tests/e2e/helpers';
 import { DateTime } from 'luxon';
 
 msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
   const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
   await expect(title).toHaveText('Contract');
+
+  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
 
@@ -22,8 +24,8 @@ msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
   await expect(container.locator('.contract-header-title__text')).toHaveText('Contract n°FACT001');
 
   const contract = container.locator('.contract-main');
-  await expect(contract.locator('.item-content-date__date').nth(0)).toHaveText('Apr 7, 1988');
-  await expect(contract.locator('.item-content-date__date').nth(1)).toHaveText(DateTime.now().plus({ year: 1 }).toFormat('LLL d, yyyy'));
+  await expect(contract.locator('.item-content-date__date').nth(0)).toHaveText(DateTime.now().minus({ months: 1 }).toFormat('LLL d, yyyy'));
+  await expect(contract.locator('.item-content-date__date').nth(1)).toHaveText(DateTime.now().toFormat('LLL d, yyyy'));
 
   await expect(contract.locator('.data-number').nth(0)).toHaveText('32');
   await expect(contract.locator('.data-number').nth(1)).toHaveText('50');

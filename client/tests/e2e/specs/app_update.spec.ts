@@ -29,7 +29,6 @@ msTest('Opens app update modal with notification', async ({ connected }) => {
   const header = connected.locator('#connected-header');
   const notifButton = header.locator('#trigger-notifications-button');
   const notifCenter = connected.locator('.notification-center-popover');
-  await connected.waitForTimeout(600);
   await expect(notifButton).toHaveTheClass('unread');
   await expect(notifCenter).toBeHidden();
   await notifButton.click();

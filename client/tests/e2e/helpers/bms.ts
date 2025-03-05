@@ -100,6 +100,8 @@ function createCustomOrderInvoices(count: number = 1, overload: MockCustomOrderD
   const STATUSES = ['paid', 'draft', 'open', 'uncollectible', 'void'];
 
   for (let i = 1; i < count + 1; i++) {
+    const licenseStart = overload.licenseStart ? overload.licenseStart : DateTime.now().minus({ months: count + 1 - i });
+    const licenseEnd = overload.licenseEnd ? overload.licenseEnd : DateTime.now().minus({ months: count - i });
     invoices.push({
       id: `custom_order_id${i}`,
       created: overload.created ? overload.created.toISO() : DateTime.now().minus({ months: count + 1 - i }),
@@ -135,19 +137,11 @@ function createCustomOrderInvoices(count: number = 1, overload: MockCustomOrderD
         custom_fields: [
           {
             code: 'parsec-saas-custom-order-start-date',
-            value: overload.licenseStart
-              ? overload.licenseStart.toISO()
-              : DateTime.now()
-                  .minus({ months: count + 1 - i })
-                  .toISO(),
+            value: licenseStart.toISO(),
           },
           {
             code: 'parsec-saas-custom-order-end-date',
-            value: overload.licenseStart
-              ? overload.licenseStart.toISO()
-              : DateTime.now()
-                  .minus({ months: count - i })
-                  .toISO(),
+            value: licenseEnd.toISO(),
           },
           {
             code: 'parsec-saas-custom-order-admin-license-count',

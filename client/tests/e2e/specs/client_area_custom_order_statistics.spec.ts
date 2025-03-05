@@ -1,9 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, msTest } from '@tests/e2e/helpers';
+import { clientAreaSwitchOrganization, expect, msTest } from '@tests/e2e/helpers';
 
 msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
   const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+
+  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
 
   await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
   await expect(title).toHaveText('Statistics');

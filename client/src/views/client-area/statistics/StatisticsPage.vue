@@ -351,7 +351,7 @@
         </div>
       </div>
     </template>
-    <template v-else-if="!querying && !stats && !error && allOrganizations.length">
+    <template v-else-if="!querying && !stats && !error && organizations.length">
       <ion-text class="organization-choice-title body-lg">
         {{ $msTranslate('clientArea.statistics.multipleOrganizations') }}
       </ion-text>
@@ -359,7 +359,7 @@
       <div class="organization-list">
         <div
           class="organization-list-item subtitles-normal"
-          v-for="org in allOrganizations"
+          v-for="org in organizations"
           :key="org.bmsId"
           @click="onOrganizationSelected(org)"
         >
@@ -372,7 +372,7 @@
         </div>
       </div>
     </template>
-    <template v-else-if="!querying && !stats && !error && allOrganizations.length === 0">
+    <template v-else-if="!querying && !stats && !error && organizations.length === 0">
       {{ $msTranslate('clientArea.statistics.noStats') }}
     </template>
     <ion-text
@@ -400,7 +400,8 @@ interface ProgressBarData {
 }
 
 const props = defineProps<{
-  organization: BmsOrganization;
+  currentOrganization: BmsOrganization;
+  organizations: Array<BmsOrganization>;
 }>();
 
 const emits = defineEmits<{
@@ -413,7 +414,6 @@ const freeSliceSize = ref<number>(0);
 const payingSliceSize = ref<number>(0);
 const querying = ref(true);
 const error = ref('');
-const allOrganizations = ref<Array<BmsOrganization>>([]);
 
 const firstBarData = ref<ProgressBarData>();
 const secondBarData = ref<ProgressBarData>();
@@ -472,28 +472,22 @@ function getThirdBarData(): ProgressBarData | undefined {
 }
 
 onMounted(async () => {
-  if (isDefaultOrganization(props.organization)) {
-    const listResponse = await BmsAccessInstance.get().listOrganizations();
-    if (!listResponse.isError && listResponse.data && listResponse.data.type === DataType.ListOrganizations) {
-      allOrganizations.value = listResponse.data.organizations;
+  if (!isDefaultOrganization(props.currentOrganization)) {
+    const response = await BmsAccessInstance.get().getOrganizationStats(props.currentOrganization.bmsId);
+
+    if (!response.isError && response.data && response.data.type === DataType.OrganizationStats) {
+      stats.value = response.data;
+
+      totalData.value = stats.value.dataSize + stats.value.metadataSize;
+      freeSliceSize.value = stats.value.freeSliceSize;
+      payingSliceSize.value = stats.value.payingSliceSize;
+
+      firstBarData.value = getFirstBarData();
+      secondBarData.value = getSecondBarData();
+      thirdBarData.value = getThirdBarData();
+    } else {
+      error.value = 'clientArea.statistics.error';
     }
-    querying.value = false;
-    return;
-  }
-  const response = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
-
-  if (!response.isError && response.data && response.data.type === DataType.OrganizationStats) {
-    stats.value = response.data;
-
-    totalData.value = stats.value.dataSize + stats.value.metadataSize;
-    freeSliceSize.value = stats.value.freeSliceSize;
-    payingSliceSize.value = stats.value.payingSliceSize;
-
-    firstBarData.value = getFirstBarData();
-    secondBarData.value = getSecondBarData();
-    thirdBarData.value = getThirdBarData();
-  } else {
-    error.value = 'clientArea.statistics.error';
   }
   querying.value = false;
 });

@@ -208,7 +208,7 @@ const savedCards = computed(() => cards.value.filter((card) => !card.isDefault))
 
 onMounted(async () => {
   if (BmsAccessInstance.get().isLoggedIn()) {
-    personalInformation.value = await BmsAccessInstance.get().getPersonalInformation();
+    personalInformation.value = BmsAccessInstance.get().getPersonalInformation();
   }
   await queryBillingDetails();
 });
