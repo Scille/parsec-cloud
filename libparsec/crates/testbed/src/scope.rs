@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{future::Future, io::Read, sync::Arc};
+use std::{future::Future, sync::Arc};
 
 use lazy_static::lazy_static;
 
@@ -140,6 +140,26 @@ fn ensure_testbed_server_is_started() -> (Option<ParsecAddr>, Option<std::proces
         ServerConfig::Default => (),
     }
 
+    // Start testbed server is not possible on web, so just skip the tests instead
+    #[cfg(target_arch = "wasm32")]
+    {
+        return (None, None);
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        let (process, port) = start_testbed_server();
+        (
+            Some(ParsecAddr::new("127.0.0.1".to_owned(), Some(port), false)),
+            Some(process),
+        )
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn start_testbed_server() -> (std::process::Child, u16) {
+    use std::io::Read;
+
     log::info!("Starting testbed server...");
 
     // We don't really know where we are executed from given it depend on what is
@@ -239,10 +259,8 @@ fn ensure_testbed_server_is_started() -> (Option<ParsecAddr>, Option<std::proces
         .expect("unreachable");
 
     log::info!("Testbed server running on 127.0.0.1:{}", port);
-    (
-        Some(ParsecAddr::new("127.0.0.1".to_owned(), Some(port), false)),
-        Some(process),
-    )
+
+    (process, port)
 }
 
 // Given static variable are never drop, we cannot handle started testbed server
