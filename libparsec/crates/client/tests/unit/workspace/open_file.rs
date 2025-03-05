@@ -5,6 +5,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use libparsec_platform_async::pretend_future_is_send_on_web;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -539,9 +540,10 @@ async fn close_on_workspace_ops_stop(
         libparsec_tests_fixtures::moment_inject_hook(
             Moment::WorkspaceOpsStopAllFdsClosed,
             async move {
-                let outcome = ops
-                    .open_file_by_id(wksp1_bar_txt_id, OpenOptions::read_only())
-                    .await;
+                let outcome = pretend_future_is_send_on_web(
+                    ops.open_file_by_id(wksp1_bar_txt_id, OpenOptions::read_only()),
+                )
+                .await;
                 concurrent_open_outcome
                     .lock()
                     .expect("Mutex is poisoned")
