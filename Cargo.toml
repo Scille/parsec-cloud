@@ -112,8 +112,6 @@ argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.0.16", default-features = false }
 async-broadcast = { version = "0.5.1", default-features = false }
 async-lock = { version = "3.4.0", default-features = false }
-base32 = { version = "0.4.0", default-features = false }
-base64 = { version = "0.22.1", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.10.0", default-features = false }
 chrono = { version = "0.4.40", default-features = false }
