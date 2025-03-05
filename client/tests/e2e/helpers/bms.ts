@@ -81,6 +81,7 @@ interface MockCustomOrderDetailsOverload {
   amountWithTaxes?: number;
   amountWithoutTaxes?: number;
   amountDue?: number;
+  status?: 'paid' | 'draft' | 'open' | 'uncollectible' | 'void';
   licenseStart?: DateTime;
   licenseEnd?: DateTime;
   adminAmountWithTaxes?: number;
@@ -96,11 +97,14 @@ interface MockCustomOrderDetailsOverload {
 function createCustomOrderInvoices(count: number = 1, overload: MockCustomOrderDetailsOverload = {}): Array<any> {
   const invoices: Array<any> = [];
 
+  const STATUSES = ['paid', 'draft', 'open', 'uncollectible', 'void'];
+
   for (let i = 1; i < count + 1; i++) {
     invoices.push({
       id: `custom_order_id${i}`,
-      created: overload.created ? overload.created.toISO() : '1988-04-07T00:00:00+00:00',
+      created: overload.created ? overload.created.toISO() : DateTime.now().minus({ months: count + 1 - i }),
       number: `FACT00${i}`,
+      status: overload.status ? overload.status : STATUSES[Math.floor(Math.random() * STATUSES.length)],
       amounts: {
         total_excl_tax: overload.amountWithoutTaxes ? overload.amountWithoutTaxes.toString() : '42.00',
         // x10, damn government
@@ -131,11 +135,19 @@ function createCustomOrderInvoices(count: number = 1, overload: MockCustomOrderD
         custom_fields: [
           {
             code: 'parsec-saas-custom-order-start-date',
-            value: overload.licenseStart ? overload.licenseStart.toISO() : '1988-04-07T00:00:00+00:00',
+            value: overload.licenseStart
+              ? overload.licenseStart.toISO()
+              : DateTime.now()
+                  .minus({ months: count + 1 - i })
+                  .toISO(),
           },
           {
             code: 'parsec-saas-custom-order-end-date',
-            value: overload.licenseStart ? overload.licenseStart.toISO() : DateTime.now().plus({ year: 1 }).toISO(),
+            value: overload.licenseStart
+              ? overload.licenseStart.toISO()
+              : DateTime.now()
+                  .minus({ months: count - i })
+                  .toISO(),
           },
           {
             code: 'parsec-saas-custom-order-admin-license-count',
@@ -266,7 +278,7 @@ async function mockListOrganizations(page: Page, options?: MockRouteOptions): Pr
         json: {
           results: [
             {
-              pk: DEFAULT_ORGANIZATION_INFORMATION.bmsId,
+              pk: '1',
               created_at: '2024-12-04T00:00:00.000',
               expiration_date: null,
               name: DEFAULT_ORGANIZATION_INFORMATION.name,
@@ -276,7 +288,7 @@ async function mockListOrganizations(page: Page, options?: MockRouteOptions): Pr
               bootstrap_link: '',
             },
             {
-              pk: `${DEFAULT_ORGANIZATION_INFORMATION.bmsId}-2`,
+              pk: '2',
               created_at: '2024-12-04T00:00:00.000',
               expiration_date: null,
               name: DEFAULT_ORGANIZATION_INFORMATION.name,
@@ -669,6 +681,15 @@ async function mockGetCustomOrderInvoices(
   options?: MockRouteOptions,
   overload: MockCustomOrderDetailsOverload = {},
 ): Promise<void> {
+  function formatResponse(postData: any): any {
+    const ret: any = {};
+    for (const orgId of postData.organization_ids ?? []) {
+      const parsecId = orgId === '1' ? DEFAULT_ORGANIZATION_INFORMATION.name : `${DEFAULT_ORGANIZATION_INFORMATION.name}-${orgId}`;
+      ret[parsecId] = createCustomOrderInvoices(12, overload);
+    }
+    return ret;
+  }
+
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/custom_order_invoices`,
@@ -676,9 +697,7 @@ async function mockGetCustomOrderInvoices(
     async (route) => {
       await route.fulfill({
         status: 200,
-        json: {
-          [DEFAULT_ORGANIZATION_INFORMATION.name]: createCustomOrderInvoices(12, overload),
-        },
+        json: formatResponse(route.request().postDataJSON()),
       });
     },
   );
