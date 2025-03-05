@@ -7,7 +7,10 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::{workspace_history_ops_with_server_access_factory, DataAccessStrategy};
+use super::utils::{
+    workspace_history_ops_with_server_access_factory, DataAccessStrategy,
+    StartWorkspaceHistoryOpsError,
+};
 use crate::workspace_history::{WorkspaceHistoryEntryStat, WorkspaceHistoryStatEntryError};
 
 #[parsec_test(testbed = "workspace_history")]
@@ -22,7 +25,8 @@ async fn ok_folder(
         .get_stuff("wksp1_foo_v2_children_available_timestamp");
     let ops = strategy
         .start_workspace_history_ops_at(env, wksp1_foo_v2_children_available_timestamp)
-        .await;
+        .await
+        .unwrap();
 
     // `/` manifest is already in cache, no need for `test_register_sequence_of_send_hooks` here
     p_assert_matches!(
@@ -56,9 +60,13 @@ async fn ok_file(
     let wksp1_foo_v2_children_available_timestamp: DateTime = *env
         .template
         .get_stuff("wksp1_foo_v2_children_available_timestamp");
-    let ops = strategy
+    let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_foo_v2_children_available_timestamp)
-        .await;
+        .await
+    {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     if matches!(strategy, DataAccessStrategy::Server) {
         test_register_sequence_of_send_hooks!(
@@ -157,9 +165,13 @@ async fn entry_not_found(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let dummy_id = VlobID::default();
     let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
-    let ops = strategy
+    let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_v2_timestamp)
-        .await;
+        .await
+    {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     if matches!(strategy, DataAccessStrategy::Server) {
         test_register_sequence_of_send_hooks!(

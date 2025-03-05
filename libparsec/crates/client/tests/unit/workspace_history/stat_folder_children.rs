@@ -7,7 +7,10 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::{workspace_history_ops_with_server_access_factory, DataAccessStrategy};
+use super::utils::{
+    workspace_history_ops_with_server_access_factory, DataAccessStrategy,
+    StartWorkspaceHistoryOpsError,
+};
 use crate::workspace_history::{
     WorkspaceHistoryEntryStat, WorkspaceHistoryStatFolderChildrenError,
 };
@@ -27,9 +30,13 @@ async fn ok(
     let wksp1_foo_v2_children_available_timestamp: DateTime = *env
         .template
         .get_stuff("wksp1_foo_v2_children_available_timestamp");
-    let ops = strategy
+    let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_foo_v2_children_available_timestamp)
-        .await;
+        .await
+    {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
@@ -82,9 +89,13 @@ async fn entry_available_but_not_referenced_in_parent(
     env: &TestbedEnv,
 ) {
     let wksp1_foo_v1_timestamp: DateTime = *env.template.get_stuff("wksp1_foo_v1_timestamp");
-    let ops = strategy
+    let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_foo_v1_timestamp)
-        .await;
+        .await
+    {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     p_assert_eq!(
         ops.stat_folder_children(&"/".parse().unwrap())
@@ -109,9 +120,13 @@ async fn entry_available_but_not_its_children(
     let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
     let wksp1_foo_egg_txt_id: VlobID = *env.template.get_stuff("wksp1_foo_egg_txt_id");
     let wksp1_foo_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_foo_v2_timestamp");
-    let ops = strategy
+    let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_foo_v2_timestamp)
-        .await;
+        .await
+    {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
@@ -200,7 +215,10 @@ async fn entry_not_found(
     strategy: DataAccessStrategy,
     env: &TestbedEnv,
 ) {
-    let ops = strategy.start_workspace_history_ops(env).await;
+    let ops = match strategy.start_workspace_history_ops(env).await {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     // Note no query to the server needs to be mocked here:
     // - Workspace manifest is always guaranteed to be in cache
@@ -223,9 +241,13 @@ async fn entry_is_file(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
-    let ops = strategy
+    let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_v2_timestamp)
-        .await;
+        .await
+    {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     if matches!(strategy, DataAccessStrategy::Server) {
         test_register_sequence_of_send_hooks!(

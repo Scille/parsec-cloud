@@ -4,7 +4,7 @@ use std::{path::Path, sync::Arc};
 
 use crate::{
     CertificateOps, ClientConfig, EventBus, MountpointMountStrategy, WorkspaceHistoryOps,
-    WorkspaceHistoryRealmExportDecryptor, WorkspaceStorageCacheSize,
+    WorkspaceStorageCacheSize,
 };
 use libparsec_client_connection::{
     test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle,
@@ -66,11 +66,15 @@ pub(crate) async fn workspace_history_ops_with_server_access_factory(
     .unwrap()
 }
 
+// Realm export database support is not available on web.
+#[cfg(not(target_arch = "wasm32"))]
 pub(crate) async fn workspace_history_ops_with_realm_export_access_factory(
     env: &TestbedEnv,
     decryptors: &[&str],
     relative_original_export_db_path: &str,
 ) -> (WorkspaceHistoryOps, TmpPath) {
+    use crate::WorkspaceHistoryRealmExportDecryptor;
+
     // Retrieve the realm export database
 
     let exe = std::env::current_exe().unwrap();
@@ -176,13 +180,19 @@ impl std::ops::DerefMut for WorkspaceHistoryOpsWithMaybeTmpPath {
     }
 }
 
+#[derive(Debug)]
+pub enum StartWorkspaceHistoryOpsError {
+    #[cfg_attr(not(target_arch = "wasm32"), expect(dead_code))]
+    RealmExportNotSupportedOnWeb,
+}
+
 impl DataAccessStrategy {
     pub async fn start_workspace_history_ops_at(
         &self,
         env: &TestbedEnv,
         timestamp: DateTime,
-    ) -> WorkspaceHistoryOpsWithMaybeTmpPath {
-        let ops = self.start_workspace_history_ops(env).await;
+    ) -> Result<WorkspaceHistoryOpsWithMaybeTmpPath, StartWorkspaceHistoryOpsError> {
+        let ops = self.start_workspace_history_ops(env).await?;
 
         if matches!(self, DataAccessStrategy::Server) {
             let realm_id = ops.realm_id();
@@ -195,14 +205,19 @@ impl DataAccessStrategy {
         }
         ops.set_timestamp_of_interest(timestamp).await.unwrap();
 
-        ops
+        Ok(ops)
     }
 
     pub async fn start_workspace_history_ops(
         &self,
         env: &TestbedEnv,
-    ) -> WorkspaceHistoryOpsWithMaybeTmpPath {
-        match self {
+    ) -> Result<WorkspaceHistoryOpsWithMaybeTmpPath, StartWorkspaceHistoryOpsError> {
+        let ops = match self {
+            #[cfg(target_arch = "wasm32")]
+            DataAccessStrategy::RealmExport => {
+                return Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb)
+            }
+            #[cfg(not(target_arch = "wasm32"))]
             DataAccessStrategy::RealmExport => {
                 let (ops, tmp_path) = workspace_history_ops_with_realm_export_access_factory(
                     env,
@@ -226,6 +241,7 @@ impl DataAccessStrategy {
                     _tmp_path: None,
                 }
             }
-        }
+        };
+        Ok(ops)
     }
 }

@@ -9,7 +9,10 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::{workspace_history_ops_with_server_access_factory, DataAccessStrategy};
+use super::utils::{
+    workspace_history_ops_with_server_access_factory, DataAccessStrategy,
+    StartWorkspaceHistoryOpsError,
+};
 use crate::workspace_history::WorkspaceHistoryFdReadError;
 
 #[parsec_test(testbed = "workspace_history")]
@@ -30,7 +33,10 @@ async fn ok(
         env.template.get_stuff("wksp1_bar_txt_v2_block1_access");
     let wksp1_bar_txt_v2_block2_access: &BlockAccess =
         env.template.get_stuff("wksp1_bar_txt_v2_block2_access");
-    let ops = strategy.start_workspace_history_ops(env).await;
+    let ops = match strategy.start_workspace_history_ops(env).await {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     // 0) Open `bar.txt` v1 and v2
 
@@ -237,7 +243,8 @@ async fn brute_force_read_combinaisons(env: &TestbedEnv) {
     //   the test data.
     let ops = DataAccessStrategy::Server
         .start_workspace_history_ops(env)
-        .await;
+        .await
+        .unwrap();
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
@@ -343,7 +350,10 @@ async fn bad_file_descriptor(
     strategy: DataAccessStrategy,
     env: &TestbedEnv,
 ) {
-    let ops = strategy.start_workspace_history_ops(env).await;
+    let ops = match strategy.start_workspace_history_ops(env).await {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     let mut buff = vec![];
     p_assert_matches!(
@@ -363,9 +373,13 @@ async fn reuse_after_close(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
-    let ops = strategy
+    let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_v2_timestamp)
-        .await;
+        .await
+    {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     if matches!(strategy, DataAccessStrategy::Server) {
         test_register_sequence_of_send_hooks!(
@@ -393,7 +407,8 @@ async fn server_only_offline(env: &TestbedEnv) {
     let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
     let ops = DataAccessStrategy::Server
         .start_workspace_history_ops_at(env, wksp1_v2_timestamp)
-        .await;
+        .await
+        .unwrap();
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
@@ -490,9 +505,13 @@ async fn block_not_found(
     let wksp1_bar_txt_v1_block_access: &BlockAccess =
         env.template.get_stuff("wksp1_bar_txt_v1_block_access");
     let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
-    let ops = strategy
+    let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_v2_timestamp)
-        .await;
+        .await
+    {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     if matches!(strategy, DataAccessStrategy::RealmExport) {
         // We need to modify the realm export database to remove the block...

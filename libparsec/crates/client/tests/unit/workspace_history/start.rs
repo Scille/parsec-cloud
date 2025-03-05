@@ -3,7 +3,7 @@
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::DataAccessStrategy;
+use super::utils::{DataAccessStrategy, StartWorkspaceHistoryOpsError};
 
 #[parsec_test(testbed = "workspace_history")]
 async fn ok(
@@ -12,7 +12,10 @@ async fn ok(
     env: &TestbedEnv,
 ) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let ops = strategy.start_workspace_history_ops(env).await;
+    let ops = match strategy.start_workspace_history_ops(env).await {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     p_assert_eq!(ops.realm_id(), wksp1_id);
 

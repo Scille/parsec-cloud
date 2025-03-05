@@ -8,7 +8,10 @@ use libparsec_types::prelude::*;
 
 use crate::WorkspaceHistorySetTimestampOfInterestError;
 
-use super::utils::{workspace_history_ops_with_server_access_factory, DataAccessStrategy};
+use super::utils::{
+    workspace_history_ops_with_server_access_factory, DataAccessStrategy,
+    StartWorkspaceHistoryOpsError,
+};
 
 #[parsec_test(testbed = "workspace_history")]
 async fn ok(
@@ -18,7 +21,10 @@ async fn ok(
 ) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let t0 = DateTime::now();
-    let ops = strategy.start_workspace_history_ops(env).await;
+    let ops = match strategy.start_workspace_history_ops(env).await {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     // Lower timestamp bound is the upload of workspace manifest v1
 
@@ -71,7 +77,10 @@ async fn older_than_lower_bound(
     strategy: DataAccessStrategy,
     env: &TestbedEnv,
 ) {
-    let ops = strategy.start_workspace_history_ops(env).await;
+    let ops = match strategy.start_workspace_history_ops(env).await {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     let timestamp_lower_bound = ops.timestamp_lower_bound();
 
@@ -89,7 +98,10 @@ async fn newer_than_higher_bound(
     strategy: DataAccessStrategy,
     env: &TestbedEnv,
 ) {
-    let ops = strategy.start_workspace_history_ops(env).await;
+    let ops = match strategy.start_workspace_history_ops(env).await {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     let timestamp_higher_bound = ops.timestamp_higher_bound();
 

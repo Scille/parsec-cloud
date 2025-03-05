@@ -7,7 +7,10 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::{workspace_history_ops_with_server_access_factory, DataAccessStrategy};
+use super::utils::{
+    workspace_history_ops_with_server_access_factory, DataAccessStrategy,
+    StartWorkspaceHistoryOpsError,
+};
 use crate::workspace_history::WorkspaceHistoryOpenFileError;
 
 #[parsec_test(testbed = "workspace_history")]
@@ -20,9 +23,13 @@ async fn ok(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
-    let ops = strategy
+    let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_v2_timestamp)
-        .await;
+        .await
+    {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     if matches!(strategy, DataAccessStrategy::Server) {
         test_register_sequence_of_send_hooks!(
@@ -142,7 +149,10 @@ async fn entry_not_found(
     #[values("open", "open_and_get_id")] kind: &str,
     env: &TestbedEnv,
 ) {
-    let ops = strategy.start_workspace_history_ops(env).await;
+    let ops = match strategy.start_workspace_history_ops(env).await {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     // Note no query to the server needs to be mocked here:
     // - Workspace manifest is always guaranteed to be in cache
@@ -172,9 +182,13 @@ async fn entry_not_a_file(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
     let wksp1_v2_timestamp: DateTime = *env.template.get_stuff("wksp1_v2_timestamp");
-    let ops = strategy
+    let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_v2_timestamp)
-        .await;
+        .await
+    {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     if matches!(strategy, DataAccessStrategy::Server) {
         test_register_sequence_of_send_hooks!(
