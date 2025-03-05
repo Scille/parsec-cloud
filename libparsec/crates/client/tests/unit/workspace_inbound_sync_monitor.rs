@@ -280,7 +280,17 @@ async fn run_testcase(
     match (task.await, expected_outcome) {
         (Err(err), _) if err.is_panic() => {
             // Resume the panic on the main task
-            std::panic::resume_unwind(err.into_panic());
+
+            let panic_obj = err.into_panic();
+
+            // SAFETY: `resume_unwind` requires the panic object to be `Send`, however
+            // `spawn` does not enforce this constraint on web platform.
+            // However this is fine to pretent the panic object is `Send` since in web
+            // we only run the application in a single thread.
+            #[cfg(target_arch = "wasm32")]
+            let panic_obj = unsafe { std::mem::transmute(panic_obj) };
+
+            std::panic::resume_unwind(panic_obj);
         }
         (Ok(()), TestcaseRunOutcome::MonitorWasCancelled) => {
             panic!("Expected monitor to be cancelled, but it has returned !")
