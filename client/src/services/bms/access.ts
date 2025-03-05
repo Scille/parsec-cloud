@@ -355,16 +355,18 @@ class BmsAccess {
     return await this.api.getCustomOrderRequests(this.tokens.access);
   }
 
-  // TODO: Update to add multi-organization support
-  async getCustomOrderInvoices(organization: BmsOrganization): Promise<BmsResponse> {
+  async getCustomOrderInvoices(...organizations: Array<BmsOrganization>): Promise<BmsResponse> {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
-    return await this.api.getCustomOrderInvoices(this.tokens.access, {
-      userId: this.customerInformation.id,
-      clientId: this.customerInformation.clientId,
-      organization: organization,
-    });
+    return await this.api.getCustomOrderInvoices(
+      this.tokens.access,
+      {
+        userId: this.customerInformation.id,
+        clientId: this.customerInformation.clientId,
+      },
+      ...organizations,
+    );
   }
 
   async clearStoredAccess(): Promise<void> {

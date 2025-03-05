@@ -334,6 +334,27 @@
         </div>
       </div>
     </template>
+    <template v-else-if="!querying && !organizationStats && !error && organizations.length">
+      <ion-text class="organization-choice-title body-lg">
+        {{ $msTranslate('clientArea.statistics.multipleOrganizations') }}
+      </ion-text>
+
+      <div class="organization-list">
+        <div
+          class="organization-list-item subtitles-normal"
+          v-for="org in organizations"
+          :key="org.bmsId"
+          @click="onOrganizationSelected(org)"
+        >
+          {{ org.name }}
+          <ion-icon
+            :icon="arrowForward"
+            slot="end"
+            class="organization-list-item__icon"
+          />
+        </div>
+      </div>
+    </template>
     <template v-else-if="!querying && !organizationStats && !error">
       {{ $msTranslate('clientArea.statistics.noStats') }}
     </template>
@@ -356,7 +377,12 @@ import { isDefaultOrganization } from '@/views/client-area/types';
 import { MsReportTheme, MsReportText } from 'megashark-lib';
 
 const props = defineProps<{
-  organization: BmsOrganization;
+  currentOrganization: BmsOrganization;
+  organizations: Array<BmsOrganization>;
+}>();
+
+const emits = defineEmits<{
+  (e: 'organizationSelected', organization: BmsOrganization): void;
 }>();
 
 const organizationStats = ref<OrganizationStatsResultData | undefined>(undefined);
@@ -372,29 +398,31 @@ const querying = ref(true);
 const error = ref('');
 
 onMounted(async () => {
-  if (isDefaultOrganization(props.organization)) {
-    querying.value = false;
-    return;
-  }
-  const orgStatsResponse = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
+  if (!isDefaultOrganization(props.currentOrganization)) {
+    const orgStatsResponse = await BmsAccessInstance.get().getOrganizationStats(props.currentOrganization.bmsId);
 
-  if (!orgStatsResponse.isError && orgStatsResponse.data && orgStatsResponse.data.type === DataType.OrganizationStats) {
-    organizationStats.value = orgStatsResponse.data;
-    totalData.value = organizationStats.value.dataSize + organizationStats.value.metadataSize;
-  } else {
-    error.value = 'clientArea.statistics.error';
-  }
+    if (!orgStatsResponse.isError && orgStatsResponse.data && orgStatsResponse.data.type === DataType.OrganizationStats) {
+      organizationStats.value = orgStatsResponse.data;
+      totalData.value = organizationStats.value.dataSize + organizationStats.value.metadataSize;
+    } else {
+      error.value = 'clientArea.statistics.error';
+    }
 
-  const contractDetailsResponse = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
-  if (
-    !contractDetailsResponse.isError &&
-    contractDetailsResponse.data &&
-    contractDetailsResponse.data.type === DataType.CustomOrderDetails
-  ) {
-    contractDetails.value = contractDetailsResponse.data;
+    const contractDetailsResponse = await BmsAccessInstance.get().getCustomOrderDetails(props.currentOrganization);
+    if (
+      !contractDetailsResponse.isError &&
+      contractDetailsResponse.data &&
+      contractDetailsResponse.data.type === DataType.CustomOrderDetails
+    ) {
+      contractDetails.value = contractDetailsResponse.data;
+    }
   }
   querying.value = false;
 });
+
+async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
+  emits('organizationSelected', org);
+}
 </script>
 
 <style scoped lang="scss">
@@ -661,6 +689,43 @@ onMounted(async () => {
     .skeleton-loading-text {
       width: 2rem;
       height: 1rem;
+    }
+  }
+}
+
+.organization-choice-title {
+  color: var(--parsec-color-light-secondary-soft-text);
+}
+
+.organization-list {
+  min-height: 4em;
+  margin-top: 1.5rem;
+  width: fit-content;
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  border-radius: var(--parsec-radius-12);
+  background: var(--parsec-color-light-secondary-background);
+  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  overflow: hidden;
+
+  &-item {
+    display: flex;
+    justify-content: space-between;
+    color: var(--parsec-color-light-primary-700);
+    flex: 1;
+    padding: 1em 1rem 1rem 1.5rem;
+    cursor: pointer;
+    min-width: 20rem;
+    width: 100%;
+    transition: background 0.2s;
+
+    &__icon {
+      color: var(--parsec-color-light-secondary-text);
+    }
+
+    &:hover {
+      background: var(--parsec-color-light-secondary-medium);
     }
   }
 }

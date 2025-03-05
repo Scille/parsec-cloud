@@ -50,7 +50,7 @@ function createMockFunction(functionName: string, mockSuccess?: MockFunction, mo
         console.info(`Mocking BMS calls to ${functionName}, set up to fail`);
         return async (...args: any[]): Promise<BmsResponse> => {
           await wait(REQUEST_WAIT_TIME);
-          return await mockError(args);
+          return await mockError(...args);
         };
       }
     } else {
@@ -60,7 +60,7 @@ function createMockFunction(functionName: string, mockSuccess?: MockFunction, mo
         console.info(`Mocking BMS calls to ${functionName}, set up to succeed`);
         return async (...args: any[]): Promise<BmsResponse> => {
           await wait(REQUEST_WAIT_TIME);
-          return await mockSuccess(args);
+          return await mockSuccess(...args);
         };
       }
     }
@@ -85,7 +85,10 @@ function getMockParameters(functionName: string): MockParameters {
   return DefaultMockParameters;
 }
 
-function createCustomOrderInvoices(count: number = 1): CustomOrderDetailsResultData | CustomOrderInvoicesResultData {
+function createCustomOrderInvoices(
+  count: number = 1,
+  organizations: Array<BmsOrganization> = [],
+): CustomOrderDetailsResultData | CustomOrderInvoicesResultData {
   const invoices: Array<SellsyInvoice> = [];
 
   for (let i = 1; i < count + 1; i++) {
@@ -121,7 +124,7 @@ function createCustomOrderInvoices(count: number = 1): CustomOrderDetailsResultD
         quantityOrdered: 1 + (i % 2),
         amountWithTaxes: 22.0 + (i % 2) * 5,
       },
-      organizationId: 'CustomOrderOrg',
+      organizationId: organizations.length > 0 ? organizations[i % organizations.length].parsecId : 'CustomOrderOrg',
     };
     invoices.push(new SellsyInvoice(customOrderInvoice));
   }
@@ -294,11 +297,11 @@ export const MockedBmsApi = {
   ),
   getCustomOrderInvoices: createMockFunction(
     'getCustomOrderInvoices',
-    async (_token: AuthenticationToken, _query: CustomOrderQueryData) => {
+    async (_token: AuthenticationToken, _query: CustomOrderQueryData, ...organizations: Array<BmsOrganization>) => {
       return {
         status: 200,
         isError: false,
-        data: createCustomOrderInvoices(12),
+        data: createCustomOrderInvoices(12, organizations),
       };
     },
   ),

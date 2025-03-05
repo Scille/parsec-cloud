@@ -45,15 +45,6 @@
           />
         </div>
       </ion-item>
-      <ion-item
-        class="organization-list__item"
-        v-show="querying"
-      >
-        <ion-skeleton-text
-          class="organization"
-          :animated="true"
-        />
-      </ion-item>
     </ion-list>
     <div
       class="organization-divider"
@@ -88,31 +79,24 @@
 </template>
 
 <script setup lang="ts">
-import { IonAvatar, IonIcon, IonItem, IonLabel, IonList, IonTitle, popoverController, IonSkeletonText } from '@ionic/vue';
+import { IonAvatar, IonIcon, IonItem, IonLabel, IonList, IonTitle, popoverController } from '@ionic/vue';
 import { arrowForward, checkmark, addCircle } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
-import { BillingSystem, BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
+import { BmsOrganization } from '@/services/bms';
 import { MsModalResult } from 'megashark-lib';
 import { DefaultBmsOrganization, isDefaultOrganization } from '@/views/client-area/types';
 
 const props = defineProps<{
   currentOrganization: BmsOrganization;
+  organizations: Array<BmsOrganization>;
 }>();
 
-const querying = ref(true);
-const organizations = ref<Array<BmsOrganization>>([]);
-const billingSystem = ref(BmsAccessInstance.get().getPersonalInformation().billingSystem);
+const organizations = ref<Array<BmsOrganization>>(Array.from(props.organizations));
 
 onMounted(async () => {
-  querying.value = true;
-  const result = await BmsAccessInstance.get().listOrganizations();
-  if (!result.isError && result.data && result.data.type === DataType.ListOrganizations) {
-    organizations.value = result.data.organizations;
-    if (billingSystem.value === BillingSystem.Stripe && result.data.organizations.length > 1) {
-      organizations.value.push(DefaultBmsOrganization);
-    }
+  if (props.organizations.length > 1) {
+    organizations.value.push(DefaultBmsOrganization);
   }
-  querying.value = false;
 });
 
 async function openCreateOrganizationModal(): Promise<void> {

@@ -12,12 +12,14 @@
 </template>
 
 <script setup lang="ts">
-import { BmsAccessInstance, BmsOrganization, DataType, SellsyInvoice } from '@/services/bms';
+import { BmsAccessInstance, BmsOrganization, BmsResponse, DataType, SellsyInvoice } from '@/services/bms';
 import { YearInvoicesList } from '@/components/client-area';
 import { ref, onMounted } from 'vue';
+import { isDefaultOrganization } from '@/views/client-area/types';
 
 const props = defineProps<{
-  organization: BmsOrganization;
+  currentOrganization: BmsOrganization;
+  organizations: Array<BmsOrganization>;
 }>();
 
 const invoices = ref<Map<number, Array<SellsyInvoice>>>(new Map());
@@ -26,7 +28,12 @@ const error = ref<string>('');
 
 onMounted(async () => {
   querying.value = true;
-  const response = await BmsAccessInstance.get().getCustomOrderInvoices(props.organization);
+  let response: BmsResponse;
+  if (isDefaultOrganization(props.currentOrganization)) {
+    response = await BmsAccessInstance.get().getCustomOrderInvoices(...props.organizations);
+  } else {
+    response = await BmsAccessInstance.get().getCustomOrderInvoices(props.currentOrganization);
+  }
   if (!response.isError && response.data && response.data.type === DataType.CustomOrderInvoices) {
     const filteredInvoices = response.data.invoices.sort((invoice1, invoice2) => {
       return invoice2.getDate().diff(invoice1.getDate()).toMillis();

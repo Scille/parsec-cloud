@@ -12,6 +12,7 @@ const debugTest = base.extend({
     browser: [
       async ({ playwright, browserName }, use): Promise<any> => {
         const args = [];
+        // cspell:disable-next-line
         if (browserName.toLowerCase().includes('chrom')) {
           args.push('--auto-open-devtools-for-tabs');
         }

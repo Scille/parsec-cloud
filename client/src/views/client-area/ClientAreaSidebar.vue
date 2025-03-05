@@ -10,13 +10,13 @@
         >
           <div
             class="card-header"
-            v-if="!isDefaultOrganization(organization)"
+            v-if="!isDefaultOrganization(currentOrganization)"
           >
             <ion-avatar class="card-header-avatar">
-              <span>{{ organization.parsecId.substring(0, 2) }}</span>
+              <span>{{ currentOrganization.parsecId.substring(0, 2) }}</span>
             </ion-avatar>
             <ion-card-title class="card-header-title title-h3">
-              {{ organization.parsecId }}
+              {{ currentOrganization.parsecId }}
             </ion-card-title>
           </div>
           <div
@@ -69,7 +69,7 @@
       </template>
 
       <!-- show it only when there is one organization selected -->
-      <template v-if="!isDefaultOrganization(organization) && status">
+      <template v-if="!isDefaultOrganization(currentOrganization) && status">
         <ion-text class="organization-card-state body">
           {{ $msTranslate('clientArea.sidebar.state.title') }}
           <span>{{ $msTranslate(status.isFrozen ? 'clientArea.sidebar.state.frozen' : 'clientArea.sidebar.state.active') }}</span>
@@ -79,7 +79,7 @@
       <!-- button: go to organization -->
       <div
         class="organization-card-button custom-button custom-button-fill"
-        v-show="showMenu && !isDefaultOrganization(organization)"
+        v-show="showMenu && !isDefaultOrganization(currentOrganization)"
         @click="goToOrganization"
       >
         <ion-icon
@@ -233,6 +233,7 @@
           button
           lines="none"
           class="button-medium menu-client-list-item"
+          v-show="false"
           :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderBillingDetails }"
           @click="goToPageClicked(ClientAreaPages.CustomOrderBillingDetails)"
         >
@@ -344,12 +345,12 @@ import { onMounted, ref } from 'vue';
 import { ServerType } from '@/services/parsecServers';
 
 const props = defineProps<{
-  organization: BmsOrganization;
+  currentOrganization: BmsOrganization;
+  organizations: Array<BmsOrganization>;
   currentPage: ClientAreaPages;
 }>();
 const status = ref<OrganizationStatusResultData | null>(null);
 const billingSystem = ref(BmsAccessInstance.get().getPersonalInformation().billingSystem);
-const organizations = ref<Array<BmsOrganization>>([]);
 const showMenu = ref(false);
 const querying = ref(false);
 
@@ -364,22 +365,17 @@ async function goToPageClicked(page: ClientAreaPages): Promise<void> {
 
 onMounted(async () => {
   querying.value = true;
-  if (isDefaultOrganization(props.organization)) {
+  if (isDefaultOrganization(props.currentOrganization)) {
     status.value = null;
   } else {
-    const response = await BmsAccessInstance.get().getOrganizationStatus(props.organization.bmsId);
+    const response = await BmsAccessInstance.get().getOrganizationStatus(props.currentOrganization.bmsId);
     if (!response.isError && response.data) {
       status.value = response.data as OrganizationStatusResultData;
     }
   }
-  const response = await BmsAccessInstance.get().listOrganizations();
-  if (!response.isError && response.data && response.data.type === DataType.ListOrganizations) {
-    organizations.value = response.data.organizations;
-  }
-  querying.value = false;
   if (billingSystem.value === BillingSystem.CustomOrder || billingSystem.value === BillingSystem.ExperimentalCandidate) {
-    const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
     showMenu.value = true;
+    const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(props.currentOrganization);
     if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus) {
       if (statusResp.data.status === CustomOrderStatus.NothingLinked) {
         showMenu.value = false;
@@ -388,16 +384,18 @@ onMounted(async () => {
   } else {
     showMenu.value = true;
   }
+  querying.value = false;
 });
 
 async function openOrganizationChoice(event: Event): Promise<void> {
-  if (organizations.value.length === 0) {
+  if (props.organizations.length === 0) {
     return;
   }
   const popover = await popoverController.create({
     component: OrganizationSwitchClientPopover,
     componentProps: {
-      currentOrganization: props.organization,
+      currentOrganization: props.currentOrganization,
+      organizations: props.organizations,
     },
     cssClass: 'dropdown-popover',
     id: 'organization-switch-popover',
@@ -414,7 +412,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 }
 
 async function goToOrganization(): Promise<void> {
-  await navigateTo(Routes.Home, { skipHandle: true, query: { bmsOrganizationId: props.organization.parsecId }, replace: true });
+  await navigateTo(Routes.Home, { skipHandle: true, query: { bmsOrganizationId: props.currentOrganization.parsecId }, replace: true });
 }
 
 async function goToHome(): Promise<void> {

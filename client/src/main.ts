@@ -140,6 +140,7 @@ async function setupApp(): Promise<void> {
     window.isDesktop = (): boolean => isDesktop;
     window.isDev = (): boolean => false;
     window.isLinux = (): boolean => isLinux;
+    window.isTesting = (): boolean => 'TESTING' in window && (window.TESTING as boolean);
 
     if (testbedDiscriminantPath) {
       window.usesTestbed = (): boolean => true;
@@ -348,18 +349,21 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
     },
     getUpdateAvailability: (): void => {
       // Wait for a bit so it seems more natural
-      setTimeout(async () => {
-        injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '13.37' });
-        injectionProvider.notifyAll(
-          new Information({
-            message: '',
-            level: InformationLevel.Info,
-            unique: true,
-            data: { type: InformationDataType.NewVersionAvailable, newVersion: '13.37' },
-          }),
-          PresentationMode.Notification,
-        );
-      }, 5000);
+      setTimeout(
+        async () => {
+          injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '13.37' });
+          injectionProvider.notifyAll(
+            new Information({
+              message: '',
+              level: InformationLevel.Info,
+              unique: true,
+              data: { type: InformationDataType.NewVersionAvailable, newVersion: '13.37' },
+            }),
+            PresentationMode.Notification,
+          );
+        },
+        window.isTesting() ? 0 : 5000,
+      );
       console.log('GetUpdateAvailability: MOCKED');
     },
     updateApp: (): void => {
@@ -499,6 +503,7 @@ declare global {
     isDesktop: () => boolean;
     isLinux: () => boolean;
     isDev: () => boolean;
+    isTesting: () => boolean;
     usesTestbed: () => boolean;
     electronAPI: {
       sendConfig: (config: Config) => void;

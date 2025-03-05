@@ -364,6 +364,27 @@
         <ion-text class="body-lg loading-text">{{ $msTranslate('clientArea.contracts.loading') }}</ion-text>
       </div>
     </template>
+    <template v-if="isDefaultOrganization(currentOrganization)">
+      <ion-text class="organization-choice-title body-lg">
+        {{ $msTranslate('clientArea.contracts.multipleOrganizations') }}
+      </ion-text>
+
+      <div class="organization-list">
+        <div
+          class="organization-list-item subtitles-normal"
+          v-for="org in organizations"
+          :key="org.bmsId"
+          @click="onOrganizationSelected(org)"
+        >
+          {{ org.name }}
+          <ion-icon
+            :icon="arrowForward"
+            slot="end"
+            class="organization-list-item__icon"
+          />
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -372,7 +393,7 @@ import { IonText, IonIcon, IonTitle } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MsImage, File, I18n, MsSpinner, MsReportTheme, MsReportText } from 'megashark-lib';
-import { informationCircle, person, pieChart } from 'ionicons/icons';
+import { informationCircle, person, pieChart, arrowForward } from 'ionicons/icons';
 import {
   BmsAccessInstance,
   BmsOrganization,
@@ -385,17 +406,17 @@ import { onMounted, ref, computed } from 'vue';
 import { isDefaultOrganization } from '@/views/client-area/types';
 
 const props = defineProps<{
-  organization: BmsOrganization;
+  currentOrganization: BmsOrganization;
+  organizations: Array<BmsOrganization>;
 }>();
 
-defineEmits<{
+const emits = defineEmits<{
   (e: 'organizationSelected', organization: BmsOrganization): void;
 }>();
 
 const contractStatus = ref(CustomOrderStatus.Unknown);
 const contractDetails = ref<CustomOrderDetailsResultData | undefined>(undefined);
 const querying = ref(true);
-const organizations = ref<Array<BmsOrganization>>([]);
 const error = ref('');
 const errorExceededUsers = ref('');
 const errorExceededStorage = ref('');
@@ -435,26 +456,19 @@ const progressWidthExternal = computed(() => {
 onMounted(async () => {
   querying.value = true;
   try {
-    if (isDefaultOrganization(props.organization)) {
-      const orgRep = await BmsAccessInstance.get().listOrganizations();
-      if (!orgRep.isError && orgRep.data && orgRep.data.type === DataType.ListOrganizations) {
-        organizations.value = orgRep.data.organizations;
-      } else {
-        error.value = 'clientArea.contracts.errors.noOrganizations';
-      }
-    } else {
-      const orgRep = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
+    if (!isDefaultOrganization(props.currentOrganization)) {
+      const orgRep = await BmsAccessInstance.get().getOrganizationStats(props.currentOrganization.bmsId);
       if (!orgRep.isError && orgRep.data && orgRep.data.type === DataType.OrganizationStats) {
         organizationStats.value = orgRep.data;
       } else {
         error.value = 'clientArea.contracts.errors.noInfo';
         return;
       }
-      const statusRep = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
+      const statusRep = await BmsAccessInstance.get().getCustomOrderStatus(props.currentOrganization);
       if (!statusRep.isError && statusRep.data && statusRep.data.type === DataType.CustomOrderStatus) {
         contractStatus.value = statusRep.data.status;
       }
-      const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
+      const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.currentOrganization);
       if (!detailsRep.isError && detailsRep.data && detailsRep.data.type === DataType.CustomOrderDetails) {
         contractDetails.value = detailsRep.data;
       } else {
@@ -525,13 +539,16 @@ function getStoragePercentage(): number {
 
   return Math.round((current / ordered) * 100);
 }
+
+async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
+  emits('organizationSelected', org);
+}
 </script>
 
 <style scoped lang="scss">
 .client-contract-page {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
   padding-bottom: 3rem;
 
   &:has(.loading-container) {
@@ -875,6 +892,43 @@ function getStoragePercentage(): number {
 
   .progress-bar-unused {
     width: calc(100% - v-bind(progressWidthStorage));
+  }
+}
+
+.organization-choice-title {
+  color: var(--parsec-color-light-secondary-soft-text);
+}
+
+.organization-list {
+  min-height: 4em;
+  margin-top: 1.5rem;
+  width: fit-content;
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  border-radius: var(--parsec-radius-12);
+  background: var(--parsec-color-light-secondary-background);
+  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  overflow: hidden;
+
+  &-item {
+    display: flex;
+    justify-content: space-between;
+    color: var(--parsec-color-light-primary-700);
+    flex: 1;
+    padding: 1em 1rem 1rem 1.5rem;
+    cursor: pointer;
+    min-width: 20rem;
+    width: 100%;
+    transition: background 0.2s;
+
+    &__icon {
+      color: var(--parsec-color-light-secondary-text);
+    }
+
+    &:hover {
+      background: var(--parsec-color-light-secondary-medium);
+    }
   }
 }
 </style>

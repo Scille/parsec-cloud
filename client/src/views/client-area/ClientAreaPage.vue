@@ -19,7 +19,8 @@
           <client-area-sidebar
             v-if="currentOrganization"
             :current-page="currentPage"
-            :organization="currentOrganization"
+            :current-organization="currentOrganization"
+            :organizations="organizations"
             @page-selected="switchPage"
             @organization-selected="onOrganizationSelected"
             :key="refresh"
@@ -76,7 +77,8 @@
               />
               <statistics-page
                 v-if="currentPage === ClientAreaPages.Statistics"
-                :organization="currentOrganization"
+                :current-organization="currentOrganization"
+                :organizations="organizations"
                 @organization-selected="onOrganizationSelected"
               />
               <invoices-page
@@ -96,11 +98,14 @@
               <!-- CustomOrder -->
               <custom-order-statistics-page
                 v-if="currentPage === ClientAreaPages.CustomOrderStatistics"
-                :organization="currentOrganization"
+                :current-organization="currentOrganization"
+                :organizations="organizations"
+                @organization-selected="onOrganizationSelected"
               />
               <contracts-page
                 v-if="currentPage === ClientAreaPages.Contracts"
-                :organization="currentOrganization"
+                :current-organization="currentOrganization"
+                :organizations="organizations"
                 @organization-selected="onOrganizationSelected"
               />
               <orders-page
@@ -115,7 +120,8 @@
               />
               <custom-order-invoices-page
                 v-if="currentPage === ClientAreaPages.CustomOrderInvoices"
-                :organization="currentOrganization"
+                :current-organization="currentOrganization"
+                :organizations="organizations"
               />
               <custom-order-processing-page v-if="currentPage === ClientAreaPages.CustomOrderProcessing" />
             </div>
@@ -198,7 +204,7 @@ onMounted(async () => {
           currentOrganization.value = org;
         }
       } else {
-        if ((organizations.value.length > 0 && billingSystem !== BillingSystem.Stripe) || organizations.value.length === 1) {
+        if (organizations.value.length === 1) {
           currentOrganization.value = organizations.value[0];
         } else {
           currentOrganization.value = DefaultBmsOrganization;

@@ -674,14 +674,17 @@ async function getCustomOrderRequests(token: AuthenticationToken): Promise<BmsRe
   });
 }
 
-// TODO: Update to add multi-organization support
-async function getCustomOrderInvoices(token: AuthenticationToken, query: CustomOrderQueryData): Promise<BmsResponse> {
+async function getCustomOrderInvoices(
+  token: AuthenticationToken,
+  query: ClientQueryData,
+  ...organizations: Array<BmsOrganization>
+): Promise<BmsResponse> {
   return wrapQuery(async () => {
     const axiosResponse = await http.getInstance().post(
       `/users/${query.userId}/clients/${query.clientId}/organizations/custom_order_invoices`,
       {
         // eslint-disable-next-line camelcase
-        organization_ids: [query.organization.bmsId],
+        organization_ids: organizations.map((org) => org.bmsId),
       },
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -689,12 +692,20 @@ async function getCustomOrderInvoices(token: AuthenticationToken, query: CustomO
         timeout: 30000,
       },
     );
-    const orgDataArray = axiosResponse.data[query.organization.parsecId];
-    if (!orgDataArray || !Array.isArray(orgDataArray) || orgDataArray.length === 0) {
-      return {
-        status: 404,
-        isError: true,
-      };
+
+    const invoices: Array<SellsyInvoice> = [];
+
+    for (const org of organizations) {
+      const orgDataArray = axiosResponse.data[org.parsecId];
+      if (!orgDataArray || !Array.isArray(orgDataArray)) {
+        continue;
+      }
+      invoices.push(
+        ...orgDataArray.map((value) => {
+          const customOrderInvoice = parseCustomOrderInvoice(value, org.parsecId);
+          return new SellsyInvoice(customOrderInvoice);
+        }),
+      );
     }
 
     return {
@@ -702,10 +713,7 @@ async function getCustomOrderInvoices(token: AuthenticationToken, query: CustomO
       isError: false,
       data: {
         type: DataType.CustomOrderInvoices,
-        invoices: orgDataArray.map((value) => {
-          const customOrderInvoice = parseCustomOrderInvoice(value, query.organization.parsecId);
-          return new SellsyInvoice(customOrderInvoice);
-        }),
+        invoices: invoices,
       },
     };
   });
