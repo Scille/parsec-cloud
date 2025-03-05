@@ -90,7 +90,7 @@ function getLastLoginText(): string {
     return '--';
   }
   const defaultTranslatable = 'HomePage.organizationList.noLastLogin';
-  const timeSince = formatTimeSince(props.lastLoginDevice, defaultTranslatable);
+  const timeSince = formatTimeSince(props.lastLoginDevice, defaultTranslatable, 'short');
   return I18n.translate(timeSince);
 }
 </script>
