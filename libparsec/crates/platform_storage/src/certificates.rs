@@ -687,7 +687,7 @@ impl CertificatesStorage {
         self.platform.stop().await
     }
 
-    pub async fn for_update<R>(
+    pub async fn for_update<R: 'static>(
         &mut self,
         cb: impl AsyncFnOnce(CertificatesStorageUpdater) -> R,
     ) -> anyhow::Result<R> {
