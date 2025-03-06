@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page id="page">
+  <ion-page
+    id="page"
+    :class="currentPage"
+  >
     <div
       class="resize-divider"
       ref="divider"
@@ -306,8 +309,6 @@ function getTitleByPage(): Translatable {
       return 'clientArea.header.titles.customOrderStatistics';
     case ClientAreaPages.CustomOrderBillingDetails:
       return 'clientArea.header.titles.customOrderBillingDetails';
-    case ClientAreaPages.CustomOrderProcessing:
-      return 'clientArea.header.titles.customOrderProcessing';
     default:
       return '';
   }

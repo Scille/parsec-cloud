@@ -91,3 +91,9 @@ ion-item {
 ion-skeleton-text {
   border-radius: var(--parsec-radius-8);
 }
+
+.custom-order-processing {
+  .header-content {
+    border: none !important;
+  }
+}
