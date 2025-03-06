@@ -1722,7 +1722,12 @@
                 "description": "You can change your credit card at any time.",
                 "update": "Update"
             },
-            "processing": "Your order is being processed.",
+            "processing": {
+                "title": "Welcome to your customer area",
+                "subtitle": "You'll find all your invoices, orders, statistics and customer information.",
+                "stepTitle": "Request in progress",
+                "stepDescription": "Our teams are processing your request. We'll get in touch shortly to accurately define your needs."
+            },
             "step": {
                 "requestSent": {
                     "title": "Request sent",

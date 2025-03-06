@@ -1722,7 +1722,12 @@
                 "description": "Vous pouvez à tout moment changer votre carte bancaire.",
                 "update": "Modifier"
             },
-            "processing": "Votre commande est en cours de traitement.",
+            "processing": {
+                "title": "Bienvenue sur votre espace client Parsec",
+                "subtitle": "Vous retrouverez l'ensemble de vos factures, commandes, statistiques ainsi que vos informations client.",
+                "stepTitle": "Demande en cours de traitement",
+                "stepDescription": "Notre équipe commerciale traite votre demande, nous allons vous recontacter prochainement pour définir précisément vos besoins."
+            },
             "step": {
                 "requestSent": {
                     "title": "Demande envoyée",
