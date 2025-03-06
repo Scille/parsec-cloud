@@ -273,7 +273,7 @@ impl From<ChunkID> for BlockID {
 
 // Equivalent to pattern "^[\w\-]{1,32}$" on 32 bytes
 #[inline]
-fn match_legacy_id(id: &str) -> bool {
+fn match_organization_id(id: &str) -> bool {
     // `str::len` returns the number of bytes
     let bytes_size = id.len();
 
@@ -286,7 +286,7 @@ fn match_legacy_id(id: &str) -> bool {
  * OrganizationID
  */
 
-new_string_based_id_type!(pub OrganizationID, match_legacy_id);
+new_string_based_id_type!(pub OrganizationID, match_organization_id);
 
 /*
  * UserID & DeviceID
