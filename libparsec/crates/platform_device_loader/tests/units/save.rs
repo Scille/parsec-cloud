@@ -3,15 +3,17 @@
 // `allow-unwrap-in-test` don't behave as expected, see:
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
-// TODO: Web support is not implemented
-#![cfg(not(target_arch = "wasm32"))]
 
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::PathBuf;
 
-use crate::{load_device, save_device, LoadDeviceError, SaveDeviceError};
+#[cfg(not(target_arch = "wasm32"))]
+use crate::SaveDeviceError;
+use crate::{load_device, save_device, LoadDeviceError};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
+#[cfg(not(target_arch = "wasm32"))]
 enum BadPathKind {
     PathIsDir,
     TmpPathIsDir,
@@ -19,6 +21,9 @@ enum BadPathKind {
     PathHasNoName,
 }
 
+// Wasm impl do not use a filesystem, so we do not have invalidPath error except if the path
+// contain invalid utf-8 char.
+#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "minimal")]
 #[case::path_is_dir(BadPathKind::PathIsDir)]
 #[case::path_is_dir(BadPathKind::TmpPathIsDir)]
@@ -50,12 +55,52 @@ async fn bad_path(tmp_path: TmpPath, #[case] kind: BadPathKind, env: &TestbedEnv
     p_assert_matches!(outcome, Err(SaveDeviceError::InvalidPath(_)));
 }
 
+#[parsec_test(testbed = "minimal")]
+async fn ok_simple(tmp_path: TmpPath, env: &TestbedEnv) {
+    let key_file = tmp_path.join("a_devices.keys");
+
+    let access = DeviceAccessStrategy::Password {
+        key_file: key_file.clone(),
+        password: "P@ssw0rd.".to_owned().into(),
+    };
+    let alice_device = env.local_device("alice@dev1");
+    alice_device
+        .time_provider
+        .mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
+    let outcome = save_device(&tmp_path, &access, &alice_device)
+        .await
+        .unwrap();
+    p_assert_eq!(
+        outcome,
+        AvailableDevice {
+            key_file_path: key_file,
+            created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+            protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+            server_url: format!("https://{}/", alice_device.organization_addr.hostname()),
+            organization_id: alice_device.organization_id().clone(),
+            user_id: alice_device.user_id,
+            device_id: alice_device.device_id,
+            human_handle: alice_device.human_handle.clone(),
+            device_label: alice_device.device_label.clone(),
+            ty: DeviceFileType::Password,
+        }
+    );
+
+    // Roundtrip check
+    let loaded = load_device(&tmp_path, &access).await.unwrap();
+    p_assert_eq!(*loaded, *alice_device);
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 enum OkKind {
     ExistingParentDir,
     MissingParentDir,
     OverwritingFile,
 }
 
+// Wasm impl do not use a filesystem, so we do not have invalidPath error except if the path
+// contain invalid utf-8 char.
+#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "minimal")]
 #[case::existing_parent_dir(OkKind::ExistingParentDir)]
 #[case::missing_parent_dir(OkKind::MissingParentDir)]
