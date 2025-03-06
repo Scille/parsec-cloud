@@ -93,6 +93,7 @@
             :sorter-labels="msSorterLabels"
             @change="onMsSorterChange"
           />
+          <ion-button @click="$emit('createOrJoinOrganizationClick', $event)"> + </ion-button>
         </div>
         <div class="organization-list">
           <ion-text
@@ -144,6 +145,7 @@ const emits = defineEmits<{
   (e: 'joinOrganizationWithLinkClick', link: string): void;
   (e: 'bootstrapOrganizationWithLinkClick', link: string): void;
   (e: 'recoverClick'): void;
+  (e: 'createOrJoinOrganizationClick', event: Event): void;
 }>();
 
 const props = defineProps<{

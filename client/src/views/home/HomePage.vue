@@ -18,8 +18,7 @@
             @about-click="openAboutModal"
             @back-click="backToPreviousPage"
             @customer-area-click="goToCustomerAreaLogin"
-            @create-organization-click="openCreateOrganizationModal"
-            @join-organization-click="onJoinOrganizationClicked"
+            @create-or-join-organization-click="openCreateOrJoinPopover"
             :display-create-join="deviceList.length > 0"
             :back-button-title="getBackButtonTitle()"
             :show-back-button="
@@ -38,6 +37,7 @@
                 @join-organization-with-link-click="openJoinByLinkModal"
                 @bootstrap-organization-with-link-click="openCreateOrganizationModal"
                 @recover-click="onForgottenPasswordClicked"
+                @create-or-join-organization-click="openCreateOrJoinPopover"
                 :device-list="deviceList"
                 :querying="querying"
                 ref="organizationListRef"
@@ -106,13 +106,14 @@ import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
 import { openSettingsModal } from '@/views/settings';
-import { IonContent, IonPage, modalController } from '@ionic/vue';
+import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Base64, Validity, MsModalResult, Position, SlideHorizontal, getTextFromUser, askQuestion, Answer } from 'megashark-lib';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
 import { getServerTypeFromAddress, ServerType } from '@/services/parsecServers';
 import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
+import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 
 enum HomePageState {
   OrganizationList = 'organization-list',
@@ -189,6 +190,30 @@ onUnmounted(() => {
   routeWatchCancel();
   stateWatchCancel();
 });
+
+async function openCreateOrJoinPopover(event: Event): Promise<void> {
+  const popover = await popoverController.create({
+    component: HomePageButtons,
+    cssClass: 'homepage-popover',
+    event: event,
+    showBackdrop: false,
+    alignment: 'end',
+    componentProps: {
+      replaceEmit: async (action: HomePageAction) => await popover.dismiss({ action: action }, MsModalResult.Confirm),
+    },
+  });
+  await popover.present();
+  const result = await popover.onWillDismiss();
+  await popover.dismiss();
+  if (result.role !== MsModalResult.Confirm) {
+    return;
+  }
+  if (result.data.action === HomePageAction.CreateOrganization) {
+    await openCreateOrganizationModal();
+  } else if (result.data.action === HomePageAction.JoinOrganization) {
+    await onJoinOrganizationClicked();
+  }
+}
 
 async function refreshDeviceList(): Promise<void> {
   querying.value = true;

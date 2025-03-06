@@ -70,7 +70,7 @@
       </div>
       <div class="topbar-right">
         <ion-button
-          @click="togglePopover"
+          @click="emits('createOrJoinOrganizationClick', $event)"
           size="default"
           id="create-organization-button"
           class="button-default"
@@ -94,11 +94,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonButtons, IonIcon, modalController, IonText, popoverController } from '@ionic/vue';
+import { IonButton, IonButtons, IonIcon, modalController, IonText } from '@ionic/vue';
 import { add, arrowBack, open } from 'ionicons/icons';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import { Translatable, MsModalResult } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
 import { Env } from '@/services/environment';
@@ -109,44 +108,6 @@ const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const eventDistributor = injectionProvider.getDefault().eventDistributor;
 let eventCbId: string | null = null;
 const updateAvailability: Ref<UpdateAvailabilityData | null> = ref(null);
-const isPopoverOpen = ref(false);
-
-async function togglePopover(event: Event): Promise<void> {
-  isPopoverOpen.value = !isPopoverOpen.value;
-  openPopover(event);
-}
-
-async function openPopover(event: Event): Promise<void> {
-  const popover = await popoverController.create({
-    component: HomePageButtons,
-    cssClass: 'homepage-popover',
-    event: event,
-    showBackdrop: false,
-    alignment: 'end',
-    componentProps: {
-      replaceEmit: dismissPopover,
-    },
-  });
-  await popover.present();
-  const result = await popover.onWillDismiss();
-  await popover.dismiss();
-  if (result.role !== MsModalResult.Confirm) {
-    return;
-  }
-  onAction(result.data.action);
-}
-
-async function dismissPopover(action: HomePageAction): Promise<void> {
-  await popoverController.dismiss({ action: action }, MsModalResult.Confirm);
-}
-
-async function onAction(action: HomePageAction): Promise<void> {
-  if (action === HomePageAction.CreateOrganization) {
-    emits('createOrganizationClick');
-  } else if (action === HomePageAction.JoinOrganization) {
-    emits('joinOrganizationClick');
-  }
-}
 
 onMounted(async () => {
   eventCbId = await eventDistributor.registerCallback(Events.UpdateAvailability, async (event: Events, data?: EventData) => {
@@ -203,8 +164,7 @@ const emits = defineEmits<{
   (e: 'aboutClick'): void;
   (e: 'backClick'): void;
   (e: 'customerAreaClick'): void;
-  (e: 'createOrganizationClick'): void;
-  (e: 'joinOrganizationClick'): void;
+  (e: 'createOrJoinOrganizationClick', event: Event): void;
 }>();
 </script>
 
