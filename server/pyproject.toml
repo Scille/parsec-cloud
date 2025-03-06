@@ -20,8 +20,9 @@ classifiers = [
 packages = [{ include = "parsec" }]
 exclude = []
 include = [
-    { path = "parsec/_parsec*.so", format = "wheel" },  # Rust lib for Linux & MacOS
-    { path = "parsec/_parsec*.pyd", format = "wheel" }, # Rust lib for Windows
+    { path = "parsec/static_client_web_app/**", format = "wheel" }, # Web client
+    { path = "parsec/_parsec*.so", format = "wheel" },              # Rust lib for Linux & MacOS
+    { path = "parsec/_parsec*.pyd", format = "wheel" },             # Rust lib for Windows
 ]
 
 [tool.poetry.scripts]
