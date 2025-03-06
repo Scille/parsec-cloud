@@ -110,6 +110,15 @@ export const msTest = debugTest.extend<{
 
     await newTestbed(page);
 
+    if (process.env.PWDEBUG) {
+      // Resize the viewport in debug mode to accomodate for the dev tools
+      const viewport = page.viewportSize();
+
+      if (viewport) {
+        await page.setViewportSize({ width: viewport.width + 400, height: viewport.height });
+      }
+    }
+
     await expect(page.locator('#app')).toHaveAttribute('app-state', 'ready');
     await use(page);
     await dropTestbed(page);
