@@ -1,15 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { clientAreaSwitchOrganization, expect, msTest } from '@tests/e2e/helpers';
+import { clientAreaSwitchOrganization, expect, MockBms, msTest } from '@tests/e2e/helpers';
 import { DateTime } from 'luxon';
 
-msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
+msTest('Test initial status for an org', async ({ clientAreaCustomOrder }) => {
   const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
   await expect(title).toHaveText('Contract');
 
   await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
+  const error = container.locator('.form-error');
+  await expect(error).toBeHidden();
 
   await expect(container.locator('.ms-error').nth(0)).toBeVisible();
   await expect(container.locator('.ms-error').nth(0)).toHaveText(
@@ -47,4 +49,75 @@ msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
   const storage = container.locator('.organization-storage');
   await expect(storage.locator('.item-active__number')).toHaveText('373 GB / 200 GB');
   await expect(storage.locator('.progress-text')).toHaveText('186% used');
+});
+
+msTest('Test initial status for all orgs', async ({ clientAreaCustomOrder }) => {
+  const orgSelector = clientAreaCustomOrder.locator('.sidebar-header').locator('.organization-card-header').locator('.card-header-title');
+  await expect(orgSelector).toHaveText('All organizations');
+
+  const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+  await expect(title).toHaveText('Contract');
+
+  const container = clientAreaCustomOrder.locator('.client-contract-page');
+  const error = container.locator('.form-error');
+  await expect(error).toBeHidden();
+
+  const orgChoice = container.locator('.organization-choice-title');
+  await expect(orgChoice).toBeVisible();
+  // eslint-disable-next-line max-len
+  await expect(orgChoice).toHaveText(
+    'You have multiple organizations. Please select one from the top-left button or select it below in order to check the contract.',
+  );
+
+  await expect(container.locator('.organization-list')).toBeVisible();
+  const orgs = container.locator('.organization-list').locator('.organization-list-item');
+  await expect(orgs).toHaveText(['BlackMesa', 'BlackMesa-2']);
+  await orgs.nth(1).click();
+  await expect(orgChoice).toBeHidden();
+  await expect(container.locator('.organization-list')).toBeHidden();
+  await expect(orgSelector).toHaveText('BlackMesa-2');
+});
+
+msTest('Custom order contract stats generic error', async ({ clientAreaCustomOrder }) => {
+  await MockBms.mockOrganizationStats(clientAreaCustomOrder, {}, { GET: { errors: { status: 400 } } });
+
+  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+
+  const container = clientAreaCustomOrder.locator('.client-contract-page');
+  const error = container.locator('.form-error');
+  await expect(error).toBeVisible();
+  await expect(error).toHaveText('Failed to retrieve the information');
+});
+
+msTest('Custom order contract stats timeout error', async ({ clientAreaCustomOrder }) => {
+  await MockBms.mockOrganizationStats(clientAreaCustomOrder, {}, { GET: { timeout: true } });
+
+  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+
+  const container = clientAreaCustomOrder.locator('.client-contract-page');
+  const error = container.locator('.form-error');
+  await expect(error).toBeVisible();
+  await expect(error).toHaveText('Failed to retrieve the information');
+});
+
+msTest('Custom order contract details generic error', async ({ clientAreaCustomOrder }) => {
+  await MockBms.mockCustomOrderDetails(clientAreaCustomOrder, {}, { POST: { errors: { status: 400 } } });
+
+  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+
+  const container = clientAreaCustomOrder.locator('.client-contract-page');
+  const error = container.locator('.form-error');
+  await expect(error).toBeVisible();
+  await expect(error).toHaveText('Failed to retrieve the information');
+});
+
+msTest('Custom order contract details timeout error', async ({ clientAreaCustomOrder }) => {
+  await MockBms.mockCustomOrderDetails(clientAreaCustomOrder, {}, { POST: { timeout: true } });
+
+  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+
+  const container = clientAreaCustomOrder.locator('.client-contract-page');
+  const error = container.locator('.form-error');
+  await expect(error).toBeVisible();
+  await expect(error).toHaveText('Failed to retrieve the information');
 });
