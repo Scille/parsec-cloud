@@ -32,17 +32,23 @@
         <div
           v-show="!isDeviceLoggedIn(device)"
           v-if="!orgNameOnly"
-          class="login-time"
+          class="login-content"
         >
           <ion-icon
             :icon="time"
-            class="login-time__icon"
+            class="login-icon"
           />
-          <ion-text class="login-time__text body-sm">
+          <ion-text class="login-text body">
             {{ getLastLoginText() }}
           </ion-text>
         </div>
-        <ion-text class="login-name body">({{ device.humanHandle.label }})</ion-text>
+        <div class="login-content">
+          <ion-icon
+            :icon="person"
+            class="login-icon"
+          />
+          <ion-text class="login-text body">{{ device.humanHandle.label }}</ion-text>
+        </div>
       </div>
     </ion-card-content>
     <!-- trial expiration badge -->
@@ -55,7 +61,7 @@
     <img
       src="@/assets/images/arrow-forward-circle.svg"
       class="organization-card-icon"
-      v-if="!orgNameOnly"
+      v-if="!orgNameOnly && !(isTrialOrg && isSmallDisplay)"
     />
   </div>
 </template>
@@ -64,11 +70,12 @@
 import { AvailableDevice, isDeviceLoggedIn } from '@/parsec';
 import { IonText, IonIcon, IonCardContent } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
-import { time } from 'ionicons/icons';
-import { MsImage, formatTimeSince, I18n, LogoIconWhite } from 'megashark-lib';
+import { person, time } from 'ionicons/icons';
+import { MsImage, formatTimeSince, I18n, LogoIconWhite, useWindowSize } from 'megashark-lib';
 import { formatExpirationTime, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
 import { Duration, DateTime } from 'luxon';
 
+const { isSmallDisplay } = useWindowSize();
 const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration>();
 
@@ -96,6 +103,8 @@ function getLastLoginText(): string {
 </script>
 
 <style lang="scss" scoped>
+@import '@/theme/responsive-mixin';
+
 .organization-card {
   background: var(--parsec-color-light-secondary-premiere);
   border: 1px solid var(--parsec-color-light-secondary-medium);
@@ -111,6 +120,7 @@ function getLastLoginText(): string {
   cursor: pointer;
   transition: all 150ms linear;
   position: relative;
+  flex-shrink: 0;
 
   // when using the card as a header only
   &.header-only {
@@ -141,6 +151,10 @@ function getLastLoginText(): string {
     background: var(--parsec-color-light-gradient-background);
     position: relative;
 
+    @include breakpoint('xs') {
+      width: 4.5rem;
+    }
+
     &::before {
       content: '';
       position: absolute;
@@ -152,6 +166,11 @@ function getLastLoginText(): string {
       background-size: cover;
       background-repeat: no-repeat;
       background-position: top left;
+
+      @include breakpoint('xs') {
+        width: 4.5rem;
+        height: 100%;
+      }
     }
 
     &__initials {
@@ -159,6 +178,10 @@ function getLastLoginText(): string {
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+
+      @include breakpoint('xs') {
+        font-size: 1.15rem;
+      }
     }
 
     &__logo {
@@ -171,16 +194,20 @@ function getLastLoginText(): string {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 0.5rem;
-    padding: 0;
+    padding: 1rem 0;
     gap: 0.25rem;
     width: 100%;
-    overflow: hidden;
+    height: 100%;
+
+    @include breakpoint('xs') {
+      padding: 0.75rem 0;
+      gap: 0.5rem;
+    }
 
     &-text {
       display: flex;
       gap: 0.375rem;
-      overflow: hidden;
+      overflow-x: hidden;
 
       .organization-name {
         color: var(--parsec-color-light-secondary-text);
@@ -199,22 +226,37 @@ function getLastLoginText(): string {
 
     &-login {
       display: flex;
-      gap: 0.5rem;
+      gap: 1rem;
 
-      .login-name {
-        color: var(--parsec-color-light-secondary-hard-grey);
+      @include breakpoint('xs') {
+        flex-direction: column;
+        gap: 0.25rem;
       }
 
-      .login-time {
-        color: var(--parsec-color-light-secondary-hard-grey);
+      .login-content {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         padding: 0;
+        color: var(--parsec-color-light-secondary-hard-grey);
+        overflow: hidden;
 
-        &__icon {
+        .login-icon {
           color: var(--parsec-color-light-secondary-light);
           font-size: 1rem;
+          flex-shrink: 0;
+        }
+
+        &:nth-child(1) {
+          flex-shrink: 0;
+        }
+
+        &:nth-child(2) {
+          .login-text {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+          }
         }
       }
     }
@@ -241,5 +283,14 @@ function getLastLoginText(): string {
   flex-shrink: 0;
   background: var(--parsec-color-light-secondary-text);
   color: var(--parsec-color-light-secondary-white);
+
+  @include breakpoint('xs') {
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: auto;
+    flex-shrink: 0;
+  }
 }
 </style>
