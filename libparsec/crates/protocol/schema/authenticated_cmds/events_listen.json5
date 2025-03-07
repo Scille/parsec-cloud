@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "events_listen",
         "req": {
-            "cmd": "events_listen",
             // No `wait` param as this API is only meant to be used from SSE
             "fields": []
         },

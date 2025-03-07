@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "invite_new_shamir_recovery",
         "req": {
-            "cmd": "invite_new_shamir_recovery",
             "fields": [
                 {
                     "name": "claimer_user_id",

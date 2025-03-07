@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "realm_create",
         "req": {
-            "cmd": "realm_create",
             "fields": [
                 {
                     "name": "realm_role_certificate",
