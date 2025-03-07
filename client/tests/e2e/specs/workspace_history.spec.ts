@@ -23,7 +23,7 @@ for (const mode of ['grid', 'list']) {
       await connected.locator('.workspace-list-item').nth(1).locator('.workspace-options').click();
     } else {
       await expect(connected.locator('.workspace-card-item')).toHaveCount(3);
-      await connected.locator('.workspace-card-item').nth(1).locator('.icon-option').nth(1).click();
+      await connected.locator('.workspace-card-item').nth(1).locator('.icon-option-container').nth(1).click();
     }
     const contextMenu = connected.locator('.workspace-context-menu');
     await expect(contextMenu).toBeVisible();
@@ -33,7 +33,7 @@ for (const mode of ['grid', 'list']) {
 }
 
 msTest('Test workspace history page', async ({ connected }) => {
-  await connected.locator('.workspace-card-item').nth(1).locator('.icon-option').nth(1).click();
+  await connected.locator('.workspace-card-item').nth(1).locator('.icon-option-container').nth(1).click();
   const contextMenu = connected.locator('.workspace-context-menu');
   await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
   await expect(connected.locator('.topbar-left').locator('.topbar-left__title')).toHaveText('History');
@@ -76,7 +76,7 @@ This will overwrite any current version but you can still retrieve it in the His
 });
 
 msTest('Test viewer in history', async ({ connected }) => {
-  await connected.locator('.workspace-card-item').nth(1).locator('.icon-option').nth(1).click();
+  await connected.locator('.workspace-card-item').nth(1).locator('.icon-option-container').nth(1).click();
   const contextMenu = connected.locator('.workspace-context-menu');
   await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
   await expect(connected.locator('.topbar-left').locator('.topbar-left__title')).toHaveText('History');

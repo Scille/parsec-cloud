@@ -1,86 +1,88 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div>
-    <file-drop-zone
-      ref="fileDropZoneRef"
-      :current-path="currentPath"
-      @files-added="$emit('filesAdded', $event)"
-      :show-drop-message="true"
-      :is-reader="ownRole === WorkspaceRole.Reader"
-      @drop-as-reader="$emit('dropAsReader')"
+  <file-drop-zone
+    ref="fileDropZoneRef"
+    :current-path="currentPath"
+    @files-added="$emit('filesAdded', $event)"
+    :show-drop-message="true"
+    :is-reader="ownRole === WorkspaceRole.Reader"
+    @drop-as-reader="$emit('dropAsReader')"
+  >
+    <div
+      class="scroll"
+      ref="containerScroll"
+      @contextmenu="onContextMenu"
     >
-      <div
-        class="scroll"
-        ref="containerScroll"
-        @contextmenu="onContextMenu"
+      <ion-list
+        class="list files-container-list"
+        :class="{ 'file-list-mobile': isSmallDisplay }"
       >
-        <ion-list class="list">
-          <ion-list-header
-            class="folder-list-header"
-            lines="full"
+        <ion-list-header
+          class="folder-list-header"
+          lines="full"
+          v-if="isLargeDisplay"
+        >
+          <ion-label class="folder-list-header__label ion-text-nowrap label-selected">
+            <ms-checkbox
+              @change="selectAll"
+              :checked="allSelected"
+              :indeterminate="someSelected && !allSelected"
+            />
+          </ion-label>
+          <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-name">
+            {{ $msTranslate('FoldersPage.listDisplayTitles.name') }}
+          </ion-label>
+          <ion-label
+            class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy"
+            v-show="false"
           >
-            <ion-label class="folder-list-header__label ion-text-nowrap label-selected">
-              <ms-checkbox
-                @change="selectAll"
-                :checked="allSelected"
-                :indeterminate="someSelected && !allSelected"
-              />
-            </ion-label>
-            <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-name">
-              {{ $msTranslate('FoldersPage.listDisplayTitles.name') }}
-            </ion-label>
-            <ion-label
-              class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy"
-              v-show="false"
-            >
-              {{ $msTranslate('FoldersPage.listDisplayTitles.updatedBy') }}
-            </ion-label>
-            <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate">
-              {{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}
-            </ion-label>
-            <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-size">
-              {{ $msTranslate('FoldersPage.listDisplayTitles.size') }}
-            </ion-label>
-            <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-space" />
-          </ion-list-header>
-          <div>
-            <file-list-item
-              v-for="folder in folders.getEntries()"
-              ref="folderItemsRef"
-              :key="folder.id"
-              :entry="folder"
-              :show-checkbox="someSelected"
-              @click="$emit('click', folder, $event)"
-              @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
-              @selected-change="onSelectedChange"
-              @files-added="onFilesAdded"
-              :is-workspace-reader="ownRole === WorkspaceRole.Reader"
-              @drop-as-reader="$emit('dropAsReader')"
-            />
-            <file-list-item
-              v-for="file in files.getEntries()"
-              ref="fileItemsRef"
-              :key="file.id"
-              :entry="file"
-              :show-checkbox="someSelected"
-              @click="$emit('click', file, $event)"
-              @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
-              @selected-change="onSelectedChange"
-              @files-added="onFilesAdded"
-              @drop-as-reader="$emit('dropAsReader')"
-            />
-            <file-list-item-processing
-              v-for="op in operationsInProgress"
-              :key="op.data.id"
-              :data="op.data"
-              :progress="op.progress"
-            />
-          </div>
-        </ion-list>
-      </div>
-    </file-drop-zone>
-  </div>
+            {{ $msTranslate('FoldersPage.listDisplayTitles.updatedBy') }}
+          </ion-label>
+          <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate">
+            {{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}
+          </ion-label>
+          <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-size">
+            {{ $msTranslate('FoldersPage.listDisplayTitles.size') }}
+          </ion-label>
+          <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-space" />
+        </ion-list-header>
+        <div>
+          <file-list-item
+            v-for="folder in folders.getEntries()"
+            ref="folderItemsRef"
+            :key="folder.id"
+            :entry="folder"
+            :show-checkbox="someSelected"
+            @click="$emit('click', folder, $event)"
+            @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
+            @selected-change="onSelectedChange"
+            @files-added="onFilesAdded"
+            :is-workspace-reader="ownRole === WorkspaceRole.Reader"
+            @drop-as-reader="$emit('dropAsReader')"
+          />
+          <file-list-item
+            v-for="file in files.getEntries()"
+            ref="fileItemsRef"
+            :key="file.id"
+            :entry="file"
+            :show-checkbox="someSelected"
+            @click="$emit('click', file, $event)"
+            @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
+            @selected-change="onSelectedChange"
+            @files-added="onFilesAdded"
+            @drop-as-reader="$emit('dropAsReader')"
+          />
+          <file-list-item-processing
+            v-for="op in operationsInProgress"
+            :key="op.data.id"
+            :data="op.data"
+            :progress="op.progress"
+          />
+        </div>
+      </ion-list>
+    </div>
+  </file-drop-zone>
 </template>
 
 <script setup lang="ts">
@@ -92,8 +94,9 @@ import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, WorkspaceRole } from '@/parsec';
 import { IonLabel, IonList, IonListHeader } from '@ionic/vue';
 import { computed, ref } from 'vue';
-import { MsCheckbox } from 'megashark-lib';
+import { MsCheckbox, useWindowSize } from 'megashark-lib';
 
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const props = defineProps<{
   operationsInProgress: Array<FileOperationProgress>;
   files: EntryCollection<FileModel>;
@@ -179,6 +182,10 @@ async function scrollToSelected(): Promise<void> {
 .scroll {
   padding: 0;
   margin-bottom: 0;
+}
+
+.file-list-mobile {
+  padding-top: 1rem;
 }
 
 .folder-list-header {

@@ -128,6 +128,8 @@ async function scrollToSelected(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+@import '@/theme/responsive-mixin';
+
 .scroll {
   padding: 0;
   margin-bottom: 0;
@@ -136,7 +138,12 @@ async function scrollToSelected(): Promise<void> {
 .folders-container-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.5em;
+  gap: 1.5rem;
   overflow-y: auto;
+
+  @include breakpoint('sm') {
+    padding-top: 2rem;
+    gap: 1rem;
+  }
 }
 </style>

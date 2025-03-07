@@ -24,19 +24,36 @@ const NAME_MATCHER_ARRAY = new Array(2).fill(DIR_MATCHER).concat(new Array(9).fi
 const TIME_MATCHER_ARRAY = new Array(11).fill(TIME_MATCHER);
 const SIZE_MATCHER_ARRAY = new Array(2).fill('').concat(new Array(9).fill(SIZE_MATCHER));
 
-msTest('Documents page default state', async ({ documents }) => {
-  const actionBar = documents.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['New folder', 'Import']);
-  await expect(actionBar.locator('.counter')).toHaveText('11 items', { useInnerText: true });
-  await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
-  await expect(actionBar.locator('#grid-view')).toNotHaveDisabledAttribute();
-  await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
-  const entries = documents.locator('.folder-container').locator('.file-list-item');
-  await expect(entries).toHaveCount(11);
-  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
-  await expect(entries.locator('.file-lastUpdate')).toHaveText(TIME_MATCHER_ARRAY);
-  await expect(entries.locator('.file-size')).toHaveText(SIZE_MATCHER_ARRAY);
-});
+for (const displaySize of ['small', 'large']) {
+  msTest(`Documents page default state on ${displaySize} display`, async ({ home, documents }) => {
+    if (displaySize === 'small') {
+      const viewport = home.viewportSize();
+      await home.setViewportSize({ width: 700, height: viewport ? viewport.height : 700 });
+    }
+
+    const actionBar = documents.locator('#folders-ms-action-bar');
+    await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['New folder', 'Import']);
+    await expect(actionBar.locator('.counter')).toHaveText('11 items', { useInnerText: true });
+    await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
+    await expect(actionBar.locator('#grid-view')).toNotHaveDisabledAttribute();
+    await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+    await expect(entries).toHaveCount(11);
+    if (displaySize === 'small') {
+      await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
+      await expect(entries.locator('.data-date')).toHaveText(TIME_MATCHER_ARRAY);
+      await expect(entries.locator('.data-size')).toHaveText(SIZE_MATCHER_ARRAY.slice(2));
+      for (let i = 0; i < (await entries.count()); i++) {
+        const entry = entries.nth(i);
+        await expect(entry.locator('.options-button')).toBeVisible();
+      }
+    } else {
+      await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
+      await expect(entries.locator('.file-lastUpdate')).toHaveText(TIME_MATCHER_ARRAY);
+      await expect(entries.locator('.file-size')).toHaveText(SIZE_MATCHER_ARRAY);
+    }
+  });
+}
 
 msTest('Check documents in grid mode', async ({ documents }) => {
   await toggleViewMode(documents);
