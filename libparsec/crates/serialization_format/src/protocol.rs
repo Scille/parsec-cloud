@@ -333,7 +333,7 @@ impl GenCmdsFamily {
                     },
                     (None, Some(fields)) => GenCmdReqKind::Composed {
                         fields: fields
-                            .into_iter()
+                            .iter()
                             .cloned()
                             .filter_map(&convert_field)
                             .collect(),
