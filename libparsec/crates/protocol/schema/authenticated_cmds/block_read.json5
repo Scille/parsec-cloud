@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "block_read",
         "req": {
-            "cmd": "block_read",
             "fields": [
                 {
                     "name": "block_id",

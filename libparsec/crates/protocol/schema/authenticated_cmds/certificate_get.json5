@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "certificate_get",
         "req": {
-            "cmd": "certificate_get",
             "fields": [
                 {
                     // Skip the certificates before (or at) this timestamp

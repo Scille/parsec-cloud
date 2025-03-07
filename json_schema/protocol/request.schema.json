@@ -4,28 +4,15 @@
     "type": "object",
     "oneOf": [
         {
-            "required": [
-                "cmd"
-            ],
             "additionalProperties": false,
-            "properties": {
-                "cmd": {
-                    "type": "string",
-                    "description": "The name of the command"
-                }
-            }
+            "properties": {}
         },
         {
             "required": [
-                "cmd",
                 "unit"
             ],
             "additionalProperties": false,
             "properties": {
-                "cmd": {
-                    "type": "string",
-                    "description": "The name of the command"
-                },
                 "unit": {
                     "type": "string"
                 }
@@ -33,15 +20,10 @@
         },
         {
             "required": [
-                "cmd",
                 "fields"
             ],
             "additionalProperties": false,
             "properties": {
-                "cmd": {
-                    "type": "string",
-                    "description": "The name of the command"
-                },
                 "fields": {
                     "description": "Additional fields to send alongside the command",
                     "$ref": "./fields.schema.json"

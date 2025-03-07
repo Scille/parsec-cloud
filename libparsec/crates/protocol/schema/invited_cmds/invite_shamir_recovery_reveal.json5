@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "invite_shamir_recovery_reveal",
         "req": {
-            "cmd": "invite_shamir_recovery_reveal",
             "fields": [
                 {
                     "name": "reveal_token",
