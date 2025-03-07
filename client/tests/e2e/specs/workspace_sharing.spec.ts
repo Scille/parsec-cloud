@@ -156,7 +156,7 @@ msTest('Batch workspace sharing hidden when reader', async ({ connected }) => {
     .locator('.workspace-card-item')
     .nth(2)
     .locator('.workspace-card-bottom__icons')
-    .locator('.icon-option')
+    .locator('.icon-option-container')
     .nth(0)
     .click();
   const modal = connected.locator('.workspace-sharing-modal');
