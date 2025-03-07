@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "realm_rename",
         "req": {
-            "cmd": "realm_rename",
             "fields": [
                 {
                     // Signed `RealmNameCertificate` certificate,

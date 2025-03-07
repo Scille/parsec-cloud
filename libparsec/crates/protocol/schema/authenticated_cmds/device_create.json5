@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "device_create",
         "req": {
-            "cmd": "device_create",
             "fields": [
                 {
                     "name": "device_certificate",

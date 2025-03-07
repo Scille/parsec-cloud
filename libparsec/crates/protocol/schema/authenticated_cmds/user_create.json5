@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "user_create",
         "req": {
-            "cmd": "user_create",
             "fields": [
                 {
                     "name": "user_certificate",

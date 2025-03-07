@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "invite_claimer_cancel_greeting_attempt",
         "req": {
-            "cmd": "invite_claimer_cancel_greeting_attempt",
             "fields": [
                 {
                     "name": "greeting_attempt",

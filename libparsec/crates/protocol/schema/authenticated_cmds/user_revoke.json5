@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "user_revoke",
         "req": {
-            "cmd": "user_revoke",
             "fields": [
                 {
                     "name": "revoked_user_certificate",

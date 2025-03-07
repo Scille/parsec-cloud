@@ -3,9 +3,8 @@
         "major_versions": [
             5
         ],
-        "req": {
-            "cmd": "list_frozen_users"
-        },
+        "cmd": "list_frozen_users",
+        "req": {},
         "reps": [
             {
                 "status": "ok",

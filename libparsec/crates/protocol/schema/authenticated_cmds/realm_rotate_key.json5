@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "realm_rotate_key",
         "req": {
-            "cmd": "realm_rotate_key",
             "fields": [
                 {
                     // Signed `RealmKeyRotationCertificate` certificate,

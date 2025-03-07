@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "realm_unshare",
         "req": {
-            "cmd": "realm_unshare",
             "fields": [
                 {
                     // `RealmRoleCertificate` with `role` field set to `None`

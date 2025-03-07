@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "invite_new_user",
         "req": {
-            "cmd": "invite_new_user",
             "fields": [
                 {
                     "name": "claimer_email",

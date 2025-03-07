@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "invite_cancel",
         "req": {
-            "cmd": "invite_cancel",
             "fields": [
                 {
                     "name": "token",
