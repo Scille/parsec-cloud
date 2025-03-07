@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "block_create",
         "req": {
-            "cmd": "block_create",
             "fields": [
                 {
                     "name": "block_id",

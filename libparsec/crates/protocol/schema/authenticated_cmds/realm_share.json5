@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "realm_share",
         "req": {
-            "cmd": "realm_share",
             "fields": [
                 {
                     // `RealmRoleCertificate` with `role` field set to a non-null value
