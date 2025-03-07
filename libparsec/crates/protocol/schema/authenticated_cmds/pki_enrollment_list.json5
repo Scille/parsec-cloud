@@ -3,9 +3,8 @@
         "major_versions": [
             5
         ],
-        "req": {
-            "cmd": "pki_enrollment_list"
-        },
+        "cmd": "pki_enrollment_list",
+        "req": {},
         "reps": [
             {
                 "status": "ok",

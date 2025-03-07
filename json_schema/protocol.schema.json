@@ -5,6 +5,7 @@
         "type": "object",
         "required": [
             "major_versions",
+            "cmd",
             "req",
             "reps"
         ],
@@ -19,6 +20,10 @@
             },
             "introduced_in": {
                 "$ref": "./protocol/major-minor-string.schema.json"
+            },
+            "cmd": {
+                "type": "string",
+                "description": "The name of the command"
             },
             "req": {
                 "$ref": "./protocol/request.schema.json"

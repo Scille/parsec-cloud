@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "vlob_poll_changes",
         "req": {
-            "cmd": "vlob_poll_changes",
             "fields": [
                 {
                     "name": "realm_id",

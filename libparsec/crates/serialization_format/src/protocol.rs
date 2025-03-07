@@ -55,6 +55,7 @@ struct JsonCmdFlavour {
     major_versions: Vec<u32>,
     #[allow(unused)]
     introduced_in: Option<String>,
+    cmd: String,
     req: JsonCmdReq,
     reps: Vec<JsonCmdRep>,
     nested_types: Option<Vec<JsonNestedType>>,
@@ -77,7 +78,6 @@ struct JsonNestedType {
 
 #[derive(Deserialize, Clone)]
 struct JsonCmdReq {
-    cmd: String,
     fields: Option<Vec<JsonCmdField>>,
     unit: Option<String>,
 }
@@ -211,13 +211,12 @@ impl GenCmdsFamily {
                 req,
                 reps,
                 nested_types,
+                cmd: cmd_name,
                 ..
             } = cmd;
-            let cmd_name = &req.cmd.clone();
             assert!(
                 !major_versions.is_empty(),
-                "{}: major_versions field cannot be empty !",
-                cmd_name
+                "{cmd_name}: major_versions field cannot be empty !",
             );
 
             // We don't try to play smart here: if `introduced_in` is set
@@ -259,7 +258,7 @@ impl GenCmdsFamily {
                                     }
                                     introduced_in_major == major_version
                                 }
-                                Err(err) => panic!("{}: {:?}", cmd_name, err),
+                                Err(err) => panic!("{cmd_name}: {err:?}"),
                             }
                         }
                         None => false,
@@ -325,23 +324,21 @@ impl GenCmdsFamily {
                 };
 
                 let JsonCmdReq {
-                    cmd: req_cmd,
                     fields: req_fields,
                     unit: req_unit,
-                } = req.clone();
+                } = &req;
                 let gen_req_kind = match (req_unit, req_fields) {
-                    (Some(nested_type_name), None) => GenCmdReqKind::Unit { nested_type_name },
+                    (Some(nested_type_name), None) => GenCmdReqKind::Unit {
+                        nested_type_name: nested_type_name.to_owned(),
+                    },
                     (None, Some(fields)) => GenCmdReqKind::Composed {
-                        fields: fields.into_iter().filter_map(&convert_field).collect(),
+                        fields: fields.iter().cloned().filter_map(&convert_field).collect(),
                     },
                     (None, None) => GenCmdReqKind::Composed { fields: vec![] },
-                    _ => panic!(
-                        "{}: `unit`/`fields` are mutually exclusives in req",
-                        &req_cmd
-                    ),
+                    _ => panic!("{cmd_name}: `unit`/`fields` are mutually exclusives in req",),
                 };
                 let gen_req = GenCmdReq {
-                    cmd: req_cmd,
+                    cmd: cmd_name.to_owned(),
                     kind: gen_req_kind,
                 };
 
