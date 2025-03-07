@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "realm_get_keys_bundle",
         "req": {
-            "cmd": "realm_get_keys_bundle",
             "fields": [
                 {
                     "name": "realm_id",

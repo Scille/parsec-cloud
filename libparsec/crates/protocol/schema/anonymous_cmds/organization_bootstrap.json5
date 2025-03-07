@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "organization_bootstrap",
         "req": {
-            "cmd": "organization_bootstrap",
             "fields": [
                 {
                     // Set to `None` for spontaneous bootstrap (i.e. the organization

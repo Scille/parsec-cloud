@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "pki_enrollment_accept",
         "req": {
-            "cmd": "pki_enrollment_accept",
             "fields": [
                 // Signature should be checked before loading.
                 {

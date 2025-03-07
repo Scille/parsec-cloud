@@ -3,9 +3,8 @@
         "major_versions": [
             5
         ],
-        "req": {
-            "cmd": "invite_list"
-        },
+        "cmd": "invite_list",
+        "req": {},
         "reps": [
             {
                 "status": "ok",

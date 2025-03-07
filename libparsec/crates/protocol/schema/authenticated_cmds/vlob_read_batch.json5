@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "vlob_read_batch",
         "req": {
-            "cmd": "vlob_read_batch",
             "fields": [
                 {
                     "name": "realm_id",

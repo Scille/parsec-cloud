@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "invite_complete",
         "req": {
-            "cmd": "invite_complete",
             "fields": [
                 {
                     "name": "token",

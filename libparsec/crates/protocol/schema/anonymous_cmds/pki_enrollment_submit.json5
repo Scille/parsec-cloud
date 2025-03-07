@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "pki_enrollment_submit",
         "req": {
-            "cmd": "pki_enrollment_submit",
             "fields": [
                 {
                     "name": "enrollment_id",

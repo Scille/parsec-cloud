@@ -3,10 +3,9 @@
         "major_versions": [
             5
         ],
+        "cmd": "tos_get",
         "req": {
-            "cmd": "tos_get",
-            "fields": [
-            ]
+            "fields": []
         },
         "reps": [
             {

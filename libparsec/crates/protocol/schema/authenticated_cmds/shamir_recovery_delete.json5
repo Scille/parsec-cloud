@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "shamir_recovery_delete",
         "req": {
-            "cmd": "shamir_recovery_delete",
             "fields": [
                 {
                     "name": "shamir_recovery_deletion_certificate",
