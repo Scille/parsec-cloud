@@ -99,7 +99,7 @@ req-fields:
   organization_id: OrganizationID
   # Proof that that we can use the uploaded device.
   # It's the signature of `DeviceID` + AuthMediumID currently used to authenticate the request.
-  # The sigature is verified by the server by asking the metadata server.
+  # The signature is verified by the server by asking the metadata server.
   device_ownership_proof: DeviceOwnershipProof
   encrypted_device: EncryptedDevice
 reps:
