@@ -309,6 +309,7 @@
         "about": "About",
         "contact": "Contact",
         "documentation": "Documentation",
+        "doc": "Doc.",
         "settings": "Settings",
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",

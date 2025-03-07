@@ -43,3 +43,12 @@
     }
   }
 }
+
+.organization-filter .ms-search-input {
+  border-color: var(--parsec-color-light-secondary-premiere);
+  background: var(--parsec-color-light-secondary-premiere);
+
+  input::placeholder {
+    color: var(--parsec-color-light-secondary-grey);
+  }
+}

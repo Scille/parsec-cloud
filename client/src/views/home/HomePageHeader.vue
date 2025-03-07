@@ -26,7 +26,7 @@
           class="menu-secondary-buttons__item"
           @click="Env.Links.openDocumentationLink"
         >
-          {{ $msTranslate('MenuPage.documentation') }}
+          {{ isSmallDisplay ? $msTranslate('MenuPage.doc') : $msTranslate('MenuPage.documentation') }}
           <ion-icon :icon="open" />
         </ion-button>
         <!-- contact button -->
@@ -77,7 +77,7 @@
           v-if="displayCreateJoin"
         >
           <ion-icon :icon="add" />
-          {{ $msTranslate('HomePage.noExistingOrganization.createOrJoin') }}
+          <span v-if="isLargeDisplay">{{ $msTranslate('HomePage.noExistingOrganization.createOrJoin') }}</span>
         </ion-button>
         <!-- customer area button -->
         <ion-button
@@ -98,12 +98,13 @@ import { IonButton, IonButtons, IonIcon, modalController, IonText } from '@ionic
 import { add, arrowBack, open } from 'ionicons/icons';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Translatable, MsModalResult } from 'megashark-lib';
+import { Translatable, MsModalResult, useWindowSize } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
 import { Env } from '@/services/environment';
 import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
 import { APP_VERSION } from '@/services/environment';
 
+const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const eventDistributor = injectionProvider.getDefault().eventDistributor;
 let eventCbId: string | null = null;
@@ -169,11 +170,18 @@ const emits = defineEmits<{
 </script>
 
 <style lang="scss" scoped>
+@import '@/theme/responsive-mixin';
+
 .menu-secondary {
   display: flex;
   justify-content: flex-end;
   width: 100%;
   padding: 0 0 2rem;
+
+  @include breakpoint('md') {
+    flex-direction: column;
+    gap: 1rem;
+  }
 
   .update-button {
     margin-right: auto;
@@ -190,10 +198,19 @@ const emits = defineEmits<{
       --background-hover: none;
       box-shadow: var(--parsec-shadow-light);
     }
+
+    @include breakpoint('md') {
+      flex-direction: column;
+    }
   }
 
   &-buttons {
     display: flex;
+
+    @include breakpoint('md') {
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
 
     &__item {
       background: none;
@@ -238,11 +255,20 @@ const emits = defineEmits<{
 .topbar {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   width: 100%;
   padding: 0 0 2rem;
+  gap: 1rem;
   margin-bottom: 2rem;
   position: relative;
   border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+
+  @include breakpoint('sm') {
+    border: none;
+    padding: 0;
+    max-width: 34.5rem;
+    margin-inline: auto;
+  }
 
   .update-button {
     background: var(--parsec-color-light-primary-50);
@@ -321,16 +347,22 @@ const emits = defineEmits<{
   border-radius: var(--parsec-radius-32);
   transition: all 150ms linear;
   border: 1px solid transparent;
+  height: fit-content;
 
   &::part(native) {
     --background: var(--parsec-color-light-secondary-premiere);
     --background-hover: none;
     border-radius: var(--parsec-radius-32);
     padding: 0.5rem 0.825rem;
+    height: auto;
   }
 
   ion-icon {
     margin-right: 0.5rem;
+
+    @include breakpoint('sm') {
+      margin: 0;
+    }
   }
 
   &:hover {
@@ -346,11 +378,13 @@ const emits = defineEmits<{
   --background: var(--parsec-color-light-primary-50);
   color: var(--parsec-color-light-primary-700);
   border: 1px solid var(--parsec-color-light-primary-100);
+  height: fit-content;
 
   &::part(native) {
     --background-hover: none;
     border-radius: var(--parsec-radius-32);
     padding: 0.5rem 0.825rem;
+    height: auto;
   }
 
   ion-icon {

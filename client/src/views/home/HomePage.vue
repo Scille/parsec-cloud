@@ -586,6 +586,8 @@ function getBackButtonTitle(): string {
 </script>
 
 <style lang="scss" scoped>
+@import '@/theme/responsive-mixin';
+
 #page {
   position: relative;
   height: 100vh;
@@ -597,11 +599,11 @@ function getBackButtonTitle(): string {
 
   // Should be edited later with responsive
   .homepage-sidebar {
-    @media screen and (max-width: 1920px) {
+    @include breakpoint('ultra-wide') {
       max-width: 35rem;
     }
 
-    @media screen and (max-width: 1500px) {
+    @include breakpoint('wide') {
       max-width: 30rem;
 
       &:before {
@@ -610,18 +612,22 @@ function getBackButtonTitle(): string {
       }
     }
 
-    @media screen and (max-width: 1200px) {
+    @include breakpoint('lg') {
       max-width: 22rem;
     }
 
-    @media screen and (max-width: 764px) {
+    @include breakpoint('md') {
+      max-width: 17rem;
+    }
+
+    @include breakpoint('sm') {
       display: none;
     }
   }
 
   // Should be edited later with responsive
   .homepage-header {
-    @media screen and (max-width: 1200px) {
+    @include breakpoint('lg') {
       flex-direction: column-reverse;
       gap: 1rem;
     }
@@ -636,8 +642,12 @@ function getBackButtonTitle(): string {
     display: flex;
     flex-direction: column;
 
-    @media screen and (max-width: 764px) {
-      padding: 4.26rem 1.5rem 0;
+    @include breakpoint('lg') {
+      padding: 4.26rem 3rem 0;
+    }
+
+    @include breakpoint('sm') {
+      padding: 1.5rem 1.5rem 0;
     }
   }
 
