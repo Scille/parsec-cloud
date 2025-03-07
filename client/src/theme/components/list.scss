@@ -19,6 +19,7 @@
     cursor: default;
   }
 
+  // border between items
   &:not(.selected)::after,
   .current-user::after {
     content: '';
@@ -27,9 +28,13 @@
     left: 0;
     width: 100%;
     height: 1px;
-    background: var(--parsec-color-light-secondary-premiere);
+    background: var(--parsec-color-light-secondary-medium);
     z-index: 1;
     cursor: default;
+
+    @include breakpoint('sm') {
+      left: 4rem;
+    }
   }
 
   &.selected {
@@ -147,6 +152,12 @@
     min-width: 4rem;
     width: 4rem;
     justify-content: end;
+
+    @include breakpoint('sm') {
+      min-width: 1rem;
+      width: 3rem;
+      padding: 0;
+    }
   }
 
   .label-name,
@@ -154,6 +165,11 @@
     min-width: 16.25rem;
     width: 100%;
     padding: 0.5rem 1rem;
+
+    @include breakpoint('sm') {
+      min-width: 10rem;
+      padding: 0.75rem 1rem;
+    }
   }
 
   .label-updatedBy,
@@ -169,12 +185,20 @@
   .file-lastUpdate {
     min-width: 11.25rem;
     flex-shrink: 1;
+
+    @include breakpoint('sm') {
+      display: none;
+    }
   }
 
   .label-size,
   .file-size {
     min-width: 8.25rem;
     flex-shrink: 1;
+
+    @include breakpoint('md') {
+      display: none;
+    }
   }
 
   .label-size,

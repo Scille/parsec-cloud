@@ -52,17 +52,19 @@
         <div
           v-show="clientProfile !== UserProfile.Outsider"
           class="icon-option-container"
+          @click.stop="$emit('shareClick', workspace, $event)"
         >
           <ion-icon
             :icon="shareSocial"
-            @click.stop="$emit('shareClick', workspace, $event)"
             class="icon-option"
           />
         </div>
-        <div class="icon-option-container">
+        <div
+          class="icon-option-container"
+          @click.stop="onOptionsClick($event)"
+        >
           <ion-icon
             :icon="ellipsisHorizontal"
-            @click.stop="onOptionsClick($event)"
             class="icon-option"
           />
         </div>
