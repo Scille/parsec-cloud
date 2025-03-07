@@ -228,26 +228,6 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
   }
 }
 
-.file-options {
-  ion-button::part(native) {
-    padding: 0;
-  }
-
-  .options-button {
-    --background-hover: none;
-
-    &__icon {
-      color: var(--parsec-color-light-secondary-grey);
-    }
-
-    &:hover {
-      .options-button__icon {
-        color: var(--parsec-color-light-primary-500);
-      }
-    }
-  }
-}
-
 .file-list-item-mobile {
   overflow: hidden;
   text-overflow: ellipsis;

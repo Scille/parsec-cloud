@@ -87,19 +87,38 @@ function getStatusForUser(user: any): string {
   return user.active ? 'Active' : 'Revoked';
 }
 
-msTest('Check user list items', async ({ usersPage }) => {
-  const usersList = usersPage.locator('#users-page-user-list');
-  for (const [index, user] of USERS.entries()) {
-    const item = usersList.getByRole('listitem').nth(index);
-    await expect(item.locator('.user-name').locator('.person-name')).toHaveText(user.name);
-    await expect(item.locator('.user-profile')).toHaveText(user.profile);
-    await expect(item.locator('.user-email')).toHaveText(user.email);
-    await expect(item.locator('.user-status')).toHaveText(getStatusForUser(user));
-    if (!user.active && !user.frozen) {
-      await expect(item).toHaveTheClass('revoked');
+for (const displaySize of ['small', 'large']) {
+  msTest(`Check user list items on ${displaySize} display`, async ({ home, usersPage }) => {
+    if (displaySize === 'small') {
+      const viewport = home.viewportSize();
+      await home.setViewportSize({ width: 700, height: viewport ? viewport.height : 700 });
     }
-  }
-});
+
+    const usersList = usersPage.locator('#users-page-user-list');
+    for (const [index, user] of USERS.entries()) {
+      const item = usersList.getByRole('listitem').nth(index);
+
+      if (displaySize === 'small') {
+        await expect(item.locator('.user-mobile-text').locator('.user-mobile-text__name')).toHaveText(user.name);
+        await expect(item.locator('.user-mobile-text').locator('.user-mobile-text__email')).toHaveText(user.email);
+        await expect(item.locator('.user-mobile-text').locator('.user-mobile-text__profile')).toHaveText(user.profile);
+        await expect(item.locator('.user-profile')).toBeHidden();
+        await expect(item.locator('.user-email')).toBeHidden();
+        await expect(item.locator('.user-status')).toBeHidden();
+        await expect(item.locator('.user-options')).toBeVisible();
+      } else {
+        await expect(item.locator('.user-name').locator('.person-name')).toHaveText(user.name);
+        await expect(item.locator('.user-profile')).toHaveText(user.profile);
+        await expect(item.locator('.user-email')).toHaveText(user.email);
+        await expect(item.locator('.user-status')).toHaveText(getStatusForUser(user));
+        await expect(item.locator('.user-options').locator('.options-button')).toBeHidden();
+        if (!user.active && !user.frozen) {
+          await expect(item).toHaveTheClass('revoked');
+        }
+      }
+    }
+  });
+}
 
 msTest('Check user grid items', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();

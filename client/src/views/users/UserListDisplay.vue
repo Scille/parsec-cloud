@@ -2,12 +2,14 @@
 
 <template>
   <ion-list
-    class="list"
+    class="list users-container-list"
     id="users-page-user-list"
+    :class="{ 'user-list-mobile': isSmallDisplay }"
   >
     <ion-list-header
       class="user-list-header"
       lines="full"
+      v-if="isLargeDisplay"
     >
       <ion-label class="user-list-header__label label-selected">
         <ms-checkbox
@@ -57,7 +59,9 @@
 import { UserCollection, UserListItem, UserModel } from '@/components/users';
 import { IonLabel, IonList, IonListHeader, IonText } from '@ionic/vue';
 import { computed } from 'vue';
-import { MsCheckbox } from 'megashark-lib';
+import { MsCheckbox, useWindowSize } from 'megashark-lib';
+
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 
 const props = defineProps<{
   users: UserCollection;
@@ -77,59 +81,7 @@ const someSelected = computed(() => {
 </script>
 
 <style scoped lang="scss">
-.user-list-header {
-  &__label {
-    padding: 0 1rem;
-    height: 100%;
-    display: flex;
-    align-items: center;
-  }
-
-  .label-selected {
-    min-width: 4rem;
-    flex-grow: 0;
-    display: flex;
-    align-items: center;
-    justify-content: end;
-  }
-
-  .label-name {
-    width: 100%;
-    max-width: 25rem;
-    min-width: 11.25rem;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  .label-profile {
-    min-width: 11.5rem;
-    max-width: 10vw;
-    flex-grow: 2;
-  }
-
-  .label-email {
-    min-width: 16rem;
-    flex-grow: 0;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  .label-status {
-    min-width: 8rem;
-    flex-grow: 0;
-  }
-
-  .label-joined-on {
-    min-width: 11.25rem;
-    flex-grow: 0;
-    flex-shrink: 0;
-  }
-
-  .label-space {
-    min-width: 4rem;
-    flex-grow: 0;
-    margin-left: auto;
-  }
+.user-list-mobile {
+  padding-top: 1rem;
 }
 </style>

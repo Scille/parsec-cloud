@@ -1,6 +1,6 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
-/* **** List of workspaces, files/folder, users **** */
+/* ------- Workspaces, Files, Users ------- */
 
 .workspace-list-item,
 .file-list-item,
@@ -66,56 +66,6 @@
   }
 }
 
-.user-list-item,
-.user-card-item {
-  &.item-disabled {
-    opacity: 1;
-    position: relative;
-
-    &:not(.current-user)::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0.4;
-      background: var(--parsec-color-light-secondary-disabled);
-      z-index: 1;
-    }
-  }
-}
-
-.user-list-item:nth-child(2)::before {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background: var(--parsec-color-light-secondary-medium);
-  z-index: 2;
-}
-
-.revoked {
-  --background: var(--parsec-color-light-secondary-premiere) !important;
-  --background-hover: none;
-
-  .user-name,
-  .user-card-avatar {
-    filter: grayscale(100%);
-
-    .person-name,
-    .user-card-info__name {
-      color: var(--parsec-color-light-secondary-grey) !important;
-    }
-  }
-  .tag {
-    background: var(--parsec-color-light-secondary-disabled) !important;
-    color: var(--parsec-color-light-secondary-grey) !important;
-  }
-}
-
 .workspace-list-item > [class^='workspace-'],
 .file-list-item > [class^='file-'],
 .user-list-item > [class^='user-'] {
@@ -128,6 +78,28 @@
   cursor: default !important;
 }
 
+// ------- File & User (option button) -------
+.file-options,
+.user-options {
+  .options-button {
+    --background-hover: none;
+
+    &::part(native) {
+      padding: 0;
+    }
+
+    &__icon {
+      color: var(--parsec-color-light-secondary-grey);
+    }
+
+    &:hover {
+      .options-button__icon {
+        color: var(--parsec-color-light-primary-500);
+      }
+    }
+  }
+}
+
 // Allow to keep hover when context menu is open
 .file-hovered,
 .user-hovered:not(.revoked) {
@@ -135,11 +107,17 @@
   background-color: var(--parsec-color-light-primary-30) !important;
 }
 
+// ------- Workspaces only -------
+.workspace-list-item > [class^='workspace-'],
+.workspace-list-item::part(native) {
+  cursor: pointer !important;
+}
+
 .workspace-hovered {
   box-shadow: var(--parsec-shadow-light) !important;
 }
 
-// List of files/folders
+// ------- Files/folders only -------
 .folder-container {
   .file-list-item {
     display: flex;
@@ -215,7 +193,165 @@
   }
 }
 
-.workspace-list-item > [class^='workspace-'],
-.workspace-list-item::part(native) {
-  cursor: pointer !important;
+// ------- Users only -------
+.users-container-list {
+  .user-list-item {
+    display: flex;
+    width: 100%;
+  }
+
+  .user-list-header__label {
+    padding: 0 1rem;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+
+  .label-selected,
+  .user-selected {
+    min-width: 4rem;
+    flex-grow: 0;
+    display: flex;
+    align-items: center;
+    justify-content: end;
+
+    @include breakpoint('sm') {
+      padding: 1rem;
+      position: absolute;
+      justify-content: center;
+    }
+  }
+
+  .label-name,
+  .user-name {
+    width: 100%;
+    min-width: 11.25rem;
+    max-width: 25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 0.5rem 1rem;
+
+    @include breakpoint('sm') {
+      max-width: 100%;
+    }
+  }
+
+  .label-profile:not(.user-mobile-text__profile),
+  .user-profile {
+    max-width: 9.5rem;
+    width: 9.5rem;
+    flex-shrink: 0;
+
+    @include breakpoint('sm') {
+      display: none;
+    }
+  }
+
+  .label-email,
+  .user-email {
+    min-width: 12rem;
+    width: 16rem;
+    flex-grow: 1;
+    overflow: hidden;
+
+    @include breakpoint('lg') {
+      display: none;
+    }
+
+    &__label {
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+  }
+
+  .label-joined-on,
+  .user-join {
+    min-width: 11.25rem;
+    flex-grow: 0;
+
+    @include breakpoint('wide') {
+      display: none;
+    }
+  }
+
+  .label-status:not(.user-mobile-text__status),
+  .user-status {
+    flex: 0 0 8rem;
+
+    @include breakpoint('md') {
+      display: none;
+    }
+  }
+
+  .label-space,
+  .user-options {
+    min-width: 4rem;
+    flex: 1 0 4rem;
+    padding: 0.75rem;
+  }
+}
+
+.user-list-item,
+.user-card-item {
+  &.item-disabled {
+    opacity: 1;
+    position: relative;
+
+    &:not(.current-user)::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.4;
+      background: var(--parsec-color-light-secondary-disabled);
+      z-index: 1;
+    }
+  }
+
+  .checkbox-mobile {
+    --size: 1.75rem;
+
+    &::part(container) {
+      border: 2px solid var(--parsec-color-light-secondary-light);
+      border-radius: var(--parsec-radius-circle);
+      padding: 0.375rem;
+    }
+
+    &.checkbox-checked::part(container) {
+      border: 2px solid var(--parsec-color-light-primary-600);
+    }
+  }
+}
+
+.user-list-item:nth-child(2)::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--parsec-color-light-secondary-medium);
+  z-index: 2;
+}
+
+.revoked {
+  --background: var(--parsec-color-light-secondary-premiere) !important;
+  --background-hover: none;
+
+  .user-name,
+  .user-card-avatar {
+    filter: grayscale(100%);
+
+    .person-name,
+    .user-card-info__name {
+      color: var(--parsec-color-light-secondary-grey) !important;
+    }
+  }
+  .tag {
+    background: var(--parsec-color-light-secondary-disabled) !important;
+    color: var(--parsec-color-light-secondary-grey) !important;
+  }
 }
