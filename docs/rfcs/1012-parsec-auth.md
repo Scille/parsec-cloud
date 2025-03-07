@@ -131,9 +131,7 @@ At the end of the process, the server should save the following information:
 
 - An entry for the user account:
 
-  - A UUID (`user_id`)
-
-    > It's not related to a `user_id` inside a parsec organization.
+  - A UUID (`account_id`)
 
   - The email of the user
 
@@ -141,7 +139,11 @@ At the end of the process, the server should save the following information:
 
 - An entry for the authentication method linked to the user:
 
+  - A UUID (`auth_medium_id`)
   - The HMAC secret (`AUTH_MEDIUM_HMAC_KEY`)
+
+    The secret should be securely stored by either encrypting its value or using a vault.
+
   - The encrypted private key (`enc(AUTH_MEDIUM_PRIV_KEY)`)
 
     > Could be empty when the user uses a FIDO2 device.
