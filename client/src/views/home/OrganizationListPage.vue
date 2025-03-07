@@ -93,7 +93,17 @@
             :sorter-labels="msSorterLabels"
             @change="onMsSorterChange"
           />
-          <ion-button @click="$emit('createOrJoinOrganizationClick', $event)"> + </ion-button>
+          <!-- will be added with Parsec Auth -->
+          <ion-button
+            class="organization-add-button"
+            @click="$emit('createOrJoinOrganizationClick', $event)"
+            v-if="isSmallDisplay && false"
+          >
+            <ms-image
+              :image="AddIcon"
+              class="add-button-icon"
+            />
+          </ion-button>
         </div>
         <div class="organization-list">
           <ion-text
@@ -127,7 +137,18 @@
 
 <script setup lang="ts">
 import { claimAndBootstrapLinkValidator, bootstrapLinkValidator } from '@/common/validators';
-import { MsImage, NoOrganization, MsSorter, MsOptions, MsSorterChangeEvent, MsSearchInput, MsInput, Validity } from 'megashark-lib';
+import {
+  MsImage,
+  NoOrganization,
+  MsSorter,
+  MsOptions,
+  MsSorterChangeEvent,
+  MsSearchInput,
+  MsInput,
+  Validity,
+  AddIcon,
+  useWindowSize,
+} from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, isDeviceLoggedIn } from '@/parsec';
 import { Routes } from '@/router';
@@ -161,6 +182,7 @@ enum SortCriteria {
 
 const ORGANIZATION_LIST_DATA_KEY = 'OrganizationList';
 
+const { isSmallDisplay } = useWindowSize();
 const storedDeviceDataDict = ref<{ [deviceId: string]: StoredDeviceData }>({});
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
@@ -295,6 +317,8 @@ const filteredDevices = computed(() => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/theme/responsive-mixin';
+
 .organization {
   background: none;
   width: 100%;
@@ -309,6 +333,10 @@ const filteredDevices = computed(() => {
   &-title {
     padding: 0;
     color: var(--parsec-color-light-secondary-text);
+
+    @include breakpoint('sm') {
+      display: none;
+    }
   }
 }
 
@@ -328,6 +356,10 @@ const filteredDevices = computed(() => {
     width: 100%;
     max-width: 34.5rem;
 
+    @include breakpoint('md') {
+      margin: auto;
+    }
+
     #search-input-organization:focus-within {
       outline: none;
       border: 1px solid var(--parsec-color-light-primary-300);
@@ -335,6 +367,23 @@ const filteredDevices = computed(() => {
 
     #organization-filter-select {
       margin-left: auto;
+    }
+
+    .organization-add-button {
+      --background: var(--parsec-color-light-secondary-text);
+      --background-hover: var(--parsec-color-light-secondary-contrast);
+      width: 2.5rem;
+      height: 2.5rem;
+
+      &::part(native) {
+        padding: 0.625rem;
+        border-radius: var(--parsec-radius-8);
+      }
+
+      .add-button-icon {
+        --fill-color: var(--parsec-color-light-secondary-white);
+        width: fit-content;
+      }
     }
   }
 
@@ -347,6 +396,11 @@ const filteredDevices = computed(() => {
     gap: 1rem;
     position: relative;
     z-index: 100;
+
+    @include breakpoint('md') {
+      margin: auto;
+      width: 100%;
+    }
   }
 }
 
