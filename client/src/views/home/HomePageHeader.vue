@@ -19,7 +19,11 @@
           class="menu-secondary-buttons__item"
           @click="$emit('aboutClick')"
         >
-          {{ $msTranslate('MenuPage.about') }}
+          <ion-icon
+            :icon="informationCircle"
+            class="menu-secondary-buttons__icon"
+          />
+          <span class="menu-secondary-buttons__text">{{ $msTranslate('MenuPage.about') }}</span>
         </ion-button>
         <!-- doc button -->
         <ion-button
@@ -43,7 +47,13 @@
           class="menu-secondary-buttons__item"
           @click="$emit('settingsClick')"
         >
-          {{ $msTranslate('MenuPage.settings') }}
+          <ion-icon
+            :icon="cog"
+            class="menu-secondary-buttons__icon"
+          />
+          <span class="menu-secondary-buttons__text">
+            {{ $msTranslate('MenuPage.settings') }}
+          </span>
         </ion-button>
       </ion-buttons>
     </div>
@@ -95,7 +105,7 @@
 
 <script setup lang="ts">
 import { IonButton, IonButtons, IonIcon, modalController, IonText } from '@ionic/vue';
-import { add, arrowBack, open } from 'ionicons/icons';
+import { add, arrowBack, cog, informationCircle, open } from 'ionicons/icons';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Translatable, MsModalResult, useWindowSize } from 'megashark-lib';
@@ -202,6 +212,10 @@ const emits = defineEmits<{
     @include breakpoint('md') {
       flex-direction: column;
     }
+
+    @include breakpoint('xs') {
+      width: 100%;
+    }
   }
 
   &-buttons {
@@ -209,7 +223,10 @@ const emits = defineEmits<{
 
     @include breakpoint('md') {
       margin-left: auto;
-      flex-wrap: wrap;
+    }
+
+    @include breakpoint('xs') {
+      margin-left: 0;
     }
 
     &__item {
@@ -218,9 +235,36 @@ const emits = defineEmits<{
       transition: all 150ms linear;
       position: relative;
       padding: 0 0.5rem;
+      --background-hover: none;
 
-      &::part(native) {
-        --background-hover: none;
+      @include breakpoint('sm') {
+        padding: 0;
+      }
+
+      &:nth-of-type(1) {
+        @include breakpoint('sm') {
+          order: 3;
+          margin-left: auto;
+        }
+      }
+
+      &:nth-of-type(2) {
+        @include breakpoint('sm') {
+          order: 1;
+        }
+      }
+
+      &:nth-of-type(3) {
+        @include breakpoint('sm') {
+          order: 2;
+          margin-right: auto;
+        }
+      }
+
+      &:nth-of-type(4) {
+        @include breakpoint('sm') {
+          order: 4;
+        }
       }
 
       ion-icon {
@@ -247,6 +291,30 @@ const emits = defineEmits<{
         width: 1px;
         background: var(--parsec-color-light-secondary-disabled);
         transition: all 150ms linear;
+
+        @include breakpoint('xs') {
+          display: none;
+        }
+      }
+
+      .menu-secondary-buttons__text {
+        display: block;
+
+        @include breakpoint('xs') {
+          display: none;
+        }
+      }
+
+      .menu-secondary-buttons__icon {
+        display: none;
+
+        @include breakpoint('xs') {
+          display: block;
+          background: var(--parsec-color-light-secondary-premiere);
+          padding: 0.5rem;
+          border-radius: var(--parsec-radius-8);
+          font-size: 1.25rem;
+        }
       }
     }
   }
@@ -270,23 +338,8 @@ const emits = defineEmits<{
     margin-inline: auto;
   }
 
-  .update-button {
-    background: var(--parsec-color-light-primary-50);
-    color: var(--parsec-color-light-primary-700);
-    min-height: 1rem;
-    border: 1px solid var(--parsec-color-light-primary-100);
-    padding: 0 0.825rem;
-    border-radius: var(--parsec-radius-32);
-    position: absolute;
-    top: -3.5rem;
-    left: 50%;
-    transform: translate(-50%, 0);
-    transition: all 150ms linear;
-
-    &:hover {
-      --background-hover: none;
-      box-shadow: var(--parsec-shadow-light);
-    }
+  @include breakpoint('xs') {
+    flex-wrap: wrap;
   }
 
   .topbar-left {
@@ -301,6 +354,10 @@ const emits = defineEmits<{
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin: 0.25rem 0;
+
+      @include breakpoint('sm') {
+        max-width: 16rem;
+      }
     }
 
     &__back-button {

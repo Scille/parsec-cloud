@@ -2,24 +2,49 @@
 
 import { answerQuestion, expect, fillIonInput, msTest, sortBy } from '@tests/e2e/helpers';
 
-const USER_NAMES = ['(Alicey McAliceFace)', '(Boby McBobFace)', '(Malloryy McMalloryFace)'];
+const USER_NAMES = ['Alicey McAliceFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
 
-msTest('Home default state with devices', async ({ home }) => {
-  await expect(home.locator('.organization-title')).toHaveText('Access your organizations');
-  await expect(home.locator('#organization-filter-select')).toHaveText('Organization name');
-  await expect(home.locator('#create-organization-button')).toHaveText('Create or join');
-  await expect(home.locator('#search-input-organization')).toBeVisible();
-  const cards = home.locator('.organization-list').locator('.organization-card');
+for (const displaySize of ['small', 'large']) {
+  msTest(`Home default state with devices on ${displaySize} display`, async ({ home }) => {
+    if (displaySize === 'small') {
+      const viewport = home.viewportSize();
+      await home.setViewportSize({ width: 700, height: viewport ? viewport.height : 700 });
+    }
 
-  await expect(cards).toHaveCount(USER_NAMES.length);
+    const topBar = home.locator('.topbar');
+    await expect(topBar.locator('.topbar-left__title')).toHaveText('Welcome to Parsec');
 
-  for (const card of await cards.all()) {
-    const lastLogin = card.locator('.login-time__text');
-    await expect(card.locator('.organization-card-content-text').locator('.title-h4')).toHaveText(/Org\d+/);
-    await expect(lastLogin).toHaveText('--');
-  }
-  await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
-});
+    const container = home.locator('.slider-container');
+    await expect(container.locator('.organization-title')).toHaveText('Access your organizations');
+    await expect(container.locator('#search-input-organization')).toBeVisible();
+    await expect(container.locator('#organization-filter-select')).toHaveText('Organization name');
+
+    const cards = home.locator('.organization-list').locator('.organization-card');
+    await expect(cards).toHaveCount(USER_NAMES.length);
+
+    for (const card of await cards.all()) {
+      const lastLogin = card.locator('.login-text').nth(0);
+      await expect(card.locator('.organization-card-content-text').locator('.title-h4')).toHaveText(/Org\d+/);
+      await expect(lastLogin).toHaveText('--');
+    }
+    await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+
+    if (displaySize === 'large') {
+      await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['Create or join', 'Customer area']);
+      await expect(home.locator('.homepage-sidebar')).toBeVisible();
+      await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText([
+        'About',
+        'Documentation',
+        'Contact',
+        'Settings',
+      ]);
+    } else {
+      await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['', 'Customer area']);
+      await expect(home.locator('.homepage-sidebar')).toBeHidden();
+      await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText(['About', 'Doc.', 'Contact', 'Settings']);
+    }
+  });
+}
 
 msTest('Sort devices', async ({ home }) => {
   const sortButton = home.locator('#organization-filter-select');

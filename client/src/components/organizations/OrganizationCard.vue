@@ -47,7 +47,7 @@
             :icon="person"
             class="login-icon"
           />
-          <ion-text class="login-text body">{{ device.humanHandle.label }}</ion-text>
+          <ion-text class="login-text login-name body">{{ device.humanHandle.label }}</ion-text>
         </div>
       </div>
     </ion-card-content>
@@ -121,6 +121,10 @@ function getLastLoginText(): string {
   transition: all 150ms linear;
   position: relative;
   flex-shrink: 0;
+
+  @include breakpoint('xs') {
+    padding-right: 0.5rem;
+  }
 
   // when using the card as a header only
   &.header-only {
@@ -201,6 +205,7 @@ function getLastLoginText(): string {
 
     @include breakpoint('xs') {
       padding: 0.75rem 0;
+      overflow: hidden;
       gap: 0.5rem;
     }
 
@@ -247,6 +252,12 @@ function getLastLoginText(): string {
           flex-shrink: 0;
         }
 
+        .login-text {
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+
         &:nth-child(1) {
           flex-shrink: 0;
         }
@@ -271,6 +282,10 @@ function getLastLoginText(): string {
     margin-left: auto;
     flex-shrink: 0;
     transition: all 150ms linear;
+
+    @include breakpoint('xs') {
+      position: relative;
+    }
   }
 }
 
