@@ -1,13 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::collections::HashMap;
+
 use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    store::{CertifStoreError, CertificatesStoreWriteGuard},
-    CertifAddCertificatesBatchError, CertificateOps, InvalidCertificateError, MaybeRedactedSwitch,
+    store::CertifStoreError, CertifAddCertificatesBatchError, CertificateOps,
+    InvalidCertificateError, MaybeRedactedSwitch,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -51,11 +53,15 @@ impl From<CertifStoreError> for CertifPollServerError {
 /// order certificates must be added on.
 pub(super) async fn poll_server_for_new_certificates(
     ops: &CertificateOps,
-    store: &mut CertificatesStoreWriteGuard<'_>,
     requirements: Option<&PerTopicLastTimestamps>,
 ) -> Result<(), CertifPollServerError> {
+    let _guard = ops.update_lock.lock().await;
+
     loop {
-        let last_stored_timestamps = store.get_last_timestamps().await?;
+        let last_stored_timestamps = ops
+            .store
+            .for_read(async |store| store.get_last_timestamps().await)
+            .await??;
         // `requirements` is useful to detect outdated `CertificatesUpdated`
         // events given the server has already been polled in the meantime.
         if let Some(requirements) = requirements {
@@ -64,7 +70,30 @@ pub(super) async fn poll_server_for_new_certificates(
             }
         }
 
-        let outcome = poll_server_and_add_certificates(ops, store, last_stored_timestamps).await?;
+        let new_certificates = poll_server(ops, last_stored_timestamps).await?;
+
+        let outcome = ops
+            .store
+            .for_write(async |store| {
+                super::add::add_certificates_batch(
+                    ops,
+                    store,
+                    &new_certificates.common_certificates,
+                    &new_certificates.sequester_certificates,
+                    &new_certificates.shamir_recovery_certificates,
+                    &new_certificates.realm_certificates,
+                )
+                .await
+                .map_err(|err| match err {
+                    CertifAddCertificatesBatchError::InvalidCertificate(err) => {
+                        CertifPollServerError::InvalidCertificate(err)
+                    }
+                    CertifAddCertificatesBatchError::Internal(err) => {
+                        CertifPollServerError::Internal(err)
+                    }
+                })
+            })
+            .await??;
 
         match outcome {
             MaybeRedactedSwitch::NoSwitch => return Ok(()),
@@ -83,13 +112,17 @@ pub(super) async fn poll_server_for_new_certificates(
     }
 }
 
-async fn poll_server_and_add_certificates(
-    ops: &CertificateOps,
-    store: &mut CertificatesStoreWriteGuard<'_>,
-    last_stored_timestamps: PerTopicLastTimestamps,
-) -> Result<MaybeRedactedSwitch, CertifPollServerError> {
-    // 1) Fetch certificates
+struct NewCertificates {
+    common_certificates: Vec<Bytes>,
+    realm_certificates: HashMap<VlobID, Vec<Bytes>>,
+    sequester_certificates: Vec<Bytes>,
+    shamir_recovery_certificates: Vec<Bytes>,
+}
 
+async fn poll_server(
+    ops: &CertificateOps,
+    last_stored_timestamps: PerTopicLastTimestamps,
+) -> Result<NewCertificates, CertifPollServerError> {
     let request = authenticated_cmds::latest::certificate_get::Req {
         common_after: last_stored_timestamps.common,
         sequester_after: last_stored_timestamps.sequester,
@@ -124,23 +157,10 @@ async fn poll_server_and_add_certificates(
         }
     };
 
-    // 2) Integrate the new certificates.
-
-    let outcome = super::add::add_certificates_batch(
-        ops,
-        store,
-        &common_certificates,
-        &sequester_certificates,
-        &shamir_recovery_certificates,
-        &realm_certificates,
-    )
-    .await
-    .map_err(|err| match err {
-        CertifAddCertificatesBatchError::InvalidCertificate(err) => {
-            CertifPollServerError::InvalidCertificate(err)
-        }
-        CertifAddCertificatesBatchError::Internal(err) => CertifPollServerError::Internal(err),
-    })?;
-
-    Ok(outcome)
+    Ok(NewCertificates {
+        common_certificates,
+        realm_certificates,
+        sequester_certificates,
+        shamir_recovery_certificates,
+    })
 }

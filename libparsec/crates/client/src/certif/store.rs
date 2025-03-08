@@ -334,29 +334,18 @@ impl CertificatesStore {
         };
 
         // We were lacking some certificates, do a server poll and retry
-        self.for_write(async |store| {
-            super::poll::poll_server_for_new_certificates(ops, store, Some(needed_timestamps))
-                .await
-                .map_err(|e| match e {
-                    CertifPollServerError::Offline(e) => {
-                        CertifForReadWithRequirementsError::Offline(e)
-                    }
-                    CertifPollServerError::Stopped => CertifForReadWithRequirementsError::Stopped,
-                    CertifPollServerError::InvalidCertificate(err) => {
-                        CertifForReadWithRequirementsError::InvalidCertificate(err)
-                    }
-                    CertifPollServerError::Internal(err) => err
-                        .context("Cannot poll server for new certificates")
-                        .into(),
-                })?;
-
-            Result::<(), CertifForReadWithRequirementsError>::Ok(())
-        })
-        .await
-        .map_err(|e| match e {
-            CertifStoreError::Stopped => CertifForReadWithRequirementsError::Stopped,
-            CertifStoreError::Internal(err) => err.context("Cannot lock storage for write").into(),
-        })??;
+        super::poll::poll_server_for_new_certificates(ops, Some(needed_timestamps))
+            .await
+            .map_err(|e| match e {
+                CertifPollServerError::Offline(e) => CertifForReadWithRequirementsError::Offline(e),
+                CertifPollServerError::Stopped => CertifForReadWithRequirementsError::Stopped,
+                CertifPollServerError::InvalidCertificate(err) => {
+                    CertifForReadWithRequirementsError::InvalidCertificate(err)
+                }
+                CertifPollServerError::Internal(err) => err
+                    .context("Cannot poll server for new certificates")
+                    .into(),
+            })?;
 
         // Retry the operation now that we have the requirements
         match try_with_requirements(cb).await.map_err(|e| match e {

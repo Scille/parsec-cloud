@@ -1,5 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::{collections::HashMap, num::NonZeroU8, sync::Arc};
+
+use libparsec_client_connection::AuthenticatedCmds;
+use libparsec_platform_async::lock::Mutex as AsyncMutex;
+use libparsec_types::prelude::*;
+
 mod add;
 mod block_validate;
 mod encrypt;
@@ -54,11 +60,6 @@ pub use store::{CertifStoreError, UpTo};
 pub use user_revoke::CertifRevokeUserError;
 pub use user_update_profile::CertifUpdateUserProfileError;
 pub use workspace_bootstrap::CertifBootstrapWorkspaceError;
-
-use std::{collections::HashMap, num::NonZeroU8, sync::Arc};
-
-use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_types::prelude::*;
 
 use crate::{event_bus::EventBus, ClientConfig};
 
@@ -179,6 +180,27 @@ pub(crate) struct CertificateOps {
     event_bus: EventBus,
     cmds: Arc<AuthenticatedCmds>,
     store: store::CertificatesStore,
+    /// Updating the certificate ops basically consist of:
+    /// 1. Checking the store to know up to what point we are up to date.
+    /// 2. Fetching new certificates from the server.
+    /// 3. Adding the new certificates to the store.
+    ///
+    /// Hence there is no point in allowing this to be done concurrently (worst !
+    /// we would then need to protect ourself against adding the same certificate
+    /// multiple times), so a lock is needed.
+    ///
+    /// The obvious lock to use would be the store itself (since we have an exclusive
+    /// access on it with `CertificatesStore::for_write`), this is what we used to do
+    /// but it brought two issues:
+    /// - The lock was held for too long (i.e. the time to fetch the certificates from
+    ///   the server), during which the store was unavailable for any other operation.
+    /// - In web, the store uses IndexedDB internally which has a very peculiar way of
+    ///   implementing transactions: a transaction is automatically terminated after
+    ///   any `await` that doesn't use the transaction (╯°□°）╯︵ ┻━┻
+    ///
+    /// So, long story short, we have to get rid of the request to the server occurring
+    /// while the store is locked with a transaction. Hence this new lock !
+    update_lock: AsyncMutex<()>,
 }
 
 // For readability, we define the public interface here and let the actual
@@ -197,6 +219,7 @@ impl CertificateOps {
             event_bus,
             cmds,
             store,
+            update_lock: AsyncMutex::new(()),
         })
     }
 
@@ -218,6 +241,8 @@ impl CertificateOps {
         shamir_recovery_certificates: &[Bytes],
         realm_certificates: &std::collections::HashMap<VlobID, Vec<Bytes>>,
     ) -> Result<MaybeRedactedSwitch, CertifAddCertificatesBatchError> {
+        let _guard = self.update_lock.lock().await;
+
         self.store
             .for_write(async |store| {
                 add::add_certificates_batch(
@@ -279,11 +304,7 @@ impl CertificateOps {
         &self,
         latest_known_timestamps: Option<&PerTopicLastTimestamps>,
     ) -> Result<(), CertifPollServerError> {
-        self.store
-            .for_write(async |store| {
-                poll::poll_server_for_new_certificates(self, store, latest_known_timestamps).await
-            })
-            .await?
+        poll::poll_server_for_new_certificates(self, latest_known_timestamps).await
     }
 
     pub async fn validate_user_manifest(
