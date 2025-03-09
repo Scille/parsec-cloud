@@ -1,1 +1,0 @@
-Only count active users in organization stats

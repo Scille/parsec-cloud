@@ -4,6 +4,61 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.3.3-a.0.dev.20156+a66b86e (2025-03-09)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Update user interface to regroup any user profile and settings in a single
+  tabbed view.
+  (`#9470 <https://github.com/Scille/parsec-cloud/issues/9470>`__)
+
+* Switch sidebar to tab menu on mobile
+  (`#9805 <https://github.com/Scille/parsec-cloud/issues/9805>`__)
+
+* Added picture in picture, loop and playback speed options to video and audio
+  viewers
+  (`#9750 <https://github.com/Scille/parsec-cloud/issues/9750>`__)
+
+* Added page for tracking order (custom order only).
+  (`#9111 <https://github.com/Scille/parsec-cloud/issues/9111>`__)
+
+* Added responsive for organization page.
+  (`#9878 <https://github.com/Scille/parsec-cloud/issues/9878>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed "Remember me" login for customer area
+  (`#9616 <https://github.com/Scille/parsec-cloud/issues/9616>`__)
+
+* Only count active users in organization stats
+  (`#9723 <https://github.com/Scille/parsec-cloud/issues/9723>`__)
+
+* Added a minimal window size
+  (`#9674 <https://github.com/Scille/parsec-cloud/issues/9674>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Updated how the new version available notification looks
+  (`#9853 <https://github.com/Scille/parsec-cloud/issues/9853>`__)
+
+* Prevent sorting users by Status if all users are active
+  (`#9621 <https://github.com/Scille/parsec-cloud/issues/9621>`__)
+
+* Slightly reworked the billing info page in client area to make billing address
+  modifications more intuitive
+  (`#9607 <https://github.com/Scille/parsec-cloud/issues/9607>`__)
+
+* Slightly improve the workspace card UI.
+  (`#9866 <https://github.com/Scille/parsec-cloud/issues/9866>`__)
+
+
+
 Parsec v3.3.2 (2025-03-04)
 --------------------------
 
