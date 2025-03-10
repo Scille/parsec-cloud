@@ -6,7 +6,6 @@ const config: CapacitorElectronConfig = {
   appId: 'com.scille.parsec',
   appName: 'Parsec',
   webDir: 'dist',
-  bundledWebRuntime: false,
   plugins: {
     SplashScreen: {
       launchAutoHide: false,
@@ -18,7 +17,7 @@ const config: CapacitorElectronConfig = {
   },
   electron: {
     trayIconAndMenuEnabled: true,
-    splashScreenEnabled: false,
+    splashScreenEnabled: true,
     deepLinkingEnabled: true,
     deepLinkingCustomProtocol: 'parsec3',
   },
