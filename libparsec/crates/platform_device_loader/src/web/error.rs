@@ -59,9 +59,6 @@ error_set::error_set! {
     JsonDeserializationError = {
         JsonDecode(serde_json::Error)
     };
-    JsonSerError = {
-        JsonEncode(serde_json::Error)
-    };
     RmpDecodeError = {
         RmpDecode(libparsec_types::RmpDecodeError)
     };
@@ -99,12 +96,10 @@ error_set::error_set! {
     SaveDeviceFileError = SetItemStorageError || AddItemToListError;
     AddItemToListError = GetRawDeviceError
         || SetItemStorageError
-        || JsonDeserializationError
-        || JsonSerError;
+        || JsonDeserializationError;
     RemoveItemFromListError = GetRawDeviceError
         || SetItemStorageError
-        || JsonDeserializationError
-        || JsonSerError;
+        || JsonDeserializationError;
     ArchiveDeviceError = GetItemStorageError
         || AddItemToListError
         || RemoveItemFromListError
@@ -140,7 +135,6 @@ impl From<SaveDeviceError> for crate::SaveDeviceError {
             SaveDeviceError::InvalidPath { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
             SaveDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::JsonDecode(_) => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::JsonEncode(_) => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::B64Decode(_) => Self::Internal(anyhow::anyhow!("{value}")),
         }
     }
@@ -169,7 +163,6 @@ impl From<SaveDeviceError> for crate::ChangeAuthentificationError {
             SaveDeviceError::InvalidPath { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
             SaveDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::JsonDecode(_) => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::JsonEncode(_) => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::B64Decode(_) => Self::InvalidData,
         }
     }
@@ -182,7 +175,6 @@ impl From<RemoveDeviceError> for crate::ChangeAuthentificationError {
             RemoveDeviceError::Missing { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
             RemoveDeviceError::SetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             RemoveDeviceError::JsonDecode(_) => Self::InvalidData,
-            RemoveDeviceError::JsonEncode(_) => Self::InvalidData,
             RemoveDeviceError::RemoveItemStorage { .. } => {
                 Self::Internal(anyhow::anyhow!("{value}"))
             }

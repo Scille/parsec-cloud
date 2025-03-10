@@ -248,7 +248,7 @@ pub(crate) fn add_item_to_list(
         .map(|v| serde_json::from_str::<HashSet<&str>>(v).map_err(AddItemToListError::JsonDecode))
         .unwrap_or_else(|| Ok(HashSet::new()))?;
     if list.insert(item) {
-        let raw_data = serde_json::to_string(&list).map_err(AddItemToListError::JsonEncode)?;
+        let raw_data = serde_json::to_string(&list).expect("Cannot encode list");
         storage
             .set_item(list_id, &raw_data)
             .map_err(|e| AddItemToListError::SetItemStorage {
@@ -291,7 +291,7 @@ pub(crate) fn remove_item_from_list(
         return Ok(false);
     };
     if list.remove(item) {
-        let raw_data = serde_json::to_string(&list).map_err(RemoveItemFromListError::JsonEncode)?;
+        let raw_data = serde_json::to_string(&list).expect("Cannot encode list");
         storage.set_item(list_id, &raw_data).map_err(|e| {
             RemoveItemFromListError::SetItemStorage {
                 key: list_id.to_owned(),
