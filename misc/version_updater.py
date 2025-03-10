@@ -92,6 +92,7 @@ class Tool(enum.Enum):
     Testbed = "testbed"
     PreCommit = "pre-commit"
     Cross = "cross"
+    CargoDeny = "cargo-deny"
 
     def post_update_hook(self, updated_files: set[Path]) -> set[Path]:
         updated: set[Path] = set()
@@ -223,10 +224,11 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         ],
     },
     ROOT_DIR / ".github/workflows/ci-rust.yml": {
-        Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
+        Tool.CargoDeny: [ReplaceRegex(r"cargo-deny@[0-9.]+", "cargo-deny@{version}")],
         Tool.Nextest: [ReplaceRegex(r"nextest@[0-9.]+", "nextest@{version}")],
-        Tool.WinFSP: [CI_WINFSP_VERSION],
         Tool.Testbed: [TESTBED_VERSION],
+        Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
+        Tool.WinFSP: [CI_WINFSP_VERSION],
     },
     ROOT_DIR / ".github/workflows/ci-web.yml": {
         Tool.Node: [NODE_GA_VERSION],
