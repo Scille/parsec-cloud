@@ -21,8 +21,8 @@ number, and ``<TYPE>`` is one of:
 
 So for example: ``123.feature.rst``, ``456.bugfix.rst``
 
-If your PR fixes an issue, use that number here. If there is no issue, then
-submit the PR first, and then use that number to add a news fragment to the PR.
+If your PR fixes an issue, use the issue number here. If there is no issue, then
+submit the PR first, and then use its number to add a news fragment to the PR.
 
 To check how the release nots will look like for the current version, run::
 

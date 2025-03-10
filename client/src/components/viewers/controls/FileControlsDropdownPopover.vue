@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-list class="file-controls-dropdown-popover">
+  <ion-list
+    class="file-controls-dropdown-popover"
+    ref="popoverElement"
+  >
     <div
       v-if="parentHistory.length > 0"
       @click="onBackClicked"
@@ -27,19 +30,31 @@
 <script setup lang="ts">
 import { FileControlsDropdownItem, FileControlsDropdownItemContent } from '@/components/viewers';
 import { IonIcon, IonList, IonText, popoverController } from '@ionic/vue';
-import { ref } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 import { chevronBack } from 'ionicons/icons';
 import { Translatable } from 'megashark-lib';
 
 const props = defineProps<{
   items: FileControlsDropdownItemContent[];
 }>();
-
 const displayedItems = ref<FileControlsDropdownItemContent[]>(props.items);
 const parentHistory = ref<Array<{ items: FileControlsDropdownItemContent[]; name: Translatable }>>([]);
+const prevHeight = ref(0);
+const popoverElement = ref();
+
+watch(displayedItems, async () => {
+  await nextTick();
+  requestAnimationFrame(async () => {
+    const popover = await popoverController.getTop();
+    if (popover) {
+      popover.style.setProperty('--offset-y', await getOffsetY());
+    }
+  });
+});
 
 async function onOptionClick(option: FileControlsDropdownItemContent): Promise<void> {
   if (option.children) {
+    saveHeight();
     parentHistory.value.push({ items: displayedItems.value, name: option.label });
     displayedItems.value = option.children;
   }
@@ -58,8 +73,23 @@ async function onOptionClick(option: FileControlsDropdownItemContent): Promise<v
 async function onBackClicked(): Promise<void> {
   const parentItem = parentHistory.value.pop();
   if (parentItem) {
+    saveHeight();
     displayedItems.value = parentItem.items;
   }
+}
+
+async function getOffsetY(): Promise<string> {
+  let offset = 0;
+  if (popoverElement.value?.$el) {
+    offset = popoverElement.value.$el.clientHeight - prevHeight.value;
+
+    return offset > 0 ? `-${offset}px` : '0px';
+  }
+  return '0px';
+}
+
+function saveHeight(): void {
+  prevHeight.value = popoverElement.value?.$el.clientHeight;
 }
 </script>
 
