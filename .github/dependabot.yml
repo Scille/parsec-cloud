@@ -1,3 +1,5 @@
+# cspell:words vitejs vitest
+
 version: 2
 updates:
   #################
@@ -148,13 +150,37 @@ updates:
         patterns:
           - "@capacitor/*"
           - "@capacitor-community/*"
+      client-linter:
+        patterns:
+          - eslint*
+          - "@intlify/eslint*"
+          - prettier*
+          - "@typescript-eslint*"
+          - "@vue/eslint*"
+      vite:
+        patterns:
+          - "@vitejs/*"
+          - vite*
+          - vitest
       client-dependencies:
         patterns:
           - "*"
         exclude-patterns:
+          # ionic deps
           - "@ionic/*"
+          # capacitor deps
           - "@capacitor/*"
           - "@capacitor-community/*"
+          # client-linter deps
+          - eslint*
+          - "@intlify/eslint*"
+          - prettier*
+          - "@typescript-eslint*"
+          - "@vue/eslint*"
+          # vite deps
+          - "@vitejs/*"
+          - vite*
+          - vitest
 
     open-pull-requests-limit: 5
     rebase-strategy: disabled
