@@ -2181,7 +2181,7 @@ dependencies = [
 name = "libparsec_platform_device_loader"
 version = "3.3.3-a.0+dev"
 dependencies = [
- "base64",
+ "data-encoding",
  "dirs",
  "error_set",
  "itertools 0.12.1",

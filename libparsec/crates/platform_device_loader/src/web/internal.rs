@@ -2,7 +2,6 @@
 
 use std::{collections::HashSet, path::Path, sync::Arc};
 
-use base64::prelude::{Engine as _, BASE64_STANDARD};
 use libparsec_types::{
     AvailableDevice, DateTime, DeviceAccessStrategy, DeviceFile, DeviceFilePassword, LocalDevice,
 };
@@ -76,7 +75,7 @@ impl Storage {
                     key: key.to_owned(),
                 })
             })?;
-        BASE64_STANDARD
+        data_encoding::BASE64
             .decode(raw_b64_data.as_bytes())
             .map_err(GetRawDeviceError::B64Decode)
     }
@@ -182,7 +181,7 @@ impl Storage {
         file_data: &DeviceFile,
     ) -> Result<(), SaveDeviceFileError> {
         let data = file_data.dump();
-        let b64_data = BASE64_STANDARD.encode(&data);
+        let b64_data = data_encoding::BASE64.encode(&data);
         self.storage
             .set_item(key, &b64_data)
             .map_err(|e| SaveDeviceFileError::SetItemStorage {

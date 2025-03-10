@@ -66,7 +66,7 @@ error_set::error_set! {
         RmpDecode(libparsec_types::RmpDecodeError)
     };
     Base64DecodeError = {
-        B64Decode(base64::DecodeError)
+        B64Decode(data_encoding::DecodeError)
     };
     ListAvailableDevicesError = GetItemStorageError
         || JsonDeserializationError

@@ -24,7 +24,6 @@ mod platform {
 #[cfg(target_arch = "wasm32")]
 mod platform {
     use crate::web::add_item_to_list;
-    use base64::prelude::{Engine as _, BASE64_STANDARD};
     use std::{collections::HashSet, path::Path};
 
     fn get_storage() -> web_sys::Storage {
@@ -41,7 +40,7 @@ mod platform {
 
     pub fn create_device_file(path: &Path, content: &[u8]) {
         let key = key_from_path(path);
-        let b64_data = BASE64_STANDARD.encode(content);
+        let b64_data = data_encoding::BASE64.encode(content);
         let storage = get_storage();
         storage
             .set_item(key, &b64_data)
