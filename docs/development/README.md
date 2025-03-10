@@ -231,6 +231,19 @@ In addition to the [shared requirements](#shared-requirements), for working with
       npm run web:open
       ```
 
+      If you haven't made any updates to the code and just want to quickly restart the Electron app, you can do so by going into the `electron` directory and type:
+
+      ```shell
+      npx electron .
+      ```
+
+      This can be used to test the behavior of the app when using links, or how it behaves if it's already running and we try to start a new instance:
+
+      ```shell
+      npx electron . "<a file link or an invitation link>"
+      ```
+
+
 ### Hacking the electron client
 
 <!-- TODO: Currently the web client via electron doesn't provide mountpoint so fuse isn't required
