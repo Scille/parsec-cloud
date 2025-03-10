@@ -42,7 +42,7 @@ type MockFunction = (...args: any[]) => Promise<BmsResponse>;
 function createMockFunction(functionName: string, mockSuccess?: MockFunction, mockError?: MockFunction): MockFunction {
   const params = getMockParameters(functionName);
 
-  if (params.isMocked) {
+  if (import.meta.env.PARSEC_APP_BMS_USE_MOCK === 'true' && params.isMocked) {
     if (params.shouldFail) {
       if (!mockError) {
         console.warn(`Function "${functionName}" does not have failure mock, defaulting to default API`);
@@ -70,12 +70,13 @@ function createMockFunction(functionName: string, mockSuccess?: MockFunction, mo
 }
 
 function getMockParameters(functionName: string): MockParameters {
+  const mocksEnabled = import.meta.env.PARSEC_APP_BMS_USE_MOCK === 'true';
   const mockFunctionsVariable: string = import.meta.env.PARSEC_APP_BMS_MOCKED_FUNCTIONS ?? '';
   const failFunctionsVariable: string = import.meta.env.PARSEC_APP_BMS_FAIL_FUNCTIONS ?? '';
   const mockedFunctions = mockFunctionsVariable.split(';');
   const failFunctions = failFunctionsVariable.split(';');
 
-  if (mockedFunctions.includes(functionName)) {
+  if (mocksEnabled && mockedFunctions.includes(functionName)) {
     console.debug(`Mock call to "${functionName}"`);
     return {
       isMocked: true,

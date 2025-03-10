@@ -200,6 +200,7 @@ export async function clientAreaSwitchOrganization(page: Page, organization: str
     const text = await item.textContent();
     if (text === organization || (text === 'All organizations' && organization === 'all')) {
       await item.click();
+      break;
     }
   }
   await expect(popover).toBeHidden();
