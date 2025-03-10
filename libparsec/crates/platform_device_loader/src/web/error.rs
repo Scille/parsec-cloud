@@ -67,7 +67,6 @@ error_set::error_set! {
     };
     ListAvailableDevicesError = GetItemStorageError
         || JsonDeserializationError
-        || InvalidPathError
         || LoadAvailableDeviceError;
     GetRawDeviceError = GetItemStorageError
         || Base64DecodeError
@@ -84,15 +83,14 @@ error_set::error_set! {
             path: std::path::PathBuf
         }
     };
-    LoadDeviceError = InvalidPathError
-        || GetRawDeviceError
+    LoadDeviceError = GetRawDeviceError
         || RmpDecodeError
         || {
             InvalidFileType,
             GetSecretKey(libparsec_crypto::CryptoError),
             DecryptAndLoad(crate::DecryptDeviceFileError),
         };
-    SaveDeviceError = SaveDeviceFileError || InvalidPathError;
+    SaveDeviceError = SaveDeviceFileError;
     SaveDeviceFileError = SetItemStorageError || AddItemToListError;
     AddItemToListError = GetRawDeviceError
         || SetItemStorageError
@@ -103,13 +101,11 @@ error_set::error_set! {
     ArchiveDeviceError = GetItemStorageError
         || AddItemToListError
         || RemoveItemFromListError
-        || JsonDeserializationError
-        || InvalidPathError;
+        || JsonDeserializationError;
     RemoveDeviceError = GetItemStorageError
         || RemoveItemFromListError
         || RemoveItemStorageError
-        || JsonDeserializationError
-        || InvalidPathError;
+        || JsonDeserializationError;
 }
 
 impl From<LoadDeviceError> for crate::LoadDeviceError {
@@ -118,7 +114,6 @@ impl From<LoadDeviceError> for crate::LoadDeviceError {
             LoadDeviceError::InvalidFileType => Self::InvalidData,
             LoadDeviceError::GetSecretKey(_) => Self::DecryptionFailed,
             LoadDeviceError::DecryptAndLoad(e) => e.into(),
-            LoadDeviceError::InvalidPath { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
             LoadDeviceError::Missing { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
             LoadDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             LoadDeviceError::RmpDecode(_) => Self::InvalidData,
@@ -132,7 +127,6 @@ impl From<SaveDeviceError> for crate::SaveDeviceError {
         match value {
             SaveDeviceError::SetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::Missing { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveDeviceError::InvalidPath { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
             SaveDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::JsonDecode(_) => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::B64Decode(_) => Self::Internal(anyhow::anyhow!("{value}")),
@@ -146,7 +140,6 @@ impl From<LoadDeviceError> for crate::ChangeAuthentificationError {
             LoadDeviceError::InvalidFileType => Self::InvalidData,
             LoadDeviceError::GetSecretKey(_) => Self::DecryptionFailed,
             LoadDeviceError::DecryptAndLoad(e) => e.into(),
-            LoadDeviceError::InvalidPath { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
             LoadDeviceError::Missing { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
             LoadDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             LoadDeviceError::RmpDecode(_) => Self::InvalidData,
@@ -160,7 +153,6 @@ impl From<SaveDeviceError> for crate::ChangeAuthentificationError {
         match value {
             SaveDeviceError::SetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::Missing { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveDeviceError::InvalidPath { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
             SaveDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::JsonDecode(_) => Self::Internal(anyhow::anyhow!("{value}")),
             SaveDeviceError::B64Decode(_) => Self::InvalidData,
@@ -178,7 +170,6 @@ impl From<RemoveDeviceError> for crate::ChangeAuthentificationError {
             RemoveDeviceError::RemoveItemStorage { .. } => {
                 Self::Internal(anyhow::anyhow!("{value}"))
             }
-            RemoveDeviceError::InvalidPath { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
             RemoveDeviceError::B64Decode(_) => Self::InvalidData,
         }
     }

@@ -35,12 +35,9 @@ impl Storage {
         &self,
         config_dir: &Path,
     ) -> Result<Vec<AvailableDevice>, ListAvailableDevicesError> {
-        let device_prefix =
-            config_dir
-                .to_str()
-                .ok_or_else(|| ListAvailableDevicesError::InvalidPath {
-                    path: config_dir.to_owned(),
-                })?;
+        let device_prefix = config_dir
+            .to_str()
+            .expect("The internal path is not a valid UTF-8 string");
         let device_prefix = format!("{device_prefix}/");
         let Some(raw_data) = self.storage.get_item(Self::LIST_DEV_KEY).map_err(|e| {
             ListAvailableDevicesError::GetItemStorage {
@@ -97,9 +94,7 @@ impl Storage {
         let key_path = access.key_file();
         let key = key_path
             .to_str()
-            .ok_or_else(|| LoadDeviceError::InvalidPath {
-                path: key_path.to_owned(),
-            })?;
+            .expect("The internal path is not a valid UTF-8 string");
         let raw_data = self.get_raw_device(key)?;
         let device = DeviceFile::load(&raw_data)?;
         let (key, created_on) = match (access, &device) {
@@ -132,9 +127,7 @@ impl Storage {
         let key_file_path = access.key_file();
         let key_file = key_file_path
             .to_str()
-            .ok_or_else(|| SaveDeviceError::InvalidPath {
-                path: key_file_path.to_owned(),
-            })?;
+            .expect("The internal path is not a valid UTF-8 string");
 
         match access {
             DeviceAccessStrategy::Keyring { .. } => todo!("Save keyring device"),
@@ -197,9 +190,7 @@ impl Storage {
     pub(crate) fn archive_device(&self, path: &Path) -> Result<(), ArchiveDeviceError> {
         let key = path
             .to_str()
-            .ok_or_else(|| ArchiveDeviceError::InvalidPath {
-                path: path.to_owned(),
-            })?;
+            .expect("The internal path is not a valid UTF-8 string");
         if remove_item_from_list(&self.storage, Self::LIST_DEV_KEY, key)? {
             add_item_to_list(&self.storage, Self::ARCHIVED_DEV_KEY_LIST, key)?;
         }
@@ -209,9 +200,7 @@ impl Storage {
     pub(crate) fn remove_device(&self, path: &Path) -> Result<(), RemoveDeviceError> {
         let key = path
             .to_str()
-            .ok_or_else(|| RemoveDeviceError::InvalidPath {
-                path: path.to_owned(),
-            })?;
+            .expect("The internal path is not a valid UTF-8 string");
         if remove_item_from_list(&self.storage, Self::LIST_DEV_KEY, key)? {
             self.storage
                 .delete(key)
