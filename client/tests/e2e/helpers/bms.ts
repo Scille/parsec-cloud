@@ -77,6 +77,8 @@ interface MockRouteOptions {
 }
 
 interface MockCustomOrderDetailsOverload {
+  empty?: boolean;
+  single?: boolean;
   created?: DateTime;
   amountWithTaxes?: number;
   amountWithoutTaxes?: number;
@@ -94,18 +96,26 @@ interface MockCustomOrderDetailsOverload {
   storageOrdered?: number;
 }
 
-function createCustomOrderInvoices(count: number = 1, overload: MockCustomOrderDetailsOverload = {}): Array<any> {
+function createCustomOrderInvoices(overload: MockCustomOrderDetailsOverload = {}): Array<any> {
   const invoices: Array<any> = [];
 
   const STATUSES = ['paid', 'draft', 'open', 'uncollectible', 'void'];
 
-  for (let i = 1; i < count + 1; i++) {
-    const licenseStart = overload.licenseStart ? overload.licenseStart : DateTime.now().minus({ months: count + 1 - i });
-    const licenseEnd = overload.licenseEnd ? overload.licenseEnd : DateTime.now().minus({ months: count - i });
+  if (overload.empty) {
+    return invoices;
+  }
+  for (let i = 0; i < (overload.single !== undefined ? 1 : 15); i++) {
+    const licenseStart = overload.licenseStart
+      ? overload.licenseStart
+      : DateTime.fromObject({ year: 2024 + Math.floor(i / 12), month: (i % 12) + 1, day: 3 });
+    const licenseEnd = overload.licenseEnd
+      ? overload.licenseEnd
+      : DateTime.fromObject({ year: 2024 + Math.floor((i + 1) / 12), month: ((i + 1) % 12) + 1, day: 3 });
+
     invoices.push({
-      id: `custom_order_id${i}`,
-      created: overload.created ? overload.created.toISO() : DateTime.now().minus({ months: count + 1 - i }),
-      number: `FACT00${i}`,
+      id: `custom_order_id${i + 1}`,
+      created: overload.created ? overload.created.toISO() : licenseStart.toISO(),
+      number: `FACT00${i + 1}`,
       status: overload.status ? overload.status : STATUSES[Math.floor(Math.random() * STATUSES.length)],
       amounts: {
         total_excl_tax: overload.amountWithoutTaxes ? overload.amountWithoutTaxes.toString() : '42.00',
@@ -594,6 +604,7 @@ async function mockCustomOrderDetails(
   overload: MockCustomOrderDetailsOverload = {},
   options?: MockRouteOptions,
 ): Promise<void> {
+  overload.single = true;
   await mockRoute(
     page,
     // eslint-disable-next-line max-len
@@ -603,7 +614,7 @@ async function mockCustomOrderDetails(
       await route.fulfill({
         status: 200,
         json: {
-          [DEFAULT_ORGANIZATION_INFORMATION.name]: createCustomOrderInvoices(1, overload)[0],
+          [DEFAULT_ORGANIZATION_INFORMATION.name]: createCustomOrderInvoices(overload)[0],
         },
       });
     },
@@ -679,7 +690,7 @@ async function mockGetCustomOrderInvoices(
     const ret: any = {};
     for (const orgId of postData.organization_ids ?? []) {
       const parsecId = orgId === '1' ? DEFAULT_ORGANIZATION_INFORMATION.name : `${DEFAULT_ORGANIZATION_INFORMATION.name}-${orgId}`;
-      ret[parsecId] = createCustomOrderInvoices(12, overload);
+      ret[parsecId] = createCustomOrderInvoices(overload);
     }
     return ret;
   }
