@@ -30,8 +30,6 @@ async fn list_no_devices(
 #[parsec_test]
 async fn ignore_invalid_items(tmp_path: TmpPath) {
     let devices_dir = tmp_path.join("devices");
-    #[cfg(not(target_arch = "wasm32"))]
-    std::fs::create_dir(&devices_dir).unwrap();
 
     // Also add dummy stuff that should be ignored
 
@@ -40,12 +38,7 @@ async fn ignore_invalid_items(tmp_path: TmpPath) {
     // Dummy file
     crate::tests::utils::create_device_file(&devices_dir.join("dummy.keys"), b"dummy");
     // Folder with dummy file
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let dummy_dir = devices_dir.join("dir");
-        std::fs::create_dir(&dummy_dir).unwrap();
-        std::fs::write(dummy_dir.join("a_file.keys"), b"dummy").unwrap();
-    }
+    crate::tests::utils::create_device_file(&devices_dir.join("dir/a_file.keys"), b"dummy");
 
     let devices = list_available_devices(&tmp_path).await;
     p_assert_eq!(devices, []);
