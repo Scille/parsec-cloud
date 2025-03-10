@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import type { CapacitorElectronConfig } from '@capacitor-community/electron';
-import { CapElectronEventEmitter, CapacitorSplashScreen, setupCapacitorElectronPlugins } from '@capacitor-community/electron';
+import { CapElectronEventEmitter, setupCapacitorElectronPlugins } from '@capacitor-community/electron';
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, session, shell } from 'electron';
@@ -12,6 +12,7 @@ import fs from 'fs';
 import { join } from 'path';
 import { WindowToPageChannel } from './communicationChannels';
 import { Env } from './envVariables';
+import { SplashScreen } from './splashscreen';
 import AppUpdater, { UpdaterState, createAppUpdater } from './updater';
 import { electronIsDev } from './utils';
 import { WinRegistry } from './winRegistry';
@@ -64,7 +65,6 @@ export function setupReloadWatcher(electronCapacitorApp: ElectronCapacitorApp): 
 // Define our class to manage our app.
 export class ElectronCapacitorApp {
   private MainWindow: BrowserWindow;
-  private SplashScreen: CapacitorSplashScreen | null = null;
   private TrayIcon: Tray;
   private CapacitorFileConfig: CapacitorElectronConfig;
   private TrayMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [];
@@ -83,6 +83,7 @@ export class ElectronCapacitorApp {
   public pageIsInitialized = false;
   public storedLink = '';
   updater?: AppUpdater;
+  private splash: SplashScreen | null = null;
 
   constructor(capacitorFileConfig: CapacitorElectronConfig, appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]) {
     this.CapacitorFileConfig = capacitorFileConfig;
@@ -354,6 +355,22 @@ export class ElectronCapacitorApp {
     }
   }
 
+  onPageInitialized(): void {
+    this.pageIsInitialized = true;
+    this.sendEvent(WindowToPageChannel.IsDevMode, electronIsDev);
+    setTimeout(() => {
+      this.MainWindow.show();
+      if (this.splash) {
+        this.splash.destroy();
+        this.splash = null;
+      }
+    }, 1500);
+    if (this.storedLink) {
+      this.sendEvent(WindowToPageChannel.OpenLink, this.storedLink);
+      this.storedLink = '';
+    }
+  }
+
   async init(): Promise<void> {
     const iconPaths = this.getIconPaths();
     const appIcon = nativeImage.createFromPath(iconPaths.app);
@@ -385,6 +402,12 @@ export class ElectronCapacitorApp {
     });
     this.mainWindowState.manage(this.MainWindow);
     this.MainWindow.setMenu(null);
+    this.MainWindow.hide();
+
+    if (this.CapacitorFileConfig.electron.splashScreenEnabled) {
+      this.splash = new SplashScreen({ width: 624, height: 424 });
+      await this.splash.load('assets/splash-screen.png');
+    }
 
     if (this.CapacitorFileConfig.backgroundColor) {
       this.MainWindow.setBackgroundColor(this.CapacitorFileConfig.electron.backgroundColor);
@@ -392,8 +415,8 @@ export class ElectronCapacitorApp {
 
     // If we close the main window with the splashscreen enabled we need to destroy the ref.
     this.MainWindow.on('closed', () => {
-      if (this.SplashScreen?.getSplashWindow() && !this.SplashScreen.getSplashWindow().isDestroyed()) {
-        this.SplashScreen.getSplashWindow().close();
+      if (this.splash) {
+        this.splash.destroy();
       }
     });
 
@@ -451,20 +474,7 @@ export class ElectronCapacitorApp {
     this.MainWindow.setMenu(null);
     // Menu.setApplicationMenu(Menu.buildFromTemplate(this.AppMenuBarMenuTemplate));
 
-    /*
-     ** If the splash screen is enabled, show it first while the main window loads, then dismiss it to display the main window.
-     ** Alternatively, you can just load the main window from the start without showing the splash screen.
-     */
-    if (this.CapacitorFileConfig.electron?.splashScreenEnabled) {
-      this.SplashScreen = new CapacitorSplashScreen({
-        imageFilePath: join(app.getAppPath(), 'assets', this.CapacitorFileConfig.electron?.splashScreenImageName ?? 'splash-screen.png'),
-        windowWidth: 600,
-        windowHeight: 400,
-      });
-      this.SplashScreen.init(this.loadMainWindow, this);
-    } else {
-      this.loadMainWindow(this);
-    }
+    this.loadMainWindow(this);
 
     // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {
@@ -496,14 +506,7 @@ export class ElectronCapacitorApp {
     // Link electron plugins into the system.
     setupCapacitorElectronPlugins();
 
-    // When the web app is loaded we hide the splashscreen if needed and show the main window.
     this.MainWindow.webContents.on('dom-ready', () => {
-      if (this.CapacitorFileConfig.electron?.splashScreenEnabled) {
-        this.SplashScreen.getSplashWindow().hide();
-      }
-      if (!this.CapacitorFileConfig.electron?.hideMainWindowOnLaunch) {
-        this.MainWindow.show();
-      }
       setTimeout(() => {
         if (electronIsDev || process.env.OPEN_DEV_TOOLS == 'true') {
           this.MainWindow.webContents.openDevTools();
