@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{collections::HashSet, path::Path, sync::Arc};
+use std::{path::Path, sync::Arc};
 
+use itertools::Itertools;
 use libparsec_types::{
     AvailableDevice, DateTime, DeviceAccessStrategy, DeviceFile, DeviceFilePassword, LocalDevice,
 };
@@ -13,11 +14,6 @@ pub struct Storage {
 }
 
 impl Storage {
-    /// Entry in the local storage where the devices keys are stored.
-    const LIST_DEV_KEY: &'static str = "parsec_devices";
-    /// Entry in the local storage where archived devices keys are stored.
-    const ARCHIVED_DEV_KEY_LIST: &'static str = "archived_parsec_devices";
-
     pub(crate) fn new() -> Result<Self, NewStorageError> {
         let window = web_sys::window().ok_or(NewStorageError::NoWindow)?;
         let storage = if cfg!(test) {
@@ -39,23 +35,28 @@ impl Storage {
             .to_str()
             .expect("The internal path is not a valid UTF-8 string");
         let device_prefix = format!("{device_prefix}/");
-        let Some(raw_data) = self.storage.get_item(Self::LIST_DEV_KEY).map_err(|e| {
-            ListAvailableDevicesError::GetItemStorage {
-                key: Self::LIST_DEV_KEY.to_owned(),
-                error: e,
-            }
-        })?
-        else {
-            return Ok(Vec::new());
-        };
-        let mut entries = serde_json::from_str::<Vec<&str>>(&raw_data)
-            .inspect_err(|e| log::warn!("Invalid device list: {e}"))
-            .map_err(ListAvailableDevicesError::JsonDecode)?;
-        entries.sort();
-        entries
-            .into_iter()
-            .filter(|key| key.starts_with(&device_prefix))
-            .map(|key| self.load_available_device(key).map_err(Into::into))
+        let items_count =
+            self.storage
+                .length()
+                .map_err(|e| ListAvailableDevicesError::GetItemStorage {
+                    key: "length".to_owned(),
+                    error: e,
+                })?;
+        (0..items_count)
+            .filter_map(|i| {
+                let key = self.storage.key(i).ok().flatten();
+                match key {
+                    Some(key)
+                        if key.starts_with(&device_prefix)
+                            && key.ends_with(crate::DEVICE_FILE_EXT) =>
+                    {
+                        Some(key)
+                    }
+                    _ => None,
+                }
+            })
+            .sorted()
+            .map(|key| self.load_available_device(&key).map_err(Into::into))
             .collect::<Result<Vec<_>, _>>()
     }
 
@@ -180,115 +181,50 @@ impl Storage {
             .map_err(|e| SaveDeviceFileError::SetItemStorage {
                 key: key.to_owned(),
                 error: e,
-            })?;
-
-        add_item_to_list(&self.storage, Self::LIST_DEV_KEY, key)
-            .and(Ok(()))
-            .map_err(Into::into)
+            })
     }
 
     pub(crate) fn archive_device(&self, path: &Path) -> Result<(), ArchiveDeviceError> {
         let key = path
             .to_str()
             .expect("The internal path is not a valid UTF-8 string");
-        if remove_item_from_list(&self.storage, Self::LIST_DEV_KEY, key)? {
-            add_item_to_list(&self.storage, Self::ARCHIVED_DEV_KEY_LIST, key)?;
-        }
-        Ok(())
+        let device_data = self
+            .storage
+            .get_item(key)
+            .map_err(|error| ArchiveDeviceError::GetItemStorage {
+                key: key.to_owned(),
+                error,
+            })
+            .and_then(|v| {
+                v.ok_or_else(|| ArchiveDeviceError::Missing {
+                    key: key.to_owned(),
+                })
+            })?;
+
+        let archived_key = format!("{key}.archived");
+        self.storage
+            .set_item(&archived_key, &device_data)
+            .map_err(|error| ArchiveDeviceError::SetItemStorage {
+                key: key.to_owned(),
+                error,
+            })?;
+        self.storage
+            .remove_item(key)
+            .map_err(|error| ArchiveDeviceError::RemoveItemStorage {
+                key: key.to_owned(),
+                error,
+            })
     }
 
     pub(crate) fn remove_device(&self, path: &Path) -> Result<(), RemoveDeviceError> {
         let key = path
             .to_str()
             .expect("The internal path is not a valid UTF-8 string");
-        if remove_item_from_list(&self.storage, Self::LIST_DEV_KEY, key)? {
-            self.storage
-                .delete(key)
-                .map_err(|e| RemoveDeviceError::RemoveItemStorage {
-                    key: key.to_owned(),
-                    error: e,
-                })?;
-        }
-        Ok(())
-    }
-}
-
-/// Add the given item to the list identified by `list_id`.
-///
-/// If the list does not exist, it will create it.
-///
-/// # Returns
-///
-/// Will return true if the item was added to the list, false if the item was already in the list.
-pub(crate) fn add_item_to_list(
-    storage: &web_sys::Storage,
-    list_id: &str,
-    item: &str,
-) -> Result<bool, AddItemToListError> {
-    let raw_list = storage
-        .get_item(list_id)
-        .map_err(|e| AddItemToListError::GetItemStorage {
-            key: list_id.to_owned(),
-            error: e,
-        })?;
-
-    let mut list = raw_list
-        .as_ref()
-        .map(|v| serde_json::from_str::<HashSet<&str>>(v).map_err(AddItemToListError::JsonDecode))
-        .unwrap_or_else(|| Ok(HashSet::new()))?;
-    if list.insert(item) {
-        let raw_data = serde_json::to_string(&list).expect("Cannot encode list");
-        storage
-            .set_item(list_id, &raw_data)
-            .map_err(|e| AddItemToListError::SetItemStorage {
-                key: list_id.to_owned(),
+        self.storage
+            .delete(key)
+            .map_err(|e| RemoveDeviceError::RemoveItemStorage {
+                key: key.to_owned(),
                 error: e,
-            })?;
-        Ok(true)
-    } else {
-        Ok(false)
-    }
-}
-
-/// Remove the given item from the list identified by `list_id`.
-///
-/// If the list does not exist, it is not created.
-///
-/// # Returns
-///
-/// Will return trun if the item was removed from the list, false if the item was not in the list.
-pub(crate) fn remove_item_from_list(
-    storage: &web_sys::Storage,
-    list_id: &str,
-    item: &str,
-) -> Result<bool, RemoveItemFromListError> {
-    let raw_list =
-        storage
-            .get_item(list_id)
-            .map_err(|e| RemoveItemFromListError::GetItemStorage {
-                key: list_id.to_owned(),
-                error: e,
-            })?;
-
-    let Some(mut list) = raw_list
-        .as_ref()
-        .map(|v| {
-            serde_json::from_str::<HashSet<&str>>(v).map_err(RemoveItemFromListError::JsonDecode)
-        })
-        .transpose()?
-    else {
-        return Ok(false);
-    };
-    if list.remove(item) {
-        let raw_data = serde_json::to_string(&list).expect("Cannot encode list");
-        storage.set_item(list_id, &raw_data).map_err(|e| {
-            RemoveItemFromListError::SetItemStorage {
-                key: list_id.to_owned(),
-                error: e,
-            }
-        })?;
-        Ok(true)
-    } else {
-        Ok(false)
+            })
     }
 }

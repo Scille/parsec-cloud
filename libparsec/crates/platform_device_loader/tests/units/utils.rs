@@ -23,8 +23,7 @@ mod platform {
 
 #[cfg(target_arch = "wasm32")]
 mod platform {
-    use crate::web::add_item_to_list;
-    use std::{collections::HashSet, path::Path};
+    use std::path::Path;
 
     fn get_storage() -> web_sys::Storage {
         web_sys::window()
@@ -45,32 +44,21 @@ mod platform {
         storage
             .set_item(key, &b64_data)
             .expect("Cannot add device to storage");
-
-        add_item_to_list(&storage, "parsec_devices", key).expect("Cannot register device");
-    }
-
-    pub fn key_in_list(list_id: &'static str, key: &str) -> bool {
-        let storage = get_storage();
-        let raw_list = storage
-            .get_item(list_id)
-            .expect("Cannot get list of devices");
-
-        let list = raw_list
-            .as_ref()
-            .map(|v| serde_json::from_str::<HashSet<&str>>(v))
-            .unwrap_or_else(|| Ok(HashSet::new()))
-            .expect("Failed to parse list of devices");
-
-        list.contains(key)
     }
 
     pub fn key_present_in_system(path: &Path) -> bool {
+        let storage = get_storage();
         let key = key_from_path(path);
-        key_in_list("parsec_devices", key)
+
+        storage
+            .get_item(key)
+            .expect("Cannot get item in storage")
+            .is_some()
     }
 
     pub fn key_is_archived(path: &Path) -> bool {
         let key = key_from_path(path);
-        !key_in_list("parsec_devices", key) && key_in_list("archived_parsec_devices", key)
+        let archived_key = format!("{}.archived", key);
+        !key_present_in_system(path) && key_present_in_system(Path::new(&archived_key))
     }
 }

@@ -8,8 +8,6 @@ use std::{path::Path, sync::Arc};
 use libparsec_types::prelude::{AvailableDevice, DateTime, DeviceAccessStrategy, LocalDevice};
 
 use internal::Storage;
-#[cfg(test)]
-pub(crate) use internal::{add_item_to_list, remove_item_from_list};
 
 /*
  * List available devices
@@ -91,7 +89,3 @@ pub async fn remove_device(device_path: &Path) -> Result<(), crate::RemoveDevice
     })?;
     storage.remove_device(device_path).map_err(Into::into)
 }
-
-#[cfg(test)]
-#[path = "../../tests/units/web/mod.rs"]
-mod tests;

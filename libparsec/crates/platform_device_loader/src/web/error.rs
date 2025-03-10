@@ -68,14 +68,15 @@ error_set::error_set! {
     ListAvailableDevicesError = GetItemStorageError
         || JsonDeserializationError
         || LoadAvailableDeviceError;
-    GetRawDeviceError = GetItemStorageError
-        || Base64DecodeError
-        || {
+    DeviceMissingError = {
         #[display("No device for '{key}'")]
         Missing {
             key: String
         },
     };
+    GetRawDeviceError = GetItemStorageError
+        || Base64DecodeError
+        || DeviceMissingError;
     LoadAvailableDeviceError = GetRawDeviceError || RmpDecodeError;
     InvalidPathError = {
         #[display("Invalid path {}", path.display())]
@@ -91,19 +92,13 @@ error_set::error_set! {
             DecryptAndLoad(crate::DecryptDeviceFileError),
         };
     SaveDeviceError = SaveDeviceFileError;
-    SaveDeviceFileError = SetItemStorageError || AddItemToListError;
-    AddItemToListError = GetRawDeviceError
-        || SetItemStorageError
-        || JsonDeserializationError;
-    RemoveItemFromListError = GetRawDeviceError
-        || SetItemStorageError
-        || JsonDeserializationError;
+    SaveDeviceFileError = SetItemStorageError;
     ArchiveDeviceError = GetItemStorageError
-        || AddItemToListError
-        || RemoveItemFromListError
+        || SetItemStorageError
+        || DeviceMissingError
+        || RemoveItemStorageError
         || JsonDeserializationError;
     RemoveDeviceError = GetItemStorageError
-        || RemoveItemFromListError
         || RemoveItemStorageError
         || JsonDeserializationError;
 }
@@ -126,10 +121,6 @@ impl From<SaveDeviceError> for crate::SaveDeviceError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
             SaveDeviceError::SetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::Missing { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::JsonDecode(_) => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::B64Decode(_) => Self::Internal(anyhow::anyhow!("{value}")),
         }
     }
 }
@@ -152,10 +143,6 @@ impl From<SaveDeviceError> for crate::ChangeAuthentificationError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
             SaveDeviceError::SetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::Missing { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            SaveDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::JsonDecode(_) => Self::Internal(anyhow::anyhow!("{value}")),
-            SaveDeviceError::B64Decode(_) => Self::InvalidData,
         }
     }
 }
@@ -164,13 +151,10 @@ impl From<RemoveDeviceError> for crate::ChangeAuthentificationError {
     fn from(value: RemoveDeviceError) -> Self {
         match value {
             RemoveDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            RemoveDeviceError::Missing { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            RemoveDeviceError::SetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             RemoveDeviceError::JsonDecode(_) => Self::InvalidData,
             RemoveDeviceError::RemoveItemStorage { .. } => {
                 Self::Internal(anyhow::anyhow!("{value}"))
             }
-            RemoveDeviceError::B64Decode(_) => Self::InvalidData,
         }
     }
 }
