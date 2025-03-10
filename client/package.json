@@ -59,7 +59,7 @@
         "qrcode-vue3": "^1.6.8",
         "uuid": "^9.0.1",
         "vue": "^3.3.8",
-        "vue-i18n": "^9.14.2",
+        "vue-i18n": "^9.14.3",
         "vue-router": "^4.2.5",
         "xlsx": "file:vendor/xlsx-0.20.3.tgz"
     },
