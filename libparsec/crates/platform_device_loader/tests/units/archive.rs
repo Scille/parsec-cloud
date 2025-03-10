@@ -3,10 +3,8 @@
 // `allow-unwrap-in-test` don't behave as expected, see:
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
-// TODO: Web support is not implemented
-#![cfg(not(target_arch = "wasm32"))]
 
-use crate::{archive_device, save_device};
+use crate::{archive_device, save_device, tests::utils::key_is_archived};
 use libparsec_tests_fixtures::{parsec_test, tmp_path, TestbedEnv, TmpPath};
 use libparsec_types::DeviceAccessStrategy;
 
@@ -25,11 +23,5 @@ async fn archive_ok(tmp_path: TmpPath, env: &TestbedEnv) {
     archive_device(&key_file).await.unwrap();
 
     // 3. Check that the device as been archived.
-    assert!(!key_file.exists(), "Device file should have been archived");
-    let expected_archive_path = key_file.with_extension("device.archived");
-    assert!(
-        expected_archive_path.exists(),
-        "Device file should have been archived at the expected location ({})",
-        expected_archive_path.display()
-    );
+    assert!(key_is_archived(&key_file));
 }

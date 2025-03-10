@@ -320,7 +320,6 @@ pub async fn export_recovery_device(
     (passphrase, file_content, recovery_device)
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn load_available_device_from_blob(
     path: PathBuf,
     blob: &[u8],
@@ -398,7 +397,6 @@ fn load_available_device_from_blob(
     })
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn encrypt_device(device: &LocalDevice, key: &SecretKey) -> Bytes {
     let cleartext = zeroize::Zeroizing::new(device.dump());
     key.encrypt(&cleartext).into()
@@ -430,7 +428,6 @@ impl From<DecryptDeviceFileError> for ChangeAuthentificationError {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn decrypt_device_file(
     device_file: &DeviceFile,
     key: &SecretKey,
@@ -442,7 +439,6 @@ fn decrypt_device_file(
     LocalDevice::load(&cleartext).map_err(DecryptDeviceFileError::Load)
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn generate_default_password_algorithm_parameters() -> DeviceFilePasswordAlgorithm {
     DeviceFilePasswordAlgorithm::Argon2id {
         memlimit_kb: ARGON2ID_DEFAULT_MEMLIMIT_KB.into(),
@@ -452,7 +448,6 @@ fn generate_default_password_algorithm_parameters() -> DeviceFilePasswordAlgorit
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", expect(dead_code))]
 fn secret_key_from_password(
     password: &Password,
     algorithm: &DeviceFilePasswordAlgorithm,
@@ -473,7 +468,6 @@ fn secret_key_from_password(
     }
 }
 
-#[cfg_attr(all(target_arch = "wasm32", not(test)), expect(dead_code))]
 fn server_url_from_device(device: &LocalDevice) -> String {
     ParsecAddr::new(
         device.organization_addr.hostname().to_owned(),
