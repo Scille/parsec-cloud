@@ -93,6 +93,12 @@ We are not affected since sqlx is used on the client side to store the files' da
 Before being stored in SQLite, that data is splitted into chunk and encoded, so we are below the overflow limit of 4GB.
 """
 
+[[advisories.ignore]]
+id = "RUSTSEC-2024-0436"
+reason = """
+paste is no longer maintained but in a correct state.
+"""
+
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
 # Setting this to true can be helpful if you have special authentication requirements that cargo-deny does not support.
