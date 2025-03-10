@@ -17,6 +17,11 @@
 // scroll behavior: user(revoked, active, invitation)/folder/workspace
 .content-scroll {
   --overflow: hidden;
+
+  &::part(scroll) {
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 ion-title {
@@ -25,13 +30,22 @@ ion-title {
 
 .scroll {
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0 2rem;
-  margin-bottom: 3rem;
-  // multiple lines for cross-browser compatibility
   height: 100%;
-  height: -webkit-fill-available;
-  height: -moz-available;
-  height: stretch;
+
+  @include breakpoint('wide') {
+    padding: 0 1rem 0 2rem;
+  }
+
+  @include breakpoint('sm') {
+    padding: 0 1.5rem;
+    margin-bottom: 0;
+  }
+
+  @include breakpoint('xs') {
+    padding: 0 1rem;
+  }
 
   .list,
   .users-container-grid,
@@ -39,6 +53,10 @@ ion-title {
   .folders-container-grid,
   .invitation-container-grid {
     padding-top: 2rem;
+
+    @include breakpoint('sm') {
+      padding-top: 0;
+    }
   }
 }
 

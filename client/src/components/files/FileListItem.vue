@@ -11,19 +11,23 @@
   >
     <ion-item
       button
-      lines="full"
+      :lines="isLargeDisplay ? 'full' : 'none'"
       :detail="false"
       class="file-list-item"
       :class="{
         selected: entry.isSelected,
         'file-hovered': !entry.isSelected && (menuOpened || isHovered),
+        'file-list-item-mobile': isSmallDisplay,
       }"
       @dblclick="$emit('click', $event, entry)"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
       @contextmenu="onOptionsClick"
     >
-      <div class="file-selected">
+      <div
+        class="file-selected"
+        v-if="isLargeDisplay || entry.isSelected || showCheckbox"
+      >
         <!-- eslint-disable vue/no-mutating-props -->
         <ms-checkbox
           v-model="entry.isSelected"
@@ -35,14 +39,32 @@
         <!-- eslint-enable vue/no-mutating-props -->
       </div>
       <!-- file name -->
-      <div class="file-name">
+      <div
+        class="file-name"
+        :class="{ 'file-mobile-content': isSmallDisplay }"
+      >
         <ms-image
           :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
           class="file-icon"
         />
-        <ion-label class="file-name__label cell">
-          {{ entry.name }}
-        </ion-label>
+        <div class="file-mobile-text">
+          <ion-label class="file-name__label cell">
+            {{ entry.name }}
+          </ion-label>
+          <ion-text
+            v-if="isSmallDisplay"
+            class="file-mobile-text__data body-sm"
+          >
+            <span class="data-date">{{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}</span>
+            <span v-if="entry.isFile()"> &bull; </span>
+            <span
+              class="data-size"
+              v-if="entry.isFile()"
+            >
+              {{ $msTranslate(formatFileSize((entry as FileModel).size)) }}
+            </span>
+          </ion-text>
+        </div>
         <ion-icon
           class="cloud-overlay"
           :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
@@ -83,7 +105,7 @@
       <div class="file-options ion-item-child-clickable">
         <ion-button
           fill="clear"
-          v-show="isHovered || menuOpened"
+          v-show="isHovered || menuOpened || isSmallDisplay"
           class="options-button"
           @click.stop="onOptionsClick($event)"
           @dblclick.stop
@@ -101,18 +123,19 @@
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon } from '@/common/file';
-import { Folder, formatTimeSince, MsImage, MsCheckbox } from 'megashark-lib';
+import { Folder, formatTimeSince, MsImage, MsCheckbox, useWindowSize } from 'megashark-lib';
 import FileDropZone from '@/components/files/FileDropZone.vue';
 import { EntryModel, FileModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { FsPath, Path } from '@/parsec';
-import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
+const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 const props = defineProps<{
   entry: EntryModel;
@@ -160,19 +183,25 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
+@import '@/theme/responsive-mixin';
+
 .drop-zone-item {
   height: fit-content;
 }
 
 .file-name {
+  position: relative;
+  display: flex;
+  gap: 1rem;
+
   .file-icon {
     width: 2rem;
     height: 2rem;
+    flex-shrink: 0;
   }
 
   &__label {
     color: var(--parsec-color-light-secondary-text);
-    margin-left: 1em;
     overflow: hidden;
     text-overflow: ellipsis;
     text-wrap: nowrap;
@@ -182,6 +211,12 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
     font-size: 1rem;
     flex-shrink: 0;
     margin-left: auto;
+    position: absolute;
+    right: 0;
+
+    @include breakpoint('sm') {
+      display: none;
+    }
 
     &-ok {
       color: var(--parsec-color-light-primary-500);
@@ -210,6 +245,32 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
         color: var(--parsec-color-light-primary-500);
       }
     }
+  }
+}
+
+.file-list-item-mobile {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  .file-mobile-content {
+    gap: 1rem;
+  }
+}
+
+.file-mobile-text {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--parsec-color-light-secondary-grey);
+  display: flex;
+  gap: 0.125rem;
+  flex-direction: column;
+
+  &__data {
+    display: flex;
+    gap: 0.5rem;
   }
 }
 </style>

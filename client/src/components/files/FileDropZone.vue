@@ -23,7 +23,7 @@
         :image="DocumentImport"
         class="restore-password-header-img"
       />
-      <ion-label class="subtitles-normal">
+      <ion-label class="subtitles-sm">
         {{ $msTranslate('FoldersPage.ImportFile.dropInstructions') }}
       </ion-label>
     </div>
@@ -125,6 +125,8 @@ function reset(): void {
 </script>
 
 <style scoped lang="scss">
+@import '@/theme/responsive-mixin';
+
 .drop-zone {
   width: 100%;
   height: 100%;
@@ -139,6 +141,11 @@ function reset(): void {
     bottom: 1.5rem;
     z-index: 1100;
 
+    @include breakpoint('sm') {
+      top: 0.75rem;
+      bottom: 0.75rem;
+    }
+
     &.drop-active {
       outline: 2px dashed var(--parsec-color-light-primary-400);
       border-radius: var(--parsec-radius-8);
@@ -152,7 +159,8 @@ function reset(): void {
   bottom: 2em;
   transform: translate(-50%, -50%);
   width: fit-content;
-  background-color: var(--parsec-color-light-primary-50);
+  background-color: var(--parsec-color-light-secondary-premiere);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
   border-radius: var(--parsec-radius-8);
   box-shadow: var(--parsec-shadow-strong);
   padding: 0.75rem;
