@@ -2,9 +2,6 @@
 
 mod error;
 mod internal;
-#[cfg(test)]
-#[path = "../../tests/units/web/mod.rs"]
-mod tests;
 
 use std::{path::Path, sync::Arc};
 
@@ -94,3 +91,7 @@ pub async fn remove_device(device_path: &Path) -> Result<(), crate::RemoveDevice
     })?;
     storage.remove_device(device_path).map_err(Into::into)
 }
+
+#[cfg(test)]
+#[path = "../../tests/units/web/mod.rs"]
+mod tests;
