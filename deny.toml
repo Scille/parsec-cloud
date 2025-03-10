@@ -248,7 +248,8 @@ skip = [
 # dependencies starting at the specified crate, up to a certain depth, which is
 # by default infinite.
 skip-tree = [
-    #{ name = "ansi_term", version = "=0.11.0", depth = 20 },
+    { crate = "jni@0.21.1", reason = "`jni` crate hasn't updated its dependencies in a long time" },
+    { crate = "windows-sys", reason = "hard to have a single version of `windows-sys`" },
 ]
 
 # This section is considered when running `cargo deny check sources`.
