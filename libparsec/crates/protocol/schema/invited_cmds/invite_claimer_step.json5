@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "invite_claimer_step",
         "req": {
-            "cmd": "invite_claimer_step",
             "fields": [
                 {
                     "name": "greeting_attempt",

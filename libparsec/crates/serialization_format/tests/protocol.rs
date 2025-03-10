@@ -23,8 +23,8 @@ fn simple() {
                     2,
                     3
                 ],
+                "cmd": "ping",
                 "req": {
-                    "cmd": "ping",
                     "fields": [
                         {
                             "name": "ping",
@@ -95,8 +95,8 @@ fn complex_type() {
         r#"[
             {
                 "major_versions": [1],
+                "cmd": "ping",
                 "req": {
-                    "cmd": "ping",
                     "fields": [
                         {
                             "name": "ping",
@@ -140,8 +140,8 @@ fn unknown_rep_status() {
         r#"[
             {
                 "major_versions": [1],
+                "cmd": "ping",
                 "req": {
-                    "cmd": "ping",
                     "fields": []
                 },
                 "reps": [
@@ -161,8 +161,8 @@ fn unknown_rep_status() {
         [
             {
                 "major_versions": [1],
+                "cmd": "ping2",
                 "req": {
-                    "cmd": "ping2",
                     "fields": []
                 },
                 "reps": [
@@ -220,8 +220,8 @@ fn introduce_in_field() {
                     2,
                     3
                 ],
+                "cmd": "ping",
                 "req": {
-                    "cmd": "ping",
                     "fields": [
                         {
                             "name": "ping",
@@ -241,8 +241,8 @@ fn introduce_in_field() {
                     2,
                     3
                 ],
+                "cmd": "ping2",
                 "req": {
-                    "cmd": "ping2",
                     "fields": []
                 },
                 "reps": [
@@ -320,8 +320,8 @@ fn nested_type() {
         r#"[
             {
                 "major_versions": [1],
+                "cmd": "ping",
                 "req": {
-                    "cmd": "ping",
                     "fields": [
                         {"name": "e", "type": "EnumNestedType"},
                         {"name": "s", "type": "StructNestedType"}
@@ -383,8 +383,8 @@ fn rep_unit() {
         r#"[
             {
                 "major_versions": [1],
+                "cmd": "ping",
                 "req": {
-                    "cmd": "ping",
                     "fields": []
                 },
                 "reps": [
