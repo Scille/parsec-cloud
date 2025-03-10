@@ -228,13 +228,7 @@ ipcMain.on(PageToWindowChannel.Log, async (_event, level: 'debug' | 'info' | 'wa
 });
 
 ipcMain.on(PageToWindowChannel.PageIsInitialized, async () => {
-  myCapacitorApp.pageIsInitialized = true;
-  myCapacitorApp.sendEvent(WindowToPageChannel.IsDevMode, electronIsDev);
-
-  if (myCapacitorApp.storedLink) {
-    myCapacitorApp.sendEvent(WindowToPageChannel.OpenLink, myCapacitorApp.storedLink);
-    myCapacitorApp.storedLink = '';
-  }
+  myCapacitorApp.onPageInitialized();
 });
 
 ipcMain.on(PageToWindowChannel.OpenConfigDir, async () => {
