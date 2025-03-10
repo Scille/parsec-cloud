@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { clientAreaSwitchOrganization, expect, MockBms, msTest } from '@tests/e2e/helpers';
-import { DateTime } from 'luxon';
 
 msTest('Test initial status for an org', async ({ clientAreaCustomOrder }) => {
   const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
@@ -26,8 +25,8 @@ msTest('Test initial status for an org', async ({ clientAreaCustomOrder }) => {
   await expect(container.locator('.contract-header-title__text')).toHaveText('Contract n°FACT001');
 
   const contract = container.locator('.contract-main');
-  await expect(contract.locator('.item-content-date__date').nth(0)).toHaveText(DateTime.now().minus({ months: 1 }).toFormat('LLL d, yyyy'));
-  await expect(contract.locator('.item-content-date__date').nth(1)).toHaveText(DateTime.now().toFormat('LLL d, yyyy'));
+  await expect(contract.locator('.item-content-date__date').nth(0)).toHaveText('Jan 3, 2024');
+  await expect(contract.locator('.item-content-date__date').nth(1)).toHaveText('Feb 3, 2024');
 
   await expect(contract.locator('.data-number').nth(0)).toHaveText('32');
   await expect(contract.locator('.data-number').nth(1)).toHaveText('50');

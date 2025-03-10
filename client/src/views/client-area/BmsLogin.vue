@@ -127,7 +127,7 @@
           </ion-text>
           <ion-button
             v-show="!loading"
-            :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || !password.length || querying"
+            :disabled="!validEmail || !password.length || querying"
             @click="onLoginClicked"
             class="saas-login-button__item"
             size="large"
@@ -199,7 +199,7 @@ import { IonButton, IonText, IonButtons, IonFooter, IonIcon, IonSkeletonText } f
 import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner, MsCheckbox } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
 import { warning, arrowBack, arrowForward, close } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 import { Env } from '@/services/environment';
@@ -226,7 +226,12 @@ const loginError = ref<Translatable>('');
 const loading = ref(true);
 const storeCredentials = ref<boolean>(false);
 
+const validEmail = computed(() => {
+  return Boolean(email.value.length > 0 && emailInputRef.value && emailInputRef.value.validity === Validity.Valid);
+});
+
 onMounted(async () => {
+  querying.value = false;
   loading.value = true;
   if (BmsAccessInstance.get().isLoggedIn()) {
     emits('loginSuccess', await BmsAccessInstance.get().getToken(), BmsAccessInstance.get().getPersonalInformation());
@@ -238,13 +243,11 @@ onMounted(async () => {
     return;
   }
 
-  if (emailInputRef.value) {
-    if (email.value.length > 0) {
-      await emailInputRef.value.validate(email.value);
-      await passwordInputRef.value.setFocus();
-    } else {
-      await emailInputRef.value.setFocus();
-    }
+  if (email.value.length > 0) {
+    await emailInputRef.value.validate(email.value);
+    await passwordInputRef.value.setFocus();
+  } else {
+    await emailInputRef.value.setFocus();
   }
   loading.value = false;
 });

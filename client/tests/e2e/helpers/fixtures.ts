@@ -264,7 +264,7 @@ export const msTest = debugTest.extend<{
     await button.click();
     await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
-    await home.locator('.saas-login-button__item').nth(1).click();
+    await home.locator('.saas-login-button').locator('ion-button').click();
     await expect(home).toHaveURL(/.+\/clientArea$/);
 
     // Switch to first org
@@ -297,9 +297,14 @@ export const msTest = debugTest.extend<{
     const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');
     await button.click();
-    await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
-    await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
-    await home.locator('.saas-login-button__item').nth(1).click();
+    const loginButton = home.locator('.saas-login-button').locator('ion-button');
+    await expect(loginButton).toHaveAttribute('disabled');
+    await fillIonInput(home.locator('.saas-login-content').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
+    await home.waitForTimeout(100);
+    await fillIonInput(home.locator('.saas-login-content').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+    await home.waitForTimeout(100);
+    await expect(loginButton).not.toHaveAttribute('disabled');
+    await loginButton.click();
     await expect(home).toHaveURL(/.+\/clientArea$/);
 
     await use(home);
