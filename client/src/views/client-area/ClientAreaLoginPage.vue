@@ -65,13 +65,12 @@ function getCurrentSectionClass(): string {
 .saas-forgot-password-container {
   display: flex;
   max-width: 48rem;
-  max-height: 32rem;
-  margin: 2rem auto;
+  margin: 0 auto;
 }
 
 .saas-login-container {
-  height: 100vh;
   width: 100%;
+  overflow-y: auto;
 }
 
 .saas-login,
