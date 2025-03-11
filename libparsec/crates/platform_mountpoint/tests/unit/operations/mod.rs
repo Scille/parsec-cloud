@@ -4,6 +4,8 @@ mod create_folder;
 mod flush_file;
 mod history;
 mod list_directory;
+#[cfg(target_os = "macos")]
+mod macos;
 mod mount_unmount;
 mod move_entry;
 mod open_file;
@@ -13,6 +15,8 @@ mod remove_folder;
 mod rename_entry;
 mod stat_entry;
 mod to_os_path;
+#[cfg(target_family = "unix")]
+mod unix;
 mod utils;
 mod write_file;
 

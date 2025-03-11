@@ -77,6 +77,24 @@ async fn file(
                 let stat = std::fs::metadata(file_path).unwrap();
                 assert!(stat.is_file());
                 p_assert_eq!(stat.len(), expected_size);
+
+                #[cfg(target_family = "unix")]
+                {
+                    use std::os::unix::fs::MetadataExt;
+                    const BLK_SIZE: u64 = 512;
+
+                    let current_uid = unsafe { libc::getuid() };
+                    let current_gid = unsafe { libc::getgid() };
+
+                    assert_eq!(stat.mode() & 0o700, 0o700);
+                    assert_eq!(stat.uid(), current_uid);
+                    assert_eq!(stat.gid(), current_gid);
+                    assert_eq!(stat.nlink(), 1); // We do not handle file link so the file will have a
+                                                 // single link
+                    assert_eq!(stat.blocks(), (expected_size + BLK_SIZE - 1) / BLK_SIZE);
+                    assert_eq!(stat.blksize(), 512); // Value of blocksize that we define during the
+                                                     // filesystem impl
+                }
             })
             .await
             .unwrap();
@@ -116,6 +134,24 @@ async fn folder(
                 };
                 let stat = std::fs::metadata(folder_path).unwrap();
                 assert!(stat.is_dir());
+
+                #[cfg(target_family = "unix")]
+                {
+                    use std::os::unix::fs::MetadataExt;
+
+                    let current_uid = unsafe { libc::getuid() };
+                    let current_gid = unsafe { libc::getgid() };
+
+                    assert_eq!(stat.mode() & 0o700, 0o700);
+                    assert_eq!(stat.uid(), current_uid);
+                    assert_eq!(stat.gid(), current_gid);
+                    assert_eq!(stat.nlink(), 1); // We do not handle file link so the file will have a
+                                                 // single link
+                    assert_eq!(stat.size(), 0); // A dir does not have a size
+                    assert_eq!(stat.blocks(), 0); // no size mean no block used
+                    assert_eq!(stat.blksize(), 512); // Value of blocksize that we define during the
+                                                     // filesystem impl
+                }
             })
             .await
             .unwrap();
