@@ -214,7 +214,8 @@ jobs:
             echo '| Platform         | Download link |'
             echo '| ---------------- | ------------- |'
             echo "| Windows          | [Parsec_${{ needs.version.outputs.full }}_win_x86_64.exe]($ASSET_DL_PATH/Parsec_${{ needs.version.outputs.full }}_win_x86_64.exe) |"
-            echo "| Macos            | $(gen_mk_dl_link ".macos.x86_64.client.dmg") |"
+            echo "| Macos (intel)    | $(gen_mk_dl_link ".macos.x86_64.client.dmg") |"
+            echo "| Macos (ARM)      | $(gen_mk_dl_link ".macos.arm64.client.dmg") |"
             echo "| Linux (AppImage) | $(gen_mk_dl_link ".linux-gnu.x86_64.client.AppImage") |"
             echo "| Linux (Snap)     | $(gen_mk_dl_link ".linux-gnu.x86_64.client.snap") |"
             echo
