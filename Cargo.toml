@@ -106,7 +106,7 @@ libparsec_types = { path = "libparsec/crates/types", default-features = false }
 libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 
 # Third parties
-android_logger = { version = "0.13", default-features = false }
+android_logger = { version = "0.15", default-features = false }
 anyhow = { version = "1.0.95", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.0.16", default-features = false }
