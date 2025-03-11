@@ -331,6 +331,9 @@ const routeWatchCancel = watchRoute(async () => {
   }
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
+    if (workspaceInfo.value && workspaceHandle !== workspaceInfo.value.handle) {
+      samePath = false;
+    }
     const infoResult = await parsec.getWorkspaceInfo(workspaceHandle);
     if (infoResult.ok) {
       workspaceInfo.value = infoResult.value;
