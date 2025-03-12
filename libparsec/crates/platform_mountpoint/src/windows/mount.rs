@@ -32,11 +32,11 @@ pub struct Mountpoint {
 }
 
 impl Mountpoint {
-    pub fn path(&self) -> &std::path::Path {
+    pub fn path(&self) -> &Path {
         &self.path
     }
 
-    pub fn to_os_path(&self, parsec_path: &FsPath) -> std::path::PathBuf {
+    pub fn to_os_path(&self, parsec_path: &FsPath) -> PathBuf {
         let mut path = self.path.to_owned();
         path.extend(parsec_path.parts().iter().map(winify_entry_name));
         path
@@ -201,9 +201,9 @@ impl Drop for Mountpoint {
 // hence there is still edge-cases where the mount can crash due to concurrent
 // changes on the mountpoint path.
 fn find_suitable_mountpoint_dir(
-    base_mountpoint_path: &std::path::Path,
+    base_mountpoint_path: &Path,
     workspace_name: &EntryName,
-) -> anyhow::Result<std::path::PathBuf> {
+) -> anyhow::Result<PathBuf> {
     // Ensure the mountpoint base directory exists
     std::fs::create_dir_all(base_mountpoint_path).context("cannot create base mountpoint dir")?;
 
@@ -280,12 +280,9 @@ fn find_suitable_mountpoint_dir(
     Err(anyhow::anyhow!("Cannot find a suitable mountpoint path"))
 }
 
-pub(crate) fn find_suitable_drive_letter(
-    index: usize,
-    length: usize,
-) -> Option<std::path::PathBuf> {
+pub(crate) fn find_suitable_drive_letter(index: usize, length: usize) -> Option<PathBuf> {
     for candidate_drive_letter in sorted_drive_letters(index, length) {
-        let path = std::path::PathBuf::from(format!("{}:", candidate_drive_letter));
+        let path = PathBuf::from(format!("{}:", candidate_drive_letter));
         if !path.exists() {
             return Some(path);
         }
@@ -295,7 +292,7 @@ pub(crate) fn find_suitable_drive_letter(
 
 /// Cleanup mountpoint base directory
 pub async fn clean_base_mountpoint_dir(
-    _mountpoint_base_path: std::path::PathBuf,
+    _mountpoint_base_path: PathBuf,
 ) -> anyhow::Result<(), libparsec_types::anyhow::Error> {
     // Currently a no-op on Windows. See `clean_base_mountpoint_dir` in `unix/mount.rs`
     Ok(())
