@@ -6,7 +6,7 @@ use std::os::macos::fs::MetadataExt;
 #[cfg(target_os = "linux")]
 use std::os::linux::fs::MetadataExt;
 
-use std::{sync::Arc, thread::JoinHandle};
+use std::{path::Path, sync::Arc, thread::JoinHandle};
 
 use libparsec_client::MountpointMountStrategy;
 use libparsec_types::prelude::*;
@@ -326,6 +326,16 @@ fn create_suitable_mountpoint_dir(
             }
         };
     }
+
+    //`EntryName` format is fully compatible with UNIX path format, so we should always
+    // be able to convert workspace name into a single component relative path.
+    assert!(
+        // `Some(...)` means the path is a relative one with a single component, (while
+        // `None` would have meant the path is an absolute one with a single component).
+        Path::new(workspace_name.as_ref()).parent() == Some(Path::new("")),
+        "Workspace name `{:?}` cannot form a valid path item",
+        workspace_name
+    );
 
     for tentative in 1.. {
         let mountpoint_path = if tentative == 1 {
