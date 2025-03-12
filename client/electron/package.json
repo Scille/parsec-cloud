@@ -15,6 +15,8 @@
     "scripts": {
         "libparsec:copy": "node ./scripts/copy_bindings.js",
         "build": "npm run libparsec:copy && tsc",
+        "electron:copy": "npx cap copy @capacitor-community/electron",
+        "electron:open": "npx cap open @capacitor-community/electron",
         "electron:start-live": "npm run build && node ./live-runner.js",
         "electron:start": "npm run build && electron --inspect=5858 ./",
         "electron:release": "npm run build && node package.js --mode prod",

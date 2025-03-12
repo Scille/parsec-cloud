@@ -6,7 +6,6 @@ const config: CapacitorElectronConfig = {
   appId: 'com.scille.parsec',
   appName: 'Parsec',
   webDir: 'dist',
-  bundledWebRuntime: false,
   plugins: {
     SplashScreen: {
       launchAutoHide: false,
