@@ -1,6 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use winfsp_wrs::{
     filetime_now, u16cstr, FileSystem, FileSystemInterface, Params, U16CStr, U16CString,
     VolumeParams,
@@ -204,15 +207,35 @@ fn find_suitable_mountpoint_dir(
     // Ensure the mountpoint base directory exists
     std::fs::create_dir_all(base_mountpoint_path).context("cannot create base mountpoint dir")?;
 
+    // We are going to use the workspace name as a folder name, however there is (at least)
+    // one trick here: `EntryName` allows `\` characters, so without sanitize we can
+    // end up with a workspace name that becomes a path with multiple components...
+    // Worse: if workspace name starts by `\\`, it can be considered as an absolute UNC
+    // path, causing the base mountpoint path to be ignored since `Path::join` replaces
+    // the current path if the param is absolute :/
+    let workspace_name: String = {
+        let name = winify_entry_name(workspace_name);
+        // Sanity check to ensure we end up with a relative single component path
+        let name_as_path = Path::new(&name);
+        assert!(
+            // `Some(...)` means the path is a relative one with a single component, (while
+            // `None` would have meant the path is an absolute one with a single component).
+            name_as_path.parent() == Some(Path::new("")),
+            "Workspace name `{:?}` cannot form a valid path item",
+            workspace_name
+        );
+        name
+    };
+
     // It is most likely the suitable directory is found on the first tentative,
     // and the likelihood of finding a suitable directory exponentially decreases
     // with each new tentative, hence we limit the number of tentatives to avoid
     // infinite loop.
     for tentative in 1..=100 {
         let mountpoint_path = if tentative == 1 {
-            base_mountpoint_path.join(workspace_name.as_ref())
+            base_mountpoint_path.join(&workspace_name)
         } else {
-            base_mountpoint_path.join(format!("{} ({})", workspace_name.as_ref(), tentative))
+            base_mountpoint_path.join(format!("{} ({})", &workspace_name, tentative))
         };
 
         // For WinFSP, mounting target must NOT exists
