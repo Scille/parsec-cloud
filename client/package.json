@@ -33,7 +33,7 @@
         "megashark:local:stop": "npm unlink megashark-lib --no-save && npm install"
     },
     "dependencies": {
-        "@capacitor-community/electron": "^5.0.1",
+        "@capacitor-community/electron": "github:Max-7/capacitor-electron",
         "@capacitor/android": "^5.6.0",
         "@capacitor/app": "^5.0.6",
         "@capacitor/core": "^5.2.1",
