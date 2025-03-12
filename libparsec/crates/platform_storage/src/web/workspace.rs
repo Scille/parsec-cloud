@@ -13,7 +13,7 @@ use libparsec_types::prelude::*;
 use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
 use crate::{
     web::{
-        model::{RealmCheckpoint, Vlob},
+        model::{get_workspace_storage_db_name, RealmCheckpoint, Vlob},
         DB_VERSION,
     },
     workspace::{
@@ -41,17 +41,7 @@ impl PlatformWorkspaceStorage {
     ) -> anyhow::Result<Self> {
         // 1) Open the database
 
-        #[cfg(feature = "test-with-testbed")]
-        let name = format!(
-            "{}-{}-{}-workspace",
-            data_base_dir.display(),
-            device.device_id.hex(),
-            realm_id.hex()
-        );
-
-        #[cfg(not(feature = "test-with-testbed"))]
-        let name = format!("{}-{}-workspace", device.device_id.hex(), realm_id.hex());
-
+        let name = get_workspace_storage_db_name(data_base_dir, device.device_id, realm_id);
         let db_req =
             IdbDatabase::open_u32(&name, DB_VERSION).map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
