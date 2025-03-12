@@ -36,6 +36,17 @@ fn store_factory(_env: &TestbedEnv) -> Arc<dyn Any + Send + Sync> {
     })
 }
 
+// Unlike in native where the database is strictly in-memory, in web we
+// rely on the `IndexedDb` API that always stores data in a persistent
+// way, hence why we need to make sure no database already exists.
+#[cfg(target_arch = "wasm32")]
+pub async fn drop_existing_web_indexed_db(name: &str) -> anyhow::Result<()> {
+    indexed_db_futures::IdbDatabase::delete_by_name(&name)
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?
+        .await
+        .map_err(|e| anyhow::anyhow!("{e:?}"))
+}
+
 #[allow(unused)]
 pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, device: &LocalDevice) {
     let disabled = std::env::var("TESTBED_DISABLE_POPULATE_CERTIFICATE_STORAGE").is_ok();
@@ -56,6 +67,15 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
         if already_populated {
             return;
         }
+
+        #[cfg(target_arch = "wasm32")]
+        drop_existing_web_indexed_db(&format!(
+            "{}-{}-certificates",
+            data_base_dir.display(),
+            device.device_id.hex()
+        ))
+        .await
+        .unwrap();
 
         let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
 
@@ -202,6 +222,15 @@ pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: &L
             return;
         }
 
+        #[cfg(target_arch = "wasm32")]
+        drop_existing_web_indexed_db(&format!(
+            "{}-{}-user",
+            data_base_dir.to_str().unwrap(),
+            device.device_id.hex()
+        ))
+        .await
+        .unwrap();
+
         let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
 
         // Only start the storage if we need to do some initialization work
@@ -279,6 +308,16 @@ pub(crate) async fn maybe_populate_workspace_storage(
         if already_populated {
             return;
         }
+
+        #[cfg(target_arch = "wasm32")]
+        drop_existing_web_indexed_db(&format!(
+            "{}-{}-{}-workspace",
+            data_base_dir.display(),
+            device.device_id.hex(),
+            realm_id.hex()
+        ))
+        .await
+        .unwrap();
 
         let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
 
