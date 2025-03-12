@@ -3,7 +3,7 @@
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::start_client_with_mountpoint_base_dir;
+use super::utils::{os_ls, start_client_with_mountpoint_base_dir};
 use crate::Mountpoint;
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -204,4 +204,74 @@ async fn mount_and_unmount(
     );
 
     client.stop().await;
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+// UTF8 name
+#[case("国家", "国家")]
+// Character not allowed on Windows
+#[case("\\", "~5c")]
+#[case(":", "~3a")]
+// cspell:disable-next-line
+#[case("foo:bar", "foo~3abar")]
+// Backslash shouldn't lead to multiple parts in the path
+// cspell:disable-next-line
+#[case("foo\\bar", "foo~5cbar")]
+// UNC absolute path
+// cspell:disable-next-line
+#[case("\\\\hello\\", "~5c~5chello~5c")]
+// cspell:disable-next-line
+#[case("\\\\hello", "~5c~5chello")]
+// cspell:disable-next-line
+#[case("\\\\127.0.0.1\\foo", "~5c~5c127.0.0.1~5cfoo")]
+#[case("\\\\127.0.0.1", "~5c~5c127.0.0.1")]
+// File name not allowed on Windows
+#[case("AUX", "AU~58")]
+#[case("COM8.txt", "COM~38.txt")]
+async fn weird_workspace_name(
+    #[case] workspace_name: &str,
+    #[cfg_attr(not(windows), allow(unused_variables))]
+    #[case]
+    windows_expected_mountpoint_name: &str,
+    tmp_path: TmpPath,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    env.customize(|builder| {
+        builder.rename_realm(wksp1_id, workspace_name);
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+        builder
+            .user_storage_local_update("alice@dev1")
+            .update_local_workspaces_with_fetched_certificates();
+    })
+    .await;
+
+    let mountpoint_base_dir = tmp_path.join("base");
+    let client =
+        start_client_with_mountpoint_base_dir(env, mountpoint_base_dir.clone(), "alice@dev1").await;
+    let wksp1_ops = client.start_workspace(wksp1_id).await.unwrap();
+    p_assert_eq!(
+        wksp1_ops.get_current_name_and_self_role().0.as_ref(),
+        workspace_name
+    ); // Sanity check
+
+    let mountpoint = Mountpoint::mount(wksp1_ops).await.unwrap();
+
+    #[cfg(not(windows))]
+    let expected_mountpoint_name: &str = workspace_name;
+    #[cfg(windows)]
+    let expected_mountpoint_name: &str = windows_expected_mountpoint_name;
+
+    p_assert_eq!(
+        mountpoint.path().parent(),
+        Some(mountpoint_base_dir.as_ref())
+    );
+    p_assert_eq!(
+        mountpoint.path().file_name(),
+        Some(std::ffi::OsStr::new(expected_mountpoint_name))
+    );
+    p_assert_eq!(
+        os_ls!(mountpoint_base_dir).await,
+        [expected_mountpoint_name]
+    );
 }
