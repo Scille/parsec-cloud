@@ -14,7 +14,7 @@ use crate::certificates::{
     FilterKind, GetCertificateError, GetCertificateQuery, PerTopicLastTimestamps,
     StorableCertificateTopic, UpTo,
 };
-use crate::web::model::{Certificate, CertificateFilter};
+use crate::web::model::{get_certificates_storage_db_name, Certificate, CertificateFilter};
 use crate::web::DB_VERSION;
 
 #[derive(Debug)]
@@ -274,16 +274,7 @@ impl PlatformCertificatesStorage {
     ) -> anyhow::Result<Self> {
         // 1) Open the database
 
-        #[cfg(feature = "test-with-testbed")]
-        let name = format!(
-            "{}-{}-certificates",
-            data_base_dir.display(),
-            device.device_id.hex()
-        );
-
-        #[cfg(not(feature = "test-with-testbed"))]
-        let name = format!("{}-certificates", device.device_id.hex());
-
+        let name = get_certificates_storage_db_name(data_base_dir, device.device_id);
         let db_req =
             IdbDatabase::open_u32(&name, DB_VERSION).map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
