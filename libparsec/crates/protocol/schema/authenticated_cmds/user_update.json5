@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "user_update",
         "req": {
-            "cmd": "user_update",
             "fields": [
                 {
                     "name": "user_update_certificate",

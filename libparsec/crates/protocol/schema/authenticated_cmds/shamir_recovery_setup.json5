@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "shamir_recovery_setup",
         "req": {
-            "cmd": "shamir_recovery_setup",
             "fields": [
                 {
                     // The actual data we want to recover.

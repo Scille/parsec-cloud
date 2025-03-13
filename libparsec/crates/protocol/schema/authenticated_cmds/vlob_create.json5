@@ -3,8 +3,8 @@
         "major_versions": [
             5
         ],
+        "cmd": "vlob_create",
         "req": {
-            "cmd": "vlob_create",
             "fields": [
                 {
                     "name": "realm_id",
