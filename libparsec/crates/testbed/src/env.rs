@@ -5,10 +5,7 @@ use std::{
     collections::HashMap,
     path::{Path, PathBuf},
     str::FromStr,
-    sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc, Mutex,
-    },
+    sync::{Arc, Mutex},
 };
 
 use lazy_static::lazy_static;
@@ -958,16 +955,34 @@ pub async fn test_new_testbed(
 
     // 3) Finally register the testbed env
     let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
-    // Config dir is used as discriminant by the testbed, hence we must make sure it
-    // is unique across the process to avoid concurrency issues
-    static ENVS_COUNTER: AtomicUsize = AtomicUsize::new(0);
-    let current = ENVS_COUNTER.fetch_add(1, Ordering::Relaxed);
+
+    #[cfg(not(target_arch = "wasm32"))]
     let discriminant_dir = {
+        // Config dir is used as discriminant by the testbed, hence we must make sure
+        // it is unique for each test across the process to avoid concurrency issues.
+        // Note this is likely not needed (but not harmful either ^^) when using
+        // `cargo nextest` since each test runs in its own process then.
+
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        static ENVS_COUNTER: AtomicUsize = AtomicUsize::new(0);
+        let current = ENVS_COUNTER.fetch_add(1, Ordering::Relaxed);
+
         let mut dir = PathBuf::from(TESTBED_BASE_DUMMY_PATH);
         dir.push(current.to_string());
         dir.push(organization_id.as_ref());
         dir
     };
+
+    #[cfg(target_arch = "wasm32")]
+    let discriminant_dir = {
+        // In web mode the tests are never run in parallel, hence there is no
+        // need to make the discriminant unique.
+        // Worst: since the database stays persistent in web, with a unique
+        // name we would end up with a lot of unused databases.
+        PathBuf::from(TESTBED_BASE_DUMMY_PATH)
+    };
+
     let env = Arc::new(TestbedEnv {
         kind,
         discriminant_dir,
