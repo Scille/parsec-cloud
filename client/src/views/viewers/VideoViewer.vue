@@ -22,7 +22,7 @@
         >
           <source
             :src="src"
-            :type="contentInfo.mimeType"
+            :type="mimeType"
           />
         </video>
       </div>
@@ -75,6 +75,7 @@ import {
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { FileViewerWrapper } from '@/views/viewers';
 import { SliderState, PipIcon } from 'megashark-lib';
+import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -88,6 +89,7 @@ const muted = ref(false);
 const fluxProgress = ref<SliderState>({ progress: 0, paused: true });
 const volume = ref<number>(1);
 const error = ref('');
+const mimeType = ref<undefined | string>(undefined);
 
 const cancelFluxProgressWatch = watch(
   () => fluxProgress.value,
@@ -143,7 +145,8 @@ const dropdownItems = ref<FileControlsDropdownItemContent[]>([
 ]);
 
 onMounted(async () => {
-  src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
+  mimeType.value = await getMimeTypeFromBuffer(props.contentInfo.data);
+  src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: mimeType.value }));
 });
 
 onUnmounted(() => {

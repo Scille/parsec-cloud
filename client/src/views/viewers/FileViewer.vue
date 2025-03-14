@@ -172,7 +172,7 @@ async function _getFileInfoAt(
     const info: FileContentInfo = {
       data: new Uint8Array((statsResult.value as WorkspaceHistoryEntryStatFile).size),
       extension: fileInfo.extension,
-      mimeType: fileInfo.mimeType,
+      contentType: fileInfo.type,
       fileName: fileName,
       path: path,
     };
@@ -223,7 +223,7 @@ async function _getFileInfo(
   const info: FileContentInfo = {
     data: new Uint8Array((statsResult.value as EntryStatFile).size),
     extension: fileInfo.extension,
-    mimeType: fileInfo.mimeType,
+    contentType: fileInfo.type,
     fileName: fileName,
     path: path,
   };
@@ -308,7 +308,7 @@ async function loadFile(): Promise<void> {
 
   const component = await getComponent(fileInfo);
   if (!component) {
-    window.electronAPI.log('error', `No component for file of type ${fileInfo.mimeType}`);
+    window.electronAPI.log('error', `No component for file with extension '${fileInfo.extension}'`);
     informationManager.present(
       new Information({
         message: 'fileViewers.genericError',

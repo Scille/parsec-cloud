@@ -1,11 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { FileContentType } from '@/common/fileTypes';
 import { EntryName, FsPath } from '@/parsec';
 
 export interface FileContentInfo {
   data: Uint8Array;
   extension: string;
-  mimeType: string;
+  contentType: FileContentType;
   fileName: EntryName;
   path: FsPath;
 }

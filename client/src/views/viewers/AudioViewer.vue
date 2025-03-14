@@ -61,6 +61,7 @@ import {
   FileViewerBackground,
 } from '@/components/viewers';
 import { SliderState } from 'megashark-lib';
+import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -126,7 +127,8 @@ const dropdownItems = ref<FileControlsDropdownItemContent[]>([
 
 onMounted(async () => {
   loading.value = true;
-  src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
+  const mimeType = await getMimeTypeFromBuffer(props.contentInfo.data);
+  src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: mimeType }));
 });
 
 onUnmounted(() => {
