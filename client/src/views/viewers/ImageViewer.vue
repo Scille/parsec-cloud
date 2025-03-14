@@ -46,6 +46,7 @@ import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 import { MsDraggable } from 'megashark-lib';
 import { scan } from 'ionicons/icons';
+import { getMimeTypeFromBuffer } from '@/common/fileTypes';
 
 const props = defineProps<{
   contentInfo: FileContentInfo;
@@ -102,7 +103,8 @@ function updateDraggingRestrictions(resetPosition = false): void {
 }
 
 onMounted(async () => {
-  src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: props.contentInfo.mimeType }));
+  const mimeType = await getMimeTypeFromBuffer(props.contentInfo.data);
+  src.value = URL.createObjectURL(new Blob([props.contentInfo.data], { type: mimeType }));
   zoomLevel.value = zoomControl.value.getZoom() / 100;
   window.addEventListener('resize', () => updateDraggingRestrictions(true));
 });
