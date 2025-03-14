@@ -144,7 +144,6 @@ async function mockRecentDocuments(): Promise<void> {
       contentType: {
         type: FileContentType.Image,
         extension: 'png',
-        mimeType: 'image/png',
       },
     });
     recentDocumentManager.addFile({
@@ -155,7 +154,6 @@ async function mockRecentDocuments(): Promise<void> {
       contentType: {
         type: FileContentType.PdfDocument,
         extension: 'pdf',
-        mimeType: 'application/pdf',
       },
     });
     recentDocumentManager.addWorkspace({

@@ -138,7 +138,7 @@ async function openPath(
   }
 
   const modal = await openSpinnerModal('fileViewers.openingFile');
-  const contentType = await detectFileContentType(workspaceHandle, entry.path, options.atTime);
+  const contentType = await detectFileContentType(entry.name);
 
   try {
     if (!contentType || contentType.type === FileContentType.Unknown || (isDesktop() && !ENABLED_FILE_VIEWERS.includes(contentType.type))) {

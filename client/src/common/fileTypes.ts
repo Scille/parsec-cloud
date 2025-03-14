@@ -1,8 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { closeFile, FileDescriptor, FsPath, getWorkspaceInfo, openFile, Path, readFile, WorkspaceHandle, WorkspaceHistory } from '@/parsec';
+import { EntryName, Path } from '@/parsec';
 import { fileTypeFromBuffer } from 'file-type';
-import { DateTime } from 'luxon';
 
 enum FileContentType {
   Image = 'image',
@@ -18,38 +17,30 @@ enum FileContentType {
 interface DetectedFileType {
   type: FileContentType;
   extension: string;
-  mimeType: string;
 }
 
-const IMAGES = ['image/png', 'image/webp', 'image/jpeg', 'image/svg+xml', 'image/bmp', 'image/gif'];
-const SPREADSHEETS = [
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.oasis.opendocument.spreadsheet',
-];
-const DOCUMENTS = ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-const PDF_DOCUMENTS = ['application/pdf'];
-const AUDIOS = ['audio/x-wav', 'audio/mpeg'];
-const VIDEOS = ['video/mp4', 'video/mpeg', 'video/webm'];
-
-// For custom mimetypes
-const SPECIAL_TEXTS = new Map<string, string>([
-  ['xml', 'application/xml'],
-  ['json', 'application/json'],
-  ['js', 'text/javascript'],
-  ['html', 'text/html'],
-  ['htm', 'text/html'],
-  ['xhtml', 'text/html'],
-  ['sh', 'application/x-sh'],
-  ['csv', 'text/csv'],
-  ['css', 'text/css'],
-  ['py', 'text/x-python'],
-  ['php', 'application/x-httpd-php'],
-  ['sh', 'application/x-sh'],
-  ['tex', 'application/x-latex'],
-]);
+const IMAGES = ['png', 'webp', 'jpg', 'jpeg', 'svg', 'bmp', 'gif'];
+const SPREADSHEETS = ['xlsx', 'xls'];
+const DOCUMENTS = ['docx'];
+const PDF_DOCUMENTS = ['pdf'];
+const AUDIOS = ['wav', 'mp3', 'ogg'];
+const VIDEOS = ['mp4', 'mpeg', 'webm'];
 
 // For generic text/plain
 const TEXTS = [
+  'xml',
+  'json',
+  'js',
+  'html',
+  'htm',
+  'xhtml',
+  'sh',
+  'csv',
+  'css',
+  'py',
+  'php',
+  'sh',
+  'tex',
   'txt',
   'h',
   'hpp',
@@ -76,109 +67,44 @@ const TEXTS = [
   'yaml',
 ];
 
-async function detectFileContentTypeFromBuffer(buffer: Uint8Array, fileExt?: string): Promise<DetectedFileType> {
-  const result = await fileTypeFromBuffer(buffer);
-
-  if (!result) {
-    return { type: FileContentType.Unknown, extension: fileExt ?? '', mimeType: 'application/octet-stream' };
-  }
-
-  if (IMAGES.includes(result.mime)) {
-    return { type: FileContentType.Image, extension: fileExt ?? result.ext, mimeType: result.mime };
-  }
-  if (
-    SPREADSHEETS.includes(result.mime) ||
-    (result.mime === 'application/zip' && fileExt === 'xlsx') ||
-    (result.mime === 'application/x-cfb' && fileExt === 'xls')
-  ) {
-    return { type: FileContentType.Spreadsheet, extension: fileExt ?? result.ext, mimeType: result.mime };
-  }
-  if (DOCUMENTS.includes(result.mime) || (result.mime === 'application/zip' && fileExt === 'docx')) {
-    return { type: FileContentType.Document, extension: fileExt ?? result.ext, mimeType: result.mime };
-  }
-  if (PDF_DOCUMENTS.includes(result.mime)) {
-    return { type: FileContentType.PdfDocument, extension: fileExt ?? result.ext, mimeType: result.mime };
-  }
-  if (AUDIOS.includes(result.mime)) {
-    return { type: FileContentType.Audio, extension: fileExt ?? result.ext, mimeType: result.mime };
-  }
-  if (VIDEOS.includes(result.mime)) {
-    return { type: FileContentType.Video, extension: fileExt ?? result.ext, mimeType: result.mime };
-  }
-  console.log(`Unhandled mimetype ${result.mime}`);
-
-  return { type: FileContentType.Unknown, extension: fileExt ?? result.ext, mimeType: result.mime };
-}
-
-const READ_CHUNK_SIZE = 512;
-
-async function _getFileAtBuffer(workspaceHandle: WorkspaceHandle, path: FsPath, at: DateTime): Promise<Uint8Array | undefined> {
-  let fd: FileDescriptor | null = null;
-  const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
-  if (!workspaceInfoResult.ok) {
+async function getMimeTypeFromBuffer(data: Uint8Array): Promise<string | undefined> {
+  try {
+    const result = await fileTypeFromBuffer(data);
+    if (result) {
+      return result.mime;
+    }
+    return undefined;
+  } catch (err: any) {
+    console.log('Cannot detect mimetype');
     return undefined;
   }
-  const history = new WorkspaceHistory(workspaceInfoResult.value.id);
-  try {
-    await history.start();
-    await history.setCurrentTime(at);
-    const openResult = await history.openFile(path);
-    if (!openResult.ok) {
-      return;
-    }
-    fd = openResult.value;
-    const readResult = await history.readFile(fd, 0, READ_CHUNK_SIZE);
-    if (!readResult.ok) {
-      return;
-    }
-    return new Uint8Array(readResult.value);
-  } finally {
-    if (fd) {
-      await history.closeFile(fd);
-    }
-    await history.stop();
-  }
 }
 
-async function _getFileBuffer(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Uint8Array | undefined> {
-  let fd: FileDescriptor | null = null;
-  try {
-    const openResult = await openFile(workspaceHandle, path, { read: true });
-    if (!openResult.ok) {
-      return;
-    }
-    fd = openResult.value;
-    const readResult = await readFile(workspaceHandle, fd, 0, READ_CHUNK_SIZE);
-    if (!readResult.ok) {
-      return;
-    }
-    return new Uint8Array(readResult.value);
-  } finally {
-    if (fd) {
-      await closeFile(workspaceHandle, fd);
-    }
+async function detectFileContentType(name: EntryName): Promise<DetectedFileType | undefined> {
+  const ext = Path.getFileExtension(name);
+
+  if (IMAGES.includes(ext)) {
+    return { type: FileContentType.Image, extension: ext };
   }
-}
-
-async function detectFileContentType(workspaceHandle: WorkspaceHandle, path: FsPath, at?: DateTime): Promise<DetectedFileType | undefined> {
-  const fileName = await Path.filename(path);
-
-  if (!fileName) {
-    return;
+  if (DOCUMENTS.includes(ext)) {
+    return { type: FileContentType.Document, extension: ext };
   }
-  const ext = Path.getFileExtension(fileName).toLocaleLowerCase();
-
-  if (SPECIAL_TEXTS.has(ext)) {
-    return { type: FileContentType.Text, extension: ext, mimeType: SPECIAL_TEXTS.get(ext) as string };
+  if (PDF_DOCUMENTS.includes(ext)) {
+    return { type: FileContentType.PdfDocument, extension: ext };
+  }
+  if (SPREADSHEETS.includes(ext)) {
+    return { type: FileContentType.Spreadsheet, extension: ext };
+  }
+  if (AUDIOS.includes(ext)) {
+    return { type: FileContentType.Audio, extension: ext };
+  }
+  if (VIDEOS.includes(ext)) {
+    return { type: FileContentType.Video, extension: ext };
   }
   if (TEXTS.includes(ext)) {
-    return { type: FileContentType.Text, extension: ext, mimeType: 'text/plain' };
+    return { type: FileContentType.Text, extension: ext };
   }
-
-  const buffer = at ? await _getFileAtBuffer(workspaceHandle, path, at) : await _getFileBuffer(workspaceHandle, path);
-  if (buffer) {
-    return await detectFileContentTypeFromBuffer(buffer, ext);
-  }
+  return { type: FileContentType.Unknown, extension: ext };
 }
 
-export { DetectedFileType, detectFileContentType, detectFileContentTypeFromBuffer, FileContentType };
+export { DetectedFileType, FileContentType, detectFileContentType, getMimeTypeFromBuffer };
