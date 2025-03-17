@@ -127,7 +127,7 @@ sequenceDiagram
   Alice ->> Alice: Create a symmetric key `ACCOUNT_MANIFEST_SYM_KEY`
   Alice ->> Alice: Encrypt the bundle `ACCOUNT_MANIFEST` with `ACCOUNT_MANIFEST_SYM_KEY` (`enc(ACCOUNT_MANIFEST)`)
   Alice ->> Alice: Encrypt `ACCOUNT_MANIFEST_SYM_KEY` with `AUTH_MEDIUM_PUB_KEY` (`enc(ACCOUNT_MANIFEST_SYM_KEY)`)
-  Alice ->> S: Send the require data to finish the account creation<br>(`enc(AUTH_MEDIUM_PRIV_KEY)`, `AUTH_MEDIUM_SYM_KEY_PARAMS`, `enc(ACCOUNT_MANIFEST)`,<br>`enc(ACCOUNT_MANIFEST_SYM_KEY)`, `AUTH_MEDIUM_HMAC_KEY`, email validation token)
+  Alice ->> S: Send the require data to finish the account creation<br>(`firstname` & `lastname`, `enc(AUTH_MEDIUM_PRIV_KEY)`, `AUTH_MEDIUM_SYM_KEY_PARAMS`, `enc(ACCOUNT_MANIFEST)`,<br>`enc(ACCOUNT_MANIFEST_SYM_KEY)`, `AUTH_MEDIUM_HMAC_KEY`, email validation token)
 ```
 
 At the end of the process, the server should save the following information:
