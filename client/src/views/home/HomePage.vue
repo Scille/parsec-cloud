@@ -14,8 +14,6 @@
           <!-- topbar -->
           <home-page-header
             class="homepage-header"
-            @settings-click="openSettingsModal"
-            @about-click="openAboutModal"
             @back-click="backToPreviousPage"
             @customer-area-click="goToCustomerAreaLogin"
             @create-or-join-organization-click="openCreateOrJoin"
@@ -99,7 +97,6 @@ import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } fr
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
-import AboutModal from '@/views/about/AboutModal.vue';
 import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.vue';
 import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
@@ -108,7 +105,6 @@ import HomePageSidebar from '@/views/home/HomePageSidebar.vue';
 import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
-import { openSettingsModal } from '@/views/settings';
 import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import {
@@ -123,12 +119,14 @@ import {
   useWindowSize,
 } from 'megashark-lib';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
-import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
 import { getServerTypeFromAddress, ServerType } from '@/services/parsecServers';
 import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import { SmallDisplayCreateJoinModal } from '@/components/small-display';
 import { useSmallDisplayWarning } from '@/services/smallDisplayWarning';
+import { openSettingsModal } from '@/views/settings';
+import AboutModal from '@/views/about/AboutModal.vue';
+import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
 
 enum HomePageState {
   OrganizationList = 'organization-list',
@@ -625,8 +623,8 @@ async function backToPreviousPage(): Promise<void> {
     state.value = HomePageState.Login;
   } else if (
     state.value === HomePageState.Login ||
-    state.value === HomePageState.CustomerArea ||
-    state.value === HomePageState.ForgottenPassword
+    state.value === HomePageState.ForgottenPassword ||
+    state.value === HomePageState.CustomerArea
   ) {
     state.value = HomePageState.OrganizationList;
     selectedDevice.value = undefined;

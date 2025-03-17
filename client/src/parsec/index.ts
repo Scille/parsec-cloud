@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+export * from '@/parsec/account';
 export * from '@/parsec/claim_device';
 export * from '@/parsec/claim_user';
 export * from '@/parsec/device';
