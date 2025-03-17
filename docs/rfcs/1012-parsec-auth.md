@@ -132,6 +132,8 @@ At the end of the process, the server should save the following information:
 - An entry for the user account:
 
   - A UUID (`account_id`)
+  - User firstname
+  - User lastname
 
   - The email of the user
 
