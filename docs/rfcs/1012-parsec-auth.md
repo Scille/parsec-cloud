@@ -63,9 +63,12 @@ sequenceDiagram
 
 Creating the account for a user will require some information for the system to work:
 
-- An identifier for the user (email)
+- Some information about the user:
 
-  The service needs to verify that the user has access to the email (using a code or sending a link to continue the process).
+  - Its firstname and lastname (Those values could be used to prefill the field during device creation)
+  - An identifier for the user (email)
+
+    The service needs to verify that the user has access to the email (using a code or sending a link to continue the process).
 
 - A HMAC shared key to authenticate the user (`AUTH_MEDIUM_HMAC_KEY`)
 
