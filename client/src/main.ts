@@ -32,6 +32,7 @@ import {
   ClientEventInvitationChanged,
   ClientEventTag,
   ConnectionHandle,
+  ParsecAccount,
   Platform,
   detectBrowser,
   getOrganizationHandle,
@@ -199,6 +200,10 @@ async function setupApp(): Promise<void> {
     stripeConfig: stripeConfig,
   });
   await megasharkPlugin.init();
+
+  if (!Env.isAccountEnabled() || config.skipAccount || ('TESTING' in window && window.TESTING)) {
+    ParsecAccount.markSkipped();
+  }
 
   const app = createApp(App)
     .use(IonicVue, {

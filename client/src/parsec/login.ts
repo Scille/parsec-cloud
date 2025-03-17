@@ -4,7 +4,6 @@ import { DeviceAccessStrategyKeyring, DeviceSaveStrategyKeyring, DeviceSaveStrat
 
 import { getClientConfig } from '@/parsec/internals';
 import { parseParsecAddr } from '@/parsec/organization';
-import { getParsecHandle } from '@/parsec/routing';
 import {
   AvailableDevice,
   ClientInfo,
@@ -165,7 +164,7 @@ export async function login(
 
 export async function logout(handle?: ConnectionHandle | undefined | null): Promise<Result<null, ClientStopError>> {
   if (!handle) {
-    handle = getParsecHandle();
+    handle = getConnectionHandle();
   }
 
   if (handle !== null) {

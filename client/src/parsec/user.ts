@@ -2,7 +2,6 @@
 
 import { libparsec } from '@/plugins/libparsec';
 
-import { getParsecHandle } from '@/parsec/routing';
 import {
   ClientListUsersError,
   ClientRevokeUserError,
@@ -13,6 +12,7 @@ import {
   UserProfile,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
+import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
 function filterUserList(list: Array<UserInfo>, pattern: string): Array<UserInfo> {
@@ -23,7 +23,7 @@ function filterUserList(list: Array<UserInfo>, pattern: string): Array<UserInfo>
 }
 
 export async function listUsers(skipRevoked = true, pattern = ''): Promise<Result<Array<UserInfo>, ClientListUsersError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     const result = await libparsec.clientListUsers(handle, skipRevoked);
@@ -52,7 +52,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
 }
 
 export async function revokeUser(userId: UserID): Promise<Result<null, ClientRevokeUserError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     return await libparsec.clientRevokeUser(handle, userId);
@@ -90,7 +90,7 @@ export async function getUserInfo(userId: UserID): Promise<Result<UserInfo, User
 }
 
 export async function updateProfile(userId: UserID, profile: UserProfile): Promise<Result<null, ClientUserUpdateProfileError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     return await libparsec.clientUpdateUserProfile(handle, userId, profile);

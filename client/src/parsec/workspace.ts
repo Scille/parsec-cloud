@@ -2,7 +2,6 @@
 
 import { DataCache } from '@/common/cache';
 import { getClientInfo } from '@/parsec/login';
-import { getParsecHandle } from '@/parsec/routing';
 import {
   ClientCreateWorkspaceError,
   ClientListWorkspaceUsersError,
@@ -34,6 +33,7 @@ import {
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import { WorkspaceStopError, libparsec } from '@/plugins/libparsec';
+import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
 export async function initializeWorkspace(
@@ -70,7 +70,7 @@ export async function listWorkspaces(
   handle: ConnectionHandle | null = null,
 ): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
   if (!handle) {
-    handle = getParsecHandle();
+    handle = getConnectionHandle();
   }
 
   if (handle !== null) {
@@ -141,7 +141,7 @@ export async function getWorkspaceName(workspaceHandle: WorkspaceHandle): Promis
 }
 
 export async function createWorkspace(name: WorkspaceName): Promise<Result<WorkspaceID, ClientCreateWorkspaceError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     return await libparsec.clientCreateWorkspace(handle, name);
@@ -150,7 +150,7 @@ export async function createWorkspace(name: WorkspaceName): Promise<Result<Works
 }
 
 export async function renameWorkspace(newName: WorkspaceName, id: WorkspaceID): Promise<Result<null, ClientRenameWorkspaceError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     return await libparsec.clientRenameWorkspace(handle, id, newName);
@@ -163,7 +163,7 @@ export async function getWorkspaceSharing(
   includeAllUsers = false,
   includeSelf = false,
 ): Promise<Result<Array<[UserTuple, WorkspaceRole | null]>, ClientListWorkspaceUsersError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     let selfId: UserID | null = null;
@@ -220,7 +220,7 @@ export async function shareWorkspace(
   userId: UserID,
   role: WorkspaceRole | null,
 ): Promise<Result<null, ClientShareWorkspaceError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     return await libparsec.clientShareWorkspace(handle, workspaceId, userId, role);
@@ -233,7 +233,7 @@ export async function startWorkspace(
   connectionHandle: ConnectionHandle | null = null,
 ): Promise<Result<WorkspaceHandle, ClientStartWorkspaceError>> {
   if (!connectionHandle) {
-    connectionHandle = getParsecHandle();
+    connectionHandle = getConnectionHandle();
   }
 
   if (connectionHandle !== null) {
@@ -243,7 +243,7 @@ export async function startWorkspace(
 }
 
 export async function stopWorkspace(workspaceHandle: WorkspaceHandle): Promise<Result<null, WorkspaceStopError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     return await libparsec.workspaceStop(workspaceHandle);

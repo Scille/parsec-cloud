@@ -7,7 +7,7 @@ async function checkModal(modal: Locator): Promise<void> {
   await expect(modal.locator('.ms-modal-header__title')).toHaveText('Settings');
   const content = modal.locator('.settings-list-container');
   const options = content.locator('.settings-option');
-  await expect(options).toHaveCount(4);
+  await expect(options).toHaveCount(3);
   const lang = options.nth(0);
   await expect(lang.locator('.settings-option__content').locator('.title')).toHaveText('Language');
   await expect(lang.locator('.settings-option__content').locator('.description')).toHaveText('Choose application language');

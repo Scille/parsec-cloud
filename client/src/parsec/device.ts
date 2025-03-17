@@ -2,7 +2,6 @@
 
 import { getClientConfig } from '@/parsec/internals';
 import { getClientInfo } from '@/parsec/login';
-import { getParsecHandle } from '@/parsec/routing';
 import {
   ArchiveDeviceError,
   AvailableDevice,
@@ -21,6 +20,7 @@ import {
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import { libparsec } from '@/plugins/libparsec';
+import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
 const RECOVERY_DEVICE_PREFIX = 'recovery';
@@ -30,7 +30,7 @@ function generateRecoveryDeviceLabel(): string {
 }
 
 export async function exportRecoveryDevice(): Promise<Result<[string, Uint8Array], ClientExportRecoveryDeviceError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     return await libparsec.clientExportRecoveryDevice(handle, generateRecoveryDeviceLabel());
@@ -53,7 +53,7 @@ export async function importRecoveryDevice(
 }
 
 export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, ClientListUserDevicesError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     const clientResult = await getClientInfo();
@@ -80,7 +80,7 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
 }
 
 export async function listUserDevices(user: UserID): Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     const result = await libparsec.clientListUserDevices(handle, user);
@@ -100,7 +100,7 @@ export async function archiveDevice(device: AvailableDevice): Promise<Result<nul
 }
 
 export async function createDeviceInvitation(sendEmail: boolean): Promise<Result<NewInvitationInfo, ClientNewDeviceInvitationError>> {
-  const clientHandle = getParsecHandle();
+  const clientHandle = getConnectionHandle();
 
   if (clientHandle !== null) {
     const result = await libparsec.clientNewDeviceInvitation(clientHandle, sendEmail);

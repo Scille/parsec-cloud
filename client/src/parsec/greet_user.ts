@@ -15,9 +15,9 @@ import {
   UserGreetInitialInfo,
   UserProfile,
 } from '@/parsec';
-import { getParsecHandle } from '@/parsec/routing';
 import { generateNoHandleError } from '@/parsec/utils';
 import { SASCode, libparsec } from '@/plugins/libparsec';
+import { getConnectionHandle } from '@/router';
 
 export class UserGreet {
   handle: ConnectionHandle | null;
@@ -66,7 +66,7 @@ export class UserGreet {
   }
 
   async startGreet(token: InvitationToken): Promise<Result<UserGreetInitialInfo, ClientStartInvitationGreetError>> {
-    const clientHandle = getParsecHandle();
+    const clientHandle = getConnectionHandle();
 
     if (clientHandle !== null) {
       const result = await libparsec.clientStartUserInvitationGreet(clientHandle, token);

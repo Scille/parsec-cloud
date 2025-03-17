@@ -136,7 +136,7 @@ msTest('Check settings section', async ({ myProfilePage }) => {
   await checkMenuItem(myProfilePage, 0, 'Settings', 'Settings');
   const settings = myProfilePage.locator('.settings-list-container');
   const options = settings.locator('.settings-option');
-  await expect(options).toHaveCount(4);
+  await expect(options).toHaveCount(3);
   const lang = options.nth(0);
   await expect(lang.locator('.settings-option__content').locator('.title')).toHaveText('Language');
   await expect(lang.locator('.settings-option__content').locator('.description')).toHaveText('Choose application language');

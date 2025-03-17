@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Path } from '@/parsec/path';
-import { getParsecHandle } from '@/parsec/routing';
 import {
   FileDescriptor,
   FsPath,
@@ -30,6 +29,7 @@ import {
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import { libparsec } from '@/plugins/libparsec';
+import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
 export class WorkspaceHistory {
@@ -74,7 +74,7 @@ export class WorkspaceHistory {
     if (this.handle !== undefined) {
       return { ok: true, value: this.handle };
     }
-    const connectionHandle = getParsecHandle();
+    const connectionHandle = getConnectionHandle();
     if (!connectionHandle) {
       return generateNoHandleError<WorkspaceHistory2StartError>();
     }

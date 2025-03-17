@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { getClientInfo } from '@/parsec/login';
-import { getParsecHandle } from '@/parsec/routing';
 import {
   ClientCancelInvitationError,
   ClientInfo,
@@ -18,10 +17,11 @@ import {
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import { libparsec } from '@/plugins/libparsec';
+import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
 export async function inviteUser(email: string): Promise<Result<NewInvitationInfo, ClientNewUserInvitationError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     return await libparsec.clientNewUserInvitation(handle, email, true);
@@ -58,7 +58,7 @@ export async function listUserInvitations(options?: {
     return true;
   }
 
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
   const infoResult = await getClientInfo();
 
   if (handle !== null) {
@@ -83,7 +83,7 @@ export async function listUserInvitations(options?: {
 }
 
 export async function cancelInvitation(token: InvitationToken): Promise<Result<null, ClientCancelInvitationError>> {
-  const handle = getParsecHandle();
+  const handle = getConnectionHandle();
 
   if (handle !== null) {
     return await libparsec.clientCancelInvitation(handle, token);

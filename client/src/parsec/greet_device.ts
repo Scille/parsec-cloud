@@ -15,9 +15,9 @@ import {
   Result,
   createDeviceInvitation,
 } from '@/parsec';
-import { getParsecHandle } from '@/parsec/routing';
 import { generateNoHandleError } from '@/parsec/utils';
 import { InvitationToken, ParsecInvitationAddr, SASCode, libparsec } from '@/plugins/libparsec';
+import { getConnectionHandle } from '@/router';
 
 export class DeviceGreet {
   handle: ConnectionHandle | null;
@@ -88,7 +88,7 @@ export class DeviceGreet {
   }
 
   async sendEmail(): Promise<boolean> {
-    const clientHandle = getParsecHandle();
+    const clientHandle = getConnectionHandle();
 
     if (clientHandle !== null) {
       const result = await libparsec.clientNewDeviceInvitation(clientHandle, true);
@@ -99,7 +99,7 @@ export class DeviceGreet {
 
   async startGreet(): Promise<Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError>> {
     this._assertState(true, true);
-    const clientHandle = getParsecHandle();
+    const clientHandle = getConnectionHandle();
 
     if (clientHandle !== null) {
       const result = await libparsec.clientStartDeviceInvitationGreet(clientHandle, this.token);

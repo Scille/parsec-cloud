@@ -428,6 +428,10 @@
                 "light": "Light",
                 "system": "System"
             }
+        },
+        "skipAccount": {
+            "label": "Skip Parsec Account login",
+            "description": "Will not prompt you to login to Parsec Account at the start of the application"
         }
     },
     "WorkspacesPage": {
@@ -1954,6 +1958,22 @@
                 "extend": "Extend contract"
             }
         }
+    },
+    "loginPage": {
+        "title": "Login to your Parsec account",
+        "server": "Server address",
+        "email": "Email address",
+        "forgotPassword": "Forgot password?",
+        "noAccount": "No Parsec account?",
+        "createAccount": "Create an account",
+        "password": "Password",
+        "login": "Log in",
+        "clientArea": {
+            "title": "Client area",
+            "button": "Access"
+        },
+        "logOut": "Log out",
+        "skip": "Skip this step"
     },
     "workspaceHistory": {
         "actions": {
