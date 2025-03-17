@@ -4,6 +4,10 @@ import { EnvironmentType, I18n } from 'megashark-lib';
 
 export const APP_VERSION = __APP_VERSION__;
 
+/*
+ STRIPE
+*/
+
 const STRIPE_ENV_VARIABLE = 'PARSEC_APP_STRIPE_API_KEY';
 // cspell:disable-next-line
 const DEFAULT_STRIPE_API_KEY = 'pk_test_P4dfuyoLBQtDHKjTiNDH3JH700TT3mCLbE';
@@ -25,11 +29,19 @@ function isStripeDisabled(): boolean {
   return import.meta.env[STRIPE_DISABLE_ENV_VARIABLE] === 'true';
 }
 
+/*
+ SENTRY
+*/
+
 const SENTRY_DISABLE_ENV_VARIABLE = 'PARSEC_APP_DISABLE_SENTRY';
 
 function isSentryDisabled(): boolean {
   return import.meta.env[SENTRY_DISABLE_ENV_VARIABLE] === 'true';
 }
+
+/*
+ BMS
+*/
 
 const BMS_ENV_VARIABLE = 'PARSEC_APP_BMS_API_URL';
 const DEFAULT_BMS_URL = 'https://bms-dev.parsec.cloud';
@@ -41,6 +53,10 @@ function getBmsUrl(): string {
   return DEFAULT_BMS_URL;
 }
 
+/*
+ PARSEC SIGN
+*/
+
 const SIGN_ENV_VARIABLE = 'PARSEC_APP_SIGN_URL';
 const DEFAULT_SIGN_URL = 'https://sign-dev.parsec.cloud';
 
@@ -50,6 +66,10 @@ function getSignUrl(): string {
   }
   return DEFAULT_SIGN_URL;
 }
+
+/*
+ DEFAULT SERVERS
+*/
 
 const SAAS_SERVERS_ENV_VARIABLE = 'PARSEC_APP_SAAS_SERVERS';
 const TRIAL_SERVERS_ENV_VARIABLE = 'PARSEC_APP_TRIAL_SERVERS';
@@ -70,6 +90,29 @@ function getTrialServers(): Array<string> {
   }
   return DEFAULT_TRIAL_SERVERS;
 }
+
+/*
+ Parsec Auth
+*/
+
+const AUTH_DEFAULT_SERVER = 'saas-v3.parsec.cloud';
+const AUTH_SERVER_ENV_VARIABLE = 'PARSEC_APP_AUTH_SERVER';
+const MOCK_AUTH_ENV_VARIABLE = 'PARSEC_APP_MOCK_AUTH';
+
+function getAuthServer(): string {
+  if (import.meta.env[AUTH_SERVER_ENV_VARIABLE]) {
+    return import.meta.env[AUTH_SERVER_ENV_VARIABLE];
+  }
+  return AUTH_DEFAULT_SERVER;
+}
+
+function isAuthMocked(): boolean {
+  return import.meta.env[MOCK_AUTH_ENV_VARIABLE] === 'true';
+}
+
+/*
+ Links
+*/
 
 const CLEAN_APP_VERSION = `${APP_VERSION.slice(0, APP_VERSION.indexOf('+') === -1 ? undefined : APP_VERSION.indexOf('+'))}`;
 const APP_VERSION_PREFIX = `v${CLEAN_APP_VERSION}`;
@@ -120,6 +163,8 @@ export const Env = {
   getTrialServers,
   isStripeDisabled,
   isSentryDisabled,
+  getAuthServer,
+  isAuthMocked,
   Links: {
     openDocumentationLink,
     openContactLink,
