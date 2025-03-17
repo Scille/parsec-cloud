@@ -75,25 +75,23 @@ Creating the account for a user will require some information for the system to 
   When using a password, it's not used as is, but it's derived to create a HMAC key using the function `PBKDF_A` (this operation is done on the client side to not leak the master password).
   The new secret will be provided as is to the server (like a password).
 
-  For the FIDO2 case the included challenge is used as is since the private key is not shared with the server.
+  When using FIDO2, the included challenge is used as is for the HMAC key since the private key is not shared with the server.
 
 - An asymmetric key pair (`AUTH_MEDIUM_PUB_KEY`, `AUTH_MEDIUM_PRIV_KEY`)
 
-  They're generated using a cryptographic secure pseudo-random number generator (CSPRNG).
+  When using a password, the asymmetric key pair is generated using a cryptographic secure pseudo-random number generator (CSPRNG).
 
-  > This step is not needed when using a fido2 device since it provides the asymmetric keys securely.
+  When using FIDO2, it already provides the asymmetric keys securely so they are used as is.
 
-- A symmetric key used to encrypt `AUTH_MEDIUM_PRIV_KEY` (`AUTH_MEDIUM_SYM_KEY`) alongside its parameters used to generate it `AUTH_MEDIUM_SYM_KEY_PARAMS`.
+- A symmetric key (`AUTH_MEDIUM_SYM_KEY`) used to encrypt `AUTH_MEDIUM_PRIV_KEY` alongside the parameters used to generate it `AUTH_MEDIUM_SYM_KEY_PARAMS`.
 
   When using a password, it's generated from the function `PBKDF_B`
 
-  For FIDO2, we can bypass that step since we do not share `AUTH_MEDIUM_PRIV_KEY` since it's stored on the device.
+ For FIDO2, the symmetric key is not needed because `AUTH_MEDIUM_PRIV_KEY` is not shared since it's stored on the device.
 
-- A randomly generated symmetric key `ACCOUNT_MANIFEST_SYM_KEY`, it will be used to encrypt the account manifest.
+- A randomly generated symmetric key `ACCOUNT_MANIFEST_SYM_KEY` used to encrypt the account manifest.
 
-- Generate the account manifest `ACCOUNT_MANIFEST`,
-
-  the manifest will store:
+- Generate the account manifest `ACCOUNT_MANIFEST` to store:
 
   - The list of authentication public keys
   - The list of keys used to encrypt the devices (the list is empty at the beginning)
@@ -111,7 +109,7 @@ sequenceDiagram
   participant S as Authentification server
 
   Alice ->> S: Provide its email for the account creation
-  S ->> Alice: Send an email with a unique code need to continue the process
+  S ->> Alice: Send an email with a unique code needed to continue the process
   alt Choose between password or fido2
     Alice ->> Alice: Choose a password
     Alice ->> Alice: Derive `AUTH_MEDIUM_HMAC_KEY` using the password and `PBKDF_A`
@@ -165,10 +163,10 @@ We use a HMAC to authenticate each request to the server with the secret `AUTH_M
 
 ### Obtain the account manifest from the server
 
-The server store the encrypted account manifest that contain the important information about the user.
-For the user to obtain the account manifest from the server it will do:
+The server stores the encrypted account manifest that contain the important information about the user.
+For the user to obtain the account manifest from the server they will do the following:
 
-1. Be authenticated with the server.
+1. Authenticate with the server.
 2. Retrieve the following encrypted data from the sever:
 
    1. Account manifest (`enc(ACCOUNT_MANIFEST)`)
@@ -237,7 +235,7 @@ sequenceDiagram
 
 Once authenticated, the user can list the devices associated to their account.
 
-The list contains the information about the device like:
+The list contains the information about each device like:
 
 - `organization_id`
 - `device_id`
@@ -325,12 +323,12 @@ sequenceDiagram
 ```
 
 > [!IMPORTANT]
-> We only delete the account in parsec-auth, no data are deleted in the metadata server.
+> Only account data stored in the authentication server is deleted (see [Account creation](<#Account creation>)), no data is deleted in the metadata server.
 
 ### Integration with the Parsec server
 
-The parsec client would use the authentication service to store a special device (let's call it remote device), which will only be used to create a new local device.
-The new local device would be stored on the local storage. If the storage happens to be cleaned, a new device could still be created from the remote device.
+The parsec client would use the authentication service to store a special device (let's call it remote device), which will only be used to create new local devices.
+The new local device would be stored on the local storage. If the storage happens to be cleaned, a new local device could still be created from the remote device.
 
 We could have directly used the remote device to communicate with the metadata server,
 but this approach (similar to the one used to create devices from a recovery device)
@@ -399,7 +397,8 @@ N/A
 
 ## Operations
 
-That require managing a new service that will store the devices of the user.
+- The authentication service storing users devices will need to be managed and probably be deployed separately from the Parsec metadata service
+- RGPD will need to be considered for the data stored by the service. CGVU will need to be adapted in order to mention the service and how to obtain and delete the data stored. 
 
 ## Security/Privacy/Compliance
 
