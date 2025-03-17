@@ -65,7 +65,7 @@ Creating the account for a user will require some information for the system to 
 
 - Some information about the user:
 
-  - Its firstname and lastname (Those values could be used to prefill the field during device creation)
+  - Its firstname and lastname (Those values could be used to prefill the human handle during device creation)
   - An identifier for the user (email)
 
     The service needs to verify that the user has access to the email (using a code or sending a link to continue the process).
