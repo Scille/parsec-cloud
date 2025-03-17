@@ -153,14 +153,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.37.9"
-description = "Type annotations for boto3 1.37.9 generated with mypy-boto3-builder 8.10.0"
+version = "1.37.13"
+description = "Type annotations for boto3 1.37.13 generated with mypy-boto3-builder 8.10.0"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "boto3_stubs-1.37.9-py3-none-any.whl", hash = "sha256:72eb2c4043b8aed8955de42aec09bc0daeffd77516cfdf79da25890c027f4ebb"},
-    {file = "boto3_stubs-1.37.9.tar.gz", hash = "sha256:988c329a48a1be33ff210e204108aeb6b25f206dd5356604d1706d7868a2ead0"},
+    {file = "boto3_stubs-1.37.13-py3-none-any.whl", hash = "sha256:0592889648dc7f75441598deac0c93ffa1d6d693ac10a59c26c0686b6953823f"},
+    {file = "boto3_stubs-1.37.13.tar.gz", hash = "sha256:bd9231adb0578acfc62c8216f63e23a9d409cd2a54b65f31268e09470fbbf053"},
 ]
 
 [package.dependencies]
@@ -215,7 +215,7 @@ bedrock-data-automation-runtime = ["mypy-boto3-bedrock-data-automation-runtime (
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.37.0,<1.38.0)"]
 billing = ["mypy-boto3-billing (>=1.37.0,<1.38.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.37.0,<1.38.0)"]
-boto3 = ["boto3 (==1.37.9)"]
+boto3 = ["boto3 (==1.37.13)"]
 braket = ["mypy-boto3-braket (>=1.37.0,<1.38.0)"]
 budgets = ["mypy-boto3-budgets (>=1.37.0,<1.38.0)"]
 ce = ["mypy-boto3-ce (>=1.37.0,<1.38.0)"]
@@ -2114,14 +2114,14 @@ full = ["httpx (>=0.27.0,<0.29.0)", "itsdangerous", "jinja2", "python-multipart 
 
 [[package]]
 name = "structlog"
-version = "25.1.0"
+version = "25.2.0"
 description = "Structured Logging for Python"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "structlog-25.1.0-py3-none-any.whl", hash = "sha256:843fe4f254540329f380812cbe612e1af5ec5b8172205ae634679cd35a6d6321"},
-    {file = "structlog-25.1.0.tar.gz", hash = "sha256:2ef2a572e0e27f09664965d31a576afe64e46ac6084ef5cec3c2b8cd6e4e3ad3"},
+    {file = "structlog-25.2.0-py3-none-any.whl", hash = "sha256:0fecea2e345d5d491b72f3db2e5fcd6393abfc8cd06a4851f21fcd4d1a99f437"},
+    {file = "structlog-25.2.0.tar.gz", hash = "sha256:d9f9776944207d1035b8b26072b9b140c63702fd7aa57c2f85d28ab701bd8e92"},
 ]
 
 [package.extras]
