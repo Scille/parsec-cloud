@@ -428,6 +428,10 @@
                 "light": "Clair",
                 "system": "Système"
             }
+        },
+        "skipAccount": {
+            "label": "Passer Parsec Account",
+            "description": "Ne pas demander à se connecter à Parsec Account au démarrage de l'application"
         }
     },
     "WorkspacesPage": {
@@ -1425,6 +1429,22 @@
         "defaultPlaceholder": "Nom ou email de la personne",
         "noMatch": "Aucun utilisateur trouvé",
         "queryFailed": "Une erreur empêche de trouver les utilisateurs."
+    },
+    "loginPage": {
+        "title": "Connexion au compte Parsec",
+        "server": "Adresse du serveur",
+        "email": "Adresse email",
+        "forgotPassword": "Mot de passe oublié ?",
+        "noAccount": "Pas de compte Parsec ?",
+        "createAccount": "Créer un compte",
+        "password": "Mot de passe",
+        "login": "Se connecter",
+        "clientArea": {
+            "title": "Espace client",
+            "button": "Accéder"
+        },
+        "logOut": "Se déconnecter",
+        "skip": "Passer cette étape"
     },
     "clientArea": {
         "app": {

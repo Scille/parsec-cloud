@@ -66,11 +66,19 @@
         </ion-button>
       </settings-option>
 
+      <settings-option
+        v-if="Env.isAccountEnabled()"
+        title="SettingsModal.skipAccount.label"
+        description="SettingsModal.skipAccount.description"
+      >
+        <ion-toggle v-model="config.skipAccount" />
+      </settings-option>
+
       <!-- display unsync files -->
       <settings-option
         :title="'SettingsModal.unsyncFiles.label'"
         :description="'SettingsModal.unsyncFiles.description'"
-        v-show="false"
+        v-if="false"
       >
         <ion-toggle v-model="config.unsyncFiles" />
       </settings-option>
@@ -102,6 +110,7 @@ import { MsOptions, MsDropdown, Locale, I18n, ThemeManager, Theme, LocaleOptions
 import { IonList, IonToggle, isPlatform, IonButton } from '@ionic/vue';
 import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 import { Sentry } from '@/services/sentry';
+import { Env } from '@/services/environment';
 
 const themeManager: ThemeManager = inject(ThemeManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;

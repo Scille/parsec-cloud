@@ -26,6 +26,8 @@ export interface Config {
   meteredConnection: boolean;
   unsyncFiles: boolean;
   skipViewers: boolean;
+  skipAccount: boolean;
+  defaultAccountServer?: string;
 }
 
 export class StorageManager {
@@ -45,6 +47,8 @@ export class StorageManager {
       meteredConnection: false,
       unsyncFiles: false,
       skipViewers: false,
+      skipAccount: false,
+      defaultAccountServer: undefined,
     };
   }
 
@@ -149,6 +153,8 @@ export class StorageManager {
       synchroWifiOnly: data.meteredConnection,
       unsyncFiles: data.unsyncFiles,
       skipViewers: data.skipViewers,
+      skipAccount: data.skipAccount,
+      defaultAccountServer: data.defaultAccountServer,
     });
     window.electronAPI.sendConfig(data);
   }
@@ -173,6 +179,8 @@ export class StorageManager {
       meteredConnection: data.meteredConnection !== undefined ? data.synchroWifiOnly : StorageManager.DEFAULT_CONFIG.meteredConnection,
       unsyncFiles: data.unsyncFiles !== undefined ? data.unsyncFiles : StorageManager.DEFAULT_CONFIG.unsyncFiles,
       skipViewers: data.skipViewers !== undefined ? data.skipViewers : StorageManager.DEFAULT_CONFIG.skipViewers,
+      skipAccount: data.skipAccount ?? StorageManager.DEFAULT_CONFIG.skipAccount,
+      defaultAccountServer: data.defaultAccountServer ?? StorageManager.DEFAULT_CONFIG.defaultAccountServer,
     };
     return config;
   }

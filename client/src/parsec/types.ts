@@ -231,6 +231,7 @@ type WorkspaceName = EntryName;
 type ConnectionHandle = Handle;
 type MountpointHandle = Handle;
 type SystemPath = Path;
+type AccountHandle = Handle;
 
 interface UserInfo extends ParsecUserInfo {
   isRevoked: () => boolean;
@@ -352,7 +353,21 @@ interface OrganizationInfo {
   organizationId: OrganizationID;
 }
 
+// Replace later
+enum AccountErrorTag {
+  InvalidPassword,
+}
+
+// Replace later
+interface AccountError {
+  tag: AccountErrorTag;
+  error: string;
+}
+
 export {
+  AccountError,
+  AccountErrorTag,
+  AccountHandle,
   ConnectionHandle,
   DateTime,
   EntryID,
