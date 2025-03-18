@@ -420,6 +420,8 @@ To make the output different, we could:
 - Choose different salt (but they need to be deterministic from the information provided by the user only).
 - Use different parameters (but that may reduce the security)
 
+To keep things simple, we will use different salt, as we could easily create multiple salt using the email + constant value.
+
 ## Risks
 
 The devices are not stored securely to only allow the user to access them.
