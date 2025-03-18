@@ -172,8 +172,8 @@ For the user to obtain the account manifest from the server they will do the fol
 2. Retrieve the following encrypted data from the sever:
 
    1. Account manifest (`enc(ACCOUNT_MANIFEST)`)
-   2. Account manifest symmetric key (`enc(ACCOUNT_MANIFEST_SYM_KEY)`)
-   3. Authentication medium private key (`enc(AUTH_MEDIUM_PRIV_KEY)`)
+   2. Account manifest symmetric key (`enc(ACCOUNT_MANIFEST_SYM_KEY)`) related to the current authentication method
+   3. Authentication medium private key (`enc(AUTH_MEDIUM_PRIV_KEY)`) corresponding to the authentication method
    4. The parameters used to generate the symmetric key that encrypt the private key (`AUTH_MEDIUM_SYM_KEY_PARAMS`)
 
 3. Re-generate `AUTH_MEDIUM_SYM_KEY` from the parameters and the password
