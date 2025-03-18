@@ -523,4 +523,4 @@ declare global {
   }
 }
 
-await setupApp();
+setupApp();

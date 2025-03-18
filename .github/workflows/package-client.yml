@@ -1,3 +1,5 @@
+# Comment to force a build
+
 name: Package client
 
 on:
