@@ -398,7 +398,7 @@ N/A
 ## Operations
 
 - The authentication service storing users devices will need to be managed and probably be deployed separately from the Parsec metadata service
-- RGPD will need to be considered for the data stored by the service. CGVU will need to be adapted in order to mention the service and how to obtain and delete the data stored. 
+- GDPR will need to be considered for the data stored by the service. T&Cs will need to be adapted in order to mention the service and how to obtain and delete the data stored.
 
 ## Security/Privacy/Compliance
 
