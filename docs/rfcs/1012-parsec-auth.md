@@ -92,7 +92,7 @@ Creating the account for a user will require some information for the system to 
 
 - Generate the account manifest `ACCOUNT_MANIFEST` to store:
 
-  - The list of authentication public keys
+  - The list of authentication public keys (`AUTH_MEDIUM_PUB_KEY`)
   - The list of keys used to encrypt the devices (the list is empty at the beginning)
 
   > The manifest will be encrypted to prevent the server to temper with it.
