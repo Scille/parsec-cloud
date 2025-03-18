@@ -72,8 +72,7 @@ Creating the account for a user will require some information for the system to 
 
 - A HMAC shared key to authenticate the user (`AUTH_MEDIUM_HMAC_KEY`)
 
-  When using a password, it's not used as is, but it's derived to create a HMAC key using the function `PBKDF_A` (this operation is done on the client side to not leak the master password).
-  The new secret will be provided as is to the server (like a password).
+  When using a password, the HMAC key is derived from it using the function `PBKDF_A` (this operation is performed on the client side to avoid leaking the password).
 
   When using FIDO2, the included challenge is used as is for the HMAC key since the private key is not shared with the server.
 
