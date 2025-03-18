@@ -438,6 +438,17 @@ We have the section [Consideration of PBKDF algorithms](<#Consideration on PBKDF
 ## Remarks & open questions
 
 - The client application will need to communicate with the authentication service: should this be integrated into `libparsec`? Or it's the JS side that handle that?
+
+  > Since the communication between the client/server is done with `libparsec`, we will continue with that
+  > @touilleMan
+
 - What to do when a user is revoked from an organization?
   Should we remove the device, or should we just provide the information that the device for the given organization is revoked?
+
+  > Just inform the user about the revocation
+  > @touilleMan
+
 - A similar question applies for devices that are no longer used (e.g. a linked browser that is no longer used)
+
+  > The uploaded device in parsec-auth are not linked to a specific browser, so this does not applies
+  > @FirelightFlagboy
