@@ -76,7 +76,7 @@ Creating the account for a user will require some information for the system to 
 
   When using FIDO2, the included challenge is used as is for the HMAC key since the private key is not shared with the server.
 
-- An asymmetric key pair (`AUTH_MEDIUM_PUB_KEY`, `AUTH_MEDIUM_PRIV_KEY`)
+- An asymmetric key pair `AUTH_MEDIUM_PUB_KEY`/`AUTH_MEDIUM_PRIV_KEY` used to encrypt `ACCOUNT_MANIFEST_SYM_KEY` described below
 
   When using a password, the asymmetric key pair is generated using a cryptographic secure pseudo-random number generator (CSPRNG).
 
