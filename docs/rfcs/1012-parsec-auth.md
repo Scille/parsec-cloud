@@ -226,6 +226,11 @@ sequenceDiagram
   Alice ->> Alice: Add `DEVICE_SYM_KEY` to the account manifest
   Alice ->> Alice: Generate `DEVICE_OWNERSHIP_PROOF`
   Alice ->> S: Upload `org_id`, `enc(DEVICE)`, `DEVICE_OWNERSHIP_PROOF`, `enc(ACCOUNT_MANIFEST)`
+  alt DEVICE_OWNERSHIP_PROOF is valid
+    S ->> Alice: The server accept the request
+  else
+    S ->> Alice: The server reject the request
+  end
 ```
 
 > [!NOTE]
