@@ -191,6 +191,24 @@ export class ElectronCapacitorApp {
     return this.customScheme;
   }
 
+  showMainWindow(): void {
+    if (this.pageIsInitialized) {
+      this.MainWindow.show();
+    }
+  }
+
+  hideMainWindow(): void {
+    if (this.pageIsInitialized) {
+      this.MainWindow.hide();
+    }
+  }
+
+  focusMainWindow(): void {
+    if (this.pageIsInitialized) {
+      this.MainWindow.focus();
+    }
+  }
+
   updateApp(): void {
     if (this.updater && this.updater.isUpdateDownloaded()) {
       this.forceClose = true;
@@ -266,6 +284,9 @@ export class ElectronCapacitorApp {
   }
 
   isMainWindowVisible(): boolean {
+    if (!this.pageIsInitialized) {
+      return false;
+    }
     if (process.platform === 'darwin') {
       return !this.MainWindow.isMinimized();
     } else {
