@@ -84,7 +84,7 @@ export class SplashScreen {
   <style>
     body {
       margin: 0;
-      width: 100vh;
+      width: 100vw;
       height: 100vh;
       overflow: hidden;
       background: url('${imageData}') no-repeat center center fixed;
