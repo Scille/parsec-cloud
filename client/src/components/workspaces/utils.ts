@@ -17,6 +17,7 @@ import { Routes, navigateTo } from '@/router';
 import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager } from '@/services/storageManager';
+import SmallDisplayWorkspaceContextMenu from '@/views/workspaces/SmallDisplayWorkspaceContextMenu.vue';
 import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
@@ -117,26 +118,49 @@ export async function openWorkspaceContextMenu(
   informationManager: InformationManager,
   storageManager: StorageManager,
   fromSidebar = false,
+  isLargeDisplay = true,
 ): Promise<void> {
   const clientProfile = await getClientProfile();
-  const popover = await popoverController.create({
-    component: WorkspaceContextMenu,
-    cssClass: fromSidebar ? 'workspace-context-menu workspace-context-menu-sidebar' : 'workspace-context-menu',
-    event: event,
-    reference: event.type === 'contextmenu' ? 'event' : 'trigger',
-    translucent: true,
-    showBackdrop: false,
-    dismissOnSelect: true,
-    componentProps: {
-      workspaceName: workspace.currentName,
-      clientProfile: clientProfile,
-      clientRole: workspace.currentSelfRole,
-      isFavorite: favorites.includes(workspace.id),
-    },
-  });
-  await popover.present();
+  let data: { action: WorkspaceAction } | undefined;
 
-  const { data } = await popover.onDidDismiss();
+  if (isLargeDisplay) {
+    const popover = await popoverController.create({
+      component: WorkspaceContextMenu,
+      cssClass: fromSidebar ? 'workspace-context-menu workspace-context-menu-sidebar' : 'workspace-context-menu',
+      event: event,
+      reference: event.type === 'contextmenu' ? 'event' : 'trigger',
+      translucent: true,
+      showBackdrop: false,
+      dismissOnSelect: true,
+      componentProps: {
+        workspaceName: workspace.currentName,
+        clientProfile: clientProfile,
+        clientRole: workspace.currentSelfRole,
+        isFavorite: favorites.includes(workspace.id),
+      },
+    });
+
+    await popover.present();
+    data = (await popover.onDidDismiss()).data;
+  } else {
+    const modal = await modalController.create({
+      component: SmallDisplayWorkspaceContextMenu,
+      cssClass: 'workspace-context-menu',
+      showBackdrop: false,
+      breakpoints: [0, 1],
+      initialBreakpoint: 1,
+      componentProps: {
+        workspaceName: workspace.currentName,
+        clientProfile: clientProfile,
+        clientRole: workspace.currentSelfRole,
+        isFavorite: favorites.includes(workspace.id),
+      },
+    });
+
+    await modal.present();
+    data = (await modal.onDidDismiss()).data;
+  }
+
   if (data !== undefined) {
     switch (data.action) {
       case WorkspaceAction.Share:
