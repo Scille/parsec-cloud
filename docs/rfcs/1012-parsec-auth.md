@@ -70,29 +70,29 @@ Creating the account for a user will require some information for the system to 
 
     The service needs to verify that the user has access to the email (using a code or sending a link to continue the process).
 
-- A HMAC shared key to authenticate the user (`AUTH_MEDIUM_HMAC_KEY`)
+- A HMAC shared key to authenticate the user (`AUTH_METHOD_HMAC_KEY`)
 
   When using a password, the HMAC key is derived from it using the function `PBKDF_A` (this operation is performed on the client side to avoid leaking the password).
 
   When using FIDO2, the included challenge is used as is for the HMAC key since the private key is not shared with the server.
 
-- An asymmetric key pair `AUTH_MEDIUM_PUB_KEY`/`AUTH_MEDIUM_PRIV_KEY` used to encrypt `ACCOUNT_MANIFEST_SYM_KEY` described below
+- An asymmetric key pair `AUTH_METHOD_PUB_KEY`/`AUTH_METHOD_PRIV_KEY` used to encrypt `ACCOUNT_MANIFEST_SYM_KEY` described below
 
   When using a password, the asymmetric key pair is generated using a cryptographic secure pseudo-random number generator (CSPRNG).
 
   When using FIDO2, it already provides the asymmetric keys securely so they are used as is.
 
-- A symmetric key (`AUTH_MEDIUM_SYM_KEY`) used to encrypt `AUTH_MEDIUM_PRIV_KEY` alongside the parameters used to generate it `AUTH_MEDIUM_SYM_KEY_PARAMS`.
+- A symmetric key (`AUTH_METHOD_SYM_KEY`) used to encrypt `AUTH_METHOD_PRIV_KEY` alongside the parameters used to generate it `AUTH_METHOD_SYM_KEY_PARAMS`.
 
   When using a password, it's generated from the function `PBKDF_B`
 
- For FIDO2, the symmetric key is not needed because `AUTH_MEDIUM_PRIV_KEY` is not shared since it's stored on the device.
+ For FIDO2, the symmetric key is not needed because `AUTH_METHOD_PRIV_KEY` is not shared since it's stored on the device.
 
 - A randomly generated symmetric key `ACCOUNT_MANIFEST_SYM_KEY` used to encrypt the account manifest.
 
 - Generate the account manifest `ACCOUNT_MANIFEST` to store:
 
-  - The list of authentication public keys (`AUTH_MEDIUM_PUB_KEY`)
+  - The list of authentication public keys (`AUTH_METHOD_PUB_KEY`)
   - The list of keys used to encrypt the devices (the list is empty at the beginning)
 
   > The manifest will be encrypted to prevent the server to temper with it.
@@ -111,20 +111,20 @@ sequenceDiagram
   S ->> Alice: Send an email with a unique code needed to continue the process
   alt Choose between password or fido2
     Alice ->> Alice: Choose a password
-    Alice ->> Alice: Derive `AUTH_MEDIUM_HMAC_KEY` using the password and `PBKDF_A`
-    Alice ->> Alice: Create `AUTH_MEDIUM_SYM_KEY` using the password and `PBKDF_B`
-    Alice ->> Alice: Generate `AUTH_MEDIUM_PRIV_KEY`, `AUTH_MEDIUM_PUB_KEY`
-    Alice ->> Alice: Encrypt `AUTH_MEDIUM_PRIV_KEY` with `AUTH_MEDIUM_SYM_KEY`
+    Alice ->> Alice: Derive `AUTH_METHOD_HMAC_KEY` using the password and `PBKDF_A`
+    Alice ->> Alice: Create `AUTH_METHOD_SYM_KEY` using the password and `PBKDF_B`
+    Alice ->> Alice: Generate `AUTH_METHOD_PRIV_KEY`, `AUTH_METHOD_PUB_KEY`
+    Alice ->> Alice: Encrypt `AUTH_METHOD_PRIV_KEY` with `AUTH_METHOD_SYM_KEY`
   else
-    Alice ->> Alice: Generate `AUTH_MEDIUM_HMAC_KEY` using the fido2 device.
-    Alice ->> Alice: Use the public key of the FIDO2 device as `AUTH_MEDIUM_PUB_KEY`
+    Alice ->> Alice: Generate `AUTH_METHOD_HMAC_KEY` using the fido2 device.
+    Alice ->> Alice: Use the public key of the FIDO2 device as `AUTH_METHOD_PUB_KEY`
   end
 
-  Alice ->> Alice: Create a bundle containing `AUTH_MEDIUM_PUB_KEY` (`ACCOUNT_MANIFEST`)
+  Alice ->> Alice: Create a bundle containing `AUTH_METHOD_PUB_KEY` (`ACCOUNT_MANIFEST`)
   Alice ->> Alice: Create a symmetric key `ACCOUNT_MANIFEST_SYM_KEY`
   Alice ->> Alice: Encrypt the bundle `ACCOUNT_MANIFEST` with `ACCOUNT_MANIFEST_SYM_KEY` (`enc(ACCOUNT_MANIFEST)`)
-  Alice ->> Alice: Encrypt `ACCOUNT_MANIFEST_SYM_KEY` with `AUTH_MEDIUM_PUB_KEY` (`enc(ACCOUNT_MANIFEST_SYM_KEY)`)
-  Alice ->> S: Send the require data to finish the account creation<br>(`firstname` & `lastname`, `enc(AUTH_MEDIUM_PRIV_KEY)`, `AUTH_MEDIUM_SYM_KEY_PARAMS`, `enc(ACCOUNT_MANIFEST)`,<br>`enc(ACCOUNT_MANIFEST_SYM_KEY)`, `AUTH_MEDIUM_HMAC_KEY`, email validation token)
+  Alice ->> Alice: Encrypt `ACCOUNT_MANIFEST_SYM_KEY` with `AUTH_METHOD_PUB_KEY` (`enc(ACCOUNT_MANIFEST_SYM_KEY)`)
+  Alice ->> S: Send the require data to finish the account creation<br>(`firstname` & `lastname`, `enc(AUTH_METHOD_PRIV_KEY)`, `AUTH_METHOD_SYM_KEY_PARAMS`, `enc(ACCOUNT_MANIFEST)`,<br>`enc(ACCOUNT_MANIFEST_SYM_KEY)`, `AUTH_METHOD_HMAC_KEY`, email validation token)
 ```
 
 At the end of the process, the server should save the following information:
@@ -141,27 +141,27 @@ At the end of the process, the server should save the following information:
 
 - An entry for the authentication method linked to the user:
 
-  - An ID that is provided by the user (`auth_medium_id`)
+  - An ID that is provided by the user (`auth_method_id`)
 
     > That require the ID to be generated by the user with information available at the moment.
 
-  - The HMAC secret (`AUTH_MEDIUM_HMAC_KEY`)
+  - The HMAC secret (`AUTH_METHOD_HMAC_KEY`)
 
     The secret should be securely stored by either encrypting its value or using a vault.
 
-  - The encrypted private key (`enc(AUTH_MEDIUM_PRIV_KEY)`)
+  - The encrypted private key (`enc(AUTH_METHOD_PRIV_KEY)`)
 
     > Could be empty when the user uses a FIDO2 device.
 
   - The encrypted key used to decrypt the account manifest (`enc(ACCOUNT_MANIFEST_SYM_KEY)`)
-  - The parameters used to generate the symmetric key (`AUTH_MEDIUM_SYM_KEY`) that encrypted `enc(AUTH_MEDIUM_PRIV_KEY)` (`AUTH_MEDIUM_SYM_KEY_PARAMS`)
+  - The parameters used to generate the symmetric key (`AUTH_METHOD_SYM_KEY`) that encrypted `enc(AUTH_METHOD_PRIV_KEY)` (`AUTH_METHOD_SYM_KEY_PARAMS`)
 
 > [!WARNING]
 > A user should be able to register multiple authentication methods,
 
 ### The authentication process
 
-We use a HMAC to authenticate each request to the server with the secret `AUTH_MEDIUM_HMAC_KEY` that was previously shared.
+We use a HMAC to authenticate each request to the server with the secret `AUTH_METHOD_HMAC_KEY` that was previously shared.
 
 ### Obtain the account manifest from the server
 
@@ -173,12 +173,12 @@ For the user to obtain the account manifest from the server they will do the fol
 
    1. Account manifest (`enc(ACCOUNT_MANIFEST)`)
    2. Account manifest symmetric key (`enc(ACCOUNT_MANIFEST_SYM_KEY)`) related to the current authentication method
-   3. Authentication medium private key (`enc(AUTH_MEDIUM_PRIV_KEY)`) corresponding to the authentication method
-   4. The parameters used to generate the symmetric key that encrypt the private key (`AUTH_MEDIUM_SYM_KEY_PARAMS`)
+   3. Authentication method private key (`enc(AUTH_METHOD_PRIV_KEY)`) corresponding to the authentication method
+   4. The parameters used to generate the symmetric key that encrypt the private key (`AUTH_METHOD_SYM_KEY_PARAMS`)
 
-3. Re-generate `AUTH_MEDIUM_SYM_KEY` from the parameters and the password
-4. Decrypt `enc(AUTH_MEDIUM_PRIV_KEY)` with `AUTH_MEDIUM_SYM_KEY` to obtain the private key (`AUTH_MEDIUM_PRIV_KEY`)
-5. Decrypt `enc(ACCOUNT_MANIFEST_SYM_KEY)` with `AUTH_MEDIUM_PRIV_KEY` (`ACCOUNT_MANIFEST_SYM_KEY`)
+3. Re-generate `AUTH_METHOD_SYM_KEY` from the parameters and the password
+4. Decrypt `enc(AUTH_METHOD_PRIV_KEY)` with `AUTH_METHOD_SYM_KEY` to obtain the private key (`AUTH_METHOD_PRIV_KEY`)
+5. Decrypt `enc(ACCOUNT_MANIFEST_SYM_KEY)` with `AUTH_METHOD_PRIV_KEY` (`ACCOUNT_MANIFEST_SYM_KEY`)
 6. Decrypt `enc(ACCOUNT_MANIFEST)` with `ACCOUNT_MANIFEST_SYM_KEY`
 7. Decrypt the account manifest
 
@@ -190,10 +190,10 @@ sequenceDiagram
 
   Note over Alice,S: Alice is already authenticated to the server
 
-  S ->> Alice: Retrieve `enc(ACCOUNT_MANIFEST)`, `enc(ACCOUNT_MANIFEST_SYM_KEY)`,<br>`enc(AUTH_MEDIUM_PRIV_KEY)` & `AUTH_MEDIUM_SYM_KEY_PARAMS`
-  Alice ->> Alice: Generate `AUTH_MEDIUM_SYM_KEY` using the password and `AUTH_MEDIUM_SYM_KEY_PARAMS`
-  Alice ->> Alice: Decrypt `enc(AUTH_MEDIUM_PRIV_KEY)` with `AUTH_MEDIUM_SYM_KEY`
-  Alice ->> Alice: Decrypt `enc(ACCOUNT_MANIFEST_SYM_KEY)` with `AUTH_MEDIUM_PRIV_KEY`
+  S ->> Alice: Retrieve `enc(ACCOUNT_MANIFEST)`, `enc(ACCOUNT_MANIFEST_SYM_KEY)`,<br>`enc(AUTH_METHOD_PRIV_KEY)` & `AUTH_METHOD_SYM_KEY_PARAMS`
+  Alice ->> Alice: Generate `AUTH_METHOD_SYM_KEY` using the password and `AUTH_METHOD_SYM_KEY_PARAMS`
+  Alice ->> Alice: Decrypt `enc(AUTH_METHOD_PRIV_KEY)` with `AUTH_METHOD_SYM_KEY`
+  Alice ->> Alice: Decrypt `enc(ACCOUNT_MANIFEST_SYM_KEY)` with `AUTH_METHOD_PRIV_KEY`
   Alice ->> Alice: Decrypt `enc(ACCOUNT_MANIFEST)` with `ACCOUNT_MANIFEST_SYM_KEY`
 ```
 
@@ -208,7 +208,7 @@ To upload a new device, the user would need to:
 5. Encrypt the account manifest with the symmetric key `ACCOUNT_MANIFEST_SYM_KEY`.
 5. Generate a device ownership proof (`DEVICE_OWNERSHIP_PROOF`):
 
-   The proof is generated by using the signature key of the device to sign the blob `device_id` + `auth_medium_id` currently used to authenticate the request.
+   The proof is generated by using the signature key of the device to sign the blob `device_id` + `auth_method_id` currently used to authenticate the request.
 
 6. Upload the organization ID, the encrypted device, the device ownership proof, and the updated encrypted account manifest.
 
@@ -265,11 +265,11 @@ To add a new authentication method, it requires the client application to:
 
 1. Be already authenticated to the server.
 2. [Obtain the account manifest from the server](#obtain-the-account-manifest-from-the-server).
-3. Generate `AUTH_MEDIUM_HMAC_KEY'`, `AUTH_MEDIUM_SYM_KEY'`, `AUTH_MEDIUM_SYM_KEY_PARAMS'`, `AUTH_MEDIUM_PRIV_KEY'`, `AUTH_MEDIUM_PUB_KEY'` for the added authentication method.
-4. Add `AUTH_MEDIUM_PUB_KEY'` to the account manifest.
-5. Encrypt `AUTH_MEDIUM_PRIV_KEY'` with `AUTH_MEDIUM_SYM_KEY'` (`enc(AUTH_MEDIUM_PRIV_KEY')`).
-6. Encrypt `ACCOUNT_MANIFEST_SYM_KEY` with `AUTH_MEDIUM_PUB_KEY'` (`enc(ACCOUNT_MANIFEST_SYM_KEY)`).
-7. Upload the updated manifest, `enc(AUTH_MEDIUM_PRIV_KEY')`, `enc(ACCOUNT_MANIFEST_SYM_KEY)` and `AUTH_MEDIUM_SYM_KEY_PARAMS'`.
+3. Generate `AUTH_METHOD_HMAC_KEY'`, `AUTH_METHOD_SYM_KEY'`, `AUTH_METHOD_SYM_KEY_PARAMS'`, `AUTH_METHOD_PRIV_KEY'`, `AUTH_METHOD_PUB_KEY'` for the added authentication method.
+4. Add `AUTH_METHOD_PUB_KEY'` to the account manifest.
+5. Encrypt `AUTH_METHOD_PRIV_KEY'` with `AUTH_METHOD_SYM_KEY'` (`enc(AUTH_METHOD_PRIV_KEY')`).
+6. Encrypt `ACCOUNT_MANIFEST_SYM_KEY` with `AUTH_METHOD_PUB_KEY'` (`enc(ACCOUNT_MANIFEST_SYM_KEY)`).
+7. Upload the updated manifest, `enc(AUTH_METHOD_PRIV_KEY')`, `enc(ACCOUNT_MANIFEST_SYM_KEY)` and `AUTH_METHOD_SYM_KEY_PARAMS'`.
 
 ```mermaid
 sequenceDiagram
@@ -281,9 +281,9 @@ sequenceDiagram
 
   S ->> Alice: Retrieve the account manifest from the server
   Alice ->> Alice: Generate the required keys for the new authentication method
-  Alice ->> Alice: Add `AUTH_MEDIUM_PUB_KEY'` to the account manifest
-  Alice ->> Alice: Encrypt `AUTH_MEDIUM_PRIV_KEY'` with `AUTH_MEDIUM_SYM_KEY'` (`enc(AUTH_MEDIUM_PRIV_KEY')`)
-  Alice ->> Alice: Encrypt `ACCOUNT_MANIFEST_SYM_KEY` with `AUTH_MEDIUM_PUB_KEY'` (`enc(ACCOUNT_MANIFEST_SYM_KEY)`)
+  Alice ->> Alice: Add `AUTH_METHOD_PUB_KEY'` to the account manifest
+  Alice ->> Alice: Encrypt `AUTH_METHOD_PRIV_KEY'` with `AUTH_METHOD_SYM_KEY'` (`enc(AUTH_METHOD_PRIV_KEY')`)
+  Alice ->> Alice: Encrypt `ACCOUNT_MANIFEST_SYM_KEY` with `AUTH_METHOD_PUB_KEY'` (`enc(ACCOUNT_MANIFEST_SYM_KEY)`)
   Alice ->> S: Upload the new/updated data to the server
 ```
 
@@ -295,8 +295,8 @@ To remove an authentication method from a user, it requires the client applicati
 2. [Obtain the account manifest from the server](#obtain-the-account-manifest-from-the-server).
 3. Remove the public of the authentication method to remove from the account manifest.
 4. Create a new `ACCOUNT_MANIFEST_SYM_KEY'`.
-5. For each public key `AUTH_MEDIUM_PUB_KEY` in the account manifest, encrypt `ACCOUNT_MANIFEST_SYM_KEY` with it (`enc(ACCOUNT_MANIFEST_SYM_KEY)`).
-6. Upload the encrypted & updated account manifest and the list of `enc(AUTH_MEDIUM_SYM_KEY')`.
+5. For each public key `AUTH_METHOD_PUB_KEY` in the account manifest, encrypt `ACCOUNT_MANIFEST_SYM_KEY` with it (`enc(ACCOUNT_MANIFEST_SYM_KEY)`).
+6. Upload the encrypted & updated account manifest and the list of `enc(AUTH_METHOD_SYM_KEY')`.
 
 ```mermaid
 sequenceDiagram
@@ -354,22 +354,22 @@ flowchart TD
 
   Email & Password --> H1 & H2
 
-  H1 --> AUTH_MEDIUM_HMAC_KEY
+  H1 --> AUTH_METHOD_HMAC_KEY
 
-  H2 --> AUTH_MEDIUM_SYM_KEY_PARAMS & AUTH_MEDIUM_SYM_KEY
+  H2 --> AUTH_METHOD_SYM_KEY_PARAMS & AUTH_METHOD_SYM_KEY
 
   CSPRNG(Cryptographic Pseudo-random Generator)
 
-  CSPRNG --> AUTH_MEDIUM_PRIV_KEY --> AUTH_MEDIUM_PUB_KEY
+  CSPRNG --> AUTH_METHOD_PRIV_KEY --> AUTH_METHOD_PUB_KEY
   CSPRNG --> ACCOUNT_MANIFEST_SYM_KEY
 
-  AUTH_MEDIUM_SYM_KEY & AUTH_MEDIUM_PRIV_KEY --> E1{"Encrypt the private key"} --> enc_PRIV_KEY["enc(AUTH_MEDIUM_PRIV_KEY)"]
+  AUTH_METHOD_SYM_KEY & AUTH_METHOD_PRIV_KEY --> E1{"Encrypt the private key"} --> enc_PRIV_KEY["enc(AUTH_METHOD_PRIV_KEY)"]
 
-  AUTH_MEDIUM_PUB_KEY --> |"Store in manifest"| ACCOUNT_MANIFEST
+  AUTH_METHOD_PUB_KEY --> |"Store in manifest"| ACCOUNT_MANIFEST
 
   ACCOUNT_MANIFEST & ACCOUNT_MANIFEST_SYM_KEY --> E2{"Encrypt account manifest"} --> enc_MANIFEST["enc(ACCOUNT_MANIFEST)"]
 
-  AUTH_MEDIUM_PUB_KEY & ACCOUNT_MANIFEST_SYM_KEY --> E3{"Encrypt account manifest symmetric key"} --> enc_MANIFEST_KEY["enc(ACCOUNT_MANIFEST_SYM_KEY)"]
+  AUTH_METHOD_PUB_KEY & ACCOUNT_MANIFEST_SYM_KEY --> E3{"Encrypt account manifest symmetric key"} --> enc_MANIFEST_KEY["enc(ACCOUNT_MANIFEST_SYM_KEY)"]
 
   CSPRNG --> DEVICE_SYM_KEY
 
@@ -378,17 +378,17 @@ flowchart TD
   DEVICE_SYM_KEY --> |"Store in manifest"| ACCOUNT_MANIFEST
 
   subgraph Parsec-Auth server
-    AUTH_MEDIUM_HMAC_KEY
-    AUTH_MEDIUM_SYM_KEY_PARAMS
+    AUTH_METHOD_HMAC_KEY
+    AUTH_METHOD_SYM_KEY_PARAMS
     enc_PRIV_KEY
     enc_MANIFEST
     enc_MANIFEST_KEY
     enc_DEVICE
   end
 
-  E[Email] & P[Password] & AUTH_MEDIUM_SYM_KEY_PARAMS --> H3{PBKDF_2} --> AUTH_SYM_KEY[AUTH_MEDIUM_SYM_KEY]
+  E[Email] & P[Password] & AUTH_METHOD_SYM_KEY_PARAMS --> H3{PBKDF_2} --> AUTH_SYM_KEY[AUTH_METHOD_SYM_KEY]
 
-  AUTH_SYM_KEY & enc_PRIV_KEY --> D1{"Decrypt the private key"} --> PRIV_KEY[AUTH_MEDIUM_PRIV_KEY]
+  AUTH_SYM_KEY & enc_PRIV_KEY --> D1{"Decrypt the private key"} --> PRIV_KEY[AUTH_METHOD_PRIV_KEY]
 
   PRIV_KEY & enc_MANIFEST_KEY --> D2{"Decrypt the account manifest symmetric key"} --> MANIFEST_KEY[ACCOUNT_MANIFEST_SYM_KEY]
 
