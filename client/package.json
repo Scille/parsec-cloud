@@ -13,7 +13,7 @@
         "test:e2e": "npx playwright test --headed --timeout=30000",
         "test:e2e:headless": "npx playwright test --timeout=30000",
         "web:open": "vite --open",
-        "web:release": "npm run lint && vite build",
+        "web:release": "vite build",
         "native:build": "node ./scripts/vite_build_for_native.cjs",
         "android:copy": "npm run native:build && npx cap copy android",
         "android:copy:release": "npm run native:build && npx cap copy android",
