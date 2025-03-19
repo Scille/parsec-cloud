@@ -375,7 +375,7 @@ The process will then be pretty similar to the [Account creation](#account-creat
 ### A word about how the account manifests are stored
 
 On the server, we want to limit concurrency issue so we try to reduce the number of deletion operations.
-For this reason the account manifest stored in the server is versioned to prevent concurrency deletions/modifications from two connections to the same account.
+For this reason the account manifests stored in the server are versioned to prevent concurrency deletions/modifications from two connections to the same account.
 
 That also provide nice characteristic when the user needs to recover its account due to loosing access to is authentication method:
 
