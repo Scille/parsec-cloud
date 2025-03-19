@@ -100,6 +100,12 @@ jobs:
           path: ${{ runner.temp }}/version.patch
           run-id: ${{ inputs.version_patch_run_id || github.run_id }}
 
+      - name: Load version config
+        id: version
+        shell: bash
+        run: cat version.patch/version.ini | tee "$GITHUB_OUTPUT"
+        working-directory: ${{ runner.temp }}
+
       - name: Apply version.patch
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
@@ -122,13 +128,23 @@ jobs:
           PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client
 
+      - name: Zip webapp content
+        run: |
+          ARTIFACT_NAME='parsec-web-${{ steps.version.outputs.full }}.zip'
+          zip "${{ runner.temp }}/${ARTIFACT_NAME}" -r . -9
+          yq --null-input ".webapp = \"${ARTIFACT_NAME}\"" | tee '${{ runner.temp }}/artifacts.yml'
+        working-directory: client/dist
+
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=client/dist/Parsec-SBOM-Web.spdx.json .
+        run: syft packages --config=.syft.yaml --output=spdx-json="${{ runner.temp }}/Parsec-SBOM-Web.spdx.json" .
 
       - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # pin v4.6.1
         with:
           name: webapp
-          path: client/dist/
+          path: |
+            ${{ runner.temp }}/parsec-web-${{ steps.version.outputs.full }}.zip
+            ${{ runner.temp }}/Parsec-SBOM-Web.spdx.json
+            ${{ runner.temp }}/artifacts.yml
           if-no-files-found: error
 
   electron-snap:
