@@ -212,7 +212,7 @@ async def test_authenticated_vlob_read_versions_author_not_allowed(
 async def test_authenticated_vlob_read_versions_too_many_elements(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
-    too_many_items = [(VlobID.new(), int(1))] * (VLOB_READ_REQUEST_ITEMS_LIMIT + 1)
+    too_many_items = [(VlobID.new(), (1))] * (VLOB_READ_REQUEST_ITEMS_LIMIT + 1)
     rep = await coolorg.alice.vlob_read_versions(
         realm_id=coolorg.wksp1_id,
         items=too_many_items,
