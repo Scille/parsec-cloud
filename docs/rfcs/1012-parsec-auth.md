@@ -10,6 +10,12 @@ This RFC will discuss the implementation of a new service to store the user's de
 > The creation of Parsec devices is not discussed in this RFC
 > as this is still performed as usual by the client application.
 
+> [!IMPORTANT]
+> Mentions to FIDO2 as an alternative authentication method should not be taken as decision made in stone.
+> We are currently lacking actual experience to be able to correctly specify what is needed.
+> For instance a FIDO2 extension allows generating a symmetric key that could be used as password
+> (so FIDO2 implementation would only be a small layer on top of the password).
+
 ## Background & Motivation
 
 During our discussions about providing a client application that could run in a web-browser, came up the following questions:
