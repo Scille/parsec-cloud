@@ -1,0 +1,1 @@
+Fix an error message when clicking on the dock on MacOS while the app is starting

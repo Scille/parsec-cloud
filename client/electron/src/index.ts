@@ -127,10 +127,12 @@ if (!lock) {
   })();
 
   app.on('second-instance', (_event, commandLine, _workingDirectory) => {
-    if (!myCapacitorApp.isMainWindowVisible()) {
-      myCapacitorApp.getMainWindow().show();
-    } else {
-      myCapacitorApp.getMainWindow().focus();
+    if (myCapacitorApp.pageIsInitialized) {
+      if (!myCapacitorApp.isMainWindowVisible()) {
+        myCapacitorApp.showMainWindow();
+      } else {
+        myCapacitorApp.focusMainWindow();
+      }
     }
 
     if (commandLine.length > 0) {
@@ -169,7 +171,7 @@ app.on('window-all-closed', async () => {
 
 // When the MacOS dock icon is clicked.
 app.on('activate', async () => {
-  myCapacitorApp.getMainWindow().show();
+  myCapacitorApp.showMainWindow();
 });
 
 ipcMain.on(PageToWindowChannel.ConfigUpdate, (_event, data) => {
