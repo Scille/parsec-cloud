@@ -151,7 +151,7 @@ keyring = { version = "3.6.2", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
 libc = { version = "0.2.171", default-features = false }
 libsodium-sys = { version = "0.2.7", default-features = false }
-libsqlite3-sys = { version = "0.26.0", default-features = false }
+libsqlite3-sys = { version = "0.30.1", default-features = false }
 log = { version = "0.4.26", default-features = false }
 miniserde = { version = "0.1.42", default-features = false }
 neon = { version = "1.0.0", default-features = false }
@@ -195,7 +195,7 @@ blahaj = "0.6.0"
 smallvec = { version = "1.14.0", default-features = false }
 sodiumoxide = { version = "0.2.7", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
-sqlx = { version = "0.7.2", default-features = false }
+sqlx = { version = "0.8.3", default-features = false }
 syn = { version = "2.0.100", default-features = false }
 thiserror = { version = "1.0.69", default-features = false }
 tokio = { version = "1.44.1", default-features = false }
