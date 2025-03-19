@@ -365,6 +365,22 @@ sequenceDiagram
 > [!IMPORTANT]
 > Only account data stored in the authentication server is deleted (see [Account creation](<#Account creation>)), no data is deleted in the metadata server.
 
+### Recovering access to the account
+
+In case the user forget is authentication method, they still could recover access to their account.
+
+The server we use their registered email to send a recovery code.
+The process will be pretty similar to the [Account creation](#account-creation) beside that the server will not delete their previous manifest/device (cf [How the account manifest are stored](#a-word-about-how-the-account-manifests-are-stored)).
+
+### A word about how the account manifests are stored
+
+On the server, we want to limit concurrency issue so we try to reduce the number of deletion operations.
+For this reason the account manifest stored in the server is versioned to prevent concurrency deletions/modifications from two connections to the same account.
+
+That also provide nice characteristic when the user needs to recover its account due to loosing access to is authentication method:
+
+If it happens that they remember their old password, they could decrypt their old manifest and merge it with the new manifest they have created from the recovery process.
+
 ### Integration with the Parsec server
 
 The parsec client would use the authentication service to store a special device (let's call it remote device), which will only be used to create new local devices.
