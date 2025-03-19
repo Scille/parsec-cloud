@@ -370,7 +370,7 @@ sequenceDiagram
 In case the user forget is authentication method, they still could recover access to their account.
 
 The server we use their registered email to send a recovery code.
-The process will be pretty similar to the [Account creation](#account-creation) beside that the server will not delete their previous manifest/device (cf [How the account manifest are stored](#a-word-about-how-the-account-manifests-are-stored)).
+The process will then be pretty similar to the [Account creation](#account-creation) beside that the server will not delete their previous manifest/device (cf [How the account manifest are stored](#a-word-about-how-the-account-manifests-are-stored)).
 
 ### A word about how the account manifests are stored
 
