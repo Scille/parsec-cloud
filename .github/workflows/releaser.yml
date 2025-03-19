@@ -142,6 +142,9 @@ jobs:
           # CLI
           cp ${CP_ARGS} artifacts/cli-x86_64-unknown-linux-gnu/parsec-cli-${{ needs.version.outputs.full }}-x86_64-unknown-linux-gnu release-files
           cp ${CP_ARGS} artifacts/cli-x86_64-unknown-linux-musl/parsec-cli-${{ needs.version.outputs.full }}-x86_64-unknown-linux-musl release-files
+
+          # Webapp
+          cp ${CP_ARGS} artifacts/webapp/parsec-web-${{ needs.version.outputs.full }}.zip release-files
         env:
           # TODO: Current version of cp don't support `--update` with argument,
           # recent version (coreutils-9.5) allows for `none-fail` that make `cp` fail if it would have overwritten a file.
@@ -218,6 +221,7 @@ jobs:
             echo "| Macos (ARM)      | $(gen_mk_dl_link ".macos.arm64.client.dmg") |"
             echo "| Linux (AppImage) | $(gen_mk_dl_link ".linux-gnu.x86_64.client.AppImage") |"
             echo "| Linux (Snap)     | $(gen_mk_dl_link ".linux-gnu.x86_64.client.snap") |"
+            echo "| WebApp           | $(gen_mk_dl_link ".webapp") |"
             echo
             echo '## Server'
             echo
