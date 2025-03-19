@@ -299,7 +299,15 @@ import {
 } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { FileDetailsModal, FileContextMenu, FileAction, FolderGlobalContextMenu, FolderGlobalAction } from '@/views/files';
+import {
+  FileDetailsModal,
+  FileContextMenu,
+  FileAction,
+  FolderGlobalContextMenu,
+  FolderGlobalAction,
+  SmallDisplayFileContextMenu,
+  openEntryContextMenu as _openEntryContextMenu,
+} from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin, download } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick } from 'vue';
@@ -1355,25 +1363,7 @@ async function openGlobalContextMenu(event: Event): Promise<void> {
 
 async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {
   const selectedEntries = getSelectedEntries();
-
-  const popover = await popoverController.create({
-    component: FileContextMenu,
-    cssClass: 'file-context-menu',
-    event: event,
-    reference: event.type === 'contextmenu' ? 'event' : 'trigger',
-    translucent: true,
-    showBackdrop: false,
-    dismissOnSelect: true,
-    alignment: 'start',
-    componentProps: {
-      role: ownRole.value,
-      multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
-      isFile: entry.isFile(),
-    },
-  });
-  await popover.present();
-
-  const { data } = await popover.onDidDismiss();
+  const data = await _openEntryContextMenu(event, entry, selectedEntries, ownRole.value, isLargeDisplay.value);
 
   if (!data) {
     if (onFinished) {
