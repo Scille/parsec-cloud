@@ -4,7 +4,7 @@
 // validation work and takes care of handling concurrency issues.
 // Hence no unique violation should occur under normal circumstances here.
 
-use libparsec_platform_async::stream::{StreamExt, TryStreamExt};
+use libparsec_platform_async::future::TryFutureExt;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
     ConnectOptions, Connection, Row, SqliteConnection,
@@ -662,26 +662,17 @@ async fn db_list_manifests(
     offset: u32,
     limit: u32,
 ) -> anyhow::Result<Vec<RawEncryptedManifest>> {
-    let rows = sqlx::query("SELECT blob FROM vlobs LIMIT ?1 OFFSET ?2")
+    sqlx::query("SELECT blob FROM vlobs LIMIT ?1 OFFSET ?2")
         .bind(limit)
         .bind(offset)
-        .fetch_many(executor);
-
-    let res: anyhow::Result<Vec<RawEncryptedManifest>> = rows
-        .filter_map(|row_res| async {
-            match row_res {
-                // `fetch_many` returns a single "left" element for the query result (containing, among others,
-                // the number of changes), then (what we are actually interested into here) one "right"
-                // elements for each row in the result.
-                Ok(sqlx::Either::Left(_res)) => None,
-                Ok(sqlx::Either::Right(row)) => Some(row.try_get(0).map_err(anyhow::Error::from)),
-                Err(e) => Some(Err(e.into())),
-            }
+        .fetch_all(executor)
+        .map_ok(|vec| {
+            vec.iter()
+                .filter_map(|row| row.try_get(0).ok())
+                .collect::<Vec<_>>()
         })
-        .try_collect()
-        .await;
-
-    res
+        .err_into::<anyhow::Error>()
+        .await
 }
 
 pub async fn db_get_chunk(
