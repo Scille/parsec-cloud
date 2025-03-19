@@ -5,6 +5,7 @@
     "type": "module",
     "license": "BUSL-1.1",
     "scripts": {
+        "preinstall": "cd deps/capacitor-electron && npm install && npm run build",
         "postinstall": "cd electron && npm install",
         "dev": "vite",
         "preview": "vite preview",
@@ -33,7 +34,7 @@
         "megashark:local:stop": "npm unlink megashark-lib --no-save && npm install"
     },
     "dependencies": {
-        "@capacitor-community/electron": "github:Scille/capacitor-electron",
+        "@capacitor-community/electron": "file:./deps/capacitor-electron",
         "@capacitor/android": "^5.6.0",
         "@capacitor/app": "^5.0.6",
         "@capacitor/core": "^5.2.1",

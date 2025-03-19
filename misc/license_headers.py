@@ -216,6 +216,7 @@ LICENSERS_MAP = {
     re.compile(r"^misc/license_headers.py$"): SkipLicenser,
     re.compile(r"^(.*/)?(target|node_modules|build|dist)/"): SkipLicenser,
     re.compile(r"^client/electron/app/"): SkipLicenser,
+    re.compile(r"^client/deps/"): SkipLicenser,
     re.compile(r"^(libparsec|bindings)/.*\.(py|pyi)$"): PythonBuslLicenser,
     re.compile(r"^(libparsec|bindings)/.*\.rs$"): RustBuslLicenser,
     re.compile(r"^(libparsec|bindings)/.*\.sql$"): SqlBuslLicenser,

@@ -135,6 +135,7 @@ ignorePaths:
   - "**/client/.env.*"
   - "**/client/tests/unit/data"
   - "**/client/tests/e2e/data"
+  - "**/client/deps"
 import:
   - "@cspell/dict-fr-fr/cspell-ext.json"
   - "@cspell/dict-fr-reforme/cspell-ext.json"

@@ -24,7 +24,7 @@
         "sentry:sourcemaps": "sentry-cli sourcemaps inject --org scille --project parsec3-frontend ./build && sentry-cli sourcemaps upload --org scille --project parsec3-frontend ./build"
     },
     "dependencies": {
-        "@capacitor-community/electron": "github:Scille/capacitor-electron",
+        "@capacitor-community/electron": "file:../deps/capacitor-electron",
         "@sentry/electron": "^6.1.0",
         "builder-util-runtime": "9.2.10",
         "chokidar": "~4.0.3",

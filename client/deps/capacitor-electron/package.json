@@ -1,0 +1,76 @@
+{
+  "name": "@capacitor-community/electron",
+  "version": "5.0.1",
+  "description": "Capacitor community support for the Electron platform!",
+  "main": "dist/core/index.js",
+  "typings": "dist/core/index.d.ts",
+  "scripts": {
+    "fmt": "prettier \"./**/*.{css,html,ts,js,java}\" --write",
+    "clean": "rimraf ./dist && rimraf ./template.tar.gz",
+    "prepare": "npm run build",
+    "build": "npm run clean && npm run fmt && npm run build-platform && npm run build-platform-types",
+    "capacitor:add": "node dist/cli-scripts/cap-scripts.js add",
+    "capacitor:copy": "node dist/cli-scripts/cap-scripts.js copy",
+    "capacitor:update": "node dist/cli-scripts/cap-scripts.js update",
+    "capacitor:sync": "node dist/cli-scripts/cap-scripts.js sync",
+    "capacitor:open": "node dist/cli-scripts/cap-scripts.js open",
+    "build-platform": "node ./build.js",
+    "build-platform-types": "tsc ./src/electron-platform/index.ts --outDir ./dist/core --declaration --emitDeclarationOnly --esModuleInterop"
+  },
+  "license": "MIT",
+  "author": "IT-MikeS",
+  "devDependencies": {
+    "@commitlint/cli": "^17.6.3",
+    "@commitlint/config-conventional": "^17.6.3",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^9.0.2",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/npm": "^10.0.3",
+    "@semantic-release/release-notes-generator": "^11.0.1",
+    "@types/events": "^3.0.0",
+    "@types/fs-extra": "^11.0.1",
+    "@types/node": "^18.16.8",
+    "commitizen": "^4.3.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "electron": "^35.0.2",
+    "esbuild": "^0.17.18",
+    "is-ci": "^3.0.1",
+    "prettier": "^2.8.8",
+    "rimraf": "^5.0.0",
+    "semantic-release": "^21.0.2",
+    "tar": "^6.1.14",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@capacitor/cli": ">=5.4.0",
+    "@capacitor/core": ">=5.4.0",
+    "@ionic/utils-fs": "~3.1.6",
+    "chalk": "^4.1.2",
+    "electron-is-dev": "~2.0.0",
+    "events": "~3.3.0",
+    "fs-extra": "~11.1.1",
+    "keyv": "^4.5.2",
+    "mime-types": "~2.1.35",
+    "ora": "^5.4.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/capacitor-community/electron"
+  },
+  "bugs": {
+    "url": "https://github.com/capacitor-community/electron/issues"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  }
+}
