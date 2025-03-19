@@ -29,7 +29,7 @@
           />
 
           <ms-action-bar-button
-            v-show="users.getSelectedUsers().filter((u) => u.currentProfile !== UserProfile.Outsider).length > 0"
+            v-show="users.getSelectedUsers().filter((u: UserModel) => u.currentProfile !== UserProfile.Outsider).length > 0"
             :icon="repeat"
             id="button-update-profile"
             :button-label="{ key: 'UsersPage.userContextMenu.actionUpdateProfile', count: users.selectedCount() }"
@@ -142,6 +142,7 @@ import {
   MsSorterChangeEvent,
   Translatable,
   MsModalResult,
+  useWindowSize,
 } from 'megashark-lib';
 import { SortProperty, UserCollection, UserFilter, UserFilterLabels, UserModel } from '@/components/users';
 import {
@@ -165,6 +166,7 @@ import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } fr
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
+import SmallDisplayUserContextMenu from '@/views/users/SmallDisplayUserContextMenu.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
@@ -174,6 +176,8 @@ import { Ref, inject, onMounted, onUnmounted, ref, toRaw } from 'vue';
 import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
+
+const { isLargeDisplay: isLargeDisplay } = useWindowSize();
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -382,23 +386,42 @@ function isCurrentUser(userId: UserID): boolean {
 }
 
 async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: () => void): Promise<void> {
-  const popover = await popoverController.create({
-    component: UserContextMenu,
-    cssClass: 'user-context-menu',
-    event: event,
-    translucent: true,
-    reference: event.type === 'contextmenu' ? 'event' : 'trigger',
-    showBackdrop: false,
-    dismissOnSelect: true,
-    alignment: 'start',
-    componentProps: {
-      user: user,
-      clientIsAdmin: isAdmin.value,
-    },
-  });
-  await popover.present();
+  let data: { action: UserAction } | undefined;
 
-  const { data } = await popover.onDidDismiss();
+  if (isLargeDisplay.value) {
+    const popover = await popoverController.create({
+      component: UserContextMenu,
+      cssClass: 'user-context-menu',
+      event: event,
+      translucent: true,
+      reference: event.type === 'contextmenu' ? 'event' : 'trigger',
+      showBackdrop: false,
+      dismissOnSelect: true,
+      alignment: 'start',
+      componentProps: {
+        user: user,
+        clientIsAdmin: isAdmin.value,
+      },
+    });
+
+    await popover.present();
+    data = (await popover.onDidDismiss()).data;
+  } else {
+    const modal = await modalController.create({
+      component: SmallDisplayUserContextMenu,
+      cssClass: 'user-context-menu',
+      showBackdrop: false,
+      breakpoints: [0, 1],
+      initialBreakpoint: 1,
+      componentProps: {
+        user: user,
+        clientIsAdmin: isAdmin.value,
+      },
+    });
+
+    await modal.present();
+    data = (await modal.onDidDismiss()).data;
+  }
   const actions = new Map<UserAction, (user: UserInfo) => Promise<void>>([
     [UserAction.Revoke, revokeUser],
     [UserAction.Details, openUserDetails],

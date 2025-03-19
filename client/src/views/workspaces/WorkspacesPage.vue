@@ -155,6 +155,7 @@ import {
   MsSorterChangeEvent,
   MsSearchInput,
   MsSpinner,
+  useWindowSize,
 } from 'megashark-lib';
 import {
   WORKSPACES_PAGE_DATA_KEY,
@@ -198,6 +199,8 @@ enum SortWorkspaceBy {
   Size = 'size',
   LastUpdate = 'lastUpdate',
 }
+
+const { isLargeDisplay: isLargeDisplay } = useWindowSize();
 
 const sortBy = ref(SortWorkspaceBy.Name);
 const sortByAsc = ref(true);
@@ -510,7 +513,16 @@ async function onWorkspaceShareClick(workspace: WorkspaceInfo): Promise<void> {
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  await openWorkspaceContextMenu(event, workspace, favorites.value, eventDistributor, informationManager, storageManager);
+  await openWorkspaceContextMenu(
+    event,
+    workspace,
+    favorites.value,
+    eventDistributor,
+    informationManager,
+    storageManager,
+    false,
+    isLargeDisplay.value,
+  );
   await refreshWorkspacesList();
   if (onFinished) {
     onFinished();
