@@ -18,10 +18,12 @@ enum FetchStrategy {
     Multiple,
 }
 
-#[parsec_test(testbed = "minimal")]
-#[case::single_fetch(FetchStrategy::Single)]
-#[case::multiple_fetch(FetchStrategy::Multiple)]
-async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv) {
+#[parsec_test(testbed = "empty")]
+async fn testbed_support(
+    #[values(FetchStrategy::Single, FetchStrategy::Multiple)] fetch_strategy: FetchStrategy,
+    #[values(false, true)] sequestered: bool,
+    env: &TestbedEnv,
+) {
     let mut expected_last_timestamps = PerTopicLastTimestamps {
         common: None,
         sequester: None,
@@ -30,6 +32,15 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
     };
 
     env.customize(|builder| {
+        if sequestered {
+            expected_last_timestamps.sequester = builder
+                .bootstrap_organization("alice")
+                .and_set_sequestered_organization()
+                .map(|e| Some(e.timestamp));
+        } else {
+            builder.bootstrap_organization("alice");
+        }
+
         expected_last_timestamps.common = builder.new_user("bob").map(|e| Some(e.timestamp));
         builder.new_realm("bob").map(|e| {
             expected_last_timestamps
@@ -41,20 +52,41 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
 
         if matches!(fetch_strategy, FetchStrategy::Multiple) {
             // Only the last fetch is taken into account, so this should be known
-            builder.new_device("alice");
+            let alice2_id = builder.new_device("alice").map(|e| e.device_id);
             expected_last_timestamps.common = builder.new_user("mike").map(|e| Some(e.timestamp));
             builder.new_realm("alice").map(|e| {
                 expected_last_timestamps
                     .realm
                     .insert(e.realm_id, e.timestamp);
             });
+            expected_last_timestamps.shamir_recovery = builder
+                .new_shamir_recovery(
+                    "alice",
+                    1,
+                    [("bob".parse().unwrap(), 1.try_into().unwrap())],
+                    alice2_id,
+                )
+                .map(|e| Some(e.timestamp));
+            if sequestered {
+                expected_last_timestamps.sequester =
+                    builder.new_sequester_service().map(|e| Some(e.timestamp));
+            }
             builder.certificates_storage_fetch_certificates("alice@dev1");
         }
 
-        // Stuff the our storage is not aware of
+        // Stuff our storage is not aware of
         builder.new_realm("alice");
-        builder.new_device("alice");
+        let bob2_id = builder.new_device("bob").map(|e| e.device_id);
         builder.new_user("philip");
+        builder.new_shamir_recovery(
+            "bob",
+            1,
+            [("alice".parse().unwrap(), 1.try_into().unwrap())],
+            bob2_id,
+        );
+        if sequestered {
+            builder.new_sequester_service();
+        }
     })
     .await;
 
