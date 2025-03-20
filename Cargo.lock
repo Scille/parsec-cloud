@@ -1797,6 +1797,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "indexed-db"
+version = "0.4.2"
+source = "git+https://github.com/Ekleog/indexed-db.git?rev=d92f17e0e2cd48abc4b2d2adf62ccef9a9924080#d92f17e0e2cd48abc4b2d2adf62ccef9a9924080"
+dependencies = [
+ "futures-channel",
+ "futures-util",
+ "pin-project-lite",
+ "scoped-tls",
+ "thiserror 2.0.12",
+ "web-sys",
+]
+
+[[package]]
 name = "indexed_db_futures"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2279,6 +2292,7 @@ dependencies = [
 name = "libparsec_platform_storage"
 version = "3.3.3-a.0+dev"
 dependencies = [
+ "indexed-db",
  "indexed_db_futures",
  "js-sys",
  "lazy_static",
@@ -2295,6 +2309,7 @@ dependencies = [
  "sqlx",
  "thiserror 2.0.12",
  "tokio",
+ "wasm-bindgen",
  "web-sys",
 ]
 

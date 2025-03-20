@@ -28,6 +28,7 @@ pub struct WorkspaceStorage {
     platform: PlatformWorkspaceStorage,
 }
 
+#[derive(Debug)]
 pub struct UpdateManifestData {
     pub entry_id: VlobID,
     pub encrypted: RawEncryptedManifest,

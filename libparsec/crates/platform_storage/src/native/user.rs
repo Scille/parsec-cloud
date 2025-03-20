@@ -206,7 +206,7 @@ impl PlatformUserStorage {
     }
 
     /// Only used for debugging tests
-    #[cfg(feature = "expose-test-methods")]
+    #[cfg(any(test, feature = "expose-test-methods"))]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         let checkpoint = self.get_realm_checkpoint().await?;
 
@@ -215,7 +215,7 @@ impl PlatformUserStorage {
                 vlob_id, \
                 need_sync, \
                 base_version, \
-                remote_version, \
+                remote_version \
             FROM vlobs \
             ",
         )
