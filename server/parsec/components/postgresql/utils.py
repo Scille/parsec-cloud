@@ -6,9 +6,7 @@ import re
 import traceback
 from functools import wraps
 from types import CoroutineType
-from typing import Any, Callable, Iterable, Protocol, TypeVar, cast
-
-from typing_extensions import Concatenate, ParamSpec
+from typing import Any, Callable, Concatenate, Iterable, ParamSpec, Protocol, TypeVar, cast
 
 from parsec._parsec import (
     ActiveUsersLimit,

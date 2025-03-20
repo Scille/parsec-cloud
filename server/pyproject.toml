@@ -39,7 +39,6 @@ pydantic-core = "^2.27.2"
 sentry-sdk = "2.22.0"
 starlette = ">=0.37.2,<0.47.0"
 structlog = ">=21.5,<26.0"
-typing-extensions = "^4.12.2"
 # ASGI server
 fastapi = ">=0.104.1,<0.116.0"
 uvicorn = ">=0.24,<0.35"

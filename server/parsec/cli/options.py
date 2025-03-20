@@ -9,15 +9,16 @@ from itertools import count
 from typing import (
     Any,
     Callable,
+    Concatenate,
     Iterable,
     Iterator,
+    ParamSpec,
     TextIO,
     TypeVar,
     cast,
 )
 
 import click
-from typing_extensions import Concatenate, ParamSpec
 
 from parsec._version import __version__
 from parsec.config import (

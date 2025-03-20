@@ -8,12 +8,11 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from functools import wraps
-from typing import AsyncIterator, Awaitable, Callable, Coroutine, Iterable
+from typing import AsyncIterator, Awaitable, Callable, Coroutine, Iterable, ParamSpec
 from uuid import uuid4
 
 import asyncpg
 from asyncpg import PostgresError, UndefinedTableError, UniqueViolationError
-from typing_extensions import ParamSpec
 
 from parsec._parsec import ActiveUsersLimit, DateTime
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
