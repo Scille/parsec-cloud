@@ -26,9 +26,12 @@ async fn cleanup_device_data(tmp_path: TmpPath, env: &TestbedEnv) {
     assert!(device_dir.exists(), "device dir does not exist");
 
     // 3) Cleanup the device data.
-    remove_device_data(&tmp_path, &alice.device_id)
+    remove_device_data(&tmp_path, alice.device_id)
         .await
         .unwrap();
     assert!(!wksp_file.exists(), "wksp file still exists");
     assert!(!device_dir.exists(), "device dir still exists");
 }
+
+// TODO: Convert this test be compatible with web
+// see https://github.com/Scille/parsec-cloud/issues/10007

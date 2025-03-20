@@ -40,11 +40,50 @@ fn store_factory(_env: &TestbedEnv) -> Arc<dyn Any + Send + Sync> {
 // rely on the `IndexedDb` API that always stores data in a persistent
 // way, hence why we need to make sure no database already exists.
 #[cfg(target_arch = "wasm32")]
-pub async fn drop_existing_web_indexed_db(name: &str) -> anyhow::Result<()> {
-    indexed_db_futures::IdbDatabase::delete_by_name(&name)
-        .map_err(|e| anyhow::anyhow!("{e:?}"))?
+mod drop_existing_web_indexed_db {
+    use super::*;
+
+    async fn drop_db(name: &str) -> anyhow::Result<()> {
+        indexed_db_futures::IdbDatabase::delete_by_name(&name)
+            .map_err(|e| anyhow::anyhow!("{e:?}"))?
+            .await
+            .map_err(|e| anyhow::anyhow!("{e:?}"))
+    }
+
+    pub(super) async fn drop_certificates_db(data_base_dir: &Path, device: &LocalDevice) {
+        drop_db(&format!(
+            "{}-{}-certificates",
+            data_base_dir.display(),
+            device.device_id.hex()
+        ))
         .await
-        .map_err(|e| anyhow::anyhow!("{e:?}"))
+        .unwrap()
+    }
+
+    pub(super) async fn drop_user_db(data_base_dir: &Path, device: &LocalDevice) {
+        drop_db(&format!(
+            "{}-{}-user",
+            data_base_dir.to_str().unwrap(),
+            device.device_id.hex()
+        ))
+        .await
+        .unwrap();
+    }
+
+    pub(super) async fn drop_workspace_db(
+        data_base_dir: &Path,
+        device: &LocalDevice,
+        realm_id: VlobID,
+    ) {
+        drop_db(&format!(
+            "{}-{}-{}-workspace",
+            data_base_dir.display(),
+            device.device_id.hex(),
+            realm_id.hex()
+        ))
+        .await
+        .unwrap();
+    }
 }
 
 #[allow(unused)]
@@ -69,13 +108,7 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
         }
 
         #[cfg(target_arch = "wasm32")]
-        drop_existing_web_indexed_db(&format!(
-            "{}-{}-certificates",
-            data_base_dir.display(),
-            device.device_id.hex()
-        ))
-        .await
-        .unwrap();
+        drop_existing_web_indexed_db::drop_certificates_db(data_base_dir, device).await;
 
         let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
 
@@ -215,13 +248,7 @@ pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: &L
         }
 
         #[cfg(target_arch = "wasm32")]
-        drop_existing_web_indexed_db(&format!(
-            "{}-{}-user",
-            data_base_dir.to_str().unwrap(),
-            device.device_id.hex()
-        ))
-        .await
-        .unwrap();
+        drop_existing_web_indexed_db::drop_user_db(data_base_dir, device).await;
 
         let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
 
@@ -302,14 +329,7 @@ pub(crate) async fn maybe_populate_workspace_storage(
         }
 
         #[cfg(target_arch = "wasm32")]
-        drop_existing_web_indexed_db(&format!(
-            "{}-{}-{}-workspace",
-            data_base_dir.display(),
-            device.device_id.hex(),
-            realm_id.hex()
-        ))
-        .await
-        .unwrap();
+        drop_existing_web_indexed_db::drop_workspace_db(data_base_dir, device, realm_id).await;
 
         let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
 
@@ -447,6 +467,9 @@ pub(crate) async fn mark_as_populated_user_storage(data_base_dir: &Path, device:
         });
 
         if !already_populated {
+            #[cfg(target_arch = "wasm32")]
+            drop_existing_web_indexed_db::drop_user_db(data_base_dir, device).await;
+
             guard.push((device.device_id, StorageKind::User));
         }
     }
@@ -474,6 +497,9 @@ pub(crate) async fn mark_as_populated_workspace_storage(
         });
 
         if !already_populated {
+            #[cfg(target_arch = "wasm32")]
+            drop_existing_web_indexed_db::drop_workspace_db(data_base_dir, device, realm_id).await;
+
             guard.push((device.device_id, StorageKind::Workspace(realm_id)));
         }
     }
