@@ -269,6 +269,9 @@ pub async fn workspace_storage_non_speculative_init(
 ) -> anyhow::Result<()> {
     // 1) Open & initialize the database
 
+    #[cfg(feature = "test-with-testbed")]
+    crate::testbed::mark_as_populated_workspace_storage(data_base_dir, device, realm_id).await;
+
     let mut storage =
         PlatformWorkspaceStorage::no_populate_start(data_base_dir, device, realm_id, u64::MAX)
             .await
