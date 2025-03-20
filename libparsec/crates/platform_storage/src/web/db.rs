@@ -165,16 +165,6 @@ pub(super) async fn count(
         .map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
-pub(super) async fn clear(tx: &IdbTransaction<'_>, store: &str) -> anyhow::Result<()> {
-    let store = tx
-        .object_store(store)
-        .map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-    store.clear().map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-    Ok(())
-}
-
 pub(super) async fn insert_with_key(
     tx: &IdbTransaction<'_>,
     store: &str,
