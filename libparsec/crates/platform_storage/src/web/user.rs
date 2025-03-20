@@ -143,33 +143,3 @@ impl PlatformUserStorage {
         todo!();
     }
 }
-
-pub async fn user_storage_non_speculative_init(
-    data_base_dir: &Path,
-    device: &LocalDevice,
-) -> anyhow::Result<()> {
-    // 1) Open & initialize the database
-
-    let mut storage = PlatformUserStorage::no_populate_start(data_base_dir, device).await?;
-
-    // 2) Populate the database with the user manifest
-
-    let timestamp = device.now();
-    let manifest = LocalUserManifest::new(
-        device.device_id.clone(),
-        timestamp,
-        Some(device.user_realm_id),
-        false,
-    );
-    let encrypted = manifest.dump_and_encrypt(&device.local_symkey);
-
-    storage
-        .update_user_manifest(&encrypted, manifest.need_sync, manifest.base.version)
-        .await?;
-
-    // 4) All done ! Don't forget to close the database before exiting ;-)
-
-    storage.stop().await?;
-
-    Ok(())
-}
