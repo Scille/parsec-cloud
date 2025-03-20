@@ -118,8 +118,6 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-@import '@/theme/responsive-mixin';
-
 .file-card-item {
   --background: var(--parsec-color-light-secondary-background);
   background: var(--parsec-color-light-secondary-background);
@@ -149,7 +147,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   width: 100%;
   margin: auto;
 
-  @include breakpoint('sm') {
+  @include ms.responsive-breakpoint('sm') {
     padding: 1rem 0.5rem;
   }
 

@@ -61,8 +61,22 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
 
 // 3) Finally configure Vite
 
+// scss additionalData is used to inject the theme variables in SCSS files imported in main.ts & .vue files
+// for SCSS files imported with sass @use / @forward methods, you need to add manually the theme import
+const additionalData = '@use "megashark-lib/theme" as ms;';
+
 // https://vitejs.dev/config/
 const config: UserConfigExport = () => ({
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: additionalData,
+        // Needed to avoid using default legacy API till upgrade to Vite 6
+        // https://sass-lang.com/documentation/breaking-changes/legacy-js-api/#bundlers
+        api: 'modern-compiler',
+      },
+    },
+  },
   // Since we do not know in advance how the webapp will be hosted we use a relative base href.
   // That way the app can be at the root or in a sub-folder and limit the need to specific build.
   base: './',

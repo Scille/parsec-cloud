@@ -733,12 +733,10 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
 </script>
 
 <style lang="scss" scoped>
-@import '@/theme/responsive-mixin';
-
 .desktop-menu-container {
   --side-min-width: var(--parsec-sidebar-menu-min-width);
 
-  @include breakpoint('sm') {
+  @include ms.responsive-breakpoint('sm') {
     flex-flow: column-reverse;
     --side-min-width: 100%;
     width: 100%;
@@ -765,7 +763,7 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     gap: 1.5rem;
   }
 
-  @include breakpoint('sm') {
+  @include ms.responsive-breakpoint('sm') {
     display: none;
   }
 
@@ -1219,7 +1217,7 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     }
   }
 
-  @include breakpoint('sm') {
+  @include ms.responsive-breakpoint('sm') {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
   }
