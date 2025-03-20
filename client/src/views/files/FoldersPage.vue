@@ -301,11 +301,9 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import {
   FileDetailsModal,
-  FileContextMenu,
   FileAction,
   FolderGlobalContextMenu,
   FolderGlobalAction,
-  SmallDisplayFileContextMenu,
   openEntryContextMenu as _openEntryContextMenu,
 } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
