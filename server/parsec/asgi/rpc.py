@@ -128,7 +128,7 @@ TOS_CMDS_LOAD_FN = {
 }
 
 
-rpc_router = APIRouter()
+rpc_router = APIRouter(tags=["rpc"])
 
 
 OrganizationIDField = Annotated[

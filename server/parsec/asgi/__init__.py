@@ -24,11 +24,27 @@ templates = Jinja2Templates(
     directory=(Path(__file__) / "../../templates").resolve(), **JINJA_ENV_CONFIG
 )
 
+tags_metadata = [
+    {
+        "name": "administration",
+        "description": "REST API for administration operations.",
+    },
+    {
+        "name": "rpc",
+        "description": "RPC Parsec API for business-logic operations.",
+    },
+    {
+        "name": "testbed",
+        "description": "API for testbed customization operations.",
+    },
+]
+
 
 def app_factory(backend: Backend) -> AsgiApp:
     app = FastAPI(
         title="Parsec Server",
         version=parsec_version,
+        openapi_tags=tags_metadata,
     )
 
     app.state.backend = backend
