@@ -66,7 +66,7 @@ if TYPE_CHECKING:
 logger = get_logger()
 
 
-administration_router = APIRouter()
+administration_router = APIRouter(tags=["administration"])
 security = HTTPBearer()
 
 
