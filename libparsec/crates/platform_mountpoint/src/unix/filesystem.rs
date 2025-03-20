@@ -209,7 +209,7 @@ async fn reply_with_lookup(
 /// This macro ensures a generic error response will be returned even if the
 /// thread panics.
 macro_rules! reply_on_drop_guard {
-    ($reply:expr, $reply_ty:ty) => {{
+    ($reply:expr, $reply_ty:ty, $file:expr, $line:expr) => {{
         struct ReplyOnDrop(Option<$reply_ty>);
 
         impl ReplyOnDrop {
@@ -228,12 +228,24 @@ macro_rules! reply_on_drop_guard {
                     // Already replied
                     None => (),
                     // Not replied time to do it with ourself !
-                    Some(reply) => reply.error(libc::EIO),
+                    Some(reply) => {
+                        log::warn!(
+                            "No manual reply, return EIO error instead ({file}:{line})",
+                            file = $file,
+                            line = $line
+                        );
+                        reply.error(libc::EIO)
+                    }
                 }
             }
         }
 
         ReplyOnDrop(Some($reply))
+    }};
+    ($reply:expr, $reply_ty:ty) => {{
+        const LINE: u32 = ::std::line!();
+        const FILE: &str = ::std::file!();
+        reply_on_drop_guard!($reply, $reply_ty, FILE, LINE)
     }};
 }
 
