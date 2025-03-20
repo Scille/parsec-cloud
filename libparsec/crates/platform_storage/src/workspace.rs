@@ -12,9 +12,6 @@ use libparsec_types::prelude::*;
 
 use crate::platform::workspace::PlatformWorkspaceStorage;
 
-// Re-expose `workspace_storage_non_speculative_init`
-pub use crate::platform::workspace::workspace_storage_non_speculative_init;
-
 pub const TYPICAL_BLOCK_SIZE: u64 = 512 * 1024; // 512 KB
 
 #[derive(Debug, thiserror::Error)]
@@ -263,6 +260,40 @@ impl WorkspaceStorage {
             .mark_prevent_sync_pattern_fully_applied(pattern)
             .await
     }
+}
+
+pub async fn workspace_storage_non_speculative_init(
+    data_base_dir: &Path,
+    device: &LocalDevice,
+    realm_id: VlobID,
+) -> anyhow::Result<()> {
+    // 1) Open & initialize the database
+
+    let mut storage =
+        PlatformWorkspaceStorage::no_populate_start(data_base_dir, device, realm_id, u64::MAX)
+            .await
+            .map_err(|err| err.context("cannot initialize database"))?;
+
+    // 2) Populate the database with the workspace manifest
+
+    let timestamp = device.now();
+    let manifest = LocalFolderManifest::new_root(device.device_id, realm_id, timestamp, false);
+
+    storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: manifest.base.id,
+            encrypted: manifest.dump_and_encrypt(&device.local_symkey),
+            need_sync: manifest.need_sync,
+            base_version: manifest.base.version,
+        })
+        .await
+        .map_err(|err| err.context("cannot store workspace manifest"))?;
+
+    // 4) All done ! Don't forget to close the database before exiting ;-)
+
+    storage.stop().await?;
+
+    Ok(())
 }
 
 #[cfg(test)]
