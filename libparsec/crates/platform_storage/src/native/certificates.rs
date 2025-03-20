@@ -269,20 +269,22 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         // Handling `up_to` with a timestamp is a bit tricky:
-        // 1) we want the last result up to the given timestamp (included)
-        // 2) BUT ! if 1) fails we want the first result in order
-        //    to correctly return NonExisting vs ExistButTooRecent
+        // 1) We want the last result up to the given timestamp (included).
+        // 2) BUT ! If 1) fails we want the first result in order
+        //    to correctly return NonExisting vs ExistButTooRecent.
         //
         // So to do that we act in three steps:
-        //  1) do the SQL query with the `up_to` filter
-        //  2) if the previous query returned nothing, do another SQL query without `up_to`
-        //  3) compare the datetime of the result with the on provided by `up_to`: if it's
-        //     too high it's a ExistButTooRecent error otherwise it's a valid result
-
+        //  1) Do the SQL query with the `up_to` filter.
+        //  2) If the previous query returned nothing, do another SQL query without `up_to`.
+        //  3a) If this new query return no result, it's obviously a NonExisting error.
+        //  3b) If this new query returns a result, compare its timestamp with the one provided
+        //      by `up_to`: too means it's an ExistButTooRecent error, otherwise it's a valid
+        //      result that got concurrently added between steps 1 and 2 (highly unlikely though).
         let mut query_builder = build_get_certificate_query(&query, up_to);
         query_builder.push(" ORDER BY certificate_timestamp DESC");
 
         // Step 1: do the regular SQL query
+
         let maybe_row = query_builder
             .build()
             .fetch_optional(&mut *self.transaction)
@@ -312,6 +314,7 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
 
         // Step 2: do another SQL query without `up_to` to look for an
         // "existing but too recent" item
+
         let mut query_builder = build_get_certificate_query(&query, UpTo::Current);
         let maybe_row = query_builder
             .build()
@@ -320,6 +323,7 @@ impl PlatformCertificatesStorageForUpdateGuard<'_> {
             .map_err(|err| GetCertificateError::Internal(err.into()))?;
 
         // Step 3: determine if the result is an actual success or a ExistButTooRecent error
+
         if let Some(row) = maybe_row {
             let certificate_timestamp = {
                 let ts = row
