@@ -55,6 +55,14 @@ repos:
             markdown,
             scss,
           ]
+      - id: server-readme
+        name: server README
+        entry: python ./misc/check_server_readme.py
+        language: python
+        language_version: python3
+        pass_filenames: false
+        require_serial: true
+        files: ^server/README.md
 
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.35.1
