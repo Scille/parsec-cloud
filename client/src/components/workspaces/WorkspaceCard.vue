@@ -108,8 +108,6 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-@import '@/theme/responsive-mixin';
-
 .workspace-card-item {
   cursor: pointer;
   text-align: center;
@@ -122,11 +120,11 @@ async function onOptionsClick(event: Event): Promise<void> {
   padding: 0.25rem;
   transition: all 0.15s ease-in-out;
 
-  @include breakpoint('sm') {
+  @include ms.responsive-breakpoint('sm') {
     max-width: 100%;
   }
 
-  @include breakpoint('xs') {
+  @include ms.responsive-breakpoint('xs') {
     max-width: 100%;
   }
 
@@ -254,7 +252,7 @@ async function onOptionsClick(event: Event): Promise<void> {
       .icon-option {
         font-size: 1.375rem;
 
-        @include breakpoint('sm') {
+        @include ms.responsive-breakpoint('sm') {
           font-size: 1.5rem;
         }
       }
@@ -265,7 +263,7 @@ async function onOptionsClick(event: Event): Promise<void> {
       }
     }
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       padding: 0 0.25rem;
     }
   }

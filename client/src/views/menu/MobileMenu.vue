@@ -130,8 +130,6 @@ async function goToLastDocumentsPage(): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-@import '@/theme/responsive-mixin';
-
 .menu-mobile {
   .tab-bar {
     background: var(--parsec-color-light-secondary-inversed-contrast);

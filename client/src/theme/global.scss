@@ -1,17 +1,8 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
 /**** Components CSS overloads ****/
-@import 'components/action-bar';
-@import 'components/file-viewers';
-@import 'components/inputs';
-@import 'components/modals';
-@import 'components/list';
-@import 'components/grid';
-@import 'components/notifications';
-@import 'components/popovers';
-@import 'components/tags';
-@import '@/theme/responsive-mixin';
-@import 'global-client';
+@use 'components' as components;
+@use 'global-client' as globalClient;
 
 /**** Global CSS overloads ****/
 // scroll behavior: user(revoked, active, invitation)/folder/workspace
@@ -34,16 +25,16 @@ ion-title {
   padding: 0 2rem;
   height: 100%;
 
-  @include breakpoint('wide') {
+  @include ms.responsive-breakpoint('xl') {
     padding: 0 1rem 0 2rem;
   }
 
-  @include breakpoint('sm') {
+  @include ms.responsive-breakpoint('sm') {
     padding: 0 1.5rem;
     margin-bottom: 0;
   }
 
-  @include breakpoint('xs') {
+  @include ms.responsive-breakpoint('xs') {
     padding: 0 1rem;
   }
 
@@ -54,7 +45,7 @@ ion-title {
   .invitation-container-grid {
     padding-top: 2rem;
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       padding-top: 0;
     }
   }
