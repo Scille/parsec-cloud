@@ -1080,170 +1080,66 @@ impl fuser::Filesystem for Filesystem {
         let uid = req.uid();
         let gid = req.gid();
 
-        if let Some(size) = size {
-            // Truncate file by file descriptor
+        let ops = self.ops.clone();
+        let is_read_only = self.is_read_only;
+        // TODO: We only need the path when fh is None since we can retrieve the file stat from a
+        // file descriptor.
+        let path = {
+            let inodes_guard = self.inodes.lock().expect("mutex is poisoned");
+            inodes_guard.get_path_or_panic(ino)
+        };
 
-            if let Some(fh) = fh {
-                let ops = self.ops.clone();
-                let is_read_only = self.is_read_only;
-                self.tokio_handle.spawn(async move {
-                    let fd = FileDescriptor(fh as u32);
-                    match ops.fd_resize(fd, size, false).await {
-                        Ok(()) => (),
-                        Err(err) => {
-                            return match err {
+        self.tokio_handle.spawn(async move {
+            let attr = 'attr: {
+                if let Some(size) = size {
+                    // Truncate file by file descriptor
+
+                    if let Some(fh) = fh {
+                        let fd = FileDescriptor(fh as u32);
+                        if let Err(err) = ops.fd_resize(fd, size, false).await {
+                            match err {
                                 WorkspaceFdResizeError::NotInWriteMode => {
-                                    reply.manual().error(libc::EBADF)
+                                    break 'attr Err(libc::EBADF)
                                 }
                                 // Unexpected: FUSE is supposed to only give us valid file descriptors !
                                 WorkspaceFdResizeError::BadFileDescriptor
                                 | WorkspaceFdResizeError::Internal(_) => {
-                                    reply.manual().error(libc::EIO)
+                                    break 'attr Err(libc::EIO)
                                 }
-                            };
+                            }
                         }
-                    }
 
-                    let stat = match ops.fd_stat(fd).await {
-                        Ok(stat) => stat,
-                        Err(err) => {
-                            return match err {
+                        ops.fd_stat(fd)
+                            .await
+                            .map(|stat| file_stat_to_file_attr(stat, ino, uid, gid, is_read_only))
+                            .map_err(|err| match err {
                                 // Unexpected: FUSE is supposed to only give us valid file descriptors !
                                 WorkspaceFdStatError::BadFileDescriptor
-                                | WorkspaceFdStatError::Internal(_) => {
-                                    reply.manual().error(libc::EIO)
-                                }
-                            };
-                        }
-                    };
+                                | WorkspaceFdStatError::Internal(_) => libc::EIO,
+                            })
+                    } else {
+                        // FIXME: Currently I'm only returning the file attributes without truncating the file
+                        // Truncate file by path
 
-                    reply.manual().attr(
-                        &TTL,
-                        &file_stat_to_file_attr(stat, ino, uid, gid, is_read_only),
-                    );
-                });
-
-                return;
-            } else {
-                // FIXME: Currently I'm only returning the file attributes without truncating the file
-                // Truncate file by path
-
-                let path = {
-                    let inodes_guard = self.inodes.lock().expect("mutex is poisoned");
-                    inodes_guard.get_path_or_panic(ino)
-                };
-
-                let ops = self.ops.clone();
-                let is_read_only = self.is_read_only;
-                self.tokio_handle.spawn(async move {
-                    let options = OpenOptions {
-                        read: false,
-                        write: true,
-                        truncate: true,
-                        create: false,
-                        create_new: false,
-                    };
-                    let fd = match ops.open_file(path.clone(), options).await {
-                        Ok(fd) => fd,
-                        Err(err) => {
-                            return match err {
-                                WorkspaceOpenFileError::EntryNotFound => {
-                                    reply.manual().error(libc::ENOENT)
-                                }
-                                WorkspaceOpenFileError::Offline(_) => {
-                                    reply.manual().error(libc::EHOSTUNREACH)
-                                }
-                                WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
-                                    reply.manual().error(libc::EEXIST)
-                                }
-                                WorkspaceOpenFileError::EntryNotAFile { .. } => {
-                                    reply.manual().error(libc::EISDIR)
-                                }
-                                WorkspaceOpenFileError::NoRealmAccess => {
-                                    reply.manual().error(libc::EPERM)
-                                }
-                                WorkspaceOpenFileError::ReadOnlyRealm => {
-                                    reply.manual().error(libc::EROFS)
-                                }
-                                WorkspaceOpenFileError::Stopped
-                                | WorkspaceOpenFileError::InvalidKeysBundle(_)
-                                | WorkspaceOpenFileError::InvalidCertificate(_)
-                                | WorkspaceOpenFileError::InvalidManifest(_)
-                                | WorkspaceOpenFileError::Internal(_) => {
-                                    log::warn!(
-                                        "FUSE `setattr` operation cannot complete: {:?}",
-                                        err
-                                    );
-                                    reply.manual().error(libc::EIO)
-                                }
-                            }
-                        }
-                    };
-
-                    let stat = match ops.fd_stat(fd).await {
-                        Ok(stat) => stat,
-                        Err(err) => {
-                            return match err {
-                                // Unexpected: we have just opened the file !
-                                WorkspaceFdStatError::BadFileDescriptor
-                                | WorkspaceFdStatError::Internal(_) => {
-                                    log::warn!(
-                                        "FUSE `setattr` operation cannot complete: {:?}",
-                                        err
-                                    );
-                                    reply.manual().error(libc::EIO)
-                                }
-                            };
-                        }
-                    };
-
-                    match ops.fd_close(fd).await {
-                        Ok(()) => (),
-                        Err(err) => {
-                            return match err {
-                            WorkspaceFdCloseError::Stopped
-                            // Unexpected: we have just opened the file !
-                            | WorkspaceFdCloseError::BadFileDescriptor
-                            | WorkspaceFdCloseError::Internal(_)
-                            => {
-                                log::warn!("FUSE `setattr` operation cannot complete: {:?}", err);
-                                reply.manual().error(libc::EIO)
-                            }
-                        };
-                        }
+                        getattr_from_path(&ops, path, ino, uid, gid, is_read_only).await
                     }
+                }
+                // Other changes are not supported
+                // TODO: support atime/utime change ?
+                else {
+                    // Nothing to set, just return the file attr
+                    // Seems benign but it's important for `setattr` to return the file attributes even if
+                    // nothing changed.
+                    // Previously we where returning an error and that caused the issues #8976 and #8991
 
-                    reply.manual().attr(
-                        &TTL,
-                        &file_stat_to_file_attr(stat, ino, uid, gid, is_read_only),
-                    );
-                });
+                    getattr_from_path(&ops, path, ino, uid, gid, is_read_only).await
+                }
+            };
 
-                return;
-            }
-        }
-
-        // Other changes are not supported
-
-        // TODO: support atime/utime change ?
-
-        // Nothing to set, just return the file attr
-        // Seems benign but it's important for `setattr` to return the file attributes even if
-        // nothing changed.
-        // Previously we where returning an error and that caused the issues #8976 and #8991
-
-        let path = {
-            let inodes_guard = self.inodes.lock().expect("Mutex is poisoned");
-            inodes_guard.get_path_or_panic(ino)
-        };
-
-        let ops = self.ops.clone();
-        let is_read_only = self.is_read_only;
-
-        self.tokio_handle.spawn(async move {
-            let res = getattr_from_path(&ops, path, ino, uid, gid, is_read_only).await;
-
-            match res {
+            match attr
+                .inspect(|stat| log::debug!("Setattr({ino}) return stat: {stat:?}"))
+                .inspect_err(|errno| log::warn!("Setattr({ino}) failed with errno {errno}"))
+            {
                 Ok(attr) => reply.manual().attr(&TTL, &attr),
                 Err(errno) => reply.manual().error(errno),
             }
