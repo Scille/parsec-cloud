@@ -1,35 +1,163 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// Certificate storage relies on the upper layer to do the actual certification
-// validation work and takes care of handling concurrency issues.
-// Hence no unique violation should occur under normal circumstances here.
+use std::path::Path;
 
-use std::{path::Path, sync::Arc};
-
-use indexed_db_futures::{prelude::IdbTransaction, IdbDatabase};
+use indexed_db::{Database, Factory, ObjectStore, Transaction};
 use libparsec_types::prelude::*;
+use wasm_bindgen::{JsCast, JsValue};
 
+use super::utils::{
+    js_to_rs_bytes, js_to_rs_string, js_to_rs_u32, js_to_rs_u64, js_to_rs_vlob_id,
+    rs_to_js_timestamp, rs_to_js_u64, with_transaction, CustomErrMarker,
+};
 #[cfg(any(test, feature = "expose-test-methods"))]
 use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
-use crate::{
-    web::{
-        model::{get_workspace_storage_db_name, RealmCheckpoint, Vlob},
-        DB_VERSION,
-    },
-    workspace::{
-        MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, RawEncryptedBlock,
-        RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData,
-    },
+use crate::workspace::{
+    MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, RawEncryptedBlock,
+    RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData,
 };
+use crate::PREVENT_SYNC_PATTERN_EMPTY_PATTERN;
 
-#[derive(Debug)]
-pub(crate) struct PlatformWorkspaceStorage {
-    conn: Arc<IdbDatabase>,
-    cache_max_blocks: u64,
+pub(super) fn get_workspace_storage_db_name(
+    data_base_dir: &Path,
+    device_id: DeviceID,
+    realm_id: VlobID,
+) -> String {
+    format!(
+        "{}-{}-{}-workspace",
+        data_base_dir.display(),
+        device_id.hex(),
+        realm_id.hex()
+    )
 }
 
-// Safety: PlatformWorkspaceStorage is read only
+// Note each database (certificates, workspace etc.) has its own version.
+const DB_VERSION: u32 = 1;
+// Prevent sync pattern store contains: {pattern: string, fully_applied: boolean}
+const PREVENT_SYNC_PATTERN_STORE: &str = "prevent_sync_pattern";
+// Prevent sync pattern is a singleton, so we use a single key.
+const PREVENT_SYNC_PATTERN_SINGLETON_KEY: u32 = 1;
+const PREVENT_SYNC_PATTERN_PATTERN_FIELD: &str = "pattern";
+const PREVENT_SYNC_PATTERN_FULLY_APPLIED_FIELD: &str = "fully_applied";
+
+// Checkpoint store contains a singleton with just a number
+const CHECKPOINT_STORE: &str = "checkpoint";
+const CHECKPOINT_SINGLETON_KEY: u32 = 1;
+
+// Vlobs store contains:
+// - key: Vlob ID (as Uint8Array)
+// - value: {
+//     base_version: number,
+//     remote_version: number,
+//     inbound_need_sync: number, // 0 is false, 1 is true
+//     outbound_need_sync: number, // 0 is false, 1 is true
+//     blob: Uint8Array
+//   }
+// Note the need to use a number to store boolean, given that IndexedDB
+// doesn't support booleans in indexes ><''
+const VLOBS_STORE: &str = "vlobs";
+const VLOBS_INDEX_INBOUND_NEED_SYNC: &str = "_idx_inbound_need_sync";
+const VLOBS_INDEX_OUTBOUND_NEED_SYNC: &str = "_idx_outbound_need_sync";
+const VLOBS_INBOUND_NEED_SYNC_FIELD: &str = "inbound_need_sync";
+const VLOBS_OUTBOUND_NEED_SYNC_FIELD: &str = "outbound_need_sync";
+const VLOBS_BASE_VERSION_FIELD: &str = "base_version";
+const VLOBS_REMOTE_VERSION_FIELD: &str = "remote_version";
+const VLOBS_BLOB_FIELD: &str = "blob";
+
+// Chunks store contains:
+// - key: Chunk ID (as Uint8Array)
+// - value: {size: number, data: Uint8Array}
+const CHUNKS_STORE: &str = "chunks";
+const CHUNKS_SIZE_FIELD: &str = "size";
+const CHUNKS_DATA_FIELD: &str = "data";
+
+// Blocks store contains:
+// - key: Block ID (as Uint8Array)
+// - value: {size: number, offline: bool, accessed_on: integer, data: Uint8Array}
+const BLOCKS_STORE: &str = "blocks";
+const BLOCKS_INDEX_ACCESSED_ON: &str = "_idx_accessed_on";
+const BLOCKS_SIZE_FIELD: &str = "size";
+const BLOCKS_OFFLINE_FIELD: &str = "offline";
+const BLOCKS_ACCESSED_ON_FIELD: &str = "accessed_on";
+const BLOCKS_DATA_FIELD: &str = "data";
+
+async fn initialize_database(
+    evt: &indexed_db::VersionChangeEvent<CustomErrMarker>,
+) -> indexed_db::Result<(), CustomErrMarker> {
+    let db = evt.database();
+
+    // 1) Create the stores
+
+    db.build_object_store(PREVENT_SYNC_PATTERN_STORE).create()?;
+    db.build_object_store(CHECKPOINT_STORE).create()?;
+
+    let vlob_store = db.build_object_store(VLOBS_STORE).create()?;
+    vlob_store
+        .build_index(VLOBS_INDEX_INBOUND_NEED_SYNC, VLOBS_INBOUND_NEED_SYNC_FIELD)
+        .create()?;
+    vlob_store
+        .build_index(
+            VLOBS_INDEX_OUTBOUND_NEED_SYNC,
+            VLOBS_OUTBOUND_NEED_SYNC_FIELD,
+        )
+        .create()?;
+
+    db.build_object_store(CHUNKS_STORE).create()?;
+
+    let block_store = db.build_object_store(BLOCKS_STORE).create()?;
+    block_store
+        .build_index(BLOCKS_INDEX_ACCESSED_ON, BLOCKS_ACCESSED_ON_FIELD)
+        .create()?;
+
+    // 2) Insert the default prevent sync pattern
+
+    let transaction = evt.transaction();
+
+    let store = transaction.object_store(PREVENT_SYNC_PATTERN_STORE)?;
+
+    let singleton = js_sys::Object::new();
+
+    js_sys::Reflect::set(
+        &singleton,
+        &PREVENT_SYNC_PATTERN_PATTERN_FIELD.into(),
+        &PREVENT_SYNC_PATTERN_EMPTY_PATTERN.into(),
+    )
+    .expect("target is an object");
+
+    js_sys::Reflect::set(
+        &singleton,
+        &PREVENT_SYNC_PATTERN_FULLY_APPLIED_FIELD.into(),
+        &false.into(),
+    )
+    .expect("target is an object");
+
+    store
+        .put_kv(&PREVENT_SYNC_PATTERN_SINGLETON_KEY.into(), &singleton)
+        .await?;
+
+    Ok(())
+}
+
+#[derive(Debug)]
+pub struct PlatformWorkspaceStorage {
+    conn: Database<CustomErrMarker>,
+    max_blocks: u64,
+}
+
+// SAFETY: see `pretend_future_is_send_on_web`'s documentation for the full explanation.
+// `PlatformWorkspaceStorage` contains `indexed_db::Database` which is `!Send` since it
+// interfaces with the browser's IndexedDB API that is not thread-safe.
+// Since are always mono-threaded in web, we can safely pretend to be `Send`, which is
+// handy for our platform-agnostic code.
 unsafe impl Send for PlatformWorkspaceStorage {}
+// SAFETY: see `pretend_future_is_send_on_web`'s documentation for the full explanation.
+unsafe impl Sync for PlatformWorkspaceStorage {}
+
+impl Drop for PlatformWorkspaceStorage {
+    fn drop(&mut self) {
+        self.conn.close();
+    }
+}
 
 impl PlatformWorkspaceStorage {
     pub async fn no_populate_start(
@@ -42,34 +170,54 @@ impl PlatformWorkspaceStorage {
         // 1) Open the database
 
         let name = get_workspace_storage_db_name(data_base_dir, device.device_id, realm_id);
-        let db_req =
-            IdbDatabase::open_u32(&name, DB_VERSION).map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
-        // 2) Initialize the database (if needed)
+        let factory = Factory::<CustomErrMarker>::get().map_err(|e| anyhow::anyhow!("{e:?}"))?;
+        let conn = factory
+            .open(
+                &name,
+                DB_VERSION,
+                |evt: indexed_db::VersionChangeEvent<CustomErrMarker>| async move {
+                    // 2) Initialize the database (if needed)
 
-        let conn = Arc::new(super::model::initialize_model_if_needed(db_req).await?);
+                    initialize_database(&evt).await
+                },
+            )
+            .await?;
 
         // 3) All done !
 
-        let storage = Self {
+        Ok(Self {
             conn,
-            cache_max_blocks,
-        };
-        Ok(storage)
+            max_blocks: cache_max_blocks,
+        })
     }
 
     pub async fn stop(self) -> anyhow::Result<()> {
-        self.conn.close();
+        // Nothing to do here since the database is closed automatically on drop
         Ok(())
     }
 
     pub async fn get_realm_checkpoint(&mut self) -> anyhow::Result<IndexInt> {
-        let transaction = RealmCheckpoint::read(&self.conn)?;
+        with_transaction!(
+            &self.conn,
+            &[CHECKPOINT_STORE],
+            false,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(CHECKPOINT_STORE)?;
 
-        Ok(RealmCheckpoint::get(&transaction)
-            .await?
-            .map(|x| x.checkpoint)
-            .unwrap_or_default())
+                let maybe_singleton = store.get(&CHECKPOINT_SINGLETON_KEY.into()).await?;
+
+                let checkpoint_js = match maybe_singleton {
+                    Some(checkpoint_js) => checkpoint_js,
+                    None => return Ok(0),
+                };
+
+                let checkpoint = js_to_rs_u64(checkpoint_js)?;
+
+                Ok(checkpoint)
+            },
+        )
+        .await?
     }
 
     pub async fn update_realm_checkpoint(
@@ -77,62 +225,162 @@ impl PlatformWorkspaceStorage {
         new_checkpoint: IndexInt,
         changed_vlobs: &[(VlobID, VersionInt)],
     ) -> anyhow::Result<()> {
-        let transaction = RealmCheckpoint::write(&self.conn)?;
+        with_transaction!(
+            &self.conn,
+            &[CHECKPOINT_STORE, VLOBS_STORE],
+            true,
+            async |transaction: Transaction<CustomErrMarker>| {
+                // 1) Update checkpoint
 
-        RealmCheckpoint {
-            checkpoint: new_checkpoint,
-        }
-        .insert(&transaction)
-        .await?;
+                let store = transaction.object_store(CHECKPOINT_STORE)?;
 
-        super::db::commit(transaction).await?;
+                let new_checkpoint_js = rs_to_js_u64(new_checkpoint)?;
+                store
+                    .put_kv(&CHECKPOINT_SINGLETON_KEY.into(), &new_checkpoint_js)
+                    .await?;
 
-        let transaction = Vlob::write(&self.conn)?;
+                // 2) Update vlobs
 
-        for (vlob_id, remote_version) in changed_vlobs {
-            let vlob_id = vlob_id.as_bytes().to_vec().into();
-            if let Some(mut vlob) = Vlob::get(&transaction, &vlob_id).await? {
-                Vlob::remove(&transaction, &vlob_id).await?;
-                vlob.remote_version = *remote_version;
-                vlob.insert(&transaction).await?;
-            }
-        }
+                let store = transaction
+                    .object_store(VLOBS_STORE)
+                    .map_err(anyhow::Error::from)?;
 
-        super::db::commit(transaction).await?;
+                for (vlob_id, new_remote_version) in changed_vlobs {
+                    let vlob_id_js: JsValue = js_sys::Uint8Array::from(vlob_id.as_bytes()).into();
+                    let cursor = store
+                        .cursor()
+                        .range(&vlob_id_js..=&vlob_id_js)?
+                        .open()
+                        .await?;
 
-        Ok(())
+                    let obj = match cursor.value() {
+                        Some(obj) => obj.dyn_into::<js_sys::Object>().map_err(|bad| {
+                            anyhow::anyhow!("Invalid entry, expected Object, got {bad:?}")
+                        })?,
+                        None => continue,
+                    };
+
+                    let new_remote_version_js = JsValue::from(*new_remote_version);
+                    js_sys::Reflect::set(
+                        &obj,
+                        &VLOBS_REMOTE_VERSION_FIELD.into(),
+                        &new_remote_version_js,
+                    )
+                    .expect("target is an object");
+
+                    let base_version_js =
+                        js_sys::Reflect::get(&obj, &VLOBS_BASE_VERSION_FIELD.into()).map_err(
+                            |e| anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}"),
+                        )?;
+                    let base_version = js_to_rs_u32(base_version_js)?;
+                    let inbound_need_sync = base_version != *new_remote_version;
+
+                    js_sys::Reflect::set(
+                        &obj,
+                        &VLOBS_INBOUND_NEED_SYNC_FIELD.into(),
+                        // Don't store boolean, IndexedDb doesn't support them in indexes !
+                        &(inbound_need_sync as u32).into(),
+                    )
+                    .expect("target is an object");
+
+                    cursor.update(&obj).await.map_err(anyhow::Error::from)?;
+                }
+
+                Ok(())
+            },
+        )
+        .await?
     }
 
     pub async fn get_outbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
-        Vlob::get_need_sync(&self.conn)
-            .await?
-            .into_iter()
-            .take(limit as usize)
-            .map(|x| VlobID::try_from(x.vlob_id.as_ref()).map_err(|e| anyhow::anyhow!(e)))
-            .collect::<Result<Vec<_>, _>>()
+        with_transaction!(
+            &self.conn,
+            &[VLOBS_STORE],
+            false,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(VLOBS_STORE)?;
+
+                let mut cursor = store
+                    .index(VLOBS_INDEX_OUTBOUND_NEED_SYNC)?
+                    .cursor()
+                    .range(JsValue::from(1)..=JsValue::from(1))?
+                    .open_key()
+                    .await?;
+
+                let mut vlobs = Vec::new();
+                while let Some(vlob_id_js) = cursor.primary_key() {
+                    if vlobs.len() >= limit as usize {
+                        break;
+                    }
+                    let vlob_id = js_to_rs_vlob_id(vlob_id_js)?;
+                    vlobs.push(vlob_id);
+                    cursor.advance(1).await?;
+                }
+
+                Ok(vlobs)
+            },
+        )
+        .await?
     }
 
     pub async fn get_inbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
-        Vlob::get_all(&self.conn)
-            .await?
-            .into_iter()
-            .filter(|x| x.base_version != x.remote_version)
-            .take(limit as usize)
-            .map(|x| VlobID::try_from(x.vlob_id.as_ref()).map_err(|e| anyhow::anyhow!(e)))
-            .collect::<Result<Vec<_>, _>>()
+        with_transaction!(
+            &self.conn,
+            &[VLOBS_STORE],
+            false,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(VLOBS_STORE)?;
+
+                let mut cursor = store
+                    .index(VLOBS_INDEX_INBOUND_NEED_SYNC)?
+                    .cursor()
+                    .range(JsValue::from(1)..=JsValue::from(1))?
+                    .open_key()
+                    .await?;
+
+                let mut vlobs = Vec::new();
+                while let Some(vlob_id_js) = cursor.primary_key() {
+                    if vlobs.len() >= limit as usize {
+                        break;
+                    }
+                    let vlob_id = js_to_rs_vlob_id(vlob_id_js)?;
+                    vlobs.push(vlob_id);
+                    cursor.advance(1).await?;
+                }
+
+                Ok(vlobs)
+            },
+        )
+        .await?
     }
 
     pub async fn get_manifest(
         &mut self,
         entry_id: VlobID,
     ) -> anyhow::Result<Option<RawEncryptedManifest>> {
-        let transaction = Vlob::read(&self.conn)?;
+        with_transaction!(
+            &self.conn,
+            &[VLOBS_STORE],
+            false,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(VLOBS_STORE)?;
 
-        Ok(
-            Vlob::get(&transaction, &entry_id.as_bytes().to_vec().into())
-                .await?
-                .map(|x| x.blob.to_vec()),
+                let entry_id_js = js_sys::Uint8Array::from(entry_id.as_bytes());
+                let maybe_obj = store.get(&entry_id_js.into()).await?;
+
+                let obj_js = match maybe_obj {
+                    Some(obj_js) => obj_js,
+                    None => return Ok(None),
+                };
+
+                let blob_js = js_sys::Reflect::get(&obj_js, &VLOBS_BLOB_FIELD.into())
+                    .map_err(|e| anyhow::anyhow!("Invalid entry, got {obj_js:?}: error {e:?}"))?;
+                let blob = js_to_rs_bytes(blob_js)?;
+
+                Ok(Some(blob))
+            },
         )
+        .await?
     }
 
     pub async fn list_manifests(
@@ -140,124 +388,112 @@ impl PlatformWorkspaceStorage {
         offset: u32,
         limit: u32,
     ) -> anyhow::Result<Vec<RawEncryptedManifest>> {
-        Vlob::list(&self.conn, offset, limit).await.map(|vlobs| {
-            vlobs
-                .into_iter()
-                .map(|vlob| RawEncryptedManifest::from(vlob.blob))
-                .collect()
-        })
+        with_transaction!(
+            &self.conn,
+            &[VLOBS_STORE],
+            false,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(VLOBS_STORE)?;
+
+                let mut cursor = store.cursor().open().await?;
+
+                if offset > 0 {
+                    cursor.advance(offset).await?;
+                }
+
+                let mut items = Vec::with_capacity(limit as usize);
+                while let Some(obj) = cursor.value() {
+                    let blob_js = js_sys::Reflect::get(&obj, &VLOBS_BLOB_FIELD.into())
+                        .map_err(|e| anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}"))?;
+                    let blob = js_to_rs_bytes(blob_js)?;
+                    items.push(blob);
+                    if items.len() >= limit as usize {
+                        break;
+                    }
+
+                    cursor.advance(1).await?;
+                }
+
+                Ok(items)
+            },
+        )
+        .await?
+    }
+
+    async fn remove_chunk_internal(
+        store: &ObjectStore<CustomErrMarker>,
+        removed_chunk_id: ChunkID,
+    ) -> anyhow::Result<()> {
+        let removed_chunk_id_js = js_sys::Uint8Array::from(removed_chunk_id.as_bytes());
+
+        store.delete(&removed_chunk_id_js).await?;
+
+        Ok(())
+    }
+
+    async fn set_chunk_internal(
+        store: &ObjectStore<CustomErrMarker>,
+        chunk_id: ChunkID,
+        encrypted: &[u8],
+    ) -> anyhow::Result<()> {
+        let obj = js_sys::Object::new();
+        let data_js = js_sys::Uint8Array::from(encrypted);
+        js_sys::Reflect::set(&obj, &CHUNKS_DATA_FIELD.into(), &data_js)
+            .expect("target is an object");
+        js_sys::Reflect::set(&obj, &CHUNKS_SIZE_FIELD.into(), &encrypted.len().into())
+            .expect("target is an object");
+
+        let chunk_id_js = js_sys::Uint8Array::from(chunk_id.as_bytes());
+
+        store.put_kv(&chunk_id_js, &obj).await?;
+
+        Ok(())
+    }
+
+    pub async fn set_chunk(&mut self, chunk_id: ChunkID, encrypted: &[u8]) -> anyhow::Result<()> {
+        with_transaction!(
+            &self.conn,
+            &[CHUNKS_STORE],
+            true,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(CHUNKS_STORE)?;
+
+                Self::set_chunk_internal(&store, chunk_id, encrypted).await
+            },
+        )
+        .await?
     }
 
     pub async fn get_chunk(
         &mut self,
         chunk_id: ChunkID,
     ) -> anyhow::Result<Option<RawEncryptedChunk>> {
-        let transaction = super::model::Chunk::read(&self.conn)?;
-        db_get_chunk(&transaction, chunk_id).await
-    }
+        with_transaction!(
+            &self.conn,
+            &[CHUNKS_STORE],
+            false,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(CHUNKS_STORE)?;
 
-    pub async fn get_block(
-        &mut self,
-        block_id: BlockID,
-        timestamp: DateTime,
-    ) -> anyhow::Result<Option<RawEncryptedBlock>> {
-        let transaction = super::model::Chunk::write(&self.conn)?;
+                let chunk_id_js = js_sys::Uint8Array::from(chunk_id.as_bytes());
+                let maybe_obj = store.get(&chunk_id_js).await?;
 
-        match super::model::Chunk::get(&transaction, &block_id.as_bytes().to_vec().into()).await? {
-            Some(mut chunk) if chunk.is_block == 1 => {
-                super::model::Chunk::remove(&transaction, &chunk.chunk_id).await?;
-                chunk.accessed_on = Some(timestamp.as_timestamp_micros());
-                let data = chunk.data.to_vec();
-                chunk.insert(&transaction).await?;
+                let obj = match maybe_obj {
+                    Some(obj) => obj,
+                    None => return Ok(None),
+                };
+                let data_js = js_sys::Reflect::get(&obj, &CHUNKS_DATA_FIELD.into())
+                    .map_err(|e| anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}"))?;
+
+                let data = data_js
+                    .dyn_ref::<js_sys::Uint8Array>()
+                    .ok_or_else(|| anyhow::anyhow!("Invalid data, got {data_js:?}"))?
+                    .to_vec();
 
                 Ok(Some(data))
-            }
-            _ => Ok(None),
-        }
-    }
-
-    pub async fn populate_manifest(
-        &mut self,
-        manifest: &UpdateManifestData,
-    ) -> anyhow::Result<PopulateManifestOutcome> {
-        let transaction = Vlob::write(&self.conn)?;
-        db_populate_manifest(&transaction, manifest).await
-    }
-
-    pub async fn update_manifest(&mut self, manifest: &UpdateManifestData) -> anyhow::Result<()> {
-        let transaction = Vlob::write(&self.conn)?;
-        db_update_manifest(&transaction, manifest).await
-    }
-
-    pub async fn update_manifests(
-        &mut self,
-        manifests: impl Iterator<Item = UpdateManifestData>,
-    ) -> anyhow::Result<()> {
-        let transaction = Vlob::write(&self.conn)?;
-
-        for manifest in manifests {
-            db_update_manifest(&transaction, &manifest).await?;
-        }
-
-        super::db::commit(transaction).await
-    }
-
-    pub async fn update_manifest_and_chunks(
-        &mut self,
-        manifest: &UpdateManifestData,
-        new_chunks: impl Iterator<Item = (ChunkID, RawEncryptedChunk)>,
-        removed_chunks: impl Iterator<Item = ChunkID>,
-    ) -> anyhow::Result<()> {
-        let transaction = Vlob::write(&self.conn)?;
-
-        db_update_manifest(&transaction, manifest).await?;
-
-        super::db::commit(transaction).await?;
-
-        let transaction = super::model::Chunk::write(&self.conn)?;
-
-        for (new_chunk_id, new_chunk_data) in new_chunks {
-            super::model::Chunk {
-                chunk_id: new_chunk_id.as_bytes().to_vec().into(),
-                size: new_chunk_data.len() as IndexInt,
-                offline: false,
-                accessed_on: None,
-                data: new_chunk_data.into(),
-                is_block: 0,
-            }
-            .insert(&transaction)
-            .await?;
-        }
-
-        for removed_chunk_id in removed_chunks {
-            db_remove_chunk(&transaction, removed_chunk_id).await?;
-        }
-
-        super::db::commit(transaction).await
-    }
-
-    pub async fn set_chunk(&mut self, chunk_id: ChunkID, encrypted: &[u8]) -> anyhow::Result<()> {
-        let chunk_id = chunk_id.as_bytes().to_vec().into();
-
-        let transaction = super::model::Chunk::write(&self.conn)?;
-
-        if super::model::Chunk::get(&transaction, &chunk_id)
-            .await?
-            .is_some()
-        {
-            super::model::Chunk::remove(&transaction, &chunk_id).await?;
-        }
-
-        super::model::Chunk {
-            chunk_id,
-            size: encrypted.len() as IndexInt,
-            offline: false,
-            accessed_on: None,
-            data: encrypted.to_vec().into(),
-            is_block: 0,
-        }
-        .insert(&transaction)
-        .await
+            },
+        )
+        .await?
     }
 
     pub async fn set_block(
@@ -266,37 +502,302 @@ impl PlatformWorkspaceStorage {
         encrypted: &[u8],
         accessed_on: DateTime,
     ) -> anyhow::Result<()> {
-        let transaction = super::model::Chunk::write(&self.conn)?;
+        with_transaction!(
+            &self.conn,
+            &[BLOCKS_STORE],
+            true,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(BLOCKS_STORE)?;
 
-        db_insert_block(&transaction, block_id, encrypted, accessed_on).await?;
+                let obj = js_sys::Object::new();
+                let data_js = js_sys::Uint8Array::from(encrypted);
+                js_sys::Reflect::set(&obj, &BLOCKS_DATA_FIELD.into(), &data_js)
+                    .expect("target is an object");
+                js_sys::Reflect::set(&obj, &BLOCKS_SIZE_FIELD.into(), &encrypted.len().into())
+                    .expect("target is an object");
+                js_sys::Reflect::set(&obj, &BLOCKS_OFFLINE_FIELD.into(), &false.into())
+                    .expect("target is an object");
+                let accessed_on_js = rs_to_js_timestamp(accessed_on)?;
+                js_sys::Reflect::set(&obj, &BLOCKS_ACCESSED_ON_FIELD.into(), &accessed_on_js)
+                    .expect("target is an object");
 
-        let nb_blocks = super::model::Chunk::count_blocks(&transaction).await?;
+                let block_id_js = js_sys::Uint8Array::from(block_id.as_bytes());
 
-        let extra_blocks = nb_blocks.saturating_sub(self.cache_max_blocks);
+                store.put_kv(&block_id_js, &obj).await?;
+
+                self.may_cleanup_blocks(&store).await?;
+
+                Ok(())
+            },
+        )
+        .await?
+    }
+
+    pub async fn get_block(
+        &mut self,
+        block_id: BlockID,
+        timestamp: DateTime,
+    ) -> anyhow::Result<Option<RawEncryptedBlock>> {
+        with_transaction!(
+            &self.conn,
+            &[BLOCKS_STORE],
+            true,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(BLOCKS_STORE)?;
+
+                // 1) Get bock the block
+
+                let block_id_js: JsValue = js_sys::Uint8Array::from(block_id.as_bytes()).into();
+
+                let cursor = store
+                    .cursor()
+                    .range(&block_id_js..=&block_id_js)?
+                    .open()
+                    .await?;
+
+                let obj = match cursor.value() {
+                    Some(obj) => obj.dyn_into::<js_sys::Object>().map_err(|bad| {
+                        anyhow::anyhow!("Invalid entry, expected Object, got {bad:?}")
+                    })?,
+                    None => return Ok(None),
+                };
+
+                let data_js = js_sys::Reflect::get(&obj, &BLOCKS_DATA_FIELD.into())
+                    .map_err(|e| anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}"))?;
+
+                let data = data_js
+                    .dyn_ref::<js_sys::Uint8Array>()
+                    .ok_or_else(|| anyhow::anyhow!("Invalid data, got {data_js:?}"))?
+                    .to_vec();
+
+                // 2) Update block's accessed_on field
+
+                js_sys::Reflect::set(
+                    &obj,
+                    &BLOCKS_ACCESSED_ON_FIELD.into(),
+                    &rs_to_js_timestamp(timestamp)?,
+                )
+                .expect("target is an object");
+                cursor.update(&obj).await?;
+
+                Ok(Some(data))
+            },
+        )
+        .await?
+    }
+
+    pub async fn populate_manifest(
+        &mut self,
+        manifest: &UpdateManifestData,
+    ) -> anyhow::Result<PopulateManifestOutcome> {
+        with_transaction!(
+            &self.conn,
+            &[VLOBS_STORE],
+            true,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(VLOBS_STORE)?;
+
+                let entry_id_js = js_sys::Uint8Array::from(manifest.entry_id.as_bytes());
+
+                let obj = js_sys::Object::new();
+
+                let blob_js = js_sys::Uint8Array::from(manifest.encrypted.as_ref());
+                js_sys::Reflect::set(&obj, &VLOBS_BLOB_FIELD.into(), &blob_js.into())
+                    .expect("target is an object");
+
+                js_sys::Reflect::set(
+                    &obj,
+                    &VLOBS_BASE_VERSION_FIELD.into(),
+                    &manifest.base_version.into(),
+                )
+                .expect("target is an object");
+
+                // Use base version as default for remote version
+                js_sys::Reflect::set(
+                    &obj,
+                    &VLOBS_REMOTE_VERSION_FIELD.into(),
+                    &manifest.base_version.into(),
+                )
+                .expect("target is an object");
+
+                js_sys::Reflect::set(
+                    &obj,
+                    &VLOBS_OUTBOUND_NEED_SYNC_FIELD.into(),
+                    // Don't store boolean, IndexedDb doesn't support them in indexes !
+                    &(manifest.need_sync as u32).into(),
+                )
+                .expect("target is an object");
+                // Don't store boolean, IndexedDb doesn't support them in indexes !
+                let inbound_need_sync_js: JsValue = (false as u32).into();
+                js_sys::Reflect::set(
+                    &obj,
+                    &VLOBS_INBOUND_NEED_SYNC_FIELD.into(),
+                    &inbound_need_sync_js,
+                )
+                .expect("target is an object");
+
+                match store.add_kv(&entry_id_js, &obj).await {
+                    Ok(()) => Ok(PopulateManifestOutcome::Stored),
+                    Err(indexed_db::Error::AlreadyExists) => {
+                        Ok(PopulateManifestOutcome::AlreadyPresent)
+                    }
+                    Err(err) => Err(err.into()),
+                }
+            },
+        )
+        .await?
+    }
+
+    async fn update_manifest_internal(
+        store: &ObjectStore<CustomErrMarker>,
+        manifest: &UpdateManifestData,
+    ) -> anyhow::Result<()> {
+        let entry_id_js: JsValue = js_sys::Uint8Array::from(manifest.entry_id.as_bytes()).into();
+
+        let cursor = store
+            .cursor()
+            .range(&entry_id_js..=&entry_id_js)?
+            .open()
+            .await?;
+
+        let remote_version = match cursor.value() {
+            Some(obj) => {
+                let remote_version_js =
+                    js_sys::Reflect::get(&obj, &VLOBS_REMOTE_VERSION_FIELD.into())
+                        .map_err(|e| anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}"))?;
+                let remote_version = js_to_rs_u32(remote_version_js)?;
+                std::cmp::max(remote_version, manifest.base_version)
+            }
+            None => manifest.base_version,
+        };
+        let inbound_need_sync = remote_version != manifest.base_version;
+
+        let obj = js_sys::Object::new();
+
+        let blob_js = js_sys::Uint8Array::from(manifest.encrypted.as_ref());
+        js_sys::Reflect::set(&obj, &VLOBS_BLOB_FIELD.into(), &blob_js.into())
+            .expect("target is an object");
+
+        js_sys::Reflect::set(
+            &obj,
+            &VLOBS_BASE_VERSION_FIELD.into(),
+            &manifest.base_version.into(),
+        )
+        .expect("target is an object");
+
+        // Use base version as default for remote version
+        js_sys::Reflect::set(
+            &obj,
+            &VLOBS_REMOTE_VERSION_FIELD.into(),
+            &remote_version.into(),
+        )
+        .expect("target is an object");
+
+        js_sys::Reflect::set(
+            &obj,
+            &VLOBS_OUTBOUND_NEED_SYNC_FIELD.into(),
+            // Don't store boolean, IndexedDb doesn't support them in indexes !
+            &(manifest.need_sync as u32).into(),
+        )
+        .expect("target is an object");
+        js_sys::Reflect::set(
+            &obj,
+            &VLOBS_INBOUND_NEED_SYNC_FIELD.into(),
+            // Don't store boolean, IndexedDb doesn't support them in indexes !
+            &(inbound_need_sync as u32).into(),
+        )
+        .expect("target is an object");
+
+        store.put_kv(&entry_id_js, &obj).await?;
+
+        Ok(())
+    }
+
+    pub async fn update_manifest(&mut self, manifest: &UpdateManifestData) -> anyhow::Result<()> {
+        with_transaction!(&self.conn, &[VLOBS_STORE], true, async |transaction| {
+            let store = transaction.object_store(VLOBS_STORE)?;
+            Self::update_manifest_internal(&store, manifest).await
+        })
+        .await?
+    }
+
+    pub async fn update_manifests(
+        &mut self,
+        manifests: impl Iterator<Item = UpdateManifestData>,
+    ) -> anyhow::Result<()> {
+        with_transaction!(
+            &self.conn,
+            &[VLOBS_STORE],
+            true,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(VLOBS_STORE)?;
+
+                for manifest in manifests {
+                    Self::update_manifest_internal(&store, &manifest).await?;
+                }
+
+                Ok(())
+            },
+        )
+        .await?
+    }
+
+    pub async fn update_manifest_and_chunks(
+        &mut self,
+        manifest: &UpdateManifestData,
+        new_chunks: impl Iterator<Item = (ChunkID, RawEncryptedChunk)>,
+        removed_chunks: impl Iterator<Item = ChunkID>,
+    ) -> anyhow::Result<()> {
+        with_transaction!(
+            &self.conn,
+            &[VLOBS_STORE, CHUNKS_STORE],
+            true,
+            async |transaction: Transaction<CustomErrMarker>| {
+                // 1) Update manifest
+
+                let store = transaction.object_store(VLOBS_STORE)?;
+                Self::update_manifest_internal(&store, &manifest).await?;
+
+                // 2) Update chunks
+
+                let store = transaction.object_store(CHUNKS_STORE)?;
+
+                for (new_chunk_id, new_chunk_data) in new_chunks {
+                    Self::set_chunk_internal(&store, new_chunk_id, &new_chunk_data).await?;
+                }
+                for removed_chunk_id in removed_chunks {
+                    Self::remove_chunk_internal(&store, removed_chunk_id).await?;
+                }
+
+                Ok(())
+            },
+        )
+        .await?
+    }
+
+    async fn may_cleanup_blocks(&self, store: &ObjectStore<CustomErrMarker>) -> anyhow::Result<()> {
+        let nb_blocks = store.count().await? as u64;
+
+        let extra_blocks = nb_blocks.saturating_sub(self.max_blocks);
 
         // Cleanup is needed
         if extra_blocks > 0 {
             // Remove the extra block plus 10% of the cache size, i.e 100 blocks
-            let to_remove = extra_blocks + self.cache_max_blocks / 10;
+            let to_remove = extra_blocks + self.max_blocks / 10;
 
-            let mut blocks = super::model::Chunk::get_blocks(&transaction).await?;
+            for _ in 0..to_remove {
+                let cursor = store
+                    .index(BLOCKS_INDEX_ACCESSED_ON)?
+                    .cursor()
+                    .direction(indexed_db::CursorDirection::Next)
+                    .open()
+                    .await?;
 
-            blocks.sort_by(|x, y| {
-                x.accessed_on
-                    .partial_cmp(&y.accessed_on)
-                    .expect("Timestamp should not be undefined")
-            });
-
-            for block_id in blocks
-                .into_iter()
-                .take(to_remove as usize)
-                .map(|x| x.chunk_id)
-            {
-                super::model::Chunk::remove(&transaction, &block_id).await?;
+                cursor.delete().await?;
             }
         }
 
-        super::db::commit(transaction).await
+        Ok(())
     }
 
     pub async fn promote_chunk_to_block(
@@ -304,254 +805,410 @@ impl PlatformWorkspaceStorage {
         chunk_id: ChunkID,
         now: DateTime,
     ) -> anyhow::Result<()> {
-        let transaction = super::model::Chunk::read(&self.conn)?;
+        with_transaction!(
+            &self.conn,
+            &[CHUNKS_STORE, BLOCKS_STORE],
+            true,
+            async |transaction: Transaction<CustomErrMarker>| {
+                // 1) Retrieve the chunk
 
-        let encrypted = match db_get_chunk(&transaction, chunk_id).await? {
-            Some(encrypted) => encrypted,
-            // Nothing to promote, this should not occur under normal circumstances
-            None => return Ok(()),
-        };
+                let store = transaction.object_store(CHUNKS_STORE)?;
 
-        let transaction = super::model::Chunk::write(&self.conn)?;
+                let chunk_id_js: JsValue = js_sys::Uint8Array::from(chunk_id.as_bytes()).into();
+                let cursor = store
+                    .cursor()
+                    .range(&chunk_id_js..=&chunk_id_js)?
+                    .open()
+                    .await?;
 
-        db_remove_chunk(&transaction, chunk_id).await?;
-        db_insert_block(&transaction, chunk_id.into(), &encrypted, now).await?;
+                let obj = match cursor.value() {
+                    Some(obj) => obj,
+                    // Nothing to promote, this should not occur under normal circumstances
+                    None => return Ok(()),
+                };
 
-        super::db::commit(transaction).await
-    }
+                let data_js = js_sys::Reflect::get(&obj, &CHUNKS_DATA_FIELD.into())
+                    .map_err(|e| anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}"))?;
+                let size = data_js
+                    .dyn_ref::<js_sys::Uint8Array>()
+                    .ok_or_else(|| anyhow::anyhow!("Invalid data, got {data_js:?}"))?
+                    .length();
 
-    /// Only used for debugging tests
-    #[cfg(any(test, feature = "expose-test-methods"))]
-    pub async fn debug_dump(&mut self) -> anyhow::Result<DebugDump> {
-        let checkpoint = self.get_realm_checkpoint().await?;
+                // 2) Remove the chunk
 
-        // Vlobs
+                cursor.delete().await?;
 
-        let vlobs = Vlob::get_all(&self.conn).await?;
+                // 3) Insert the block
 
-        let vlobs = vlobs
-            .iter()
-            .map(|vlob| {
-                let id = VlobID::try_from(vlob.vlob_id.as_ref()).map_err(|e| anyhow::anyhow!(e))?;
-                let need_sync = vlob.need_sync;
-                let base_version = vlob.base_version;
-                let remote_version = vlob.remote_version;
+                let store = transaction.object_store(BLOCKS_STORE)?;
 
-                Ok(DebugVlob {
-                    id,
-                    need_sync,
-                    base_version,
-                    remote_version,
-                })
-            })
-            .collect::<anyhow::Result<_>>()?;
+                let obj = js_sys::Object::new();
+                js_sys::Reflect::set(&obj, &BLOCKS_DATA_FIELD.into(), &data_js)
+                    .expect("target is an object");
+                js_sys::Reflect::set(&obj, &BLOCKS_SIZE_FIELD.into(), &size.into())
+                    .expect("target is an object");
+                js_sys::Reflect::set(&obj, &BLOCKS_OFFLINE_FIELD.into(), &false.into())
+                    .expect("target is an object");
+                let now_js = rs_to_js_timestamp(now)?;
+                js_sys::Reflect::set(&obj, &BLOCKS_ACCESSED_ON_FIELD.into(), &now_js)
+                    .expect("target is an object");
 
-        // Chunks
+                store.put_kv(&chunk_id_js, &obj).await?;
 
-        let transaction = super::model::Chunk::read(&self.conn)?;
+                self.may_cleanup_blocks(&store).await?;
 
-        let chunks = super::model::Chunk::get_chunks(&transaction).await?;
-
-        let chunks = chunks
-            .iter()
-            .map(|chunk| {
-                let id =
-                    ChunkID::try_from(chunk.chunk_id.as_ref()).map_err(|e| anyhow::anyhow!(e))?;
-                let size = chunk.size as u32;
-                let offline = chunk.offline;
-
-                Ok(DebugChunk { id, size, offline })
-            })
-            .collect::<anyhow::Result<_>>()?;
-
-        // Blocks
-
-        let mut blocks = super::model::Chunk::get_blocks(&transaction).await?;
-        blocks.sort_by(|x, y| x.chunk_id.cmp(&y.chunk_id));
-
-        let blocks = blocks
-            .iter()
-            .map(|block| {
-                let id =
-                    BlockID::try_from(block.chunk_id.as_ref()).map_err(|e| anyhow::anyhow!(e))?;
-                let size = block.size as u32;
-                let offline = block.offline;
-                let accessed_on = DateTime::from_timestamp_micros(
-                    block
-                        .accessed_on
-                        .ok_or(anyhow::anyhow!("Missing accessed_on field"))?,
-                )?
-                .to_rfc3339();
-
-                Ok(DebugBlock {
-                    id,
-                    size,
-                    offline,
-                    accessed_on,
-                })
-            })
-            .collect::<anyhow::Result<_>>()?;
-
-        Ok(DebugDump {
-            checkpoint,
-            vlobs,
-            chunks,
-            blocks,
-        })
+                Ok(())
+            },
+        )
+        .await?
     }
 
     pub async fn set_prevent_sync_pattern(
         &mut self,
         pattern: &PreventSyncPattern,
     ) -> anyhow::Result<bool> {
-        let tx = super::model::PreventSyncPattern::write(&self.conn)?;
+        let new_pattern_js: JsValue = js_sys::JsString::from(pattern.to_string()).into();
 
-        let current = super::model::PreventSyncPattern::get(&tx).await?;
+        with_transaction!(
+            &self.conn,
+            &[PREVENT_SYNC_PATTERN_STORE],
+            true,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(PREVENT_SYNC_PATTERN_STORE)?;
 
-        let regex = pattern.to_string();
-        match current {
-            // The provided pattern is already in the database, we return its current state.
-            Some(current) if current.pattern == regex => Ok(current.fully_applied),
-            // Either we don't have a prevent sync pattern in the database
-            // or the pattern is different from the one provided.
-            None | Some(_) => {
-                let value = super::model::PreventSyncPattern {
-                    pattern: regex,
-                    fully_applied: false,
-                };
-                value.insert(&tx).await?;
-                super::db::commit(tx).await.and(Ok(false))
-            }
-        }
+                // 1) Get back the current prevent sync pattern
+
+                let current_singleton = store
+                    .get(&PREVENT_SYNC_PATTERN_SINGLETON_KEY.into())
+                    .await?
+                    .ok_or_else(|| anyhow::anyhow!("Prevent sync pattern is missing"))?;
+
+                // Get pattern field
+
+                let current_pattern_js = js_sys::Reflect::get(
+                    &current_singleton,
+                    &PREVENT_SYNC_PATTERN_PATTERN_FIELD.into(),
+                )
+                .map_err(|e| {
+                    anyhow::anyhow!("Invalid entry, got {current_singleton:?}: error {e:?}")
+                })?;
+
+                if current_pattern_js == new_pattern_js {
+                    // The pattern hasn't changed
+                    let current_fully_applied_js = js_sys::Reflect::get(
+                        &current_singleton,
+                        &PREVENT_SYNC_PATTERN_FULLY_APPLIED_FIELD.into(),
+                    )
+                    .map_err(|e| {
+                        anyhow::anyhow!("Invalid entry, got {current_singleton:?}: error {e:?}")
+                    })?;
+                    let current_fully_applied =
+                        current_fully_applied_js.as_bool().ok_or_else(|| {
+                            anyhow::anyhow!("Invalid boolean, got {current_fully_applied_js:?}")
+                        })?;
+                    return Ok(current_fully_applied);
+                }
+
+                // 2) The pattern differs, must update the database
+
+                let new_singleton = js_sys::Object::new();
+
+                js_sys::Reflect::set(
+                    &new_singleton,
+                    &PREVENT_SYNC_PATTERN_PATTERN_FIELD.into(),
+                    &new_pattern_js,
+                )
+                .expect("target is an object");
+
+                js_sys::Reflect::set(
+                    &new_singleton,
+                    &PREVENT_SYNC_PATTERN_FULLY_APPLIED_FIELD.into(),
+                    &false.into(),
+                )
+                .expect("target is an object");
+
+                store
+                    .put_kv(&PREVENT_SYNC_PATTERN_SINGLETON_KEY.into(), &new_singleton)
+                    .await?;
+
+                Ok(false)
+            },
+        )
+        .await?
     }
 
     pub async fn get_prevent_sync_pattern(&mut self) -> anyhow::Result<(PreventSyncPattern, bool)> {
-        let tx = super::model::PreventSyncPattern::read(&self.conn)?;
-        let res = super::model::PreventSyncPattern::get(&tx)
-            .await?
-            .expect("The database should be initialized with a default value");
+        with_transaction!(
+            &self.conn,
+            &[PREVENT_SYNC_PATTERN_STORE],
+            false,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction.object_store(PREVENT_SYNC_PATTERN_STORE)?;
 
-        let pattern = PreventSyncPattern::from_regex(&res.pattern).map_err(anyhow::Error::from)?;
+                let maybe_singleton = store
+                    .get(&PREVENT_SYNC_PATTERN_SINGLETON_KEY.into())
+                    .await?;
 
-        Ok((pattern, res.fully_applied))
+                let singleton = match maybe_singleton {
+                    Some(singleton) => singleton,
+                    None => return Err(anyhow::anyhow!("Prevent sync pattern is missing")),
+                };
+
+                // Get pattern field
+
+                let pattern_js =
+                    js_sys::Reflect::get(&singleton, &PREVENT_SYNC_PATTERN_PATTERN_FIELD.into())
+                        .map_err(|e| {
+                            anyhow::anyhow!("Invalid entry, got {singleton:?}: error {e:?}")
+                        })?;
+
+                let pattern = {
+                    let raw = js_to_rs_string(pattern_js)?;
+                    PreventSyncPattern::from_regex(&raw)?
+                };
+
+                // Get fully_applied field
+
+                let fully_applied_js = js_sys::Reflect::get(
+                    &singleton,
+                    &PREVENT_SYNC_PATTERN_FULLY_APPLIED_FIELD.into(),
+                )
+                .map_err(|e| anyhow::anyhow!("Invalid entry, got {singleton:?}: error {e:?}"))?;
+                let fully_applied = fully_applied_js
+                    .as_bool()
+                    .ok_or_else(|| anyhow::anyhow!("Invalid boolean, got {fully_applied_js:?}"))?;
+
+                Ok((pattern, fully_applied))
+            },
+        )
+        .await?
     }
 
     pub async fn mark_prevent_sync_pattern_fully_applied(
         &mut self,
         pattern: &PreventSyncPattern,
     ) -> Result<(), MarkPreventSyncPatternFullyAppliedError> {
-        let tx = super::model::PreventSyncPattern::write(&self.conn)?;
+        let expected_pattern_js: JsValue = js_sys::JsString::from(pattern.to_string()).into();
 
-        let current = super::model::PreventSyncPattern::get(&tx).await?;
+        with_transaction!(
+            &self.conn,
+            &[PREVENT_SYNC_PATTERN_STORE],
+            true,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction
+                    .object_store(PREVENT_SYNC_PATTERN_STORE)
+                    .map_err(anyhow::Error::from)?;
 
-        let regex = pattern.to_string();
-        match current {
-            // The provided pattern is already in the database
-            Some(current) if current.pattern == regex => {
-                // Already applied, nothing to do
-                if current.fully_applied {
-                    return Ok(());
+                // 1) Get back the current prevent sync pattern
+
+                let current_singleton = store
+                    .get(&PREVENT_SYNC_PATTERN_SINGLETON_KEY.into())
+                    .await
+                    .map_err(anyhow::Error::from)?
+                    .ok_or_else(|| anyhow::anyhow!("Prevent sync pattern is missing"))?;
+
+                // Get pattern field
+
+                let current_pattern_js = js_sys::Reflect::get(
+                    &current_singleton,
+                    &PREVENT_SYNC_PATTERN_PATTERN_FIELD.into(),
+                )
+                .map_err(|e| {
+                    anyhow::anyhow!("Invalid entry, got {current_singleton:?}: error {e:?}")
+                })?;
+
+                if current_pattern_js != expected_pattern_js {
+                    return Err(MarkPreventSyncPatternFullyAppliedError::PatternMismatch);
                 }
 
-                let value = super::model::PreventSyncPattern {
-                    pattern: regex,
-                    fully_applied: true,
+                // 2) The pattern match, we can update the database
+
+                let current_fully_applied_js = js_sys::Reflect::get(
+                    &current_singleton,
+                    &PREVENT_SYNC_PATTERN_FULLY_APPLIED_FIELD.into(),
+                )
+                .map_err(|e| {
+                    anyhow::anyhow!("Invalid entry, got {current_singleton:?}: error {e:?}")
+                })?;
+
+                if current_fully_applied_js.as_bool().unwrap_or(false) {
+                    return Ok(()); // Already marked as fully applied
+                }
+
+                js_sys::Reflect::set(
+                    &current_singleton,
+                    &PREVENT_SYNC_PATTERN_FULLY_APPLIED_FIELD.into(),
+                    &true.into(),
+                )
+                .expect("target is an object");
+
+                store
+                    .put_kv(
+                        &PREVENT_SYNC_PATTERN_SINGLETON_KEY.into(),
+                        &current_singleton,
+                    )
+                    .await
+                    .map_err(anyhow::Error::from)?;
+
+                Ok(())
+            },
+        )
+        .await?
+    }
+
+    /// Only used for debugging tests
+    #[cfg(any(test, feature = "expose-test-methods"))]
+    pub async fn debug_dump(&mut self) -> anyhow::Result<DebugDump> {
+        use super::utils::{js_to_rs_block_id, js_to_rs_chunk_id, js_to_rs_timestamp};
+
+        with_transaction!(
+            &self.conn,
+            &[CHECKPOINT_STORE, VLOBS_STORE, CHUNKS_STORE, BLOCKS_STORE],
+            false,
+            async |transaction: Transaction<CustomErrMarker>| {
+                // 1) Get checkpoint
+
+                let store = transaction.object_store(CHECKPOINT_STORE)?;
+                let maybe_singleton = store.get(&CHECKPOINT_SINGLETON_KEY.into()).await?;
+                let checkpoint = match maybe_singleton {
+                    Some(checkpoint_js) => js_to_rs_u64(checkpoint_js)?,
+                    None => 0,
                 };
 
-                value.insert(&tx).await?;
+                // 2) Get vlobs
 
-                super::db::commit(tx)
-                    .await
-                    .map_err(MarkPreventSyncPatternFullyAppliedError::Internal)
-            }
-            // Pattern mismatch
-            Some(_) => Err(MarkPreventSyncPatternFullyAppliedError::PatternMismatch),
-            // We don't have a prevent sync pattern in the database
-            None => Err(anyhow::anyhow!("No prevent sync pattern in the database").into()),
-        }
+                let mut vlobs = vec![];
+                let store = transaction.object_store(VLOBS_STORE)?;
+                let mut cursor = store.cursor().open().await?;
+                while let Some(obj) = cursor.value() {
+                    vlobs.push(DebugVlob {
+                        id: {
+                            let id_js = cursor.primary_key().expect("value is present");
+                            js_to_rs_vlob_id(id_js)?
+                        },
+                        need_sync: {
+                            let need_sync_js =
+                                js_sys::Reflect::get(&obj, &VLOBS_OUTBOUND_NEED_SYNC_FIELD.into())
+                                    .map_err(|e| {
+                                        anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}")
+                                    })?;
+                            need_sync_js
+                                .as_f64()
+                                .and_then(|raw| match raw as u32 {
+                                    0 => Some(false),
+                                    1 => Some(true),
+                                    _ => None,
+                                })
+                                .ok_or_else(|| {
+                                    anyhow::anyhow!(
+                                        "Invalid number-as-boolean, got {need_sync_js:?}"
+                                    )
+                                })?
+                        },
+                        base_version: {
+                            let base_version_js =
+                                js_sys::Reflect::get(&obj, &VLOBS_BASE_VERSION_FIELD.into())
+                                    .map_err(|e| {
+                                        anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}")
+                                    })?;
+                            base_version_js.as_f64().ok_or_else(|| {
+                                anyhow::anyhow!("Invalid number, got {base_version_js:?}")
+                            })? as VersionInt
+                        },
+                        remote_version: {
+                            let remote_version_js =
+                                js_sys::Reflect::get(&obj, &VLOBS_REMOTE_VERSION_FIELD.into())
+                                    .map_err(|e| {
+                                        anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}")
+                                    })?;
+                            remote_version_js.as_f64().ok_or_else(|| {
+                                anyhow::anyhow!("Invalid number, got {remote_version_js:?}")
+                            })? as VersionInt
+                        },
+                    });
+
+                    cursor.advance(1).await?;
+                }
+
+                // 3) Get chunks
+
+                let mut chunks = vec![];
+                let store = transaction.object_store(CHUNKS_STORE)?;
+                let mut cursor = store.cursor().open().await?;
+                while let Some(obj) = cursor.value() {
+                    chunks.push(DebugChunk {
+                        id: {
+                            let id_js = cursor.primary_key().expect("value is present");
+                            js_to_rs_chunk_id(id_js)?
+                        },
+                        size: {
+                            let size_js = js_sys::Reflect::get(&obj, &CHUNKS_SIZE_FIELD.into())
+                                .map_err(|e| {
+                                    anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}")
+                                })?;
+                            size_js
+                                .as_f64()
+                                .ok_or_else(|| anyhow::anyhow!("Invalid number, got {size_js:?}"))?
+                                as u32
+                        },
+                        offline: false,
+                    });
+
+                    cursor.advance(1).await?;
+                }
+
+                // 4) Get blocks
+
+                let mut blocks = vec![];
+                let store = transaction.object_store(BLOCKS_STORE)?;
+                let mut cursor = store.cursor().open().await?;
+                while let Some(obj) = cursor.value() {
+                    blocks.push(DebugBlock {
+                        id: {
+                            let id_js = cursor.primary_key().expect("value is present");
+                            js_to_rs_block_id(id_js)?
+                        },
+                        size: {
+                            let size_js = js_sys::Reflect::get(&obj, &BLOCKS_SIZE_FIELD.into())
+                                .map_err(|e| {
+                                    anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}")
+                                })?;
+                            size_js
+                                .as_f64()
+                                .ok_or_else(|| anyhow::anyhow!("Invalid number, got {size_js:?}"))?
+                                as u32
+                        },
+                        offline: {
+                            let offline_js =
+                                js_sys::Reflect::get(&obj, &BLOCKS_OFFLINE_FIELD.into()).map_err(
+                                    |e| anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}"),
+                                )?;
+                            offline_js.as_bool().ok_or_else(|| {
+                                anyhow::anyhow!("Invalid boolean, got {offline_js:?}")
+                            })?
+                        },
+                        accessed_on: {
+                            let accessed_on_js =
+                                js_sys::Reflect::get(&obj, &BLOCKS_ACCESSED_ON_FIELD.into())
+                                    .map_err(|e| {
+                                        anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}")
+                                    })?;
+                            let accessed_on = js_to_rs_timestamp(accessed_on_js)?;
+                            accessed_on.to_rfc3339()
+                        },
+                    });
+
+                    cursor.advance(1).await?;
+                }
+
+                Ok(DebugDump {
+                    checkpoint,
+                    vlobs,
+                    chunks,
+                    blocks,
+                })
+            },
+        )
+        .await?
     }
-}
-
-pub async fn db_populate_manifest<'a>(
-    tx: &IdbTransaction<'a>,
-    manifest: &UpdateManifestData,
-) -> anyhow::Result<PopulateManifestOutcome> {
-    match Vlob::get(tx, &manifest.entry_id.as_bytes().to_vec().into()).await? {
-        Some(_) => Ok(PopulateManifestOutcome::AlreadyPresent),
-        None => {
-            Vlob {
-                vlob_id: manifest.entry_id.as_bytes().to_vec().into(),
-                blob: manifest.encrypted.to_vec().into(),
-                need_sync: manifest.need_sync,
-                base_version: manifest.base_version,
-                remote_version: manifest.base_version,
-            }
-            .insert(tx)
-            .await?;
-            Ok(PopulateManifestOutcome::Stored)
-        }
-    }
-}
-
-async fn db_update_manifest<'a>(
-    tx: &IdbTransaction<'a>,
-    manifest: &UpdateManifestData,
-) -> anyhow::Result<()> {
-    match Vlob::get(tx, &manifest.entry_id.as_bytes().to_vec().into()).await? {
-        Some(old_vlob) => {
-            Vlob::remove(tx, &old_vlob.vlob_id).await?;
-            Vlob {
-                vlob_id: old_vlob.vlob_id.clone(),
-                blob: manifest.encrypted.to_vec().into(),
-                need_sync: manifest.need_sync,
-                base_version: manifest.base_version,
-                remote_version: std::cmp::max(manifest.base_version, old_vlob.remote_version),
-            }
-            .insert(tx)
-            .await
-        }
-        None => {
-            Vlob {
-                vlob_id: manifest.entry_id.as_bytes().to_vec().into(),
-                blob: manifest.encrypted.to_vec().into(),
-                need_sync: manifest.need_sync,
-                base_version: manifest.base_version,
-                remote_version: manifest.base_version,
-            }
-            .insert(tx)
-            .await
-        }
-    }
-}
-
-async fn db_get_chunk(
-    tx: &IdbTransaction<'_>,
-    chunk_id: ChunkID,
-) -> anyhow::Result<Option<RawEncryptedChunk>> {
-    match super::model::Chunk::get(tx, &chunk_id.as_bytes().to_vec().into()).await? {
-        Some(chunk) if chunk.is_block == 0 => Ok(Some(chunk.data.to_vec())),
-        _ => Ok(None),
-    }
-}
-
-async fn db_insert_block(
-    tx: &IdbTransaction<'_>,
-    block_id: BlockID,
-    encrypted: &[u8],
-    accessed_on: DateTime,
-) -> anyhow::Result<()> {
-    super::model::Chunk {
-        chunk_id: block_id.as_bytes().to_vec().into(),
-        size: encrypted.len() as IndexInt,
-        offline: false,
-        accessed_on: Some(accessed_on.as_timestamp_micros()),
-        data: encrypted.to_vec().into(),
-        is_block: 1,
-    }
-    .insert(tx)
-    .await
-}
-
-async fn db_remove_chunk(tx: &IdbTransaction<'_>, chunk_id: ChunkID) -> anyhow::Result<()> {
-    super::model::Chunk::remove(tx, &chunk_id.as_bytes().to_vec().into()).await
 }

@@ -145,6 +145,9 @@ gloo-timers = { version = "0.3.0", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 hex-literal = { version = "0.4.1", default-features = false }
 indexed_db_futures = { version = "0.5.0", default-features = false }
+# Base on https://github.com/Ekleog/indexed-db/pull/9
+indexed-db = { git = "https://github.com/Ekleog/indexed-db.git", rev = "d92f17e0e2cd48abc4b2d2adf62ccef9a9924080", default-features = false }
+# indexed-db = { path = "../indexed-db/",  version = "0.4.2", default-features = false }
 itertools = { version = "0.12.1", default-features = false }
 jni = { version = "0.21.1", default-features = false }
 js-sys = { version = "0.3.70", default-features = false }
