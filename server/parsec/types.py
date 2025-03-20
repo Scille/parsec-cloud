@@ -6,7 +6,8 @@ from collections.abc import Buffer
 from enum import Enum, auto
 from typing import Annotated, Final
 
-from pydantic import PlainSerializer, PlainValidator, ValidationError
+from pydantic import GetPydanticSchema, PlainSerializer, PlainValidator, ValidationError
+from pydantic_core import core_schema
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -77,10 +78,30 @@ OrganizationIDField = Annotated[
     PlainValidator(lambda x: x if isinstance(x, OrganizationID) else OrganizationID(x)),
     PlainSerializer(lambda x: x.str, return_type=str),
 ]
+
+user_id_from_str_schema = core_schema.chain_schema(
+    [  # check if it's a valid string, then that it can be converted to UserID
+        core_schema.str_schema(),
+        core_schema.no_info_plain_validator_function(lambda v: UserID.from_hex(v)),
+    ]
+)
 UserIDField = Annotated[
     UserID,
-    PlainValidator(lambda x: x if isinstance(x, UserID) else UserID.from_hex(x)),
-    PlainSerializer(lambda x: x.hex, return_type=str),
+    GetPydanticSchema(
+        lambda _source_type, _handler: core_schema.json_or_python_schema(
+            json_schema=user_id_from_str_schema,
+            python_schema=core_schema.union_schema(
+                [
+                    # check if it's a UserID first, if not use schema from str
+                    core_schema.is_instance_schema(UserID),
+                    user_id_from_str_schema,
+                ]
+            ),
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                lambda v: v.hex if isinstance(v, UserID) else v
+            ),
+        ),
+    ),
 ]
 DeviceIDField = Annotated[
     DeviceID,
