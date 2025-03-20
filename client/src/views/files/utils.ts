@@ -36,8 +36,8 @@ export async function openEntryContextMenu(
   } else {
     const modal = await modalController.create({
       component: SmallDisplayFileContextMenu,
-      cssClass: 'file-context-menu',
-      breakpoints: [0, 1],
+      cssClass: 'file-context-sheet-modal',
+      breakpoints: [0, 0.5, 1],
       initialBreakpoint: 1,
       showBackdrop: false,
       componentProps: {

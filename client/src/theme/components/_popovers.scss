@@ -46,9 +46,20 @@
   --width: var(--popover-option-width);
 }
 
+/* --- sheet modal option popover --- */
+.workspace-context-sheet-modal,
+.file-context-sheet-modal,
+.user-context-sheet-modal {
+  --width: var(--popover-option-width);
+  --height: auto;
+}
+
 #workspace-context-menu,
 #file-context-menu,
 #user-context-menu,
+#workspace-context-sheet-modal,
+#file-context-sheet-modal,
+#user-context-sheet-modal,
 .filter-container {
   background-color: var(--parsec-color-light-secondary-inverted-contrast);
 

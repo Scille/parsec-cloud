@@ -450,9 +450,9 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
   } else {
     const modal = await modalController.create({
       component: SmallDisplayUserContextMenu,
-      cssClass: 'user-context-menu',
+      cssClass: 'user-context-sheet-modal',
       showBackdrop: false,
-      breakpoints: [0, 1],
+      breakpoints: [0, 0.5, 1],
       initialBreakpoint: 1,
       componentProps: {
         user: user,
