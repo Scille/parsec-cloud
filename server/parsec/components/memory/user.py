@@ -1,9 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, Literal, override
-
-from typing_extensions import assert_never
+from typing import Any, Literal, assert_never, override
 
 from parsec._parsec import (
     DateTime,

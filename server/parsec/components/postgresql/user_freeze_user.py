@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing_extensions import assert_never
+from typing import assert_never
 
 from parsec._parsec import (
     HumanHandle,
