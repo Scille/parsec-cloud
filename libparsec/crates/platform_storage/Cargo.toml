@@ -34,8 +34,10 @@ sqlx = { workspace = true, features = ["sqlite", "runtime-tokio", "macros"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 indexed_db_futures = { workspace = true, features = ["indices", "cursors"] }
+indexed-db = { workspace = true }
 js-sys = { workspace = true }
 web-sys = { workspace = true, features = ["IdbKeyRange"] }
+wasm-bindgen = { workspace = true }
 serde = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
 
