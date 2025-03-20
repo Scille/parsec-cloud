@@ -145,9 +145,9 @@ export async function openWorkspaceContextMenu(
   } else {
     const modal = await modalController.create({
       component: SmallDisplayWorkspaceContextMenu,
-      cssClass: 'workspace-context-menu',
+      cssClass: 'workspace-context-sheet-modal',
       showBackdrop: false,
-      breakpoints: [0, 1],
+      breakpoints: [0, 0.5, 1],
       initialBreakpoint: 1,
       componentProps: {
         workspaceName: workspace.currentName,
