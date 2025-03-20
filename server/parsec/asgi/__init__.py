@@ -29,10 +29,6 @@ def app_factory(backend: Backend) -> AsgiApp:
     app = FastAPI(
         title="Parsec Server",
         version=parsec_version,
-        # Disable auto-generated docs for the moment as it is broken (due to custom types validator for events)
-        docs_url=None,
-        redoc_url=None,
-        openapi_url=None,
     )
 
     app.state.backend = backend
