@@ -103,8 +103,6 @@ function getLastLoginText(): string {
 </script>
 
 <style lang="scss" scoped>
-@import '@/theme/responsive-mixin';
-
 .organization-card {
   background: var(--parsec-color-light-secondary-premiere);
   border: 1px solid var(--parsec-color-light-secondary-medium);
@@ -122,7 +120,7 @@ function getLastLoginText(): string {
   position: relative;
   flex-shrink: 0;
 
-  @include breakpoint('xs') {
+  @include ms.responsive-breakpoint('xs') {
     padding-right: 0.5rem;
   }
 
@@ -155,7 +153,7 @@ function getLastLoginText(): string {
     background: var(--parsec-color-light-gradient-background);
     position: relative;
 
-    @include breakpoint('xs') {
+    @include ms.responsive-breakpoint('xs') {
       width: 4.5rem;
     }
 
@@ -171,7 +169,7 @@ function getLastLoginText(): string {
       background-repeat: no-repeat;
       background-position: top left;
 
-      @include breakpoint('xs') {
+      @include ms.responsive-breakpoint('xs') {
         width: 4.5rem;
         height: 100%;
       }
@@ -183,7 +181,7 @@ function getLastLoginText(): string {
       white-space: nowrap;
       text-overflow: ellipsis;
 
-      @include breakpoint('xs') {
+      @include ms.responsive-breakpoint('xs') {
         font-size: 1.15rem;
       }
     }
@@ -203,7 +201,7 @@ function getLastLoginText(): string {
     width: 100%;
     height: 100%;
 
-    @include breakpoint('xs') {
+    @include ms.responsive-breakpoint('xs') {
       padding: 0.75rem 0;
       overflow: hidden;
       gap: 0.5rem;
@@ -233,7 +231,7 @@ function getLastLoginText(): string {
       display: flex;
       gap: 1rem;
 
-      @include breakpoint('xs') {
+      @include ms.responsive-breakpoint('xs') {
         flex-direction: column;
         gap: 0.25rem;
       }
@@ -283,7 +281,7 @@ function getLastLoginText(): string {
     flex-shrink: 0;
     transition: all 150ms linear;
 
-    @include breakpoint('xs') {
+    @include ms.responsive-breakpoint('xs') {
       position: relative;
     }
   }
@@ -299,7 +297,7 @@ function getLastLoginText(): string {
   background: var(--parsec-color-light-secondary-text);
   color: var(--parsec-color-light-secondary-white);
 
-  @include breakpoint('xs') {
+  @include ms.responsive-breakpoint('xs') {
     position: absolute;
     right: 1.5rem;
     top: 50%;

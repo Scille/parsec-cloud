@@ -519,8 +519,6 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
 </script>
 
 <style lang="scss" scoped>
-@import '@/theme/responsive-mixin';
-
 .no-workspaces {
   max-width: 30rem;
   color: var(--parsec-color-light-secondary-grey);
@@ -601,12 +599,12 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
   overflow: visible;
   padding-bottom: 2rem;
 
-  @include breakpoint('sm') {
+  @include ms.responsive-breakpoint('sm') {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
   }
 
-  @include breakpoint('xs') {
+  @include ms.responsive-breakpoint('xs') {
     grid-template-columns: repeat(1, 1fr);
   }
 }

@@ -125,8 +125,6 @@ function reset(): void {
 </script>
 
 <style scoped lang="scss">
-@import '@/theme/responsive-mixin';
-
 .drop-zone {
   width: 100%;
   height: 100%;
@@ -141,7 +139,7 @@ function reset(): void {
     bottom: 1.5rem;
     z-index: 1100;
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       top: 0.75rem;
       bottom: 0.75rem;
     }

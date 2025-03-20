@@ -61,8 +61,6 @@ function setToastOffset(width: number): void {
 </script>
 
 <style lang="scss" scoped>
-@import '@/theme/responsive-mixin';
-
 * {
   transition: all 100ms ease-in-out;
 }

@@ -180,15 +180,13 @@ const emits = defineEmits<{
 </script>
 
 <style lang="scss" scoped>
-@import '@/theme/responsive-mixin';
-
 .menu-secondary {
   display: flex;
   justify-content: flex-end;
   width: 100%;
   padding: 0 0 2rem;
 
-  @include breakpoint('md') {
+  @include ms.responsive-breakpoint('md') {
     flex-direction: column;
     gap: 1rem;
   }
@@ -209,11 +207,11 @@ const emits = defineEmits<{
       box-shadow: var(--parsec-shadow-light);
     }
 
-    @include breakpoint('md') {
+    @include ms.responsive-breakpoint('md') {
       flex-direction: column;
     }
 
-    @include breakpoint('xs') {
+    @include ms.responsive-breakpoint('xs') {
       width: 100%;
     }
   }
@@ -221,11 +219,11 @@ const emits = defineEmits<{
   &-buttons {
     display: flex;
 
-    @include breakpoint('md') {
+    @include ms.responsive-breakpoint('md') {
       margin-left: auto;
     }
 
-    @include breakpoint('xs') {
+    @include ms.responsive-breakpoint('xs') {
       margin-left: 0;
     }
 
@@ -237,32 +235,32 @@ const emits = defineEmits<{
       padding: 0 0.5rem;
       --background-hover: none;
 
-      @include breakpoint('sm') {
+      @include ms.responsive-breakpoint('sm') {
         padding: 0;
       }
 
       &:nth-of-type(1) {
-        @include breakpoint('sm') {
+        @include ms.responsive-breakpoint('sm') {
           order: 3;
           margin-left: auto;
         }
       }
 
       &:nth-of-type(2) {
-        @include breakpoint('sm') {
+        @include ms.responsive-breakpoint('sm') {
           order: 1;
         }
       }
 
       &:nth-of-type(3) {
-        @include breakpoint('sm') {
+        @include ms.responsive-breakpoint('sm') {
           order: 2;
           margin-right: auto;
         }
       }
 
       &:nth-of-type(4) {
-        @include breakpoint('sm') {
+        @include ms.responsive-breakpoint('sm') {
           order: 4;
         }
       }
@@ -292,7 +290,7 @@ const emits = defineEmits<{
         background: var(--parsec-color-light-secondary-disabled);
         transition: all 150ms linear;
 
-        @include breakpoint('xs') {
+        @include ms.responsive-breakpoint('xs') {
           display: none;
         }
       }
@@ -300,7 +298,7 @@ const emits = defineEmits<{
       .menu-secondary-buttons__text {
         display: block;
 
-        @include breakpoint('xs') {
+        @include ms.responsive-breakpoint('xs') {
           display: none;
         }
       }
@@ -308,7 +306,7 @@ const emits = defineEmits<{
       .menu-secondary-buttons__icon {
         display: none;
 
-        @include breakpoint('xs') {
+        @include ms.responsive-breakpoint('xs') {
           display: block;
           background: var(--parsec-color-light-secondary-premiere);
           padding: 0.5rem;
@@ -331,14 +329,14 @@ const emits = defineEmits<{
   position: relative;
   border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
 
-  @include breakpoint('sm') {
+  @include ms.responsive-breakpoint('sm') {
     border: none;
     padding: 0;
     max-width: 34.5rem;
     margin-inline: auto;
   }
 
-  @include breakpoint('xs') {
+  @include ms.responsive-breakpoint('xs') {
     flex-wrap: wrap;
   }
 
@@ -355,7 +353,7 @@ const emits = defineEmits<{
       -webkit-text-fill-color: transparent;
       margin: 0.25rem 0;
 
-      @include breakpoint('sm') {
+      @include ms.responsive-breakpoint('sm') {
         max-width: 16rem;
       }
     }
@@ -417,7 +415,7 @@ const emits = defineEmits<{
   ion-icon {
     margin-right: 0.5rem;
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       margin: 0;
     }
   }
