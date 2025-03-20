@@ -11,10 +11,27 @@ use crate::certificates::{
     FilterKind, GetCertificateError, GetCertificateQuery, PerTopicLastTimestamps,
     StorableCertificateTopic, UpTo,
 };
-use crate::web::model::get_certificates_storage_db_name;
+
+pub(super) fn get_certificates_storage_db_name(
+    data_base_dir: &Path,
+    device_id: DeviceID,
+) -> String {
+    format!(
+        "{}-{}-certificates",
+        data_base_dir.display(),
+        device_id.hex()
+    )
+}
 
 // Note each database (certificates, workspace etc.) has its own version.
 const DB_VERSION: u32 = 1;
+// Store contains: {
+//   certificate_type: string,
+//   filter1: Uint8Array,
+//   filter2: Uint8Array,
+//   certificate_timestamp: number,
+//   certificate: Uint8Array
+// }
 const STORE: &'static str = "certificates";
 const FIELD_CERTIFICATE_TYPE: &'static str = "certificate_type";
 const FIELD_FILTER1: &'static str = "filter1";
@@ -832,6 +849,12 @@ unsafe impl Send for PlatformCertificatesStorage {}
 // SAFETY: see `pretend_future_is_send_on_web`'s documentation for the full explanation.
 unsafe impl Sync for PlatformCertificatesStorage {}
 
+impl Drop for PlatformCertificatesStorage {
+    fn drop(&mut self) {
+        self.conn.close();
+    }
+}
+
 impl PlatformCertificatesStorage {
     pub async fn no_populate_start(
         data_base_dir: &Path,
@@ -962,11 +985,5 @@ impl PlatformCertificatesStorage {
                 err => Err(anyhow::anyhow!("{err:?}").into()),
             },
         }
-    }
-}
-
-impl Drop for PlatformCertificatesStorage {
-    fn drop(&mut self) {
-        self.conn.close();
     }
 }
