@@ -6,7 +6,6 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
 from typing import (
-    Annotated,
     Any,
     AsyncGenerator,
     AsyncIterator,
@@ -20,10 +19,6 @@ import anyio.abc
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.datastructures import Headers
 from fastapi.responses import StreamingResponse
-from pydantic import (
-    GetPydanticSchema,
-)
-from pydantic_core import core_schema
 from starlette.requests import ClientDisconnect
 
 from parsec._parsec import (
@@ -129,28 +124,6 @@ TOS_CMDS_LOAD_FN = {
 
 
 rpc_router = APIRouter(tags=["rpc"])
-
-
-OrganizationIDField = Annotated[
-    OrganizationID,
-    GetPydanticSchema(
-        lambda tp, handler: core_schema.json_or_python_schema(
-            json_schema=core_schema.chain_schema(
-                [
-                    core_schema.str_schema(),
-                    core_schema.no_info_plain_validator_function(OrganizationID),
-                ]
-            ),
-            python_schema=core_schema.chain_schema(
-                [
-                    core_schema.is_instance_schema(OrganizationID),
-                    core_schema.no_info_plain_validator_function(OrganizationID),
-                ]
-            ),
-            serialization=core_schema.plain_serializer_function_ser_schema(lambda x: x.str),
-        )
-    ),
-]
 
 
 async def _rpc_get_body_with_limit_check(request: Request) -> bytes:
