@@ -9,7 +9,7 @@ This RFC defines the schema used for communicating with the parsec-auth service.
 ## Goals and Non-Goals
 
 The goal is to define the required schema used when communicating with the parsec-auth service.
-For simplicity, we will skip the fido2 part that will be defined in a later RFC.
+For simplicity, we will skip the Fido2 part that will be defined in a later RFC.
 
 ## Design
 
