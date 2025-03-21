@@ -367,7 +367,7 @@ class FileOperationManager {
     const srcEntry = statResult.value;
     if (statResult.value.isFile()) {
       tree = {
-        totalSize: (statResult.value as EntryStatFile).size,
+        totalSize: Number((statResult.value as EntryStatFile).size),
         entries: [statResult.value as EntryStatFile],
         maxRecursionReached: false,
         maxFilesReached: false,
@@ -449,7 +449,7 @@ class FileOperationManager {
         fdW = openWriteResult.value;
 
         // Resize the destination
-        await resizeFile(data.workspaceHandle, fdW, entry.size);
+        await resizeFile(data.workspaceHandle, fdW, Number(entry.size));
 
         let loop = true;
         let offset = 0;
@@ -593,7 +593,7 @@ class FileOperationManager {
       }
       if (statResult.value.isFile()) {
         tree = {
-          totalSize: (statResult.value as WorkspaceHistoryEntryStatFile).size,
+          totalSize: Number((statResult.value as WorkspaceHistoryEntryStatFile).size),
           entries: [statResult.value as WorkspaceHistoryEntryStatFile],
           maxRecursionReached: false,
           maxFilesReached: false,
@@ -659,7 +659,7 @@ class FileOperationManager {
           fdW = openWriteResult.value;
 
           // Resize the destination
-          await resizeFile(data.workspaceHandle, fdW, entry.size);
+          await resizeFile(data.workspaceHandle, fdW, Number(entry.size));
 
           let loop = true;
           let offset = 0;
@@ -786,7 +786,7 @@ class FileOperationManager {
           const chunk = value as Uint8Array;
           await wStream.write(chunk);
           writtenSize += chunk.byteLength;
-          await this.sendState(FileOperationState.OperationProgress, data, { progress: (writtenSize / (fileSize || 1)) * 100 });
+          await this.sendState(FileOperationState.OperationProgress, data, { progress: (writtenSize / (Number(fileSize) || 1)) * 100 });
         }
       }
       wStream.close();

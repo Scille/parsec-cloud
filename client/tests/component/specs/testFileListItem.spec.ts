@@ -33,7 +33,7 @@ describe('File List Item', () => {
       baseVersion: 1,
       isPlaceholder: false,
       needSync: false,
-      size: 43_297_832_478,
+      size: BigInt(43_297_832_478),
       name: 'A File.txt',
       path: '/',
       isFile: (): boolean => true,

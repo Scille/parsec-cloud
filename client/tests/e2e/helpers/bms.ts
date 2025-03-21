@@ -3,12 +3,8 @@
 /* eslint-disable camelcase */
 
 import { Page, Route } from '@playwright/test';
-import {
-  DEFAULT_ORGANIZATION_DATA_SLICE,
-  DEFAULT_ORGANIZATION_INFORMATION,
-  DEFAULT_USER_INFORMATION,
-  UserData,
-} from '@tests/e2e/helpers/data';
+import { DEFAULT_ORGANIZATION_DATA_SLICE, DEFAULT_USER_INFORMATION } from '@tests/e2e/helpers/data';
+import { MsPage } from '@tests/e2e/helpers/fixtures';
 import { DateTime } from 'luxon';
 
 async function mockRoute(
@@ -204,18 +200,18 @@ interface MockUserOverload {
   noClient?: boolean;
 }
 
-async function mockUserRoute(page: Page, overload: MockUserOverload = {}, options?: MockRouteOptions): Promise<void> {
+async function mockUserRoute(page: MsPage, overload: MockUserOverload = {}, options?: MockRouteOptions): Promise<void> {
   await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}`, options, async (route) => {
     if (route.request().method() === 'GET') {
       let client = null;
       if (!overload.noClient) {
         client = {
-          firstname: UserData.firstName,
-          lastname: UserData.lastName,
+          firstname: page.userData.firstName,
+          lastname: page.userData.lastName,
           id: '1337',
-          job: UserData.job,
-          company: UserData.company,
-          phone: UserData.phone,
+          job: page.userData.job,
+          company: page.userData.company,
+          phone: page.userData.phone,
           billing_system: overload.billingSystem ?? 'STRIPE',
         };
       }
@@ -225,7 +221,7 @@ async function mockUserRoute(page: Page, overload: MockUserOverload = {}, option
         json: {
           id: DEFAULT_USER_INFORMATION.id,
           created_at: '2024-07-15T13:21:32.141317Z',
-          email: UserData.email,
+          email: page.userData.email,
           client: client,
         },
       });
@@ -233,19 +229,19 @@ async function mockUserRoute(page: Page, overload: MockUserOverload = {}, option
       const data = await route.request().postDataJSON();
       if (data.client) {
         if (data.client.firstname) {
-          UserData.firstName = data.client.firstname;
+          page.userData.firstName = data.client.firstname;
         }
         if (data.client.lastname) {
-          UserData.lastName = data.client.lastname;
+          page.userData.lastName = data.client.lastname;
         }
         if (data.client.phone) {
-          UserData.phone = data.client.phone;
+          page.userData.phone = data.client.phone;
         }
         if (data.client.job || data.client.job === null) {
-          UserData.job = data.client.job;
+          page.userData.job = data.client.job;
         }
         if (data.client.company || data.client.job === null) {
-          UserData.company = data.client.company;
+          page.userData.company = data.client.company;
         }
       }
       await route.fulfill({
@@ -271,7 +267,7 @@ async function mockCreateOrganization(page: Page, bootstrapAddr: string, options
   );
 }
 
-async function mockListOrganizations(page: Page, options?: MockRouteOptions): Promise<void> {
+async function mockListOrganizations(page: MsPage, options?: MockRouteOptions): Promise<void> {
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations`,
@@ -282,22 +278,22 @@ async function mockListOrganizations(page: Page, options?: MockRouteOptions): Pr
         json: {
           results: [
             {
-              pk: '1',
+              pk: page.orgInfo.bmsId,
               created_at: '2024-12-04T00:00:00.000',
               expiration_date: null,
-              name: DEFAULT_ORGANIZATION_INFORMATION.name,
-              parsec_id: DEFAULT_ORGANIZATION_INFORMATION.name,
-              suffix: DEFAULT_ORGANIZATION_INFORMATION.name,
+              name: page.orgInfo.name,
+              parsec_id: page.orgInfo.name,
+              suffix: page.orgInfo.name,
               stripe_subscription_id: 'stripe_id',
               bootstrap_link: '',
             },
             {
-              pk: '2',
+              pk: `${page.orgInfo.bmsId}-2`,
               created_at: '2024-12-04T00:00:00.000',
               expiration_date: null,
-              name: DEFAULT_ORGANIZATION_INFORMATION.name,
-              parsec_id: `${DEFAULT_ORGANIZATION_INFORMATION.name}-2`,
-              suffix: `${DEFAULT_ORGANIZATION_INFORMATION.name}-2`,
+              name: page.orgInfo.name,
+              parsec_id: `${page.orgInfo.name}-2`,
+              suffix: `${page.orgInfo.name}-2`,
               stripe_subscription_id: 'stripe_id2',
               bootstrap_link: '',
             },
@@ -395,7 +391,7 @@ interface MockGetInvoicesOverload {
   count?: number;
 }
 
-async function mockGetInvoices(page: Page, overload: MockGetInvoicesOverload = {}, options?: MockRouteOptions): Promise<void> {
+async function mockGetInvoices(page: MsPage, overload: MockGetInvoicesOverload = {}, options?: MockRouteOptions): Promise<void> {
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/invoices`,
@@ -411,7 +407,7 @@ async function mockGetInvoices(page: Page, overload: MockGetInvoicesOverload = {
             period_end: DateTime.fromObject({ year: year, month: month }).endOf('month').toFormat('yyyy-LL-dd'),
             total: Math.round(Math.random() * 1000000),
             status: ['paid', 'draft', 'open'][Math.floor(Math.random() * 3)],
-            organization: DEFAULT_ORGANIZATION_INFORMATION.name,
+            organization: page.orgInfo.name,
             number: `${year}-${month}`,
             receiptNumber: `${year}-${month}`,
           });
@@ -446,7 +442,7 @@ interface MockBillingDetailsOverload {
   };
 }
 
-async function mockBillingDetails(page: Page, overload: MockBillingDetailsOverload = {}, options?: MockRouteOptions): Promise<void> {
+async function mockBillingDetails(page: MsPage, overload: MockBillingDetailsOverload = {}, options?: MockRouteOptions): Promise<void> {
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/billing_details`,
@@ -476,14 +472,14 @@ async function mockBillingDetails(page: Page, overload: MockBillingDetailsOverlo
         await route.fulfill({
           status: 200,
           json: {
-            email: overload.email ?? UserData.email,
-            name: overload.name ?? `${UserData.firstName} ${UserData.lastName}`,
+            email: overload.email ?? page.userData.email,
+            name: overload.name ?? `${page.userData.firstName} ${page.userData.lastName}`,
             address: {
-              line1: (overload.address && overload.address.line1) ?? UserData.address.line1,
+              line1: (overload.address && overload.address.line1) ?? page.userData.address.line1,
               line2: (overload.address && overload.address.line2) ?? '',
-              city: (overload.address && overload.address.city) ?? UserData.address.city,
-              postal_code: (overload.address && overload.address.postalCode) ?? UserData.address.postalCode,
-              country: (overload.address && overload.address.country) ?? UserData.address.country,
+              city: (overload.address && overload.address.city) ?? page.userData.address.city,
+              postal_code: (overload.address && overload.address.postalCode) ?? page.userData.address.postalCode,
+              country: (overload.address && overload.address.country) ?? page.userData.address.country,
             },
             payment_methods: paymentMethods,
           },
@@ -492,19 +488,19 @@ async function mockBillingDetails(page: Page, overload: MockBillingDetailsOverlo
         const data = await route.request().postDataJSON();
         if (data.address) {
           if (data.address.line1) {
-            UserData.address.line1 = data.address.line1;
+            page.userData.address.line1 = data.address.line1;
           }
           if (data.address.line2) {
-            UserData.address.line2 = data.address.line2;
+            page.userData.address.line2 = data.address.line2;
           }
           if (data.address.postal_code) {
-            UserData.address.postalCode = data.address.postal_code;
+            page.userData.address.postalCode = data.address.postal_code;
           }
           if (data.address.city) {
-            UserData.address.line1 = data.address.city;
+            page.userData.address.line1 = data.address.city;
           }
           if (data.address.country) {
-            UserData.address.line1 = data.address.country;
+            page.userData.address.line1 = data.address.country;
           }
         }
         await route.fulfill({
@@ -571,11 +567,11 @@ async function mockUpdateEmailSendCode(page: Page, options?: MockRouteOptions): 
   });
 }
 
-async function mockUpdateEmail(page: Page, options?: MockRouteOptions): Promise<void> {
+async function mockUpdateEmail(page: MsPage, options?: MockRouteOptions): Promise<void> {
   await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/update_email`, options, async (route) => {
     const data = await route.request().postDataJSON();
     if (data.email) {
-      UserData.email = data.email;
+      page.userData.email = data.email;
     }
     await route.fulfill({
       status: 200,
@@ -600,7 +596,7 @@ async function mockChangePassword(page: Page, options?: MockRouteOptions): Promi
 }
 
 async function mockCustomOrderDetails(
-  page: Page,
+  page: MsPage,
   overload: MockCustomOrderDetailsOverload = {},
   options?: MockRouteOptions,
 ): Promise<void> {
@@ -614,7 +610,7 @@ async function mockCustomOrderDetails(
       await route.fulfill({
         status: 200,
         json: {
-          [DEFAULT_ORGANIZATION_INFORMATION.name]: createCustomOrderInvoices(overload)[0],
+          [page.orgInfo.name]: createCustomOrderInvoices(overload)[0],
         },
       });
     },
@@ -625,9 +621,9 @@ interface MockCustomOrderStatusOverload {
   status: 'invoice_paid' | 'nothing_linked' | 'unknown' | 'contract_ended' | 'invoice_to_be_paid' | 'estimate_linked';
 }
 
-async function mockCustomOrderStatus(page: Page, overload?: MockCustomOrderStatusOverload, options?: MockRouteOptions): Promise<void> {
+async function mockCustomOrderStatus(page: MsPage, overload?: MockCustomOrderStatusOverload, options?: MockRouteOptions): Promise<void> {
   const data: { [key: string]: string } = {};
-  data[DEFAULT_ORGANIZATION_INFORMATION.name] = overload ? overload.status : 'invoice_paid';
+  data[page.orgInfo.name] = overload ? overload.status : 'invoice_paid';
 
   await mockRoute(
     page,
@@ -642,7 +638,7 @@ async function mockCustomOrderStatus(page: Page, overload?: MockCustomOrderStatu
   );
 }
 
-async function mockCreateCustomOrderRequest(page: Page, options?: MockRouteOptions): Promise<void> {
+async function mockCreateCustomOrderRequest(page: MsPage, options?: MockRouteOptions): Promise<void> {
   await mockRoute(page, '**/custom_order_requests', options, async (route) => {
     await route.fulfill({
       status: 204,
@@ -650,7 +646,7 @@ async function mockCreateCustomOrderRequest(page: Page, options?: MockRouteOptio
   });
 }
 
-async function mockGetCustomOrderRequests(page: Page, options?: MockRouteOptions): Promise<void> {
+async function mockGetCustomOrderRequests(page: MsPage, options?: MockRouteOptions): Promise<void> {
   await mockRoute(page, '**/custom_order_requests', options, async (route) => {
     await route.fulfill({
       status: 200,
@@ -682,14 +678,14 @@ async function mockGetCustomOrderRequests(page: Page, options?: MockRouteOptions
 }
 
 async function mockGetCustomOrderInvoices(
-  page: Page,
+  page: MsPage,
   options?: MockRouteOptions,
   overload: MockCustomOrderDetailsOverload = {},
 ): Promise<void> {
   function formatResponse(postData: any): any {
     const ret: any = {};
     for (const orgId of postData.organization_ids ?? []) {
-      const parsecId = orgId === '1' ? DEFAULT_ORGANIZATION_INFORMATION.name : `${DEFAULT_ORGANIZATION_INFORMATION.name}-${orgId}`;
+      const parsecId = orgId === '1' ? page.orgInfo.name : `${page.orgInfo.name}-${orgId}`;
       ret[parsecId] = createCustomOrderInvoices(overload);
     }
     return ret;

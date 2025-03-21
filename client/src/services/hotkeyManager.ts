@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { isDesktop, isLinux, isMacOS, isMobile, isWeb, isWindows, needsMocks } from '@/parsec/environment';
+import { isDesktop, isLinux, isMacOS, isMobile, isWeb, isWindows } from '@/parsec/environment';
 import { Routes, currentRouteIs } from '@/router';
 import { modalController } from '@ionic/vue';
 
@@ -50,7 +50,7 @@ export class HotkeyGroup {
   }
 
   add(options: HotkeyOptions, callback: () => Promise<void>): void {
-    if (needsMocks()) {
+    if (window.isDev() && isWeb()) {
       options.platforms |= Platforms.Web;
     }
     this.hotkeys.push({
