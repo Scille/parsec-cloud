@@ -36,7 +36,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  poetry-version: 1.5.1
+  poetry-version: 2.1.1
   CARGO_CI_FLAGS: --locked --profile=ci-rust
   CARGO_NEXTEST_CI_FLAGS: --profile=ci --locked --cargo-profile=ci-rust
   WINFSP_VERSION: 2.0.23075

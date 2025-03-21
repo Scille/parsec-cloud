@@ -40,6 +40,10 @@ runs:
           | python3 - --version=${{ inputs.poetry-version }}
         echo "${APPDATA}\.poetry\bin" >> "$GITHUB_PATH"
 
+    - name: Install poetry-plugin-export
+      shell: bash
+      run: poetry self add poetry-plugin-export
+
     - name: Install python
       uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38  # pin v5.4.0
       id: setup-python

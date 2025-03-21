@@ -26,7 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  poetry-version: 1.5.1
+  poetry-version: 2.1.1
   pytest-base-args: >-
     --log-level=DEBUG
     --durations=10
@@ -180,7 +180,7 @@ jobs:
       - name: Check python code style
         shell: bash -eux {0}
         run: |
-          for step in black ruff pyright ${{ !inputs.style-only && 'sqlfluff' || '' }}; do
+          for step in ruff-format ruff pyright ${{ !inputs.style-only && 'sqlfluff' || '' }}; do
             python \
               ${{ steps.pre-commit.outputs.install-path }} \
               run \
