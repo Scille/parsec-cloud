@@ -22,7 +22,7 @@ Recently, some changes came to disrupt this stability:
   - the 3rd party libraries changed, new issues were detected (particularily on
     macOS)
 
-- **Mountpoint strategy**: Parsec workspaces can be mounted either as *Drive* or
+- **Mountpoint strategy**: Parsec workspaces can be mounted either as *Drive* (only on Windows) or
   as *Directory*. This added some uncertainty as which should be the preferred/
   default strategy, and if this should be platform-dependent.
 
@@ -41,8 +41,8 @@ In short, this RFC aims at describing how Parsec should support mountpoint on
 each platform, therefore answering questions such as:
 
 - How workspaces should be mounted by default?
-- What is the expected behavior on startup/shutdown?
-- How should Parsec recover recover from a mountpoint crash or an application
+- What is the expected behavior on startup/shutdown of the application?
+- How should Parsec recover from a mountpoint crash or an application
   crash?
 
 > The **need** for user function to mount/unmount workspaces can be discussed
@@ -88,7 +88,7 @@ file system:
 
 #### Default strategy
 
-On Linux, there is not much difference between Drive and Directory strategies.
+On Unix system (Linux & MacOS), there is not much difference between Drive and Directory strategies.
 
 On Windows, the limitation on the number of drive letters is what ends up
 tipping balance in favor of the *Mountpoint as Directory* strategy.
@@ -129,7 +129,7 @@ workspace:
 
 1. if the existing directory was manually created by the user
    - if empty, should be **safe to mount here**
-   - if not empty, **do not mount here** (it may contain user data)
+   - if not empty, **do not mount here** (it contains user data)
 2. if the existing directory contains a valid mounted workspace (probably from a
    different organization) **do not mount here**
    - On Linux this can be checked by getting directory metadata (`stat`) and
@@ -153,7 +153,7 @@ is preferred (e.g. try `my workspace (1)`, `my workspace (2)` and so on).
 | **Workspace unmounted** | If the workspace crashes, or is manually unmounted by the user, no action is performed. The workspace should be re-mounted when the user attemps to access the workspace again from Parsec GUI. |
 | **Workspace directory removed** | If the workspace directory is manually removed by the user, no action is performed. The workspace should be re-mounted when the user attemps to access the workspace again from Parsec GUI. |
 
-In either of the previous cases, Parsec should inform the user abut the issue.
+In either of the previous cases, Parsec should inform the user about the issue.
 This could be done in a non-intrusive manner such as displaying a warning sign
 on top of the workspace that will display a tooltip on hover.
 
