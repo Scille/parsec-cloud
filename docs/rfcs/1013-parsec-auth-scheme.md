@@ -126,23 +126,13 @@ Before obtaining the encrypted account manifest, the user retrieves the informat
   "reps": [
     {
       "status": "ok",
-      "account_manifest": "EncryptedAccountManifest",
-      "encrypted_priv_key_key_algorithm": "KeyAlgorithm",
-      "encrypted_priv_key": "EncryptedPrivKey"
-    }
-  ]
-}
-```
-
-And now request the account manifest:
-
-```yml
-{
-  "cmd": "account_manifest_get",
-  "req": {},
-  "status": [
-    {
-      "status": "ok",
+      # Parameters used to generate the symmetric key for the authentication method.
+      "sym_key_params": "KeyAlgorithm",
+      # The auth method private key, encrypted with `auth_method_sym_key`.
+      "encrypted_priv_key": "EncryptedPrivKey",
+      # The account manifest symmetric key encrypted with `auth_method_pub_key`.
+      "account_manifest_sym_key": "EncryptedSymKey",
+      # The account manifest encrypted with `account_manifest_sym_key`.
       "account_manifest": "EncryptedAccountManifest"
     }
   ]
