@@ -132,10 +132,53 @@ Before obtaining the encrypted account manifest, the user retrieves the informat
       "encrypted_priv_key": "EncryptedPrivKey",
       # The account manifest symmetric key encrypted with `auth_method_pub_key`.
       "account_manifest_sym_key": "EncryptedSymKey",
-      # The account manifest encrypted with `account_manifest_sym_key`.
-      "account_manifest": "EncryptedAccountManifest"
+      # The account manifest related to the authentication method.
+      "account_manifest_id": "AccountManifestID",
     }
   ]
+}
+```
+
+Then retrieve the account manifest using the provided `account_manifest_id`:
+
+```yml
+{
+  "cmd": "account_manifest_get",
+  "req": {
+    "id": "AccountManifestID",
+    # Allow to retrieve the manifest at a specific version.
+    # If not provided, will return the latest version.
+    "version": "Option<UInt>"
+  },
+  "reps": [
+    {
+      "status": "ok",
+      "manifest": "AccountManifestEntry"
+    },
+    {
+      "status": "unknown_manifest_id"
+    },
+    {
+      "status": "unknown_manifest_version"
+    }
+  ]
+}
+```
+
+`AccountManifestEntry` is structured like so:
+
+```yml
+{
+  "label": "AccountManifestEntry",
+  "type": "account_manifest_entry",
+  "other_fields": {
+    # The ID of the account manifest
+    "id": "Uuid",
+    # The version of the account manifest
+    "version": "UInt",
+    # The account manifest encrypted with `account_manifest_sym_key`
+    "encrypted_manifest": "EncryptedAccountManifest",
+  }
 }
 ```
 
@@ -147,7 +190,7 @@ Now that the client can encrypt the device with the symmetric key, it can upload
 {
   "cmd": "device_upload",
   "req": {
-    "account_manifest": "EncryptedAccountManifest",
+    "account_manifest": "AccountManifestEntry"
     "organization_id": "OrganizationID",
     "device_ownership_proof": "DeviceOwnershipProof",
     "encrypted_device": "EncryptedDevice"
@@ -161,6 +204,10 @@ Now that the client can encrypt the device with the symmetric key, it can upload
     },
     {
       "status": "invalid_ownership_proof"
+    },
+    {
+      # Error when the account manifest version is already in use (meaning concurrent change)
+      "status": "invalid_manifest_version"
     }
   ]
 }
