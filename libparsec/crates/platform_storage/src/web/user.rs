@@ -39,6 +39,7 @@ async fn initialize_database(
 #[derive(Debug)]
 pub struct PlatformUserStorage {
     conn: Database<CustomErrMarker>,
+    #[cfg(any(test, feature = "expose-test-methods"))]
     realm_id: VlobID,
 }
 
@@ -85,6 +86,7 @@ impl PlatformUserStorage {
 
         Ok(Self {
             conn,
+            #[cfg(any(test, feature = "expose-test-methods"))]
             realm_id: device.user_realm_id,
         })
     }
@@ -95,34 +97,39 @@ impl PlatformUserStorage {
     }
 
     pub async fn get_realm_checkpoint(&self) -> anyhow::Result<IndexInt> {
-        self.with_transaction(false, async |transaction: Transaction<CustomErrMarker>| {
-            let store = transaction
-                .object_store(STORE)
-                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+        with_transaction!(
+            &self.conn,
+            &[STORE],
+            false,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction
+                    .object_store(STORE)
+                    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
-            let maybe_singleton = store
-                .get(&SINGLETON_KEY.into())
-                .await
-                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+                let maybe_singleton = store
+                    .get(&SINGLETON_KEY.into())
+                    .await
+                    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
-            let singleton = match maybe_singleton {
-                Some(singleton) => singleton,
-                None => return Ok(0),
-            };
+                let singleton = match maybe_singleton {
+                    Some(singleton) => singleton,
+                    None => return Ok(0),
+                };
 
-            let checkpoint_or_undefined =
-                js_sys::Reflect::get(&singleton, &SINGLETON_CHECKPOINT_FIELD.into()).map_err(
-                    |e| anyhow::anyhow!("Invalid entry, got {singleton:?}: error {e:?}"),
-                )?;
+                let checkpoint_or_undefined =
+                    js_sys::Reflect::get(&singleton, &SINGLETON_CHECKPOINT_FIELD.into()).map_err(
+                        |e| anyhow::anyhow!("Invalid entry, got {singleton:?}: error {e:?}"),
+                    )?;
 
-            if checkpoint_or_undefined.is_undefined() {
-                return Ok(0);
-            } else {
-                js_to_rs_u64(checkpoint_or_undefined)
-                    .with_context(|| format!("Invalid entry, got {singleton:?}"))
+                if checkpoint_or_undefined.is_undefined() {
+                    return Ok(0);
+                } else {
+                    js_to_rs_u64(checkpoint_or_undefined)
+                        .with_context(|| format!("Invalid entry, got {singleton:?}"))
+                }
             }
-        })
-        .await
+        )
+        .await?
     }
 
     pub async fn update_realm_checkpoint(
@@ -130,37 +137,139 @@ impl PlatformUserStorage {
         new_checkpoint: IndexInt,
         remote_user_manifest_version: Option<VersionInt>,
     ) -> anyhow::Result<()> {
-        self.with_transaction(true, async |transaction: Transaction<CustomErrMarker>| {
-            let store = transaction
-                .object_store(STORE)
+        with_transaction!(
+            &self.conn,
+            &[STORE],
+            true,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction
+                    .object_store(STORE)
+                    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+                let maybe_singleton = store
+                    .get(&SINGLETON_KEY.into())
+                    .await
+                    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+                let singleton = maybe_singleton.unwrap_or_else(|| js_sys::Object::new().into());
+
+                // Update checkpoint field
+
+                let current_checkpoint = {
+                    js_sys::Reflect::get(&singleton, &SINGLETON_CHECKPOINT_FIELD.into())
+                        .map_err(|e| anyhow::anyhow!("{e:?}"))?
+                        .as_f64()
+                        .map(|f| f as IndexInt)
+                        .unwrap_or(0)
+                };
+                js_sys::Reflect::set(
+                    &singleton,
+                    &SINGLETON_CHECKPOINT_FIELD.into(),
+                    &rs_to_js_u64(std::cmp::max(current_checkpoint, new_checkpoint))?,
+                )
                 .map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
-            let maybe_singleton = store
-                .get(&SINGLETON_KEY.into())
-                .await
+                // Update remove version field
+
+                if let Some(new_remote_version) = remote_user_manifest_version {
+                    let current_remote_version = {
+                        js_sys::Reflect::get(&singleton, &SINGLETON_REMOTE_VERSION_FIELD.into())
+                            .map_err(|e| anyhow::anyhow!("{e:?}"))?
+                            .as_f64()
+                            .map(|f| f as VersionInt)
+                            .unwrap_or(0)
+                    };
+                    js_sys::Reflect::set(
+                        &singleton,
+                        &SINGLETON_REMOTE_VERSION_FIELD.into(),
+                        &std::cmp::max(current_remote_version, new_remote_version).into(),
+                    )
+                    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+                }
+
+                // Save in database
+
+                store
+                    .put_kv(&SINGLETON_KEY.into(), &singleton)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+                Ok(())
+            }
+        )
+        .await?
+    }
+
+    pub async fn get_user_manifest(&self) -> anyhow::Result<Option<Vec<u8>>> {
+        with_transaction!(
+            &self.conn,
+            &[STORE],
+            false,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction
+                    .object_store(STORE)
+                    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+                let maybe_singleton = store
+                    .get(&SINGLETON_KEY.into())
+                    .await
+                    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+                let singleton = match maybe_singleton {
+                    Some(singleton) => singleton,
+                    None => return Ok(None),
+                };
+
+                let blob_or_undefined =
+                    js_sys::Reflect::get(&singleton, &SINGLETON_BLOB_FIELD.into()).map_err(
+                        |e| anyhow::anyhow!("Invalid entry, got {singleton:?}: error {e:?}"),
+                    )?;
+
+                if blob_or_undefined.is_undefined() {
+                    Ok(None)
+                } else {
+                    let blob = js_to_rs_bytes(blob_or_undefined)
+                        .with_context(|| format!("Invalid entry, got {singleton:?}"))?;
+                    Ok(Some(blob))
+                }
+            }
+        )
+        .await?
+    }
+
+    pub async fn update_user_manifest(
+        &mut self,
+        encrypted: &[u8],
+        need_sync: bool,
+        base_version: VersionInt,
+    ) -> anyhow::Result<()> {
+        with_transaction!(
+            &self.conn,
+            &[STORE],
+            true,
+            async |transaction: Transaction<CustomErrMarker>| {
+                let store = transaction
+                    .object_store(STORE)
+                    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+                let maybe_singleton = store
+                    .get(&SINGLETON_KEY.into())
+                    .await
+                    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+                let singleton = maybe_singleton.unwrap_or_else(|| js_sys::Object::new().into());
+
+                // Update base version fields
+
+                js_sys::Reflect::set(
+                    &singleton,
+                    &SINGLETON_BASE_VERSION_FIELD.into(),
+                    &base_version.into(),
+                )
                 .map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
-            let singleton = maybe_singleton.unwrap_or_else(|| js_sys::Object::new().into());
+                // Update remote version fields
 
-            // Update checkpoint field
-
-            let current_checkpoint = {
-                js_sys::Reflect::get(&singleton, &SINGLETON_CHECKPOINT_FIELD.into())
-                    .map_err(|e| anyhow::anyhow!("{e:?}"))?
-                    .as_f64()
-                    .map(|f| f as IndexInt)
-                    .unwrap_or(0)
-            };
-            js_sys::Reflect::set(
-                &singleton,
-                &SINGLETON_CHECKPOINT_FIELD.into(),
-                &rs_to_js_u64(std::cmp::max(current_checkpoint, new_checkpoint))?,
-            )
-            .map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-            // Update remove version field
-
-            if let Some(new_remote_version) = remote_user_manifest_version {
                 let current_remote_version = {
                     js_sys::Reflect::get(&singleton, &SINGLETON_REMOTE_VERSION_FIELD.into())
                         .map_err(|e| anyhow::anyhow!("{e:?}"))?
@@ -171,129 +280,44 @@ impl PlatformUserStorage {
                 js_sys::Reflect::set(
                     &singleton,
                     &SINGLETON_REMOTE_VERSION_FIELD.into(),
-                    &std::cmp::max(current_remote_version, new_remote_version).into(),
+                    &std::cmp::max(current_remote_version, base_version).into(),
                 )
                 .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+                // Update need sync field
+
+                js_sys::Reflect::set(
+                    &singleton,
+                    &SINGLETON_NEED_SYNC_FIELD.into(),
+                    &need_sync.into(),
+                )
+                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+                // Update blob field
+
+                js_sys::Reflect::set(
+                    &singleton,
+                    &SINGLETON_BLOB_FIELD.into(),
+                    &js_sys::Uint8Array::from(encrypted.as_ref()).into(),
+                )
+                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+                // Save in database
+
+                store
+                    .put_kv(&SINGLETON_KEY.into(), &singleton)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+                Ok(())
             }
-
-            // Save in database
-
-            store
-                .put_kv(&SINGLETON_KEY.into(), &singleton)
-                .await
-                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-            Ok(())
-        })
-        .await
-    }
-
-    pub async fn get_user_manifest(&self) -> anyhow::Result<Option<Vec<u8>>> {
-        self.with_transaction(false, async |transaction: Transaction<CustomErrMarker>| {
-            let store = transaction
-                .object_store(STORE)
-                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-            let maybe_singleton = store
-                .get(&SINGLETON_KEY.into())
-                .await
-                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-            let singleton = match maybe_singleton {
-                Some(singleton) => singleton,
-                None => return Ok(None),
-            };
-
-            let blob_or_undefined = js_sys::Reflect::get(&singleton, &SINGLETON_BLOB_FIELD.into())
-                .map_err(|e| anyhow::anyhow!("Invalid entry, got {singleton:?}: error {e:?}"))?;
-
-            if blob_or_undefined.is_undefined() {
-                Ok(None)
-            } else {
-                let blob = js_to_rs_bytes(blob_or_undefined)
-                    .with_context(|| format!("Invalid entry, got {singleton:?}"))?;
-                Ok(Some(blob))
-            }
-        })
-        .await
-    }
-
-    pub async fn update_user_manifest(
-        &mut self,
-        encrypted: &[u8],
-        need_sync: bool,
-        base_version: VersionInt,
-    ) -> anyhow::Result<()> {
-        self.with_transaction(true, async |transaction: Transaction<CustomErrMarker>| {
-            let store = transaction
-                .object_store(STORE)
-                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-            let maybe_singleton = store
-                .get(&SINGLETON_KEY.into())
-                .await
-                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-            let singleton = maybe_singleton.unwrap_or_else(|| js_sys::Object::new().into());
-
-            // Update base version fields
-
-            js_sys::Reflect::set(
-                &singleton,
-                &SINGLETON_BASE_VERSION_FIELD.into(),
-                &base_version.into(),
-            )
-            .map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-            // Update remote version fields
-
-            let current_remote_version = {
-                js_sys::Reflect::get(&singleton, &SINGLETON_REMOTE_VERSION_FIELD.into())
-                    .map_err(|e| anyhow::anyhow!("{e:?}"))?
-                    .as_f64()
-                    .map(|f| f as VersionInt)
-                    .unwrap_or(0)
-            };
-            js_sys::Reflect::set(
-                &singleton,
-                &SINGLETON_REMOTE_VERSION_FIELD.into(),
-                &std::cmp::max(current_remote_version, base_version).into(),
-            )
-            .map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-            // Update need sync field
-
-            js_sys::Reflect::set(
-                &singleton,
-                &SINGLETON_NEED_SYNC_FIELD.into(),
-                &need_sync.into(),
-            )
-            .map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-            // Update blob field
-
-            js_sys::Reflect::set(
-                &singleton,
-                &SINGLETON_BLOB_FIELD.into(),
-                &js_sys::Uint8Array::from(encrypted.as_ref()).into(),
-            )
-            .map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-            // Save in database
-
-            store
-                .put_kv(&SINGLETON_KEY.into(), &singleton)
-                .await
-                .map_err(|e| anyhow::anyhow!("{e:?}"))?;
-
-            Ok(())
-        })
-        .await
+        )
+        .await?
     }
 
     #[cfg(any(test, feature = "expose-test-methods"))]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[STORE],
             false,
@@ -379,41 +403,6 @@ impl PlatformUserStorage {
                 Ok(output)
             },
         )
-        .await
-    }
-
-    async fn with_transaction<R, E: From<anyhow::Error>>(
-        &self,
-        rw: bool,
-        cb: impl AsyncFnOnce(Transaction<CustomErrMarker>) -> Result<R, E>,
-    ) -> Result<R, E> {
-        let custom_err = std::cell::Cell::new(None);
-        let custom_err_ref = &custom_err;
-
-        let transaction_builder = self.conn.transaction(&[STORE]);
-        let transaction_builder = if rw {
-            transaction_builder.rw()
-        } else {
-            transaction_builder
-        };
-
-        let outcome = transaction_builder
-            .run(async move |transaction| {
-                cb(transaction).await.map_err(|e| {
-                    custom_err_ref.set(Some(e));
-                    CustomErrMarker.into()
-                })
-            })
-            .await;
-
-        match outcome {
-            Ok(ok) => Ok(ok),
-            Err(err) => match err {
-                indexed_db::Error::User(_) => {
-                    Err(custom_err.take().expect("error must have been set"))
-                }
-                err => Err(anyhow::anyhow!("{err:?}").into()),
-            },
-        }
+        .await?
     }
 }

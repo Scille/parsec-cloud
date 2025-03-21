@@ -1181,5 +1181,183 @@ async fn nop_mark_prevent_sync_pattern_with_different_pat(env: &TestbedEnv) {
     );
 }
 
-// TODO: test get/set blocks
-// TODO: test inbound / outbound need sync
+// We test inbound and outbound together to ensure the two are not stepping on each other
+#[parsec_test(testbed = "minimal")]
+async fn get_inbound_outbound_need_sync(env: &TestbedEnv) {
+    let realm_id = VlobID::from_hex("aa0000000000000000000000000000ee").unwrap();
+    let vlob1_id = VlobID::from_hex("aa000000000000000000000000000011").unwrap();
+    let vlob2_id = VlobID::from_hex("aa000000000000000000000000000022").unwrap();
+    let vlob3_id = VlobID::from_hex("aa000000000000000000000000000033").unwrap();
+    let vlob4_id = VlobID::from_hex("aa000000000000000000000000000044").unwrap();
+    let vlob5_id = VlobID::from_hex("aa000000000000000000000000000055").unwrap();
+    let alice = env.local_device("alice@dev1");
+
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
+
+    macro_rules! assert_outbound_need_sync {
+        ($expected: expr) => {
+            async {
+                let expected: Vec<VlobID> = $expected;
+                assert!(expected.len() <= 100); // Sanity check
+                p_assert_eq!(
+                    workspace_storage.get_outbound_need_sync(100).await.unwrap(),
+                    expected
+                );
+                p_assert_eq!(
+                    workspace_storage.get_outbound_need_sync(1).await.unwrap(),
+                    match expected.first() {
+                        None => vec![],
+                        Some(&first) => vec![first],
+                    }
+                );
+                p_assert_eq!(
+                    workspace_storage.get_outbound_need_sync(0).await.unwrap(),
+                    vec![]
+                );
+            }
+        };
+    }
+
+    macro_rules! assert_inbound_need_sync {
+        ($expected: expr) => {
+            async {
+                let expected: Vec<VlobID> = $expected;
+                assert!(expected.len() <= 100); // Sanity check
+                p_assert_eq!(
+                    workspace_storage.get_inbound_need_sync(100).await.unwrap(),
+                    expected
+                );
+                p_assert_eq!(
+                    workspace_storage.get_inbound_need_sync(1).await.unwrap(),
+                    match expected.first() {
+                        None => vec![],
+                        Some(&first) => vec![first],
+                    }
+                );
+                p_assert_eq!(
+                    workspace_storage.get_inbound_need_sync(0).await.unwrap(),
+                    vec![]
+                );
+            }
+        };
+    }
+
+    // 1) Storage starts empty
+
+    assert_outbound_need_sync!(vec![]).await;
+    assert_inbound_need_sync!(vec![]).await;
+
+    // 2) Add items that doesn't need sync
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: vlob1_id,
+            encrypted: b"<vlob1_v1>".to_vec(),
+            need_sync: false,
+            base_version: 1,
+        })
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: vlob2_id,
+            encrypted: b"<vlob2_v2>".to_vec(),
+            need_sync: false,
+            base_version: 2,
+        })
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: vlob3_id,
+            encrypted: b"<vlob3_v1>".to_vec(),
+            need_sync: false,
+            base_version: 1,
+        })
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: vlob4_id,
+            encrypted: b"<vlob4_v4>".to_vec(),
+            need_sync: false,
+            base_version: 4,
+        })
+        .await
+        .unwrap();
+
+    assert_outbound_need_sync!(vec![]).await;
+    assert_inbound_need_sync!(vec![]).await;
+
+    // 4) Add inbound need sync
+
+    workspace_storage
+        .update_realm_checkpoint(
+            1,
+            &[
+                (vlob1_id, 1),  // Noop since version is the same
+                (vlob2_id, 3),  // Need sync !
+                (vlob3_id, 42), // Need sync !
+                (vlob4_id, 3),  // Smaller version should also trigger inbound sync
+            ],
+        )
+        .await
+        .unwrap();
+
+    assert_outbound_need_sync!(vec![]).await;
+    assert_inbound_need_sync!(vec![vlob2_id, vlob3_id, vlob4_id]).await;
+
+    // 3) Add outbound need sync
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: vlob1_id,
+            encrypted: b"<vlob1_v1 locally modified>".to_vec(),
+            need_sync: true,
+            base_version: 1,
+        })
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: vlob2_id,
+            encrypted: b"<vlob2_v0 locally modified>".to_vec(),
+            need_sync: true,
+            base_version: 3, // Change in base version should impact inbound sync
+        })
+        .await
+        .unwrap();
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: vlob5_id,
+            encrypted: b"<vlob5_v0 locally modified>".to_vec(),
+            need_sync: true,
+            base_version: 0,
+        })
+        .await
+        .unwrap();
+
+    assert_outbound_need_sync!(vec![vlob1_id, vlob2_id, vlob5_id]).await;
+    assert_inbound_need_sync!(vec![vlob3_id, vlob4_id]).await;
+
+    workspace_storage
+        .update_manifest(&UpdateManifestData {
+            entry_id: vlob5_id,
+            encrypted: b"<vlob5_v1>".to_vec(),
+            need_sync: false,
+            base_version: 1,
+        })
+        .await
+        .unwrap();
+
+    assert_outbound_need_sync!(vec![vlob1_id, vlob2_id]).await;
+    assert_inbound_need_sync!(vec![vlob3_id, vlob4_id]).await;
+}

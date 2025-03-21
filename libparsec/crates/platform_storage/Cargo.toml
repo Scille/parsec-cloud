@@ -38,6 +38,7 @@ web-sys = { workspace = true, features = ["IdbKeyRange"] }
 wasm-bindgen = { workspace = true }
 serde = { workspace = true }
 serde-wasm-bindgen = { workspace = true }
+libparsec_tests_lite = { workspace = true }
 
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }
