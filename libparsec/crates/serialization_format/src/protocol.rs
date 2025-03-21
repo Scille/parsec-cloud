@@ -503,6 +503,12 @@ fn quote_versioned_cmds(family: &str, version: u32, cmds: &[GenCmd]) -> (Ident, 
     (versioned_cmds_mod, code)
 }
 
+fn format_family_name_to_ident(s: &str) -> String {
+    s.split("_")
+        .map(|w| format!("{}{}", &w[..1].to_uppercase(), &w[1..]))
+        .fold(String::new(), |acc, w| acc + &w)
+}
+
 fn quote_cmd(family: &str, cmd_version: u32, cmd: &GenCmd) -> (TokenStream, TokenStream) {
     let pascal_case_name = &snake_to_pascal_case(&cmd.cmd);
     let snake_case_name = &cmd.cmd;
@@ -512,7 +518,8 @@ fn quote_cmd(family: &str, cmd_version: u32, cmd: &GenCmd) -> (TokenStream, Toke
     let command_name = snake_case_name;
 
     // `authenticated` -> `Authenticated`
-    let family_enum_variant = format_ident!("{}{}", family[..1].to_uppercase(), family[1..]);
+    // 'authenticated_account' -> 'AuthenticatedAccount'
+    let family_enum_variant = format_ident!("{}", format_family_name_to_ident(family));
 
     let module = match &cmd.spec {
         GenCmdSpec::ReusedFromVersion { version } => {
@@ -987,5 +994,18 @@ fn quote_cmd_field(field: &GenCmdField, with_pub: bool) -> TokenStream {
             #(#attrs)*
             #name: #ty
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::protocol::format_family_name_to_ident;
+
+    #[test]
+    fn test_format_family_name_to_ident() {
+        assert_eq!(
+            format_family_name_to_ident("authenticated_account"),
+            "AuthenticatedAccount"
+        )
     }
 }

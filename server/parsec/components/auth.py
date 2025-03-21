@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from enum import auto
 
 from parsec._parsec import (
+    AccountToken,
     CryptoError,
     DateTime,
     DeviceID,
@@ -50,10 +51,28 @@ class AuthAuthenticatedAuthBadOutcome(BadOutcomeEnum):
     TOKEN_TOO_OLD = auto()
 
 
+class AuthAnonymousAccountAuthBadOutcome(BadOutcomeEnum):
+    pass
+
+
+class AuthAuthenticatedAccountAuthBadOutcome(BadOutcomeEnum):
+    pass
+
+
 @dataclass
 class AnonymousAuthInfo:
     organization_id: OrganizationID
     organization_internal_id: int
+
+
+@dataclass
+class AnonymousAccountAuthInfo:
+    pass
+
+
+@dataclass
+class AuthenticatedAccountAuthInfo:
+    token: AccountToken
 
 
 @dataclass
@@ -176,6 +195,19 @@ class BaseAuthComponent:
     async def invited_auth(
         self, now: DateTime, organization_id: OrganizationID, token: InvitationToken
     ) -> InvitedAuthInfo | AuthInvitedAuthBadOutcome:
+        raise NotImplementedError
+
+    async def anonymous_account_auth(
+        self,
+        now: DateTime,
+    ) -> AnonymousAccountAuthInfo | AuthAnonymousAccountAuthBadOutcome:
+        raise NotImplementedError
+
+    async def authenticated_account_auth(
+        self,
+        now: DateTime,
+        token: AccountToken,
+    ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
         raise NotImplementedError
 
     async def authenticated_auth(
