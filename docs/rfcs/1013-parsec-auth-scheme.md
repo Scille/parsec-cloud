@@ -74,20 +74,27 @@ On `ok`, the server would have sent a mail with a unique token used for next the
     {
       "status": "invalid_email_validation_token"
     }
-  ],
-  "custom_types": {
-    "AuthMethod": {
-      "id": "AuthMethodID",
-      # The symmetric key used to encrypt the manifest
-      # that was encrypted using the public key of the authentication method.
-      "account_manifest_encrypted_sym_key": "EncryptedSymKey",
-      # The shared secret between the client and server using for the HMAC authentication.
-      "hmac_key": "HMACKey",
-      # The private key of the authentication method encrypted with `auth_method_sym_key`.
-      "encrypted_priv_key": "EncryptedPrivKey",
-      # The parameters used to generate the symmetric key for the authentication method.
-      "sym_key_params": "KeyAlgorithm"
-    }
+  ]
+}
+```
+
+With `AuthMethod` defined like so:
+
+```yml
+{
+  "label": "AuthMethod",
+  "type": "auth_method",
+  "other_fields": {
+    "id": "AuthMethodID",
+    # The symmetric key used to encrypt the manifest
+    # that was encrypted using the public key of the authentication method.
+    "account_manifest_encrypted_sym_key": "EncryptedSymKey",
+    # The shared secret between the client and server using for the HMAC authentication.
+    "hmac_key": "HMACKey",
+    # The private key of the authentication method encrypted with `auth_method_sym_key`.
+    "encrypted_priv_key": "EncryptedPrivKey",
+    # The parameters used to generate the symmetric key for the authentication method.
+    "sym_key_params": "KeyAlgorithm"
   }
 }
 ```
@@ -275,12 +282,9 @@ To add a new authentication method, the client just needs to provide the require
 {
   "cmd": "auth_method_new",
   "req": {
+    "auth_method": "AuthMethod",
     "account_manifest": "AccountManifestEntry",
     "delete_auth_method_id": "Option<AuthMethodID>",
-    "auth_method_id": "AuthMethodID",
-    "auth_method_hmac_key": "HMACKey",
-    "auth_method_encrypted_priv_key": "EncryptedPrivKey",
-    "auth_method_encrypted_priv_key_key_algorithm": "KeyAlgorithm",
     "per_auth_method_encrypted_account_manifest_sym_key": "HashMap<AuthMethodID, EncryptedSymKey>"
   },
   "reps": [
@@ -307,11 +311,9 @@ To remove an authentication method
 {
   "cmd": "auth_method_delete",
   "req": {
-    "auth_method_id": "AuthMethodID"
-    # TODO: Should:
-    # - add updated manifest without the removed auth method public key.
-    # - Setup a new account_manifest_sym_key.
-    # - Encrypt `account_manifest_sym_key` for each still in use auth method.
+    "auth_method_id": "AuthMethodID",
+    "account_manifest": "AccountManifestEntry",
+    "per_auth_method_encrypted_account_manifest_sym_key": "HashMap<AuthMethodID, EncryptedSymKey>"
   },
   "reps": [
     {
