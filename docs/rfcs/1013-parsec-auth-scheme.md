@@ -42,7 +42,7 @@ On `ok`, the server would have sent a mail with a unique token used for next the
   "req": {
     "email_validation_token": "EmailValidationToken",
     "account_manifest": "EncryptedAccountManifest",
-    "auth_method": "AuthMedium"
+    "auth_method": "AuthMethod"
   },
   "reps": [
     {
@@ -53,8 +53,8 @@ On `ok`, the server would have sent a mail with a unique token used for next the
     }
   ],
   "custom_types": {
-    "AuthMedium": {
-      "id": "AuthMediumID",
+    "AuthMethod": {
+      "id": "AuthMethodID",
       # The symmetric key used to encrypt the manifest
       # that was encrypted using the public key of the authentication method.
       "account_manifest_encrypted_sym_key": "EncryptedSymKey",
@@ -76,7 +76,7 @@ On `ok`, the server would have sent a mail with a unique token used for next the
 ```rust
 struct AccountManifest {
   /// List of registered auth method for the account.
-  auth_methods: HashMap<AuthMediumID, PublicKey>,
+  auth_methods: HashMap<AuthMethodID, PublicKey>,
   /// List of devices registered for the account.
   device_keys: HashMap<(OrganizationID, DeviceID), SymmetricKey>,
 }
@@ -90,7 +90,7 @@ Before obtaining the encrypted account manifest, the user retrieves the informat
 {
   "cmd": "auth_method_get",
   "req": {
-    "id": "AuthMediumID"
+    "id": "AuthMethodID"
   },
   "reps": [
     {
@@ -207,12 +207,12 @@ To add a new authentication method, the client just needs to provide the require
   "cmd": "auth_method_new",
   "req": {
     "account_manifest": "EncryptedAccountManifest",
-    "delete_auth_method_id": "Option<AuthMediumID>",
-    "auth_method_id": "AuthMediumID",
+    "delete_auth_method_id": "Option<AuthMethodID>",
+    "auth_method_id": "AuthMethodID",
     "auth_method_hmac_key": "HMACKey",
     "auth_method_encrypted_priv_key": "EncryptedPrivKey",
     "auth_method_encrypted_priv_key_key_algorithm": "KeyAlgorithm",
-    "per_auth_method_encrypted_account_manifest_sym_key": "HashMap<AuthMediumID, EncryptedSymKey>"
+    "per_auth_method_encrypted_account_manifest_sym_key": "HashMap<AuthMethodID, EncryptedSymKey>"
   },
   "reps": [
     {
@@ -238,7 +238,7 @@ To remove an authentication method
 {
   "cmd": "auth_method_delete",
   "req": {
-    "auth_method_id": "AuthMediumID"
+    "auth_method_id": "AuthMethodID"
   },
   "reps": [
     {
