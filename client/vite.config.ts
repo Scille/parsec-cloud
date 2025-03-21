@@ -63,6 +63,7 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
 
 // https://vitejs.dev/config/
 const config: UserConfigExport = () => ({
+  base: process.env.PARSEC_APP_BASEHREF || '/',
   test: {
     include: ['tests/unit/specs/*.spec.ts'],
     setupFiles: [path.resolve(__dirname, './tests/component/support/setup.ts')],
