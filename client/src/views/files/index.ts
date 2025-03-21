@@ -5,6 +5,8 @@ import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import FileOperationMenu from '@/views/files/FileOperationMenu.vue';
 import FolderGlobalContextMenu from '@/views/files/FolderGlobalContextMenu.vue';
 import FoldersPage from '@/views/files/FoldersPage.vue';
+import SmallDisplayFileContextMenu from '@/views/files/SmallDisplayFileContextMenu.vue';
 
 export * from '@/views/files/types';
-export { FileContextMenu, FileDetailsModal, FileOperationMenu, FolderGlobalContextMenu, FoldersPage };
+export * from '@/views/files/utils';
+export { FileContextMenu, FileDetailsModal, FileOperationMenu, FolderGlobalContextMenu, FoldersPage, SmallDisplayFileContextMenu };
