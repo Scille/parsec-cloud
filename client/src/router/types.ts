@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ConnectionHandle, EntryName, FsPath, ParsecWorkspacePathAddr, WorkspaceHandle, WorkspaceName } from '@/parsec';
+import { ConnectionHandle, EntryName, FsPath, ParsecAuth, ParsecWorkspacePathAddr, WorkspaceHandle, WorkspaceName } from '@/parsec';
 import { DeviceID, OrganizationID } from '@/plugins/libparsec';
 import { ServerType } from '@/services/parsecServers';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
@@ -9,6 +9,7 @@ import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-route
 
 export enum Routes {
   Home = 'home',
+  Auth = 'auth',
   Workspaces = 'workspaces',
   Documents = 'documents',
   Users = 'users',
@@ -26,12 +27,28 @@ export enum Routes {
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: `/${Routes.Home}`,
+    redirect: (to): any => {
+      if (ParsecAuth.isSkipped() || ParsecAuth.isLoggedIn()) {
+        return { name: Routes.Home, query: to.query, params: to.params };
+      }
+      return { name: Routes.Auth, query: to.query, params: to.params };
+    },
   },
   {
     path: `/${Routes.Home}`,
     name: Routes.Home,
     component: () => import('@/views/home/HomePage.vue'),
+    beforeEnter: (): boolean => {
+      if (!ParsecAuth.isSkipped && !ParsecAuth.isLoggedIn) {
+        ParsecAuth.markSkipped();
+      }
+      return true;
+    },
+  },
+  {
+    path: `/${Routes.Auth}`,
+    name: Routes.Auth,
+    component: () => import('@/views/home/AuthHomePage.vue'),
   },
   {
     path: '/:unknown(.*)*',
@@ -47,7 +64,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: `/${Routes.ClientAreaLogin}`,
     name: Routes.ClientAreaLogin,
-    component: () => import('@/views/client-area/ClientAreaLoginPage.vue'),
+    component: () => import('@/views/home/ClientAreaHomePage.vue'),
   },
   {
     path: `/${Routes.ClientArea}`,

@@ -12,12 +12,18 @@
       >
         {{ $msTranslate('notificationCenter.newVersionAvailable') }}
       </ion-button>
+      <ion-button
+        v-show="ParsecAuth.isLoggedIn()"
+        @click="logOutParsecAuth"
+      >
+        {{ 'LOG OUT' }}
+      </ion-button>
       <ion-buttons class="menu-secondary-buttons">
         <!-- about button -->
         <ion-button
           id="trigger-version-button"
           class="menu-secondary-buttons__item"
-          @click="$emit('aboutClick')"
+          @click="openAboutModal"
         >
           <ion-icon
             :icon="informationCircle"
@@ -45,7 +51,7 @@
         <ion-button
           id="trigger-settings-button"
           class="menu-secondary-buttons__item"
-          @click="$emit('settingsClick')"
+          @click="openSettingsModal"
         >
           <ion-icon
             :icon="cog"
@@ -113,14 +119,26 @@ import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
 import { Env } from '@/services/environment';
 import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
 import { APP_VERSION } from '@/services/environment';
+import { openSettingsModal } from '@/views/settings';
+import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
+import AboutModal from '@/views/about/AboutModal.vue';
+import { ParsecAuth } from '@/parsec';
+import { navigateTo, Routes } from '@/router';
 
 const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const eventDistributor = injectionProvider.getDefault().eventDistributor;
 let eventCbId: string | null = null;
 const updateAvailability: Ref<UpdateAvailabilityData | null> = ref(null);
+const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
+
+let hotkeys: HotkeyGroup | null = null;
 
 onMounted(async () => {
+  hotkeys = hotkeyManager.newHotkeys();
+  hotkeys.add({ key: ',', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true }, openSettingsModal);
+  hotkeys.add({ key: 'a', modifiers: Modifiers.Ctrl | Modifiers.Alt, platforms: Platforms.Desktop, disableIfModal: true }, openAboutModal);
+
   eventCbId = await eventDistributor.registerCallback(Events.UpdateAvailability, async (event: Events, data?: EventData) => {
     if (event === Events.UpdateAvailability) {
       updateAvailability.value = data as UpdateAvailabilityData;
@@ -132,6 +150,9 @@ onMounted(async () => {
 onUnmounted(async () => {
   if (eventCbId) {
     eventDistributor.removeCallback(eventCbId);
+  }
+  if (hotkeys) {
+    hotkeyManager.unregister(hotkeys);
   }
 });
 
@@ -164,6 +185,11 @@ async function update(): Promise<void> {
   }
 }
 
+async function logOutParsecAuth(): Promise<void> {
+  await ParsecAuth.logout();
+  await navigateTo(Routes.Auth, { skipHandle: true });
+}
+
 defineProps<{
   showBackButton: boolean;
   backButtonTitle?: Translatable;
@@ -171,12 +197,20 @@ defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'settingsClick'): void;
-  (e: 'aboutClick'): void;
   (e: 'backClick'): void;
   (e: 'customerAreaClick'): void;
   (e: 'createOrJoinOrganizationClick', event: Event): void;
 }>();
+
+async function openAboutModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: AboutModal,
+    cssClass: 'about-modal',
+  });
+  await modal.present();
+  await modal.onWillDismiss();
+  await modal.dismiss();
+}
 </script>
 
 <style lang="scss" scoped>

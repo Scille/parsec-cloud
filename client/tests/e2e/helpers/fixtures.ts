@@ -54,7 +54,6 @@ export const msTest = debugTest.extend<{
     await page.addInitScript(() => {
       (window as any).TESTING = true;
       (window as any).showSaveFilePicker = async (): Promise<FileSystemFileHandle> => {
-        console.log('Show save file Picker');
         return {
           kind: 'file',
           name: 'downloadedFile.tmp',
