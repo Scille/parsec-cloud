@@ -7,6 +7,7 @@ use wasm_bindgen::{JsCast, JsValue};
 use indexed_db::{Database, Factory, Transaction};
 use libparsec_types::prelude::*;
 
+use super::utils::{with_transaction, CustomErrMarker};
 use crate::certificates::{
     FilterKind, GetCertificateError, GetCertificateQuery, PerTopicLastTimestamps,
     StorableCertificateTopic, UpTo,
@@ -90,22 +91,6 @@ async fn initialize_database(
         .create()?;
 
     Ok(())
-}
-
-// TODO: update doc
-// `indexed_db::Database` force us to specify a custom error type off the bat.
-// This is an issue since `PlatformCertificatesStorage::for_update` is generic
-// over the error type !
-// Hence our only solution is to rely on type erasing to make the error go
-// through the `indexed_db` API, only to downcast it back to the original error.
-//
-// See https://github.com/Ekleog/indexed-db/issues/4
-#[derive(Debug, thiserror::Error)]
-struct CustomErrMarker;
-impl std::fmt::Display for CustomErrMarker {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "CustomErrMarker")
-    }
 }
 
 #[derive(Debug)]
@@ -893,38 +878,20 @@ impl PlatformCertificatesStorage {
         &mut self,
         cb: impl AsyncFnOnce(PlatformCertificatesStorageForUpdateGuard) -> Result<R, E>,
     ) -> anyhow::Result<Result<R, E>> {
-        let custom_err = std::cell::Cell::new(None);
-        let custom_err_ref = &custom_err;
-
-        let outcome = self
-            .conn
-            .transaction(&[STORE])
-            .rw()
-            .run(async move |transaction| {
-                let updater = PlatformCertificatesStorageForUpdateGuard {
-                    transaction: &transaction,
-                };
-                cb(updater).await.map_err(|e| {
-                    custom_err_ref.set(Some(e));
-                    CustomErrMarker.into()
-                })
-            })
-            .await;
-
-        match outcome {
-            Ok(ok) => Ok(Ok(ok)),
-            Err(err) => match err {
-                indexed_db::Error::User(_) => {
-                    Ok(Err(custom_err.take().expect("error must have been set")))
-                }
-                err => Err(anyhow::anyhow!("{err:?}")),
-            },
-        }
+        with_transaction!(&self.conn, &[STORE], true, async move |transaction| {
+            let updater = PlatformCertificatesStorageForUpdateGuard {
+                transaction: &transaction,
+            };
+            cb(updater).await
+        })
+        .await
     }
 
     pub async fn get_last_timestamps(&mut self) -> anyhow::Result<PerTopicLastTimestamps> {
-        self.with_ro_transaction(async move |transaction| get_last_timestamps(&transaction).await)
-            .await
+        with_transaction!(&self.conn, &[STORE], false, async |transaction| {
+            get_last_timestamps(&transaction).await
+        })
+        .await?
     }
 
     pub async fn get_certificate_encrypted<'a>(
@@ -932,10 +899,10 @@ impl PlatformCertificatesStorage {
         query: GetCertificateQuery<'a>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
-        self.with_ro_transaction(async move |transaction| {
+        with_transaction!(&self.conn, &[STORE], false, async move |transaction| {
             get_certificate_encrypted(&transaction, query, up_to).await
         })
-        .await
+        .await?
     }
 
     pub async fn get_multiple_certificates_encrypted<'a>(
@@ -945,45 +912,19 @@ impl PlatformCertificatesStorage {
         offset: Option<u32>,
         limit: Option<u32>,
     ) -> anyhow::Result<Vec<(DateTime, Vec<u8>)>> {
-        self.with_ro_transaction(async move |transaction| {
+        with_transaction!(&self.conn, &[STORE], false, async move |transaction| {
             get_multiple_certificates_encrypted(&transaction, query, up_to, offset, limit).await
         })
-        .await
+        .await?
     }
 
     /// Only used for debugging tests
     #[cfg(any(test, feature = "expose-test-methods"))]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
-        self.with_ro_transaction(async |transaction| debug_dump(&transaction).await)
-            .await
-    }
-
-    async fn with_ro_transaction<R, E: From<anyhow::Error>>(
-        &self,
-        cb: impl AsyncFnOnce(Transaction<CustomErrMarker>) -> Result<R, E>,
-    ) -> Result<R, E> {
-        let custom_err = std::cell::Cell::new(None);
-        let custom_err_ref = &custom_err;
-
-        let outcome = self
-            .conn
-            .transaction(&[STORE])
-            .run(async move |transaction| {
-                cb(transaction).await.map_err(|e| {
-                    custom_err_ref.set(Some(e));
-                    CustomErrMarker.into()
-                })
-            })
-            .await;
-
-        match outcome {
-            Ok(ok) => Ok(ok),
-            Err(err) => match err {
-                indexed_db::Error::User(_) => {
-                    Err(custom_err.take().expect("error must have been set"))
-                }
-                err => Err(anyhow::anyhow!("{err:?}").into()),
-            },
-        }
+        with_transaction!(&self.conn, &[STORE], false, async |transaction| debug_dump(
+            &transaction
+        )
+        .await)
+        .await?
     }
 }

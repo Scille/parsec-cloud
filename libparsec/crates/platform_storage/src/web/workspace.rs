@@ -46,7 +46,15 @@ const CHECKPOINT_SINGLETON_KEY: u32 = 1;
 
 // Vlobs store contains:
 // - key: Vlob ID (as Uint8Array)
-// - value: {base_version: number, remote_version: number, need_sync: bool, blob: Uint8Array}
+// - value: {
+//     base_version: number,
+//     remote_version: number,
+//     inbound_need_sync: number, // 0 is false, 1 is true
+//     outbound_need_sync: number, // 0 is false, 1 is true
+//     blob: Uint8Array
+//   }
+// Note the need to use a number to store boolean, given that IndexedDB
+// doesn't support booleans in indexes ><''
 const VLOBS_STORE: &str = "vlobs";
 const VLOBS_INDEX_INBOUND_NEED_SYNC: &str = "_idx_inbound_need_sync";
 const VLOBS_INDEX_OUTBOUND_NEED_SYNC: &str = "_idx_outbound_need_sync";
@@ -191,7 +199,7 @@ impl PlatformWorkspaceStorage {
     }
 
     pub async fn get_realm_checkpoint(&mut self) -> anyhow::Result<IndexInt> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[CHECKPOINT_STORE],
             false,
@@ -215,7 +223,7 @@ impl PlatformWorkspaceStorage {
                 Ok(checkpoint)
             },
         )
-        .await
+        .await?
     }
 
     pub async fn update_realm_checkpoint(
@@ -223,7 +231,7 @@ impl PlatformWorkspaceStorage {
         new_checkpoint: IndexInt,
         changed_vlobs: &[(VlobID, VersionInt)],
     ) -> anyhow::Result<()> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[CHECKPOINT_STORE, VLOBS_STORE],
             true,
@@ -246,7 +254,7 @@ impl PlatformWorkspaceStorage {
                     .object_store(VLOBS_STORE)
                     .map_err(anyhow::Error::from)?;
 
-                for (vlob_id, version) in changed_vlobs {
+                for (vlob_id, new_remote_version) in changed_vlobs {
                     let vlob_id_js: JsValue = js_sys::Uint8Array::from(vlob_id.as_bytes()).into();
                     let cursor = store
                         .cursor()
@@ -261,9 +269,28 @@ impl PlatformWorkspaceStorage {
                         None => continue,
                     };
 
-                    let version_js = JsValue::from(*version);
-                    js_sys::Reflect::set(&obj, &VLOBS_REMOTE_VERSION_FIELD.into(), &version_js)
-                        .map_err(|_| anyhow::anyhow!("Invalid entry, got {obj:?}"))?;
+                    let new_remote_version_js = JsValue::from(*new_remote_version);
+                    js_sys::Reflect::set(
+                        &obj,
+                        &VLOBS_REMOTE_VERSION_FIELD.into(),
+                        &new_remote_version_js,
+                    )
+                    .map_err(|_| anyhow::anyhow!("Invalid entry, got {obj:?}"))?;
+
+                    let base_version_js =
+                        js_sys::Reflect::get(&obj, &VLOBS_BASE_VERSION_FIELD.into()).map_err(
+                            |e| anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}"),
+                        )?;
+                    let base_version = js_to_rs_u32(base_version_js)?;
+                    let inbound_need_sync = base_version != *new_remote_version;
+
+                    js_sys::Reflect::set(
+                        &obj,
+                        &VLOBS_INBOUND_NEED_SYNC_FIELD.into(),
+                        // Don't store boolean, IndexedDb doesn't support them in indexes !
+                        &(inbound_need_sync as u32).into(),
+                    )
+                    .map_err(|_| anyhow::anyhow!("Invalid entry, got {obj:?}"))?;
 
                     cursor.update(&obj).await.map_err(anyhow::Error::from)?;
                 }
@@ -271,11 +298,11 @@ impl PlatformWorkspaceStorage {
                 Ok(())
             },
         )
-        .await
+        .await?
     }
 
     pub async fn get_outbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[VLOBS_STORE],
             false,
@@ -288,7 +315,7 @@ impl PlatformWorkspaceStorage {
                     .index(VLOBS_INDEX_OUTBOUND_NEED_SYNC)
                     .map_err(anyhow::Error::from)?
                     .cursor()
-                    .range(JsValue::from(true)..=true.into())
+                    .range(JsValue::from(1)..=JsValue::from(1))
                     .map_err(anyhow::Error::from)?
                     .open_key()
                     .await
@@ -296,22 +323,22 @@ impl PlatformWorkspaceStorage {
 
                 let mut vlobs = Vec::new();
                 while let Some(vlob_id_js) = cursor.primary_key() {
-                    let vlob_id = js_to_rs_vlob_id(vlob_id_js)?;
-                    vlobs.push(vlob_id);
-                    cursor.advance(1).await.map_err(anyhow::Error::from)?;
                     if vlobs.len() >= limit as usize {
                         break;
                     }
+                    let vlob_id = js_to_rs_vlob_id(vlob_id_js)?;
+                    vlobs.push(vlob_id);
+                    cursor.advance(1).await.map_err(anyhow::Error::from)?;
                 }
 
                 Ok(vlobs)
             },
         )
-        .await
+        .await?
     }
 
     pub async fn get_inbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[VLOBS_STORE],
             false,
@@ -324,7 +351,7 @@ impl PlatformWorkspaceStorage {
                     .index(VLOBS_INDEX_INBOUND_NEED_SYNC)
                     .map_err(anyhow::Error::from)?
                     .cursor()
-                    .range(JsValue::from(true)..=true.into())
+                    .range(JsValue::from(1)..=JsValue::from(1))
                     .map_err(anyhow::Error::from)?
                     .open_key()
                     .await
@@ -332,25 +359,25 @@ impl PlatformWorkspaceStorage {
 
                 let mut vlobs = Vec::new();
                 while let Some(vlob_id_js) = cursor.primary_key() {
-                    let vlob_id = js_to_rs_vlob_id(vlob_id_js)?;
-                    vlobs.push(vlob_id);
-                    cursor.advance(1).await.map_err(anyhow::Error::from)?;
                     if vlobs.len() >= limit as usize {
                         break;
                     }
+                    let vlob_id = js_to_rs_vlob_id(vlob_id_js)?;
+                    vlobs.push(vlob_id);
+                    cursor.advance(1).await.map_err(anyhow::Error::from)?;
                 }
 
                 Ok(vlobs)
             },
         )
-        .await
+        .await?
     }
 
     pub async fn get_manifest(
         &mut self,
         entry_id: VlobID,
     ) -> anyhow::Result<Option<RawEncryptedManifest>> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[VLOBS_STORE],
             false,
@@ -377,7 +404,7 @@ impl PlatformWorkspaceStorage {
                 Ok(Some(blob))
             },
         )
-        .await
+        .await?
     }
 
     pub async fn list_manifests(
@@ -385,7 +412,7 @@ impl PlatformWorkspaceStorage {
         offset: u32,
         limit: u32,
     ) -> anyhow::Result<Vec<RawEncryptedManifest>> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[VLOBS_STORE],
             false,
@@ -416,7 +443,7 @@ impl PlatformWorkspaceStorage {
                 Ok(items)
             },
         )
-        .await
+        .await?
     }
 
     async fn remove_chunk_internal(
@@ -456,7 +483,7 @@ impl PlatformWorkspaceStorage {
     }
 
     pub async fn set_chunk(&mut self, chunk_id: ChunkID, encrypted: &[u8]) -> anyhow::Result<()> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[CHUNKS_STORE],
             true,
@@ -468,14 +495,14 @@ impl PlatformWorkspaceStorage {
                 Self::set_chunk_internal(&store, chunk_id, encrypted).await
             },
         )
-        .await
+        .await?
     }
 
     pub async fn get_chunk(
         &mut self,
         chunk_id: ChunkID,
     ) -> anyhow::Result<Option<RawEncryptedChunk>> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[CHUNKS_STORE],
             false,
@@ -502,7 +529,7 @@ impl PlatformWorkspaceStorage {
                 Ok(Some(data))
             },
         )
-        .await
+        .await?
     }
 
     pub async fn set_block(
@@ -511,7 +538,7 @@ impl PlatformWorkspaceStorage {
         encrypted: &[u8],
         accessed_on: DateTime,
     ) -> anyhow::Result<()> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[BLOCKS_STORE],
             true,
@@ -544,7 +571,7 @@ impl PlatformWorkspaceStorage {
                 Ok(())
             },
         )
-        .await
+        .await?
     }
 
     pub async fn get_block(
@@ -552,7 +579,7 @@ impl PlatformWorkspaceStorage {
         block_id: BlockID,
         timestamp: DateTime,
     ) -> anyhow::Result<Option<RawEncryptedBlock>> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[BLOCKS_STORE],
             true,
@@ -599,14 +626,14 @@ impl PlatformWorkspaceStorage {
                 Ok(Some(data))
             },
         )
-        .await
+        .await?
     }
 
     pub async fn populate_manifest(
         &mut self,
         manifest: &UpdateManifestData,
     ) -> anyhow::Result<PopulateManifestOutcome> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[VLOBS_STORE],
             true,
@@ -641,11 +668,18 @@ impl PlatformWorkspaceStorage {
                 js_sys::Reflect::set(
                     &obj,
                     &VLOBS_OUTBOUND_NEED_SYNC_FIELD.into(),
-                    &manifest.need_sync.into(),
+                    // Don't store boolean, IndexedDb doesn't support them in indexes !
+                    &(manifest.need_sync as u32).into(),
                 )
                 .expect("target is an object");
-                js_sys::Reflect::set(&obj, &VLOBS_INBOUND_NEED_SYNC_FIELD.into(), &false.into())
-                    .expect("target is an object");
+                // Don't store boolean, IndexedDb doesn't support them in indexes !
+                let inbound_need_sync_js: JsValue = (false as u32).into();
+                js_sys::Reflect::set(
+                    &obj,
+                    &VLOBS_INBOUND_NEED_SYNC_FIELD.into(),
+                    &inbound_need_sync_js,
+                )
+                .expect("target is an object");
 
                 match store.add_kv(&entry_id_js, &obj).await {
                     Ok(()) => Ok(PopulateManifestOutcome::Stored),
@@ -656,7 +690,7 @@ impl PlatformWorkspaceStorage {
                 }
             },
         )
-        .await
+        .await?
     }
 
     async fn update_manifest_internal(
@@ -709,13 +743,15 @@ impl PlatformWorkspaceStorage {
         js_sys::Reflect::set(
             &obj,
             &VLOBS_OUTBOUND_NEED_SYNC_FIELD.into(),
-            &manifest.need_sync.into(),
+            // Don't store boolean, IndexedDb doesn't support them in indexes !
+            &(manifest.need_sync as u32).into(),
         )
         .expect("target is an object");
         js_sys::Reflect::set(
             &obj,
             &VLOBS_INBOUND_NEED_SYNC_FIELD.into(),
-            &inbound_need_sync.into(),
+            // Don't store boolean, IndexedDb doesn't support them in indexes !
+            &(inbound_need_sync as u32).into(),
         )
         .expect("target is an object");
 
@@ -728,20 +764,20 @@ impl PlatformWorkspaceStorage {
     }
 
     pub async fn update_manifest(&mut self, manifest: &UpdateManifestData) -> anyhow::Result<()> {
-        with_transaction(&self.conn, &[VLOBS_STORE], true, async |transaction| {
+        with_transaction!(&self.conn, &[VLOBS_STORE], true, async |transaction| {
             let store = transaction
                 .object_store(VLOBS_STORE)
                 .map_err(anyhow::Error::from)?;
             Self::update_manifest_internal(&store, manifest).await
         })
-        .await
+        .await?
     }
 
     pub async fn update_manifests(
         &mut self,
         manifests: impl Iterator<Item = UpdateManifestData>,
     ) -> anyhow::Result<()> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[VLOBS_STORE],
             true,
@@ -757,7 +793,7 @@ impl PlatformWorkspaceStorage {
                 Ok(())
             },
         )
-        .await
+        .await?
     }
 
     pub async fn update_manifest_and_chunks(
@@ -766,7 +802,7 @@ impl PlatformWorkspaceStorage {
         new_chunks: impl Iterator<Item = (ChunkID, RawEncryptedChunk)>,
         removed_chunks: impl Iterator<Item = ChunkID>,
     ) -> anyhow::Result<()> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[VLOBS_STORE, CHUNKS_STORE],
             true,
@@ -794,7 +830,7 @@ impl PlatformWorkspaceStorage {
                 Ok(())
             },
         )
-        .await
+        .await?
     }
 
     async fn may_cleanup_blocks(&self, store: &ObjectStore<CustomErrMarker>) -> anyhow::Result<()> {
@@ -829,7 +865,7 @@ impl PlatformWorkspaceStorage {
         chunk_id: ChunkID,
         now: DateTime,
     ) -> anyhow::Result<()> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[CHUNKS_STORE, BLOCKS_STORE],
             true,
@@ -893,7 +929,7 @@ impl PlatformWorkspaceStorage {
                 Ok(())
             },
         )
-        .await
+        .await?
     }
 
     pub async fn set_prevent_sync_pattern(
@@ -902,7 +938,7 @@ impl PlatformWorkspaceStorage {
     ) -> anyhow::Result<bool> {
         let new_pattern_js: JsValue = js_sys::JsString::from(pattern.to_string()).into();
 
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[PREVENT_SYNC_PATTERN_STORE],
             true,
@@ -971,11 +1007,11 @@ impl PlatformWorkspaceStorage {
                 Ok(false)
             },
         )
-        .await
+        .await?
     }
 
     pub async fn get_prevent_sync_pattern(&mut self) -> anyhow::Result<(PreventSyncPattern, bool)> {
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[PREVENT_SYNC_PATTERN_STORE],
             false,
@@ -1021,7 +1057,7 @@ impl PlatformWorkspaceStorage {
                 Ok((pattern, fully_applied))
             },
         )
-        .await
+        .await?
     }
 
     pub async fn mark_prevent_sync_pattern_fully_applied(
@@ -1030,7 +1066,7 @@ impl PlatformWorkspaceStorage {
     ) -> Result<(), MarkPreventSyncPatternFullyAppliedError> {
         let expected_pattern_js: JsValue = js_sys::JsString::from(pattern.to_string()).into();
 
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[PREVENT_SYNC_PATTERN_STORE],
             true,
@@ -1093,7 +1129,7 @@ impl PlatformWorkspaceStorage {
                 Ok(())
             },
         )
-        .await
+        .await?
     }
 
     /// Only used for debugging tests
@@ -1101,7 +1137,7 @@ impl PlatformWorkspaceStorage {
     pub async fn debug_dump(&mut self) -> anyhow::Result<DebugDump> {
         use super::utils::{js_to_rs_block_id, js_to_rs_chunk_id, js_to_rs_timestamp};
 
-        with_transaction(
+        with_transaction!(
             &self.conn,
             &[CHECKPOINT_STORE, VLOBS_STORE, CHUNKS_STORE, BLOCKS_STORE],
             false,
@@ -1139,9 +1175,18 @@ impl PlatformWorkspaceStorage {
                                     .map_err(|e| {
                                         anyhow::anyhow!("Invalid entry, got {obj:?}: error {e:?}")
                                     })?;
-                            need_sync_js.as_bool().ok_or_else(|| {
-                                anyhow::anyhow!("Invalid boolean, got {need_sync_js:?}")
-                            })?
+                            need_sync_js
+                                .as_f64()
+                                .and_then(|raw| match raw as u32 {
+                                    0 => Some(false),
+                                    1 => Some(true),
+                                    _ => None,
+                                })
+                                .ok_or_else(|| {
+                                    anyhow::anyhow!(
+                                        "Invalid number-as-boolean, got {need_sync_js:?}"
+                                    )
+                                })?
                         },
                         base_version: {
                             let base_version_js =
@@ -1251,6 +1296,6 @@ impl PlatformWorkspaceStorage {
                 })
             },
         )
-        .await
+        .await?
     }
 }

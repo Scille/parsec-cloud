@@ -161,12 +161,38 @@ pub(super) fn js_to_rs_string(raw_js: JsValue) -> anyhow::Result<String> {
         .ok_or_else(|| anyhow::anyhow!("Invalid string, got {raw_js:?}"))
 }
 
-pub(super) async fn with_transaction<R, E: From<anyhow::Error>>(
+// We use a macro here to be able to log the file and line where the transaction
+// is started, otherwise internal errors are just a nightmare to debug (since web
+// doesn't support backtrace, we otherwise only get a generic error message).
+macro_rules! with_transaction {
+    ($conn: expr, $stores: expr, $rw: expr, $cb: expr $(,)?) => {
+        $crate::platform::utils::with_transaction_internal(
+            $conn,
+            $stores,
+            $rw,
+            $cb,
+            file!(),
+            line!(),
+        )
+    };
+}
+pub(super) use with_transaction;
+
+pub(super) async fn with_transaction_internal<R, E>(
     conn: &Database<CustomErrMarker>,
     stores: &[&str],
     rw: bool,
     cb: impl AsyncFnOnce(Transaction<CustomErrMarker>) -> Result<R, E>,
-) -> Result<R, E> {
+    file: &str,
+    line: u32,
+) -> anyhow::Result<Result<R, E>> {
+    libparsec_tests_lite::platform::wasm_bindgen_test::console_log!(
+        "{}:{} IndexedDb transaction started, write={}",
+        file,
+        line,
+        rw
+    );
+    // log::debug!("{file}:{line} IndexedDb transaction started, write={rw}");
     let custom_err = std::cell::Cell::new(None);
     let custom_err_ref = &custom_err;
 
@@ -187,10 +213,30 @@ pub(super) async fn with_transaction<R, E: From<anyhow::Error>>(
         .await;
 
     match outcome {
-        Ok(ok) => Ok(ok),
+        Ok(ok) => {
+            libparsec_tests_lite::platform::wasm_bindgen_test::console_log!(
+                "{}:{} IndexedDb transaction ok",
+                file,
+                line
+            );
+            // log::debug!("{file}:{line} IndexedDb transaction ok");
+            Ok(Ok(ok))
+        }
         Err(err) => match err {
-            indexed_db::Error::User(_) => Err(custom_err.take().expect("error must have been set")),
-            err => Err(anyhow::anyhow!("{err:?}").into()),
+            indexed_db::Error::User(_) => {
+                Ok(Err(custom_err.take().expect("error must have been set")))
+            }
+            err => {
+                let err = anyhow::Error::from(err).context("IndexedDb error at {file}:{line}");
+                libparsec_tests_lite::platform::wasm_bindgen_test::console_log!(
+                    "{}:{} IndexedDb transaction internal error: {err:?}",
+                    file,
+                    line,
+                    err = err
+                );
+                // log::debug!("{file}:{line} IndexedDb transaction internal error: {err:?}");
+                Err(err.into())
+            }
         },
     }
 }
