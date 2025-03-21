@@ -109,6 +109,21 @@ async fn user_manifest(env: &TestbedEnv) {
         user_storage.get_user_manifest().await.unwrap().unwrap(),
         b"<user_manifest_v1>"
     );
+
+    p_assert_eq!(
+        user_storage.debug_dump().await.unwrap(),
+        "\
+        checkpoint: 0\n\
+        vlobs: [\n\
+        {\n\
+        \tvlob_id: f0000000-0000-0000-0000-000000000001\n\
+        \tneed_sync: false\n\
+        \tbase_version: 1\n\
+        \tremote_version: 1\n\
+        },\n\
+        ]\n\
+        "
+    );
 }
 
 #[parsec_test(testbed = "minimal")]

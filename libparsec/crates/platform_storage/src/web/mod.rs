@@ -2,9 +2,6 @@
 
 pub mod certificates;
 pub(crate) mod cleanup;
-mod db;
-mod model;
 pub mod user;
+mod utils;
 pub mod workspace;
-
-const DB_VERSION: u32 = 1;
