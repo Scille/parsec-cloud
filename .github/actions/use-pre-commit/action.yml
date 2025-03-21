@@ -13,7 +13,7 @@ inputs:
   version:
     description: pre-commit version to use
     required: false
-    default: 3.7.1 # __VERSION__
+    default: 4.2.0 # __VERSION__
   install-only:
     description: Only install pre-commit without running it.
     required: false
