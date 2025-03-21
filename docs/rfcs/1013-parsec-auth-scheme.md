@@ -47,7 +47,6 @@ On `ok`, the server would have sent a mail with a unique token used for next the
   "reps": [
     {
       "status": "ok",
-      "auth_medium_id": "AuthMediumID"
     },
     {
       "status": "invalid_email_validation_token"
@@ -56,10 +55,15 @@ On `ok`, the server would have sent a mail with a unique token used for next the
   "custom_types": {
     "AuthMedium": {
       "id": "AuthMediumID",
+      # The symmetric key used to encrypt the manifest
+      # that was encrypted using the public key of the authentication method.
       "account_manifest_encrypted_sym_key": "EncryptedSymKey",
+      # The shared secret between the client and server using for the HMAC authentication.
       "hmac_key": "HMACKey",
+      # The private key of the authentication method encrypted with `auth_method_sym_key`.
       "encrypted_priv_key": "EncryptedPrivKey",
-      "encrypted_priv_key_key_algorithm": "KeyAlgorithm"
+      # The parameters used to generate the symmetric key for the authentication method.
+      "sym_key_params": "KeyAlgorithm"
     }
   }
 }
