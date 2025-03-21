@@ -275,7 +275,7 @@ To add a new authentication method, the client just needs to provide the require
 {
   "cmd": "auth_method_new",
   "req": {
-    "account_manifest": "EncryptedAccountManifest",
+    "account_manifest": "AccountManifestEntry",
     "delete_auth_method_id": "Option<AuthMethodID>",
     "auth_method_id": "AuthMethodID",
     "auth_method_hmac_key": "HMACKey",
@@ -308,6 +308,10 @@ To remove an authentication method
   "cmd": "auth_method_delete",
   "req": {
     "auth_method_id": "AuthMethodID"
+    # TODO: Should:
+    # - add updated manifest without the removed auth method public key.
+    # - Setup a new account_manifest_sym_key.
+    # - Encrypt `account_manifest_sym_key` for each still in use auth method.
   },
   "reps": [
     {
