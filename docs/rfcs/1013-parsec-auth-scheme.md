@@ -4,7 +4,8 @@
 
 ## Overview
 
-This RFC defines the schema used for communicating with the parsec-auth service.
+This RFC defines the schema used for communicating with the parsec-auth service 
+described in [RFC 1012](https://github.com/Scille/parsec-cloud/blob/master/docs/rfcs/1012-parsec-auth.md).
 
 ## Goals and Non-Goals
 
@@ -12,6 +13,28 @@ The goal is to define the required schema used when communicating with the parse
 For simplicity, we will skip the Fido2 part that will be defined in a later RFC.
 
 ## Design
+
+### Summary
+
+This RFC proposes to add the commands below to manage _accounts_,
+_authentication methods_ and _devices_. All these commands would 
+be added to a new command family named `account_cmds`.
+
+For the account:
+- `account_create_get_token`: get a verification token for a given email
+- `account_create`: create an account for a given email 
+- `account_manifest_get`: get the account manifest for a given authentication method.
+- `account_delete`: remove the account and all the data associated to it
+
+For the authentication methods:
+- `auth_method_add`: add an authentication method
+- `auth_method_remove`: remove an existing authentication method
+- `auth_method_list`: list registered authentication methods
+
+For the devices managed by the service:
+- `device_upload`: upload a new device for an organization
+- `device_list`: list all registered devices
+- `device_get`: get the encrypted device for a given organization and device ID
 
 ### Account creation
 
@@ -268,7 +291,7 @@ To delete the account, the client needs to be authenticated and provide the deri
 
 ```yml
 {
-  "cmd": "delete_account",
+  "cmd": "account_delete",
   "req": {},
   "reps": [
     {
