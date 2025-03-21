@@ -1,1 +1,0 @@
-Automatically scrolls to the file pointed to when using a file link
