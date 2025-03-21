@@ -8,9 +8,11 @@ export PATH="/root/.cargo/bin:$PATH"
 cargo --version
 
 # Install Poetry
-curl -sSL https://install.python-poetry.org | python - --version=1.5.1
+curl -sSL https://install.python-poetry.org | python - --version=2.1.1
 export PATH="/root/.local/bin:$PATH"
 poetry --version
+# Install plugin for poetry export
+poetry self add poetry-plugin-export
 
 # Install parsec in virtual env
 python -m venv venv
@@ -26,7 +28,7 @@ python -m venv venv
 
 # Only keep dependencies from `main` group (i.e. the base dependencies) and
 # testbed-server, as other groups are for dev
-poetry --directory ./server export --output requirements.txt --with=main,testbed-server
+poetry --project ./server export --output requirements.txt --with=main,testbed-server
 # Install the dependencies...
 pip install -r ./requirements.txt
 # ...and our project
