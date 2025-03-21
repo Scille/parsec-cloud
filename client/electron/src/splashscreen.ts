@@ -53,7 +53,7 @@ export class SplashScreen {
       show: false,
       frame: false,
       alwaysOnTop: true,
-      hasShadow: true,
+      hasShadow: false,
       resizable: false,
       x: x,
       y: y,
@@ -98,7 +98,7 @@ export class SplashScreen {
       await this.splash.loadURL(`data:text/html;charset=UTF-8,${encodeURIComponent(html)}`);
       this.splash.show();
     } catch (err: any) {
-      log.error(`Could not load splashscreen: ${err}`);
+      log.error(`Could not load splashscreen: ${err.toString()}`);
     }
   }
 
@@ -107,7 +107,11 @@ export class SplashScreen {
   }
 
   destroy(): void {
-    this.splash.close();
-    this.splash.destroy();
+    try {
+      this.splash.close();
+      this.splash.destroy();
+    } catch (err: any) {
+      log.error(`Could not destroy splashscreen: ${err.toString()}`);
+    }
   }
 }

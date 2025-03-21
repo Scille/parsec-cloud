@@ -377,19 +377,19 @@ export class ElectronCapacitorApp {
   }
 
   onPageInitialized(): void {
-    this.pageIsInitialized = true;
     this.sendEvent(WindowToPageChannel.IsDevMode, electronIsDev);
     setTimeout(() => {
+      this.pageIsInitialized = true;
       this.MainWindow.show();
       if (this.splash) {
         this.splash.destroy();
         this.splash = null;
       }
+      if (this.storedLink) {
+        this.sendEvent(WindowToPageChannel.OpenLink, this.storedLink);
+        this.storedLink = '';
+      }
     }, 1500);
-    if (this.storedLink) {
-      this.sendEvent(WindowToPageChannel.OpenLink, this.storedLink);
-      this.storedLink = '';
-    }
   }
 
   async init(): Promise<void> {
@@ -427,7 +427,7 @@ export class ElectronCapacitorApp {
 
     if (this.CapacitorFileConfig.electron.splashScreenEnabled) {
       this.splash = new SplashScreen({ width: 624, height: 424 });
-      await this.splash.load('assets/splash-screen.png');
+      await this.splash.load(join(app.getAppPath(), 'assets', 'splash-screen.png'));
     }
 
     if (this.CapacitorFileConfig.backgroundColor) {
@@ -438,6 +438,7 @@ export class ElectronCapacitorApp {
     this.MainWindow.on('closed', () => {
       if (this.splash) {
         this.splash.destroy();
+        this.splash = null;
       }
     });
 
