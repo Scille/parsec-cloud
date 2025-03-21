@@ -586,8 +586,6 @@ function getBackButtonTitle(): string {
 </script>
 
 <style lang="scss" scoped>
-@import '@/theme/responsive-mixin';
-
 #page {
   position: relative;
   height: 100vh;
@@ -599,11 +597,11 @@ function getBackButtonTitle(): string {
 
   // Should be edited later with responsive
   .homepage-sidebar {
-    @include breakpoint('ultra-wide') {
+    @include ms.responsive-breakpoint('xxl') {
       max-width: 35rem;
     }
 
-    @include breakpoint('wide') {
+    @include ms.responsive-breakpoint('xl') {
       max-width: 30rem;
 
       &:before {
@@ -612,22 +610,22 @@ function getBackButtonTitle(): string {
       }
     }
 
-    @include breakpoint('lg') {
+    @include ms.responsive-breakpoint('lg') {
       max-width: 22rem;
     }
 
-    @include breakpoint('md') {
+    @include ms.responsive-breakpoint('md') {
       max-width: 17rem;
     }
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       display: none;
     }
   }
 
   // Should be edited later with responsive
   .homepage-header {
-    @include breakpoint('lg') {
+    @include ms.responsive-breakpoint('lg') {
       flex-direction: column-reverse;
       gap: 1rem;
     }
@@ -642,11 +640,11 @@ function getBackButtonTitle(): string {
     display: flex;
     flex-direction: column;
 
-    @include breakpoint('lg') {
+    @include ms.responsive-breakpoint('lg') {
       padding: 4.26rem 3rem 0;
     }
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       padding: 1.5rem 1.5rem 0;
     }
   }

@@ -32,7 +32,7 @@
     z-index: 1;
     cursor: default;
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       left: 4rem;
     }
   }
@@ -131,7 +131,7 @@
     width: 4rem;
     justify-content: end;
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       min-width: 1rem;
       width: 3rem;
       padding: 0;
@@ -144,7 +144,7 @@
     width: 100%;
     padding: 0.5rem 1rem;
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       min-width: 10rem;
       padding: 0.75rem 1rem;
     }
@@ -164,7 +164,7 @@
     min-width: 11.25rem;
     flex-shrink: 1;
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       display: none;
     }
   }
@@ -174,7 +174,7 @@
     min-width: 8.25rem;
     flex-shrink: 1;
 
-    @include breakpoint('md') {
+    @include ms.responsive-breakpoint('md') {
       display: none;
     }
   }
@@ -215,7 +215,7 @@
     align-items: center;
     justify-content: end;
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       padding: 1rem;
       position: absolute;
       justify-content: center;
@@ -231,7 +231,7 @@
     overflow: hidden;
     padding: 0.5rem 1rem;
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       max-width: 100%;
     }
   }
@@ -242,7 +242,7 @@
     width: 9.5rem;
     flex-shrink: 0;
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       display: none;
     }
   }
@@ -254,7 +254,7 @@
     flex-grow: 1;
     overflow: hidden;
 
-    @include breakpoint('lg') {
+    @include ms.responsive-breakpoint('lg') {
       display: none;
     }
 
@@ -270,7 +270,7 @@
     min-width: 11.25rem;
     flex-grow: 0;
 
-    @include breakpoint('wide') {
+    @include ms.responsive-breakpoint('xl') {
       display: none;
     }
   }
@@ -279,7 +279,7 @@
   .user-status {
     flex: 0 0 8rem;
 
-    @include breakpoint('md') {
+    @include ms.responsive-breakpoint('md') {
       display: none;
     }
   }

@@ -61,8 +61,18 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
 
 // 3) Finally configure Vite
 
+// scss additionalData is used to inject the theme variables in the global scope
+const additionalData = '@use "megashark-lib/theme" as ms;';
+
 // https://vitejs.dev/config/
 const config: UserConfigExport = () => ({
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: additionalData,
+      },
+    },
+  },
   test: {
     include: ['tests/unit/specs/*.spec.ts'],
     setupFiles: [path.resolve(__dirname, './tests/component/support/setup.ts')],

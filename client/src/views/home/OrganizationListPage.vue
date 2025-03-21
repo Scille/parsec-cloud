@@ -317,8 +317,6 @@ const filteredDevices = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-@import '@/theme/responsive-mixin';
-
 .organization {
   background: none;
   width: 100%;
@@ -334,7 +332,7 @@ const filteredDevices = computed(() => {
     padding: 0;
     color: var(--parsec-color-light-secondary-text);
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       display: none;
     }
   }
@@ -356,7 +354,7 @@ const filteredDevices = computed(() => {
     width: 100%;
     max-width: 34.5rem;
 
-    @include breakpoint('md') {
+    @include ms.responsive-breakpoint('md') {
       margin: auto;
     }
 
@@ -397,7 +395,7 @@ const filteredDevices = computed(() => {
     position: relative;
     z-index: 100;
 
-    @include breakpoint('md') {
+    @include ms.responsive-breakpoint('md') {
       margin: auto;
       width: 100%;
     }

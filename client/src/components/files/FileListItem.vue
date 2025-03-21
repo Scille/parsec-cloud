@@ -183,8 +183,6 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-@import '@/theme/responsive-mixin';
-
 .drop-zone-item {
   height: fit-content;
 }
@@ -214,7 +212,7 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
     position: absolute;
     right: 0;
 
-    @include breakpoint('sm') {
+    @include ms.responsive-breakpoint('sm') {
       display: none;
     }
 
