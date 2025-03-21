@@ -24,7 +24,7 @@ Recently, some changes came to disrupt this stability:
 
 - **Mountpoint strategy**: Parsec workspaces can be mounted either as *Drive* (only on Windows) or
   as *Directory*. This added some uncertainty as which should be the preferred/
-  default strategy, and if this should be platform-dependent.
+  default strategy to use on Windows.
 
 - **User mount/unmount**: the ability to mount/unmount workspaces was considered
   not so user-friendly and was removed from the GUI. This introduced some
