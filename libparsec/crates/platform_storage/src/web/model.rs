@@ -3,12 +3,41 @@
 use indexed_db_futures::{prelude::*, web_sys::DomException};
 use js_sys::{wasm_bindgen::JsValue, Array, Uint8Array};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 
 use libparsec_types::prelude::*;
 
 use crate::certificates::{FilterKind, GetCertificateQuery};
 use crate::workspace::{RawEncryptedChunk, RawEncryptedManifest};
 use crate::PREVENT_SYNC_PATTERN_EMPTY_PATTERN;
+
+pub(super) fn get_certificates_storage_db_name(
+    data_base_dir: &Path,
+    device_id: DeviceID,
+) -> String {
+    format!(
+        "{}-{}-certificates",
+        data_base_dir.display(),
+        device_id.hex()
+    )
+}
+
+pub(super) fn get_user_storage_db_name(data_base_dir: &Path, device_id: DeviceID) -> String {
+    format!("{}-{}-user", data_base_dir.display(), device_id.hex())
+}
+
+pub(super) fn get_workspace_storage_db_name(
+    data_base_dir: &Path,
+    device_id: DeviceID,
+    realm_id: VlobID,
+) -> String {
+    format!(
+        "{}-{}-{}-workspace",
+        data_base_dir.display(),
+        device_id.hex(),
+        realm_id.hex()
+    )
+}
 
 #[derive(Debug, Clone)]
 pub(super) struct CertificateFilter<'a>(pub GetCertificateQuery<'a>);

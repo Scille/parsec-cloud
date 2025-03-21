@@ -13,7 +13,7 @@ use libparsec_types::prelude::*;
 use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
 use crate::{
     web::{
-        model::{RealmCheckpoint, Vlob},
+        model::{get_workspace_storage_db_name, RealmCheckpoint, Vlob},
         DB_VERSION,
     },
     workspace::{
@@ -41,17 +41,7 @@ impl PlatformWorkspaceStorage {
     ) -> anyhow::Result<Self> {
         // 1) Open the database
 
-        #[cfg(feature = "test-with-testbed")]
-        let name = format!(
-            "{}-{}-{}-workspace",
-            data_base_dir.display(),
-            device.device_id.hex(),
-            realm_id.hex()
-        );
-
-        #[cfg(not(feature = "test-with-testbed"))]
-        let name = format!("{}-{}-workspace", device.device_id.hex(), realm_id.hex());
-
+        let name = get_workspace_storage_db_name(data_base_dir, device.device_id, realm_id);
         let db_req =
             IdbDatabase::open_u32(&name, DB_VERSION).map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
@@ -480,41 +470,6 @@ impl PlatformWorkspaceStorage {
             None => Err(anyhow::anyhow!("No prevent sync pattern in the database").into()),
         }
     }
-}
-
-pub async fn workspace_storage_non_speculative_init(
-    data_base_dir: &Path,
-    device: &LocalDevice,
-    realm_id: VlobID,
-) -> anyhow::Result<()> {
-    // 1) Open & initialize the database
-
-    let mut storage =
-        PlatformWorkspaceStorage::no_populate_start(data_base_dir, device, realm_id, u64::MAX)
-            .await
-            .map_err(|err| err.context("cannot initialize database"))?;
-
-    // 2) Populate the database with the workspace manifest
-
-    let timestamp = device.now();
-    let manifest =
-        LocalFolderManifest::new_root(device.device_id.clone(), realm_id, timestamp, false);
-
-    storage
-        .update_manifest(&UpdateManifestData {
-            entry_id: manifest.base.id,
-            encrypted: manifest.dump_and_encrypt(&device.local_symkey),
-            need_sync: manifest.need_sync,
-            base_version: manifest.base.version,
-        })
-        .await
-        .map_err(|err| err.context("cannot store workspace manifest"))?;
-
-    // 4) All done ! Don't forget to close the database before exiting ;-)
-
-    storage.stop().await?;
-
-    Ok(())
 }
 
 pub async fn db_populate_manifest<'a>(

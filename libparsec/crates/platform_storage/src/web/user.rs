@@ -6,7 +6,7 @@ use indexed_db_futures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::web::{
-    model::{RealmCheckpoint, Vlob},
+    model::{get_user_storage_db_name, RealmCheckpoint, Vlob},
     DB_VERSION,
 };
 
@@ -27,21 +27,12 @@ unsafe impl Send for PlatformUserStorage {}
 
 impl PlatformUserStorage {
     pub(crate) async fn no_populate_start(
-        _data_base_dir: &Path,
+        data_base_dir: &Path,
         device: &LocalDevice,
     ) -> anyhow::Result<Self> {
         // 1) Open the database
 
-        #[cfg(feature = "test-with-testbed")]
-        let name = format!(
-            "{}-{}-user",
-            _data_base_dir.to_str().unwrap(),
-            device.device_id.hex()
-        );
-
-        #[cfg(not(feature = "test-with-testbed"))]
-        let name = format!("{}-user", device.device_id.hex());
-
+        let name = get_user_storage_db_name(data_base_dir, device.device_id);
         let db_req =
             IdbDatabase::open_u32(&name, DB_VERSION).map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
@@ -151,34 +142,4 @@ impl PlatformUserStorage {
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         todo!();
     }
-}
-
-pub async fn user_storage_non_speculative_init(
-    data_base_dir: &Path,
-    device: &LocalDevice,
-) -> anyhow::Result<()> {
-    // 1) Open & initialize the database
-
-    let mut storage = PlatformUserStorage::no_populate_start(data_base_dir, device).await?;
-
-    // 2) Populate the database with the user manifest
-
-    let timestamp = device.now();
-    let manifest = LocalUserManifest::new(
-        device.device_id.clone(),
-        timestamp,
-        Some(device.user_realm_id),
-        false,
-    );
-    let encrypted = manifest.dump_and_encrypt(&device.local_symkey);
-
-    storage
-        .update_user_manifest(&encrypted, manifest.need_sync, manifest.base.version)
-        .await?;
-
-    // 4) All done ! Don't forget to close the database before exiting ;-)
-
-    storage.stop().await?;
-
-    Ok(())
 }
