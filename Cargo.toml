@@ -106,7 +106,7 @@ libparsec_types = { path = "libparsec/crates/types", default-features = false }
 libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 
 # Third parties
-android_logger = { version = "0.13", default-features = false }
+android_logger = { version = "0.15", default-features = false }
 anyhow = { version = "1.0.95", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.0.16", default-features = false }
@@ -131,7 +131,7 @@ digest = { version = "0.10.7", default-features = false }
 dirs = { version = "5.0.1", default-features = false }
 ed25519-dalek = { version = "2.1.1", default-features = false }
 email-address-parser = { version = "2.0.0", default-features = false }
-env_logger = { version = "0.10.2", default-features = false }
+env_logger = { version = "0.11.7", default-features = false }
 event-listener = { version = "5.4.0", default-features = false }
 eventsource-stream = { version = "0.2.3", default-features = false }
 flate2 = { version = "1.0.35", features = ["rust_backend"], default-features = false }

@@ -94,11 +94,9 @@ Before being stored in SQLite, that data is splitted into chunk and encoded, so 
 """
 
 [[advisories.ignore]]
-id = "RUSTSEC-2024-0398"
+id = "RUSTSEC-2024-0436"
 reason = """
-We do not distribute the same secret 500-1500 times.
-
-https://github.com/Scille/parsec-cloud/issues/8990
+paste is no longer maintained but in a correct state.
 """
 
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
@@ -250,7 +248,8 @@ skip = [
 # dependencies starting at the specified crate, up to a certain depth, which is
 # by default infinite.
 skip-tree = [
-    #{ name = "ansi_term", version = "=0.11.0", depth = 20 },
+    { crate = "jni@0.21.1", reason = "`jni` crate hasn't updated its dependencies in a long time" },
+    { crate = "windows-sys", reason = "hard to have a single version of `windows-sys`" },
 ]
 
 # This section is considered when running `cargo deny check sources`.
