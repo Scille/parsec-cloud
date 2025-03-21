@@ -4,8 +4,8 @@
 
 ## Overview
 
-This RFC defines the schema used for communicating with the parsec-auth service 
-described in [RFC 1012](https://github.com/Scille/parsec-cloud/blob/master/docs/rfcs/1012-parsec-auth.md).
+This RFC defines the schema used for communicating with the parsec-auth service
+described in [RFC 1012](1012-parsec-auth.md).
 
 ## Goals and Non-Goals
 
@@ -17,12 +17,12 @@ For simplicity, we will skip the Fido2 part that will be defined in a later RFC.
 ### Summary
 
 This RFC proposes to add the commands below to manage _accounts_,
-_authentication methods_ and _devices_. All these commands would 
+_authentication methods_ and _devices_. All these commands would
 be added to a new command family named `account_cmds`.
 
 For the account:
 - `account_create_get_token`: get a verification token for a given email
-- `account_create`: create an account for a given email 
+- `account_create`: create an account for a given email
 - `account_manifest_get`: get the account manifest for a given authentication method.
 - `account_delete`: remove the account and all the data associated to it
 
