@@ -206,7 +206,8 @@ Now that the client can encrypt the device with the symmetric key, it can upload
       "status": "invalid_ownership_proof"
     },
     {
-      # Error when the account manifest version is already in use (meaning concurrent change)
+      # The version does not respect `next_version > current_version`.
+      # Where `current_version` is the latest version registered in the server (that would indicate concurrent change)
       "status": "invalid_manifest_version"
     }
   ]
