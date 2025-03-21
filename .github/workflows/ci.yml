@@ -200,7 +200,7 @@ jobs:
       #   it in the `test-rust-matrix` job where compilation cache is reused !
       # - `fmt`: Requires Rust toolchain, so run instead in `test-rust-matrix`.
       # - `cspell`: Run in `spelling`.
-      # - `ruff`/`black`/`pyright`/`deptry`: Requires to have the Python server
+      # - `ruff`/`ruff-format`/`pyright`/`deptry`: Requires to have the Python server
       #   project installed, so run instead in `test-python-server`.
       # - `sqlfluff`: Same as above, but on top of that it checks SQL code in both
       #   server (PostgreSQL) and libparsec (Sqlite).
@@ -213,7 +213,7 @@ jobs:
         with:
           config-file: ${{ steps.patched-pre-commit-config.outputs.path }}
         env:
-          SKIP: clippy,fmt,cspell,ruff,black,pyright,eslint,deptry,sqlfluff,powrap
+          SKIP: clippy,fmt,cspell,ruff,ruff-format,pyright,eslint,deptry,sqlfluff,powrap
         timeout-minutes: 5
 
   python:
