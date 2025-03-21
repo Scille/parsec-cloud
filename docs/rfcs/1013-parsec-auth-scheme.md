@@ -75,8 +75,12 @@ On `ok`, the server would have sent a mail with a unique token used for next the
 
 ```rust
 struct AccountManifest {
-  /// List of registered auth method for the account.
-  auth_methods: HashMap<AuthMethodID, PublicKey>,
+  /// List of registered auth methods for the account.
+  ///
+  /// The account manifest is itself encrypted for each auth method,
+  /// hence we need those keys to be able to re-encrypt it every time
+  /// it is modified (i.e. when adding/removing a device/auth medium).
+  per_auth_method_pub_key: HashMap<AuthMethodID, PublicKey>,
   /// List of devices registered for the account.
   device_keys: HashMap<(OrganizationID, DeviceID), SymmetricKey>,
 }
