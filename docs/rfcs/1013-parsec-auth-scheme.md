@@ -42,7 +42,7 @@ On `ok`, the server would have sent a mail with a unique token used for next the
   "req": {
     "email_validation_token": "EmailValidationToken",
     "account_manifest": "EncryptedAccountManifest",
-    "auth_medium": "AuthMedium"
+    "auth_method": "AuthMedium"
   },
   "reps": [
     {
@@ -75,8 +75,8 @@ On `ok`, the server would have sent a mail with a unique token used for next the
 
 ```rust
 struct AccountManifest {
-  /// List of registered auth medium for the account.
-  auth_mediums: HashMap<AuthMediumID, PublicKey>,
+  /// List of registered auth method for the account.
+  auth_methods: HashMap<AuthMediumID, PublicKey>,
   /// List of devices registered for the account.
   device_keys: HashMap<(OrganizationID, DeviceID), SymmetricKey>,
 }
@@ -84,11 +84,11 @@ struct AccountManifest {
 
 ### Obtain the account manifest
 
-Before obtaining the encrypted account manifest, the user retrieves the information related to its authentication medium:
+Before obtaining the encrypted account manifest, the user retrieves the information related to its authentication method:
 
 ```yml
 {
-  "cmd": "auth_medium_get",
+  "cmd": "auth_method_get",
   "req": {
     "id": "AuthMediumID"
   },
@@ -136,7 +136,7 @@ Now that the client can encrypt the device with the symmetric key, it can upload
       "status": "ok"
     },
     {
-      "status": "auth_medium_mismatch"
+      "status": "auth_method_mismatch"
     },
     {
       "status": "invalid_ownership_proof"
@@ -204,31 +204,31 @@ To add a new authentication method, the client just needs to provide the require
 
 ```yml
 {
-  "cmd": "auth_medium_new",
+  "cmd": "auth_method_new",
   "req": {
     "account_manifest": "EncryptedAccountManifest",
-    "delete_auth_medium_id": "Option<AuthMediumID>",
-    "auth_medium_id": "AuthMediumID",
-    "auth_medium_hmac_key": "HMACKey",
-    "auth_medium_encrypted_priv_key": "EncryptedPrivKey",
-    "auth_medium_encrypted_priv_key_key_algorithm": "KeyAlgorithm",
-    "per_auth_medium_encrypted_account_manifest_sym_key": "HashMap<AuthMediumID, EncryptedSymKey>"
+    "delete_auth_method_id": "Option<AuthMediumID>",
+    "auth_method_id": "AuthMediumID",
+    "auth_method_hmac_key": "HMACKey",
+    "auth_method_encrypted_priv_key": "EncryptedPrivKey",
+    "auth_method_encrypted_priv_key_key_algorithm": "KeyAlgorithm",
+    "per_auth_method_encrypted_account_manifest_sym_key": "HashMap<AuthMediumID, EncryptedSymKey>"
   },
   "reps": [
     {
       "status": "ok"
     },
     {
-      "status": "auth_medium_not_found"
+      "status": "auth_method_not_found"
     },
     {
-      "status": "per_auth_medium_encrypted_account_manifest_sym_key_mismatch"
+      "status": "per_auth_method_encrypted_account_manifest_sym_key_mismatch"
     }
   ]
 }
 ```
 
-> `delete_auth_medium_id` is optional and can be used to delete the authentication method identified by the ID.
+> `delete_auth_method_id` is optional and can be used to delete the authentication method identified by the ID.
 
 ### Removing an authentication method
 
@@ -236,19 +236,19 @@ To remove an authentication method
 
 ```yml
 {
-  "cmd": "auth_medium_delete",
+  "cmd": "auth_method_delete",
   "req": {
-    "auth_medium_id": "AuthMediumID"
+    "auth_method_id": "AuthMediumID"
   },
   "reps": [
     {
       "status": "ok"
     },
     {
-      "status": "auth_medium_not_found"
+      "status": "auth_method_not_found"
     },
     {
-      "status": "cannot_delete_last_auth_medium"
+      "status": "cannot_delete_last_auth_method"
     }
   ]
 }
