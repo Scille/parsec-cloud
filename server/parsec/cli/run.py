@@ -289,14 +289,14 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
 )
 @click.option(
     "--ssl-keyfile",
-    type=click.Path(exists=True, dir_okay=False),
+    type=click.Path(exists=True, dir_okay=False, file_okay=True, path_type=Path),
     envvar="PARSEC_SSL_KEYFILE",
     show_envvar=True,
     help="SSL key file. This setting enables serving Parsec over SSL.",
 )
 @click.option(
     "--ssl-certfile",
-    type=click.Path(exists=True, dir_okay=False),
+    type=click.Path(exists=True, dir_okay=False, file_okay=True, path_type=Path),
     envvar="PARSEC_SSL_CERTFILE",
     show_envvar=True,
     help="SSL certificate file. This setting enables serving Parsec over SSL.",
