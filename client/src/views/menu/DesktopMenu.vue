@@ -466,6 +466,7 @@ import { Duration } from 'luxon';
 import { openWorkspaceContextMenu } from '@/components/workspaces';
 import { formatExpirationTime } from '@/common/organization';
 import useSidebarMenu from '@/services/sidebarMenu';
+import useUploadMenu from '@/services/fileUploadMenu';
 
 defineProps<{
   userInfo: ClientInfo;
@@ -680,6 +681,8 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   const { data, role } = await popover.onDidDismiss();
   await popover.dismiss();
   if (role === MsModalResult.Confirm) {
+    const menuCtrls = useUploadMenu();
+    menuCtrls.hide();
     switchOrganization(data.handle);
   }
 }
