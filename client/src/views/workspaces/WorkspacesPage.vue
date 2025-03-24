@@ -6,7 +6,10 @@
       :fullscreen="true"
       class="content-scroll"
     >
-      <ms-action-bar id="workspaces-ms-action-bar">
+      <ms-action-bar
+        id="workspaces-ms-action-bar"
+        v-if="isLargeDisplay"
+      >
         <!-- contextual menu -->
         <ms-action-bar-button
           v-show="clientProfile != UserProfile.Outsider"
@@ -39,8 +42,28 @@
           />
         </div>
       </ms-action-bar>
+
       <!-- workspaces -->
       <div class="workspaces-container scroll">
+        <div
+          class="mobile-filters"
+          v-if="isSmallDisplay"
+        >
+          <ms-search-input
+            v-model="filterWorkspaceName"
+            placeholder="WorkspacesPage.filterPlaceholder"
+            id="search-input-workspace"
+            class="mobile-filters__search"
+          />
+          <ms-sorter
+            id="workspace-filter-select"
+            :options="msSorterOptions"
+            default-option="name"
+            :sorter-labels="msSorterLabels"
+            @change="onMsSorterChange($event)"
+            class="mobile-filters__sorter"
+          />
+        </div>
         <div
           v-show="querying && filteredWorkspaces.length === 0"
           class="no-workspaces-content"
@@ -155,6 +178,7 @@ import {
   MsSorterChangeEvent,
   MsSearchInput,
   MsSpinner,
+  useWindowSize,
 } from 'megashark-lib';
 import {
   WORKSPACES_PAGE_DATA_KEY,
@@ -167,6 +191,8 @@ import {
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
+  ClientInfo,
+  getClientInfo as parsecGetClientInfo,
   EntryName,
   ParsecWorkspacePathAddr,
   Path,
@@ -199,6 +225,8 @@ enum SortWorkspaceBy {
   LastUpdate = 'lastUpdate',
 }
 
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+const userInfo: Ref<ClientInfo | null> = ref(null);
 const sortBy = ref(SortWorkspaceBy.Name);
 const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
@@ -283,6 +311,14 @@ onMounted(async (): Promise<void> => {
 
   clientProfile.value = await getClientProfile();
   await refreshWorkspacesList();
+
+  const infoResult = await parsecGetClientInfo();
+
+  if (infoResult.ok) {
+    userInfo.value = infoResult.value;
+  } else {
+    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
+  }
 
   const query = getCurrentRouteQuery();
   if (query.fileLink) {
@@ -597,7 +633,7 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
   flex-wrap: wrap;
   gap: 1.5em;
   overflow: visible;
-  padding-bottom: 2rem;
+  padding: 2rem 0;
 
   @include ms.responsive-breakpoint('sm') {
     display: grid;

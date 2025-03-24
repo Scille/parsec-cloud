@@ -7,7 +7,10 @@
       class="content-scroll"
     >
       <!-- contextual menu -->
-      <ms-action-bar id="activate-users-ms-action-bar">
+      <ms-action-bar
+        id="activate-users-ms-action-bar"
+        v-if="isLargeDisplay"
+      >
         <div v-show="users.selectedCount() === 0 && isAdmin">
           <ms-action-bar-button
             :icon="personAdd"
@@ -87,6 +90,42 @@
           />
         </div>
       </ms-action-bar>
+      <small-display-header-title
+        v-if="isSmallDisplay"
+        :title="
+          users.selectedCount() > 0
+            ? { key: 'UsersPage.userSelectedCount', data: { count: users.selectedCount() }, count: users.selectedCount() }
+            : 'HeaderPage.titles.users'
+        "
+        @open-contextual-modal="console.log('open-contextual-modal')"
+      />
+      <div
+        class="mobile-filters"
+        v-if="isSmallDisplay"
+      >
+        <ms-search-input
+          :placeholder="'HomePage.organizationList.search'"
+          v-model="users.searchFilter"
+          @change="users.unselectHiddenUsers()"
+          id="search-input-users"
+          class="mobile-filters__search"
+        />
+        <user-filter
+          :users="users as UserCollection"
+          @change="onFilterUpdated"
+          class="mobile-filters__filter"
+        />
+        <ms-sorter
+          :key="`${currentSortProperty}-${currentSortOrder}`"
+          :label="'UsersPage.sort.byName'"
+          :options="msSorterOptions"
+          :default-option="currentSortProperty"
+          :sorter-labels="msSorterLabels"
+          :sort-by-asc="currentSortOrder"
+          @change="onSortChange"
+          class="mobile-filters__sorter"
+        />
+      </div>
       <!-- users -->
       <div class="users-container scroll">
         <div
@@ -142,7 +181,9 @@ import {
   MsSorterChangeEvent,
   Translatable,
   MsModalResult,
+  useWindowSize,
 } from 'megashark-lib';
+import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
 import { SortProperty, UserCollection, UserFilter, UserFilterLabels, UserModel } from '@/components/users';
 import {
   ClientInfo,
@@ -190,6 +231,7 @@ const currentSortOrder = ref(true);
 let eventCbId: string | null = null;
 
 const USERS_PAGE_DATA_KEY = 'UsersPage';
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 
 interface UsersPageSavedData {
   displayState: DisplayState;
@@ -666,6 +708,17 @@ onUnmounted(async () => {
 <style scoped lang="scss">
 .action-bar-buttons {
   gap: 0 !important;
+}
+
+.mobile-filters {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1rem;
+
+  &__filter {
+    margin-left: auto;
+  }
 }
 
 .no-active {
