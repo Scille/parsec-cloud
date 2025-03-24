@@ -24,6 +24,7 @@ libparsec_testbed = { workspace = true, optional = true }
 log = { workspace = true }
 paste = { workspace = true }
 lazy_static = { workspace = true, optional = true }
+thiserror = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { workspace = true, features = ["fs", "sync"] }

@@ -42,7 +42,7 @@ regex-syntax = { workspace = true, features = ["unicode-perl"] }
 unicode-normalization = { workspace = true, features = ["std"] }
 paste = { workspace = true }
 rand = { workspace = true, features = ["std", "std_rng"] }
-thiserror = { workspace = true }
+thiserror = { workspace = true, features = ["std"] }
 email-address-parser = { workspace = true }
 anyhow = { workspace = true, features = ["std", "backtrace"] }
 flate2 = { workspace = true }

@@ -2016,6 +2016,7 @@ dependencies = [
  "libparsec_tests_fixtures",
  "libparsec_types",
  "log",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -2079,6 +2080,7 @@ dependencies = [
  "proptest",
  "proptest-state-machine",
  "smallvec",
+ "thiserror 2.0.12",
  "tokio",
 ]
 
@@ -2173,6 +2175,7 @@ dependencies = [
  "libparsec_types",
  "log",
  "serde_json",
+ "thiserror 2.0.12",
  "tokio",
  "uuid",
  "web-sys",
@@ -2200,6 +2203,7 @@ dependencies = [
  "libparsec_tests_lite",
  "libparsec_types",
  "log",
+ "thiserror 2.0.12",
  "tokio",
  "windows-sys 0.59.0",
 ]
@@ -2237,6 +2241,7 @@ dependencies = [
  "libparsec_types",
  "libsqlite3-sys",
  "sqlx",
+ "thiserror 2.0.12",
  "tokio",
 ]
 
@@ -2258,6 +2263,7 @@ dependencies = [
  "serde",
  "serde-wasm-bindgen",
  "sqlx",
+ "thiserror 2.0.12",
  "tokio",
  "web-sys",
 ]

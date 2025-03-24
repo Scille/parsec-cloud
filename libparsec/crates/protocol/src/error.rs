@@ -2,8 +2,6 @@
 
 use thiserror::Error;
 
-use libparsec_types::prelude::*;
-
 // TODO: remove me: seems only used in the python bindings
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum ProtocolError {
