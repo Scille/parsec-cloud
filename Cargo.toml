@@ -197,7 +197,7 @@ sodiumoxide = { version = "0.2.7", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
 sqlx = { version = "0.8.3", default-features = false }
 syn = { version = "2.0.100", default-features = false }
-thiserror = { version = "1.0.69", default-features = false }
+thiserror = { version = "2.0.12", default-features = false }
 tokio = { version = "1.44.1", default-features = false }
 unicode-normalization = { version = "0.1.24", default-features = false }
 url = { version = "2.5.4", default-features = false }
