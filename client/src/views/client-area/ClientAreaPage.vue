@@ -223,11 +223,9 @@ onMounted(async () => {
           ? organizationStatusResp.data.isBootstrapped
           : false;
       if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus && !isBootstrapped) {
-        if (statusResp.data.status !== CustomOrderStatus.ContractEnded) {
-          currentPage.value = ClientAreaPages.CustomOrderProcessing;
-        }
-      } else {
-        currentPage.value = ClientAreaPages.Contracts;
+        statusResp.data.status !== CustomOrderStatus.ContractEnded
+          ? currentPage.value = ClientAreaPages.Orders
+          : currentPage.value = ClientAreaPages.CustomOrderBillingDetails;
       }
     } else {
       currentPage.value = ClientAreaPages.Dashboard;
