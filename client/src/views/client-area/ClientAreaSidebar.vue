@@ -181,20 +181,21 @@
       </ion-list>
 
       <ion-list
-        v-if="(billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) && showMenu"
+        v-if="billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate"
         class="menu-client-list"
       >
-        <!-- contract -->
+        <!-- contracts -->
         <ion-item
           button
           lines="none"
+          :disabled="!showMenu"
           class="button-medium menu-client-list-item"
           :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Contracts }"
           @click="goToPageClicked(ClientAreaPages.Contracts)"
         >
           <ion-icon
             class="menu-client-list-item__icon"
-            :icon="grid"
+            :icon="albums"
           />
           {{ $msTranslate('clientArea.sidebar.menu.contract') }}
         </ion-item>
@@ -203,6 +204,7 @@
         <ion-item
           button
           lines="none"
+          :disabled="!showMenu"
           class="button-medium menu-client-list-item"
           :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderStatistics }"
           @click="goToPageClicked(ClientAreaPages.CustomOrderStatistics)"
@@ -214,6 +216,7 @@
           {{ $msTranslate('clientArea.sidebar.menu.stats') }}
         </ion-item>
 
+        <!-- orders -->
         <ion-item
           button
           lines="none"
@@ -228,10 +231,27 @@
           {{ $msTranslate('clientArea.sidebar.menu.orders') }}
         </ion-item>
 
+        <!-- invoices -->
+        <ion-item
+          button
+          lines="none"
+          :disabled="!showMenu"
+          class="button-medium menu-client-list-item"
+          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderInvoices }"
+          @click="goToPageClicked(ClientAreaPages.CustomOrderInvoices)"
+        >
+          <ion-icon
+            class="menu-client-list-item__icon"
+            :icon="newspaper"
+          />
+          {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
+        </ion-item>
+
         <!-- billing -->
         <ion-item
           button
           lines="none"
+          :disabled="!showMenu"
           class="button-medium menu-client-list-item"
           v-show="false"
           :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderBillingDetails }"
@@ -242,19 +262,6 @@
             :icon="idCard"
           />
           {{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}
-        </ion-item>
-        <ion-item
-          button
-          lines="none"
-          class="button-medium menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderInvoices }"
-          @click="goToPageClicked(ClientAreaPages.CustomOrderInvoices)"
-        >
-          <ion-icon
-            class="menu-client-list-item__icon"
-            :icon="idCard"
-          />
-          {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
         </ion-item>
       </ion-list>
     </div>
@@ -315,7 +322,7 @@
 
 <script setup lang="ts">
 import { askQuestion, Answer, ChevronExpand, MsImage, MsModalResult, MsInformationTooltip } from 'megashark-lib';
-import { arrowForward, card, chatbubbleEllipses, home, logOut, podium, grid, idCard, newspaper, add, cube } from 'ionicons/icons';
+import { arrowForward, card, chatbubbleEllipses, home, logOut, podium, grid, idCard, newspaper, add, cube, albums } from 'ionicons/icons';
 import {
   BmsAccessInstance,
   BmsOrganization,

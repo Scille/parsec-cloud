@@ -139,7 +139,7 @@
 import { IonPage, IonContent, IonSkeletonText, IonSplitPane, IonMenu, GestureDetail, createGesture } from '@ionic/vue';
 import ClientAreaHeader from '@/views/client-area/ClientAreaHeader.vue';
 import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
-import { BillingSystem, BmsAccessInstance, BmsOrganization, CustomOrderStatus, DataType } from '@/services/bms';
+import { BillingSystem, BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
 import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { DefaultBmsOrganization, ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import BillingDetailsPage from '@/views/client-area/billing-details/BillingDetailsPage.vue';
@@ -183,11 +183,15 @@ function setToastOffset(width: number): void {
 }
 
 onMounted(async () => {
+  // Set the sidebar width property for the layout
   sidebarWidthProperty.value = `${computedWidth.value}px`;
   querying.value = true;
+
+  // Check if the user is logged in; if not, attempt auto-login
   if (!BmsAccessInstance.get().isLoggedIn()) {
     loggedIn.value = await BmsAccessInstance.get().tryAutoLogin();
     if (!loggedIn.value) {
+      // Redirect to the login page if auto-login fails
       await navigateTo(Routes.ClientAreaLogin, { skipHandle: true });
       querying.value = false;
       return;
@@ -195,11 +199,22 @@ onMounted(async () => {
   } else {
     loggedIn.value = true;
   }
+
+  // Retrieve the billing system and query parameters
   const billingSystem = BmsAccessInstance.get().getPersonalInformation().billingSystem;
   const query = getCurrentRouteQuery<ClientAreaQuery>();
   const response = await BmsAccessInstance.get().listOrganizations();
+  const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(currentOrganization.value);
+  const organizationStatusResp = await BmsAccessInstance.get().getOrganizationStatus(currentOrganization.value.bmsId);
+  const isBootstrapped =
+    !organizationStatusResp.isError && organizationStatusResp.data && organizationStatusResp.data.type === DataType.OrganizationStatus
+      ? organizationStatusResp.data.isBootstrapped
+      : false;
+
   if (!response.isError && response.data && response.data.type === DataType.ListOrganizations) {
     organizations.value = response.data.organizations;
+
+    // Determine the current organization based on the query
     if (organizations.value.length > 0) {
       if (query.organization) {
         const org = organizations.value.find((org) => org.bmsId === query.organization);
@@ -207,38 +222,45 @@ onMounted(async () => {
           currentOrganization.value = org;
         }
       } else {
+        // Manage the case where there is only one organization
         if (organizations.value.length === 1) {
           currentOrganization.value = organizations.value[0];
         } else {
+          // Manage the case where there are multiple organizations
           currentOrganization.value = DefaultBmsOrganization;
         }
       }
     }
-    if (billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) {
-      currentPage.value = ClientAreaPages.Contracts;
-      const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(currentOrganization.value);
-      const organizationStatusResp = await BmsAccessInstance.get().getOrganizationStatus(currentOrganization.value.bmsId);
-      const isBootstrapped =
-        !organizationStatusResp.isError && organizationStatusResp.data && organizationStatusResp.data.type === DataType.OrganizationStatus
-          ? organizationStatusResp.data.isBootstrapped
-          : false;
-      if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus && !isBootstrapped) {
-        if (statusResp.data.status !== CustomOrderStatus.ContractEnded) {
-          currentPage.value = ClientAreaPages.CustomOrderProcessing;
-        }
-      } else {
+
+    // Use a switch statement to determine the current page
+    switch (billingSystem) {
+      // Custom order with Sellsy
+      case BillingSystem.CustomOrder:
+      case BillingSystem.ExperimentalCandidate:
         currentPage.value = ClientAreaPages.Contracts;
-      }
-    } else {
-      currentPage.value = ClientAreaPages.Dashboard;
+
+        if (!statusResp.isError && statusResp.data && !isBootstrapped) {
+          currentPage.value = ClientAreaPages.Orders;
+        }
+        break;
+
+      // Standard order with Stripe
+      case BillingSystem.Stripe:
+        currentPage.value = ClientAreaPages.Dashboard;
+        break;
     }
+    // Override the current page if specified in the query
     if (query.page) {
       currentPage.value = query.page as ClientAreaPages;
     }
   }
+
   querying.value = false;
 
+  // Set the toast offset for the sidebar
   setToastOffset(computedWidth.value);
+
+  // Enable the gesture for resizing the sidebar
   if (divider.value) {
     const gesture = createGesture({
       gestureName: 'resize-menu',
