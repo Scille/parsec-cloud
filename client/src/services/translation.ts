@@ -93,8 +93,8 @@ export function getCustomOrderStatusTranslationKey(
       };
     case `${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Finished}`:
       return {
-        title: 'clientArea.dashboard.step.validate.title',
-        description: 'clientArea.dashboard.step.validate.description',
+        title: 'clientArea.dashboard.step.confirmed.title',
+        description: 'clientArea.dashboard.step.confirmed.description',
       };
     case `${CustomOrderStatus.InvoiceToBePaid}-${CustomOrderRequestStatus.Finished}`:
       return {

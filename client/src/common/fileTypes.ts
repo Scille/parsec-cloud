@@ -107,4 +107,4 @@ async function detectFileContentType(name: EntryName): Promise<DetectedFileType 
   return { type: FileContentType.Unknown, extension: ext };
 }
 
-export { DetectedFileType, detectFileContentType, FileContentType, getMimeTypeFromBuffer };
+export { DetectedFileType, FileContentType, detectFileContentType, getMimeTypeFromBuffer };
