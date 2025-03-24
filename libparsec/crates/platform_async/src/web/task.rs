@@ -3,7 +3,7 @@
 use futures::FutureExt;
 use pin_project::{pin_project, pinned_drop};
 use std::num::NonZeroU64;
-use std::sync::atomic::AtomicU64;
+use std::sync::{atomic::AtomicU64, Mutex};
 use std::{
     any::Any,
     sync::{
@@ -221,9 +221,16 @@ where
 impl<R> JoinHandle<R> {
     #[inline(always)]
     pub fn abort(&self) {
-        self.task_flags
-            .abort_required
-            .store(true, Ordering::Relaxed);
+        if let Some(sx) = self
+            .task_flags
+            .abort_required_sx
+            .lock()
+            .expect("Mutex is poisoned")
+            .take()
+        {
+            // Error here means the receiver has been dropped, which means the task is already finished.
+            let _ = sx.send(());
+        }
     }
 
     #[inline(always)]
@@ -273,9 +280,16 @@ pub struct AbortHandle {
 impl AbortHandle {
     #[inline(always)]
     pub fn abort(&self) {
-        self.task_flags
-            .abort_required
-            .store(true, Ordering::Relaxed);
+        if let Some(sx) = self
+            .task_flags
+            .abort_required_sx
+            .lock()
+            .expect("Mutex is poisoned")
+            .take()
+        {
+            // Error here means the receiver has been dropped, which means the task is already finished.
+            let _ = sx.send(());
+        }
     }
 
     #[inline(always)]
@@ -305,7 +319,7 @@ impl std::fmt::Debug for AbortHandle {
 struct TaskSharedFlags {
     id: TaskID,
     is_finished: AtomicBool,
-    abort_required: AtomicBool,
+    abort_required_sx: Mutex<Option<oneshot::Sender<()>>>,
 }
 
 #[pin_project(PinnedDrop)]
@@ -315,9 +329,11 @@ where
     T::Output: 'static,
 {
     outcome_sx: Option<oneshot::Sender<Result<T::Output, JoinError>>>,
+    #[pin]
+    abort_required_rx: oneshot::Receiver<()>,
     flags: Arc<TaskSharedFlags>,
     #[pin]
-    future: T,
+    future: Option<T>,
 }
 
 impl<T> Future for Task<T>
@@ -332,11 +348,13 @@ where
         self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context,
     ) -> std::task::Poll<Self::Output> {
-        let this = self.project();
+        let mut this = self.project();
 
         macro_rules! finish {
             ($outcome:expr) => {{
                 let outcome_sx = this.outcome_sx.take().expect("called after complete");
+                // Drop the future
+                this.future.set(None);
                 // If this errors, it means the handle has been dropped, so no big deal.
                 let _ = outcome_sx.send($outcome);
                 this.flags.is_finished.store(true, Ordering::Relaxed);
@@ -344,9 +362,12 @@ where
             }};
         }
 
-        if this.flags.abort_required.load(Ordering::Relaxed) {
-            // TODO: should we drop `this.future` here ?
-            return finish!(Err(JoinError::cancelled(this.flags.id)));
+        match this.abort_required_rx.poll(cx) {
+            std::task::Poll::Pending => (),
+            std::task::Poll::Ready(_) => {
+                // The task has been aborted !
+                return finish!(Err(JoinError::cancelled(this.flags.id)));
+            }
         }
 
         let previous_task_id = set_current_task_id(Some(this.flags.id));
@@ -354,8 +375,14 @@ where
         // when polling the future of a task (i.e. what we do here !), and this is
         // not supposed to lead to recursive calls.
         assert!(previous_task_id.is_none());
-        let poll_outcome =
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| this.future.poll(cx)));
+        let poll_outcome = {
+            let future = this
+                .future
+                .as_mut()
+                .as_pin_mut()
+                .expect("called after complete");
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| future.poll(cx)))
+        };
         set_current_task_id(None);
         match poll_outcome {
             Ok(std::task::Poll::Pending) => std::task::Poll::Pending,
@@ -374,10 +401,11 @@ where
 {
     fn drop(self: std::pin::Pin<&mut Self>) {
         let this = self.project();
-        if let Some(outcome_sx) = this.outcome_sx.take() {
-            // If this errors, it means the handle has been dropped, so no big deal.
-            let _ = outcome_sx.send(Err(JoinError::cancelled(this.flags.id)));
-        }
+        // The task is always passed to wasm bindgen's `spawn` right after being created,
+        // hence it should be polled until completion, at which point `outcome_sx`&`future`
+        // have been used.
+        assert!(this.outcome_sx.is_none());
+        assert!(this.future.is_none());
     }
 }
 
@@ -392,16 +420,18 @@ where
     T::Output: 'static,
 {
     let (task_outcome_sx, task_outcome_rx) = oneshot::channel::<Result<T::Output, JoinError>>();
+    let (abort_required_sx, abort_required_rx) = oneshot::channel::<()>();
     let task_flags = Arc::new(TaskSharedFlags {
         id: TaskID::next(),
         is_finished: AtomicBool::new(false),
-        abort_required: AtomicBool::new(false),
+        abort_required_sx: Mutex::new(Some(abort_required_sx)),
     });
 
     let future = Task {
         outcome_sx: Some(task_outcome_sx),
+        abort_required_rx,
         flags: task_flags.clone(),
-        future,
+        future: Some(future),
     };
     wasm_bindgen_futures::spawn_local(future);
 

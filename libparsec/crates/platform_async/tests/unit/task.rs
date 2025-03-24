@@ -122,6 +122,9 @@ pub async fn aborted_by_handle() {
     pin_mut!(handle);
 
     p_assert_eq!(handle.is_finished(), false);
+
+    // Wait a bit so that the task is actually running
+    sleep(std::time::Duration::from_millis(10)).await;
     handle.abort();
 
     let err = handle.as_mut().await.unwrap_err();
@@ -144,6 +147,8 @@ pub async fn aborted_by_aborter() {
     let aborter = handle.abort_handle();
     p_assert_eq!(aborter.is_finished(), false);
 
+    // Wait a bit so that the task is actually running
+    sleep(std::time::Duration::from_millis(10)).await;
     aborter.abort();
 
     let err = handle.await.unwrap_err();
