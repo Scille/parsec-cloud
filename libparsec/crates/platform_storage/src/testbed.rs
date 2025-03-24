@@ -43,11 +43,12 @@ fn store_factory(_env: &TestbedEnv) -> Arc<dyn Any + Send + Sync> {
 mod drop_existing_web_indexed_db {
     use super::*;
 
-    async fn drop_db(name: &str) -> anyhow::Result<()> {
-        indexed_db_futures::IdbDatabase::delete_by_name(&name)
-            .map_err(|e| anyhow::anyhow!("{e:?}"))?
+    async fn drop_db(name: &str) {
+        indexed_db::Factory::<()>::get()
+            .unwrap()
+            .delete_database(name)
             .await
-            .map_err(|e| anyhow::anyhow!("{e:?}"))
+            .unwrap()
     }
 
     pub(super) async fn drop_certificates_db(data_base_dir: &Path, device: &LocalDevice) {
@@ -57,7 +58,6 @@ mod drop_existing_web_indexed_db {
             device.device_id.hex()
         ))
         .await
-        .unwrap()
     }
 
     pub(super) async fn drop_user_db(data_base_dir: &Path, device: &LocalDevice) {
@@ -67,7 +67,6 @@ mod drop_existing_web_indexed_db {
             device.device_id.hex()
         ))
         .await
-        .unwrap();
     }
 
     pub(super) async fn drop_workspace_db(
@@ -82,7 +81,6 @@ mod drop_existing_web_indexed_db {
             realm_id.hex()
         ))
         .await
-        .unwrap();
     }
 }
 
