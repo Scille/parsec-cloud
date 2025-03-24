@@ -42,7 +42,7 @@ pub enum DataError {
     #[error("Invalid user ID: expected `{expected}`, got `{got}`")]
     UnexpectedUserID { expected: UserID, got: UserID },
 
-    // `HumanHandle` is 72bytes long, so boxing is needed to limit presure on the stack
+    // `HumanHandle` is 72bytes long, so boxing is needed to limit pressure on the stack
     #[error("Invalid HumanHandle, expected `{expected}`, got `{got}`")]
     UnexpectedHumanHandle {
         expected: Box<HumanHandle>,

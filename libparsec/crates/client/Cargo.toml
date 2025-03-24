@@ -26,6 +26,7 @@ paste = { workspace = true }
 log = { workspace = true }
 blahaj = { workspace = true }
 smallvec = { workspace = true }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }

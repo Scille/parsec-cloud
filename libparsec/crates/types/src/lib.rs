@@ -26,7 +26,6 @@ extern crate lazy_static;
 pub use anyhow;
 pub use bytes;
 pub use bytes::Bytes;
-pub use thiserror;
 pub use uuid;
 
 // Re-expose crypto so that `use libparsec_types::prelude::*` is the single-no-brainer-one-liner™
