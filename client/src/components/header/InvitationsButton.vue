@@ -10,13 +10,18 @@
       unread: invitations,
     }"
   >
-    {{ $msTranslate({ key: 'HeaderPage.invitations.title', data: { count: invitations.length }, count: invitations.length }) }}
+    <span
+      v-if="isLargeDisplay"
+      class="button-text"
+    >
+      {{ $msTranslate({ key: 'HeaderPage.invitations.title', data: { count: invitations.length }, count: invitations.length }) }}
+    </span>
     <ion-icon :icon="mail" />
   </ion-button>
 </template>
 
 <script setup lang="ts">
-import { Answer, MsModalResult, askQuestion } from 'megashark-lib';
+import { Answer, MsModalResult, askQuestion, useWindowSize } from 'megashark-lib';
 import { InvitationAction } from '@/components/users';
 import InvitationsListPopover from '@/components/users/InvitationsListPopover.vue';
 import { ClientCancelInvitationErrorTag, UserInvitation, cancelInvitation, listUserInvitations } from '@/parsec';
@@ -32,6 +37,7 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 let eventCbId: string | null = null;
 const invitations: Ref<UserInvitation[]> = ref([]);
+const { isLargeDisplay } = useWindowSize();
 
 onMounted(async () => {
   eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, _data?: EventData) => {
@@ -151,23 +157,34 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
 <style scoped lang="scss">
 #invitations-button {
   overflow: visible;
+  --background: var(--parsec-color-light-primary-50);
+  --color: var(--parsec-color-light-primary-500);
 
   &::part(native) {
-    background: var(--parsec-color-light-warning-100);
     --background-hover: none;
-    color: var(--parsec-color-light-warning-500);
-    padding: 0.375rem 0.625rem;
-    border: 1px solid var(--parsec-color-light-warning-100);
+    padding: 0.625rem;
     transition: all 150ms ease-in-out;
+    border-radius: var(--parsec-radius-12);
 
     &:hover {
-      color: var(--parsec-color-light-warning-700);
+      --background: var(--parsec-color-light-primary-100);
+      color: var(--parsec-color-light-primary-700);
     }
   }
 
   ion-icon {
     font-size: 1.375rem;
     margin-left: 0.5rem;
+
+    @include ms.responsive-breakpoint('lg') {
+      margin-left: 0;
+    }
+  }
+
+  .button-text {
+    @include ms.responsive-breakpoint('lg') {
+      display: none;
+    }
   }
 
   &.unread {
@@ -181,7 +198,7 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
       width: 0.625rem;
       height: 0.625rem;
       background: var(--parsec-color-light-danger-500);
-      border: 2px solid var(--parsec-color-light-warning-100);
+      border: 2px solid var(--parsec-color-light-primary-50);
       border-radius: var(--parsec-radius-12);
     }
   }

@@ -6,7 +6,10 @@
       :fullscreen="true"
       class="content-scroll"
     >
-      <ms-action-bar id="folders-ms-action-bar">
+      <ms-action-bar
+        id="folders-ms-action-bar"
+        v-if="isLargeDisplay"
+      >
         <div v-if="selectedFilesCount === 0">
           <ms-action-bar-button
             id="button-new-folder"
@@ -143,6 +146,11 @@
           />
         </div>
       </ms-action-bar>
+      <small-display-header-title
+        v-if="workspaceInfo && isSmallDisplay"
+        :title="getDisplayText()"
+        @open-contextual-modal="openGlobalContextMenu"
+      />
       <div class="folder-container scroll">
         <file-inputs
           ref="fileInputsRef"
@@ -237,6 +245,8 @@ import {
   Translatable,
   asyncComputed,
   MsSpinner,
+  I18n,
+  useWindowSize,
 } from 'megashark-lib';
 import * as parsec from '@/parsec';
 
@@ -257,6 +267,7 @@ import {
   copyPathLinkToClipboard,
   EntryModel,
 } from '@/components/files';
+import SmallDisplayHeaderTitle from '@/components/header/SmallDisplayHeaderTitle.vue';
 import {
   Path,
   entryStat,
@@ -301,6 +312,7 @@ interface FoldersPageSavedData {
   displayState?: DisplayState;
 }
 
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const msSorterOptions: MsOptions = new MsOptions([
   {
     label: 'FoldersPage.sort.byName',
@@ -358,6 +370,7 @@ const sortAsc = ref(true);
 
 const fileOperations: Ref<Array<FileOperationProgress>> = ref([]);
 const currentPath = ref('/');
+const currentFolder: Ref<EntryName> = ref('/');
 const folders = ref(new EntryCollection<FolderModel>());
 const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
@@ -489,6 +502,20 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
         }
       }
     }
+  }
+}
+
+function getDisplayText(): Translatable {
+  if (files.value.selectedCount() > 0 || folders.value.selectedCount() > 0) {
+    return {
+      key: 'FoldersPage.itemSelectedCount',
+      data: { count: selectedFilesCount.value },
+      count: selectedFilesCount.value,
+    };
+  } else {
+    return currentFolder.value !== '/'
+      ? I18n.valueAsTranslatable(currentFolder.value)
+      : I18n.valueAsTranslatable(workspaceInfo.value?.currentName);
   }
 }
 
@@ -771,6 +798,10 @@ const fileOperationsCurrentDir = asyncComputed(async () => {
 });
 
 async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boolean }): Promise<void> {
+  if (currentPath.value) {
+    currentFolder.value = (await Path.filename(currentPath.value)) ?? '/';
+  }
+
   if (!workspaceInfo.value) {
     return;
   }

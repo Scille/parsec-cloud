@@ -133,6 +133,7 @@ onMounted(async () => {
   padding: 2.5rem;
   border-radius: var(--parsec-radius-12);
   background-color: var(--parsec-color-light-primary-30-opacity15);
+  overflow: hidden;
 }
 
 // eslint-disable-next-line vue-scoped-css/no-unused-selector

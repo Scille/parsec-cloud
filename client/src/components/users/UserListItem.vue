@@ -61,7 +61,15 @@
         }"
       />
       <div class="user-mobile-text">
-        <ion-text class="button-medium user-mobile-text__name">{{ user.humanHandle.label }}</ion-text>
+        <ion-text class="button-medium">
+          <span class="user-mobile-text__name">{{ user.humanHandle.label }}</span>
+          <span
+            v-if="user.isCurrent"
+            class="body-sm user-mobile-text__you"
+          >
+            {{ $msTranslate('UsersPage.currentUser') }}
+          </span>
+        </ion-text>
         <ion-text class="cell user-mobile-text__email">
           {{ user.humanHandle.email }}
         </ion-text>
@@ -210,6 +218,11 @@ async function onOptionsClick(event: Event): Promise<void> {
 
     &__name {
       color: var(--parsec-color-light-secondary-text);
+    }
+
+    &__you {
+      color: var(--parsec-color-light-primary-600);
+      margin-left: 0.25rem;
     }
 
     &__email {

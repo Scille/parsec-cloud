@@ -49,7 +49,7 @@ msTest('Test workspace history page', async ({ connected }) => {
   const folderList = container.locator('.folder-list-main');
   await expect(folderList.locator('.file-list-item')).toHaveCount(11);
   await folderList.locator('.file-list-item').nth(0).dblclick();
-  await expect(breadcrumbs).toHaveText([' Trademeet /', /^ Dir_.+$/]);
+  await expect(breadcrumbs).toHaveText([' Trademeet/', /^ Dir_.+$/]);
 
   await folderList.locator('.file-list-item').nth(2).locator('ion-checkbox').click();
   await expect(restoreButton).toBeTrulyEnabled();

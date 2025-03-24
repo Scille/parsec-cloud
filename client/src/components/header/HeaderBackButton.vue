@@ -7,10 +7,12 @@
       @click="routerGoBack()"
       class="back-button"
     >
-      <ion-icon :icon="chevronBack" />
-
+      <ion-icon
+        :icon="chevronBack"
+        class="back-button__icon"
+      />
       <ion-label
-        v-if="!short"
+        v-if="!short && isLargeDisplay"
         class="back-button__label"
       >
         {{ $msTranslate('HeaderPage.previous') }}
@@ -18,7 +20,7 @@
     </ion-button>
 
     <div
-      v-if="short"
+      v-if="short && isLargeDisplay"
       class="vertical-spacer"
     />
   </div>
@@ -28,6 +30,9 @@
 import { routerGoBack } from '@/router';
 import { IonButton, IonIcon, IonLabel } from '@ionic/vue';
 import { chevronBack } from 'ionicons/icons';
+import { useWindowSize } from 'megashark-lib';
+
+const { isLargeDisplay } = useWindowSize();
 
 defineProps<{
   short: boolean;
@@ -39,9 +44,25 @@ defineProps<{
   margin-inline: 0px;
   margin-top: 0px;
   margin-bottom: 0px;
+  min-height: 0;
+
+  @include ms.responsive-breakpoint('sm') {
+    background: var(--parsec-color-light-secondary-premiere);
+    border-radius: var(--parsec-radius-8);
+  }
 
   &::part(native) {
     padding: 0.5rem;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0.375rem;
+    }
+  }
+
+  &__icon {
+    @include ms.responsive-breakpoint('sm') {
+      color: var(--parsec-color-light-secondary-hard-grey);
+    }
   }
 
   &__label {

@@ -17,15 +17,10 @@
     >
       <ion-icon
         class="main-icon"
-        v-if="path.icon"
+        v-if="path.icon && isLargeDisplay"
         :icon="path.icon"
       />
       {{ path.display ? path.display : $msTranslate(path.title) }}
-      <ion-icon
-        class="separator-icon"
-        slot="separator"
-        :icon="caretForward"
-      />
     </ion-breadcrumb>
   </ion-breadcrumbs>
 </template>
@@ -44,10 +39,11 @@ export interface RouterPathNode {
 
 <script setup lang="ts">
 import { Query } from '@/router';
-import { Translatable } from 'megashark-lib';
+import { Translatable, useWindowSize } from 'megashark-lib';
 import { IonBreadcrumb, IonBreadcrumbs, IonIcon } from '@ionic/vue';
-import { caretForward } from 'ionicons/icons';
 import { Ref, computed, ref } from 'vue';
+
+const { isLargeDisplay } = useWindowSize();
 
 const props = withDefaults(
   defineProps<{
@@ -103,17 +99,14 @@ function navigateTo(path: RouterPathNode): void {
       font-size: 1.125rem;
     }
 
-    .separator-icon {
-      color: var(--parsec-color-light-secondary-grey);
-      font-size: 0.75rem;
-    }
-
     &::part(native) {
       cursor: pointer;
+      padding: 0.25rem 0.5rem;
     }
 
     &::part(separator) {
       margin-inline: 0;
+      color: var(--parsec-color-light-secondary-grey);
       cursor: default;
     }
 
@@ -121,6 +114,7 @@ function navigateTo(path: RouterPathNode): void {
       border-radius: var(--parsec-radius-8);
       background: var(--parsec-color-light-secondary-medium);
       color: var(--parsec-color-light-secondary-grey);
+      margin-inline: 0.5rem;
     }
 
     &:hover:not(.breadcrumb-collapsed) {
@@ -130,12 +124,19 @@ function navigateTo(path: RouterPathNode): void {
       &::after {
         content: '';
         position: absolute;
-        bottom: 4px;
-        left: 0.75rem;
-        width: calc(100% - 2.1rem);
-        height: 1px;
-        background: var(--parsec-color-light-secondary-text);
-        z-index: 1000;
+        width: calc(100% - 0.25rem);
+        height: 100%;
+        border-radius: var(--parsec-radius-8);
+        background: var(--parsec-color-light-secondary-medium);
+        opacity: 0.6;
+        z-index: -10;
+      }
+
+      @include ms.responsive-breakpoint('md') {
+        &::after {
+          left: 0.5rem;
+          width: calc(100% - 1.25rem);
+        }
       }
     }
   }

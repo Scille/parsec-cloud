@@ -9,24 +9,23 @@
       >
         <!-- icon visible when menu is hidden -->
         <ms-image
-          v-if="!isMobile()"
+          v-if="!isMobile() && isLargeDisplay"
           slot="start"
           id="trigger-toggle-menu-button"
           class="topbar-button__item"
           @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
           :image="SidebarToggle"
         />
-        <!-- end of icon visible when menu is hidden -->
         <div class="topbar-left">
           <div
             id="back-block"
-            v-if="hasHistory()"
+            v-if="hasHistory() && !currentRouteIs(Routes.Workspaces)"
           >
             <header-back-button :short="currentRouteIsFileRoute() ? true : false" />
           </div>
 
           <div
-            v-if="!currentRouteIsFileRoute()"
+            v-if="!currentRouteIsFileRoute() && isLargeDisplay"
             class="topbar-left__title"
           >
             <ion-label
@@ -37,22 +36,24 @@
             </ion-label>
           </div>
 
-          <div class="topbar-left__breadcrumb">
+          <div
+            class="topbar-left__breadcrumb"
+            v-if="currentRouteIsFileRoute() && (!currentRouteIs(Routes.Workspaces) || isLargeDisplay)"
+          >
             <header-breadcrumbs
               :path-nodes="fullPath"
               @change="onNodeSelected"
             />
           </div>
-        </div>
 
-        <!-- icon menu on mobile -->
-        <ion-buttons
-          slot="start"
-          v-if="isMobile()"
-        >
-          <ion-menu-button />
-        </ion-buttons>
-        <!-- end of icon menu on mobile -->
+          <div
+            v-if="isSmallDisplay && userInfo && currentRouteIs(Routes.Workspaces)"
+            class="topbar-left-workspaces-mobile"
+          >
+            <ion-text class="topbar-left-workspaces-mobile__orga body">{{ userInfo.organizationId }}</ion-text>
+            <ion-title class="topbar-left-workspaces-mobile__title title-h2">{{ $msTranslate('HeaderPage.titles.workspaces') }}</ion-title>
+          </div>
+        </div>
 
         <!-- top right icon + profile -->
         <ion-buttons
@@ -94,6 +95,7 @@
           </div>
 
           <profile-header
+            v-if="isLargeDisplay"
             id="profile-button"
             :name="userInfo ? userInfo.humanHandle.label : ''"
             :email="userInfo ? userInfo.humanHandle.email : ''"
@@ -101,7 +103,6 @@
             class="profile-header"
           />
         </ion-buttons>
-        <!-- top right icon + profil -->
       </ion-toolbar>
     </ion-header>
 
@@ -133,7 +134,7 @@ import {
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { Translatable, MsImage, SidebarToggle } from 'megashark-lib';
+import { Translatable, MsImage, SidebarToggle, useWindowSize } from 'megashark-lib';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import { openSettingsModal } from '@/views/settings';
@@ -144,16 +145,18 @@ import {
   IonHeader,
   IonIcon,
   IonLabel,
-  IonMenuButton,
   IonPage,
   IonRouterOutlet,
   IonToolbar,
+  IonTitle,
+  IonText,
   popoverController,
 } from '@ionic/vue';
 import { home, notifications, search } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
 const workspaceName = ref('');
@@ -315,7 +318,11 @@ async function openNotificationCenter(event: Event): Promise<void> {
 .topbar {
   --background: var(--parsec-color-light-secondary-white);
   display: flex;
-  padding: 1.5rem 2em 1rem;
+  padding: 1.5rem 2rem 1rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 1.5rem 1.5rem 1rem;
+  }
 
   &-history {
     --background: var(--parsec-color-light-secondary-inversed-contrast);
@@ -354,6 +361,10 @@ async function openNotificationCenter(event: Event): Promise<void> {
       width: 1px;
       height: 1.5em;
       background: var(--parsec-color-light-secondary-light);
+
+      @include ms.responsive-breakpoint('sm') {
+        display: none;
+      }
     }
 
     // eslint-disable-next-line vue-scoped-css/no-unused-selector
@@ -411,6 +422,20 @@ async function openNotificationCenter(event: Event): Promise<void> {
 .topbar-left {
   display: flex;
   align-items: center;
+
+  .topbar-left-workspaces-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    &__orga {
+      color: var(--parsec-color-light-secondary-grey);
+    }
+
+    &__title {
+      color: var(--parsec-color-light-primary-800);
+    }
+  }
 
   &__title {
     width: 100%;

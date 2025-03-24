@@ -180,21 +180,21 @@ for (const gridMode of [false, true]) {
 msTest('Back from files with back button', async ({ connected }) => {
   await connected.locator('.workspace-card-item').nth(0).click();
   await expect(connected.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1)).toHaveText(
-    'The Copper Coronet',
+    ' The Copper Coronet',
   );
   await connected.locator('.topbar-left').locator('.back-button').click();
   await expect(connected.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0)).toHaveText(
-    'My workspaces',
+    ' My workspaces',
   );
 });
 
 msTest('Back from files with side menu', async ({ connected }) => {
   await connected.locator('.workspace-card-item').nth(0).click();
   await expect(connected.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1)).toHaveText(
-    'The Copper Coronet',
+    ' The Copper Coronet',
   );
   await connected.locator('.sidebar').locator('.sidebar-header').locator('#goHome').click();
   await expect(connected.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0)).toHaveText(
-    'My workspaces',
+    ' My workspaces',
   );
 });

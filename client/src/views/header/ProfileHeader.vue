@@ -14,7 +14,7 @@
     />
     <div class="text-content">
       <div class="text-content-name">
-        <ion-text class="body">
+        <ion-text class="text-content-name__text body">
           {{ name }}
         </ion-text>
         <ion-icon
@@ -182,6 +182,10 @@ async function openPopover(event: Event): Promise<void> {
   margin: 0 0.75em 0 0;
   position: relative;
 
+  @include ms.responsive-breakpoint('md') {
+    margin: 0;
+  }
+
   &::after {
     content: '';
     position: absolute;
@@ -211,6 +215,12 @@ async function openPopover(event: Event): Promise<void> {
     align-items: center;
     color: var(--parsec-color-light-secondary-text);
 
+    &__text {
+      @include ms.responsive-breakpoint('md') {
+        display: none;
+      }
+    }
+
     ion-icon {
       transition: transform ease-out 300ms;
       font-size: 1.125rem;
@@ -223,6 +233,10 @@ async function openPopover(event: Event): Promise<void> {
 
   &-update {
     color: var(--parsec-color-light-primary-500);
+
+    @include ms.responsive-breakpoint('md') {
+      display: none;
+    }
   }
 }
 </style>

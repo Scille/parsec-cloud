@@ -45,7 +45,7 @@ msTest('Opens app update modal with notification', async ({ connected }) => {
 msTest('Opens app update modal with profile popover', async ({ connected }) => {
   const header = connected.locator('#connected-header');
   await expect(header.locator('#profile-button').locator('.text-content-update')).toBeVisible();
-  await expect(header.locator('#profile-button').locator('.text-content-update')).toHaveText('New update available');
+  await expect(header.locator('#profile-button').locator('.text-content-update')).toHaveText('Update available');
   await header.locator('#profile-button').click();
   const profilePopover = connected.locator('.profile-header-popover');
   await expect(profilePopover).toBeVisible();
