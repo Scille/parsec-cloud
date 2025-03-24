@@ -185,7 +185,7 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
       outsidersAllowed: clientInfoResult.value.serverConfig.userProfileOutsiderAllowed,
       userLimit:
         clientInfoResult.value.serverConfig.activeUsersLimit.tag === ActiveUsersLimitTag.LimitedTo
-          ? (clientInfoResult.value.serverConfig.activeUsersLimit as ActiveUsersLimitLimitedTo).x1
+          ? Number((clientInfoResult.value.serverConfig.activeUsersLimit as ActiveUsersLimitLimitedTo).x1)
           : undefined,
       hasUserLimit: clientInfoResult.value.serverConfig.activeUsersLimit.tag !== ActiveUsersLimitTag.NoLimit,
       organizationAddr: clientInfoResult.value.organizationAddr,

@@ -247,19 +247,21 @@ interface EntryStatFolder extends ParsecEntryStatFolder {
   name: EntryName;
 }
 
-interface EntryStatFile extends ParsecEntryStatFile {
+interface EntryStatFile extends Omit<ParsecEntryStatFile, 'size'> {
   isFile: () => boolean;
   isConfined: () => boolean;
   path: FsPath;
   name: EntryName;
+  size: number;
 }
 
 type EntryStat = EntryStatFile | EntryStatFolder;
 
-interface WorkspaceHistoryEntryStatFile extends ParsecWorkspaceHistory2EntryStatFile {
+interface WorkspaceHistoryEntryStatFile extends Omit<ParsecWorkspaceHistory2EntryStatFile, 'size'> {
   isFile: () => boolean;
   path: FsPath;
   name: EntryName;
+  size: number;
 }
 
 interface WorkspaceHistoryEntryStatFolder extends ParsecWorkspaceHistory2EntryStatFolder {
