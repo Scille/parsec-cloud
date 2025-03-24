@@ -13,10 +13,10 @@ import wasmPack from './scripts/vite_plugin_wasm_pack';
 const plugins: PluginOption[] = [vue(), topLevelAwait()];
 let platform: string;
 
-// Vite only expose in `import.meta.env` the environ variables with a `PARSEC_APP_` prefix,
+// Vite only expose in `import.meta.env` the environment variables with a `PARSEC_APP_` prefix,
 // but to make it a bit easier, we're also letting the user provide TESTBED_SERVER
 if (process.env.PARSEC_APP_TESTBED_SERVER || process.env.TESTBED_SERVER) {
-  // Why this if guard ? Guess what kiddo !
+  // Why this if guard? Guess what kiddo!
   // Setting `process.env.PARSEC_APP_TESTBED_SERVER = undefined` got chewed up
   // in the web page into "undefined" string...
   process.env.PARSEC_APP_TESTBED_SERVER = process.env.PARSEC_APP_TESTBED_SERVER || process.env.TESTBED_SERVER;
@@ -37,7 +37,7 @@ if (process.env.PLATFORM !== undefined) {
     throw new Error('Invalid value for PLATFORM environ variable, accepted values: `web`/`native`');
   }
 } else {
-  // Ain't nobody got time to set environ variable !
+  // Ain't nobody got time to set environment variable !
   console.log('PLATFORM environ variable not set, defaulting to `web`');
   platform = 'web';
 }
@@ -63,7 +63,9 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
 
 // https://vitejs.dev/config/
 const config: UserConfigExport = () => ({
-  base: process.env.PARSEC_APP_BASEHREF || '/',
+  // Since we do not know in advance how the webapp will be hosted we use a relative base href.
+  // That way the app can be at the root or in a sub-folder and limit the need to specific build.
+  base: './',
   test: {
     include: ['tests/unit/specs/*.spec.ts'],
     setupFiles: [path.resolve(__dirname, './tests/component/support/setup.ts')],
