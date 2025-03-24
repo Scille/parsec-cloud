@@ -1854,7 +1854,7 @@
             "loading": "Vos commandes arrivent...",
             "new": {
                 "title": "Vous avez besoin de créer une nouvelle organisation ?",
-                "button": "Nouvelle demande",
+                "button": "Demander une nouvelle organisation",
                 "sent": "Votre demande a bien été envoyée.",
                 "details": "Détails de la demande",
                 "date": "Date de la demande",

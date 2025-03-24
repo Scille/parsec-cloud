@@ -1855,7 +1855,7 @@
             "loading": "Your orders are loading...",
             "new": {
                 "title": "You need to create a new organization?",
-                "button": "New request",
+                "button": "Request a new organization",
                 "sent": "Your request has been sent.",
                 "details": "Order details",
                 "date": "Date",

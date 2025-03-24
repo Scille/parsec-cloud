@@ -212,7 +212,7 @@ export const MockedBmsApi = {
       isError: false,
       data: {
         type: DataType.CustomOrderStatus,
-        status: CustomOrderStatus.EstimateLinked,
+        status: CustomOrderStatus.NothingLinked,
       },
     };
   }),
