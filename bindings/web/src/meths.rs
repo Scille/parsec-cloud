@@ -2661,9 +2661,10 @@ fn struct_started_workspace_info_rs_to_js(
         for (i, elem) in rs_obj.mountpoints.into_iter().enumerate() {
             let js_elem = {
                 let (x1, x2) = elem;
+                // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                 let js_array = Array::new_with_length(2);
                 let js_value = JsValue::from(x1);
-                js_array.push(&js_value);
+                js_array.set(0, js_value);
                 let js_value = JsValue::from_str({
                     let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
                         path.into_os_string()
@@ -2676,7 +2677,7 @@ fn struct_started_workspace_info_rs_to_js(
                     }
                     .as_ref()
                 });
-                js_array.push(&js_value);
+                js_array.set(1, js_value);
                 js_array.into()
             };
             js_array.set(i as u32, js_elem);
@@ -16494,11 +16495,12 @@ pub fn clientExportRecoveryDevice(client_handle: u32, device_label: String) -> P
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
                     let (x1, x2) = value;
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(2);
                     let js_value = x1.into();
-                    js_array.push(&js_value);
+                    js_array.set(0, js_value);
                     let js_value = JsValue::from(Uint8Array::from(x2.as_ref()));
-                    js_array.push(&js_value);
+                    js_array.set(1, js_value);
                     js_array.into()
                 };
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
@@ -16583,11 +16585,12 @@ pub fn clientGetUserDevice(client: u32, device: String) -> Promise {
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
                     let (x1, x2) = value;
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(2);
                     let js_value = struct_user_info_rs_to_js(x1)?;
-                    js_array.push(&js_value);
+                    js_array.set(0, js_value);
                     let js_value = struct_device_info_rs_to_js(x2)?;
-                    js_array.push(&js_value);
+                    js_array.set(1, js_value);
                     js_array.into()
                 };
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
@@ -19362,6 +19365,7 @@ pub fn workspaceHistory2OpenFileAndGetId(workspace_history: u32, path: String) -
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
                     let (x1, x2) = value;
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(2);
                     let js_value = {
                         let custom_to_rs_u32 =
@@ -19372,7 +19376,7 @@ pub fn workspaceHistory2OpenFileAndGetId(workspace_history: u32, path: String) -
                         };
                         JsValue::from(v)
                     };
-                    js_array.push(&js_value);
+                    js_array.set(0, js_value);
                     let js_value = JsValue::from_str({
                         let custom_to_rs_string =
                             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
@@ -19382,7 +19386,7 @@ pub fn workspaceHistory2OpenFileAndGetId(workspace_history: u32, path: String) -
                         }
                         .as_ref()
                     });
-                    js_array.push(&js_value);
+                    js_array.set(1, js_value);
                     js_array.into()
                 };
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
@@ -19613,11 +19617,12 @@ pub fn workspaceHistory2StatFolderChildren(workspace_history: u32, path: String)
                     for (i, elem) in value.into_iter().enumerate() {
                         let js_elem = {
                             let (x1, x2) = elem;
+                            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                             let js_array = Array::new_with_length(2);
                             let js_value = JsValue::from_str(x1.as_ref());
-                            js_array.push(&js_value);
+                            js_array.set(0, js_value);
                             let js_value = variant_workspace_history2_entry_stat_rs_to_js(x2)?;
-                            js_array.push(&js_value);
+                            js_array.set(1, js_value);
                             js_array.into()
                         };
                         js_array.set(i as u32, js_elem);
@@ -19665,11 +19670,12 @@ pub fn workspaceHistory2StatFolderChildrenById(
                     for (i, elem) in value.into_iter().enumerate() {
                         let js_elem = {
                             let (x1, x2) = elem;
+                            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                             let js_array = Array::new_with_length(2);
                             let js_value = JsValue::from_str(x1.as_ref());
-                            js_array.push(&js_value);
+                            js_array.set(0, js_value);
                             let js_value = variant_workspace_history2_entry_stat_rs_to_js(x2)?;
-                            js_array.push(&js_value);
+                            js_array.set(1, js_value);
                             js_array.into()
                         };
                         js_array.set(i as u32, js_elem);
@@ -20058,11 +20064,12 @@ pub fn workspaceHistoryStatFolderChildren(workspace: u32, at: f64, path: String)
                     for (i, elem) in value.into_iter().enumerate() {
                         let js_elem = {
                             let (x1, x2) = elem;
+                            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                             let js_array = Array::new_with_length(2);
                             let js_value = JsValue::from_str(x1.as_ref());
-                            js_array.push(&js_value);
+                            js_array.set(0, js_value);
                             let js_value = variant_workspace_history_entry_stat_rs_to_js(x2)?;
-                            js_array.push(&js_value);
+                            js_array.set(1, js_value);
                             js_array.into()
                         };
                         js_array.set(i as u32, js_elem);
@@ -20118,11 +20125,12 @@ pub fn workspaceHistoryStatFolderChildrenById(
                     for (i, elem) in value.into_iter().enumerate() {
                         let js_elem = {
                             let (x1, x2) = elem;
+                            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                             let js_array = Array::new_with_length(2);
                             let js_value = JsValue::from_str(x1.as_ref());
-                            js_array.push(&js_value);
+                            js_array.set(0, js_value);
                             let js_value = variant_workspace_history_entry_stat_rs_to_js(x2)?;
-                            js_array.push(&js_value);
+                            js_array.set(1, js_value);
                             js_array.into()
                         };
                         js_array.set(i as u32, js_elem);
@@ -20180,9 +20188,10 @@ pub fn workspaceMount(workspace: u32) -> Promise {
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
                     let (x1, x2) = value;
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(2);
                     let js_value = JsValue::from(x1);
-                    js_array.push(&js_value);
+                    js_array.set(0, js_value);
                     let js_value = JsValue::from_str({
                         let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
                             path.into_os_string()
@@ -20195,7 +20204,7 @@ pub fn workspaceMount(workspace: u32) -> Promise {
                         }
                         .as_ref()
                     });
-                    js_array.push(&js_value);
+                    js_array.set(1, js_value);
                     js_array.into()
                 };
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
@@ -20318,6 +20327,7 @@ pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> 
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = {
                     let (x1, x2) = value;
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                     let js_array = Array::new_with_length(2);
                     let js_value = {
                         let custom_to_rs_u32 =
@@ -20328,7 +20338,7 @@ pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> 
                         };
                         JsValue::from(v)
                     };
-                    js_array.push(&js_value);
+                    js_array.set(0, js_value);
                     let js_value = JsValue::from_str({
                         let custom_to_rs_string =
                             |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
@@ -20338,7 +20348,7 @@ pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> 
                         }
                         .as_ref()
                     });
-                    js_array.push(&js_value);
+                    js_array.set(1, js_value);
                     js_array.into()
                 };
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
@@ -20714,11 +20724,12 @@ pub fn workspaceStatFolderChildren(workspace: u32, path: String) -> Promise {
                     for (i, elem) in value.into_iter().enumerate() {
                         let js_elem = {
                             let (x1, x2) = elem;
+                            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                             let js_array = Array::new_with_length(2);
                             let js_value = JsValue::from_str(x1.as_ref());
-                            js_array.push(&js_value);
+                            js_array.set(0, js_value);
                             let js_value = variant_entry_stat_rs_to_js(x2)?;
-                            js_array.push(&js_value);
+                            js_array.set(1, js_value);
                             js_array.into()
                         };
                         js_array.set(i as u32, js_elem);
@@ -20761,11 +20772,12 @@ pub fn workspaceStatFolderChildrenById(workspace: u32, entry_id: String) -> Prom
                     for (i, elem) in value.into_iter().enumerate() {
                         let js_elem = {
                             let (x1, x2) = elem;
+                            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
                             let js_array = Array::new_with_length(2);
                             let js_value = JsValue::from_str(x1.as_ref());
-                            js_array.push(&js_value);
+                            js_array.set(0, js_value);
                             let js_value = variant_entry_stat_rs_to_js(x2)?;
-                            js_array.push(&js_value);
+                            js_array.set(1, js_value);
                             js_array.into()
                         };
                         js_array.set(i as u32, js_elem);
