@@ -6,7 +6,7 @@ msTest('Open organization switch popover', async ({ connected }) => {
   const popoverButton = connected.locator('.sidebar').locator('.sidebar-header').locator('.organization-card-header-desktop');
   const popover = connected.locator('.popover-switch');
 
-  await expect(popoverButton.locator('.organization-text')).toHaveText('MyOrg');
+  await expect(popoverButton.locator('.organization-text')).toHaveText(/^Org\d+$/);
   await expect(popover).toBeHidden();
   await popoverButton.click();
   await expect(popover).toBeVisible();

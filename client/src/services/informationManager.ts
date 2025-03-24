@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ConnectionHandle, EntryName, FsPath, SizeInt, UserID, WorkspaceHandle, WorkspaceRole } from '@/parsec';
+import { ConnectionHandle, EntryName, FsPath, UserID, WorkspaceHandle, WorkspaceRole } from '@/parsec';
 import { getConnectionHandle } from '@/router';
 import { NotificationManager } from '@/services/notificationManager';
 import { modalController } from '@ionic/vue';
@@ -63,7 +63,7 @@ export interface UserSharedDocumentData extends AbstractInformationData {
   userId: UserID;
   fileName: EntryName;
   filePath: FsPath;
-  fileSize: SizeInt;
+  fileSize: number;
 }
 
 // All elements the owner's account has been imported is done

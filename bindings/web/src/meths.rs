@@ -1550,14 +1550,8 @@ fn struct_file_stat_js_to_rs(obj: JsValue) -> Result<libparsec::FileStat, JsValu
     let size = {
         let js_val = Reflect::get(&obj, &"size".into())?;
         {
-            let v = js_val
-                .dyn_into::<Number>()
-                .map_err(|_| TypeError::new("Not a number"))?
-                .value_of();
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                return Err(JsValue::from(TypeError::new("Not an u64 number")));
-            }
-            let v = v as u64;
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
             v
         }
     };
@@ -3898,14 +3892,8 @@ fn struct_workspace_history_file_stat_js_to_rs(
     let size = {
         let js_val = Reflect::get(&obj, &"size".into())?;
         {
-            let v = js_val
-                .dyn_into::<Number>()
-                .map_err(|_| TypeError::new("Not a number"))?
-                .value_of();
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                return Err(JsValue::from(TypeError::new("Not an u64 number")));
-            }
-            let v = v as u64;
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
             v
         }
     };
@@ -4149,14 +4137,8 @@ fn variant_active_users_limit_js_to_rs(
             let x1 = {
                 let js_val = Reflect::get(&obj, &"x1".into())?;
                 {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
-                    }
-                    let v = v as u64;
+                    let v = u64::try_from(js_val)
+                        .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
                     v
                 }
             };
@@ -5490,42 +5472,24 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
             let blocks = {
                 let js_val = Reflect::get(&obj, &"blocks".into())?;
                 {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
-                    }
-                    let v = v as u64;
+                    let v = u64::try_from(js_val)
+                        .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
                     v
                 }
             };
             let block_index = {
                 let js_val = Reflect::get(&obj, &"blockIndex".into())?;
                 {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
-                    }
-                    let v = v as u64;
+                    let v = u64::try_from(js_val)
+                        .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
                     v
                 }
             };
             let blocksize = {
                 let js_val = Reflect::get(&obj, &"blocksize".into())?;
                 {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
-                    }
-                    let v = v as u64;
+                    let v = u64::try_from(js_val)
+                        .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
                     v
                 }
             };
@@ -7579,14 +7543,8 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
             let size = {
                 let js_val = Reflect::get(&obj, &"size".into())?;
                 {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
-                    }
-                    let v = v as u64;
+                    let v = u64::try_from(js_val)
+                        .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
                     v
                 }
             };
@@ -10558,14 +10516,8 @@ fn variant_parsed_parsec_addr_js_to_rs(
             let key_index = {
                 let js_val = Reflect::get(&obj, &"keyIndex".into())?;
                 {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
-                    }
-                    let v = v as u64;
+                    let v = u64::try_from(js_val)
+                        .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
                     v
                 }
             };
@@ -14085,14 +14037,8 @@ fn variant_workspace_history_entry_stat_js_to_rs(
             let size = {
                 let js_val = Reflect::get(&obj, &"size".into())?;
                 {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
-                    }
-                    let v = v as u64;
+                    let v = u64::try_from(js_val)
+                        .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
                     v
                 }
             };

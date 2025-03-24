@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ConnectionHandle, needsMocks } from '@/parsec';
+import { ConnectionHandle, isWeb } from '@/parsec';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
 import { FileOperationManager } from '@/services/fileOperationManager';
 import { Information, InformationManager } from '@/services/informationManager';
@@ -48,7 +48,7 @@ export class InjectionProvider {
     const inj = this.injections.get(handle);
 
     if (!inj) {
-      if (needsMocks()) {
+      if (window.isDev() && isWeb()) {
         return this.getDefault();
       }
       console.warn('Could not get injections for handle', handle);
