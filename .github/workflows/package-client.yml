@@ -126,6 +126,9 @@ jobs:
         run: npm run web:release
         env:
           PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          # Configure the base href of the WebApp,
+          # we use a relative path since we want to provide a bundle that does not enforce a way to distribute the app.
+          PARSEC_APP_BASEHREF: ./
         working-directory: client
 
       - name: Zip webapp content
