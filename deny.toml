@@ -276,11 +276,7 @@ allow-git = []
 
 [sources.allow-org]
 # 1 or more github.com organizations to allow git sources for
-github = [
-    "Scille",
-    # FIXME: Remove me once we remove the patch for fuser in `Cargo.toml`
-    "FirelightFlagboy",
-]
+github = ["Scille"]
 # 1 or more gitlab.com organizations to allow git sources for
 gitlab = []
 # 1 or more bitbucket.org organizations to allow git sources for
