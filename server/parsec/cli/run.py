@@ -306,6 +306,26 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
 # Add --sentry-url
 @sentry_config_options(configure_sentry=True)
 @click.option(
+    "--sse-keepalive",
+    default=30,
+    show_default=True,
+    type=int,
+    callback=lambda ctx, param, value: None if value is None or value <= 0 else value,
+    envvar="PARSEC_SSE_KEEPALIVE",
+    show_envvar=True,
+    help="Keep SSE connection open by sending keepalive messages to client, in seconds (pass <= 0 to disable)",
+)
+@click.option(
+    "--with-client-web-app",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True, path_type=Path),
+    envvar="PARSEC_WITH_CLIENT_WEB_APP",
+    show_envvar=True,
+    help=(
+        "Host the client web app (default: disabled)."
+        " When enabled, the server landing page serves the content of the given directory."
+    ),
+)
+@click.option(
     "--dev",
     cls=DevOption,
     is_flag=True,
@@ -316,16 +336,6 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
         " --email-sender=no-reply@parsec.com --email-host=MOCKED"
         " --server-addr=parsec3://localhost:<port>(?no_ssl=False if ssl is not set)`"
     ),
-)
-@click.option(
-    "--sse-keepalive",
-    default=30,
-    show_default=True,
-    type=int,
-    callback=lambda ctx, param, value: None if value is None or value <= 0 else value,
-    envvar="PARSEC_SSE_KEEPALIVE",
-    show_envvar=True,
-    help="Keep SSE connection open by sending keepalive messages to client, in seconds (pass <= 0 to disable)",
 )
 # Add --debug & --version
 @debug_config_options
@@ -361,6 +371,7 @@ def run_cmd(
     log_file: str | None,
     sentry_dsn: str | None,
     sentry_environment: str,
+    with_client_web_app: Path | None,
     debug: bool,
     dev: bool,
 ) -> None:
@@ -427,6 +438,7 @@ def run_cmd(
                     ssl_certfile=ssl_certfile,
                     ssl_keyfile=ssl_keyfile,
                     retry_policy=retry_policy,
+                    with_client_web_app=with_client_web_app,
                     app_config=app_config,
                 )
             )
@@ -470,6 +482,7 @@ async def _run_backend(
     ssl_certfile: Path | None,
     ssl_keyfile: Path | None,
     retry_policy: RetryPolicy,
+    with_client_web_app: Path | None,
     app_config: BackendConfig,
 ) -> None:
     # Log the server version and the backend configuration
@@ -488,7 +501,12 @@ async def _run_backend(
                 retry_policy.success()
 
                 # Serve backend through TCP
-                parsec_app = app_factory(backend)
+
+                parsec_app = app_factory(
+                    backend,
+                    with_client_web_app=with_client_web_app,
+                )
+
                 await serve_parsec_asgi_app(
                     app=parsec_app,
                     host=host,
