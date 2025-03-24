@@ -172,9 +172,10 @@ export class WorkspaceHistory {
           stat.created = DateTime.fromSeconds(stat.created as any as number);
           stat.updated = DateTime.fromSeconds(stat.updated as any as number);
           if (stat.tag === WorkspaceHistory2EntryStatTag.File) {
-            (stat as WorkspaceHistoryEntryStatFile).isFile = (): boolean => true;
-            (stat as WorkspaceHistoryEntryStatFile).name = name;
-            (stat as WorkspaceHistoryEntryStatFile).path = await Path.join(path, name);
+            (stat as unknown as WorkspaceHistoryEntryStatFile).size = Number(stat.size);
+            (stat as unknown as WorkspaceHistoryEntryStatFile).isFile = (): boolean => true;
+            (stat as unknown as WorkspaceHistoryEntryStatFile).name = name;
+            (stat as unknown as WorkspaceHistoryEntryStatFile).path = await Path.join(path, name);
           } else {
             (stat as WorkspaceHistoryEntryStatFolder).isFile = (): boolean => false;
             (stat as WorkspaceHistoryEntryStatFolder).name = name;
@@ -205,9 +206,10 @@ export class WorkspaceHistory {
       const result = await libparsec.workspaceHistory2StatEntry(this.handle, path);
       if (result.ok) {
         if (result.value.tag === WorkspaceHistory2EntryStatTag.File) {
-          (result.value as WorkspaceHistoryEntryStatFile).isFile = (): boolean => true;
-          (result.value as WorkspaceHistoryEntryStatFile).name = fileName;
-          (result.value as WorkspaceHistoryEntryStatFile).path = path;
+          (result.value as unknown as WorkspaceHistoryEntryStatFile).size = Number(result.value.size);
+          (result.value as unknown as WorkspaceHistoryEntryStatFile).isFile = (): boolean => true;
+          (result.value as unknown as WorkspaceHistoryEntryStatFile).name = fileName;
+          (result.value as unknown as WorkspaceHistoryEntryStatFile).path = path;
         } else {
           (result.value as WorkspaceHistoryEntryStatFolder).isFile = (): boolean => false;
           (result.value as WorkspaceHistoryEntryStatFolder).name = fileName;
@@ -256,7 +258,7 @@ export class WorkspaceHistory {
       return { ok: false, error: { tag: WorkspaceHistory2FdReadErrorTag.Internal, error: 'Not started' } };
     }
     if (!needsMocks()) {
-      return await libparsec.workspaceHistory2FdRead(this.handle, fd, offset, size);
+      return await libparsec.workspaceHistory2FdRead(this.handle, fd, BigInt(offset), BigInt(size));
     } else {
       if (!MOCK_OPENED_FILES.has(fd)) {
         return { ok: false, error: { tag: WorkspaceHistory2FdReadErrorTag.BadFileDescriptor, error: 'Invalid file descriptor' } };

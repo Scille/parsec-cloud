@@ -107,10 +107,11 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
       result.value.created = DateTime.fromSeconds(result.value.created as any as number);
       result.value.updated = DateTime.fromSeconds(result.value.updated as any as number);
       if (result.value.tag === FileType.File) {
-        (result.value as EntryStatFile).isFile = (): boolean => true;
-        (result.value as EntryStatFile).name = fileName;
-        (result.value as EntryStatFile).path = path;
-        (result.value as EntryStatFile).isConfined = (): boolean => result.value.confinementPoint !== null;
+        (result.value as unknown as EntryStatFile).size = Number(result.value.size);
+        (result.value as unknown as EntryStatFile).isFile = (): boolean => true;
+        (result.value as unknown as EntryStatFile).name = fileName;
+        (result.value as unknown as EntryStatFile).path = path;
+        (result.value as unknown as EntryStatFile).isConfined = (): boolean => result.value.confinementPoint !== null;
       } else {
         (result.value as EntryStatFolder).isFile = (): boolean => false;
         (result.value as EntryStatFolder).name = fileName;
@@ -163,10 +164,11 @@ export async function statFolderChildren(
         stat.created = DateTime.fromSeconds(stat.created as any as number);
         stat.updated = DateTime.fromSeconds(stat.updated as any as number);
         if (stat.tag === FileType.File) {
-          (stat as EntryStatFile).isFile = (): boolean => true;
-          (stat as EntryStatFile).name = name;
-          (stat as EntryStatFile).path = await Path.join(path, name);
-          (stat as EntryStatFile).isConfined = (): boolean => stat.confinementPoint !== null;
+          (stat as unknown as EntryStatFile).size = Number(stat.size);
+          (stat as unknown as EntryStatFile).isFile = (): boolean => true;
+          (stat as unknown as EntryStatFile).name = name;
+          (stat as unknown as EntryStatFile).path = await Path.join(path, name);
+          (stat as unknown as EntryStatFile).isConfined = (): boolean => stat.confinementPoint !== null;
         } else {
           (stat as EntryStatFolder).isFile = (): boolean => false;
           (stat as EntryStatFolder).name = name;
@@ -325,7 +327,7 @@ export async function resizeFile(
   length: number,
 ): Promise<Result<null, WorkspaceFdResizeError>> {
   if (workspaceHandle && !needsMocks()) {
-    return await libparsec.workspaceFdResize(workspaceHandle, fd, length, true);
+    return await libparsec.workspaceFdResize(workspaceHandle, fd, BigInt(length), true);
   } else {
     if (!MOCK_OPENED_FILES.has(fd)) {
       return { ok: false, error: { tag: WorkspaceFdResizeErrorTag.BadFileDescriptor, error: 'Invalid file descriptor' } };
@@ -341,7 +343,11 @@ export async function writeFile(
   data: Uint8Array,
 ): Promise<Result<number, WorkspaceFdWriteError>> {
   if (!needsMocks()) {
-    return await libparsec.workspaceFdWrite(workspaceHandle, fd, offset, data);
+    const result = await libparsec.workspaceFdWrite(workspaceHandle, fd, BigInt(offset), data);
+    if (result.ok) {
+      return { ok: true, value: Number(result.value) };
+    }
+    return result;
   } else {
     if (!MOCK_OPENED_FILES.has(fd)) {
       return { ok: false, error: { tag: WorkspaceFdWriteErrorTag.BadFileDescriptor, error: 'Invalid file descriptor' } };
@@ -358,7 +364,7 @@ export async function readFile(
   size: number,
 ): Promise<Result<Uint8Array, WorkspaceFdReadError>> {
   if (!needsMocks()) {
-    return await libparsec.workspaceFdRead(workspaceHandle, fd, offset, size);
+    return await libparsec.workspaceFdRead(workspaceHandle, fd, BigInt(offset), BigInt(size));
   } else {
     if (!MOCK_OPENED_FILES.has(fd)) {
       return { ok: false, error: { tag: WorkspaceFdReadErrorTag.BadFileDescriptor, error: 'Invalid file descriptor' } };
