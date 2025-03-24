@@ -2101,7 +2101,7 @@ dependencies = [
  "log",
  "reqwest",
  "reqwest-eventsource",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "tokio",
 ]
 
@@ -2133,7 +2133,7 @@ dependencies = [
  "serde_test",
  "sha2",
  "sodiumoxide",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "uuid",
  "x25519-dalek",
  "zeroize",
@@ -2280,7 +2280,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -2391,7 +2391,7 @@ dependencies = [
  "serde_bytes",
  "serde_test",
  "serde_with",
- "thiserror 1.0.69",
+ "thiserror 2.0.12",
  "unicode-normalization",
  "url",
  "uuid",
