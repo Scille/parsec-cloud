@@ -100,7 +100,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@d4323d4df104b026a6aa633fdb11d772146be0bf # pin v4.2.2
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # pin v4.2.3
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -118,7 +118,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@f0deed1e0edfc6a9be95417288c0e1099b1eeec3 # pin v2.7.7
+        uses: Swatinem/rust-cache@9d47c6ad4b02e050fd481d890b2ea34778fd09d6 # pin v2.7.8
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
@@ -130,7 +130,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@2c41309d51ede152b6f2ee6bf3b71e6dc9a8b7df # pin v2.49.27
+      - uses: taiki-e/install-action@914ac1e29db2d22aef69891f032778d9adc3990d # pin v2.49.34
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
 
@@ -142,7 +142,7 @@ jobs:
 
       - name: Save libparsec to be reuse later
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
-        uses: actions/cache/save@d4323d4df104b026a6aa633fdb11d772146be0bf # pin v4.2.2
+        uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # pin v4.2.3
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -172,7 +172,7 @@ jobs:
 
       - name: Archive test results
         if: failure()
-        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # pin v4.6.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin v4.6.2
         with:
           name: playwright-artifacts
           path: client/test-results/

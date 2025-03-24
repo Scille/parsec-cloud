@@ -80,7 +80,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Download version.patch artifact
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # pin v4.1.9
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # pin v4.2.1
         with:
           name: version.patch
           path: ${{ runner.temp }}/version.patch
@@ -133,7 +133,7 @@ jobs:
           yq --null-input ".${{ matrix.os }}.${{ matrix.arch }}.cli = \"$FINAL_ARTIFACT_NAME\"" | tee ${{ runner.temp }}/artifacts.yml
         timeout-minutes: 1
 
-      - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # pin v4.6.1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin v4.6.2
         with:
           name: cli-${{ matrix.arch }}-${{ matrix.vendor }}-${{ matrix.os }}
           path: |
@@ -168,7 +168,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Download version.patch artifact
-        uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # pin v4.1.9
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # pin v4.2.1
         with:
           name: version.patch
           path: ${{ runner.temp }}/version.patch
@@ -227,7 +227,7 @@ jobs:
           $jsonContent = '{ "version": "${{ steps.version.outputs.full }}" }'
           $jsonContent | Tee-Object -FilePath "${{ runner.temp }}\package.json"
 
-      - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # pin v4.6.1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin v4.6.2
         with:
           name: ${{ runner.os }}-${{ matrix.target }}-cli-pre-build
           path: |
