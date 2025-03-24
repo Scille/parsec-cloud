@@ -603,11 +603,12 @@ JsValue::from(Uint8Array::from({%- if type.custom_to_rs_bytes -%}
         {{- value_var_name }}{{ ", " if not loop.last else "" -}}
     {%- endfor -%}
     ) = {{ rs_value }};
+    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
     let js_array = Array::new_with_length({{ type.values | length }});
     {%- for value in type.values -%}
         {% set value_var_name = "x" ~ loop.index %}
         let js_value = {{ render_rs_to_js_value(value_var_name, value) }};
-        js_array.push(&js_value);
+        js_array.set({{ loop.index0 }}, js_value);
     {%- endfor -%}
     js_array.into()
 }
