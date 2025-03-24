@@ -114,8 +114,10 @@ With `AuthMethod` defined like so:
     # hence we need those keys to be able to re-encrypt it every time
     # it is modified (i.e. when adding/removing a device/auth medium).
     "per_auth_method_pub_key": "HashMap<AuthMethodID, PublicKey>",
-    # List of devices registered for the account.
-    "device_keys": "HashMap<(OrganizationID, DeviceID), SymmetricKey>",
+    # Each device is stored on the server encrypted with it own symmetric key.
+    # Note we call this key "decryption" even if it's a symmetric one since the device
+    # never gets re-encrypted and hence the key is only used to decrypt it.
+    "per_device_decryption_keys": "HashMap<(OrganizationID, DeviceID), SymmetricKey>"
   }
 }
 ```
