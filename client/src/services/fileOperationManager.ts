@@ -34,7 +34,7 @@ import { DateTime } from 'luxon';
 import { FileSystemFileHandle } from 'native-file-system-adapter';
 import { v4 as uuid4 } from 'uuid';
 
-const MAX_SIMULTANEOUS_OPERATIONS = 1;
+const MAX_SIMULTANEOUS_OPERATIONS = 3;
 const MIN_OPERATION_TIME_MS = 500;
 
 export const FileOperationManagerKey = 'fileOperationManager';

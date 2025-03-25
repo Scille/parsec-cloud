@@ -38,14 +38,17 @@ onMounted(async () => {
   if (query.loginInfo) {
     try {
       const loginInfo = Base64.toObject(query.loginInfo) as RouteBackup;
-      setTimeout(async () => {
-        await navigateTo(loginInfo.data.route, {
-          params: loginInfo.data.params,
-          query: loginInfo.data.query,
-          skipHandle: true,
-          replace: true,
-        });
-      }, import.meta.env.PARSEC_APP_TESTBED_SERVER ? 0 : 1500);
+      setTimeout(
+        async () => {
+          await navigateTo(loginInfo.data.route, {
+            params: loginInfo.data.params,
+            query: loginInfo.data.query,
+            skipHandle: true,
+            replace: true,
+          });
+        },
+        import.meta.env.PARSEC_APP_TESTBED_SERVER ? 0 : 1500,
+      );
     } catch (e: any) {
       window.electronAPI.log('error', `Invalid log in info provided: ${e}`);
       await navigateTo(Routes.Home, { skipHandle: true, replace: true });

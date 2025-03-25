@@ -243,7 +243,8 @@ async function onOptionsClick(event: Event): Promise<void> {
     gap: 0.75rem;
     padding: 0.25rem;
 
-    .icon-option-container, .icon-share-container {
+    .icon-option-container,
+    .icon-share-container {
       display: flex;
       align-items: center;
       padding: 0.25rem;
@@ -251,7 +252,8 @@ async function onOptionsClick(event: Event): Promise<void> {
       transition: background 0.15s ease-in-out;
       gap: 0.25rem;
 
-      .icon-option, .icon-share {
+      .icon-option,
+      .icon-share {
         font-size: 1.375rem;
 
         @include breakpoint('sm') {
