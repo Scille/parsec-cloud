@@ -31,7 +31,9 @@ impl Storage {
         &self,
         config_dir: &Path,
     ) -> Result<Vec<AvailableDevice>, ListAvailableDevicesError> {
-        let device_prefix = format!("{}/", config_dir.display());
+        let devices_dir = crate::get_devices_dir(config_dir);
+        let device_prefix = format!("{}/", devices_dir.display());
+        log::debug!("Will list devices starting with `{device_prefix}`");
         let items_count =
             self.storage
                 .length()
@@ -47,9 +49,13 @@ impl Storage {
                         if key.starts_with(&device_prefix)
                             && key.ends_with(crate::DEVICE_FILE_EXT) =>
                     {
+                        log::trace!("Device {key:?} included in list");
                         Some(key)
                     }
-                    _ => None,
+                    _ => {
+                        log::trace!("Device {key:?} not included in list");
+                        None
+                    }
                 }
             })
             .sorted()
@@ -169,6 +175,7 @@ impl Storage {
     ) -> Result<(), SaveDeviceFileError> {
         let data = file_data.dump();
         let b64_data = data_encoding::BASE64.encode(&data);
+        log::trace!("Saving device using key={key}");
         self.storage
             .set_item(key, &b64_data)
             .map_err(|e| SaveDeviceFileError::SetItemStorage {

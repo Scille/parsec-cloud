@@ -52,7 +52,7 @@ fn find_device_files(path: PathBuf) -> Vec<PathBuf> {
 }
 
 pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
-    let key_file_paths = config_dir.join("devices");
+    let key_file_paths = crate::get_devices_dir(config_dir);
 
     // Consider `.keys` files in devices directory
     let mut key_file_paths = find_device_files(key_file_paths);
