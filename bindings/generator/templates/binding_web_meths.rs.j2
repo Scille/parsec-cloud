@@ -788,7 +788,7 @@ pub fn {{ meth.name | snake2camel }}(
 {{ param_name }}: {{ function_param_type(param_type) }}{{ "" if loop.last else ", " }}
 {%- endfor -%}
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
 {# Cook param if needed (typically for string-based types) #}
 {% for param_name, param_type in meth.params.items() %}
         {{ render_function_param_cooking(param_name, param_type) }}
@@ -809,7 +809,7 @@ pub fn {{ meth.name | snake2camel }}(
 {% else %}
         Ok({{ render_rs_to_js_value("ret", meth.return_type) }})
 {% endif %}
-    })
+    }))
 }
 {% endmacro -%}
 
@@ -822,7 +822,7 @@ pub fn {{ meth.name | snake2camel }}(
 {{ param_name }}: {{ function_param_type(param_type) }}{{ "" if loop.last else ", " }}
 {%- endfor -%}
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
 {# Cook param if needed (typically for string-based types) #}
 {%- for param_name, param_type in meth.params.items() %}
         {{ render_function_param_cooking(param_name, param_type) }}
@@ -843,7 +843,7 @@ pub fn {{ meth.name | snake2camel }}(
 {% else %}
         Ok({{ render_rs_to_js_value("ret", meth.return_type) }})
 {% endif %}
-    })
+    }))
 }
 {% endmacro -%}
 
