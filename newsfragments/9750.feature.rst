@@ -1,1 +1,0 @@
-Added picture in picture, loop and playback speed options to video and audio viewers

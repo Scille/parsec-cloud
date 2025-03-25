@@ -1,1 +1,0 @@
-Fixed "Remember me" login for customer area
