@@ -1,1 +1,0 @@
-Prevent sorting users by Status if all users are active
