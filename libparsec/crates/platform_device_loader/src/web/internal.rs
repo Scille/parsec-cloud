@@ -49,7 +49,7 @@ impl Storage {
                         if key.starts_with(&device_prefix)
                             && key.ends_with(crate::DEVICE_FILE_EXT) =>
                     {
-                        log::trace!("Device {key} included in list");
+                        log::trace!("Device {key:?} included in list");
                         Some(key)
                     }
                     _ => {
