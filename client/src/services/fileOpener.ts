@@ -8,6 +8,7 @@ import {
   getSystemPath,
   getWorkspaceInfo,
   isDesktop,
+  isWeb,
   WorkspaceHandle,
   WorkspaceHistory,
   WorkspaceHistoryEntryStat,
@@ -56,7 +57,7 @@ async function openWithSystem(
   if (!result.ok) {
     await informationManager.present(
       new Information({
-        message: entry.isFile() ? 'FoldersPage.open.fileFailed' : 'FoldersPage.open.folderFailed',
+        message: { key: entry.isFile() ? 'FoldersPage.open.fileFailed' : 'FoldersPage.open.folderFailed', data: { name: entry.name } },
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,
@@ -142,7 +143,7 @@ async function openPath(
 
   try {
     if (!contentType || contentType.type === FileContentType.Unknown || (isDesktop() && !ENABLED_FILE_VIEWERS.includes(contentType.type))) {
-      if (!options.onlyViewers) {
+      if (!isWeb() && !options.onlyViewers) {
         await openWithSystem(workspaceHandle, entry, informationManager);
       } else {
         await modal.dismiss();
@@ -163,7 +164,7 @@ async function openPath(
           }),
           PresentationMode.Toast,
         );
-        if (!options.onlyViewers) {
+        if (!isWeb() && !options.onlyViewers) {
           await openWithSystem(workspaceHandle, entry, informationManager);
         }
         return;

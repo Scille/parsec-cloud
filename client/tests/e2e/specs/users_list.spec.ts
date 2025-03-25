@@ -109,13 +109,23 @@ msTest('Revoke one user with context menu and check context menu', async ({ user
   await item.locator('.options-button').click();
   await expect(menu).toBeVisible();
   // Full context menu
-  await expect(menu.getByRole('listitem')).toHaveText(['Deletion', 'Revoke this user', 'Profile', 'Change profile', 'User details', 'View details', 'Copy roles', 'Copy workspace roles to...']);
+  await expect(menu.getByRole('listitem')).toHaveText([
+    'Deletion',
+    'Revoke this user',
+    'Profile',
+    'Change profile',
+    'User details',
+    'View details',
+    'Copy roles',
+    'Copy workspace roles to...',
+  ]);
 
   // Revoke the user
   await menu.getByRole('listitem').nth(1).click();
   await answerQuestion(usersPage, true, {
     expectedTitleText: 'Revoke this user?',
-    expectedQuestionText: 'This will revoke Boby McBobFace, preventing them from accessing this organization. Are you sure you want to proceed?',
+    expectedQuestionText:
+      'This will revoke Boby McBobFace, preventing them from accessing this organization. Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
     expectedNegativeText: 'Cancel',
   });
@@ -135,7 +145,8 @@ msTest('Revoke one user with selection', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('#button-revoke-user').click();
   await answerQuestion(usersPage, true, {
     expectedTitleText: 'Revoke this user?',
-    expectedQuestionText: 'This will revoke Boby McBobFace, preventing them from accessing this organization. Are you sure you want to proceed?',
+    expectedQuestionText:
+      'This will revoke Boby McBobFace, preventing them from accessing this organization. Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
     expectedNegativeText: 'Cancel',
   });
