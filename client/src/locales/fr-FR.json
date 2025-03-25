@@ -487,6 +487,11 @@
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
         "emptyFolder": "Ce dossier est vide.",
         "loading": "Chargement du dossier...",
+        "actions": {
+            "select": "Tout sélect.",
+            "unselect": "Déselect.",
+            "cancel": "Annuler"
+        },
         "listDisplayTitles": {
             "name": "Nom",
             "updatedBy": "Modifié par",
@@ -518,7 +523,11 @@
             "actionDetails": "Détails",
             "actionCopyLink": "Copier le lien",
             "actionDelete": "Supprimer",
-            "actionSeeInExplorer": "Voir dans l'explorateur"
+            "actionSeeInExplorer": "Voir dans l'explorateur",
+            "actionSelect": "Sélection",
+            "actionSelectAll": "Tout sélectionner",
+            "actionUnselectAll": "Tout désélectionner",
+            "actionShare": "Partager"
         },
         "importModal": {
             "title": "Importer vos fichiers",
@@ -1061,7 +1070,10 @@
             "actionAssignRoles": "Copier les rôles des espaces de travail à...",
             "subtitleAssignRoles": "Vous pouvez copier les rôles de {sourceUser} vers une autre personne. Les rôles des espaces de travail ne seront pas retirés.",
             "titleUpdateProfile": "Profil",
-            "actionUpdateProfile": "Modifier le profil | Modifier les profils"
+            "actionUpdateProfile": "Modifier le profil | Modifier les profils",
+            "actionSelect": "Sélection",
+            "actionSelectAll": "Tout sélectionner",
+            "actionUnselectAll": "Tout désélectionner"
         },
         "greet": {
             "titles": {

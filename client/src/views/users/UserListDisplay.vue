@@ -49,8 +49,9 @@
       :class="{
         'current-user': user.isCurrent,
       }"
-      :show-checkbox="someSelected"
-      @menu-click="(event: Event, user: UserModel, onFinished: () => void) => $emit('menuClick', event, user, onFinished)"
+      :show-checkbox="someSelected || selectionEnabled === true"
+      @menu-click="onMenuClick"
+      @select="$emit('checkboxClick')"
     />
   </ion-list>
 </template>
@@ -65,10 +66,12 @@ const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 
 const props = defineProps<{
   users: UserCollection;
+  selectionEnabled?: boolean;
 }>();
 
-defineEmits<{
+const emits = defineEmits<{
   (e: 'menuClick', event: Event, user: UserModel, onFinished: () => void): void;
+  (e: 'checkboxClick'): void;
 }>();
 
 const allSelected = computed(() => {
@@ -78,6 +81,10 @@ const allSelected = computed(() => {
 const someSelected = computed(() => {
   return props.users.selectedCount() > 0;
 });
+
+async function onMenuClick(event: Event, user: UserModel, onFinished: () => void): Promise<void> {
+  emits('menuClick', event, user, onFinished);
+}
 </script>
 
 <style scoped lang="scss">

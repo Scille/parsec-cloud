@@ -150,6 +150,11 @@
         v-if="workspaceInfo && isSmallDisplay"
         :title="getDisplayText()"
         @open-contextual-modal="openGlobalContextMenu"
+        @select="selectAll"
+        @unselect="unselectAll"
+        @cancel-selection="onSelectionCancel"
+        :selection-enabled="selectionEnabled"
+        :some-selected="selectedFilesCount > 0"
       />
       <div class="folder-container scroll">
         <file-inputs
@@ -202,6 +207,7 @@
               @global-menu-click="openGlobalContextMenu"
               :own-role="ownRole"
               @drop-as-reader="onDropAsReader"
+              :selection-enabled="selectionEnabled"
             />
           </div>
           <div v-if="displayView === DisplayState.Grid">
@@ -217,6 +223,8 @@
               @global-menu-click="openGlobalContextMenu"
               :own-role="ownRole"
               @drop-as-reader="onDropAsReader"
+              :selection-enabled="selectionEnabled"
+              @checkbox-click="selectionEnabled = true"
             />
           </div>
         </div>
@@ -302,9 +310,9 @@ import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import {
   FileDetailsModal,
   FileAction,
-  FolderGlobalContextMenu,
   FolderGlobalAction,
   openEntryContextMenu as _openEntryContextMenu,
+  openGlobalContextMenu as _openGlobalContextMenu,
 } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin, download } from 'ionicons/icons';
@@ -393,6 +401,7 @@ let eventCbId: string | null = null;
 const selectedFilesCount = computed(() => {
   return files.value.selectedCount() + folders.value.selectedCount();
 });
+const selectionEnabled = ref<boolean>(false);
 
 let hotkeys: HotkeyGroup | null = null;
 let callbackId: string | null = null;
@@ -475,8 +484,7 @@ async function defineShortcuts(): Promise<void> {
   hotkeys.add(
     { key: 'a', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
     async () => {
-      folders.value.selectAll(true);
-      files.value.selectAll(true);
+      selectAll();
     },
   );
 }
@@ -1038,6 +1046,7 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
       );
     }
   }
+  await onSelectionCancel();
   await listFolder({ sameFolder: true });
 }
 
@@ -1083,6 +1092,7 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
     entry.name = newName;
     entry.path = result.value;
   }
+  await onSelectionCancel();
 }
 
 async function copyLink(entries: EntryModel[]): Promise<void> {
@@ -1163,6 +1173,7 @@ async function moveEntriesTo(entries: EntryModel[]): Promise<void> {
     );
     entry.isSelected = false;
   }
+  selectionEnabled.value = false;
 }
 
 async function showDetails(entries: EntryModel[]): Promise<void> {
@@ -1209,6 +1220,7 @@ async function copyEntries(entries: EntryModel[]): Promise<void> {
     await fileOperationManager.copyEntry(workspaceInfo.value.handle, workspaceInfo.value.id, entry.path, folder);
     entry.isSelected = false;
   }
+  selectionEnabled.value = false;
 }
 
 async function downloadEntries(entries: EntryModel[]): Promise<void> {
@@ -1290,6 +1302,7 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
       window.electronAPI.log('error', `Failed to select destination folder: ${e.toString()}`);
     }
   }
+  await onSelectionCancel();
 }
 
 async function showHistory(entries: EntryModel[]): Promise<void> {
@@ -1308,6 +1321,7 @@ async function showHistory(entries: EntryModel[]): Promise<void> {
       selectFile: entries[0].isFile() ? entries[0].name : undefined,
     },
   });
+  selectionEnabled.value = false;
 }
 
 async function openEntries(entries: EntryModel[]): Promise<void> {
@@ -1321,29 +1335,17 @@ async function openEntries(entries: EntryModel[]): Promise<void> {
   const config = await storageManager.retrieveConfig();
 
   await openPath(workspaceHandle, entry.path, informationManager, { skipViewers: config.skipViewers });
+  selectionEnabled.value = false;
 }
 
 async function openGlobalContextMenu(event: Event): Promise<void> {
-  if (ownRole.value === WorkspaceRole.Reader) {
-    return;
-  }
+  const data = await _openGlobalContextMenu(
+    event,
+    ownRole.value,
+    isLargeDisplay.value,
+    folders.value.entriesCount() + files.value.entriesCount() === 0,
+  );
 
-  const popover = await popoverController.create({
-    component: FolderGlobalContextMenu,
-    cssClass: 'folder-global-context-menu',
-    event: event,
-    reference: event.type === 'contextmenu' ? 'event' : 'trigger',
-    translucent: true,
-    showBackdrop: false,
-    dismissOnSelect: true,
-    alignment: 'start',
-    componentProps: {
-      role: ownRole.value,
-    },
-  });
-  await popover.present();
-
-  const { data } = await popover.onDidDismiss();
   if (!data || !workspaceInfo.value) {
     return;
   }
@@ -1356,6 +1358,12 @@ async function openGlobalContextMenu(event: Event): Promise<void> {
       return await fileInputsRef.value.importFolder();
     case FolderGlobalAction.OpenInExplorer:
       return await openPath(workspaceInfo.value.handle, currentPath.value, informationManager, { skipViewers: true });
+    case FolderGlobalAction.ToggleSelect:
+      return await toggleSelection();
+    case FolderGlobalAction.SelectAll:
+      return await selectAll();
+    case FolderGlobalAction.Share:
+      return await shareEntries();
   }
 }
 
@@ -1394,6 +1402,36 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
   if (onFinished) {
     onFinished();
   }
+}
+
+async function toggleSelection(): Promise<void> {
+  selectionEnabled.value = !selectionEnabled.value;
+  if (selectionEnabled.value === false) {
+    await unselectAll();
+  }
+}
+
+async function onSelectionCancel(): Promise<void> {
+  await unselectAll();
+  selectionEnabled.value = false;
+}
+
+async function selectAll(): Promise<void> {
+  selectionEnabled.value = true;
+  folders.value.selectAll(true);
+  files.value.selectAll(true);
+}
+
+async function unselectAll(): Promise<void> {
+  folders.value.selectAll(false);
+  files.value.selectAll(false);
+}
+
+async function shareEntries(): Promise<void> {
+  if (!workspaceInfo.value) {
+    return;
+  }
+  copyPathLinkToClipboard(currentPath.value, workspaceInfo.value.handle, informationManager);
 }
 
 async function seeInExplorer(entries: EntryModel[]): Promise<void> {

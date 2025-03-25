@@ -6,8 +6,9 @@
     :key="user.id"
     :user="user"
     :disabled="user.isCurrent"
-    :show-checkbox="someSelected"
-    @menu-click="(event: Event, user: UserModel, onFinished: () => void) => $emit('menuClick', event, user, onFinished)"
+    :show-checkbox="someSelected || selectionEnabled === true"
+    @menu-click="onMenuClick"
+    @select="$emit('checkboxClick')"
     :class="{
       'current-user': user.isCurrent,
     }"
@@ -28,10 +29,12 @@ import { computed, ref } from 'vue';
 
 defineProps<{
   users: UserCollection;
+  selectionEnabled?: boolean;
 }>();
 
-defineEmits<{
+const emits = defineEmits<{
   (e: 'menuClick', event: Event, user: UserModel, onFinished: () => void): void;
+  (e: 'checkboxClick'): void;
 }>();
 
 const selectedCount = ref(0);
@@ -39,6 +42,10 @@ const selectedCount = ref(0);
 const someSelected = computed(() => {
   return selectedCount.value > 0;
 });
+
+async function onMenuClick(event: Event, user: UserModel, onFinished: () => void): Promise<void> {
+  emits('menuClick', event, user, onFinished);
+}
 </script>
 
 <style scoped lang="scss"></style>

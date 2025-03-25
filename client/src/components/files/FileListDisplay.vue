@@ -53,9 +53,9 @@
             ref="folderItemsRef"
             :key="folder.id"
             :entry="folder"
-            :show-checkbox="someSelected"
+            :show-checkbox="someSelected || selectionEnabled === true"
             @click="$emit('click', folder, $event)"
-            @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
+            @menu-click="onMenuClick"
             @selected-change="onSelectedChange"
             @files-added="onFilesAdded"
             :is-workspace-reader="ownRole === WorkspaceRole.Reader"
@@ -66,9 +66,9 @@
             ref="fileItemsRef"
             :key="file.id"
             :entry="file"
-            :show-checkbox="someSelected"
+            :show-checkbox="someSelected || selectionEnabled === true"
             @click="$emit('click', file, $event)"
-            @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
+            @menu-click="onMenuClick"
             @selected-change="onSelectedChange"
             @files-added="onFilesAdded"
             @drop-as-reader="$emit('dropAsReader')"
@@ -103,6 +103,7 @@ const props = defineProps<{
   folders: EntryCollection<FolderModel>;
   currentPath: FsPath;
   ownRole: WorkspaceRole;
+  selectionEnabled?: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -134,6 +135,10 @@ const someSelected = computed(() => {
 async function onContextMenu(event: Event): Promise<void> {
   event.preventDefault();
   emits('globalMenuClick', event);
+}
+
+async function onMenuClick(event: Event, entry: EntryModel, onFinished: () => void): Promise<void> {
+  emits('menuClick', event, entry, onFinished);
 }
 
 async function onSelectedChange(_entry: EntryModel, _checked: boolean): Promise<void> {}
