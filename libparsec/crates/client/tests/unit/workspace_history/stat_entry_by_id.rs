@@ -23,10 +23,13 @@ async fn ok_folder(
     let wksp1_foo_v2_children_available_timestamp: DateTime = *env
         .template
         .get_stuff("wksp1_foo_v2_children_available_timestamp");
-    let ops = strategy
+    let ops = match strategy
         .start_workspace_history_ops_at(env, wksp1_foo_v2_children_available_timestamp)
         .await
-        .unwrap();
+    {
+        Ok(ops) => ops,
+        Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb) => return,
+    };
 
     // `/` manifest is already in cache, no need for `test_register_sequence_of_send_hooks` here
     p_assert_matches!(
