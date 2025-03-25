@@ -7,6 +7,7 @@ from typing import cast
 import anyio
 import uvicorn
 from fastapi import FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -41,13 +42,22 @@ tags_metadata = [
 ]
 
 
-def app_factory(backend: Backend, with_client_web_app: Path | None = None) -> AsgiApp:
+def app_factory(
+    backend: Backend,
+    cors_allow_origins: list[str] = [],
+    with_client_web_app: Path | None = None,
+) -> AsgiApp:
     app = FastAPI(
         title="Parsec Server",
         version=parsec_version,
         openapi_tags=tags_metadata,
     )
-
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_allow_origins,
+        allow_methods=["OPTIONS", "GET", "POST", "PATCH"],
+        allow_headers=["api-version", "authorization"],
+    )
     app.state.backend = backend
 
     if with_client_web_app:
