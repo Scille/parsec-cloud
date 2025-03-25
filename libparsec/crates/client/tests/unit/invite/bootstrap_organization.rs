@@ -114,11 +114,13 @@ async fn finalize(tmp_path: TmpPath, env: &TestbedEnv) {
     p_assert_eq!(*reloaded, *device);
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 enum BadFinalizeKind {
     DeviceSaveError,
     UserStorageInitError,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "minimal")]
 #[case::device_save_error(BadFinalizeKind::DeviceSaveError)]
 #[case::user_storage_init_error(BadFinalizeKind::UserStorageInitError)]
