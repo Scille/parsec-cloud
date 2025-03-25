@@ -103,6 +103,30 @@ async fn testbed_support(
 }
 
 #[parsec_test(testbed = "minimal")]
+async fn for_update_preserves_task_id(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+
+    let mut storage = CertificatesStorage::start(&env.discriminant_dir, &alice)
+        .await
+        .unwrap();
+
+    let task = libparsec_platform_async::spawn(async move {
+        let task_id_from_task = libparsec_platform_async::try_task_id();
+        let task_id_from_for_update = storage
+            .for_update::<_, ()>(async |_| Ok(libparsec_platform_async::try_task_id()))
+            .await
+            .unwrap()
+            .unwrap();
+        (task_id_from_task, task_id_from_for_update)
+    });
+    let task_id = task.id();
+    let (task_id_from_task, task_id_from_for_update) = task.await.unwrap();
+
+    p_assert_eq!(task_id_from_task.unwrap(), task_id);
+    p_assert_eq!(task_id_from_for_update.unwrap(), task_id);
+}
+
+#[parsec_test(testbed = "minimal")]
 async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
 
