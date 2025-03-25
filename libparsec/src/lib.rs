@@ -61,6 +61,10 @@ pub mod internal {
     };
 }
 
+// Used by the web bindings
+#[cfg(target_arch = "wasm32")]
+pub use libparsec_platform_async::WithTaskIDFuture;
+
 /// Libparsec initialization routine
 pub async fn init_libparsec(
     #[cfg_attr(target_arch = "wasm32", allow(unused_variables))] config: ClientConfig,

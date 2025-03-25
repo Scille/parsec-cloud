@@ -127,10 +127,13 @@ macro_rules! select3_biased {
 
 // Platform specific stuff
 
+#[cfg(target_arch = "wasm32")]
+pub use platform::WithTaskIDFuture;
 pub use platform::{
     pretend_future_is_send_on_web, pretend_stream_is_send_on_web, sleep, spawn, try_task_id,
     yield_now, AbortHandle, Instant, JoinHandle, TaskID,
 };
+
 pub use std::time::Duration; // Re-exposed to simplify use of `sleep`
 
 #[cfg(target_arch = "wasm32")]
