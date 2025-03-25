@@ -442,6 +442,87 @@ where
 }
 
 /*
+ * WithTaskIDFuture
+ */
+
+/// On native platform everything is simple:
+/// - Tokio runs the futures.
+/// - Either a futures runs as a task, in which case Tokio gave it a task ID...
+/// - ...or the futures runs from something like `tokio::block_on` (e.g. from
+///   `#[tokio::main]`), in which case this is not a task so it does not have
+///   a task ID.
+///
+/// However on web, we have to interface ourselves with the JS event loop:
+/// - There is no `tokio::block_on` equivalent, one less thing to worry about ;-)
+/// - Futures explicitly spawned from our code are run as tasks and have a task ID...
+/// - ...but futures running from JS code (i.e. from the bindings) have no concept
+///   of task even if they are very similar in practice (i.e. they are isolated
+///   piece of asynchronous work).
+///
+/// This is especially an issue since we rely on task ID to track errors such as
+/// invalid lockings.
+///
+/// Hence this special future wrapper that should be used by the bindings to give
+/// a task ID to the futures coming from the JS event loop.
+#[pin_project]
+pub struct WithTaskIDFuture<T>
+where
+    T: Future + 'static,
+    T::Output: 'static,
+{
+    task_id: TaskID,
+    #[pin]
+    future: T,
+}
+
+impl<T> From<T> for WithTaskIDFuture<T>
+where
+    T: Future + 'static,
+    T::Output: 'static,
+{
+    fn from(future: T) -> Self {
+        Self {
+            task_id: TaskID::next(),
+            future,
+        }
+    }
+}
+
+impl<T> Future for WithTaskIDFuture<T>
+where
+    T: Future + 'static,
+    T::Output: 'static,
+{
+    type Output = T::Output;
+
+    #[inline(always)]
+    fn poll(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context,
+    ) -> std::task::Poll<Self::Output> {
+        let this = self.project();
+
+        let previous_task_id = set_current_task_id(Some(*this.task_id));
+        // `previous_task_id` is expected to be `None` since it is only configured
+        // when polling the future of a task (i.e. what we do here !), and this is
+        // not supposed to lead to recursive calls.
+        assert!(previous_task_id.is_none());
+
+        let poll_outcome =
+            { std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| this.future.poll(cx))) };
+
+        set_current_task_id(None);
+
+        match poll_outcome {
+            Ok(res) => res,
+            Err(err) => {
+                std::panic::resume_unwind(err);
+            }
+        }
+    }
+}
+
+/*
  * Thread-local context (to implement coroutine local)
  */
 
