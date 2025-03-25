@@ -3767,14 +3767,8 @@ fn struct_workspace_history2_file_stat_js_to_rs(
     let size = {
         let js_val = Reflect::get(&obj, &"size".into())?;
         {
-            let v = js_val
-                .dyn_into::<Number>()
-                .map_err(|_| TypeError::new("Not a number"))?
-                .value_of();
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                return Err(JsValue::from(TypeError::new("Not an u64 number")));
-            }
-            let v = v as u64;
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
             v
         }
     };
@@ -13004,14 +12998,8 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
             let size = {
                 let js_val = Reflect::get(&obj, &"size".into())?;
                 {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
-                    }
-                    let v = v as u64;
+                    let v = u64::try_from(js_val)
+                        .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
                     v
                 }
             };
@@ -15330,7 +15318,7 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn archiveDevice(device_path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let device_path = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
@@ -15357,7 +15345,7 @@ pub fn archiveDevice(device_path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // bootstrap_organization
@@ -15372,7 +15360,7 @@ pub fn bootstrapOrganization(
     device_label: String,
     sequester_authority_verify_key: Option<Uint8Array>,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
 
@@ -15448,14 +15436,14 @@ pub fn bootstrapOrganization(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // build_parsec_organization_bootstrap_addr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn buildParsecOrganizationBootstrapAddr(addr: String, organization_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
@@ -15480,14 +15468,14 @@ pub fn buildParsecOrganizationBootstrapAddr(addr: String, organization_id: Strin
             }
             .as_ref()
         }))
-    })
+    }))
 }
 
 // cancel
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn cancel(canceller: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::cancel(canceller);
         Ok(match ret {
             Ok(value) => {
@@ -15508,14 +15496,14 @@ pub fn cancel(canceller: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_device_finalize_save_local_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerDeviceFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let save_strategy = save_strategy.into();
         let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
 
@@ -15536,14 +15524,14 @@ pub fn claimerDeviceFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_device_in_progress_1_do_deny_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerDeviceInProgress1DoDenyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::claimer_device_in_progress_1_do_deny_trust(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -15564,14 +15552,14 @@ pub fn claimerDeviceInProgress1DoDenyTrust(canceller: u32, handle: u32) -> Promi
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_device_in_progress_1_do_signify_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerDeviceInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::claimer_device_in_progress_1_do_signify_trust(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -15589,14 +15577,14 @@ pub fn claimerDeviceInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Pr
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_device_in_progress_2_do_wait_peer_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerDeviceInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret =
             libparsec::claimer_device_in_progress_2_do_wait_peer_trust(canceller, handle).await;
         Ok(match ret {
@@ -15615,7 +15603,7 @@ pub fn claimerDeviceInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> P
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_device_in_progress_3_do_claim
@@ -15626,7 +15614,7 @@ pub fn claimerDeviceInProgress3DoClaim(
     handle: u32,
     requested_device_label: String,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let requested_device_label = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
@@ -15655,14 +15643,14 @@ pub fn claimerDeviceInProgress3DoClaim(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_device_initial_do_wait_peer
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerDeviceInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::claimer_device_initial_do_wait_peer(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -15680,14 +15668,14 @@ pub fn claimerDeviceInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_greeter_abort_operation
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerGreeterAbortOperation(handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::claimer_greeter_abort_operation(handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -15708,14 +15696,14 @@ pub fn claimerGreeterAbortOperation(handle: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_retrieve_info
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerRetrieveInfo(config: Object, on_event_callback: Function, addr: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
 
@@ -15754,14 +15742,14 @@ pub fn claimerRetrieveInfo(config: Object, on_event_callback: Function, addr: St
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_shamir_recovery_add_share
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerShamirRecoveryAddShare(recipient_pick_handle: u32, share_handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::claimer_shamir_recovery_add_share(recipient_pick_handle, share_handle);
         Ok(match ret {
             Ok(value) => {
@@ -15780,14 +15768,14 @@ pub fn claimerShamirRecoveryAddShare(recipient_pick_handle: u32, share_handle: u
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_shamir_recovery_finalize_save_local_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerShamirRecoveryFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let save_strategy = save_strategy.into();
         let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
 
@@ -15810,14 +15798,14 @@ pub fn claimerShamirRecoveryFinalizeSaveLocalDevice(handle: u32, save_strategy: 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_shamir_recovery_in_progress_1_do_deny_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerShamirRecoveryInProgress1DoDenyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret =
             libparsec::claimer_shamir_recovery_in_progress_1_do_deny_trust(canceller, handle).await;
         Ok(match ret {
@@ -15839,14 +15827,14 @@ pub fn claimerShamirRecoveryInProgress1DoDenyTrust(canceller: u32, handle: u32) 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_shamir_recovery_in_progress_1_do_signify_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerShamirRecoveryInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret =
             libparsec::claimer_shamir_recovery_in_progress_1_do_signify_trust(canceller, handle)
                 .await;
@@ -15866,14 +15854,14 @@ pub fn claimerShamirRecoveryInProgress1DoSignifyTrust(canceller: u32, handle: u3
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_shamir_recovery_in_progress_2_do_wait_peer_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerShamirRecoveryInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret =
             libparsec::claimer_shamir_recovery_in_progress_2_do_wait_peer_trust(canceller, handle)
                 .await;
@@ -15893,14 +15881,14 @@ pub fn claimerShamirRecoveryInProgress2DoWaitPeerTrust(canceller: u32, handle: u
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_shamir_recovery_in_progress_3_do_claim
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerShamirRecoveryInProgress3DoClaim(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret =
             libparsec::claimer_shamir_recovery_in_progress_3_do_claim(canceller, handle).await;
         Ok(match ret {
@@ -15919,14 +15907,14 @@ pub fn claimerShamirRecoveryInProgress3DoClaim(canceller: u32, handle: u32) -> P
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_shamir_recovery_initial_do_wait_peer
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerShamirRecoveryInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::claimer_shamir_recovery_initial_do_wait_peer(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -15944,14 +15932,14 @@ pub fn claimerShamirRecoveryInitialDoWaitPeer(canceller: u32, handle: u32) -> Pr
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_shamir_recovery_pick_recipient
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerShamirRecoveryPickRecipient(handle: u32, recipient_user_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let recipient_user_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -15975,14 +15963,14 @@ pub fn claimerShamirRecoveryPickRecipient(handle: u32, recipient_user_id: String
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_shamir_recovery_recover_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerShamirRecoveryRecoverDevice(handle: u32, requested_device_label: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let requested_device_label = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
@@ -16007,14 +15995,14 @@ pub fn claimerShamirRecoveryRecoverDevice(handle: u32, requested_device_label: S
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_user_finalize_save_local_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerUserFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let save_strategy = save_strategy.into();
         let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
 
@@ -16035,14 +16023,14 @@ pub fn claimerUserFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) ->
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_user_in_progress_1_do_deny_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerUserInProgress1DoDenyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::claimer_user_in_progress_1_do_deny_trust(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -16063,14 +16051,14 @@ pub fn claimerUserInProgress1DoDenyTrust(canceller: u32, handle: u32) -> Promise
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_user_in_progress_1_do_signify_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerUserInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::claimer_user_in_progress_1_do_signify_trust(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -16088,14 +16076,14 @@ pub fn claimerUserInProgress1DoSignifyTrust(canceller: u32, handle: u32) -> Prom
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_user_in_progress_2_do_wait_peer_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerUserInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::claimer_user_in_progress_2_do_wait_peer_trust(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -16113,7 +16101,7 @@ pub fn claimerUserInProgress2DoWaitPeerTrust(canceller: u32, handle: u32) -> Pro
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_user_in_progress_3_do_claim
@@ -16125,7 +16113,7 @@ pub fn claimerUserInProgress3DoClaim(
     requested_device_label: String,
     requested_human_handle: Object,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let requested_device_label = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
@@ -16158,14 +16146,14 @@ pub fn claimerUserInProgress3DoClaim(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_user_initial_do_wait_peer
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::claimer_user_initial_do_wait_peer(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -16183,14 +16171,14 @@ pub fn claimerUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_user_list_initial_info
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerUserListInitialInfo(handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::claimer_user_list_initial_info(handle);
         Ok(match ret {
             Ok(value) => {
@@ -16216,14 +16204,14 @@ pub fn claimerUserListInitialInfo(handle: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // claimer_user_wait_all_peers
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn claimerUserWaitAllPeers(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::claimer_user_wait_all_peers(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -16241,14 +16229,14 @@ pub fn claimerUserWaitAllPeers(canceller: u32, handle: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_accept_tos
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientAcceptTos(client: u32, tos_updated_on: f64) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let tos_updated_on = {
             let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
@@ -16277,14 +16265,14 @@ pub fn clientAcceptTos(client: u32, tos_updated_on: f64) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_cancel_invitation
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientCancelInvitation(client: u32, token: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let token = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
                 libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -16311,7 +16299,7 @@ pub fn clientCancelInvitation(client: u32, token: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_change_authentication
@@ -16322,7 +16310,7 @@ pub fn clientChangeAuthentication(
     current_auth: Object,
     new_auth: Object,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let client_config = client_config.into();
         let client_config = struct_client_config_js_to_rs(client_config)?;
 
@@ -16353,14 +16341,14 @@ pub fn clientChangeAuthentication(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_create_workspace
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let name = {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
                 s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
@@ -16392,14 +16380,14 @@ pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_delete_shamir_recovery
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientDeleteShamirRecovery(client_handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::client_delete_shamir_recovery(client_handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -16420,14 +16408,14 @@ pub fn clientDeleteShamirRecovery(client_handle: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_export_recovery_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientExportRecoveryDevice(client_handle: u32, device_label: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let device_label = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
@@ -16460,14 +16448,14 @@ pub fn clientExportRecoveryDevice(client_handle: u32, device_label: String) -> P
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_get_self_shamir_recovery
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientGetSelfShamirRecovery(client_handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::client_get_self_shamir_recovery(client_handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -16485,14 +16473,14 @@ pub fn clientGetSelfShamirRecovery(client_handle: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_get_tos
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientGetTos(client: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::client_get_tos(client).await;
         Ok(match ret {
             Ok(value) => {
@@ -16510,14 +16498,14 @@ pub fn clientGetTos(client: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_get_user_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientGetUserDevice(client: u32, device: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let device = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
                 libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -16550,14 +16538,14 @@ pub fn clientGetUserDevice(client: u32, device: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_info
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientInfo(client: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::client_info(client).await;
         Ok(match ret {
             Ok(value) => {
@@ -16575,14 +16563,14 @@ pub fn clientInfo(client: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_list_frozen_users
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientListFrozenUsers(client_handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::client_list_frozen_users(client_handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -16620,14 +16608,14 @@ pub fn clientListFrozenUsers(client_handle: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_list_invitations
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientListInvitations(client: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::client_list_invitations(client).await;
         Ok(match ret {
             Ok(value) => {
@@ -16653,14 +16641,14 @@ pub fn clientListInvitations(client: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_list_shamir_recoveries_for_others
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientListShamirRecoveriesForOthers(client_handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::client_list_shamir_recoveries_for_others(client_handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -16686,14 +16674,14 @@ pub fn clientListShamirRecoveriesForOthers(client_handle: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_list_user_devices
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientListUserDevices(client: u32, user: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let user = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -16725,14 +16713,14 @@ pub fn clientListUserDevices(client: u32, user: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_list_users
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientListUsers(client: u32, skip_revoked: bool) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::client_list_users(client, skip_revoked).await;
         Ok(match ret {
             Ok(value) => {
@@ -16758,14 +16746,14 @@ pub fn clientListUsers(client: u32, skip_revoked: bool) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_list_workspace_users
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientListWorkspaceUsers(client: u32, realm_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let realm_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -16797,14 +16785,14 @@ pub fn clientListWorkspaceUsers(client: u32, realm_id: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_list_workspaces
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientListWorkspaces(client: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::client_list_workspaces(client).await;
         Ok(match ret {
             Ok(value) => {
@@ -16830,14 +16818,14 @@ pub fn clientListWorkspaces(client: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_new_device_invitation
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientNewDeviceInvitation(client: u32, send_email: bool) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::client_new_device_invitation(client, send_email).await;
         Ok(match ret {
             Ok(value) => {
@@ -16855,7 +16843,7 @@ pub fn clientNewDeviceInvitation(client: u32, send_email: bool) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_new_shamir_recovery_invitation
@@ -16866,7 +16854,7 @@ pub fn clientNewShamirRecoveryInvitation(
     claimer_user_id: String,
     send_email: bool,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let claimer_user_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -16893,14 +16881,14 @@ pub fn clientNewShamirRecoveryInvitation(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_new_user_invitation
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: bool) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::client_new_user_invitation(client, claimer_email, send_email).await;
         Ok(match ret {
             Ok(value) => {
@@ -16918,14 +16906,14 @@ pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: b
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_rename_workspace
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientRenameWorkspace(client: u32, realm_id: String, new_name: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let realm_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -16958,14 +16946,14 @@ pub fn clientRenameWorkspace(client: u32, realm_id: String, new_name: String) ->
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_revoke_user
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientRevokeUser(client: u32, user: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let user = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -16992,7 +16980,7 @@ pub fn clientRevokeUser(client: u32, user: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_setup_shamir_recovery
@@ -17003,7 +16991,7 @@ pub fn clientSetupShamirRecovery(
     per_recipient_shares: Object,
     threshold: u8,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let per_recipient_shares = {
             let js_map = per_recipient_shares;
             let mut d = std::collections::HashMap::with_capacity(
@@ -17112,7 +17100,7 @@ pub fn clientSetupShamirRecovery(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_share_workspace
@@ -17124,7 +17112,7 @@ pub fn clientShareWorkspace(
     recipient: String,
     role: Option<String>,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let realm_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -17166,14 +17154,14 @@ pub fn clientShareWorkspace(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_start
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientStart(config: Object, on_event_callback: Function, access: Object) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
 
@@ -17209,14 +17197,14 @@ pub fn clientStart(config: Object, on_event_callback: Function, access: Object) 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_start_device_invitation_greet
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientStartDeviceInvitationGreet(client: u32, token: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let token = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
                 libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -17240,14 +17228,14 @@ pub fn clientStartDeviceInvitationGreet(client: u32, token: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_start_shamir_recovery_invitation_greet
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientStartShamirRecoveryInvitationGreet(client: u32, token: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let token = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
                 libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -17272,14 +17260,14 @@ pub fn clientStartShamirRecoveryInvitationGreet(client: u32, token: String) -> P
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_start_user_invitation_greet
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientStartUserInvitationGreet(client: u32, token: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let token = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
                 libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -17303,14 +17291,14 @@ pub fn clientStartUserInvitationGreet(client: u32, token: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_start_workspace
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientStartWorkspace(client: u32, realm_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let realm_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -17334,14 +17322,14 @@ pub fn clientStartWorkspace(client: u32, realm_id: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_start_workspace_history2
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientStartWorkspaceHistory2(client: u32, realm_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let realm_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -17365,14 +17353,14 @@ pub fn clientStartWorkspaceHistory2(client: u32, realm_id: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_stop
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientStop(client: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::client_stop(client).await;
         Ok(match ret {
             Ok(value) => {
@@ -17393,14 +17381,14 @@ pub fn clientStop(client: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // client_update_user_profile
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn clientUpdateUserProfile(client_handle: u32, user: String, new_profile: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let user = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
                 libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -17429,14 +17417,14 @@ pub fn clientUpdateUserProfile(client_handle: u32, user: String, new_profile: St
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // get_default_config_dir
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn getDefaultConfigDir() -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::get_default_config_dir();
         Ok(JsValue::from_str({
             let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
@@ -17450,14 +17438,14 @@ pub fn getDefaultConfigDir() -> Promise {
             }
             .as_ref()
         }))
-    })
+    }))
 }
 
 // get_default_data_base_dir
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn getDefaultDataBaseDir() -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::get_default_data_base_dir();
         Ok(JsValue::from_str({
             let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
@@ -17471,14 +17459,14 @@ pub fn getDefaultDataBaseDir() -> Promise {
             }
             .as_ref()
         }))
-    })
+    }))
 }
 
 // get_default_mountpoint_base_dir
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn getDefaultMountpointBaseDir() -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::get_default_mountpoint_base_dir();
         Ok(JsValue::from_str({
             let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
@@ -17492,24 +17480,24 @@ pub fn getDefaultMountpointBaseDir() -> Promise {
             }
             .as_ref()
         }))
-    })
+    }))
 }
 
 // get_platform
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn getPlatform() -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::get_platform();
         Ok(JsValue::from_str(enum_platform_rs_to_js(ret)))
-    })
+    }))
 }
 
 // greeter_device_in_progress_1_do_wait_peer_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterDeviceInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret =
             libparsec::greeter_device_in_progress_1_do_wait_peer_trust(canceller, handle).await;
         Ok(match ret {
@@ -17528,14 +17516,14 @@ pub fn greeterDeviceInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> P
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_device_in_progress_2_do_deny_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterDeviceInProgress2DoDenyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::greeter_device_in_progress_2_do_deny_trust(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -17556,14 +17544,14 @@ pub fn greeterDeviceInProgress2DoDenyTrust(canceller: u32, handle: u32) -> Promi
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_device_in_progress_2_do_signify_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterDeviceInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::greeter_device_in_progress_2_do_signify_trust(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -17581,14 +17569,14 @@ pub fn greeterDeviceInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Pr
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_device_in_progress_3_do_get_claim_requests
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterDeviceInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret =
             libparsec::greeter_device_in_progress_3_do_get_claim_requests(canceller, handle).await;
         Ok(match ret {
@@ -17607,7 +17595,7 @@ pub fn greeterDeviceInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_device_in_progress_4_do_create
@@ -17618,7 +17606,7 @@ pub fn greeterDeviceInProgress4DoCreate(
     handle: u32,
     device_label: String,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let device_label = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
@@ -17647,14 +17635,14 @@ pub fn greeterDeviceInProgress4DoCreate(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_device_initial_do_wait_peer
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterDeviceInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::greeter_device_initial_do_wait_peer(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -17672,14 +17660,14 @@ pub fn greeterDeviceInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_shamir_recovery_in_progress_1_do_wait_peer_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterShamirRecoveryInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret =
             libparsec::greeter_shamir_recovery_in_progress_1_do_wait_peer_trust(canceller, handle)
                 .await;
@@ -17699,14 +17687,14 @@ pub fn greeterShamirRecoveryInProgress1DoWaitPeerTrust(canceller: u32, handle: u
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_shamir_recovery_in_progress_2_do_deny_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterShamirRecoveryInProgress2DoDenyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret =
             libparsec::greeter_shamir_recovery_in_progress_2_do_deny_trust(canceller, handle).await;
         Ok(match ret {
@@ -17728,14 +17716,14 @@ pub fn greeterShamirRecoveryInProgress2DoDenyTrust(canceller: u32, handle: u32) 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_shamir_recovery_in_progress_2_do_signify_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterShamirRecoveryInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret =
             libparsec::greeter_shamir_recovery_in_progress_2_do_signify_trust(canceller, handle)
                 .await;
@@ -17755,14 +17743,14 @@ pub fn greeterShamirRecoveryInProgress2DoSignifyTrust(canceller: u32, handle: u3
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_shamir_recovery_in_progress_3_do_get_claim_requests
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterShamirRecoveryInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::greeter_shamir_recovery_in_progress_3_do_get_claim_requests(
             canceller, handle,
         )
@@ -17786,14 +17774,14 @@ pub fn greeterShamirRecoveryInProgress3DoGetClaimRequests(canceller: u32, handle
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_shamir_recovery_initial_do_wait_peer
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterShamirRecoveryInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::greeter_shamir_recovery_initial_do_wait_peer(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -17811,14 +17799,14 @@ pub fn greeterShamirRecoveryInitialDoWaitPeer(canceller: u32, handle: u32) -> Pr
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_user_in_progress_1_do_wait_peer_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterUserInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::greeter_user_in_progress_1_do_wait_peer_trust(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -17836,14 +17824,14 @@ pub fn greeterUserInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> Pro
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_user_in_progress_2_do_deny_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterUserInProgress2DoDenyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::greeter_user_in_progress_2_do_deny_trust(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -17864,14 +17852,14 @@ pub fn greeterUserInProgress2DoDenyTrust(canceller: u32, handle: u32) -> Promise
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_user_in_progress_2_do_signify_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterUserInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::greeter_user_in_progress_2_do_signify_trust(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -17889,14 +17877,14 @@ pub fn greeterUserInProgress2DoSignifyTrust(canceller: u32, handle: u32) -> Prom
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_user_in_progress_3_do_get_claim_requests
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterUserInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret =
             libparsec::greeter_user_in_progress_3_do_get_claim_requests(canceller, handle).await;
         Ok(match ret {
@@ -17915,7 +17903,7 @@ pub fn greeterUserInProgress3DoGetClaimRequests(canceller: u32, handle: u32) -> 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_user_in_progress_4_do_create
@@ -17928,7 +17916,7 @@ pub fn greeterUserInProgress4DoCreate(
     device_label: String,
     profile: String,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let human_handle = human_handle.into();
         let human_handle = struct_human_handle_js_to_rs(human_handle)?;
 
@@ -17967,14 +17955,14 @@ pub fn greeterUserInProgress4DoCreate(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // greeter_user_initial_do_wait_peer
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn greeterUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::greeter_user_initial_do_wait_peer(canceller, handle).await;
         Ok(match ret {
             Ok(value) => {
@@ -17992,7 +17980,7 @@ pub fn greeterUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // import_recovery_device
@@ -18005,7 +17993,7 @@ pub fn importRecoveryDevice(
     device_label: String,
     save_strategy: Object,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
 
@@ -18044,37 +18032,37 @@ pub fn importRecoveryDevice(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // init_libparsec
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn initLibparsec(config: Object) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
 
         libparsec::init_libparsec(config).await;
         Ok(JsValue::NULL)
-    })
+    }))
 }
 
 // is_keyring_available
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn isKeyringAvailable() -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::is_keyring_available();
         Ok(ret.into())
-    })
+    }))
 }
 
 // list_available_devices
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn listAvailableDevices(path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
@@ -18091,14 +18079,14 @@ pub fn listAvailableDevices(path: String) -> Promise {
             }
             js_array.into()
         })
-    })
+    }))
 }
 
 // mountpoint_to_os_path
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn mountpointToOsPath(mountpoint: u32, parsec_path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let parsec_path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -18133,14 +18121,14 @@ pub fn mountpointToOsPath(mountpoint: u32, parsec_path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // mountpoint_unmount
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn mountpointUnmount(mountpoint: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::mountpoint_unmount(mountpoint).await;
         Ok(match ret {
             Ok(value) => {
@@ -18161,24 +18149,24 @@ pub fn mountpointUnmount(mountpoint: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // new_canceller
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn newCanceller() -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::new_canceller();
         Ok(JsValue::from(ret))
-    })
+    }))
 }
 
 // parse_parsec_addr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn parseParsecAddr(url: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::parse_parsec_addr(&url);
         Ok(match ret {
             Ok(value) => {
@@ -18196,14 +18184,14 @@ pub fn parseParsecAddr(url: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // path_filename
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn pathFilename(path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -18215,14 +18203,14 @@ pub fn pathFilename(path: String) -> Promise {
             Some(val) => JsValue::from_str(val.as_ref()),
             None => JsValue::NULL,
         })
-    })
+    }))
 }
 
 // path_join
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn pathJoin(parent: String, child: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let parent = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -18245,14 +18233,14 @@ pub fn pathJoin(parent: String, child: String) -> Promise {
             }
             .as_ref()
         }))
-    })
+    }))
 }
 
 // path_normalize
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn pathNormalize(path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -18269,14 +18257,14 @@ pub fn pathNormalize(path: String) -> Promise {
             }
             .as_ref()
         }))
-    })
+    }))
 }
 
 // path_parent
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn pathParent(path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -18293,14 +18281,14 @@ pub fn pathParent(path: String) -> Promise {
             }
             .as_ref()
         }))
-    })
+    }))
 }
 
 // path_split
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn pathSplit(path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -18317,14 +18305,14 @@ pub fn pathSplit(path: String) -> Promise {
             }
             js_array.into()
         })
-    })
+    }))
 }
 
 // test_drop_testbed
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn testDropTestbed(path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
@@ -18351,14 +18339,14 @@ pub fn testDropTestbed(path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // test_get_testbed_bootstrap_organization_addr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let discriminant_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
@@ -18391,14 +18379,14 @@ pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Prom
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // test_get_testbed_organization_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let discriminant_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
@@ -18424,14 +18412,14 @@ pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // test_new_testbed
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let test_server = match test_server {
             Some(test_server) => {
                 let test_server = {
@@ -18474,84 +18462,84 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // validate_device_label
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validateDeviceLabel(raw: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::validate_device_label(&raw);
         Ok(ret.into())
-    })
+    }))
 }
 
 // validate_email
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validateEmail(raw: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::validate_email(&raw);
         Ok(ret.into())
-    })
+    }))
 }
 
 // validate_entry_name
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validateEntryName(raw: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::validate_entry_name(&raw);
         Ok(ret.into())
-    })
+    }))
 }
 
 // validate_human_handle_label
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validateHumanHandleLabel(raw: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::validate_human_handle_label(&raw);
         Ok(ret.into())
-    })
+    }))
 }
 
 // validate_invitation_token
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validateInvitationToken(raw: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::validate_invitation_token(&raw);
         Ok(ret.into())
-    })
+    }))
 }
 
 // validate_organization_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validateOrganizationId(raw: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::validate_organization_id(&raw);
         Ok(ret.into())
-    })
+    }))
 }
 
 // validate_path
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn validatePath(raw: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::validate_path(&raw);
         Ok(ret.into())
-    })
+    }))
 }
 
 // wait_for_device_available
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn waitForDeviceAvailable(config_dir: String, device_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config_dir = {
             let custom_from_rs_string =
                 |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
@@ -18584,14 +18572,14 @@ pub fn waitForDeviceAvailable(config_dir: String, device_id: String) -> Promise 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_create_file
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceCreateFile(workspace: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -18623,14 +18611,14 @@ pub fn workspaceCreateFile(workspace: u32, path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_create_folder
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceCreateFolder(workspace: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -18662,14 +18650,14 @@ pub fn workspaceCreateFolder(workspace: u32, path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_create_folder_all
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -18701,14 +18689,14 @@ pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_decrypt_path_addr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceDecryptPathAddr(workspace: u32, link: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let link = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecWorkspacePathAddr::from_any(&s).map_err(|e| e.to_string())
@@ -18742,14 +18730,14 @@ pub fn workspaceDecryptPathAddr(workspace: u32, link: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_fd_close
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceFdClose(workspace: u32, fd: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -18776,14 +18764,14 @@ pub fn workspaceFdClose(workspace: u32, fd: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_fd_flush
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceFdFlush(workspace: u32, fd: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -18810,14 +18798,14 @@ pub fn workspaceFdFlush(workspace: u32, fd: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_fd_read
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceFdRead(workspace: u32, fd: u32, offset: u64, size: u64) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -18841,14 +18829,14 @@ pub fn workspaceFdRead(workspace: u32, fd: u32, offset: u64, size: u64) -> Promi
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_fd_resize
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceFdResize(workspace: u32, fd: u32, length: u64, truncate_only: bool) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -18875,14 +18863,14 @@ pub fn workspaceFdResize(workspace: u32, fd: u32, length: u64, truncate_only: bo
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_fd_stat
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceFdStat(workspace: u32, fd: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -18906,14 +18894,14 @@ pub fn workspaceFdStat(workspace: u32, fd: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_fd_write
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceFdWrite(workspace: u32, fd: u32, offset: u64, data: Uint8Array) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -18939,7 +18927,7 @@ pub fn workspaceFdWrite(workspace: u32, fd: u32, offset: u64, data: Uint8Array) 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_fd_write_constrained_io
@@ -18951,7 +18939,7 @@ pub fn workspaceFdWriteConstrainedIo(
     offset: u64,
     data: Uint8Array,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -18979,14 +18967,14 @@ pub fn workspaceFdWriteConstrainedIo(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_fd_write_start_eof
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceFdWriteStartEof(workspace: u32, fd: u32, data: Uint8Array) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -19012,14 +19000,14 @@ pub fn workspaceFdWriteStartEof(workspace: u32, fd: u32, data: Uint8Array) -> Pr
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_generate_path_addr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -19054,14 +19042,14 @@ pub fn workspaceGeneratePathAddr(workspace: u32, path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_fd_close
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2FdClose(workspace_history: u32, fd: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -19087,14 +19075,14 @@ pub fn workspaceHistory2FdClose(workspace_history: u32, fd: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_fd_read
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2FdRead(workspace_history: u32, fd: u32, offset: u64, size: u64) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -19118,14 +19106,14 @@ pub fn workspaceHistory2FdRead(workspace_history: u32, fd: u32, offset: u64, siz
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_fd_stat
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2FdStat(workspace_history: u32, fd: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -19149,14 +19137,14 @@ pub fn workspaceHistory2FdStat(workspace_history: u32, fd: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_get_timestamp_higher_bound
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2GetTimestampHigherBound(workspace_history: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::workspace_history2_get_timestamp_higher_bound(workspace_history);
         Ok(match ret {
             Ok(value) => {
@@ -19183,14 +19171,14 @@ pub fn workspaceHistory2GetTimestampHigherBound(workspace_history: u32) -> Promi
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_get_timestamp_lower_bound
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2GetTimestampLowerBound(workspace_history: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::workspace_history2_get_timestamp_lower_bound(workspace_history);
         Ok(match ret {
             Ok(value) => {
@@ -19217,14 +19205,14 @@ pub fn workspaceHistory2GetTimestampLowerBound(workspace_history: u32) -> Promis
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_get_timestamp_of_interest
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2GetTimestampOfInterest(workspace_history: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::workspace_history2_get_timestamp_of_interest(workspace_history);
         Ok(match ret {
             Ok(value) => {
@@ -19251,14 +19239,14 @@ pub fn workspaceHistory2GetTimestampOfInterest(workspace_history: u32) -> Promis
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_open_file
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2OpenFile(workspace_history: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -19290,14 +19278,14 @@ pub fn workspaceHistory2OpenFile(workspace_history: u32, path: String) -> Promis
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_open_file_and_get_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2OpenFileAndGetId(workspace_history: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -19346,14 +19334,14 @@ pub fn workspaceHistory2OpenFileAndGetId(workspace_history: u32, path: String) -
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_open_file_by_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2OpenFileById(workspace_history: u32, entry_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let entry_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -19385,14 +19373,14 @@ pub fn workspaceHistory2OpenFileById(workspace_history: u32, entry_id: String) -
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_set_timestamp_of_interest
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2SetTimestampOfInterest(workspace_history: u32, toi: f64) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let toi = {
             let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
@@ -19423,7 +19411,7 @@ pub fn workspaceHistory2SetTimestampOfInterest(workspace_history: u32, toi: f64)
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_start_with_realm_export
@@ -19434,7 +19422,7 @@ pub fn workspaceHistory2StartWithRealmExport(
     export_db_path: String,
     decryptors: Vec<Object>,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
 
@@ -19473,14 +19461,14 @@ pub fn workspaceHistory2StartWithRealmExport(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_stat_entry
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2StatEntry(workspace_history: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -19505,14 +19493,14 @@ pub fn workspaceHistory2StatEntry(workspace_history: u32, path: String) -> Promi
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_stat_entry_by_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2StatEntryById(workspace_history: u32, entry_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let entry_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -19536,14 +19524,14 @@ pub fn workspaceHistory2StatEntryById(workspace_history: u32, entry_id: String) 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_stat_folder_children
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2StatFolderChildren(workspace_history: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -19586,7 +19574,7 @@ pub fn workspaceHistory2StatFolderChildren(workspace_history: u32, path: String)
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_stat_folder_children_by_id
@@ -19596,7 +19584,7 @@ pub fn workspaceHistory2StatFolderChildrenById(
     workspace_history: u32,
     entry_id: String,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let entry_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -19639,14 +19627,14 @@ pub fn workspaceHistory2StatFolderChildrenById(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history2_stop
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistory2Stop(workspace_history: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::workspace_history2_stop(workspace_history);
         Ok(match ret {
             Ok(value) => {
@@ -19667,14 +19655,14 @@ pub fn workspaceHistory2Stop(workspace_history: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history_fd_close
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistoryFdClose(workspace: u32, fd: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -19700,14 +19688,14 @@ pub fn workspaceHistoryFdClose(workspace: u32, fd: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history_fd_read
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistoryFdRead(workspace: u32, fd: u32, offset: u64, size: u64) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -19731,14 +19719,14 @@ pub fn workspaceHistoryFdRead(workspace: u32, fd: u32, offset: u64, size: u64) -
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history_fd_stat
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistoryFdStat(workspace: u32, fd: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let fd = {
             let custom_from_rs_u32 =
                 |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
@@ -19762,14 +19750,14 @@ pub fn workspaceHistoryFdStat(workspace: u32, fd: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history_get_workspace_manifest_v1_timestamp
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistoryGetWorkspaceManifestV1Timestamp(workspace: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::workspace_history_get_workspace_manifest_v1_timestamp(workspace).await;
         Ok(match ret {
             Ok(value) => {
@@ -19803,14 +19791,14 @@ pub fn workspaceHistoryGetWorkspaceManifestV1Timestamp(workspace: u32) -> Promis
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history_open_file
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistoryOpenFile(workspace: u32, at: f64, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let at = {
             let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
@@ -19850,14 +19838,14 @@ pub fn workspaceHistoryOpenFile(workspace: u32, at: f64, path: String) -> Promis
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history_open_file_by_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistoryOpenFileById(workspace: u32, at: f64, entry_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let at = {
             let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
@@ -19897,14 +19885,14 @@ pub fn workspaceHistoryOpenFileById(workspace: u32, at: f64, entry_id: String) -
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history_stat_entry
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistoryStatEntry(workspace: u32, at: f64, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let at = {
             let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
@@ -19937,14 +19925,14 @@ pub fn workspaceHistoryStatEntry(workspace: u32, at: f64, path: String) -> Promi
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history_stat_entry_by_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistoryStatEntryById(workspace: u32, at: f64, entry_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let at = {
             let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
@@ -19976,14 +19964,14 @@ pub fn workspaceHistoryStatEntryById(workspace: u32, at: f64, entry_id: String) 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history_stat_folder_children
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceHistoryStatFolderChildren(workspace: u32, at: f64, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let at = {
             let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
@@ -20033,7 +20021,7 @@ pub fn workspaceHistoryStatFolderChildren(workspace: u32, at: f64, path: String)
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_history_stat_folder_children_by_id
@@ -20044,7 +20032,7 @@ pub fn workspaceHistoryStatFolderChildrenById(
     at: f64,
     entry_id: String,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let at = {
             let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
                 libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
@@ -20094,14 +20082,14 @@ pub fn workspaceHistoryStatFolderChildrenById(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_info
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceInfo(workspace: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::workspace_info(workspace).await;
         Ok(match ret {
             Ok(value) => {
@@ -20119,14 +20107,14 @@ pub fn workspaceInfo(workspace: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_mount
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceMount(workspace: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::workspace_mount(workspace).await;
         Ok(match ret {
             Ok(value) => {
@@ -20164,14 +20152,14 @@ pub fn workspaceMount(workspace: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_move_entry
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceMoveEntry(workspace: u32, src: String, dst: String, mode: Object) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let src = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -20207,14 +20195,14 @@ pub fn workspaceMoveEntry(workspace: u32, src: String, dst: String, mode: Object
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_open_file
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceOpenFile(workspace: u32, path: String, mode: Object) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -20249,14 +20237,14 @@ pub fn workspaceOpenFile(workspace: u32, path: String, mode: Object) -> Promise 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_open_file_and_get_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -20308,14 +20296,14 @@ pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_open_file_by_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceOpenFileById(workspace: u32, entry_id: String, mode: Object) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let entry_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -20350,14 +20338,14 @@ pub fn workspaceOpenFileById(workspace: u32, entry_id: String, mode: Object) -> 
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_remove_entry
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceRemoveEntry(workspace: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -20384,14 +20372,14 @@ pub fn workspaceRemoveEntry(workspace: u32, path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_remove_file
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceRemoveFile(workspace: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -20418,14 +20406,14 @@ pub fn workspaceRemoveFile(workspace: u32, path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_remove_folder
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceRemoveFolder(workspace: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -20452,14 +20440,14 @@ pub fn workspaceRemoveFolder(workspace: u32, path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_remove_folder_all
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceRemoveFolderAll(workspace: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -20486,7 +20474,7 @@ pub fn workspaceRemoveFolderAll(workspace: u32, path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_rename_entry_by_id
@@ -20499,7 +20487,7 @@ pub fn workspaceRenameEntryById(
     dst_name: String,
     mode: Object,
 ) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let src_parent_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -20548,14 +20536,14 @@ pub fn workspaceRenameEntryById(
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_stat_entry
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceStatEntry(workspace: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -20580,14 +20568,14 @@ pub fn workspaceStatEntry(workspace: u32, path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_stat_entry_by_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceStatEntryById(workspace: u32, entry_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let entry_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -20611,14 +20599,14 @@ pub fn workspaceStatEntryById(workspace: u32, entry_id: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_stat_entry_by_id_ignore_confinement_point
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceStatEntryByIdIgnoreConfinementPoint(workspace: u32, entry_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let entry_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -20644,14 +20632,14 @@ pub fn workspaceStatEntryByIdIgnoreConfinementPoint(workspace: u32, entry_id: St
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_stat_folder_children
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceStatFolderChildren(workspace: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -20693,14 +20681,14 @@ pub fn workspaceStatFolderChildren(workspace: u32, path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_stat_folder_children_by_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceStatFolderChildrenById(workspace: u32, entry_id: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let entry_id = {
             let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
                 libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
@@ -20741,14 +20729,14 @@ pub fn workspaceStatFolderChildrenById(workspace: u32, entry_id: String) -> Prom
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_stop
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceStop(workspace: u32) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::workspace_stop(workspace).await;
         Ok(match ret {
             Ok(value) => {
@@ -20769,14 +20757,14 @@ pub fn workspaceStop(workspace: u32) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
 
 // workspace_watch_entry_oneshot
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn workspaceWatchEntryOneshot(workspace: u32, path: String) -> Promise {
-    future_to_promise(async move {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let path = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
@@ -20808,5 +20796,5 @@ pub fn workspaceWatchEntryOneshot(workspace: u32, path: String) -> Promise {
                 js_obj
             }
         })
-    })
+    }))
 }
