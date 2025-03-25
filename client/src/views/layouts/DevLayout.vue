@@ -40,7 +40,7 @@ onMounted(async () => {
     return;
   }
 
-  if (!import.meta.env.PARSEC_APP_TESTBED_SERVER || (await getLoggedInDevices()).length !== 0) {
+  if (!import.meta.env.PARSEC_APP_TESTBED_SERVER || (await getLoggedInDevices()).length !== 0 || import.meta.env.PARSEC_APP_TESTBED_AUTO_LOGIN !== 'true') {
     initialized.value = true;
     return;
   }
