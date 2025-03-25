@@ -3522,13 +3522,11 @@ fn struct_workspace_history2_file_stat_js_to_rs<'a>(
         }
     };
     let size = {
-        let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
+        let js_val: Handle<JsBigInt> = obj.get(cx, "size")?;
         {
-            let v = js_val.value(cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
@@ -3579,7 +3577,7 @@ fn struct_workspace_history2_file_stat_rs_to_js<'a>(
     js_obj.set(cx, "updated", js_updated)?;
     let js_version = JsNumber::new(cx, rs_obj.version as f64);
     js_obj.set(cx, "version", js_version)?;
-    let js_size = JsNumber::new(cx, rs_obj.size as f64);
+    let js_size = JsBigInt::from_u64(cx, rs_obj.size);
     js_obj.set(cx, "size", js_size)?;
     Ok(js_obj)
 }
@@ -11740,13 +11738,11 @@ fn variant_workspace_history2_entry_stat_js_to_rs<'a>(
                 }
             };
             let size = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
+                let js_val: Handle<JsBigInt> = obj.get(cx, "size")?;
                 {
-                    let v = js_val.value(cx);
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        cx.throw_type_error("Not an u64 number")?
-                    }
-                    let v = v as u64;
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
                     v
                 }
             };
@@ -11895,7 +11891,7 @@ fn variant_workspace_history2_entry_stat_rs_to_js<'a>(
             js_obj.set(cx, "updated", js_updated)?;
             let js_version = JsNumber::new(cx, version as f64);
             js_obj.set(cx, "version", js_version)?;
-            let js_size = JsNumber::new(cx, size as f64);
+            let js_size = JsBigInt::from_u64(cx, size);
             js_obj.set(cx, "size", js_size)?;
         }
         libparsec::WorkspaceHistory2EntryStat::Folder {
@@ -20923,24 +20919,20 @@ fn workspace_history2_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let offset = {
-        let js_val = cx.argument::<JsNumber>(2)?;
+        let js_val = cx.argument::<JsBigInt>(2)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
     let size = {
-        let js_val = cx.argument::<JsNumber>(3)?;
+        let js_val = cx.argument::<JsBigInt>(3)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
