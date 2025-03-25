@@ -1,9 +1,59 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { EntryModel } from '@/components/files';
+import { SmallDisplayCategoryFileContextMenu, SmallDisplayFileContextMenu } from '@/components/small-display';
 import { WorkspaceRole } from '@/parsec';
-import { FileAction, FileContextMenu, SmallDisplayFileContextMenu } from '@/views/files';
+import { FileAction, FileContextMenu, FolderGlobalAction, FolderGlobalContextMenu } from '@/views/files';
 import { modalController, popoverController } from '@ionic/vue';
+
+export async function openGlobalContextMenu(
+  event: Event,
+  ownRole: WorkspaceRole,
+  isLargeDisplay: boolean,
+  isFolderEmpty: boolean,
+): Promise<{ action: FolderGlobalAction } | undefined> {
+  let data: { action: FolderGlobalAction } | undefined;
+
+  if (isLargeDisplay) {
+    if (ownRole === WorkspaceRole.Reader) {
+      return;
+    }
+
+    const popover = await popoverController.create({
+      component: FolderGlobalContextMenu,
+      cssClass: 'folder-global-context-menu',
+      event: event,
+      reference: event.type === 'contextmenu' ? 'event' : 'trigger',
+      translucent: true,
+      showBackdrop: false,
+      dismissOnSelect: true,
+      alignment: 'start',
+      componentProps: {
+        role: ownRole,
+      },
+    });
+    await popover.present();
+    data = (await popover.onDidDismiss()).data;
+    await popover.dismiss();
+  } else {
+    const modal = await modalController.create({
+      component: SmallDisplayCategoryFileContextMenu,
+      cssClass: 'file-context-sheet-modal',
+      canDismiss: true,
+      breakpoints: [0, 0.25, 1],
+      initialBreakpoint: 0.25,
+      showBackdrop: true,
+      componentProps: {
+        disableSelect: isFolderEmpty,
+      },
+    });
+
+    await modal.present();
+    data = (await modal.onWillDismiss()).data;
+    await modal.dismiss();
+  }
+  return data;
+}
 
 export async function openEntryContextMenu(
   event: Event,
@@ -33,6 +83,7 @@ export async function openEntryContextMenu(
 
     await popover.present();
     data = (await popover.onDidDismiss()).data;
+    await popover.dismiss();
   } else {
     const modal = await modalController.create({
       component: SmallDisplayFileContextMenu,
@@ -51,6 +102,7 @@ export async function openEntryContextMenu(
 
     await modal.present();
     data = (await modal.onDidDismiss()).data;
+    await modal.dismiss();
   }
 
   return data;

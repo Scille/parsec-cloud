@@ -24,6 +24,7 @@
         <ms-checkbox
           v-model="entry.isSelected"
           v-show="entry.isSelected || isHovered || showCheckbox"
+          @ion-change="$emit('select')"
           @click.stop
           @dblclick.stop
         />
@@ -97,6 +98,7 @@ const emits = defineEmits<{
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
   (e: 'dropAsReader'): void;
+  (e: 'select'): void;
 }>();
 
 defineExpose({

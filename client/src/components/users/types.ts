@@ -140,8 +140,12 @@ export class UserCollection {
     return this.users.filter((user) => user.isSelected && this.userIsVisible(user));
   }
 
+  isSelectable(user: UserModel): boolean {
+    return this.userIsVisible(user) && !user.isRevoked() && !user.isCurrent;
+  }
+
   selectableUsersCount(): number {
-    return this.users.filter((user) => this.userIsVisible(user) && !user.isRevoked() && !user.isCurrent).length;
+    return this.users.filter((user) => this.isSelectable(user)).length;
   }
 
   selectedCount(): number {

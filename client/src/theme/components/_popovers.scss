@@ -43,7 +43,7 @@
 .workspace-context-sheet-modal,
 .file-context-sheet-modal,
 .user-context-sheet-modal {
-  --width: var(--popover-option-width);
+  --width: 30rem;
   --height: 90%;
   --backdrop-opacity: 0.15;
 
@@ -52,8 +52,7 @@
   }
 
   &::part(handle) {
-    margin: 0.5rem auto;
-    background: var(--parsec-color-light-secondary-light);
+    margin: 0.75rem auto;
   }
 }
 
@@ -126,11 +125,6 @@
 
     &__label {
       margin: 0;
-
-      &-small {
-        font-size: small;
-        font-weight: 500;
-      }
     }
 
     &:hover {
@@ -150,8 +144,35 @@
     }
   }
 
+  .menu-list-small {
+    .list-group {
+      padding-inline: 0.75rem;
+    }
+
+    .list-group-item {
+      --padding-start: 0.75rem;
+      --padding-end: 0.75rem;
+      --padding-top: 0.5rem;
+      --padding-bottom: 0.5rem;
+
+      ion-icon {
+        font-size: 1.25rem;
+        margin-right: 0.5em;
+      }
+    }
+  }
+
   ion-label {
     margin: 0;
+  }
+}
+
+// specific margin-top for handle
+#workspace-context-sheet-modal,
+#file-context-sheet-modal,
+#user-context-sheet-modal {
+  .menu-list-small {
+    margin-top: 1.5rem;
   }
 }
 

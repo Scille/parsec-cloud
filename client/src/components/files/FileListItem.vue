@@ -176,9 +176,7 @@ async function onOptionsClick(event: PointerEvent): Promise<void> {
   event.stopPropagation();
 
   menuOpened.value = true;
-  emits('menuClick', event, props.entry, () => {
-    menuOpened.value = false;
-  });
+  emits('menuClick', event, props.entry, () => (menuOpened.value = false));
 }
 </script>
 

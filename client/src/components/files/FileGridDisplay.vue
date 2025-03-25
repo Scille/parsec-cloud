@@ -21,12 +21,13 @@
           v-for="folder in folders.getEntries()"
           :key="folder.id"
           :entry="folder"
-          :show-checkbox="hasSelected()"
+          :show-checkbox="hasSelected() || selectionEnabled === true"
           @click="$emit('click', folder, $event)"
-          @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
+          @menu-click="onMenuClick"
           @files-added="onFilesAdded"
           :is-workspace-reader="ownRole === WorkspaceRole.Reader"
           @drop-as-reader="$emit('dropAsReader')"
+          @select="$emit('checkboxClick')"
         />
         <file-card
           class="folder-grid-item"
@@ -34,11 +35,12 @@
           v-for="file in files.getEntries()"
           :key="file.id"
           :entry="file"
-          :show-checkbox="hasSelected()"
+          :show-checkbox="hasSelected() || selectionEnabled === true"
           @click="$emit('click', file, $event)"
-          @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
+          @menu-click="onMenuClick"
           @files-added="onFilesAdded"
           @drop-as-reader="$emit('dropAsReader')"
+          @select="$emit('checkboxClick')"
         />
 
         <file-card-processing
@@ -67,6 +69,7 @@ const props = defineProps<{
   folders: EntryCollection<FolderModel>;
   currentPath: FsPath;
   ownRole: WorkspaceRole;
+  selectionEnabled?: boolean;
 }>();
 
 const fileDropZoneRef = ref();
@@ -78,6 +81,7 @@ const emits = defineEmits<{
   (e: 'click', entry: EntryModel, event: Event): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'globalMenuClick', event: Event): void;
+  (e: 'checkboxClick'): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
   (e: 'dropAsReader'): void;
 }>();
@@ -86,6 +90,11 @@ async function onContextMenu(event: Event): Promise<void> {
   event.preventDefault();
   emits('globalMenuClick', event);
 }
+
+async function onMenuClick(event: Event, entry: EntryModel, onFinished: () => void): Promise<void> {
+  emits('menuClick', event, entry, onFinished);
+}
+
 defineExpose({
   scrollToSelected,
 });

@@ -5,6 +5,10 @@ enum FolderGlobalAction {
   ImportFiles,
   ImportFolder,
   OpenInExplorer,
+  CopyLink,
+  ToggleSelect,
+  SelectAll,
+  Share,
 }
 
 enum FileAction {

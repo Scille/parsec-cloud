@@ -134,6 +134,7 @@ Delorean
 deptry
 derandomize
 derivated
+Déselect
 DESYNC
 detailmenu
 devhelp

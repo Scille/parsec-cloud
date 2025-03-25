@@ -487,6 +487,11 @@
         "itemSelectedCount": "No selected items | 1 selected item | {count} selected items",
         "emptyFolder": "This folder is empty.",
         "loading": "Loading the folder...",
+        "actions": {
+            "select": "Select all",
+            "unselect": "Unselect",
+            "cancel": "Cancel"
+        },
         "listDisplayTitles": {
             "name": "Name",
             "updatedBy": "Updated By",
@@ -518,7 +523,11 @@
             "actionDetails": "Details",
             "actionCopyLink": "Copy link",
             "actionDelete": "Delete",
-            "actionSeeInExplorer": "See in explorer"
+            "actionSeeInExplorer": "See in explorer",
+            "actionSelect": "Selection",
+            "actionSelectAll": "Select all",
+            "actionUnselectAll": "Unselect all",
+            "actionShare": "Share"
         },
         "importModal": {
             "title": "Upload your files",
@@ -1061,7 +1070,10 @@
             "actionAssignRoles": "Copy workspace roles to...",
             "subtitleAssignRoles": "You can copy {sourceUser} roles to another person. Workspace roles will not be removed.",
             "titleUpdateProfile": "Profile",
-            "actionUpdateProfile": "Change profile | Change profiles"
+            "actionUpdateProfile": "Change profile | Change profiles",
+            "actionSelect": "Selection",
+            "actionSelectAll": "Select all",
+            "actionUnselectAll": "Unselect all"
         },
         "greet": {
             "titles": {

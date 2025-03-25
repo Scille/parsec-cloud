@@ -97,7 +97,13 @@
             ? { key: 'UsersPage.userSelectedCount', data: { count: users.selectedCount() }, count: users.selectedCount() }
             : 'HeaderPage.titles.users'
         "
-        @open-contextual-modal="console.log('open-contextual-modal')"
+        @open-contextual-modal="openGlobalUserContextMenu"
+        @select="selectAllUsers"
+        @unselect="unselectAllUsers"
+        @cancel-selection="onSelectionCancel"
+        :selection-enabled="selectionEnabled"
+        :some-selected="users.hasSelected()"
+        :options-disabled="users.selectableUsersCount() === 0"
       />
       <div
         class="mobile-filters"
@@ -145,6 +151,8 @@
             <user-list-display
               :users="(users as UserCollection)"
               @menu-click="openUserContextMenu"
+              @checkbox-click="selectionEnabled = true"
+              :selection-enabled="selectionEnabled"
             />
           </div>
           <div
@@ -155,6 +163,8 @@
             <user-grid-display
               :users="(users as UserCollection)"
               @menu-click="openUserContextMenu"
+              @checkbox-click="selectionEnabled = true"
+              :selection-enabled="selectionEnabled"
             />
           </div>
         </div>
@@ -205,17 +215,17 @@ import { Routes, getCurrentRouteQuery, watchRoute, currentRouteIsUserRoute, navi
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
-import SmallDisplayUserContextMenu from '@/views/users/SmallDisplayUserContextMenu.vue';
+import { UserAction } from '@/views/users/UserContextMenu.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
-import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
+import { IonContent, IonPage, IonText, modalController } from '@ionic/vue';
 import { informationCircle, personAdd, personRemove, repeat } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref, toRaw } from 'vue';
 import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
+import { openUserContextMenu as _openUserContextMenu, openGlobalUserContextMenu as _openGlobalUserContextMenu } from '@/views/users/utils';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -224,6 +234,7 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const selectionEnabled = ref<boolean>(false);
 
 let hotkeys: HotkeyGroup | null = null;
 const users = ref(new UserCollection());
@@ -332,6 +343,7 @@ async function revokeUser(user: UserInfo): Promise<void> {
       PresentationMode.Toast,
     );
   }
+  await onSelectionCancel();
   await refreshUserList();
 }
 
@@ -395,6 +407,7 @@ async function revokeSelectedUsers(): Promise<void> {
       PresentationMode.Toast,
     );
   }
+  await onSelectionCancel();
   await refreshUserList();
 }
 
@@ -424,50 +437,22 @@ function isCurrentUser(userId: UserID): boolean {
   return clientInfo.value !== null && clientInfo.value.userId === userId;
 }
 
-async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: () => void): Promise<void> {
-  let data: { action: UserAction } | undefined;
-
-  if (isLargeDisplay.value) {
-    const popover = await popoverController.create({
-      component: UserContextMenu,
-      cssClass: 'user-context-menu',
-      event: event,
-      translucent: true,
-      reference: event.type === 'contextmenu' ? 'event' : 'trigger',
-      showBackdrop: false,
-      dismissOnSelect: true,
-      alignment: 'start',
-      componentProps: {
-        user: user,
-        clientIsAdmin: isAdmin.value,
-      },
-    });
-
-    await popover.present();
-    data = (await popover.onDidDismiss()).data;
-  } else {
-    const modal = await modalController.create({
-      component: SmallDisplayUserContextMenu,
-      cssClass: 'user-context-sheet-modal',
-      showBackdrop: true,
-      breakpoints: [0, 0.5, 1],
-      // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
-      // expandToScroll: false, should be added to scroll with Ionic 8
-      initialBreakpoint: 0.5,
-      componentProps: {
-        user: user,
-        clientIsAdmin: isAdmin.value,
-      },
-    });
-
-    await modal.present();
-    data = (await modal.onDidDismiss()).data;
+async function openUserContextMenu(event: Event, user: UserModel, onFinished?: () => void): Promise<void> {
+  let selectedUsers = users.value.getSelectedUsers();
+  if (selectedUsers.length === 0 || !selectedUsers.includes(user)) {
+    selectedUsers = [user];
   }
-  const actions = new Map<UserAction, (user: UserInfo) => Promise<void>>([
+  const data = await _openUserContextMenu(event, selectedUsers, isAdmin.value, isLargeDisplay.value);
+
+  const actions = new Map<UserAction, (user: UserModel) => Promise<void>>([
     [UserAction.Revoke, revokeUser],
     [UserAction.Details, openUserDetails],
     [UserAction.AssignRoles, assignWorkspaceRoles],
     [UserAction.UpdateProfile, updateUserProfile],
+  ]);
+  const actionsMultiple = new Map<UserAction, () => Promise<void>>([
+    [UserAction.Revoke, revokeSelectedUsers],
+    [UserAction.UpdateProfile, updateSelectedUserProfiles],
   ]);
 
   if (!data) {
@@ -477,13 +462,57 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
     return;
   }
 
-  const fn = actions.get(data.action);
-  if (fn) {
-    await fn(user);
+  if (selectedUsers.length === 1) {
+    const fn = actions.get(data.action);
+    if (fn) {
+      await fn(selectedUsers[0]);
+    }
+  } else {
+    const fn = actionsMultiple.get(data.action);
+    if (fn) {
+      await fn();
+    }
   }
+
   if (onFinished) {
     onFinished();
   }
+}
+
+async function openGlobalUserContextMenu(): Promise<void> {
+  const data = await _openGlobalUserContextMenu();
+
+  const actions = new Map<UserAction, () => Promise<void>>([
+    [UserAction.ToggleSelect, toggleSelection],
+    [UserAction.SelectAll, selectAllUsers],
+  ]);
+
+  if (!data) {
+    return;
+  }
+
+  const fn = actions.get(data.action);
+  if (fn) {
+    await fn();
+  }
+}
+
+async function toggleSelection(): Promise<void> {
+  selectionEnabled.value = !selectionEnabled.value;
+}
+
+async function selectAllUsers(): Promise<void> {
+  selectionEnabled.value = true;
+  users.value.selectAll(true);
+}
+
+async function unselectAllUsers(): Promise<void> {
+  users.value.selectAll(false);
+}
+
+async function onSelectionCancel(): Promise<void> {
+  await unselectAllUsers();
+  selectionEnabled.value = false;
 }
 
 async function updateSelectedUserProfiles(): Promise<void> {
@@ -545,6 +574,7 @@ async function updateUserProfiles(selectedUsers: Array<UserInfo>): Promise<void>
     PresentationMode.Toast,
   );
 
+  await onSelectionCancel();
   await refreshUserList();
 }
 
@@ -559,8 +589,11 @@ async function assignWorkspaceRoles(user: UserInfo): Promise<void> {
     },
   });
   await modal.present();
-  await modal.onWillDismiss();
+  const result = await modal.onWillDismiss();
   await modal.dismiss();
+  if (result.role === MsModalResult.Confirm) {
+    onSelectionCancel();
+  }
 }
 
 async function inviteUser(): Promise<void> {
@@ -701,7 +734,7 @@ onMounted(async (): Promise<void> => {
     },
   );
   hotkeys.add({ key: 'a', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Users }, async () =>
-    users.value.selectAll(true),
+    selectAllUsers(),
   );
 
   const result = await parsecGetClientInfo();

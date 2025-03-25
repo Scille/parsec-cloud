@@ -5,7 +5,7 @@
     <ion-list class="menu-list">
       <ion-item-group
         class="list-group"
-        v-if="!user.isRevoked() && clientIsAdmin"
+        v-if="canRevoke"
       >
         <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
@@ -20,14 +20,14 @@
         >
           <ion-icon :icon="personRemove" />
           <ion-label class="body list-group-item__label">
-            {{ $msTranslate('UsersPage.userContextMenu.actionRevoke') }}
+            {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionRevoke', count: multipleSelected ? 2 : 1 }) }}
           </ion-label>
         </ion-item>
       </ion-item-group>
 
       <ion-item-group
         class="list-group"
-        v-if="!user.isRevoked() && clientIsAdmin && user.currentProfile !== UserProfile.Outsider"
+        v-if="canUpdateProfile"
       >
         <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
@@ -41,12 +41,15 @@
         >
           <ion-icon :icon="repeat" />
           <ion-label class="body list-group-item__label">
-            {{ $msTranslate('UsersPage.userContextMenu.actionUpdateProfile') }}
+            {{ $msTranslate({ key: 'UsersPage.userContextMenu.actionUpdateProfile', count: multipleSelected ? 2 : 1 }) }}
           </ion-label>
         </ion-item>
       </ion-item-group>
 
-      <ion-item-group class="list-group">
+      <ion-item-group
+        class="list-group"
+        v-if="!multipleSelected"
+      >
         <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleDetails') }}
@@ -64,7 +67,10 @@
         </ion-item>
       </ion-item-group>
 
-      <ion-item-group class="list-group">
+      <ion-item-group
+        class="list-group"
+        v-if="!multipleSelected"
+      >
         <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleAssignRoles') }}
@@ -91,17 +97,20 @@ export enum UserAction {
   Details,
   AssignRoles,
   UpdateProfile,
+  ToggleSelect,
+  SelectAll,
+  UnselectAll,
 }
 </script>
 
 <script setup lang="ts">
-import { UserInfo, UserProfile } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { informationCircle, personRemove, returnUpForward, repeat } from 'ionicons/icons';
 
 defineProps<{
-  user: UserInfo;
-  clientIsAdmin?: boolean;
+  multipleSelected?: boolean;
+  canUpdateProfile?: boolean;
+  canRevoke?: boolean;
 }>();
 
 async function onClick(action: UserAction): Promise<boolean> {
