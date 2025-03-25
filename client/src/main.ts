@@ -347,22 +347,24 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
     },
     getUpdateAvailability: (): void => {
       // Wait for a bit so it seems more natural
-      setTimeout(
-        async () => {
-          injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '13.37' });
-          injectionProvider.notifyAll(
-            new Information({
-              message: '',
-              level: InformationLevel.Info,
-              unique: true,
-              data: { type: InformationDataType.NewVersionAvailable, newVersion: '13.37' },
-            }),
-            PresentationMode.Notification,
-          );
-        },
-        window.isTesting() ? 0 : 5000,
-      );
-      console.log('GetUpdateAvailability: MOCKED');
+      if (window.usesTestbed()) {
+        setTimeout(
+          async () => {
+            injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '13.37' });
+            injectionProvider.notifyAll(
+              new Information({
+                message: '',
+                level: InformationLevel.Info,
+                unique: true,
+                data: { type: InformationDataType.NewVersionAvailable, newVersion: '13.37' },
+              }),
+              PresentationMode.Notification,
+            );
+          },
+          window.isTesting() ? 0 : 5000,
+        );
+        console.log('GetUpdateAvailability: MOCKED');
+      }
     },
     updateApp: (): void => {
       console.log('UpdateApp: Not available.');

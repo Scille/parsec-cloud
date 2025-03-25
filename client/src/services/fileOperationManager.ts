@@ -874,7 +874,6 @@ class FileOperationManager {
       const buffer = await reader.read();
 
       if (buffer.value) {
-        console.log('Write', writtenData);
         const writeResult = await writeFile(data.workspaceHandle, fd, writtenData, buffer.value);
 
         if (!writeResult.ok) {
