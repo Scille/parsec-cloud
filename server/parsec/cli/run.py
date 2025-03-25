@@ -326,6 +326,16 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     ),
 )
 @click.option(
+    "--cors-allow-origins",
+    default=[],
+    show_default=True,
+    multiple=True,
+    type=list[str],
+    envvar="PARSEC_CORS_ALLOW_ORIGINS",
+    show_envvar=True,
+    help="A list of allowed origins for Cross-Origin Resource Sharing (CORS)",
+)
+@click.option(
     "--dev",
     cls=DevOption,
     is_flag=True,
@@ -372,6 +382,7 @@ def run_cmd(
     sentry_dsn: str | None,
     sentry_environment: str,
     with_client_web_app: Path | None,
+    cors_allow_origins: list[str],
     debug: bool,
     dev: bool,
 ) -> None:
@@ -439,6 +450,7 @@ def run_cmd(
                     ssl_keyfile=ssl_keyfile,
                     retry_policy=retry_policy,
                     with_client_web_app=with_client_web_app,
+                    cors_allow_origins=cors_allow_origins,
                     app_config=app_config,
                 )
             )
@@ -483,6 +495,7 @@ async def _run_backend(
     ssl_keyfile: Path | None,
     retry_policy: RetryPolicy,
     with_client_web_app: Path | None,
+    cors_allow_origins: list[str],
     app_config: BackendConfig,
 ) -> None:
     # Log the server version and the backend configuration
@@ -505,6 +518,7 @@ async def _run_backend(
                 parsec_app = app_factory(
                     backend,
                     with_client_web_app=with_client_web_app,
+                    cors_allow_origins=cors_allow_origins,
                 )
 
                 await serve_parsec_asgi_app(
