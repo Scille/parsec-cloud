@@ -88,14 +88,16 @@ pub fn get_default_mountpoint_base_dir() -> PathBuf {
     }
 }
 
+fn get_devices_dir(config_dir: &Path) -> PathBuf {
+    config_dir.join("devices")
+}
+
 /// Return the default keyfile path for a given device.
 ///
 /// Note that the filename does not carry any intrinsic meaning.
 /// Here, we simply use the device ID (as it is a UUID) to avoid name collision.
 pub fn get_default_key_file(config_dir: &Path, device_id: &DeviceID) -> PathBuf {
-    let mut device_path = config_dir.to_path_buf();
-
-    device_path.push("devices");
+    let mut device_path = get_devices_dir(config_dir);
 
     device_path.push(format!("{}.{DEVICE_FILE_EXT}", device_id.hex()));
 
