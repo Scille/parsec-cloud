@@ -312,7 +312,7 @@ export const msTest = debugTest.extend<{
       .locator('.workspace-card-item')
       .nth(1)
       .locator('.workspace-card-bottom__icons')
-      .locator('.icon-option-container')
+      .locator('.icon-share-container')
       .nth(0)
       .click();
     const modal = workspaces.locator('.workspace-sharing-modal');
