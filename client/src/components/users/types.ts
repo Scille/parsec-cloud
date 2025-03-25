@@ -82,6 +82,13 @@ export class UserCollection {
     return this.getSelectedUsers().length > 0;
   }
 
+  select(user: UserInfo): void {
+    const model = this.users.filter((u) => u.id === user.id)[0];
+    if (this.isSelectable(model)) {
+      model.isSelected = true;
+    }
+  }
+
   selectAll(selected: boolean): void {
     for (const entry of this.users) {
       if (this.userIsVisible(entry) && !entry.isRevoked() && !entry.isCurrent) {
@@ -140,8 +147,16 @@ export class UserCollection {
     return this.users.filter((user) => user.isSelected && this.userIsVisible(user));
   }
 
+  isUserInfoSelectable(user: UserInfo): boolean {
+    return this.isSelectable(this.getUsers().filter((u) => u.id === user.id)[0]);
+  }
+
+  isSelectable(user: UserModel): boolean {
+    return this.userIsVisible(user) && !user.isRevoked() && !user.isCurrent;
+  }
+
   selectableUsersCount(): number {
-    return this.users.filter((user) => this.userIsVisible(user) && !user.isRevoked() && !user.isCurrent).length;
+    return this.users.filter((user) => this.isSelectable(user)).length;
   }
 
   selectedCount(): number {

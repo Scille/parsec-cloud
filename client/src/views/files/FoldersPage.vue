@@ -475,8 +475,7 @@ async function defineShortcuts(): Promise<void> {
   hotkeys.add(
     { key: 'a', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
     async () => {
-      folders.value.selectAll(true);
-      files.value.selectAll(true);
+      selectAll();
     },
   );
 }
@@ -1359,9 +1358,17 @@ async function openGlobalContextMenu(event: Event): Promise<void> {
   }
 }
 
-async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {
+async function openEntryContextMenu(event: Event, entry: EntryModel, fromRightClick: boolean, onFinished?: () => void): Promise<void> {
   const selectedEntries = getSelectedEntries();
-  const data = await _openEntryContextMenu(event, entry, selectedEntries, ownRole.value, isLargeDisplay.value);
+  const data = await _openEntryContextMenu(
+    event,
+    entry,
+    selectedEntries,
+    ownRole.value,
+    isLargeDisplay.value,
+    fromRightClick,
+    files.value.entriesCount() + folders.value.entriesCount(),
+  );
 
   if (!data) {
     if (onFinished) {
@@ -1381,6 +1388,10 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
     [FileAction.CopyLink, copyLink],
     [FileAction.Delete, deleteEntries],
     [FileAction.SeeInExplorer, seeInExplorer],
+    [FileAction.Select, selectOne],
+    [FileAction.SelectAll, selectAll],
+    [FileAction.UnselectAll, unselectAll],
+    [FileAction.Share, shareEntries],
   ]);
 
   const fn = actions.get(data.action);
@@ -1394,6 +1405,27 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
   if (onFinished) {
     onFinished();
   }
+}
+
+async function selectOne(entries: EntryModel[]): Promise<void> {
+  if (entries.length !== 1) {
+    return;
+  }
+  entries[0].isSelected = true;
+}
+
+async function selectAll(): Promise<void> {
+  folders.value.selectAll(true);
+  files.value.selectAll(true);
+}
+
+async function unselectAll(): Promise<void> {
+  folders.value.selectAll(false);
+  files.value.selectAll(false);
+}
+
+async function shareEntries(entries: EntryModel[]): Promise<void> {
+  console.log(`Share ${entries}`);
 }
 
 async function seeInExplorer(entries: EntryModel[]): Promise<void> {

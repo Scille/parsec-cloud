@@ -205,17 +205,17 @@ import { Routes, getCurrentRouteQuery, watchRoute, currentRouteIsUserRoute } fro
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
-import SmallDisplayUserContextMenu from '@/views/users/SmallDisplayUserContextMenu.vue';
+import { UserAction } from '@/views/users/UserContextMenu.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
-import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
+import { IonContent, IonPage, IonText, modalController } from '@ionic/vue';
 import { informationCircle, personAdd, personRemove, repeat } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref, toRaw } from 'vue';
 import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
+import { openUserContextMenu as _openUserContextMenu } from '@/views/users/utils';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -424,50 +424,25 @@ function isCurrentUser(userId: UserID): boolean {
   return clientInfo.value !== null && clientInfo.value.userId === userId;
 }
 
-async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: () => void): Promise<void> {
-  let data: { action: UserAction } | undefined;
+async function openUserContextMenu(event: Event, user: UserInfo, fromRightClick: boolean, onFinished?: () => void): Promise<void> {
+  const data = await _openUserContextMenu(
+    event,
+    user,
+    isAdmin.value,
+    users.value.isUserInfoSelectable(user),
+    users.value.selectedCount() > 0,
+    isLargeDisplay.value,
+    fromRightClick,
+  );
 
-  if (isLargeDisplay.value) {
-    const popover = await popoverController.create({
-      component: UserContextMenu,
-      cssClass: 'user-context-menu',
-      event: event,
-      translucent: true,
-      reference: event.type === 'contextmenu' ? 'event' : 'trigger',
-      showBackdrop: false,
-      dismissOnSelect: true,
-      alignment: 'start',
-      componentProps: {
-        user: user,
-        clientIsAdmin: isAdmin.value,
-      },
-    });
-
-    await popover.present();
-    data = (await popover.onDidDismiss()).data;
-  } else {
-    const modal = await modalController.create({
-      component: SmallDisplayUserContextMenu,
-      cssClass: 'user-context-sheet-modal',
-      showBackdrop: true,
-      breakpoints: [0, 0.5, 1],
-      // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
-      // expandToScroll: false, should be added to scroll with Ionic 8
-      initialBreakpoint: 0.5,
-      componentProps: {
-        user: user,
-        clientIsAdmin: isAdmin.value,
-      },
-    });
-
-    await modal.present();
-    data = (await modal.onDidDismiss()).data;
-  }
   const actions = new Map<UserAction, (user: UserInfo) => Promise<void>>([
     [UserAction.Revoke, revokeUser],
     [UserAction.Details, openUserDetails],
     [UserAction.AssignRoles, assignWorkspaceRoles],
     [UserAction.UpdateProfile, updateUserProfile],
+    [UserAction.Select, selectOneUser],
+    [UserAction.SelectAll, selectAllUsers],
+    [UserAction.UnselectAll, unselectAllUsers],
   ]);
 
   if (!data) {
@@ -484,6 +459,18 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
   if (onFinished) {
     onFinished();
   }
+}
+
+async function selectOneUser(user: UserInfo): Promise<void> {
+  users.value.select(user);
+}
+
+async function selectAllUsers(): Promise<void> {
+  users.value.selectAll(true);
+}
+
+async function unselectAllUsers(): Promise<void> {
+  users.value.selectAll(false);
 }
 
 async function updateSelectedUserProfiles(): Promise<void> {
@@ -700,7 +687,7 @@ onMounted(async (): Promise<void> => {
     },
   );
   hotkeys.add({ key: 'a', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Users }, async () =>
-    users.value.selectAll(true),
+    selectAllUsers(),
   );
 
   const result = await parsecGetClientInfo();

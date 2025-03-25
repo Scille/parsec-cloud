@@ -22,7 +22,7 @@
       @dblclick="$emit('click', $event, entry)"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
-      @contextmenu="onOptionsClick"
+      @contextmenu="onOptionsClick($event, true)"
     >
       <div
         class="file-selected"
@@ -107,7 +107,7 @@
           fill="clear"
           v-show="isHovered || menuOpened || isSmallDisplay"
           class="options-button"
-          @click.stop="onOptionsClick($event)"
+          @click.stop="onOptionsClick($event, false)"
           @dblclick.stop
         >
           <ion-icon
@@ -146,7 +146,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (e: 'click', event: Event, entry: EntryModel): void;
-  (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
+  (e: 'menuClick', event: Event, entry: EntryModel, fromRightClick: boolean, onFinished: () => void): void;
   (e: 'selectedChange', entry: EntryModel, checked: boolean): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
   (e: 'dropAsReader'): void;
@@ -171,14 +171,12 @@ function isFileSynced(): boolean {
   return !props.entry.needSync;
 }
 
-async function onOptionsClick(event: PointerEvent): Promise<void> {
+async function onOptionsClick(event: PointerEvent, fromRightClick: boolean): Promise<void> {
   event.preventDefault();
   event.stopPropagation();
 
   menuOpened.value = true;
-  emits('menuClick', event, props.entry, () => {
-    menuOpened.value = false;
-  });
+  emits('menuClick', event, props.entry, fromRightClick, () => (menuOpened.value = false));
 }
 </script>
 

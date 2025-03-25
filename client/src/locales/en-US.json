@@ -518,7 +518,11 @@
             "actionDetails": "Details",
             "actionCopyLink": "Copy link",
             "actionDelete": "Delete",
-            "actionSeeInExplorer": "See in explorer"
+            "actionSeeInExplorer": "See in explorer",
+            "actionSelect": "Select",
+            "actionSelectAll": "Select all",
+            "actionUnselectAll": "Unselect all",
+            "actionShare": "Share"
         },
         "importModal": {
             "title": "Upload your files",
@@ -1061,7 +1065,10 @@
             "actionAssignRoles": "Copy workspace roles to...",
             "subtitleAssignRoles": "You can copy {sourceUser} roles to another person. Workspace roles will not be removed.",
             "titleUpdateProfile": "Profile",
-            "actionUpdateProfile": "Change profile | Change profiles"
+            "actionUpdateProfile": "Change profile | Change profiles",
+            "actionSelect": "Select",
+            "actionSelectAll": "Select all",
+            "actionUnselectAll": "Unselect all"
         },
         "greet": {
             "titles": {

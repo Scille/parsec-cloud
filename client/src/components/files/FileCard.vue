@@ -10,7 +10,7 @@
     @dblclick="$emit('click', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
-    @contextmenu="onOptionsClick"
+    @contextmenu="onOptionsClick($event, true)"
   >
     <file-drop-zone
       :disabled="entry.isFile()"
@@ -32,7 +32,7 @@
       <div
         class="card-option"
         v-show="isHovered || menuOpened"
-        @click.stop="onOptionsClick($event)"
+        @click.stop="onOptionsClick($event, false)"
         @dblclick.stop
       >
         <ion-icon :icon="ellipsisHorizontal" />
@@ -94,7 +94,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (e: 'click', event: Event, entry: EntryModel): void;
-  (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
+  (e: 'menuClick', event: Event, entry: EntryModel, fromRightClick: boolean, onFinished: () => void): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
   (e: 'dropAsReader'): void;
 }>();
@@ -107,11 +107,11 @@ function isFileSynced(): boolean {
   return !props.entry.needSync;
 }
 
-async function onOptionsClick(event: Event): Promise<void> {
+async function onOptionsClick(event: Event, fromRightClick: boolean): Promise<void> {
   event.preventDefault();
   event.stopPropagation();
   menuOpened.value = true;
-  emits('menuClick', event, props.entry, () => {
+  emits('menuClick', event, props.entry, fromRightClick, () => {
     menuOpened.value = false;
   });
 }

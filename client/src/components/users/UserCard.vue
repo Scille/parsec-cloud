@@ -14,7 +14,7 @@
     @click="$emit('click', $event, user)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
-    @contextmenu="onOptionsClick"
+    @contextmenu="onOptionsClick($event, true)"
   >
     <div
       class="card-checkbox"
@@ -32,7 +32,7 @@
     <div
       class="card-option"
       v-show="isHovered || menuOpened"
-      @click.stop="onOptionsClick($event)"
+      @click.stop="onOptionsClick($event, false)"
     >
       <ion-icon :icon="ellipsisHorizontal" />
     </div>
@@ -92,7 +92,7 @@ const menuOpened = ref(false);
 
 const emits = defineEmits<{
   (e: 'click', event: Event, user: UserModel): void;
-  (e: 'menuClick', event: Event, user: UserModel, onFinished: () => void): void;
+  (e: 'menuClick', event: Event, user: UserModel, fromRightClick: boolean, onFinished: () => void): void;
   (e: 'select', user: UserModel, selected: boolean): void;
 }>();
 
@@ -105,11 +105,11 @@ defineExpose({
   isHovered,
 });
 
-async function onOptionsClick(event: Event): Promise<void> {
+async function onOptionsClick(event: Event, fromRightClick: boolean): Promise<void> {
   event.preventDefault();
   event.stopPropagation();
   menuOpened.value = true;
-  emits('menuClick', event, props.user, () => {
+  emits('menuClick', event, props.user, fromRightClick, () => {
     menuOpened.value = false;
   });
 }

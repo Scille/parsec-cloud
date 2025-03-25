@@ -91,6 +91,9 @@ export enum UserAction {
   Details,
   AssignRoles,
   UpdateProfile,
+  Select,
+  SelectAll,
+  UnselectAll,
 }
 </script>
 
