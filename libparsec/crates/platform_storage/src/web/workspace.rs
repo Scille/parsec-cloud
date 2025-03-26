@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::convert::Infallible;
 use std::path::Path;
 
 use indexed_db::{Database, Factory, ObjectStore, Transaction};
@@ -82,16 +83,15 @@ const BLOCKS_ACCESSED_ON_FIELD: &str = "accessed_on";
 const BLOCKS_DATA_FIELD: &str = "data";
 
 async fn initialize_database(
-    evt: &indexed_db::VersionChangeEvent<CustomErrMarker>,
-) -> indexed_db::Result<(), CustomErrMarker> {
-    let db = evt.database();
-
+    evt: &indexed_db::VersionChangeEvent<Infallible>,
+) -> indexed_db::Result<(), Infallible> {
     // 1) Create the stores
 
-    db.build_object_store(PREVENT_SYNC_PATTERN_STORE).create()?;
-    db.build_object_store(CHECKPOINT_STORE).create()?;
+    evt.build_object_store(PREVENT_SYNC_PATTERN_STORE)
+        .create()?;
+    evt.build_object_store(CHECKPOINT_STORE).create()?;
 
-    let vlob_store = db.build_object_store(VLOBS_STORE).create()?;
+    let vlob_store = evt.build_object_store(VLOBS_STORE).create()?;
     vlob_store
         .build_index(VLOBS_INDEX_INBOUND_NEED_SYNC, VLOBS_INBOUND_NEED_SYNC_FIELD)
         .create()?;
@@ -102,9 +102,9 @@ async fn initialize_database(
         )
         .create()?;
 
-    db.build_object_store(CHUNKS_STORE).create()?;
+    evt.build_object_store(CHUNKS_STORE).create()?;
 
-    let block_store = db.build_object_store(BLOCKS_STORE).create()?;
+    let block_store = evt.build_object_store(BLOCKS_STORE).create()?;
     block_store
         .build_index(BLOCKS_INDEX_ACCESSED_ON, BLOCKS_ACCESSED_ON_FIELD)
         .create()?;
@@ -140,7 +140,7 @@ async fn initialize_database(
 
 #[derive(Debug)]
 pub struct PlatformWorkspaceStorage {
-    conn: Database<CustomErrMarker>,
+    conn: Database,
     max_blocks: u64,
 }
 
@@ -171,17 +171,13 @@ impl PlatformWorkspaceStorage {
 
         let name = get_workspace_storage_db_name(data_base_dir, device.device_id, realm_id);
 
-        let factory = Factory::<CustomErrMarker>::get().map_err(|e| anyhow::anyhow!("{e:?}"))?;
+        let factory = Factory::get().map_err(|e| anyhow::anyhow!("{e:?}"))?;
         let conn = factory
-            .open(
-                &name,
-                DB_VERSION,
-                |evt: indexed_db::VersionChangeEvent<CustomErrMarker>| async move {
-                    // 2) Initialize the database (if needed)
+            .open(&name, DB_VERSION, async |evt| {
+                // 2) Initialize the database (if needed)
 
-                    initialize_database(&evt).await
-                },
-            )
+                initialize_database(&evt).await
+            })
             .await?;
 
         // 3) All done !

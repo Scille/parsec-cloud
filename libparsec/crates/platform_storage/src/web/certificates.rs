@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::collections::HashMap;
 use std::path::Path;
+use std::{collections::HashMap, convert::Infallible};
 use wasm_bindgen::{JsCast, JsValue};
 
 use indexed_db::{Database, Factory, Transaction};
@@ -48,9 +48,9 @@ const INDEX_FILTER2: &'static str = "_idx_filter2";
 const INDEX_FILTERS: &'static str = "_idx_filters";
 
 async fn initialize_database(
-    db: &Database<CustomErrMarker>,
-) -> indexed_db::Result<(), CustomErrMarker> {
-    let store = db.build_object_store(STORE).auto_increment().create()?;
+    evt: &indexed_db::VersionChangeEvent<Infallible>,
+) -> indexed_db::Result<(), Infallible> {
+    let store = evt.build_object_store(STORE).auto_increment().create()?;
 
     store
         .build_compound_index(
@@ -745,7 +745,7 @@ async fn debug_dump(transaction: &Transaction<CustomErrMarker>) -> anyhow::Resul
 
 #[derive(Debug)]
 pub(crate) struct PlatformCertificatesStorage {
-    conn: Database<CustomErrMarker>,
+    conn: Database,
 }
 
 // SAFETY: see `pretend_future_is_send_on_web`'s documentation for the full explanation.
@@ -772,18 +772,13 @@ impl PlatformCertificatesStorage {
 
         let name = get_certificates_storage_db_name(data_base_dir, device.device_id);
 
-        let factory = Factory::<CustomErrMarker>::get()?;
+        let factory = Factory::get()?;
         let conn = factory
-            .open(
-                &name,
-                DB_VERSION,
-                |evt: indexed_db::VersionChangeEvent<CustomErrMarker>| async move {
-                    // 2) Initialize the database (if needed)
+            .open(&name, DB_VERSION, async |evt| {
+                // 2) Initialize the database (if needed)
 
-                    let db = evt.database();
-                    initialize_database(&db).await
-                },
-            )
+                initialize_database(&evt).await
+            })
             .await?;
 
         // 3) All done !

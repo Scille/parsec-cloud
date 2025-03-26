@@ -1763,7 +1763,7 @@ dependencies = [
 [[package]]
 name = "indexed-db"
 version = "0.4.2"
-source = "git+https://github.com/Ekleog/indexed-db.git?rev=d92f17e0e2cd48abc4b2d2adf62ccef9a9924080#d92f17e0e2cd48abc4b2d2adf62ccef9a9924080"
+source = "git+https://github.com/Ekleog/indexed-db.git?rev=fe645fae2a91a48a0af6126611c2031d59db0ad1#fe645fae2a91a48a0af6126611c2031d59db0ad1"
 dependencies = [
  "futures-channel",
  "futures-util",

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::path::Path;
+use std::{convert::Infallible, path::Path};
 
 use indexed_db::{Database, Factory, ObjectStore, Transaction};
 use libparsec_types::prelude::*;
@@ -30,16 +30,16 @@ const SINGLETON_NEED_SYNC_FIELD: &str = "need_sync";
 const SINGLETON_BLOB_FIELD: &str = "blob";
 
 async fn initialize_database(
-    db: &Database<CustomErrMarker>,
-) -> indexed_db::Result<(), CustomErrMarker> {
-    db.build_object_store(STORE).create()?;
+    evt: &indexed_db::VersionChangeEvent<Infallible>,
+) -> indexed_db::Result<(), Infallible> {
+    evt.build_object_store(STORE).create()?;
 
     Ok(())
 }
 
 #[derive(Debug)]
 pub struct PlatformUserStorage {
-    conn: Database<CustomErrMarker>,
+    conn: Database,
     #[cfg(any(test, feature = "expose-test-methods"))]
     realm_id: VlobID,
 }
@@ -68,18 +68,13 @@ impl PlatformUserStorage {
 
         let name = get_user_storage_db_name(data_base_dir, device.device_id);
 
-        let factory = Factory::<CustomErrMarker>::get().map_err(|e| anyhow::anyhow!("{e:?}"))?;
+        let factory = Factory::get().map_err(|e| anyhow::anyhow!("{e:?}"))?;
         let conn = factory
-            .open(
-                &name,
-                DB_VERSION,
-                |evt: indexed_db::VersionChangeEvent<CustomErrMarker>| async move {
-                    // 2) Initialize the database (if needed)
+            .open(&name, DB_VERSION, async |evt| {
+                // 2) Initialize the database (if needed)
 
-                    let db = evt.database();
-                    initialize_database(&db).await
-                },
-            )
+                initialize_database(&evt).await
+            })
             .await?;
 
         // 3) All done !

@@ -4,13 +4,10 @@ use std::path::Path;
 
 use libparsec_types::{anyhow, DeviceID};
 
-use super::{
-    certificates::get_certificates_storage_db_name, user::get_user_storage_db_name,
-    utils::CustomErrMarker,
-};
+use super::{certificates::get_certificates_storage_db_name, user::get_user_storage_db_name};
 
 async fn drop_db(name: &str) -> anyhow::Result<()> {
-    indexed_db::Factory::<CustomErrMarker>::get()
+    indexed_db::Factory::get()
         .map_err(anyhow::Error::from)?
         .delete_database(name)
         .await
