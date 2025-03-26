@@ -186,7 +186,7 @@ pub(super) use with_transaction;
 // However this is not yet possible since for the moment `indexed_db` API requires
 // a single error type for all operations (see https://github.com/Ekleog/indexed-db/issues/4).
 pub(super) async fn with_transaction_internal<R, E>(
-    conn: &Database<CustomErrMarker>,
+    conn: &Database,
     stores: &[&str],
     rw: bool,
     cb: impl AsyncFnOnce(Transaction<CustomErrMarker>) -> Result<R, E>,

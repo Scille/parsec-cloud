@@ -44,7 +44,7 @@ mod drop_existing_web_indexed_db {
     use super::*;
 
     async fn drop_db(name: &str) {
-        indexed_db::Factory::<()>::get()
+        indexed_db::Factory::get()
             .unwrap()
             .delete_database(name)
             .await
