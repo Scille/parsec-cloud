@@ -211,12 +211,13 @@ export async function workspacesInGridMode(workspacesPage: Page): Promise<boolea
 
 export async function createWorkspace(workspacesPage: Page, name: string): Promise<void> {
   let workspacesCount = 0;
-  const actionBar = workspacesPage.locator('#workspaces-ms-action-bar');
+  await expect(workspacesPage.locator('.no-workspaces-loading')).toBeHidden();
   if (await workspacesInGridMode(workspacesPage)) {
     workspacesCount = await workspacesPage.locator('.workspaces-container').locator('.workspace-card-item').count();
   } else {
     workspacesCount = await workspacesPage.locator('.workspaces-container').locator('.workspace-list-item').count();
   }
+  const actionBar = workspacesPage.locator('#workspaces-ms-action-bar');
   await actionBar.locator('#button-new-workspace').click();
   await fillInputModal(workspacesPage, name);
   if (await workspacesInGridMode(workspacesPage)) {
