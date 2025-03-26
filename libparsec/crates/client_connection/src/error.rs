@@ -68,7 +68,15 @@ pub enum ConnectionError {
     UserMustAcceptTos,
 
     /// The authentication token has expired
-    #[error("Authentication token has expired")]
+    ///
+    /// This corresponds to a 498 error returned by the server to indicate that
+    /// the client has sent it signed authentication info with a date that's
+    /// too old.
+    ///
+    /// Basically, it's triggered if the computer's clock is more than 5 minutes
+    /// off the server's time (in theory, modern computers all use NTP to
+    /// synchronize their clocks regularly, but a manual sync might be needed)
+    #[error("Authentication token has expired. This could mean that the client's clock is too far behind or ahead of the server's.")]
     AuthenticationTokenExpired,
 
     /// The version is not supported
