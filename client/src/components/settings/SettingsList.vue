@@ -66,6 +66,13 @@
         </ion-button>
       </settings-option>
 
+      <settings-option
+        title="SettingsModal.skipAuth.label"
+        description="SettingsModal.skipAuth.description"
+      >
+        <ion-toggle v-model="config.skipAuth" />
+      </settings-option>
+
       <!-- display unsync files -->
       <settings-option
         :title="'SettingsModal.unsyncFiles.label'"

@@ -14,16 +14,12 @@
           <!-- topbar -->
           <home-page-header
             class="homepage-header"
-            @settings-click="openSettingsModal"
-            @about-click="openAboutModal"
             @back-click="backToPreviousPage"
             @customer-area-click="goToCustomerAreaLogin"
             @create-or-join-organization-click="openCreateOrJoinPopover"
             :display-create-join="deviceList.length > 0"
             :back-button-title="getBackButtonTitle()"
-            :show-back-button="
-              state === HomePageState.Login || state === HomePageState.ForgottenPassword || state === HomePageState.CustomerArea
-            "
+            :show-back-button="state === HomePageState.Login || state === HomePageState.ForgottenPassword"
           />
           <slide-horizontal
             :appear-from="slidePositions.appearFrom"
@@ -42,9 +38,6 @@
                 :querying="querying"
                 ref="organizationListRef"
               />
-            </template>
-            <template v-else-if="state === HomePageState.CustomerArea">
-              <client-area-login-page />
             </template>
             <template v-else-if="state === HomePageState.Login">
               <login-page
@@ -96,7 +89,6 @@ import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } fr
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
-import AboutModal from '@/views/about/AboutModal.vue';
 import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.vue';
 import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
@@ -105,12 +97,10 @@ import HomePageSidebar from '@/views/home/HomePageSidebar.vue';
 import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
-import { openSettingsModal } from '@/views/settings';
 import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Base64, Validity, MsModalResult, Position, SlideHorizontal, getTextFromUser, askQuestion, Answer } from 'megashark-lib';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
-import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
 import { getServerTypeFromAddress, ServerType } from '@/services/parsecServers';
 import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
@@ -119,7 +109,6 @@ enum HomePageState {
   OrganizationList = 'organization-list',
   Login = 'login',
   ForgottenPassword = 'forgotten-password',
-  CustomerArea = 'customer-area',
 }
 
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -168,14 +157,6 @@ onMounted(async () => {
     { key: 'j', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Home },
     onJoinOrganizationClicked,
   );
-  hotkeys.add(
-    { key: ',', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Home },
-    openSettingsModal,
-  );
-  hotkeys.add(
-    { key: 'a', modifiers: Modifiers.Ctrl | Modifiers.Alt, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Home },
-    openAboutModal,
-  );
 
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 
@@ -190,6 +171,10 @@ onUnmounted(() => {
   routeWatchCancel();
   stateWatchCancel();
 });
+
+async function goToCustomerAreaLogin(): Promise<void> {
+  await navigateTo(Routes.ClientAreaLogin);
+}
 
 async function openCreateOrJoinPopover(event: Event): Promise<void> {
   const popover = await popoverController.create({
@@ -524,11 +509,7 @@ async function associateDefaultEvents(eventDistributor: EventDistributor, inform
 async function backToPreviousPage(): Promise<void> {
   if (state.value === HomePageState.ForgottenPassword && selectedDevice.value) {
     state.value = HomePageState.Login;
-  } else if (
-    state.value === HomePageState.Login ||
-    state.value === HomePageState.CustomerArea ||
-    state.value === HomePageState.ForgottenPassword
-  ) {
+  } else if (state.value === HomePageState.Login || state.value === HomePageState.ForgottenPassword) {
     state.value = HomePageState.OrganizationList;
     selectedDevice.value = undefined;
   }
@@ -537,20 +518,6 @@ async function backToPreviousPage(): Promise<void> {
 function onForgottenPasswordClicked(device?: AvailableDevice): void {
   selectedDevice.value = device;
   state.value = HomePageState.ForgottenPassword;
-}
-
-async function openAboutModal(): Promise<void> {
-  const modal = await modalController.create({
-    component: AboutModal,
-    cssClass: 'about-modal',
-  });
-  await modal.present();
-  await modal.onWillDismiss();
-  await modal.dismiss();
-}
-
-async function goToCustomerAreaLogin(): Promise<void> {
-  state.value = HomePageState.CustomerArea;
 }
 
 async function onJoinOrganizationClicked(): Promise<void> {
@@ -578,8 +545,6 @@ function getBackButtonTitle(): string {
     return 'HomePage.topbar.backToList';
   } else if (state.value === HomePageState.ForgottenPassword) {
     return 'HomePage.topbar.backToLogin';
-  } else if (state.value === HomePageState.CustomerArea) {
-    return 'HomePage.topbar.backToList';
   }
   return '';
 }

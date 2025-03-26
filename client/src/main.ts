@@ -23,7 +23,16 @@ import { availableDeviceMatchesServer } from '@/common/device';
 import { bootstrapLinkValidator, claimLinkValidator, fileLinkValidator } from '@/common/validators';
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
-import { getLoggedInDevices, getOrganizationHandle, isElectron, listAvailableDevices, logout, needsMocks, parseFileLink } from '@/parsec';
+import {
+  ParsecAuth,
+  getLoggedInDevices,
+  getOrganizationHandle,
+  isElectron,
+  listAvailableDevices,
+  logout,
+  needsMocks,
+  parseFileLink,
+} from '@/parsec';
 import { getClientConfig } from '@/parsec/internals';
 import { AvailableDevice, Platform, libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
@@ -90,6 +99,10 @@ async function setupApp(): Promise<void> {
     stripeConfig: stripeConfig,
   });
   await megasharkPlugin.init();
+
+  if (config.skipAuth || ('TESTING' in window && window.TESTING)) {
+    ParsecAuth.markSkipped();
+  }
 
   const app = createApp(App)
     .use(IonicVue, {
