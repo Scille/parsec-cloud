@@ -195,7 +195,7 @@ jobs:
         shell: bash -e -o pipefail {0}
         run: |
           (
-            echo 'tag_name=${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'nightly' || github.ref }}'
+            echo 'tag_name=${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'nightly' || github.ref_name }}'
             echo 'release_name=${{ env.NIGHTLY_RELEASE == 'true' && 'Nightly release' || format('Release v{0}', needs.version.outputs.full) }}'
             echo 'repo_path=${{ github.server_url }}/${{ github.repository }}'
           ) | tee -a $GITHUB_OUTPUT
