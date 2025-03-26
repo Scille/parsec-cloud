@@ -71,7 +71,7 @@ async function initModals(hostPage: Page, guestPage: Page): Promise<[ModalData, 
   };
 
   // Start the join
-  await expect(joinData.nextButton).toHaveText('I understand!');
+  await expect(joinData.nextButton).toHaveText('Continue with Alicey McAliceFace');
   await joinData.nextButton.click();
 
   return [greetData, joinData];
@@ -125,7 +125,7 @@ msTest('Greet user whole process', async ({ usersPage, secondTab }) => {
   await joinData.nextButton.click();
   await expect(joinData.nextButton).toBeHidden();
   await expect(joinData.modal.locator('.spinner-container')).toBeVisible();
-  await expect(joinData.modal.locator('.spinner-container')).toHaveText('(Waiting for the host)');
+  await expect(joinData.modal.locator('.spinner-container')).toHaveText('(Waiting for the administrator)');
 
   // host reviews the information and chose profile
   await expect(greetData.title).toHaveText('Contact details');
@@ -236,7 +236,7 @@ msTest('Host selects invalid SAS code', async ({ usersPage, secondTab }) => {
 
   // Back to the beginning
   await expect(joinData.title).toHaveText('Welcome to Parsec!');
-  await expect(joinData.nextButton).toHaveText('I understand!');
+  await expect(joinData.nextButton).toHaveText('Continue with Alicey McAliceFace');
 });
 
 msTest('Host selects no SAS code', async ({ usersPage, secondTab }) => {
@@ -270,11 +270,12 @@ msTest('Host selects no SAS code', async ({ usersPage, secondTab }) => {
   await expect(greetData.content.locator('.button-none')).toHaveText('None shown');
   await greetData.content.locator('.button-none').click();
 
+  await expect(secondTab).toShowToast('The host has cancelled the process.', 'Error');
+
   await expect(usersPage).toShowToast(
     'If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.',
     'Error',
   );
-  await expect(secondTab).toShowToast('The host has cancelled the process.', 'Error');
 
   // Back to the beginning
   await expect(greetData.nextButton).toHaveText('Start');
@@ -282,7 +283,7 @@ msTest('Host selects no SAS code', async ({ usersPage, secondTab }) => {
 
   // Back to the beginning
   await expect(joinData.title).toHaveText('Welcome to Parsec!');
-  await expect(joinData.nextButton).toHaveText('I understand!');
+  await expect(joinData.nextButton).toHaveText('Continue with Alicey McAliceFace');
 });
 
 msTest('Host closes greet process', async ({ usersPage, secondTab }) => {
@@ -370,7 +371,7 @@ msTest('Guest selects invalid SAS code', async ({ usersPage, secondTab }) => {
 
   // Back to the beginning
   await expect(joinData.title).toHaveText('Welcome to Parsec!');
-  await expect(joinData.nextButton).toHaveText('I understand!');
+  await expect(joinData.nextButton).toHaveText('Continue with Alicey McAliceFace');
 });
 
 msTest('Guest selects no SAS code', async ({ usersPage, secondTab }) => {
@@ -404,7 +405,7 @@ msTest('Guest selects no SAS code', async ({ usersPage, secondTab }) => {
 
   // Back to the beginning
   await expect(joinData.title).toHaveText('Welcome to Parsec!');
-  await expect(joinData.nextButton).toHaveText('I understand!');
+  await expect(joinData.nextButton).toHaveText('Continue with Alicey McAliceFace');
 });
 
 msTest('Guest closes greet process', async ({ usersPage, secondTab }) => {

@@ -226,6 +226,12 @@ export async function createWorkspace(workspacesPage: Page, name: string): Promi
   }
 }
 
+export async function createFolder(documentsPage: Page, name: string): Promise<void> {
+  const actionBar = documentsPage.locator('#folders-ms-action-bar');
+  await actionBar.locator('.ms-action-bar-button:visible').nth(0).click();
+  await fillInputModal(documentsPage, name);
+}
+
 export async function dismissToast(page: Page): Promise<void> {
   await page.locator('.notification-toast').locator('.toast-button-confirm').click();
   await expect(page.locator('.notification-toast')).toBeHidden();

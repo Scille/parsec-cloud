@@ -30,17 +30,14 @@ const WORKSPACES = [
   },
 ];
 
-for (const workspace of WORKSPACES) {
-  msTest(`Check workspace card of ${workspace.name}`, async ({ workspaces }) => {
-    const workspaceCard = workspaces.locator('.workspace-card-item', { hasText: workspace.name });
-    await expect(workspaceCard).toContainText(workspace.name);
-    expect(workspaceCard).toBeDefined();
-    const workspaceRole = workspaceCard.locator('.workspace-card-bottom');
-    await expect(workspaceRole.locator('.workspace-card-bottom__role')).toHaveText(/^(Reader|Manager|Owner|Contributor)$/);
-    const icons = workspaceRole.locator('.workspace-card-bottom__icons').locator('ion-icon');
-    await expect(icons).toHaveCount(2);
-  });
-}
+msTest('Check workspace card', async ({ workspaces }) => {
+  const workspaceCard = workspaces.locator('.workspace-card-item').nth(0);
+  await expect(workspaceCard.locator('.workspace-card-content__title')).toHaveText('The Copper Coronet');
+  const workspaceRole = workspaceCard.locator('.workspace-card-bottom');
+  await expect(workspaceRole.locator('.workspace-card-bottom__role')).toHaveText(/^(Reader|Manager|Owner|Contributor)$/);
+  const icons = workspaceRole.locator('.workspace-card-bottom__icons').locator('ion-icon');
+  await expect(icons).toHaveCount(2);
+});
 
 for (const gridMode of [false, true]) {
   msTest.fail(`Empty workspaces in ${gridMode ? 'grid' : 'list'} mode`, async ({ connected }) => {

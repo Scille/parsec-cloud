@@ -63,24 +63,21 @@ msTest('Filter users', async ({ workspaceSharingModal }) => {
   const searchInput = content.locator('.ms-search-input');
   const members = content.locator('.user-list-members').locator('.content');
   const suggestions = workspaceSharingModal.locator('.user-list-suggestions-item');
-  await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText([
-    'Gordon Freeman',
-    'Korgan Bloodaxe',
-    'Jaheira',
-  ]);
+  await expect(members.locator('.person-name')).toHaveText(['Alicey McAliceFace']);
+  await expect(suggestions.locator('.person-name')).toHaveText(['Boby McBobFace', 'Malloryy McMalloryFace']);
 
-  // cspell:enable
-  await fillIonInput(searchInput, 'or');
-  // cspell:disable-next-line
-  await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText(['Gordon Freeman', 'Korgan Bloodaxe']);
+  await fillIonInput(searchInput, 'al');
+
+  await expect(members.locator('.person-name')).toHaveText(['Alicey McAliceFace']);
+  await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
+
   await searchInput.locator('.input-clear-icon').click();
-  // cspell:disable
-  await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText([
-    'Gordon Freeman',
-    'Korgan Bloodaxe',
-    'Jaheira',
-  ]);
-  // cspell:enable
+  await expect(members.locator('.person-name')).toHaveText(['Alicey McAliceFace']);
+  await expect(suggestions.locator('.person-name')).toHaveText(['Boby McBobFace', 'Malloryy McMalloryFace']);
+
+  await fillIonInput(searchInput, 'bo');
+  await expect(members).toBeHidden();
+  await expect(suggestions.locator('.person-name')).toHaveText(['Boby McBobFace']);
 });
 
 msTest('Filter users no match', async ({ workspaceSharingModal }) => {

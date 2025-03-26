@@ -11,7 +11,7 @@ import {
   generateDefaultUserData,
 } from '@tests/e2e/helpers/data';
 import { dropTestbed, newTestbed } from '@tests/e2e/helpers/testbed';
-import { createWorkspace, dismissToast, dragAndDropFile, fillInputModal, fillIonInput } from '@tests/e2e/helpers/utils';
+import { createFolder, createWorkspace, dismissToast, dragAndDropFile, fillInputModal, fillIonInput } from '@tests/e2e/helpers/utils';
 import path from 'path';
 
 export interface MsPage extends Page {
@@ -203,7 +203,7 @@ export const msTest = debugTest.extend<{
     await expect(workspaces).toHaveHeader(['The Copper Coronet'], true, true);
     await expect(workspaces).toBeDocumentPage();
     await expect(workspaces.locator('.folder-container').locator('.no-files')).toBeVisible();
-    // Also create a folder here when available
+    await createFolder(workspaces, 'Folder');
     const dropZone = workspaces.locator('.folder-container').locator('.drop-zone').nth(0);
     await dragAndDropFile(workspaces, dropZone, [
       path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png'),
@@ -216,14 +216,38 @@ export const msTest = debugTest.extend<{
       path.join(testInfo.config.rootDir, 'data', 'imports', 'code.py'),
     ]);
     // Hide the import menu
-    await workspaces.locator('.upload-menu').locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+    const uploadMenu = workspaces.locator('.upload-menu');
+    await expect(uploadMenu).toBeVisible();
+    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
+    await expect(tabs.locator('.text-counter')).toHaveText(['0', '8', '0']);
+    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+    await expect(workspaces.locator('.folder-container').locator('.no-files-content')).toBeHidden();
     use(workspaces);
   },
 
-  documentsReadOnly: async ({ workspaces }, use) => {
+  documentsReadOnly: async ({ workspaces }, use, testInfo: TestInfo) => {
     await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(2).click();
     await expect(workspaces).toHaveHeader(["Watcher's Keep"], true, true);
     await expect(workspaces).toBeDocumentPage();
+    await expect(workspaces.locator('.folder-container').locator('.no-files')).toBeVisible();
+    await createFolder(workspaces, 'Folder');
+    const dropZone = workspaces.locator('.folder-container').locator('.drop-zone').nth(0);
+    await dragAndDropFile(workspaces, dropZone, [
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'document.docx'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'pdfDocument.pdf'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'video.mp4'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'audio.mp3'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'spreadsheet.xlsx'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'text.txt'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'code.py'),
+    ]);
+    // Hide the import menu
+    const uploadMenu = workspaces.locator('.upload-menu');
+    await expect(uploadMenu).toBeVisible();
+    const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
+    await expect(tabs.locator('.text-counter')).toHaveText(['0', '8', '0']);
+    await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
     await expect(workspaces.locator('.folder-container').locator('.no-files-content')).toBeHidden();
     use(workspaces);
   },

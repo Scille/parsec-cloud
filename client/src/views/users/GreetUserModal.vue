@@ -256,7 +256,7 @@ async function updateCanGoForward(): Promise<void> {
   }
 }
 
-function getNextButtonText(): string {
+function getNextButtonText(): string | undefined {
   if (pageStep.value === GreetUserStep.WaitForGuest) {
     return 'UsersPage.greet.actions.start';
   } else if (pageStep.value === GreetUserStep.Summary) {
@@ -264,7 +264,7 @@ function getNextButtonText(): string {
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
     return 'UsersPage.greet.actions.approve';
   }
-  return '';
+  return undefined;
 }
 
 async function selectGuestSas(code: string | null): Promise<void> {

@@ -42,7 +42,6 @@ export default defineConfig({
     '**/app_update.spec.ts',
     '**/client_*',
     '**/workspace_history.spec.ts',
-    '**/workspace_actions.spec.ts',
     '**/sidebar.spec.ts',
     '**/profile_popover.spec.ts',
     '**/my_profile_page.spec.ts',
