@@ -284,7 +284,7 @@ To add a new authentication method, the client just needs to provide the require
 
 ```yml
 {
-  "cmd": "auth_method_new",
+  "cmd": "auth_method_create",
   "req": {
     "auth_method": "AuthMethod",
     "account_manifest": "AccountManifestEntry",
