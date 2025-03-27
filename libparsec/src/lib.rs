@@ -23,7 +23,7 @@ pub use addr::*;
 pub use cancel::*;
 pub use client::*;
 pub use config::*;
-pub use device::{archive_device, list_available_devices, ArchiveDeviceError};
+pub use device::*;
 pub use events::*;
 pub use handle::Handle;
 pub use invite::*;
