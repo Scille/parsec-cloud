@@ -691,30 +691,6 @@ export type ClientCancelInvitationError =
   | ClientCancelInvitationErrorOffline
 
 
-// ClientChangeAuthenticationError
-export interface ClientChangeAuthenticationErrorDecryptionFailed {
-    tag: "DecryptionFailed"
-    error: string
-}
-export interface ClientChangeAuthenticationErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface ClientChangeAuthenticationErrorInvalidData {
-    tag: "InvalidData"
-    error: string
-}
-export interface ClientChangeAuthenticationErrorInvalidPath {
-    tag: "InvalidPath"
-    error: string
-}
-export type ClientChangeAuthenticationError =
-  | ClientChangeAuthenticationErrorDecryptionFailed
-  | ClientChangeAuthenticationErrorInternal
-  | ClientChangeAuthenticationErrorInvalidData
-  | ClientChangeAuthenticationErrorInvalidPath
-
-
 // ClientCreateWorkspaceError
 export interface ClientCreateWorkspaceErrorInternal {
     tag: "Internal"
@@ -910,6 +886,20 @@ export type ClientExportRecoveryDeviceError =
   | ClientExportRecoveryDeviceErrorOffline
   | ClientExportRecoveryDeviceErrorStopped
   | ClientExportRecoveryDeviceErrorTimestampOutOfBallpark
+
+
+// ClientForgetAllCertificatesError
+export interface ClientForgetAllCertificatesErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientForgetAllCertificatesErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type ClientForgetAllCertificatesError =
+  | ClientForgetAllCertificatesErrorInternal
+  | ClientForgetAllCertificatesErrorStopped
 
 
 // ClientGetSelfShamirRecoveryError
@@ -2171,6 +2161,30 @@ export interface TestbedErrorInternal {
 export type TestbedError =
   | TestbedErrorDisabled
   | TestbedErrorInternal
+
+
+// UpdateDeviceError
+export interface UpdateDeviceErrorDecryptionFailed {
+    tag: "DecryptionFailed"
+    error: string
+}
+export interface UpdateDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface UpdateDeviceErrorInvalidData {
+    tag: "InvalidData"
+    error: string
+}
+export interface UpdateDeviceErrorInvalidPath {
+    tag: "InvalidPath"
+    error: string
+}
+export type UpdateDeviceError =
+  | UpdateDeviceErrorDecryptionFailed
+  | UpdateDeviceErrorInternal
+  | UpdateDeviceErrorInvalidData
+  | UpdateDeviceErrorInvalidPath
 
 
 // UserClaimListInitialInfosError
@@ -3729,11 +3743,6 @@ export function clientCancelInvitation(
     client: number,
     token: string
 ): Promise<Result<null, ClientCancelInvitationError>>
-export function clientChangeAuthentication(
-    client_config: ClientConfig,
-    current_auth: DeviceAccessStrategy,
-    new_auth: DeviceSaveStrategy
-): Promise<Result<null, ClientChangeAuthenticationError>>
 export function clientCreateWorkspace(
     client: number,
     name: string
@@ -3745,6 +3754,9 @@ export function clientExportRecoveryDevice(
     client_handle: number,
     device_label: string
 ): Promise<Result<[string, Uint8Array], ClientExportRecoveryDeviceError>>
+export function clientForgetAllCertificates(
+    client: number
+): Promise<Result<null, ClientForgetAllCertificatesError>>
 export function clientGetSelfShamirRecovery(
     client_handle: number
 ): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>
@@ -3985,6 +3997,16 @@ export function testNewTestbed(
     template: string,
     test_server: string | null
 ): Promise<Result<string, TestbedError>>
+export function updateDeviceChangeAuthentication(
+    config_dir: string,
+    current_auth: DeviceAccessStrategy,
+    new_auth: DeviceSaveStrategy
+): Promise<Result<AvailableDevice, UpdateDeviceError>>
+export function updateDeviceOverwriteServerAddr(
+    config_dir: string,
+    access: DeviceAccessStrategy,
+    new_server_addr: string
+): Promise<Result<string, UpdateDeviceError>>
 export function validateDeviceLabel(
     raw: string
 ): Promise<boolean>

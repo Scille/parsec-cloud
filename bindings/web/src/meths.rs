@@ -4994,48 +4994,6 @@ fn variant_client_cancel_invitation_error_rs_to_js(
     Ok(js_obj)
 }
 
-// ClientChangeAuthenticationError
-
-#[allow(dead_code)]
-fn variant_client_change_authentication_error_rs_to_js(
-    rs_obj: libparsec::ClientChangeAuthenticationError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientChangeAuthenticationError::DecryptionFailed { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ClientChangeAuthenticationErrorDecryptionFailed".into(),
-            )?;
-        }
-        libparsec::ClientChangeAuthenticationError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ClientChangeAuthenticationErrorInternal".into(),
-            )?;
-        }
-        libparsec::ClientChangeAuthenticationError::InvalidData { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ClientChangeAuthenticationErrorInvalidData".into(),
-            )?;
-        }
-        libparsec::ClientChangeAuthenticationError::InvalidPath { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ClientChangeAuthenticationErrorInvalidPath".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
 // ClientCreateWorkspaceError
 
 #[allow(dead_code)]
@@ -6114,6 +6072,34 @@ fn variant_client_export_recovery_device_error_rs_to_js(
                 &js_obj,
                 &"ballparkClientLateOffset".into(),
                 &js_ballpark_client_late_offset,
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientForgetAllCertificatesError
+
+#[allow(dead_code)]
+fn variant_client_forget_all_certificates_error_rs_to_js(
+    rs_obj: libparsec::ClientForgetAllCertificatesError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientForgetAllCertificatesError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientForgetAllCertificatesErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientForgetAllCertificatesError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientForgetAllCertificatesErrorStopped".into(),
             )?;
         }
     }
@@ -12349,6 +12335,44 @@ fn variant_testbed_error_rs_to_js(rs_obj: libparsec::TestbedError) -> Result<JsV
     Ok(js_obj)
 }
 
+// UpdateDeviceError
+
+#[allow(dead_code)]
+fn variant_update_device_error_rs_to_js(
+    rs_obj: libparsec::UpdateDeviceError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::UpdateDeviceError::DecryptionFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UpdateDeviceErrorDecryptionFailed".into(),
+            )?;
+        }
+        libparsec::UpdateDeviceError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"UpdateDeviceErrorInternal".into())?;
+        }
+        libparsec::UpdateDeviceError::InvalidData { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UpdateDeviceErrorInvalidData".into(),
+            )?;
+        }
+        libparsec::UpdateDeviceError::InvalidPath { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UpdateDeviceErrorInvalidPath".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // UserClaimListInitialInfosError
 
 #[allow(dead_code)]
@@ -16352,48 +16376,6 @@ pub fn clientCancelInvitation(client: u32, token: String) -> Promise {
     }))
 }
 
-// client_change_authentication
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientChangeAuthentication(
-    client_config: Object,
-    current_auth: Object,
-    new_auth: Object,
-) -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let client_config = client_config.into();
-        let client_config = struct_client_config_js_to_rs(client_config)?;
-
-        let current_auth = current_auth.into();
-        let current_auth = variant_device_access_strategy_js_to_rs(current_auth)?;
-
-        let new_auth = new_auth.into();
-        let new_auth = variant_device_save_strategy_js_to_rs(new_auth)?;
-
-        let ret =
-            libparsec::client_change_authentication(client_config, current_auth, new_auth).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_client_change_authentication_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    }))
-}
-
 // client_create_workspace
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -16494,6 +16476,34 @@ pub fn clientExportRecoveryDevice(client_handle: u32, device_label: String) -> P
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_export_recovery_device_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_forget_all_certificates
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientForgetAllCertificates(client: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::client_forget_all_certificates(client).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_forget_all_certificates_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -18508,6 +18518,105 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_testbed_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// update_device_change_authentication
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn updateDeviceChangeAuthentication(
+    config_dir: String,
+    current_auth: Object,
+    new_auth: Object,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let current_auth = current_auth.into();
+        let current_auth = variant_device_access_strategy_js_to_rs(current_auth)?;
+
+        let new_auth = new_auth.into();
+        let new_auth = variant_device_save_strategy_js_to_rs(new_auth)?;
+
+        let ret =
+            libparsec::update_device_change_authentication(&config_dir, current_auth, new_auth)
+                .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_available_device_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_update_device_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// update_device_overwrite_server_addr
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn updateDeviceOverwriteServerAddr(
+    config_dir: String,
+    access: Object,
+    new_server_addr: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let access = access.into();
+        let access = variant_device_access_strategy_js_to_rs(access)?;
+
+        let new_server_addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(new_server_addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret =
+            libparsec::update_device_overwrite_server_addr(&config_dir, access, new_server_addr)
+                .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |addr: libparsec::ParsecAddr| -> Result<String, &'static str> {
+                            Ok(addr.to_url().into())
+                        };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_update_device_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
