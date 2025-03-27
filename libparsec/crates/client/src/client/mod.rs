@@ -63,6 +63,7 @@ pub use recovery_device::{
 
 // Re-exposed for public API
 pub use crate::certif::{
+    CertifForgetAllCertificatesError as ClientForgetAllCertificatesError,
     CertifGetCurrentSelfProfileError as ClientGetCurrentSelfProfileError,
     CertifGetUserDeviceError as ClientGetUserDeviceError,
     CertifListUserDevicesError as ClientListUserDevicesError,
@@ -462,6 +463,18 @@ impl Client {
         self.certificates_ops
             .poll_server_for_new_certificates(None)
             .await
+    }
+
+    /// Forget all certificates from the local database, this is not needed under normal circumstances.
+    ///
+    /// Clearing the certificates might be useful in case the server database got rolled back
+    /// to a previous state, resulting in the local database containing certificates that are no
+    /// longer valid.
+    ///
+    /// Note that this scenario is technically similar to a server compromise, so this
+    /// operation should only result from a manual user action (e.g. CLI command).
+    pub async fn forget_all_certificates(&self) -> Result<(), ClientForgetAllCertificatesError> {
+        self.certificates_ops.forget_all_certificates().await
     }
 
     /// Refresh the workspace list cache by taking into account the certificates that
