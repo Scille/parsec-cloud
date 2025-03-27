@@ -11,7 +11,10 @@ use uuid::Uuid;
 
 use libparsec_types::prelude::*;
 
-use crate::{ChangeAuthenticationError, LoadDeviceError, SaveDeviceError, DEVICE_FILE_EXT};
+use crate::{
+    ArchiveDeviceError, LoadDeviceError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
+    DEVICE_FILE_EXT,
+};
 
 const KEYRING_SERVICE: &str = "parsec";
 
@@ -299,11 +302,25 @@ pub async fn save_device(
     })
 }
 
-pub async fn change_authentication(
+pub async fn update_device(
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
-) -> Result<AvailableDevice, ChangeAuthenticationError> {
-    let (device, created_on) = load_device(current_access).await?;
+    overwrite_server_addr: Option<ParsecAddr>,
+) -> Result<(AvailableDevice, ParsecAddr), UpdateDeviceError> {
+    let (mut device, created_on) = load_device(current_access).await?;
+
+    let old_server_addr = ParsecAddr::new(
+        device.organization_addr.hostname().to_owned(),
+        Some(device.organization_addr.port()),
+        device.organization_addr.use_ssl(),
+    );
+    if let Some(overwrite_server_addr) = overwrite_server_addr {
+        Arc::make_mut(&mut device).organization_addr = ParsecOrganizationAddr::new(
+            overwrite_server_addr,
+            device.organization_addr.organization_id().to_owned(),
+            device.organization_addr.root_verify_key().to_owned(),
+        );
+    }
 
     let available_device = save_device(new_access, &device, created_on).await?;
 
@@ -311,18 +328,18 @@ pub async fn change_authentication(
     let new_key_file = new_access.key_file();
 
     if key_file != new_key_file {
-        tokio::fs::remove_file(key_file)
-            .await
-            .map_err(|_| ChangeAuthenticationError::CannotRemoveOldDevice)?;
+        if let Err(err) = tokio::fs::remove_file(key_file).await {
+            log::warn!("Cannot remove old key file {key_file:?}: {err}");
+        }
     }
 
-    Ok(available_device)
+    Ok((available_device, old_server_addr))
 }
 
 pub const ARCHIVE_DEVICE_EXT: &str = "archived";
 
 /// Archive a device identified by its path.
-pub async fn archive_device(device_path: &Path) -> Result<(), crate::ArchiveDeviceError> {
+pub async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
     let archive_device_path = if let Some(current_file_extension) = device_path.extension() {
         // Add ARCHIVE_DEVICE_EXT to the current file extension resulting in extension `.{current}.{ARCHIVE_DEVICE_EXT}`.
         let mut ext = current_file_extension.to_owned();
@@ -340,15 +357,15 @@ pub async fn archive_device(device_path: &Path) -> Result<(), crate::ArchiveDevi
 
     tokio::fs::rename(device_path, archive_device_path)
         .await
-        .map_err(|e| crate::ArchiveDeviceError::Internal(e.into()))
+        .map_err(|e| ArchiveDeviceError::Internal(e.into()))
 }
 
-pub async fn remove_device(device_path: &Path) -> Result<(), crate::RemoveDeviceError> {
+pub async fn remove_device(device_path: &Path) -> Result<(), RemoveDeviceError> {
     log::debug!("Removing device {}", device_path.display());
 
     tokio::fs::remove_file(device_path)
         .await
-        .map_err(|e| crate::RemoveDeviceError::Internal(e.into()))
+        .map_err(|e| RemoveDeviceError::Internal(e.into()))
 }
 
 pub fn is_keyring_available() -> bool {

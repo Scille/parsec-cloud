@@ -29,7 +29,7 @@ macro_rules! impl_from_new_storage_error {
 impl_from_new_storage_error!(
     crate::LoadDeviceError,
     crate::SaveDeviceError,
-    crate::ChangeAuthenticationError,
+    crate::UpdateDeviceError,
     crate::ArchiveDeviceError,
     crate::RemoveDeviceError
 );
@@ -125,7 +125,7 @@ impl From<SaveDeviceError> for crate::SaveDeviceError {
     }
 }
 
-impl From<LoadDeviceError> for crate::ChangeAuthenticationError {
+impl From<LoadDeviceError> for crate::UpdateDeviceError {
     fn from(value: LoadDeviceError) -> Self {
         match value {
             LoadDeviceError::InvalidFileType => Self::InvalidData,
@@ -139,7 +139,7 @@ impl From<LoadDeviceError> for crate::ChangeAuthenticationError {
     }
 }
 
-impl From<SaveDeviceError> for crate::ChangeAuthenticationError {
+impl From<SaveDeviceError> for crate::UpdateDeviceError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
             SaveDeviceError::SetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
@@ -147,7 +147,7 @@ impl From<SaveDeviceError> for crate::ChangeAuthenticationError {
     }
 }
 
-impl From<RemoveDeviceError> for crate::ChangeAuthenticationError {
+impl From<RemoveDeviceError> for crate::UpdateDeviceError {
     fn from(value: RemoveDeviceError) -> Self {
         match value {
             RemoveDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
