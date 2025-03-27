@@ -164,20 +164,18 @@ pub async fn save_device(
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum ChangeAuthenticationError {
+pub enum UpdateDeviceError {
     #[error(transparent)]
     InvalidPath(anyhow::Error),
     #[error("Cannot deserialize file content")]
     InvalidData,
     #[error("Failed to decrypt file content")]
     DecryptionFailed,
-    #[error("Cannot remove the old device")]
-    CannotRemoveOldDevice,
     #[error(transparent)]
     Internal(anyhow::Error),
 }
 
-impl From<LoadDeviceError> for ChangeAuthenticationError {
+impl From<LoadDeviceError> for UpdateDeviceError {
     fn from(value: LoadDeviceError) -> Self {
         match value {
             LoadDeviceError::DecryptionFailed => Self::DecryptionFailed,
@@ -188,7 +186,7 @@ impl From<LoadDeviceError> for ChangeAuthenticationError {
     }
 }
 
-impl From<SaveDeviceError> for ChangeAuthenticationError {
+impl From<SaveDeviceError> for UpdateDeviceError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
             SaveDeviceError::InvalidPath(e) => Self::InvalidPath(e),
@@ -198,19 +196,40 @@ impl From<SaveDeviceError> for ChangeAuthenticationError {
 }
 
 /// Note `config_dir` is only used as discriminant for the testbed here
-pub async fn change_authentication(
+pub async fn update_device_change_authentication(
     #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
-) -> Result<AvailableDevice, ChangeAuthenticationError> {
+) -> Result<AvailableDevice, UpdateDeviceError> {
     #[cfg(feature = "test-with-testbed")]
-    if let Some(result) =
-        testbed::maybe_change_authentication(config_dir, current_access, new_access)
+    if let Some(result) = testbed::maybe_update_device(config_dir, current_access, new_access, None)
     {
-        return result;
+        return result.map(|(available_device, _)| available_device);
     }
 
-    platform::change_authentication(current_access, new_access).await
+    platform::update_device(current_access, new_access, None)
+        .await
+        .map(|(available_device, _)| available_device)
+}
+
+/// Note `config_dir` is only used as discriminant for the testbed here
+///
+/// Returns the old server address
+pub async fn update_device_overwrite_server_addr(
+    #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
+    access: &DeviceAccessStrategy,
+    new_server_addr: ParsecAddr,
+) -> Result<ParsecAddr, UpdateDeviceError> {
+    #[cfg(feature = "test-with-testbed")]
+    if let Some(result) =
+        testbed::maybe_update_device(config_dir, access, access, Some(new_server_addr.clone()))
+    {
+        return result.map(|(_, old_server_addr)| old_server_addr);
+    }
+
+    platform::update_device(access, access, Some(new_server_addr))
+        .await
+        .map(|(_, old_server_addr)| old_server_addr)
 }
 
 pub fn is_keyring_available() -> bool {
@@ -421,11 +440,11 @@ impl From<DecryptDeviceFileError> for LoadDeviceError {
     }
 }
 
-impl From<DecryptDeviceFileError> for ChangeAuthenticationError {
+impl From<DecryptDeviceFileError> for UpdateDeviceError {
     fn from(value: DecryptDeviceFileError) -> Self {
         match value {
-            DecryptDeviceFileError::Decrypt(_) => ChangeAuthenticationError::DecryptionFailed,
-            DecryptDeviceFileError::Load(_) => ChangeAuthenticationError::InvalidData,
+            DecryptDeviceFileError::Decrypt(_) => UpdateDeviceError::DecryptionFailed,
+            DecryptDeviceFileError::Load(_) => UpdateDeviceError::InvalidData,
         }
     }
 }

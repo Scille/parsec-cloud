@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use crate::{change_authentication, load_device, save_device};
+use crate::{load_device, save_device, update_device_change_authentication};
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
 use libparsec_tests_lite::prelude::*;
@@ -59,7 +59,7 @@ async fn same_key_file(tmp_path: TmpPath) {
         password: "P@ssw0rd1.".to_owned().into(),
     };
     TimeProvider::root_provider().mock_time_frozen("2000-01-02T00:00:00Z".parse().unwrap());
-    let available2 = change_authentication(Path::new(""), &access, &new_access)
+    let available2 = update_device_change_authentication(Path::new(""), &access, &new_access)
         .await
         .unwrap();
     TimeProvider::root_provider().unmock_time();
@@ -121,7 +121,7 @@ async fn different_key_file(tmp_path: TmpPath) {
         password: "P@ssw0rd.".to_owned().into(),
     };
 
-    change_authentication(Path::new(""), &access, &new_access)
+    update_device_change_authentication(Path::new(""), &access, &new_access)
         .await
         .unwrap();
 
@@ -154,7 +154,7 @@ async fn testbed_same_key_file(env: &TestbedEnv) {
         key_file,
         password: "P@ssw0rd1.".to_owned().into(),
     };
-    change_authentication(&env.discriminant_dir, &current_access, &new_access)
+    update_device_change_authentication(&env.discriminant_dir, &current_access, &new_access)
         .await
         .unwrap();
 
@@ -184,7 +184,7 @@ async fn testbed_different_key_file(env: &TestbedEnv) {
         key_file: new_key_file,
         password: "P@ssw0rd.".to_owned().into(),
     };
-    change_authentication(&env.discriminant_dir, &current_access, &new_access)
+    update_device_change_authentication(&env.discriminant_dir, &current_access, &new_access)
         .await
         .unwrap();
 

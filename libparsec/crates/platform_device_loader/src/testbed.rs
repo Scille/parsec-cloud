@@ -11,7 +11,7 @@ use libparsec_testbed::{
 };
 use libparsec_types::prelude::*;
 
-use crate::{ChangeAuthenticationError, LoadDeviceError, SaveDeviceError};
+use crate::{LoadDeviceError, SaveDeviceError, UpdateDeviceError};
 
 const STORE_ENTRY_KEY: &str = "platform_device_loader";
 const KEY_FILE_PASSWORD: &str = "P@ssw0rd."; // Use the same password for all simulated key files
@@ -340,20 +340,34 @@ pub(crate) fn maybe_save_device(
         })
 }
 
-pub(crate) fn maybe_change_authentication(
+pub(crate) fn maybe_update_device(
     config_dir: &Path,
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
-) -> Option<Result<AvailableDevice, ChangeAuthenticationError>> {
+    overwrite_server_addr: Option<ParsecAddr>,
+) -> Option<Result<(AvailableDevice, ParsecAddr), UpdateDeviceError>> {
     if let Some(result) = maybe_load_device(config_dir, current_access) {
-        let device = match result {
+        let mut device = match result {
             Ok(device) => device,
-            Err(e) => return Some(Err(ChangeAuthenticationError::from(e))),
+            Err(e) => return Some(Err(UpdateDeviceError::from(e))),
         };
+
+        let old_server_addr = ParsecAddr::new(
+            device.organization_addr.hostname().to_owned(),
+            Some(device.organization_addr.port()),
+            device.organization_addr.use_ssl(),
+        );
+        if let Some(overwrite_server_addr) = overwrite_server_addr {
+            Arc::make_mut(&mut device).organization_addr = ParsecOrganizationAddr::new(
+                overwrite_server_addr,
+                device.organization_addr.organization_id().to_owned(),
+                device.organization_addr.root_verify_key().to_owned(),
+            );
+        }
 
         let available_device = match maybe_save_device(config_dir, new_access, &device) {
             Some(Ok(available_device)) => available_device,
-            Some(Err(e)) => return Some(Err(ChangeAuthenticationError::from(e))),
+            Some(Err(e)) => return Some(Err(UpdateDeviceError::from(e))),
             None => return None,
         };
 
@@ -374,11 +388,11 @@ pub(crate) fn maybe_change_authentication(
                     c_key_file != key_file
                 });
 
-                Ok(available_device)
+                Ok((available_device, old_server_addr))
             });
         }
 
-        return Some(Ok(available_device));
+        return Some(Ok((available_device, old_server_addr)));
     }
 
     None
