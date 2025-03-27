@@ -455,6 +455,20 @@ async def client_share_workspace(
     raise NotImplementedError
 
 
+class ClientForgetAllCertificatesError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_forget_all_certificates(
+    client: Handle,
+) -> Result[None, ClientForgetAllCertificatesError]:
+    raise NotImplementedError
+
+
 def is_keyring_available() -> bool:
     raise NotImplementedError
 
