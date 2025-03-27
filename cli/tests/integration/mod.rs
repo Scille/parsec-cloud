@@ -86,12 +86,13 @@ async fn run_local_organization(
 }
 
 fn wait_for(mut reader: impl BufRead, buf: &mut String, text: &str) {
-    buf.clear();
+    let mut pos = buf.len();
     while reader.read_line(buf).is_ok() {
-        if buf.is_empty() || buf.contains(text) {
+        let new = &buf[pos..];
+        if new.is_empty() || new.contains(text) {
             break;
         }
-        buf.clear();
+        pos = buf.len();
     }
 }
 
