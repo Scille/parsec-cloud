@@ -458,8 +458,10 @@ impl Client {
 
     /// Force a poll of the server to fetch new certificates.
     ///
+    /// Returns the number of new certificates fetched.
+    ///
     /// This method is typically used by a monitor.
-    pub async fn poll_server_for_new_certificates(&self) -> Result<(), CertifPollServerError> {
+    pub async fn poll_server_for_new_certificates(&self) -> Result<usize, CertifPollServerError> {
         self.certificates_ops
             .poll_server_for_new_certificates(None)
             .await

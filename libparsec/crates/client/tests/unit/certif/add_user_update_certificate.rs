@@ -29,7 +29,7 @@ async fn ok(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -74,7 +74,7 @@ async fn ok_outsider_switch(
     if switched_is_self && !storage_initially_empty {
         p_assert_matches!(switch, MaybeRedactedSwitch::Switched);
     } else {
-        p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+        p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
     }
 }
 
@@ -270,7 +270,7 @@ async fn owner_of_realm_not_shared_to_outsider_is_ok(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -306,7 +306,7 @@ async fn realm_member_switching_to_outsider_is_ok(#[case] role: RealmRole, env: 
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]

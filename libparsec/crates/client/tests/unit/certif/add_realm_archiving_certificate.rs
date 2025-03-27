@@ -45,7 +45,7 @@ async fn ok(
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -97,7 +97,7 @@ async fn multiple(
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]

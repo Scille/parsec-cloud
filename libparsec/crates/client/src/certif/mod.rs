@@ -314,10 +314,11 @@ impl CertificateOps {
     // For readability, we define the public interface here and let the actual
     // implementation in separated submodules
 
+    /// Return the number of new certificates added to the storage.
     pub async fn poll_server_for_new_certificates(
         &self,
         latest_known_timestamps: Option<&PerTopicLastTimestamps>,
-    ) -> Result<(), CertifPollServerError> {
+    ) -> Result<usize, CertifPollServerError> {
         poll::poll_server_for_new_certificates(self, latest_known_timestamps).await
     }
 

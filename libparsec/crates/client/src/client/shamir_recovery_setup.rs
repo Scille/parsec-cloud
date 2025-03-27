@@ -36,5 +36,7 @@ pub async fn setup_shamir_recovery(
             CertifPollServerError::Internal(err) => err
                 .context("Cannot poll server for new certificates")
                 .into(),
-        })
+        })?;
+
+    Ok(())
 }

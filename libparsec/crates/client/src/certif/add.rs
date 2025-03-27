@@ -158,7 +158,7 @@ pub enum CertifAddCertificatesBatchError {
 #[derive(Debug)]
 pub enum MaybeRedactedSwitch {
     Switched,
-    NoSwitch,
+    NoSwitch { new_certificates: usize },
 }
 
 pub(super) async fn add_certificates_batch(
@@ -169,13 +169,15 @@ pub(super) async fn add_certificates_batch(
     shamir_recovery_certificates: &[Bytes],
     realm_certificates: &HashMap<VlobID, Vec<Bytes>>,
 ) -> Result<MaybeRedactedSwitch, CertifAddCertificatesBatchError> {
+    let mut new_certificates = 0;
+
     // Early exit if there is nothing to do
     if common_certificates.is_empty()
         && sequester_certificates.is_empty()
         && shamir_recovery_certificates.is_empty()
         && realm_certificates.is_empty()
     {
-        return Ok(MaybeRedactedSwitch::NoSwitch);
+        return Ok(MaybeRedactedSwitch::NoSwitch { new_certificates });
     }
 
     let send_event_on_invalid_certificate = |err: CertifAddCertificatesBatchError| {
@@ -205,6 +207,7 @@ pub(super) async fn add_certificates_batch(
             .map_err(send_event_on_invalid_certificate)?;
 
         store.add_next_sequester_certificate(cooked, signed).await?;
+        new_certificates += 1;
     }
 
     // Then add the common certificates...
@@ -215,6 +218,7 @@ pub(super) async fn add_certificates_batch(
             .map_err(send_event_on_invalid_certificate)?;
 
         store.add_next_common_certificate(cooked, signed).await?;
+        new_certificates += 1;
     }
 
     // ...now the remaining topics can be added (given they may depend on common)
@@ -226,6 +230,7 @@ pub(super) async fn add_certificates_batch(
                 .map_err(send_event_on_invalid_certificate)?;
 
             store.add_next_realm_x_certificate(cooked, signed).await?;
+            new_certificates += 1;
         }
     }
 
@@ -288,6 +293,7 @@ pub(super) async fn add_certificates_batch(
         store
             .add_next_shamir_recovery_certificate(cooked, signed)
             .await?;
+        new_certificates += 1;
     }
     if let NextShamirCertifExpect::Share { brief } = expect_next_certif {
         let hint = "<no more certificates>".to_string();
@@ -365,7 +371,7 @@ pub(super) async fn add_certificates_batch(
     };
     ops.event_bus.send(&event);
 
-    Ok(MaybeRedactedSwitch::NoSwitch)
+    Ok(MaybeRedactedSwitch::NoSwitch { new_certificates })
 }
 
 macro_rules! verify_certificate_signature {

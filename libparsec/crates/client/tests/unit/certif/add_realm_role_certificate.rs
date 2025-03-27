@@ -30,7 +30,7 @@ async fn ok(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -89,7 +89,7 @@ async fn ok_with_existing_certificates(
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -228,7 +228,7 @@ async fn different_realms_can_have_same_timestamp(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -339,7 +339,7 @@ async fn can_unshare_with_revoked(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -368,7 +368,7 @@ async fn create_with_profile(#[case] profile: UserProfile, env: &TestbedEnv) {
 
     match profile {
         UserProfile::Admin | UserProfile::Standard => {
-            p_assert_matches!(outcome, Ok(MaybeRedactedSwitch::NoSwitch));
+            p_assert_matches!(outcome, Ok(MaybeRedactedSwitch::NoSwitch { .. }));
         }
         UserProfile::Outsider => {
             p_assert_matches!(
@@ -556,7 +556,7 @@ async fn share_realm_with_outsider(#[case] role: RealmRole, env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch)
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -633,7 +633,7 @@ async fn user_becoming_outsider_can_still_share(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch)
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -706,7 +706,7 @@ async fn owner_giving_role(#[case] role: RealmRole, env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch)
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -739,7 +739,7 @@ async fn manager_giving_role(#[case] role: RealmRole, env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch)
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]

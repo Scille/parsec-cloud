@@ -41,5 +41,7 @@ pub async fn update_profile(
             CertifPollServerError::Internal(err) => err
                 .context("Cannot poll server for new certificates")
                 .into(),
-        })
+        })?;
+
+    Ok(())
 }

@@ -34,5 +34,7 @@ pub async fn revoke_user(client_ops: &Client, user: UserID) -> Result<(), Client
             CertifPollServerError::Internal(err) => err
                 .context("Cannot poll server for new certificates")
                 .into(),
-        })
+        })?;
+
+    Ok(())
 }
