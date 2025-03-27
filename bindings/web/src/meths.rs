@@ -221,6 +221,35 @@ fn enum_invitation_status_rs_to_js(value: libparsec::InvitationStatus) -> &'stat
     }
 }
 
+// LogLevel
+
+#[allow(dead_code)]
+fn enum_log_level_js_to_rs(raw_value: &str) -> Result<libparsec::LogLevel, JsValue> {
+    match raw_value {
+        "LogLevelDebug" => Ok(libparsec::LogLevel::Debug),
+        "LogLevelError" => Ok(libparsec::LogLevel::Error),
+        "LogLevelInfo" => Ok(libparsec::LogLevel::Info),
+        "LogLevelTrace" => Ok(libparsec::LogLevel::Trace),
+        "LogLevelWarn" => Ok(libparsec::LogLevel::Warn),
+        _ => {
+            let range_error = RangeError::new("Invalid value for enum LogLevel");
+            range_error.set_cause(&JsValue::from(raw_value));
+            Err(JsValue::from(range_error))
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn enum_log_level_rs_to_js(value: libparsec::LogLevel) -> &'static str {
+    match value {
+        libparsec::LogLevel::Debug => "LogLevelDebug",
+        libparsec::LogLevel::Error => "LogLevelError",
+        libparsec::LogLevel::Info => "LogLevelInfo",
+        libparsec::LogLevel::Trace => "LogLevelTrace",
+        libparsec::LogLevel::Warn => "LogLevelWarn",
+    }
+}
+
 // Platform
 
 #[allow(dead_code)]
@@ -602,6 +631,21 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
             )
         }
     };
+    let log_level = {
+        let js_val = Reflect::get(&obj, &"logLevel".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some({
+                let raw_string = js_val.as_string().ok_or_else(|| {
+                    let type_error = TypeError::new("value is not a string");
+                    type_error.set_cause(&js_val);
+                    JsValue::from(type_error)
+                })?;
+                enum_log_level_js_to_rs(raw_string.as_str())
+            }?)
+        }
+    };
     Ok(libparsec::ClientConfig {
         config_dir,
         data_base_dir,
@@ -609,6 +653,7 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
         workspace_storage_cache_size,
         with_monitors,
         prevent_sync_pattern,
+        log_level,
     })
 }
 
@@ -666,6 +711,11 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
         &"preventSyncPattern".into(),
         &js_prevent_sync_pattern,
     )?;
+    let js_log_level = match rs_obj.log_level {
+        Some(val) => JsValue::from_str(enum_log_level_rs_to_js(val)),
+        None => JsValue::NULL,
+    };
+    Reflect::set(&js_obj, &"logLevel".into(), &js_log_level)?;
     Ok(js_obj)
 }
 
@@ -3767,14 +3817,8 @@ fn struct_workspace_history2_file_stat_js_to_rs(
     let size = {
         let js_val = Reflect::get(&obj, &"size".into())?;
         {
-            let v = js_val
-                .dyn_into::<Number>()
-                .map_err(|_| TypeError::new("Not a number"))?
-                .value_of();
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                return Err(JsValue::from(TypeError::new("Not an u64 number")));
-            }
-            let v = v as u64;
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
             v
         }
     };
@@ -13004,14 +13048,8 @@ fn variant_workspace_history2_entry_stat_js_to_rs(
             let size = {
                 let js_val = Reflect::get(&obj, &"size".into())?;
                 {
-                    let v = js_val
-                        .dyn_into::<Number>()
-                        .map_err(|_| TypeError::new("Not a number"))?
-                        .value_of();
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
-                    }
-                    let v = v as u64;
+                    let v = u64::try_from(js_val)
+                        .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
                     v
                 }
             };

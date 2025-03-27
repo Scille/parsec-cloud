@@ -18,5 +18,6 @@ export function getClientConfig(): ClientConfig {
     workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
     withMonitors: true,
     preventSyncPattern: null,
+    logLevel: null,
   };
 }

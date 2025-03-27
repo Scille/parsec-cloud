@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from typing import Optional
-from .common import Path, Structure, U32BasedType, Variant, VariantItemUnit
+from .common import EnumItemUnit, Path, Structure, U32BasedType, Variant, VariantItemUnit, Enum
 
 
 class CacheSize(U32BasedType):
@@ -26,6 +26,14 @@ class MountpointMountStrategy(Variant):
     Disabled = VariantItemUnit()
 
 
+class LogLevel(Enum):
+    Error = EnumItemUnit()
+    Warn = EnumItemUnit()
+    Info = EnumItemUnit()
+    Debug = EnumItemUnit()
+    Trace = EnumItemUnit()
+
+
 class ClientConfig(Structure):
     config_dir: Path
     data_base_dir: Path
@@ -33,6 +41,7 @@ class ClientConfig(Structure):
     workspace_storage_cache_size: WorkspaceStorageCacheSize
     with_monitors: bool
     prevent_sync_pattern: Optional[str]
+    log_level: Optional[LogLevel]
 
 
 def get_default_data_base_dir() -> Path:
