@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Awaitable, Callable, cast
+from typing import cast
 
 import anyio
 import uvicorn
@@ -12,8 +12,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import FileResponse
 from starlette.types import Receive, Scope, Send
 
 from parsec._version import __version__ as parsec_version
@@ -44,22 +42,19 @@ tags_metadata = [
     },
 ]
 
-client_base_url = "/client"
+WEB_APP_BASE_URL = "/client"
 
 
-class SPARedirectMiddleware(BaseHTTPMiddleware):
-    def __init__(self, app: Any, static_dir: Path) -> None:
-        super().__init__(app)
-        self.static_dir = static_dir
-
-    async def dispatch(
-        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response | FileResponse:
-        response = await call_next(request)
-        if response.status_code == 404 and request.url.path.startswith(f"{client_base_url}/"):
-            index_path = os.path.join(self.static_dir, "index.html")
-            return FileResponse(index_path)
-        return response
+# This class is used to serve the static files of the web app (SPA)
+# and redirect to the index.html if file not found on server.
+# Useful when the user refresh the page or access a route directly.
+class StaticFilesWithSPARedirect(StaticFiles):
+    def lookup_path(self, path: str) -> tuple[str, os.stat_result | None]:
+        match super().lookup_path(path):
+            case (_, None):
+                return super().lookup_path("index.html")
+            case found:
+                return found
 
 
 def app_factory(
@@ -83,10 +78,11 @@ def app_factory(
     if with_client_web_app:
 
         def root(request: Request) -> Response:
-            return RedirectResponse(url=client_base_url, status_code=301)
+            return RedirectResponse(url=WEB_APP_BASE_URL, status_code=301)
 
-        app.mount(client_base_url, StaticFiles(directory=with_client_web_app, html=True))
-        app.add_middleware(SPARedirectMiddleware, static_dir=with_client_web_app)
+        app.mount(
+            WEB_APP_BASE_URL, StaticFilesWithSPARedirect(directory=with_client_web_app, html=True)
+        )
     else:
 
         def root(request: Request) -> Response:
