@@ -89,8 +89,8 @@
 import { MsModalResult, MsPasswordInput, asyncComputed, MsSpinner } from 'megashark-lib';
 import {
   AvailableDevice,
-  ClientChangeAuthenticationErrorTag,
-  changeAuthentication as parsecChangeAuthentication,
+  UpdateDeviceErrorTag,
+  updateDeviceChangeAuthentication,
   DeviceFileType,
   DeviceAccessStrategyPassword,
   DeviceAccessStrategyTag,
@@ -178,7 +178,7 @@ async function changeAuthentication(): Promise<void> {
     };
   }
 
-  const result = await parsecChangeAuthentication(accessStrategy, chooseAuthRef.value.getSaveStrategy());
+  const result = await updateDeviceChangeAuthentication(accessStrategy, chooseAuthRef.value.getSaveStrategy());
 
   if (result.ok) {
     props.informationManager.present(
@@ -191,7 +191,7 @@ async function changeAuthentication(): Promise<void> {
     await modalController.dismiss(undefined, MsModalResult.Confirm);
   } else {
     switch (result.error.tag) {
-      case ClientChangeAuthenticationErrorTag.DecryptionFailed: {
+      case UpdateDeviceErrorTag.DecryptionFailed: {
         errorMessage.value = 'MyProfilePage.errors.wrongPassword';
         break;
       }
