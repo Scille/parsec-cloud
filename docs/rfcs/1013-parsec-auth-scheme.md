@@ -63,7 +63,7 @@ to avoid creating an oracle about emails registered in the service.
 
 ```yml
 {
-  "cmd": "account_creation_step2_registration",
+  "cmd": "account_create",
   "req": {
     "email_validation_token": "EmailValidationToken",
     "account_manifest": "EncryptedAccountManifest",
