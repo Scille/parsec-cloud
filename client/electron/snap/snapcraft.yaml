@@ -1,6 +1,6 @@
 name: parsec
 base: core22
-version: 3.4.0-a.2
+version: 3.4.0-a.3+dev
 summary: Secure cloud framework
 description: Parsec is an open-source cloud-based application that allows simple yet cryptographically secure file hosting.
 grade: stable
