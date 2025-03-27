@@ -216,6 +216,34 @@ fn enum_invitation_status_rs_to_js(value: libparsec::InvitationStatus) -> &'stat
     }
 }
 
+// LogLevel
+
+#[allow(dead_code)]
+fn enum_log_level_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::LogLevel> {
+    match raw_value {
+        "LogLevelDebug" => Ok(libparsec::LogLevel::Debug),
+        "LogLevelError" => Ok(libparsec::LogLevel::Error),
+        "LogLevelInfo" => Ok(libparsec::LogLevel::Info),
+        "LogLevelTrace" => Ok(libparsec::LogLevel::Trace),
+        "LogLevelWarn" => Ok(libparsec::LogLevel::Warn),
+        _ => cx.throw_range_error(format!("Invalid value `{raw_value}` for enum LogLevel")),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_log_level_rs_to_js(value: libparsec::LogLevel) -> &'static str {
+    match value {
+        libparsec::LogLevel::Debug => "LogLevelDebug",
+        libparsec::LogLevel::Error => "LogLevelError",
+        libparsec::LogLevel::Info => "LogLevelInfo",
+        libparsec::LogLevel::Trace => "LogLevelTrace",
+        libparsec::LogLevel::Warn => "LogLevelWarn",
+    }
+}
+
 // Platform
 
 #[allow(dead_code)]
@@ -567,6 +595,20 @@ fn struct_client_config_js_to_rs<'a>(
             }
         }
     };
+    let log_level = {
+        let js_val: Handle<JsValue> = obj.get(cx, "logLevel")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some({
+                    let js_string = js_val.value(cx);
+                    enum_log_level_js_to_rs(cx, js_string.as_str())?
+                })
+            }
+        }
+    };
     Ok(libparsec::ClientConfig {
         config_dir,
         data_base_dir,
@@ -574,6 +616,7 @@ fn struct_client_config_js_to_rs<'a>(
         workspace_storage_cache_size,
         with_monitors,
         prevent_sync_pattern,
+        log_level,
     })
 }
 
@@ -626,6 +669,13 @@ fn struct_client_config_rs_to_js<'a>(
         None => JsNull::new(cx).as_value(cx),
     };
     js_obj.set(cx, "preventSyncPattern", js_prevent_sync_pattern)?;
+    let js_log_level = match rs_obj.log_level {
+        Some(elem) => JsString::try_new(cx, enum_log_level_rs_to_js(elem))
+            .or_throw(cx)?
+            .as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "logLevel", js_log_level)?;
     Ok(js_obj)
 }
 
@@ -3522,13 +3572,11 @@ fn struct_workspace_history2_file_stat_js_to_rs<'a>(
         }
     };
     let size = {
-        let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
+        let js_val: Handle<JsBigInt> = obj.get(cx, "size")?;
         {
-            let v = js_val.value(cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
@@ -3579,7 +3627,7 @@ fn struct_workspace_history2_file_stat_rs_to_js<'a>(
     js_obj.set(cx, "updated", js_updated)?;
     let js_version = JsNumber::new(cx, rs_obj.version as f64);
     js_obj.set(cx, "version", js_version)?;
-    let js_size = JsNumber::new(cx, rs_obj.size as f64);
+    let js_size = JsBigInt::from_u64(cx, rs_obj.size);
     js_obj.set(cx, "size", js_size)?;
     Ok(js_obj)
 }
@@ -11740,13 +11788,11 @@ fn variant_workspace_history2_entry_stat_js_to_rs<'a>(
                 }
             };
             let size = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "size")?;
+                let js_val: Handle<JsBigInt> = obj.get(cx, "size")?;
                 {
-                    let v = js_val.value(cx);
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        cx.throw_type_error("Not an u64 number")?
-                    }
-                    let v = v as u64;
+                    let v = js_val
+                        .to_u64(cx)
+                        .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
                     v
                 }
             };
@@ -11895,7 +11941,7 @@ fn variant_workspace_history2_entry_stat_rs_to_js<'a>(
             js_obj.set(cx, "updated", js_updated)?;
             let js_version = JsNumber::new(cx, version as f64);
             js_obj.set(cx, "version", js_version)?;
-            let js_size = JsNumber::new(cx, size as f64);
+            let js_size = JsBigInt::from_u64(cx, size);
             js_obj.set(cx, "size", js_size)?;
         }
         libparsec::WorkspaceHistory2EntryStat::Folder {
@@ -20923,24 +20969,20 @@ fn workspace_history2_fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let offset = {
-        let js_val = cx.argument::<JsNumber>(2)?;
+        let js_val = cx.argument::<JsBigInt>(2)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };
     let size = {
-        let js_val = cx.argument::<JsNumber>(3)?;
+        let js_val = cx.argument::<JsBigInt>(3)?;
         {
-            let v = js_val.value(&mut cx);
-            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                cx.throw_type_error("Not an u64 number")?
-            }
-            let v = v as u64;
+            let v = js_val
+                .to_u64(&mut cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
             v
         }
     };

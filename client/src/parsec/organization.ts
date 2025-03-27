@@ -54,6 +54,7 @@ export async function createOrganization(
       workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
       withMonitors: false,
       preventSyncPattern: null,
+      logLevel: null,
     };
     const result = await libparsec.bootstrapOrganization(
       config,
@@ -114,6 +115,7 @@ export async function bootstrapOrganization(
       workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
       withMonitors: false,
       preventSyncPattern: null,
+      logLevel: null,
     };
     const result = await libparsec.bootstrapOrganization(
       config,

@@ -11,6 +11,8 @@ pub use libparsec_platform_device_loader::{
 };
 pub use libparsec_types::prelude::*;
 
+pub use log::Level as LogLevel;
+
 /// Partial client configuration.
 /// This configuration should be configured by the user before converting it to
 /// the proper configuration [`libparsec_client::ClientConfig`] by using default values as fallback.
@@ -24,6 +26,7 @@ pub struct ClientConfig {
     /// The prevent sync pattern, if not provided will use a default pattern.
     /// The pattern is formatted like a `.gitignore` file.
     pub prevent_sync_pattern: Option<String>,
+    pub log_level: Option<LogLevel>,
 }
 
 impl Default for ClientConfig {
@@ -35,6 +38,7 @@ impl Default for ClientConfig {
             workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
             with_monitors: false,
             prevent_sync_pattern: None,
+            log_level: None,
         }
     }
 }

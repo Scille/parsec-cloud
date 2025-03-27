@@ -84,9 +84,13 @@ pub async fn init_libparsec(
 #[cfg(not(target_arch = "wasm32"))]
 fn init_logger(config: &ClientConfig) {
     let log_env = env_logger::Env::default()
-        // TODO: ClientConfig should provide the log level to use
-        // https://github.com/Scille/parsec-cloud/issues/9579
-        .filter_or("PARSEC_RUST_LOG", "info")
+        .filter_or(
+            "PARSEC_RUST_LOG",
+            config
+                .log_level
+                .map(|lvl| lvl.to_string())
+                .unwrap_or_else(|| "info".to_string()),
+        )
         .write_style("PARSEC_RUST_LOG_STYLE");
     let mut builder = env_logger::Builder::from_env(log_env);
     let log_file_path = std::env::var_os("PARSEC_RUST_LOG_FILE")

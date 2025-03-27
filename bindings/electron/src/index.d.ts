@@ -50,6 +50,14 @@ export enum InvitationStatus {
     Pending = 'InvitationStatusPending',
 }
 
+export enum LogLevel {
+    Debug = 'LogLevelDebug',
+    Error = 'LogLevelError',
+    Info = 'LogLevelInfo',
+    Trace = 'LogLevelTrace',
+    Warn = 'LogLevelWarn',
+}
+
 export enum Platform {
     Android = 'PlatformAndroid',
     Linux = 'PlatformLinux',
@@ -99,6 +107,7 @@ export interface ClientConfig {
     workspaceStorageCacheSize: WorkspaceStorageCacheSize
     withMonitors: boolean
     preventSyncPattern: string | null
+    logLevel: LogLevel | null
 }
 
 
