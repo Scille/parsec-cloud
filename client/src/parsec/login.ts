@@ -7,7 +7,6 @@ import { parseParsecAddr } from '@/parsec/organization';
 import { getParsecHandle } from '@/parsec/routing';
 import {
   AvailableDevice,
-  ClientChangeAuthenticationError,
   ClientEvent,
   ClientEventGreetingAttemptCancelled,
   ClientEventGreetingAttemptJoined,
@@ -26,6 +25,7 @@ import {
   DeviceSaveStrategyTag,
   OrganizationID,
   Result,
+  UpdateDeviceError,
   UserProfile,
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
@@ -299,12 +299,12 @@ export async function getCurrentAvailableDevice(): Promise<Result<AvailableDevic
   return { ok: true, value: currentAvailableDevice };
 }
 
-export async function changeAuthentication(
+export async function updateDeviceChangeAuthentication(
   accessStrategy: DeviceAccessStrategy,
   saveStrategy: DeviceSaveStrategy,
-): Promise<Result<null, ClientChangeAuthenticationError>> {
+): Promise<Result<AvailableDevice, UpdateDeviceError>> {
   const clientConfig = getClientConfig();
-  return await libparsec.clientChangeAuthentication(clientConfig, accessStrategy, saveStrategy);
+  return await libparsec.updateDeviceChangeAuthentication(clientConfig.configDir, accessStrategy, saveStrategy);
 }
 
 export async function isKeyringAvailable(): Promise<boolean> {
