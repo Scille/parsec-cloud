@@ -37,17 +37,27 @@ async fn empty(env: &TestbedEnv) {
         },
     );
 
-    ops.poll_server_for_new_certificates(None).await.unwrap();
+    p_assert_matches!(
+        ops.poll_server_for_new_certificates(None).await,
+        Ok(new_certificates) if new_certificates == 0
+    );
 }
 
-async fn poll_testbed_certificates(env: &TestbedEnv, device: Arc<LocalDevice>) {
+async fn poll_testbed_certificates(
+    env: &TestbedEnv,
+    device: Arc<LocalDevice>,
+    expected_new_certificates: usize,
+) {
     let ops = certificates_ops_factory(env, &device).await;
+
+    ops.forget_all_certificates().await.unwrap();
 
     test_register_send_hook(&env.discriminant_dir, {
         let rep = authenticated_cmds::latest::certificate_get::Rep::Ok {
             common_certificates: env.get_common_certificates_signed(),
             sequester_certificates: env.get_sequester_certificates_signed(),
-            shamir_recovery_certificates: env.get_shamir_recovery_certificates_signed(),
+            shamir_recovery_certificates: env
+                .get_shamir_recovery_certificates_signed_for_user_topic(device.user_id),
             realm_certificates: env.get_realms_certificates_signed(),
         };
         move |req: authenticated_cmds::latest::certificate_get::Req| {
@@ -59,60 +69,18 @@ async fn poll_testbed_certificates(env: &TestbedEnv, device: Arc<LocalDevice>) {
         }
     });
 
-    ops.poll_server_for_new_certificates(None).await.unwrap();
+    p_assert_matches!(
+        ops.poll_server_for_new_certificates(None).await,
+        Ok(new_certificates) if new_certificates == expected_new_certificates
+    );
 
     // Re-poll, but nothing more to get
 
-    let mut expected_common_after = None;
-    let mut expected_shamir_recovery_after: Option<DateTime> = None;
-    let mut expected_realm_after: HashMap<VlobID, DateTime> = HashMap::default();
-    let mut expected_sequester_after = None;
-    for certif in env.template.certificates() {
-        match certif.certificate {
-            AnyArcCertificate::User(c) => {
-                expected_common_after = Some(c.timestamp);
-            }
-            AnyArcCertificate::Device(c) => {
-                expected_common_after = Some(c.timestamp);
-            }
-            AnyArcCertificate::UserUpdate(c) => {
-                expected_common_after = Some(c.timestamp);
-            }
-            AnyArcCertificate::RevokedUser(c) => {
-                expected_common_after = Some(c.timestamp);
-            }
-            AnyArcCertificate::RealmRole(c) => {
-                expected_realm_after.insert(c.realm_id, c.timestamp);
-            }
-            AnyArcCertificate::RealmName(c) => {
-                expected_realm_after.insert(c.realm_id, c.timestamp);
-            }
-            AnyArcCertificate::RealmKeyRotation(c) => {
-                expected_realm_after.insert(c.realm_id, c.timestamp);
-            }
-            AnyArcCertificate::RealmArchiving(c) => {
-                expected_realm_after.insert(c.realm_id, c.timestamp);
-            }
-            AnyArcCertificate::ShamirRecoveryBrief(c) => {
-                expected_shamir_recovery_after = Some(c.timestamp);
-            }
-            AnyArcCertificate::ShamirRecoveryShare(c) => {
-                expected_shamir_recovery_after = Some(c.timestamp);
-            }
-            AnyArcCertificate::ShamirRecoveryDeletion(c) => {
-                expected_shamir_recovery_after = Some(c.timestamp);
-            }
-            AnyArcCertificate::SequesterAuthority(c) => {
-                expected_sequester_after = Some(c.timestamp);
-            }
-            AnyArcCertificate::SequesterService(c) => {
-                expected_sequester_after = Some(c.timestamp);
-            }
-            AnyArcCertificate::SequesterRevokedService(c) => {
-                expected_sequester_after = Some(c.timestamp);
-            }
-        }
-    }
+    let expected_common_after = Some(env.get_last_common_certificate_timestamp());
+    let expected_realm_after = env.get_last_realm_certificate_timestamp_for_all_realms();
+    let expected_sequester_after = env.get_last_sequester_certificate_timestamp();
+    let expected_shamir_recovery_after =
+        env.get_last_shamir_recovery_certificate_timestamp(device.user_id);
 
     test_register_send_hook(
         &env.discriminant_dir,
@@ -131,20 +99,34 @@ async fn poll_testbed_certificates(env: &TestbedEnv, device: Arc<LocalDevice>) {
         },
     );
 
-    ops.poll_server_for_new_certificates(None).await.unwrap();
+    p_assert_matches!(
+        ops.poll_server_for_new_certificates(None).await,
+        Ok(new_certificates) if new_certificates == 0
+    );
 }
 
 #[parsec_test(testbed = "minimal")]
 async fn minimal(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    poll_testbed_certificates(env, alice).await;
+    poll_testbed_certificates(env, alice, 2).await;
 }
 
 #[parsec_test(testbed = "coolorg")]
 async fn coolorg(env: &TestbedEnv) {
-    // Cannot use Alice@dev1 here given its certificate storage is not empty
-    let alice = env.local_device("alice@dev2");
-    poll_testbed_certificates(env, alice).await;
+    let alice = env.local_device("alice@dev1");
+    poll_testbed_certificates(env, alice, 14).await;
+}
+
+#[parsec_test(testbed = "sequestered")]
+async fn sequestered(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    poll_testbed_certificates(env, alice, 14).await;
+}
+
+#[parsec_test(testbed = "shamir")]
+async fn shamir(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    poll_testbed_certificates(env, alice, 15).await;
 }
 
 #[parsec_test(testbed = "minimal")]

@@ -29,7 +29,7 @@ async fn ok(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -303,5 +303,5 @@ async fn revoke_owner(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
