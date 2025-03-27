@@ -13,7 +13,6 @@ from .common import (
     Handle,
     HumanHandle,
     OrganizationID,
-    Password,
     Path,
     Result,
     Structure,
@@ -29,6 +28,7 @@ from .common import (
     EnumItemUnit,
     NonZeroU8,
 )
+from .device import DeviceAccessStrategy
 from .invite import DeviceSaveStrategy, AvailableDevice
 from .config import ClientConfig
 from .events import OnClientEventCallback
@@ -44,18 +44,6 @@ async def wait_for_device_available(
     device_id: DeviceID,
 ) -> Result[None, WaitForDeviceAvailableError]:
     raise NotImplementedError
-
-
-class DeviceAccessStrategy(Variant):
-    class Keyring:
-        key_file: Path
-
-    class Password:
-        password: Password
-        key_file: Path
-
-    class Smartcard:
-        key_file: Path
 
 
 class ClientStartError(ErrorVariant):
@@ -124,28 +112,6 @@ class ClientInfo(Structure):
 async def client_info(
     client: Handle,
 ) -> Result[ClientInfo, ClientInfoError]:
-    raise NotImplementedError
-
-
-class ClientChangeAuthenticationError(ErrorVariant):
-    class InvalidPath:
-        pass
-
-    class InvalidData:
-        pass
-
-    class DecryptionFailed:
-        pass
-
-    class Internal:
-        pass
-
-
-async def client_change_authentication(
-    client_config: ClientConfig,
-    current_auth: DeviceAccessStrategy,
-    new_auth: DeviceSaveStrategy,
-) -> Result[None, ClientChangeAuthenticationError]:
     raise NotImplementedError
 
 

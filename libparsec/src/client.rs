@@ -14,7 +14,6 @@ pub use libparsec_client::{
     SelfShamirRecoveryInfo, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
-use libparsec_platform_device_loader::ChangeAuthenticationError;
 use libparsec_types::prelude::*;
 pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
 
@@ -373,52 +372,6 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
             })?,
         server_config: client.server_config(),
     })
-}
-
-/*
- * Change access
- */
-
-#[derive(Debug, thiserror::Error)]
-pub enum ClientChangeAuthenticationError {
-    #[error(transparent)]
-    InvalidPath(anyhow::Error),
-    #[error("Cannot deserialize file content")]
-    InvalidData,
-    #[error("Failed to decrypt file content")]
-    DecryptionFailed,
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-impl From<ChangeAuthenticationError> for ClientChangeAuthenticationError {
-    fn from(value: ChangeAuthenticationError) -> Self {
-        match value {
-            ChangeAuthenticationError::InvalidPath(e) => Self::InvalidPath(e),
-            ChangeAuthenticationError::InvalidData => Self::InvalidData,
-            ChangeAuthenticationError::DecryptionFailed => Self::DecryptionFailed,
-            ChangeAuthenticationError::CannotRemoveOldDevice => {
-                Self::Internal(anyhow::anyhow!(value))
-            }
-            ChangeAuthenticationError::Internal(e) => Self::Internal(e),
-        }
-    }
-}
-
-pub async fn client_change_authentication(
-    config: ClientConfig,
-    current_auth: DeviceAccessStrategy,
-    new_auth: DeviceSaveStrategy,
-) -> Result<(), ClientChangeAuthenticationError> {
-    let key_file = current_auth.key_file().to_owned();
-
-    libparsec_platform_device_loader::change_authentication(
-        &config.config_dir,
-        &current_auth,
-        &new_auth.into_access(key_file),
-    )
-    .await?;
-    Ok(())
 }
 
 /*
