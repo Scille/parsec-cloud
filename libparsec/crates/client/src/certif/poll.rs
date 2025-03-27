@@ -44,6 +44,8 @@ impl From<CertifStoreError> for CertifPollServerError {
 
 /// Poll the server for new certificates and add them to the local storage.
 ///
+/// Returns the number of new certificates added to the storage.
+///
 /// If `requirements` is specified, no poll will be done if the current certificates
 /// on the local storage already satisfy the requirements.
 ///
@@ -54,7 +56,7 @@ impl From<CertifStoreError> for CertifPollServerError {
 pub(super) async fn poll_server_for_new_certificates(
     ops: &CertificateOps,
     requirements: Option<&PerTopicLastTimestamps>,
-) -> Result<(), CertifPollServerError> {
+) -> Result<usize, CertifPollServerError> {
     let _guard = ops.update_lock.lock().await;
 
     loop {
@@ -66,7 +68,7 @@ pub(super) async fn poll_server_for_new_certificates(
         // events given the server has already been polled in the meantime.
         if let Some(requirements) = requirements {
             if last_stored_timestamps.is_up_to_date(requirements) {
-                return Ok(());
+                return Ok(0);
             }
         }
 
@@ -96,7 +98,7 @@ pub(super) async fn poll_server_for_new_certificates(
             .await??;
 
         match outcome {
-            MaybeRedactedSwitch::NoSwitch => return Ok(()),
+            MaybeRedactedSwitch::NoSwitch { new_certificates } => return Ok(new_certificates),
             // Unlike other profiles, Outsider is required to use the redacted
             // certificates, hence our local certificates have been flushed and we
             // must go back to the server to get the all certificates from scratch.
