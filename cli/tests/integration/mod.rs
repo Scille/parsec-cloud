@@ -1,3 +1,4 @@
+mod certificate;
 mod device;
 mod device_option;
 mod invitations;
