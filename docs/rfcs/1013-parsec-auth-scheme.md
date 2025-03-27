@@ -42,7 +42,7 @@ To start the account creation, the client start by sending its email.
 
 ```yml
 {
-  "cmd": "account_creation_step1_email_validation",
+  "cmd": "account_send_email_validation_token",
   "req": {
     "email": "Email"
   },
