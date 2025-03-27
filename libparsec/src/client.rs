@@ -5,8 +5,9 @@ use std::{collections::HashMap, num::NonZeroU8, path::Path, sync::Arc};
 use libparsec_client::ServerConfig;
 pub use libparsec_client::{
     ClientAcceptTosError, ClientCreateWorkspaceError, ClientDeleteShamirRecoveryError,
-    ClientGetCurrentSelfProfileError, ClientGetSelfShamirRecoveryError, ClientGetTosError,
-    ClientGetUserDeviceError, ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
+    ClientForgetAllCertificatesError, ClientGetCurrentSelfProfileError,
+    ClientGetSelfShamirRecoveryError, ClientGetTosError, ClientGetUserDeviceError,
+    ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
     ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
     ClientRenameWorkspaceError, ClientRevokeUserError, ClientSetupShamirRecoveryError,
     ClientShareWorkspaceError, ClientUserUpdateProfileError, DeviceInfo, OtherShamirRecoveryInfo,
@@ -314,6 +315,18 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
     }
 
     Ok(())
+}
+
+/*
+ * Client forget all certificates
+ */
+
+pub async fn client_forget_all_certificates(
+    client: Handle,
+) -> Result<(), ClientForgetAllCertificatesError> {
+    let client = borrow_client(client)?;
+
+    client.forget_all_certificates().await
 }
 
 /*
