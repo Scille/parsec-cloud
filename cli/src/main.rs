@@ -32,6 +32,9 @@ enum Command {
     /// Contains subcommands related to workspace
     #[command(subcommand)]
     Workspace(workspace::Group),
+    /// Contains subcommands related to certificate
+    #[command(subcommand)]
+    Certificate(certificate::Group),
     #[cfg(feature = "testenv")]
     /// Create a temporary environment and initialize a test setup for parsec.
     /// #### WARNING: it also leaves an in-memory server running in the background.
@@ -64,6 +67,7 @@ async fn main() -> anyhow::Result<()> {
         Command::User(user) => user::dispatch_command(user).await,
         Command::Server(server) => server::dispatch_command(server).await,
         Command::Workspace(workspace) => workspace::dispatch_command(workspace).await,
+        Command::Certificate(certificate) => certificate::dispatch_command(certificate).await,
         #[cfg(feature = "testenv")]
         Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,
         Command::Ls(ls) => ls::main(ls).await,

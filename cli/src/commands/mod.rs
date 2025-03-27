@@ -1,3 +1,4 @@
+pub mod certificate;
 pub mod device;
 pub mod invite;
 pub mod ls;
