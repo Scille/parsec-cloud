@@ -57,7 +57,9 @@ To start the account creation, the client start by sending its email.
 }
 ```
 
-On `ok`, the server would have sent a mail with a unique token used for next the request used to register the authentication method:
+On `ok`, the server would have sent a mail with a unique token used for next the request used to register the authentication method.
+If the email is already registered in the service, a `ok` response will still be sent (without token creation)
+to avoid creating an oracle about emails registered in the service.
 
 ```yml
 {
