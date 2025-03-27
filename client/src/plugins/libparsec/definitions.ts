@@ -738,36 +738,6 @@ export type ClientCancelInvitationError =
   | ClientCancelInvitationErrorNotFound
   | ClientCancelInvitationErrorOffline
 
-// ClientChangeAuthenticationError
-export enum ClientChangeAuthenticationErrorTag {
-    DecryptionFailed = 'ClientChangeAuthenticationErrorDecryptionFailed',
-    Internal = 'ClientChangeAuthenticationErrorInternal',
-    InvalidData = 'ClientChangeAuthenticationErrorInvalidData',
-    InvalidPath = 'ClientChangeAuthenticationErrorInvalidPath',
-}
-
-export interface ClientChangeAuthenticationErrorDecryptionFailed {
-    tag: ClientChangeAuthenticationErrorTag.DecryptionFailed
-    error: string
-}
-export interface ClientChangeAuthenticationErrorInternal {
-    tag: ClientChangeAuthenticationErrorTag.Internal
-    error: string
-}
-export interface ClientChangeAuthenticationErrorInvalidData {
-    tag: ClientChangeAuthenticationErrorTag.InvalidData
-    error: string
-}
-export interface ClientChangeAuthenticationErrorInvalidPath {
-    tag: ClientChangeAuthenticationErrorTag.InvalidPath
-    error: string
-}
-export type ClientChangeAuthenticationError =
-  | ClientChangeAuthenticationErrorDecryptionFailed
-  | ClientChangeAuthenticationErrorInternal
-  | ClientChangeAuthenticationErrorInvalidData
-  | ClientChangeAuthenticationErrorInvalidPath
-
 // ClientCreateWorkspaceError
 export enum ClientCreateWorkspaceErrorTag {
     Internal = 'ClientCreateWorkspaceErrorInternal',
@@ -1005,6 +975,24 @@ export type ClientExportRecoveryDeviceError =
   | ClientExportRecoveryDeviceErrorOffline
   | ClientExportRecoveryDeviceErrorStopped
   | ClientExportRecoveryDeviceErrorTimestampOutOfBallpark
+
+// ClientForgetAllCertificatesError
+export enum ClientForgetAllCertificatesErrorTag {
+    Internal = 'ClientForgetAllCertificatesErrorInternal',
+    Stopped = 'ClientForgetAllCertificatesErrorStopped',
+}
+
+export interface ClientForgetAllCertificatesErrorInternal {
+    tag: ClientForgetAllCertificatesErrorTag.Internal
+    error: string
+}
+export interface ClientForgetAllCertificatesErrorStopped {
+    tag: ClientForgetAllCertificatesErrorTag.Stopped
+    error: string
+}
+export type ClientForgetAllCertificatesError =
+  | ClientForgetAllCertificatesErrorInternal
+  | ClientForgetAllCertificatesErrorStopped
 
 // ClientGetSelfShamirRecoveryError
 export enum ClientGetSelfShamirRecoveryErrorTag {
@@ -2549,6 +2537,36 @@ export interface TestbedErrorInternal {
 export type TestbedError =
   | TestbedErrorDisabled
   | TestbedErrorInternal
+
+// UpdateDeviceError
+export enum UpdateDeviceErrorTag {
+    DecryptionFailed = 'UpdateDeviceErrorDecryptionFailed',
+    Internal = 'UpdateDeviceErrorInternal',
+    InvalidData = 'UpdateDeviceErrorInvalidData',
+    InvalidPath = 'UpdateDeviceErrorInvalidPath',
+}
+
+export interface UpdateDeviceErrorDecryptionFailed {
+    tag: UpdateDeviceErrorTag.DecryptionFailed
+    error: string
+}
+export interface UpdateDeviceErrorInternal {
+    tag: UpdateDeviceErrorTag.Internal
+    error: string
+}
+export interface UpdateDeviceErrorInvalidData {
+    tag: UpdateDeviceErrorTag.InvalidData
+    error: string
+}
+export interface UpdateDeviceErrorInvalidPath {
+    tag: UpdateDeviceErrorTag.InvalidPath
+    error: string
+}
+export type UpdateDeviceError =
+  | UpdateDeviceErrorDecryptionFailed
+  | UpdateDeviceErrorInternal
+  | UpdateDeviceErrorInvalidData
+  | UpdateDeviceErrorInvalidPath
 
 // UserClaimListInitialInfosError
 export enum UserClaimListInitialInfosErrorTag {
@@ -4438,11 +4456,6 @@ export interface LibParsecPlugin {
         client: Handle,
         token: InvitationToken
     ): Promise<Result<null, ClientCancelInvitationError>>
-    clientChangeAuthentication(
-        client_config: ClientConfig,
-        current_auth: DeviceAccessStrategy,
-        new_auth: DeviceSaveStrategy
-    ): Promise<Result<null, ClientChangeAuthenticationError>>
     clientCreateWorkspace(
         client: Handle,
         name: EntryName
@@ -4454,6 +4467,9 @@ export interface LibParsecPlugin {
         client_handle: Handle,
         device_label: DeviceLabel
     ): Promise<Result<[string, Uint8Array], ClientExportRecoveryDeviceError>>
+    clientForgetAllCertificates(
+        client: Handle
+    ): Promise<Result<null, ClientForgetAllCertificatesError>>
     clientGetSelfShamirRecovery(
         client_handle: Handle
     ): Promise<Result<SelfShamirRecoveryInfo, ClientGetSelfShamirRecoveryError>>
@@ -4694,6 +4710,16 @@ export interface LibParsecPlugin {
         template: string,
         test_server: ParsecAddr | null
     ): Promise<Result<Path, TestbedError>>
+    updateDeviceChangeAuthentication(
+        config_dir: Path,
+        current_auth: DeviceAccessStrategy,
+        new_auth: DeviceSaveStrategy
+    ): Promise<Result<AvailableDevice, UpdateDeviceError>>
+    updateDeviceOverwriteServerAddr(
+        config_dir: Path,
+        access: DeviceAccessStrategy,
+        new_server_addr: ParsecAddr
+    ): Promise<Result<ParsecAddr, UpdateDeviceError>>
     validateDeviceLabel(
         raw: string
     ): Promise<boolean>
