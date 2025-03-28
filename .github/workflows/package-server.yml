@@ -42,7 +42,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  node-version: 18.12.0
+  node-version: 22.14.0
   poetry-version: 2.1.1
 
 permissions:

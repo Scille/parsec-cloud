@@ -2,12 +2,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 const { argv, exit, platform } = require('node:process');
-const { spawnSync } = require('node:child_process');
-const fs = require("fs");
+const { spawn, spawnSync } = require('node:child_process');
+const fs = require("node:fs");
+const fsPromise = require("node:fs/promises");
 const path = require("path");
 
 const DEFAULT_PROFILE = "release";
 const WORKDIR = path.join(__dirname, "..");
+const OUTPUT_DIR = 'dist'
+const BUILD_LOG = OUTPUT_DIR + '/cargo-build-log.json';
 
 switch (argv.length) {
   // argv[0] is node, argv[1] is build.js
@@ -29,17 +32,34 @@ function on_windows() {
   return platform == 'win32';
 }
 
+/**
+  * @param {string[]} args
+  * @param {SpawnSyncOptionsWithStringEncoding} options
+  * @returns {SpawnSyncReturns<Buffer>}
+  */
 function exec_cmd(args, options) {
-  console.log(">>> ", args.join(" "));
+  const command = args.join(" ");
+  console.log(">>> ", command);
 
-  ret = spawnSync(args[0], args.slice(1), options);
+  ret = spawnSync(args[0], args.slice(1), { stdio: 'inherit', cwd: WORKDIR, ...options });
 
-  if (ret.signal != null) {
-    console.error(`The command ${args.join(" ")} received the signal ${ret.signal}`);
-    exit(1);
-  }
+  handle_cmd_status(command, ret)
 
   return ret;
+}
+
+/**
+  * @param {string} name
+  * @param {SpawnSyncReturns<Buffer>} ret
+  */
+function handle_cmd_status(name, ret) {
+  if (ret.status !== 0) {
+    console.error(`The following command as fail: ${name}`);
+    console.error(`  status: ${ret.status}`);
+    console.error(`  signal: ${ret.signal}`);
+    console.error(`  error: ${ret.error}`);
+    exit(1)
+  }
 }
 
 // Fetch Cargo compile flags
@@ -51,53 +71,54 @@ function fetch_cargo_flags() {
     "--quiet",
   ];
 
-  ret = exec_cmd(ARGS, {
+  let ret = exec_cmd(ARGS, {
     // ignore stdin, stdout in pipe, stderr to actual stderr
     stdio: ['ignore', 'pipe', 'inherit'],
-    cwd: WORKDIR,
   });
-
-  if (ret.status != 0) {
-    console.log("stdout:", ret.stdout.toString());
-    exit(ret.status);
-  }
 
   return ret.stdout.toString(encoding = "ascii").trim().split(" ");
 }
 
-function build_electron_bindings(cargo_flags) {
-  // On Windows only .exe/.bat can be directly executed, `npx.cmd` is the bat version of `npx`
-  const ARGS = [
-    on_windows() ? "npx.cmd" : "npx",
-    "cargo-cp-artifact",
-    "--npm",
-    "cdylib",
-    "dist/libparsec.node",
-    "--",
-    "cargo",
-    "build",
-    "--locked",
-    "--message-format=json-render-diagnostics",
-    ...cargo_flags
-  ];
+async function build_electron_bindings(cargo_flags) {
+  const CARGO_ARGS = ['cargo', 'build', '--locked', '--verbose', '--message-format=json-render-diagnostics', '--package', 'libparsec_bindings_electron', ...cargo_flags];
+  const log = await new Promise((resolve) => {
+    const stream = fs.createWriteStream(BUILD_LOG);
+    stream.on('ready', () => resolve(stream));
+  });
 
-  ret2 = exec_cmd(ARGS,
+  exec_cmd(
+    CARGO_ARGS,
     {
-      stdio: 'inherit',
-      cwd: WORKDIR,
-    },
+      stdio: ['inherit', log, 'inherit'],
+    }
   );
-
-  if (ret2.status != 0) {
-    exit(ret2.status);
-  }
 }
 
-const cargo_flags = fetch_cargo_flags();
+function process_rust_lib() {
+  const NEON_ARGS = [
+    // On Windows only .exe/.bat can be directly executed, `npx.cmd` is the bat version of `npx`
+    on_windows() ? "npx.cmd" : "npx",
+    'cargo-cp-artifact', '--npm', 'cdylib', OUTPUT_DIR + '/libparsec.node', '--', 'cat', BUILD_LOG
+  ];
 
-// Actually do the compilation
-build_electron_bindings(cargo_flags);
+  exec_cmd(
+    NEON_ARGS,
+    {
+      // Recent versions of node (since >= 20) now require to set `shell: true` when executing batch script.
+      // https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2#command-injection-via-args-parameter-of-child_processspawn-without-shell-option-enabled-on-windows-cve-2024-27980---high
+      shell: on_windows(),
+    }
+  );
+}
 
+async function main() {
+  const cargo_flags = fetch_cargo_flags();
 
-// Finally, copy the typing info
-fs.copyFileSync('src/index.d.ts', 'dist/libparsec.d.ts');
+  await fsPromise.mkdir(OUTPUT_DIR, { recursive: true });
+  // Actually do the compilation
+  await build_electron_bindings(cargo_flags);
+  process_rust_lib();
+  await fsPromise.cp('src/index.d.ts', OUTPUT_DIR + '/libparsec.d.ts');
+}
+
+main()
