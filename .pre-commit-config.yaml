@@ -257,47 +257,63 @@ repos:
   ####
   # Js
 
+  # We use the same trick that for Python here: we run the tools with `npx`
+  # from the GUI project directory to reuse the installed dependencies.
   - repo: local
     hooks:
       - id: eslint
-        name: eslint
-        entry: eslint
-        language: node
+        name: eslint (using `npx`)
+        # Note we don't use `npx eslint` with `--prefix=./client` because it causes
+        # random compat issues since every sub-command expects to be run from
+        # the root of the node project.
+        entry: |
+          node -e "
+            const { spawnSync } = require('child_process');
+            const { exit, argv } = require('process');
+            let files = argv.slice(1).map(function (x) { return x.replace(/^client\//, '') });
+            let ret = spawnSync('npx', ['eslint', '--max-warnings=0'].concat(files), {cwd: './client', stdio: 'inherit'});
+            exit(ret.status);
+          "
+        require_serial: true
+        language: system
         files: ^client/
-        # see: https://github.com/pre-commit/identify/blob/master/identify/extensions.py
         types_or: [vue, ts, tsx, javascript, jsx]
-        args: [--config=client/.eslintrc.cjs]
-        stages:
-          - manual
-        # Deps should be kept updated with `client/package-lock.json` !
-        additional_dependencies:
-          - "@intlify/eslint-plugin-vue-i18n@2.0.0"
-          - "@typescript-eslint/eslint-plugin@5.55.0"
-          - "@typescript-eslint/parser@5.55.0"
-          - "@vue/eslint-config-typescript@10.0.0"
-          - eslint@8.36.0
-          - eslint-config-standard-with-typescript@34.0.1
-          - eslint-plugin-import@2.27.5
-          - eslint-plugin-n@15.6.1
-          - eslint-plugin-promise@6.1.1
-          - eslint-plugin-vue@8.7.1
 
-  - repo: local
-    hooks:
+      - id: vue-tsc
+        name: vue-tsc (using `npx`)
+        # Note we don't use `npx vue-tsc` with `--prefix=./client` because it causes
+        # random compat issues since every sub-command expects to be run from
+        # the root of the node project.
+        entry: |
+          node -e "
+            const { spawnSync } = require('child_process');
+            const { exit, argv } = require('process');
+            let files = argv.slice(1).map(function (x) { return x.replace(/^client\//, '') });
+            let ret = spawnSync('npx', ['vue-tsc', '--noEmit'].concat(files), {cwd: './client', stdio: 'inherit'});
+            exit(ret.status);
+          "
+        require_serial: true
+        language: system
+        files: ^client/
+        types_or: [vue, ts, tsx]
+
       - id: prettier
-        name: prettier
-        entry: >-
-          npx prettier
-          --config=client/.prettierrc.json5
-          --ignore-path=client/.prettierignore
-          --write
-        language: node
+        name: prettier (using `npx`)
+        # Note we don't use `npx prettier` with `--prefix=./client` because it causes
+        # random compat issues since every sub-command expects to be run from
+        # the root of the node project.
+        entry: |
+          node -e "
+            const { spawnSync } = require('child_process');
+            const { exit, argv } = require('process');
+            let files = argv.slice(1).map(function (x) { return x.replace(/^client\//, '') });
+            let ret = spawnSync('npx', ['prettier', '--write'].concat(files), {cwd: './client', stdio: 'inherit'});
+            exit(ret.status);
+          "
+        require_serial: true
+        language: system
         files: ^client/
         types_or: [vue, ts, tsx, javascript, jsx, html]
-        stages:
-          - manual
-        additional_dependencies:
-          - prettier@3.0.3
 
   ######
   # JSON
