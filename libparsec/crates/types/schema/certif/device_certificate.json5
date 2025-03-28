@@ -10,7 +10,7 @@
         },
         {
             "name": "author",
-            "type": "CertificateSignerOwned"
+            "type": "CertificateSigner"
         },
         {
             "name": "timestamp",

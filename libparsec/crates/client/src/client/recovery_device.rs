@@ -217,7 +217,7 @@ pub(crate) fn generate_new_device_certificates(
     now: DateTime,
 ) -> DeviceCertificatesBytes {
     let device_cert = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
+        author: CertificateSigner::User(author.device_id),
         timestamp: now,
         purpose: new_device_purpose,
         user_id: new_device.user_id,

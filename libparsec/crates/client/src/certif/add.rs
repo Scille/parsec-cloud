@@ -77,7 +77,7 @@ pub enum InvalidCertificateError {
     #[error("Certificate `{hint}` breaks consistency: as first device certificate for its user it must have the same author that the user certificate ({user_author:?})")]
     UserFirstDeviceAuthorMismatch {
         hint: String,
-        user_author: CertificateSignerOwned,
+        user_author: CertificateSigner,
     },
     #[error("Certificate `{hint}` breaks consistency: as first device certificate for its user it must have the same timestamp that the user certificate ({user_timestamp})")]
     UserFirstDeviceTimestampMismatch {
@@ -444,7 +444,7 @@ macro_rules! verify_certificate_signature {
 
     (@internal, DeviceOrRoot, $unsecure:ident, $ops:expr, $store:expr) => {
         match $unsecure.author() {
-            CertificateSignerOwned::Root => $unsecure
+            CertificateSigner::Root => $unsecure
                 .verify_signature($ops.device.root_verify_key())
                 .map(|(certif, _)| (certif, None))
                 .map_err(|(unsecure, error)| {
@@ -452,7 +452,7 @@ macro_rules! verify_certificate_signature {
                     Box::new(InvalidCertificateError::Corrupted { hint, error })
                 }),
 
-            CertificateSignerOwned::User(author) => {
+            CertificateSigner::User(author) => {
                 verify_certificate_signature!(
                     @internal,
                     Device,

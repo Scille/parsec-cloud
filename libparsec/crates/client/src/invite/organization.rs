@@ -73,7 +73,7 @@ pub async fn bootstrap_organization(
     let timestamp = device.now();
     let (user_certificate, redacted_user_certificate) = {
         let mut user_certificate = UserCertificate {
-            author: CertificateSignerOwned::Root,
+            author: CertificateSigner::Root,
             timestamp,
             user_id: device.user_id,
             human_handle: MaybeRedacted::Real(device.human_handle.clone()),
@@ -92,7 +92,7 @@ pub async fn bootstrap_organization(
 
     let (device_certificate, redacted_device_certificate) = {
         let mut device_certificate = DeviceCertificate {
-            author: CertificateSignerOwned::Root,
+            author: CertificateSigner::Root,
             timestamp,
             purpose: DevicePurpose::Standard,
             user_id: device.user_id,

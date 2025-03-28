@@ -13,9 +13,7 @@ use pyo3::{
     Bound,
 };
 
-use libparsec_types::{
-    CertificateSignerOwned, CertificateSignerRef, IndexInt, UnsecureSkipValidationReason,
-};
+use libparsec_types::{CertificateSigner, IndexInt, UnsecureSkipValidationReason};
 
 use crate::{
     crypto::{PublicKey, SequesterPublicKeyDer, SequesterVerifyKeyDer, SigningKey, VerifyKey},
@@ -64,8 +62,8 @@ impl UserCertificate {
         };
         Ok(Self(Arc::new(libparsec_types::UserCertificate {
             author: match author {
-                Some(device_id) => CertificateSignerOwned::User(device_id.0),
-                None => CertificateSignerOwned::Root,
+                Some(device_id) => CertificateSigner::User(device_id.0),
+                None => CertificateSigner::Root,
             },
             timestamp: timestamp.0,
             user_id: user_id.0,
@@ -81,7 +79,7 @@ impl UserCertificate {
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: Option<&DeviceID>,
+        expected_author: Option<DeviceID>,
         expected_user: Option<UserID>,
         expected_human_handle: Option<&HumanHandle>,
     ) -> PyResult<Self> {
@@ -89,8 +87,8 @@ impl UserCertificate {
             signed,
             &author_verify_key.0,
             match expected_author {
-                Some(device_id) => CertificateSignerRef::User(&device_id.0),
-                None => CertificateSignerRef::Root,
+                Some(device_id) => CertificateSigner::User(device_id.0),
+                None => CertificateSigner::Root,
             },
             expected_user.map(|x| x.0),
             expected_human_handle.map(|x| &x.0),
@@ -147,8 +145,8 @@ impl UserCertificate {
     #[getter]
     fn author(&self) -> Option<DeviceID> {
         match &self.0.author {
-            CertificateSignerOwned::Root => None,
-            CertificateSignerOwned::User(device_id) => Some(DeviceID(*device_id)),
+            CertificateSigner::Root => None,
+            CertificateSigner::User(device_id) => Some(DeviceID(*device_id)),
         }
     }
 
@@ -233,8 +231,8 @@ impl DeviceCertificate {
         };
         Ok(Self(Arc::new(libparsec_types::DeviceCertificate {
             author: match author {
-                Some(device_id) => CertificateSignerOwned::User(device_id.0),
-                None => CertificateSignerOwned::Root,
+                Some(device_id) => CertificateSigner::User(device_id.0),
+                None => CertificateSigner::Root,
             },
             timestamp: timestamp.0,
             purpose: purpose.0,
@@ -251,15 +249,15 @@ impl DeviceCertificate {
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: Option<&DeviceID>,
-        expected_device: Option<&DeviceID>,
+        expected_author: Option<DeviceID>,
+        expected_device: Option<DeviceID>,
     ) -> PyResult<Self> {
         libparsec_types::DeviceCertificate::verify_and_load(
             signed,
             &author_verify_key.0,
             match &expected_author {
-                Some(device_id) => CertificateSignerRef::User(&device_id.0),
-                None => CertificateSignerRef::Root,
+                Some(device_id) => CertificateSigner::User(device_id.0),
+                None => CertificateSigner::Root,
             },
             expected_device.map(|x| x.0),
         )
@@ -318,8 +316,8 @@ impl DeviceCertificate {
     #[getter]
     fn author(&self) -> Option<DeviceID> {
         match &self.0.author {
-            CertificateSignerOwned::Root => None,
-            CertificateSignerOwned::User(device_id) => Some(DeviceID(*device_id)),
+            CertificateSigner::Root => None,
+            CertificateSigner::User(device_id) => Some(DeviceID(*device_id)),
         }
     }
 
@@ -393,7 +391,7 @@ impl RevokedUserCertificate {
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_user: Option<UserID>,
     ) -> PyResult<Self> {
         libparsec_types::RevokedUserCertificate::verify_and_load(
@@ -470,7 +468,7 @@ impl UserUpdateCertificate {
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_user: Option<UserID>,
     ) -> PyResult<Self> {
         libparsec_types::UserUpdateCertificate::verify_and_load(
@@ -554,7 +552,7 @@ impl RealmRoleCertificate {
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_realm: Option<VlobID>,
         expected_user: Option<UserID>,
     ) -> PyResult<Self> {
@@ -645,7 +643,7 @@ impl RealmNameCertificate {
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_realm: Option<VlobID>,
     ) -> PyResult<Self> {
         libparsec_types::RealmNameCertificate::verify_and_load(
@@ -756,7 +754,7 @@ impl RealmKeyRotationCertificate {
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_realm: Option<VlobID>,
     ) -> PyResult<Self> {
         libparsec_types::RealmKeyRotationCertificate::verify_and_load(
@@ -914,7 +912,7 @@ impl RealmArchivingCertificate {
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_realm: Option<VlobID>,
     ) -> PyResult<Self> {
         libparsec_types::RealmArchivingCertificate::verify_and_load(
@@ -1008,7 +1006,7 @@ impl ShamirRecoveryBriefCertificate {
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
     ) -> PyResult<Self> {
         libparsec_types::ShamirRecoveryBriefCertificate::verify_and_load(
             signed,
@@ -1105,7 +1103,7 @@ impl ShamirRecoveryShareCertificate {
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_recipient: Option<UserID>,
     ) -> PyResult<Self> {
         libparsec_types::ShamirRecoveryShareCertificate::verify_and_load(
@@ -1203,7 +1201,7 @@ impl ShamirRecoveryDeletionCertificate {
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
     ) -> PyResult<Self> {
         libparsec_types::ShamirRecoveryDeletionCertificate::verify_and_load(
             signed,
