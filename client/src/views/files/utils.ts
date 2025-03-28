@@ -38,8 +38,10 @@ export async function openEntryContextMenu(
       component: SmallDisplayFileContextMenu,
       cssClass: 'file-context-sheet-modal',
       breakpoints: [0, 0.5, 1],
-      initialBreakpoint: 1,
-      showBackdrop: false,
+      initialBreakpoint: 0.5,
+      // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
+      // expandToScroll: false, should be added to scroll with Ionic 8
+      showBackdrop: true,
       componentProps: {
         role: ownRole,
         multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),

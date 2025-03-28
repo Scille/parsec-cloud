@@ -39,19 +39,22 @@
   --width: var(--popover-dropdown-filter-width);
 }
 
-/* --- dropdown option popover --- */
-.workspace-context-menu,
-.file-context-menu,
-.user-context-menu {
-  --width: var(--popover-option-width);
-}
-
 /* --- sheet modal option popover --- */
 .workspace-context-sheet-modal,
 .file-context-sheet-modal,
 .user-context-sheet-modal {
   --width: var(--popover-option-width);
-  --height: auto;
+  --height: 90%;
+  --backdrop-opacity: 0.15;
+
+  &::part(content) {
+    border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+  }
+
+  &::part(handle) {
+    margin: 0.5rem auto;
+    background: var(--parsec-color-light-secondary-light);
+  }
 }
 
 #workspace-context-menu,
