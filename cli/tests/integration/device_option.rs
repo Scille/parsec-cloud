@@ -136,7 +136,7 @@ async fn multiple_device_found(tmp_path: TmpPath) {
         &libparsec::DeviceAccessStrategy::Password {
             key_file: libparsec::get_default_key_file(
                 &client_config.config_dir,
-                &first_available_device.device_id,
+                first_available_device.device_id,
             ),
             password: crate::testenv_utils::DEFAULT_DEVICE_PASSWORD
                 .to_string()
@@ -233,7 +233,7 @@ async fn create_second_device(
     }
 
     let key_file =
-        libparsec::get_default_key_file(&client_config.config_dir, &second_device.device_id);
+        libparsec::get_default_key_file(&client_config.config_dir, second_device.device_id);
 
     let second_dev_access = libparsec::DeviceAccessStrategy::Password {
         key_file,

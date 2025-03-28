@@ -58,7 +58,7 @@ pub async fn initialize_test_organization(
     let access = DeviceAccessStrategy::Password {
         key_file: libparsec::get_default_key_file(
             &client_config.config_dir,
-            &alice_device.device_id,
+            alice_device.device_id,
         ),
         password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
     };
@@ -149,8 +149,7 @@ async fn register_new_device(
         Err(e) => return Err(anyhow::anyhow!("{e}")),
     }
 
-    let key_file =
-        libparsec::get_default_key_file(&client_config.config_dir, &new_device.device_id);
+    let key_file = libparsec::get_default_key_file(&client_config.config_dir, new_device.device_id);
 
     let access = DeviceAccessStrategy::Password {
         key_file,
@@ -212,8 +211,7 @@ async fn register_new_user(
         Err(e) => return Err(anyhow::anyhow!("{e}")),
     }
 
-    let key_file =
-        libparsec::get_default_key_file(&client_config.config_dir, &new_device.device_id);
+    let key_file = libparsec::get_default_key_file(&client_config.config_dir, new_device.device_id);
 
     let access = DeviceAccessStrategy::Password {
         key_file,

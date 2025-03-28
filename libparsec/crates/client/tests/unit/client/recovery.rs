@@ -97,7 +97,7 @@ async fn ok(env: &TestbedEnv) {
     // Part 3: connect with new device
 
     let access = {
-        let key_file = get_default_key_file(&env.discriminant_dir, &saved_device.device_id);
+        let key_file = get_default_key_file(&env.discriminant_dir, saved_device.device_id);
         save_strategy.into_access(key_file)
     };
     let new_device = load_device(&env.discriminant_dir, &access).await.unwrap();

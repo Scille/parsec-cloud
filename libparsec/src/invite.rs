@@ -124,7 +124,7 @@ pub async fn bootstrap_organization(
     let access = {
         let key_file = libparsec_platform_device_loader::get_default_key_file(
             &config.config_dir,
-            &finalize_ctx.new_local_device.device_id,
+            finalize_ctx.new_local_device.device_id,
         );
         save_strategy.into_access(key_file)
     };
