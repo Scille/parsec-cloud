@@ -146,6 +146,9 @@ if (import.meta.env.PARSEC_APP_TEST_MODE?.toLowerCase() === 'true') {
   });
 }
 
+if (!import.meta.env.BASE_URL.startsWith('/')) {
+  console.warn(`BASE_URL is not an absolute path, this will cause issue with vue-router (BASE_URL=${import.meta.env.BASE_URL})`);
+}
 const router: Router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,

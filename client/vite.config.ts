@@ -79,7 +79,7 @@ const config: UserConfigExport = () => ({
   },
   // Since we do not know in advance how the webapp will be hosted we use a relative base href.
   // That way the app can be at the root or in a sub-folder and limit the need to specific build.
-  base: './',
+  base: process.env.BASE_URL || './',
   test: {
     include: ['tests/unit/specs/*.spec.ts'],
     setupFiles: [path.resolve(__dirname, './tests/component/support/setup.ts')],
