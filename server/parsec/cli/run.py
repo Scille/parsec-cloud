@@ -327,10 +327,9 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
 )
 @click.option(
     "--cors-allow-origins",
-    default=[],
     show_default=True,
     multiple=True,
-    type=list[str],
+    type=str,
     envvar="PARSEC_CORS_ALLOW_ORIGINS",
     show_envvar=True,
     help="A list of allowed origins for Cross-Origin Resource Sharing (CORS)",
