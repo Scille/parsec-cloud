@@ -418,23 +418,36 @@ const filteredDevices = computed(() => {
 
 .no-devices {
   max-width: 45rem;
-  background: var(--parsec-color-light-secondary-white);
-  border: 1px solid var(--parsec-color-light-secondary-medium);
-  border-radius: var(--parsec-radius-12);
   margin-bottom: 0.5rem;
-  gap: 0;
+  gap: 1.5rem;
   padding: 0;
   overflow: auto;
 
-  .create-organization {
+  .create-organization,
+  .invitation {
+    background: var(--parsec-color-light-secondary-white);
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    border-radius: var(--parsec-radius-12);
     display: flex;
+  }
+
+  .create-organization {
     align-items: center;
+    gap: 1.5rem;
     padding: 3rem 2rem;
+
+    @include ms.responsive-breakpoint('xs') {
+      padding: 1.5rem;
+    }
 
     &-text {
       display: flex;
       flex-direction: column;
       max-width: 24rem;
+
+      @include ms.responsive-breakpoint('xs') {
+        max-width: 100%;
+      }
 
       &__title {
         color: var(--parsec-color-light-primary-700);
@@ -449,6 +462,10 @@ const filteredDevices = computed(() => {
       #create-organization-button {
         width: fit-content;
 
+        @include ms.responsive-breakpoint('md') {
+          width: 100%;
+        }
+
         ion-icon {
           margin-inline-end: 0.5rem;
         }
@@ -460,6 +477,16 @@ const filteredDevices = computed(() => {
         gap: 0.5rem;
         color: var(--parsec-color-light-secondary-grey);
         margin-top: 1rem;
+
+        @include ms.responsive-breakpoint('sm') {
+          flex-direction: column;
+        }
+
+        ion-text {
+          @include ms.responsive-breakpoint('xs') {
+            display: none;
+          }
+        }
       }
     }
 
@@ -467,15 +494,25 @@ const filteredDevices = computed(() => {
       width: 100%;
       max-width: 10rem;
       margin: auto;
+
+      @include ms.responsive-breakpoint('md') {
+        max-width: 8rem;
+      }
+
+      @include ms.responsive-breakpoint('xs') {
+        display: none;
+      }
     }
   }
 
   .invitation {
-    display: flex;
     flex-direction: column;
     gap: 1.5rem;
     padding: 2rem 2rem 3rem;
-    border-top: 1px solid var(--parsec-color-light-secondary-medium);
+
+    @include ms.responsive-breakpoint('xs') {
+      padding: 1.5rem;
+    }
 
     &__title {
       color: var(--parsec-color-light-primary-800);
@@ -487,6 +524,10 @@ const filteredDevices = computed(() => {
       gap: 1rem;
       align-items: flex-end;
 
+      @include ms.responsive-breakpoint('xs') {
+        flex-direction: column;
+      }
+
       &__input {
         width: 100%;
         max-width: 30rem;
@@ -494,6 +535,10 @@ const filteredDevices = computed(() => {
 
       #join-organization-button {
         padding-bottom: 0.125rem;
+
+        @include ms.responsive-breakpoint('xs') {
+          width: 100%;
+        }
       }
     }
   }
