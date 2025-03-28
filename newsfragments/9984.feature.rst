@@ -1,1 +1,0 @@
-Added top bar responsive for organization page, files page, and users page

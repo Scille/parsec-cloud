@@ -4,6 +4,24 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.4.0-a.3 (2025-03-28)
+------------------------------
+
+Features
+~~~~~~~~
+
+* Added top bar responsive for organization page, files page, and users page
+  (`#9984 <https://github.com/Scille/parsec-cloud/issues/9984>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fix log messages not being appended in libparsec log file
+  (`#10011 <https://github.com/Scille/parsec-cloud/issues/10011>`__)
+
+
+
 Parsec v3.4.0-a.2 (2025-03-27)
 ------------------------------
 
