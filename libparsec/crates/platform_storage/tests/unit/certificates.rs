@@ -162,7 +162,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
                         timestamp: t1,
                         user_id,
                         // Not meaningful for the test
-                        author: CertificateSignerOwned::Root,
+                        author: CertificateSigner::Root,
                         human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
                         public_key: alice.public_key(),
                         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
@@ -223,7 +223,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
                         device_id,
                         purpose: DevicePurpose::Standard,
                         // Not meaningful for the test
-                        author: CertificateSignerOwned::Root,
+                        author: CertificateSigner::Root,
                         device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
                         verify_key: alice.verify_key(),
                         algorithm: SigningKeyAlgorithm::Ed25519,
@@ -536,7 +536,7 @@ async fn add_and_get_certificate(
                         timestamp: t1,
                         user_id,
                         // Not meaningful for the test
-                        author: CertificateSignerOwned::Root,
+                        author: CertificateSigner::Root,
                         human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
                         public_key: alice.public_key(),
                         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
@@ -604,7 +604,7 @@ async fn add_and_get_certificate(
                         device_id,
                         purpose: DevicePurpose::Standard,
                         // Not meaningful for the test
-                        author: CertificateSignerOwned::Root,
+                        author: CertificateSigner::Root,
                         user_id,
                         device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
                         verify_key: alice.verify_key(),
@@ -1161,7 +1161,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
                         timestamp: t1,
                         user_id,
                         // Not meaningful for the test
-                        author: CertificateSignerOwned::Root,
+                        author: CertificateSigner::Root,
                         human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
                         public_key: alice.public_key(),
                         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
@@ -1210,7 +1210,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
                         purpose: DevicePurpose::Standard,
                         user_id,
                         // Not meaningful for the test
-                        author: CertificateSignerOwned::Root,
+                        author: CertificateSigner::Root,
                         device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
                         verify_key: alice.verify_key(),
                         algorithm: SigningKeyAlgorithm::Ed25519,

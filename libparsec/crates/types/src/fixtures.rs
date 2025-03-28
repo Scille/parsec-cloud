@@ -10,7 +10,7 @@ use rstest::fixture;
 use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 
 use crate::{
-    CertificateSignerOwned, DeviceCertificate, DeviceID, DeviceLabel, DevicePurpose, Duration,
+    CertificateSigner, DeviceCertificate, DeviceID, DeviceLabel, DevicePurpose, Duration,
     HumanHandle, LocalDevice, MaybeRedacted, OrganizationID, ParsecOrganizationAddr,
     PrivateKeyAlgorithm, SigningKeyAlgorithm, TimeProvider, UserCertificate, UserID, UserProfile,
     VlobID,
@@ -221,7 +221,7 @@ pub fn timestamps(timestamp: DateTime) -> TimestampGenerator {
 #[once]
 pub fn user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
     UserCertificate {
-        author: CertificateSignerOwned::User(alice.device_id),
+        author: CertificateSigner::User(alice.device_id),
         timestamp,
         user_id: bob.user_id,
         human_handle: MaybeRedacted::Real(bob.human_handle.clone()),
@@ -236,7 +236,7 @@ pub fn user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Ve
 #[once]
 pub fn redacted_user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
     UserCertificate {
-        author: CertificateSignerOwned::User(alice.device_id),
+        author: CertificateSigner::User(alice.device_id),
         timestamp,
         user_id: bob.user_id,
         human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id)),
@@ -251,7 +251,7 @@ pub fn redacted_user_certificate(alice: &Device, bob: &Device, timestamp: DateTi
 #[once]
 pub fn device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
     DeviceCertificate {
-        author: CertificateSignerOwned::User(alice.device_id),
+        author: CertificateSigner::User(alice.device_id),
         timestamp,
         purpose: DevicePurpose::Standard,
         user_id: bob.user_id,
@@ -267,7 +267,7 @@ pub fn device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> 
 #[once]
 pub fn redacted_device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
     DeviceCertificate {
-        author: CertificateSignerOwned::User(alice.device_id),
+        author: CertificateSigner::User(alice.device_id),
         timestamp,
         purpose: DevicePurpose::Standard,
         user_id: bob.user_id,

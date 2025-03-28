@@ -197,19 +197,17 @@ async fn load_device_verify_keys(
         };
 
         let author_verify_key = match unsecure.author() {
-            CertificateSignerOwned::User(device_id) => {
-                match per_device_verify_key.get(&device_id) {
-                    Some(key) => key,
-                    None => {
-                        log::warn!(
-                            "Ignoring device certificate signed by unknown device: {:?}",
-                            unsecure
-                        );
-                        continue;
-                    }
+            CertificateSigner::User(device_id) => match per_device_verify_key.get(&device_id) {
+                Some(key) => key,
+                None => {
+                    log::warn!(
+                        "Ignoring device certificate signed by unknown device: {:?}",
+                        unsecure
+                    );
+                    continue;
                 }
-            }
-            CertificateSignerOwned::Root => root_verify_key,
+            },
+            CertificateSigner::Root => root_verify_key,
         };
 
         let certificate = match unsecure.verify_signature(author_verify_key) {

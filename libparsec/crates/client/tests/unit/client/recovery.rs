@@ -27,8 +27,8 @@ fn assert_device(info: &DeviceInfo, expected_device: impl TryInto<DeviceID>, env
     p_assert_eq!(purpose, &certif.purpose);
     p_assert_eq!(created_on, &certif.timestamp);
     let expected_created_by = match &certif.author {
-        CertificateSignerOwned::User(author) => Some(author),
-        CertificateSignerOwned::Root => None,
+        CertificateSigner::User(author) => Some(author),
+        CertificateSigner::Root => None,
     };
     p_assert_eq!(created_by.as_ref(), expected_created_by);
 }
@@ -97,7 +97,7 @@ async fn ok(env: &TestbedEnv) {
     // Part 3: connect with new device
 
     let access = {
-        let key_file = get_default_key_file(&env.discriminant_dir, &saved_device.device_id);
+        let key_file = get_default_key_file(&env.discriminant_dir, saved_device.device_id);
         save_strategy.into_access(key_file)
     };
     let new_device = load_device(&env.discriminant_dir, &access).await.unwrap();

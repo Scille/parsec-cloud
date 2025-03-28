@@ -1312,9 +1312,9 @@ macro_rules! impl_read_methods {
         pub async fn get_last_shamir_recovery_brief_certificate_for_author(
             &mut self,
             up_to: UpTo,
-            author: &UserID,
+            author: UserID,
         ) -> anyhow::Result<Option<Arc<ShamirRecoveryBriefCertificate>>> {
-            let query = GetCertificateQuery::user_shamir_recovery_brief_certificates(author);
+            let query = GetCertificateQuery::user_shamir_recovery_brief_certificates(&author);
             // `get_certificate_encrypted` returns the last certificate if multiple are available
             let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
             let encrypted = match outcome {
@@ -1383,9 +1383,9 @@ macro_rules! impl_read_methods {
         pub async fn get_last_shamir_recovery_deletion_certificate_for_author(
             &mut self,
             up_to: UpTo,
-            author: &UserID,
+            author: UserID,
         ) -> anyhow::Result<Option<Arc<ShamirRecoveryDeletionCertificate>>> {
-            let query = GetCertificateQuery::user_shamir_recovery_deletion_certificates(author);
+            let query = GetCertificateQuery::user_shamir_recovery_deletion_certificates(&author);
             // `get_certificate_encrypted` returns the last certificate if multiple are available
             let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
             let encrypted = match outcome {
@@ -1420,7 +1420,7 @@ macro_rules! impl_read_methods {
             user_id: UserID,
         ) -> anyhow::Result<LastShamirRecovery> {
             let last_brief_certif = match self
-                .get_last_shamir_recovery_brief_certificate_for_author(up_to, &user_id)
+                .get_last_shamir_recovery_brief_certificate_for_author(up_to, user_id)
                 .await?
             {
                 Some(certif) => certif,
@@ -1429,7 +1429,7 @@ macro_rules! impl_read_methods {
             };
 
             let last_shamir_recovery = match self
-                .get_last_shamir_recovery_deletion_certificate_for_author(up_to, &user_id)
+                .get_last_shamir_recovery_deletion_certificate_for_author(up_to, user_id)
                 .await?
             {
                 // The user has never deleted any shamir recovery, so the one we have is valid !

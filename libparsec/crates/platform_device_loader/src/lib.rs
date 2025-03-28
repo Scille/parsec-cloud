@@ -96,7 +96,7 @@ fn get_devices_dir(config_dir: &Path) -> PathBuf {
 ///
 /// Note that the filename does not carry any intrinsic meaning.
 /// Here, we simply use the device ID (as it is a UUID) to avoid name collision.
-pub fn get_default_key_file(config_dir: &Path, device_id: &DeviceID) -> PathBuf {
+pub fn get_default_key_file(config_dir: &Path, device_id: DeviceID) -> PathBuf {
     let mut device_path = get_devices_dir(config_dir);
 
     device_path.push(format!("{}.{DEVICE_FILE_EXT}", device_id.hex()));

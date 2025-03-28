@@ -69,7 +69,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
             let ctxs = list_administrators_ctx.list_initial_ctxs();
             assert_eq!(ctxs.len(), 1);
             let ctx = ctxs.into_iter().next().unwrap();
-            p_assert_eq!(*ctx.greeter_user_id(), alice.user_id);
+            p_assert_eq!(ctx.greeter_user_id(), alice.user_id);
             p_assert_eq!(*ctx.greeter_human_handle(), alice.human_handle);
             ctx
         }

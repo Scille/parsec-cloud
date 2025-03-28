@@ -217,7 +217,7 @@ pub(crate) fn generate_new_device_certificates(
     now: DateTime,
 ) -> DeviceCertificatesBytes {
     let device_cert = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
+        author: CertificateSigner::User(author.device_id),
         timestamp: now,
         purpose: new_device_purpose,
         user_id: new_device.user_id,
@@ -353,7 +353,7 @@ pub async fn import_recovery_device(
     // 2) Save the device on disk
 
     let access = {
-        let key_file = get_default_key_file(config_dir, &new_device.device_id);
+        let key_file = get_default_key_file(config_dir, new_device.device_id);
         save_strategy.into_access(key_file)
     };
     let new_available_device = save_device(config_dir, &access, &new_device).await?;

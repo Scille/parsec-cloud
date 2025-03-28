@@ -12,7 +12,7 @@ use crate::{alice, bob, mallory, Device};
 #[once]
 pub fn alice_user_certif(alice: &Device) -> UserCertificate {
     UserCertificate {
-        author: CertificateSignerOwned::Root,
+        author: CertificateSigner::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
         user_id: alice.user_id,
         human_handle: MaybeRedacted::Real(alice.human_handle.clone()),
@@ -26,7 +26,7 @@ pub fn alice_user_certif(alice: &Device) -> UserCertificate {
 #[once]
 pub fn bob_user_certif(bob: &Device) -> UserCertificate {
     UserCertificate {
-        author: CertificateSignerOwned::Root,
+        author: CertificateSigner::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
         user_id: bob.user_id,
         human_handle: MaybeRedacted::Real(bob.human_handle.clone()),
@@ -40,7 +40,7 @@ pub fn bob_user_certif(bob: &Device) -> UserCertificate {
 #[once]
 pub fn mallory_user_certif(mallory: &Device) -> UserCertificate {
     UserCertificate {
-        author: CertificateSignerOwned::Root,
+        author: CertificateSigner::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
         user_id: mallory.user_id,
         human_handle: MaybeRedacted::Real(mallory.human_handle.clone()),
@@ -54,7 +54,7 @@ pub fn mallory_user_certif(mallory: &Device) -> UserCertificate {
 #[once]
 pub fn alice_device_certif(alice: &Device) -> DeviceCertificate {
     DeviceCertificate {
-        author: CertificateSignerOwned::Root,
+        author: CertificateSigner::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
         purpose: DevicePurpose::Standard,
         user_id: alice.user_id,
@@ -69,7 +69,7 @@ pub fn alice_device_certif(alice: &Device) -> DeviceCertificate {
 #[once]
 pub fn bob_device_certif(bob: &Device) -> DeviceCertificate {
     DeviceCertificate {
-        author: CertificateSignerOwned::Root,
+        author: CertificateSigner::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
         purpose: DevicePurpose::Standard,
         user_id: bob.user_id,
@@ -84,7 +84,7 @@ pub fn bob_device_certif(bob: &Device) -> DeviceCertificate {
 #[once]
 pub fn mallory_device_certif(mallory: &Device) -> DeviceCertificate {
     DeviceCertificate {
-        author: CertificateSignerOwned::Root,
+        author: CertificateSigner::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
         purpose: DevicePurpose::Standard,
         user_id: mallory.user_id,

@@ -24,22 +24,21 @@ use crate::{
 };
 
 fn check_author_allow_root(
-    author: &CertificateSignerOwned,
-    expected_author: CertificateSignerRef,
+    author: CertificateSigner,
+    expected_author: CertificateSigner,
 ) -> DataResult<()> {
     match (author, expected_author) {
-        (
-            CertificateSignerOwned::User(author_id),
-            CertificateSignerRef::User(expected_author_id),
-        ) if author_id != expected_author_id => {
+        (CertificateSigner::User(author_id), CertificateSigner::User(expected_author_id))
+            if author_id != expected_author_id =>
+        {
             return Err(DataError::UnexpectedAuthor {
-                expected: *expected_author_id,
-                got: Some(*author_id),
+                expected: expected_author_id,
+                got: Some(author_id),
             })
         }
-        (CertificateSignerOwned::Root, CertificateSignerRef::User(expected_author_id)) => {
+        (CertificateSigner::Root, CertificateSigner::User(expected_author_id)) => {
             return Err(DataError::UnexpectedAuthor {
-                expected: *expected_author_id,
+                expected: expected_author_id,
                 got: None,
             })
         }
@@ -167,71 +166,31 @@ pub(super) use impl_dump_and_sign;
  * CertificateSigner
  */
 
-// Signature can be done either by a user (through one of it devices) or
-// by the Root Key when bootstrapping the organization (only the very first
-// user and device certificates are signed this way)
-
-pub enum CertificateSignerRef<'a> {
-    User(&'a DeviceID),
-    Root,
-}
-
-impl<'a> From<Option<&'a DeviceID>> for CertificateSignerRef<'a> {
-    fn from(item: Option<&'a DeviceID>) -> Self {
-        match item {
-            Some(device_id) => Self::User(device_id),
-            None => Self::Root,
-        }
-    }
-}
-
-impl<'a> From<CertificateSignerRef<'a>> for Option<&'a DeviceID> {
-    fn from(item: CertificateSignerRef<'a>) -> Self {
-        match item {
-            CertificateSignerRef::User(device_id) => Some(device_id),
-            CertificateSignerRef::Root => None,
-        }
-    }
-}
-
+/// Signature can be done either by a user (through one of it devices) or
+/// by the Root Key when bootstrapping the organization (only the very first
+/// user and device certificates are signed this way)
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "Option<DeviceID>", try_from = "Option<DeviceID>")]
-pub enum CertificateSignerOwned {
+pub enum CertificateSigner {
     User(DeviceID),
     Root,
 }
 
-impl From<Option<DeviceID>> for CertificateSignerOwned {
-    fn from(item: Option<DeviceID>) -> CertificateSignerOwned {
+impl From<Option<DeviceID>> for CertificateSigner {
+    fn from(item: Option<DeviceID>) -> CertificateSigner {
         match item {
-            Some(device_id) => CertificateSignerOwned::User(device_id),
-            None => CertificateSignerOwned::Root,
+            Some(device_id) => CertificateSigner::User(device_id),
+            None => CertificateSigner::Root,
         }
     }
 }
 
-impl From<CertificateSignerOwned> for Option<DeviceID> {
-    fn from(item: CertificateSignerOwned) -> Option<DeviceID> {
+impl From<CertificateSigner> for Option<DeviceID> {
+    fn from(item: CertificateSigner) -> Option<DeviceID> {
         match item {
-            CertificateSignerOwned::User(device_id) => Some(device_id),
-            CertificateSignerOwned::Root => None,
+            CertificateSigner::User(device_id) => Some(device_id),
+            CertificateSigner::Root => None,
         }
-    }
-}
-
-impl std::cmp::PartialEq<CertificateSignerOwned> for CertificateSignerRef<'_> {
-    fn eq(&self, other: &CertificateSignerOwned) -> bool {
-        match (self, other) {
-            (CertificateSignerRef::Root, CertificateSignerOwned::Root) => true,
-            (CertificateSignerRef::User(a), CertificateSignerOwned::User(b)) => *a == b,
-            _ => false,
-        }
-    }
-}
-
-impl<'a> std::cmp::PartialEq<CertificateSignerRef<'a>> for CertificateSignerOwned {
-    fn eq(&self, other: &CertificateSignerRef<'a>) -> bool {
-        other == self
     }
 }
 
@@ -242,7 +201,7 @@ impl<'a> std::cmp::PartialEq<CertificateSignerRef<'a>> for CertificateSignerOwne
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "UserCertificateData", from = "UserCertificateData")]
 pub struct UserCertificate {
-    pub author: CertificateSignerOwned,
+    pub author: CertificateSigner,
     pub timestamp: DateTime,
 
     pub user_id: UserID,
@@ -252,7 +211,7 @@ pub struct UserCertificate {
     pub profile: UserProfile,
 }
 
-impl_unsecure_load!(UserCertificate -> CertificateSignerOwned);
+impl_unsecure_load!(UserCertificate -> CertificateSigner);
 impl_unsecure_dump!(UserCertificate);
 impl_dump_and_sign!(UserCertificate);
 impl_base_load!(UserCertificate);
@@ -281,12 +240,12 @@ impl UserCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: CertificateSignerRef,
+        expected_author: CertificateSigner,
         expected_user_id: Option<UserID>,
         expected_human_handle: Option<&HumanHandle>,
     ) -> DataResult<Self> {
         let r = Self::base_verify_and_load(signed, author_verify_key)?;
-        check_author_allow_root(&r.author, expected_author)?;
+        check_author_allow_root(r.author, expected_author)?;
 
         if let Some(expected_user_id) = expected_user_id {
             if r.user_id != expected_user_id {
@@ -489,7 +448,7 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceCertificateData", from = "DeviceCertificateData")]
 pub struct DeviceCertificate {
-    pub author: CertificateSignerOwned,
+    pub author: CertificateSigner,
     pub timestamp: DateTime,
 
     pub purpose: DevicePurpose,
@@ -502,7 +461,7 @@ pub struct DeviceCertificate {
 
 parsec_data!("schema/certif/device_certificate.json5");
 
-impl_unsecure_load!(DeviceCertificate -> CertificateSignerOwned);
+impl_unsecure_load!(DeviceCertificate -> CertificateSigner);
 impl_unsecure_dump!(DeviceCertificate);
 impl_dump_and_sign!(DeviceCertificate);
 impl_base_load!(DeviceCertificate);
@@ -531,11 +490,11 @@ impl DeviceCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: CertificateSignerRef,
+        expected_author: CertificateSigner,
         expected_device_id: Option<DeviceID>,
     ) -> DataResult<Self> {
         let r = Self::base_verify_and_load(signed, author_verify_key)?;
-        check_author_allow_root(&r.author, expected_author)?;
+        check_author_allow_root(r.author, expected_author)?;
 
         if let Some(expected_device_id) = expected_device_id {
             if r.device_id != expected_device_id {

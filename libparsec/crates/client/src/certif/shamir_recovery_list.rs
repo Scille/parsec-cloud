@@ -413,7 +413,7 @@ pub async fn get_shamir_recovery_share_data(
             // 2. Retrieve the brief and share certificates
 
             let brief_certificate = store
-                .get_last_shamir_recovery_brief_certificate_for_author(UpTo::Current, &user_id)
+                .get_last_shamir_recovery_brief_certificate_for_author(UpTo::Current, user_id)
                 .await?;
             let brief_certificate = match brief_certificate {
                 Some(brief_certificate) if brief_certificate.timestamp == shamir_recovery_created_on => Ok(brief_certificate),

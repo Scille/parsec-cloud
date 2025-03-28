@@ -126,8 +126,8 @@ pub(super) async fn list_users(
                 };
 
                 let created_by = match &certif.author {
-                    CertificateSignerOwned::User(author) => Some(author.to_owned()),
-                    CertificateSignerOwned::Root => None,
+                    CertificateSigner::User(author) => Some(author.to_owned()),
+                    CertificateSigner::Root => None,
                 };
 
                 let info = UserInfo {
@@ -178,8 +178,8 @@ pub(super) async fn list_user_devices(
         .into_iter()
         .map(|certif| {
             let created_by = match &certif.author {
-                CertificateSignerOwned::User(author) => Some(author.to_owned()),
-                CertificateSignerOwned::Root => None,
+                CertificateSigner::User(author) => Some(author.to_owned()),
+                CertificateSigner::Root => None,
             };
 
             DeviceInfo {
@@ -251,8 +251,8 @@ pub(super) async fn get_user_device(
             };
 
             let user_created_by = match &user_certif.author {
-                CertificateSignerOwned::User(author) => Some(author.to_owned()),
-                CertificateSignerOwned::Root => None,
+                CertificateSigner::User(author) => Some(author.to_owned()),
+                CertificateSigner::Root => None,
             };
 
             let maybe_revoked = store
@@ -293,8 +293,8 @@ pub(super) async fn get_user_device(
             };
 
             let device_created_by = match &device_certif.author {
-                CertificateSignerOwned::User(author) => Some(author.to_owned()),
-                CertificateSignerOwned::Root => None,
+                CertificateSigner::User(author) => Some(author.to_owned()),
+                CertificateSigner::Root => None,
             };
 
             let device_info = DeviceInfo {

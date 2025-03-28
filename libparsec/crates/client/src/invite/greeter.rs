@@ -1239,7 +1239,7 @@ fn create_new_signed_user_certificates(
     let device_id = DeviceID::default();
 
     let user_certificate = UserCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
+        author: CertificateSigner::User(author.device_id),
         timestamp,
         user_id,
         human_handle: MaybeRedacted::Real(human_handle.clone()),
@@ -1249,7 +1249,7 @@ fn create_new_signed_user_certificates(
     };
 
     let redacted_user_certificate = UserCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
+        author: CertificateSigner::User(author.device_id),
         timestamp,
         user_id,
         human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
@@ -1259,7 +1259,7 @@ fn create_new_signed_user_certificates(
     };
 
     let device_certificate = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
+        author: CertificateSigner::User(author.device_id),
         timestamp,
         purpose: DevicePurpose::Standard,
         user_id,
@@ -1270,7 +1270,7 @@ fn create_new_signed_user_certificates(
     };
 
     let redacted_device_certificate = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
+        author: CertificateSigner::User(author.device_id),
         timestamp,
         purpose: DevicePurpose::Standard,
         user_id,
@@ -1314,7 +1314,7 @@ fn create_new_signed_device_certificates(
     let device_id = DeviceID::default();
 
     let device_certificate = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
+        author: CertificateSigner::User(author.device_id),
         timestamp,
         purpose: DevicePurpose::Standard,
         user_id: author.user_id,
@@ -1325,7 +1325,7 @@ fn create_new_signed_device_certificates(
     };
 
     let redacted_device_certificate = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
+        author: CertificateSigner::User(author.device_id),
         timestamp,
         purpose: DevicePurpose::Standard,
         user_id: author.user_id,

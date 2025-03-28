@@ -910,8 +910,8 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::BootstrapToken => quote_rs_to_py_class!(crate::token::BootstrapToken),
         FieldType::InvitationToken => quote_rs_to_py_class!(crate::token::InvitationToken),
         FieldType::InvitationStatus => quote_rs_to_py_class!(crate::enumerate::InvitationStatus),
-        FieldType::CertificateSignerOwned => {
-            quote_rs_to_py_class!(crate::certif::CertificateSignerOwned)
+        FieldType::CertificateSigner => {
+            quote_rs_to_py_class!(crate::certif::CertificateSigner)
         }
         FieldType::BlockAccess => quote_rs_to_py_class!(crate::data::BlockAccess),
         FieldType::EntryName => quote_rs_to_py_class!(crate::data::EntryName),
@@ -1005,7 +1005,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::BootstrapToken => quote! { crate::token::BootstrapToken },
         FieldType::InvitationToken => quote! { crate::token::InvitationToken },
         FieldType::InvitationStatus => quote! { crate::enumerate::InvitationStatus },
-        FieldType::CertificateSignerOwned => quote! { crate::certif::CertificateSignerOwned },
+        FieldType::CertificateSigner => quote! { crate::certif::CertificateSigner },
         FieldType::BlockAccess => quote! { crate::data::BlockAccess },
         FieldType::EntryName => quote! { crate::data::EntryName },
         FieldType::FileManifest => quote! { crate::data::FileManifest },
@@ -1143,7 +1143,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::BootstrapToken
         | FieldType::InvitationToken
         | FieldType::InvitationStatus
-        | FieldType::CertificateSignerOwned
+        | FieldType::CertificateSigner
         | FieldType::BlockAccess
         | FieldType::EntryName
         | FieldType::FileManifest
