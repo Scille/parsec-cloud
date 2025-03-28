@@ -74,30 +74,32 @@
             <ion-text class="file-info-path-value__text body">
               {{ shortenFileName(entry.path, { maxLength: 60, prefixLength: 20, suffixLength: 30 }) }}
             </ion-text>
-            <ion-button
-              fill="clear"
-              size="small"
-              id="copy-link-btn"
-              @click="copyPath"
-              v-show="copyStatus === CopyStatus.NotCopied"
-            >
-              <ion-icon
-                class="icon-copy"
-                :icon="copy"
-              />
-            </ion-button>
-            <ion-text
-              v-show="copyStatus === CopyStatus.Copied"
-              class="file-info-path-value__copied body copied"
-            >
-              {{ $msTranslate('FileDetails.stats.linkCopied') }}
-            </ion-text>
-            <ion-text
-              v-show="copyStatus === CopyStatus.FailedToCopy"
-              class="file-info-path-value__not-copied body"
-            >
-              {{ $msTranslate('FileDetails.stats.failedToCopy') }}
-            </ion-text>
+            <template v-if="isDesktop()">
+              <ion-button
+                fill="clear"
+                size="small"
+                id="copy-link-btn"
+                @click="copyPath"
+                v-show="copyStatus === CopyStatus.NotCopied"
+              >
+                <ion-icon
+                  class="icon-copy"
+                  :icon="copy"
+                />
+              </ion-button>
+              <ion-text
+                v-show="copyStatus === CopyStatus.Copied"
+                class="file-info-path-value__copied body copied"
+              >
+                {{ $msTranslate('FileDetails.stats.linkCopied') }}
+              </ion-text>
+              <ion-text
+                v-show="copyStatus === CopyStatus.FailedToCopy"
+                class="file-info-path-value__not-copied body"
+              >
+                {{ $msTranslate('FileDetails.stats.failedToCopy') }}
+              </ion-text>
+            </template>
           </div>
         </div>
       </div>
@@ -108,7 +110,7 @@
 <script setup lang="ts">
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { Clipboard, Folder, MsImage, MsModal, openTooltip, I18n } from 'megashark-lib';
-import { EntryStat, EntryStatFile, getSystemPath, WorkspaceHandle } from '@/parsec';
+import { EntryStat, EntryStatFile, isDesktop, getSystemPath, WorkspaceHandle } from '@/parsec';
 import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, copy } from 'ionicons/icons';
 import { defineProps, ref } from 'vue';
