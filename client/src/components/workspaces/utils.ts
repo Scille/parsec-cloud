@@ -146,9 +146,11 @@ export async function openWorkspaceContextMenu(
     const modal = await modalController.create({
       component: SmallDisplayWorkspaceContextMenu,
       cssClass: 'workspace-context-sheet-modal',
-      showBackdrop: false,
+      showBackdrop: true,
       breakpoints: [0, 0.5, 1],
-      initialBreakpoint: 1,
+      // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
+      // expandToScroll: false, should be added to scroll with Ionic 8
+      initialBreakpoint: 0.5,
       componentProps: {
         workspaceName: workspace.currentName,
         clientProfile: clientProfile,

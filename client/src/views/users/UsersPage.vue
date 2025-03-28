@@ -217,8 +217,6 @@ import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 
-const { isLargeDisplay: isLargeDisplay } = useWindowSize();
-
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
@@ -451,9 +449,11 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
     const modal = await modalController.create({
       component: SmallDisplayUserContextMenu,
       cssClass: 'user-context-sheet-modal',
-      showBackdrop: false,
+      showBackdrop: true,
       breakpoints: [0, 0.5, 1],
-      initialBreakpoint: 1,
+      // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
+      // expandToScroll: false, should be added to scroll with Ionic 8
+      initialBreakpoint: 0.5,
       componentProps: {
         user: user,
         clientIsAdmin: isAdmin.value,

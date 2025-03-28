@@ -2,7 +2,7 @@
 
 <template>
   <ion-page id="file-context-sheet-modal">
-    <ion-content class="content">
+    <ion-content class="context-sheet-modal-content">
       <ion-list class="menu-list menu-list-small list">
         <ion-item-group class="list-group">
           <ion-item
@@ -95,7 +95,7 @@
             class="ion-no-padding list-group-item"
           >
             <ion-icon :icon="link" />
-            <ion-label class="body list-group-item__label">
+            <ion-label class="body list-group-item__label-small">
               {{ $msTranslate('FoldersPage.fileContextMenu.actionCopyLink') }}
             </ion-label>
           </ion-item>
@@ -149,8 +149,4 @@ async function onClick(action: FileAction): Promise<boolean> {
 }
 </script>
 
-<style lang="scss" scoped>
-.content {
-  height: 20rem;
-}
-</style>
+<style lang="scss" scoped></style>

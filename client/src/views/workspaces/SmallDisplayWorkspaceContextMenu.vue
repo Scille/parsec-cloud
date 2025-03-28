@@ -2,7 +2,7 @@
 
 <template>
   <ion-page id="workspace-context-sheet-modal">
-    <ion-content class="content">
+    <ion-content class="context-sheet-modal-content">
       <ion-list class="menu-list menu-list-small">
         <ion-item-group
           class="list-group"
@@ -137,8 +137,4 @@ defineProps<{
 }>();
 </script>
 
-<style lang="scss" scoped>
-.content {
-  height: 20rem;
-}
-</style>
+<style lang="scss" scoped></style>
