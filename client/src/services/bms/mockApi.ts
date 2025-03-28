@@ -175,7 +175,7 @@ export const MockedBmsApi = {
       isError: false,
       data: {
         type: DataType.OrganizationStats,
-        dataSize: 4200000000,
+        dataSize: 127374182400,
         metadataSize: 42,
         users: 42,
         activeUsers: 10,
@@ -191,8 +191,8 @@ export const MockedBmsApi = {
           active: 1010,
           revoked: 3,
         },
-        freeSliceSize: 42,
-        payingSliceSize: 42,
+        freeSliceSize: 107374182400,
+        payingSliceSize: 20000000000,
         status: CustomOrderStatus.InvoicePaid,
       },
     };

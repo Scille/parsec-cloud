@@ -154,7 +154,6 @@
               {{ $msTranslate(formatFileSize(totalData)) }}
             </ion-text>
             <div class="storage-data-global-info">
-              <ion-text class="storage-data-global-info__text body">{{ $msTranslate('clientArea.statistics.ofWhich') }}</ion-text>
               <ion-text class="storage-data-global-info__text">
                 <span class="title-h5">{{ $msTranslate(formatFileSize(organizationStats.dataSize)) }}</span>
                 <span class="body">{{ $msTranslate('clientArea.statistics.data') }}</span>
@@ -167,7 +166,7 @@
           </div>
           <div class="storage-data-consumption">
             <ion-text class="storage-data-consumption__title title-h5">
-              {{ $msTranslate('clientArea.statistics.consumptionDetail') }}
+              {{ $msTranslate('clientArea.statistics.detail') }}
             </ion-text>
 
             <div class="consumption">
