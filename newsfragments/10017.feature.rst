@@ -1,0 +1,1 @@
+Add new commands in the client CLI: `certificate poll`, `certificate forget-all-certificates`, `device change-authentication`, `device overwrite-server-url`
