@@ -15,7 +15,7 @@
     @click="$emit('click', $event, user)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
-    @contextmenu="onOptionsClick"
+    @contextmenu="onOptionsClick($event, true)"
   >
     <div class="user-selected">
       <!-- eslint-disable vue/no-mutating-props -->
@@ -126,7 +126,7 @@
         v-show="(isHovered || menuOpened || isSmallDisplay) && !user.isCurrent"
         fill="clear"
         class="options-button"
-        @click.stop="onOptionsClick($event)"
+        @click.stop="onOptionsClick($event, false)"
       >
         <ion-icon
           slot="icon-only"
@@ -159,7 +159,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (e: 'click', event: Event, user: UserModel): void;
-  (e: 'menuClick', event: Event, user: UserModel, onFinished: () => void): void;
+  (e: 'menuClick', event: Event, user: UserModel, fromRightClick: boolean, onFinished: () => void): void;
   (e: 'select', user: UserModel, selected: boolean): void;
 }>();
 
@@ -167,11 +167,11 @@ defineExpose({
   isHovered,
 });
 
-async function onOptionsClick(event: Event): Promise<void> {
+async function onOptionsClick(event: Event, fromRightClick: boolean): Promise<void> {
   event.preventDefault();
   event.stopPropagation();
   menuOpened.value = true;
-  emits('menuClick', event, props.user, () => {
+  emits('menuClick', event, props.user, fromRightClick, () => {
     menuOpened.value = false;
   });
 }

@@ -23,7 +23,10 @@
           :entry="folder"
           :show-checkbox="hasSelected()"
           @click="$emit('click', folder, $event)"
-          @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
+          @menu-click="
+            (event: Event, entry: EntryModel, fromRightClick: boolean, onFinished: () => void) =>
+              $emit('menuClick', event, entry, fromRightClick, onFinished)
+          "
           @files-added="onFilesAdded"
           :is-workspace-reader="ownRole === WorkspaceRole.Reader"
           @drop-as-reader="$emit('dropAsReader')"
@@ -36,7 +39,10 @@
           :entry="file"
           :show-checkbox="hasSelected()"
           @click="$emit('click', file, $event)"
-          @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
+          @menu-click="
+            (event: Event, entry: EntryModel, fromRightClick: boolean, onFinished: () => void) =>
+              $emit('menuClick', event, entry, fromRightClick, onFinished)
+          "
           @files-added="onFilesAdded"
           @drop-as-reader="$emit('dropAsReader')"
         />
@@ -76,7 +82,7 @@ const folderItemsRef = ref<Array<typeof FileCard>>();
 
 const emits = defineEmits<{
   (e: 'click', entry: EntryModel, event: Event): void;
-  (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
+  (e: 'menuClick', event: Event, entry: EntryModel, fromRightClick: boolean, onFinished: () => void): void;
   (e: 'globalMenuClick', event: Event): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
   (e: 'dropAsReader'): void;

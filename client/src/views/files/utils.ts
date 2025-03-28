@@ -1,8 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { EntryModel } from '@/components/files';
+import { SmallDisplayCategoryFileContextMenu, SmallDisplayFileContextMenu } from '@/components/small-display';
 import { WorkspaceRole } from '@/parsec';
-import { FileAction, FileContextMenu, SmallDisplayFileContextMenu } from '@/views/files';
+import { FileAction, FileContextMenu } from '@/views/files';
 import { modalController, popoverController } from '@ionic/vue';
 
 export async function openEntryContextMenu(
@@ -11,6 +12,8 @@ export async function openEntryContextMenu(
   selectedEntries: EntryModel[],
   ownRole: WorkspaceRole,
   isLargeDisplay: boolean,
+  fromRightClick: boolean,
+  totalFilesNumber: number,
 ): Promise<{ action: FileAction } | undefined> {
   let data: { action: FileAction } | undefined;
 
@@ -33,7 +36,8 @@ export async function openEntryContextMenu(
 
     await popover.present();
     data = (await popover.onDidDismiss()).data;
-  } else {
+    await popover.dismiss();
+  } else if (fromRightClick) {
     const modal = await modalController.create({
       component: SmallDisplayFileContextMenu,
       cssClass: 'file-context-sheet-modal',
@@ -51,6 +55,25 @@ export async function openEntryContextMenu(
 
     await modal.present();
     data = (await modal.onDidDismiss()).data;
+    await modal.dismiss();
+  } else {
+    const modal = await modalController.create({
+      component: SmallDisplayCategoryFileContextMenu,
+      cssClass: 'file-context-sheet-modal',
+      canDismiss: true,
+      breakpoints: [0, 0.25, 1],
+      initialBreakpoint: 0.25,
+      showBackdrop: true,
+      componentProps: {
+        multipleSelected: selectedEntries.length > 1,
+        someSelected: selectedEntries.length > 0,
+        allSelected: selectedEntries.length === totalFilesNumber,
+      },
+    });
+
+    await modal.present();
+    data = (await modal.onWillDismiss()).data;
+    await modal.dismiss();
   }
 
   return data;

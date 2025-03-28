@@ -18,6 +18,10 @@ enum FileAction {
   ShowDetails,
   CopyLink,
   SeeInExplorer,
+  Select,
+  SelectAll,
+  UnselectAll,
+  Share,
 }
 
 export { FileAction, FolderGlobalAction };

@@ -7,7 +7,10 @@
     :user="user"
     :disabled="user.isCurrent"
     :show-checkbox="someSelected"
-    @menu-click="(event: Event, user: UserModel, onFinished: () => void) => $emit('menuClick', event, user, onFinished)"
+    @menu-click="
+      (event: Event, user: UserModel, fromRightClick: boolean, onFinished: () => void) =>
+        $emit('menuClick', event, user, fromRightClick, onFinished)
+    "
     :class="{
       'current-user': user.isCurrent,
     }"
@@ -31,7 +34,7 @@ defineProps<{
 }>();
 
 defineEmits<{
-  (e: 'menuClick', event: Event, user: UserModel, onFinished: () => void): void;
+  (e: 'menuClick', event: Event, user: UserModel, fromRightClick: boolean, onFinished: () => void): void;
 }>();
 
 const selectedCount = ref(0);
