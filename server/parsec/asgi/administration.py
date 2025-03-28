@@ -77,6 +77,14 @@ def check_administration_auth(
         raise HTTPException(status_code=403, detail="Bad authorization token")
 
 
+def check_service_auth(
+    request: Request, credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
+) -> None:
+    service_token = request.app.state.backend.config.service_token
+    if service_token is None or service_token != credentials.credentials:
+        raise HTTPException(status_code=403, detail="Bad authorization token")
+
+
 # This function is a workaround for FastAPI's broken custom type in query parameters
 # (see https://github.com/tiangolo/fastapi/issues/10259)
 def parse_organization_id_or_die(raw_organization_id: str) -> OrganizationID:
