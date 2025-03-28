@@ -30,6 +30,10 @@ pub fn validate_invitation_token(raw: &str) -> bool {
     libparsec_types::InvitationToken::from_hex(raw).is_ok()
 }
 
+pub fn validate_account_token(raw: &str) -> bool {
+    libparsec_types::AccountToken::from_hex(raw).is_ok()
+}
+
 pub fn validate_organization_id(raw: &str) -> bool {
     libparsec_types::OrganizationID::from_str(raw).is_ok()
 }

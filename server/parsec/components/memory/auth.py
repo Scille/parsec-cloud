@@ -2,11 +2,15 @@
 
 from typing import Any
 
-from parsec._parsec import DateTime, DeviceID, InvitationToken, OrganizationID
+from parsec._parsec import AccountToken, DateTime, DeviceID, InvitationToken, OrganizationID
 from parsec.components.auth import (
+    AnonymousAccountAuthInfo,
     AnonymousAuthInfo,
+    AuthAnonymousAccountAuthBadOutcome,
     AuthAnonymousAuthBadOutcome,
+    AuthAuthenticatedAccountAuthBadOutcome,
     AuthAuthenticatedAuthBadOutcome,
+    AuthenticatedAccountAuthInfo,
     AuthenticatedAuthInfo,
     AuthInvitedAuthBadOutcome,
     BaseAuthComponent,
@@ -114,3 +118,20 @@ class MemoryAuthComponent(BaseAuthComponent):
             organization_internal_id=0,  # Only used by PostgreSQL implementation
             device_internal_id=0,  # Only used by PostgreSQL implementation
         )
+
+    async def anonymous_account_auth(
+        self,
+        now: DateTime,
+    ) -> AnonymousAccountAuthInfo | AuthAnonymousAccountAuthBadOutcome:
+        return AnonymousAccountAuthInfo()
+
+    async def authenticated_account_auth(
+        self,
+        now: DateTime,
+        token: AccountToken,
+    ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
+        try:
+            account = self._data.accounts[token]
+        except KeyError:
+            return AuthAuthenticatedAccountAuthBadOutcome.ACCOUNT_NOT_FOUND
+        return AuthenticatedAccountAuthInfo(account.token)

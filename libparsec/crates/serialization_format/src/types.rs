@@ -239,6 +239,7 @@ generate_field_type_enum!(
     RealmRole => libparsec_types::RealmRole,
     BootstrapToken => libparsec_types::BootstrapToken,
     InvitationToken => libparsec_types::InvitationToken,
+    AccountToken => libparsec_types::AccountToken,
     InvitationStatus => libparsec_types::InvitationStatus,
     CertificateSignerOwned => libparsec_types::CertificateSignerOwned,
     BlockAccess => libparsec_types::BlockAccess,
