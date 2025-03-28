@@ -21,9 +21,6 @@
         @click="$event.preventDefault()"
         :disabled="!keyringAvailable || disableKeyring"
       >
-        <ion-text class="body-lg item-radio__label">
-          {{ $msTranslate('Authentication.useKeyring') }}
-        </ion-text>
         <ion-text
           v-show="!keyringAvailable && isDesktop()"
           class="body-sm item-radio__text"
@@ -35,6 +32,9 @@
           class="body-sm item-radio__text"
         >
           {{ $msTranslate('Authentication.keyringUnavailableOnWeb') }}
+        </ion-text>
+        <ion-text class="body-lg item-radio__label">
+          {{ $msTranslate('Authentication.useKeyring') }}
         </ion-text>
       </ion-radio>
       <ion-radio
@@ -52,7 +52,10 @@
       <keyring-information v-show="authentication === DeviceSaveStrategyTag.Keyring" />
     </div>
     <div v-show="authentication === DeviceSaveStrategyTag.Password">
-      <ms-choose-password-input ref="choosePassword" />
+      <ms-choose-password-input
+        ref="choosePassword"
+        class="choose-password"
+      />
     </div>
   </ion-list>
 </template>
@@ -119,47 +122,46 @@ async function areFieldsCorrect(): Promise<boolean> {
   }
   // eslint-disable-next-line vue-scoped-css/no-unused-selector
   .choose-password {
-    padding: 0.75rem;
+    padding: 1.5rem 1rem;
   }
 }
 
 .radio-list {
   display: flex;
-  flex-direction: column;
+  gap: 1rem;
+}
+
+.choose-password {
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  border-radius: var(--parsec-radius-12) 0 var(--parsec-radius-12) var(--parsec-radius-12);
+  box-shadow: var(--parsec-shadow-soft);
 }
 
 // eslint-disable-next-line vue-scoped-css/no-unused-selector
 .radio-list-item {
   display: flex;
   flex-direction: column;
-  border-radius: var(--parsec-radius-6);
+  border-radius: var(--parsec-radius-12);
   width: 100%;
   z-index: 2;
+
   &:hover {
     background: var(--parsec-color-light-secondary-background);
-  }
-
-  &:nth-child(2) {
-    border-radius: var(--parsec-radius-6) var(--parsec-radius-6);
-
-    &:hover {
-      border-radius: var(--parsec-radius-6);
-    }
   }
 
   &.radio-checked {
     background: var(--parsec-color-light-secondary-premiere);
   }
 
-  &:first-of-type {
-    margin-bottom: 0.5rem;
+  &.radio-checked:last-of-type {
+    border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
   }
 }
 
 // eslint-disable-next-line vue-scoped-css/no-unused-selector
 .item-radio {
   gap: 0.5rem;
-  padding: 1em;
+  padding: 1rem;
   width: 100%;
 
   &::part(mark) {
@@ -168,35 +170,40 @@ async function areFieldsCorrect(): Promise<boolean> {
     transform: none;
   }
 
+  &::part(label) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   &__label,
   &__text {
     color: var(--parsec-color-light-secondary-grey);
     display: block;
-    margin-left: 1rem;
     width: 100%;
   }
 
   &__text {
     display: flex;
-    align-items: center;
-    background: var(--parsec-color-light-secondary-text);
-    color: var(--parsec-color-light-secondary-white);
-    padding: 0.125rem 0.25rem;
+    color: var(--parsec-color-light-danger-700);
+    padding: 0.125rem 0;
     border-radius: var(--parsec-radius-4);
     width: fit-content;
-    margin-left: auto;
+    position: absolute;
+    top: -1.25rem;
   }
 
   &.radio-disabled {
     &::part(container) {
       opacity: 0.3;
     }
+
     &::part(label) {
       opacity: 1;
       display: flex;
-      align-items: center;
-      gap: 1rem;
+      gap: 0.125rem;
     }
+
     .item-radio__label {
       opacity: 0.5;
     }

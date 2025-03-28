@@ -108,17 +108,38 @@
   }
 
   &:has(.Authentication)::part(content) {
-    max-height: var(--parsec-modal-max-height);
+    max-height: 48rem;
+
+    @media only screen and (max-height: 700px) {
+      max-height: 100%;
+    }
   }
 
   .Authentication {
-    max-height: var(--parsec-modal-max-height);
+    max-height: 48rem;
     overflow: hidden;
     display: flex;
+
+    @media only screen and (max-height: 700px) {
+      max-height: 30rem;
+    }
+
+    .modal-footer {
+      position: sticky;
+      bottom: 0;
+      padding-bottom: 2rem;
+      right: -2rem;
+      background: var(--parsec-color-light-secondary-white);
+
+      #next-button {
+        margin-top: 1rem;
+      }
+    }
 
     .wizardTrue {
       overflow-y: auto;
       position: relative;
+      padding: 2.5rem 2.5rem 0 2.5rem;
 
       &::after {
         content: '';

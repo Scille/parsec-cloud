@@ -860,8 +860,8 @@
             "password": "Mot de passe"
         },
         "changeAuthenticationButton": "Changer de méthode",
-        "useKeyring": "Utiliser l'authentification du système",
-        "usePassword": "Utiliser un mot de passe",
+        "useKeyring": "Authentification du système",
+        "usePassword": "Mot de passe",
         "label": "Méthode d'authentification",
         "keyringUnavailableOnSystem": "Indisponible sur votre système",
         "keyringUnavailableOnWeb": "Indisponible sur le web"

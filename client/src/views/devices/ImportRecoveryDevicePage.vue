@@ -283,13 +283,18 @@ async function onLoginClick(): Promise<void> {
 .recovery-content {
   height: auto;
   width: 60vw;
-  max-width: var(--parsec-max-forgotten-pwd-width);
+  max-width: 40rem;
   display: flex;
   margin: 2rem auto;
   flex-direction: column;
   align-items: center;
   gap: 2rem;
   box-shadow: none;
+
+  @include ms.responsive-breakpoint('lg') {
+    width: 100%;
+    max-width: none;
+  }
 }
 
 .recovery-header {
@@ -300,9 +305,9 @@ async function onLoginClick(): Promise<void> {
 
 .recovery-card {
   height: auto;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   padding: 2rem;
   margin: 0;
   border-radius: var(--parsec-radius-12);
@@ -396,6 +401,10 @@ async function onLoginClick(): Promise<void> {
   display: flex;
   width: fit-content;
   margin-left: auto;
+}
+
+#validate-password-btn {
+  margin-top: 2rem;
 }
 
 .success-card {
