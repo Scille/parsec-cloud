@@ -55,10 +55,10 @@ fn find_device_files(path: PathBuf) -> Vec<PathBuf> {
 }
 
 pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
-    let key_file_paths = crate::get_devices_dir(config_dir);
+    let devices_dir = crate::get_devices_dir(config_dir);
 
     // Consider `.keys` files in devices directory
-    let mut key_file_paths = find_device_files(key_file_paths);
+    let mut key_file_paths = find_device_files(devices_dir);
 
     // Sort paths so the discovery order is deterministic
     // In the case of duplicate files, that means only the first discovered device is considered
