@@ -3,16 +3,16 @@
 import { Page } from '@playwright/test';
 import { expect, fillIonInput, msTest, selectDropdown } from '@tests/e2e/helpers';
 
-msTest.fail('Check devices list', async ({ myProfilePage }) => {
+msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
   await myProfilePage.locator('.menu-list__item').nth(1).click();
   await expect(myProfilePage.locator('#add-device-button')).toHaveText('Add a new device');
   const devices = myProfilePage.locator('#devices-list').getByRole('listitem');
-  await expect(devices.locator('.device-name')).toHaveText([/^device\d$/, /^device\d$/]);
-  await expect(devices.locator('.join-date')).toHaveText(['Joined: Today', 'Joined: Today']);
-  await expect(devices.locator('.label-id')).toHaveText([/^Technical ID: device\d$/, /^Technical ID: device\d$/]);
-  await expect(devices.nth(0).locator('.badge')).toBeVisible();
-  await expect(devices.nth(1).locator('.badge')).toBeHidden();
+  await expect(devices.locator('.device-name')).toHaveText(['My alice@dev1 machine', 'My alice@dev2 machine']);
+  await expect(devices.locator('.join-date')).toHaveText(['Joined: Jan 2, 2000', 'Joined: Jan 4, 2000']);
+  await expect(devices.locator('.label-id')).toHaveText([/^(Technical ID: )[a-f0-9-]+$/, /^(Technical ID: )[a-f0-9-]+$/]);
+  await expect(devices.nth(0).locator('.badge')).toBeHidden();
+  await expect(devices.nth(1).locator('.badge')).toBeVisible();
 });
 
 async function checkMenuItem(
@@ -100,6 +100,49 @@ msTest('Change password', async ({ home, myProfilePage }) => {
   await changePasswordModal.locator('#next-button').click();
   await expect(changePasswordModal).toBeHidden();
   await expect(myProfilePage).toShowToast('Authentication has been updated.', 'Success');
+
+  await myProfilePage.locator('#change-authentication-button').click();
+  await fillIonInput(currentPasswordContainer.locator('ion-input'), 'P@ssw0rd.');
+  await expect(changePasswordModal.locator('#next-button')).toBeTrulyEnabled();
+  await changePasswordModal.locator('#next-button').click();
+  await expect(currentPasswordContainer.locator('.form-error')).toBeVisible();
+  await expect(currentPasswordContainer.locator('.form-error')).toHaveText('Wrong password. Please try again.');
+});
+
+msTest('Create recovery files', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Organization recovery');
+  await myProfilePage.locator('.menu-list__item').nth(3).click();
+  const restorePassword = myProfilePage.locator('.recovery');
+  await expect(restorePassword).toBeVisible();
+  await expect(restorePassword.locator('.item-header__title')).toHaveText('Organization recovery files');
+  await expect(restorePassword.locator('.done')).toBeHidden();
+  await expect(restorePassword.locator('.danger')).toBeVisible();
+  await expect(restorePassword.locator('.danger')).toHaveText('Action required');
+  await expect(restorePassword.locator('.restore-password-button')).toHaveText('Create a recovery file');
+  await restorePassword.locator('.restore-password-button').locator('ion-button').click();
+  await expect(restorePassword.locator('.recovery-item-download').nth(0)).toBeVisible();
+  await expect(restorePassword.locator('.recovery-item-download').nth(1)).toBeVisible();
+
+  // Download recovery file
+  await expect(restorePassword.locator('.recovery-item-download__button').nth(0)).toHaveText('Download');
+  await expect(restorePassword.locator('.recovery-item-download__downloaded').nth(0)).toBeHidden();
+  await restorePassword.locator('.recovery-item-download__button').nth(0).click();
+  await expect(restorePassword.locator('.recovery-item-download__button').nth(0)).toHaveText('Download again');
+  await expect(restorePassword.locator('.recovery-item-download__downloaded').nth(0)).toBeVisible();
+
+  // Download secret key
+  await expect(restorePassword.locator('.recovery-item-download__button').nth(1)).toHaveText('Download');
+  await expect(restorePassword.locator('.recovery-item-download__downloaded').nth(1)).toBeHidden();
+  await restorePassword.locator('.recovery-item-download__button').nth(1).click();
+  await expect(restorePassword.locator('.recovery-item-download__button').nth(1)).toHaveText('Download again');
+  await expect(restorePassword.locator('.recovery-item-download__downloaded').nth(1)).toBeVisible();
+
+  // Switch page to reload and check chip text
+  await myProfilePage.locator('.menu-list__item').nth(2).click();
+  await myProfilePage.locator('.menu-list__item').nth(3).click();
+  await expect(restorePassword.locator('.danger')).toBeHidden();
+  await expect(restorePassword.locator('.done')).toBeVisible();
+  await expect(restorePassword.locator('.done')).toHaveText('Recovery file already created');
 });
 
 msTest('Check settings section', async ({ myProfilePage }) => {
