@@ -42,7 +42,6 @@ export default defineConfig({
     '**/workspace_history.spec.ts',
     '**/my_profile_page.spec.ts',
     '**/organization_switch_popover.spec.ts',
-    '**/file_details.spec.ts',
     '**/export_recovery_device.spec.ts',
     '**/import_recovery_device.spec.ts',
     '**/device_greet.spec.ts',
