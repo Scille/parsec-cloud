@@ -14,7 +14,7 @@ use libparsec_types::prelude::*;
 async fn save_load(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
     use crate::tests::utils::key_present_in_system;
 
-    let key_file = tmp_path.join("keyring_file");
+    let key_file = tmp_path.join("devices/keyring_file.keys");
     let url = ParsecOrganizationAddr::from_any(
         // cspell:disable-next-line
         "parsec3://test.invalid/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA",
