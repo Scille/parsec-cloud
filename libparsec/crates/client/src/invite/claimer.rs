@@ -437,8 +437,8 @@ impl ShamirRecoveryClaimPickRecipientCtx {
         self.threshold
     }
 
-    pub fn claimer_user_id(&self) -> &UserID {
-        &self.claimer_user_id
+    pub fn claimer_user_id(&self) -> UserID {
+        self.claimer_user_id
     }
 
     pub fn claimer_human_handle(&self) -> &HumanHandle {
@@ -596,8 +596,8 @@ pub struct ShamirRecoveryClaimRecoverDeviceCtx {
 }
 
 impl ShamirRecoveryClaimRecoverDeviceCtx {
-    pub fn claimer_user_id(&self) -> &UserID {
-        &self.claimer_user_id
+    pub fn claimer_user_id(&self) -> UserID {
+        self.claimer_user_id
     }
 
     pub fn claimer_human_handle(&self) -> &HumanHandle {
@@ -998,8 +998,8 @@ impl UserClaimInitialCtx {
         }
     }
 
-    pub fn greeter_user_id(&self) -> &UserID {
-        &self.base.greeter_user_id
+    pub fn greeter_user_id(&self) -> UserID {
+        self.base.greeter_user_id
     }
 
     pub fn greeter_human_handle(&self) -> &HumanHandle {
@@ -1110,8 +1110,8 @@ impl DeviceClaimInitialCtx {
         ))
     }
 
-    pub fn greeter_user_id(&self) -> &UserID {
-        &self.0.greeter_user_id
+    pub fn greeter_user_id(&self) -> UserID {
+        self.0.greeter_user_id
     }
 
     pub fn greeter_human_handle(&self) -> &HumanHandle {
@@ -1153,8 +1153,8 @@ impl ShamirRecoveryClaimInitialCtx {
         ))
     }
 
-    pub fn greeter_user_id(&self) -> &UserID {
-        &self.0.greeter_user_id
+    pub fn greeter_user_id(&self) -> UserID {
+        self.0.greeter_user_id
     }
 
     pub fn greeter_human_handle(&self) -> &HumanHandle {
@@ -1237,8 +1237,8 @@ impl BaseClaimInProgress1Ctx {
 pub struct UserClaimInProgress1Ctx(BaseClaimInProgress1Ctx);
 
 impl UserClaimInProgress1Ctx {
-    pub fn greeter_user_id(&self) -> &UserID {
-        &self.0.greeter_user_id
+    pub fn greeter_user_id(&self) -> UserID {
+        self.0.greeter_user_id
     }
 
     pub fn greeter_human_handle(&self) -> &HumanHandle {
@@ -1270,8 +1270,8 @@ impl UserClaimInProgress1Ctx {
 pub struct DeviceClaimInProgress1Ctx(BaseClaimInProgress1Ctx);
 
 impl DeviceClaimInProgress1Ctx {
-    pub fn greeter_user_id(&self) -> &UserID {
-        &self.0.greeter_user_id
+    pub fn greeter_user_id(&self) -> UserID {
+        self.0.greeter_user_id
     }
 
     pub fn greeter_human_handle(&self) -> &HumanHandle {
@@ -1306,8 +1306,8 @@ impl DeviceClaimInProgress1Ctx {
 pub struct ShamirRecoveryClaimInProgress1Ctx(BaseClaimInProgress1Ctx);
 
 impl ShamirRecoveryClaimInProgress1Ctx {
-    pub fn greeter_user_id(&self) -> &UserID {
-        &self.0.greeter_user_id
+    pub fn greeter_user_id(&self) -> UserID {
+        self.0.greeter_user_id
     }
 
     pub fn greeter_human_handle(&self) -> &HumanHandle {

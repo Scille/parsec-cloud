@@ -70,7 +70,7 @@ async fn shamir_full_greeting(tmp_path: TmpPath, env: &TestbedEnv) {
     p_assert_matches!(&alice_ctx, AnyClaimRetrievedInfoCtx::ShamirRecovery(_));
     let alice_recipient_pick_ctx = match alice_ctx {
         AnyClaimRetrievedInfoCtx::ShamirRecovery(alice_ctx) => {
-            p_assert_eq!(*alice_ctx.claimer_user_id(), alice.user_id);
+            p_assert_eq!(alice_ctx.claimer_user_id(), alice.user_id);
             p_assert_eq!(*alice_ctx.claimer_human_handle(), alice.human_handle);
             p_assert_eq!(
                 *alice_ctx.recipients(),
@@ -411,7 +411,7 @@ async fn unrecoverable_recovery(env: &TestbedEnv) {
     p_assert_matches!(&alice_ctx, AnyClaimRetrievedInfoCtx::ShamirRecovery(_));
     let alice_recipient_pick_ctx = match alice_ctx {
         AnyClaimRetrievedInfoCtx::ShamirRecovery(alice_ctx) => {
-            p_assert_eq!(*alice_ctx.claimer_user_id(), alice.user_id);
+            p_assert_eq!(alice_ctx.claimer_user_id(), alice.user_id);
             p_assert_eq!(*alice_ctx.claimer_human_handle(), alice.human_handle);
             p_assert_eq!(
                 *alice_ctx.recipients(),
