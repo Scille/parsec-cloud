@@ -47,18 +47,18 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         }
     })?;
 
-    let mut handle = start_spinner("Saving new device".into());
-
-    libparsec_client::import_recovery_device(
+    let device_label = DeviceLabel::try_from(label.as_str())?;
+    let new_device = libparsec_client::import_recovery_device(
         &config_dir,
         &recovery_device,
         passphrase.to_string(),
-        DeviceLabel::try_from(label.as_str())?,
+        device_label.clone(),
         libparsec::DeviceSaveStrategy::Password { password },
     )
     .await?;
 
-    handle.stop_with_message("Saved new device".into());
+    println!("New device created:");
+    println!("{}", &format_single_device(&new_device));
 
     Ok(())
 }
