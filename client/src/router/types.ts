@@ -146,8 +146,12 @@ if (import.meta.env.PARSEC_APP_TEST_MODE?.toLowerCase() === 'true') {
   });
 }
 
+const BASE_URI = new URL(document.baseURI);
+// We use `BASE_URI.pathname` over `import.meta.env.BASE_URL` because `vue-router` need an absolute path
+// and we defined `BASE_URL` as relative to simplify hosting configurations.
+const BASE_URL = BASE_URI.pathname;
 const router: Router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(BASE_URL),
   routes,
 });
 
