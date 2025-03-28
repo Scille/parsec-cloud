@@ -82,7 +82,7 @@ impl UserCertificate {
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: Option<&DeviceID>,
-        expected_user: Option<&UserID>,
+        expected_user: Option<UserID>,
         expected_human_handle: Option<&HumanHandle>,
     ) -> PyResult<Self> {
         libparsec_types::UserCertificate::verify_and_load(
@@ -394,7 +394,7 @@ impl RevokedUserCertificate {
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
-        expected_user: Option<&UserID>,
+        expected_user: Option<UserID>,
     ) -> PyResult<Self> {
         libparsec_types::RevokedUserCertificate::verify_and_load(
             signed,
@@ -471,7 +471,7 @@ impl UserUpdateCertificate {
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
-        expected_user: Option<&UserID>,
+        expected_user: Option<UserID>,
     ) -> PyResult<Self> {
         libparsec_types::UserUpdateCertificate::verify_and_load(
             signed,
@@ -556,7 +556,7 @@ impl RealmRoleCertificate {
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
         expected_realm: Option<VlobID>,
-        expected_user: Option<&UserID>,
+        expected_user: Option<UserID>,
     ) -> PyResult<Self> {
         libparsec_types::RealmRoleCertificate::verify_and_load(
             signed,
