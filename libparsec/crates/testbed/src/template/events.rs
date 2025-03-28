@@ -626,7 +626,7 @@ impl TestbedEventBootstrapOrganization {
                 1 => {
                     let populate = || {
                         let mut certif = UserCertificate {
-                            author: CertificateSignerOwned::Root,
+                            author: CertificateSigner::Root,
                             timestamp: self.timestamp,
                             user_id: self.first_user_id,
                             human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(
@@ -656,7 +656,7 @@ impl TestbedEventBootstrapOrganization {
                 2 => {
                     let populate = || {
                         let mut certif = DeviceCertificate {
-                            author: CertificateSignerOwned::Root,
+                            author: CertificateSigner::Root,
                             timestamp: self.timestamp,
                             purpose: DevicePurpose::Standard,
                             user_id: self.first_user_id,
@@ -985,7 +985,7 @@ impl TestbedEventNewUser {
                         let author_signkey = template.device_signing_key(self.author);
 
                         let mut certif = UserCertificate {
-                            author: CertificateSignerOwned::User(self.author),
+                            author: CertificateSigner::User(self.author),
                             timestamp: self.timestamp,
                             user_id: self.user_id,
                             human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(
@@ -1016,7 +1016,7 @@ impl TestbedEventNewUser {
                         let author_signkey = template.device_signing_key(self.author);
 
                         let mut certif = DeviceCertificate {
-                            author: CertificateSignerOwned::User(self.author),
+                            author: CertificateSigner::User(self.author),
                             timestamp: self.timestamp,
                             purpose: DevicePurpose::Standard,
                             user_id: self.user_id,
@@ -1067,7 +1067,7 @@ single_certificate_event!(
     |e: &TestbedEventNewDevice, t: &TestbedTemplate| {
         let author_signkey = t.device_signing_key(e.author);
         let mut certif = DeviceCertificate {
-            author: CertificateSignerOwned::User(e.author),
+            author: CertificateSigner::User(e.author),
             timestamp: e.timestamp,
             purpose: DevicePurpose::Standard,
             user_id: e.user_id,

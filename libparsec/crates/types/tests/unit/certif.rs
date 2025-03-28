@@ -13,7 +13,7 @@ use crate::prelude::*;
 #[rstest]
 fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     let user_certificate = UserCertificate {
-        author: CertificateSignerOwned::User(alice.device_id),
+        author: CertificateSigner::User(alice.device_id),
         timestamp,
         user_id: bob.user_id,
         human_handle: MaybeRedacted::Real(bob.human_handle.clone()),
@@ -37,7 +37,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let device_certificate = DeviceCertificate {
-        author: CertificateSignerOwned::User(alice.device_id),
+        author: CertificateSigner::User(alice.device_id),
         timestamp,
         purpose: DevicePurpose::Standard,
         user_id: bob.user_id,
@@ -301,7 +301,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
     ));
 
     let expected = UserCertificate {
-        author: CertificateSignerOwned::User(alice.device_id),
+        author: CertificateSigner::User(alice.device_id),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id,
         human_handle: MaybeRedacted::Real(bob.human_handle.to_owned()),
@@ -313,7 +313,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
     let certif = UserCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        CertificateSignerRef::User(&alice.device_id),
+        CertificateSigner::User(alice.device_id),
         None,
         None,
     )
@@ -323,7 +323,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
     let unsecure_certif = UserCertificate::unsecure_load(data.clone()).unwrap();
     p_assert_eq!(
         unsecure_certif.author(),
-        CertificateSignerOwned::User(alice.device_id)
+        CertificateSigner::User(alice.device_id)
     );
     p_assert_eq!(
         unsecure_certif
@@ -344,7 +344,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
     let certif2 = UserCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        CertificateSignerRef::User(&alice.device_id),
+        CertificateSigner::User(alice.device_id),
         None,
         None,
     )
@@ -360,7 +360,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
         UserCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
-            CertificateSignerRef::Root,
+            CertificateSigner::Root,
             None,
             None
         ),
@@ -393,7 +393,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = UserCertificate {
-        author: CertificateSignerOwned::User(alice.device_id),
+        author: CertificateSigner::User(alice.device_id),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id,
         human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id)),
@@ -405,7 +405,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
     let certif = UserCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        CertificateSignerRef::User(&alice.device_id),
+        CertificateSigner::User(alice.device_id),
         None,
         None,
     )
@@ -415,7 +415,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
     let unsecure_certif = UserCertificate::unsecure_load(data.clone()).unwrap();
     p_assert_eq!(
         unsecure_certif.author(),
-        CertificateSignerOwned::User(alice.device_id)
+        CertificateSigner::User(alice.device_id)
     );
     p_assert_eq!(
         unsecure_certif
@@ -436,7 +436,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
     let certif2 = UserCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        CertificateSignerRef::User(&alice.device_id),
+        CertificateSigner::User(alice.device_id),
         None,
         None,
     )
@@ -483,7 +483,7 @@ fn serde_device_certificate(
             .as_ref();
 
             let expected = DeviceCertificate {
-                author: CertificateSignerOwned::User(alice.device_id),
+                author: CertificateSigner::User(alice.device_id),
                 timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
                 purpose: DevicePurpose::Standard,
                 user_id: alice.user_id,
@@ -521,7 +521,7 @@ fn serde_device_certificate(
             .as_ref();
 
             let expected = DeviceCertificate {
-                author: CertificateSignerOwned::User(alice.device_id),
+                author: CertificateSigner::User(alice.device_id),
                 timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
                 purpose: DevicePurpose::Standard,
                 user_id: alice.user_id,
@@ -560,7 +560,7 @@ fn serde_device_certificate(
             .as_ref();
 
             let expected = DeviceCertificate {
-                author: CertificateSignerOwned::User(alice.device_id),
+                author: CertificateSigner::User(alice.device_id),
                 timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
                 purpose: DevicePurpose::ShamirRecovery,
                 user_id: alice.user_id,
@@ -599,7 +599,7 @@ fn serde_device_certificate(
             .as_ref();
 
             let expected = DeviceCertificate {
-                author: CertificateSignerOwned::User(alice.device_id),
+                author: CertificateSigner::User(alice.device_id),
                 timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
                 purpose: DevicePurpose::PassphraseRecovery,
                 user_id: alice.user_id,
@@ -637,7 +637,7 @@ fn serde_device_certificate(
             .as_ref();
 
             let expected = DeviceCertificate {
-                author: CertificateSignerOwned::User(alice.device_id),
+                author: CertificateSigner::User(alice.device_id),
                 timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
                 purpose: DevicePurpose::WebAuth,
                 user_id: alice.user_id,
@@ -657,7 +657,7 @@ fn serde_device_certificate(
     let certif = DeviceCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        CertificateSignerRef::User(&alice.device_id),
+        CertificateSigner::User(alice.device_id),
         None,
     )
     .unwrap();
@@ -666,7 +666,7 @@ fn serde_device_certificate(
     let unsecure_certif = DeviceCertificate::unsecure_load(data.clone()).unwrap();
     p_assert_eq!(
         unsecure_certif.author(),
-        CertificateSignerOwned::User(alice.device_id)
+        CertificateSigner::User(alice.device_id)
     );
     p_assert_eq!(
         unsecure_certif
@@ -687,7 +687,7 @@ fn serde_device_certificate(
     let certif2 = DeviceCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        CertificateSignerRef::User(&alice.device_id),
+        CertificateSigner::User(alice.device_id),
         None,
     )
     .unwrap();
@@ -702,7 +702,7 @@ fn serde_device_certificate(
         DeviceCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
-            CertificateSignerRef::Root,
+            CertificateSigner::Root,
             None
         ),
         Err(DataError::Signature)
@@ -747,7 +747,7 @@ fn serde_device_certificate_redacted(
             .as_ref();
 
             let expected = DeviceCertificate {
-                author: CertificateSignerOwned::User(alice.device_id),
+                author: CertificateSigner::User(alice.device_id),
                 timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
                 purpose: DevicePurpose::Standard,
                 user_id: alice.user_id,
@@ -785,7 +785,7 @@ fn serde_device_certificate_redacted(
             .as_ref();
 
             let expected = DeviceCertificate {
-                author: CertificateSignerOwned::User(alice.device_id),
+                author: CertificateSigner::User(alice.device_id),
                 timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
                 purpose: DevicePurpose::Standard,
                 user_id: alice.user_id,
@@ -823,7 +823,7 @@ fn serde_device_certificate_redacted(
             .as_ref();
 
             let expected = DeviceCertificate {
-                author: CertificateSignerOwned::User(alice.device_id),
+                author: CertificateSigner::User(alice.device_id),
                 timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
                 purpose: DevicePurpose::ShamirRecovery,
                 user_id: alice.user_id,
@@ -861,7 +861,7 @@ fn serde_device_certificate_redacted(
             .as_ref();
 
             let expected = DeviceCertificate {
-                author: CertificateSignerOwned::User(alice.device_id),
+                author: CertificateSigner::User(alice.device_id),
                 timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
                 purpose: DevicePurpose::PassphraseRecovery,
                 user_id: alice.user_id,
@@ -899,7 +899,7 @@ fn serde_device_certificate_redacted(
             .as_ref();
 
             let expected = DeviceCertificate {
-                author: CertificateSignerOwned::User(alice.device_id),
+                author: CertificateSigner::User(alice.device_id),
                 timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
                 purpose: DevicePurpose::WebAuth,
                 user_id: alice.user_id,
@@ -919,7 +919,7 @@ fn serde_device_certificate_redacted(
     let certif = DeviceCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        CertificateSignerRef::User(&alice.device_id),
+        CertificateSigner::User(alice.device_id),
         None,
     )
     .unwrap();
@@ -928,7 +928,7 @@ fn serde_device_certificate_redacted(
     let unsecure_certif = DeviceCertificate::unsecure_load(data.clone()).unwrap();
     p_assert_eq!(
         unsecure_certif.author(),
-        CertificateSignerOwned::User(alice.device_id)
+        CertificateSigner::User(alice.device_id)
     );
     p_assert_eq!(
         unsecure_certif
@@ -949,7 +949,7 @@ fn serde_device_certificate_redacted(
     let certif2 = DeviceCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        CertificateSignerRef::User(&alice.device_id),
+        CertificateSigner::User(alice.device_id),
         None,
     )
     .unwrap();

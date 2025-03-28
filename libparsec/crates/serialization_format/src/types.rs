@@ -240,7 +240,7 @@ generate_field_type_enum!(
     BootstrapToken => libparsec_types::BootstrapToken,
     InvitationToken => libparsec_types::InvitationToken,
     InvitationStatus => libparsec_types::InvitationStatus,
-    CertificateSignerOwned => libparsec_types::CertificateSignerOwned,
+    CertificateSigner => libparsec_types::CertificateSigner,
     BlockAccess => libparsec_types::BlockAccess,
     EntryName => libparsec_types::EntryName,
     FileManifest => libparsec_types::FileManifest,

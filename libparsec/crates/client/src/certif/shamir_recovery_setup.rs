@@ -233,7 +233,7 @@ async fn create_shamir_recovery_device(
     );
 
     let device_cert = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
+        author: CertificateSigner::User(author.device_id),
         timestamp,
         purpose: DevicePurpose::ShamirRecovery,
         user_id: recovery_device.user_id,

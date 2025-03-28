@@ -30,8 +30,8 @@ async fn ok(env: &TestbedEnv) {
         p_assert_eq!(purpose, &certif.purpose);
         p_assert_eq!(created_on, &certif.timestamp);
         let expected_created_by = match &certif.author {
-            CertificateSignerOwned::User(author) => Some(author),
-            CertificateSignerOwned::Root => None,
+            CertificateSigner::User(author) => Some(author),
+            CertificateSigner::Root => None,
         };
         p_assert_eq!(created_by.as_ref(), expected_created_by);
     };
