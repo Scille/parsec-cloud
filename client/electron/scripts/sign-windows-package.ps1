@@ -9,7 +9,7 @@
 $ErrorActionPreference = "Stop"
 
 # Check node version
-$expected_node_version = "v18.12.0"
+$expected_node_version = "v22.14.0"
 $node_version = node --version
 if (-Not ($node_version -eq $expected_node_version)) {
     fnm use $expected_node_version
