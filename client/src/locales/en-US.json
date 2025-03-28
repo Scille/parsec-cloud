@@ -860,8 +860,8 @@
             "password": "Password"
         },
         "changeAuthenticationButton": "Change method",
-        "useKeyring": "Use System Authentication",
-        "usePassword": "Use Password",
+        "useKeyring": "System Authentication",
+        "usePassword": "Password",
         "label": "Authentication method",
         "keyringUnavailableOnSystem": "Unavailable on your system",
         "keyringUnavailableOnWeb": "Unavailable on web"

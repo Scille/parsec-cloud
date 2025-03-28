@@ -148,7 +148,7 @@ async function areFieldsCorrect(): Promise<boolean> {
 
 .item-radio {
   gap: 0.5rem;
-  padding: 1em;
+  padding: 0.5rem 1rem;
   width: 100%;
 
   &::part(mark) {
@@ -173,8 +173,8 @@ async function areFieldsCorrect(): Promise<boolean> {
   }
 
   &::part(mark) {
-    width: 0.85rem;
-    height: 0.85rem;
+    width: 0.75rem;
+    height: 0.75rem;
     border: 1.5px solid var(--parsec-color-light-secondary-inversed-contrast);
     background: var(--parsec-color-light-primary-600);
     border-radius: var(--parsec-radius-circle);
