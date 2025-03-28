@@ -240,27 +240,27 @@ const emits = defineEmits<{
       }
 
       &:nth-of-type(1) {
-        @include ms.responsive-breakpoint('sm') {
+        @include ms.responsive-breakpoint('xs') {
           order: 3;
           margin-left: auto;
         }
       }
 
       &:nth-of-type(2) {
-        @include ms.responsive-breakpoint('sm') {
+        @include ms.responsive-breakpoint('xs') {
           order: 1;
         }
       }
 
       &:nth-of-type(3) {
-        @include ms.responsive-breakpoint('sm') {
+        @include ms.responsive-breakpoint('xs') {
           order: 2;
           margin-right: auto;
         }
       }
 
       &:nth-of-type(4) {
-        @include ms.responsive-breakpoint('sm') {
+        @include ms.responsive-breakpoint('xs') {
           order: 4;
         }
       }
@@ -332,7 +332,6 @@ const emits = defineEmits<{
   @include ms.responsive-breakpoint('sm') {
     border: none;
     padding: 0;
-    max-width: 34.5rem;
     margin-inline: auto;
   }
 
