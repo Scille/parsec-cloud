@@ -30,5 +30,5 @@ async fn import_recovery_device(tmp_path: TmpPath) {
         "--label",
         "new_device"
     )
-    .stdout(predicates::str::contains("Saved new device"));
+    .stdout(predicates::str::contains("New device created:"));
 }

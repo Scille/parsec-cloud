@@ -17,6 +17,7 @@ use libparsec::{
     },
     ClientConfig, DeviceAccessStrategy, ParsecInvitationAddr,
 };
+use libparsec_client::ShamirRecoveryClaimFinalizeCtx;
 
 use crate::utils::*;
 use dialoguer::{FuzzySelect, Input};
@@ -126,11 +127,8 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                     }
                 }
             };
-            let key_file = final_ctx.get_default_key_file();
-            let access_strategy = get_access_strategy(key_file, save_mode)?;
-            final_ctx.save_local_device(&access_strategy).await?;
 
-            Ok(())
+            save_shamir_recovery(final_ctx, save_mode).await
         }
     }
 }
@@ -456,15 +454,10 @@ fn get_access_strategy(
 async fn save_user(ctx: UserClaimFinalizeCtx, save_mode: SaveMode) -> anyhow::Result<()> {
     let key_file = ctx.get_default_key_file();
     let access = get_access_strategy(key_file, save_mode)?;
+    let new_device = ctx.save_local_device(&access).await?;
 
-    let mut handle = start_spinner(format!(
-        "Saving device at: {YELLOW}{}{RESET}",
-        access.key_file().display()
-    ));
-
-    ctx.save_local_device(&access).await?;
-
-    handle.stop_with_symbol(GREEN_CHECKMARK);
+    println!("New device created:");
+    println!("{}", &format_single_device(&new_device));
 
     Ok(())
 }
@@ -472,14 +465,24 @@ async fn save_user(ctx: UserClaimFinalizeCtx, save_mode: SaveMode) -> anyhow::Re
 async fn save_device(ctx: DeviceClaimFinalizeCtx, save_mode: SaveMode) -> anyhow::Result<()> {
     let key_file = ctx.get_default_key_file();
     let access = get_access_strategy(key_file, save_mode)?;
-    let mut handle = start_spinner(format!(
-        "Saving device at: {YELLOW}{}{RESET}",
-        access.key_file().display()
-    ));
+    let new_device = ctx.save_local_device(&access).await?;
 
-    ctx.save_local_device(&access).await?;
+    println!("New device created:");
+    println!("{}", &format_single_device(&new_device));
 
-    handle.stop_with_symbol(GREEN_CHECKMARK);
+    Ok(())
+}
+
+async fn save_shamir_recovery(
+    ctx: ShamirRecoveryClaimFinalizeCtx,
+    save_mode: SaveMode,
+) -> anyhow::Result<()> {
+    let key_file = ctx.get_default_key_file();
+    let access_strategy = get_access_strategy(key_file, save_mode)?;
+    let new_device = ctx.save_local_device(&access_strategy).await?;
+
+    println!("New device created:");
+    println!("{}", &format_single_device(&new_device));
 
     Ok(())
 }

@@ -29,6 +29,14 @@ pub const YELLOW: &str = "\x1B[33m";
 pub const GREEN_CHECKMARK: &str = "\x1B[92m✔\x1B[39m";
 pub const BULLET_CHAR: &str = "•";
 
+pub fn format_single_device(device: &AvailableDevice) -> String {
+    let short_id = &device.device_id.hex()[..MINIMAL_SHORT_ID_SIZE];
+    let organization_id = &device.organization_id;
+    let human_handle = &device.human_handle;
+    let device_label = &device.device_label;
+    format!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}")
+}
+
 pub fn format_devices(
     devices: &[AvailableDevice],
     mut f: impl std::fmt::Write,
