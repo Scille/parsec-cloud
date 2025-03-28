@@ -337,7 +337,7 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
     querying.value = false;
   }
 }
-function getNextButtonText(): Translatable {
+function getNextButtonText(): Translatable | undefined {
   switch (pageStep.value) {
     case UserJoinOrganizationStep.WaitForHost:
       return { key: 'JoinOrganization.continueWith', data: { greeter: claimer.value.greeter?.label } };
@@ -348,7 +348,7 @@ function getNextButtonText(): Translatable {
     case UserJoinOrganizationStep.Finish:
       return { key: 'JoinOrganization.logIn' };
     default:
-      return { key: '' };
+      return undefined;
   }
 }
 

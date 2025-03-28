@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DEFAULT_ORGANIZATION_INFORMATION, MockBms, expect, msTest } from '@tests/e2e/helpers';
+import { MockBms, expect, msTest } from '@tests/e2e/helpers';
 
 msTest('List the invoices', async ({ clientArea }) => {
   await MockBms.mockGetInvoices(clientArea);
@@ -17,7 +17,7 @@ msTest('List the invoices', async ({ clientArea }) => {
   await expect(containers.nth(0).locator('.invoices-year-content-list-item').nth(0).locator('ion-text')).toHaveText([
     'Dec 2021',
     '2021-12',
-    DEFAULT_ORGANIZATION_INFORMATION.name,
+    clientArea.orgInfo.name,
     /^€[\d.,]+$/,
     /^(Paid|In progress|To pay)\s*Download$/,
   ]);

@@ -167,6 +167,7 @@ jobs:
         run: npm run test:e2e:headless
         env:
           TESTBED_SERVER: parsec3://localhost:6777?no_ssl=true
+          PARSEC_APP_TRIAL_SERVERS: localhost:6777?no_ssl=true
         working-directory: client
         timeout-minutes: 20
 

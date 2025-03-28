@@ -6,7 +6,7 @@ msTest('Image viewer', async ({ documents }) => {
   await openFileType(documents, 'png');
   await expect(documents).toBeViewerPage();
   await expect(documents).toHavePageTitle('File viewer');
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.png$/);
+  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.png$/);
 
   const wrapper = documents.locator('.file-viewer-wrapper');
   await expect(wrapper.locator('img')).toBeVisible();
@@ -19,7 +19,7 @@ msTest('Image viewer zoom', async ({ documents }) => {
   await openFileType(documents, 'png');
   await expect(documents).toBeViewerPage();
   await expect(documents).toHavePageTitle('File viewer');
-  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^File_[a-z0-9_]+\.png$/);
+  await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(/^[A-Za-z0-9_-]+\.png$/);
   const bottomBar = documents.locator('.file-viewer-bottombar');
   const wrapper = documents.locator('.file-viewer-wrapper');
   const zoom = bottomBar.locator('.zoom-controls');

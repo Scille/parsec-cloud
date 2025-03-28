@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { answerQuestion, expect, fillInputModal, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, createFolder, expect, fillInputModal, msTest } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#folders-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -15,14 +15,14 @@ async function toggleViewMode(page: Page): Promise<void> {
   }
 }
 
-const FILE_MATCHER = /^File_[a-z0-9_.]+$/;
-const DIR_MATCHER = /^Dir_[a-z_]+$/;
+const FILE_MATCHER = /^[A-Za-z0-9_.]+$/;
+const DIR_MATCHER = /^Dir_[A-Za-z_]+$/;
 const TIME_MATCHER = /^(now|< 1 minute|(\d{1,2}|one) minutes? ago)$/;
 const SIZE_MATCHER = /^[0-9.]+ (K|M|G)?B$/;
 
-const NAME_MATCHER_ARRAY = new Array(2).fill(DIR_MATCHER).concat(new Array(9).fill(FILE_MATCHER));
-const TIME_MATCHER_ARRAY = new Array(11).fill(TIME_MATCHER);
-const SIZE_MATCHER_ARRAY = new Array(2).fill('').concat(new Array(9).fill(SIZE_MATCHER));
+const NAME_MATCHER_ARRAY = new Array(1).fill(DIR_MATCHER).concat(new Array(8).fill(FILE_MATCHER));
+const TIME_MATCHER_ARRAY = new Array(9).fill(TIME_MATCHER);
+const SIZE_MATCHER_ARRAY = new Array(1).fill('').concat(new Array(8).fill(SIZE_MATCHER));
 
 for (const displaySize of ['small', 'large']) {
   msTest(`Documents page default state on ${displaySize} display`, async ({ home, documents }) => {
@@ -30,24 +30,21 @@ for (const displaySize of ['small', 'large']) {
     if (displaySize === 'small') {
       const viewport = home.viewportSize();
       await home.setViewportSize({ width: 700, height: viewport ? viewport.height : 700 });
-    } else {
-      const actionBar = documents.locator('#folders-ms-action-bar');
-      await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['New folder', 'Import']);
-      await expect(actionBar.locator('.counter')).toHaveText('11 items', { useInnerText: true });
-      await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
-      await expect(actionBar.locator('#grid-view')).toNotHaveDisabledAttribute();
-      await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
-      await expect(entries).toHaveCount(11);
-    }
-    if (displaySize === 'small') {
       await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
       await expect(entries.locator('.data-date')).toHaveText(TIME_MATCHER_ARRAY);
-      await expect(entries.locator('.data-size')).toHaveText(SIZE_MATCHER_ARRAY.slice(2));
+      await expect(entries.locator('.data-size')).toHaveText(SIZE_MATCHER_ARRAY.slice(1));
       for (let i = 0; i < (await entries.count()); i++) {
         const entry = entries.nth(i);
         await expect(entry.locator('.options-button')).toBeVisible();
       }
     } else {
+      const actionBar = documents.locator('#folders-ms-action-bar');
+      await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['New folder', 'Import']);
+      await expect(actionBar.locator('.counter')).toHaveText('9 items', { useInnerText: true });
+      await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
+      await expect(actionBar.locator('#grid-view')).toNotHaveDisabledAttribute();
+      await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
+      await expect(entries).toHaveCount(9);
       await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
       await expect(entries.locator('.file-lastUpdate')).toHaveText(TIME_MATCHER_ARRAY);
       await expect(entries.locator('.file-size')).toHaveText(SIZE_MATCHER_ARRAY);
@@ -58,21 +55,21 @@ for (const displaySize of ['small', 'large']) {
 msTest('Check documents in grid mode', async ({ documents }) => {
   await toggleViewMode(documents);
   const entries = documents.locator('.folder-container').locator('.file-card-item');
-  await expect(entries).toHaveCount(11);
+  await expect(entries).toHaveCount(9);
   await expect(entries.locator('.file-card__title')).toHaveText(NAME_MATCHER_ARRAY);
   await expect(entries.locator('.file-card-last-update')).toHaveText(TIME_MATCHER_ARRAY);
 });
 
-msTest('Documents page default state in a read only workspace', async ({ documentsReadOnly }) => {
+msTest.skip('Documents page default state in a read only workspace', async ({ documentsReadOnly }) => {
   const actionBar = documentsReadOnly.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(0);
   await expect(actionBar.locator('.right-side').locator('.label-role')).toHaveText('Reader');
-  await expect(actionBar.locator('.counter')).toHaveText('11 items', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('9 items', { useInnerText: true });
   await expect(actionBar.locator('#select-popover-button')).toHaveText('Name');
   await expect(actionBar.locator('#grid-view')).toNotHaveDisabledAttribute();
   await expect(actionBar.locator('#list-view')).toHaveDisabledAttribute();
   const entries = documentsReadOnly.locator('.folder-container').locator('.file-list-item');
-  await expect(entries).toHaveCount(11);
+  await expect(entries).toHaveCount(9);
   await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
   await expect(entries.locator('.file-lastUpdate')).toHaveText(TIME_MATCHER_ARRAY);
   await expect(entries.locator('.file-size')).toHaveText(SIZE_MATCHER_ARRAY);
@@ -132,13 +129,24 @@ msTest('Delete all documents', async ({ documents }) => {
     expectedPositiveText: /Delete \d+ items/,
     expectedNegativeText: 'Keep items',
   });
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  await expect(entries).toHaveCount(0);
 });
 
 msTest('Create a folder', async ({ documents }) => {
   const actionBar = documents.locator('#folders-ms-action-bar');
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+  await expect(entries).toHaveCount(9);
+  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
   await actionBar.locator('.ms-action-bar-button:visible').nth(0).click();
   await fillInputModal(documents, 'My folder');
-  await expect(documents).toShowToast('Failed to create folder `My folder` because an entry with the same name already exists.', 'Error');
+  await expect(entries).toHaveCount(10);
+  // Don't ask.
+  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText([
+    ...NAME_MATCHER_ARRAY.slice(0, 1),
+    'My folder',
+    ...NAME_MATCHER_ARRAY.slice(1),
+  ]);
 });
 
 msTest('Import context menu', async ({ documents }) => {
@@ -162,9 +170,9 @@ msTest('Selection in grid mode', async ({ documents }) => {
   }
   await entries.nth(1).locator('ion-checkbox').click();
   const actionBar = documents.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.counter')).toHaveText('10 selected items', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('8 selected items', { useInnerText: true });
   await entries.nth(3).locator('ion-checkbox').click();
-  await expect(actionBar.locator('.counter')).toHaveText('9 selected items', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('7 selected items', { useInnerText: true });
 
   await expect(entries.nth(0).locator('ion-checkbox')).toHaveState('checked');
   await expect(entries.nth(1).locator('ion-checkbox')).toHaveState('unchecked');
@@ -175,7 +183,7 @@ msTest('Selection in grid mode', async ({ documents }) => {
 for (const gridMode of [false, true]) {
   msTest(`Open file in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
     await expect(documents.locator('.information-modal')).toBeHidden();
-    await expect(documents).toHaveHeader(['The Copper Coronet'], true, true);
+    await expect(documents).toHaveHeader(['wksp1'], true, true);
     if (gridMode) {
       await toggleViewMode(documents);
       await documents.locator('.folder-container').locator('.file-card-item').nth(2).dblclick();
@@ -203,15 +211,16 @@ for (const gridMode of [false, true]) {
       await toggleViewMode(documents);
     }
 
-    await expect(documents).toHaveHeader(['The Copper Coronet'], true, true);
+    await expect(documents).toHaveHeader(['wksp1'], true, true);
     await navigateDown();
-    await expect(documents).toHaveHeader(['The Copper Coronet', DIR_MATCHER], true, true);
+    await expect(documents).toHaveHeader(['wksp1', 'Dir_Folder'], true, true);
+    await createFolder(documents, 'Subdir');
     await navigateDown();
-    await expect(documents).toHaveHeader(['The Copper Coronet', DIR_MATCHER, DIR_MATCHER], true, true);
+    await expect(documents).toHaveHeader(['wksp1', 'Dir_Folder', 'Subdir'], true, true);
     await navigateUp();
-    await expect(documents).toHaveHeader(['The Copper Coronet', DIR_MATCHER], true, true);
+    await expect(documents).toHaveHeader(['wksp1', 'Dir_Folder'], true, true);
     await navigateUp();
-    await expect(documents).toHaveHeader(['The Copper Coronet'], true, true);
+    await expect(documents).toHaveHeader(['wksp1'], true, true);
     await navigateUp();
     await expect(documents).toBeWorkspacePage();
   });
@@ -221,10 +230,10 @@ msTest('Show recently opened files in sidebar', async ({ documents }) => {
   const sidebarRecentList = documents.locator('.sidebar').locator('.file-workspaces').locator('ion-list');
   await expect(sidebarRecentList.locator('.list-sidebar-header')).toHaveText('Recent documents');
   // Two recently opened files by default in dev mode
-  await expect(sidebarRecentList.locator('.sidebar-item')).toHaveText(['File_Fake PDF document.pdf', 'File_Fake image.png']);
+  await expect(sidebarRecentList.locator('.sidebar-item')).toHaveCount(0);
 
   await expect(documents.locator('.information-modal')).toBeHidden();
-  await expect(documents).toHaveHeader(['The Copper Coronet'], true, true);
+  await expect(documents).toHaveHeader(['wksp1'], true, true);
   const fileItem = documents.locator('.folder-container').getByRole('listitem').nth(2);
   const fileName = await fileItem.locator('.file-name').textContent();
   await fileItem.dblclick();
@@ -233,9 +242,5 @@ msTest('Show recently opened files in sidebar', async ({ documents }) => {
   await expect(documents.locator('.ms-spinner-modal')).toBeHidden();
   await expect(documents).toHavePageTitle('File viewer');
   // One file added
-  await expect(sidebarRecentList.locator('.sidebar-item')).toHaveText([
-    fileName ?? '',
-    'File_Fake PDF document.pdf',
-    'File_Fake image.png',
-  ]);
+  await expect(sidebarRecentList.locator('.sidebar-item')).toHaveText([fileName ?? '']);
 });

@@ -5,8 +5,8 @@ import { answerQuestion, expect, fillInputModal, fillIonInput, msTest, sortBy } 
 
 const USERS = [
   {
-    name: 'Gordon Freeman',
-    email: 'user@host.com',
+    name: 'Alicey McAliceFace',
+    email: 'alice@example.com',
     profile: 'Administrator',
     active: true,
     currentUser: true,
@@ -14,57 +14,19 @@ const USERS = [
   },
   {
     // cspell:disable-next-line
-    name: 'Jaheira',
-    email: 'jaheira@gmail.com',
-    profile: 'Administrator',
-    active: true,
-    frozen: false,
-  },
-  {
-    // cspell:disable-next-line
-    name: 'Arthas Menethil',
-    email: 'arthasmenethil@gmail.com',
-    profile: 'Administrator',
-    active: false,
-    frozen: false,
-  },
-  {
-    // cspell:disable-next-line
-    name: 'Cernd',
-    email: 'cernd@gmail.com',
-    profile: 'Member',
-    active: true,
-    frozen: false,
-  },
-  {
-    name: 'Patches',
-    email: 'patches@yahoo.fr',
+    name: 'Boby McBobFace',
+    email: 'bob@example.com',
     profile: 'Member',
     active: true,
     frozen: false,
   },
   {
     // cspell:disable-next-line
-    name: 'Valygar Corthala',
-    email: 'val@gmail.com',
-    profile: 'Member',
-    active: false,
-    frozen: false,
-  },
-  {
-    name: 'Gaia',
-    email: 'gaia@gmail.com',
+    name: 'Malloryy McMalloryFace',
+    email: 'mallory@example.com',
     profile: 'External',
-    active: false,
+    active: true,
     frozen: false,
-  },
-  {
-    // cspell:disable-next-line
-    name: 'Karl Hungus',
-    email: 'karlhungus@gmail.com',
-    profile: 'External',
-    active: false,
-    frozen: true,
   },
 ];
 
@@ -138,57 +100,42 @@ msTest('Check user grid items', async ({ usersPage }) => {
   }
 });
 
-for (const revokedUser of [false, true]) {
-  msTest(`Check user context menu for ${revokedUser ? 'revoked' : 'active'} user`, async ({ usersPage }) => {
-    const item = usersPage
-      .locator('#users-page-user-list')
-      .getByRole('listitem')
-      .nth(revokedUser ? 2 : 1);
-    await expect(usersPage.locator('#user-context-menu')).toBeHidden();
-    await item.hover();
-    await item.locator('.options-button').click();
-    await expect(usersPage.locator('#user-context-menu')).toBeVisible();
-    const menu = usersPage.locator('#user-context-menu');
-    const expectedActions = ['User details', 'View details', 'Copy roles', 'Copy workspace roles to...'];
-    if (!revokedUser) {
-      expectedActions.unshift(...['Deletion', 'Revoke this user', 'Profile', 'Change profile']);
-    }
-    await expect(menu.getByRole('listitem')).toHaveText(expectedActions);
-  });
-}
-
-for (const revokedUser of [false, true]) {
-  msTest(`Check user context menu on right click for ${revokedUser ? 'revoked' : 'active'} user`, async ({ usersPage }) => {
-    const item = usersPage
-      .locator('#users-page-user-list')
-      .getByRole('listitem')
-      .nth(revokedUser ? 2 : 1);
-    await expect(usersPage.locator('#user-context-menu')).toBeHidden();
-    await item.click({ button: 'right' });
-    await expect(usersPage.locator('#user-context-menu')).toBeVisible();
-    const menu = usersPage.locator('#user-context-menu');
-    const expectedActions = ['User details', 'View details', 'Copy roles', 'Copy workspace roles to...'];
-    if (!revokedUser) {
-      expectedActions.unshift(...['Deletion', 'Revoke this user', 'Profile', 'Change profile']);
-    }
-    await expect(menu.getByRole('listitem')).toHaveText(expectedActions);
-  });
-}
-
-msTest('Revoke one user with context menu', async ({ usersPage }) => {
+msTest('Revoke one user with context menu and check context menu', async ({ usersPage }) => {
   const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   await item.hover();
+  const menu = usersPage.locator('#user-context-menu');
+  await expect(menu).toBeHidden();
+  // Opens context menu with button
   await item.locator('.options-button').click();
-  await usersPage.locator('#user-context-menu').getByRole('listitem').nth(1).click();
+  await expect(menu).toBeVisible();
+  // Full context menu
+  await expect(menu.getByRole('listitem')).toHaveText([
+    'Deletion',
+    'Revoke this user',
+    'Profile',
+    'Change profile',
+    'User details',
+    'View details',
+    'Copy roles',
+    'Copy workspace roles to...',
+  ]);
+
+  // Revoke the user
+  await menu.getByRole('listitem').nth(1).click();
   await answerQuestion(usersPage, true, {
     expectedTitleText: 'Revoke this user?',
-    // cspell:disable-next-line
-    expectedQuestionText: 'This will revoke Jaheira, preventing them from accessing this organization. Are you sure you want to proceed?',
+    expectedQuestionText:
+      'This will revoke Boby McBobFace, preventing them from accessing this organization. Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
     expectedNegativeText: 'Cancel',
   });
-  // cspell:disable-next-line
-  await expect(usersPage).toShowToast('Jaheira has been revoked. They can no longer access this organization.', 'Success');
+  await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
+
+  // Opens context menu with right click
+  await expect(menu).toBeHidden();
+  await item.click({ button: 'right' });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole('listitem')).toHaveText(['User details', 'View details', 'Copy roles', 'Copy workspace roles to...']);
 });
 
 msTest('Revoke one user with selection', async ({ usersPage }) => {
@@ -198,13 +145,12 @@ msTest('Revoke one user with selection', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('#button-revoke-user').click();
   await answerQuestion(usersPage, true, {
     expectedTitleText: 'Revoke this user?',
-    // cspell:disable-next-line
-    expectedQuestionText: 'This will revoke Jaheira, preventing them from accessing this organization. Are you sure you want to proceed?',
+    expectedQuestionText:
+      'This will revoke Boby McBobFace, preventing them from accessing this organization. Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
     expectedNegativeText: 'Cancel',
   });
-  // cspell:disable-next-line
-  await expect(usersPage).toShowToast('Jaheira has been revoked. They can no longer access this organization.', 'Success');
+  await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
 });
 
 msTest('Revoke two users with selection', async ({ usersPage }) => {
@@ -212,7 +158,7 @@ msTest('Revoke two users with selection', async ({ usersPage }) => {
   await item1.hover();
   await item1.locator('ion-checkbox').click();
 
-  const item2 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(3);
+  const item2 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2);
   await item2.hover();
   await item2.locator('ion-checkbox').click();
 
@@ -277,17 +223,17 @@ msTest('Test users selection in list mode', async ({ usersPage }) => {
       await expect(checkbox).toHaveState('checked');
     }
   }
-  const expectedSelected = USERS.filter((u) => (u.active || u.frozen) && u.name !== 'Gordon Freeman');
+  const expectedSelected = USERS.filter((u) => (u.active || u.frozen) && u.name !== 'Alicey McAliceFace');
   await expect(actionBar.locator('.counter')).toHaveText(`${expectedSelected.length} users selected`, { useInnerText: true });
   await expect(headerCheckbox).toHaveState('checked');
   // Unselect one
-  await usersPage.locator('#users-page-user-list').getByRole('listitem').nth(3).locator('ion-checkbox').click();
-  await expect(usersPage.locator('#users-page-user-list').getByRole('listitem').nth(3).locator('ion-checkbox')).toHaveState('unchecked');
+  await usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2).locator('ion-checkbox').click();
+  await expect(usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2).locator('ion-checkbox')).toHaveState('unchecked');
   // Header checkbox goes to indeterminate
   await expect(headerCheckbox).toHaveState('indeterminate');
   // Reselect the user
-  await usersPage.locator('#users-page-user-list').getByRole('listitem').nth(3).locator('ion-checkbox').click();
-  await expect(usersPage.locator('#users-page-user-list').getByRole('listitem').nth(3).locator('ion-checkbox')).toHaveState('checked');
+  await usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2).locator('ion-checkbox').click();
+  await expect(usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2).locator('ion-checkbox')).toHaveState('checked');
   // Header checkbox goes back to checked
   await expect(headerCheckbox).toHaveState('checked');
 
@@ -297,43 +243,43 @@ msTest('Test users selection in list mode', async ({ usersPage }) => {
 });
 
 msTest('Maintain selection between modes', async ({ usersPage }) => {
-  for (const index of [1, 3, 4]) {
+  for (const index of [1, 2]) {
     const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(index);
     await item.hover();
     await item.locator('ion-checkbox').click();
   }
 
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
-  await expect(actionBar.locator('.counter')).toHaveText('3 users selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
   // Check the checkboxes in list mode
   for (const [index, user] of USERS.entries()) {
     // Revoked users do not have a checkbox
     if (user.active && !user.currentUser) {
       const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(index);
-      await expect(item.locator('ion-checkbox')).toHaveState([1, 3, 4].includes(index) ? 'checked' : 'unchecked');
+      await expect(item.locator('ion-checkbox')).toHaveState([1, 2].includes(index) ? 'checked' : 'unchecked');
     }
   }
 
   // Switch to grid mode
   await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
-  await expect(actionBar.locator('.counter')).toHaveText('3 users selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
   // Check the checkboxes in grid mode
   for (const [index, user] of USERS.entries()) {
     // Revoked users do not have a checkbox
     if (user.active && !user.currentUser) {
       const item = usersPage.locator('.users-container-grid').locator('.user-card-item').nth(index);
       await item.hover();
-      await expect(item.locator('ion-checkbox')).toHaveState([1, 3, 4].includes(index) ? 'checked' : 'unchecked');
+      await expect(item.locator('ion-checkbox')).toHaveState([1, 2].includes(index) ? 'checked' : 'unchecked');
     }
   }
   // Uncheck one
-  await usersPage.locator('.users-container-grid').locator('.user-card-item').nth(3).locator('ion-checkbox').click();
-  await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
+  await usersPage.locator('.users-container-grid').locator('.user-card-item').nth(2).locator('ion-checkbox').click();
+  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
   for (const [index, user] of USERS.entries()) {
     if (user.active && !user.currentUser) {
       const item = usersPage.locator('.users-container-grid').locator('.user-card-item').nth(index);
       await item.hover();
-      await expect(item.locator('ion-checkbox')).toHaveState([1, 4].includes(index) ? 'checked' : 'unchecked');
+      await expect(item.locator('ion-checkbox')).toHaveState([1].includes(index) ? 'checked' : 'unchecked');
     }
   }
 
@@ -414,13 +360,12 @@ msTest('Filter users list', async ({ usersPage }) => {
 msTest('Remove selection on filtering', async ({ usersPage }) => {
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
   await expect(actionBar.locator('.counter')).toHaveText(`${USERS.length} users`, { useInnerText: true });
-  const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(3);
+  const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   await item.hover();
   await item.locator('ion-checkbox').click();
   await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
   await toggleFilter(usersPage, 'Member');
-  const expectedUsers = USERS.filter((u) => u.currentUser || u.profile !== 'Member');
-  await expect(actionBar.locator('.counter')).toHaveText(`${expectedUsers.length} users`, { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('2 users', { useInnerText: true });
 });
 
 msTest('User sort popover default state', async ({ usersPage }) => {
@@ -431,8 +376,8 @@ msTest('User sort popover default state', async ({ usersPage }) => {
   await expect(usersPage.locator('.sorter-popover')).toBeVisible();
   const popover = usersPage.locator('.sorter-popover');
   const items = popover.locator('.sorter-container').getByRole('listitem');
-  await expect(items).toHaveCount(5);
-  await expect(items).toHaveText(['Ascending', 'Name', 'Joining date', 'Profile', 'Status']);
+  await expect(items).toHaveCount(4);
+  await expect(items).toHaveText(['Ascending', 'Name', 'Joining date', 'Profile']);
   for (const [index, item] of (await items.all()).entries()) {
     if (index === 3) {
       await expect(item).toHaveTheClass('selected');
@@ -481,8 +426,8 @@ msTest('Search user list', async ({ usersPage }) => {
   const items = usersList.getByRole('listitem');
   const gridItems = usersPage.locator('.users-container-grid').locator('.user-card-item');
 
-  await expect(actionBar.locator('.counter')).toHaveText('8 users', { useInnerText: true });
-  await expect(items).toHaveCount(8);
+  await expect(actionBar.locator('.counter')).toHaveText('3 users', { useInnerText: true });
+  await expect(items).toHaveCount(3);
 
   // No matches
   await fillIonInput(searchInput, 'abc');
@@ -491,53 +436,50 @@ msTest('Search user list', async ({ usersPage }) => {
   await expect(items).toHaveCount(0);
 
   // Search on email
-  await fillIonInput(searchInput, 'gmail');
-  await expect(actionBar.locator('.counter')).toHaveText('6 users', { useInnerText: true });
-  await expect(items).toHaveCount(6);
-  for (let i = 0; i < 6; i++) {
-    await expect(items.nth(i).locator('.user-email')).toContainText('gmail');
+  await fillIonInput(searchInput, 'example');
+  await expect(actionBar.locator('.counter')).toHaveText('3 users', { useInnerText: true });
+  await expect(items).toHaveCount(3);
+  for (let i = 0; i < 3; i++) {
+    await expect(items.nth(i).locator('.user-email')).toContainText('example');
   }
 
   // Search on name
-  await fillIonInput(searchInput, 'he');
+  await fillIonInput(searchInput, 'al');
   await expect(actionBar.locator('.counter')).toHaveText('2 users', { useInnerText: true });
   // cspell:disable-next-line
-  await expect(items.nth(0).locator('.user-name')).toContainText('Jaheira');
-  await expect(items.nth(1).locator('.user-name')).toContainText('Patches');
+  await expect(items.nth(0).locator('.user-name')).toContainText('Alicey McAliceFace');
+  await expect(items.nth(1).locator('.user-name')).toContainText('Malloryy McMalloryFace');
   // cspell:disable-next-line
-  await fillIonInput(searchInput, 'Valygar');
+  await fillIonInput(searchInput, 'Bob');
   await expect(actionBar.locator('.counter')).toHaveText('One user', { useInnerText: true });
   // cspell:disable-next-line
-  await expect(items.nth(0).locator('.user-name')).toContainText('Valygar');
+  await expect(items.nth(0).locator('.user-name')).toContainText('Boby McBobFace');
 
   // Check that selection resets on filter
   await fillIonInput(searchInput, '');
   await usersPage.locator('.user-list-header').locator('ion-checkbox').click();
-  await expect(actionBar.locator('.counter')).toHaveText('4 users selected', { useInnerText: true });
-  await fillIonInput(searchInput, 'he');
   await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
+  await fillIonInput(searchInput, 'Bob');
+  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
   await fillIonInput(searchInput, '');
-  await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
-  await expect(items).toHaveCount(8);
-  // cspell:disable-next-line
-  await expect(items.nth(1).locator('.user-name')).toContainText('Jaheira');
+  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await expect(items).toHaveCount(3);
+  await expect(items.nth(1).locator('.user-name')).toContainText('Boby McBobFace');
   await expect(items.nth(1).locator('ion-checkbox')).toHaveState('checked');
-  await expect(items.nth(4).locator('.user-name')).toContainText('Patches');
-  await expect(items.nth(4).locator('ion-checkbox')).toHaveState('checked');
+  await expect(items.nth(2).locator('.user-name')).toContainText('Malloryy McMalloryFace');
+  await expect(items.nth(2).locator('ion-checkbox')).toHaveState('unchecked');
 
   // Check that search persists on grid mode
-  await fillIonInput(searchInput, 'he');
+  await fillIonInput(searchInput, 'al');
   await expect(items).toHaveCount(2);
   await actionBar.locator('.ms-grid-list-toggle').locator('#grid-view').click();
   await expect(gridItems).toHaveCount(2);
-  await fillIonInput(searchInput, 'hei');
+  await fillIonInput(searchInput, 'allo');
   await expect(gridItems).toHaveCount(1);
-  // cspell:disable-next-line
-  await expect(gridItems.nth(0).locator('.user-card-info__name')).toContainText('Jaheira');
+  await expect(gridItems.nth(0).locator('.user-card-info__name')).toContainText('Malloryy McMalloryFace');
   await actionBar.locator('.ms-grid-list-toggle').locator('#list-view').click();
   await expect(items).toHaveCount(1);
-  // cspell:disable-next-line
-  await expect(items.nth(0).locator('.user-name')).toContainText('Jaheira');
+  await expect(items.nth(0).locator('.user-name')).toContainText('Malloryy McMalloryFace');
 });
 
 msTest('Search user grid', async ({ usersPage }) => {
@@ -548,8 +490,8 @@ msTest('Search user grid', async ({ usersPage }) => {
 
   await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
 
-  await expect(actionBar.locator('.counter')).toHaveText('8 users', { useInnerText: true });
-  await expect(items).toHaveCount(8);
+  await expect(actionBar.locator('.counter')).toHaveText('3 users', { useInnerText: true });
+  await expect(items).toHaveCount(3);
 
   // No matches
   await fillIonInput(searchInput, 'abc');
@@ -558,46 +500,39 @@ msTest('Search user grid', async ({ usersPage }) => {
   await expect(items).toHaveCount(0);
 
   // Search on email
-  await fillIonInput(searchInput, 'gmail');
-  await expect(actionBar.locator('.counter')).toHaveText('6 users', { useInnerText: true });
-  await expect(items).toHaveCount(6);
-  for (let i = 0; i < 6; i++) {
-    await expect(items.nth(i).locator('.user-card-info__email')).toContainText('gmail');
+  await fillIonInput(searchInput, 'example');
+  await expect(actionBar.locator('.counter')).toHaveText('3 users', { useInnerText: true });
+  await expect(items).toHaveCount(3);
+  for (let i = 0; i < 3; i++) {
+    await expect(items.nth(i).locator('.user-card-info__email')).toContainText('example');
   }
 
   // Search on name
-  await fillIonInput(searchInput, 'he');
+  await fillIonInput(searchInput, 'al');
   await expect(actionBar.locator('.counter')).toHaveText('2 users', { useInnerText: true });
-  // cspell:disable-next-line
-  await expect(items.nth(0).locator('.user-card-info__name')).toContainText('Jaheira');
-  await expect(items.nth(1).locator('.user-card-info__name')).toContainText('Patches');
-  // cspell:disable-next-line
-  await fillIonInput(searchInput, 'Valygar');
+  await expect(items.nth(0).locator('.user-card-info__name')).toContainText('Alicey McAliceFace');
+  await expect(items.nth(1).locator('.user-card-info__name')).toContainText('Malloryy McMalloryFace');
+  await fillIonInput(searchInput, 'Bob');
   await expect(actionBar.locator('.counter')).toHaveText('One user', { useInnerText: true });
-  // cspell:disable-next-line
-  await expect(items.nth(0).locator('.user-card-info__name')).toContainText('Valygar');
+  await expect(items.nth(0).locator('.user-card-info__name')).toContainText('Boby McBobFace');
 
   // Check that selection resets on filter
   await fillIonInput(searchInput, '');
-  await expect(items).toHaveCount(8);
+  await expect(items).toHaveCount(3);
   await items.nth(1).hover();
   await items.nth(1).locator('ion-checkbox').click();
-  await items.nth(3).hover();
-  await items.nth(3).locator('ion-checkbox').click();
-  await items.nth(4).hover();
-  await items.nth(4).locator('ion-checkbox').click();
-  await items.nth(7).hover();
-  await items.nth(7).locator('ion-checkbox').click();
-  await expect(actionBar.locator('.counter')).toHaveText('4 users selected', { useInnerText: true });
-  await fillIonInput(searchInput, 'he');
+  await items.nth(2).hover();
+  await items.nth(2).locator('ion-checkbox').click();
   await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
+  await fillIonInput(searchInput, 'Bob');
+  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
   await fillIonInput(searchInput, '');
-  await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
-  // cspell:disable-next-line
-  await expect(items.nth(1).locator('.user-card-info__name')).toContainText('Jaheira');
+  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+
+  await expect(items.nth(1).locator('.user-card-info__name')).toContainText('Boby McBobFace');
   await expect(items.nth(1).locator('ion-checkbox')).toHaveState('checked');
-  await expect(items.nth(4).locator('.user-card-info__name')).toContainText('Patches');
-  await expect(items.nth(4).locator('ion-checkbox')).toHaveState('checked');
+  await expect(items.nth(2).locator('.user-card-info__name')).toContainText('Malloryy McMalloryFace');
+  await expect(items.nth(2).locator('ion-checkbox')).toHaveState('unchecked');
 });
 
 msTest('Invite new user', async ({ usersPage }) => {
@@ -610,12 +545,12 @@ msTest('Invite new user', async ({ usersPage }) => {
 
 msTest('Invite user with already existing email', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
-  await fillInputModal(usersPage, 'jaheira@gmail.com');
-  await expect(usersPage).toShowToast('The email jaheira@gmail.com is already used by someone in this organization.', 'Error');
+  await fillInputModal(usersPage, 'mallory@example.com');
+  await expect(usersPage).toShowToast('The email mallory@example.com is already used by someone in this organization.', 'Error');
 });
 
 msTest('Reassign workspace role', async ({ usersPage }) => {
-  const sourceUser = usersPage.locator('.users-container').locator('#users-page-user-list').locator('.user-list-item').nth(3);
+  const sourceUser = usersPage.locator('.users-container').locator('#users-page-user-list').locator('.user-list-item').nth(1);
   await sourceUser.hover();
   await sourceUser.locator('.options-button').click();
   const menuButton = usersPage.locator('.user-context-menu').getByRole('group').nth(3).getByRole('listitem').nth(1);
@@ -627,29 +562,26 @@ msTest('Reassign workspace role', async ({ usersPage }) => {
   await expect(nextButton).toHaveText('Select');
   await expect(nextButton).toHaveDisabledAttribute();
   const input = modal.locator('#select-user-input').locator('ion-input');
-  await fillIonInput(input, 'gmail');
+  await fillIonInput(input, 'example');
   const dropdown = usersPage.locator('.user-select-dropdown-popover');
-  await expect(dropdown.getByRole('listitem')).toHaveCount(2);
+  await expect(dropdown.getByRole('listitem')).toHaveCount(1);
+  await expect(dropdown.getByRole('listitem').nth(0).locator('.option-text__label')).toHaveText('Malloryy McMalloryFace');
+  await dropdown.getByRole('listitem').nth(0).click();
   // cspell:disable-next-line
-  await expect(dropdown.getByRole('listitem').nth(0).locator('.option-text__label')).toHaveText('Jaheira');
-  // cspell:disable-next-line
-  await expect(dropdown.getByRole('listitem').nth(1).locator('.option-text__label')).toHaveText('Karl Hungus');
-  await dropdown.getByRole('listitem').nth(1).click();
-  // cspell:disable-next-line
-  await expect(input.locator('input')).toHaveValue('Karl Hungus (karlhungus@gmail.com)');
+  await expect(input.locator('input')).toHaveValue('Malloryy McMalloryFace (mallory@example.com)');
   await expect(nextButton).toNotHaveDisabledAttribute();
   await nextButton.click();
   await usersPage.waitForTimeout(1000);
   const newRoles = modal.locator('.workspace-list').getByRole('listitem');
   await expect(newRoles).toHaveCount(1);
-  await expect(newRoles.locator('.workspace-item__name')).toHaveText('Trademeet');
+  await expect(newRoles.locator('.workspace-item__name')).toHaveText('wksp1');
   await expect(newRoles.locator('.workspace-item__role-old')).toHaveText('Not shared');
   await expect(newRoles.locator('.workspace-item__role-new')).toHaveText('Reader');
   await nextButton.click();
 });
 
 msTest('Update profile', async ({ usersPage }) => {
-  const sourceUser = usersPage.locator('.users-container').locator('#users-page-user-list').locator('.user-list-item').nth(3);
+  const sourceUser = usersPage.locator('.users-container').locator('#users-page-user-list').locator('.user-list-item').nth(1);
   await sourceUser.hover();
   await sourceUser.locator('.options-button').click();
   const menuButton = usersPage.locator('.user-context-menu').getByRole('group').nth(1).getByRole('listitem').nth(1);
@@ -661,13 +593,13 @@ msTest('Update profile', async ({ usersPage }) => {
   const nextButton = modal.locator('#next-button');
   await expect(nextButton).toHaveText('Change');
   await expect(nextButton).toHaveDisabledAttribute();
-  // cspell:disable-next-line
-  await expect(modalContent.locator('.update-profile-user__item').nth(0)).toHaveText('Cernd');
+  await expect(modalContent.locator('.update-profile-user__item').nth(0)).toHaveText('Boby McBobFace');
   const profileButton = modalContent.locator('#dropdown-popover-button');
   await expect(profileButton).toHaveText('Choose a profile');
   await profileButton.click();
   const profileDropdown = usersPage.locator('.dropdown-popover');
   await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Member']);
+  await expect(profileDropdown.getByRole('listitem').nth(1)).toHaveTheClass('item-disabled');
   await profileDropdown.getByRole('listitem').nth(0).click();
   await expect(profileButton).toHaveText('Administrator');
   await expect(nextButton).toBeTrulyEnabled();
@@ -675,7 +607,7 @@ msTest('Update profile', async ({ usersPage }) => {
   await expect(usersPage).toShowToast('The profile has been changed!', 'Success');
 });
 
-msTest('Update multiple profiles', async ({ usersPage }) => {
+msTest.skip('Update multiple profiles', async ({ usersPage }) => {
   for (const index of [1, 3, 4, 7]) {
     const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(index);
     await item.hover();

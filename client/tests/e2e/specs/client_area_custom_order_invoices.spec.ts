@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { clientAreaSwitchOrganization, DEFAULT_ORGANIZATION_INFORMATION, expect, MockBms, msTest } from '@tests/e2e/helpers';
+import { clientAreaSwitchOrganization, expect, MockBms, msTest } from '@tests/e2e/helpers';
 
 msTest('Test all orgs', async ({ clientAreaCustomOrder }) => {
   const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
@@ -21,7 +21,7 @@ msTest('Test all orgs', async ({ clientAreaCustomOrder }) => {
 msTest('Test only one org', async ({ clientAreaCustomOrder }) => {
   const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
 
-  await clientAreaSwitchOrganization(clientAreaCustomOrder, DEFAULT_ORGANIZATION_INFORMATION.name);
+  await clientAreaSwitchOrganization(clientAreaCustomOrder, clientAreaCustomOrder.orgInfo.name);
 
   await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(3).click();
   await expect(title).toHaveText('Invoices');
@@ -105,7 +105,7 @@ for (const orgMode of ['oneOrg', 'allOrgs']) {
     await MockBms.mockGetCustomOrderInvoices(clientAreaCustomOrder, { POST: { errors: { status: 400 } } });
 
     if (orgMode === 'orgOrg') {
-      await clientAreaSwitchOrganization(clientAreaCustomOrder, DEFAULT_ORGANIZATION_INFORMATION.name);
+      await clientAreaSwitchOrganization(clientAreaCustomOrder, clientAreaCustomOrder.orgInfo.name);
     }
 
     const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
@@ -122,7 +122,7 @@ for (const orgMode of ['oneOrg', 'allOrgs']) {
     await MockBms.mockGetCustomOrderInvoices(clientAreaCustomOrder, { POST: { timeout: true } });
 
     if (orgMode === 'orgOrg') {
-      await clientAreaSwitchOrganization(clientAreaCustomOrder, DEFAULT_ORGANIZATION_INFORMATION.name);
+      await clientAreaSwitchOrganization(clientAreaCustomOrder, clientAreaCustomOrder.orgInfo.name);
     }
 
     const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
