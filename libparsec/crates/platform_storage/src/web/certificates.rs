@@ -4,7 +4,7 @@ use std::path::Path;
 use std::{collections::HashMap, convert::Infallible};
 use wasm_bindgen::{JsCast, JsValue};
 
-use indexed_db::{Database, Factory, Transaction};
+use indexed_db::{Factory, OwnedDatabase, Transaction};
 use libparsec_types::prelude::*;
 
 use super::utils::{
@@ -745,7 +745,7 @@ async fn debug_dump(transaction: &Transaction<CustomErrMarker>) -> anyhow::Resul
 
 #[derive(Debug)]
 pub(crate) struct PlatformCertificatesStorage {
-    conn: Database,
+    conn: OwnedDatabase,
 }
 
 // SAFETY: see `pretend_future_is_send_on_web`'s documentation for the full explanation.
@@ -756,12 +756,6 @@ pub(crate) struct PlatformCertificatesStorage {
 unsafe impl Send for PlatformCertificatesStorage {}
 // SAFETY: see `pretend_future_is_send_on_web`'s documentation for the full explanation.
 unsafe impl Sync for PlatformCertificatesStorage {}
-
-impl Drop for PlatformCertificatesStorage {
-    fn drop(&mut self) {
-        self.conn.close();
-    }
-}
 
 impl PlatformCertificatesStorage {
     pub async fn no_populate_start(
