@@ -3,7 +3,7 @@
 use std::convert::Infallible;
 use std::path::Path;
 
-use indexed_db::{Database, Factory, ObjectStore, Transaction};
+use indexed_db::{Factory, ObjectStore, OwnedDatabase, Transaction};
 use libparsec_types::prelude::*;
 use wasm_bindgen::{JsCast, JsValue};
 
@@ -140,7 +140,7 @@ async fn initialize_database(
 
 #[derive(Debug)]
 pub struct PlatformWorkspaceStorage {
-    conn: Database,
+    conn: OwnedDatabase,
     max_blocks: u64,
 }
 
@@ -152,12 +152,6 @@ pub struct PlatformWorkspaceStorage {
 unsafe impl Send for PlatformWorkspaceStorage {}
 // SAFETY: see `pretend_future_is_send_on_web`'s documentation for the full explanation.
 unsafe impl Sync for PlatformWorkspaceStorage {}
-
-impl Drop for PlatformWorkspaceStorage {
-    fn drop(&mut self) {
-        self.conn.close();
-    }
-}
 
 impl PlatformWorkspaceStorage {
     pub async fn no_populate_start(
