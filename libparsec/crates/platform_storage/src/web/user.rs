@@ -2,7 +2,7 @@
 
 use std::{convert::Infallible, path::Path};
 
-use indexed_db::{Database, Factory, ObjectStore, Transaction};
+use indexed_db::{Factory, ObjectStore, OwnedDatabase, Transaction};
 use libparsec_types::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -39,7 +39,7 @@ async fn initialize_database(
 
 #[derive(Debug)]
 pub struct PlatformUserStorage {
-    conn: Database,
+    conn: OwnedDatabase,
     #[cfg(any(test, feature = "expose-test-methods"))]
     realm_id: VlobID,
 }
@@ -52,12 +52,6 @@ pub struct PlatformUserStorage {
 unsafe impl Send for PlatformUserStorage {}
 // SAFETY: see `pretend_future_is_send_on_web`'s documentation for the full explanation.
 unsafe impl Sync for PlatformUserStorage {}
-
-impl Drop for PlatformUserStorage {
-    fn drop(&mut self) {
-        self.conn.close();
-    }
-}
 
 impl PlatformUserStorage {
     pub(crate) async fn no_populate_start(

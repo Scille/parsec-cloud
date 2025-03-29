@@ -1762,8 +1762,9 @@ dependencies = [
 
 [[package]]
 name = "indexed-db"
-version = "0.4.2"
-source = "git+https://github.com/Ekleog/indexed-db.git?rev=fe645fae2a91a48a0af6126611c2031d59db0ad1#fe645fae2a91a48a0af6126611c2031d59db0ad1"
+version = "0.5.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e575bb17bdd13396d721d20813de89c32e91bdb69a4f62235b6b5e42182c842f"
 dependencies = [
  "futures-channel",
  "futures-util",
