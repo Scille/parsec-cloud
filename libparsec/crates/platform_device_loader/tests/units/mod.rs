@@ -4,7 +4,6 @@
 libparsec_tests_lite::platform::wasm_bindgen_test_configure!(run_in_browser);
 
 mod archive;
-mod change_auth;
 mod list;
 mod load;
 mod recovery;
@@ -12,6 +11,8 @@ mod remove;
 mod save;
 mod save_list;
 mod save_load;
+mod update_device_change_authentication;
+mod update_device_overwrite_server_addr;
 mod utils;
 
 use libparsec_tests_lite::p_assert_eq;

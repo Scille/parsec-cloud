@@ -24,7 +24,7 @@ async fn ok(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch)
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -175,7 +175,7 @@ async fn ok_non_root(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch)
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]

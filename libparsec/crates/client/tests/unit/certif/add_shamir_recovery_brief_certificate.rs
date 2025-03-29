@@ -63,7 +63,7 @@ async fn ok_as_only_recipient(
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch)
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -99,7 +99,7 @@ async fn ok_as_recipient_among_others(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch)
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -136,7 +136,7 @@ async fn ok_as_author(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch)
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch { .. });
 }
 
 #[parsec_test(testbed = "minimal")]

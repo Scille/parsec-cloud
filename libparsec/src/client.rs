@@ -5,15 +5,15 @@ use std::{collections::HashMap, num::NonZeroU8, path::Path, sync::Arc};
 use libparsec_client::ServerConfig;
 pub use libparsec_client::{
     ClientAcceptTosError, ClientCreateWorkspaceError, ClientDeleteShamirRecoveryError,
-    ClientGetCurrentSelfProfileError, ClientGetSelfShamirRecoveryError, ClientGetTosError,
-    ClientGetUserDeviceError, ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
+    ClientForgetAllCertificatesError, ClientGetCurrentSelfProfileError,
+    ClientGetSelfShamirRecoveryError, ClientGetTosError, ClientGetUserDeviceError,
+    ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
     ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
     ClientRenameWorkspaceError, ClientRevokeUserError, ClientSetupShamirRecoveryError,
     ClientShareWorkspaceError, ClientUserUpdateProfileError, DeviceInfo, OtherShamirRecoveryInfo,
     SelfShamirRecoveryInfo, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
-use libparsec_platform_device_loader::ChangeAuthentificationError;
 use libparsec_types::prelude::*;
 pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
 
@@ -317,6 +317,18 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
 }
 
 /*
+ * Client forget all certificates
+ */
+
+pub async fn client_forget_all_certificates(
+    client: Handle,
+) -> Result<(), ClientForgetAllCertificatesError> {
+    let client = borrow_client(client)?;
+
+    client.forget_all_certificates().await
+}
+
+/*
  * Client info
  */
 
@@ -360,52 +372,6 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
             })?,
         server_config: client.server_config(),
     })
-}
-
-/*
- * Change access
- */
-
-#[derive(Debug, thiserror::Error)]
-pub enum ClientChangeAuthenticationError {
-    #[error(transparent)]
-    InvalidPath(anyhow::Error),
-    #[error("Cannot deserialize file content")]
-    InvalidData,
-    #[error("Failed to decrypt file content")]
-    DecryptionFailed,
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-impl From<ChangeAuthentificationError> for ClientChangeAuthenticationError {
-    fn from(value: ChangeAuthentificationError) -> Self {
-        match value {
-            ChangeAuthentificationError::InvalidPath(e) => Self::InvalidPath(e),
-            ChangeAuthentificationError::InvalidData => Self::InvalidData,
-            ChangeAuthentificationError::DecryptionFailed => Self::DecryptionFailed,
-            ChangeAuthentificationError::CannotRemoveOldDevice => {
-                Self::Internal(anyhow::anyhow!(value))
-            }
-            ChangeAuthentificationError::Internal(e) => Self::Internal(e),
-        }
-    }
-}
-
-pub async fn client_change_authentication(
-    config: ClientConfig,
-    current_auth: DeviceAccessStrategy,
-    new_auth: DeviceSaveStrategy,
-) -> Result<(), ClientChangeAuthenticationError> {
-    let key_file = current_auth.key_file().to_owned();
-
-    libparsec_platform_device_loader::change_authentication(
-        &config.config_dir,
-        &current_auth,
-        &new_auth.into_access(key_file),
-    )
-    .await?;
-    Ok(())
 }
 
 /*

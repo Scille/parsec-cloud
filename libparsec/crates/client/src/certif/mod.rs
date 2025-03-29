@@ -9,6 +9,7 @@ use libparsec_types::prelude::*;
 mod add;
 mod block_validate;
 mod encrypt;
+mod forget_all_certificates;
 mod list;
 mod manifest_validate;
 mod poll;
@@ -30,6 +31,7 @@ mod workspace_bootstrap;
 pub use add::{CertifAddCertificatesBatchError, InvalidCertificateError, MaybeRedactedSwitch};
 pub use block_validate::{CertifValidateBlockError, InvalidBlockAccessError};
 pub use encrypt::CertifEncryptForSequesterServicesError;
+pub use forget_all_certificates::CertifForgetAllCertificatesError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 pub use list::{
     CertifGetCurrentSelfProfileError, CertifGetCurrentSelfRealmRoleError,
@@ -231,6 +233,18 @@ impl CertificateOps {
         self.store.stop().await
     }
 
+    /// Forget all certificates from the local database, this is not needed under normal circumstances.
+    ///
+    /// Clearing the certificates might be useful in case the server database got rolled back
+    /// to a previous state, resulting in the local database containing certificates that are no
+    /// longer valid.
+    ///
+    /// Note that this scenario is technically similar to a server compromise, so this
+    /// operation should only result from a manual user action (e.g. CLI command).
+    pub async fn forget_all_certificates(&self) -> Result<(), CertifForgetAllCertificatesError> {
+        forget_all_certificates::forget_all_certificates(self).await
+    }
+
     /// Only a test helper: in production `poll::poll_server_for_new_certificates` is
     /// used instead (which deals with both fetching certificates and storing them).
     #[cfg(test)]
@@ -300,10 +314,11 @@ impl CertificateOps {
     // For readability, we define the public interface here and let the actual
     // implementation in separated submodules
 
+    /// Return the number of new certificates added to the storage.
     pub async fn poll_server_for_new_certificates(
         &self,
         latest_known_timestamps: Option<&PerTopicLastTimestamps>,
-    ) -> Result<(), CertifPollServerError> {
+    ) -> Result<usize, CertifPollServerError> {
         poll::poll_server_for_new_certificates(self, latest_known_timestamps).await
     }
 

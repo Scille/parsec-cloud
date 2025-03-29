@@ -17,6 +17,7 @@ from .common import (
     UserID,
     Variant,
 )
+from .addr import ParsecAddr
 
 
 class DeviceFileType(Enum):
@@ -35,6 +36,18 @@ class DeviceSaveStrategy(Variant):
 
     class Smartcard:
         pass
+
+
+class DeviceAccessStrategy(Variant):
+    class Keyring:
+        key_file: Path
+
+    class Password:
+        password: Password
+        key_file: Path
+
+    class Smartcard:
+        key_file: Path
 
 
 class AvailableDevice(Structure):
@@ -60,4 +73,34 @@ class ArchiveDeviceError(ErrorVariant):
 
 
 async def archive_device(device_path: Ref[Path]) -> Result[None, ArchiveDeviceError]:
+    raise NotImplementedError
+
+
+class UpdateDeviceError(ErrorVariant):
+    class InvalidPath:
+        pass
+
+    class InvalidData:
+        pass
+
+    class DecryptionFailed:
+        pass
+
+    class Internal:
+        pass
+
+
+async def update_device_change_authentication(
+    config_dir: Ref[Path],
+    current_auth: DeviceAccessStrategy,
+    new_auth: DeviceSaveStrategy,
+) -> Result[AvailableDevice, UpdateDeviceError]:
+    raise NotImplementedError
+
+
+async def update_device_overwrite_server_addr(
+    config_dir: Ref[Path],
+    access: DeviceAccessStrategy,
+    new_server_addr: ParsecAddr,
+) -> Result[ParsecAddr, UpdateDeviceError]:
     raise NotImplementedError

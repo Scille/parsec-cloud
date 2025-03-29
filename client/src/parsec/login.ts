@@ -15,8 +15,6 @@ import { parseParsecAddr } from '@/parsec/organization';
 import { getParsecHandle } from '@/parsec/routing';
 import {
   AvailableDevice,
-  ClientChangeAuthenticationError,
-  ClientChangeAuthenticationErrorTag,
   ClientEvent,
   ClientEventGreetingAttemptCancelled,
   ClientEventGreetingAttemptJoined,
@@ -36,6 +34,8 @@ import {
   DeviceSaveStrategyTag,
   OrganizationID,
   Result,
+  UpdateDeviceError,
+  UpdateDeviceErrorTag,
   UserProfile,
 } from '@/parsec/types';
 import { getConnectionHandle } from '@/router';
@@ -396,22 +396,39 @@ export async function getCurrentAvailableDevice(): Promise<Result<AvailableDevic
   }
 }
 
-export async function changeAuthentication(
+export async function updateDeviceChangeAuthentication(
   accessStrategy: DeviceAccessStrategy,
   saveStrategy: DeviceSaveStrategy,
-): Promise<Result<null, ClientChangeAuthenticationError>> {
+): Promise<Result<AvailableDevice, UpdateDeviceError>> {
   if (!needsMocks()) {
     const clientConfig = getClientConfig();
-    return await libparsec.clientChangeAuthentication(clientConfig, accessStrategy, saveStrategy);
+    return await libparsec.updateDeviceChangeAuthentication(clientConfig.configDir, accessStrategy, saveStrategy);
   } else {
     // Fake an error
     if (
       accessStrategy.tag === DeviceAccessStrategyTag.Password &&
       (accessStrategy as DeviceAccessStrategyPassword).password !== 'P@ssw0rd.'
     ) {
-      return { ok: false, error: { tag: ClientChangeAuthenticationErrorTag.DecryptionFailed, error: 'Invalid password' } };
+      return { ok: false, error: { tag: UpdateDeviceErrorTag.DecryptionFailed, error: 'Invalid password' } };
     }
-    return { ok: true, value: null };
+    return {
+      ok: true,
+      value: {
+        keyFilePath: '/path',
+        serverUrl: 'https://parsec.invalid',
+        createdOn: DateTime.utc(),
+        protectedOn: DateTime.utc(),
+        organizationId: 'MyOrg',
+        userId: 'userid',
+        deviceId: 'deviceid',
+        humanHandle: {
+          label: 'A',
+          email: 'a@b.c',
+        },
+        deviceLabel: 'MyPC',
+        ty: DeviceFileType.Password,
+      },
+    };
   }
 }
 

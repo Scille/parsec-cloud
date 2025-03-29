@@ -20,6 +20,7 @@ mod decrypt_current_realm_name;
 mod encrypt_for_realm;
 mod encrypt_for_sequester_services;
 mod ensure_realm_created;
+mod forget_all_certificates;
 mod get_current_self_profile;
 mod get_current_self_realm_role;
 mod get_current_self_realms_role;

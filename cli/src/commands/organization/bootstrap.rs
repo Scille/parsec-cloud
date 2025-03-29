@@ -48,7 +48,7 @@ pub async fn bootstrap_organization_req(
 
     let on_event_callback = Arc::new(|_, _| ());
 
-    Ok(libparsec::bootstrap_organization(
+    libparsec::bootstrap_organization(
         client_config,
         on_event_callback,
         addr,
@@ -57,7 +57,8 @@ pub async fn bootstrap_organization_req(
         device_label,
         sequester_key,
     )
-    .await?)
+    .await
+    .map_err(anyhow::Error::from)
 }
 
 pub async fn main(args: Args) -> anyhow::Result<()> {
@@ -92,17 +93,20 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 
     let mut handle = start_spinner("Bootstrapping organization in the server".into());
 
-    bootstrap_organization_req(
+    let new_device = bootstrap_organization_req(
         ClientConfig::default(),
         addr,
-        device_label,
-        human_handle,
+        device_label.clone(),
+        human_handle.clone(),
         password,
         sequester_verify_key,
     )
     .await?;
 
     handle.stop_with_message("Organization bootstrapped".into());
+
+    println!("New device created:");
+    println!("{}", &format_single_device(&new_device));
 
     Ok(())
 }
