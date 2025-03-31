@@ -115,7 +115,7 @@ async-lock = { version = "3.4.0", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.10.1", default-features = false }
 chrono = { version = "0.4.40", default-features = false }
-clap = { version = "4.5.32", default-features = false }
+clap = { version = "4.5.34", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
 crc32fast = { version = "1.4.2", default-features = false }
@@ -155,10 +155,10 @@ lazy_static = { version = "1.5.0", default-features = false }
 libc = { version = "0.2.171", default-features = false }
 libsodium-sys = { version = "0.2.7", default-features = false }
 libsqlite3-sys = { version = "0.30.1", default-features = false }
-log = { version = "0.4.26", default-features = false }
+log = { version = "0.4.27", default-features = false }
 miniserde = { version = "0.1.42", default-features = false }
 neon = { version = "1.0.0", default-features = false }
-once_cell = { version = "1.21.1", default-features = false }
+once_cell = { version = "1.21.3", default-features = false }
 openssl = { version = "0.10.71", default-features = false }
 paste = { version = "1.0.15", default-features = false }
 percent-encoding = { version = "2.3.1", default-features = false }
