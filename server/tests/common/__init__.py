@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from _pytest.logging import LogCaptureFixture as VanillaLogCaptureFixture
+from pytest import LogCaptureFixture as VanillaLogCaptureFixture
 
 from .backend import *  # noqa
 from .client import *  # noqa

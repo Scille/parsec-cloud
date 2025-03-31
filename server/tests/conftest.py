@@ -120,7 +120,7 @@ def _is_xdist_master(config: pytest.Config) -> bool:
 
 
 def _patch_caplog() -> None:
-    from _pytest.logging import LogCaptureFixture
+    from pytest import LogCaptureFixture
 
     def _remove_colors(msg):
         return re.sub(r"\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]", "", str(msg))
