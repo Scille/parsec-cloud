@@ -8,7 +8,7 @@
     >
       {{ $msTranslate('HomePage.organizationList.title') }}
     </ion-text>
-    <template v-if="deviceList.length > 0 && !querying">
+    <template v-if="deviceList.length === 0 && !querying">
       <!-- No organization -->
       <div class="organization-content no-devices">
         <div class="create-organization">
