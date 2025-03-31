@@ -743,14 +743,14 @@ unicode-backport = ["unicodedata2"]
 
 [[package]]
 name = "cibuildwheel"
-version = "2.23.1"
+version = "2.23.2"
 description = "Build Python wheels on CI with minimal configuration."
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "cibuildwheel-2.23.1-py3-none-any.whl", hash = "sha256:591b143d1c4e44ddbf645c3c4e231bf12419c8db1a518a707cba9325403dc6ea"},
-    {file = "cibuildwheel-2.23.1.tar.gz", hash = "sha256:5e755f65ef778a3c1891f11b7f1db727517028e342d56e5a255fbc5fadb046d0"},
+    {file = "cibuildwheel-2.23.2-py3-none-any.whl", hash = "sha256:aebe67a0d8463e16a4709763ee8b16a2cadc9f4fe8c040b7fedae8fdbb6443dd"},
+    {file = "cibuildwheel-2.23.2.tar.gz", hash = "sha256:fba11162a4c0b3c4f0f5302661abb2dccdb26b0e9449ea0389c5ff18d4ef0c55"},
 ]
 
 [package.dependencies]
@@ -995,13 +995,13 @@ toml = ["tomli (>=1.2.1)"]
 
 [[package]]
 name = "editorconfig-checker"
-version = "3.2.0"
+version = "3.2.1"
 description = "Python wrapper around invoking editorconfig-checker (https://github.com/editorconfig-checker/editorconfig-checker)"
 optional = false
 python-versions = ">=2.7"
 groups = ["dev"]
 files = [
-    {file = "editorconfig-checker-3.2.0.tar.gz", hash = "sha256:50b845ae743d1f6bf29e58c1b05607dc86f0777f5d8c625780aa0f4b3ce26cfc"},
+    {file = "editorconfig-checker-3.2.1.tar.gz", hash = "sha256:41c884129343f1418118fc160889dc0cba4e66e23b45bc9731f40d73be4ce204"},
 ]
 
 [[package]]
@@ -1589,14 +1589,14 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyright"
-version = "1.1.397"
+version = "1.1.398"
 description = "Command line wrapper for pyright"
 optional = false
 python-versions = ">=3.7"
 groups = ["dev"]
 files = [
-    {file = "pyright-1.1.397-py3-none-any.whl", hash = "sha256:2e93fba776e714a82b085d68f8345b01f91ba43e1ab9d513e79b70fc85906257"},
-    {file = "pyright-1.1.397.tar.gz", hash = "sha256:07530fd65a449e4b0b28dceef14be0d8e0995a7a5b1bb2f3f897c3e548451ce3"},
+    {file = "pyright-1.1.398-py3-none-any.whl", hash = "sha256:0a70bfd007d9ea7de1cf9740e1ad1a40a122592cfe22a3f6791b06162ad08753"},
+    {file = "pyright-1.1.398.tar.gz", hash = "sha256:357a13edd9be8082dc73be51190913e475fa41a6efb6ec0d4b7aab3bc11638d8"},
 ]
 
 [package.dependencies]
@@ -2048,14 +2048,14 @@ unleash = ["UnleashClient (>=6.0.1)"]
 
 [[package]]
 name = "setuptools"
-version = "77.0.3"
+version = "78.1.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
 optional = false
 python-versions = ">=3.9"
 groups = ["main", "dev"]
 files = [
-    {file = "setuptools-77.0.3-py3-none-any.whl", hash = "sha256:67122e78221da5cf550ddd04cf8742c8fe12094483749a792d56cd669d6cf58c"},
-    {file = "setuptools-77.0.3.tar.gz", hash = "sha256:583b361c8da8de57403743e756609670de6fb2345920e36dc5c2d914c319c945"},
+    {file = "setuptools-78.1.0-py3-none-any.whl", hash = "sha256:3e386e96793c8702ae83d17b853fb93d3e09ef82ec62722e61da5cd22376dcd8"},
+    {file = "setuptools-78.1.0.tar.gz", hash = "sha256:18fd474d4a82a5f83dac888df697af65afa82dec7323d09c3e37d1f14288da54"},
 ]
 
 [package.extras]
@@ -2331,4 +2331,4 @@ standard = ["colorama (>=0.4) ; sys_platform == \"win32\"", "httptools (>=0.6.3)
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.12.0"
-content-hash = "de66fccab63457c4ceb50b33376513dc21b2601782743ef68a090ba92e4323c2"
+content-hash = "de79e557da9d9c44d03c31b61eb5128b5bdbb79f1f94a0dd7c883ecaf79bedec"
