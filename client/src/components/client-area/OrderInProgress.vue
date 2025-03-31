@@ -484,7 +484,7 @@ function toggleOpen(): boolean {
       background-color: var(--parsec-color-tags-blue-50);
       color: var(--parsec-color-tags-blue-700);
     }
-    .invoice {
+    .invoiceToBePaid {
       background-color: var(--parsec-color-tags-orange-50);
       color: var(--parsec-color-tags-orange-700);
     }

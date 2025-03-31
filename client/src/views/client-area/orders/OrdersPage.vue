@@ -63,7 +63,6 @@ import NewOrderModal from '@/views/client-area/orders/NewOrderModal.vue';
 import OrderInProgress from '@/components/client-area/OrderInProgress.vue';
 import { ref, onMounted } from 'vue';
 import { MsSpinner } from 'megashark-lib';
-import { MockedBmsApi } from '@/services/bms/mockApi';
 
 const error = ref<string>('');
 const querying = ref(true);
@@ -87,7 +86,7 @@ const props = defineProps<{
 onMounted(async () => {
   querying.value = true;
 
-  const orderRequestsRep = await MockedBmsApi.getCustomOrderRequests();
+  const orderRequestsRep = await BmsAccessInstance.get().getCustomOrderRequests();
   const orderDetailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
 
   if (!orderRequestsRep.isError && orderRequestsRep.data && orderRequestsRep.data.type === DataType.GetCustomOrderRequests) {
