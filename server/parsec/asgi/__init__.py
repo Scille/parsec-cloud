@@ -71,7 +71,7 @@ def app_factory(
         CORSMiddleware,
         allow_origins=cors_allow_origins,
         allow_methods=["OPTIONS", "GET", "POST", "PATCH"],
-        allow_headers=["api-version", "authorization"],
+        allow_headers=["api-version", "authorization", "user-agent"],
     )
     app.state.backend = backend
 
