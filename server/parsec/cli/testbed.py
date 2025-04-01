@@ -244,7 +244,7 @@ async def testbed_backend_factory(
         db_config = MockedDatabaseConfig()
     else:
         db_config = PostgreSQLDatabaseConfig(
-            url=with_postgresql, min_connections=5, max_connections=7
+            url=with_postgresql, min_connections=1, max_connections=5
         )
 
     # TODO: avoid tempdir for email ?
