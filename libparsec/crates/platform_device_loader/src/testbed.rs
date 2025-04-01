@@ -11,7 +11,7 @@ use libparsec_testbed::{
 };
 use libparsec_types::prelude::*;
 
-use crate::{ChangeAuthentificationError, LoadDeviceError, SaveDeviceError};
+use crate::{ChangeAuthenticationError, LoadDeviceError, SaveDeviceError};
 
 const STORE_ENTRY_KEY: &str = "platform_device_loader";
 const KEY_FILE_PASSWORD: &str = "P@ssw0rd."; // Use the same password for all simulated key files
@@ -344,16 +344,16 @@ pub(crate) fn maybe_change_authentication(
     config_dir: &Path,
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
-) -> Option<Result<AvailableDevice, ChangeAuthentificationError>> {
+) -> Option<Result<AvailableDevice, ChangeAuthenticationError>> {
     if let Some(result) = maybe_load_device(config_dir, current_access) {
         let device = match result {
             Ok(device) => device,
-            Err(e) => return Some(Err(ChangeAuthentificationError::from(e))),
+            Err(e) => return Some(Err(ChangeAuthenticationError::from(e))),
         };
 
         let available_device = match maybe_save_device(config_dir, new_access, &device) {
             Some(Ok(available_device)) => available_device,
-            Some(Err(e)) => return Some(Err(ChangeAuthentificationError::from(e))),
+            Some(Err(e)) => return Some(Err(ChangeAuthenticationError::from(e))),
             None => return None,
         };
 
