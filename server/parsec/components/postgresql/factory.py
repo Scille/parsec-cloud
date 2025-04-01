@@ -9,6 +9,7 @@ from typing import Any, AsyncGenerator
 import httpx
 
 from parsec.components.blockstore import blockstore_factory
+from parsec.components.postgresql.account import PGAccountComponent
 from parsec.components.postgresql.auth import PGAuthComponent
 from parsec.components.postgresql.block import PGBlockComponent
 from parsec.components.postgresql.events import PGEventsComponent, event_bus_factory
@@ -58,6 +59,7 @@ async def components_factory(
 
                 pki = None
                 sequester = PGSequesterComponent(pool=pool)
+                account = PGAccountComponent(pool=pool)
 
                 components = {
                     "event_bus": event_bus,
@@ -75,6 +77,7 @@ async def components_factory(
                     "pki": pki,
                     "sequester": sequester,
                     "shamir": shamir,
+                    "account": account,
                 }
                 for component in components.values():
                     method = getattr(component, "register_components", None)

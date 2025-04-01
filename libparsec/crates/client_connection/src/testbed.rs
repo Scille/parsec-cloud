@@ -206,7 +206,7 @@ impl SendHookConfig {
             .downcast()
             .expect("Wrong type returned for response !");
 
-        // println!("[Testbed] Client connection <- {:?}", rep);
+        println!("[Testbed] Client connection <- {:?}", rep);
 
         HighLevelSendResult::Resolved(Ok(*rep))
     }

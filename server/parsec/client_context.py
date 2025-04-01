@@ -166,3 +166,37 @@ class AuthenticatedClientContext:
             CustomHttpStatus.UserRevoked,
             api_version=self.settled_api_version,
         )
+
+
+@dataclass(slots=True)
+class AnonymousAccountClientContext:
+    client_api_version: ApiVersion
+    settled_api_version: ApiVersion
+    logger: ParsecBoundLogger = field(init=False)
+
+    def __post_init__(self):
+        # Generate a request ID just for the logs
+        # It doesn't have to be as long as a UUID, 4 hex characters should be enough
+        request_id = uuid4().hex[:4]
+        self.logger = logger.bind(
+            request=request_id,
+            api=f"{self.settled_api_version.version}.{self.settled_api_version.revision}",
+            auth="anonymous_account",
+        )
+
+
+@dataclass(slots=True)
+class AuthenticatedAccountClientContext:
+    client_api_version: ApiVersion
+    settled_api_version: ApiVersion
+    logger: ParsecBoundLogger = field(init=False)
+
+    def __post_init__(self):
+        # Generate a request ID just for the logs
+        # It doesn't have to be as long as a UUID, 4 hex characters should be enough
+        request_id = uuid4().hex[:4]
+        self.logger = logger.bind(
+            request=request_id,
+            api=f"{self.settled_api_version.version}.{self.settled_api_version.revision}",
+            auth="authenticated_account",
+        )

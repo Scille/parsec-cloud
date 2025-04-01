@@ -10,6 +10,8 @@ from enum import Enum, auto
 from itertools import chain
 from typing import AsyncIterator, Iterable, Iterator, Literal
 
+from pydantic import EmailStr
+
 from parsec._parsec import (
     ActiveUsersLimit,
     BlockID,
@@ -93,6 +95,9 @@ TopicAndDiscriminant = (
 @dataclass(slots=True)
 class MemoryDatamodel:
     organizations: dict[OrganizationID, MemoryOrganization] = field(default_factory=dict)
+    # accounts are not associated to one organization
+    # (email, account)
+    accounts: dict[EmailStr, MemoryAccount] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -846,3 +851,8 @@ class MemoryShamirRecovery:
 class MemoryShamirShare:
     cooked: ShamirRecoveryShareCertificate
     shamir_recovery_share_certificates: bytes
+
+
+@dataclass(slots=True)
+class MemoryAccount:
+    user_email: str | None
