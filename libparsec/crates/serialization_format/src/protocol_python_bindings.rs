@@ -909,6 +909,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::RealmRole => quote_rs_to_py_class!(crate::enumerate::RealmRole),
         FieldType::BootstrapToken => quote_rs_to_py_class!(crate::token::BootstrapToken),
         FieldType::InvitationToken => quote_rs_to_py_class!(crate::token::InvitationToken),
+        FieldType::AccountToken => quote_rs_to_py_class!(crate::token::AccountToken),
         FieldType::InvitationStatus => quote_rs_to_py_class!(crate::enumerate::InvitationStatus),
         FieldType::CertificateSigner => {
             quote_rs_to_py_class!(crate::certif::CertificateSigner)
@@ -1004,6 +1005,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::RealmRole => quote! { crate::enumerate::RealmRole },
         FieldType::BootstrapToken => quote! { crate::token::BootstrapToken },
         FieldType::InvitationToken => quote! { crate::token::InvitationToken },
+        FieldType::AccountToken => quote! { crate::token::AccountToken },
         FieldType::InvitationStatus => quote! { crate::enumerate::InvitationStatus },
         FieldType::CertificateSigner => quote! { crate::certif::CertificateSigner },
         FieldType::BlockAccess => quote! { crate::data::BlockAccess },
@@ -1142,6 +1144,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::RealmRole
         | FieldType::BootstrapToken
         | FieldType::InvitationToken
+        | FieldType::AccountToken
         | FieldType::InvitationStatus
         | FieldType::CertificateSigner
         | FieldType::BlockAccess

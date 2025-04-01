@@ -59,6 +59,7 @@ from parsec._parsec_pyi.enumerate import (
     UserProfile,
 )
 from parsec._parsec_pyi.ids import (
+    AccountToken,
     BlockID,
     BootstrapToken,
     ChunkID,
@@ -165,6 +166,7 @@ __all__ = [
     "VlobID",
     "VlobID",
     "VlobID",
+    "AccountToken",
     # Addrs
     "ParsecActionAddr",
     "ParsecAddr",
