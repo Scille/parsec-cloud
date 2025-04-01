@@ -13,7 +13,7 @@ pub use libparsec_client::{
     SelfShamirRecoveryInfo, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
-use libparsec_platform_device_loader::ChangeAuthentificationError;
+use libparsec_platform_device_loader::ChangeAuthenticationError;
 use libparsec_types::prelude::*;
 pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
 
@@ -378,16 +378,16 @@ pub enum ClientChangeAuthenticationError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ChangeAuthentificationError> for ClientChangeAuthenticationError {
-    fn from(value: ChangeAuthentificationError) -> Self {
+impl From<ChangeAuthenticationError> for ClientChangeAuthenticationError {
+    fn from(value: ChangeAuthenticationError) -> Self {
         match value {
-            ChangeAuthentificationError::InvalidPath(e) => Self::InvalidPath(e),
-            ChangeAuthentificationError::InvalidData => Self::InvalidData,
-            ChangeAuthentificationError::DecryptionFailed => Self::DecryptionFailed,
-            ChangeAuthentificationError::CannotRemoveOldDevice => {
+            ChangeAuthenticationError::InvalidPath(e) => Self::InvalidPath(e),
+            ChangeAuthenticationError::InvalidData => Self::InvalidData,
+            ChangeAuthenticationError::DecryptionFailed => Self::DecryptionFailed,
+            ChangeAuthenticationError::CannotRemoveOldDevice => {
                 Self::Internal(anyhow::anyhow!(value))
             }
-            ChangeAuthentificationError::Internal(e) => Self::Internal(e),
+            ChangeAuthenticationError::Internal(e) => Self::Internal(e),
         }
     }
 }

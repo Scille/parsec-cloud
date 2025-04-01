@@ -59,7 +59,7 @@ pub async fn save_device(
 pub async fn change_authentication(
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
-) -> Result<AvailableDevice, crate::ChangeAuthentificationError> {
+) -> Result<AvailableDevice, crate::ChangeAuthenticationError> {
     let storage = Storage::new().inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     })?;

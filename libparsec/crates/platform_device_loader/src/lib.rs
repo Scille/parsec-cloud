@@ -164,7 +164,7 @@ pub async fn save_device(
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum ChangeAuthentificationError {
+pub enum ChangeAuthenticationError {
     #[error(transparent)]
     InvalidPath(anyhow::Error),
     #[error("Cannot deserialize file content")]
@@ -177,7 +177,7 @@ pub enum ChangeAuthentificationError {
     Internal(anyhow::Error),
 }
 
-impl From<LoadDeviceError> for ChangeAuthentificationError {
+impl From<LoadDeviceError> for ChangeAuthenticationError {
     fn from(value: LoadDeviceError) -> Self {
         match value {
             LoadDeviceError::DecryptionFailed => Self::DecryptionFailed,
@@ -188,7 +188,7 @@ impl From<LoadDeviceError> for ChangeAuthentificationError {
     }
 }
 
-impl From<SaveDeviceError> for ChangeAuthentificationError {
+impl From<SaveDeviceError> for ChangeAuthenticationError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
             SaveDeviceError::InvalidPath(e) => Self::InvalidPath(e),
@@ -202,7 +202,7 @@ pub async fn change_authentication(
     #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
-) -> Result<AvailableDevice, ChangeAuthentificationError> {
+) -> Result<AvailableDevice, ChangeAuthenticationError> {
     #[cfg(feature = "test-with-testbed")]
     if let Some(result) =
         testbed::maybe_change_authentication(config_dir, current_access, new_access)
@@ -421,11 +421,11 @@ impl From<DecryptDeviceFileError> for LoadDeviceError {
     }
 }
 
-impl From<DecryptDeviceFileError> for ChangeAuthentificationError {
+impl From<DecryptDeviceFileError> for ChangeAuthenticationError {
     fn from(value: DecryptDeviceFileError) -> Self {
         match value {
-            DecryptDeviceFileError::Decrypt(_) => ChangeAuthentificationError::DecryptionFailed,
-            DecryptDeviceFileError::Load(_) => ChangeAuthentificationError::InvalidData,
+            DecryptDeviceFileError::Decrypt(_) => ChangeAuthenticationError::DecryptionFailed,
+            DecryptDeviceFileError::Load(_) => ChangeAuthenticationError::InvalidData,
         }
     }
 }

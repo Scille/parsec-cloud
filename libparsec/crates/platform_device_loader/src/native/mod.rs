@@ -11,7 +11,7 @@ use uuid::Uuid;
 
 use libparsec_types::prelude::*;
 
-use crate::{ChangeAuthentificationError, LoadDeviceError, SaveDeviceError, DEVICE_FILE_EXT};
+use crate::{ChangeAuthenticationError, LoadDeviceError, SaveDeviceError, DEVICE_FILE_EXT};
 
 const KEYRING_SERVICE: &str = "parsec";
 
@@ -302,7 +302,7 @@ pub async fn save_device(
 pub async fn change_authentication(
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
-) -> Result<AvailableDevice, ChangeAuthentificationError> {
+) -> Result<AvailableDevice, ChangeAuthenticationError> {
     let (device, created_on) = load_device(current_access).await?;
 
     let available_device = save_device(new_access, &device, created_on).await?;
@@ -313,7 +313,7 @@ pub async fn change_authentication(
     if key_file != new_key_file {
         tokio::fs::remove_file(key_file)
             .await
-            .map_err(|_| ChangeAuthentificationError::CannotRemoveOldDevice)?;
+            .map_err(|_| ChangeAuthenticationError::CannotRemoveOldDevice)?;
     }
 
     Ok(available_device)
