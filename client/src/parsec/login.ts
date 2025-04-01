@@ -290,7 +290,7 @@ export async function getCurrentAvailableDevice(): Promise<Result<AvailableDevic
   if (!clientResult.ok) {
     return { ok: false, error: { tag: 'NotFound' } };
   }
-  const availableDevices = await listAvailableDevices();
+  const availableDevices = await listAvailableDevices(false);
 
   const currentAvailableDevice = availableDevices.find((device) => device.deviceId === clientResult.value.deviceId);
   if (!currentAvailableDevice) {

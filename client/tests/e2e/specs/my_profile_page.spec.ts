@@ -1,18 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { expect, fillIonInput, msTest, selectDropdown } from '@tests/e2e/helpers';
+import { expect, fillIonInput, logout, msTest, selectDropdown } from '@tests/e2e/helpers';
 
-msTest.fail('Check devices list', async ({ myProfilePage }) => {
+msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
   await myProfilePage.locator('.menu-list__item').nth(1).click();
   await expect(myProfilePage.locator('#add-device-button')).toHaveText('Add a new device');
   const devices = myProfilePage.locator('#devices-list').getByRole('listitem');
-  await expect(devices.locator('.device-name')).toHaveText([/^device\d$/, /^device\d$/]);
-  await expect(devices.locator('.join-date')).toHaveText(['Joined: Today', 'Joined: Today']);
-  await expect(devices.locator('.label-id')).toHaveText([/^Technical ID: device\d$/, /^Technical ID: device\d$/]);
-  await expect(devices.nth(0).locator('.badge')).toBeVisible();
-  await expect(devices.nth(1).locator('.badge')).toBeHidden();
+  await expect(devices.locator('.device-name')).toHaveText(['My alice@dev1 machine', 'My alice@dev2 machine']);
+  await expect(devices.locator('.join-date')).toHaveText(['Joined: Jan 2, 2000', 'Joined: Jan 4, 2000']);
+  await expect(devices.locator('.label-id')).toHaveText([/^Technical ID: [a-f0-9]+$/, /^Technical ID: [a-f0-9]+$/]);
+  await expect(devices.nth(0).locator('.badge')).toBeHidden();
+  await expect(devices.nth(1).locator('.badge')).toBeVisible();
+  await expect(devices.nth(1).locator('.badge')).toHaveText('Current');
 });
 
 async function checkMenuItem(
@@ -69,12 +70,13 @@ msTest('Check if restore-password section is displayed', async ({ myProfilePage 
   await expect(restorePassword.locator('.restore-password-button')).toHaveText('Create a recovery file');
 });
 
-msTest('Change password', async ({ home, myProfilePage }) => {
+msTest('Change password', async ({ myProfilePage }) => {
+  const newPassword = 'New-P@ssw0rd.6786?6786';
   await expect(myProfilePage.locator('.menu-list__item').nth(2)).toHaveText('Authentication');
   await myProfilePage.locator('.menu-list__item').nth(2).click();
   await expect(myProfilePage.locator('.profile-content-item').locator('.item-header__title')).toHaveText('Authentication');
   await myProfilePage.locator('#change-authentication-button').click();
-  const changePasswordModal = home.locator('.change-authentication-modal');
+  const changePasswordModal = myProfilePage.locator('.change-authentication-modal');
   await expect(changePasswordModal).toBeVisible();
   await expect(changePasswordModal.locator('.modal-header')).toHaveText('Enter your current password');
   await expect(changePasswordModal.locator('ion-footer').locator('#next-button')).toBeTrulyDisabled();
@@ -91,15 +93,43 @@ msTest('Change password', async ({ home, myProfilePage }) => {
   await expect(changePasswordModal.locator('.modal-header')).toHaveText('Choose your new authentication method');
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
   const passwordInputs = changePasswordModal.locator('.input-container').locator('ion-input');
-  await fillIonInput(passwordInputs.nth(1), 'New-P@ssw0rd.6786?6786');
-  await fillIonInput(passwordInputs.nth(2), 'New-P@ssw0rd');
+  await fillIonInput(passwordInputs.nth(1), newPassword);
+  await fillIonInput(passwordInputs.nth(2), 'no match');
   await expect(changePasswordModal.locator('.inputs-container-item').nth(1).getByText('Do not match')).toBeVisible();
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
-  await fillIonInput(passwordInputs.nth(2), 'New-P@ssw0rd.6786?6786');
+  await fillIonInput(passwordInputs.nth(2), newPassword);
   await expect(changePasswordModal.locator('#next-button')).toNotHaveDisabledAttribute();
   await changePasswordModal.locator('#next-button').click();
   await expect(changePasswordModal).toBeHidden();
   await expect(myProfilePage).toShowToast('Authentication has been updated.', 'Success');
+
+  await logout(myProfilePage);
+
+  // Alias for clarity
+  const home = myProfilePage;
+
+  await home.locator('.organization-list').locator('.organization-card').nth(0).click();
+  const loginButton = home.locator('.login-card-footer').locator('.login-button');
+  await expect(loginButton).toHaveDisabledAttribute();
+  await expect(home.locator('#password-input').locator('.form-error')).toBeHidden();
+  const input = home.locator('#password-input').locator('ion-input');
+  // Original password should fail
+  await fillIonInput(input, 'P@ssw0rd.');
+  await expect(loginButton).toNotHaveDisabledAttribute();
+  await loginButton.click();
+  const error = home.locator('#password-input').locator('.form-error');
+  await expect(error).toBeVisible();
+  await expect(error).toHaveText('Incorrect password.');
+  await expect(home).toBeHomePage();
+
+  // Now with the new password
+  await fillIonInput(input, newPassword);
+  await expect(loginButton).toNotHaveDisabledAttribute();
+  await loginButton.click();
+  await expect(home).toBeWorkspacePage();
+  await expect(home).toHaveHeader(['My workspaces'], false, false);
+  const profile = home.locator('.topbar').locator('.profile-header');
+  await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
 });
 
 msTest('Check settings section', async ({ myProfilePage }) => {

@@ -265,3 +265,12 @@ export async function setSmallDisplay(page: Page): Promise<void> {
   const viewport = page.viewportSize();
   await page.setViewportSize({ width: 700, height: viewport ? viewport.height : 700 });
 }
+
+export async function logout(page: Page): Promise<void> {
+  await page.locator('.topbar').locator('.profile-header').click();
+  const buttons = page.locator('.profile-header-popover').locator('.main-list').getByRole('listitem');
+  await buttons.nth(4).click();
+  await answerQuestion(page, true);
+  await expect(page).toBeHomePage();
+  await expect(page.locator('.homepage-header').locator('.topbar-left')).toHaveText('Welcome to Parsec');
+}

@@ -74,7 +74,6 @@ onMounted(async () => {
   if (import.meta.env.PARSEC_APP_CLEAR_CACHE === 'true') {
     await storageManager.clearAll();
   }
-  console.log(import.meta.env.PARSEC_APP_POPULATE_DEFAULT_WORKSPACE);
   if (import.meta.env.PARSEC_APP_POPULATE_DEFAULT_WORKSPACE === 'true') {
     await populate();
   }

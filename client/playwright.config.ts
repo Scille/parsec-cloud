@@ -38,7 +38,6 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   testIgnore: [
-    '**/my_profile_page.spec.ts',
     '**/organization_switch_popover.spec.ts',
     '**/export_recovery_device.spec.ts',
     '**/import_recovery_device.spec.ts',

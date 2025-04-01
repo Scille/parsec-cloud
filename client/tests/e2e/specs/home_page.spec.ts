@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, expect, fillIonInput, msTest, setSmallDisplay, sortBy } from '@tests/e2e/helpers';
+import { expect, fillIonInput, logout, msTest, setSmallDisplay, sortBy } from '@tests/e2e/helpers';
 
 const USER_NAMES = ['Alicey McAliceFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
 
@@ -172,12 +172,7 @@ msTest('Logout and go back to devices list', async ({ home }) => {
   await fillIonInput(home.locator('#password-input').locator('ion-input'), 'P@ssw0rd.');
   await home.locator('.login-card-footer').locator('.login-button').click();
   await expect(home).toBeWorkspacePage();
-  await home.locator('.topbar').locator('.profile-header').click();
-  const buttons = home.locator('.profile-header-popover').locator('.main-list').getByRole('listitem');
-  await buttons.nth(4).click();
-  await answerQuestion(home, true);
-  await expect(home.locator('.organization-title')).toHaveText('Access your organizations');
-  await expect(home).toBeHomePage();
+  await logout(home);
 });
 
 msTest('Check header buttons', async ({ home }) => {
