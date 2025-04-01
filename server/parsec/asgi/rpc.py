@@ -22,25 +22,34 @@ from fastapi.responses import StreamingResponse
 from starlette.requests import ClientDisconnect
 
 from parsec._parsec import (
+    AccountToken,
     ApiVersion,
     DateTime,
     InvitationToken,
     OrganizationID,
+    anonymous_account_cmds,
     anonymous_cmds,
+    authenticated_account_cmds,
     authenticated_cmds,
     invited_cmds,
     tos_cmds,
 )
 from parsec.backend import Backend
 from parsec.client_context import (
+    AnonymousAccountClientContext,
     AnonymousClientContext,
+    AuthenticatedAccountClientContext,
     AuthenticatedClientContext,
     InvitedClientContext,
 )
 from parsec.components.auth import (
+    AnonymousAccountAuthInfo,
     AnonymousAuthInfo,
+    AuthAnonymousAccountAuthBadOutcome,
     AuthAnonymousAuthBadOutcome,
+    AuthAuthenticatedAccountAuthBadOutcome,
     AuthAuthenticatedAuthBadOutcome,
+    AuthenticatedAccountAuthInfo,
     AuthenticatedAuthInfo,
     AuthenticatedToken,
     AuthInvitedAuthBadOutcome,
@@ -114,6 +123,16 @@ INVITED_CMDS_LOAD_FN = {
 ANONYMOUS_CMDS_LOAD_FN = {
     int(v_version[1:]): getattr(anonymous_cmds, v_version).AnyCmdReq.load
     for v_version in dir(anonymous_cmds)
+    if v_version.startswith("v")
+}
+ANONYMOUS_ACCOUNT_CMDS_LOAD_FN = {
+    int(v_version[1:]): getattr(anonymous_account_cmds, v_version).AnyCmdReq.load
+    for v_version in dir(anonymous_account_cmds)
+    if v_version.startswith("v")
+}
+AUTHENTICATED_ACCOUNT_CMDS_LOAD_FN = {
+    int(v_version[1:]): getattr(authenticated_account_cmds, v_version).AnyCmdReq.load
+    for v_version in dir(authenticated_account_cmds)
     if v_version.startswith("v")
 }
 TOS_CMDS_LOAD_FN = {
@@ -243,6 +262,7 @@ class CustomHttpStatus(Enum):
     UserFrozen = 462
     UserMustAcceptTos = 463
     TokenExpired = 498
+    AccountNotFound = 464
 
 
 # e.g. `InvitationAlreadyUsedOrDeleted` -> `Invitation already used or deleted`
@@ -392,9 +412,99 @@ def _parse_auth_headers_or_abort(
     )
 
 
+@dataclass
+class AccountParsedAuthHeaders:
+    settled_api_version: ApiVersion
+    client_api_version: ApiVersion
+    user_agent: str
+    account_token: AccountToken | None
+    last_event_id: UUID | None
+
+
+def _account_parse_auth_headers_or_abort(
+    headers: Headers,
+    # TODO: Use FastAPI' path parsing to handle this once it is fixed upstream
+    # (see https://github.com/tiangolo/fastapi/pull/10109)
+    with_account_headers: bool,
+    with_sse_headers: bool,
+    expected_content_type: str | None,
+    expected_accept_type: str | None,
+) -> AccountParsedAuthHeaders:
+    # 1) Check API version
+    # Parse `Api-version` from the HTTP Header and return the version implemented
+    # by the server that is compatible with the client.
+    try:
+        client_api_version = ApiVersion.from_str(headers.get("Api-Version", ""))
+        settled_api_version, _ = settle_compatible_versions(
+            SUPPORTED_API_VERSIONS, [client_api_version]
+        )
+    except (ValueError, IncompatibleAPIVersionsError):
+        supported_api_versions = ";".join(
+            str(api_version) for api_version in SUPPORTED_API_VERSIONS
+        )
+        raise HTTPException(
+            status_code=CustomHttpStatus.UnsupportedApiVersion.value,
+            headers={"Supported-Api-Versions": supported_api_versions},
+        )
+
+    # From now on the version is settled, our reply must have the `Api-Version` header
+
+    # 3) Check User-Agent, Content-Type & Accept
+    user_agent = headers.get("User-Agent", "unknown")
+    if expected_content_type and headers.get("Content-Type") != expected_content_type:
+        _handshake_abort_bad_content(api_version=settled_api_version)
+    if expected_accept_type and headers.get("Accept") != expected_accept_type:
+        _handshake_abort(CustomHttpStatus.BadAcceptType, api_version=settled_api_version)
+
+    # 4) Check authenticated headers
+    if not with_account_headers:
+        account_token = None
+
+    else:
+        try:
+            raw_authorization = headers["Authorization"]
+        except KeyError:
+            _handshake_abort(
+                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
+            )
+
+        try:
+            expected_bearer, raw_account_token = raw_authorization.split()
+            if expected_bearer.lower() != "bearer":
+                raise ValueError
+
+            account_token = AccountToken.from_hex(raw_account_token)
+        except ValueError:
+            _handshake_abort(
+                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
+            )
+
+    if not with_sse_headers:
+        last_event_id = None
+    else:
+        last_event_id = headers.get("Last-Event-Id")
+        if last_event_id is not None:
+            try:
+                last_event_id = UUID(last_event_id)
+            except ValueError:
+                last_event_id = None
+
+    return AccountParsedAuthHeaders(
+        settled_api_version=settled_api_version,
+        client_api_version=client_api_version,
+        user_agent=user_agent,
+        last_event_id=last_event_id,
+        account_token=account_token,
+    )
+
+
 async def run_request(
     backend: Backend,
-    client_ctx: AuthenticatedClientContext | InvitedClientContext | AnonymousClientContext,
+    client_ctx: AuthenticatedClientContext
+    | InvitedClientContext
+    | AnonymousClientContext
+    | AnonymousAccountClientContext
+    | AuthenticatedAccountClientContext,
     request: object,
 ) -> object:
     cmd_func = backend.apis[type(request)]
@@ -488,6 +598,102 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
 
     try:
         req = ANONYMOUS_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
+    except ValueError:
+        _handshake_abort_bad_content(api_version=parsed.settled_api_version)
+
+    rep = await run_request(backend, client_ctx, req)
+
+    return _rpc_rep(rep, parsed.settled_api_version)
+
+
+@rpc_router.post("/anonymous_account")
+async def anonymous_account_api(request: Request) -> Response:
+    backend: Backend = request.app.state.backend
+
+    parsed = _account_parse_auth_headers_or_abort(
+        headers=request.headers,
+        with_account_headers=False,
+        with_sse_headers=False,
+        expected_accept_type=None,
+        expected_content_type=CONTENT_TYPE_MSGPACK,
+    )
+
+    outcome = await backend.auth.anonymous_account_auth(DateTime.now())
+    match outcome:
+        case AnonymousAccountAuthInfo():  # TODO as auth_info:
+            pass
+        case AuthAnonymousAccountAuthBadOutcome():
+            # No bad case expected
+            raise NotImplementedError
+
+            # _handshake_abort(
+            #     CustomHttpStatus.AccountNotFound,  # TODO
+            #     api_version=parsed.settled_api_version,
+            # )
+
+    # Handshake is done
+
+    client_ctx = AnonymousAccountClientContext(
+        client_api_version=parsed.client_api_version,
+        settled_api_version=parsed.settled_api_version,
+    )
+
+    # Reply to GET
+    if request.method == "GET":
+        return Response(
+            status_code=200,
+            headers={
+                "Api-Version": str(parsed.settled_api_version),
+                "Content-Type": CONTENT_TYPE_MSGPACK,
+            },
+        )
+
+    body: bytes = await _rpc_get_body_with_limit_check(request)
+
+    try:
+        req = ANONYMOUS_ACCOUNT_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
+    except ValueError:
+        _handshake_abort_bad_content(api_version=parsed.settled_api_version)
+
+    rep = await run_request(backend, client_ctx, req)
+
+    return _rpc_rep(rep, parsed.settled_api_version)
+
+
+@rpc_router.post("/authenticated_account")
+async def authenticated_account_api(request: Request) -> Response:
+    backend: Backend = request.app.state.backend
+    parsed = _account_parse_auth_headers_or_abort(
+        headers=request.headers,
+        with_account_headers=True,
+        with_sse_headers=False,
+        expected_accept_type=None,
+        expected_content_type=CONTENT_TYPE_MSGPACK,
+    )
+
+    assert parsed.account_token is not None
+    outcome = await backend.auth.authenticated_account_auth(DateTime.now(), parsed.account_token)
+    match outcome:
+        case AuthenticatedAccountAuthInfo() as auth_info:
+            pass
+        case AuthAuthenticatedAccountAuthBadOutcome():
+            _handshake_abort(
+                CustomHttpStatus.AccountNotFound,
+                api_version=parsed.settled_api_version,
+            )
+
+    # Handshake is done
+
+    client_ctx = AuthenticatedAccountClientContext(
+        client_api_version=parsed.client_api_version,
+        settled_api_version=parsed.settled_api_version,
+        token=auth_info.token,
+    )
+
+    body: bytes = await _rpc_get_body_with_limit_check(request)
+
+    try:
+        req = AUTHENTICATED_ACCOUNT_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
     except ValueError:
         _handshake_abort_bad_content(api_version=parsed.settled_api_version)
 

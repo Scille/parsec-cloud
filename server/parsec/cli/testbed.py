@@ -13,7 +13,7 @@ import structlog
 from fastapi import APIRouter, BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from parsec._parsec import OrganizationID, ParsecAddr
+from parsec._parsec import AccountToken, OrganizationID, ParsecAddr
 
 try:
     from parsec._parsec import testbed
@@ -130,6 +130,9 @@ class TestbedBackend:
         await self.backend.test_drop_organization(id)
         del self.template_per_org[id]
 
+    async def new_account(self) -> tuple[str, AccountToken]:
+        return await self.backend.test_new_account()
+
 
 testbed_router = APIRouter(tags=["testbed"])
 
@@ -230,6 +233,17 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
     await testbed.drop_organization(organization_id)
 
     return Response(status_code=200, content=b"")
+
+
+@testbed_router.post("/testbed/account/new")
+async def test_account(request: Request) -> Response:
+    # post /account/new?
+    # -> email uuid@invalid.com; hmac_key bytes
+    testbed: TestbedBackend = request.app.state.testbed
+
+    (email, token) = await testbed.new_account()
+
+    return Response(status_code=200, content=f"{email}\n{token}".encode("utf8"))
 
 
 @asynccontextmanager

@@ -91,6 +91,11 @@ impl TryFrom<&str> for ApiVersion {
  * ProtocolRequest
  */
 
+/// There is two kinds of protocol family. On the one side, Anonymous, Invited and Authenticated
+/// (with Tos being kind of like Authenticated) that are the regular families used to
+/// interact between the metadata server and the client. And on the other side,
+/// AuthenticatedAccount and AnonymousAccount that are used to store a device key file on
+/// a server (typically used to use parsec's web version)
 #[derive(Debug, Clone, Copy)]
 pub enum ProtocolFamily {
     /// Family used for all requests done by a device.
@@ -102,6 +107,10 @@ pub enum ProtocolFamily {
     Anonymous,
     /// Family used by an invitation claimer in order to obtain a device.
     Invited,
+    /// Family used for account anonymous operations. (ex: create account)
+    AnonymousAccount,
+    /// Family used for token protected account operations (ex: list organization for human)
+    AuthenticatedAccount,
 }
 
 pub trait ProtocolRequest<const V: u32> {
