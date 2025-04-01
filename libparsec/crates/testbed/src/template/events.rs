@@ -1582,7 +1582,7 @@ impl TestbedEventRenameRealm {
             .to_owned();
 
         let (key_index, key) = utils::realm_keys(&builder.events, realm)
-            .next()
+            .last()
             .expect("Realm must have had at least one key rotation before rename is possible !");
 
         // 2) Actual creation

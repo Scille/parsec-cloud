@@ -197,7 +197,7 @@ pub(super) fn non_revoked_sequester_services(
 pub(super) fn realm_keys(
     events: &[TestbedEvent],
     realm: VlobID,
-) -> impl Iterator<Item = (IndexInt, &KeyDerivation)> {
+) -> impl DoubleEndedIterator<Item = (IndexInt, &KeyDerivation)> {
     events.iter().filter_map(move |e| match e {
         TestbedEvent::RotateKeyRealm(x) if x.realm == realm => Some((
             x.key_index,
