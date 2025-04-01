@@ -167,7 +167,7 @@
           class="body-lg"
         >
           <div class="no-files-content">
-            <ms-spinner />
+            <ms-spinner class="ms-spinner" />
             <ion-text>
               {{ $msTranslate('FoldersPage.loading') }}
             </ion-text>
@@ -1457,7 +1457,7 @@ async function onDropAsReader(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.folder-container div:not(.no-files-content) {
+.folder-container div:not(.no-files-content div) {
   height: 100%;
 }
 
@@ -1468,24 +1468,21 @@ async function onDropAsReader(): Promise<void> {
   border: 1px solid var(--parsec-color-light-secondary-disabled);
 }
 
-.no-files {
+.no-files-content {
   width: 100%;
   height: 100%;
-  color: var(--parsec-color-light-secondary-grey);
-  display: flex;
   margin: auto;
+  color: var(--parsec-color-light-secondary-grey);
+  border-radius: var(--parsec-radius-8);
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem 1rem;
 
-  &-content {
-    border-radius: var(--parsec-radius-8);
-    display: flex;
-    height: fit-content;
-    width: 100%;
-    text-align: center;
-    flex-direction: column;
-    gap: 1rem;
-    align-items: center;
-    padding: 2rem 1rem;
+  .ms-spinner {
+    height: 1.5rem;
   }
 }
 </style>

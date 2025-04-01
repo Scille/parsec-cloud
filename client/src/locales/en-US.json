@@ -331,7 +331,8 @@
         },
         "previous": "Go back",
         "invitations": {
-            "title": "No invitations | One invitation | {count} invitations"
+            "title": "No invitations | One invitation | {count} invitations",
+            "smallDisplayTitle": "pending invitation | pending invitations"
         }
     },
     "WorkspaceSharing": {
@@ -680,31 +681,32 @@
         "folderSyncKo": "This folder is not synced with the server."
     },
     "OrganizationPage": {
-        "infoPage": {
-            "getInfoFailed": "Failed to retrieve organization information. Please make sure you are online.",
-            "users": {
-                "revokedUsers": "Revoked",
-                "activeUsers": "Active",
-                "title": "Users",
-                "seeUsers": "See users"
-            },
-            "size": {
-                "metadata": "Meta-data",
-                "total": "Global data",
-                "title": "Storage",
-                "unavailable": "Unavailable"
-            },
-            "configuration": {
-                "outsidersAllowed": "External profile",
-                "userLimit": "User limit (excluding users with External profile)",
-                "unlimited": "Unlimited",
-                "allowed": "Enabled",
-                "forbidden": "Disabled",
-                "title": "Configuration",
-                "serverAddr": "Server address",
-                "copyPath": "Copied",
-                "copyFailed": "Failed to copy the organization address. Your browser or device does not seem to support copy/paste."
-            }
+        "title": "Information",
+        "getInfoFailed": "Failed to retrieve organization information. Please make sure you are online.",
+        "users": {
+            "revokedUsers": "Revoked | Revoked",
+            "activeUsers": "Active | Active",
+            "frozenUsers": "Frozen | Frozen",
+            "title": "Users",
+            "seeUsers": "See users",
+            "addUser": "Add a user"
+        },
+        "size": {
+            "metadata": "Meta-data",
+            "total": "Global data",
+            "title": "Storage",
+            "unavailable": "Unavailable"
+        },
+        "configuration": {
+            "outsidersAllowed": "External profile",
+            "userLimit": "User limit (excluding users with External profile)",
+            "unlimited": "Unlimited",
+            "allowed": "Enabled",
+            "forbidden": "Disabled",
+            "title": "Configuration",
+            "serverAddr": "Server address",
+            "copyPath": "Copied",
+            "copyFailed": "Failed to copy the organization address. Your browser or device does not seem to support copy/paste."
         }
     },
     "common": {
