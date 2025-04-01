@@ -48,6 +48,8 @@ def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:  # pyright: ignore[reportMissingTyp
             "AuthenticatedClientContext": "AuthenticatedClientContext",
             "InvitedClientContext": "InvitedClientContext",
             "AnonymousClientContext": "AnonymousClientContext",
+            "AnonymousAccountClientContext": "AnonymousAccountClientContext",
+            "AuthenticatedAccountClientContext": "AuthenticatedAccountClientContext",
         },
     )
     assert types.keys() == {"client_ctx", "req", "return"}
@@ -62,9 +64,14 @@ def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:  # pyright: ignore[reportMissingTyp
         expected_type_name = "AuthenticatedClientContext"
     elif m_family == "invited_cmds":
         expected_type_name = "InvitedClientContext"
-    else:
-        assert m_family == "anonymous_cmds"
+    elif m_family == "authenticated_account_cmds":
+        expected_type_name = "AuthenticatedAccountClientContext"
+    elif m_family == "anonymous_account_cmds":
+        expected_type_name = "AnonymousAccountClientContext"
+    elif m_family == "anonymous_cmds":
         expected_type_name = "AnonymousClientContext"
+    else:
+        raise ValueError(f"unexpected family {m_family}")
     assert types["client_ctx"] == ForwardRef(expected_type_name), (
         f"Expect `client_ctx` to be an `{expected_type_name}`"
     )

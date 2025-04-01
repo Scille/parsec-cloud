@@ -23,7 +23,9 @@ pub use url::Url;
 
 use libparsec_crypto::VerifyKey;
 
-use crate::{BootstrapToken, IndexInt, InvitationToken, InvitationType, OrganizationID, VlobID};
+use crate::{
+    AccountToken, BootstrapToken, IndexInt, InvitationToken, InvitationType, OrganizationID, VlobID,
+};
 
 pub const PARSEC_SCHEME: &str = "parsec3";
 const HTTP_OR_HTTPS_SCHEME: &str = "http(s)";
@@ -921,6 +923,97 @@ impl ParsecInvitationAddr {
     pub fn to_invited_url(&self) -> Url {
         self.base
             .to_http_url(Some(&format!("/invited/{}", &self.organization_id)))
+    }
+}
+
+/*
+ * ParsecAccountAddr
+ */
+
+/// Represent the URL to connect to authenticated account
+///
+/// (e.g. TODO)  // cspell:disable-line
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct ParsecAuthenticatedAccountAddr {
+    base: BaseParsecAddr,
+    token: AccountToken,
+}
+
+impl_common_stuff!(ParsecAuthenticatedAccountAddr);
+
+impl ParsecAuthenticatedAccountAddr {
+    pub fn new(server_addr: impl Into<ParsecAddr>, token: AccountToken) -> Self {
+        Self {
+            base: server_addr.into().base,
+
+            token,
+        }
+    }
+
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseParsecAddr::from_url(parsed)?;
+        let pairs = parsed.0.query_pairs();
+
+        let token =
+            extract_param_and_b64_msgpack_deserialize!(&pairs, PARSEC_PARAM_PAYLOAD, AccountToken)?;
+
+        Ok(Self { base, token })
+    }
+
+    expose_base_parsec_addr_fields!();
+
+    fn _to_url(&self, mut url: Url) -> Url {
+        url.path_segments_mut()
+            .expect("expected url not to be a cannot-be-a-base");
+
+        let payload = b64_msgpack_serialize(&self.token);
+
+        url.query_pairs_mut()
+            .append_pair(PARSEC_PARAM_PAYLOAD, &payload);
+        url
+    }
+
+    pub fn token(&self) -> AccountToken {
+        self.token
+    }
+    pub fn to_authenticated_account_url(&self) -> Url {
+        self.base.to_http_url(None)
+    }
+}
+
+/// Represent the URL to connect to anonymous account
+///
+/// (e.g. TODO)  // cspell:disable-line
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct ParsecAnonymousAccountAddr {
+    base: BaseParsecAddr,
+}
+
+impl_common_stuff!(ParsecAnonymousAccountAddr);
+
+impl ParsecAnonymousAccountAddr {
+    pub fn new(server_addr: impl Into<ParsecAddr>) -> Self {
+        Self {
+            base: server_addr.into().base,
+        }
+    }
+
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseParsecAddr::from_url(parsed)?;
+
+        Ok(Self { base })
+    }
+
+    expose_base_parsec_addr_fields!();
+
+    fn _to_url(&self, mut url: Url) -> Url {
+        url.path_segments_mut()
+            .expect("expected url not to be a cannot-be-a-base");
+        url
+    }
+
+    pub fn to_anonymous_account_url(&self) -> Url {
+        self.base.to_http_url(None)
     }
 }
 

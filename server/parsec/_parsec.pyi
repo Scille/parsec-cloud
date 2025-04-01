@@ -93,7 +93,9 @@ from parsec._parsec_pyi.pki import (
 )
 from parsec._parsec_pyi.protocol import (
     ActiveUsersLimit,
+    anonymous_account_cmds,
     anonymous_cmds,
+    authenticated_account_cmds,
     authenticated_cmds,
     invited_cmds,
     tos_cmds,
@@ -197,6 +199,8 @@ __all__ = [
     "authenticated_cmds",
     "invited_cmds",
     "tos_cmds",
+    "authenticated_account_cmds",
+    "anonymous_account_cmds",
     # Testbed
     "testbed",
 ]

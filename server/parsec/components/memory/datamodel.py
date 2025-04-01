@@ -11,6 +11,7 @@ from itertools import chain
 from typing import AsyncIterator, Iterable, Iterator, Literal
 
 from parsec._parsec import (
+    AccountToken,
     ActiveUsersLimit,
     BlockID,
     BootstrapToken,
@@ -93,6 +94,10 @@ TopicAndDiscriminant = (
 @dataclass(slots=True)
 class MemoryDatamodel:
     organizations: dict[OrganizationID, MemoryOrganization] = field(default_factory=dict)
+    # accounts are not associated to one organization
+    # (email, account)
+    # TODO: have a email class
+    accounts: dict[str, MemoryAccount] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -846,3 +851,9 @@ class MemoryShamirRecovery:
 class MemoryShamirShare:
     cooked: ShamirRecoveryShareCertificate
     shamir_recovery_share_certificates: bytes
+
+
+@dataclass(slots=True)
+class MemoryAccount:
+    token: AccountToken
+    user_email: str | None
