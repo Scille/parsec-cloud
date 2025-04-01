@@ -77,7 +77,7 @@ async def test_authenticated_block_read_ok(
         block=block,
     )
 
-    rep = await author.block_read(realm_id, block_id)
+    rep = await author.block_read(block_id, realm_id)
     assert rep == authenticated_cmds.latest.block_read.RepOk(
         block=block,
         key_index=1,
@@ -90,14 +90,14 @@ async def test_authenticated_block_read_realm_not_found(
 ):
     realm_id = VlobID.new()
     block_id = BlockID.new()
-    await coolorg.alice.block_read(realm_id, block_id)
+    await coolorg.alice.block_read(block_id, realm_id)
 
 
 async def test_authenticated_block_read_block_not_found(coolorg: CoolorgRpcClients) -> None:
     realm_id = coolorg.wksp1_id
     block_id = BlockID.new()
 
-    rep = await coolorg.alice.block_read(realm_id, block_id)
+    rep = await coolorg.alice.block_read(block_id, realm_id)
     assert rep == authenticated_cmds.latest.block_read.RepBlockNotFound()
 
 
@@ -132,7 +132,7 @@ async def test_authenticated_block_read_author_not_allowed(
         case unknown:
             assert False, unknown
 
-    rep = await author.block_read(realm_id, block_id)
+    rep = await author.block_read(block_id, realm_id)
     assert rep == authenticated_cmds.latest.block_read.RepAuthorNotAllowed()
 
 
@@ -170,7 +170,7 @@ async def test_authenticated_block_read_store_unavailable(
         "parsec.components.postgresql.block.PGBlockStoreComponent.read", mocked_blockstore_read
     )
 
-    rep = await coolorg.alice.block_read(realm_id, block_id)
+    rep = await coolorg.alice.block_read(block_id, realm_id)
     assert rep == authenticated_cmds.latest.block_read.RepStoreUnavailable()
 
 
@@ -194,6 +194,6 @@ async def test_authenticated_block_read_http_common_errors(
     )
 
     async def do():
-        await coolorg.alice.block_read(realm_id, block_id)
+        await coolorg.alice.block_read(block_id, realm_id)
 
     await authenticated_http_common_errors_tester(do)

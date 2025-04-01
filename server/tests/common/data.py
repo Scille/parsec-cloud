@@ -761,6 +761,76 @@ async def anonymous_http_common_errors_tester(
     assert tester_called
 
 
+@pytest.fixture(params=("",))
+async def anonymous_account_http_common_errors_tester(
+    request: pytest.FixtureRequest, coolorg: CoolorgRpcClients, backend: Backend
+) -> AsyncGenerator[HttpCommonErrorsTester, None]:
+    tester_called = False
+
+    async def _anonymous_account_http_common_errors_tester(do: HttpCommonErrorsTesterDoCallback):
+        nonlocal tester_called
+        tester_called = True
+        # TODO
+        # match request.param:
+        #     case "organization_expired":
+        #         outcome = await backend.organization.update(
+        #             now=DateTime.now(), id=coolorg.organization_id, is_expired=True
+        #         )
+        #         assert outcome is None
+
+        #         expected_http_status = 460
+        #     # TODO
+        #     case unknown:
+        #         assert False, unknown
+
+        # try:
+        #     await do()
+        #     assert False, f"{do!r} was expected to raise an `RpcTransportError` exception !"
+        # except RpcTransportError as err:
+        #     assert err.rep.status_code == expected_http_status, err
+
+    yield _anonymous_account_http_common_errors_tester
+
+    # assert tester_called
+
+
+@pytest.fixture(params=("",))
+async def authenticated_account_http_common_errors_tester(
+    request: pytest.FixtureRequest, coolorg: CoolorgRpcClients, backend: Backend
+) -> AsyncGenerator[HttpCommonErrorsTester, None]:
+    tester_called = False
+
+    async def _authenticated_account_http_common_errors_tester(
+        do: HttpCommonErrorsTesterDoCallback,
+    ):
+        nonlocal tester_called
+        tester_called = True
+
+        # TODO
+        # match request.param:
+        #     case "organization_expired":
+        #         outcome = await backend.organization.update(
+        #             now=DateTime.now(), id=coolorg.organization_id, is_expired=True
+        #         )
+        #         assert outcome is None
+
+        #         expected_http_status = 460
+        #         # TODO
+
+        #     case unknown:
+        #         assert False, unknown
+
+        # try:
+        #     await do()
+        #     assert False, f"{do!r} was expected to raise an `RpcTransportError` exception !"
+        # except RpcTransportError as err:
+        #     assert err.rep.status_code == expected_http_status, err
+
+    yield _authenticated_account_http_common_errors_tester
+
+    # assert tester_called
+
+
 def generate_realm_role_certificate(
     coolorg: CoolorgRpcClients,
     user_id: UserID,

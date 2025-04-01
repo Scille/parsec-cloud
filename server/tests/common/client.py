@@ -35,7 +35,9 @@ from parsec.asgi import AsgiApp
 from parsec.components.auth import AuthenticatedToken
 from tests.common.backend import SERVER_DOMAIN, TestbedBackend
 from tests.common.rpc import (
+    BaseAnonymousAccountRpcClient,
     BaseAnonymousRpcClient,
+    BaseAuthenticatedAccountRpcClient,
     BaseAuthenticatedRpcClient,
     BaseInvitedRpcClient,
     BaseTosRpcClient,
@@ -56,6 +58,42 @@ class AnonymousRpcClient(BaseAnonymousRpcClient):
         self.headers = {
             "Content-Type": "application/msgpack",
             "Api-Version": str(ApiVersion.API_LATEST_VERSION),
+        }
+
+    async def _do_request(self, req: bytes, family: str) -> bytes:
+        rep = await self.raw_client.post(self.url, headers=self.headers, content=req)
+        if rep.status_code != 200:
+            raise RpcTransportError(rep)
+        return rep.content
+
+
+class AnonymousAccountRpcClient(BaseAnonymousAccountRpcClient):
+    def __init__(self, raw_client: AsyncClient):
+        self.raw_client = raw_client
+        self.url = f"http://{SERVER_DOMAIN}/anonymous_account"
+        self.headers = {
+            "Content-Type": "application/msgpack",
+            "Api-Version": str(ApiVersion.API_LATEST_VERSION),
+        }
+
+    async def _do_request(self, req: bytes, family: str) -> bytes:
+        rep = await self.raw_client.post(self.url, headers=self.headers, content=req)
+        if rep.status_code != 200:
+            raise RpcTransportError(rep)
+        return rep.content
+
+
+class AuthenticatedAccountRpcClient(BaseAuthenticatedAccountRpcClient):
+    def __init__(
+        self,
+        raw_client: AsyncClient,
+    ):
+        self.raw_client = raw_client
+        self.url = f"http://{SERVER_DOMAIN}/authenticated_account"
+        self.headers = {
+            "Content-Type": "application/msgpack",
+            "Api-Version": str(ApiVersion.API_LATEST_VERSION),
+            "Authorization": "Bearer TODO",
         }
 
     async def _do_request(self, req: bytes, family: str) -> bytes:
@@ -224,6 +262,8 @@ class CoolorgRpcClients:
     testbed_template: tb.TestbedTemplateContent
     organization_id: OrganizationID
     _anonymous: AnonymousRpcClient | None = None
+    _anonymous_account: AnonymousAccountRpcClient | None = None
+    _authenticated_account: AuthenticatedAccountRpcClient | None = None
     _alice: AuthenticatedRpcClient | None = None
     _bob: AuthenticatedRpcClient | None = None
     _mallory: AuthenticatedRpcClient | None = None
@@ -236,6 +276,20 @@ class CoolorgRpcClients:
             self.raw_client, self.organization_id
         )
         return self._anonymous
+
+    @property
+    def anonymous_account(self) -> AnonymousAccountRpcClient:
+        self._anonymous_account = self._anonymous_account or AnonymousAccountRpcClient(
+            self.raw_client,
+        )
+        return self._anonymous_account
+
+    @property
+    def authenticated_account(self) -> AuthenticatedAccountRpcClient:
+        self._authenticated_account = self._authenticated_account or AuthenticatedAccountRpcClient(
+            self.raw_client
+        )
+        return self._authenticated_account
 
     @property
     def wksp1_id(self) -> VlobID:
@@ -395,6 +449,7 @@ class MinimalorgRpcClients:
     testbed_template: tb.TestbedTemplateContent
     organization_id: OrganizationID
     _anonymous: AnonymousRpcClient | None = None
+    _authenticated_account: AuthenticatedAccountRpcClient | None = None
     _alice: AuthenticatedRpcClient | None = None
 
     @property
@@ -452,6 +507,38 @@ async def minimalorg(
         )
 
         await testbed.drop_organization(organization_id)
+
+
+@dataclass(slots=True)
+class AccountRpcClient:
+    # TODO
+    # - make the template in the testbed
+    # - manage multiple accounts
+    raw_client: AsyncClient
+    email: str
+    _authenticated_account: AuthenticatedAccountRpcClient | None = None
+    _anonymous_account: AnonymousAccountRpcClient | None = None
+
+    @property
+    def anonymous_account(self) -> AnonymousAccountRpcClient:
+        self._anonymous_account = self._anonymous_account or AnonymousAccountRpcClient(
+            self.raw_client,
+        )
+        return self._anonymous_account
+
+    @property
+    def authenticated_account(self) -> AuthenticatedAccountRpcClient:
+        self._authenticated_account = self._authenticated_account or AuthenticatedAccountRpcClient(
+            self.raw_client
+        )
+        return self._authenticated_account
+
+
+@pytest.fixture
+async def account(app: AsgiApp, testbed: TestbedBackend) -> AsyncGenerator[AccountRpcClient, None]:
+    async with AsyncClient(transport=ASGITransport(app=app)) as raw_client:
+        email = await testbed.new_account()
+        yield AccountRpcClient(raw_client=raw_client, email=email)
 
 
 @dataclass(slots=True)

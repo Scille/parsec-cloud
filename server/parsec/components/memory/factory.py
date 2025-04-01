@@ -8,6 +8,7 @@ from typing import Any, AsyncGenerator
 import httpx
 
 from parsec.components.blockstore import blockstore_factory
+from parsec.components.memory.account import MemoryAccountComponent
 from parsec.components.memory.auth import MemoryAuthComponent
 from parsec.components.memory.block import MemoryBlockComponent
 from parsec.components.memory.datamodel import MemoryDatamodel
@@ -49,6 +50,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             blockstore = blockstore_factory(config.blockstore_config, mocked_data=data)
             block = MemoryBlockComponent(data, blockstore)
             events = MemoryEventsComponent(data, config, event_bus)
+            account = MemoryAccountComponent(data, event_bus)
 
             components = {
                 "mocked_data": data,
@@ -67,6 +69,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
                 "block": block,
                 "blockstore": blockstore,
                 "shamir": shamir,
+                "account": account,
             }
 
             yield components

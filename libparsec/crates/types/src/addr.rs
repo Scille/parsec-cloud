@@ -925,6 +925,83 @@ impl ParsecInvitationAddr {
 }
 
 /*
+ * ParsecAuthenticatedAccountAddr
+ */
+
+/// Represent the URL to connect to authenticated account
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct ParsecAuthenticatedAccountAddr {
+    base: BaseParsecAddr,
+}
+
+impl_common_stuff!(ParsecAuthenticatedAccountAddr);
+
+impl ParsecAuthenticatedAccountAddr {
+    pub fn new(server_addr: impl Into<ParsecAddr>) -> Self {
+        Self {
+            base: server_addr.into().base,
+        }
+    }
+
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseParsecAddr::from_url(parsed)?;
+
+        Ok(Self { base })
+    }
+
+    expose_base_parsec_addr_fields!();
+
+    fn _to_url(&self, mut url: Url) -> Url {
+        url.path_segments_mut()
+            .expect("expected url not to be a cannot-be-a-base");
+
+        url
+    }
+
+    pub fn to_authenticated_account_url(&self) -> Url {
+        self.base.to_http_url(Some("/authenticated_account"))
+    }
+}
+
+/*
+ * ParsecAnonymousAccountAddr
+ */
+
+/// Represent the URL to connect to anonymous account
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct ParsecAnonymousAccountAddr {
+    base: BaseParsecAddr,
+}
+
+impl_common_stuff!(ParsecAnonymousAccountAddr);
+
+impl ParsecAnonymousAccountAddr {
+    pub fn new(server_addr: impl Into<ParsecAddr>) -> Self {
+        Self {
+            base: server_addr.into().base,
+        }
+    }
+
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseParsecAddr::from_url(parsed)?;
+
+        Ok(Self { base })
+    }
+
+    expose_base_parsec_addr_fields!();
+
+    fn _to_url(&self, mut url: Url) -> Url {
+        url.path_segments_mut()
+            .expect("expected url not to be a cannot-be-a-base");
+        url
+    }
+
+    pub fn to_anonymous_account_url(&self) -> Url {
+        self.base.to_http_url(Some("/anonymous_account"))
+    }
+}
+
+/*
  * ParsecPkiEnrollmentAddr
  */
 

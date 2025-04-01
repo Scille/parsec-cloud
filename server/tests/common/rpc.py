@@ -16,7 +16,9 @@ from parsec._parsec import (
     UserID,
     VerifyKey,
     VlobID,
+    anonymous_account_cmds,
     anonymous_cmds,
+    authenticated_account_cmds,
     authenticated_cmds,
     invited_cmds,
     tos_cmds,
@@ -82,6 +84,16 @@ class BaseAnonymousRpcClient:
         return anonymous_cmds.latest.pki_enrollment_submit.Rep.load(raw_rep)
 
 
+class BaseAnonymousAccountRpcClient:
+    async def _do_request(self, req: bytes, family: str) -> bytes:
+        raise NotImplementedError
+
+    async def ping(self, ping: str) -> anonymous_account_cmds.latest.ping.Rep:
+        req = anonymous_account_cmds.latest.ping.Req(ping=ping)
+        raw_rep = await self._do_request(req.dump(), "anonymous_account")
+        return anonymous_account_cmds.latest.ping.Rep.load(raw_rep)
+
+
 class BaseAuthenticatedRpcClient:
     async def _do_request(self, req: bytes, family: str) -> bytes:
         raise NotImplementedError
@@ -96,7 +108,7 @@ class BaseAuthenticatedRpcClient:
         return authenticated_cmds.latest.block_create.Rep.load(raw_rep)
 
     async def block_read(
-        self, realm_id: VlobID, block_id: BlockID
+        self, block_id: BlockID, realm_id: VlobID
     ) -> authenticated_cmds.latest.block_read.Rep:
         req = authenticated_cmds.latest.block_read.Req(block_id=block_id, realm_id=realm_id)
         raw_rep = await self._do_request(req.dump(), "authenticated")
@@ -431,6 +443,16 @@ class BaseAuthenticatedRpcClient:
         )
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.vlob_update.Rep.load(raw_rep)
+
+
+class BaseAuthenticatedAccountRpcClient:
+    async def _do_request(self, req: bytes, family: str) -> bytes:
+        raise NotImplementedError
+
+    async def ping(self, ping: str) -> authenticated_account_cmds.latest.ping.Rep:
+        req = authenticated_account_cmds.latest.ping.Req(ping=ping)
+        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        return authenticated_account_cmds.latest.ping.Rep.load(raw_rep)
 
 
 class BaseInvitedRpcClient:
