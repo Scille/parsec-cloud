@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { answerQuestion, createFolder, expect, fillInputModal, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, createFolder, expect, fillInputModal, msTest, setSmallDisplay } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#folders-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -25,11 +25,10 @@ const TIME_MATCHER_ARRAY = new Array(9).fill(TIME_MATCHER);
 const SIZE_MATCHER_ARRAY = new Array(1).fill('').concat(new Array(8).fill(SIZE_MATCHER));
 
 for (const displaySize of ['small', 'large']) {
-  msTest(`Documents page default state on ${displaySize} display`, async ({ home, documents }) => {
+  msTest(`Documents page default state on ${displaySize} display`, async ({ documents }) => {
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     if (displaySize === 'small') {
-      const viewport = home.viewportSize();
-      await home.setViewportSize({ width: 700, height: viewport ? viewport.height : 700 });
+      await setSmallDisplay(documents);
       await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
       await expect(entries.locator('.data-date')).toHaveText(TIME_MATCHER_ARRAY);
       await expect(entries.locator('.data-size')).toHaveText(SIZE_MATCHER_ARRAY.slice(1));

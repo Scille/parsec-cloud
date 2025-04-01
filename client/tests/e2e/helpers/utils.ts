@@ -260,3 +260,8 @@ export function getOrganizationAddr(orgName: string): string {
 export function getServerAddr(): string {
   return process.env.TESTBED_SERVER ?? '';
 }
+
+export async function setSmallDisplay(page: Page): Promise<void> {
+  const viewport = page.viewportSize();
+  await page.setViewportSize({ width: 700, height: viewport ? viewport.height : 700 });
+}

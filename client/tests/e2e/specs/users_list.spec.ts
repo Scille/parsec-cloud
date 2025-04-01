@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { answerQuestion, expect, fillInputModal, fillIonInput, msTest, sortBy } from '@tests/e2e/helpers';
+import { answerQuestion, expect, fillInputModal, fillIonInput, msTest, setSmallDisplay, sortBy } from '@tests/e2e/helpers';
 
 const USERS = [
   {
@@ -50,10 +50,9 @@ function getStatusForUser(user: any): string {
 }
 
 for (const displaySize of ['small', 'large']) {
-  msTest(`Check user list items on ${displaySize} display`, async ({ home, usersPage }) => {
+  msTest(`Check user list items on ${displaySize} display`, async ({ usersPage }) => {
     if (displaySize === 'small') {
-      const viewport = home.viewportSize();
-      await home.setViewportSize({ width: 700, height: viewport ? viewport.height : 700 });
+      await setSmallDisplay(usersPage);
     }
 
     const usersList = usersPage.locator('#users-page-user-list');
