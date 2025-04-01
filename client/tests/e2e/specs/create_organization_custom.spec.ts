@@ -2,6 +2,7 @@
 
 import { Locator, Page } from '@playwright/test';
 import { DEFAULT_USER_INFORMATION, expect, fillInputModal, fillIonInput, getTestbedBootstrapAddr, msTest } from '@tests/e2e/helpers';
+import { randomInt } from 'crypto';
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
   await page.locator('#create-organization-button').click();
@@ -24,13 +25,15 @@ async function cancelAndResume(page: Page, currentContainer: Locator): Promise<v
 msTest('Go through custom org creation process', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
+  const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;
+
   const orgServerContainer = modal.locator('.organization-name-and-server-page');
   await expect(orgServerContainer.locator('.modal-header-title__text')).toHaveText('Create organization on my Parsec server');
   const orgPrevious = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(0);
   const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
   await expect(orgPrevious).toBeVisible();
   await expect(orgNext).toHaveDisabledAttribute();
-  await fillIonInput(orgServerContainer.locator('ion-input').nth(0), home.orgInfo.name);
+  await fillIonInput(orgServerContainer.locator('ion-input').nth(0), uniqueOrgName);
   await expect(orgNext).toHaveDisabledAttribute();
   await fillIonInput(orgServerContainer.locator('ion-input').nth(1), home.orgInfo.serverAddr);
   await expect(orgNext).not.toHaveDisabledAttribute();
@@ -43,7 +46,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(orgNameError).toHaveText('Only letters, digits, underscores and hyphens. No spaces.');
 
   // Correct org name again
-  await fillIonInput(orgServerContainer.locator('ion-input').nth(0), home.orgInfo.name);
+  await fillIonInput(orgServerContainer.locator('ion-input').nth(0), uniqueOrgName);
   await expect(orgNext).not.toHaveDisabledAttribute();
   await expect(orgNameError).toBeHidden();
 
@@ -174,7 +177,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
     'Authentication method',
   ]);
   await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
-    home.orgInfo.name,
+    uniqueOrgName,
     DEFAULT_USER_INFORMATION.name,
     DEFAULT_USER_INFORMATION.email,
     'Custom Server',

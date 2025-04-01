@@ -52,26 +52,41 @@ export const expect = baseExpect.extend({
     const toast = page.locator('.notification-toast');
     let errorMessage = '';
     let pass = true;
+    let isVisible = true;
 
     try {
-      await baseExpect(toast.locator('.toast-message')).toHaveText(message);
+      await expect(toast).toBeVisible();
     } catch (error: any) {
-      errorMessage = `Toast does not contain the text '${message}'. Found: '${error.matcherResult.actual}' instead.`;
+      isVisible = false;
+      errorMessage = 'Toast is not visible';
       pass = false;
     }
 
     if (pass) {
-      pass = await toast.evaluate((node, theme: string) => {
-        const expectedClass = `ms-${theme.toLowerCase()}`;
-        return node.classList.contains(expectedClass);
-      }, theme);
-      if (!pass) {
-        errorMessage = `Toast does not have the theme '${theme}'`;
+      try {
+        await baseExpect(toast.locator('.toast-message')).toHaveText(message);
+      } catch (error: any) {
+        errorMessage = `Toast does not contain the text '${message}'. Found: '${error.matcherResult.actual}' instead.`;
+        pass = false;
       }
     }
 
-    await dismissToast(page);
-    await expect(toast).toBeHidden();
+    if (pass) {
+      try {
+        await expect(toast).toHaveTheClass(`ms-${theme.toLocaleLowerCase()}`);
+        if (!pass) {
+          errorMessage = `Toast does not have the theme '${theme}'`;
+        }
+      } catch (error: any) {
+        errorMessage = `Toast does not have the theme '${theme}'.`;
+        pass = false;
+      }
+    }
+
+    if (isVisible) {
+      await dismissToast(page);
+      await expect(toast).toBeHidden();
+    }
 
     return {
       message: () => errorMessage,

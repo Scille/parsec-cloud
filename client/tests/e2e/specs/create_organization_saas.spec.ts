@@ -10,6 +10,7 @@ import {
   getTestbedBootstrapAddr,
   msTest,
 } from '@tests/e2e/helpers';
+import { randomInt } from 'crypto';
 
 async function openCreateOrganizationModal(page: Page): Promise<Locator> {
   await page.locator('#create-organization-button').click();
@@ -33,9 +34,11 @@ async function cancelAndResume(page: Page, currentContainer: Locator): Promise<v
 msTest('Go through saas org creation process', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
+  const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;
+
   await MockBms.mockLogin(home);
   await MockBms.mockUserRoute(home);
-  await MockBms.mockCreateOrganization(home, getTestbedBootstrapAddr(home.orgInfo.name));
+  await MockBms.mockCreateOrganization(home, getTestbedBootstrapAddr(uniqueOrgName));
 
   const bmsContainer = modal.locator('.saas-login');
   await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link your customer account to your new organization');
@@ -66,7 +69,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(orgNameError).toHaveText('Only letters, digits, underscores and hyphens. No spaces.');
 
   // Back to good name
-  await fillIonInput(orgNameContainer.locator('ion-input'), home.orgInfo.name);
+  await fillIonInput(orgNameContainer.locator('ion-input'), uniqueOrgName);
   await expect(orgNameError).toBeHidden();
   await expect(orgNameNext).toNotHaveDisabledAttribute();
 
@@ -145,7 +148,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
     'Authentication method',
   ]);
   await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
-    home.orgInfo.name,
+    uniqueOrgName,
     DEFAULT_USER_INFORMATION.name,
     DEFAULT_USER_INFORMATION.email,
     'Parsec SaaS',
@@ -187,6 +190,8 @@ for (const testInfo of [
   msTest(`Org creation error (${testInfo.status} - ${testInfo.code})`, async ({ home }) => {
     const modal = await openCreateOrganizationModal(home);
 
+    const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;
+
     await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home);
 
@@ -201,7 +206,7 @@ for (const testInfo of [
       };
     }
 
-    await MockBms.mockCreateOrganization(home, getTestbedBootstrapAddr(home.orgInfo.name), { POST: routeOptions });
+    await MockBms.mockCreateOrganization(home, getTestbedBootstrapAddr(uniqueOrgName), { POST: routeOptions });
 
     const bmsContainer = modal.locator('.saas-login');
     const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1);
@@ -211,7 +216,7 @@ for (const testInfo of [
 
     const orgNameContainer = modal.locator('.organization-name-page');
     const orgNameNext = modal.locator('.organization-name-page-footer').locator('ion-button').nth(1);
-    await fillIonInput(orgNameContainer.locator('ion-input'), home.orgInfo.name);
+    await fillIonInput(orgNameContainer.locator('ion-input'), uniqueOrgName);
     await orgNameNext.click();
 
     const authContainer = modal.locator('.authentication-page');
@@ -231,14 +236,16 @@ for (const testInfo of [
   });
 
 msTest.skip('Go through saas org creation process from bootstrap link', async ({ home }) => {
+  const uniqueOrgName = `${home.orgInfo.name}-${randomInt(2 ** 47)}`;
+
   await home.locator('#create-organization-button').click();
   await home.locator('.popover-viewport').getByRole('listitem').nth(1).click();
-  await fillInputModal(home, getTestbedBootstrapAddr(home.orgInfo.name));
+  await fillInputModal(home, getTestbedBootstrapAddr(uniqueOrgName));
   const modal = home.locator('.create-organization-modal');
 
   await MockBms.mockLogin(home);
   await MockBms.mockUserRoute(home);
-  await MockBms.mockCreateOrganization(home, getTestbedBootstrapAddr(home.orgInfo.name));
+  await MockBms.mockCreateOrganization(home, getTestbedBootstrapAddr(uniqueOrgName));
 
   const bmsContainer = modal.locator('.saas-login');
   await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link your customer account to your new organization');
@@ -297,7 +304,7 @@ msTest.skip('Go through saas org creation process from bootstrap link', async ({
     'Authentication method',
   ]);
   await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
-    home.orgInfo.name,
+    uniqueOrgName,
     DEFAULT_USER_INFORMATION.name,
     DEFAULT_USER_INFORMATION.email,
     'Parsec SaaS',
