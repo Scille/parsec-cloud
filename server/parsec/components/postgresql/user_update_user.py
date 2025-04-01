@@ -184,7 +184,6 @@ async def user_update_user(
 
     # 4) All checks are good, now we do the actual insertion
 
-    # TODO: validate it's okay not to check this
     # Note an OUTSIDER is not supposed to be OWNER/MANAGER of a shared realm. However this
     # is possible if the user's profile is updated to OUTSIDER here.
     # We don't try to prevent this given:
