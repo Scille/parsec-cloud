@@ -49,14 +49,13 @@ def get_tracks_for_version(version: Version) -> tuple[Track, ...]:
         case 2:
             return (Track.V2,)
         case 3:
-            # TODO: Add Latest track once we publicly release v3
-            return (Track.V3,)
+            return (Track.V3, Track.Latest)
         case _:
             raise ValueError(f"Unsupported major version: {version.major}")
 
 
 assert get_tracks_for_version(Version.parse("2.0.0")) == (Track.V2,)
-assert get_tracks_for_version(Version.parse("3.0.0")) == (Track.V3,)
+assert get_tracks_for_version(Version.parse("3.0.0")) == (Track.V3, Track.Latest)
 
 
 def get_risk_level_for_version(version: Version) -> RiskLevel:
