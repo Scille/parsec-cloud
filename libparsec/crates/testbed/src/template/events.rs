@@ -561,7 +561,9 @@ impl TestbedEventBootstrapOrganization {
                 (human_handle, device_id)
             }
             None => {
-                let human_handle = HumanHandle::new_redacted(first_user_id);
+                let label = first_user_id.hex();
+                let email = format!("{}@example.com", &label);
+                let human_handle = HumanHandle::new(&email, &label).unwrap();
                 let device_id = builder.counters.next_device_id();
                 (human_handle, device_id)
             }
@@ -569,7 +571,7 @@ impl TestbedEventBootstrapOrganization {
 
         let device_label = match device_id.test_nickname() {
             Some(nickname) => format!("My {} machine", nickname).parse().unwrap(),
-            None => DeviceLabel::new_redacted(device_id),
+            None => device_id.hex().parse().unwrap(),
         };
 
         Self {
@@ -943,7 +945,9 @@ impl TestbedEventNewUser {
                 (human_handle, device_id)
             }
             None => {
-                let human_handle = HumanHandle::new_redacted(user_id);
+                let label = user_id.hex();
+                let email = format!("{}@example.com", &label);
+                let human_handle = HumanHandle::new(&email, &label).unwrap();
                 let device_id = builder.counters.next_device_id();
                 (human_handle, device_id)
             }
@@ -1113,7 +1117,7 @@ impl TestbedEventNewDevice {
             .unwrap_or_else(|_| builder.counters.next_device_id());
         let device_label = match device_id.test_nickname() {
             Some(nickname) => format!("My {} machine", nickname).parse().unwrap(),
-            None => DeviceLabel::new_redacted(device_id),
+            None => device_id.hex().parse().unwrap(),
         };
 
         // 2) Actual creation
