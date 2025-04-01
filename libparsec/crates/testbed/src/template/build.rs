@@ -153,6 +153,7 @@ const SEQUESTER_SERVICE_IDENTITIES: &[SequesterServiceIdentityType] = &[
 pub struct TestbedTemplateBuilderCounters {
     current_timestamp: DateTime,
     current_invitation_token: u128,
+    current_account_token: u128,
     current_entry_id: u128,
     current_user_id: u128,
     current_device_id: u128,
@@ -165,6 +166,7 @@ impl Default for TestbedTemplateBuilderCounters {
         Self {
             current_timestamp: "2000-01-01T00:00:00Z".parse().unwrap(),
             current_invitation_token: 0xE000_0000_0000_0000_0000_0000_0000_0000,
+            current_account_token: 0xE000_0000_0000_0000_0000_0000_0000_0000,
             current_entry_id: 0xF000_0000_0000_0000_0000_0000_0000_0000,
             current_user_id: 0xA000_0000_0000_0000_0000_0000_0000_0000,
             current_device_id: 0xB000_0000_0000_0000_0000_0000_0000_0000,
@@ -204,6 +206,10 @@ impl TestbedTemplateBuilderCounters {
     pub fn next_invitation_token(&mut self) -> InvitationToken {
         self.current_invitation_token += 1;
         self.current_invitation_token.to_be_bytes().into()
+    }
+    pub fn next_account_token(&mut self) -> AccountToken {
+        self.current_account_token += 1;
+        self.current_account_token.to_be_bytes().into()
     }
     fn next_256bits_key(&mut self) -> &[u8; 32] {
         // 256 keys should be far enough for our needs
@@ -601,6 +607,17 @@ impl TestbedEventNewShamirRecoveryInvitationBuilder<'_> {
     impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
     impl_customize_field_meth!(token, InvitationToken);
+}
+/*
+ * TestbedEventAddAccount
+ */
+
+impl_event_builder!(AddAccount, [created_by_email: String]);
+
+impl TestbedEventAddAccountBuilder<'_> {
+    impl_customize_field_meth!(created_by_email, String);
+    impl_customize_field_meth!(created_on, DateTime);
+    impl_customize_field_meth!(token, AccountToken);
 }
 
 /*
