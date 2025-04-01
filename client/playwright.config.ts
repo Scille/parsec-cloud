@@ -39,7 +39,6 @@ export default defineConfig({
   },
   testIgnore: [
     '**/client_*',
-    '**/workspace_history.spec.ts',
     '**/my_profile_page.spec.ts',
     '**/organization_switch_popover.spec.ts',
     '**/export_recovery_device.spec.ts',

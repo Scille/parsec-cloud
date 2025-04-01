@@ -160,8 +160,7 @@ import { openPath } from '@/services/fileOpener';
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
-// Default it to 5 seconds ago to not interfere with the `max` value
-const selectedDateTime = ref(DateTime.now().minus({ seconds: 5 }).toJSDate());
+const selectedDateTime = ref(DateTime.now().toJSDate());
 const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
 const currentPath: Ref<FsPath> = ref('/');
