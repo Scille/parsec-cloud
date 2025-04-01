@@ -99,6 +99,12 @@ reason = """
 paste is no longer maintained but in a correct state.
 """
 
+[[advisories.ignore]]
+id = "RUSTSEC-2025-0020"
+reason = """
+`PyString::from_object` is not used in the codebase.
+"""
+
 # If this is true, then cargo deny will use the git executable to fetch advisory database.
 # If this is false, then it uses a built-in git library.
 # Setting this to true can be helpful if you have special authentication requirements that cargo-deny does not support.
