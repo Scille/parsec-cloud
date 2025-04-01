@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { getOrganizationAddr, getServerAddr } from '@tests/e2e/helpers/utils';
-import { randomInt } from 'crypto';
 
 export interface UserInformation {
   id: string;
@@ -53,7 +52,7 @@ export interface OrganizationInformation {
 }
 
 export function generateDefaultOrganizationInformation(): OrganizationInformation {
-  const name = `BlackMesa${randomInt(2 ** 47)}`;
+  const name = 'BlackMesa';
   return {
     name: name,
     addr: getOrganizationAddr(name),

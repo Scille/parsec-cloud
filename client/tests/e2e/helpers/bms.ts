@@ -685,7 +685,7 @@ async function mockGetCustomOrderInvoices(
   function formatResponse(postData: any): any {
     const ret: any = {};
     for (const orgId of postData.organization_ids ?? []) {
-      const parsecId = orgId === '1' ? page.orgInfo.name : `${page.orgInfo.name}-${orgId}`;
+      const parsecId = orgId === '42' ? page.orgInfo.name : `${page.orgInfo.name}-2`;
       ret[parsecId] = createCustomOrderInvoices(overload);
     }
     return ret;
