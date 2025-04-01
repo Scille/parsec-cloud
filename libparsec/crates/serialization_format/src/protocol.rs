@@ -512,7 +512,8 @@ fn quote_cmd(family: &str, cmd_version: u32, cmd: &GenCmd) -> (TokenStream, Toke
     let command_name = snake_case_name;
 
     // `authenticated` -> `Authenticated`
-    let family_enum_variant = format_ident!("{}{}", family[..1].to_uppercase(), family[1..]);
+    // 'authenticated_account' -> 'AuthenticatedAccount'
+    let family_enum_variant = format_ident!("{}", snake_to_pascal_case(family));
 
     let module = match &cmd.spec {
         GenCmdSpec::ReusedFromVersion { version } => {
