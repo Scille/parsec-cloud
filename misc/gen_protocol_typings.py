@@ -549,9 +549,10 @@ class AnyCmdReq:
     test_rpc_code_need_import_types: set[str] = set()
     for family_name, specs in sorted(collect_specs().items()):
         family_mod_name = f"{family_name}_cmds"
+        camel_case_family_name = snake_case_to_camel_case(family_name)
         test_rpc_code_need_import_types.add(family_mod_name)
         test_rpc_code_body.append("")
-        test_rpc_code_body.append(f"class Base{family_name.capitalize()}RpcClient:")
+        test_rpc_code_body.append(f"class Base{camel_case_family_name}RpcClient:")
         test_rpc_code_body.append(
             "    async def _do_request(self, req: bytes, family: str) -> bytes:"
         )
