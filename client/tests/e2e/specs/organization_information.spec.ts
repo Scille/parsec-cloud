@@ -1,52 +1,71 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, expect, msTest, setSmallDisplay } from '@tests/e2e/helpers';
 
-msTest('Org info default state', async ({ organizationPage }) => {
-  const container = organizationPage.locator('.org-info-container');
-  const configContainer = container.locator('.org-config');
-  const usersContainer = container.locator('.org-user');
+for (const displaySize of ['small', 'large']) {
+  msTest(`Org info default state on ${displaySize} display`, async ({ organizationPage }) => {
+    const container = organizationPage.locator('.organization-page-content');
+    const configContainer = container.locator('.organization-info');
+    const usersContainer = container.locator('.organization-users');
+    await usersContainer.locator('#invitations-button').isVisible();
 
-  await expect(configContainer.locator('.org-config-list-item').locator('.org-info-item-title')).toHaveText([
-    'External profile',
-    'User limit (excluding users with External profile)',
-    'Server address',
-  ]);
-  await expect(configContainer.locator('.org-config-list-item').nth(0).locator('.org-config-list-item__value')).toHaveText(['Enabled']);
-  await expect(configContainer.locator('.org-config-list-item').nth(1).locator('.org-config-list-item__value')).toHaveText(['Unlimited']);
-  await expect(configContainer.locator('.org-config-list-item').nth(2).locator('.server-address-value__text')).toHaveText(
-    /^parsec3:\/\/.+$/,
-  );
+    if (displaySize === 'small') {
+      await setSmallDisplay(organizationPage);
+      await expect(usersContainer.locator('.gradient-button-text').locator('.button-large')).toHaveText('pending invitation');
+      await usersContainer.locator('.user-invite-button').isVisible();
+      await usersContainer.locator('.card-header__button').click();
+    }
 
-  await expect(usersContainer.locator('.user-active-header').locator('.user-active-header__title')).toHaveText('Active');
-  await expect(usersContainer.locator('.user-active-header').locator('.title-h4')).toHaveText('3');
-  await expect(usersContainer.locator('.user-active-list').locator('.label-profile')).toHaveText(['Administrator', 'Member', 'External']);
-  await expect(usersContainer.locator('.user-active-list').locator('.user-active-list-item__value')).toHaveText(['1', '1', '1']);
-  await expect(usersContainer.locator('.user-revoked-header').locator('.user-revoked-header__title')).toHaveText('Revoked');
-  await expect(usersContainer.locator('.user-revoked-header').locator('.title-h4')).toHaveText('0');
-});
+    await expect(configContainer.locator('.info-list-item').locator('.info-list-item__title')).toHaveText([
+      'External profile',
+      'User limit (excluding users with External profile)',
+      'Server address',
+    ]);
+    await expect(configContainer.locator('.info-list-item').nth(0).locator('.info-list-item__value')).toHaveText(['Enabled']);
+    await expect(configContainer.locator('.info-list-item').nth(1).locator('.info-list-item__value')).toHaveText(['Unlimited']);
+    await expect(configContainer.locator('.info-list-item').nth(2).locator('.server-address-value__text')).toHaveText(/^parsec3:\/\/.+$/);
 
-msTest('Org info after one revocation', async ({ usersPage }) => {
-  const sidebarButtons = usersPage
-    .locator('.sidebar')
-    .locator('.manage-organization')
-    .locator('.list-sidebar-content')
-    .getByRole('listitem');
-  await sidebarButtons.nth(0).click();
+    await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__title')).toHaveText('3');
+    await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__description')).toHaveText('Active');
+    await expect(usersContainer.locator('.users-list-item').nth(1).locator('.users-list-item__title')).toHaveText('0');
+    await expect(usersContainer.locator('.users-list-item').nth(1).locator('.users-list-item__description')).toHaveText('Revoked');
+    await expect(usersContainer.locator('.users-list-item').nth(2).locator('.users-list-item__title')).toHaveText('0');
+    await expect(usersContainer.locator('.users-list-item').nth(2).locator('.users-list-item__description')).toHaveText('Frozen');
+    await expect(usersContainer.locator('.user-active-list').locator('.label-profile')).toHaveText(['Administrator', 'Member', 'External']);
+    await expect(usersContainer.locator('.user-active-list').locator('.user-active-list-item__value')).toHaveText(['1', '1', '1']);
+  });
 
-  const user = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
-  await user.hover();
-  await user.locator('.options-button').click();
-  await usersPage.locator('.user-context-menu').getByRole('listitem').nth(1).click();
-  await usersPage.locator('.question-modal').locator('ion-button').nth(2).click();
+  msTest(`Org info after one revocation ${displaySize} display`, async ({ usersPage }) => {
+    const sidebarButtons = usersPage
+      .locator('.sidebar')
+      .locator('.manage-organization')
+      .locator('.list-sidebar-content')
+      .getByRole('listitem');
 
-  await sidebarButtons.nth(1).click();
-  const container = usersPage.locator('.org-info-container');
-  const usersContainer = container.locator('.org-user');
-  await expect(usersContainer.locator('.user-active-header').locator('.user-active-header__title')).toHaveText('Active');
-  await expect(usersContainer.locator('.user-active-header').locator('.title-h4')).toHaveText('2');
-  await expect(usersContainer.locator('.user-active-list').locator('.label-profile')).toHaveText(['Administrator', 'Member', 'External']);
-  await expect(usersContainer.locator('.user-active-list').locator('.user-active-list-item__value')).toHaveText(['1', '0', '1']);
-  await expect(usersContainer.locator('.user-revoked-header').locator('.user-revoked-header__title')).toHaveText('Revoked');
-  await expect(usersContainer.locator('.user-revoked-header').locator('.title-h4')).toHaveText('1');
-});
+    if (displaySize === 'small') {
+      await setSmallDisplay(usersPage);
+      const userSmall = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
+      await userSmall.hover();
+      await userSmall.locator('.options-button').click();
+      await usersPage.locator('.user-context-sheet-modal').getByRole('listitem').nth(0).click();
+      await usersPage.locator('.question-modal').locator('ion-button').nth(1).click();
+      await usersPage.locator('.tab-bar-list-button').nth(2).click();
+    } else {
+      const user = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
+      await user.hover();
+      await user.locator('.options-button').click();
+      await usersPage.locator('.user-context-menu').getByRole('listitem').nth(1).click();
+      await answerQuestion(usersPage, true);
+      await sidebarButtons.nth(1).click();
+    }
+
+    const container = usersPage.locator('.organization-page').locator('.organization-page-content');
+    const usersContainer = container.locator('.organization-users');
+    await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__description')).toHaveText('Active');
+    await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__title')).toHaveText('2');
+    await expect(usersContainer.locator('.users-list-item').nth(1).locator('.users-list-item__title')).toHaveText('1');
+    await expect(usersContainer.locator('.users-list-item').nth(1).locator('.users-list-item__description')).toHaveText('Revoked');
+    await expect(usersContainer.locator('.user-active-list').locator('.label-profile')).toHaveText(['Administrator', 'Member', 'External']);
+    await expect(usersContainer.locator('.user-active-list').locator('.user-active-list-item__value')).toHaveText(['1', '0', '1']);
+  });
+}

@@ -8,6 +8,7 @@
     class="button-medium"
     :class="{
       unread: invitations,
+      'gradient-button': isGradientButton,
     }"
   >
     <span
@@ -16,7 +17,24 @@
     >
       {{ $msTranslate({ key: 'HeaderPage.invitations.title', data: { count: invitations.length }, count: invitations.length }) }}
     </span>
-    <ion-icon :icon="mail" />
+    <ion-text
+      v-if="isGradientButton"
+      :class="{ 'gradient-button-text': isGradientButton }"
+    >
+      <span class="title-h2">{{ invitations.length }}</span>
+      <span class="button-large">
+        {{ $msTranslate({ key: 'HeaderPage.invitations.smallDisplayTitle', data: { count: invitations.length } }) }}
+      </span>
+    </ion-text>
+    <ion-icon
+      v-if="!isGradientButton"
+      :icon="mail"
+    />
+    <ion-icon
+      v-else
+      :icon="mailUnread"
+      class="gradient-button-icon"
+    />
   </ion-button>
 </template>
 
@@ -29,8 +47,8 @@ import { Routes, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
-import { IonButton, IonIcon, modalController, popoverController } from '@ionic/vue';
-import { mail } from 'ionicons/icons';
+import { IonButton, IonIcon, IonText, modalController, popoverController } from '@ionic/vue';
+import { mail, mailUnread } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
@@ -38,6 +56,10 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 let eventCbId: string | null = null;
 const invitations: Ref<UserInvitation[]> = ref([]);
 const { isLargeDisplay } = useWindowSize();
+
+defineProps<{
+  isGradientButton?: boolean;
+}>();
 
 onMounted(async () => {
   eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, _data?: EventData) => {
@@ -155,7 +177,7 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-#invitations-button {
+#invitations-button:not(.gradient-button) {
   overflow: visible;
   --background: var(--parsec-color-light-primary-50);
   --color: var(--parsec-color-light-primary-500);
@@ -201,6 +223,34 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
       border: 2px solid var(--parsec-color-light-primary-50);
       border-radius: var(--parsec-radius-12);
     }
+  }
+}
+
+.gradient-button {
+  position: relative;
+
+  &::part(native) {
+    --background: var(--parsec-color-light-gradient-background);
+    --background-hover: var(--parsec-color-light-primary-600);
+    --color: var(--parsec-color-light-secondary-white);
+    justify-content: flex-start;
+    text-align: start;
+    padding: 0.75rem 1rem;
+  }
+
+  &-text {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    text-wrap: auto;
+  }
+
+  &-icon {
+    font-size: 3.25rem;
+    color: var(--parsec-color-light-secondary-white);
+    position: absolute;
+    right: -1.5rem;
+    opacity: 0.2;
   }
 }
 </style>

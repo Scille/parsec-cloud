@@ -336,6 +336,7 @@ interface OrganizationInfo {
     admins: number;
     standards: number;
     outsiders: number;
+    frozen: number;
   };
   size: {
     metadata: number;

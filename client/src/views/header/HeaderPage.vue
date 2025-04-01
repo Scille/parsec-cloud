@@ -2,7 +2,10 @@
 
 <template>
   <ion-page>
-    <ion-header id="connected-header">
+    <ion-header
+      id="connected-header"
+      v-if="showHeader"
+    >
       <ion-toolbar
         class="topbar"
         :class="currentRouteIs(Routes.History) ? 'topbar-history' : ''"
@@ -153,7 +156,7 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { home, notifications, search } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref, computed } from 'vue';
 import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
@@ -167,6 +170,9 @@ const notificationPopoverIsVisible: Ref<boolean> = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const notificationCenterButton = ref();
+const showHeader = computed(() => {
+  return !(currentRouteIs(Routes.Organization) && isSmallDisplay.value);
+});
 
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIsLoggedRoute()) {

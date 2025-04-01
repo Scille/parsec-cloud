@@ -331,7 +331,8 @@
         },
         "previous": "Précédent",
         "invitations": {
-            "title": "Aucune invitation | Une invitation | {count} invitations"
+            "title": "Aucune invitation | Une invitation | {count} invitations",
+            "smallDisplayTitle": "invitation en cours | invitations en cours"
         }
     },
     "WorkspaceSharing": {
@@ -671,31 +672,32 @@
         "folderSyncKo": "Ce dossier n'est pas synchronisé avec le serveur."
     },
     "OrganizationPage": {
-        "infoPage": {
-            "getInfoFailed": "Impossible de récupérer les informations sur l'organisation. Veuillez vérifier votre connexion internet.",
-            "users": {
-                "revokedUsers": "Révoqué",
-                "activeUsers": "Actif",
-                "title": "Utilisateurs",
-                "seeUsers": "Voir les utilisateurs"
-            },
-            "size": {
-                "metadata": "Métadonnées",
-                "total": "Données totales",
-                "title": "Stockage",
-                "unavailable": "Non disponible"
-            },
-            "configuration": {
-                "outsidersAllowed": "Profil externe",
-                "userLimit": "Limite du nombre d'utilisateurs (hors utilisateurs avec un profil Externe)",
-                "unlimited": "Illimitée",
-                "allowed": "Activé",
-                "forbidden": "Désactivé",
-                "title": "Configuration",
-                "serverAddr": "Adresse du serveur",
-                "copyPath": "Copié",
-                "copyFailed": "Impossible de copier l'adresse de l'organisation. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller."
-            }
+        "title": "Informations",
+        "getInfoFailed": "Impossible de récupérer les informations sur l'organisation. Veuillez vérifier votre connexion internet.",
+        "users": {
+            "revokedUsers": "Révoqué | Révoqués",
+            "activeUsers": "Actif | Actifs",
+            "frozenUsers": "Suspendu | Suspendus",
+            "title": "Utilisateurs",
+            "seeUsers": "Voir les utilisateurs",
+            "addUser": "Ajouter un utilisateur"
+        },
+        "size": {
+            "metadata": "Métadonnées",
+            "total": "Données totales",
+            "title": "Stockage",
+            "unavailable": "Non disponible"
+        },
+        "configuration": {
+            "outsidersAllowed": "Profil externe",
+            "userLimit": "Limite du nombre d'utilisateurs (hors utilisateurs avec un profil Externe)",
+            "unlimited": "Illimitée",
+            "allowed": "Activé",
+            "forbidden": "Désactivé",
+            "title": "Configuration",
+            "serverAddr": "Adresse du serveur",
+            "copyPath": "Copié",
+            "copyFailed": "Impossible de copier l'adresse de l'organisation. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller."
         }
     },
     "common": {
