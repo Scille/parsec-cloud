@@ -11,9 +11,11 @@ import { inject, onMounted, ref } from 'vue';
 import { IonPage, IonRouterOutlet } from '@ionic/vue';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { EventDistributor } from '@/services/eventDistributor';
-import { AccessStrategy, closeFile, getLoggedInDevices, listAvailableDevices, listWorkspaces, login, openFile, writeFile } from '@/parsec';
+import * as parsec from '@/parsec';
+import { libparsec } from '@/plugins/libparsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { StorageManagerKey, StorageManager } from '@/services/storageManager';
+import { getClientConfig } from '@/parsec/internals';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -32,7 +34,7 @@ onMounted(async () => {
 
   if (
     !import.meta.env.PARSEC_APP_TESTBED_SERVER ||
-    (await getLoggedInDevices()).length !== 0 ||
+    (await parsec.getLoggedInDevices()).length !== 0 ||
     import.meta.env.PARSEC_APP_TESTBED_AUTO_LOGIN !== 'true'
   ) {
     initialized.value = true;
@@ -50,7 +52,7 @@ onMounted(async () => {
   window.electronAPI.log('info', 'Page was refreshed, login in a default device');
   injectionProvider.createNewInjections(DEV_DEFAULT_HANDLE, new EventDistributor());
   // Not filtering the devices, because we need alice first device, not the second one
-  const devices = await listAvailableDevices(false);
+  const devices = await parsec.listAvailableDevices(false);
   let device = devices.find((d) => d.humanHandle.label === 'Alicey McAliceFace' && d.deviceLabel.includes('dev1'));
 
   if (!device) {
@@ -58,10 +60,10 @@ onMounted(async () => {
     window.electronAPI.log('error', `Could not find Alice device, using ${device.humanHandle.label}`);
   }
 
-  const result = await login(
+  const result = await parsec.login(
     injectionProvider.getInjections(DEV_DEFAULT_HANDLE).eventDistributor,
     device,
-    AccessStrategy.usePassword(device, 'P@ssw0rd.'),
+    parsec.AccessStrategy.usePassword(device, 'P@ssw0rd.'),
   );
   if (!result.ok) {
     window.electronAPI.log('error', `Failed to log in on a default device: ${JSON.stringify(result.error)}`);
@@ -74,19 +76,175 @@ onMounted(async () => {
   if (import.meta.env.PARSEC_APP_CLEAR_CACHE === 'true') {
     await storageManager.clearAll();
   }
-  if (import.meta.env.PARSEC_APP_POPULATE_DEFAULT_WORKSPACE === 'true') {
-    await populate();
-  }
-
+  await populate(handle);
   initialized.value = true;
 });
 
-async function populate(): Promise<void> {
+async function populate(handle: parsec.ConnectionHandle): Promise<void> {
+  if (import.meta.env.PARSEC_APP_POPULATE_DEFAULT_WORKSPACE === 'true') {
+    await populateFiles();
+  }
+  await populateUsers(handle);
+}
+
+async function populateUsers(handle: parsec.ConnectionHandle): Promise<void> {
+  if (import.meta.env.PARSEC_APP_POPULATE_USERS !== 'true') {
+    return;
+  }
+
+  const USERS = [
+    {
+      // cspell:disable-next-line
+      label: 'Gordon Freeman',
+      // cspell:disable-next-line
+      email: 'gordon.freeman@blackmesa.nm',
+      profile: parsec.UserProfile.Standard,
+      revoked: false,
+    },
+    {
+      // cspell:disable-next-line
+      label: 'Arthas Menethil',
+      // cspell:disable-next-line
+      email: 'arthas.menethil@lordaeron.az',
+      profile: parsec.UserProfile.Admin,
+      revoked: true,
+    },
+    {
+      // cspell:disable-next-line
+      label: 'Karlach',
+      // cspell:disable-next-line
+      email: 'karlach@avernus.hell',
+      profile: parsec.UserProfile.Outsider,
+      revoked: false,
+    },
+  ];
+
+  for (const user of USERS) {
+    await addUser(handle, user.label, user.email, user.profile, user.revoked);
+  }
+}
+
+async function addUser(
+  connHandle: parsec.ConnectionHandle,
+  label: string,
+  email: string,
+  profile: parsec.UserProfile,
+  revoke: boolean,
+): Promise<void> {
+  const invResult = await parsec.inviteUser(email);
+  if (!invResult.ok) {
+    console.log(invResult.error);
+    return;
+  }
+
+  console.log(`Adding user ${label} <${email}>`);
+
+  greetUser(connHandle, invResult.value.token, profile)
+    .then(async () => {
+      if (revoke) {
+        console.log(`Revoke ${label}`);
+        const result = await parsec.listUsers(true, email);
+        if (result.ok && result.value.length > 0) {
+          await parsec.revokeUser(result.value[0].id);
+        }
+      }
+    })
+    .catch((err: string) => {
+      console.log(`Greet failed: ${err}`);
+    });
+  claimUser(email, label, invResult.value.addr).catch((err: string) => {
+    console.log(`Claim failed: ${err}`);
+  });
+}
+
+async function claimUser(email: string, label: string, link: string): Promise<void> {
+  const retResult = await libparsec.claimerRetrieveInfo(getClientConfig(), async () => {}, link);
+  if (!retResult.ok) {
+    throw new Error(`claimerRetrieveInfo failed: ${retResult.error.error}`);
+  }
+  let handle = retResult.value.handle;
+  let canceller = await libparsec.newCanceller();
+  const waitResult = await libparsec.claimerUserWaitAllPeers(canceller, handle);
+  if (!waitResult.ok) {
+    throw new Error(`claimerUserWaitAllPeers failed: ${waitResult.error.error}`);
+  }
+  handle = waitResult.value.handle;
+  canceller = await libparsec.newCanceller();
+  const signifyTrustResult = await libparsec.claimerUserInProgress1DoSignifyTrust(canceller, handle);
+  if (!signifyTrustResult.ok) {
+    throw new Error(`claimerUserInProgress1DoSignifyTrust failed: ${signifyTrustResult.error.error}`);
+  }
+  handle = signifyTrustResult.value.handle;
+  canceller = await libparsec.newCanceller();
+  const waitTrustResult = await libparsec.claimerUserInProgress2DoWaitPeerTrust(canceller, handle);
+  if (!waitTrustResult.ok) {
+    throw new Error(`claimerUserInProgress2DoWaitPeerTrust failed: ${waitTrustResult.error.error}`);
+  }
+  handle = waitTrustResult.value.handle;
+  canceller = await libparsec.newCanceller();
+  const claimResult = await libparsec.claimerUserInProgress3DoClaim(canceller, handle!, 'DeviceLabel', { email: email, label: label });
+  if (!claimResult.ok) {
+    throw new Error(`claimerUserInProgress3DoClaim failed: ${claimResult.error.error}`);
+  }
+  handle = claimResult.value.handle;
+  const finalizeResult = await libparsec.claimerUserFinalizeSaveLocalDevice(handle, {
+    tag: parsec.DeviceSaveStrategyTag.Password,
+    password: 'P@ssw0rd.',
+  });
+  if (!finalizeResult.ok) {
+    throw new Error(`claimerUserFinalizeSaveLocalDevice failed: ${finalizeResult.error.error}`);
+  }
+}
+
+async function greetUser(connHandle: parsec.ConnectionHandle, token: string, profile: parsec.UserProfile): Promise<void> {
+  const greetResult = await libparsec.clientStartUserInvitationGreet(connHandle, token);
+  if (!greetResult.ok) {
+    throw new Error(`clientStartUserInvitationGreet failed: ${greetResult.error.error}`);
+  }
+  let handle = greetResult.value.handle;
+  let canceller = await libparsec.newCanceller();
+  const waitResult = await libparsec.greeterUserInitialDoWaitPeer(canceller, handle);
+  if (!waitResult.ok) {
+    throw new Error(`greeterUserInitialDoWaitPeer failed: ${waitResult.error.error}`);
+  }
+  handle = waitResult.value.handle;
+  canceller = await libparsec.newCanceller();
+  const waitTrustResult = await libparsec.greeterUserInProgress1DoWaitPeerTrust(canceller, handle);
+  if (!waitTrustResult.ok) {
+    throw new Error(`greeterUserInProgress1DoWaitPeerTrust failed: ${waitTrustResult.error.error}`);
+  }
+  handle = waitTrustResult.value.handle;
+  canceller = await libparsec.newCanceller();
+  const signifyTrustResult = await libparsec.greeterUserInProgress2DoSignifyTrust(canceller, handle);
+  if (!signifyTrustResult.ok) {
+    throw new Error(`greeterUserInProgress2DoSignifyTrust failed: ${signifyTrustResult.error.error}`);
+  }
+  handle = signifyTrustResult.value.handle;
+  canceller = await libparsec.newCanceller();
+  const claimRequestsResult = await libparsec.greeterUserInProgress3DoGetClaimRequests(canceller, handle);
+  if (!claimRequestsResult.ok) {
+    throw new Error(`greeterUserInProgress3DoGetClaimRequests failed: ${claimRequestsResult.error.error}`);
+  }
+  handle = claimRequestsResult.value.handle;
+  canceller = await libparsec.newCanceller();
+  const createResult = await libparsec.greeterUserInProgress4DoCreate(
+    canceller,
+    handle,
+    claimRequestsResult.value.requestedHumanHandle,
+    claimRequestsResult.value.requestedDeviceLabel,
+    profile,
+  );
+  if (!createResult.ok) {
+    throw new Error(`greeterUserInProgress4DoCreate failed: ${createResult.error.error}`);
+  }
+}
+
+async function populateFiles(): Promise<void> {
   // Avoid importing files if unnecessary
   const mockFiles = await import('@/parsec/mock_files');
 
   window.electronAPI.log('debug', 'Creating mock files');
-  const workspaces = await listWorkspaces(getConnectionHandle());
+  const workspaces = await parsec.listWorkspaces(getConnectionHandle());
   if (!workspaces.ok) {
     window.electronAPI.log('error', 'Failed to list workspaces');
     return;
@@ -95,19 +253,19 @@ async function populate(): Promise<void> {
     for (const fileType in mockFiles.MockFileType) {
       console.log(workspace.currentName, fileType);
       const fileName = `document_${fileType}.${fileType.toLocaleLowerCase()}`;
-      const openResult = await openFile(workspace.handle, `/${fileName}`, { write: true, truncate: true, create: true });
+      const openResult = await parsec.openFile(workspace.handle, `/${fileName}`, { write: true, truncate: true, create: true });
 
       if (!openResult.ok) {
         window.electronAPI.log('error', `Could not open file ${fileName}`);
         continue;
       }
       const content = await mockFiles.getMockFileContent(fileType as any);
-      const writeResult = await writeFile(workspace.handle, openResult.value, 0, content);
+      const writeResult = await parsec.writeFile(workspace.handle, openResult.value, 0, content);
       if (!writeResult.ok) {
         window.electronAPI.log('error', `Failed to write file ${fileName}`);
         continue;
       }
-      await closeFile(workspace.handle, openResult.value);
+      await parsec.closeFile(workspace.handle, openResult.value);
     }
   }
 }
