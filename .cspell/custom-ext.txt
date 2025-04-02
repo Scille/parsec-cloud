@@ -1,9 +1,5 @@
 fseventsd
+hprof
 icns
 indd
-jfif
-mobi
-sitx
 xcuserstate
-hprof
-thyj
