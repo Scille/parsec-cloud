@@ -67,7 +67,7 @@ WEB_RELEASE_CARGO_FLAGS = "--release"  # Note: on web we use RustCrypto for rele
 # considers there is no need to pass extra args to cargo (i.e. cargo build
 # for dev by default). This way we can pass our own `--profile=foo` extra args
 # without cargo complaining it is clashing with `--release` (provided by wasm-pack, and
-# equivalent to `--profile=realese`).
+# equivalent to `--profile=release`).
 # This should be safe given if anything change, cargo won't allow multiple profiles
 # to be passed (hence this script will simply fail).
 # cf. https://github.com/rustwasm/wasm-pack/blob/b4e619c8a13a8441b804895348afbfd4fb1a68a3/src/build/mod.rs#L91-L106
