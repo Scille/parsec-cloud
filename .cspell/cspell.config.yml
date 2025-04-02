@@ -1,6 +1,7 @@
 ---
 $schema: https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json
 version: "0.2"
+# List of custom dictionary files to add to the global list of dictionaries
 dictionaryDefinitions:
   - name: custom-words
     path: ./custom-words.txt
@@ -10,134 +11,99 @@ dictionaryDefinitions:
     path: ./names.txt
     scope: workspace
     addWords: true
-  # Not all french word are present in the `fr-fr` dictionary.
-  - name: french-words
-    path: ./french-words.txt
-    addWords: true
-  # `filetypes` is missing some file types
   - name: custom-ext
+    description: File types missing in the `filetypes` dictionary
     path: ./custom-ext.txt
     addWords: true
-  - name: jinja
-    path: ./jinja.txt
-    addWords: true
+# Dictionaries to always be used
 dictionaries:
+  # custom dictionaries
+  - custom-words
+  - custom-ext
+  - names
+  # cspell dictionaries
+  - bash
+  - cpp
+  - cpp-refined
+  - docker
   - en_us
+  - en-common-misspellings
   - en-gb
-  - fr-fr
-  - french-words
+  - filetypes
+  - fonts
+  - html
+  - latex
   - lorem-ipsum
+  - makefile
   - misc
-  - softwareTerms
   - networking-terms
+  - npm
+  - npm
+  - powershell
   - python
   - python-common
   - rust
-  - cpp
-  - cpp-refined
-  - filetypes
-  - bash
   - shell
-  - custom-words
-  - filetypes
-  - custom-ext
-  - names
-  - typescript
+  - shellscript
+  - softwareTerms
   - sql
+  - typescript
   - win32
-  - jinja
-words:
-  - libparsec
-  - schemafile
-  - intlify
-  - htmlcov
-  - Swatinem
-ignoreWords:
-  - ABCDEFGHJKLMNPQRSTUVWXYZ
-  - Aaaaaand
-  - AIAA
-  - ApiV
-  - Assss
-  - devel
-  - Crefreshiconhandler
-  - Cwindowsiconhandler
-  - DWXJ
-  - EFGH
-  - HRSW
-  - JKLM
-  - KBWM
-  - NNWQ
-  - NPQR
-  - PQRSTUVWXYZHIJKLMNO
-  - QPGW
-  - QPIM
-  - QWIPQs
-  - QYJW
-  - SPFYHIZLEL
-  - SPIHB
-  - SYMED
-  - VFKA
-  - VQLP
-  - WPFF
-  - XBAO
-  - XPCMTSEN
-  - YVPZ
-  - ZGIQ
-  - ZOXKGGIMTY
-  - abcefg
-  - ackup
-  - csdef
-  - dbmdl
-  - dbproj
-  - dksjdskdjs
-  - ebug
-  - elease
-  - eleases
-  - esult
-  - iobj
-  - ipch
-  - ipdb
-  - jmconfig
-  - mnpcod
-  - ntvs
-  - nunit
-  - nupkg
-  - nvuser
-  - paket
-  - pidb
-  - psess
-  - rsuser
-  - snupkg
-  - splitn
-  - tqdm
-  - Ssjfq
 cache:
   cacheFormat: universal
   cacheStrategy: metadata
   useCache: true
 useGitignore: true
+caseSensitive: false
 allowCompoundWords: false
+flagWords:
+  # TODO: "ocurred" is present in dict-cpp (bug?) even though correct spelling is "occurred"
+  - ocurred:occurred
+  - occured:occurred
 ignorePaths:
   # Cspell seems to match against the absolute path, so must always start with `**/` :(
-  - "**/bindings/web/src/meths.rs"
-  - "**/bindings/electron/src/meths.rs"
-  - "**/*.svg"
-  - "**/*.excalidraw"
-  - "**/default_pattern.ignore"
-  - "**/docs/figures/*.svg"
-  - "**/windows-icon-handler/**/*.vcxproj"
-  - "**/windows-icon-handler/**/*.vcxproj.filters"
-  - "**/gradle.lockfile"
-  - "**/buildscript-gradle.lockfile"
-  - "**/gradle/verification-metadata.xml"
-  - "**/*.icns"
+  - "**/.cspell/cspell.config.yml"
   - "**/.git"
+  - "**/*.excalidraw"
+  - "**/*.icns"
+  - "**/*.svg"
+  - "**/bindings/electron/src/meths.rs"
+  - "**/bindings/web/src/meths.rs"
+  - "**/buildscript-gradle.lockfile"
   - "**/client/.env.*"
-  - "**/client/tests/unit/data"
   - "**/client/tests/e2e/data"
+  - "**/client/tests/unit/data"
+  - "**/default_pattern.ignore"
+  - "**/docs/rfcs/old/*"
+  - "**/gradle.lockfile"
+  - "**/gradle/verification-metadata.xml"
+  - "**/windows-icon-handler/**/*.vcxproj.filters"
+  - "**/windows-icon-handler/**/*.vcxproj"
 import:
   - "@cspell/dict-fr-fr/cspell-ext.json"
   - "@cspell/dict-fr-reforme/cspell-ext.json"
-  - "@cspell/dict-bash/cspell-ext.json"
-  - "@cspell/dict-shell/cspell-ext.json"
   - "@cspell/dict-win32/cspell-ext.json"
+overrides:
+  # Files containing multiple words in French
+  - dictionaries:
+      - fr-fr
+      - fr-fr-90
+    filename:
+      - "**/client/electron/src/index.ts"
+      - "**/client/electron/src/setup.ts"
+      - "**/client/src/locales/fr-FR.json"
+      - "**/client/tests/e2e/specs/my_profile_page.spec.ts"
+      - "**/client/tests/e2e/specs/settings_modal.spec.ts"
+      - "**/docs/development/glossary-FR.md"
+      - "**/docs/locale/fr/**/*"
+  # JSON files containing only a single word in French
+  - words:
+      - reforme
+      - Français
+    filename:
+      - "**/client/src/locales/en-US.json"
+      # Only .cspell/package.json contains French word but that file is copied
+      # to the root directory in .github/cspell.yml workflow. So we need to
+      # match a package.json in the root directory (even though this will
+      # match all package.json files)
+      - "**/package.json"
