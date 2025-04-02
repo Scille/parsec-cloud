@@ -1005,7 +1005,7 @@ With `CertificateBasedInfoOrigin`:
 > **Note**
 >
 > Regarding backward compatibility, legacy key is only important if it has been used to
-> upload data, which is supposed to occured only after a minimal sync on the realm.
+> upload data, which is supposed to occurred only after a minimal sync on the realm.
 > And at this point the user manifest has been synced with the new workspace entry
 > containing this key.
 > Hence we only need to fetch the legacy key from the user manifest (ergo the `key` field

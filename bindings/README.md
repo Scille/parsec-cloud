@@ -94,7 +94,7 @@ You can either install `Android Studio` or `Android tools`
    $TEMP_DIR/cmdline-tools/bin/sdkmanager --install "cmdline-tools;latest"
    ```
 
-   > Note: using `latest` may not allow reproductible build on different dev env.
+   > Note: using `latest` may not allow reproducible build on different dev env.
    > But you can replace the value by another one (`0.9` for example).
 
 7. Update your `PATH` variable

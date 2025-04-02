@@ -123,7 +123,7 @@ To start hacking, follow the basic steps detailed below:
 
 ## Hacking the Python server
 
-Once you have installed the [basic requirements](#shared-requirements), you can procede to setup to python virtual env with `poetry`.
+Once you have installed the [basic requirements](#shared-requirements), you can proceed to setup to python virtual env with `poetry`.
 
 The python code is located in the folder `server`, The following steps and instruction will consider that you're in that folder.
 

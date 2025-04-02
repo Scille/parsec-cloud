@@ -90,7 +90,7 @@ On the opposite, a web application allows much stealthier attacks:
 
 The last point is very important, considering an actor hosting a Parsec server that ends up in a legal obligation to break Zero-trust:
 
-- With the users using native app there is no way to break Zero-trust (appart from putting the application developer in legal obligation too, hence creating a backdoor that is publicly visible)
+- With the users using native app there is no way to break Zero-trust (apart from putting the application developer in legal obligation too, hence creating a backdoor that is publicly visible)
 - With the users using a web app, it is possible to serve a modified version of the Parsec client that returns the users private keys to the server.
 
 #### So is Parsec web application completely broken (and hence useless) ?
