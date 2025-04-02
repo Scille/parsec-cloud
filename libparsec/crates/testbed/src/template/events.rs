@@ -546,9 +546,9 @@ impl TestbedEventBootstrapOrganization {
 
         let (human_handle, device_id) = match first_user_id.test_nickname() {
             Some(nickname) => {
-                let email = format!("{}@example.com", nickname);
+                let email = format!("{nickname}@example.com");
                 let label = {
-                    let mut buff = format!("{}y Mc{}Face", nickname, nickname);
+                    let mut buff = format!("{nickname}y Mc{nickname}Face");
                     let nickname_len = nickname.len();
                     // "alicey McaliceFace" -> "Alicey McaliceFace"
                     buff[..1].make_ascii_uppercase();
@@ -557,12 +557,12 @@ impl TestbedEventBootstrapOrganization {
                     buff
                 };
                 let human_handle = HumanHandle::new(&email, &label).unwrap();
-                let device_id = format!("{}@dev1", nickname).parse().unwrap();
+                let device_id = format!("{nickname}@dev1").parse().unwrap();
                 (human_handle, device_id)
             }
             None => {
                 let label = first_user_id.hex();
-                let email = format!("{}@example.com", &label);
+                let email = format!("{label}@example.com");
                 let human_handle = HumanHandle::new(&email, &label).unwrap();
                 let device_id = builder.counters.next_device_id();
                 (human_handle, device_id)
@@ -570,7 +570,7 @@ impl TestbedEventBootstrapOrganization {
         };
 
         let device_label = match device_id.test_nickname() {
-            Some(nickname) => format!("My {} machine", nickname).parse().unwrap(),
+            Some(nickname) => format!("My {nickname} machine").parse().unwrap(),
             None => device_id.hex().parse().unwrap(),
         };
 
@@ -930,9 +930,9 @@ impl TestbedEventNewUser {
 
         let (human_handle, device_id) = match user_id.test_nickname() {
             Some(nickname) => {
-                let email = format!("{}@example.com", nickname);
+                let email = format!("{nickname}@example.com");
                 let label = {
-                    let mut buff = format!("{}y Mc{}Face", nickname, nickname);
+                    let mut buff = format!("{nickname}y Mc{nickname}Face");
                     let nickname_len = nickname.len();
                     // "alicey McaliceFace" -> "Alicey McaliceFace"
                     buff[..1].make_ascii_uppercase();
@@ -941,12 +941,12 @@ impl TestbedEventNewUser {
                     buff
                 };
                 let human_handle = HumanHandle::new(&email, &label).unwrap();
-                let device_id = format!("{}@dev1", nickname).parse().unwrap();
+                let device_id = format!("{nickname}@dev1").parse().unwrap();
                 (human_handle, device_id)
             }
             None => {
                 let label = user_id.hex();
-                let email = format!("{}@example.com", &label);
+                let email = format!("{label}@example.com");
                 let human_handle = HumanHandle::new(&email, &label).unwrap();
                 let device_id = builder.counters.next_device_id();
                 (human_handle, device_id)
@@ -954,7 +954,7 @@ impl TestbedEventNewUser {
         };
 
         let device_label = match device_id.test_nickname() {
-            Some(nickname) => format!("My {} machine", nickname).parse().unwrap(),
+            Some(nickname) => format!("My {nickname} machine").parse().unwrap(),
             None => DeviceLabel::new_redacted(device_id),
         };
 
@@ -1116,7 +1116,7 @@ impl TestbedEventNewDevice {
         let device_id = DeviceID::test_from_user_nickname(user, dev_index)
             .unwrap_or_else(|_| builder.counters.next_device_id());
         let device_label = match device_id.test_nickname() {
-            Some(nickname) => format!("My {} machine", nickname).parse().unwrap(),
+            Some(nickname) => format!("My {nickname} machine").parse().unwrap(),
             None => device_id.hex().parse().unwrap(),
         };
 
