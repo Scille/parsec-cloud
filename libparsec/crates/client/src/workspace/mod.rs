@@ -77,9 +77,9 @@ struct OpenedFile {
     new_chunks: Vec<(ChunkID, Vec<u8>)>,
     /// In theory we could deduce from `removed_chunks`&`new_chunks` if the flush
     /// is needed, but (at least for now) we instead value the simplicity of setting
-    /// a flag when a change occured.
+    /// a flag when a change occurred.
     flush_needed: bool,
-    /// Track the fact any modification occured on the file since it has been opened.
+    /// Track the fact any modification occurred on the file since it has been opened.
     /// This is useful on close to determine if we should broadcast a
     /// `WorkspaceOpsOutboundSyncNeeded` event.
     modified_since_opened: bool,
@@ -286,7 +286,7 @@ impl WorkspaceOps {
     ///
     /// This also requires to download and merge any remote changes. Hence the
     /// client is fully synchronized with the server once this function returns
-    /// (unless a concurrent local change occured during the sync).
+    /// (unless a concurrent local change occurred during the sync).
     pub async fn outbound_sync(
         &self,
         entry_id: VlobID,

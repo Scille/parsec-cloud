@@ -24,7 +24,7 @@ async fn ok_with_changes(
         .customize(|builder| {
             let mut expected_workspaces = vec![];
 
-            // The testbed env is coolorg, hence Alice already has acces to workspace wksp1...
+            // The testbed env is coolorg, hence Alice already has access to workspace wksp1...
 
             let wksp1_id: VlobID = *builder.get_stuff("wksp1_id");
 

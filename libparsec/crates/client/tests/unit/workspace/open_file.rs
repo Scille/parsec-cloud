@@ -374,7 +374,7 @@ async fn multiple_opens(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn write_open_but_no_modif(
+async fn write_open_but_no_modification(
     #[values(
         "synced_non_empty_then_open_for_write",
         "synced_non_empty_then_open_for_create",

@@ -311,7 +311,7 @@ impl WorkspaceHistoryStoreCache {
                             if at < *resolution_at {
                                 match version.cmp(resolution_version) {
                                     std::cmp::Ordering::Less => {
-                                        // Case 2: An existing resolution occured after our own and refers to a different manifest version.
+                                        // Case 2: An existing resolution occurred after our own and refers to a different manifest version.
 
                                         if at >= *resolution_timestamp {
                                             return Err(CachePopulateManifestAtError::InvalidHistory(Box::new(
@@ -349,7 +349,7 @@ impl WorkspaceHistoryStoreCache {
                                         );
                                     }
                                     std::cmp::Ordering::Equal => {
-                                        // Case 3: An existing resolution occured after our own and refers to the same manifest version.
+                                        // Case 3: An existing resolution occurred after our own and refers to the same manifest version.
                                         // We can update the existing resolution to indicate the manifest was still using the same
                                         // version up until the time of our new resolution.
 
@@ -387,7 +387,7 @@ impl WorkspaceHistoryStoreCache {
                     }
                 }
 
-                // If we end up here, it means all existing resolutions occured at times
+                // If we end up here, it means all existing resolutions occurred at times
                 // before our own resolution.
 
                 let previous_resolution = resolutions.last_mut().expect("cannot be empty");

@@ -54,7 +54,7 @@ enum WaitForNextIncomingEventOutcome {
     Disconnected,
 }
 
-/// This internal trait is used to abstract all side effets `inbound_sync_monitor_loop` relies on.
+/// This internal trait is used to abstract all side effects `inbound_sync_monitor_loop` relies on.
 /// This way tests can be done with a mocked version of `WorkspaceOps`&co.
 ///
 /// Also note all the methods here are asynchronous (even if some are implemented by wrapping
@@ -449,7 +449,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                         }
 
                         WorkspaceSyncError::Internal(err) => {
-                            // Unexpected error occured, better stop the monitor
+                            // Unexpected error occurred, better stop the monitor
                             log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                             let event = EventMonitorCrashed {
                                 monitor: WORKSPACE_INBOUND_SYNC_MONITOR_NAME,

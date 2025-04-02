@@ -112,7 +112,7 @@ pub async fn share_workspace(
         | CertificateBasedActionOutcome::RemoteIdempotent {
             certificate_timestamp,
         } => {
-            // Bootstrap just occured, must fetch the new certificates.
+            // Bootstrap just occurred, must fetch the new certificates.
             let latest_known_timestamps =
                 PerTopicLastTimestamps::new_for_realm(realm_id, certificate_timestamp);
             client

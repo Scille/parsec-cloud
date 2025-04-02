@@ -72,7 +72,7 @@ pub(super) async fn rotate_realm_key_idempotent(
 
         // If the key index mismatch, it means a concurrent modification occurred in
         // our local storage. In this case there is two possibilities:
-        // - key_index > target_key_index: a new key rotation occured, our job is done here !
+        // - key_index > target_key_index: a new key rotation occurred, our job is done here!
         // - key_index < target_key_index: some (all ?) key rotation certificates disappeared
         //   from the storage (e.g. our user has been switch from/to OUTSIDER profile).
         //   This is a corner case that we can just ignore: when the missing certificates will
@@ -91,7 +91,7 @@ pub(super) async fn rotate_realm_key_idempotent(
             Rep::Ok => Ok(CertificateBasedActionOutcome::Uploaded {
                 certificate_timestamp: timestamp,
             }),
-            // Bad key index means another key rotation occured, hence our job is done here !
+            // Bad key index means another key rotation occurred, hence our job is done here!
             Rep::BadKeyIndex {
                 last_realm_certificate_timestamp,
             } => Ok(CertificateBasedActionOutcome::RemoteIdempotent {
@@ -241,7 +241,7 @@ async fn generate_realm_rotate_key_req(
             }
             .dump_and_sign(&ops.device.signing_key);
 
-            // 3) Encrypte keys bundle access for each participant
+            // 3) Encrypt keys bundle access for each participant
 
             let per_participant_keys_bundle_access = {
                 let mut per_user_role = store
@@ -300,7 +300,7 @@ async fn generate_realm_rotate_key_req(
                 per_participant_keys_bundle_access
             };
 
-            // 4) Encrypte keys bundle access for each active sequester service
+            // 4) Encrypt keys bundle access for each active sequester service
 
             let per_sequester_service_keys_bundle_access = {
                 let sequester_blob =

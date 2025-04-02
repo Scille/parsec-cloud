@@ -432,7 +432,7 @@ impl ChunkView {
             return Err(ChunkViewPromoteAsBlockError::AlreadyPromotedAsBlock);
         }
 
-        // Check alignement
+        // Check alignment
         if !self.is_aligned_with_raw_data() {
             return Err(ChunkViewPromoteAsBlockError::NotAligned);
         }

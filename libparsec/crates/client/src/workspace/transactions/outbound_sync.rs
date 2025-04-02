@@ -128,7 +128,7 @@ async fn outbound_sync_child(
 
             Err(ForUpdateSyncError::Stopped) => return Err(WorkspaceSyncError::Stopped),
             Err(ForUpdateSyncError::Internal(err)) => {
-                return Err(err.context("cannot acces entry in store").into())
+                return Err(err.context("cannot access entry in store").into())
             }
         }
     };
@@ -154,7 +154,7 @@ async fn outbound_sync_child(
 
     // 2) Bootstrap workspace if needed
 
-    // The only way to be sure the bootstrap occured is to ask the certificate ops, however
+    // The only way to be sure the bootstrap occurred is to ask the certificate ops, however
     // before that there is two simple tests we can do to filter out most false positive:
     // - If the manifest's vlob has already been synced we know we can do it again !
     // - If name origin is not a placeholder, then the workspace has been bootstrapped
@@ -299,7 +299,7 @@ async fn outbound_sync_file(
             }
             Err(ForUpdateSyncLocalOnlyError::Stopped) => return Err(WorkspaceSyncError::Stopped),
             Err(ForUpdateSyncLocalOnlyError::Internal(err)) => {
-                return Err(err.context("cannot acces entry in store").into())
+                return Err(err.context("cannot access entry in store").into())
             }
         }
     };
@@ -354,7 +354,7 @@ async fn outbound_sync_folder(
             }
             Err(ForUpdateSyncLocalOnlyError::Stopped) => return Err(WorkspaceSyncError::Stopped),
             Err(ForUpdateSyncLocalOnlyError::Internal(err)) => {
-                return Err(err.context("cannot acces entry in store").into())
+                return Err(err.context("cannot access entry in store").into())
             }
         }
     };
@@ -515,7 +515,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 Rep::SequesterServiceUnavailable { service_id } => Err(anyhow::anyhow!("Sequester service {service_id} unavailable").into()),
                 // TODO: we should send a dedicated event for this, and return an according error
                 Rep::RejectedBySequesterService { service_id, reason } => Err(anyhow::anyhow!("Rejected by sequester service {service_id} ({reason:?})").into()),
-                // A key rotation occured concurrently, should poll for new certificates and retry
+                // A key rotation occurred concurrently, should poll for new certificates and retry
                 Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
                     let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);
                     ops.certificates_ops
@@ -577,7 +577,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 Rep::SequesterServiceUnavailable { service_id } => Err(anyhow::anyhow!("Sequester service {service_id} unavailable").into()),
                 // TODO: we should send a dedicated event for this, and return an according error
                 Rep::RejectedBySequesterService { service_id, reason } => Err(anyhow::anyhow!("Rejected by sequester service {service_id} ({reason:?})").into()),
-                // A key rotation occured concurrently, should poll for new certificates and retry
+                // A key rotation occurred concurrently, should poll for new certificates and retry
                 Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
                     let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);
                     ops.certificates_ops

@@ -285,7 +285,7 @@ async fn run_testcase(
 
             // SAFETY: `resume_unwind` requires the panic object to be `Send`, however
             // `spawn` does not enforce this constraint on web platform.
-            // However this is fine to pretent the panic object is `Send` since in web
+            // However it is fine to assume that the panic object is `Send` since in web
             // we only run the application in a single thread.
             #[cfg(target_arch = "wasm32")]
             let panic_obj = unsafe { std::mem::transmute(panic_obj) };
@@ -397,7 +397,7 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
                 }
                 outcome
             }
-            expected => panic!("The unexpected occured ! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {:?}", expected),
         }
     }
 
@@ -414,7 +414,7 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
                     side_effect(entry_id, &mut ());
                 }
             }
-            expected => panic!("The unexpected occured ! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {:?}", expected),
         }
     }
     async fn event_bus_wait_server_reconnect(&self) {
@@ -426,7 +426,7 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
                     side_effect(&mut ());
                 }
             }
-            expected => panic!("The unexpected occured ! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {:?}", expected),
         }
     }
 
@@ -437,7 +437,7 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
             InboundSyncMonitorEvent::EventBusSend { assert_event } => {
                 assert_event(event.to_any_spied_event());
             }
-            expected => panic!("The unexpected occured ! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {:?}", expected),
         }
     }
 
@@ -454,7 +454,7 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
                 }
                 outcome
             }
-            expected => panic!("The unexpected occured ! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {:?}", expected),
         }
     }
 
@@ -475,7 +475,7 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
                 }
                 outcome
             }
-            expected => panic!("The unexpected occured ! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {:?}", expected),
         }
     }
 
@@ -497,7 +497,7 @@ impl InboundSyncManagerIO for MockedInboundSyncManagerIO {
                 }
                 outcome
             }
-            expected => panic!("The unexpected occured ! Expected {:?}", expected),
+            expected => panic!("The unexpected occurred! Expected {:?}", expected),
         }
     }
 }

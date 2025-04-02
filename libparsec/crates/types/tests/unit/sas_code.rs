@@ -1,4 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// cspell:words AIAA KBWM
 
 use libparsec_tests_lite::prelude::*;
 

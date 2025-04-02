@@ -139,7 +139,7 @@ async fn no_remote_change_but_local_uses_outdated_prevent_sync_pattern(
             local
                 .children
                 .insert("child.tmp~".parse().unwrap(), child_id);
-            // Pretent the outdated prevent sync pattern is `.tmp~`
+            // Pretend the outdated prevent sync pattern is `.tmp~`
             local.local_confinement_points.insert(child_id);
         }
         "remote_entry_matching_outdated_pattern" => {
@@ -153,7 +153,7 @@ async fn no_remote_change_but_local_uses_outdated_prevent_sync_pattern(
                 .base
                 .children
                 .insert("child.tmp~".parse().unwrap(), child_id);
-            // Pretent the outdated prevent sync pattern is `.tmp~`
+            // Pretend the outdated prevent sync pattern is `.tmp~`
             local.remote_confinement_points.insert(child_id);
         }
         "local_entry_matching_new_pattern" => {

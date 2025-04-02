@@ -634,7 +634,7 @@ mod spy {
             }
         }
 
-        /// Return all events that occured so far, useful for dump as last ditch attempt
+        /// Return all events that occurred so far, useful for dump as last ditch attempt
         /// during debugging.
         ///
         /// In tests, use `EventBusSpy::start_expecting` instead.
@@ -643,7 +643,7 @@ mod spy {
             guard.events.clone()
         }
 
-        /// Convenient way to ensure some events occured in at a given place.
+        /// Convenient way to ensure some events occurred in at a given place.
         /// Note any non-acknowledged event will cause a panic on drop.
         pub fn start_expecting(&self) -> EventBusSpyExpectContext {
             let current_offset = {

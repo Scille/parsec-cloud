@@ -62,7 +62,7 @@ libsodium-sys = { workspace = true, optional = true }
 #
 # On Linux on the other hand we have the choice: to vendor or not ?
 # Not-vendoring would make things consistent with the other platform regarding
-# "openssl-for-reqwest", however it complexifies packaging (e.g. by default
+# "openssl-for-reqwest", however it complicates packaging (e.g. by default
 # maturin bundles extra shared libraries, which defeat the purpose of not
 # vendoring !)
 #

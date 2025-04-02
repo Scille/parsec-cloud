@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok_same_parent(
-    #[values("empty_dst", "overwrite_any", "overwrite_file_only", "echange")] kind: &str,
+    #[values("empty_dst", "overwrite_any", "overwrite_file_only", "exchange")] kind: &str,
     env: &TestbedEnv,
 ) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
@@ -66,7 +66,7 @@ async fn ok_same_parent(
                 vec![("egg.txt", wksp1_foo_spam_id)],
             )
         }
-        "echange" => {
+        "exchange" => {
             let wksp1_other_txt_id = ops
                 .create_file("/other.txt".parse().unwrap())
                 .await
@@ -112,7 +112,7 @@ async fn ok_same_parent(
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok_different_parents(
-    #[values("empty_dst", "overwrite_any", "overwrite_file_only", "echange")] kind: &str,
+    #[values("empty_dst", "overwrite_any", "overwrite_file_only", "exchange")] kind: &str,
     env: &TestbedEnv,
 ) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
@@ -148,7 +148,7 @@ async fn ok_different_parents(
             vec![("bar.txt", wksp1_foo_spam_id), ("foo", wksp1_foo_id)],
             vec![("egg.txt", wksp1_foo_egg_txt_id)],
         ),
-        "echange" => (
+        "exchange" => (
             MoveEntryMode::Exchange,
             "/bar.txt",
             vec![("bar.txt", wksp1_foo_spam_id), ("foo", wksp1_foo_id)],

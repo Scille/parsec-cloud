@@ -123,7 +123,7 @@
 //     let need_sync = storage.get_need_sync_entries().await.unwrap();
 //     assert_need_sync(need_sync, &[workspace_id], &[]);
 
-//     // 2) Pretent workspace manifest have been synced
+//     // 2) Pretend workspace manifest have been synced
 
 //     let (updater, mut manifest) = storage.for_update_workspace_manifest().await;
 //     {
@@ -136,7 +136,7 @@
 //     let need_sync = storage.get_need_sync_entries().await.unwrap();
 //     assert_need_sync(need_sync, &[], &[]);
 
-//     // 3) Pretent remote change arrived
+//     // 3) Pretend remote change arrived
 
 //     // Child is not currently part of the storage and hence should be ignored
 //     storage
@@ -198,7 +198,7 @@
 //         .await
 //         .unwrap();
 
-//     // 1) Pretent remote change arrived, should be ignored since child is not present yet
+//     // 1) Pretend remote change arrived, should be ignored since child is not present yet
 
 //     storage
 //         .update_realm_checkpoint(2, vec![(child1_id, 2)])
@@ -264,7 +264,7 @@
 //     let need_sync = storage.get_need_sync_entries().await.unwrap();
 //     assert_need_sync(need_sync, &[], &[]);
 
-//     // 4) Pretent remote change arrived for child
+//     // 4) Pretend remote change arrived for child
 
 //     storage
 //         .update_realm_checkpoint(3, vec![(child1_id, 3), (child2_id, 2)])

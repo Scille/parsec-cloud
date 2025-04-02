@@ -95,7 +95,7 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                             return;
                         }
                         ClientProcessWorkspacesNeedsError::Internal(err) => {
-                            // Unexpected error occured, better stop the monitor
+                            // Unexpected error occurred, better stop the monitor
                             log::error!("Workspaces bootstrap monitor has crashed: {}", err);
                             let event = EventMonitorCrashed {
                                 monitor: WORKSPACES_PROCESS_NEEDS_MONITOR_NAME,

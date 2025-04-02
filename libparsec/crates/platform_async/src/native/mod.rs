@@ -102,7 +102,7 @@ where
 /// to mark `Future` vs `Future + Send + 'static`.
 ///
 /// To add insult to injury, compiler is complaining about our stuff not being `Send`
-/// on web, where it is impossible to share data accros multiple threads... which makes
+/// on web, where it is impossible to share data across multiple threads... which makes
 /// `Send` useless in practice (yes WebAssembly is planning to support thread in the
 /// future, but for now this is just "pain but no gain").
 ///

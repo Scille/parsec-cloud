@@ -8,7 +8,7 @@ use crate::{DateTime, DatetimeFromTimestampMicrosError};
 // Note msgpack already define a extension type for timestamp
 // (see https://github.com/msgpack/msgpack/blob/master/spec.md#timestamp-extension-type)
 // However is not a good fit for our use case:
-// - it is more complexe than needed with 3 different ways to encode the timestamp.
+// - it is more complex than needed with 3 different ways to encode the timestamp.
 // - it precision is in nanosecond, we only need microsecond (this is important since
 //   PostgreSQL's TIMESTAMPZ type has a microsecond precision, and losing precision on
 //   round trip would be very error prone).

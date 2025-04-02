@@ -680,7 +680,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
     // 3) Alice gets disconnected, Bob sends some events
 
     alice_disconnect_proxy.disconnect().await;
-    // Can be `ConnectionError::NoResponse` if the disconnection occured while
+    // Can be `ConnectionError::NoResponse` if the disconnection occurred while
     // transmitting data.
     p_assert_matches!(
         sse_alice.next().await,

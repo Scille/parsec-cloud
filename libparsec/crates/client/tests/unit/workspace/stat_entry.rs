@@ -592,7 +592,7 @@ async fn stat_entry_on_under_modification_file(
 
     alice.time_provider.unmock_time();
 
-    // The file is still opened and no flush has occured yet !
+    // The file is still opened and no flush has occurred yet!
 
     let stat = ops.stat_entry(&path).await.unwrap();
 

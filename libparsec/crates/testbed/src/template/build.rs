@@ -322,7 +322,7 @@ impl TestbedTemplateBuilder {
             key
         );
         // It's no big deal to leak the data here: the template is kept until the end
-        // of the program anyway (and the amount of leak is negligeable).
+        // of the program anyway (and the amount of leak is insignificant).
         // On the other hand it allows to provide the stuff as `&'static Foo` which
         // is convenient.
         self.stuff.push((key, Box::leak(boxed)));
@@ -1124,7 +1124,7 @@ impl TestbedEventUserStorageLocalUpdateBuilder<'_> {
             }
         }
         // Cannot set the workspace name in the previous loop as this would hide
-        // the rename events that occured before the workspace was shared with us !
+        // the rename events that occurred before the workspace was shared with us!
         for event in rename_events {
             let found: Option<&mut LocalUserManifestWorkspaceEntry> =
                 local_workspaces.iter_mut().find(|w| w.id == event.realm);

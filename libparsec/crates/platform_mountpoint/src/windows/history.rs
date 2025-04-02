@@ -94,7 +94,7 @@ fn parsec_file_stat_to_winfsp_file_info(stat: &WorkspaceHistoryFileStat) -> File
         // hence the conversion to `u64` left us with the UUID's bytes 8 to 15.
         // There is not much reason (apart for simplicity) as to why those bytes are used
         // given UUIDv4 is just random stuff (well not totally since some bits are used
-        // to indicate version, but this is negligeable).
+        // to indicate version, but this is not relevant).
         .set_index_number(stat.id.as_u128() as u64)
         .set_file_size(stat.size)
         // AllocationSize is the size actually occupied on the storage medium, this is

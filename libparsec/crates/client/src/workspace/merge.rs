@@ -51,8 +51,8 @@ fn has_file_content_changed_in_local(
     // Remember the local and remote manifests represent the content in different ways:
     // - In remote each blocksize area is represented by a block access.
     // - In local each blocksize area is represented by a list of chunk view.
-    // - A chunk view in turn may refere to a block access (or not if it correspond to new data).
-    // - To have an actual correspondance, a given blocksize area must be represented in
+    // - A chunk view in turn may refer to a block access (or not if it correspond to new data).
+    // - To have an actual correspondence, a given blocksize area must be represented in
     //   local as a single chunk view that refers to a block access and use it entirely
     //   (not referring to a subset of the block).
     // - A remote manifest can omit some blocksize area if they only contains empty data, on
@@ -286,7 +286,7 @@ pub(super) fn merge_local_folder_manifest(
     }
 
     // 2) Confinement points is a special case: given any entry that match the prevent
-    // sync pattern is kept appart, there is no possibility of conflict here (i.e.
+    // sync pattern is kept apart, there is no possibility of conflict here (i.e.
     // confined local entries stay in `local.children`, confined remote entries stay in
     // `local.base.children`).
     //

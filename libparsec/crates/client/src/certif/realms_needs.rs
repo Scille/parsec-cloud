@@ -70,7 +70,7 @@ pub async fn get_realm_needs(
             let mut current_users_with_role = HashSet::new();
             // This loop does two things at once:
             // - Collect all users that are currently part of the workspace (will be used in next step)
-            // - Update `needs` if a unshare has occured since the last key rotation
+            // - Update `needs` if a unshare has occurred since the last key rotation
             for role in roles {
                 match role.role {
                     Some(_) => {

@@ -125,7 +125,7 @@ async fn ok(
 }
 
 #[parsec_test(testbed = "workspace_history")]
-async fn brute_force_read_combinaisons(env: &TestbedEnv) {
+async fn brute_force_read_combinations(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
 
@@ -173,7 +173,7 @@ async fn brute_force_read_combinaisons(env: &TestbedEnv) {
             // what is declared in the corresponding block access, and that size must
             // be equal to the blocksize (except for the last block which can be smaller).
             //
-            // In this test we want to do multiple reads with all possible combinaisons
+            // In this test we want to do multiple reads with all possible combinations
             // of blocks involved.
 
             // Block slot 1 & 2 (file offset 0 to 64)

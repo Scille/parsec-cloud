@@ -172,7 +172,7 @@ enum LoadLastKeysBundleError {
 ///
 /// Also, a simple mitigation against corrupted keys bundle could be to look for an
 /// older one, but this only works for user that have been part of the realm before the
-/// corruption occured, hence it's not worth the complexity.
+/// corruption occurred, hence it's not worth the complexity.
 async fn load_last_realm_keys_bundle(
     ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
