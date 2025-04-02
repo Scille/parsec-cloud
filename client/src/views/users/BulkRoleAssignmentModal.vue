@@ -3,22 +3,16 @@
 <template>
   <ion-page class="modal-stepper">
     <!-- close button -->
-    <ion-buttons
-      slot="end"
-      class="closeBtn-container"
+    <ion-button
+      slot="icon-only"
+      @click="cancel()"
+      class="closeBtn"
     >
-      <ion-button
-        slot="icon-only"
-        @click="cancel()"
-        class="closeBtn"
-      >
-        <ion-icon
-          :icon="close"
-          size="large"
-          class="closeBtn__icon"
-        />
-      </ion-button>
-    </ion-buttons>
+      <ion-icon
+        :icon="close"
+        class="closeBtn__icon"
+      />
+    </ion-button>
 
     <div class="modal">
       <ion-header class="modal-header">
