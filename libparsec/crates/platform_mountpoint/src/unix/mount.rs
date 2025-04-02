@@ -337,11 +337,11 @@ fn create_suitable_mountpoint_dir(
         workspace_name
     );
 
-    for tentative in 1.. {
-        let mountpoint_path = if tentative == 1 {
+    for attempt in 1.. {
+        let mountpoint_path = if attempt == 1 {
             base_mountpoint_path.join(workspace_name.as_ref())
         } else {
-            base_mountpoint_path.join(format!("{workspace_name} ({tentative})"))
+            base_mountpoint_path.join(format!("{workspace_name} ({attempt})"))
         };
 
         // On POSIX systems, mounting target must exists

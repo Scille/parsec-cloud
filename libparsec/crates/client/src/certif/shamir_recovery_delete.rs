@@ -57,7 +57,7 @@ pub(super) async fn delete_shamir_recovery(
     let brief = match last_shamir_recovery {
         LastShamirRecovery::Valid(brief) => brief,
 
-        // Return early if the deletion already occured
+        // Return early if the deletion already occurred
         LastShamirRecovery::Deleted(_, _) => {
             return Ok(CertificateBasedActionOutcome::LocalIdempotent);
         }

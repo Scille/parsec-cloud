@@ -144,7 +144,7 @@ impl std::fmt::Display for DateTime {
 }
 
 // `FromStr` is a convenient but ambiguous shortcut, we should only use it
-// for tests and prefere `DateTime::from_rfc3339` elsewhere
+// for tests and prefer `DateTime::from_rfc3339` elsewhere
 // TODO: prevent me from being used outside of test code
 impl std::str::FromStr for DateTime {
     type Err = chrono::format::ParseError;

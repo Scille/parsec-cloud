@@ -217,7 +217,7 @@ fn task_future_factory(
 
         // Start a sub-task that will do the actual synchronization work
 
-        // Note the rendez-vous channel (i.e. bound with zero capacity) used for
+        // Note the rendezvous channel (i.e. bound with zero capacity) used for
         // communication.
         // This is because we want the entry waiting for sync to stay in the
         // `to_sync` list, so that the due time can be updated if additional
@@ -279,7 +279,7 @@ fn task_future_factory(
                                 break;
                             }
                             WorkspaceSyncError::Internal(err) => {
-                                // Unexpected error occured, better stop the monitor
+                                // Unexpected error occurred, better stop the monitor
                                 log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                                 let event = EventMonitorCrashed {
                                     monitor: WORKSPACE_OUTBOUND_SYNC_MONITOR_NAME,

@@ -551,7 +551,7 @@ async fn read_folder_containing_under_modification_file(
 
     alice.time_provider.unmock_time();
 
-    // The file is still opened and no flush has occured yet !
+    // The file is still opened and no flush has occurred yet!
 
     let mut children_stats = ops
         .stat_folder_children(&"/".parse().unwrap())

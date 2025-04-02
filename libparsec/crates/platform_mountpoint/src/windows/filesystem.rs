@@ -110,7 +110,7 @@ fn parsec_file_stat_to_winfsp_file_info(stat: &FileStat) -> FileInfo {
         // hence the conversion to `u64` left us with the UUID's bytes 8 to 15.
         // There is not much reason (apart for simplicity) as to why those bytes are used
         // given UUIDv4 is just random stuff (well not totally since some bits are used
-        // to indicate version, but this is negligeable).
+        // to indicate version, but this is not relevant).
         .set_index_number(stat.id.as_u128() as u64)
         .set_file_size(stat.size)
         // AllocationSize is the size actually occupied on the storage medium, this is
@@ -632,7 +632,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                     //
                     // For this reason the remove can fail here, in which case we can
                     // just ignore it: the final situation is similar to what would
-                    // have occured if the removal had occured first, only for *then*
+                    // have occurred if the removal had occurred first, only for *then*
                     // the concurrent change to arrive.
                     match &*fc {
                         OpenedObj::Folder { .. } => {

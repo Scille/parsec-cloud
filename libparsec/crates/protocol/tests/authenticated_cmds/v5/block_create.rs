@@ -5,7 +5,7 @@
 #![allow(clippy::unwrap_used)]
 
 // wrap this in each test function
-// macro qui contient une closure
+// macro that contains a closure
 use super::authenticated_cmds;
 
 use libparsec_tests_lite::{hex, p_assert_eq};

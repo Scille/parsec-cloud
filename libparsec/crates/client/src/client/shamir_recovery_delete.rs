@@ -62,7 +62,7 @@ pub async fn delete_shamir_recovery(
         | CertificateBasedActionOutcome::RemoteIdempotent {
             certificate_timestamp,
         } => {
-            // Bootstrap just occured, must fetch the new certificates.
+            // Bootstrap just occurred, must fetch the new certificates.
             let latest_known_timestamps =
                 PerTopicLastTimestamps::new_for_shamir(certificate_timestamp);
             client

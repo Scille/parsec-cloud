@@ -33,7 +33,7 @@ async fn decrypt_with(
         ),
         "only_sequester_service_ko" => (false, When::BarTxtV3, ["sequester_service_1"].as_ref()),
         "sequester_service_ko_then_user_ok" => {
-            // Not sequester service 2 is not revoked, but no key rotation occured
+            // Not sequester service 2 is not revoked, but no key rotation occurred
             // since its creation, and hence it never had any access to the realm.
             (
                 true,

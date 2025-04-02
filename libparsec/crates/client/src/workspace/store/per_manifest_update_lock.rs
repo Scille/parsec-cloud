@@ -96,8 +96,8 @@ impl PerManifestUpdateLock {
 
             // The entry is present: the manifest is already taken for update !
             Some((_, state)) => match state {
-                // Appart from the coroutine currently updating the manifest, nobody
-                // else is waiting for it... except us !
+                // Apart from the coroutine currently updating the manifest, nobody
+                // else is waiting for it... except us!
                 // So it's our job to setup the event to get notified when the manifest
                 // is again available for update.
                 EntryLockState::Taken => {

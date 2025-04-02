@@ -29,7 +29,7 @@ struct WorkspaceHistoryOpsReadWriteAttributes {
     next_file_descriptor: FileDescriptor,
     // Given the files are only opened for read, each open only needs to have access
     // the manifest at the given point in time.
-    // Note multiple opens of the same file leads to multiple independant entries
+    // Note multiple opens of the same file leads to multiple independent entries
     // in the map which is totally fine since no write operation is allowed.
     opened_files: HashMap<FileDescriptor, Arc<FileManifest>>,
     timestamp_of_interest: DateTime,

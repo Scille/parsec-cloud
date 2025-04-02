@@ -227,15 +227,15 @@ fn find_suitable_mountpoint_dir(
         name
     };
 
-    // It is most likely the suitable directory is found on the first tentative,
+    // It is most likely the suitable directory is found on the first attempt,
     // and the likelihood of finding a suitable directory exponentially decreases
-    // with each new tentative, hence we limit the number of tentatives to avoid
+    // with each new attempt, hence we limit the number of attempts to avoid
     // infinite loop.
-    for tentative in 1..=100 {
-        let mountpoint_path = if tentative == 1 {
+    for attempt in 1..=100 {
+        let mountpoint_path = if attempt == 1 {
             base_mountpoint_path.join(&workspace_name)
         } else {
-            base_mountpoint_path.join(format!("{} ({})", &workspace_name, tentative))
+            base_mountpoint_path.join(format!("{} ({})", &workspace_name, attempt))
         };
 
         // For WinFSP, mounting target must NOT exists

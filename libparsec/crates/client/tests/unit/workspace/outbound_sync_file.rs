@@ -541,7 +541,7 @@ async fn entry_is_busy_after_file_reshaped_and_block_uploaded(
     }
 
     // The outbound sync has failed. Since we injected the concurrent open at
-    // `Moment::OutboundSyncFileReshapedAndBlockUploaded` the failure occured
+    // `Moment::OutboundSyncFileReshapedAndBlockUploaded` the failure occurred
     // after server blocks & manifest upload (the manifest could not be updated
     // on local to acknowledge the new remote version).
 

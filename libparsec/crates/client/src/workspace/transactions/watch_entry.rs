@@ -89,7 +89,7 @@ pub async fn watch_entry_oneshot(
     // Note step 1 and 2 are not atomic, hence a modification occurring between the two
     // steps will not be caught by the watcher. This should be okay though, as step 1
     // is only used to get the entry ID from the path, so we can just pretend the
-    // modification occured just before step 1 (it would be different if we were
+    // modification occurred just before step 1 (it would be different if we were
     // returning the stat obtained from step 1 to the caller).
 
     {

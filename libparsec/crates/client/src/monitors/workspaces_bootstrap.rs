@@ -103,7 +103,7 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                         log::warn!("Invalid certificate detected: {}", error);
                     }
                     Err(ClientEnsureWorkspacesBootstrappedError::Internal(err)) => {
-                        // Unexpected error occured, better stop the monitor
+                        // Unexpected error occurred, better stop the monitor
                         log::error!("Workspaces bootstrap monitor has crashed: {}", err);
                         let event = EventMonitorCrashed {
                             monitor: WORKSPACES_BOOTSTRAP_MONITOR_NAME,

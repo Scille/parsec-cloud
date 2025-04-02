@@ -159,7 +159,7 @@ pub(super) trait StorableCertificateTopic {
     /// See the implementation of this method in the [`impl_storable_certificate_topic!`] macro.
     #[cfg(test)]
     #[allow(unused)]
-    fn topic_certifs_correspondance_canary(certif: Self);
+    fn topic_certifs_correspondence_canary(certif: Self);
 }
 
 macro_rules! impl_storable_certificate_topic {
@@ -172,7 +172,7 @@ macro_rules! impl_storable_certificate_topic {
             ];
 
             #[cfg(test)]
-            fn topic_certifs_correspondance_canary(certif: Self) {
+            fn topic_certifs_correspondence_canary(certif: Self) {
                 // `certif` is an enum defined in `libparsec_types` (it is considered the
                 // source of truth that gets updated whenever a new certificate is added
                 // to a topic).

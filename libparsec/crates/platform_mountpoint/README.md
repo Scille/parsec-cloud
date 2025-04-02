@@ -41,7 +41,7 @@ The answer is basically always the same: a filesystem is a very convenient but
 feature-limited abstraction over data (e.g. there is no api to atomically remove a
 non-empty directory, atomic writing of a file requires writing to a temporary destination
 then doing a rename), so it's no big deal to have some weird behavior when remote change
-has just occured. And if need stronger guarantees, then you should access your data
+has just occurred. And if need stronger guarantees, then you should access your data
 through another mechanism.
 
 So in the end it's all a question of tweaking the cache timeout according to how big
