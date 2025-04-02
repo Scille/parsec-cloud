@@ -72,12 +72,12 @@ repos:
           - --no-progress
           - --dot
           - --no-must-find-files
+          - --show-suggestions
           - --no-summary
-          - --gitignore
         additional_dependencies:
           - "@cspell/dict-en_us"
           - "@cspell/dict-fr-fr"
-          - "@cspell/dict-fr-reforme"
+          - "@cspell/dict-fr-reforme"  # cspell:disable-line
           - "@cspell/dict-bash"
           - "@cspell/dict-shell"
           - "@cspell/dict-win32"
