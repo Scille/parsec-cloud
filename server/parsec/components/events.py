@@ -154,16 +154,16 @@ class EventBusSpy:
             for event in events:
                 if not isinstance(event, type):
                     event.event_id = ANY
-        occured_events = self.events
+        occurred_events = self.events
         for event in events:
-            for i, (occured_event, _) in enumerate(occured_events):
+            for i, (occurred_event, _) in enumerate(occurred_events):
                 if isinstance(event, type):
-                    matches = isinstance(occured_event, event)
+                    matches = isinstance(occurred_event, event)
                 else:
-                    matches = occured_event == event
+                    matches = occurred_event == event
                 if matches:
                     if in_order:
-                        occured_events = occured_events[i + 1 :]
+                        occurred_events = occurred_events[i + 1 :]
                     break
             else:
                 raise AssertionError(f"Event {event} didn't occurred")

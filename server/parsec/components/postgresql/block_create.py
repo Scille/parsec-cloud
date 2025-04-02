@@ -148,7 +148,7 @@ async def block_create(
     # Given block metadata and block data are stored on different storages,
     # being atomic is not easy here :(
     #
-    # Hence there is three distincts steps here:
+    # Hence there is three distinct steps here:
     # 1) Fetch info from PostgreSQL to do access control & ensure the block doesn't
     #    already exists.
     # 2) Store the block in the blockstore (e.g. S3).

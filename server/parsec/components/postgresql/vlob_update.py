@@ -282,7 +282,7 @@ async def vlob_update(
     # 4) All checks are good, now we do the actual insertion
 
     # Note no unique violation exception can be raised here since all the insertion
-    # in this query uses `ON CONFLICT DO NOTHING` (we then know if a conflict occured
+    # in this query uses `ON CONFLICT DO NOTHING` (we then know if a conflict occurred
     # if the returned columns are NULL).
     row = await conn.fetchrow(
         *_q_insert_vlob(

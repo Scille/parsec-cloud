@@ -313,7 +313,7 @@ async def realm_rotate_key(
                 last_sequester_certificate_timestamp=last_sequester_certificate_timestamp,
             )
 
-        # TODO: Webhook sequester service are complexe to implement since they do HTTP requests.
+        # TODO: Webhook sequester service are complex to implement since they do HTTP requests.
         #       However we shouldn't keep the connection to PostgreSQL while doing those HTTP
         #       request to avoid famine.
         has_webhook_services = any(

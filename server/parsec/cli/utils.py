@@ -189,7 +189,7 @@ class ParsecDateTimeClickType(click.ParamType):
     Add support for RFC3339 date time to `click.DateTime`.
 
     Funny enough, `click.DateTime` only support local time (e.g. 2000-01-01T00:00:00)
-    while we precisely want the exact opposite: only support time in Zoulou
+    while we precisely want the exact opposite: only support time in Zulu
     format (e.g. 2000-01-01T00:00:00Z).
 
     The rational for this is using local time is very error prone:
@@ -199,7 +199,7 @@ class ParsecDateTimeClickType(click.ParamType):
       timezone `2000-01-01` gets translated to `1999-12-31T23:00:00Z`, even if
       we are in summer and hence current local time is UTC+1 :/)
 
-    So the simple fix is to only allow the Zoulou format (e.g. `2000-01-01T00:00:00Z`)
+    So the simple fix is to only allow the Zulu format (e.g. `2000-01-01T00:00:00Z`)
     and consider the date only format as shortcut for not typing the final `T00:00:00Z`.
 
     On top of that, we don't support the full range of timezone but only `Z` (so
