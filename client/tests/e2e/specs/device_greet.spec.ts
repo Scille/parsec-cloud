@@ -21,10 +21,11 @@ interface ModalData {
 }
 
 async function initModals(hostPage: Page, guestPage: Page): Promise<[ModalData, ModalData]> {
+  await expect(hostPage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
+  await hostPage.locator('.menu-list__item').nth(1).click();
   // Invite a new user and retrieve the invitation link
-  await hostPage.locator('.devices-header').locator('#add-device-button').click();
+  await hostPage.locator('.profile-content-item').locator('#add-device-button').click();
   const greetModal = hostPage.locator('.greet-organization-modal');
-  // cspell:disable-next-line
   await expect(greetModal.locator('.modal-header__title')).toHaveText('Create a new device');
   await expect(greetModal.locator('.first-step').locator('.container-textinfo__text')).toHaveText(
     'Parsec must be open on both devices during the onboarding process.',
