@@ -22,9 +22,9 @@
           <!-- Features -->
           <div
             v-show="versionChange.features.length > 0"
-            class="categorie"
+            class="category"
           >
-            <ion-text class="categorie-title body-lg">
+            <ion-text class="category-title body-lg">
               <ion-icon :icon="sparkles" />
               {{ $msTranslate('Changelog.features') }}
             </ion-text>
@@ -52,9 +52,9 @@
           <!-- Bugfixes -->
           <div
             v-show="versionChange.fixes.length > 0"
-            class="categorie"
+            class="category"
           >
-            <ion-text class="categorie-title body-lg">
+            <ion-text class="category-title body-lg">
               <ion-icon :icon="construct" />
               {{ $msTranslate('Changelog.fixes') }}
             </ion-text>
@@ -82,9 +82,9 @@
           <!-- Misc -->
           <div
             v-show="versionChange.misc.length > 0"
-            class="categorie"
+            class="category"
           >
-            <ion-text class="categorie-title body-lg">
+            <ion-text class="category-title body-lg">
               <ion-icon :icon="infinite" />
               {{ $msTranslate('Changelog.misc') }}
             </ion-text>
@@ -157,11 +157,11 @@ onMounted(() => {
   }
 }
 
-.categorie {
+.category {
   margin-bottom: 2.5rem;
 }
 
-.categorie-title {
+.category-title {
   display: flex;
   align-items: center;
   gap: 0.5rem;

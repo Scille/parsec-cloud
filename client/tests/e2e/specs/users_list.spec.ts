@@ -473,6 +473,7 @@ msTest('Search user list', async ({ usersPage }) => {
   await expect(items).toHaveCount(2);
   await actionBar.locator('.ms-grid-list-toggle').locator('#grid-view').click();
   await expect(gridItems).toHaveCount(2);
+  // cspell:disable-next-line
   await fillIonInput(searchInput, 'allo');
   await expect(gridItems).toHaveCount(1);
   await expect(gridItems.nth(0).locator('.user-card-info__name')).toContainText('Malloryy McMalloryFace');
