@@ -2,23 +2,17 @@
 
 <template>
   <div class="saas-login">
-    <ion-buttons
-      slot="end"
-      class="closeBtn-container"
+    <ion-button
       v-show="!hideHeader"
+      slot="icon-only"
+      class="closeBtn"
+      @click="$emit('closeRequested')"
     >
-      <ion-button
-        slot="icon-only"
-        class="closeBtn"
-        @click="$emit('closeRequested')"
-      >
-        <ion-icon
-          :icon="close"
-          size="large"
-          class="closeBtn__icon"
-        />
-      </ion-button>
-    </ion-buttons>
+      <ion-icon
+        :icon="close"
+        class="closeBtn__icon"
+      />
+    </ion-button>
     <div class="saas-login-container">
       <create-organization-modal-header
         v-if="!hideHeader"
@@ -195,7 +189,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonText, IonButtons, IonFooter, IonIcon, IonSkeletonText } from '@ionic/vue';
+import { IonButton, IonText, IonFooter, IonIcon, IonSkeletonText } from '@ionic/vue';
 import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner, MsCheckbox } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
 import { warning, arrowBack, arrowForward, close } from 'ionicons/icons';

@@ -2,23 +2,17 @@
 
 <template>
   <div class="saas-forgot-password">
-    <ion-buttons
-      slot="end"
-      class="closeBtn-container"
+    <ion-button
       v-if="!hideHeader"
+      slot="icon-only"
+      class="closeBtn"
+      @click="$emit('closeRequested')"
     >
-      <ion-button
-        slot="icon-only"
-        class="closeBtn"
-        @click="$emit('closeRequested')"
-      >
-        <ion-icon
-          :icon="close"
-          size="large"
-          class="closeBtn__icon"
-        />
-      </ion-button>
-    </ion-buttons>
+      <ion-icon
+        :icon="close"
+        class="closeBtn__icon"
+      />
+    </ion-button>
     <div class="saas-forgot-password-container">
       <!-- here we should normally use the hide-close-button given by the component not the custom one above -->
       <!-- will be addressed in https://github.com/Scille/parsec-cloud/issues/8056 -->
@@ -46,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
+import { IonButton, IonIcon } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
 import { close, keypad, mailUnread } from 'ionicons/icons';
 import { ref } from 'vue';

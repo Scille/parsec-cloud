@@ -15,23 +15,17 @@
         'JoinOrganization.stepTitles.Authentication',
       ]"
     />
-    <ion-buttons
-      slot="end"
-      class="closeBtn-container"
+    <ion-button
+      slot="icon-only"
+      @click="cancelModal()"
+      v-if="pageStep !== UserJoinOrganizationStep.Finish && pageStep !== UserJoinOrganizationStep.Authentication"
+      class="closeBtn"
     >
-      <ion-button
-        slot="icon-only"
-        @click="cancelModal()"
-        v-if="pageStep !== UserJoinOrganizationStep.Finish && pageStep !== UserJoinOrganizationStep.Authentication"
-        class="closeBtn"
-      >
-        <ion-icon
-          :icon="close"
-          size="large"
-          class="closeBtn__icon"
-        />
-      </ion-button>
-    </ion-buttons>
+      <ion-icon
+        :icon="close"
+        class="closeBtn__icon"
+      />
+    </ion-button>
     <!-- v-if pageStep === WaitForHost so add class wizardTrue -->
     <div
       class="modal"

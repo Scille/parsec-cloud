@@ -1,23 +1,17 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-buttons
-    slot="end"
-    class="closeBtn-container"
+  <ion-button
     v-if="!hideCloseButton"
+    slot="icon-only"
+    class="closeBtn"
+    @click="$emit('closeClicked')"
   >
-    <ion-button
-      slot="icon-only"
-      class="closeBtn"
-      @click="$emit('closeClicked')"
-    >
-      <ion-icon
-        :icon="close"
-        size="large"
-        class="closeBtn__icon"
-      />
-    </ion-button>
-  </ion-buttons>
+    <ion-icon
+      :icon="close"
+      class="closeBtn__icon"
+    />
+  </ion-button>
   <ion-header class="modal-header">
     <div class="modal-header-title">
       <ion-icon
@@ -39,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonButtons, IonHeader, IonIcon, IonText } from '@ionic/vue';
+import { IonButton, IonHeader, IonIcon, IonText } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { Translatable } from 'megashark-lib';
 

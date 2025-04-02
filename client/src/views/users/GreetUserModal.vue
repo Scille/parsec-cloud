@@ -7,23 +7,17 @@
       :current-index="getStepperIndex()"
       :titles="['UsersPage.greet.steps.hostCode', 'UsersPage.greet.steps.guestCode', 'UsersPage.greet.steps.contactDetails']"
     />
-    <ion-buttons
-      slot="end"
-      class="closeBtn-container"
+    <ion-button
+      slot="icon-only"
+      @click="cancelModal()"
+      class="closeBtn"
+      v-show="pageStep !== GreetUserStep.Summary"
     >
-      <ion-button
-        slot="icon-only"
-        @click="cancelModal()"
-        class="closeBtn"
-        v-show="pageStep !== GreetUserStep.Summary"
-      >
-        <ion-icon
-          :icon="close"
-          size="large"
-          class="closeBtn__icon"
-        />
-      </ion-button>
-    </ion-buttons>
+      <ion-icon
+        :icon="close"
+        class="closeBtn__icon"
+      />
+    </ion-button>
     <div class="modal">
       <ion-header class="modal-header">
         <ion-title class="modal-header__title title-h2">
