@@ -1885,8 +1885,8 @@
                     "label": "Describe your needs",
                     "placeholder": "Tell us more about your needs, expectations, and constraints..."
                 },
-                "connectionFailure": "An error occured (Failed to contact the server).",
-                "serverFailure": "An error occured (server request refused."
+                "connectionFailure": "An error occurred (Failed to contact the server).",
+                "serverFailure": "An error occurred (server request refused."
             },
             "progress": {
                 "orderNumber": "Order n°{number}",

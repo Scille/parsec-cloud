@@ -195,7 +195,7 @@ async function showTOSModal(): Promise<void> {
         PresentationMode.Toast,
       );
       modalOpened.value = false;
-      // Early return here. If the user didn't accept the TOS or the acception fails,
+      // Early return here. If the user didn't accept the TOS or the acceptance fails,
       // we will log them out.
       return;
     } else {
