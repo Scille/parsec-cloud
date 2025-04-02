@@ -222,7 +222,7 @@ class BackendConfig:
 
     def logging_kwargs(self) -> dict[str, str]:
         """
-        Provide a safe dictionnary for logging the backend configuration.
+        Provide a safe dictionary for logging the backend configuration.
         """
         kwargs = {field.name: repr(getattr(self, field.name)) for field in fields(self)}
         kwargs["administration_token"] = "***"

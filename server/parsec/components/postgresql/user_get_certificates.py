@@ -21,7 +21,7 @@ from parsec.components.user import (
 )
 
 # Extract from the main query the the SQL fragment used to fetch all certificates.
-# This is because this operation is complexe (as it involves multiple tables and
+# This is because this operation is complex (as it involves multiple tables and
 # must be updated whenever we add another type of certificate) and is also needed
 # in `realm_export_do_certificates`
 
