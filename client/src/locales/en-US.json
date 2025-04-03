@@ -1562,16 +1562,16 @@
                 "users": "Users",
                 "active": "active",
                 "revoked": "revoked",
-                "storage": "Used storage"
+                "storage": "Storage"
             },
             "admin": "Administrators | Administrator | Administrators",
             "standard": "Members | Member | Members",
             "outsider": "Externals | External | Externals",
             "total" : "Total",
             "detail": "Detail",
-            "consumption": "Consumption",
+            "usage": "Usage",
             "includedTitle": "Included",
-            "additionalTitle": "Additional",
+            "extraTitle": "Extra",
             "data": "Data",
             "metadata": "Metadata",
             "error": "Failed to retrieve organization data.",
@@ -1579,7 +1579,7 @@
             "noStats": "No statistics to display.",
             "used": "consumed",
             "remaining": "remaining",
-            "additional": "additional",
+            "extra": "extra",
             "almostFullUsed": "You are almost at your storage limit.",
             "fullUsed": "You have reached your storage limit.",
             "overUsed": "You have exceeded your contract storage quantity, please readjust."
