@@ -9,4 +9,4 @@ import TimeFilterPopover from '@/components/client-area/TimeFilterPopover.vue';
 // progress circle
 import ProgressCircle from '@/components/client-area/ProgressCircle.vue';
 
-export { TimeFilterPopover, YearInvoicesList, ProgressCircle };
+export { ProgressCircle, TimeFilterPopover, YearInvoicesList };

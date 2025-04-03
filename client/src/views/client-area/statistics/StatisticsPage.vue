@@ -40,9 +40,12 @@
             <ion-card class="users-cards-list-item">
               <div class="users-cards-list-item-text">
                 <ion-text class="users-cards-list-item-text__title body-sm">
-                  {{ $msTranslate({
-                    key: 'clientArea.statistics.total',
-                    count: stats.outsiderUsersDetail.active + stats.adminUsersDetail.active + stats.standardUsersDetail.active }) }}
+                  {{
+                    $msTranslate({
+                      key: 'clientArea.statistics.total',
+                      count: stats.outsiderUsersDetail.active + stats.adminUsersDetail.active + stats.standardUsersDetail.active,
+                    })
+                  }}
                 </ion-text>
                 <ion-text class="users-cards-list-item-text__number title-h1">
                   {{ stats.outsiderUsersDetail.active + stats.adminUsersDetail.active + stats.standardUsersDetail.active }}
@@ -112,7 +115,7 @@
             </div>
           </div>
         </div>
-        
+
         <div class="storage-usage">
           <ion-text class="storage-usage__title title-h5">
             <span>{{ $msTranslate('clientArea.statistics.usage') }}</span>
@@ -140,8 +143,12 @@
               <ion-text class="usage-data__title title-h5">{{ $msTranslate('clientArea.statistics.extra') }}</ion-text>
               <div class="usage-data-content">
                 <div class="usage-data-caption">
-                  <ion-text class="usage-data-caption__title title-h2">{{ $msTranslate(formatFileSize(payingData ? payingData.amount : 0)) }}</ion-text>
-                  <ion-text class="usage-data-caption__description body">{{ $msTranslate('clientArea.statistics.additionalCost') }}</ion-text>
+                  <ion-text class="usage-data-caption__title title-h2">{{
+                    $msTranslate(formatFileSize(payingData ? payingData.amount : 0))
+                  }}</ion-text>
+                  <ion-text class="usage-data-caption__description body">{{
+                    $msTranslate('clientArea.statistics.additionalCost')
+                  }}</ion-text>
                 </div>
               </div>
             </div>
@@ -448,7 +455,8 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
       &:nth-child(4) {
         background: var(--parsec-color-light-secondary-text);
 
-        .users-cards-list-item-text__title, .users-cards-list-item-text__number {
+        .users-cards-list-item-text__title,
+        .users-cards-list-item-text__number {
           color: var(--parsec-color-light-secondary-white);
         }
       }
@@ -471,7 +479,8 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
     width: 100%;
   }
 
-  &-detail, &-usage {
+  &-detail,
+  &-usage {
     display: flex;
     gap: 1.5rem;
     flex-direction: column;
@@ -557,11 +566,11 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
     padding: 1.5rem;
     border-radius: var(--parsec-radius-12);
 
-    &:nth-child(1){
+    &:nth-child(1) {
       min-width: 18rem;
     }
 
-    &:nth-child(2){
+    &:nth-child(2) {
       min-width: 12rem;
     }
 

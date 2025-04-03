@@ -93,32 +93,32 @@ const amountValueComputed = computed(() => {
   }
 
   .circle-inner {
-    width:var(--size);
-    aspect-ratio:1/1;
-    position:relative;
-    display:inline-grid;
-    place-content:center;
+    width: var(--size);
+    aspect-ratio: 1/1;
+    position: relative;
+    display: inline-grid;
+    place-content: center;
 
     &::before,
     &::after {
-      content:"";
-      position:absolute;
-      border-radius:50%;
+      content: '';
+      position: absolute;
+      border-radius: 50%;
     }
 
     &::before {
-      inset:0;
+      inset: 0;
       background:
-        radial-gradient(farthest-side,var(--color) 98%,#0000) top/var(--thickness) var(--thickness) no-repeat,
-        conic-gradient(var(--color) calc(var(--percentage)*1%),#0000 0);
-      -webkit-mask:radial-gradient(farthest-side,#0000 calc(99% - var(--thickness)),#000 calc(100% - var(--thickness)));
-              mask:radial-gradient(farthest-side,#0000 calc(99% - var(--thickness)),#000 calc(100% - var(--thickness)));
+        radial-gradient(farthest-side, var(--color) 98%, #0000) top/var(--thickness) var(--thickness) no-repeat,
+        conic-gradient(var(--color) calc(var(--percentage) * 1%), #0000 0);
+      -webkit-mask: radial-gradient(farthest-side, #0000 calc(99% - var(--thickness)), #000 calc(100% - var(--thickness)));
+      mask: radial-gradient(farthest-side, #0000 calc(99% - var(--thickness)), #000 calc(100% - var(--thickness)));
     }
 
     &::after {
-      inset:calc(50% - var(--thickness)/2);
+      inset: calc(50% - var(--thickness) / 2);
       background: var(--color);
-      transform: rotate(calc(var(--percentage)*3.6deg - 90deg)) translate(calc(var(--size)/2 - 50%));
+      transform: rotate(calc(var(--percentage) * 3.6deg - 90deg)) translate(calc(var(--size) / 2 - 50%));
     }
   }
 

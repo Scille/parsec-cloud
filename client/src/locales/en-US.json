@@ -1567,7 +1567,7 @@
             "admin": "Administrators | Administrator | Administrators",
             "standard": "Members | Member | Members",
             "outsider": "Externals | External | Externals",
-            "total" : "Total",
+            "total": "Total",
             "detail": "Detail",
             "usage": "Usage",
             "included": "Included",
