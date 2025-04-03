@@ -1576,16 +1576,16 @@
                 "users": "Utilisateurs",
                 "active": "actifs",
                 "revoked": "révoqués",
-                "storage": "Stockage utilisé"
+                "storage": "Stockage"
             },
             "admin": "Administrateur | Administrateur | Administrateurs",
             "standard": "Membres | Membre | Membres",
             "outsider": "Externe | Externe | Externes",
             "total" : "Total",
             "detail": "Détails",
-            "consumption": "Consommation",
+            "usage": "Utilisation",
             "includedTitle": "Inclus",
-            "additionalTitle": "Additionel",
+            "extraTitle": "Supplémentaire",
             "data": "Données",
             "metadata": "Métadonnées",
             "error": "Impossible de récupérer les données de l'organisation.",
@@ -1593,7 +1593,7 @@
             "noStats": "Aucune statistique à afficher.",
             "used": "consommé",
             "remaining": "restant",
-            "additional": "additionnel",
+            "extra": "supplémentaire",
             "almostFullUsed": "Vous avez presque atteint votre limite de stockage.",
             "fullUsed": "Vous avez consommé toute la quantité de stockage prévue dans votre contrat.",
             "overUsed": "Vous avez dépassé la quantité de stockage prévue dans votre contrat, veuillez réajuster."
