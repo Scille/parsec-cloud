@@ -113,27 +113,28 @@
           </div>
         </div>
 
-        <div class="storage-consumption">
-          <ion-text class="storage-consumption__title title-h5">
-            <span>{{ $msTranslate('clientArea.statistics.consumption') }}</span>
+        <div class="storage-usage">
+          <ion-text class="storage-usage__title title-h5">
+            <span>{{ $msTranslate('clientArea.statistics.usage') }}</span>
           </ion-text>
-          <div class="storage-data-consumption-content">
-            <div class="consumption">
-              <div class="consumption-data">
-                <div class="consumption-data-container">
-                  <div class="consumption-data-caption">
-                    <ion-text class="consumption-data-caption__number title-h5">
+          <div class="storage-data-usage-content">
+            <div class="usage">
+              <div class="usage-data">
+                <div class="usage-data-container">
+                  <div class="usage-data-caption">
+                    <ion-text class="usage-data-caption__number title-h5">
                       {{ $msTranslate(formatFileSize(freeSliceSize)) }}
                     </ion-text>
-                    <ion-text class="consumption-data-caption__text body">
+                    <ion-text class="usage-data-caption__text body">
                       {{ $msTranslate('clientArea.statistics.remaining') }}
                     </ion-text>
                   </div>
-                  <div class="consumption-data-caption">
-                    <ion-text class="consumption-data-caption__number title-h5">{{ $msTranslate(formatFileSize(totalData)) }}</ion-text>
-                    <ion-text class="consumption-data-caption__text body">{{ $msTranslate('clientArea.statistics.used') }}</ion-text>
+                  <div class="usage-data-caption">
+                    <ion-text class="usage-data-caption__number title-h5">{{ $msTranslate(formatFileSize(totalData)) }}</ion-text>
+                    <ion-text class="usage-data-caption__text body">{{ $msTranslate('clientArea.statistics.used') }}</ion-text>
                   </div>
                 </div>
+                {{ freeCircleData }}
                 <progress-circle
                   :data="freeCircleData.amount"
                   :amount-value="80"
@@ -143,7 +144,7 @@
                 <progress-circle
                   :data="payingCircleData ? payingCircleData.amount : 0"
                   :amount-value="payingCircleData ? payingCircleData.percentage : 0"
-                  :text="$msTranslate('clientArea.statistics.additionalTitle')"
+                  :text="$msTranslate('clientArea.statistics.extraTitle')"
                 />
               </div>
             </div>
@@ -241,18 +242,18 @@
               />
             </div>
           </div>
-          <div class="storage-data-consumption">
+          <div class="storage-data-usage">
             <ion-skeleton-text
               :animated="true"
               class="skeleton-loading-text"
             />
-            <div class="storage-data-consumption-content">
-              <div class="consumption-item">
+            <div class="storage-data-usage-content">
+              <div class="usage-item">
                 <div
                   id="firstBar"
                   class="consumption"
                 >
-                  <div class="consumption-number">
+                  <div class="usage-number">
                     <ion-skeleton-text
                       :animated="true"
                       class="skeleton-loading-text"
@@ -471,7 +472,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
     width: 100%;
   }
 
-  &-detail, &-consumption {
+  &-detail, &-usage {
     display: flex;
     gap: 1.5rem;
     flex-direction: column;
@@ -506,7 +507,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
     flex: 1;
   }
 
-  &-consumption {
+  &-usage {
     flex: 2;
   }
 }
@@ -538,7 +539,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   }
 }
 
-.consumption {
+.usage {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -607,11 +608,11 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
     height: 1rem;
   }
 
-  .storage-data-consumption::before {
+  .storage-data-usage::before {
     content: none;
   }
 
-  .consumption-number {
+  .usage-number {
     .skeleton-loading-text {
       width: 2rem;
       height: 1rem;

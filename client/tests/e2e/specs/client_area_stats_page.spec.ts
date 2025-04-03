@@ -59,8 +59,8 @@ import { DEFAULT_ORGANIZATION_DATA_SLICE, MockBms, expect, msTest } from '@tests
     await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
 
     await expect(clientArea.locator('.storage').locator('.storage-data-global__total')).toHaveText(dataText);
-    await expect(clientArea.locator('#firstBar').locator('.consumption-number__amount')).toHaveText(bar1.amount);
-    await expect(clientArea.locator('#firstBar').locator('.consumption-number__percentage')).toHaveText(bar1.percentage);
+    await expect(clientArea.locator('#firstBar').locator('.usage-number__amount')).toHaveText(bar1.amount);
+    await expect(clientArea.locator('#firstBar').locator('.usage-number__percentage')).toHaveText(bar1.percentage);
 
     if (bar2.visible) {
       await expect(clientArea.locator('#secondBar')).toBeVisible();
@@ -68,8 +68,8 @@ import { DEFAULT_ORGANIZATION_DATA_SLICE, MockBms, expect, msTest } from '@tests
         if (bar2.multiplier) {
           await expect(clientArea.locator('#secondBar').locator('.number-multiplier')).toHaveText(`<span>${bar2.multiplier}</span>`);
         }
-        await expect(clientArea.locator('#secondBar').locator('.consumption-number__amount')).toHaveText(bar2.amount);
-        await expect(clientArea.locator('#secondBar').locator('.consumption-number__percentage')).toHaveText(bar2.percentage);
+        await expect(clientArea.locator('#secondBar').locator('.usage-number__amount')).toHaveText(bar2.amount);
+        await expect(clientArea.locator('#secondBar').locator('.usage-number__percentage')).toHaveText(bar2.percentage);
       }
     } else {
       await expect(clientArea.locator('#secondBar')).toBeHidden();
@@ -78,8 +78,8 @@ import { DEFAULT_ORGANIZATION_DATA_SLICE, MockBms, expect, msTest } from '@tests
     if (bar3.visible) {
       await expect(clientArea.locator('#thirdBar')).toBeVisible();
       if (bar3.amount) {
-        await expect(clientArea.locator('#thirdBar').locator('.consumption-number__amount')).toHaveText(bar3.amount);
-        await expect(clientArea.locator('#thirdBar').locator('.consumption-number__percentage')).toHaveText(bar3.percentage);
+        await expect(clientArea.locator('#thirdBar').locator('.usage-number__amount')).toHaveText(bar3.amount);
+        await expect(clientArea.locator('#thirdBar').locator('.usage-number__percentage')).toHaveText(bar3.percentage);
       }
     } else {
       await expect(clientArea.locator('#thirdBar')).toBeHidden();
