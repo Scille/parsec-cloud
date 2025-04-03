@@ -170,7 +170,7 @@
               {{ $msTranslate('clientArea.statistics.usageDetail') }}
             </ion-text>
 
-            <div class="consumption">
+            <div class="usage">
               <ms-report-text
                 :theme="MsReportTheme.Warning"
                 v-if="storagePercentage === 100"
