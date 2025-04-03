@@ -4,13 +4,13 @@
   <div class="organization-recovery-container">
     <ion-label
       class="button-small done"
-      v-if="hasRecoveryDevice"
+      v-show="hasRecoveryDevice"
     >
       {{ $msTranslate('OrganizationRecovery.done.label') }}
     </ion-label>
     <ion-label
       class="body-sm danger"
-      v-else
+      v-show="!hasRecoveryDevice"
     >
       {{ $msTranslate('OrganizationRecovery.notDone.label') }}
     </ion-label>
@@ -42,7 +42,7 @@
               <ion-button
                 @click="downloadRecoveryFile()"
                 :disabled="disableFileDownload"
-                id="downloadButton"
+                id="downloadFileButton"
                 size="default"
                 :fill="recoveryFileDownloaded ? 'outline' : 'solid'"
               >
@@ -86,7 +86,7 @@
             <div class="recovery-item-download__button">
               <ion-button
                 @click="downloadRecoveryKey()"
-                id="downloadButton"
+                id="downloadPassphraseButton"
                 :disabled="disableKeyDownload"
                 size="default"
                 :fill="recoveryKeyDownloaded ? 'outline' : 'solid'"
@@ -300,7 +300,8 @@ ion-label {
           margin: 0;
         }
 
-        #downloadButton {
+        #downloadPassphraseButton,
+        #downloadFileButton {
           display: flex;
           align-items: center;
 

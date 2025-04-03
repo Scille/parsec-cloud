@@ -40,7 +40,7 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
-  testIgnore: ['**/organization_switch_popover.spec.ts', '**/export_recovery_device.spec.ts', '**/import_recovery_device.spec.ts'],
+  testIgnore: ['**/organization_switch_popover.spec.ts'],
   /* Configure projects for major browsers */
   projects: [
     {
