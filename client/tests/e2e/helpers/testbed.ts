@@ -17,7 +17,7 @@ export async function newTestbed(page: Page, template: TestbedTemplate = 'coolor
       const [libparsec, nextStage] = window.nextStageHook();
       const configResult = await libparsec.testNewTestbed(template, testbedServerUrl);
       if (!configResult.ok) {
-        throw new Error(`Failed to init the testbed ${configResult.error}`);
+        throw new Error(`Failed to init the testbed ${JSON.stringify(configResult.error)}`);
       }
       const configPath = configResult.value;
       (window as any).TESTING_CONFIG_PATH = configPath;
