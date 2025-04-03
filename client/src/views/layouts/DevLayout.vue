@@ -84,14 +84,12 @@ async function populate(handle: parsec.ConnectionHandle): Promise<void> {
   if (import.meta.env.PARSEC_APP_POPULATE_DEFAULT_WORKSPACE === 'true') {
     await populateFiles();
   }
-  await populateUsers(handle);
+  if (import.meta.env.PARSEC_APP_POPULATE_USERS === 'true') {
+    await populateUsers(handle);
+  }
 }
 
 async function populateUsers(handle: parsec.ConnectionHandle): Promise<void> {
-  if (import.meta.env.PARSEC_APP_POPULATE_USERS !== 'true') {
-    return;
-  }
-
   const USERS = [
     {
       // cspell:disable-next-line
@@ -117,6 +115,14 @@ async function populateUsers(handle: parsec.ConnectionHandle): Promise<void> {
       profile: parsec.UserProfile.Outsider,
       revoked: false,
     },
+    {
+      // cspell:disable-next-line
+      label: 'Artorias',
+      // cspell:disable-next-line
+      email: 'artorias@abyss.dark',
+      profile: parsec.UserProfile.Admin,
+      revoked: false,
+    },
   ];
 
   for (const user of USERS) {
@@ -137,12 +143,12 @@ async function addUser(
     return;
   }
 
-  console.log(`Adding user ${label} <${email}>`);
+  window.electronAPI.log('debug', `Adding user ${label} <${email}>`);
 
   greetUser(connHandle, invResult.value.token, profile)
     .then(async () => {
       if (revoke) {
-        console.log(`Revoke ${label}`);
+        window.electronAPI.log('debug', `Revoking ${label} <${email}>`);
         const result = await parsec.listUsers(true, email);
         if (result.ok && result.value.length > 0) {
           await parsec.revokeUser(result.value[0].id);
@@ -150,10 +156,10 @@ async function addUser(
       }
     })
     .catch((err: string) => {
-      console.log(`Greet failed: ${err}`);
+      window.electronAPI.log('error', `Greet failed: ${err}`);
     });
   claimUser(email, label, invResult.value.addr).catch((err: string) => {
-    console.log(`Claim failed: ${err}`);
+    window.electronAPI.log('error', `Claim failed: ${err}`);
   });
 }
 
@@ -267,6 +273,51 @@ async function populateFiles(): Promise<void> {
       }
       await parsec.closeFile(workspace.handle, openResult.value);
     }
+  }
+  await addReadOnlyWorkspace();
+}
+
+async function addReadOnlyWorkspace(): Promise<void> {
+  const devices = await parsec.listAvailableDevices(false);
+  const bobDevice = devices.find((d) => d.humanHandle.label === 'Boby McBobFace');
+  const aliceDevice = devices.find((d) => d.humanHandle.label === 'Alicey McAliceFace');
+
+  window.electronAPI.log('debug', 'Creating read-only workspace');
+
+  if (!bobDevice || !aliceDevice) {
+    window.electronAPI.log('error', 'Could not find Alice or Bob device');
+    return;
+  }
+  const loginResult = await libparsec.clientStart(getClientConfig(), async () => {}, {
+    tag: parsec.DeviceAccessStrategyTag.Password,
+    password: 'P@ssw0rd.',
+    keyFile: bobDevice.keyFilePath,
+  });
+  if (!loginResult.ok) {
+    window.electronAPI.log('error', `Failed to login as Bob: ${loginResult.error.error}`);
+    return;
+  }
+  try {
+    const wkResult = await libparsec.clientCreateWorkspace(loginResult.value, 'wksp2');
+    if (!wkResult.ok) {
+      window.electronAPI.log('error', `Failed to create a workspace as Bob: ${wkResult.error.error}`);
+      return;
+    }
+    const shareResult = await libparsec.clientShareWorkspace(
+      loginResult.value,
+      wkResult.value,
+      aliceDevice.userId,
+      parsec.WorkspaceRole.Reader,
+    );
+    if (!shareResult.ok) {
+      window.electronAPI.log('error', `Failed to share Bob's workspace with Alice: ${shareResult.error.error}`);
+      return;
+    }
+    window.electronAPI.log('debug', 'Read-only workspace created');
+  } catch (e: any) {
+    window.electronAPI.log('error', `Error while creating read-only workspace: ${e}`);
+  } finally {
+    await libparsec.clientStop(loginResult.value);
   }
 }
 </script>
