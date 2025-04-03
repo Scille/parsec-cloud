@@ -90,7 +90,7 @@
       <!-- storage -->
       <div
         class="storage"
-        v-if="freeCircleData"
+        v-if="freeData"
       >
         <ion-text class="storage__title title-h4">{{ $msTranslate('clientArea.statistics.titles.storage') }}</ion-text>
 
@@ -112,40 +112,37 @@
             </div>
           </div>
         </div>
-
+        
         <div class="storage-usage">
           <ion-text class="storage-usage__title title-h5">
             <span>{{ $msTranslate('clientArea.statistics.usage') }}</span>
           </ion-text>
-          <div class="storage-data-usage-content">
-            <div class="usage">
-              <div class="usage-data">
-                <div class="usage-data-container">
-                  <div class="usage-data-caption">
-                    <ion-text class="usage-data-caption__number title-h5">
-                      {{ $msTranslate(formatFileSize(freeSliceSize)) }}
-                    </ion-text>
-                    <ion-text class="usage-data-caption__text body">
-                      {{ $msTranslate('clientArea.statistics.remaining') }}
-                    </ion-text>
-                  </div>
-                  <div class="usage-data-caption">
-                    <ion-text class="usage-data-caption__number title-h5">{{ $msTranslate(formatFileSize(totalData)) }}</ion-text>
-                    <ion-text class="usage-data-caption__text body">{{ $msTranslate('clientArea.statistics.used') }}</ion-text>
-                  </div>
+          <div class="usage">
+            <div class="usage-data">
+              <ion-text class="usage-data__title title-h5">{{ $msTranslate('clientArea.statistics.included') }}</ion-text>
+
+              <div class="usage-data-content">
+                <div class="usage-data-caption">
+                  <ion-text class="usage-data-caption__title title-h2">{{ $msTranslate(formatFileSize(freeSliceSize)) }}</ion-text>
+                  <ion-text class="usage-data-caption__description body">
+                    {{ $msTranslate(formatFileSize(INCLUDED_STORAGE)) }}
+                    <span>{{ $msTranslate('clientArea.statistics.included') }}</span>
+                  </ion-text>
                 </div>
-                {{ freeCircleData }}
                 <progress-circle
-                  :data="freeCircleData.amount"
-                  :amount-value="80"
-                  :text="$msTranslate('clientArea.statistics.includedTitle')"
-                  :state="freeCircleData.percentage < 0.8 ? 'active' : 'success'"
+                  :amount-value="Math.trunc(freeData.percentage)"
+                  :state="'default'"
                 />
-                <progress-circle
-                  :data="payingCircleData ? payingCircleData.amount : 0"
-                  :amount-value="payingCircleData ? payingCircleData.percentage : 0"
-                  :text="$msTranslate('clientArea.statistics.extraTitle')"
-                />
+              </div>
+            </div>
+
+            <div class="usage-data">
+              <ion-text class="usage-data__title title-h5">{{ $msTranslate('clientArea.statistics.extra') }}</ion-text>
+              <div class="usage-data-content">
+                <div class="usage-data-caption">
+                  <ion-text class="usage-data-caption__title title-h2">{{ $msTranslate(formatFileSize(payingData ? payingData.amount : 0)) }}</ion-text>
+                  <ion-text class="usage-data-caption__description body">{{ $msTranslate('clientArea.statistics.additionalCost') }}</ion-text>
+                </div>
               </div>
             </div>
           </div>
@@ -322,6 +319,8 @@ interface CircleProgressData {
   progress: number;
 }
 
+const INCLUDED_STORAGE = 107374182400; // 100GB
+
 const props = defineProps<{
   currentOrganization: BmsOrganization;
   organizations: Array<BmsOrganization>;
@@ -338,26 +337,26 @@ const payingSliceSize = ref<number>(0);
 const querying = ref(true);
 const error = ref('');
 
-const freeCircleData = ref<CircleProgressData>();
-const payingCircleData = ref<CircleProgressData>();
+const freeData = ref<CircleProgressData>();
+const payingData = ref<CircleProgressData>();
 
-function getFreeCircleData(): CircleProgressData {
+function getFreeData(): CircleProgressData {
   return {
     amount: totalData.value > freeSliceSize.value ? freeSliceSize.value : totalData.value,
-    percentage: totalData.value > freeSliceSize.value ? 100 : (totalData.value * 100) / freeSliceSize.value,
-    progress: totalData.value > freeSliceSize.value ? 1 : totalData.value / freeSliceSize.value,
+    percentage: INCLUDED_STORAGE < totalData.value ? 100 : (freeSliceSize.value * 100) / INCLUDED_STORAGE,
+    progress: INCLUDED_STORAGE < totalData.value ? 1 : freeSliceSize.value / INCLUDED_STORAGE,
   };
 }
 
-function getPaidCircleData(): CircleProgressData | undefined {
+function getPaidData(): CircleProgressData | undefined {
   if (totalData.value < freeSliceSize.value) {
     return undefined;
   }
 
-  const truncatedAmount: number = (totalData.value - freeSliceSize.value) % payingSliceSize.value;
+  const truncatedAmount: number = totalData.value - freeSliceSize.value;
 
   return {
-    amount: truncatedAmount,
+    amount: totalData.value - freeSliceSize.value,
     percentage: (truncatedAmount * 100) / payingSliceSize.value,
     progress: truncatedAmount / payingSliceSize.value,
   };
@@ -374,8 +373,8 @@ onMounted(async () => {
       freeSliceSize.value = stats.value.freeSliceSize;
       payingSliceSize.value = stats.value.payingSliceSize;
 
-      freeCircleData.value = getFreeCircleData();
-      payingCircleData.value = getPaidCircleData();
+      freeData.value = getFreeData();
+      payingData.value = getPaidData();
     } else {
       error.value = 'clientArea.statistics.error';
     }
@@ -541,8 +540,8 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 
 .usage {
   display: flex;
-  flex-direction: column;
   width: 100%;
+  gap: 1.5rem;
 
   &-item {
     width: 100%;
@@ -551,47 +550,44 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 
   &-data {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
     background: var(--parsec-color-light-secondary-white);
+    width: 100%;
     box-shadow: var(--parsec-shadow-soft);
     padding: 1.5rem;
     border-radius: var(--parsec-radius-12);
-    gap: 1.5rem;
 
-    &-container {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+    &:nth-child(1){
+      min-width: 18rem;
     }
 
-    &-caption {
+    &:nth-child(2){
+      min-width: 12rem;
+    }
+
+    &__title {
+      color: var(--parsec-color-light-secondary-hard-grey);
+    }
+
+    &-content {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      color: var(--parsec-color-light-secondary-text);
-      position: relative;
-
-      &::before {
-        content: '';
-        display: block;
-        position: relative;
-        top: 0;
-        left: 0;
-        width: 0.25rem;
-        height: 1.25rem;
-        margin-right: 0.25rem;
-        border-radius: var(--parsec-radius-4);
-        background: var(--parsec-color-light-secondary-text);
-      }
+      gap: 1.5rem;
+      height: 100%;
     }
 
     &-caption {
       display: flex;
-      gap: 0.25rem;
+      flex-direction: column;
+      gap: 0.375rem;
+      width: 100%;
 
-      &__number {
+      &__title {
         color: var(--parsec-color-light-secondary-text);
+      }
+
+      &__description {
+        color: var(--parsec-color-light-secondary-grey);
       }
     }
   }

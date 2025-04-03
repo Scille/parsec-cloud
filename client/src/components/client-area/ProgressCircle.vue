@@ -7,24 +7,23 @@
   >
     <div class="circle-outer">
       <div class="circle-inner">
-        <ion-text class="circle__amount title-h5">{{ $msTranslate(formatFileSize(data)) }}</ion-text>
+        <ion-text
+          class="circle__amount title-h5"
+          :class="props.state"
+        >
+          {{ props.amountValue }}%
+        </ion-text>
       </div>
     </div>
-
-    <ion-text class="circle__description title-h5">{{ $msTranslate(text) }}</ion-text>
   </div>
 </template>
 
 <script setup lang="ts">
 import { IonText } from '@ionic/vue';
-import { formatFileSize } from '@/common/file';
 import { computed } from 'vue';
-import { Translatable } from 'megashark-lib';
 
 const props = defineProps<{
-  data: number;
   amountValue: number;
-  text?: Translatable;
   state?: string;
 }>();
 
@@ -34,11 +33,13 @@ const amountValueComputed = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-.circle-container {
-  --percentage: v-bind(amountValueComputed);
-  --thickness: 0.5rem;
-  --color: var(--parsec-color-light-secondary-text);
-  --size: 5rem;
+.circle-container,
+.circle__amount {
+  color: var(--color);
+
+  &.default {
+    --color: var(--parsec-color-light-secondary-text);
+  }
 
   &.warning {
     --color: var(--parsec-color-light-warning-500);
@@ -55,6 +56,13 @@ const amountValueComputed = computed(() => {
   &.active {
     --color: var(--parsec-color-light-primary-500);
   }
+}
+
+.circle-container {
+  --percentage: v-bind(amountValueComputed);
+  --thickness: 0.5rem;
+  --color: var(--parsec-color-light-secondary-text);
+  --size: 5rem;
 
   display: flex;
   align-items: center;
