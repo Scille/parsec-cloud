@@ -5120,7 +5120,19 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
         .as_string()
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
+        "ClientEventClientErrorResponse" => {
+            let error_type = {
+                let js_val = Reflect::get(&obj, &"errorType".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::ClientEvent::ClientErrorResponse { error_type })
+        }
         "ClientEventExpiredOrganization" => Ok(libparsec::ClientEvent::ExpiredOrganization {}),
+        "ClientEventFrozenSelfUser" => Ok(libparsec::ClientEvent::FrozenSelfUser {}),
         "ClientEventGreetingAttemptCancelled" => {
             let token = {
                 let js_val = Reflect::get(&obj, &"token".into())?;
@@ -5242,15 +5254,54 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
             })
         }
         "ClientEventIncompatibleServer" => {
-            let detail = {
-                let js_val = Reflect::get(&obj, &"detail".into())?;
+            let api_version = {
+                let js_val = Reflect::get(&obj, &"apiVersion".into())?;
                 js_val
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::ApiVersion::try_from(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid ApiVersion"))?
             };
-            Ok(libparsec::ClientEvent::IncompatibleServer { detail })
+            let supported_api_version = {
+                let js_val = Reflect::get(&obj, &"supportedApiVersion".into())?;
+                {
+                    let js_val = js_val
+                        .dyn_into::<Array>()
+                        .map_err(|_| TypeError::new("Not an array"))?;
+                    let mut converted = Vec::with_capacity(js_val.length() as usize);
+                    for x in js_val.iter() {
+                        let x_converted = x
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                                    libparsec::ApiVersion::try_from(s.as_str())
+                                        .map_err(|e| e.to_string())
+                                };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid ApiVersion"))?;
+                        converted.push(x_converted);
+                    }
+                    converted
+                }
+            };
+            Ok(libparsec::ClientEvent::IncompatibleServer {
+                api_version,
+                supported_api_version,
+            })
+        }
+        "ClientEventInvitationAlreadyUsedOrDeleted" => {
+            Ok(libparsec::ClientEvent::InvitationAlreadyUsedOrDeleted {})
         }
         "ClientEventInvitationChanged" => {
             let token = {
@@ -5286,6 +5337,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
         "ClientEventMustAcceptTos" => Ok(libparsec::ClientEvent::MustAcceptTos {}),
         "ClientEventOffline" => Ok(libparsec::ClientEvent::Offline {}),
         "ClientEventOnline" => Ok(libparsec::ClientEvent::Online {}),
+        "ClientEventOrganizationNotFound" => Ok(libparsec::ClientEvent::OrganizationNotFound {}),
         "ClientEventPing" => {
             let ping = {
                 let js_val = Reflect::get(&obj, &"ping".into())?;
@@ -5299,6 +5351,30 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
         }
         "ClientEventRevokedSelfUser" => Ok(libparsec::ClientEvent::RevokedSelfUser {}),
         "ClientEventServerConfigChanged" => Ok(libparsec::ClientEvent::ServerConfigChanged {}),
+        "ClientEventServerInvalidResponseContent" => {
+            let protocol_decode_error = {
+                let js_val = Reflect::get(&obj, &"protocolDecodeError".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::ClientEvent::ServerInvalidResponseContent {
+                protocol_decode_error,
+            })
+        }
+        "ClientEventServerInvalidResponseStatus" => {
+            let status_code = {
+                let js_val = Reflect::get(&obj, &"statusCode".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::ClientEvent::ServerInvalidResponseStatus { status_code })
+        }
         "ClientEventTooMuchDriftWithServerClock" => {
             let server_timestamp = {
                 let js_val = Reflect::get(&obj, &"serverTimestamp".into())?;
@@ -5581,12 +5657,24 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
 fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        libparsec::ClientEvent::ClientErrorResponse { error_type, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventClientErrorResponse".into(),
+            )?;
+            let js_error_type = error_type.into();
+            Reflect::set(&js_obj, &"errorType".into(), &js_error_type)?;
+        }
         libparsec::ClientEvent::ExpiredOrganization { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"ClientEventExpiredOrganization".into(),
             )?;
+        }
+        libparsec::ClientEvent::FrozenSelfUser { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientEventFrozenSelfUser".into())?;
         }
         libparsec::ClientEvent::GreetingAttemptCancelled {
             token,
@@ -5687,14 +5775,59 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             });
             Reflect::set(&js_obj, &"greetingAttempt".into(), &js_greeting_attempt)?;
         }
-        libparsec::ClientEvent::IncompatibleServer { detail, .. } => {
+        libparsec::ClientEvent::IncompatibleServer {
+            api_version,
+            supported_api_version,
+            ..
+        } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"ClientEventIncompatibleServer".into(),
             )?;
-            let js_detail = detail.into();
-            Reflect::set(&js_obj, &"detail".into(), &js_detail)?;
+            let js_api_version = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::ApiVersion| -> Result<String, &'static str> {
+                        Ok(x.to_string())
+                    };
+                match custom_to_rs_string(api_version) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"apiVersion".into(), &js_api_version)?;
+            let js_supported_api_version = {
+                // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                let js_array = Array::new_with_length(supported_api_version.len() as u32);
+                for (i, elem) in supported_api_version.into_iter().enumerate() {
+                    let js_elem = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::ApiVersion| -> Result<String, &'static str> {
+                                Ok(x.to_string())
+                            };
+                        match custom_to_rs_string(elem) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    js_array.set(i as u32, js_elem);
+                }
+                js_array.into()
+            };
+            Reflect::set(
+                &js_obj,
+                &"supportedApiVersion".into(),
+                &js_supported_api_version,
+            )?;
+        }
+        libparsec::ClientEvent::InvitationAlreadyUsedOrDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventInvitationAlreadyUsedOrDeleted".into(),
+            )?;
         }
         libparsec::ClientEvent::InvitationChanged { token, status, .. } => {
             Reflect::set(
@@ -5724,6 +5857,13 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
         libparsec::ClientEvent::Online { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventOnline".into())?;
         }
+        libparsec::ClientEvent::OrganizationNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventOrganizationNotFound".into(),
+            )?;
+        }
         libparsec::ClientEvent::Ping { ping, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventPing".into())?;
             let js_ping = ping.into();
@@ -5738,6 +5878,31 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventServerConfigChanged".into(),
             )?;
+        }
+        libparsec::ClientEvent::ServerInvalidResponseContent {
+            protocol_decode_error,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventServerInvalidResponseContent".into(),
+            )?;
+            let js_protocol_decode_error = protocol_decode_error.into();
+            Reflect::set(
+                &js_obj,
+                &"protocolDecodeError".into(),
+                &js_protocol_decode_error,
+            )?;
+        }
+        libparsec::ClientEvent::ServerInvalidResponseStatus { status_code, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventServerInvalidResponseStatus".into(),
+            )?;
+            let js_status_code = status_code.into();
+            Reflect::set(&js_obj, &"statusCode".into(), &js_status_code)?;
         }
         libparsec::ClientEvent::TooMuchDriftWithServerClock {
             server_timestamp,

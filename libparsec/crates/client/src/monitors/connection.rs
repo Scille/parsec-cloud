@@ -222,41 +222,64 @@ fn handle_sse_error(
 
         // ...otherwise the server rejected us, hence there is no use
         // retrying to connect and we just stop this coroutine
-        ConnectionError::ExpiredOrganization => {
-            event_bus.send(&EventExpiredOrganization);
-            HandleSseErrorOutcome::StopMonitor
-        }
-        ConnectionError::RevokedUser => {
-            event_bus.send(&EventRevokedSelfUser);
-            HandleSseErrorOutcome::StopMonitor
-        }
-        ConnectionError::UnsupportedApiVersion {
-            api_version,
-            supported_api_versions,
-        } => {
-            let event = EventIncompatibleServer(IncompatibleServerReason::UnsupportedApiVersion {
-                api_version,
-                supported_api_versions,
-            });
-            event_bus.send(&event);
-            HandleSseErrorOutcome::StopMonitor
-        }
-        err @ (ConnectionError::MissingAuthenticationInfo
-        | ConnectionError::BadAuthenticationInfo
-        | ConnectionError::OrganizationNotFound
-        | ConnectionError::BadAcceptType
-        | ConnectionError::InvitationAlreadyUsedOrDeleted
-        | ConnectionError::BadContent
-        | ConnectionError::InvalidResponseStatus(_)
-        | ConnectionError::InvalidResponseContent(_)
-        | ConnectionError::MissingSupportedApiVersions
-        | ConnectionError::FrozenUser
-        | ConnectionError::AuthenticationTokenExpired
-        | ConnectionError::WrongApiVersion(_)
-        | ConnectionError::InvalidSSEEventID(_)) => {
-            let event =
-                EventIncompatibleServer(IncompatibleServerReason::Unexpected(Arc::new(err.into())));
-            event_bus.send(&event);
+        _ => {
+            match err {
+                ConnectionError::NoResponse(_) | ConnectionError::UserMustAcceptTos => {
+                    unreachable!()
+                }
+
+                ConnectionError::OrganizationNotFound => event_bus.send(&EventOrganizationNotFound),
+                ConnectionError::ExpiredOrganization => event_bus.send(&EventExpiredOrganization),
+                ConnectionError::InvitationAlreadyUsedOrDeleted => {
+                    event_bus.send(&EventInvitationAlreadyUsedOrDeleted)
+                }
+                ConnectionError::RevokedUser => event_bus.send(&EventRevokedSelfUser),
+                ConnectionError::FrozenUser => event_bus.send(&EventFrozenSelfUser),
+                ConnectionError::AuthenticationTokenExpired => {
+                    event_bus.send(&EventClientErrorResponse {
+                        error_type: ClientErrorResponseType::MissingAuthenticationInfo,
+                    })
+                }
+                ConnectionError::MissingAuthenticationInfo => {
+                    event_bus.send(&EventClientErrorResponse {
+                        error_type: ClientErrorResponseType::MissingAuthenticationInfo,
+                    })
+                }
+                ConnectionError::BadAuthenticationInfo => {
+                    event_bus.send(&EventClientErrorResponse {
+                        error_type: ClientErrorResponseType::BadAuthenticationInfo,
+                    })
+                }
+                ConnectionError::BadAcceptType => event_bus.send(&EventClientErrorResponse {
+                    error_type: ClientErrorResponseType::BadAcceptType,
+                }),
+                ConnectionError::BadContent => event_bus.send(&EventClientErrorResponse {
+                    error_type: ClientErrorResponseType::BadContent,
+                }),
+                ConnectionError::UnsupportedApiVersion {
+                    api_version,
+                    supported_api_versions,
+                } => event_bus.send(&EventIncompatibleServer {
+                    api_version,
+                    supported_api_version: supported_api_versions,
+                }),
+                ConnectionError::MissingSupportedApiVersions { api_version } => {
+                    event_bus.send(&EventIncompatibleServer {
+                        api_version,
+                        supported_api_version: Vec::new(),
+                    })
+                }
+                ConnectionError::InvalidResponseStatus(status_code) => {
+                    event_bus.send(&EventServerInvalidResponseStatus {
+                        status_code: status_code.to_string(),
+                    })
+                }
+                ConnectionError::InvalidResponseContent(protocol_decode_error) => {
+                    event_bus.send(&EventServerInvalidResponseContent {
+                        protocol_decode_error: protocol_decode_error.to_string(),
+                    })
+                }
+            };
             HandleSseErrorOutcome::StopMonitor
         }
     }

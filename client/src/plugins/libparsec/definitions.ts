@@ -83,6 +83,7 @@ export enum UserProfile {
     Outsider = 'UserProfileOutsider',
     Standard = 'UserProfileStandard',
 }
+export type ApiVersion = string
 export type DeviceID = string
 export type DeviceLabel = string
 export type EntryName = string
@@ -798,18 +799,24 @@ export type ClientDeleteShamirRecoveryError =
 
 // ClientEvent
 export enum ClientEventTag {
+    ClientErrorResponse = 'ClientEventClientErrorResponse',
     ExpiredOrganization = 'ClientEventExpiredOrganization',
+    FrozenSelfUser = 'ClientEventFrozenSelfUser',
     GreetingAttemptCancelled = 'ClientEventGreetingAttemptCancelled',
     GreetingAttemptJoined = 'ClientEventGreetingAttemptJoined',
     GreetingAttemptReady = 'ClientEventGreetingAttemptReady',
     IncompatibleServer = 'ClientEventIncompatibleServer',
+    InvitationAlreadyUsedOrDeleted = 'ClientEventInvitationAlreadyUsedOrDeleted',
     InvitationChanged = 'ClientEventInvitationChanged',
     MustAcceptTos = 'ClientEventMustAcceptTos',
     Offline = 'ClientEventOffline',
     Online = 'ClientEventOnline',
+    OrganizationNotFound = 'ClientEventOrganizationNotFound',
     Ping = 'ClientEventPing',
     RevokedSelfUser = 'ClientEventRevokedSelfUser',
     ServerConfigChanged = 'ClientEventServerConfigChanged',
+    ServerInvalidResponseContent = 'ClientEventServerInvalidResponseContent',
+    ServerInvalidResponseStatus = 'ClientEventServerInvalidResponseStatus',
     TooMuchDriftWithServerClock = 'ClientEventTooMuchDriftWithServerClock',
     WorkspaceLocallyCreated = 'ClientEventWorkspaceLocallyCreated',
     WorkspaceOpsInboundSyncDone = 'ClientEventWorkspaceOpsInboundSyncDone',
@@ -821,8 +828,15 @@ export enum ClientEventTag {
     WorkspacesSelfListChanged = 'ClientEventWorkspacesSelfListChanged',
 }
 
+export interface ClientEventClientErrorResponse {
+    tag: ClientEventTag.ClientErrorResponse
+    errorType: string
+}
 export interface ClientEventExpiredOrganization {
     tag: ClientEventTag.ExpiredOrganization
+}
+export interface ClientEventFrozenSelfUser {
+    tag: ClientEventTag.FrozenSelfUser
 }
 export interface ClientEventGreetingAttemptCancelled {
     tag: ClientEventTag.GreetingAttemptCancelled
@@ -841,7 +855,11 @@ export interface ClientEventGreetingAttemptReady {
 }
 export interface ClientEventIncompatibleServer {
     tag: ClientEventTag.IncompatibleServer
-    detail: string
+    apiVersion: ApiVersion
+    supportedApiVersion: Array<ApiVersion>
+}
+export interface ClientEventInvitationAlreadyUsedOrDeleted {
+    tag: ClientEventTag.InvitationAlreadyUsedOrDeleted
 }
 export interface ClientEventInvitationChanged {
     tag: ClientEventTag.InvitationChanged
@@ -857,6 +875,9 @@ export interface ClientEventOffline {
 export interface ClientEventOnline {
     tag: ClientEventTag.Online
 }
+export interface ClientEventOrganizationNotFound {
+    tag: ClientEventTag.OrganizationNotFound
+}
 export interface ClientEventPing {
     tag: ClientEventTag.Ping
     ping: string
@@ -866,6 +887,14 @@ export interface ClientEventRevokedSelfUser {
 }
 export interface ClientEventServerConfigChanged {
     tag: ClientEventTag.ServerConfigChanged
+}
+export interface ClientEventServerInvalidResponseContent {
+    tag: ClientEventTag.ServerInvalidResponseContent
+    protocolDecodeError: string
+}
+export interface ClientEventServerInvalidResponseStatus {
+    tag: ClientEventTag.ServerInvalidResponseStatus
+    statusCode: string
 }
 export interface ClientEventTooMuchDriftWithServerClock {
     tag: ClientEventTag.TooMuchDriftWithServerClock
@@ -914,18 +943,24 @@ export interface ClientEventWorkspacesSelfListChanged {
     tag: ClientEventTag.WorkspacesSelfListChanged
 }
 export type ClientEvent =
+  | ClientEventClientErrorResponse
   | ClientEventExpiredOrganization
+  | ClientEventFrozenSelfUser
   | ClientEventGreetingAttemptCancelled
   | ClientEventGreetingAttemptJoined
   | ClientEventGreetingAttemptReady
   | ClientEventIncompatibleServer
+  | ClientEventInvitationAlreadyUsedOrDeleted
   | ClientEventInvitationChanged
   | ClientEventMustAcceptTos
   | ClientEventOffline
   | ClientEventOnline
+  | ClientEventOrganizationNotFound
   | ClientEventPing
   | ClientEventRevokedSelfUser
   | ClientEventServerConfigChanged
+  | ClientEventServerInvalidResponseContent
+  | ClientEventServerInvalidResponseStatus
   | ClientEventTooMuchDriftWithServerClock
   | ClientEventWorkspaceLocallyCreated
   | ClientEventWorkspaceOpsInboundSyncDone
