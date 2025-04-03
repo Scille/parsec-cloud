@@ -164,6 +164,7 @@ jobs:
         timeout-minutes: 5
 
       - name: E2E tests
+        id: playwright
         run: npm run test:e2e:headless
         env:
           TESTBED_SERVER: parsec3://localhost:6777?no_ssl=true
@@ -172,8 +173,13 @@ jobs:
         timeout-minutes: 20
 
       - name: Archive test results
-        if: failure()
+        # Always upload playwright report when playwright tests are run
+        if: steps.playwright.outcome != 'skipped'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin v4.6.2
         with:
           name: playwright-artifacts
-          path: client/test-results/
+          if-no-files-found: error
+          path: |
+            client/test-results/
+            client/test-results.json
+            client/playwright-report/
