@@ -142,7 +142,7 @@ register_rpc_http_hook!(
     rpc_unsupported_api_version_http_codes_422,
     StatusCode::from_u16(422).unwrap(),
     |err| {
-        p_assert_matches!(err, ConnectionError::MissingSupportedApiVersions);
+        p_assert_matches!(err, ConnectionError::MissingSupportedApiVersions { api_version } if api_version == *API_LATEST_VERSION );
     }
 );
 register_rpc_http_hook!(

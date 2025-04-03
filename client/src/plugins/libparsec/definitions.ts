@@ -18,6 +18,21 @@ export enum CancelledGreetingAttemptReason {
     UndeserializablePayload = 'CancelledGreetingAttemptReasonUndeserializablePayload',
 }
 
+export enum ClientRequestErrorType {
+    AuthenticationTokenExpired = 'ClientRequestErrorTypeAuthenticationTokenExpired',
+    BadAcceptType = 'ClientRequestErrorTypeBadAcceptType',
+    BadAuthenticationInfo = 'ClientRequestErrorTypeBadAuthenticationInfo',
+    BadContent = 'ClientRequestErrorTypeBadContent',
+    FrozenUser = 'ClientRequestErrorTypeFrozenUser',
+    InvalidResponseContent = 'ClientRequestErrorTypeInvalidResponseContent',
+    InvalidResponseStatus = 'ClientRequestErrorTypeInvalidResponseStatus',
+    InvalidSSEEventID = 'ClientRequestErrorTypeInvalidSSEEventID',
+    InvitationAlreadyUsedOrDeleted = 'ClientRequestErrorTypeInvitationAlreadyUsedOrDeleted',
+    MissingAuthenticationInfo = 'ClientRequestErrorTypeMissingAuthenticationInfo',
+    OrganizationNotFound = 'ClientRequestErrorTypeOrganizationNotFound',
+    WrongApiVersion = 'ClientRequestErrorTypeWrongApiVersion',
+}
+
 export enum DeviceFileType {
     Keyring = 'DeviceFileTypeKeyring',
     Password = 'DeviceFileTypePassword',
@@ -798,6 +813,7 @@ export type ClientDeleteShamirRecoveryError =
 
 // ClientEvent
 export enum ClientEventTag {
+    ClientRequestError = 'ClientEventClientRequestError',
     ExpiredOrganization = 'ClientEventExpiredOrganization',
     GreetingAttemptCancelled = 'ClientEventGreetingAttemptCancelled',
     GreetingAttemptJoined = 'ClientEventGreetingAttemptJoined',
@@ -821,6 +837,10 @@ export enum ClientEventTag {
     WorkspacesSelfListChanged = 'ClientEventWorkspacesSelfListChanged',
 }
 
+export interface ClientEventClientRequestError {
+    tag: ClientEventTag.ClientRequestError
+    errorType: ClientRequestErrorType
+}
 export interface ClientEventExpiredOrganization {
     tag: ClientEventTag.ExpiredOrganization
 }
@@ -914,6 +934,7 @@ export interface ClientEventWorkspacesSelfListChanged {
     tag: ClientEventTag.WorkspacesSelfListChanged
 }
 export type ClientEvent =
+  | ClientEventClientRequestError
   | ClientEventExpiredOrganization
   | ClientEventGreetingAttemptCancelled
   | ClientEventGreetingAttemptJoined

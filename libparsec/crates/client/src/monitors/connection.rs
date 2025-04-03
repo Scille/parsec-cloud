@@ -234,29 +234,53 @@ fn handle_sse_error(
             api_version,
             supported_api_versions,
         } => {
-            let event = EventIncompatibleServer(IncompatibleServerReason::UnsupportedApiVersion {
+            event_bus.send(&EventIncompatibleServer {
                 api_version,
-                supported_api_versions,
+                supported_api_version: supported_api_versions,
             });
+            HandleSseErrorOutcome::StopMonitor
+        }
+        ConnectionError::MissingSupportedApiVersions { api_version } => {
+            event_bus.send(&EventIncompatibleServer {
+                api_version,
+                supported_api_version: Vec::new(),
+            });
+            HandleSseErrorOutcome::StopMonitor
+        }
+        ConnectionError::MissingAuthenticationInfo
+        | ConnectionError::BadAuthenticationInfo
+        | ConnectionError::AuthenticationTokenExpired => {
+            event_bus.send(&EventAuthenticationErrorResponse {
+                detail: err.to_string(),
+            });
+            HandleSseErrorOutcome::StopMonitor
+        }
+        ConnectionError::OrganizationNotFound => {
+            let event = EventClientRequestError(ClientRequestErrorType::OrganizationNotFound);
             event_bus.send(&event);
             HandleSseErrorOutcome::StopMonitor
         }
-        err @ (ConnectionError::MissingAuthenticationInfo
-        | ConnectionError::BadAuthenticationInfo
-        | ConnectionError::OrganizationNotFound
-        | ConnectionError::BadAcceptType
-        | ConnectionError::InvitationAlreadyUsedOrDeleted
-        | ConnectionError::BadContent
-        | ConnectionError::InvalidResponseStatus(_)
-        | ConnectionError::InvalidResponseContent(_)
-        | ConnectionError::MissingSupportedApiVersions
-        | ConnectionError::FrozenUser
-        | ConnectionError::AuthenticationTokenExpired
-        | ConnectionError::WrongApiVersion(_)
-        | ConnectionError::InvalidSSEEventID(_)) => {
+        ConnectionError::InvitationAlreadyUsedOrDeleted => {
             let event =
-                EventIncompatibleServer(IncompatibleServerReason::Unexpected(Arc::new(err.into())));
+                EventClientRequestError(ClientRequestErrorType::InvitationAlreadyUsedOrDeleted);
             event_bus.send(&event);
+            HandleSseErrorOutcome::StopMonitor
+        }
+        ConnectionError::FrozenUser => {
+            let event = EventClientRequestError(ClientRequestErrorType::FrozenUser);
+            event_bus.send(&event);
+            HandleSseErrorOutcome::StopMonitor
+        }
+        ConnectionError::BadAcceptType | ConnectionError::BadContent => {
+            event_bus.send(&EventClientErrorResponse {
+                detail: err.to_string(),
+            });
+            HandleSseErrorOutcome::StopMonitor
+        }
+        ConnectionError::InvalidResponseStatus(_) | ConnectionError::InvalidResponseContent(_) => {
+            event_bus.send(&EventServerErrorResponse {
+                detail: err.to_string(),
+            });
             HandleSseErrorOutcome::StopMonitor
         }
     }
