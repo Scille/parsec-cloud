@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import type { ReporterDescription } from '@playwright/test';
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 
@@ -8,6 +9,8 @@ import dotenv from 'dotenv';
  * https://github.com/motdotla/dotenv
  */
 dotenv.config({ path: '.env.playwright' });
+
+const CI_REPORTERS: ReporterDescription[] = [['github'], ['json', { outputFile: 'test-results.json' }], ['html', { open: 'never' }]];
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -23,7 +26,7 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 5 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: process.env.CI ? 'github' : 'list',
+  reporter: process.env.CI ? CI_REPORTERS : 'list',
   webServer: {
     command: 'npm run dev -- --port 8080',
     url: 'http://localhost:8080',
