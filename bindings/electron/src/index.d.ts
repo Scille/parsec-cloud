@@ -739,8 +739,15 @@ export type ClientDeleteShamirRecoveryError =
 
 
 // ClientEvent
+export interface ClientEventClientErrorResponse {
+    tag: "ClientErrorResponse"
+    error_type: string
+}
 export interface ClientEventExpiredOrganization {
     tag: "ExpiredOrganization"
+}
+export interface ClientEventFrozenSelfUser {
+    tag: "FrozenSelfUser"
 }
 export interface ClientEventGreetingAttemptCancelled {
     tag: "GreetingAttemptCancelled"
@@ -759,7 +766,11 @@ export interface ClientEventGreetingAttemptReady {
 }
 export interface ClientEventIncompatibleServer {
     tag: "IncompatibleServer"
-    detail: string
+    api_version: string
+    supported_api_version: Array<string>
+}
+export interface ClientEventInvitationAlreadyUsedOrDeleted {
+    tag: "InvitationAlreadyUsedOrDeleted"
 }
 export interface ClientEventInvitationChanged {
     tag: "InvitationChanged"
@@ -775,6 +786,9 @@ export interface ClientEventOffline {
 export interface ClientEventOnline {
     tag: "Online"
 }
+export interface ClientEventOrganizationNotFound {
+    tag: "OrganizationNotFound"
+}
 export interface ClientEventPing {
     tag: "Ping"
     ping: string
@@ -784,6 +798,14 @@ export interface ClientEventRevokedSelfUser {
 }
 export interface ClientEventServerConfigChanged {
     tag: "ServerConfigChanged"
+}
+export interface ClientEventServerInvalidResponseContent {
+    tag: "ServerInvalidResponseContent"
+    protocol_decode_error: string
+}
+export interface ClientEventServerInvalidResponseStatus {
+    tag: "ServerInvalidResponseStatus"
+    status_code: string
 }
 export interface ClientEventTooMuchDriftWithServerClock {
     tag: "TooMuchDriftWithServerClock"
@@ -832,18 +854,24 @@ export interface ClientEventWorkspacesSelfListChanged {
     tag: "WorkspacesSelfListChanged"
 }
 export type ClientEvent =
+  | ClientEventClientErrorResponse
   | ClientEventExpiredOrganization
+  | ClientEventFrozenSelfUser
   | ClientEventGreetingAttemptCancelled
   | ClientEventGreetingAttemptJoined
   | ClientEventGreetingAttemptReady
   | ClientEventIncompatibleServer
+  | ClientEventInvitationAlreadyUsedOrDeleted
   | ClientEventInvitationChanged
   | ClientEventMustAcceptTos
   | ClientEventOffline
   | ClientEventOnline
+  | ClientEventOrganizationNotFound
   | ClientEventPing
   | ClientEventRevokedSelfUser
   | ClientEventServerConfigChanged
+  | ClientEventServerInvalidResponseContent
+  | ClientEventServerInvalidResponseStatus
   | ClientEventTooMuchDriftWithServerClock
   | ClientEventWorkspaceLocallyCreated
   | ClientEventWorkspaceOpsInboundSyncDone

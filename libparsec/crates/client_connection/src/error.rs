@@ -6,9 +6,12 @@ use libparsec_types::prelude::*;
 
 pub type ConnectionResult<T> = core::result::Result<T, ConnectionError>;
 
-/// Sending a command isn't risk-free, we have multiple possible way to fail.
-/// Also note we only deal with *transport* related errors here (i.e. *deserialization* / *http* / *tcp* related stuff),
-/// hence dealing with the `status` field of the response message is left to the caller
+/// Connection errors regarding communication with the server
+///
+/// Sending a command isn't risk-free, there are multiple possible ways it can fail.
+/// These are only *transport*-related errors (i.e. deserialization/http/tcp stuff)
+/// including both client errors (4xx) and server errors (5xx).
+/// Dealing with the response `status` field is left to the caller.
 #[derive(Debug, Error)]
 pub enum ConnectionError {
     /// Missing authentication info
@@ -23,36 +26,40 @@ pub enum ConnectionError {
     #[error("Organization not found")]
     OrganizationNotFound,
 
-    /// Bad accept type
-    #[error("Bad accept type")]
+    /// Bad Accept header
+    #[error("Bad Accept response received from the server (unexpected Accept header))")]
     BadAcceptType,
 
     /// Invitation already used or deleted
     #[error("Invitation already used or deleted")]
     InvitationAlreadyUsedOrDeleted,
 
-    /// Any invalid content
-    #[error("Invalid content")]
+    /// Bad content is sent by the server for the following reasons:
+    /// - Bad content-type
+    /// - Body is not a valid message
+    /// - Unknown command
+    #[error("Bad Content response received from the server (unexpected Content-Type header, body or RPC command)")]
     BadContent,
 
     /// The organization has expired
     #[error("The organization has expired")]
     ExpiredOrganization,
 
-    /// We receive a response but with an unexpected status code.
-    #[error("Unexpected response status {0}")]
+    /// Unexpected response status code sent by the server
+    #[error("Invalid response status {0}")]
     InvalidResponseStatus(reqwest::StatusCode),
 
-    /// We failed to deserialize the reply.
+    /// Failed to deserialize the response
     #[error("Failed to deserialize the response: {0}")]
     InvalidResponseContent(ProtocolDecodeError),
 
-    /// We failed to retrieve Supported-Api-Versions
-    #[error("Supported-Api-Versions header is missing")]
-    MissingSupportedApiVersions,
+    /// Server does not support API version used by the client but did not
+    /// include the `Supported-Api-Versions` header in the response.
+    #[error("Server does not support API version {api_version} but did not include the supported versions in the response")]
+    MissingSupportedApiVersions { api_version: ApiVersion },
 
-    /// We failed to retrieve the reply.
-    #[error("Failed to retrieving the response: {}", .0.as_ref().map(reqwest::Error::to_string).unwrap_or_else(|| "Server unavailable".into()))]
+    /// Failed to retrieve the response
+    #[error("Failed to retrieve the response: {}", .0.as_ref().map(reqwest::Error::to_string).unwrap_or_else(|| "Server unavailable".into()))]
     NoResponse(Option<reqwest::Error>),
 
     /// The user has been revoked
@@ -60,11 +67,11 @@ pub enum ConnectionError {
     RevokedUser,
 
     /// The user has been frozen (i.e. similar to revoked, but can be unfrozen)
-    #[error("User has been frozen")]
+    #[error("User has been frozen (temporarily suspended from the server)")]
     FrozenUser,
 
     /// The server requires the user to accept the Terms of Service (TOS)
-    #[error("User must first accept the Terms of Service")]
+    #[error("User must accept the Terms of Service to be able to connect to the server")]
     UserMustAcceptTos,
 
     /// The authentication token has expired
@@ -76,22 +83,15 @@ pub enum ConnectionError {
     /// Basically, it's triggered if the computer's clock is more than 5 minutes
     /// off the server's time (in theory, modern computers all use NTP to
     /// synchronize their clocks regularly, but a manual sync might be needed)
-    #[error("Authentication token has expired. This could mean that the client's clock is too far behind or ahead of the server's.")]
+    #[error("Authentication token has expired. This could mean that the client's clock is too far behind or ahead of the server's")]
     AuthenticationTokenExpired,
 
-    /// The version is not supported
-    #[error("Unsupported API version: {api_version}, supported versions are: {supported_api_versions:?}")]
+    /// Server does not support the API version used by the client
+    #[error("Server does not support API version {api_version}, supported versions are: {supported_api_versions:?}")]
     UnsupportedApiVersion {
         api_version: ApiVersion,
         supported_api_versions: Vec<ApiVersion>,
     },
-
-    /// We failed to deserialize ApiVersion
-    #[error("Wrong ApiVersion {0}")]
-    WrongApiVersion(String),
-
-    #[error("Invalid sse event id: {0}")]
-    InvalidSSEEventID(#[from] reqwest::header::InvalidHeaderValue),
 }
 
 impl From<ProtocolDecodeError> for ConnectionError {
@@ -122,7 +122,7 @@ pub(crate) fn unsupported_api_version_from_headers(
         },
         None => {
             log::error!("Missing Supported-Api-Versions header");
-            ConnectionError::MissingSupportedApiVersions
+            ConnectionError::MissingSupportedApiVersions { api_version }
         }
     }
 }

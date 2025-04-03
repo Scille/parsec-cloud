@@ -169,15 +169,32 @@ macro_rules! impl_events {
     }
 }
 
-#[derive(Debug, Clone, thiserror::Error)]
-pub enum IncompatibleServerReason {
-    #[error("Server is incompatible given it doesn't support API version: {api_version} (supported versions: {supported_api_versions:?})")]
-    UnsupportedApiVersion {
-        api_version: ApiVersion,
-        supported_api_versions: Vec<ApiVersion>,
-    },
-    #[error("Server is incompatible due to an unexpected error: {0}")]
-    Unexpected(Arc<anyhow::Error>),
+#[derive(Debug, Clone)]
+pub enum ClientErrorResponseType {
+    BadAcceptType,
+    BadContent,
+    BadAuthenticationInfo,
+    MissingAuthenticationInfo,
+    AuthenticationTokenExpired,
+    InvitationAlreadyUsedOrDeleted,
+}
+impl std::fmt::Display for ClientErrorResponseType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            ClientErrorResponseType::BadAcceptType => write!(f, "BadAcceptType"),
+            ClientErrorResponseType::BadContent => write!(f, "BadContent"),
+            ClientErrorResponseType::BadAuthenticationInfo => write!(f, "BadAuthenticationInfo"),
+            ClientErrorResponseType::MissingAuthenticationInfo => {
+                write!(f, "MissingAuthenticationInfo")
+            }
+            ClientErrorResponseType::AuthenticationTokenExpired => {
+                write!(f, "AuthenticationTokenExpired")
+            }
+            ClientErrorResponseType::InvitationAlreadyUsedOrDeleted => {
+                write!(f, "InvitationAlreadyUsedOrDeleted")
+            }
+        }
+    }
 }
 
 // All those items will be named with a `Event` prefix (e.g. `Foo` => `EventFoo`)
@@ -243,20 +260,52 @@ impl_events!(
     ExpiredOrganization,
     /// This event is fired by the connection monitor.
     ///
-    /// The server has informed us that the user we are authenticated with has been revoked.
-    /// Note this can also occur if the user has been frozen (i.e. the user is temporary not
-    /// allowed to connect to the server).
+    /// The server has informed us that the organization was not found.
+    OrganizationNotFound,
+    /// This event is fired by the connection monitor.
+    ///
+    /// The server has informed us that the invitation was already used or deleted.
+    InvitationAlreadyUsedOrDeleted,
+    /// This event is fired by the connection monitor.
+    ///
+    /// The server has informed us that the authenticated user has been revoked.
     RevokedSelfUser,
     /// This event is fired by the connection monitor.
     ///
-    /// The server has informed us that the authenticated user has not accepted the
-    /// Terms of Service (TOS) yet.
+    /// The server has informed us that the authenticated user has been frozen
+    /// (i.e. the user is temporary not allowed to connect to the server).
+    FrozenSelfUser,
+    /// This event is fired by the connection monitor.
+    ///
+    /// The server has informed us that the authenticated user has not accepted
+    /// the Terms of Service (TOS) yet.
     MustAcceptTos,
     /// This event is fired by the connection monitor.
     ///
-    /// A connection has been made between the client and the server, but they cannot
-    /// settle on a common API to communicate.
-    IncompatibleServer(IncompatibleServerReason),
+    /// A connection has been established between the client and the server, but
+    /// cannot settle on a common API to communicate.
+    IncompatibleServer{
+        api_version: ApiVersion,
+        supported_api_version: Vec<ApiVersion>
+    },
+    /// This event is fired by the connection monitor.
+    ///
+    /// The server returned a client error response status code (4xx)
+    ClientErrorResponse{
+        error_type: ClientErrorResponseType
+    },
+    /// This event is fired by the connection monitor.
+    ///
+    /// The server returned an unexpected status code
+    ServerInvalidResponseStatus{
+        status_code: String
+    },
+    /// This event is fired by the connection monitor.
+    ///
+    /// The server returned an unexpected response content
+    ServerInvalidResponseContent{
+        protocol_decode_error: String
+    },
     /// The server and client clocks are too much out of sync.
     ///
     /// This event is a special snowflake: it is fired anywhere the client sends a RPC

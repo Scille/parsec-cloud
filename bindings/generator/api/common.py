@@ -159,6 +159,13 @@ class Handle(U32BasedType):
     pass
 
 
+class ApiVersion(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ApiVersion::try_from(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::ApiVersion| -> Result<String, &'static str> { Ok(x.to_string()) }"
+    )
+
+
 class OrganizationID(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string()) }"
 

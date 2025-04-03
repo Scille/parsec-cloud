@@ -3,6 +3,7 @@
 from typing import Callable
 
 from .common import (
+    ApiVersion,
     DateTime,
     Handle,
     IndexInt,
@@ -86,14 +87,33 @@ class ClientEvent(Variant):
     class ExpiredOrganization:
         pass
 
+    class OrganizationNotFound:
+        pass
+
+    class InvitationAlreadyUsedOrDeleted:
+        pass
+
     class RevokedSelfUser:
+        pass
+
+    class FrozenSelfUser:
         pass
 
     class MustAcceptTos:
         pass
 
     class IncompatibleServer:
-        detail: str
+        api_version: ApiVersion
+        supported_api_version: list[ApiVersion]
+
+    class ClientErrorResponse:
+        error_type: str
+
+    class ServerInvalidResponseStatus:
+        status_code: str
+
+    class ServerInvalidResponseContent:
+        protocol_decode_error: str
 
     # class InvalidKeysBundle:
     #     detail: str

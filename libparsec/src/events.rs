@@ -76,16 +76,29 @@ pub enum ClientEvent {
 
     // Error from server & server-provided data
     ExpiredOrganization,
+    OrganizationNotFound,
+    InvitationAlreadyUsedOrDeleted,
     RevokedSelfUser,
+    FrozenSelfUser,
     MustAcceptTos,
+    IncompatibleServer {
+        api_version: ApiVersion,
+        supported_api_version: Vec<ApiVersion>,
+    },
+    ClientErrorResponse {
+        error_type: String,
+    },
+    ServerInvalidResponseStatus {
+        status_code: String,
+    },
+    ServerInvalidResponseContent {
+        protocol_decode_error: String,
+    },
     TooMuchDriftWithServerClock {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
         ballpark_client_early_offset: Float,
         ballpark_client_late_offset: Float,
-    },
-    IncompatibleServer {
-        detail: String,
     },
     // TODO
     // InvalidKeysBundle {
@@ -132,11 +145,21 @@ pub(crate) struct OnEventCallbackPlugged {
     _greeting_attempt_joined:
         EventBusConnectionLifetime<libparsec_client::EventGreetingAttemptJoined>,
     _expired_organization: EventBusConnectionLifetime<libparsec_client::EventExpiredOrganization>,
+    _organization_not_found:
+        EventBusConnectionLifetime<libparsec_client::EventOrganizationNotFound>,
+    _invitation_already_used_or_deleted:
+        EventBusConnectionLifetime<libparsec_client::EventInvitationAlreadyUsedOrDeleted>,
     _revoked_self_user: EventBusConnectionLifetime<libparsec_client::EventRevokedSelfUser>,
+    _frozen_self_user: EventBusConnectionLifetime<libparsec_client::EventFrozenSelfUser>,
     _must_accept_tos: EventBusConnectionLifetime<libparsec_client::EventMustAcceptTos>,
+    _incompatible_server: EventBusConnectionLifetime<libparsec_client::EventIncompatibleServer>,
+    _client_error_response: EventBusConnectionLifetime<libparsec_client::EventClientErrorResponse>,
+    _server_invalid_response_status:
+        EventBusConnectionLifetime<libparsec_client::EventServerInvalidResponseStatus>,
+    _server_invalid_response_content:
+        EventBusConnectionLifetime<libparsec_client::EventServerInvalidResponseContent>,
     _too_much_drift_with_server_clock:
         EventBusConnectionLifetime<libparsec_client::EventTooMuchDriftWithServerClock>,
-    _incompatible_server: EventBusConnectionLifetime<libparsec_client::EventIncompatibleServer>,
     // _invalid_keys_bundle: EventBusConnectionLifetime<libparsec_client::EventInvalidKeysBundle>,
     // _invalid_certificate: EventBusConnectionLifetime<libparsec_client::EventInvalidCertificate>,
     // _invalid_manifest: EventBusConnectionLifetime<libparsec_client::EventInvalidManifest>,
@@ -358,10 +381,30 @@ impl OnEventCallbackPlugged {
                 (on_event_callback)(handle, ClientEvent::ExpiredOrganization);
             })
         };
+        let organization_not_found = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(move |_: &libparsec_client::EventOrganizationNotFound| {
+                (on_event_callback)(handle, ClientEvent::OrganizationNotFound);
+            })
+        };
+        let invitation_already_used_or_deleted = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(
+                move |_: &libparsec_client::EventInvitationAlreadyUsedOrDeleted| {
+                    (on_event_callback)(handle, ClientEvent::InvitationAlreadyUsedOrDeleted);
+                },
+            )
+        };
         let revoked_self_user = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |_: &libparsec_client::EventRevokedSelfUser| {
                 (on_event_callback)(handle, ClientEvent::RevokedSelfUser);
+            })
+        };
+        let frozen_self_user = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(move |_: &libparsec_client::EventFrozenSelfUser| {
+                (on_event_callback)(handle, ClientEvent::FrozenSelfUser);
             })
         };
         let must_accept_tos = {
@@ -369,6 +412,55 @@ impl OnEventCallbackPlugged {
             event_bus.connect(move |_: &libparsec_client::EventMustAcceptTos| {
                 (on_event_callback)(handle, ClientEvent::MustAcceptTos);
             })
+        };
+        let incompatible_server = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(move |e: &libparsec_client::EventIncompatibleServer| {
+                (on_event_callback)(
+                    handle,
+                    ClientEvent::IncompatibleServer {
+                        api_version: e.api_version,
+                        supported_api_version: e.supported_api_version.clone(),
+                    },
+                );
+            })
+        };
+        let client_error_response = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(move |e: &libparsec_client::EventClientErrorResponse| {
+                (on_event_callback)(
+                    handle,
+                    ClientEvent::ClientErrorResponse {
+                        error_type: e.error_type.to_string(),
+                    },
+                );
+            })
+        };
+        let server_invalid_response_status = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(
+                move |e: &libparsec_client::EventServerInvalidResponseStatus| {
+                    (on_event_callback)(
+                        handle,
+                        ClientEvent::ServerInvalidResponseStatus {
+                            status_code: e.status_code.clone(),
+                        },
+                    );
+                },
+            )
+        };
+        let server_invalid_response_content = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(
+                move |e: &libparsec_client::EventServerInvalidResponseContent| {
+                    (on_event_callback)(
+                        handle,
+                        ClientEvent::ServerInvalidResponseContent {
+                            protocol_decode_error: e.protocol_decode_error.clone(),
+                        },
+                    );
+                },
+            )
         };
         let too_much_drift_with_server_clock = {
             let on_event_callback = on_event_callback.clone();
@@ -386,17 +478,7 @@ impl OnEventCallbackPlugged {
                 },
             )
         };
-        let incompatible_server = {
-            let on_event_callback = on_event_callback.clone();
-            event_bus.connect(move |e: &libparsec_client::EventIncompatibleServer| {
-                (on_event_callback)(
-                    handle,
-                    ClientEvent::IncompatibleServer {
-                        detail: e.0.to_string(),
-                    },
-                );
-            })
-        };
+
         // let invalid_keys_bundle = {
         //     let on_event_callback = on_event_callback.clone();
         //     event_bus.connect(move |e: &libparsec_client::EventInvalidKeysBundle| {
@@ -438,9 +520,15 @@ impl OnEventCallbackPlugged {
             _greeting_attempt_joined: greeting_attempt_joined,
             _too_much_drift_with_server_clock: too_much_drift_with_server_clock,
             _expired_organization: expired_organization,
+            _organization_not_found: organization_not_found,
+            _invitation_already_used_or_deleted: invitation_already_used_or_deleted,
             _revoked_self_user: revoked_self_user,
+            _frozen_self_user: frozen_self_user,
             _must_accept_tos: must_accept_tos,
             _incompatible_server: incompatible_server,
+            _client_error_response: client_error_response,
+            _server_invalid_response_status: server_invalid_response_status,
+            _server_invalid_response_content: server_invalid_response_content,
             // _invalid_keys_bundle: invalid_keys_bundle,
             // _invalid_certificate: invalid_certificate,
             // _invalid_manifest: invalid_manifest,
