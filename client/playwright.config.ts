@@ -24,6 +24,8 @@ export default defineConfig({
   workers: process.env.CI ? 5 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: process.env.CI ? 'github' : 'list',
+  /* Allow for 10 test failure on CI (including retries) */
+  maxFailures: process.env.CI ? 10 : 0,
   webServer: {
     command: 'npm run dev -- --port 8080',
     url: 'http://localhost:8080',
@@ -34,8 +36,12 @@ export default defineConfig({
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: 'http://localhost:8080',
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    /**
+     * Keep trace of failed test
+     * See https://playwright.dev/docs/trace-viewer on how to use trace
+     * And https://playwright.dev/docs/api/class-testoptions#test-options-trace how to configure the option
+     */
+    trace: 'retain-on-failure',
   },
   testIgnore: ['**/organization_switch_popover.spec.ts', '**/export_recovery_device.spec.ts', '**/import_recovery_device.spec.ts'],
   /* Configure projects for major browsers */
