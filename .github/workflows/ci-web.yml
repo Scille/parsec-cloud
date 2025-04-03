@@ -159,7 +159,7 @@ jobs:
         run: curl http://localhost:6777
 
       - name: Install Playwright dependencies
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chrome
         working-directory: client
         timeout-minutes: 5
 
