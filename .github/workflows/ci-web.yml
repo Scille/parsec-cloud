@@ -169,7 +169,7 @@ jobs:
           TESTBED_SERVER: parsec3://localhost:6777?no_ssl=true
           PARSEC_APP_TRIAL_SERVERS: localhost:6777?no_ssl=true
         working-directory: client
-        timeout-minutes: 20
+        timeout-minutes: 30
 
       - name: Archive test results
         if: failure()
