@@ -59,7 +59,7 @@
             <template v-else-if="state === HomePageState.ForgottenPassword">
               <import-recovery-device-page
                 :device="selectedDevice"
-                @organization-selected="onOrganizationSelected"
+                @organization-selected="login"
               />
             </template>
           </slide-horizontal>

@@ -36,6 +36,7 @@
                 type="file"
                 hidden
                 ref="hiddenInput"
+                accept=".psrk"
               />
               <div
                 v-if="!recoveryFile"
@@ -117,7 +118,7 @@
         id="validate-password-btn"
         class="validate-button"
         :disabled="!changeButtonIsEnabled"
-        @click="createNewDevice()"
+        @click="createNewDevice"
       >
         {{ $msTranslate('ImportRecoveryDevicePage.actions.validateAuth') }}
       </ion-button>
@@ -151,7 +152,15 @@ import { secretKeyValidator } from '@/common/validators';
 import { MsInformativeText, MsReportText, MsReportTheme, MsInput, asyncComputed, Validity } from 'megashark-lib';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice, importRecoveryDevice, ImportRecoveryDeviceErrorTag } from '@/parsec';
+import {
+  AccessStrategy,
+  AvailableDevice,
+  DeviceAccessStrategy,
+  DeviceSaveStrategyPassword,
+  DeviceSaveStrategyTag,
+  importRecoveryDevice,
+  ImportRecoveryDeviceErrorTag,
+} from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonTitle } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
@@ -173,6 +182,7 @@ const recoveryFile: Ref<File | null> = ref(null);
 const isSecretKeyValid = ref(false);
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
+let accessStrategy: DeviceAccessStrategy | undefined;
 let newDevice: AvailableDevice;
 
 const changeButtonIsEnabled = asyncComputed(async (): Promise<boolean> => {
@@ -183,7 +193,7 @@ const changeButtonIsEnabled = asyncComputed(async (): Promise<boolean> => {
 });
 
 const emits = defineEmits<{
-  (e: 'organizationSelected', device: AvailableDevice): void;
+  (e: 'organizationSelected', device: AvailableDevice, access: DeviceAccessStrategy): void;
 }>();
 
 const props = defineProps<{
@@ -231,15 +241,19 @@ async function createNewDevice(): Promise<void> {
     content.set(buffer.value, offset);
   }
 
+  const saveStrategy = chooseAuthRef.value.getSaveStrategy();
   const result = await importRecoveryDevice(
     props.device ? props.device.deviceLabel : getDefaultDeviceName(),
     content,
     secretKey.value.trim(),
-    chooseAuthRef.value.getSaveStrategy(),
+    saveStrategy,
   );
   if (result.ok) {
     newDevice = result.value;
-
+    accessStrategy =
+      saveStrategy.tag === DeviceSaveStrategyTag.Keyring
+        ? AccessStrategy.useKeyring(newDevice)
+        : AccessStrategy.usePassword(newDevice, (saveStrategy as DeviceSaveStrategyPassword).password);
     state.value = ImportDevicePageState.Done;
   } else {
     const notificationInfo = { message: '', level: InformationLevel.Error };
@@ -261,7 +275,7 @@ async function createNewDevice(): Promise<void> {
 }
 
 async function onLoginClick(): Promise<void> {
-  emits('organizationSelected', newDevice);
+  emits('organizationSelected', newDevice, accessStrategy as DeviceAccessStrategy);
 }
 </script>
 
