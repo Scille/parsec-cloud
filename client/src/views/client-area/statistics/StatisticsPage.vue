@@ -143,12 +143,12 @@
               <ion-text class="usage-data__title title-h5">{{ $msTranslate('clientArea.statistics.extra') }}</ion-text>
               <div class="usage-data-content">
                 <div class="usage-data-caption">
-                  <ion-text class="usage-data-caption__title title-h2">{{
-                    $msTranslate(formatFileSize(payingData ? payingData.amount : 0))
-                  }}</ion-text>
-                  <ion-text class="usage-data-caption__description body">{{
-                    $msTranslate('clientArea.statistics.additionalCost')
-                  }}</ion-text>
+                  <ion-text class="usage-data-caption__title title-h2">
+                    {{ $msTranslate(formatFileSize(payingData ? payingData.amount : 0)) }}
+                  </ion-text>
+                  <ion-text class="usage-data-caption__description body">
+                    {{ $msTranslate('clientArea.statistics.additionalCost') }}
+                  </ion-text>
                 </div>
               </div>
             </div>
