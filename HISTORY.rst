@@ -4,6 +4,100 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.3.3-a.0.dev.20182+87bddff (2025-04-04)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Update user interface to regroup any user profile and settings in a single
+  tabbed view.
+  (`#9470 <https://github.com/Scille/parsec-cloud/issues/9470>`__)
+
+* Switch sidebar to tab menu on mobile
+  (`#9805 <https://github.com/Scille/parsec-cloud/issues/9805>`__)
+
+* Automatically scrolls to the file pointed to when using a file link
+  (`#8627 <https://github.com/Scille/parsec-cloud/issues/8627>`__)
+
+* Add new commands in the client CLI: `certificate poll`, `certificate forget-
+  all-certificates`, `device change-authentication`, `device overwrite-server-
+  url`
+  (`#10017 <https://github.com/Scille/parsec-cloud/issues/10017>`__)
+
+* Added picture in picture, loop and playback speed options to video and audio
+  viewers
+  (`#9750 <https://github.com/Scille/parsec-cloud/issues/9750>`__)
+
+* Added responsive for files/folders item in list view.
+  (`#9902 <https://github.com/Scille/parsec-cloud/issues/9902>`__)
+
+* Added responsive for user item in list view.
+  (`#9912 <https://github.com/Scille/parsec-cloud/issues/9912>`__)
+
+* Added page for tracking order (custom order only).
+  (`#9111 <https://github.com/Scille/parsec-cloud/issues/9111>`__)
+
+* Update responsive for Organization information page
+  (`#10061 <https://github.com/Scille/parsec-cloud/issues/10061>`__)
+
+* Added small-display global and specific contextual menus for members and
+  files, as well as correct handling of contextual menu when selecting multiple
+  members
+  (`#9505 <https://github.com/Scille/parsec-cloud/issues/9505>`__)
+
+* Added top bar responsive for organization page, files page, and users page
+  (`#9984 <https://github.com/Scille/parsec-cloud/issues/9984>`__)
+
+* Added responsive for organization page.
+  (`#9878 <https://github.com/Scille/parsec-cloud/issues/9878>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed "Remember me" login for customer area
+  (`#9616 <https://github.com/Scille/parsec-cloud/issues/9616>`__)
+
+* Only count active users in organization stats
+  (`#9723 <https://github.com/Scille/parsec-cloud/issues/9723>`__)
+
+* Fix crash on Windows when a workspace name contains characters incompatible
+  with Windows file path rules.
+  (`#9925 <https://github.com/Scille/parsec-cloud/issues/9925>`__)
+
+* Fix log messages not being appended in libparsec log file
+  (`#10011 <https://github.com/Scille/parsec-cloud/issues/10011>`__)
+
+* Added a minimal window size
+  (`#9674 <https://github.com/Scille/parsec-cloud/issues/9674>`__)
+
+* Fix an error message when clicking on the dock on MacOS while the app is
+  starting
+  (`#9950 <https://github.com/Scille/parsec-cloud/issues/9950>`__)
+
+* fixes file viewer dropdowns expanding out of the viewport
+  (`#9798 <https://github.com/Scille/parsec-cloud/issues/9798>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Updated how the new version available notification looks
+  (`#9853 <https://github.com/Scille/parsec-cloud/issues/9853>`__)
+
+* Prevent sorting users by Status if all users are active
+  (`#9621 <https://github.com/Scille/parsec-cloud/issues/9621>`__)
+
+* Slightly reworked the billing info page in client area to make billing address
+  modifications more intuitive
+  (`#9607 <https://github.com/Scille/parsec-cloud/issues/9607>`__)
+
+* Slightly improve the workspace card UI.
+  (`#9866 <https://github.com/Scille/parsec-cloud/issues/9866>`__)
+
+
+
 Parsec v3.3.2 (2025-03-04)
 --------------------------
 

@@ -1,1 +1,0 @@
-Switch sidebar to tab menu on mobile
