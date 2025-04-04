@@ -47,6 +47,7 @@ onMounted(async () => {
             replace: true,
           });
         },
+        // 0 can cause loading problems with the org switch (Vue does not fully unmount in some cases)
         import.meta.env.PARSEC_APP_TESTBED_SERVER ? 0 : 1500,
       );
     } catch (e: any) {
