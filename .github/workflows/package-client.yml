@@ -123,7 +123,7 @@ jobs:
         working-directory: bindings/web
 
       - name: Build web app
-        run: npm run web:release
+        run: npm run web:release -- --mode ${{ steps.version.outputs.type }}
         env:
           PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           BASE_URL: /client
