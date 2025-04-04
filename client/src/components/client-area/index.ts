@@ -6,4 +6,7 @@ import YearInvoicesList from '@/components/client-area/invoices/YearInvoicesList
 // others
 import TimeFilterPopover from '@/components/client-area/TimeFilterPopover.vue';
 
-export { TimeFilterPopover, YearInvoicesList };
+// progress circle
+import ProgressCircle from '@/components/client-area/ProgressCircle.vue';
+
+export { ProgressCircle, TimeFilterPopover, YearInvoicesList };

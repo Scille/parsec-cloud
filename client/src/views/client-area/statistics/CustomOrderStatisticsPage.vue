@@ -165,12 +165,12 @@
               </ion-text>
             </div>
           </div>
-          <div class="storage-data-consumption">
-            <ion-text class="storage-data-consumption__title title-h5">
-              {{ $msTranslate('clientArea.statistics.consumptionDetail') }}
+          <div class="storage-data-usage">
+            <ion-text class="storage-data-usage__title title-h5">
+              {{ $msTranslate('clientArea.statistics.usageDetail') }}
             </ion-text>
 
-            <div class="consumption">
+            <div class="usage">
               <ms-report-text
                 :theme="MsReportTheme.Warning"
                 v-if="storagePercentage === 100"
@@ -183,22 +183,22 @@
               >
                 {{ $msTranslate('clientArea.statistics.almostFullUsed') }}
               </ms-report-text>
-              <ion-text class="consumption-number title-h3">
+              <ion-text class="usage-number title-h3">
                 {{ $msTranslate(formatFileSize(remainingStorageSize)) }}
                 <span class="subtitles-sm">{{ $msTranslate('clientArea.statistics.remaining') }}</span>
               </ion-text>
-              <div class="consumption-progress">
+              <div class="usage-progress">
                 <div
-                  class="consumption-progress__bar"
+                  class="usage-progress__bar"
                   :class="{ overused: storagePercentage >= 100 }"
                   id="useStorageBar"
                 />
                 <div
-                  class="consumption-progress__bar"
+                  class="usage-progress__bar"
                   id="remainingStorageBar"
                 />
               </div>
-              <div class="consumption-caption">
+              <div class="usage-caption">
                 <span
                   class="subtitles-sm"
                   :class="{ overused: storagePercentage >= 100 }"
@@ -302,18 +302,18 @@
               />
             </div>
           </div>
-          <div class="storage-data-consumption">
+          <div class="storage-data-usage">
             <ion-skeleton-text
               :animated="true"
               class="skeleton-loading-text"
             />
-            <div class="storage-data-consumption-content">
-              <div class="consumption-item">
+            <div class="storage-data-usage-content">
+              <div class="usage-item">
                 <div
                   id="firstBar"
                   class="consumption"
                 >
-                  <div class="consumption-number">
+                  <div class="usage-number">
                     <ion-skeleton-text
                       :animated="true"
                       class="skeleton-loading-text"
@@ -532,7 +532,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
     display: flex;
     gap: 3rem;
 
-    &-consumption {
+    &-usage {
       display: flex;
       flex-direction: column;
       gap: 1rem;
@@ -591,7 +591,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   }
 }
 
-.consumption {
+.usage {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -681,11 +681,11 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
     height: 1rem;
   }
 
-  .storage-data-consumption::before {
+  .storage-data-usage::before {
     content: none;
   }
 
-  .consumption-number {
+  .usage-number {
     .skeleton-loading-text {
       width: 2rem;
       height: 1rem;
