@@ -6,17 +6,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-18 17:42+0200\n"
+"POT-Creation-Date: 2025-04-04 15:38+0200\n"
 "PO-Revision-Date: 2024-09-18 18:43+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
-"Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"Generated-By: Babel 2.15.0\n"
-"X-Generator: Poedit 3.5\n"
+"Generated-By: Babel 2.17.0\n"
 
 #: ../../userguide/installation.rst:7
 msgid "Install Parsec"
@@ -39,7 +38,8 @@ msgstr "Windows"
 msgid "Download the latest stable version of the Windows installer:"
 msgstr "Téléchargez la dernière version stable de l'installeur Windows :"
 
-#: ../../userguide/installation.rst
+#: ../../userguide/installation.rst:21 ../../userguide/installation.rst:32
+#: ../../userguide/installation.rst:82
 msgid "download parsec"
 msgstr "télécharger parsec"
 
@@ -117,25 +117,25 @@ msgstr ""
 "Ensuite, vous pouvez installer la v3.0 (à condition d'avoir déjà installé la "
 "v2.17), en lui donnant un nom spécifique :"
 
-#: ../../userguide/installation.rst:79
+#: ../../userguide/installation.rst:78
 msgid "macOS"
 msgstr "macOS"
 
-#: ../../userguide/installation.rst:85
+#: ../../userguide/installation.rst:80
 msgid "Download the latest stable version of the **macOS installer**:"
 msgstr "Téléchargez la dernière version stable de l'installateur **macOS** :"
 
-#: ../../userguide/installation.rst:92
+#: ../../userguide/installation.rst:87
 msgid ""
 "Start the ``.dmg`` installer and follow the instructions to install **Parsec "
 "app**."
 msgstr "Lancez le fichier ``.dmg`` et suivez les instructions d'installation."
 
-#: ../../userguide/installation.rst:94
+#: ../../userguide/installation.rst:89
 msgid "Install macFUSE (see below)"
 msgstr "Installation de macFUSE (voir ci-dessous)"
 
-#: ../../userguide/installation.rst:98
+#: ../../userguide/installation.rst:93
 msgid ""
 "Parsec requires `macFUSE <https://osxfuse.github.io/>`_ in order to provide "
 "a smooth integration with macOS and let you access your documents via Finder "
@@ -145,15 +145,15 @@ msgstr ""
 "intégration fluide avec macOS et de vous permettre d'accéder à vos documents "
 "via Finder (le gestionnaire de fichiers de macOS)."
 
-#: ../../userguide/installation.rst:100
+#: ../../userguide/installation.rst:95
 msgid "**Install macFUSE**"
 msgstr "**Installation de macFUSE**"
 
-#: ../../userguide/installation.rst:102
+#: ../../userguide/installation.rst:97
 msgid "This section describe how to install macFUSE."
 msgstr "Cette section décrit comment installer macFUSE."
 
-#: ../../userguide/installation.rst:104
+#: ../../userguide/installation.rst:99
 msgid ""
 "Get the latest version from the `macFUSE <https://osxfuse.github.io/>`_ "
 "website."
@@ -161,15 +161,15 @@ msgstr ""
 "Téléchargez la dernière version sur le site web de `macFUSE <https://osxfuse."
 "github.io/>`_."
 
-#: ../../userguide/installation.rst
+#: ../../userguide/installation.rst:101
 msgid "macFUSE download screen"
 msgstr "écran de téléchargement de macFUSE"
 
-#: ../../userguide/installation.rst:110
+#: ../../userguide/installation.rst:105
 msgid "Open the ``.dmg`` file and follow instructions to install."
 msgstr "Ouvrez le fichier ``.dmg`` et suivez les instructions d'installation."
 
-#: ../../userguide/installation.rst:112
+#: ../../userguide/installation.rst:107
 msgid ""
 "If the opening fails, two options are available in `System Settings > "
 "Privacy and Security`: either check the `App Store and identified "
@@ -183,39 +183,40 @@ msgstr ""
 "changer ce paramètre, ce qui devra être fait une fois pour ouvrir le ``."
 "dmg``, et éventuellement une fois de plus pour démarrer l'installateur."
 
-#: ../../userguide/installation.rst:112
+#: ../../userguide/installation.rst:109
 msgid "macFUSE current allow screen"
 msgstr "écran d'autorisation de macFUSE"
 
-#: ../../userguide/installation.rst:118
+#: ../../userguide/installation.rst:113
 msgid "Finally, reboot your Mac to complete the installation."
 msgstr "Enfin, redémarrez votre Mac pour finaliser l'installation."
 
-#: ../../userguide/installation.rst:122
+#: ../../userguide/installation.rst:117
+#, fuzzy
 msgid ""
 "On macOS 12 and older, if the installer fails to start, check the `App Store "
-"and identified developers` box in `System Preferences > Security & Privacy`:"
+"and identified developers` box in `System Settings > Security & Privacy`:"
 msgstr ""
-"Sur macOS 12 et les versions antérieures, si le programme d'installation ne "
-"démarre pas, cochez la case `App Store et développeurs identifiés` dans "
-"`Confidentialité et sécurité Système > Confidentialité et sécurité` :"
+"À partir de macOS 12, si le programme d'installation ne démarre pas, cochez "
+"la case `App Store et développeurs identifiés` dans `Réglages Système > "
+"Confidentialité et sécurité` :"
 
-#: ../../userguide/installation.rst
+#: ../../userguide/installation.rst:119
 msgid "macOS path to Security and Privacy"
 msgstr "macOS chemin vers Sécurité et Confidentialité"
 
-#: ../../userguide/installation.rst
+#: ../../userguide/installation.rst:123
 msgid "macOS previous allow identified developer"
 msgstr "macOS ancien autoriser développeurs identifiés"
 
-#: ../../userguide/installation.rst:132
+#: ../../userguide/installation.rst:127
 msgid ""
 "To change this setting, click the lock first which will require admin rights."
 msgstr ""
 "Pour changer ce paramètre, cliquez d'abord sur le cadenas, qui requiert les "
 "droits d'administrateur."
 
-#: ../../userguide/installation.rst:134
+#: ../../userguide/installation.rst:129
 msgid ""
 "Once the installation is done, a `System Extension Updated` window will pop "
 "up. Click `Open Security Preferences`, and click the lock, then click "
@@ -226,19 +227,19 @@ msgstr ""
 "sécurité`, puis cliquez sur `Autoriser` après avoir cliqué à nouveau sur le "
 "cadenas :"
 
-#: ../../userguide/installation.rst
+#: ../../userguide/installation.rst:131
 msgid "Previous System Extension Updated window"
 msgstr "Ancienne fenêtre de mise à jour d'extension système"
 
-#: ../../userguide/installation.rst
+#: ../../userguide/installation.rst:135
 msgid "macOS previous allow extension"
 msgstr "macOS ancien autoriser extension"
 
-#: ../../userguide/installation.rst:146
+#: ../../userguide/installation.rst:141
 msgid "Update Parsec app"
 msgstr "Mise à jour de l'application Parsec"
 
-#: ../../userguide/installation.rst:148
+#: ../../userguide/installation.rst:143
 msgid ""
 "Automatic updates are supported and enabled. When a new version is released, "
 "Parsec app updates automatically on startup."
@@ -247,7 +248,7 @@ msgstr ""
 "nouvelle version est publiée, l'application Parsec se met à jour "
 "automatiquement au démarrage."
 
-#: ../../userguide/installation.rst:150
+#: ../../userguide/installation.rst:145
 msgid ""
 "If Parsec app is running, A message is displayed. Simply click on the "
 "message to update the application."
@@ -255,11 +256,11 @@ msgstr ""
 "Si l'application Parsec est en cours d'exécution, un message s'affiche. Il "
 "suffit de cliquer sur le message pour mettre à jour l'application."
 
-#: ../../userguide/installation.rst:154
+#: ../../userguide/installation.rst:149
 msgid "Install an older version of Parsec"
 msgstr "Installer une ancienne version de Parsec"
 
-#: ../../userguide/installation.rst:158
+#: ../../userguide/installation.rst:153
 msgid ""
 "For security reasons, you should **always install the latest stable version "
 "of Parsec** as it contains the latest security fixes."
@@ -268,7 +269,7 @@ msgstr ""
 "version stable de Parsec** car elle contient les derniers correctifs de "
 "sécurité."
 
-#: ../../userguide/installation.rst:160
+#: ../../userguide/installation.rst:155
 msgid "If you need to access older versions, they are available on `GitHub`_."
 msgstr ""
 "Si vous avez besoin d'accéder à des versions plus anciennes, elle sont "
