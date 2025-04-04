@@ -248,7 +248,7 @@ macro_rules! impl_common_stuff {
     };
 }
 
-/// The enum constains the list of possible errors when working with url / addr.
+/// The enum contains the list of possible errors when working with url / addr.
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum AddrError {
     /// We failed to parse the url
