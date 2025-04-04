@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-19 17:32+0200\n"
-"PO-Revision-Date: 2024-09-19 17:37+0200\n"
+"POT-Creation-Date: 2025-04-09 10:12+0200\n"
+"PO-Revision-Date: 2025-04-09 10:22+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
@@ -15,20 +15,81 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"Generated-By: Babel 2.15.0\n"
+"Generated-By: Babel 2.17.0\n"
 "X-Generator: Poedit 3.5\n"
 
 #: ../../userguide/troubleshooting.rst:6
 msgid "Troubleshooting"
 msgstr "Résolution des problèmes"
 
-#: ../../userguide/troubleshooting.rst:10
+#: ../../userguide/troubleshooting.rst:9
+msgid "MacOS Finder errors"
+msgstr "Erreurs du Finder macOS"
+
+#: ../../userguide/troubleshooting.rst:11
+msgid ""
+"Some file operations can fail when browsing your files through the macOS "
+"Finder. This is due to some macOS system updates that may break "
+"compatibility with the filesystem driver used by Parsec."
+msgstr ""
+"Certaines opérations sur les fichiers peuvent échouer lorsque vous parcourez "
+"vos fichiers dans le Finder de macOS. Ceci est dû à certaines mises à jour "
+"du système macOS qui peuvent rompre la compatibilité avec le pilote du "
+"système de fichiers utilisé par Parsec."
+
+#: ../../userguide/troubleshooting.rst:15
+msgid ""
+"Make sure your version of **macFUSE** is up to date, either by checking in "
+"`System Settings > macFUSE`, or through the `macFUSE <https://osxfuse.github."
+"io/>`_ website. After update, you will need to allow the use of **macFUSE** "
+"in `System Settings > Privacy and Security` and reboot your Mac."
+msgstr ""
+"Assurez-vous que votre version de **macFUSE** est à jour, soit en vérifiant "
+"dans `Réglages Système > macFUSE`, soit en consultant le site web `macFUSE "
+"<https://osxfuse.github.io/>`_. Après la mise à jour, vous devrez autoriser "
+"l'utilisation de **macFUSE** dans `Réglages Système > Confidentialité et "
+"sécurité` et redémarrer votre Mac."
+
+#: ../../userguide/troubleshooting.rst:20
+msgid ""
+"If the issues persist on the latest version, you can still perform file "
+"operations directly in Parsec until the issue is fixed."
+msgstr ""
+"Si les problèmes persistent dans la dernière version, vous pouvez toujours "
+"effectuer des opérations sur les fichiers directement dans Parsec jusqu'à ce "
+"que le problème soit résolu."
+
+#: ../../userguide/troubleshooting.rst:23
+msgid "The Parsec interface (GUI) allows you to:"
+msgstr "L'interface Parsec (GUI) vous permet de :"
+
+#: ../../userguide/troubleshooting.rst:25
+msgid "**copy** and **move** files within the same workspace"
+msgstr "**copier** et **déplacer** des fichiers dans le même espace de travail"
+
+#: ../../userguide/troubleshooting.rst:26
+msgid "**delete** and **rename** files from your workspace"
+msgstr "**supprimer** et **renommer** les fichiers de votre espace de travail"
+
+#: ../../userguide/troubleshooting.rst:27
+msgid "**import** files into your workspace either:"
+msgstr "**importer** des fichiers dans votre espace de travail soit :"
+
+#: ../../userguide/troubleshooting.rst:29
+msgid "by drag & drop from the Finder into a directory in Parsec"
+msgstr "par glisser-déposer depuis le Finder dans un répertoire de Parsec"
+
+#: ../../userguide/troubleshooting.rst:30
+msgid "by using the ``Import`` button"
+msgstr "en utilisant le bouton ``Importer``"
+
+#: ../../userguide/troubleshooting.rst:34
 msgid "Microsoft Excel/Word or similar software says the file name is too long"
 msgstr ""
 "MS Excel/Word ou un logiciel similaire indique que le nom du fichier est "
 "trop long"
 
-#: ../../userguide/troubleshooting.rst:12
+#: ../../userguide/troubleshooting.rst:36
 msgid ""
 "This error is due to Microsoft's `Maximum File Path Limitation <https://"
 "learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-"
@@ -38,7 +99,7 @@ msgstr ""
 "learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-"
 "limitation>`_ de Microsoft."
 
-#: ../../userguide/troubleshooting.rst:14
+#: ../../userguide/troubleshooting.rst:38
 msgid ""
 "When you save or open a file, its path (including the file name) cannot "
 "exceeds 260 characters. This limitation includes 3 characters for the drive "
@@ -51,7 +112,7 @@ msgstr ""
 "de dossiers, la barre oblique inverse entre les dossiers et les caractères "
 "du nom du fichier."
 
-#: ../../userguide/troubleshooting.rst:19
+#: ../../userguide/troubleshooting.rst:43
 msgid ""
 "So the only solution is to rename the file or the folders containing it in "
 "order to have shorter path."
@@ -59,7 +120,7 @@ msgstr ""
 "La seule solution consiste donc à renommer le fichier ou les dossiers qui le "
 "contiennent afin de raccourcir le chemin d'accès."
 
-#: ../../userguide/troubleshooting.rst:22
+#: ../../userguide/troubleshooting.rst:46
 msgid ""
 "Microsoft's article also mentions a more cumbersome approach by modifying a "
 "registry entry. This might work, but it has not been tested in Parsec."
@@ -68,11 +129,11 @@ msgstr ""
 "consistant à modifier une entrée du registre. Cette méthode pourrait "
 "fonctionner, mais elle n'a pas été testée dans Parsec."
 
-#: ../../userguide/troubleshooting.rst:27
+#: ../../userguide/troubleshooting.rst:51
 msgid "Copying files from Parsec V2 takes a long time"
 msgstr "La copie des fichiers de Parsec V2 prend beaucoup de temps"
 
-#: ../../userguide/troubleshooting.rst:29
+#: ../../userguide/troubleshooting.rst:53
 msgid ""
 "When copying files from a mounted workspace in Parsec V2 the operation may "
 "take some time and the files may not be accessible to open them. After some "
@@ -83,7 +144,7 @@ msgstr ""
 "ne pas être accessibles pour les ouvrir. Après un certain temps, les "
 "fichiers sont copiés et peuvent être ouverts normalement."
 
-#: ../../userguide/troubleshooting.rst:33
+#: ../../userguide/troubleshooting.rst:57
 msgid ""
 "This is most likely due to data is not being present locally in cache. "
 "Reading data when is not in cache is much slower than reading data from from "
@@ -96,7 +157,7 @@ msgstr ""
 "système de fichiers sur disque ordinaire et les performances dépendent "
 "fortement de la vitesse de votre connexion internet."
 
-#: ../../userguide/troubleshooting.rst:38
+#: ../../userguide/troubleshooting.rst:62
 msgid ""
 "Moreover, while the file is under copy, its displayed size only grows when a "
 "*flush* operation occurs. Flush are not explicitly issued by Parsec V2 and "
@@ -109,7 +170,7 @@ msgstr ""
 "lorsque les données écrites depuis le flush précédent sont plus grandes que "
 "la taille de bloc du fichier (c'est-à-dire 512 Ko)."
 
-#: ../../userguide/troubleshooting.rst:43
+#: ../../userguide/troubleshooting.rst:67
 msgid ""
 "So this explain why the file can appear with a size of 0 for some time: data "
 "is being downloaded into cache and then copied via occasional flush "
@@ -119,7 +180,7 @@ msgstr ""
 "pendant un certain temps : les données sont téléchargées dans la mémoire "
 "cache, puis copiées par des opérations de vidage occasionnelles."
 
-#: ../../userguide/troubleshooting.rst:46
+#: ../../userguide/troubleshooting.rst:70
 msgid ""
 "You could try enabling the off-line mode on Parsec V2 workspaces before "
 "copying large amount of files. In any case, you will need to wait for the "

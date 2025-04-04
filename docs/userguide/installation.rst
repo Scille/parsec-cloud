@@ -114,7 +114,7 @@ Parsec is available for Linux, Mac, and Windows operating systems.
 
       .. note::
 
-          On macOS 12 and older, if the installer fails to start, check the `App Store and identified developers` box in `System Preferences > Security & Privacy`:
+          On macOS 12 and older, if the installer fails to start, check the `App Store and identified developers` box in `System Settings > Security & Privacy`:
 
           .. image:: screens/macfuse_previous_system_preferences.png
               :align: center
