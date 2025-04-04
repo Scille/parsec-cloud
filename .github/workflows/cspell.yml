@@ -82,6 +82,7 @@ jobs:
           # Only check for changed files on a PR
           # But check on all files on the main branch & the merge queue
           incremental_files_only: ${{ github.ref != 'refs/heads/master' && contains(github.ref, 'gh-readonly-queue') != 'true' }}
+          check_dot_files: true
 
       - name: Show result
         run: printenv RESULT | jq -r .
