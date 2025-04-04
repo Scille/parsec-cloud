@@ -170,14 +170,13 @@ macro_rules! impl_events {
 }
 
 #[derive(Debug, Clone, thiserror::Error)]
-pub enum IncompatibleServerReason {
-    #[error("Server is incompatible given it doesn't support API version: {api_version} (supported versions: {supported_api_versions:?})")]
-    UnsupportedApiVersion {
-        api_version: ApiVersion,
-        supported_api_versions: Vec<ApiVersion>,
-    },
-    #[error("Server is incompatible due to an unexpected error: {0}")]
-    Unexpected(Arc<anyhow::Error>),
+pub enum ClientRequestErrorType {
+    #[error("Organization not found")]
+    OrganizationNotFound,
+    #[error("Invitation already used or deleted")]
+    InvitationAlreadyUsedOrDeleted,
+    #[error("User has been frozen (temporarily suspended from the server)")]
+    FrozenUser,
 }
 
 // All those items will be named with a `Event` prefix (e.g. `Foo` => `EventFoo`)
@@ -256,7 +255,30 @@ impl_events!(
     ///
     /// A connection has been made between the client and the server, but they cannot
     /// settle on a common API to communicate.
-    IncompatibleServer(IncompatibleServerReason),
+    IncompatibleServer{
+        api_version: ApiVersion,
+        supported_api_version: Vec<ApiVersion>
+    },
+    ClientRequestError(ClientRequestErrorType),
+    /// This event is fired by the connection monitor.
+    ///
+    /// The server returned a client error response status code (4xx)
+    /// related to an authentication error
+    AuthenticationErrorResponse{
+        detail: String
+    },
+    /// This event is fired by the connection monitor.
+    ///
+    /// The server returned a client error response status code (4xx)
+    ClientErrorResponse{
+        detail: String
+    },
+    /// This event is fired by the connection monitor.
+    ///
+    /// The server returned a server error response sstatus code (5xx)
+    ServerErrorResponse{
+        detail: String
+    },
     /// The server and client clocks are too much out of sync.
     ///
     /// This event is a special snowflake: it is fired anywhere the client sends a RPC

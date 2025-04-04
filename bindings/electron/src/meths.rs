@@ -74,6 +74,90 @@ fn enum_cancelled_greeting_attempt_reason_rs_to_js(
     }
 }
 
+// ClientRequestErrorType
+
+#[allow(dead_code)]
+fn enum_client_request_error_type_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::ClientRequestErrorType> {
+    match raw_value {
+        "ClientRequestErrorTypeAuthenticationTokenExpired" => {
+            Ok(libparsec::ClientRequestErrorType::AuthenticationTokenExpired)
+        }
+        "ClientRequestErrorTypeBadAcceptType" => {
+            Ok(libparsec::ClientRequestErrorType::BadAcceptType)
+        }
+        "ClientRequestErrorTypeBadAuthenticationInfo" => {
+            Ok(libparsec::ClientRequestErrorType::BadAuthenticationInfo)
+        }
+        "ClientRequestErrorTypeBadContent" => Ok(libparsec::ClientRequestErrorType::BadContent),
+        "ClientRequestErrorTypeFrozenUser" => Ok(libparsec::ClientRequestErrorType::FrozenUser),
+        "ClientRequestErrorTypeInvalidResponseContent" => {
+            Ok(libparsec::ClientRequestErrorType::InvalidResponseContent)
+        }
+        "ClientRequestErrorTypeInvalidResponseStatus" => {
+            Ok(libparsec::ClientRequestErrorType::InvalidResponseStatus)
+        }
+        "ClientRequestErrorTypeInvalidSSEEventID" => {
+            Ok(libparsec::ClientRequestErrorType::InvalidSSEEventID)
+        }
+        "ClientRequestErrorTypeInvitationAlreadyUsedOrDeleted" => {
+            Ok(libparsec::ClientRequestErrorType::InvitationAlreadyUsedOrDeleted)
+        }
+        "ClientRequestErrorTypeMissingAuthenticationInfo" => {
+            Ok(libparsec::ClientRequestErrorType::MissingAuthenticationInfo)
+        }
+        "ClientRequestErrorTypeOrganizationNotFound" => {
+            Ok(libparsec::ClientRequestErrorType::OrganizationNotFound)
+        }
+        "ClientRequestErrorTypeWrongApiVersion" => {
+            Ok(libparsec::ClientRequestErrorType::WrongApiVersion)
+        }
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum ClientRequestErrorType"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_client_request_error_type_rs_to_js(
+    value: libparsec::ClientRequestErrorType,
+) -> &'static str {
+    match value {
+        libparsec::ClientRequestErrorType::AuthenticationTokenExpired => {
+            "ClientRequestErrorTypeAuthenticationTokenExpired"
+        }
+        libparsec::ClientRequestErrorType::BadAcceptType => "ClientRequestErrorTypeBadAcceptType",
+        libparsec::ClientRequestErrorType::BadAuthenticationInfo => {
+            "ClientRequestErrorTypeBadAuthenticationInfo"
+        }
+        libparsec::ClientRequestErrorType::BadContent => "ClientRequestErrorTypeBadContent",
+        libparsec::ClientRequestErrorType::FrozenUser => "ClientRequestErrorTypeFrozenUser",
+        libparsec::ClientRequestErrorType::InvalidResponseContent => {
+            "ClientRequestErrorTypeInvalidResponseContent"
+        }
+        libparsec::ClientRequestErrorType::InvalidResponseStatus => {
+            "ClientRequestErrorTypeInvalidResponseStatus"
+        }
+        libparsec::ClientRequestErrorType::InvalidSSEEventID => {
+            "ClientRequestErrorTypeInvalidSSEEventID"
+        }
+        libparsec::ClientRequestErrorType::InvitationAlreadyUsedOrDeleted => {
+            "ClientRequestErrorTypeInvitationAlreadyUsedOrDeleted"
+        }
+        libparsec::ClientRequestErrorType::MissingAuthenticationInfo => {
+            "ClientRequestErrorTypeMissingAuthenticationInfo"
+        }
+        libparsec::ClientRequestErrorType::OrganizationNotFound => {
+            "ClientRequestErrorTypeOrganizationNotFound"
+        }
+        libparsec::ClientRequestErrorType::WrongApiVersion => {
+            "ClientRequestErrorTypeWrongApiVersion"
+        }
+    }
+}
+
 // DeviceFileType
 
 #[allow(dead_code)]
@@ -4731,6 +4815,16 @@ fn variant_client_event_js_to_rs<'a>(
 ) -> NeonResult<libparsec::ClientEvent> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
+        "ClientEventClientRequestError" => {
+            let error_type = {
+                let js_val: Handle<JsString> = obj.get(cx, "errorType")?;
+                {
+                    let js_string = js_val.value(cx);
+                    enum_client_request_error_type_js_to_rs(cx, js_string.as_str())?
+                }
+            };
+            Ok(libparsec::ClientEvent::ClientRequestError { error_type })
+        }
         "ClientEventExpiredOrganization" => Ok(libparsec::ClientEvent::ExpiredOrganization {}),
         "ClientEventGreetingAttemptCancelled" => {
             let token = {
@@ -5133,6 +5227,14 @@ fn variant_client_event_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
+        libparsec::ClientEvent::ClientRequestError { error_type, .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventClientRequestError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_error_type =
+                JsString::try_new(cx, enum_client_request_error_type_rs_to_js(error_type))
+                    .or_throw(cx)?;
+            js_obj.set(cx, "errorType", js_error_type)?;
+        }
         libparsec::ClientEvent::ExpiredOrganization { .. } => {
             let js_tag = JsString::try_new(cx, "ClientEventExpiredOrganization").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;

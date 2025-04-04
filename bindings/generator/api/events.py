@@ -4,6 +4,8 @@ from typing import Callable
 
 from .common import (
     DateTime,
+    Enum,
+    EnumItemUnit,
     Handle,
     IndexInt,
     InvitationStatus,
@@ -13,6 +15,21 @@ from .common import (
     Variant,
     VlobID,
 )
+
+
+class ClientRequestErrorType(Enum):
+    MissingAuthenticationInfo = EnumItemUnit
+    BadAuthenticationInfo = EnumItemUnit
+    OrganizationNotFound = EnumItemUnit
+    BadAcceptType = EnumItemUnit
+    InvitationAlreadyUsedOrDeleted = EnumItemUnit
+    BadContent = EnumItemUnit
+    InvalidResponseStatus = EnumItemUnit
+    InvalidResponseContent = EnumItemUnit
+    FrozenUser = EnumItemUnit
+    AuthenticationTokenExpired = EnumItemUnit
+    WrongApiVersion = EnumItemUnit
+    InvalidSSEEventID = EnumItemUnit
 
 
 class ClientEvent(Variant):
@@ -94,6 +111,9 @@ class ClientEvent(Variant):
 
     class IncompatibleServer:
         detail: str
+
+    class ClientRequestError:
+        error_type: ClientRequestErrorType
 
     # class InvalidKeysBundle:
     #     detail: str

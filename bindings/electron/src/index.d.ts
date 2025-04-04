@@ -19,6 +19,21 @@ export enum CancelledGreetingAttemptReason {
     UndeserializablePayload = 'CancelledGreetingAttemptReasonUndeserializablePayload',
 }
 
+export enum ClientRequestErrorType {
+    AuthenticationTokenExpired = 'ClientRequestErrorTypeAuthenticationTokenExpired',
+    BadAcceptType = 'ClientRequestErrorTypeBadAcceptType',
+    BadAuthenticationInfo = 'ClientRequestErrorTypeBadAuthenticationInfo',
+    BadContent = 'ClientRequestErrorTypeBadContent',
+    FrozenUser = 'ClientRequestErrorTypeFrozenUser',
+    InvalidResponseContent = 'ClientRequestErrorTypeInvalidResponseContent',
+    InvalidResponseStatus = 'ClientRequestErrorTypeInvalidResponseStatus',
+    InvalidSSEEventID = 'ClientRequestErrorTypeInvalidSSEEventID',
+    InvitationAlreadyUsedOrDeleted = 'ClientRequestErrorTypeInvitationAlreadyUsedOrDeleted',
+    MissingAuthenticationInfo = 'ClientRequestErrorTypeMissingAuthenticationInfo',
+    OrganizationNotFound = 'ClientRequestErrorTypeOrganizationNotFound',
+    WrongApiVersion = 'ClientRequestErrorTypeWrongApiVersion',
+}
+
 export enum DeviceFileType {
     Keyring = 'DeviceFileTypeKeyring',
     Password = 'DeviceFileTypePassword',
@@ -739,6 +754,10 @@ export type ClientDeleteShamirRecoveryError =
 
 
 // ClientEvent
+export interface ClientEventClientRequestError {
+    tag: "ClientRequestError"
+    error_type: ClientRequestErrorType
+}
 export interface ClientEventExpiredOrganization {
     tag: "ExpiredOrganization"
 }
@@ -832,6 +851,7 @@ export interface ClientEventWorkspacesSelfListChanged {
     tag: "WorkspacesSelfListChanged"
 }
 export type ClientEvent =
+  | ClientEventClientRequestError
   | ClientEventExpiredOrganization
   | ClientEventGreetingAttemptCancelled
   | ClientEventGreetingAttemptJoined
