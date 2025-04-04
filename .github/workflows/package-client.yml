@@ -369,8 +369,14 @@ jobs:
       - name: Build Electron bindings
         run: npm run build:release
         working-directory: bindings/electron
-        # MacOS is really slow when build rust
+        # MacOS is really slow when building rust
         timeout-minutes: 30
+
+      - name: Inspect rust electron build
+        run: ls -Rl .
+        shell: bash
+        working-directory: bindings/electron
+        timeout-minutes: 1
 
       - name: Build client for electron
         run: npm run native:build -- --mode ${{ steps.version.outputs.type }}
