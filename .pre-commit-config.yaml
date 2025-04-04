@@ -185,6 +185,7 @@ repos:
       - id: powrap
         name: powrap (using `poetry`)
         entry: poetry --directory ./docs run make wrap
+        pass_filenames: false
         types: [pofile]
         require_serial: true
         language: system
