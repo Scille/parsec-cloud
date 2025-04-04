@@ -46,3 +46,22 @@ being downloaded into cache and then copied via occasional flush operations.
 You could try enabling the off-line mode on Parsec V2 workspaces before copying
 large amount of files. In any case, you will need to wait for the copy to be
 fully finished to be able to open files.
+
+
+Errors are raised when trying file operations through Finder on MacOS
+---------------------------------------------------------------------
+
+Some file operations can fail when browsing your workspaces through the Finder.
+Some MacOS updates can break API compatibility if changes are made to the
+filesystem.
+
+First, make sure your version of **macFUSE** is up to date, either by checking
+in `System Settings > macFUSE`, or through the `macFUSE <https://osxfuse.github.io/>`_
+website. If you update, you will then need to allow the use of **macFUSE** in
+`System Settings > Privacy and Security` and reboot your Mac.
+
+If the issues persist on the latest version, please use the Parsec GUI for your
+file operations: you can **copy** and **move** within the same workspace, and
+**delete** or **rename** your files. For **file imports**, you can either drag
+& drop your files from the Finder into a open directory the Parsec GUI, or use
+the built-in file import function.
