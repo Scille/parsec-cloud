@@ -66,6 +66,15 @@ function fetch_cargo_flags() {
 }
 
 function build_electron_bindings(cargo_flags) {
+  const PRE_BUILD_ARGS = [
+    "cargo", "build", "--locked", "--message-format=json-render-diagnostics", ...cargo_flags
+  ];
+
+  ret = exec_cmd(PRE_BUILD_ARGS, { stdio: 'inherit', cwd: WORKDIR });
+  if (ret.status != 0) {
+    exit(ret.status)
+  }
+
   // On Windows only .exe/.bat can be directly executed, `npx.cmd` is the bat version of `npx`
   const ARGS = [
     on_windows() ? "npx.cmd" : "npx",
