@@ -393,6 +393,8 @@ function getNextButtonText(): string {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  max-height: 15rem;
+  overflow-y: auto;
 }
 
 .workspace-item {
@@ -402,12 +404,12 @@ function getNextButtonText(): string {
   border-radius: var(--parsec-radius-4);
   border-left: 3px solid var(--parsec-color-light-secondary-medium);
   background: var(--parsec-color-light-secondary-background);
-
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   width: 100%;
 
   &-container {
+    flex-shrink: 0;
     --inner-padding-end: 0;
     --background: none;
   }
