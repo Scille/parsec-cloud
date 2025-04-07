@@ -126,13 +126,16 @@
 
               <div class="usage-data-content">
                 <div class="usage-data-caption">
-                  <ion-text class="usage-data-caption__title title-h2">{{ $msTranslate(formatFileSize(freeSliceSize)) }}</ion-text>
+                  <ion-text class="usage-data-caption__title title-h2">
+                    {{ totalData > INCLUDED_STORAGE
+                      ? $msTranslate(formatFileSize(INCLUDED_STORAGE))
+                      : $msTranslate(formatFileSize(totalData)) }}
+                  </ion-text>
                   <ion-text class="usage-data-caption__description body">
                     {{ $msTranslate(formatFileSize(INCLUDED_STORAGE)) }}
                     <span>{{ $msTranslate('clientArea.statistics.included') }}</span>
                   </ion-text>
                 </div>
-                {{ freeData.percentage }}
                 <progress-circle
                   :amount-value="Math.trunc(freeData.percentage)"
                   :state="'default'"
@@ -140,7 +143,7 @@
               </div>
             </div>
 
-            <div class="usage-data">
+            <div class="usage-data extra">
               <ion-text class="usage-data__title title-h5">{{ $msTranslate('clientArea.statistics.extra') }}</ion-text>
               <div class="usage-data-content">
                 <div class="usage-data-caption">

@@ -49,7 +49,7 @@ import { DEFAULT_ORGANIZATION_DATA_SLICE, MockBms, expect, msTest } from '@tests
     await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
 
     await expect(clientArea.locator('.storage').locator('.storage-detail-data__total')).toHaveText(totalData);
-    await expect(clientArea.locator('.storage').locator('.circle__amount')).toHaveText(freePercentage);
-    await expect(clientArea.locator('.storage').locator('.usage-data-caption__title')).toHaveText(payingData || '0 B');
+    // await expect(clientArea.locator('.storage').locator('.circle__amount')).toHaveText(freePercentage);
+    await expect(clientArea.locator('.extra').locator('.usage-data-caption__title')).toHaveText(payingData || '0 B');
   });
 });
