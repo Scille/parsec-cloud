@@ -384,7 +384,7 @@ onMounted(async () => {
       stats.value = response.data;
 
       totalData.value = stats.value.dataSize + stats.value.metadataSize;
-      freeSliceSize.value = stats.value.freeSliceSize;
+      freeSliceSize.value = totalData.value > INCLUDED_STORAGE ? INCLUDED_STORAGE : totalData.value;
       payingSliceSize.value = stats.value.payingSliceSize;
 
       freeData.value = getFreeData();
