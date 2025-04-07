@@ -250,7 +250,9 @@ jobs:
       - name: Use strawberry perl
         if: startsWith(matrix.os, 'windows')
         shell: bash
-        run: echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+        run: |
+          echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+          echo PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
         timeout-minutes: 1
 
       - name: Install winfsp

@@ -325,6 +325,17 @@ jobs:
           mv 'D:/a/_temp/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
         timeout-minutes: 2
 
+      # Building OpenSSL requires a perl interpreter.
+      # The default one does not provide windows-style filesystem
+      # paths so we have to switch to Strawberry.
+      - name: Use strawberry perl
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+          echo PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+        timeout-minutes: 1
+
       - name: Windows > Install yq
         if: matrix.platform == 'windows'
         run: choco install yq
