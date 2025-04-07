@@ -165,7 +165,7 @@
       <div class="users active skeleton">
         <ion-skeleton-text
           :animated="true"
-          class="skeleton-loading-title"
+          class="skeleton-title"
         />
         <div class="users-cards-list">
           <ion-card
@@ -173,12 +173,6 @@
             v-for="index in 3"
             :key="index"
           >
-            <div class="users-cards-list-item-icons">
-              <ion-icon
-                class="users-cards-list-item-icons__main"
-                :icon="person"
-              />
-            </div>
             <div class="users-cards-list-item-text">
               <ion-skeleton-text
                 :animated="true"
@@ -196,7 +190,7 @@
       <div class="users revoked skeleton">
         <ion-skeleton-text
           :animated="true"
-          class="skeleton-loading-title"
+          class="skeleton-title"
         />
         <div class="users-cards-list">
           <ion-card
@@ -204,12 +198,6 @@
             v-for="index in 3"
             :key="index"
           >
-            <div class="users-cards-list-item-icons">
-              <ion-icon
-                class="users-cards-list-item-icons__main"
-                :icon="person"
-              />
-            </div>
             <div class="users-cards-list-item-text">
               <ion-skeleton-text
                 :animated="true"
@@ -227,53 +215,68 @@
       <div class="storage skeleton">
         <ion-skeleton-text
           :animated="true"
-          class="skeleton-loading-title"
+          class="skeleton-title"
         />
         <div class="storage-data">
           <div class="storage-data-global">
             <ion-skeleton-text
               :animated="true"
-              class="skeleton-loading-number"
+              class="storage-data-global-title"
             />
             <div class="storage-data-global-info">
               <ion-skeleton-text
                 :animated="true"
-                class="skeleton-loading-text"
+                class="skeleton-number"
               />
               <ion-skeleton-text
                 :animated="true"
-                class="skeleton-loading-text"
+                class="skeleton-text"
               />
               <ion-skeleton-text
                 :animated="true"
-                class="skeleton-loading-text"
+                class="skeleton-text"
               />
             </div>
           </div>
           <div class="storage-data-usage">
             <ion-skeleton-text
               :animated="true"
-              class="skeleton-loading-text"
+              class="storage-data-usage-title"
             />
-            <div class="storage-data-usage-content">
-              <div class="usage-item">
-                <div
-                  id="firstBar"
-                  class="consumption"
-                >
-                  <div class="usage-number">
-                    <ion-skeleton-text
-                      :animated="true"
-                      class="skeleton-loading-text"
-                    />
-                    <ion-skeleton-text
-                      :animated="true"
-                      class="skeleton-loading-text"
-                    />
-                  </div>
+            <div class="storage-data-usage-info">
+              <div class="usage-info-container">
+                <div class="usage-info-data">
                   <ion-skeleton-text
                     :animated="true"
-                    class="skeleton-loading-text"
+                    class="skeleton-number"
+                  />
+                  <ion-skeleton-text
+                    :animated="true"
+                    class="skeleton-text"
+                  />
+                  <ion-skeleton-text
+                    :animated="true"
+                    class="skeleton-text"
+                  />
+                </div>
+                <ion-skeleton-text
+                  :animated="true"
+                  class="skeleton-circle"
+                />
+              </div>
+              <div class="usage-info-container">
+                <div class="usage-info-data">
+                  <ion-skeleton-text
+                    :animated="true"
+                    class="skeleton-number"
+                  />
+                  <ion-skeleton-text
+                    :animated="true"
+                    class="skeleton-text"
+                  />
+                  <ion-skeleton-text
+                    :animated="true"
+                    class="skeleton-text"
                   />
                 </div>
               </div>
@@ -320,7 +323,7 @@ import { BmsAccessInstance, DataType, BmsOrganization, OrganizationStatsResultDa
 import { onMounted, ref } from 'vue';
 import { IonCard, IonText, IonIcon, IonTitle, IonSkeletonText } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
-import { person, arrowForward } from 'ionicons/icons';
+import { arrowForward } from 'ionicons/icons';
 import { isDefaultOrganization } from '@/views/client-area/types';
 import ProgressCircle from '@/components/client-area/ProgressCircle.vue';
 
@@ -556,11 +559,6 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   width: 100%;
   gap: 1.5rem;
 
-  &-item {
-    width: 100%;
-    max-width: 20rem;
-  }
-
   &-data {
     display: flex;
     flex-direction: column;
@@ -607,24 +605,94 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 }
 
 .skeleton {
-  &-loading-number {
-    width: 6rem;
-    height: 1.5rem;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 
-  &-loading-title {
+  &-title {
     width: 8rem;
     height: 1rem;
   }
 
-  .storage-data-usage::before {
-    content: none;
+  .storage-data-global {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 9.5rem;
+
+    .skeleton-number {
+      width: 8rem;
+      height: 2rem;
+    }
+
+    .skeleton-text {
+      max-width: 9.5rem;
+      height: 1rem;
+    }
+
+    &-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      max-width: 9.5rem;
+    }
   }
 
-  .usage-number {
-    .skeleton-loading-text {
-      width: 2rem;
-      height: 1rem;
+  &-loading-text {
+    width: 4rem;
+    height: 1rem;
+  }
+
+  .storage-data {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .storage-data-usage {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+  }
+
+  .storage-data-usage-info {
+    display: flex;
+    gap: 1.5rem;
+    width: 100%;
+
+    .usage-info-container {
+      display: flex;
+      background: var(--parsec-color-light-secondary-white);
+      border-radius: var(--parsec-radius-12);
+      gap: 1rem;
+      padding: 1.5rem;
+      width: 100%;
+
+      .usage-info-data {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+        width: 100%;
+      }
+
+      .skeleton-number {
+        width: 8rem;
+        height: 2rem;
+      }
+
+      .skeleton-text {
+        max-width: 9.5rem;
+        height: 1rem;
+      }
+
+      .skeleton-circle {
+        width: 5rem;
+        height: 5rem;
+        flex-shrink: 0;
+        align-self: flex-end;
+        border-radius: var(--parsec-radius-circle);
+      }
     }
   }
 }
