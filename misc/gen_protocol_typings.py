@@ -65,7 +65,7 @@ SpecsByMajor: TypeAlias = dict[MajorVersion, CmdSpecs]
 SpecsByFamily: TypeAlias = dict[str, SpecsByMajor]
 
 
-def snake_case_to_camel_case(name: str) -> str:
+def snake_case_to_upper_camel_case(name: str) -> str:
     words = name.split("_")
 
     if len(words) == 1:
@@ -204,7 +204,7 @@ class RepUnknownStatus(Rep):
 """
 
     for rep in reps:
-        rep_cls_name = f"Rep{snake_case_to_camel_case(rep['status'])}"
+        rep_cls_name = f"Rep{snake_case_to_upper_camel_case(rep['status'])}"
         collected_items.append(rep_cls_name)
 
         fields = [cook_field(f, field_parse_callback) for f in rep.get("fields", ())]
@@ -549,7 +549,7 @@ class AnyCmdReq:
     test_rpc_code_need_import_types: set[str] = set()
     for family_name, specs in sorted(collect_specs().items()):
         family_mod_name = f"{family_name}_cmds"
-        camel_case_family_name = snake_case_to_camel_case(family_name)
+        camel_case_family_name = snake_case_to_upper_camel_case(family_name)
         test_rpc_code_need_import_types.add(family_mod_name)
         test_rpc_code_body.append("")
         test_rpc_code_body.append(f"class Base{camel_case_family_name}RpcClient:")
