@@ -127,9 +127,11 @@
               <div class="usage-data-content">
                 <div class="usage-data-caption">
                   <ion-text class="usage-data-caption__title title-h2">
-                    {{ totalData > INCLUDED_STORAGE
-                      ? $msTranslate(formatFileSize(INCLUDED_STORAGE))
-                      : $msTranslate(formatFileSize(totalData)) }}
+                    {{
+                      totalData > INCLUDED_STORAGE
+                        ? $msTranslate(formatFileSize(INCLUDED_STORAGE))
+                        : $msTranslate(formatFileSize(totalData))
+                    }}
                   </ion-text>
                   <ion-text class="usage-data-caption__description body">
                     {{ $msTranslate(formatFileSize(INCLUDED_STORAGE)) }}
@@ -357,7 +359,7 @@ const payingData = ref<CircleProgressData>();
 function getFreeData(): CircleProgressData {
   return {
     amount: totalData.value > freeSliceSize.value ? freeSliceSize.value : totalData.value,
-    percentage: totalData.value > INCLUDED_STORAGE  ? 100 : (freeSliceSize.value * 100) / INCLUDED_STORAGE,
+    percentage: totalData.value > INCLUDED_STORAGE ? 100 : (freeSliceSize.value * 100) / INCLUDED_STORAGE,
     progress: totalData.value > INCLUDED_STORAGE ? 1 : freeSliceSize.value / INCLUDED_STORAGE,
   };
 }
