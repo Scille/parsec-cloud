@@ -20,9 +20,10 @@ msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
   const revokedUserItems = revoked.locator('.users-cards-list-item').locator('.users-cards-list-item-text');
   await expect(revokedUserItems).toHaveText(['1Administrator', '1Member', '142Externals']);
 
-  const storage = page.locator('.storage-data');
-  const storageGlobal = storage.locator('.storage-data-global');
-  await expect(storageGlobal.locator('ion-text')).toHaveText(['373 GB', 'of which', '373 GBdata', '381 MBmetadata']);
+  const storage = page.locator('.storage-detail');
+  const storageGlobal = storage.locator('.storage-detail-data');
+  await expect(storageGlobal.locator('.storage-detail-data__total')).toHaveText('373 GB');
+  await expect(storageGlobal.locator('.storage-detail-data__text span')).toHaveText(['Data', '373 GB', 'Metadata', '381 MB']);
   const consumption = storage.locator('.storage-data-usage');
   await expect(consumption.locator('.ms-warning')).toBeVisible();
   await expect(consumption.locator('.ms-warning')).toHaveText('You have reached your storage limit.');

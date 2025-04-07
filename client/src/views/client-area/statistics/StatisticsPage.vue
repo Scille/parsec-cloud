@@ -132,6 +132,7 @@
                     <span>{{ $msTranslate('clientArea.statistics.included') }}</span>
                   </ion-text>
                 </div>
+                {{ freeData.percentage }}
                 <progress-circle
                   :amount-value="Math.trunc(freeData.percentage)"
                   :state="'default'"
@@ -326,7 +327,7 @@ interface CircleProgressData {
   progress: number;
 }
 
-const INCLUDED_STORAGE = 107374182400; // 100GB
+const INCLUDED_STORAGE = 1024 * 1024 * 1024 * 100; // 100GB
 
 const props = defineProps<{
   currentOrganization: BmsOrganization;
@@ -350,8 +351,8 @@ const payingData = ref<CircleProgressData>();
 function getFreeData(): CircleProgressData {
   return {
     amount: totalData.value > freeSliceSize.value ? freeSliceSize.value : totalData.value,
-    percentage: INCLUDED_STORAGE < totalData.value ? 100 : (freeSliceSize.value * 100) / INCLUDED_STORAGE,
-    progress: INCLUDED_STORAGE < totalData.value ? 1 : freeSliceSize.value / INCLUDED_STORAGE,
+    percentage: totalData.value > INCLUDED_STORAGE  ? 100 : (freeSliceSize.value * 100) / INCLUDED_STORAGE,
+    progress: totalData.value > INCLUDED_STORAGE ? 1 : freeSliceSize.value / INCLUDED_STORAGE,
   };
 }
 
