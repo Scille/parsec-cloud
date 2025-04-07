@@ -75,7 +75,7 @@ parts:
       cargo --version
 
       cd bindings/electron
-      npm clean-install
+      npm clean-install --no-audit
       npm run build:release
 
       cp -va dist/libparsec.node "$CRAFT_PART_INSTALL/libparsec.node"
@@ -99,7 +99,7 @@ parts:
       mkdir -pv megashark-lib && cd megashark-lib
       tar --extract --file ../megashark-lib-src.tar.gz --strip-components=1
 
-      npm clean-install
+      npm clean-install --no-audit
       MEGASHARK_ARCHIVE=$(npm pack | tail -n1)
 
       cp -v $MEGASHARK_ARCHIVE "$CRAFT_STAGE/megashark-lib.tar.gz"
@@ -130,12 +130,12 @@ parts:
 
       # Use `--ignore-scripts` to prevent the postinstall script trying to be smarter than us and
       # install electron dependencies (as it would use `npm install` instead of `npm clean-install`).
-      npm install --ignore-scripts
+      npm install --ignore-scripts --no-audit
       npm run native:build -- --mode $VITE_MODE
       npm exec cap copy @capacitor-community/electron
 
       cd electron
-      npm clean-install
+      npm clean-install --no-audit
 
       # Copy bindings
       rm -rf build # Cleanup build folder

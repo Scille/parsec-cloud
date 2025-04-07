@@ -64,6 +64,8 @@ env:
   node-version: 18.12.0
   wasm-pack-version: 0.12.1
   WINFSP_VERSION: 2.0.23075
+  # When installing npm dependencies, we skip the audit to have faster installation time.
+  NPM_ARGS: --no-audit
 
 permissions:
   contents: read
@@ -110,7 +112,7 @@ jobs:
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
       - name: Install dependencies
-        run: npm clean-install
+        run: npm clean-install ${{ env.NPM_ARGS }}
         working-directory: client
 
       # Install syft
@@ -352,17 +354,17 @@ jobs:
       - name: Install client dependencies
         # Use `--ignore-scripts` to prevent the postinstall script trying to be smarter than us and
         # install electron dependencies (as it would use `npm install` instead of `npm clean-install`).
-        run: npm clean-install --ignore-scripts
+        run: npm clean-install --ignore-scripts ${{ env.NPM_ARGS }}
         working-directory: client
         timeout-minutes: 10
 
       - name: Install electron dependencies
-        run: npm clean-install
+        run: npm clean-install ${{ env.NPM_ARGS }}
         working-directory: client/electron
         timeout-minutes: 2
 
       - name: Install electron bindings dependencies
-        run: npm clean-install
+        run: npm clean-install ${{ env.NPM_ARGS }}
         working-directory: bindings/electron
         timeout-minutes: 1
 
