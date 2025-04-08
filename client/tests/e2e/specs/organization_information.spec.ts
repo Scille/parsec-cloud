@@ -50,12 +50,14 @@ for (const displaySize of ['small', 'large']) {
       await usersPage.locator('.user-context-sheet-modal').getByRole('listitem').nth(0).click();
       await usersPage.locator('.question-modal').locator('ion-button').nth(1).click();
       await usersPage.locator('.tab-bar-list-button').nth(2).click();
+      await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
     } else {
       const user = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
       await user.hover();
       await user.locator('.options-button').click();
       await usersPage.locator('.user-context-menu').getByRole('listitem').nth(1).click();
       await answerQuestion(usersPage, true);
+      await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
       await sidebarButtons.nth(1).click();
     }
 

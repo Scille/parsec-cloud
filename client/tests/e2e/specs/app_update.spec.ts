@@ -16,6 +16,7 @@ async function checkAppUpdateModal(page: Page): Promise<void> {
   const newTab = await newTabPromise;
   await newTab.waitForLoadState();
   await expect(newTab).toHaveURL(new RegExp('^https://docs\\.parsec\\.cloud/.+'));
+  await newTab.close();
 }
 
 msTest('Opens app update modal on home page', async ({ home }) => {

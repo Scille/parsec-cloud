@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { answerQuestion, expect, fillInputModal, fillIonInput, msTest, setSmallDisplay, sortBy } from '@tests/e2e/helpers';
+import { addUser, answerQuestion, expect, fillInputModal, fillIonInput, msTest, setSmallDisplay, sortBy } from '@tests/e2e/helpers';
 
 const USERS = [
   {
@@ -607,8 +607,20 @@ msTest('Update profile', async ({ usersPage }) => {
   await expect(usersPage).toShowToast('The profile has been changed!', 'Success');
 });
 
-msTest.skip('Update multiple profiles', async ({ usersPage }) => {
-  for (const index of [1, 3, 4, 7]) {
+msTest('Update multiple profiles', async ({ usersPage }) => {
+  msTest.setTimeout(120_000);
+
+  const secondTab = await usersPage.openNewTab();
+  await addUser(usersPage, secondTab, 'Gordon Freeman', 'gordon.freeman@blackmesa.nm', 'standard');
+  if (secondTab.release) {
+    // Liberating the second tab speeds up the test a lot
+    await secondTab.release();
+  }
+
+  const users = usersPage.locator('#users-page-user-list').getByRole('listitem');
+  await expect(users.locator('.user-profile')).toHaveText(['Administrator', 'Member', 'Member', 'External']);
+
+  for (const index of [1, 2, 3]) {
     const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(index);
     await item.hover();
     await item.locator('ion-checkbox').click();
@@ -621,9 +633,7 @@ msTest.skip('Update multiple profiles', async ({ usersPage }) => {
   const nextButton = modal.locator('#next-button');
   await expect(nextButton).toHaveText('Change');
   await expect(nextButton).toHaveDisabledAttribute();
-  // cspell:disable-next-line
-  await expect(modalContent.locator('.update-profile-user__item')).toHaveText(['Jaheira', 'Cernd', 'Patches']);
-  // cspell:disable-next-line
+  await expect(modalContent.locator('.update-profile-user__item')).toHaveText(['Boby McBobFace', 'Gordon Freeman']);
   await expect(modalContent.locator('.update-profile-user__more')).toBeHidden();
   await expect(modalContent.locator('.warn-outsiders')).toBeVisible();
   const profileButton = modalContent.locator('#dropdown-popover-button');
@@ -631,9 +641,11 @@ msTest.skip('Update multiple profiles', async ({ usersPage }) => {
   await profileButton.click();
   const profileDropdown = usersPage.locator('.dropdown-popover');
   await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Member']);
-  await profileDropdown.getByRole('listitem').nth(1).click();
-  await expect(profileButton).toHaveText('Member');
+  await profileDropdown.getByRole('listitem').nth(0).click();
+  await expect(profileButton).toHaveText('Administrator');
   await expect(nextButton).toBeTrulyEnabled();
   await nextButton.click();
+  await expect(modal).toBeHidden();
   await expect(usersPage).toShowToast('The profiles have been changed!', 'Success');
+  await expect(users.locator('.user-profile')).toHaveText(['Administrator', 'Administrator', 'Administrator', 'External']);
 });

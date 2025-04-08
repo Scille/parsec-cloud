@@ -59,7 +59,7 @@ msTest('Check documents in grid mode', async ({ documents }) => {
   await expect(entries.locator('.file-card-last-update')).toHaveText(TIME_MATCHER_ARRAY);
 });
 
-msTest.skip('Documents page default state in a read only workspace', async ({ documentsReadOnly }) => {
+msTest('Documents page default state in a read only workspace', async ({ documentsReadOnly }) => {
   const actionBar = documentsReadOnly.locator('#folders-ms-action-bar');
   await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(0);
   await expect(actionBar.locator('.right-side').locator('.label-role')).toHaveText('Reader');

@@ -287,7 +287,7 @@ async function setupApp(): Promise<void> {
   // - dev with a testbed Parsec server with the default devices
   // - dev or prod where devices are fetched from the local storage
   // - tests with Playwright where the testbed instantiation is done by Playwright
-  if ('TESTING' in window && window.TESTING) {
+  if ('TESTING' in window && window.TESTING === true) {
     Sentry.disable();
     //  handle the testbed and provides the configPath
     window.nextStageHook = (): any => {

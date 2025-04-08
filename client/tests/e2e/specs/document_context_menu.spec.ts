@@ -278,27 +278,41 @@ for (const gridMode of [false, true]) {
     }
   });
 
-  msTest.skip(
-    `Document actions default state in a read only workspace in ${gridMode ? 'grid' : 'list'} mode`,
-    async ({ documentsReadOnly }) => {
-      await expect(documentsReadOnly.locator('.file-context-menu')).toBeHidden();
-      if (!gridMode) {
-        const entry = documentsReadOnly.locator('.folder-container').locator('.file-list-item').nth(0);
-        await entry.hover();
-        await entry.locator('.options-button').click();
-      } else {
-        await toggleViewMode(documentsReadOnly);
-        const entry = documentsReadOnly.locator('.folder-container').locator('.file-card-item').nth(0);
-        await entry.hover();
-        await entry.locator('.card-option').click();
-      }
-      await expect(documentsReadOnly.locator('.file-context-menu')).toBeVisible();
-      const popover = documentsReadOnly.locator('.file-context-menu');
-      await expect(popover.getByRole('group')).toHaveCount(2);
-      await expect(popover.getByRole('listitem')).toHaveCount(5);
-      await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Download', 'Details', 'Collaboration', 'Copy link']);
-    },
-  );
+  msTest(`Folder actions default state in a read only workspace in ${gridMode ? 'grid' : 'list'} mode`, async ({ documentsReadOnly }) => {
+    await expect(documentsReadOnly.locator('.file-context-menu')).toBeHidden();
+    if (!gridMode) {
+      const entry = documentsReadOnly.locator('.folder-container').locator('.file-list-item').nth(0);
+      await entry.hover();
+      await entry.locator('.options-button').click();
+    } else {
+      await toggleViewMode(documentsReadOnly);
+      const entry = documentsReadOnly.locator('.folder-container').locator('.file-card-item').nth(0);
+      await entry.hover();
+      await entry.locator('.card-option').click();
+    }
+    await expect(documentsReadOnly.locator('.file-context-menu')).toBeVisible();
+    const popover = documentsReadOnly.locator('.file-context-menu');
+    await expect(popover.getByRole('group')).toHaveCount(2);
+    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Details', 'Collaboration', 'Copy link']);
+  });
+
+  msTest(`File actions default state in a read only workspace in ${gridMode ? 'grid' : 'list'} mode`, async ({ documentsReadOnly }) => {
+    await expect(documentsReadOnly.locator('.file-context-menu')).toBeHidden();
+    if (!gridMode) {
+      const entry = documentsReadOnly.locator('.folder-container').locator('.file-list-item').nth(1);
+      await entry.hover();
+      await entry.locator('.options-button').click();
+    } else {
+      await toggleViewMode(documentsReadOnly);
+      const entry = documentsReadOnly.locator('.folder-container').locator('.file-card-item').nth(1);
+      await entry.hover();
+      await entry.locator('.card-option').click();
+    }
+    await expect(documentsReadOnly.locator('.file-context-menu')).toBeVisible();
+    const popover = documentsReadOnly.locator('.file-context-menu');
+    await expect(popover.getByRole('group')).toHaveCount(2);
+    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Download', 'Details', 'Collaboration', 'Copy link']);
+  });
 
   msTest(`Move document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
     if (gridMode) {

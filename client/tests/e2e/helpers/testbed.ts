@@ -1,10 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
+import { MsPage } from '@tests/e2e/helpers/types';
 
 type TestbedTemplate = 'coolorg' | 'empty';
 
-export async function newTestbed(page: Page, template: TestbedTemplate = 'coolorg'): Promise<void> {
+export async function initTestBed(page: MsPage, reuseConfigPath?: string, template: TestbedTemplate = 'coolorg'): Promise<string> {
   const TESTBED_SERVER = process.env.TESTBED_SERVER;
   if (TESTBED_SERVER === undefined) {
     throw new Error('Environ variable `TESTBED_SERVER` must be defined to use testbed');
@@ -12,19 +13,22 @@ export async function newTestbed(page: Page, template: TestbedTemplate = 'coolor
 
   // `page.evaluate` runs inside the web page, hence why we pass a function with
   // parameters instead of a closure.
-  await page.evaluate(
-    async ([template, testbedServerUrl]) => {
+  return await page.evaluate(
+    async ([template, testbedServerUrl, reuseConfigPath]) => {
       const [libparsec, nextStage] = window.nextStageHook();
-      const configResult = await libparsec.testNewTestbed(template, testbedServerUrl);
-      if (!configResult.ok) {
-        throw new Error(`Failed to init the testbed ${JSON.stringify(configResult.error)}`);
+      let configPath: string | undefined = reuseConfigPath;
+      if (configPath === undefined) {
+        const configResult = await libparsec.testNewTestbed(template, testbedServerUrl);
+        if (!configResult.ok) {
+          throw new Error(`Failed to init the testbed ${JSON.stringify(configResult.error)}`);
+        }
+        configPath = configResult.value;
       }
-      const configPath = configResult.value;
-      (window as any).TESTING_CONFIG_PATH = configPath;
-      await nextStage(configPath, 'en-US');
-      return configPath;
+      (window as any).TESTING_CONFIG_PATH = configPath as string;
+      await nextStage(configPath as string, 'en-US');
+      return configPath as string;
     },
-    [template, TESTBED_SERVER],
+    [template, TESTBED_SERVER, reuseConfigPath],
   );
 }
 
