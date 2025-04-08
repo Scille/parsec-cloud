@@ -177,7 +177,11 @@ export async function login(
         break;
       case ClientEventTag.IncompatibleServer:
         window.electronAPI.log('warn', `IncompatibleServerEvent: ${JSON.stringify(event)}`);
-        distributor.dispatchEvent(Events.IncompatibleServer, { reason: event.detail }, { delay: 5000 });
+        distributor.dispatchEvent(
+          Events.IncompatibleServer,
+          { version: event.apiVersion, supportedVersions: event.supportedApiVersion },
+          { delay: 5000 },
+        );
         break;
       case ClientEventTag.RevokedSelfUser:
         eventDistributor.dispatchEvent(Events.ClientRevoked);

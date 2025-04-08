@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { EntryID, InvitationStatus, InvitationToken, WorkspaceID } from '@/parsec';
+import { ApiVersion, EntryID, InvitationStatus, InvitationToken, WorkspaceID } from '@/parsec';
 import { GreetingAttemptID } from '@/plugins/libparsec';
 import { v4 as uuid4 } from 'uuid';
 
@@ -63,7 +63,8 @@ interface EntrySyncData {
 }
 
 interface IncompatibleServerData {
-  reason: string;
+  version: ApiVersion;
+  supportedVersions: Array<ApiVersion>;
 }
 
 type EventData =

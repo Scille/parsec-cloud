@@ -77,6 +77,7 @@ export {
 export type {
   AnyClaimRetrievedInfoDevice,
   AnyClaimRetrievedInfoUser,
+  ApiVersion,
   ArchiveDeviceError,
   AvailableDevice,
   BootstrapOrganizationError,
