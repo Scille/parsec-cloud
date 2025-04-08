@@ -16,7 +16,7 @@
 .modal-stepper {
   // global
   .modal {
-    padding: 2.5rem;
+    padding: 2rem;
 
     &.wizardTrue {
       padding-top: 2.5rem;
@@ -139,7 +139,7 @@
     .wizardTrue {
       overflow-y: auto;
       position: relative;
-      padding: 2.5rem 2.5rem 0 2.5rem;
+      padding: 2rem 2rem 0 2rem;
 
       &::after {
         content: '';
@@ -178,7 +178,7 @@
   }
 
   .page-modal-container {
-    padding: 2.5rem;
+    padding: 2rem;
     display: flex;
     height: auto;
     width: 100%;
