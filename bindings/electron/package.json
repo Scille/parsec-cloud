@@ -11,7 +11,7 @@
     },
     "author": "",
     "license": "BUSL-1.1",
-    "dependencies": {
-        "cargo-cp-artifact": "^0.1.9"
+    "devDependencies": {
+        "@neon-rs/cli": "0.1.82"
     }
 }
