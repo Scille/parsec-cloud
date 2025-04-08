@@ -33,14 +33,13 @@ import { Information, InformationDataType, InformationLevel, InformationManager,
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Sentry } from '@/services/sentry';
 import { initViewers } from '@/services/viewers';
+import { LogLevel, WebLogger } from '@/services/webLogger';
 import { Answer, Base64, I18n, Locale, MegaSharkPlugin, StripeConfig, ThemeManager, Validity, askQuestion } from 'megashark-lib';
 
 enum AppState {
   Ready = 'ready',
   Initializing = 'initializing',
 }
-
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 function preventRightClick(): void {
   window.document.addEventListener('contextmenu', async (event) => {
@@ -66,6 +65,8 @@ async function setupApp(): Promise<void> {
   const storageManager = storageManagerInstance.get();
 
   const config = await storageManager.retrieveConfig();
+
+  await WebLogger.init();
 
   const injectionProvider = new InjectionProvider();
   const hotkeyManager = new HotkeyManager();
@@ -373,6 +374,7 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
       console.log('PrepareUpdate: Not available');
     },
     log: (level: LogLevel, message: string): void => {
+      WebLogger.log(level, message);
       console[level](`[MOCKED-ELECTRON-LOG] ${message}`);
     },
     pageIsInitialized: (): void => {
@@ -389,6 +391,13 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
     },
     seeInExplorer: (_path: string): void => {
       console.log('SeeInExplorer: Not available');
+    },
+    getLogs: (): Promise<Array<string>> => {
+      return new Promise((resolve, _reject) => {
+        WebLogger.getEntries().then((entries) => {
+          resolve(entries.map((entry) => `[${entry.timestamp}] [${entry.level}] ${entry.message}`));
+        });
+      });
     },
   };
 }
@@ -522,6 +531,7 @@ declare global {
       openConfigDir: () => void;
       authorizeURL: (url: string) => void;
       seeInExplorer: (path: string) => void;
+      getLogs: () => Promise<Array<string>>;
     };
   }
 }
