@@ -78,7 +78,7 @@ This will overwrite any current version but you can still retrieve it in the His
   const opContainer = uploadMenu.locator('.element-container');
   const elements = opContainer.locator('.element');
   await expect(elements).toHaveCount(9);
-  await expect(elements.locator('.element-details__name').nth(0)).toHaveText(/^Restoration of [a-z0-9_.]+$/);
+  await expect(elements.locator('.element-details__name').nth(0)).toHaveText(/^Restoration of [A-Za-z0-9_.]+$/);
 });
 
 msTest('Test viewer in history', async ({ documents }) => {

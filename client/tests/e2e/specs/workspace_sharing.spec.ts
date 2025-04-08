@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, fillIonInput, msTest } from '@tests/e2e/helpers';
+import { createWorkspace, expect, fillIonInput, login, MsPage, msTest } from '@tests/e2e/helpers';
 
 msTest('Workspace sharing modal default state', async ({ workspaceSharingModal }) => {
   await expect(workspaceSharingModal.locator('.ms-modal-header__title')).toHaveText('wksp1');
@@ -65,18 +65,30 @@ msTest('Share with external', async ({ workspaceSharingModal }) => {
   await expect(users.nth(2).locator('.filter-button')).toHaveText('Contributor');
 });
 
+// Can't test it right now because the testbed doesn't support to tabs using the same org
 msTest.skip('Unshare workspace', async ({ workspaceSharingModal }) => {
+  const secondTab = await (workspaceSharingModal.page() as MsPage).openNewTab();
+  await login(secondTab, 'Boby McBobFace');
+  await createWorkspace(secondTab, 'Bob Workspace');
+  const workspaces = secondTab.locator('.workspaces-container-grid').locator('.workspace-card-item');
+  await expect(workspaces).toHaveCount(2);
+  await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['Bob Workspace', 'wksp1']);
+  await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces')).toBeHidden();
+
   const content = workspaceSharingModal.locator('.ms-modal-content');
   const user2 = content.locator('.user-list').locator('.content').nth(1);
   await expect(user2.locator('.filter-button')).toHaveText('Reader');
   await user2.locator('.filter-button').click();
   const roleDropdown = workspaceSharingModal.page().locator('.dropdown-popover');
-  const roles = roleDropdown.getByRole('listitem');
+  const roles = roleDropdown.getByRole('list').getByRole('listitem');
   // Unshare
   await roles.nth(4).click();
-  // cspell:disable-next-line
-  await expect(workspaceSharingModal.page()).toShowToast('The workspace is no longer shared with Korgan Bloodaxe.', 'Success');
+  await expect(workspaceSharingModal.page()).toShowToast('The workspace is no longer shared with Boby McBobFace.', 'Success');
   await expect(user2.locator('.filter-button')).toHaveText('Not shared');
+
+  await expect(workspaces).toHaveCount(1);
+  await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['Bob Workspace']);
+  await expect(secondTab.locator('.workspaces-container').locator('.no-workspaces')).toBeVisible();
 });
 
 msTest('Filter users', async ({ workspaceSharingModal }) => {
@@ -173,16 +185,17 @@ msTest('Batch workspace sharing', async ({ workspaceSharingModal }) => {
   await expect(membersCheckbox).not.toBeVisible();
 });
 
-msTest.skip('Batch workspace sharing hidden when reader', async ({ connected }) => {
-  await connected
+msTest('Batch workspace sharing hidden when reader', async ({ home }) => {
+  await login(home, 'Boby McBobFace');
+  await home
     .locator('.workspaces-container-grid')
     .locator('.workspace-card-item')
-    .nth(2)
+    .nth(0)
     .locator('.workspace-card-bottom__icons')
-    .locator('.icon-option-container')
+    .locator('.icon-share-container')
     .nth(0)
     .click();
-  const modal = connected.locator('.workspace-sharing-modal');
+  const modal = home.locator('.workspace-sharing-modal');
   await expect(modal).toBeVisible();
   const content = modal.locator('.ms-modal-content');
 

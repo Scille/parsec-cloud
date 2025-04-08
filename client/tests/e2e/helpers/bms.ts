@@ -4,7 +4,7 @@
 
 import { Page, Route } from '@playwright/test';
 import { DEFAULT_ORGANIZATION_DATA_SLICE, DEFAULT_USER_INFORMATION } from '@tests/e2e/helpers/data';
-import { MsPage } from '@tests/e2e/helpers/fixtures';
+import { MsPage } from '@tests/e2e/helpers/types';
 import { DateTime } from 'luxon';
 
 async function mockRoute(
