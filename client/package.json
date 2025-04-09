@@ -75,6 +75,7 @@
         "@types/luxon": "^3.3.4",
         "@types/node": "^22.13.10",
         "@types/uuid": "^10.0.0",
+        "@types/w3c-image-capture": "^1.0.10",
         "@typescript-eslint/eslint-plugin": "^6.10.0",
         "@typescript-eslint/parser": "^6.10.0",
         "@vitejs/plugin-vue": "^4.4.1",
