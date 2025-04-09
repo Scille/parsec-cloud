@@ -43,13 +43,17 @@ jobs:
         timeout-minutes: 10
 
       - name: Install gettext (required by powrap)
-        run: sudo apt-get install -y gettext
+        run: |
+          sudo apt-get install -y gettext
+          gettext --version
         timeout-minutes: 5
 
       - name: Install docs deps
+        working-directory: docs
         run: |
-          poetry --directory ./docs env info
-          poetry --directory ./docs install
+          poetry env info
+          poetry install
+          poetry show
         timeout-minutes: 5
 
       - name: Update translation
@@ -64,8 +68,9 @@ jobs:
 
       - name: Check if `*.po` were modified
         shell: bash
+        working-directory: docs
         run: |
-          if git status --porcelain | grep '**.po'; then
+          if git status --porcelain | grep '\.po'; then
             # PO files were modified, the step fail
             exit 1
           else
