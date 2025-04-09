@@ -31,7 +31,6 @@ from .common import (
 from .device import DeviceAccessStrategy
 from .invite import DeviceSaveStrategy, AvailableDevice
 from .config import ClientConfig
-from .events import OnClientEventCallback
 
 
 class WaitForDeviceAvailableError(ErrorVariant):
@@ -65,7 +64,6 @@ class ClientStartError(ErrorVariant):
 
 async def client_start(
     config: ClientConfig,
-    on_event_callback: OnClientEventCallback,
     access: DeviceAccessStrategy,
 ) -> Result[Handle, ClientStartError]:
     raise NotImplementedError

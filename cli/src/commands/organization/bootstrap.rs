@@ -46,11 +46,9 @@ pub async fn bootstrap_organization_req(
         client_config.data_base_dir.display()
     );
 
-    let on_event_callback = Arc::new(|_, _| ());
-
+    libparsec::libparsec_init_set_on_event_callback(Arc::new(|_, _| ()));
     libparsec::bootstrap_organization(
         client_config,
-        on_event_callback,
         addr,
         DeviceSaveStrategy::Password { password },
         human_handle,

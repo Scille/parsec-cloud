@@ -22,7 +22,7 @@ use crate::{
         borrow_from_handle, filter_close_handles, register_handle_with_init, take_and_close_handle,
         FilterCloseHandle, Handle, HandleItem,
     },
-    ClientConfig, ClientEvent, OnEventCallbackPlugged,
+    ClientConfig, OnEventCallbackPlugged,
 };
 
 fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>> {
@@ -95,13 +95,6 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
 
 pub async fn client_start(
     config: ClientConfig,
-
-    #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<
-        dyn Fn(Handle, ClientEvent) + Send + Sync,
-    >,
-    // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
-    #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(Handle, ClientEvent)>,
-
     access: DeviceAccessStrategy,
 ) -> Result<Handle, ClientStartError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
@@ -168,6 +161,7 @@ pub async fn client_start(
 
     // 3) Actually start the client
 
+    let on_event_callback = super::get_on_event_callback();
     let on_event = OnEventCallbackPlugged::new(initializing.handle(), on_event_callback);
     let client = libparsec_client::Client::start(config, on_event.event_bus.clone(), device)
         .await
