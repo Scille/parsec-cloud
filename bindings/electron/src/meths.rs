@@ -761,6 +761,18 @@ fn struct_client_info_js_to_rs<'a>(
         let js_val: Handle<JsObject> = obj.get(cx, "serverConfig")?;
         struct_server_config_js_to_rs(cx, js_val)?
     };
+    let is_server_online = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "isServerOnline")?;
+        js_val.value(cx)
+    };
+    let is_organization_expired = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "isOrganizationExpired")?;
+        js_val.value(cx)
+    };
+    let must_accept_tos = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "mustAcceptTos")?;
+        js_val.value(cx)
+    };
     Ok(libparsec::ClientInfo {
         organization_addr,
         organization_id,
@@ -770,6 +782,9 @@ fn struct_client_info_js_to_rs<'a>(
         human_handle,
         current_profile,
         server_config,
+        is_server_online,
+        is_organization_expired,
+        must_accept_tos,
     })
 }
 
@@ -822,6 +837,12 @@ fn struct_client_info_rs_to_js<'a>(
     js_obj.set(cx, "currentProfile", js_current_profile)?;
     let js_server_config = struct_server_config_rs_to_js(cx, rs_obj.server_config)?;
     js_obj.set(cx, "serverConfig", js_server_config)?;
+    let js_is_server_online = JsBoolean::new(cx, rs_obj.is_server_online);
+    js_obj.set(cx, "isServerOnline", js_is_server_online)?;
+    let js_is_organization_expired = JsBoolean::new(cx, rs_obj.is_organization_expired);
+    js_obj.set(cx, "isOrganizationExpired", js_is_organization_expired)?;
+    let js_must_accept_tos = JsBoolean::new(cx, rs_obj.must_accept_tos);
+    js_obj.set(cx, "mustAcceptTos", js_must_accept_tos)?;
     Ok(js_obj)
 }
 
@@ -4738,6 +4759,36 @@ fn variant_client_event_js_to_rs<'a>(
             };
             Ok(libparsec::ClientEvent::ClientErrorResponse { error_type })
         }
+        "ClientEventClientStarted" => {
+            let device_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "deviceId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ClientEvent::ClientStarted { device_id })
+        }
+        "ClientEventClientStopped" => {
+            let device_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "deviceId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ClientEvent::ClientStopped { device_id })
+        }
         "ClientEventExpiredOrganization" => Ok(libparsec::ClientEvent::ExpiredOrganization {}),
         "ClientEventFrozenSelfUser" => Ok(libparsec::ClientEvent::FrozenSelfUser {}),
         "ClientEventGreetingAttemptCancelled" => {
@@ -5198,6 +5249,34 @@ fn variant_client_event_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_error_type = JsString::try_new(cx, error_type).or_throw(cx)?;
             js_obj.set(cx, "errorType", js_error_type)?;
+        }
+        libparsec::ClientEvent::ClientStarted { device_id, .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventClientStarted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_device_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(device_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "deviceId", js_device_id)?;
+        }
+        libparsec::ClientEvent::ClientStopped { device_id, .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventClientStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_device_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(device_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "deviceId", js_device_id)?;
         }
         libparsec::ClientEvent::ExpiredOrganization { .. } => {
             let js_tag = JsString::try_new(cx, "ClientEventExpiredOrganization").or_throw(cx)?;
@@ -13997,57 +14076,8 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_val = cx.argument::<JsObject>(0)?;
         struct_client_config_js_to_rs(&mut cx, js_val)?
     };
-    let on_event_callback = {
-        let js_val = cx.argument::<JsFunction>(1)?;
-        // The Javascript function object is going to be shared between the closure
-        // called by rust (that can be called multiple times) and the single-use
-        // closure sent to the js runtime.
-        // So we must use an Arc to ensure the resource is shared correctly, but
-        // that's not all of it !
-        // When the resource is no longer use, we must consume the reference we
-        // had on the javascript function in a neon context so that it can itself
-        // notify the js runtime's garbage collector.
-        struct Callback {
-            js_fn: Option<neon::handle::Root<JsFunction>>,
-            channel: neon::event::Channel,
-        }
-        impl Drop for Callback {
-            fn drop(&mut self) {
-                if let Some(js_fn) = self.js_fn.take() {
-                    // Return the js object to the js runtime to avoid memory leak
-                    self.channel.send(move |mut cx| {
-                        js_fn.to_inner(&mut cx);
-                        Ok(())
-                    });
-                }
-            }
-        }
-        let callback = std::sync::Arc::new(Callback {
-            js_fn: Some(js_val.root(&mut cx)),
-            channel: cx.channel(),
-        });
-        std::sync::Arc::new(
-            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
-                let callback2 = callback.clone();
-                callback.channel.send(move |mut cx| {
-                    // TODO: log an error instead of panic ? (it is a bit harsh to crash
-                    // the current task if an unrelated event handler has a bug...)
-                    let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
-                    let js_handle = JsNumber::new(&mut cx, handle);
-                    if let Some(ref js_fn) = callback2.js_fn {
-                        js_fn
-                            .to_inner(&mut cx)
-                            .call_with(&cx)
-                            .args((js_handle, js_event))
-                            .apply::<JsValue, _>(&mut cx)?;
-                    }
-                    Ok(())
-                });
-            },
-        ) as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent) + Send + Sync>
-    };
     let bootstrap_organization_addr = {
-        let js_val = cx.argument::<JsString>(2)?;
+        let js_val = cx.argument::<JsString>(1)?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
@@ -14059,15 +14089,15 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let save_strategy = {
-        let js_val = cx.argument::<JsObject>(3)?;
+        let js_val = cx.argument::<JsObject>(2)?;
         variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let human_handle = {
-        let js_val = cx.argument::<JsObject>(4)?;
+        let js_val = cx.argument::<JsObject>(3)?;
         struct_human_handle_js_to_rs(&mut cx, js_val)?
     };
     let device_label = {
-        let js_val = cx.argument::<JsString>(5)?;
+        let js_val = cx.argument::<JsString>(4)?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
@@ -14078,7 +14108,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
             }
         }
     };
-    let sequester_authority_verify_key = match cx.argument_opt(6) {
+    let sequester_authority_verify_key = match cx.argument_opt(5) {
         Some(v) => {
             match v.downcast::<JsTypedArray<u8>, _>(&mut cx) {
                 Ok(js_val) => {
@@ -14107,7 +14137,6 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .spawn(async move {
             let ret = libparsec::bootstrap_organization(
                 config,
-                on_event_callback,
                 bootstrap_organization_addr,
                 save_strategy,
                 human_handle,
@@ -14674,57 +14703,8 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_val = cx.argument::<JsObject>(0)?;
         struct_client_config_js_to_rs(&mut cx, js_val)?
     };
-    let on_event_callback = {
-        let js_val = cx.argument::<JsFunction>(1)?;
-        // The Javascript function object is going to be shared between the closure
-        // called by rust (that can be called multiple times) and the single-use
-        // closure sent to the js runtime.
-        // So we must use an Arc to ensure the resource is shared correctly, but
-        // that's not all of it !
-        // When the resource is no longer use, we must consume the reference we
-        // had on the javascript function in a neon context so that it can itself
-        // notify the js runtime's garbage collector.
-        struct Callback {
-            js_fn: Option<neon::handle::Root<JsFunction>>,
-            channel: neon::event::Channel,
-        }
-        impl Drop for Callback {
-            fn drop(&mut self) {
-                if let Some(js_fn) = self.js_fn.take() {
-                    // Return the js object to the js runtime to avoid memory leak
-                    self.channel.send(move |mut cx| {
-                        js_fn.to_inner(&mut cx);
-                        Ok(())
-                    });
-                }
-            }
-        }
-        let callback = std::sync::Arc::new(Callback {
-            js_fn: Some(js_val.root(&mut cx)),
-            channel: cx.channel(),
-        });
-        std::sync::Arc::new(
-            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
-                let callback2 = callback.clone();
-                callback.channel.send(move |mut cx| {
-                    // TODO: log an error instead of panic ? (it is a bit harsh to crash
-                    // the current task if an unrelated event handler has a bug...)
-                    let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
-                    let js_handle = JsNumber::new(&mut cx, handle);
-                    if let Some(ref js_fn) = callback2.js_fn {
-                        js_fn
-                            .to_inner(&mut cx)
-                            .call_with(&cx)
-                            .args((js_handle, js_event))
-                            .apply::<JsValue, _>(&mut cx)?;
-                    }
-                    Ok(())
-                });
-            },
-        ) as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent) + Send + Sync>
-    };
     let addr = {
-        let js_val = cx.argument::<JsString>(2)?;
+        let js_val = cx.argument::<JsString>(1)?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
@@ -14743,7 +14723,7 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::claimer_retrieve_info(config, on_event_callback, addr).await;
+            let ret = libparsec::claimer_retrieve_info(config, addr).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -17457,57 +17437,8 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_val = cx.argument::<JsObject>(0)?;
         struct_client_config_js_to_rs(&mut cx, js_val)?
     };
-    let on_event_callback = {
-        let js_val = cx.argument::<JsFunction>(1)?;
-        // The Javascript function object is going to be shared between the closure
-        // called by rust (that can be called multiple times) and the single-use
-        // closure sent to the js runtime.
-        // So we must use an Arc to ensure the resource is shared correctly, but
-        // that's not all of it !
-        // When the resource is no longer use, we must consume the reference we
-        // had on the javascript function in a neon context so that it can itself
-        // notify the js runtime's garbage collector.
-        struct Callback {
-            js_fn: Option<neon::handle::Root<JsFunction>>,
-            channel: neon::event::Channel,
-        }
-        impl Drop for Callback {
-            fn drop(&mut self) {
-                if let Some(js_fn) = self.js_fn.take() {
-                    // Return the js object to the js runtime to avoid memory leak
-                    self.channel.send(move |mut cx| {
-                        js_fn.to_inner(&mut cx);
-                        Ok(())
-                    });
-                }
-            }
-        }
-        let callback = std::sync::Arc::new(Callback {
-            js_fn: Some(js_val.root(&mut cx)),
-            channel: cx.channel(),
-        });
-        std::sync::Arc::new(
-            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
-                let callback2 = callback.clone();
-                callback.channel.send(move |mut cx| {
-                    // TODO: log an error instead of panic ? (it is a bit harsh to crash
-                    // the current task if an unrelated event handler has a bug...)
-                    let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
-                    let js_handle = JsNumber::new(&mut cx, handle);
-                    if let Some(ref js_fn) = callback2.js_fn {
-                        js_fn
-                            .to_inner(&mut cx)
-                            .call_with(&cx)
-                            .args((js_handle, js_event))
-                            .apply::<JsValue, _>(&mut cx)?;
-                    }
-                    Ok(())
-                });
-            },
-        ) as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent) + Send + Sync>
-    };
     let access = {
-        let js_val = cx.argument::<JsObject>(2)?;
+        let js_val = cx.argument::<JsObject>(1)?;
         variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
@@ -17518,7 +17449,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_start(config, on_event_callback, access).await;
+            let ret = libparsec::client_start(config, access).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -19278,8 +19209,18 @@ fn import_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// init_libparsec
-fn init_libparsec(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// is_keyring_available
+fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let ret = libparsec::is_keyring_available();
+    let js_ret = JsBoolean::new(&mut cx, ret);
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// libparsec_init_native_only_init
+fn libparsec_init_native_only_init(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
     let config = {
         let js_val = cx.argument::<JsObject>(0)?;
@@ -19293,7 +19234,7 @@ fn init_libparsec(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            libparsec::init_libparsec(config).await;
+            libparsec::libparsec_init_native_only_init(config).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = cx.null();
@@ -19304,11 +19245,60 @@ fn init_libparsec(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// is_keyring_available
-fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// libparsec_init_set_on_event_callback
+fn libparsec_init_set_on_event_callback(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
-    let ret = libparsec::is_keyring_available();
-    let js_ret = JsBoolean::new(&mut cx, ret);
+    let on_event_callback = {
+        let js_val = cx.argument::<JsFunction>(0)?;
+        // The Javascript function object is going to be shared between the closure
+        // called by rust (that can be called multiple times) and the single-use
+        // closure sent to the js runtime.
+        // So we must use an Arc to ensure the resource is shared correctly, but
+        // that's not all of it !
+        // When the resource is no longer use, we must consume the reference we
+        // had on the javascript function in a neon context so that it can itself
+        // notify the js runtime's garbage collector.
+        struct Callback {
+            js_fn: Option<neon::handle::Root<JsFunction>>,
+            channel: neon::event::Channel,
+        }
+        impl Drop for Callback {
+            fn drop(&mut self) {
+                if let Some(js_fn) = self.js_fn.take() {
+                    // Return the js object to the js runtime to avoid memory leak
+                    self.channel.send(move |mut cx| {
+                        js_fn.to_inner(&mut cx);
+                        Ok(())
+                    });
+                }
+            }
+        }
+        let callback = std::sync::Arc::new(Callback {
+            js_fn: Some(js_val.root(&mut cx)),
+            channel: cx.channel(),
+        });
+        std::sync::Arc::new(
+            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
+                let callback2 = callback.clone();
+                callback.channel.send(move |mut cx| {
+                    // TODO: log an error instead of panic ? (it is a bit harsh to crash
+                    // the current task if an unrelated event handler has a bug...)
+                    let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
+                    let js_handle = JsNumber::new(&mut cx, handle);
+                    if let Some(ref js_fn) = callback2.js_fn {
+                        js_fn
+                            .to_inner(&mut cx)
+                            .call_with(&cx)
+                            .args((js_handle, js_event))
+                            .apply::<JsValue, _>(&mut cx)?;
+                    }
+                    Ok(())
+                });
+            },
+        ) as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent) + Send + Sync>
+    };
+    libparsec::libparsec_init_set_on_event_callback(on_event_callback);
+    let js_ret = cx.null();
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
     Ok(promise)
@@ -19352,6 +19342,40 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
             });
         });
 
+    Ok(promise)
+}
+
+// list_started_clients
+fn list_started_clients(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let ret = libparsec::list_started_clients();
+    let js_ret = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(&mut cx, ret.len());
+        for (i, elem) in ret.into_iter().enumerate() {
+            let js_elem = {
+                let (x0, x1) = elem;
+                let js_array = JsArray::new(&mut cx, 2);
+                let js_value = JsNumber::new(&mut cx, x0 as f64);
+                js_array.set(&mut cx, 0, js_value)?;
+                let js_value = JsString::try_new(&mut cx, {
+                    let custom_to_rs_string =
+                        |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+                .or_throw(&mut cx)?;
+                js_array.set(&mut cx, 1, js_value)?;
+                js_array
+            };
+            js_array.set(&mut cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
     Ok(promise)
 }
 
@@ -24570,9 +24594,17 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         greeter_user_initial_do_wait_peer,
     )?;
     cx.export_function("importRecoveryDevice", import_recovery_device)?;
-    cx.export_function("initLibparsec", init_libparsec)?;
     cx.export_function("isKeyringAvailable", is_keyring_available)?;
+    cx.export_function(
+        "libparsecInitNativeOnlyInit",
+        libparsec_init_native_only_init,
+    )?;
+    cx.export_function(
+        "libparsecInitSetOnEventCallback",
+        libparsec_init_set_on_event_callback,
+    )?;
     cx.export_function("listAvailableDevices", list_available_devices)?;
+    cx.export_function("listStartedClients", list_started_clients)?;
     cx.export_function("mountpointToOsPath", mountpoint_to_os_path)?;
     cx.export_function("mountpointUnmount", mountpoint_unmount)?;
     cx.export_function("newCanceller", new_canceller)?;
