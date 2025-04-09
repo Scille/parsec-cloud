@@ -27,7 +27,6 @@ from .common import (
 )
 from .config import ClientConfig
 from .device import AvailableDevice, DeviceSaveStrategy
-from .events import OnClientEventCallback
 
 
 class ClaimerGreeterAbortOperationError(ErrorVariant):
@@ -74,7 +73,6 @@ class BootstrapOrganizationError(ErrorVariant):
 
 async def bootstrap_organization(
     config: ClientConfig,
-    on_event_callback: OnClientEventCallback,
     bootstrap_organization_addr: ParsecOrganizationBootstrapAddr,
     save_strategy: DeviceSaveStrategy,
     human_handle: HumanHandle,
@@ -214,7 +212,6 @@ class AnyClaimRetrievedInfo(Variant):
 
 async def claimer_retrieve_info(
     config: ClientConfig,
-    on_event_callback: OnClientEventCallback,
     addr: ParsecInvitationAddr,
 ) -> Result[AnyClaimRetrievedInfo, ClaimerRetrieveInfoError]:
     raise NotImplementedError

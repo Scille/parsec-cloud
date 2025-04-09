@@ -3,8 +3,6 @@
 // Here we expose only a subset of the client events, as some of them are for
 // internal use only.
 
-use std::sync::Arc;
-
 use libparsec_client::EventBusConnectionLifetime;
 use libparsec_types::prelude::*;
 
@@ -165,32 +163,10 @@ pub(crate) struct OnEventCallbackPlugged {
     // _invalid_manifest: EventBusConnectionLifetime<libparsec_client::EventInvalidManifest>,
 }
 
-impl OnEventCallbackPlugged {
-    pub fn new(
-        handle: Handle,
-        // Access to the event bus is done through this callback.
-        // Ad-hoc code should be added to the binding system to handle this (hence
-        // why this is passed as a parameter instead of as part of `ClientConfig`:
-        // we can have a simple `if func_name == "client_login"` that does a special
-        // cooking of it last param.
-        #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<
-            dyn Fn(Handle, ClientEvent) + Send + Sync,
-        >,
-        // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
-        #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(Handle, ClientEvent)>,
-    ) -> Self {
-        // SAFETY: `EventBus` requires callback to be `Send`, however on web the runtime
-        // is strictly single-threaded and callback must be `!Send`.
-        // So here we are going "trust me bro" considering it is fine to lie about
-        // send'ness of the callback given it will never leave the current thread.
-        #[cfg(target_arch = "wasm32")]
-        let on_event_callback = unsafe {
-            std::mem::transmute::<
-                Arc<dyn Fn(Handle, ClientEvent)>,
-                Arc<dyn Fn(Handle, ClientEvent) + Send + Sync>,
-            >(on_event_callback)
-        };
+pub type OnEventCallback = std::sync::Arc<dyn Fn(Handle, ClientEvent) + Send + Sync>;
 
+impl OnEventCallbackPlugged {
+    pub fn new(handle: Handle, on_event_callback: OnEventCallback) -> Self {
         let event_bus = libparsec_client::EventBus::default();
 
         // Connect events

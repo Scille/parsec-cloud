@@ -65,17 +65,65 @@ pub mod internal {
 #[cfg(target_arch = "wasm32")]
 pub use libparsec_platform_async::WithTaskIDFuture;
 
-/// Libparsec initialization routine
-pub async fn init_libparsec(
-    #[cfg_attr(target_arch = "wasm32", allow(unused_variables))] config: ClientConfig,
+/// Access to the event bus is done through this global callback.
+///
+/// We use a single global callback configured during libparsec initialization
+/// since on web there is a strong separation between the tabs (responsible for
+/// displaying the GUI) and the shared worker (where runs libparsec and which is
+/// accessed by all the tabs), making it impossible to pass a callback function
+/// between them.
+///
+/// So instead the shared worker configures a global callback as part of its initialization,
+/// then broadcast the events to all tabs (and let them rely on the handle parameter in the
+/// event for filtering).
+static ON_EVENT_CALLBACK: std::sync::Mutex<Option<OnEventCallback>> = std::sync::Mutex::new(None);
+
+/// Return the globally configured event callback, or panic if
+/// `libparsec_init_set_on_event_callback` has not been called yet.
+fn get_on_event_callback() -> OnEventCallback {
+    ON_EVENT_CALLBACK
+        .lock()
+        .expect("Mutex is poisoned")
+        .clone()
+        .expect("Global on event callback not configured !")
+}
+
+pub fn libparsec_init_set_on_event_callback(
+    #[cfg(not(target_arch = "wasm32"))] on_event_callback: OnEventCallback,
+    // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
+    #[cfg(target_arch = "wasm32")] on_event_callback: std::sync::Arc<dyn Fn(Handle, ClientEvent)>,
 ) {
+    // SAFETY: Storing this callback globally requires it to be `Sync` (and also
+    // `EventBus` requires callbacks to be `Send`), however on web the runtime
+    // is strictly single-threaded and hence Javascript callbacks are `!Send`.
+    // So here we are going "trust me bro" considering it is fine to lie about
+    // send'ness of the callback given it will never leave the current thread.
+    #[cfg(target_arch = "wasm32")]
+    let on_event_callback = unsafe {
+        std::mem::transmute::<
+            std::sync::Arc<dyn Fn(Handle, ClientEvent)>,
+            std::sync::Arc<dyn Fn(Handle, ClientEvent) + Send + Sync>,
+        >(on_event_callback)
+    };
+
+    ON_EVENT_CALLBACK
+        .lock()
+        .expect("Mutex is poisoned")
+        .replace(on_event_callback);
+}
+
+#[cfg(target_arch = "wasm32")]
+pub async fn libparsec_init_native_only_init(_config: ClientConfig) {
+    panic!("should not be called on web !");
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub async fn libparsec_init_native_only_init(config: ClientConfig) {
     // 1) Initialize logger
-    #[cfg(not(target_arch = "wasm32"))]
     init_logger(&config);
     log::debug!("Initializing libparsec");
 
     // 2) Clean base home directory
-    #[cfg(not(target_arch = "wasm32"))]
     if let MountpointMountStrategy::Directory { base_dir } = config.mountpoint_mount_strategy {
         if let Err(err) = libparsec_platform_mountpoint::clean_base_mountpoint_dir(base_dir).await {
             log::error!("Failed to clean base home directory ({err})");
