@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { TrashButton } from '@revolist/vue3-datagrid';
 import { DateTime } from 'luxon';
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
