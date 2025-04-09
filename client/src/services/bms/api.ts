@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { getDefaultDeviceName } from '@/common/device';
 import {
   AddPaymentMethodQueryData,
   AuthenticationToken,
@@ -8,6 +9,7 @@ import {
   BmsInvoice,
   BmsOrganization,
   BmsResponse,
+  BugReportQueryData,
   CONNECTION_ERROR_STATUS,
   ChangePasswordQueryData,
   ClientQueryData,
@@ -29,7 +31,7 @@ import {
   UpdatePersonalInformationQueryData,
 } from '@/services/bms/types';
 import { parseCustomOrderInvoice } from '@/services/bms/utils';
-import { Env } from '@/services/environment';
+import { APP_VERSION, Env } from '@/services/environment';
 import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { decodeToken } from 'megashark-lib';
@@ -719,6 +721,60 @@ async function getCustomOrderInvoices(
   });
 }
 
+interface FileData {
+  name: string;
+  data: Uint8Array;
+  mimeType: string;
+}
+
+interface BugReportOptions {
+  includeLogs?: boolean;
+  includeScreenshot?: boolean;
+  files?: Array<FileData>;
+}
+
+async function reportBug(query: BugReportQueryData, opts?: BugReportOptions): Promise<BmsResponse> {
+  console.log(opts?.includeLogs);
+  return wrapQuery(async () => {
+    const formData = new FormData();
+    const json = {
+      type: 'bug_report',
+      // See if this can be made more precise (OS Version, browser, ...)
+      platform: getDefaultDeviceName(),
+      name: query.name ?? query.email,
+      email: query.email,
+      title: 'Bug Report',
+      description: query.description,
+      version: APP_VERSION,
+      timestamp: DateTime.now().toISO(),
+      logs: opts?.includeLogs ? await window.electronAPI.getLogs() : [],
+    };
+    formData.append('data', new Blob([JSON.stringify(json)], { type: 'application/json' }));
+
+    // For later
+    // if (opts.includeScreenshot) {
+    //   const screenshot = takeScreenshot();
+    //   formData.append('screenshot', screenshot);
+    // }
+
+    for (const fileData of opts?.files ?? []) {
+      const blob = new Blob([fileData.data], { type: fileData.mimeType });
+      formData.append(fileData.name, blob);
+    }
+
+    // Update with new route
+    const axiosResponse = await http.getInstance().post('/feedback', formData, {
+      validateStatus: (status) => status === 200,
+      timeout: 30000,
+    });
+
+    return {
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
 export const BmsApi = {
   login,
   getPersonalInformation,
@@ -745,4 +801,5 @@ export const BmsApi = {
   createCustomOrderRequest,
   getCustomOrderRequests,
   getCustomOrderInvoices,
+  reportBug,
 };

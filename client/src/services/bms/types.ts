@@ -367,6 +367,12 @@ interface CreateCustomOrderRequestQueryData {
   organizationName?: string;
 }
 
+interface BugReportQueryData {
+  name?: string;
+  email: string;
+  description: string;
+}
+
 enum InvoiceType {
   Sellsy = 'sellsy',
   Stripe = 'stripe',
@@ -484,6 +490,7 @@ export {
   BmsInvoice,
   BmsOrganization,
   BmsResponse,
+  BugReportQueryData,
   ChangePasswordQueryData,
   ClientQueryData,
   CreateCustomOrderRequestQueryData,

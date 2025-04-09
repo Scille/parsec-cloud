@@ -112,6 +112,14 @@ async function openLink(link: string): Promise<void> {
   window.open(link, '_blank');
 }
 
+async function openLogs(): Promise<void> {
+  const logs = await window.electronAPI.getLogs();
+
+  const blob = new Blob([logs.join('\n')], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+
 export const Env = {
   getStripeApiKey,
   getBmsUrl,
@@ -129,5 +137,6 @@ export const Env = {
     openDeveloperLink,
     openTOS,
     openLink,
+    openLogs,
   },
 };

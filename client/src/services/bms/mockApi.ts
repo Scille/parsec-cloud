@@ -140,6 +140,7 @@ function createCustomOrderInvoices(
 }
 
 export const MockedBmsApi = {
+  reportBug: createMockFunction('reportBug'),
   login: createMockFunction('login'),
   getPersonalInformation: createMockFunction('getPersonalInformation'),
   updatePersonalInformation: createMockFunction('updatePersonalInformation'),
