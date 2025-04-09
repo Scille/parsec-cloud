@@ -23,9 +23,24 @@ import { availableDeviceMatchesServer } from '@/common/device';
 import { bootstrapLinkValidator, claimLinkValidator, fileLinkValidator } from '@/common/validators';
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
-import { getLoggedInDevices, getOrganizationHandle, isElectron, listAvailableDevices, logout, parseFileLink } from '@/parsec';
+import {
+  AvailableDevice,
+  ClientEvent,
+  ClientEventGreetingAttemptCancelled,
+  ClientEventGreetingAttemptJoined,
+  ClientEventGreetingAttemptReady,
+  ClientEventInvitationChanged,
+  ClientEventTag,
+  ConnectionHandle,
+  Platform,
+  getConnectionInfo,
+  getOrganizationHandle,
+  isElectron,
+  listAvailableDevices,
+  parseFileLink,
+} from '@/parsec';
 import { getClientConfig } from '@/parsec/internals';
-import { AvailableDevice, Platform, libparsec } from '@/plugins/libparsec';
+import { libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 import { Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
@@ -39,6 +54,97 @@ import { Answer, Base64, I18n, Locale, MegaSharkPlugin, StripeConfig, ThemeManag
 enum AppState {
   Ready = 'ready',
   Initializing = 'initializing',
+}
+
+async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent): Promise<void> {
+  const connInfo = getConnectionInfo(handle);
+  const distributor = injectionProvider.getInjections(handle).eventDistributor;
+  switch (event.tag) {
+    case ClientEventTag.Online:
+      if (connInfo) {
+        connInfo.isOnline = true;
+      }
+      distributor.dispatchEvent(Events.Online);
+      break;
+    case ClientEventTag.Offline:
+      if (connInfo) {
+        connInfo.isOnline = false;
+      }
+      distributor.dispatchEvent(Events.Offline);
+      break;
+    case ClientEventTag.MustAcceptTos:
+      if (connInfo) {
+        connInfo.shouldAcceptTos = true;
+      }
+      distributor.dispatchEvent(Events.TOSAcceptRequired, undefined, { delay: 2000 });
+      break;
+    case ClientEventTag.InvitationChanged:
+      distributor.dispatchEvent(Events.InvitationUpdated, {
+        token: (event as ClientEventInvitationChanged).token,
+        status: (event as ClientEventInvitationChanged).status,
+      });
+      break;
+    case ClientEventTag.GreetingAttemptReady:
+      distributor.dispatchEvent(Events.GreetingAttemptReady, {
+        token: (event as ClientEventGreetingAttemptReady).token,
+        greetingAttempt: (event as ClientEventGreetingAttemptReady).greetingAttempt,
+      });
+      break;
+    case ClientEventTag.GreetingAttemptCancelled:
+      distributor.dispatchEvent(Events.GreetingAttemptCancelled, {
+        token: (event as ClientEventGreetingAttemptCancelled).token,
+        greetingAttempt: (event as ClientEventGreetingAttemptCancelled).greetingAttempt,
+      });
+      break;
+    case ClientEventTag.GreetingAttemptJoined:
+      distributor.dispatchEvent(Events.GreetingAttemptJoined, {
+        token: (event as ClientEventGreetingAttemptJoined).token,
+        greetingAttempt: (event as ClientEventGreetingAttemptJoined).greetingAttempt,
+      });
+      break;
+    case ClientEventTag.IncompatibleServer:
+      window.electronAPI.log('warn', `IncompatibleServerEvent: ${JSON.stringify(event)}`);
+      distributor.dispatchEvent(
+        Events.IncompatibleServer,
+        { version: event.apiVersion, supportedVersions: event.supportedApiVersion },
+        { delay: 5000 },
+      );
+      break;
+    case ClientEventTag.RevokedSelfUser:
+      distributor.dispatchEvent(Events.ClientRevoked);
+      break;
+    case ClientEventTag.ExpiredOrganization:
+      if (connInfo) {
+        connInfo.isExpired = true;
+      }
+      distributor.dispatchEvent(Events.ExpiredOrganization);
+      break;
+    case ClientEventTag.WorkspaceLocallyCreated:
+      distributor.dispatchEvent(Events.WorkspaceCreated);
+      break;
+    case ClientEventTag.WorkspacesSelfListChanged:
+      distributor.dispatchEvent(Events.WorkspaceUpdated);
+      break;
+    case ClientEventTag.WorkspaceWatchedEntryChanged:
+      distributor.dispatchEvent(Events.EntryUpdated, undefined, { aggregateTime: 1000 });
+      break;
+    case ClientEventTag.WorkspaceOpsInboundSyncDone:
+      distributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'inbound' });
+      break;
+    case ClientEventTag.WorkspaceOpsOutboundSyncDone:
+      distributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
+      break;
+    case ClientEventTag.WorkspaceOpsOutboundSyncStarted:
+      distributor.dispatchEvent(Events.EntrySyncStarted, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
+      break;
+    // Ignore those events for now
+    case ClientEventTag.WorkspaceOpsOutboundSyncProgress:
+    case ClientEventTag.ServerConfigChanged:
+      break;
+    default:
+      window.electronAPI.log('debug', `Unhandled event ${event.tag}`);
+      break;
+  }
 }
 
 function preventRightClick(): void {
@@ -59,6 +165,8 @@ function warnRefresh(): void {
     event.returnValue = true;
   });
 }
+
+const injectionProvider = new InjectionProvider();
 
 async function setupApp(): Promise<void> {
   await storageManagerInstance.init();
@@ -160,7 +268,12 @@ async function setupApp(): Promise<void> {
     }
 
     // Libparsec initialization
-    await libparsec.initLibparsec(getClientConfig());
+
+    await libparsec.libparsecInitSetOnEventCallback(parsecEventCallback);
+    if (platform !== Platform.Web) {
+      await libparsec.libparsecInitNativeOnlyInit(getClientConfig());
+    }
+
     if (locale) {
       I18n.changeLocale(locale);
     }
@@ -397,11 +510,7 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
 }
 
 async function cleanBeforeQuitting(injectionProvider: InjectionProvider): Promise<void> {
-  const devices = await getLoggedInDevices();
   await injectionProvider.cleanAll();
-  for (const device of devices) {
-    await logout(device.handle);
-  }
 }
 
 function getCurrentInformationManager(injectionProvider: InjectionProvider): InformationManager {

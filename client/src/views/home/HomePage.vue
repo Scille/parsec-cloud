@@ -432,7 +432,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
   const eventDistributor = new EventDistributor();
   loginInProgress.value = true;
-  const result = await parsecLogin(eventDistributor, device, access);
+  const result = await parsecLogin(device, access);
   if (result.ok) {
     if (!storedDeviceDataDict.value[device.deviceId]) {
       storedDeviceDataDict.value[device.deviceId] = {
