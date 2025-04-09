@@ -150,6 +150,9 @@ export interface ClientInfo {
     humanHandle: HumanHandle
     currentProfile: UserProfile
     serverConfig: ServerConfig
+    isServerOnline: boolean
+    isOrganizationExpired: boolean
+    mustAcceptTos: boolean
 }
 
 export interface DeviceClaimFinalizeInfo {
@@ -800,6 +803,8 @@ export type ClientDeleteShamirRecoveryError =
 // ClientEvent
 export enum ClientEventTag {
     ClientErrorResponse = 'ClientEventClientErrorResponse',
+    ClientStarted = 'ClientEventClientStarted',
+    ClientStopped = 'ClientEventClientStopped',
     ExpiredOrganization = 'ClientEventExpiredOrganization',
     FrozenSelfUser = 'ClientEventFrozenSelfUser',
     GreetingAttemptCancelled = 'ClientEventGreetingAttemptCancelled',
@@ -831,6 +836,14 @@ export enum ClientEventTag {
 export interface ClientEventClientErrorResponse {
     tag: ClientEventTag.ClientErrorResponse
     errorType: string
+}
+export interface ClientEventClientStarted {
+    tag: ClientEventTag.ClientStarted
+    deviceId: DeviceID
+}
+export interface ClientEventClientStopped {
+    tag: ClientEventTag.ClientStopped
+    deviceId: DeviceID
 }
 export interface ClientEventExpiredOrganization {
     tag: ClientEventTag.ExpiredOrganization
@@ -944,6 +957,8 @@ export interface ClientEventWorkspacesSelfListChanged {
 }
 export type ClientEvent =
   | ClientEventClientErrorResponse
+  | ClientEventClientStarted
+  | ClientEventClientStopped
   | ClientEventExpiredOrganization
   | ClientEventFrozenSelfUser
   | ClientEventGreetingAttemptCancelled
@@ -4367,7 +4382,6 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, ArchiveDeviceError>>
     bootstrapOrganization(
         config: ClientConfig,
-        on_event_callback: (handle: number, event: ClientEvent) => void,
         bootstrap_organization_addr: ParsecOrganizationBootstrapAddr,
         save_strategy: DeviceSaveStrategy,
         human_handle: HumanHandle,
@@ -4411,7 +4425,6 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, ClaimerGreeterAbortOperationError>>
     claimerRetrieveInfo(
         config: ClientConfig,
-        on_event_callback: (handle: number, event: ClientEvent) => void,
         addr: ParsecInvitationAddr
     ): Promise<Result<AnyClaimRetrievedInfo, ClaimerRetrieveInfoError>>
     claimerShamirRecoveryAddShare(
@@ -4578,7 +4591,6 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, ClientShareWorkspaceError>>
     clientStart(
         config: ClientConfig,
-        on_event_callback: (handle: number, event: ClientEvent) => void,
         access: DeviceAccessStrategy
     ): Promise<Result<Handle, ClientStartError>>
     clientStartDeviceInvitationGreet(
@@ -4696,14 +4708,19 @@ export interface LibParsecPlugin {
         device_label: DeviceLabel,
         save_strategy: DeviceSaveStrategy
     ): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
-    initLibparsec(
-        config: ClientConfig
-    ): Promise<null>
     isKeyringAvailable(
     ): Promise<boolean>
+    libparsecInitNativeOnlyInit(
+        config: ClientConfig
+    ): Promise<null>
+    libparsecInitSetOnEventCallback(
+        on_event_callback: (handle: number, event: ClientEvent) => void
+    ): Promise<null>
     listAvailableDevices(
         path: Path
     ): Promise<Array<AvailableDevice>>
+    listStartedClients(
+    ): Promise<Array<[Handle, DeviceID]>>
     mountpointToOsPath(
         mountpoint: Handle,
         parsec_path: FsPath
