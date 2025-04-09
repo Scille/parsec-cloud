@@ -6,7 +6,6 @@ import {
   AvailableDevice,
   ClaimInProgressError,
   ClaimerRetrieveInfoError,
-  ClientEvent,
   ConnectionHandle,
   DeviceSaveStrategy,
   HumanHandle,
@@ -73,14 +72,10 @@ export class UserClaim {
   }
 
   async retrieveInfo(invitationLink: string): Promise<Result<AnyClaimRetrievedInfoUser, ClaimerRetrieveInfoError>> {
-    function eventCallback(_handle: number, event: ClientEvent): void {
-      console.log('On event', event);
-    }
-
     this._assertState(true, true);
 
     const clientConfig = getClientConfig();
-    const result = await libparsec.claimerRetrieveInfo(clientConfig, eventCallback, invitationLink);
+    const result = await libparsec.claimerRetrieveInfo(clientConfig, invitationLink);
     if (result.ok) {
       if (result.value.tag !== AnyClaimRetrievedInfoTag.User) {
         throw Error('Unexpected tag');

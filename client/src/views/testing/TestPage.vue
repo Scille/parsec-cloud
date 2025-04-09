@@ -102,10 +102,6 @@ async function testBootstrapOrganization(): Promise<void> {
     logLevel: null,
   };
 
-  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  const onEventCallback = (_handle: number, e: ClientEvent) => {
-    console.log(`Event received from libparsec: ${e}`);
-  };
   const bootstrapAddrResult = await libparsec.testGetTestbedBootstrapOrganizationAddr(configPath);
   if (!bootstrapAddrResult.ok || bootstrapAddrResult.value === null) {
     throw new Error("Couldn't retrieve bootstrap organization addr");
@@ -117,7 +113,6 @@ async function testBootstrapOrganization(): Promise<void> {
   const availableDevice = await testCase('Bootstrap organization', async () => {
     const outcome = await libparsec.bootstrapOrganization(
       config,
-      onEventCallback,
       bootstrapAddr,
       {
         tag: DeviceSaveStrategyTag.Password,
@@ -142,7 +137,6 @@ async function testBootstrapOrganization(): Promise<void> {
   await testCase('Bootstrap organization bad outcome', async () => {
     const outcome = await libparsec.bootstrapOrganization(
       config,
-      onEventCallback,
       bootstrapAddr,
       {
         tag: DeviceSaveStrategyTag.Password,

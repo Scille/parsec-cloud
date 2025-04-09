@@ -7,12 +7,6 @@ import { parseParsecAddr } from '@/parsec/organization';
 import { getParsecHandle } from '@/parsec/routing';
 import {
   AvailableDevice,
-  ClientEvent,
-  ClientEventGreetingAttemptCancelled,
-  ClientEventGreetingAttemptJoined,
-  ClientEventGreetingAttemptReady,
-  ClientEventInvitationChanged,
-  ClientEventTag,
   ClientInfo,
   ClientInfoError,
   ClientStartError,
@@ -30,7 +24,6 @@ import {
 } from '@/parsec/types';
 import { generateNoHandleError } from '@/parsec/utils';
 import { getConnectionHandle } from '@/router';
-import { EventDistributor, Events } from '@/services/eventDistributor';
 import { DateTime } from 'luxon';
 
 export interface LoggedInDeviceInfo {
@@ -126,110 +119,17 @@ export async function listAvailableDevices(filter = true): Promise<Array<Availab
 }
 
 export async function login(
-  eventDistributor: EventDistributor,
   device: AvailableDevice,
   accessStrategy: DeviceAccessStrategy,
 ): Promise<Result<ConnectionHandle, ClientStartError>> {
-  function parsecEventCallback(distributor: EventDistributor, event: ClientEvent, handle: ConnectionHandle): void {
-    const connInfo = getConnectionInfo(handle);
-    switch (event.tag) {
-      case ClientEventTag.Online:
-        if (connInfo) {
-          connInfo.isOnline = true;
-        }
-        distributor.dispatchEvent(Events.Online);
-        break;
-      case ClientEventTag.Offline:
-        if (connInfo) {
-          connInfo.isOnline = false;
-        }
-        distributor.dispatchEvent(Events.Offline);
-        break;
-      case ClientEventTag.MustAcceptTos:
-        if (connInfo) {
-          connInfo.shouldAcceptTos = true;
-        }
-        distributor.dispatchEvent(Events.TOSAcceptRequired, undefined, { delay: 2000 });
-        break;
-      case ClientEventTag.InvitationChanged:
-        distributor.dispatchEvent(Events.InvitationUpdated, {
-          token: (event as ClientEventInvitationChanged).token,
-          status: (event as ClientEventInvitationChanged).status,
-        });
-        break;
-      case ClientEventTag.GreetingAttemptReady:
-        distributor.dispatchEvent(Events.GreetingAttemptReady, {
-          token: (event as ClientEventGreetingAttemptReady).token,
-          greetingAttempt: (event as ClientEventGreetingAttemptReady).greetingAttempt,
-        });
-        break;
-      case ClientEventTag.GreetingAttemptCancelled:
-        distributor.dispatchEvent(Events.GreetingAttemptCancelled, {
-          token: (event as ClientEventGreetingAttemptCancelled).token,
-          greetingAttempt: (event as ClientEventGreetingAttemptCancelled).greetingAttempt,
-        });
-        break;
-      case ClientEventTag.GreetingAttemptJoined:
-        distributor.dispatchEvent(Events.GreetingAttemptJoined, {
-          token: (event as ClientEventGreetingAttemptJoined).token,
-          greetingAttempt: (event as ClientEventGreetingAttemptJoined).greetingAttempt,
-        });
-        break;
-      case ClientEventTag.IncompatibleServer:
-        window.electronAPI.log('warn', `IncompatibleServerEvent: ${JSON.stringify(event)}`);
-        distributor.dispatchEvent(
-          Events.IncompatibleServer,
-          { version: event.apiVersion, supportedVersions: event.supportedApiVersion },
-          { delay: 5000 },
-        );
-        break;
-      case ClientEventTag.RevokedSelfUser:
-        eventDistributor.dispatchEvent(Events.ClientRevoked);
-        break;
-      case ClientEventTag.ExpiredOrganization:
-        if (connInfo) {
-          connInfo.isExpired = true;
-        }
-        eventDistributor.dispatchEvent(Events.ExpiredOrganization);
-        break;
-      case ClientEventTag.WorkspaceLocallyCreated:
-        eventDistributor.dispatchEvent(Events.WorkspaceCreated);
-        break;
-      case ClientEventTag.WorkspacesSelfListChanged:
-        eventDistributor.dispatchEvent(Events.WorkspaceUpdated);
-        break;
-      case ClientEventTag.WorkspaceWatchedEntryChanged:
-        eventDistributor.dispatchEvent(Events.EntryUpdated, undefined, { aggregateTime: 1000 });
-        break;
-      case ClientEventTag.WorkspaceOpsInboundSyncDone:
-        eventDistributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'inbound' });
-        break;
-      case ClientEventTag.WorkspaceOpsOutboundSyncDone:
-        eventDistributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
-        break;
-      case ClientEventTag.WorkspaceOpsOutboundSyncStarted:
-        eventDistributor.dispatchEvent(Events.EntrySyncStarted, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
-        break;
-      // Ignore those events for now
-      case ClientEventTag.WorkspaceOpsOutboundSyncProgress:
-      case ClientEventTag.ServerConfigChanged:
-        break;
-      default:
-        window.electronAPI.log('debug', `Unhandled event ${event.tag}`);
-        break;
-    }
-  }
-
   const info = loggedInDevices.find((info) => info.device.deviceId === device.deviceId);
   if (info !== undefined) {
     return { ok: true, value: info.handle };
   }
 
-  const callback = (handle: ConnectionHandle, event: ClientEvent): void => {
-    parsecEventCallback(eventDistributor, event, handle);
-  };
+  // TODO: event handling has changed !
   const clientConfig = getClientConfig();
-  const result = await libparsec.clientStart(clientConfig, callback, accessStrategy);
+  const result = await libparsec.clientStart(clientConfig, accessStrategy);
   if (result.ok) {
     loggedInDevices.push({ handle: result.value, device: device, isExpired: false, isOnline: false, shouldAcceptTos: false });
   }
@@ -347,6 +247,6 @@ export const SaveStrategy = {
 
 export async function isAuthenticationValid(device: AvailableDevice, accessStrategy: DeviceAccessStrategy): Promise<boolean> {
   const clientConfig = getClientConfig();
-  const result = await libparsec.clientStart(clientConfig, (_handle: number, _event: ClientEvent) => {}, accessStrategy);
+  const result = await libparsec.clientStart(clientConfig, accessStrategy);
   return result.ok;
 }

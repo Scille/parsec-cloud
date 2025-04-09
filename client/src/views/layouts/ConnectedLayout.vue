@@ -10,7 +10,7 @@
 <script lang="ts" setup>
 import { getConnectionInfo, getTOS, logout as parsecLogout, acceptTOS, getClientInfo } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
-import { EventData, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey, Injections } from '@/services/injectionProvider';
@@ -43,12 +43,18 @@ onMounted(async () => {
   }
 
   // Vue wants `provide` to be the absolute first thing.
+  if (!injectionProvider.hasInjections(handle)) {
+    const eventDistributor = new EventDistributor();
+    injectionProvider.createNewInjections(handle, eventDistributor);
+  }
   injections = injectionProvider.getInjections(handle);
 
   // Provide the injections to children
   provide(FileOperationManagerKey, injections.fileOperationManager);
   provide(InformationManagerKey, injections.informationManager);
   provide(EventDistributorKey, injections.eventDistributor);
+
+  console.log(handle);
 
   const clientInfoResult = await getClientInfo(handle);
   // The handle is invalid
