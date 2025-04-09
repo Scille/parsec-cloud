@@ -18,5 +18,13 @@ from .workspace_history import *
 from .workspace_history2 import *
 
 
-async def init_libparsec(config: ClientConfig):
+def libparsec_init_set_on_event_callback(
+    on_event_callback: OnClientEventCallback,
+):
+    raise NotImplementedError
+
+
+async def libparsec_init_native_only_init(
+    config: ClientConfig,
+):
     raise NotImplementedError
