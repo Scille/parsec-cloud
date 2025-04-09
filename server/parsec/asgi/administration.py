@@ -54,7 +54,12 @@ from parsec.components.sequester import (
     SequesterUpdateConfigForServiceStoreBadOutcome,
     WebhookSequesterService,
 )
-from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListUsersBadOutcome
+from parsec.components.user import (
+    UserFreezeUserBadOutcome,
+    UserInfo,
+    UserListOrganizationsBadOutcome,
+    UserListUsersBadOutcome,
+)
 from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
 from parsec.logging import get_logger
 from parsec.types import Base64Bytes, SequesterServiceIDField, Unset, UnsetType
@@ -754,4 +759,37 @@ async def administration_organization_sequester_service_update_config(
     return JSONResponse(
         status_code=200,
         content={},
+    )
+
+
+class AdministrationUsersOrganizations(BaseModel):
+    user_email: str
+
+
+@administration_router.get("/administration/users/organizations")
+@log_request
+async def administration_users_organizations(
+    body: AdministrationUsersOrganizations,
+    auth: Annotated[None, Depends(check_administration_auth)],  # TODO change to service token
+    request: Request,
+) -> Response:
+    backend: Backend = request.app.state.backend
+    outcome = await backend.user.list_organizations(body.user_email)
+
+    match outcome:
+        case list():
+            pass
+        case UserListOrganizationsBadOutcome.USER_NOT_FOUND:
+            raise HTTPException(status_code=404, detail="User not found")
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "organizations": [
+                {
+                    "organization_id": org.org_id,
+                }
+                for org in outcome
+            ]
+        },
     )
