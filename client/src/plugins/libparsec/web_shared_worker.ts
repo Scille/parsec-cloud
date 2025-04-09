@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
-import { LibParsecPlugin, ClientEvent } from '@/plugins/libparsec/definitions';
+import { ClientEvent, LibParsecPlugin } from '@/plugins/libparsec/definitions';
 
 // @ts-ignore
 // eslint-disable-next-line camelcase
@@ -26,7 +26,7 @@ _self.onconnect = async (msg: MessageEvent): Promise<void> => {
 
   port.onmessage = async (msg: MessageEvent): Promise<void> => {
     // console.debug('libparsec_worker: onmessage', msg.data);
-    const {id, name, args} = msg.data as {id: number, name: string, args: [...any]};
+    const { id, name, args } = msg.data as { id: number; name: string; args: [...any] };
     if (!id) {
       console.error('libparsec_worker: skipping unknown message', msg.data);
       return;
@@ -34,8 +34,8 @@ _self.onconnect = async (msg: MessageEvent): Promise<void> => {
     // Since libparsec bindings never raise exceptions under normal conditions,
     // we don't need to catch them: any exception here is a bug and we should
     // just let it bubble up so that Sentry takes care of it.
-    const result = await libparsec[name as keyof LibParsecPlugin](...args);
-    port.postMessage({id, result});
+    const result = await (libparsec[name as keyof LibParsecPlugin] as (...args: any[]) => Promise<any>)(...args);
+    port.postMessage({ id, result });
     // console.debug('libparsec_worker: onmessage result', id, name, result);
   };
 };
@@ -51,7 +51,7 @@ async function maybeInit(): Promise<LibParsecPlugin> {
 
     module.libparsecInitSetOnEventCallback((handle: number, event: ClientEvent) => {
       // console.debug('libparsec_worker: onEventCallback', handle, event);
-      onEventBroadcast.postMessage({handle, event});
+      onEventBroadcast.postMessage({ handle, event });
     });
 
     _libparsec = module;
