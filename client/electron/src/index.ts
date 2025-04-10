@@ -233,6 +233,10 @@ ipcMain.on(PageToWindowChannel.PageIsInitialized, async () => {
   myCapacitorApp.onPageInitialized();
 });
 
+ipcMain.on(PageToWindowChannel.PageInitError, async (_event, error?: string) => {
+  myCapacitorApp.onRendererInitError(error);
+});
+
 ipcMain.on(PageToWindowChannel.OpenConfigDir, async () => {
   await shell.openExternal(parsecConfigDir.startsWith('file://') ? parsecConfigDir : `file://${parsecConfigDir}`);
 });
@@ -245,7 +249,6 @@ ipcMain.on(PageToWindowChannel.MacfuseNotInstalled, async (_event) => {
   const isFRLocale: boolean = app.getLocale().startsWith('fr');
   const url: string = isFRLocale ? INSTALL_GUIDE_URL_FR : INSTALL_GUIDE_URL_EN;
 
-  console.log(_event, url);
   shell.openExternal(url);
 
   dialog.showErrorBox(

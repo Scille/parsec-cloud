@@ -15,6 +15,7 @@ export enum PageToWindowChannel {
   CriticalError = 'parsec-critical-error',
   MacfuseNotInstalled = 'parsec-macfuse-not-installed',
   SeeInExplorer = 'parsec-see-in-explorer',
+  PageInitError = 'parsec-page-init-error',
 }
 
 export enum WindowToPageChannel {

@@ -40,6 +40,9 @@ process.once('loaded', async () => {
     pageIsInitialized: () => {
       ipcRenderer.send(PageToWindowChannel.PageIsInitialized);
     },
+    initError: (error?: string) => {
+      ipcRenderer.send(PageToWindowChannel.PageInitError, error);
+    },
     openConfigDir: () => {
       ipcRenderer.send(PageToWindowChannel.OpenConfigDir);
     },
