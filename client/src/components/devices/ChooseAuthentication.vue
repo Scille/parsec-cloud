@@ -135,26 +135,10 @@ async function areFieldsCorrect(): Promise<boolean> {
   border: 1px solid var(--parsec-color-light-secondary-medium);
   border-radius: var(--parsec-radius-12) 0 var(--parsec-radius-12) var(--parsec-radius-12);
   box-shadow: var(--parsec-shadow-soft);
-}
+  background: var(--parsec-color-light-secondary-inversed-contrast);
 
-// eslint-disable-next-line vue-scoped-css/no-unused-selector
-.radio-list-item {
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--parsec-radius-12);
-  width: 100%;
-  z-index: 2;
-
-  &:hover {
-    background: var(--parsec-color-light-secondary-background);
-  }
-
-  &.radio-checked {
-    background: var(--parsec-color-light-secondary-premiere);
-  }
-
-  &.radio-checked:last-of-type {
-    border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+  @include ms.responsive-breakpoint('sm') {
+    border-top: 1px solid var(--parsec-color-light-secondary-medium);
   }
 }
 
@@ -163,17 +147,19 @@ async function areFieldsCorrect(): Promise<boolean> {
   gap: 0.5rem;
   padding: 1rem;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--parsec-radius-12);
+  width: 100%;
+  z-index: 2;
 
-  &::part(mark) {
-    background: none;
-    transition: none;
-    transform: none;
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0.75rem 1rem;
+    border-radius: var(--parsec-radius-12);
   }
 
-  &::part(label) {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+  &:hover {
+    background: var(--parsec-color-light-secondary-background);
   }
 
   &__label,
@@ -193,6 +179,10 @@ async function areFieldsCorrect(): Promise<boolean> {
     top: -1.25rem;
   }
 
+  &.radio-checked {
+    background: var(--parsec-color-light-secondary-premiere);
+  }
+
   &.radio-disabled {
     &::part(container) {
       opacity: 0.3;
@@ -208,24 +198,53 @@ async function areFieldsCorrect(): Promise<boolean> {
       opacity: 0.5;
     }
   }
-}
-
-// eslint-disable-next-line vue-scoped-css/no-unused-selector
-.item-radio.radio-checked {
-  &::part(container) {
-    border-color: var(--parsec-color-light-primary-600);
-  }
 
   &::part(mark) {
-    width: 0.85rem;
-    height: 0.85rem;
-    border: 1.5px solid var(--parsec-color-light-secondary-inversed-contrast);
-    background: var(--parsec-color-light-primary-600);
-    border-radius: var(--parsec-radius-circle);
+    background: none;
+    transition: none;
+    transform: none;
   }
 
-  .item-radio__label {
-    color: var(--parsec-color-light-primary-600);
+  &::part(label) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    @include ms.responsive-breakpoint('sm') {
+      margin: 0;
+    }
+  }
+
+  &::part(container) {
+    @include ms.responsive-breakpoint('sm') {
+      display: none;
+    }
+  }
+
+  // eslint-disable-next-line vue-scoped-css/no-unused-selector
+  &.radio-checked {
+    border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+
+    @include ms.responsive-breakpoint('sm') {
+      border: 2px solid var(--parsec-color-light-secondary-medium);
+      border-bottom: none;
+    }
+
+    &::part(container) {
+      border-color: var(--parsec-color-light-primary-600);
+    }
+
+    &::part(mark) {
+      width: 0.85rem;
+      height: 0.85rem;
+      border: 1.5px solid var(--parsec-color-light-secondary-inversed-contrast);
+      background: var(--parsec-color-light-primary-600);
+      border-radius: var(--parsec-radius-circle);
+    }
+
+    .item-radio__label {
+      color: var(--parsec-color-light-primary-600);
+    }
   }
 }
 </style>

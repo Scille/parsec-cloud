@@ -20,10 +20,10 @@ msTest('Opens the create organization modal', async ({ home }) => {
     'Create my organization on Parsec',
     'Try Parsec for 15 days (Your organization and associated data will be deleted at the end of the trial period)',
   ]);
-  await expect(modal.locator('.server-modal-footer').locator('ion-button').nth(0)).toHaveText('Use a different Parsec server');
+  await expect(modal.locator('.server-page-footer').locator('ion-button').nth(0)).toHaveText('Use a different Parsec server');
 
   // Select one option
-  const nextButton = modal.locator('.server-modal-footer').locator('ion-button').nth(1);
+  const nextButton = modal.locator('.server-page-footer').locator('ion-button').nth(1);
   await expect(nextButton).toBeTrulyDisabled();
   await expect(nextButton).toHaveText('Continue');
   await modal.locator('.server-choice-item').nth(0).click();
@@ -39,18 +39,18 @@ msTest('Return to server selection after selecting server type', async ({ home }
   await home.locator('#create-organization-button').click();
   await home.locator('.popover-viewport').getByRole('listitem').nth(0).click();
   const modal = home.locator('.create-organization-modal');
-  await expect(modal.locator('.server-modal')).toBeVisible();
+  await expect(modal.locator('.server-page')).toBeVisible();
 
   // Go to saas and back
   await modal.locator('.server-choice-item').nth(0).click();
-  await modal.locator('.server-modal-footer').locator('ion-button').nth(1).click();
+  await modal.locator('.server-page-footer').locator('ion-button').nth(1).click();
   await expect(modal.locator('.saas-login')).toBeVisible();
   await modal.locator('.saas-login-button__item').nth(0).click();
-  await expect(modal.locator('.server-modal')).toBeVisible();
+  await expect(modal.locator('.server-page')).toBeVisible();
 
   // Go to saas, login, and back
   await modal.locator('.server-choice-item').nth(0).click();
-  await modal.locator('.server-modal-footer').locator('ion-button').nth(1).click();
+  await modal.locator('.server-page-footer').locator('ion-button').nth(1).click();
 
   await MockBms.mockLogin(home);
   await MockBms.mockUserRoute(home);
@@ -65,18 +65,18 @@ msTest('Return to server selection after selecting server type', async ({ home }
   await expect(bmsContainer).toBeHidden();
   await expect(modal.locator('.organization-name-page')).toBeVisible();
   await modal.locator('.organization-name-page').locator('#previous-button').click();
-  await expect(modal.locator('.server-modal')).toBeVisible();
+  await expect(modal.locator('.server-page')).toBeVisible();
 
   // To to trial and back
   await modal.locator('.server-choice-item').nth(1).click();
-  await modal.locator('.server-modal-footer').locator('ion-button').nth(1).click();
+  await modal.locator('.server-page-footer').locator('ion-button').nth(1).click();
   await expect(modal.locator('.user-information-page')).toBeVisible();
   await modal.locator('.user-information-page').locator('#previous-button').click();
-  await expect(modal.locator('.server-modal')).toBeVisible();
+  await expect(modal.locator('.server-page')).toBeVisible();
 
   // Go to custom and back
-  await modal.locator('.server-modal-footer').locator('ion-button').nth(0).click();
+  await modal.locator('.server-page-footer').locator('ion-button').nth(0).click();
   await expect(modal.locator('.organization-name-and-server-page')).toBeVisible();
   await modal.locator('.organization-name-and-server-page').locator('#previous-button').click();
-  await expect(modal.locator('.server-modal')).toBeVisible();
+  await expect(modal.locator('.server-page')).toBeVisible();
 });

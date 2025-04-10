@@ -5,6 +5,7 @@
     <create-organization-modal-header
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.personalDetails"
+      :small-display-stepper="true"
     />
 
     <user-information
@@ -14,6 +15,7 @@
       :email-enabled="email === undefined"
       :name-enabled="name === undefined"
       @field-update="onFieldUpdated"
+      class="user-information-content"
     />
 
     <div
@@ -138,6 +140,13 @@ async function onFieldUpdated(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+.user-information-content,
+.tos-checkbox {
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0 2rem;
+  }
+}
+
 .tos-checkbox {
   padding-top: 1em;
   color: var(--parsec-color-light-secondary-soft-text);

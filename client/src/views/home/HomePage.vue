@@ -18,7 +18,7 @@
             @about-click="openAboutModal"
             @back-click="backToPreviousPage"
             @customer-area-click="goToCustomerAreaLogin"
-            @create-or-join-organization-click="openCreateOrJoinPopover"
+            @create-or-join-organization-click="openCreateOrJoin"
             :display-create-join="deviceList.length > 0"
             :back-button-title="getBackButtonTitle()"
             :show-back-button="
@@ -37,7 +37,7 @@
                 @join-organization-with-link-click="openJoinByLinkModal"
                 @bootstrap-organization-with-link-click="openCreateOrganizationModal"
                 @recover-click="onForgottenPasswordClicked"
-                @create-or-join-organization-click="openCreateOrJoinPopover"
+                @create-or-join-organization-click="openCreateOrJoin"
                 :device-list="deviceList"
                 :querying="querying"
                 ref="organizationListRef"
@@ -108,12 +108,23 @@ import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vu
 import { openSettingsModal } from '@/views/settings';
 import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { Base64, Validity, MsModalResult, Position, SlideHorizontal, getTextFromUser, askQuestion, Answer } from 'megashark-lib';
+import {
+  Base64,
+  Validity,
+  MsModalResult,
+  Position,
+  SlideHorizontal,
+  getTextFromUser,
+  askQuestion,
+  Answer,
+  useWindowSize,
+} from 'megashark-lib';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
 import { getServerTypeFromAddress, ServerType } from '@/services/parsecServers';
 import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
+import { SmallDisplayCreateJoinModal } from '@/components/small-display';
 
 enum HomePageState {
   OrganizationList = 'organization-list',
@@ -122,6 +133,7 @@ enum HomePageState {
   CustomerArea = 'customer-area',
 }
 
+const { isLargeDisplay } = useWindowSize();
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
@@ -191,23 +203,40 @@ onUnmounted(() => {
   stateWatchCancel();
 });
 
-async function openCreateOrJoinPopover(event: Event): Promise<void> {
-  const popover = await popoverController.create({
-    component: HomePageButtons,
-    cssClass: 'homepage-popover',
-    event: event,
-    showBackdrop: false,
-    alignment: 'end',
-    componentProps: {
-      replaceEmit: async (action: HomePageAction) => await popover.dismiss({ action: action }, MsModalResult.Confirm),
-    },
-  });
-  await popover.present();
-  const result = await popover.onWillDismiss();
-  await popover.dismiss();
-  if (result.role !== MsModalResult.Confirm) {
+async function openCreateOrJoin(event: Event): Promise<void> {
+  let result!: { role?: string; data?: { action: HomePageAction } };
+
+  if (isLargeDisplay.value) {
+    const popover = await popoverController.create({
+      component: HomePageButtons,
+      cssClass: 'homepage-popover',
+      event: event,
+      showBackdrop: false,
+      alignment: 'end',
+    });
+    await popover.present();
+    result = await popover.onWillDismiss();
+    await popover.dismiss();
+  } else {
+    const modal = await modalController.create({
+      component: SmallDisplayCreateJoinModal,
+      cssClass: 'create-join-modal',
+      showBackdrop: true,
+      handle: false,
+      breakpoints: isLargeDisplay.value ? undefined : [1],
+      // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
+      // expandToScroll: false, should be added to scroll with Ionic 8
+      initialBreakpoint: isLargeDisplay.value ? undefined : 1,
+    });
+    await modal.present();
+    result = await modal.onWillDismiss();
+    await modal.dismiss();
+  }
+
+  if (result.role !== MsModalResult.Confirm || !result.data) {
     return;
   }
+
   if (result.data.action === HomePageAction.CreateOrganization) {
     await openCreateOrganizationModal();
   } else if (result.data.action === HomePageAction.JoinOrganization) {
@@ -270,7 +299,11 @@ async function openCreateOrganizationModal(bootstrapLink?: string, defaultServer
     component: CreateOrganizationModal,
     canDismiss: true,
     cssClass: 'create-organization-modal',
-    backdropDismiss: false,
+    backdropDismiss: isLargeDisplay.value ? false : true,
+    showBackdrop: true,
+    breakpoints: isLargeDisplay.value ? undefined : [0, 0.5, 1],
+    handle: false,
+    initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     componentProps: {
       informationManager: informationManager,
       bootstrapLink: bootstrapLink,

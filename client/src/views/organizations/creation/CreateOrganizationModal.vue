@@ -115,5 +115,9 @@ async function onBackToServerChoice(): Promise<void> {
 <style lang="scss" scoped>
 .modal-content {
   min-width: 32em;
+
+  @include ms.responsive-breakpoint('sm') {
+    min-width: 100%;
+  }
 }
 </style>
