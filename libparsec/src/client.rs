@@ -19,8 +19,8 @@ pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
 
 use crate::{
     handle::{
-        borrow_from_handle, filter_close_handles, register_handle_with_init, take_and_close_handle,
-        FilterCloseHandle, Handle, HandleItem,
+        borrow_from_handle, filter_close_handles, iter_opened_handles, register_handle_with_init,
+        take_and_close_handle, FilterCloseHandle, Handle, HandleItem,
     },
     ClientConfig, OnEventCallbackPlugged,
 };
@@ -30,6 +30,26 @@ fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
+}
+
+/*
+ * List started clients
+ */
+
+/// In theory `DeviceID` is not guaranteed to be globally unique since its value
+/// is choosen client-side during the device creation.
+///
+/// However in practice the device ID *is* randomly picked so we can use it
+/// as a unique identifier (instead of having to also compare the server URL and
+/// organization ID).
+pub fn list_started_clients() -> Vec<(Handle, DeviceID)> {
+    let mut clients = vec![];
+    iter_opened_handles(|handle, item| {
+        if let HandleItem::Client { client, .. } = item {
+            clients.push((handle, client.device_id()));
+        }
+    });
+    clients
 }
 
 /*
@@ -335,6 +355,9 @@ pub struct ClientInfo {
     pub human_handle: HumanHandle,
     pub current_profile: UserProfile,
     pub server_config: ServerConfig,
+    pub is_server_online: bool,
+    pub is_organization_expired: bool,
+    pub must_accept_tos: bool,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -365,6 +388,9 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
                 }
             })?,
         server_config: client.server_config(),
+        is_server_online: client.is_server_online(),
+        is_organization_expired: client.is_organization_expired(),
+        must_accept_tos: client.must_accept_tos(),
     })
 }
 
