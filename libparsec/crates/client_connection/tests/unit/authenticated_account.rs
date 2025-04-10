@@ -42,7 +42,11 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
                 Some(&HeaderValue::from_static("application/msgpack"))
             );
 
-            assert!(headers.contains_key(AUTHORIZATION));
+            assert!(headers
+                .get(AUTHORIZATION)
+                .unwrap()
+                .as_bytes()
+                .starts_with(b"Bearer PARSEC-HMAC-BLAKE2B.password.Zm9vQGV4YW1wbGUuY29t."));
 
             let body = request.body().unwrap().as_bytes().unwrap();
             let request = authenticated_account_cmds::AnyCmdReq::load(body).unwrap();
