@@ -61,7 +61,7 @@ concurrency:
 env:
   # We use the version 18.12 because the version >= 18.13 have some breaking changes on how they format the date.
   # That would break our unit test if we don't update them.
-  node-version: 18.12.0
+  node-version: 22.14.0
   wasm-pack-version: 0.12.1
   WINFSP_VERSION: 2.0.23075
 
@@ -325,6 +325,17 @@ jobs:
           mv 'D:/a/_temp/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
         timeout-minutes: 2
 
+      # Building OpenSSL requires a perl interpreter.
+      # The default one does not provide windows-style filesystem
+      # paths so we have to switch to Strawberry.
+      - name: Use strawberry perl
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          echo OPENSSL_SRC_PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+          echo PERL=C:/Strawberry/perl/bin/perl >> $GITHUB_ENV
+        timeout-minutes: 1
+
       - name: Windows > Install yq
         if: matrix.platform == 'windows'
         run: choco install yq
@@ -369,8 +380,14 @@ jobs:
       - name: Build Electron bindings
         run: npm run build:release
         working-directory: bindings/electron
-        # MacOS is really slow when build rust
+        # MacOS is really slow when building rust
         timeout-minutes: 30
+
+      - name: Inspect rust electron build
+        run: ls -Rl .
+        shell: bash
+        working-directory: bindings/electron
+        timeout-minutes: 1
 
       - name: Build client for electron
         run: npm run native:build -- --mode ${{ steps.version.outputs.type }}
