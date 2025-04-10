@@ -7,7 +7,9 @@ use std::{
 
 use libparsec_tests_fixtures::*;
 
-use crate::{EventBus, EventOffline, EventOnline, EventPing};
+use crate::{
+    EventBus, EventExpiredOrganization, EventMustAcceptTos, EventOffline, EventOnline, EventPing,
+};
 
 #[test]
 fn debug_format() {
@@ -15,17 +17,19 @@ fn debug_format() {
 
     let eb = EventBus::default();
 
-    // Online/Offline events are always registered internally
+    // Online/Offline/MustAcceptTos events are always registered internally
     p_assert_eq!(
         format!("{:?}", eb),
-        "EventBus { on_online_cbs: 1, on_offline_cbs: 1 }"
+        // cspell:disable-next-line
+        "EventBus { on_online_cbs: 1, on_offline_cbs: 1, on_expiredorganization_cbs: 1, on_mustaccepttos_cbs: 1 }"
     );
 
     let _lifetime = eb.connect(callback);
 
     p_assert_eq!(
         format!("{:?}", eb),
-        "EventBus { on_online_cbs: 1, on_offline_cbs: 1, on_ping_cbs: 1 }"
+        // cspell:disable-next-line
+        "EventBus { on_online_cbs: 1, on_offline_cbs: 1, on_expiredorganization_cbs: 1, on_mustaccepttos_cbs: 1, on_ping_cbs: 1 }"
     );
 }
 
@@ -112,6 +116,8 @@ fn closure() {
 async fn wait_server_online() {
     let eb = EventBus::default();
 
+    p_assert_eq!(eb.is_server_online(), false);
+
     for _ in 0..2 {
         let switched_to_online = Cell::new(false);
         libparsec_platform_async::future::join(
@@ -133,8 +139,36 @@ async fn wait_server_online() {
 
         // Now we are online
         eb.wait_server_online().await;
+        p_assert_eq!(eb.is_server_online(), true);
 
         // ...and switch back to offline and retry from the beginning !
         eb.send(&EventOffline);
+        p_assert_eq!(eb.is_server_online(), false);
     }
+}
+
+#[parsec_test]
+async fn is_organization_expired() {
+    let eb = EventBus::default();
+
+    p_assert_eq!(eb.is_organization_expired(), false);
+    eb.send(&EventExpiredOrganization);
+    p_assert_eq!(eb.is_organization_expired(), true);
+    eb.send(&EventOffline);
+    p_assert_eq!(eb.is_organization_expired(), true);
+    eb.send(&EventOnline);
+    p_assert_eq!(eb.is_organization_expired(), false);
+}
+
+#[parsec_test]
+async fn must_accept_tos() {
+    let eb = EventBus::default();
+
+    p_assert_eq!(eb.must_accept_tos(), false);
+    eb.send(&EventMustAcceptTos);
+    p_assert_eq!(eb.must_accept_tos(), true);
+    eb.send(&EventOffline);
+    p_assert_eq!(eb.must_accept_tos(), true);
+    eb.send(&EventOnline);
+    p_assert_eq!(eb.must_accept_tos(), false);
 }
