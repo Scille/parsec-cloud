@@ -12,6 +12,7 @@ on:
       # Testbed code also depends on `libparsec/**`, but this code change very often
       # and we consider the server tests are good enough on this part.
       - server/packaging/testbed-server/**
+      - "!server/packaging/testbed-server/**.md"
       - .github/workflows/docker-testbed.yml
   push:
     branches:
@@ -20,6 +21,7 @@ on:
       # Testbed code also depends on `libparsec/**`, but this code change very often
       # and we consider the server tests are good enough on this part.
       - server/packaging/testbed-server/**
+      - "!server/packaging/testbed-server/**.md"
       - .github/workflows/docker-testbed.yml
 
 permissions:
