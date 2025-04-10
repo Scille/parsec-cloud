@@ -296,22 +296,21 @@ async function setupApp(): Promise<void> {
     const msg = `\`TESTBED_SERVER\` environ variable detected, creating a new coolorg testbed organization with server ${
       import.meta.env.PARSEC_APP_TESTBED_SERVER
     }`;
-    (window as any).electronAPI.log('debug', msg);
+    window.electronAPI.log('debug', msg);
 
     // Dev mode, provide a default testbed
     const configResult = await libparsec.testNewTestbed('coolorg', import.meta.env.PARSEC_APP_TESTBED_SERVER);
     if (configResult.ok) {
       nextStage(configResult.value); // Fire-and-forget call
     } else {
+      window.electronAPI.initError(`Failed to initialize the testbed: ${configResult.error.error}`);
       // eslint-disable-next-line no-alert
       alert(
         `Failed to initialize using the testbed.\nTESTBED_SERVER is set to '${import.meta.env.PARSEC_APP_TESTBED_SERVER}'\n${
           configResult.error.tag
         }: ${configResult.error.error}`,
       );
-      if (isElectron()) {
-        (window as any).electronAPI.closeApp();
-      }
+      window.electronAPI.closeApp();
     }
   } else {
     // Prod or using devices in local storage
@@ -380,6 +379,9 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
       if (!window.isDev()) {
         warnRefresh();
       }
+    },
+    initError: (error?: string): void => {
+      console.error('Error at initialization', error);
     },
     openConfigDir: (): void => {
       console.log('OpenConfigDir: Not available');
@@ -522,6 +524,7 @@ declare global {
       openConfigDir: () => void;
       authorizeURL: (url: string) => void;
       seeInExplorer: (path: string) => void;
+      initError: (error?: string) => void;
     };
   }
 }

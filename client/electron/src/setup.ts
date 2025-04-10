@@ -392,6 +392,14 @@ export class ElectronCapacitorApp {
     }, 1500);
   }
 
+  onRendererInitError(_error?: string): void {
+    this.MainWindow.show();
+    if (this.splash) {
+      this.splash.destroy();
+      this.splash = null;
+    }
+  }
+
   async init(): Promise<void> {
     const iconPaths = this.getIconPaths();
     const appIcon = nativeImage.createFromPath(iconPaths.app);
