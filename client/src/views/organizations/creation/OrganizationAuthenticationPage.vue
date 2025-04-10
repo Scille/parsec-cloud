@@ -6,11 +6,16 @@
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.authentication"
       subtitle="CreateOrganization.subtitle.authentication"
+      :small-display-stepper="{
+        icon: shapes,
+        title: $msTranslate('HomePage.noExistingOrganization.createOrganization'),
+      }"
     />
 
     <choose-authentication
       ref="chooseAuthenticationRef"
       @field-update="onFieldUpdated"
+      class="authentication-content"
     />
 
     <ion-footer class="authentication-page-footer">
@@ -56,7 +61,7 @@
 <script setup lang="ts">
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import { DeviceSaveStrategy } from '@/parsec';
-import { chevronForward, chevronBack } from 'ionicons/icons';
+import { chevronForward, chevronBack, shapes } from 'ionicons/icons';
 import { IonPage, IonButton, IonButtons, IonIcon, IonFooter } from '@ionic/vue';
 import { asyncComputed } from 'megashark-lib';
 import { ref } from 'vue';
@@ -91,5 +96,8 @@ async function onFieldUpdated(): Promise<void> {
 <style scoped lang="scss">
 .authentication-page {
   overflow: auto;
+}
+.authentication-content {
+  padding: 0 1rem;
 }
 </style>

@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="server-modal">
+  <ion-page class="server-page">
     <create-organization-modal-header
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.create"
@@ -36,6 +36,11 @@
         <ion-text class="server-choice-item__label subtitles-normal">
           {{ $msTranslate('CreateOrganization.server.saas') }}
         </ion-text>
+        <ion-icon
+          v-if="serverChoice === ServerType.Saas"
+          class="server-choice-item__checkmark"
+          :icon="checkmarkCircle"
+        />
       </div>
 
       <!-- Trial -->
@@ -54,10 +59,15 @@
           {{ $msTranslate('CreateOrganization.server.trial.title') }}
           <span class="body">{{ $msTranslate('CreateOrganization.server.trial.description') }}</span>
         </ion-text>
+        <ion-icon
+          v-if="serverChoice === ServerType.Trial"
+          class="server-choice-item__checkmark"
+          :icon="checkmarkCircle"
+        />
       </div>
     </div>
 
-    <ion-footer class="server-modal-footer">
+    <ion-footer class="server-page-footer">
       <ion-button
         @click="$emit('serverChosen', ServerType.Custom)"
         fill="clear"
@@ -66,6 +76,7 @@
       </ion-button>
       <ion-button
         @click="onChoiceMade"
+        size="large"
         :disabled="serverChoice === undefined"
       >
         {{ $msTranslate('CreateOrganization.button.continue') }}
@@ -75,12 +86,13 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonButton, IonText, IonFooter } from '@ionic/vue';
+import { IonPage, IonButton, IonText, IonFooter, IonIcon } from '@ionic/vue';
 import { ref } from 'vue';
 import { ServerType } from '@/services/parsecServers';
 import { I18n } from 'megashark-lib';
 import TrialUS from '@/assets/images/trial-US.svg';
 import TrialFR from '@/assets/images/trial-FR.svg';
+import { checkmarkCircle } from 'ionicons/icons';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 import { Env } from '@/services/environment';
 
@@ -110,11 +122,14 @@ function getImagePath(): string {
 </script>
 
 <style scoped lang="scss">
-.server-modal {
-  padding: 2.5rem;
+.server-page {
+  padding: 2rem;
   display: flex;
-  height: auto;
   width: 100%;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0;
+  }
 
   &-footer {
     display: flex;
@@ -125,8 +140,15 @@ function getImagePath(): string {
 
 .server-choice {
   display: flex;
-  gap: 4rem;
-  justify-content: center;
+  padding: 0.5rem 2rem;
+  justify-content: space-evenly;
+
+  @include ms.responsive-breakpoint('sm') {
+    flex-direction: column;
+    margin: auto;
+    gap: 2rem;
+    max-width: 35rem;
+  }
 
   &-item {
     display: flex;
@@ -135,9 +157,26 @@ function getImagePath(): string {
     cursor: pointer;
     flex: 1;
     position: relative;
+    align-items: center;
 
-    &:first-child {
-      align-items: end;
+    @include ms.responsive-breakpoint('sm') {
+      outline: 1px solid var(--parsec-color-light-secondary-medium);
+      border-radius: var(--parsec-radius-12);
+      gap: 0;
+    }
+
+    &__checkmark {
+      position: absolute;
+      top: 0.5rem;
+      right: 3rem;
+      color: var(--parsec-color-light-primary-600);
+      font-size: 1.5rem;
+      z-index: 3;
+
+      @include ms.responsive-breakpoint('sm') {
+        top: 1rem;
+        right: 1rem;
+      }
     }
 
     &__image {
@@ -150,6 +189,12 @@ function getImagePath(): string {
       align-items: center;
       position: relative;
       overflow: hidden;
+      transition: all 0.1s ease-out;
+
+      @include ms.responsive-breakpoint('sm') {
+        width: 100%;
+        height: 8rem;
+      }
 
       #top-left {
         position: absolute;
@@ -171,6 +216,11 @@ function getImagePath(): string {
         transition:
           right 0.3s,
           top 0.3s;
+
+        @include ms.responsive-breakpoint('sm') {
+          top: -3rem;
+          right: -4rem;
+        }
       }
 
       #center {
@@ -195,19 +245,33 @@ function getImagePath(): string {
       display: flex;
       flex-direction: column;
       color: var(--parsec-color-light-secondary-text);
-      max-width: 12rem;
+      max-width: 15rem;
       line-height: 150%; /* 150% */
       gap: 0.25rem;
 
       span {
         color: var(--parsec-color-light-secondary-hard-grey);
       }
+
+      @include ms.responsive-breakpoint('sm') {
+        max-width: 100%;
+        padding: 1rem 1.5rem;
+        text-align: center;
+      }
     }
 
     &:hover {
+      @include ms.responsive-breakpoint('sm') {
+        outline: 2px solid var(--parsec-color-light-primary-300);
+      }
+
       .server-choice-item__image {
-        outline: 3px solid var(--parsec-color-light-primary-100);
-        color: var(--parsec-color-light-secondary-grey);
+        outline: 2px solid var(--parsec-color-light-primary-300);
+        background-color: var(--parsec-color-light-primary-30);
+
+        @include ms.responsive-breakpoint('sm') {
+          outline: none;
+        }
 
         #top-left {
           top: -3rem;
@@ -227,9 +291,17 @@ function getImagePath(): string {
     }
 
     &.selected {
+      @include ms.responsive-breakpoint('sm') {
+        outline: 2px solid var(--parsec-color-light-primary-600);
+      }
+
       .server-choice-item__image {
-        outline: 3px solid var(--parsec-color-light-primary-300);
+        outline: 2px solid var(--parsec-color-light-primary-600);
         background-color: var(--parsec-color-light-primary-30);
+
+        @include ms.responsive-breakpoint('sm') {
+          outline: none;
+        }
 
         #top-left {
           top: -3rem;
@@ -244,6 +316,11 @@ function getImagePath(): string {
         #center {
           bottom: -4.5rem;
           left: 1rem;
+
+          @include ms.responsive-breakpoint('sm') {
+            bottom: -5.5rem;
+            left: 2rem;
+          }
         }
       }
       .server-choice-item__label {
