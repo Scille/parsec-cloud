@@ -4,6 +4,22 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.3.3-rc.0 (2025-04-10)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix incompatibility with Outsider users created with Parsec < v3.3 preventing
+  them to start a client with Parsec >= 3.3
+  (`#10041 <https://github.com/Scille/parsec-cloud/issues/10041>`__)
+
+* Fix crash on Windows when a workspace name contains characters incompatible
+  with Windows file path rules.
+  (`#9925 <https://github.com/Scille/parsec-cloud/issues/9925>`__)
+
+
+
 Parsec v3.3.2 (2025-03-04)
 --------------------------
 
