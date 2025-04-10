@@ -74,6 +74,10 @@ impl SecretKey {
         out
     }
 
+    pub fn hmac_full(&self, data: &[u8]) -> Vec<u8> {
+        self.hmac::<U64>(data)
+    }
+
     pub fn sas_code(&self, data: &[u8]) -> Vec<u8> {
         self.hmac::<U5>(data)
     }
