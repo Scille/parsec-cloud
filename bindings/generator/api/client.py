@@ -33,6 +33,10 @@ from .invite import DeviceSaveStrategy, AvailableDevice
 from .config import ClientConfig
 
 
+def list_started_clients() -> list[tuple[Handle, DeviceID]]:
+    raise NotImplementedError
+
+
 class WaitForDeviceAvailableError(ErrorVariant):
     class Internal:
         pass
@@ -105,6 +109,9 @@ class ClientInfo(Structure):
     human_handle: HumanHandle
     current_profile: UserProfile
     server_config: ServerConfig
+    is_server_online: bool
+    is_organization_expired: bool
+    must_accept_tos: bool
 
 
 async def client_info(
