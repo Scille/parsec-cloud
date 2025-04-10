@@ -1,12 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use bytes::Bytes;
+use data_encoding::BASE64URL;
 use reqwest::{
     header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
-use std::fmt::Debug;
 use std::path::Path;
+use std::{fmt::Debug, sync::Arc};
 
 use libparsec_platform_http_proxy::ProxyConfig;
 use libparsec_protocol::{api_version_major_to_full, API_LATEST_VERSION};
@@ -21,6 +22,16 @@ use crate::{
 
 const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 
+/// Method name that will be used for the `Authorization` header
+pub const PARSEC_AUTH_METHOD: &str = "PARSEC-PASSWORD-HMAC-BLAKE2B";
+
+#[derive(Debug)]
+pub struct AccountPassword {
+    pub email: String,
+    pub time_provider: TimeProvider,
+    pub hmac_key: SecretKey,
+}
+
 /// Send commands in an authenticated account context.
 #[derive(Debug)]
 pub struct AuthenticatedAccountCmds {
@@ -30,6 +41,8 @@ pub struct AuthenticatedAccountCmds {
     url: Url,
     #[cfg(feature = "test-with-testbed")]
     send_hook: SendHookConfig,
+    time_provider: TimeProvider,
+    account: Arc<AccountPassword>,
 }
 
 impl AuthenticatedAccountCmds {
@@ -37,15 +50,17 @@ impl AuthenticatedAccountCmds {
         config_dir: &Path,
         addr: ParsecAuthenticatedAccountAddr,
         proxy: ProxyConfig,
+        account: Arc<AccountPassword>,
     ) -> anyhow::Result<Self> {
         let client = crate::build_client_with_proxy(proxy)?;
-        Ok(Self::from_client(client, config_dir, addr))
+        Ok(Self::from_client(client, config_dir, addr, account))
     }
 
     pub fn from_client(
         client: Client,
         _config_dir: &Path,
         addr: ParsecAuthenticatedAccountAddr,
+        account: Arc<AccountPassword>,
     ) -> Self {
         let url = addr.to_authenticated_account_url();
 
@@ -58,6 +73,8 @@ impl AuthenticatedAccountCmds {
             url,
             #[cfg(feature = "test-with-testbed")]
             send_hook,
+            time_provider: account.time_provider.new_child(),
+            account,
         }
     }
 
@@ -96,7 +113,13 @@ impl AuthenticatedAccountCmds {
             .expect("api version must contains valid char");
         let request_builder = self.client.post(self.url.clone());
 
-        let req = prepare_request(request_builder, api_version_header_value, request_body);
+        let req = prepare_request(
+            request_builder,
+            api_version_header_value,
+            request_body,
+            &self.time_provider,
+            &self.account,
+        );
 
         #[cfg(feature = "test-with-testbed")]
         let resp = self.send_hook.low_level_send(req).await?;
@@ -149,6 +172,8 @@ fn prepare_request(
     request_builder: RequestBuilder,
     api_version_header_value: HeaderValue,
     body: Vec<u8>,
+    time_provider: &TimeProvider,
+    account: &AccountPassword,
 ) -> RequestBuilder {
     let mut content_headers = HeaderMap::with_capacity(4);
     content_headers.insert(API_VERSION_HEADER_NAME, api_version_header_value);
@@ -157,10 +182,37 @@ fn prepare_request(
         CONTENT_LENGTH,
         HeaderValue::from_str(&body.len().to_string()).expect("numeric value are valid char"),
     );
-    let authorization_header_value = HeaderValue::from_static("a0000000000000000000000000000001");
+    let body_sha256 = libparsec_crypto::HashDigest::from_data(&body);
+    let authorization_header_value = HeaderValue::from_str(&generate_authorization_header_value(
+        &BASE64URL.encode(account.email.as_bytes()),
+        time_provider.now(),
+        &body_sha256,
+        &account.hmac_key,
+    ))
+    .expect("always valid");
     content_headers.insert(AUTHORIZATION, authorization_header_value);
 
     request_builder.headers(content_headers).body(body)
+}
+
+fn generate_authorization_header_value(
+    email_base64: &str,
+    now: DateTime,
+    body_sha256: &HashDigest,
+    secret: &SecretKey,
+) -> String {
+    let timestamp = now.as_timestamp_seconds().to_string();
+    let content = [
+        PARSEC_AUTH_METHOD.as_bytes(),
+        email_base64.as_bytes(),
+        timestamp.as_bytes(),
+        body_sha256.as_ref(),
+    ]
+    .join(b".".as_slice());
+    let signature = secret.hmac_full(&content);
+    let b64_signature = BASE64URL.encode(&signature);
+
+    format!("Bearer {PARSEC_AUTH_METHOD}.{email_base64}.{timestamp}.{b64_signature}")
 }
 
 #[cfg(test)]
