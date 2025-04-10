@@ -47,23 +47,12 @@ export enum HomePageAction {
 </script>
 
 <script setup lang="ts">
-import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
+import { IonIcon, IonItem, IonLabel, IonList, IonText, popoverController } from '@ionic/vue';
 import { addCircle, mail } from 'ionicons/icons';
-
-const emits = defineEmits<{
-  (e: 'click', action: HomePageAction): void;
-}>();
-
-const props = defineProps<{
-  replaceEmit?: (action: HomePageAction) => Promise<void>;
-}>();
+import { MsModalResult } from 'megashark-lib';
 
 async function clicked(action: HomePageAction): Promise<void> {
-  if (props.replaceEmit) {
-    await props.replaceEmit(action);
-  } else {
-    emits('click', action);
-  }
+  await popoverController.dismiss({ action: action }, MsModalResult.Confirm);
 }
 </script>
 

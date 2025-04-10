@@ -5,6 +5,9 @@
     v-if="!hideCloseButton"
     slot="icon-only"
     class="closeBtn"
+    :class="{
+      'closeBtn--small-display': smallDisplayStepper && isSmallDisplay,
+    }"
     @click="$emit('closeClicked')"
   >
     <ion-icon
@@ -12,7 +15,24 @@
       class="closeBtn__icon"
     />
   </ion-button>
-  <ion-header class="modal-header">
+  <ion-header
+    class="modal-header"
+    :class="{
+      'modal-header--small-display': smallDisplayStepper && isSmallDisplay,
+    }"
+  >
+    <div
+      class="small-display-stepper"
+      v-if="smallDisplayStepper && isSmallDisplay"
+    >
+      <ion-icon
+        :icon="shapes"
+        class="small-display-stepper__icon"
+      />
+      <ion-text class="small-display-stepper__icon button-small">
+        {{ $msTranslate('HomePage.noExistingOrganization.createOrganization') }}
+      </ion-text>
+    </div>
     <div class="modal-header-title">
       <ion-icon
         v-if="icon"
@@ -34,14 +54,17 @@
 
 <script setup lang="ts">
 import { IonButton, IonHeader, IonIcon, IonText } from '@ionic/vue';
-import { close } from 'ionicons/icons';
-import { Translatable } from 'megashark-lib';
+import { close, shapes } from 'ionicons/icons';
+import { Translatable, useWindowSize } from 'megashark-lib';
+
+const { isSmallDisplay } = useWindowSize();
 
 defineProps<{
   title: Translatable;
   subtitle?: Translatable;
   icon?: string;
   hideCloseButton?: boolean;
+  smallDisplayStepper?: boolean;
 }>();
 
 defineEmits<{
@@ -56,6 +79,11 @@ defineEmits<{
   text-wrap: wrap;
   margin-bottom: 1.5rem;
   gap: 1rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 2rem 0 1.5rem 2rem;
+    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+  }
 
   &-title {
     display: flex;
@@ -77,6 +105,40 @@ defineEmits<{
 
   &__text {
     color: var(--parsec-color-light-secondary-soft-text);
+
+    @include ms.responsive-breakpoint('sm') {
+      display: none;
+    }
+  }
+}
+
+.closeBtn--small-display {
+  position: absolute;
+  top: 3rem;
+  right: 1rem;
+  padding: 0.25rem;
+}
+
+.modal-header--small-display {
+  padding: 0 0 1.5rem;
+
+  .small-display-stepper {
+    background: var(--parsec-color-light-primary-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    gap: 0.75rem;
+
+    &__icon {
+      color: var(--parsec-color-light-primary-600);
+      border-radius: var(--parsec-radius-6);
+      font-size: 1.125rem;
+    }
+  }
+
+  .modal-header-title {
+    padding: 0.5rem 2rem 0;
   }
 }
 </style>

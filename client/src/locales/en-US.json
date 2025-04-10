@@ -154,6 +154,7 @@
         "noExistingOrganization": {
             "createOrJoin": "Create or join",
             "createOrganization": "Create an organization",
+            "createOrganizationDescription": "Would you like to create or join an organization?",
             "createOrganizationTitle": "Create",
             "createOrganizationSubtitle": "I want to create an organization",
             "joinOrganization": "Join an organization",
@@ -235,7 +236,7 @@
         },
         "parsecServerUrl": "URL of your Parsec server",
         "loading": "Just a moment, we are setting up your organization",
-        "organizationCreated": "You can access your new organization",
+        "organizationCreated": "Congratulations! You have created your new organization.",
         "title": {
             "create": "Create an organization",
             "personalDetails": "Enter your personal information",
@@ -264,7 +265,7 @@
             "next": "Next",
             "previous": "Previous",
             "create": "Create organization",
-            "done": "Let's go!",
+            "done": "Access to your organization",
             "modify": "Edit",
             "continue": "Continue"
         },

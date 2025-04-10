@@ -8,7 +8,7 @@ async function openCreateOrganizationModal(page: Page): Promise<Locator> {
   await page.locator('#create-organization-button').click();
   await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
   const modal = page.locator('.create-organization-modal');
-  await modal.locator('.server-modal-footer').locator('ion-button').nth(0).click();
+  await modal.locator('.server-page-footer').locator('ion-button').nth(0).click();
   return modal;
 }
 
@@ -36,7 +36,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await fillIonInput(orgServerContainer.locator('ion-input').nth(0), uniqueOrgName);
   await expect(orgNext).toHaveDisabledAttribute();
   await fillIonInput(orgServerContainer.locator('ion-input').nth(1), home.orgInfo.serverAddr);
-  await expect(orgNext).not.toHaveDisabledAttribute();
+  await expect(orgNext).toNotHaveDisabledAttribute();
 
   // Wrong org name
   await fillIonInput(orgServerContainer.locator('ion-input').nth(0), 'Invalid Org N@me');
@@ -47,7 +47,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
 
   // Correct org name again
   await fillIonInput(orgServerContainer.locator('ion-input').nth(0), uniqueOrgName);
-  await expect(orgNext).not.toHaveDisabledAttribute();
+  await expect(orgNext).toNotHaveDisabledAttribute();
   await expect(orgNameError).toBeHidden();
 
   // Now wrong server address
@@ -59,7 +59,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
 
   // And correct server address again
   await fillIonInput(orgServerContainer.locator('ion-input').nth(1), home.orgInfo.serverAddr);
-  await expect(orgNext).not.toHaveDisabledAttribute();
+  await expect(orgNext).toNotHaveDisabledAttribute();
   await expect(orgServerError).toBeHidden();
 
   await orgNext.click();

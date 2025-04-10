@@ -6,11 +6,13 @@
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.authentication"
       subtitle="CreateOrganization.subtitle.authentication"
+      :small-display-stepper="true"
     />
 
     <choose-authentication
       ref="chooseAuthenticationRef"
       @field-update="onFieldUpdated"
+      class="authentication-content"
     />
 
     <ion-footer class="authentication-page-footer">
@@ -91,5 +93,10 @@ async function onFieldUpdated(): Promise<void> {
 <style scoped lang="scss">
 .authentication-page {
   overflow: auto;
+}
+.authentication-content {
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0 1rem;
+  }
 }
 </style>

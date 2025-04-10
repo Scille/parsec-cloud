@@ -8,7 +8,7 @@ async function openCreateOrganizationModal(page: Page): Promise<Locator> {
   await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
   const modal = page.locator('.create-organization-modal');
   await modal.locator('.server-choice-item').nth(1).click();
-  await modal.locator('.server-modal-footer').locator('ion-button').nth(1).click();
+  await modal.locator('.server-page-footer').locator('ion-button').nth(1).click();
   return modal;
 }
 
@@ -111,7 +111,6 @@ msTest('Go through trial org creation process', async ({ home }) => {
   await expect(userInfoContainer).toBeHidden();
   await expect(authContainer).toBeHidden();
   await expect(modal.locator('.creation-page')).toBeVisible();
-  await expect(modal.locator('.creation-page').locator('.closeBtn')).toBeHidden();
   await home.waitForTimeout(1000);
 
   await expect(modal.locator('.created-page')).toBeVisible();

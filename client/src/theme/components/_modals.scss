@@ -12,6 +12,16 @@
   }
 }
 
+.modal-default::part(content) {
+  @media only screen and (max-height: 700px) {
+    max-width: var(--parsec-modal-width-md);
+  }
+}
+
+.closeBtn::part(native) {
+  height: 2rem;
+}
+
 /* -- modal-stepper -- */
 .modal-stepper {
   // global
@@ -99,6 +109,31 @@
   }
 }
 
+.create-join-modal {
+  &::part(content) {
+    max-height: 37.5rem;
+    height: 70%;
+    border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+    max-width: var(--parsec-modal-width-sm);
+  }
+
+  .modal-header-title {
+    max-width: none;
+    padding: 1.5rem 2rem 0;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0;
+    }
+  }
+
+  .modal-content {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+}
+
 .join-organization-modal {
   &::part(content) {
     max-width: var(--parsec-modal-width-lg);
@@ -158,6 +193,23 @@
   &::part(content) {
     min-width: var(--parsec-modal-width-md);
     max-width: var(--parsec-modal-width-md);
+
+    @include ms.responsive-breakpoint('sm') {
+      min-width: 100%;
+      max-width: 100%;
+      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+    }
+  }
+
+  .page-modal-container {
+    padding: 2rem;
+    display: flex;
+    height: auto;
+    width: 100%;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0;
+    }
   }
 
   &:has(.OrgNameStep)::part(content),
@@ -170,18 +222,16 @@
   &:has(.organization-name-and-server-page.active)::part(content) {
     min-width: var(--parsec-modal-width-sm);
     max-width: var(--parsec-modal-width-sm);
+
+    @include ms.responsive-breakpoint('sm') {
+      min-width: 100%;
+      max-width: 100%;
+    }
   }
 
   &:has(.saas-forgot-password)::part(content) {
     min-width: 35.75rem;
     max-width: 35.75rem;
-  }
-
-  .page-modal-container {
-    padding: 2rem;
-    display: flex;
-    height: auto;
-    width: 100%;
   }
 
   .authentication-page {
@@ -212,6 +262,23 @@
     .modal-footer-buttons {
       display: flex;
       gap: 1rem;
+    }
+  }
+
+  // footer
+  [class*='-page-footer'] {
+    @include ms.responsive-breakpoint('sm') {
+      margin: 0 auto !important;
+      padding: 2rem 2rem 3rem;
+      gap: 1rem;
+      flex-direction: column;
+      max-width: 35rem;
+    }
+
+    .modal-footer-buttons {
+      @include ms.responsive-breakpoint('sm') {
+        justify-content: space-between;
+      }
     }
   }
 
@@ -336,6 +403,8 @@
 
 .question-modal,
 .information-modal {
+  padding: 2rem;
+
   &::part(content) {
     max-width: var(--parsec-modal-width-sm);
     width: var(--parsec-modal-width-sm);
@@ -343,6 +412,14 @@
 
   .ms-modal-header {
     padding-bottom: 0rem !important;
+  }
+
+  .ms-small-display-modal-footer-buttons {
+    justify-content: flex-end;
+
+    .button {
+      margin: 0;
+    }
   }
 }
 
