@@ -493,6 +493,8 @@ At that point the server can remove the client, and it's related data
 
 #### Missing elements to be defined in the future
 
+- Support changing email linked to account
+- Support validating device using different email in human handle
 - Support for FIDO2
 - Multiple auth method support (listing, deletion)
 - MFA support
