@@ -97,7 +97,7 @@ interface ConnectedOrganization {
   handle: ConnectionHandle;
   device: AvailableDevice;
   trial: boolean;
-  isExpired: boolean;
+  isOrganizationExpired: boolean;
   isOnline: boolean;
 }
 
@@ -116,7 +116,7 @@ onMounted(async () => {
       userEmail: info.device.humanHandle.email,
       device: info.device,
       trial: isTrialOrganizationDevice(info.device),
-      isExpired: info.isExpired,
+      isOrganizationExpired: info.isOrganizationExpired,
       isOnline: info.isOnline,
     };
   });

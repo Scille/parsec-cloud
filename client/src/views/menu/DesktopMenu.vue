@@ -441,7 +441,6 @@ import {
 } from '@/router';
 import {
   ClientInfo,
-  getConnectionInfo,
   LoggedInDeviceInfo,
   WorkspaceID,
   WorkspaceInfo,
@@ -450,6 +449,7 @@ import {
   getCurrentAvailableDevice,
   AvailableDevice,
   getLoggedInDevices,
+  getClientInfo,
 } from '@/parsec';
 import { ChevronExpand, MsImage, LogoIconGradient, I18n, MsModalResult } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
@@ -624,9 +624,10 @@ onMounted(async () => {
   menusVisible.value.recentWorkspaces = savedSidebarData.workspacesVisible ?? true;
   menusVisible.value.recentFiles = savedSidebarData.recentFilesVisible ?? true;
 
-  const connInfo = getConnectionInfo();
-  if (connInfo) {
-    isExpired.value = connInfo.isExpired;
+  const clientInfoResult = await getClientInfo();
+  if (clientInfoResult.ok) {
+    // clientInfoResult.organizationIsExpired;
+    isExpired.value = false;
   }
 
   await loadAll();

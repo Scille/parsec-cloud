@@ -290,6 +290,18 @@ impl Client {
             .clone()
     }
 
+    pub fn is_server_online(&self) -> bool {
+        self.event_bus.is_server_online()
+    }
+
+    pub fn is_organization_expired(&self) -> bool {
+        self.event_bus.is_organization_expired()
+    }
+
+    pub fn must_accept_tos(&self) -> bool {
+        self.event_bus.must_accept_tos()
+    }
+
     pub fn organization_addr(&self) -> &ParsecOrganizationAddr {
         &self.device.organization_addr
     }

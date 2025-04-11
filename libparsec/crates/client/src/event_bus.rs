@@ -7,7 +7,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use libparsec_platform_async::{lock::Mutex as AsyncMutex, sleep};
+use libparsec_platform_async::sleep;
 use libparsec_types::prelude::*;
 
 macro_rules! impl_any_spied_event_type {
@@ -612,47 +612,124 @@ where
     fn try_from_any_spied_event(event: &AnySpiedEvent) -> Option<&Self>;
 }
 
-enum ServerState {
-    Online,
-    Offline,
-}
-
+/// Keeps track of some state that are propagated by events.
+///
+/// This is typically useful to know if the server is online or not, and to wait
+/// for it to be online.
 struct ServerStateListener {
-    watch: libparsec_platform_async::watch::Receiver<ServerState>,
+    internal: Arc<Mutex<ServerStateInternal>>,
     _lifetimes: (
         EventBusConnectionLifetime<EventOnline>,
         EventBusConnectionLifetime<EventOffline>,
+        EventBusConnectionLifetime<EventExpiredOrganization>,
+        EventBusConnectionLifetime<EventMustAcceptTos>,
     ),
+}
+
+struct ServerStateInternal {
+    /// Based on `EventOnline` and `EventOffline` events.
+    is_server_online: bool,
+    /// Based on `EventExpiredOrganization` and `EventOnline` events (the latter event because
+    /// a client cannot successfully connect to the server if the organization is expired).
+    is_organization_expired: bool,
+    /// Based on `EventMustAcceptTos` and `EventOnline` events (the latter event because
+    /// a client can only successfully connect to the server once the TOS has been accepted).
+    must_accept_tos: bool,
+    on_changed: libparsec_platform_async::event::Event,
 }
 
 impl ServerStateListener {
     fn new(event_bus: &Arc<EventBusInternal>) -> Self {
-        let (tx, rx) = libparsec_platform_async::watch::channel(ServerState::Offline);
-        let tx_online = Arc::new(Mutex::new(tx));
-        let tx_offline = tx_online.clone();
+        let internal = Arc::new(Mutex::new(ServerStateInternal {
+            is_server_online: false,
+            is_organization_expired: false,
+            must_accept_tos: false,
+            on_changed: libparsec_platform_async::event::Event::new(),
+        }));
+
         let lifetimes = (
-            EventOnline::connect(
-                event_bus.clone(),
-                Box::new(move |_| {
-                    let _ = tx_online
-                        .lock()
-                        .expect("Mutex is poisoned")
-                        .send(ServerState::Online);
-                }),
-            ),
-            EventOffline::connect(
-                event_bus.clone(),
-                Box::new(move |_| {
-                    let _ = tx_offline
-                        .lock()
-                        .expect("Mutex is poisoned")
-                        .send(ServerState::Offline);
-                }),
-            ),
+            {
+                let internal = internal.clone();
+                EventOnline::connect(
+                    event_bus.clone(),
+                    Box::new(move |_| {
+                        let mut guard = internal.lock().expect("Mutex is poisoned");
+                        guard.is_server_online = true;
+                        guard.is_organization_expired = false;
+                        guard.must_accept_tos = false;
+                        guard.on_changed.notify(usize::MAX);
+                    }),
+                )
+            },
+            {
+                let internal = internal.clone();
+                EventOffline::connect(
+                    event_bus.clone(),
+                    Box::new(move |_| {
+                        let mut guard = internal.lock().expect("Mutex is poisoned");
+                        guard.is_server_online = false;
+                        guard.on_changed.notify(usize::MAX);
+                    }),
+                )
+            },
+            {
+                let internal = internal.clone();
+                EventExpiredOrganization::connect(
+                    event_bus.clone(),
+                    Box::new(move |_| {
+                        let mut guard = internal.lock().expect("Mutex is poisoned");
+                        guard.is_organization_expired = true;
+                        guard.on_changed.notify(usize::MAX);
+                    }),
+                )
+            },
+            {
+                let internal = internal.clone();
+                EventMustAcceptTos::connect(
+                    event_bus.clone(),
+                    Box::new(move |_| {
+                        let mut guard = internal.lock().expect("Mutex is poisoned");
+                        guard.must_accept_tos = true;
+                        guard.on_changed.notify(usize::MAX);
+                    }),
+                )
+            },
         );
+
         Self {
-            watch: rx,
+            internal,
             _lifetimes: lifetimes,
+        }
+    }
+
+    pub fn is_server_online(&self) -> bool {
+        let guard = self.internal.lock().expect("Mutex is poisoned");
+        guard.is_server_online
+    }
+
+    pub fn is_organization_expired(&self) -> bool {
+        let guard = self.internal.lock().expect("Mutex is poisoned");
+        guard.is_organization_expired
+    }
+
+    pub fn must_accept_tos(&self) -> bool {
+        let guard = self.internal.lock().expect("Mutex is poisoned");
+        guard.must_accept_tos
+    }
+
+    pub async fn wait_server_online(&self) {
+        loop {
+            let listener = {
+                let guard = self.internal.lock().expect("Mutex is poisoned");
+                if guard.is_server_online {
+                    return;
+                }
+
+                // The server is currently offline, must wait !
+                guard.on_changed.listen()
+            };
+
+            listener.await
         }
     }
 }
@@ -802,7 +879,7 @@ pub use spy::{EventBusSpy, EventBusSpyExpectContext};
 #[derive(Clone)]
 pub struct EventBus {
     internal: Arc<EventBusInternal>,
-    server_state: Arc<AsyncMutex<ServerStateListener>>,
+    server_state: Arc<ServerStateListener>,
     #[cfg(test)]
     pub spy: EventBusSpy,
 }
@@ -810,7 +887,7 @@ pub struct EventBus {
 impl Default for EventBus {
     fn default() -> Self {
         let internal = Arc::new(EventBusInternal::default());
-        let server_state = Arc::new(AsyncMutex::new(ServerStateListener::new(&internal)));
+        let server_state = Arc::new(ServerStateListener::new(&internal));
         Self {
             internal,
             server_state,
@@ -839,17 +916,20 @@ impl EventBus {
         B::connect(self.internal.clone(), Box::new(callback))
     }
 
+    pub fn must_accept_tos(&self) -> bool {
+        self.server_state.must_accept_tos()
+    }
+
+    pub fn is_server_online(&self) -> bool {
+        self.server_state.is_server_online()
+    }
+
+    pub fn is_organization_expired(&self) -> bool {
+        self.server_state.is_organization_expired()
+    }
+
     pub async fn wait_server_online(&self) {
-        let mut guard = self.server_state.lock().await;
-        if let ServerState::Online = *guard.watch.borrow_and_update() {
-            return;
-        }
-        // The server is currently offline, must wait !
-        guard
-            .watch
-            .wait_for(|state| matches!(*state, ServerState::Online))
-            .await
-            .expect("Same lifetime for senders&receiver");
+        self.server_state.wait_server_online().await
     }
 
     /// This method is used in the monitors when a request has failed due

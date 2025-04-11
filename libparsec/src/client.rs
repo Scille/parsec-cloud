@@ -19,8 +19,8 @@ pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
 
 use crate::{
     handle::{
-        borrow_from_handle, filter_close_handles, register_handle_with_init, take_and_close_handle,
-        FilterCloseHandle, Handle, HandleItem,
+        borrow_from_handle, filter_close_handles, iter_opened_handles, register_handle_with_init,
+        take_and_close_handle, FilterCloseHandle, Handle, HandleItem,
     },
     ClientConfig, ClientEvent, OnEventCallbackPlugged,
 };
@@ -30,6 +30,26 @@ fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })
+}
+
+/*
+ * List started clients
+ */
+
+/// In theory `DeviceID` is not guaranteed to be globally unique since its value
+/// is choosen client-side during the device creation.
+///
+/// However in practice the device ID *is* randomly picked so we can use it
+/// as a unique identifier (instead of having to also compare the server URL and
+/// organization ID).
+pub fn list_started_clients() -> Vec<(Handle, DeviceID)> {
+    let mut clients = vec![];
+    iter_opened_handles(|handle, item| {
+        if let HandleItem::Client { client, .. } = item {
+            clients.push((handle, client.device_id()));
+        }
+    });
+    clients
 }
 
 /*
@@ -95,13 +115,6 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
 
 pub async fn client_start(
     config: ClientConfig,
-
-    #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<
-        dyn Fn(Handle, ClientEvent) + Send + Sync,
-    >,
-    // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
-    #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(Handle, ClientEvent)>,
-
     access: DeviceAccessStrategy,
 ) -> Result<Handle, ClientStartError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
@@ -168,10 +181,12 @@ pub async fn client_start(
 
     // 3) Actually start the client
 
-    let on_event = OnEventCallbackPlugged::new(initializing.handle(), on_event_callback);
+    let on_event_callback = super::get_on_event_callback();
+    let on_event = OnEventCallbackPlugged::new(initializing.handle(), on_event_callback.clone());
     let client = libparsec_client::Client::start(config, on_event.event_bus.clone(), device)
         .await
         .map_err(ClientStartError::Internal)?;
+    let device_id = client.device_id();
 
     let handle = initializing.initialized(move |item: &mut HandleItem| {
         let starting = std::mem::replace(
@@ -194,6 +209,8 @@ pub async fn client_start(
             _ => unreachable!(),
         }
     });
+
+    on_event_callback(handle, ClientEvent::ClientStarted { device_id });
 
     Ok(handle)
 }
@@ -222,6 +239,7 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
     // 1. Stop the client
 
     let client = borrow_client(client_handle)?;
+    let device_id = client.device_id();
 
     // Notes:
     // - Stop is idempotent.
@@ -313,6 +331,9 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
         }
     }
 
+    let on_event_callback = super::get_on_event_callback();
+    on_event_callback(client_handle, ClientEvent::ClientStopped { device_id });
+
     Ok(())
 }
 
@@ -341,6 +362,9 @@ pub struct ClientInfo {
     pub human_handle: HumanHandle,
     pub current_profile: UserProfile,
     pub server_config: ServerConfig,
+    pub is_server_online: bool,
+    pub is_organization_expired: bool,
+    pub must_accept_tos: bool,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -371,6 +395,9 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
                 }
             })?,
         server_config: client.server_config(),
+        is_server_online: client.is_server_online(),
+        is_organization_expired: client.is_organization_expired(),
+        must_accept_tos: client.must_accept_tos(),
     })
 }
 

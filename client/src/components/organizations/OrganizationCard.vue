@@ -23,14 +23,14 @@
         <ion-text class="organization-name title-h4">{{ device.organizationId }}</ion-text>
         <ion-text
           class="organization-connected body-sm"
-          v-show="isDeviceLoggedIn(device)"
+          v-show="loggedIn"
         >
           {{ $msTranslate('HomePage.organizationList.loggedIn') }}
         </ion-text>
       </div>
       <div class="organization-card-content-login">
         <div
-          v-show="!isDeviceLoggedIn(device)"
+          v-show="!loggedIn"
           v-if="!orgNameOnly"
           class="login-content"
         >
@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { AvailableDevice, isDeviceLoggedIn } from '@/parsec';
+import { AvailableDevice } from '@/parsec';
 import { IonText, IonIcon, IonCardContent } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
 import { person, time } from 'ionicons/icons';
@@ -83,6 +83,7 @@ const props = defineProps<{
   device: AvailableDevice;
   lastLoginDevice?: DateTime;
   orgNameOnly?: boolean;
+  loggedIn?: boolean;
 }>();
 
 onMounted(async () => {

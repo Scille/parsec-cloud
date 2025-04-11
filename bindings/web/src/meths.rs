@@ -817,6 +817,27 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
         let js_val = Reflect::get(&obj, &"serverConfig".into())?;
         struct_server_config_js_to_rs(js_val)?
     };
+    let is_server_online = {
+        let js_val = Reflect::get(&obj, &"isServerOnline".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
+    let is_organization_expired = {
+        let js_val = Reflect::get(&obj, &"isOrganizationExpired".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
+    let must_accept_tos = {
+        let js_val = Reflect::get(&obj, &"mustAcceptTos".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
     Ok(libparsec::ClientInfo {
         organization_addr,
         organization_id,
@@ -826,6 +847,9 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
         human_handle,
         current_profile,
         server_config,
+        is_server_online,
+        is_organization_expired,
+        must_accept_tos,
     })
 }
 
@@ -874,6 +898,16 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
     Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
     let js_server_config = struct_server_config_rs_to_js(rs_obj.server_config)?;
     Reflect::set(&js_obj, &"serverConfig".into(), &js_server_config)?;
+    let js_is_server_online = rs_obj.is_server_online.into();
+    Reflect::set(&js_obj, &"isServerOnline".into(), &js_is_server_online)?;
+    let js_is_organization_expired = rs_obj.is_organization_expired.into();
+    Reflect::set(
+        &js_obj,
+        &"isOrganizationExpired".into(),
+        &js_is_organization_expired,
+    )?;
+    let js_must_accept_tos = rs_obj.must_accept_tos.into();
+    Reflect::set(&js_obj, &"mustAcceptTos".into(), &js_must_accept_tos)?;
     Ok(js_obj)
 }
 
@@ -5131,6 +5165,42 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
             };
             Ok(libparsec::ClientEvent::ClientErrorResponse { error_type })
         }
+        "ClientEventClientStarted" => {
+            let device_id = {
+                let js_val = Reflect::get(&obj, &"deviceId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
+            Ok(libparsec::ClientEvent::ClientStarted { device_id })
+        }
+        "ClientEventClientStopped" => {
+            let device_id = {
+                let js_val = Reflect::get(&obj, &"deviceId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+            };
+            Ok(libparsec::ClientEvent::ClientStopped { device_id })
+        }
         "ClientEventExpiredOrganization" => Ok(libparsec::ClientEvent::ExpiredOrganization {}),
         "ClientEventFrozenSelfUser" => Ok(libparsec::ClientEvent::FrozenSelfUser {}),
         "ClientEventGreetingAttemptCancelled" => {
@@ -5665,6 +5735,32 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             )?;
             let js_error_type = error_type.into();
             Reflect::set(&js_obj, &"errorType".into(), &js_error_type)?;
+        }
+        libparsec::ClientEvent::ClientStarted { device_id, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientEventClientStarted".into())?;
+            let js_device_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(device_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
+        }
+        libparsec::ClientEvent::ClientStopped { device_id, .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientEventClientStopped".into())?;
+            let js_device_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(device_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
         }
         libparsec::ClientEvent::ExpiredOrganization { .. } => {
             Reflect::set(
@@ -15592,7 +15688,6 @@ pub fn archiveDevice(device_path: String) -> Promise {
 #[wasm_bindgen]
 pub fn bootstrapOrganization(
     config: Object,
-    on_event_callback: Function,
     bootstrap_organization_addr: String,
     save_strategy: Object,
     human_handle: Object,
@@ -15602,18 +15697,6 @@ pub fn bootstrapOrganization(
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
-
-        let on_event_callback = std::sync::Arc::new(
-            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
-                // TODO: Better error handling here (log error ?)
-                let js_event =
-                    variant_client_event_rs_to_js(event).expect("event type conversion error");
-                on_event_callback
-                    .call2(&JsValue::NULL, &Number::from(handle), &js_event)
-                    .expect("error in event callback");
-            },
-        )
-            as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent)>;
 
         let bootstrap_organization_addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -15651,7 +15734,6 @@ pub fn bootstrapOrganization(
 
         let ret = libparsec::bootstrap_organization(
             config,
-            on_event_callback,
             bootstrap_organization_addr,
             save_strategy,
             human_handle,
@@ -15941,22 +16023,10 @@ pub fn claimerGreeterAbortOperation(handle: u32) -> Promise {
 // claimer_retrieve_info
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn claimerRetrieveInfo(config: Object, on_event_callback: Function, addr: String) -> Promise {
+pub fn claimerRetrieveInfo(config: Object, addr: String) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
-
-        let on_event_callback = std::sync::Arc::new(
-            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
-                // TODO: Better error handling here (log error ?)
-                let js_event =
-                    variant_client_event_rs_to_js(event).expect("event type conversion error");
-                on_event_callback
-                    .call2(&JsValue::NULL, &Number::from(handle), &js_event)
-                    .expect("error in event callback");
-            },
-        )
-            as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent)>;
 
         let addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -15964,7 +16034,7 @@ pub fn claimerRetrieveInfo(config: Object, on_event_callback: Function, addr: St
             };
             custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let ret = libparsec::claimer_retrieve_info(config, on_event_callback, addr).await;
+        let ret = libparsec::claimer_retrieve_info(config, addr).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -17385,27 +17455,15 @@ pub fn clientShareWorkspace(
 // client_start
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientStart(config: Object, on_event_callback: Function, access: Object) -> Promise {
+pub fn clientStart(config: Object, access: Object) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
 
-        let on_event_callback = std::sync::Arc::new(
-            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
-                // TODO: Better error handling here (log error ?)
-                let js_event =
-                    variant_client_event_rs_to_js(event).expect("event type conversion error");
-                on_event_callback
-                    .call2(&JsValue::NULL, &Number::from(handle), &js_event)
-                    .expect("error in event callback");
-            },
-        )
-            as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent)>;
-
         let access = access.into();
         let access = variant_device_access_strategy_js_to_rs(access)?;
 
-        let ret = libparsec::client_start(config, on_event_callback, access).await;
+        let ret = libparsec::client_start(config, access).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -18260,19 +18318,6 @@ pub fn importRecoveryDevice(
     }))
 }
 
-// init_libparsec
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn initLibparsec(config: Object) -> Promise {
-    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
-        let config = config.into();
-        let config = struct_client_config_js_to_rs(config)?;
-
-        libparsec::init_libparsec(config).await;
-        Ok(JsValue::NULL)
-    }))
-}
-
 // is_keyring_available
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -18280,6 +18325,40 @@ pub fn isKeyringAvailable() -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
         let ret = libparsec::is_keyring_available();
         Ok(ret.into())
+    }))
+}
+
+// libparsec_init_native_only_init
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn libparsecInitNativeOnlyInit(config: Object) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
+        libparsec::libparsec_init_native_only_init(config).await;
+        Ok(JsValue::NULL)
+    }))
+}
+
+// libparsec_init_set_on_event_callback
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn libparsecInitSetOnEventCallback(on_event_callback: Function) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let on_event_callback = std::sync::Arc::new(
+            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
+                // TODO: Better error handling here (log error ?)
+                let js_event =
+                    variant_client_event_rs_to_js(event).expect("event type conversion error");
+                on_event_callback
+                    .call2(&JsValue::NULL, &Number::from(handle), &js_event)
+                    .expect("error in event callback");
+            },
+        )
+            as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent)>;
+        libparsec::libparsec_init_set_on_event_callback(on_event_callback);
+        Ok(JsValue::NULL)
     }))
 }
 
@@ -18300,6 +18379,43 @@ pub fn listAvailableDevices(path: String) -> Promise {
             let js_array = Array::new_with_length(ret.len() as u32);
             for (i, elem) in ret.into_iter().enumerate() {
                 let js_elem = struct_available_device_rs_to_js(elem)?;
+                js_array.set(i as u32, js_elem);
+            }
+            js_array.into()
+        })
+    }))
+}
+
+// list_started_clients
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn listStartedClients() -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::list_started_clients();
+        Ok({
+            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+            let js_array = Array::new_with_length(ret.len() as u32);
+            for (i, elem) in ret.into_iter().enumerate() {
+                let js_elem = {
+                    let (x1, x2) = elem;
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(2);
+                    let js_value = JsValue::from(x1);
+                    js_array.set(0, js_value);
+                    let js_value = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::DeviceID| -> Result<String, &'static str> {
+                                Ok(x.hex())
+                            };
+                        match custom_to_rs_string(x2) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    js_array.set(1, js_value);
+                    js_array.into()
+                };
                 js_array.set(i as u32, js_elem);
             }
             js_array.into()

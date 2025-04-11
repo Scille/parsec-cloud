@@ -14,7 +14,6 @@ import {
   BootstrapOrganizationError,
   BootstrapOrganizationErrorTag,
   ClientConfig,
-  ClientEvent,
   DeviceSaveStrategy,
   OrganizationID,
   OrganizationInfo,
@@ -37,10 +36,6 @@ export async function createOrganization(
   deviceLabel: string,
   saveStrategy: DeviceSaveStrategy,
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
-  function parsecEventCallback(_handle: number, event: ClientEvent): void {
-    console.log('On event', event);
-  }
-
   const bootstrapAddr = await libparsec.buildParsecOrganizationBootstrapAddr(serverAddr, orgName);
 
   const config: ClientConfig = {
@@ -54,7 +49,6 @@ export async function createOrganization(
   };
   const result = await libparsec.bootstrapOrganization(
     config,
-    parsecEventCallback,
     bootstrapAddr,
     saveStrategy,
     { label: userName, email: email },
@@ -78,10 +72,6 @@ export async function bootstrapOrganization(
   deviceLabel: string,
   saveStrategy: DeviceSaveStrategy,
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
-  function parsecEventCallback(_handle: number, event: ClientEvent): void {
-    console.log('On event', event);
-  }
-
   const config: ClientConfig = {
     configDir: window.getConfigDir(),
     dataBaseDir: window.getDataBaseDir(),
@@ -93,7 +83,6 @@ export async function bootstrapOrganization(
   };
   const result = await libparsec.bootstrapOrganization(
     config,
-    parsecEventCallback,
     bootstrapAddr,
     saveStrategy,
     { label: userName, email: email },

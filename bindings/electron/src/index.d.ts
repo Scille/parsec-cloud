@@ -120,6 +120,9 @@ export interface ClientInfo {
     humanHandle: HumanHandle
     currentProfile: UserProfile
     serverConfig: ServerConfig
+    isServerOnline: boolean
+    isOrganizationExpired: boolean
+    mustAcceptTos: boolean
 }
 
 
@@ -743,6 +746,14 @@ export interface ClientEventClientErrorResponse {
     tag: "ClientErrorResponse"
     error_type: string
 }
+export interface ClientEventClientStarted {
+    tag: "ClientStarted"
+    device_id: string
+}
+export interface ClientEventClientStopped {
+    tag: "ClientStopped"
+    device_id: string
+}
 export interface ClientEventExpiredOrganization {
     tag: "ExpiredOrganization"
 }
@@ -855,6 +866,8 @@ export interface ClientEventWorkspacesSelfListChanged {
 }
 export type ClientEvent =
   | ClientEventClientErrorResponse
+  | ClientEventClientStarted
+  | ClientEventClientStopped
   | ClientEventExpiredOrganization
   | ClientEventFrozenSelfUser
   | ClientEventGreetingAttemptCancelled
@@ -3647,7 +3660,6 @@ export function archiveDevice(
 ): Promise<Result<null, ArchiveDeviceError>>
 export function bootstrapOrganization(
     config: ClientConfig,
-    on_event_callback: (handle: number, event: ClientEvent) => void,
     bootstrap_organization_addr: string,
     save_strategy: DeviceSaveStrategy,
     human_handle: HumanHandle,
@@ -3691,7 +3703,6 @@ export function claimerGreeterAbortOperation(
 ): Promise<Result<null, ClaimerGreeterAbortOperationError>>
 export function claimerRetrieveInfo(
     config: ClientConfig,
-    on_event_callback: (handle: number, event: ClientEvent) => void,
     addr: string
 ): Promise<Result<AnyClaimRetrievedInfo, ClaimerRetrieveInfoError>>
 export function claimerShamirRecoveryAddShare(
@@ -3858,7 +3869,6 @@ export function clientShareWorkspace(
 ): Promise<Result<null, ClientShareWorkspaceError>>
 export function clientStart(
     config: ClientConfig,
-    on_event_callback: (handle: number, event: ClientEvent) => void,
     access: DeviceAccessStrategy
 ): Promise<Result<number, ClientStartError>>
 export function clientStartDeviceInvitationGreet(
@@ -3976,14 +3986,19 @@ export function importRecoveryDevice(
     device_label: string,
     save_strategy: DeviceSaveStrategy
 ): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
-export function initLibparsec(
-    config: ClientConfig
-): Promise<null>
 export function isKeyringAvailable(
 ): Promise<boolean>
+export function libparsecInitNativeOnlyInit(
+    config: ClientConfig
+): Promise<null>
+export function libparsecInitSetOnEventCallback(
+    on_event_callback: (handle: number, event: ClientEvent) => void
+): Promise<null>
 export function listAvailableDevices(
     path: string
 ): Promise<Array<AvailableDevice>>
+export function listStartedClients(
+): Promise<Array<[number, string]>>
 export function mountpointToOsPath(
     mountpoint: number,
     parsec_path: string

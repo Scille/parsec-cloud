@@ -16,6 +16,7 @@ import { libparsec } from '@/plugins/libparsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { StorageManagerKey, StorageManager } from '@/services/storageManager';
 import { getClientConfig } from '@/parsec/internals';
+import { getClientInfo } from '@/parsec';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -34,7 +35,7 @@ onMounted(async () => {
 
   if (
     !import.meta.env.PARSEC_APP_TESTBED_SERVER ||
-    (await parsec.getLoggedInDevices()).length !== 0 ||
+    (await getClientInfo(handle)).ok === true ||
     import.meta.env.PARSEC_APP_TESTBED_AUTO_LOGIN !== 'true'
   ) {
     initialized.value = true;
@@ -60,11 +61,7 @@ onMounted(async () => {
     window.electronAPI.log('error', `Could not find Alice device, using ${device.humanHandle.label}`);
   }
 
-  const result = await parsec.login(
-    injectionProvider.getInjections(DEV_DEFAULT_HANDLE).eventDistributor,
-    device,
-    parsec.AccessStrategy.usePassword(device, 'P@ssw0rd.'),
-  );
+  const result = await parsec.login(device, parsec.AccessStrategy.usePassword(device, 'P@ssw0rd.'));
   if (!result.ok) {
     window.electronAPI.log('error', `Failed to log in on a default device: ${JSON.stringify(result.error)}`);
   } else if (result.value !== DEV_DEFAULT_HANDLE) {
@@ -164,7 +161,7 @@ async function addUser(
 }
 
 async function claimUser(email: string, label: string, link: string): Promise<void> {
-  const retResult = await libparsec.claimerRetrieveInfo(getClientConfig(), async () => {}, link);
+  const retResult = await libparsec.claimerRetrieveInfo(getClientConfig(), link);
   if (!retResult.ok) {
     throw new Error(`claimerRetrieveInfo failed: ${retResult.error.error}`);
   }
@@ -288,7 +285,7 @@ async function addReadOnlyWorkspace(): Promise<void> {
     window.electronAPI.log('error', 'Could not find Alice or Bob device');
     return;
   }
-  const loginResult = await libparsec.clientStart(getClientConfig(), async () => {}, {
+  const loginResult = await libparsec.clientStart(getClientConfig(), {
     tag: parsec.DeviceAccessStrategyTag.Password,
     password: 'P@ssw0rd.',
     keyFile: bobDevice.keyFilePath,
