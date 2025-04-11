@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { AvailableDevice, isDeviceLoggedIn } from '@/parsec';
+import { AvailableDevice } from '@/parsec';
 import { IonText, IonIcon, IonCardContent } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
 import { person, time } from 'ionicons/icons';
@@ -78,12 +78,12 @@ import { Duration, DateTime } from 'luxon';
 const { isSmallDisplay } = useWindowSize();
 const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration>();
-const loggedIn = ref(false);
 
 const props = defineProps<{
   device: AvailableDevice;
   lastLoginDevice?: DateTime;
   orgNameOnly?: boolean;
+  loggedIn?: boolean;
 }>();
 
 onMounted(async () => {
@@ -91,7 +91,6 @@ onMounted(async () => {
   if (isTrialOrg.value) {
     expirationDuration.value = getDurationBeforeExpiration(props.device.createdOn);
   }
-  loggedIn.value = await isDeviceLoggedIn(props.device);
 });
 
 function getLastLoginText(): string {
