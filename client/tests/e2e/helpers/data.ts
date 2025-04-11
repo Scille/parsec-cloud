@@ -62,7 +62,7 @@ export function generateDefaultOrganizationInformation(): OrganizationInformatio
 }
 
 export const DEFAULT_ORGANIZATION_DATA_SLICE = {
-  free: 1024 * 1024 * 1024 * 200, // 200 Gb
+  free: 1024 * 1024 * 1024 * 100, // 100 Gb
   paying: 1024 * 1024 * 1024 * 100, // 100 Gb
 };
 
