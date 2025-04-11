@@ -33,7 +33,6 @@ import {
   ClientEventTag,
   ConnectionHandle,
   Platform,
-  getConnectionInfo,
   getOrganizationHandle,
   isElectron,
   listAvailableDevices,
@@ -57,25 +56,15 @@ enum AppState {
 }
 
 async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent): Promise<void> {
-  const connInfo = getConnectionInfo(handle);
   const distributor = injectionProvider.getInjections(handle).eventDistributor;
   switch (event.tag) {
     case ClientEventTag.Online:
-      if (connInfo) {
-        connInfo.isOnline = true;
-      }
       distributor.dispatchEvent(Events.Online);
       break;
     case ClientEventTag.Offline:
-      if (connInfo) {
-        connInfo.isOnline = false;
-      }
       distributor.dispatchEvent(Events.Offline);
       break;
     case ClientEventTag.MustAcceptTos:
-      if (connInfo) {
-        connInfo.shouldAcceptTos = true;
-      }
       distributor.dispatchEvent(Events.TOSAcceptRequired, undefined, { delay: 2000 });
       break;
     case ClientEventTag.InvitationChanged:
@@ -114,9 +103,6 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
       distributor.dispatchEvent(Events.ClientRevoked);
       break;
     case ClientEventTag.ExpiredOrganization:
-      if (connInfo) {
-        connInfo.isExpired = true;
-      }
       distributor.dispatchEvent(Events.ExpiredOrganization);
       break;
     case ClientEventTag.WorkspaceLocallyCreated:
