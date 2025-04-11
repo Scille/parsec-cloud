@@ -7,13 +7,16 @@ use crypto_secretbox::{
     aead::{rand_core::RngCore, OsRng},
     AeadCore, Key, XSalsa20Poly1305,
 };
-use digest::{consts::U5, KeyInit, Mac};
+use digest::{
+    consts::{U5, U64},
+    typenum::{IsLessOrEqual, LeEq, NonZero},
+    KeyInit, Mac,
+};
+use generic_array::ArrayLength;
 use serde::Deserialize;
 use serde_bytes::Bytes;
 
 use crate::{CryptoError, Password};
-
-type Blake2bMac40 = Blake2bMac<U5>;
 
 // https://github.com/sodiumoxide/sodiumoxide/blob/3057acb1a030ad86ed8892a223d64036ab5e8523/libsodium-sys/src/sodium_bindings.rs#L137
 const SALTBYTES: usize = 16;
@@ -32,11 +35,11 @@ impl SecretKey {
 
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
         // Returned format: NONCE | MAC | CIPHERTEXT
-        // TODO: zero copy with preallocated buffer
+        // TODO: zero copy with pre-allocated buffer
         // let mut ciphered = Vec::with_capacity(NONCE_SIZE + TAG_SIZE + data.len());
         let cipher = XSalsa20Poly1305::new(&self.0);
         let nonce = XSalsa20Poly1305::generate_nonce(&mut rand::thread_rng());
-        // TODO: handle this error ?
+        // TODO: handle this error?
         let mut ciphered = cipher.encrypt(&nonce, data).expect("encryption failure !");
         let mut res = vec![];
         res.append(&mut nonce.to_vec());
@@ -57,16 +60,22 @@ impl SecretKey {
             .map_err(|_| CryptoError::Decryption)
     }
 
-    pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
-        // TODO only work for 5 bytes -> need to improve
-        if digest_size != 5 {
-            panic!("Not implemented for this digest size");
-        }
-        let mut hasher = <Blake2bMac40 as KeyInit>::new_from_slice(self.0.as_ref())
+    pub fn hmac<Size>(&self, data: &[u8]) -> Vec<u8>
+    where
+        Size: ArrayLength<u8> + IsLessOrEqual<U64>,
+        LeEq<Size, U64>: NonZero,
+    {
+        let mut hasher = <Blake2bMac<Size> as KeyInit>::new_from_slice(self.0.as_ref())
             .unwrap_or_else(|_| unreachable!());
         hasher.update(data);
         let res = hasher.finalize();
-        res.into_bytes().to_vec()
+        let mut out = res.into_bytes().to_vec();
+        out.resize(Size::USIZE, 0);
+        out
+    }
+
+    pub fn sas_code(&self, data: &[u8]) -> Vec<u8> {
+        self.hmac::<U5>(data)
     }
 
     pub fn generate_salt() -> Vec<u8> {
