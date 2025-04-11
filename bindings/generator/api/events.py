@@ -12,11 +12,18 @@ from .common import (
     GreetingAttemptID,
     SizeInt,
     Variant,
+    DeviceID,
     VlobID,
 )
 
 
 class ClientEvent(Variant):
+    class ClientStarted:
+        device_id: DeviceID
+
+    class ClientStopped:
+        device_id: DeviceID
+
     class Ping:
         ping: str
 

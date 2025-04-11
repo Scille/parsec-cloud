@@ -10,6 +10,16 @@ use crate::handle::Handle;
 
 #[derive(Debug)]
 pub enum ClientEvent {
+    // Client lifecycle
+    // Note those events have no equivalent among `libparsec_client`'s events since
+    // they are only used in `libparsec::client_start/client_stop`.
+    ClientStarted {
+        device_id: DeviceID,
+    },
+    ClientStopped {
+        device_id: DeviceID,
+    },
+
     // Dummy event for tests only
     Ping {
         ping: String,
