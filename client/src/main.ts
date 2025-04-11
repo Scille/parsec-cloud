@@ -127,6 +127,12 @@ async function parsecEventCallback(handle: ConnectionHandle, event: ClientEvent)
     case ClientEventTag.WorkspaceOpsOutboundSyncProgress:
     case ClientEventTag.ServerConfigChanged:
       break;
+    case ClientEventTag.ClientStarted:
+      injectionProvider.getDefault().eventDistributor.dispatchEvent(Events.ClientStarted, { handle: handle });
+      break;
+    case ClientEventTag.ClientStopped:
+      injectionProvider.getDefault().eventDistributor.dispatchEvent(Events.ClientStopped, { handle: handle });
+      break;
     default:
       window.electronAPI.log('debug', `Unhandled event ${event.tag}`);
       break;

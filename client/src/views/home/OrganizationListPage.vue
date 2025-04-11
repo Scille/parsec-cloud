@@ -119,6 +119,7 @@
             :device="device"
             :last-login-device="storedDeviceDataDict[device.deviceId]?.lastLogin"
             @click="$emit('organizationSelect', device)"
+            :logged-in="loggedInDevices.find((info) => info.device.deviceId === device.deviceId) !== undefined"
           />
         </div>
       </div>
@@ -157,7 +158,7 @@ import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/
 import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import { DateTime } from 'luxon';
-import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const emits = defineEmits<{
   (e: 'organizationSelect', device: AvailableDevice): void;
@@ -199,6 +200,13 @@ interface OrganizationListSavedData {
   sortByAsc?: boolean;
   sortBy?: SortCriteria;
 }
+
+watch(
+  () => props.deviceList,
+  async () => {
+    loggedInDevices.value = await getLoggedInDevices();
+  },
+);
 
 let hotkeys: HotkeyGroup | null = null;
 
