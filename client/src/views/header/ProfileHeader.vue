@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { UserProfile, getConnectionInfo } from '@/parsec';
+import { UserProfile, getClientInfo } from '@/parsec';
 import { Routes, navigateTo, ProfilePages } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
@@ -76,9 +76,9 @@ onMounted(async () => {
     },
   );
 
-  const connInfo = getConnectionInfo();
-  if (connInfo) {
-    isOnline.value = connInfo.isOnline;
+  const clientInfoResult = await getClientInfo();
+  if (clientInfoResult.ok) {
+    isOnline.value = clientInfoResult.value.isServerOnline;
   }
 
   window.electronAPI.getUpdateAvailability();
