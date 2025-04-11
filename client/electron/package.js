@@ -111,13 +111,13 @@ const UNSIGNED_ARTIFACT_NAME =
 
 /**
  * @type {import('electron-builder').Configuration}
- * @see https://www.electron.build/configuration
+ * @see https://www.electron.build/configuration/configuration
  */
 const options = {
   /* eslint-disable max-len */
   /*
    * Doc mentions that it's used as a CFBundleIdentifier on MacOS, and as an Application User Model ID on Windows
-   * (https://www.electron.build/configuration#appid)
+   * (https://www.electron.build/configuration/configuration.html#configuration)
    * The doc for CFBundleIdentifier specifies that this should be in reverse-dns format
    *   https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070
    * The doc for Application User Model ID specifies that it should be in the `CompanyName.ProductName.SubProduct.VersionInformation` format
@@ -129,7 +129,7 @@ const options = {
   appId: 'ParsecCloud.Parsec.Parsec.3',
   productName: 'Parsec',
   artifactName: UNSIGNED_ARTIFACT_NAME,
-  buildVersion: '3.4.0-a.7+dev',
+  buildVersion: '3.4.1-a.0+dev',
   protocols: {
     name: 'Parsec-v3',
     schemes: [PARSEC_SCHEME],
@@ -187,8 +187,9 @@ const options = {
   },
 
   linux: {
-    synopsis: 'Secure file sharing in the cloud',
-    category: 'Office;Network;FileTransfer;Filesystem;Security;',
+    synopsis: 'Secure cloud framework',
+    description: 'Parsec is an open-source cloud-based application that allows simple yet cryptographically secure file hosting.',
+    category: 'Office Network FileTransfer FileSystem Security',
     desktop: {
       MimeType: `x-scheme-handler/${PARSEC_SCHEME}`,
     },
