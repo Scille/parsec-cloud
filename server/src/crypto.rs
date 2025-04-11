@@ -211,8 +211,8 @@ impl SecretKey {
         }
     }
 
-    fn hmac<'py>(&self, py: Python<'py>, data: &[u8], digest_size: usize) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.hmac(data, digest_size))
+    fn sas_code<'py>(&self, py: Python<'py>, data: &[u8]) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.sas_code(data))
     }
 
     #[classmethod]
