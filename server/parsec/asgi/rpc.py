@@ -42,6 +42,7 @@ from parsec.client_context import (
     InvitedClientContext,
 )
 from parsec.components.auth import (
+    AccountPasswordAuthenticationToken,
     AnonymousAccountAuthInfo,
     AnonymousAuthInfo,
     AuthAnonymousAccountAuthBadOutcome,
@@ -415,6 +416,7 @@ class AccountParsedAuthHeaders:
     settled_api_version: ApiVersion
     client_api_version: ApiVersion
     user_agent: str
+    authentication_token: AccountPasswordAuthenticationToken | None
 
 
 def _parse_account_auth_headers_or_abort(
@@ -451,32 +453,33 @@ def _parse_account_auth_headers_or_abort(
         _handshake_abort(CustomHttpStatus.BadAcceptType, api_version=settled_api_version)
 
     # 4) Check authenticated headers
-    # TODO https://github.com/Scille/parsec-cloud/issues/10076
-    # if not with_account_headers:
+    if not with_account_headers:
+        authentication_token = None
+    else:
+        try:
+            raw_authorization = headers["Authorization"]
+        except KeyError:
+            _handshake_abort(
+                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
+            )
 
-    # else:
-    # TODO
-    # try:
-    #     raw_authorization = headers["Authorization"]
-    # except KeyError:
-    #     _handshake_abort(
-    #         CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
-    #     )
-
-    # try:
-    #     expected_bearer, raw_account_token = raw_authorization.split()
-    #     if expected_bearer.lower() != "bearer":
-    #         raise ValueError
-
-    # except ValueError:
-    #     _handshake_abort(
-    #         CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
-    #     )
+        try:
+            expected_bearer, raw_authentication_token = raw_authorization.split()
+            if expected_bearer.lower() != "bearer":
+                raise ValueError
+            authentication_token = AccountPasswordAuthenticationToken.from_raw(
+                raw_authentication_token.encode()
+            )
+        except ValueError:
+            _handshake_abort(
+                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
+            )
 
     return AccountParsedAuthHeaders(
         settled_api_version=settled_api_version,
         client_api_version=client_api_version,
         user_agent=user_agent,
+        authentication_token=authentication_token,
     )
 
 
@@ -634,6 +637,9 @@ async def authenticated_account_api(request: Request) -> Response:
         expected_accept_type=None,
         expected_content_type=CONTENT_TYPE_MSGPACK,
     )
+
+    assert parsed.authentication_token is not None
+    # TODO: Validate authentication_token
 
     outcome = await backend.auth.authenticated_account_auth(DateTime.now())
     match outcome:

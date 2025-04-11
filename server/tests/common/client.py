@@ -8,6 +8,7 @@ from typing import AsyncContextManager, AsyncGenerator, AsyncIterator
 import pytest
 from httpx import ASGITransport, AsyncClient, Response
 from httpx_sse import EventSource, ServerSentEvent, aconnect_sse
+from pydantic import EmailStr
 
 from parsec._parsec import (
     ApiVersion,
@@ -16,6 +17,7 @@ from parsec._parsec import (
     HumanHandle,
     InvitationToken,
     OrganizationID,
+    SecretKey,
     SequesterServiceID,
     SequesterSigningKeyDer,
     SequesterVerifyKeyDer,
@@ -32,7 +34,10 @@ from parsec._parsec import (
     testbed as tb,
 )
 from parsec.asgi import AsgiApp
-from parsec.components.auth import AuthenticatedToken
+from parsec.components.auth import (
+    AccountPasswordAuthenticationToken,
+    AuthenticatedToken,
+)
 from tests.common.backend import SERVER_DOMAIN, TestbedBackend
 from tests.common.rpc import (
     BaseAnonymousAccountRpcClient,
@@ -87,17 +92,28 @@ class AuthenticatedAccountRpcClient(BaseAuthenticatedAccountRpcClient):
     def __init__(
         self,
         raw_client: AsyncClient,
+        email: EmailStr,
+        key: SecretKey,
     ):
         self.raw_client = raw_client
         self.url = f"http://{SERVER_DOMAIN}/authenticated_account"
         self.headers = {
             "Content-Type": "application/msgpack",
             "Api-Version": str(ApiVersion.API_LATEST_VERSION),
-            "Authorization": "Bearer TODO",
         }
+        self.email = email
+        self.key = key
+        self.now_factory = DateTime.now
 
     async def _do_request(self, req: bytes, family: str) -> bytes:
-        rep = await self.raw_client.post(self.url, headers=self.headers, content=req)
+        token = AccountPasswordAuthenticationToken.generate_raw(
+            timestamp=self.now_factory(),
+            email=self.email,
+            body=req,
+            key=self.key,
+        )
+        headers = {**self.headers, "Authorization": f"Bearer {token.decode()}"}
+        rep = await self.raw_client.post(self.url, headers=headers, content=req)
         if rep.status_code != 200:
             raise RpcTransportError(rep)
         return rep.content
@@ -283,13 +299,6 @@ class CoolorgRpcClients:
             self.raw_client,
         )
         return self._anonymous_account
-
-    @property
-    def authenticated_account(self) -> AuthenticatedAccountRpcClient:
-        self._authenticated_account = self._authenticated_account or AuthenticatedAccountRpcClient(
-            self.raw_client
-        )
-        return self._authenticated_account
 
     @property
     def wksp1_id(self) -> VlobID:
@@ -518,6 +527,7 @@ class AccountRpcClient:
     email: str
     _authenticated_account: AuthenticatedAccountRpcClient | None = None
     _anonymous_account: AnonymousAccountRpcClient | None = None
+    _hmac_key: SecretKey | None = None
 
     @property
     def anonymous_account(self) -> AnonymousAccountRpcClient:
@@ -528,8 +538,9 @@ class AccountRpcClient:
 
     @property
     def authenticated_account(self) -> AuthenticatedAccountRpcClient:
+        self._hmac_key = SecretKey.generate()
         self._authenticated_account = self._authenticated_account or AuthenticatedAccountRpcClient(
-            self.raw_client
+            self.raw_client, self.email, self._hmac_key
         )
         return self._authenticated_account
 
