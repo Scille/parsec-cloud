@@ -23,14 +23,14 @@
         <ion-text class="organization-name title-h4">{{ device.organizationId }}</ion-text>
         <ion-text
           class="organization-connected body-sm"
-          v-show="isDeviceLoggedIn(device)"
+          v-show="loggedIn"
         >
           {{ $msTranslate('HomePage.organizationList.loggedIn') }}
         </ion-text>
       </div>
       <div class="organization-card-content-login">
         <div
-          v-show="!isDeviceLoggedIn(device)"
+          v-show="!loggedIn"
           v-if="!orgNameOnly"
           class="login-content"
         >
@@ -78,6 +78,7 @@ import { Duration, DateTime } from 'luxon';
 const { isSmallDisplay } = useWindowSize();
 const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration>();
+const loggedIn = ref(false);
 
 const props = defineProps<{
   device: AvailableDevice;
@@ -90,6 +91,7 @@ onMounted(async () => {
   if (isTrialOrg.value) {
     expirationDuration.value = getDurationBeforeExpiration(props.device.createdOn);
   }
+  loggedIn.value = await isDeviceLoggedIn(props.device);
 });
 
 function getLastLoginText(): string {

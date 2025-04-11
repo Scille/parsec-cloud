@@ -15,6 +15,7 @@ import {
   DeviceAccessStrategy,
   DeviceAccessStrategyPassword,
   DeviceAccessStrategyTag,
+  DeviceID,
   DeviceSaveStrategy,
   DeviceSaveStrategyTag,
   OrganizationID,
@@ -29,34 +30,49 @@ import { DateTime } from 'luxon';
 export interface LoggedInDeviceInfo {
   handle: ConnectionHandle;
   device: AvailableDevice;
-  isExpired: boolean;
+  isOrganizationExpired: boolean;
   isOnline: boolean;
   shouldAcceptTos: boolean;
 }
 
-const loggedInDevices: Array<LoggedInDeviceInfo> = [];
-
 export async function getLoggedInDevices(): Promise<Array<LoggedInDeviceInfo>> {
+  const availableDevices = await listAvailableDevices();
+  const startedDevices = await libparsec.listStartedClients();
+  const loggedInDevices: Array<LoggedInDeviceInfo> = [];
+
+  for (const [handle, deviceId] of startedDevices) {
+    const device = availableDevices.find((d) => d.deviceId === deviceId);
+    if (!device) {
+      continue;
+    }
+    const clientInfoResult = await libparsec.clientInfo(handle);
+    if (!clientInfoResult.ok) {
+      continue;
+    }
+    loggedInDevices.push({
+      handle: handle,
+      device: device,
+      isOnline: clientInfoResult.value.isServerOnline,
+      shouldAcceptTos: clientInfoResult.value.mustAcceptTos,
+      isOrganizationExpired: clientInfoResult.value.isOrganizationExpired,
+    });
+  }
   return loggedInDevices;
 }
 
-export function isDeviceLoggedIn(device: AvailableDevice): boolean {
-  return loggedInDevices.find((info) => info.device.deviceId === device.deviceId) !== undefined;
+export async function isDeviceLoggedIn(device: AvailableDevice): Promise<boolean> {
+  const startedDevices = await libparsec.listStartedClients();
+
+  return startedDevices.find(([_handle, deviceId]) => deviceId === device.deviceId) !== undefined;
 }
 
-export function getDeviceHandle(device: AvailableDevice): ConnectionHandle | null {
-  const info = loggedInDevices.find((info) => info.device.deviceId === device.deviceId);
-  if (info) {
-    return info.handle;
-  }
-  return null;
+export async function getDeviceHandle(device: AvailableDevice): Promise<ConnectionHandle | undefined> {
+  const startedDevices = await libparsec.listStartedClients();
+  return startedDevices.find(([_handle, deviceId]) => deviceId === device.deviceId)?.[0];
 }
 
-export function getConnectionInfo(handle: ConnectionHandle | null = null): LoggedInDeviceInfo | undefined {
-  if (!handle) {
-    handle = getParsecHandle();
-  }
-  return loggedInDevices.find((info) => info.handle === handle);
+export async function listStartedClients(): Promise<Array<[ConnectionHandle, DeviceID]>> {
+  return await libparsec.listStartedClients();
 }
 
 interface OrganizationInfo {
@@ -68,6 +84,7 @@ interface OrganizationInfo {
 }
 
 export async function getOrganizationHandle(orgInfo: OrganizationInfo): Promise<ConnectionHandle | null> {
+  const loggedInDevices = await getLoggedInDevices();
   const matchingDevices = loggedInDevices.filter((item) => item.device.organizationId === orgInfo.id);
   if (!orgInfo.server || matchingDevices.length <= 1) {
     return matchingDevices.length > 0 ? matchingDevices[0].handle : null;
@@ -89,6 +106,7 @@ export async function getOrganizationHandle(orgInfo: OrganizationInfo): Promise<
 }
 
 export async function getOrganizationHandles(orgId: OrganizationID): Promise<Array<ConnectionHandle>> {
+  const loggedInDevices = await getLoggedInDevices();
   return loggedInDevices.filter((item) => item.device.organizationId === orgId).map((item) => item.handle);
 }
 
@@ -122,18 +140,15 @@ export async function login(
   device: AvailableDevice,
   accessStrategy: DeviceAccessStrategy,
 ): Promise<Result<ConnectionHandle, ClientStartError>> {
-  const info = loggedInDevices.find((info) => info.device.deviceId === device.deviceId);
-  if (info !== undefined) {
-    return { ok: true, value: info.handle };
+  const startedClients = await libparsec.listStartedClients();
+  const foundHandle = startedClients.find(([_handle, deviceId]) => deviceId === device.deviceId)?.[0];
+  if (foundHandle !== undefined) {
+    return { ok: true, value: foundHandle };
   }
 
   // TODO: event handling has changed !
   const clientConfig = getClientConfig();
-  const result = await libparsec.clientStart(clientConfig, accessStrategy);
-  if (result.ok) {
-    loggedInDevices.push({ handle: result.value, device: device, isExpired: false, isOnline: false, shouldAcceptTos: false });
-  }
-  return result;
+  return await libparsec.clientStart(clientConfig, accessStrategy);
 }
 
 export async function logout(handle?: ConnectionHandle | undefined | null): Promise<Result<null, ClientStopError>> {
@@ -142,14 +157,7 @@ export async function logout(handle?: ConnectionHandle | undefined | null): Prom
   }
 
   if (handle !== null) {
-    const result = await libparsec.clientStop(handle);
-    if (result.ok) {
-      const index = loggedInDevices.findIndex((info) => info.handle === handle);
-      if (index !== -1) {
-        loggedInDevices.splice(index, 1);
-      }
-    }
-    return result;
+    return await libparsec.clientStop(handle);
   }
   return generateNoHandleError<ClientStopError>();
 }
