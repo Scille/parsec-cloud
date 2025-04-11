@@ -148,6 +148,7 @@ const queryInProgress = ref(false);
 const organizationListRef = ref<typeof OrganizationListPage>();
 const querying = ref(true);
 const deviceList: Ref<AvailableDevice[]> = ref([]);
+let eventCallbackId!: string;
 
 const slidePositions = ref({ appearFrom: Position.Left, disappearTo: Position.Right });
 
@@ -188,6 +189,14 @@ onMounted(async () => {
     { key: 'a', modifiers: Modifiers.Ctrl | Modifiers.Alt, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Home },
     openAboutModal,
   );
+  eventCallbackId = await injectionProvider
+    .getDefault()
+    .eventDistributor.registerCallback(
+      Events.ClientStarted | Events.ClientStopped,
+      async (_event: Events, _data?: EventData): Promise<void> => {
+        refreshDeviceList();
+      },
+    );
 
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 
@@ -201,6 +210,7 @@ onUnmounted(() => {
   }
   routeWatchCancel();
   stateWatchCancel();
+  injectionProvider.getDefault().eventDistributor.removeCallback(eventCallbackId);
 });
 
 async function openCreateOrJoin(event: Event): Promise<void> {
