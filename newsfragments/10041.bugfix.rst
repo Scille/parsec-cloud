@@ -1,1 +1,0 @@
-Fix incompatibility with Outsider users created with Parsec < v3.3 preventing them to start a client with Parsec >= 3.3
