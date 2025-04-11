@@ -55,7 +55,7 @@ export const expect = baseExpect.extend({
     let isVisible = true;
 
     try {
-      await expect(toast).toBeVisible();
+      await expect(toast).toHaveCount(1);
     } catch (error: any) {
       isVisible = false;
       errorMessage = 'Toast is not visible';
@@ -85,7 +85,7 @@ export const expect = baseExpect.extend({
 
     if (isVisible) {
       await dismissToast(page);
-      await expect(toast).toBeHidden();
+      await expect(toast).toHaveCount(0);
     }
 
     return {

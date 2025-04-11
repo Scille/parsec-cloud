@@ -83,6 +83,7 @@ onMounted(async () => {
 async function populate(handle: parsec.ConnectionHandle): Promise<void> {
   if (import.meta.env.PARSEC_APP_POPULATE_DEFAULT_WORKSPACE === 'true') {
     await populateFiles();
+    await addReadOnlyWorkspace();
   }
   if (import.meta.env.PARSEC_APP_POPULATE_USERS === 'true') {
     await populateUsers(handle);
@@ -257,24 +258,30 @@ async function populateFiles(): Promise<void> {
   }
   for (const workspace of workspaces.value) {
     for (const fileType in mockFiles.MockFileType) {
-      console.log(workspace.currentName, fileType);
       const fileName = `document_${fileType}.${fileType.toLocaleLowerCase()}`;
-      const openResult = await parsec.openFile(workspace.handle, `/${fileName}`, { write: true, truncate: true, create: true });
+      const openResult = await parsec.openFile(workspace.handle, `/${fileName}`, {
+        write: true,
+        truncate: true,
+        create: true,
+        createNew: true,
+      });
 
       if (!openResult.ok) {
         window.electronAPI.log('error', `Could not open file ${fileName}`);
         continue;
       }
-      const content = await mockFiles.getMockFileContent(fileType as any);
-      const writeResult = await parsec.writeFile(workspace.handle, openResult.value, 0, content);
-      if (!writeResult.ok) {
-        window.electronAPI.log('error', `Failed to write file ${fileName}`);
-        continue;
+      try {
+        const content = await mockFiles.getMockFileContent(fileType as any);
+        const writeResult = await parsec.writeFile(workspace.handle, openResult.value, 0, content);
+        if (!writeResult.ok) {
+          window.electronAPI.log('error', `Failed to write file ${fileName}`);
+          continue;
+        }
+      } finally {
+        await parsec.closeFile(workspace.handle, openResult.value);
       }
-      await parsec.closeFile(workspace.handle, openResult.value);
     }
   }
-  await addReadOnlyWorkspace();
 }
 
 async function addReadOnlyWorkspace(): Promise<void> {
@@ -303,6 +310,42 @@ async function addReadOnlyWorkspace(): Promise<void> {
       window.electronAPI.log('error', `Failed to create a workspace as Bob: ${wkResult.error.error}`);
       return;
     }
+
+    /* Does not work currently because of some problems with the testbed */
+    // const mockFiles = await import('@/parsec/mock_files');
+
+    // window.electronAPI.log('debug', 'Creating mock files in read-only workspace');
+
+    // const startWkResult = await libparsec.clientStartWorkspace(loginResult.value, wkResult.value);
+    // if (!startWkResult.ok) {
+    //   window.electronAPI.log('error', `Failed to start workspace: ${startWkResult.error.error}`);
+    //   return;
+    // }
+    // for (const fileType in mockFiles.MockFileType) {
+    //   const fileName = `document_${fileType}.${fileType.toLocaleLowerCase()}`;
+    //   const openResult = await libparsec.workspaceOpenFile(startWkResult.value, `/${fileName}`, {
+    //     write: true,
+    //     truncate: true,
+    //     create: true,
+    //     createNew: true,
+    //     read: false,
+    //   });
+    //   if (!openResult.ok) {
+    //     window.electronAPI.log('error', `Could not open file ${fileName}`);
+    //     continue;
+    //   }
+    //   try {
+    //     const content = await mockFiles.getMockFileContent(fileType as any);
+    //     const writeResult = await libparsec.workspaceFdWrite(startWkResult.value, openResult.value, BigInt(0), content);
+    //     if (!writeResult.ok) {
+    //       window.electronAPI.log('error', `Failed to write file ${fileName}`);
+    //       continue;
+    //     }
+    //   } finally {
+    //     await libparsec.workspaceFdClose(startWkResult.value, openResult.value);
+    //   }
+    // }
+
     const shareResult = await libparsec.clientShareWorkspace(
       loginResult.value,
       wkResult.value,

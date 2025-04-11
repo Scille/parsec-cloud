@@ -287,7 +287,7 @@ async function setupApp(): Promise<void> {
   // - dev with a testbed Parsec server with the default devices
   // - dev or prod where devices are fetched from the local storage
   // - tests with Playwright where the testbed instantiation is done by Playwright
-  if ('TESTING' in window && window.TESTING) {
+  if ('TESTING' in window && window.TESTING === true) {
     Sentry.disable();
     //  handle the testbed and provides the configPath
     window.nextStageHook = (): any => {
@@ -347,22 +347,16 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
       console.log('SetMountpointFolder: Not available.');
     },
     getUpdateAvailability: (): void => {
-      // Wait for a bit so it seems more natural
       if (window.usesTestbed()) {
-        setTimeout(
-          async () => {
-            injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '13.37' });
-            injectionProvider.notifyAll(
-              new Information({
-                message: '',
-                level: InformationLevel.Info,
-                unique: true,
-                data: { type: InformationDataType.NewVersionAvailable, newVersion: '13.37' },
-              }),
-              PresentationMode.Notification,
-            );
-          },
-          window.isTesting() ? 0 : 5000,
+        injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '13.37' });
+        injectionProvider.notifyAll(
+          new Information({
+            message: '',
+            level: InformationLevel.Info,
+            unique: true,
+            data: { type: InformationDataType.NewVersionAvailable, newVersion: '13.37' },
+          }),
+          PresentationMode.Notification,
         );
         console.log('GetUpdateAvailability: MOCKED');
       }

@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Locator, Page } from '@playwright/test';
-import { answerQuestion, expect, msTest } from '@tests/e2e/helpers';
+import { Locator } from '@playwright/test';
+import { answerQuestion, expect, MsPage, msTest } from '@tests/e2e/helpers';
 import { DateTime } from 'luxon';
 
-async function openModalWithUser(usersPage: Page, userIndex: number, revokeFirst?: boolean): Promise<Locator> {
+async function openModalWithUser(usersPage: MsPage, userIndex: number, revokeFirst?: boolean): Promise<Locator> {
   await expect(usersPage.locator('.user-details-modal')).toBeHidden();
   const user = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(userIndex);
   const isOutsider = (await user.locator('.user-profile').innerText()) === 'External';
@@ -14,6 +14,7 @@ async function openModalWithUser(usersPage: Page, userIndex: number, revokeFirst
     await user.locator('.options-button').click();
     await usersPage.locator('.user-context-menu').getByRole('listitem').nth(1).click();
     await answerQuestion(usersPage, true);
+    await expect(usersPage).toShowToast('Malloryy McMalloryFace has been revoked. They can no longer access this organization.', 'Success');
     await expect(user).toHaveTheClass('revoked');
   }
   await user.hover();

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { BrowserContext, Locator, Page } from '@playwright/test';
+import { BrowserContext, Locator, Page, TestInfo } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
 import { readFileSync } from 'fs';
 import path from 'path';
@@ -236,7 +236,7 @@ export async function createFolder(documentsPage: Page, name: string): Promise<v
 
 export async function dismissToast(page: Page): Promise<void> {
   await page.locator('.notification-toast').locator('.toast-button-confirm').click();
-  await expect(page.locator('.notification-toast')).toBeHidden();
+  await expect(page.locator('.notification-toast')).toHaveCount(0);
 }
 
 export function getTestbedBootstrapAddr(orgName: string): string {
@@ -266,6 +266,19 @@ export async function setSmallDisplay(page: Page): Promise<void> {
   await page.setViewportSize({ width: 700, height: viewport ? viewport.height : 700 });
 }
 
+export async function login(homePage: Page, name: string): Promise<void> {
+  await homePage.locator('.organization-card', { hasText: name }).click();
+  await expect(homePage.locator('#password-input')).toBeVisible();
+
+  await expect(homePage.locator('.login-button')).toHaveDisabledAttribute();
+
+  await homePage.locator('#password-input').locator('input').fill('P@ssw0rd.');
+  await expect(homePage.locator('.login-button')).toBeEnabled();
+  await homePage.locator('.login-button').click();
+  await expect(homePage.locator('#connected-header')).toContainText('My workspaces');
+  await expect(homePage).toBeWorkspacePage();
+}
+
 export async function logout(page: Page): Promise<void> {
   await page.locator('.topbar').locator('.profile-header').click();
   const buttons = page.locator('.profile-header-popover').locator('.main-list').getByRole('listitem');
@@ -273,4 +286,27 @@ export async function logout(page: Page): Promise<void> {
   await answerQuestion(page, true);
   await expect(page).toBeHomePage();
   await expect(page.locator('.homepage-header').locator('.topbar-left')).toHaveText('Welcome to Parsec');
+}
+
+export async function importDefaultFiles(documentsPage: Page, testInfo: TestInfo): Promise<void> {
+  await expect(documentsPage).toBeDocumentPage();
+  await createFolder(documentsPage, 'Dir_Folder');
+  const dropZone = documentsPage.locator('.folder-container').locator('.drop-zone').nth(0);
+  await dragAndDropFile(documentsPage, dropZone, [
+    path.join(testInfo.config.rootDir, 'data', 'imports', 'image.png'),
+    path.join(testInfo.config.rootDir, 'data', 'imports', 'document.docx'),
+    path.join(testInfo.config.rootDir, 'data', 'imports', 'pdfDocument.pdf'),
+    path.join(testInfo.config.rootDir, 'data', 'imports', 'video.mp4'),
+    path.join(testInfo.config.rootDir, 'data', 'imports', 'audio.mp3'),
+    path.join(testInfo.config.rootDir, 'data', 'imports', 'spreadsheet.xlsx'),
+    path.join(testInfo.config.rootDir, 'data', 'imports', 'text.txt'),
+    path.join(testInfo.config.rootDir, 'data', 'imports', 'code.py'),
+  ]);
+  // Hide the import menu
+  const uploadMenu = documentsPage.locator('.upload-menu');
+  await expect(uploadMenu).toBeVisible();
+  const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
+  await expect(tabs.locator('.text-counter')).toHaveText(['0', '8', '0']);
+  await uploadMenu.locator('.menu-header-icons').locator('ion-icon').nth(1).click();
+  await expect(documentsPage.locator('.folder-container').locator('.no-files-content')).toBeHidden();
 }

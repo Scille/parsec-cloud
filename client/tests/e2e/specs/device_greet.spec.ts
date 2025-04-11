@@ -76,9 +76,11 @@ async function initModals(hostPage: Page, guestPage: Page): Promise<[ModalData, 
   return [greetData, joinData];
 }
 
-msTest('Greet device whole process', async ({ myProfilePage, secondTab }) => {
+msTest('Greet device whole process', async ({ myProfilePage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
+
+  const secondTab = await myProfilePage.openNewTab();
 
   const [greetData, joinData] = await initModals(myProfilePage, secondTab);
 
@@ -149,6 +151,7 @@ msTest('Greet device whole process', async ({ myProfilePage, secondTab }) => {
   await expect(secondTab).toBeWorkspacePage();
   const profile = secondTab.locator('.topbar').locator('.profile-header');
   await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+  await secondTab.release();
 
   // host is done
   await expect(greetData.title).toHaveText('New device added');
@@ -163,10 +166,11 @@ msTest('Greet device whole process', async ({ myProfilePage, secondTab }) => {
   await expect(myProfilePage).toShowToast('You can connect to this organization from your new device.', 'Success');
 });
 
-msTest('Host selects invalid SAS code', async ({ myProfilePage, secondTab }) => {
+msTest('Host selects invalid SAS code', async ({ myProfilePage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 
+  const secondTab = await myProfilePage.openNewTab();
   const [greetData, joinData] = await initModals(myProfilePage, secondTab);
 
   // Check the provide code page from the host and retrieve the code
@@ -208,10 +212,11 @@ msTest('Host selects invalid SAS code', async ({ myProfilePage, secondTab }) => 
   await expect(joinData.nextButton).toHaveText('I understand!');
 });
 
-msTest('Host selects no SAS code', async ({ myProfilePage, secondTab }) => {
+msTest('Host selects no SAS code', async ({ myProfilePage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 
+  const secondTab = await myProfilePage.openNewTab();
   const [greetData, joinData] = await initModals(myProfilePage, secondTab);
 
   // Check the provide code page from the host and retrieve the code
@@ -256,9 +261,11 @@ msTest('Host selects no SAS code', async ({ myProfilePage, secondTab }) => {
   await expect(joinData.nextButton).toHaveText('I understand!');
 });
 
-msTest('Host closes greet process', async ({ myProfilePage, secondTab }) => {
+msTest('Host closes greet process', async ({ myProfilePage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
+
+  const secondTab = await myProfilePage.openNewTab();
 
   const [greetData, joinData] = await initModals(myProfilePage, secondTab);
 
@@ -311,9 +318,11 @@ msTest('Host closes greet process', async ({ myProfilePage, secondTab }) => {
   await expect(joinData.nextButton).toHaveText('I understand!');
 });
 
-msTest('Guest selects invalid SAS code', async ({ myProfilePage, secondTab }) => {
+msTest('Guest selects invalid SAS code', async ({ myProfilePage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
+
+  const secondTab = await myProfilePage.openNewTab();
 
   const [greetData, joinData] = await initModals(myProfilePage, secondTab);
 
@@ -342,9 +351,11 @@ msTest('Guest selects invalid SAS code', async ({ myProfilePage, secondTab }) =>
   await expect(joinData.nextButton).toHaveText('I understand!');
 });
 
-msTest('Guest selects no SAS code', async ({ myProfilePage, secondTab }) => {
+msTest('Guest selects no SAS code', async ({ myProfilePage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
+
+  const secondTab = await myProfilePage.openNewTab();
 
   const [greetData, joinData] = await initModals(myProfilePage, secondTab);
 
@@ -375,9 +386,11 @@ msTest('Guest selects no SAS code', async ({ myProfilePage, secondTab }) => {
   await expect(joinData.nextButton).toHaveText('I understand!');
 });
 
-msTest('Guest closes greet process', async ({ myProfilePage, secondTab }) => {
+msTest('Guest closes greet process', async ({ myProfilePage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
+
+  const secondTab = await myProfilePage.openNewTab();
 
   const [greetData, joinData] = await initModals(myProfilePage, secondTab);
 

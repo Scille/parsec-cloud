@@ -86,11 +86,13 @@ msTest('Invite new user', async ({ connected }) => {
   await expect(invitations.locator('.invitation-actions-date')).toHaveText(['Jan 7, 2000', 'now'], { useInnerText: true });
 });
 
-msTest.fail('Invite user with already existing email', async ({ connected }) => {
+msTest('Invite user with already existing email', async ({ connected }) => {
   await connected.locator('.topbar').locator('#invitations-button').click();
   const popover = connected.locator('.invitations-list-popover');
   await popover.locator('.invitations-list-header__button').click();
   await expect(connected).toBeUserPage();
-  await fillInputModal(connected, 'jaheira@gmail.com');
-  await expect(connected).toShowToast('The email jaheira@gmail.com is already used by someone in this organization.', 'Error');
+  // cspell:disable-next-line
+  await fillInputModal(connected, 'bob@example.com');
+  // cspell:disable-next-line
+  await expect(connected).toShowToast('The email bob@example.com is already used by someone in this organization.', 'Error');
 });

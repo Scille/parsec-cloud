@@ -1,87 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Locator, Page } from '@playwright/test';
-import {
-  answerQuestion,
-  expect,
-  fillInputModal,
-  fillIonInput,
-  getClipboardText,
-  msTest,
-  setWriteClipboardPermission,
-} from '@tests/e2e/helpers';
+import { answerQuestion, expect, fillIonInput, initGreetUserModals, msTest } from '@tests/e2e/helpers';
 
-interface ModalData {
-  modal: Locator;
-  nextButton: Locator;
-  title: Locator;
-  subtitle: Locator;
-  content: Locator;
-  closeButton: Locator;
-}
-
-async function initModals(hostPage: Page, guestPage: Page): Promise<[ModalData, ModalData]> {
-  // Invite a new user and retrieve the invitation link
-  await hostPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
-  // cspell:disable-next-line
-  await fillInputModal(hostPage, 'gordon.freeman@blackmesa.nm');
-  // cspell:disable-next-line
-  await expect(hostPage).toShowToast('An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.', 'Success');
-  await hostPage.locator('.topbar').locator('#invitations-button').click();
-  const popover = hostPage.locator('.invitations-list-popover');
-  await setWriteClipboardPermission(hostPage.context(), true);
-  const inv = popover.locator('.invitation-list-item').nth(1);
-  await inv.hover();
-  await inv.locator('.copy-link').click();
-  await expect(hostPage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
-  const invitationLink = await getClipboardText(hostPage);
-
-  // Use the invitation link in the second tab
-  await guestPage.locator('#create-organization-button').click();
-  await expect(guestPage.locator('.homepage-popover')).toBeVisible();
-  await guestPage.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-  await fillInputModal(guestPage, invitationLink);
-  const joinModal = guestPage.locator('.join-organization-modal');
-  await expect(joinModal).toBeVisible();
-
-  // Start the greet
-  await inv.locator('.invitation-actions-buttons').locator('ion-button').nth(1).click();
-
-  const greetModal = hostPage.locator('.greet-organization-modal');
-
-  const greetData = {
-    modal: greetModal,
-    nextButton: greetModal.locator('#next-button'),
-    title: greetModal.locator('.modal-header__title'),
-    subtitle: greetModal.locator('.modal-header__text'),
-    content: greetModal.locator('.modal-content'),
-    closeButton: greetModal.locator('.closeBtn'),
-  };
-  await expect(greetData.nextButton).toHaveText('Start');
-  await expect(greetData.title).toHaveText('Onboard a new user');
-  await greetData.nextButton.click();
-
-  const joinData = {
-    modal: joinModal,
-    nextButton: joinModal.locator('#next-button'),
-    title: joinModal.locator('.modal-header__title'),
-    subtitle: joinModal.locator('.modal-header__text'),
-    content: joinModal.locator('.modal-content'),
-    closeButton: joinModal.locator('.closeBtn'),
-  };
-
-  // Start the join
-  await expect(joinData.nextButton).toHaveText('Continue with Alicey McAliceFace');
-  await joinData.nextButton.click();
-
-  return [greetData, joinData];
-}
-
-msTest('Greet user whole process', async ({ usersPage, secondTab }) => {
+msTest('Greet user whole process', async ({ usersPage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 
-  const [greetData, joinData] = await initModals(usersPage, secondTab);
+  const secondTab = await usersPage.openNewTab();
+
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
@@ -167,7 +94,12 @@ msTest('Greet user whole process', async ({ usersPage, secondTab }) => {
   await greetData.nextButton.click();
   await expect(greetData.modal).toBeHidden();
   await expect(usersPage).toShowToast('Gordon Freeman can now access to the organization.', 'Success');
-  // Also check that the user list gets updated with the new user
+  await expect(usersPage.locator('#users-page-user-list').getByRole('listitem').locator('.person-name')).toHaveText([
+    'Alicey McAliceFace',
+    'Boby McBobFace',
+    'Gordon Freeman',
+    'Malloryy McMalloryFace',
+  ]);
 
   // Joiner sets password
   const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item');
@@ -196,11 +128,13 @@ msTest('Greet user whole process', async ({ usersPage, secondTab }) => {
   await expect(profile.locator('.text-content-name')).toHaveText('Gordon Freeman');
 });
 
-msTest('Host selects invalid SAS code', async ({ usersPage, secondTab }) => {
+msTest('Host selects invalid SAS code', async ({ usersPage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 
-  const [greetData, joinData] = await initModals(usersPage, secondTab);
+  const secondTab = await usersPage.openNewTab();
+
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
@@ -227,8 +161,8 @@ msTest('Host selects invalid SAS code', async ({ usersPage, secondTab }) => {
   await expect(greetData.content.locator('.button-choice')).toHaveCount(4);
   await greetData.modal.locator('.button-choice').filter({ hasNotText: joinCode }).nth(0).click();
 
-  await expect(usersPage).toShowToast('You did not select the correct code. Please restart the onboarding process.', 'Error');
   await expect(secondTab).toShowToast('The host has selected the wrong code.', 'Error');
+  await expect(usersPage).toShowToast('You did not select the correct code. Please restart the onboarding process.', 'Error');
 
   // Back to the beginning
   await expect(greetData.nextButton).toHaveText('Start');
@@ -239,11 +173,13 @@ msTest('Host selects invalid SAS code', async ({ usersPage, secondTab }) => {
   await expect(joinData.nextButton).toHaveText('Continue with Alicey McAliceFace');
 });
 
-msTest('Host selects no SAS code', async ({ usersPage, secondTab }) => {
+msTest('Host selects no SAS code', async ({ usersPage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 
-  const [greetData, joinData] = await initModals(usersPage, secondTab);
+  const secondTab = await usersPage.openNewTab();
+
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
@@ -286,11 +222,12 @@ msTest('Host selects no SAS code', async ({ usersPage, secondTab }) => {
   await expect(joinData.nextButton).toHaveText('Continue with Alicey McAliceFace');
 });
 
-msTest('Host closes greet process', async ({ usersPage, secondTab }) => {
+msTest('Host closes greet process', async ({ usersPage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 
-  const [greetData, joinData] = await initModals(usersPage, secondTab);
+  const secondTab = await usersPage.openNewTab();
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
@@ -343,11 +280,12 @@ msTest('Host closes greet process', async ({ usersPage, secondTab }) => {
   // await expect(joinNextButton).toHaveText('I understand!');
 });
 
-msTest('Guest selects invalid SAS code', async ({ usersPage, secondTab }) => {
+msTest('Guest selects invalid SAS code', async ({ usersPage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 
-  const [greetData, joinData] = await initModals(usersPage, secondTab);
+  const secondTab = await usersPage.openNewTab();
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
@@ -374,11 +312,12 @@ msTest('Guest selects invalid SAS code', async ({ usersPage, secondTab }) => {
   await expect(joinData.nextButton).toHaveText('Continue with Alicey McAliceFace');
 });
 
-msTest('Guest selects no SAS code', async ({ usersPage, secondTab }) => {
+msTest('Guest selects no SAS code', async ({ usersPage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 
-  const [greetData, joinData] = await initModals(usersPage, secondTab);
+  const secondTab = await usersPage.openNewTab();
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
@@ -408,11 +347,12 @@ msTest('Guest selects no SAS code', async ({ usersPage, secondTab }) => {
   await expect(joinData.nextButton).toHaveText('Continue with Alicey McAliceFace');
 });
 
-msTest('Guest closes greet process', async ({ usersPage, secondTab }) => {
+msTest('Guest closes greet process', async ({ usersPage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 
-  const [greetData, joinData] = await initModals(usersPage, secondTab);
+  const secondTab = await usersPage.openNewTab();
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
