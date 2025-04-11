@@ -380,9 +380,9 @@ async function openJoinByLinkModal(link: string): Promise<void> {
 }
 
 async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
-  if (isDeviceLoggedIn(device)) {
-    const handle = getDeviceHandle(device);
-    switchOrganization(handle, false);
+  if (await isDeviceLoggedIn(device)) {
+    const handle = await getDeviceHandle(device);
+    switchOrganization(handle ?? null, false);
   } else {
     if (isTrialOrganizationDevice(device) && isExpired(getDurationBeforeExpiration(device.createdOn))) {
       const answer = await askQuestion('HomePage.expiredDevice.questionTitle', 'HomePage.expiredDevice.questionMessage', {

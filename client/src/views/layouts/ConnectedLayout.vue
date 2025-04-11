@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts" setup>
-import { getConnectionInfo, getTOS, logout as parsecLogout, acceptTOS, getClientInfo } from '@/parsec';
+import { getTOS, logout as parsecLogout, acceptTOS, getClientInfo, listStartedClients } from '@/parsec';
 import { getConnectionHandle, navigateTo, Routes } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
@@ -54,8 +54,6 @@ onMounted(async () => {
   provide(InformationManagerKey, injections.informationManager);
   provide(EventDistributorKey, injections.eventDistributor);
 
-  console.log(handle);
-
   const clientInfoResult = await getClientInfo(handle);
   // The handle is invalid
   if (!clientInfoResult.ok) {
@@ -83,8 +81,7 @@ onMounted(async () => {
   // Making sure we get a notification as soon as possible
   window.electronAPI.getUpdateAvailability();
 
-  const connInfo = getConnectionInfo();
-  if (connInfo && connInfo.shouldAcceptTos) {
+  if (clientInfoResult.value.mustAcceptTos) {
     await showTOSModal();
   }
 });
@@ -129,16 +126,17 @@ async function logout(): Promise<void> {
   if (!handle) {
     window.electronAPI.log('error', 'No handle found when trying to log out');
   } else {
-    const connInfo = getConnectionInfo(handle);
+    const startedClients = await listStartedClients();
+    const deviceId = startedClients.find(([sHandle, _deviceId]) => sHandle === handle)?.[1];
 
-    if (connInfo) {
+    if (deviceId) {
       const storedDeviceDataDict = await storageManager.retrieveDevicesData();
-      if (!storedDeviceDataDict[connInfo.device.deviceId]) {
-        storedDeviceDataDict[connInfo.device.deviceId] = {
+      if (!storedDeviceDataDict[deviceId]) {
+        storedDeviceDataDict[deviceId] = {
           lastLogin: DateTime.now(),
         };
       } else {
-        storedDeviceDataDict[connInfo.device.deviceId].lastLogin = DateTime.now();
+        storedDeviceDataDict[deviceId].lastLogin = DateTime.now();
       }
       await storageManager.storeDevicesData(storedDeviceDataDict);
     }
@@ -188,10 +186,6 @@ async function showTOSModal(): Promise<void> {
   if (role === MsModalResult.Confirm) {
     const acceptResult = await acceptTOS(result.value.updatedOn);
     if (acceptResult.ok) {
-      const connInfo = getConnectionInfo();
-      if (connInfo) {
-        connInfo.shouldAcceptTos = false;
-      }
       lastAccepted.value = result.value.updatedOn;
       injections.informationManager.present(
         new Information({
