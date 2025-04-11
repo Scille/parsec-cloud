@@ -1,0 +1,1 @@
+Add responsive for create trial organization

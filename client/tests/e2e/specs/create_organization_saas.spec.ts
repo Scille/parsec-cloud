@@ -17,7 +17,7 @@ async function openCreateOrganizationModal(page: Page): Promise<Locator> {
   await page.locator('.popover-viewport').getByRole('listitem').nth(0).click();
   const modal = page.locator('.create-organization-modal');
   await modal.locator('.server-choice-item').nth(0).click();
-  await modal.locator('.server-modal-footer').locator('ion-button').nth(1).click();
+  await modal.locator('.server-page-footer').locator('ion-button').nth(1).click();
   return modal;
 }
 
@@ -166,7 +166,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
 
   await expect(modal.locator('.created-page')).toBeVisible();
   await expect(modal.locator('.creation-page')).toBeHidden();
-  await expect(modal.locator('.created-page').locator('.closeBtn')).toBeHidden();
+  await expect(modal.locator('.created-page').locator('.closeBtn')).toBeVisible();
   await modal.locator('.created-page-footer').locator('ion-button').click();
   await expect(modal).toBeHidden();
 });

@@ -5,6 +5,10 @@
     <create-organization-modal-header
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.personalDetails"
+      :small-display-stepper="{
+        icon: shapes,
+        title: $msTranslate('HomePage.noExistingOrganization.createOrganization'),
+      }"
     />
 
     <user-information
@@ -14,6 +18,7 @@
       :email-enabled="email === undefined"
       :name-enabled="name === undefined"
       @field-update="onFieldUpdated"
+      class="user-information-content"
     />
 
     <div
@@ -91,7 +96,7 @@
 <script setup lang="ts">
 import { IonPage, IonButton, IonButtons, IonFooter, IonIcon, IonText } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
-import { chevronForward, chevronBack } from 'ionicons/icons';
+import { chevronForward, chevronBack, shapes } from 'ionicons/icons';
 import { MsCheckbox } from 'megashark-lib';
 import UserInformation from '@/components/users/UserInformation.vue';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
@@ -138,6 +143,13 @@ async function onFieldUpdated(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+.user-information-content,
+.tos-checkbox {
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0 2rem;
+  }
+}
+
 .tos-checkbox {
   padding-top: 1em;
   color: var(--parsec-color-light-secondary-soft-text);
