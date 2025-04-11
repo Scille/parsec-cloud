@@ -347,22 +347,16 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
       console.log('SetMountpointFolder: Not available.');
     },
     getUpdateAvailability: (): void => {
-      // Wait for a bit so it seems more natural
       if (window.usesTestbed()) {
-        setTimeout(
-          async () => {
-            injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '13.37' });
-            injectionProvider.notifyAll(
-              new Information({
-                message: '',
-                level: InformationLevel.Info,
-                unique: true,
-                data: { type: InformationDataType.NewVersionAvailable, newVersion: '13.37' },
-              }),
-              PresentationMode.Notification,
-            );
-          },
-          window.isTesting() ? 0 : 5000,
+        injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '13.37' });
+        injectionProvider.notifyAll(
+          new Information({
+            message: '',
+            level: InformationLevel.Info,
+            unique: true,
+            data: { type: InformationDataType.NewVersionAvailable, newVersion: '13.37' },
+          }),
+          PresentationMode.Notification,
         );
         console.log('GetUpdateAvailability: MOCKED');
       }
