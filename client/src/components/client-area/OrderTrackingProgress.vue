@@ -131,7 +131,6 @@ onMounted(async () => {
   flex-direction: column;
   gap: 2.5rem;
   padding: 2.5rem;
-  border-radius: var(--parsec-radius-12);
   background-color: var(--parsec-color-light-primary-30-opacity15);
   overflow: hidden;
 }
@@ -216,7 +215,7 @@ onMounted(async () => {
         width: 100%;
         height: 100%;
         background-color: var(--parsec-color-light-primary-600);
-        z-index: -2;
+        z-index: 0;
         border-radius: var(--parsec-radius-circle);
         animation: pulse 1.5s ease-in-out infinite;
       }
@@ -252,7 +251,7 @@ onMounted(async () => {
   // line between steps
   &:not(:last-child)::after {
     transform-origin: 50% -100%;
-    z-index: -1;
+    z-index: 1;
     content: '';
     position: absolute;
     top: 1.5rem;

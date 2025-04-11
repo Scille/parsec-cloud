@@ -139,7 +139,7 @@
 import { IonPage, IonContent, IonSkeletonText, IonSplitPane, IonMenu, GestureDetail, createGesture } from '@ionic/vue';
 import ClientAreaHeader from '@/views/client-area/ClientAreaHeader.vue';
 import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
-import { BillingSystem, BmsAccessInstance, BmsOrganization, CustomOrderStatus, DataType } from '@/services/bms';
+import { BillingSystem, BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
 import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { DefaultBmsOrganization, ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import BillingDetailsPage from '@/views/client-area/billing-details/BillingDetailsPage.vue';
@@ -183,62 +183,12 @@ function setToastOffset(width: number): void {
 }
 
 onMounted(async () => {
+  // Set the sidebar width property for the layout
   sidebarWidthProperty.value = `${computedWidth.value}px`;
-  querying.value = true;
-  if (!BmsAccessInstance.get().isLoggedIn()) {
-    loggedIn.value = await BmsAccessInstance.get().tryAutoLogin();
-    if (!loggedIn.value) {
-      await navigateTo(Routes.ClientAreaLogin, { skipHandle: true });
-      querying.value = false;
-      return;
-    }
-  } else {
-    loggedIn.value = true;
-  }
-  const billingSystem = BmsAccessInstance.get().getPersonalInformation().billingSystem;
-  const query = getCurrentRouteQuery<ClientAreaQuery>();
-  const response = await BmsAccessInstance.get().listOrganizations();
-  if (!response.isError && response.data && response.data.type === DataType.ListOrganizations) {
-    organizations.value = response.data.organizations;
-    if (organizations.value.length > 0) {
-      if (query.organization) {
-        const org = organizations.value.find((org) => org.bmsId === query.organization);
-        if (org) {
-          currentOrganization.value = org;
-        }
-      } else {
-        if (organizations.value.length === 1) {
-          currentOrganization.value = organizations.value[0];
-        } else {
-          currentOrganization.value = DefaultBmsOrganization;
-        }
-      }
-    }
-    if (billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) {
-      currentPage.value = ClientAreaPages.Contracts;
-      const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(currentOrganization.value);
-      const organizationStatusResp = await BmsAccessInstance.get().getOrganizationStatus(currentOrganization.value.bmsId);
-      const isBootstrapped =
-        !organizationStatusResp.isError && organizationStatusResp.data && organizationStatusResp.data.type === DataType.OrganizationStatus
-          ? organizationStatusResp.data.isBootstrapped
-          : false;
-      if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus && !isBootstrapped) {
-        if (statusResp.data.status !== CustomOrderStatus.ContractEnded) {
-          currentPage.value = ClientAreaPages.CustomOrderProcessing;
-        }
-      } else {
-        currentPage.value = ClientAreaPages.Contracts;
-      }
-    } else {
-      currentPage.value = ClientAreaPages.Dashboard;
-    }
-    if (query.page) {
-      currentPage.value = query.page as ClientAreaPages;
-    }
-  }
-  querying.value = false;
-
+  // Set the toast offset for the sidebar
   setToastOffset(computedWidth.value);
+
+  // Enable the gesture for resizing the sidebar
   if (divider.value) {
     const gesture = createGesture({
       gestureName: 'resize-menu',
@@ -246,6 +196,72 @@ onMounted(async () => {
       onMove,
     });
     gesture.enable();
+  }
+
+  querying.value = true;
+
+  try {
+    // Check if the user is logged in; if not, attempt auto-login
+    if (!BmsAccessInstance.get().isLoggedIn()) {
+      loggedIn.value = await BmsAccessInstance.get().tryAutoLogin();
+      if (!loggedIn.value) {
+        // Redirect to the login page if auto-login fails
+        await navigateTo(Routes.ClientAreaLogin, { skipHandle: true });
+        return;
+      }
+    } else {
+      loggedIn.value = true;
+    }
+
+    // Retrieve the billing system and the list of organizations
+    const billingSystem = BmsAccessInstance.get().getPersonalInformation().billingSystem;
+    const query = getCurrentRouteQuery<ClientAreaQuery>();
+    const orgListResponse = await BmsAccessInstance.get().listOrganizations();
+
+    if (orgListResponse.isError || !orgListResponse.data || orgListResponse.data.type !== DataType.ListOrganizations) {
+      currentOrganization.value = DefaultBmsOrganization;
+      // TODO: display a toast or a modal or something
+      return;
+    }
+
+    organizations.value = orgListResponse.data.organizations;
+
+    currentOrganization.value = DefaultBmsOrganization;
+    if (organizations.value.length > 0) {
+      if (query.organization) {
+        currentOrganization.value = organizations.value.find((org) => org.bmsId === query.organization) ?? DefaultBmsOrganization;
+      } else if (organizations.value.length === 1) {
+        currentOrganization.value = organizations.value[0];
+      }
+    }
+
+    if (query.page) {
+      // Page is defined is the query, no need to go further
+      currentPage.value = query.page as ClientAreaPages;
+      return;
+    }
+
+    if (billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) {
+      // Custom order, if there are no organization we default to custom order processing, otherwise we default to contracts
+      currentPage.value = organizations.value.length === 0 ? ClientAreaPages.Orders : ClientAreaPages.Contracts;
+      if (currentOrganization.value !== DefaultBmsOrganization) {
+        // If we have an organization but it hasn't been bootstrapped, we default to Orders
+        const orgStatusResp = await BmsAccessInstance.get().getOrganizationStatus(currentOrganization.value.bmsId);
+        if (
+          !orgStatusResp.isError &&
+          orgStatusResp.data &&
+          orgStatusResp.data.type === DataType.OrganizationStatus &&
+          !orgStatusResp.data.isBootstrapped
+        ) {
+          currentPage.value = ClientAreaPages.Orders;
+        }
+      }
+    } else {
+      // Not custom order, display the dashboard
+      currentPage.value = ClientAreaPages.Dashboard;
+    }
+  } finally {
+    querying.value = false;
   }
 });
 
