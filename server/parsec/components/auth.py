@@ -1,8 +1,12 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import hashlib
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 from dataclasses import dataclass
 from enum import auto
+
+from pydantic import EmailStr
+from pydantic.networks import validate_email
 
 from parsec._parsec import (
     CryptoError,
@@ -11,6 +15,7 @@ from parsec._parsec import (
     InvitationToken,
     InvitationType,
     OrganizationID,
+    SecretKey,
     SigningKey,
     UserID,
     VerifyKey,
@@ -151,6 +156,66 @@ class AuthenticatedToken:
                 signature=self.signature, message=self.header_and_payload
             )
             return True
+        except CryptoError:
+            return False
+
+
+@dataclass
+class AccountPasswordAuthenticationToken:
+    timestamp: DateTime
+    email: EmailStr
+    header_and_payload: bytes
+    signature: bytes
+
+    HEADER = b"PARSEC-PASSWORD-HMAC-BLAKE2B"
+
+    # Only used for tests, but coherent to have it here
+    @staticmethod
+    def generate_raw(
+        timestamp: DateTime,
+        email: EmailStr,
+        body: bytes,
+        key: SecretKey,
+    ) -> bytes:
+        raw_timestamp_us = str(timestamp.as_timestamp_seconds()).encode("ascii")
+        raw_email = urlsafe_b64encode(email.encode("utf8"))
+        body_sha256 = hashlib.sha256(body).digest()
+        header_and_payload = b".".join(
+            (
+                AccountPasswordAuthenticationToken.HEADER,
+                raw_email,
+                raw_timestamp_us,
+            )
+        )
+        signature = key.hmac_full(header_and_payload + b"." + body_sha256)
+        return b"%s.%s" % (header_and_payload, urlsafe_b64encode(signature))
+
+    @classmethod
+    def from_raw(cls, raw: bytes) -> "AccountPasswordAuthenticationToken":
+        try:
+            header_and_payload, raw_signature = raw.rsplit(b".", 1)
+            header, raw_email, raw_timestamp_us = header_and_payload.split(b".")
+            if header != cls.HEADER:
+                raise ValueError
+            email = urlsafe_b64decode(raw_email).decode("utf8")
+            validate_email(email)
+            timestamp = DateTime.from_timestamp_seconds(int(raw_timestamp_us))
+            signature = urlsafe_b64decode(raw_signature)
+        except ValueError as e:
+            raise ValueError("Invalid token") from e
+
+        return cls(
+            timestamp=timestamp,
+            email=email,
+            header_and_payload=header_and_payload,
+            signature=signature,
+        )
+
+    def verify_signature(self, body: bytes, secret: SecretKey) -> bool:
+        body_sha256 = hashlib.sha256(body).digest()
+        try:
+            expected_signature = secret.hmac_full(self.header_and_payload + b"." + body_sha256)
+            return self.signature == expected_signature
         except CryptoError:
             return False
 
