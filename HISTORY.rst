@@ -4,6 +4,86 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.4.0-a.13 (2025-05-06)
+-------------------------------
+
+No significant changes.
+
+
+Parsec v3.4.0-a.12 (2025-05-06)
+-------------------------------
+
+No significant changes.
+
+
+Parsec v3.4.0-a.11 (2025-04-30)
+-------------------------------
+
+Features
+~~~~~~~~
+
+* Add responsive for create trial organization
+  (`#10143 <https://github.com/Scille/parsec-cloud/issues/10143>`__)
+
+* Added responsive for profile menu
+  (`#10165 <https://github.com/Scille/parsec-cloud/issues/10165>`__)
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Hosting Guide: add database and S3 backup and restore instructions
+  (`#6174 <https://github.com/Scille/parsec-cloud/issues/6174>`__)
+
+
+
+Parsec v3.4.0-a.10 (2025-04-16)
+-------------------------------
+
+No significant changes.
+
+
+Parsec v3.4.0-a.9 (2025-04-15)
+------------------------------
+
+No significant changes.
+
+
+Parsec v3.4.0-a.8 (2025-04-14)
+------------------------------
+
+No significant changes.
+
+
+Parsec v3.4.0-a.7 (2025-04-11)
+------------------------------
+
+Features
+~~~~~~~~
+
+* Add new commands in the client CLI: `certificate poll`, `certificate forget-
+  all-certificates`, `device change-authentication`, `device overwrite-server-
+  url`
+  (`#10017 <https://github.com/Scille/parsec-cloud/issues/10017>`__)
+
+* Update responsive for Organization information page
+  (`#10061 <https://github.com/Scille/parsec-cloud/issues/10061>`__)
+
+* Added small-display global and specific contextual menus for members and
+  files, as well as correct handling of contextual menu when selecting multiple
+  members
+  (`#9505 <https://github.com/Scille/parsec-cloud/issues/9505>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fix incompatibility with Outsider users created with Parsec < v3.3 preventing
+  them to start a client with Parsec >= 3.3
+  (`#10041 <https://github.com/Scille/parsec-cloud/issues/10041>`__)
+
+
+
 Parsec v3.4.0-a.6 (2025-03-31)
 ------------------------------
 
