@@ -22,7 +22,7 @@ use crate::{
         borrow_from_handle, filter_close_handles, iter_opened_handles, register_handle_with_init,
         take_and_close_handle, FilterCloseHandle, Handle, HandleItem,
     },
-    ClientConfig, OnEventCallbackPlugged,
+    ClientConfig, ClientEvent, OnEventCallbackPlugged,
 };
 
 fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>> {
@@ -182,10 +182,11 @@ pub async fn client_start(
     // 3) Actually start the client
 
     let on_event_callback = super::get_on_event_callback();
-    let on_event = OnEventCallbackPlugged::new(initializing.handle(), on_event_callback);
+    let on_event = OnEventCallbackPlugged::new(initializing.handle(), on_event_callback.clone());
     let client = libparsec_client::Client::start(config, on_event.event_bus.clone(), device)
         .await
         .map_err(ClientStartError::Internal)?;
+    let device_id = client.device_id();
 
     let handle = initializing.initialized(move |item: &mut HandleItem| {
         let starting = std::mem::replace(
@@ -208,6 +209,8 @@ pub async fn client_start(
             _ => unreachable!(),
         }
     });
+
+    on_event_callback(handle, ClientEvent::ClientStarted { device_id });
 
     Ok(handle)
 }
@@ -236,6 +239,7 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
     // 1. Stop the client
 
     let client = borrow_client(client_handle)?;
+    let device_id = client.device_id();
 
     // Notes:
     // - Stop is idempotent.
@@ -326,6 +330,9 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
             None => break,
         }
     }
+
+    let on_event_callback = super::get_on_event_callback();
+    on_event_callback(client_handle, ClientEvent::ClientStopped { device_id });
 
     Ok(())
 }
