@@ -1,5 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use digest::{
+    consts::{U5, U64},
+    typenum::{IsLessOrEqual, LeEq, NonZero},
+};
+use generic_array::ArrayLength;
 use serde::Deserialize;
 use serde_bytes::Bytes;
 use sodiumoxide::{
@@ -59,11 +64,15 @@ impl SecretKey {
     /// This function requires access to libsodium methods that are not
     /// exposed directly, so it uses the unsafe C API
     /// ...
-    pub fn hmac(&self, data: &[u8], digest_size: usize) -> Vec<u8> {
+    pub fn hmac<Size>(&self, data: &[u8]) -> Vec<u8>
+    where
+        Size: ArrayLength<u8> + IsLessOrEqual<U64>,
+        LeEq<Size, U64>: NonZero,
+    {
         let mut state = libsodium_sys::crypto_generichash_blake2b_state {
             opaque: [0u8; 384usize],
         };
-        let mut out = Vec::with_capacity(digest_size);
+        let mut out = Vec::with_capacity(Size::USIZE);
 
         // SAFETY: Sodiumoxide doesn't expose those methods, so we have to access
         // the libsodium C API directly.
@@ -75,7 +84,7 @@ impl SecretKey {
                 &mut state,
                 self.as_ref().as_ptr(),
                 self.as_ref().len(),
-                digest_size,
+                Size::USIZE,
             );
             libsodium_sys::crypto_generichash_blake2b_update(
                 &mut state,
@@ -85,11 +94,15 @@ impl SecretKey {
             libsodium_sys::crypto_generichash_blake2b_final(
                 &mut state,
                 out.as_mut_ptr(),
-                digest_size,
+                Size::USIZE,
             );
-            out.set_len(digest_size);
+            out.set_len(Size::USIZE);
             out
         }
+    }
+
+    pub fn sas_code(&self, data: &[u8]) -> Vec<u8> {
+        self.hmac::<U5>(data)
     }
 
     pub fn generate_salt() -> Vec<u8> {
