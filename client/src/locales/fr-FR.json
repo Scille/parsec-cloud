@@ -864,6 +864,7 @@
             "password": "Mot de passe"
         },
         "changeAuthenticationButton": "Changer de méthode",
+        "changePasswordButton": "Modifier le mot de passe",
         "useKeyring": "Authentification du système",
         "usePassword": "Mot de passe",
         "label": "Méthode d'authentification",
@@ -1318,8 +1319,9 @@
         "title": "Fichiers de récupération d'organisation",
         "recoveryFile": "Fichier de récupération",
         "recoveryKey": "Clé secrète",
+        "advice": "Nous vous conseillons de créer un fichier de récupération pour chaque organisation.",
+        "adviceDone": "Vous avez déjà créé un fichier de récupération.",
         "done": {
-            "label": "Fichier déjà créé",
             "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
             "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
             "button": "Créer un fichier de récupération",
@@ -1329,7 +1331,6 @@
             "recreateNo": "Annuler"
         },
         "notDone": {
-            "label": "Action requise",
             "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
             "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
             "button": "Créer un fichier de récupération"
