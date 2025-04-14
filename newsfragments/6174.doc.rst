@@ -1,0 +1,1 @@
+Hosting Guide: add database and S3 backup and restore instructions
