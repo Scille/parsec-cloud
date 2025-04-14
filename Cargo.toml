@@ -107,7 +107,7 @@ libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 
 # Third parties
 android_logger = { version = "0.15", default-features = false }
-anyhow = { version = "1.0.97", default-features = false }
+anyhow = { version = "1.0.98", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.0.16", default-features = false }
 async-broadcast = { version = "0.5.1", default-features = false }
@@ -115,7 +115,7 @@ async-lock = { version = "3.4.0", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.10.1", default-features = false }
 chrono = { version = "0.4.40", default-features = false }
-clap = { version = "4.5.35", default-features = false }
+clap = { version = "4.5.36", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
 crc32fast = { version = "1.4.2", default-features = false }
@@ -123,7 +123,7 @@ crypto_box = { version = "0.9.1", default-features = false }
 crypto_secretbox = { version = "0.1.1", default-features = false }
 ctrlc = { version = "3.4.6", default-features = false }
 # You need base64&co ? This is the crate you need !
-data-encoding = { version = "2.8.0", default-features = false }
+data-encoding = { version = "2.9.0", default-features = false }
 dialoguer = { version = "0.11.0", default-features = false }
 digest = { version = "0.10.7", default-features = false }
 dirs = { version = "5.0.1", default-features = false }
