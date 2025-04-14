@@ -250,12 +250,14 @@ def with_postgresql(request: pytest.FixtureRequest) -> bool:
 
 @pytest.fixture
 def skip_if_postgresql(with_postgresql: bool) -> None:
+    """Test is not expected to pass"""
     if with_postgresql:
         pytest.skip("Test is not compatible with PostgreSQL backend")
 
 
 @pytest.fixture
 def xfail_if_postgresql(with_postgresql: bool) -> None:
+    """Test is expected to pass in the future"""
     if with_postgresql:
         pytest.xfail("TODO: Test is not compatible with PostgreSQL backend yet")
 

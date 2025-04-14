@@ -4,10 +4,10 @@
 
 from __future__ import annotations
 
-from . import ping
+from . import account_send_email_validation_token, ping
 
 class AnyCmdReq:
     @classmethod
-    def load(cls, raw: bytes) -> ping.Req: ...
+    def load(cls, raw: bytes) -> account_send_email_validation_token.Req | ping.Req: ...
 
-__all__ = ["AnyCmdReq", "ping"]
+__all__ = ["AnyCmdReq", "account_send_email_validation_token", "ping"]

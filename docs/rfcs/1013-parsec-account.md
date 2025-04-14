@@ -203,21 +203,31 @@ The `label` is not used by Parsec Account server but will be used by the client 
 
 To create an account, the client starts by requesting an email validation token.
 
-```yaml
-{
-  "cmd": "account_send_email_validation_token",
-  "req": {
-    "email": "EmailStr"
-  },
-  "reps": [
-    {
-      "status": "ok"
+```json
+[
+  {
+    "major_versions": [
+      5
+    ],
+    "cmd": "account_send_email_validation_token",
+    "req": {
+      "fields": [
+        {
+          "name": "email",
+          "type": "String"
+        }
+      ]
     },
-    {
-      "status": "invalid_email"
-    }
-  ]
-}
+    "reps": [
+      {
+        "status": "ok"
+      },
+      {
+        "status": "invalid_email"
+      }
+    ]
+  }
+]
 ```
 
 > This request is not authenticated with the server.

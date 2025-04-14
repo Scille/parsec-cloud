@@ -1,0 +1,24 @@
+[
+  {
+    "major_versions": [
+      5
+    ],
+    "cmd": "account_send_email_validation_token",
+    "req": {
+      "fields": [
+        {
+          "name": "email",
+          "type": "String"
+        }
+      ]
+    },
+    "reps": [
+      {
+        "status": "ok"
+      },
+      {
+        "status": "invalid_email"
+      }
+    ]
+  }
+]

@@ -131,6 +131,7 @@ class Backend:
             self.pki,
             self.events,
             self.shamir,
+            self.account,
             # Ping command is only used in tests
             include_ping=self.config.debug,
         )

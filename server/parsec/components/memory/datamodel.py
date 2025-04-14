@@ -20,6 +20,7 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
+    EmailValidationToken,
     EnrollmentID,
     GreeterOrClaimer,
     GreetingAttemptID,
@@ -98,6 +99,7 @@ class MemoryDatamodel:
     # accounts are not associated to one organization
     # (email, account)
     accounts: dict[EmailStr, MemoryAccount] = field(default_factory=dict)
+    unverified_emails: dict[EmailStr, EmailValidationToken] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -855,4 +857,4 @@ class MemoryShamirShare:
 
 @dataclass(slots=True)
 class MemoryAccount:
-    user_email: str | None
+    user_email: EmailStr

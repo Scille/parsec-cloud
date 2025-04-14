@@ -1,9 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from typing import override
 
-from parsec.components.account import BaseAccountComponent, CreateAccountBadOutcome
+from pydantic import EmailStr
+
+from parsec._parsec import EmailValidationToken
+from parsec.components.account import BaseAccountComponent, CreateEmailValidationTokenBadOutcome
 from parsec.components.events import EventBus
-from parsec.components.memory.datamodel import MemoryAccount, MemoryDatamodel
+from parsec.components.memory.datamodel import (
+    MemoryDatamodel,
+)
 
 
 class MemoryAccountComponent(BaseAccountComponent):
@@ -13,11 +19,15 @@ class MemoryAccountComponent(BaseAccountComponent):
         self._event_bus = event_bus
 
     @override
-    async def create(self, email: str) -> None | CreateAccountBadOutcome:
+    async def create_email_validation_token(
+        self, email: EmailStr
+    ) -> EmailValidationToken | CreateEmailValidationTokenBadOutcome:
         if email in self._data.accounts:
-            return CreateAccountBadOutcome.ACCOUNT_ALREADY_EXISTS
+            return CreateEmailValidationTokenBadOutcome.ACCOUNT_ALREADY_EXISTS
         else:
-            self._data.accounts[email] = MemoryAccount(email)
+            token = EmailValidationToken.new()
+            self._data.unverified_emails[email] = token
+        return token
 
     @override
     async def check_signature(self):

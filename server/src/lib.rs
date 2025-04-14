@@ -77,6 +77,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<UserID>()?;
     m.add_class::<BootstrapToken>()?;
     m.add_class::<InvitationToken>()?;
+    m.add_class::<EmailValidationToken>()?;
     m.add_class::<GreetingAttemptID>()?;
 
     // Time
