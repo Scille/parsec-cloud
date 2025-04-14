@@ -70,7 +70,7 @@ jobs:
         shell: bash
         working-directory: docs
         run: |
-          if git status --porcelain | grep '\.po'; then
+          if [ -n "$(git status --porcelain '*.po' | tee /dev/stderr)" ]; then
             # PO files were modified, the step fail
             exit 1
           else
