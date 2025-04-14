@@ -11,11 +11,18 @@ type WasmPackCrate = {
 };
 
 function vitePluginWasmPack(
-  crates: WasmPackCrate[]
+  crates: WasmPackCrate[],
+  // If the wasm module runs in a web worker, we are required to instantiate this
+  // plugin multiple times:
+  // - One main plugin instance
+  // - Another instance for each web worker
+  //
+  // However we only need to copy the wasm file once ! Hence this flag that should
+  // only be enabled for the main plugin instance.
+  emitReleaseAsset: boolean,
 ): PluginOption {
   const prefix = '@vite-plugin-wasm-pack@';
   const pkg = 'pkg'; // default folder of wasm-pack module
-  let configBase: string;
   let configAssetsDir: string;
   let configIsProduction: boolean;
 
@@ -61,7 +68,6 @@ function vitePluginWasmPack(
 
     configResolved(resolvedConfig): void {
       configIsProduction = resolvedConfig.isProduction;
-      configBase = resolvedConfig.base;
       configAssetsDir = resolvedConfig.build.assetsDir;
     },
 
@@ -144,11 +150,10 @@ function vitePluginWasmPack(
           const regex = /module_or_path = new URL\('(.+)'.+;/g;
           let found = false;
           code = code.replace(regex, (_match, _group1) => {
-            const assetUrl = path.posix.join(
-              configBase,
-              configAssetsDir,
-              wasmFileName
-            );
+            // Use a relative path since the `XXX_bg.wasm` file is expected to
+            // always be in the same directory as the `XXX.js` intermediary
+            // file that we are patching.
+            const assetUrl = wasmFileName;
             found = true;
             return `module_or_path = "${assetUrl}";`;
           });
@@ -194,6 +199,9 @@ function vitePluginWasmPack(
 
     // Copy all .wasm files in the asset folder
     buildEnd(): void {
+      if (!emitReleaseAsset) {
+        return;
+      }
       for (const crate of crates) {
         const content = fs.readFileSync(getWasmFilePath(crate));
         const wasmFileName = `${crate.name}_bg-${generateDigest(content)}.wasm`;
