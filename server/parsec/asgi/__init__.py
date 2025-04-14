@@ -7,7 +7,7 @@ from typing import cast
 
 import anyio
 import uvicorn
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -42,7 +42,7 @@ tags_metadata = [
     },
 ]
 
-WEB_APP_BASE_URL = "/client"
+WEB_APP_BASE_URL = "/client/"
 
 
 # This class is used to serve the static files of the web app (SPA)
@@ -52,7 +52,10 @@ class StaticFilesWithSPARedirect(StaticFiles):
     def lookup_path(self, path: str) -> tuple[str, os.stat_result | None]:
         match super().lookup_path(path):
             case (_, None):
-                return super().lookup_path("index.html")
+                if path.startswith("assets/"):
+                    raise HTTPException(status_code=404)
+                else:
+                    return super().lookup_path("index.html")
             case found:
                 return found
 
