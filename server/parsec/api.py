@@ -16,7 +16,9 @@ from parsec._parsec import ApiVersion
 
 if TYPE_CHECKING:
     from parsec.client_context import (
+        AnonymousAccountClientContext,
         AnonymousClientContext,
+        AuthenticatedAccountClientContext,
         AuthenticatedClientContext,
         InvitedClientContext,
     )
@@ -25,7 +27,12 @@ if TYPE_CHECKING:
     Req = TypeVar("Req")
     Rep = TypeVar("Rep")
     ClientContext = TypeVar(
-        "ClientContext", AuthenticatedClientContext, InvitedClientContext, AnonymousClientContext
+        "ClientContext",
+        AuthenticatedClientContext,
+        InvitedClientContext,
+        AnonymousClientContext,
+        AnonymousAccountClientContext,
+        AuthenticatedAccountClientContext,
     )
     ApiFn = Callable[[ClientContext, Req], Awaitable[Rep | None]]
     ApiFnWithSelf = Callable[[Any, ClientContext, Req], Awaitable[Rep | None]]
@@ -74,7 +81,7 @@ def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:  # pyright: ignore[reportMissingTyp
         case _:
             raise ValueError(f"unexpected family {m_family}")
     assert types["client_ctx"] == ForwardRef(expected_type_name), (
-        f"Expect `client_ctx` to be an `{expected_type_name}`"
+        f"Expect `client_ctx`({types['client_ctx']}) to be an `{expected_type_name}`. Did you add `from __future__ import annotations` ?"
     )
 
     fn._api_info = {  # type: ignore[attr-defined]

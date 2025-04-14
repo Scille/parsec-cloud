@@ -26,8 +26,9 @@ pub fn req() {
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let anonymous_account_cmds::AnyCmdReq::Ping(req2) = data;
-
+    let anonymous_account_cmds::AnyCmdReq::Ping(req2) = data else {
+        unreachable!()
+    };
     let raw2 = req2.dump().unwrap();
 
     let data2 = anonymous_account_cmds::AnyCmdReq::load(&raw2).unwrap();
