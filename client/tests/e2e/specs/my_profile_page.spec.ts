@@ -35,8 +35,8 @@ async function checkMenuItem(
 
 msTest('Check if each tab is displayed', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.profile-menu').locator('.menu-list__item')).toHaveCount(7);
-  await expect(myProfilePage.locator('.menu-list__title').nth(0)).toHaveText('My account');
-  await expect(myProfilePage.locator('.menu-list__title').nth(1)).toHaveText('Support');
+  await expect(myProfilePage.locator('.menu-content__title').nth(0)).toHaveText('My account');
+  await expect(myProfilePage.locator('.menu-content__title').nth(1)).toHaveText('Support');
 
   await checkMenuItem(myProfilePage, 0, 'Settings', 'Settings', 'settings');
   await checkMenuItem(myProfilePage, 1, 'My devices', 'My devices', 'devices');
@@ -60,10 +60,10 @@ msTest('Check if restore-password section is displayed', async ({ myProfilePage 
   const restorePassword = myProfilePage.locator('.recovery');
   await expect(restorePassword).toBeVisible();
   await expect(restorePassword.locator('.item-header__title')).toHaveText('Organization recovery files');
-  await expect(restorePassword.locator('.item-header__description span').nth(0)).toHaveText(
+  await expect(restorePassword.locator('.restore-password__description span').nth(0)).toHaveText(
     'A recovery file enables you to reclaim access to your data if you forget your password or lose your devices.',
   );
-  await expect(restorePassword.locator('.item-header__description span').nth(1)).toHaveText(
+  await expect(restorePassword.locator('.restore-password__description span').nth(1)).toHaveText(
     `Without a recovery file, you wouldn't be able to recover your account in such a case,
   and you would need to be re-invited to the organization to regain access to your data.`,
   );
@@ -173,4 +173,14 @@ msTest('Open feedback', async ({ myProfilePage }) => {
   const newTab = await myProfilePage.waitForEvent('popup');
   await newTab.waitForLoadState();
   await expect(newTab).toHaveURL(new RegExp('https://sign(-dev)?.parsec.cloud/contact'));
+});
+
+msTest('Logout from my profile page', async ({ myProfilePage }) => {
+  // Verify the "Logout" button is present
+  const logoutButton = myProfilePage.locator('.logout');
+  await expect(logoutButton).toBeVisible();
+  await expect(logoutButton.locator('.logout-text')).toHaveText('Log out');
+
+  await expect(logoutButton).toHaveText('Log out');
+  await logoutButton.click();
 });

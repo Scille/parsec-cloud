@@ -19,11 +19,12 @@
         <ion-button
           id="change-authentication-button"
           class="update-auth-button"
+          fill="clear"
           @click="openChangeAuthentication()"
-          fill="outline"
         >
           <ion-label class="update-auth-button__label">
-            {{ $msTranslate('Authentication.changeAuthenticationButton') }}
+            <span v-if="isWeb()">{{ $msTranslate('Authentication.changePasswordButton') }}</span>
+            <span v-else>{{ $msTranslate('Authentication.changeAuthenticationButton') }}</span>
           </ion-label>
         </ion-button>
       </div>
@@ -41,7 +42,7 @@
 
 <script setup lang="ts">
 import { MsModalResult } from 'megashark-lib';
-import { AvailableDevice, DeviceFileType, getCurrentAvailableDevice } from '@/parsec';
+import { AvailableDevice, DeviceFileType, getCurrentAvailableDevice, isWeb } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
 import keypadGradient from '@/assets/images/keypad-gradient.svg';
@@ -125,18 +126,21 @@ onMounted(async () => {
 .update-auth-button {
   margin-top: 1em;
   width: fit-content;
+  --background: var(--parsec-color-light-secondary-text);
+  --background-hover: var(--parsec-color-light-secondary-contrast);
+  color: var(--parsec-color-light-secondary-white);
 
-  &::part(native) {
-    color: var(--parsec-color-light-secondary-text);
-    border: 1px solid var(--parsec-color-light-secondary-text);
-    padding: 0.75rem 1.125rem;
-  }
-
-  &:hover {
-    &::part(native) {
-      border-color: var(--parsec-color-light-secondary-contrast);
-      background: var(--parsec-color-light-secondary-background);
-    }
+  @include ms.responsive-breakpoint('xs') {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    transform: translateX(50%, 50%);
+    width: calc(100% - 4rem);
+    margin: auto;
+    z-index: 2;
+    box-shadow: var(--parsec-shadow-strong);
+    --overflow: visible;
+    overflow: visible;
   }
 }
 </style>
