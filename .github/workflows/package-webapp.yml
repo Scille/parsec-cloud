@@ -1,0 +1,134 @@
+name: Package webapp
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/package-webapp.yml
+      - bindings/web/scripts/
+      - bindings/web/package*.json
+  workflow_call:
+    inputs:
+      version:
+        description: The version to use
+        type: string
+        required: true
+      version_patch_run_id:
+        description: |
+          The run id where the version.patch artifact was uploaded.
+          If not provided, the workflow will generate the patch by itself.
+        type: string
+        required: true
+      commit_sha:
+        required: true
+        type: string
+        description: The commit SHA to use when checkout'ing the repository
+        default: ${{ github.sha }}
+      nightly_build:
+        type: boolean
+        description: The current build is a nightly build
+        default: false
+    secrets:
+      SENTRY_AUTH_TOKEN:
+        required: true
+  workflow_dispatch:
+    inputs:
+      version:
+        description: The version to use (if not provided, will generate one from code space version)
+        type: string
+        required: false
+
+# Set `concurrency` to prevent this workflow from being run on code that is not up-to-date on a PR (e.g. when making many push quickly on a PR).
+# This behavior is only intended for a PR and not for merge commits on the main branch. Having the workflow run on each merge commit can be useful to spot regressions missed by previous checks.
+# To distinguish between these cases, we use `head_ref` that is only defined on `pull-request` and fallback to `run_id` (this is a counter, so it's value is unique between workflow call).
+concurrency:
+  group: package-webapp-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  # We use the version 18.12 because the version >= 18.13 have some breaking changes on how they format the date.
+  # That would break our unit test if we don't update them.
+  node-version: 22.14.0
+  wasm-pack-version: 0.12.1
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    if: ${{ inputs.version_patch_run_id == '' }}
+    uses: ./.github/workflows/_parse_version.yml
+    with:
+      version: ${{ inputs.version }}
+      commit_sha: ${{ inputs.commit_sha }}
+
+  webapp:
+    needs: version
+    # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
+    if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
+    runs-on: ubuntu-22.04
+    name: ⚡ Package web app
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
+        with:
+          ref: ${{ inputs.commit_sha }}
+        timeout-minutes: 5
+
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e  # pin v4.3.0
+        with:
+          node-version: ${{ env.node-version }}
+        timeout-minutes: 2
+
+      - name: Download version.patch artifact
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # pin v4.2.1
+        with:
+          name: version.patch
+          path: ${{ runner.temp }}/version.patch
+          run-id: ${{ inputs.version_patch_run_id || github.run_id }}
+
+      - name: Load version config
+        id: version
+        shell: bash
+        run: cat version.patch/version.ini | tee "$GITHUB_OUTPUT"
+        working-directory: ${{ runner.temp }}
+
+      - name: Apply version.patch
+        run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
+
+      - name: Install dependencies
+        run: npm clean-install
+        working-directory: client
+
+      # Install syft
+      - uses: taiki-e/install-action@be7c31b6745feec79dec5eb79178466c0670bb2d # pin v2.49.49
+        with:
+          tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
+
+      - name: Build web bindings
+        run: npm run build:release
+        working-directory: bindings/web
+
+      - name: Build web app
+        run: npm run web:release -- --mode ${{ steps.version.outputs.type }}
+        env:
+          PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          BASE_URL: /client
+        working-directory: client
+
+      - name: Zip webapp content
+        run: |
+          ARTIFACT_NAME='parsec-web-${{ steps.version.outputs.full }}.zip'
+          zip "${{ runner.temp }}/${ARTIFACT_NAME}" -r . -9
+          yq --null-input ".webapp = \"${ARTIFACT_NAME}\"" | tee '${{ runner.temp }}/artifacts.yml'
+        working-directory: client/dist
+
+      - name: Generate SBOM
+        run: syft packages --config=.syft.yaml --output=spdx-json="${{ runner.temp }}/Parsec-SBOM-Web.spdx.json" .
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin v4.6.2
+        with:
+          name: webapp
+          path: |
+            ${{ runner.temp }}/parsec-web-${{ steps.version.outputs.full }}.zip
+            ${{ runner.temp }}/Parsec-SBOM-Web.spdx.json
+            ${{ runner.temp }}/artifacts.yml
+          if-no-files-found: error

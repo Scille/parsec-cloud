@@ -53,11 +53,24 @@ jobs:
       version_patch_run_id: ${{ github.run_id }}
       commit_sha: ${{ needs.version.outputs.commit_sha }}
 
-  package-parsec-client:
+  package-parsec-webapp:
     needs: version
     # Do not run this job if the event is a pull request from dependabot.
     if: needs.version.result == 'success' && !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]') && always()
-    uses: ./.github/workflows/package-client.yml
+    uses: ./.github/workflows/package-webapp.yml
+    with:
+      version: ${{ needs.version.outputs.full }}
+      version_patch_run_id: ${{ github.run_id }}
+      commit_sha: ${{ needs.version.outputs.commit_sha }}
+      nightly_build: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.ref == 'refs/tags/nightly' }}
+    secrets:
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+  package-parsec-desktop:
+    needs: version
+    # Do not run this job if the event is a pull request from dependabot.
+    if: needs.version.result == 'success' && !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]') && always()
+    uses: ./.github/workflows/package-desktop.yml
     with:
       version: ${{ needs.version.outputs.full }}
       version_patch_run_id: ${{ github.run_id }}
@@ -86,7 +99,8 @@ jobs:
     needs:
       - version
       - package-parsec-server
-      - package-parsec-client
+      - package-parsec-webapp
+      - package-parsec-desktop
       - package-parsec-cli
     name: 🚛 Releaser
     permissions:
