@@ -1,9 +1,15 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+
 from typing import override
 
 from parsec.components.account import BaseAccountComponent, CreateAccountBadOutcome
 from parsec.components.events import EventBus
-from parsec.components.memory.datamodel import MemoryAccount, MemoryDatamodel
+from parsec.components.memory.datamodel import (
+    MemoryAccount,
+    MemoryDatamodel,
+    UserAccountDataValidationModel,
+)
 
 
 class MemoryAccountComponent(BaseAccountComponent):
@@ -17,7 +23,11 @@ class MemoryAccountComponent(BaseAccountComponent):
         if email in self._data.accounts:
             return CreateAccountBadOutcome.ACCOUNT_ALREADY_EXISTS
         else:
-            self._data.accounts[email] = MemoryAccount(email)
+            try:
+                user_email = UserAccountDataValidationModel(user_email=email)
+                self._data.accounts[email] = MemoryAccount(user_email=user_email.user_email)
+            except ValueError:
+                return CreateAccountBadOutcome.INVALID_EMAIL
 
     @override
     async def check_signature(self):
