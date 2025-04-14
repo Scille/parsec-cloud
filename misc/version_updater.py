@@ -257,10 +257,13 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Cross: [ReplaceRegex(r"cross-version: .*", "cross-version: {version}")],
         Tool.WinFSP: [CI_WINFSP_VERSION],
     },
-    ROOT_DIR / ".github/workflows/package-client.yml": {
+    ROOT_DIR / ".github/workflows/package-desktop.yml": {
+        Tool.Node: [NODE_GA_VERSION],
+        Tool.WinFSP: [CI_WINFSP_VERSION],
+    },
+    ROOT_DIR / ".github/workflows/package-webapp.yml": {
         Tool.Node: [NODE_GA_VERSION],
         Tool.WasmPack: [WASM_PACK_GA_VERSION],
-        Tool.WinFSP: [CI_WINFSP_VERSION],
     },
     ROOT_DIR / "bindings/electron/package.json": {
         Tool.License: [JSON_LICENSE_FIELD],
