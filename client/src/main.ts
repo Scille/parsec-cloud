@@ -43,7 +43,7 @@ enum AppState {
 
 function preventRightClick(): void {
   window.document.addEventListener('contextmenu', async (event) => {
-    if (!window.isDev()) {
+    if (window.isDesktop() && !window.isDev()) {
       event.preventDefault();
       const top = await popoverController.getTop();
       if (top) {
