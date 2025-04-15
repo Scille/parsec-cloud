@@ -192,14 +192,13 @@ msgid "Finally, reboot your Mac to complete the installation."
 msgstr "Enfin, redémarrez votre Mac pour finaliser l'installation."
 
 #: ../../userguide/installation.rst:117
-#, fuzzy
 msgid ""
 "On macOS 12 and older, if the installer fails to start, check the `App Store "
 "and identified developers` box in `System Settings > Security & Privacy`:"
 msgstr ""
-"À partir de macOS 12, si le programme d'installation ne démarre pas, cochez "
-"la case `App Store et développeurs identifiés` dans `Réglages Système > "
-"Confidentialité et sécurité` :"
+"Sur macOS 12 et plus ancien, si le programme d'installation ne démarre pas, "
+"cochez la case `App Store et développeurs identifiés` dans `Réglages Système "
+"> Confidentialité et sécurité` :"
 
 #: ../../userguide/installation.rst:119
 msgid "macOS path to Security and Privacy"
