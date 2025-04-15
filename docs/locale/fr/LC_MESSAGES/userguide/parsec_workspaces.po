@@ -1,9 +1,7 @@
-# SOME DESCRIPTIVE TITLE.
 # Copyright (C) 2016-present, Scille SAS
 # This file is distributed under the same license as the Parsec package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+# Parsec dev <dev-parsec@scille.fr>, 2024.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"

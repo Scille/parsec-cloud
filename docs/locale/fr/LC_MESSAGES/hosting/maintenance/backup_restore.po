@@ -1,4 +1,4 @@
-# Copyright (c) BUSL-1.1 2016-present Scille SAS
+# Copyright (C) 2016-present, Scille SAS
 # This file is distributed under the same license as the Parsec package.
 # Marcos Medrano <marcos.medrano@scille.fr>, 2025.
 #
