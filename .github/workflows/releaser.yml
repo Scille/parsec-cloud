@@ -105,7 +105,13 @@ jobs:
     name: 🚛 Releaser
     permissions:
       contents: write
-    if: needs.version.result == 'success' && needs.package-parsec-client.result == 'success' && needs.package-parsec-server.result && always()
+    if: >-
+      needs.version.result == 'success'
+      && needs.package-parsec-desktop.result == 'success'
+      && needs.package-parsec-webapp.result == 'success'
+      && needs.package-parsec-server.result == 'success'
+      && needs.package-parsec-cli.result == 'success'
+      && always()
     runs-on: ubuntu-22.04
     steps:
       - name: Download every artifact generated (and uploaded)
