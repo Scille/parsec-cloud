@@ -168,7 +168,6 @@ async function setupApp(): Promise<void> {
 
   await WebLogger.init();
 
-  const injectionProvider = new InjectionProvider();
   const hotkeyManager = new HotkeyManager();
   const router = getRouter();
 
