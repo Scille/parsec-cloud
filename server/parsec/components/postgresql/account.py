@@ -1,4 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+
 from parsec.components.account import BaseAccountComponent, CreateAccountBadOutcome
 from parsec.components.postgresql import AsyncpgPool
 

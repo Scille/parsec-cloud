@@ -10,7 +10,7 @@ from enum import Enum, auto
 from itertools import chain
 from typing import AsyncIterator, Iterable, Iterator, Literal
 
-from pydantic import EmailStr
+from pydantic import BaseModel, EmailStr
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -855,4 +855,8 @@ class MemoryShamirShare:
 
 @dataclass(slots=True)
 class MemoryAccount:
-    user_email: str | None
+    user_email: EmailStr
+
+
+class UserAccountDataValidationModel(BaseModel):
+    user_email: EmailStr
