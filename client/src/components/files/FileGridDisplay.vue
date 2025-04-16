@@ -28,6 +28,7 @@
           :is-workspace-reader="ownRole === WorkspaceRole.Reader"
           @drop-as-reader="$emit('dropAsReader')"
           @select="$emit('checkboxClick')"
+          v-model="folder.isSelected"
         />
         <file-card
           class="folder-grid-item"
@@ -41,6 +42,7 @@
           @files-added="onFilesAdded"
           @drop-as-reader="$emit('dropAsReader')"
           @select="$emit('checkboxClick')"
+          v-model="file.isSelected"
         />
 
         <file-card-processing
@@ -149,7 +151,11 @@ async function scrollToSelected(): Promise<void> {
   overflow-y: auto;
 
   @include ms.responsive-breakpoint('sm') {
-    padding-top: 2rem;
+    padding-top: 1.5rem;
+    gap: 1.5rem;
+  }
+
+  @include ms.responsive-breakpoint('xs') {
     gap: 1rem;
   }
 }

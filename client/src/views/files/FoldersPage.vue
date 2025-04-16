@@ -156,6 +156,23 @@
         :selection-enabled="selectionEnabled"
         :some-selected="selectedFilesCount > 0"
       />
+      <div
+        v-if="isSmallDisplay"
+        class="action-bar-mobile-filter"
+      >
+        <ms-sorter
+          :label="'FoldersPage.sort.byName'"
+          :options="msSorterOptions"
+          :default-option="SortProperty.Name"
+          :sorter-labels="msSorterLabels"
+          @change="onSortChange"
+        />
+
+        <ms-grid-list-toggle
+          v-model="displayView"
+          @update:model-value="onDisplayStateChange"
+        />
+      </div>
       <div class="folder-container scroll">
         <file-inputs
           ref="fileInputsRef"
@@ -207,7 +224,7 @@
               @global-menu-click="openGlobalContextMenu"
               :own-role="ownRole"
               @drop-as-reader="onDropAsReader"
-              :selection-enabled="selectionEnabled"
+              :selection-enabled="selectionEnabled && isSmallDisplay"
             />
           </div>
           <div v-if="displayView === DisplayState.Grid">
@@ -223,7 +240,7 @@
               @global-menu-click="openGlobalContextMenu"
               :own-role="ownRole"
               @drop-as-reader="onDropAsReader"
-              :selection-enabled="selectionEnabled"
+              :selection-enabled="selectionEnabled && isSmallDisplay"
               @checkbox-click="selectionEnabled = true"
             />
           </div>
@@ -1466,6 +1483,15 @@ async function onDropAsReader(): Promise<void> {
   padding: 0.25rem;
   border-radius: var(--parsec-radius-32);
   border: 1px solid var(--parsec-color-light-secondary-disabled);
+}
+
+.action-bar-mobile-filter {
+  display: flex;
+  justify-content: flex-end;
+  background: var(--parsec-color-light-secondary-inversed-contrast);
+  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+  padding: 0.5rem 1.5rem;
+  gap: 1rem;
 }
 
 .no-files-content {

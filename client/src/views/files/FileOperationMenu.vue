@@ -493,6 +493,11 @@ async function onFileOperationEvent(
   display: flex;
   flex-direction: column;
 
+  @include ms.responsive-breakpoint('sm') {
+    right: 0;
+    min-width: 100%;
+  }
+
   &-header {
     display: flex;
     align-items: center;

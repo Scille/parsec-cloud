@@ -594,6 +594,7 @@
         "deleteMultipleNo": "Conserver les éléments",
         "copySelectFolderTitle": "Copier un élément | Copier {count} éléments",
         "moveSelectFolderTitle": "Déplacer un élément | Déplacer {count} éléments",
+        "copyMoveFolderNoElement": "Aucun élément dans ce dossier",
         "moveAlreadyExistTitle": "Remplacer ou ignorer l'élément | Remplacer ou ignorer les éléments",
         "moveAlreadyExistQuestion": "Un élément nommé `{file}` existe déjà dans le dossier de destination. Que souhaitez-vous faire ? | Plusieurs éléments du même nom existent déjà dans le dossier de destination. Que souhaitez-vous faire ?",
         "moveAlreadyExistSkip": "Ignorer | Tout ignorer",

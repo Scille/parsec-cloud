@@ -11,6 +11,7 @@
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
     @contextmenu="onOptionsClick"
+    @click="onCardClick"
   >
     <file-drop-zone
       :disabled="entry.isFile()"
@@ -65,7 +66,7 @@
 
 <script setup lang="ts">
 import { getFileIcon } from '@/common/file';
-import { Folder, formatTimeSince, MsImage, MsCheckbox } from 'megashark-lib';
+import { Folder, formatTimeSince, MsImage, MsCheckbox, useWindowSize } from 'megashark-lib';
 import FileDropZone from '@/components/files/FileDropZone.vue';
 import { EntryModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
@@ -77,6 +78,7 @@ import { Ref, onMounted, ref } from 'vue';
 const isHovered = ref(false);
 const menuOpened = ref(false);
 
+const { isSmallDisplay } = useWindowSize();
 const currentPath: Ref<FsPath> = ref('/');
 
 onMounted(async () => {
@@ -91,6 +93,7 @@ const props = defineProps<{
   entry: EntryModel;
   showCheckbox: boolean;
   isWorkspaceReader?: boolean;
+  modelValue?: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -99,11 +102,18 @@ const emits = defineEmits<{
   (e: 'filesAdded', imports: FileImportTuple[]): void;
   (e: 'dropAsReader'): void;
   (e: 'select'): void;
+  (e: 'update:modelValue', value: boolean): void;
 }>();
 
 defineExpose({
   props,
 });
+
+async function onCardClick(): Promise<void> {
+  if (isSmallDisplay.value && props.showCheckbox) {
+    emits('update:modelValue', !props.entry.isSelected);
+  }
+}
 
 function isFileSynced(): boolean {
   return !props.entry.needSync;
@@ -127,6 +137,15 @@ async function onOptionsClick(event: Event): Promise<void> {
   text-align: center;
   user-select: none;
   width: 10.5rem;
+  transition: width 0.2s ease-in-out;
+
+  @include ms.responsive-breakpoint('xs') {
+    width: 9rem;
+  }
+
+  @include ms.responsive-breakpoint('xs') {
+    width: 8rem;
+  }
 }
 
 .card-checkbox {

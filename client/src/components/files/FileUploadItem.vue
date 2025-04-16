@@ -15,48 +15,65 @@
       class="element ion-no-padding"
       @click="$emit('click', operationData, state)"
     >
-      <div class="element-type">
-        <div class="element-type__icon">
-          <ms-image
-            :image="getFileIcon(fileCache.name)"
-            class="file-icon"
-          />
+      <div class="element-content">
+        <div class="element-type">
+          <div class="element-type__icon">
+            <ms-image
+              :image="getFileIcon(fileCache.name)"
+              class="file-icon"
+            />
+          </div>
         </div>
-      </div>
-      <div class="element-details">
-        <ion-text class="element-details__name body">
-          {{ shortenFileName(fileCache.name, { suffixLength: 4, maxLength: 42 }) }}
-        </ion-text>
-        <ion-label class="element-details-info body-sm">
-          <span class="default-state element-details-info__size">{{ $msTranslate(formatFileSize(fileCache.size)) }}</span>
-          <span
-            class="default-state element-details-info__workspace"
-            v-if="workspaceName"
-          >
-            &bull; {{ workspaceName }}
-          </span>
-          <span
-            class="hover-state"
-            v-show="state === FileOperationState.FileImported"
-          >
-            {{ $msTranslate('FoldersPage.ImportFile.browse') }}
-          </span>
-        </ion-label>
-      </div>
+        <div class="element-details">
+          <ion-text class="element-details__name body">
+            {{ shortenFileName(fileCache.name, { suffixLength: 4, maxLength: 42 }) }}
+          </ion-text>
+          <ion-label class="element-details-info body-sm">
+            <span class="default-state element-details-info__size">{{ $msTranslate(formatFileSize(fileCache.size)) }}</span>
+            <span
+              class="default-state element-details-info__workspace"
+              v-if="workspaceName"
+            >
+              &bull; {{ workspaceName }}
+            </span>
+            <span
+              class="hover-state"
+              v-show="state === FileOperationState.FileImported"
+            >
+              {{ $msTranslate('FoldersPage.ImportFile.browse') }}
+            </span>
+          </ion-label>
+        </div>
 
-      <!-- waiting -->
-      <div class="waiting-info">
-        <ion-text
-          class="waiting-text body"
-          v-if="state === FileOperationState.FileAdded"
-        >
-          {{ $msTranslate('FoldersPage.ImportFile.waiting') }}
-        </ion-text>
+        <!-- waiting -->
+        <div class="waiting-info">
+          <ion-text
+            class="waiting-text body"
+            v-if="state === FileOperationState.FileAdded"
+          >
+            {{ $msTranslate('FoldersPage.ImportFile.waiting') }}
+          </ion-text>
+          <ion-button
+            fill="clear"
+            size="small"
+            class="cancel-button"
+            v-if="state === FileOperationState.FileAdded"
+            @click="$emit('cancel', operationData.id)"
+          >
+            <ion-icon
+              class="cancel-button__icon"
+              slot="icon-only"
+              :icon="closeCircle"
+            />
+          </ion-button>
+        </div>
+
+        <!-- in progress -->
         <ion-button
           fill="clear"
           size="small"
           class="cancel-button"
-          v-if="state === FileOperationState.FileAdded"
+          v-if="state === FileOperationState.OperationProgress"
           @click="$emit('cancel', operationData.id)"
         >
           <ion-icon
@@ -65,57 +82,42 @@
             :icon="closeCircle"
           />
         </ion-button>
-      </div>
 
-      <!-- in progress -->
-      <ion-button
-        fill="clear"
-        size="small"
-        class="cancel-button"
-        v-if="state === FileOperationState.OperationProgress"
-        @click="$emit('cancel', operationData.id)"
-      >
+        <!-- done -->
         <ion-icon
-          class="cancel-button__icon"
-          slot="icon-only"
-          :icon="closeCircle"
+          class="checkmark-icon default-state"
+          v-show="state === FileOperationState.FileImported"
+          :icon="checkmarkCircle"
         />
-      </ion-button>
+        <ion-icon
+          class="arrow-icon hover-state"
+          v-show="state === FileOperationState.FileImported"
+          :icon="arrowForward"
+        />
 
-      <!-- done -->
-      <ion-icon
-        class="checkmark-icon default-state"
-        v-show="state === FileOperationState.FileImported"
-        :icon="checkmarkCircle"
-      />
-      <ion-icon
-        class="arrow-icon hover-state"
-        v-show="state === FileOperationState.FileImported"
-        :icon="arrowForward"
-      />
-
-      <!-- cancel -->
-      <ion-text
-        class="cancel-text body"
-        v-if="state === FileOperationState.Cancelled"
-      >
-        {{ $msTranslate('FoldersPage.ImportFile.cancelled') }}
-      </ion-text>
-
-      <!-- failed -->
-      <div
-        class="failed-content"
-        v-if="state === FileOperationState.CreateFailed"
-      >
-        <ion-text class="failed-text body">
-          {{ $msTranslate('FoldersPage.ImportFile.failed') }}
+        <!-- cancel -->
+        <ion-text
+          class="cancel-text body"
+          v-if="state === FileOperationState.Cancelled"
+        >
+          {{ $msTranslate('FoldersPage.ImportFile.cancelled') }}
         </ion-text>
-        <ms-information-tooltip
-          v-show="false"
-          :text="'FoldersPage.ImportFile.failedDetails'"
-          class="information-icon"
-          slot="end"
-        />
+
+        <!-- failed -->
+        <div
+          class="failed-content"
+          v-if="state === FileOperationState.CreateFailed"
+        >
+          <ion-text class="failed-text body">
+            {{ $msTranslate('FoldersPage.ImportFile.failed') }}
+          </ion-text>
+          <ms-information-tooltip
+            v-show="false"
+            :text="'FoldersPage.ImportFile.failedDetails'"
+            class="information-icon"
+            slot="end"
+          />
+        </div>
       </div>
     </ion-item>
     <ms-progress
@@ -189,21 +191,33 @@ defineEmits<{
   --background: none;
   padding: 0.75rem 1rem;
   --inner-padding-end: 0;
+  overflow: hidden;
+
+  &-content {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    width: 100%;
+  }
 
   .file-icon {
-    width: 2rem;
-    height: 2rem;
+    min-width: 2rem;
+    min-height: 2rem;
   }
 
   &-details {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     position: relative;
     margin-left: 0.875rem;
-    max-width: 16rem;
+    width: 100%;
 
     &__name {
       color: var(--parsec-color-light-primary-800);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     &-info {
@@ -233,6 +247,7 @@ defineEmits<{
   .failed-content {
     margin-left: auto;
     flex-shrink: 0;
+    min-width: 2rem;
   }
 }
 
