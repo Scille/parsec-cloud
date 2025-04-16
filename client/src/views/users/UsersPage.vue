@@ -152,7 +152,7 @@
               :users="(users as UserCollection)"
               @menu-click="openUserContextMenu"
               @checkbox-click="selectionEnabled = true"
-              :selection-enabled="selectionEnabled"
+              :selection-enabled="selectionEnabled && isSmallDisplay"
             />
           </div>
           <div
@@ -164,7 +164,7 @@
               :users="(users as UserCollection)"
               @menu-click="openUserContextMenu"
               @checkbox-click="selectionEnabled = true"
-              :selection-enabled="selectionEnabled"
+              :selection-enabled="selectionEnabled && isSmallDisplay"
             />
           </div>
         </div>

@@ -594,6 +594,7 @@
         "deleteMultipleNo": "Keep items",
         "copySelectFolderTitle": "Copy one item | Copy {count} items",
         "moveSelectFolderTitle": "Move one item | Move {count} items",
+        "copyMoveFolderNoElement": "No element in this folder",
         "moveAlreadyExistTitle": "Replace or skip file | Replace or skip files",
         "moveAlreadyExistQuestion": "A file named `{file}` already exists in the destination. What would you like to do? | Multiple files of the same name already exist in the destination. What would you like to do?",
         "moveAlreadyExistSkip": "Skip | Skip All",

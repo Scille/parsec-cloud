@@ -47,7 +47,16 @@
       />
     </div>
     <ion-list class="folder-list">
-      <div class="folder-container">
+      <ion-text
+        class="folder-list__empty body"
+        v-if="currentEntries.length === 0"
+      >
+        {{ $msTranslate('FoldersPage.copyMoveFolderNoElement') }}
+      </ion-text>
+      <div
+        class="folder-container"
+        v-if="currentEntries.length > 0"
+      >
         <ion-item
           class="file-list-item"
           v-for="entry in currentEntries"
@@ -78,7 +87,7 @@ import { FolderSelectionOptions } from '@/components/files';
 import { Folder, MsImage, MsModalResult, MsModal } from 'megashark-lib';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { EntryStat, FsPath, Path, StartedWorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
-import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
+import { IonButton, IonButtons, IonText, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
@@ -203,7 +212,7 @@ async function cancel(): Promise<boolean> {
   display: flex;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-light);
+  border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
 
   .disabled {
     pointer-events: none;
@@ -214,10 +223,23 @@ async function cancel(): Promise<boolean> {
 
 .folder-list {
   overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  background: var(--parsec-color-light-secondary-background);
+  padding: 0.5rem;
+  height: -webkit-fill-available;
+  border-radius: var(--parsec-radius-6);
+
+  &__empty {
+    max-width: 10rem;
+    text-align: center;
+    color: var(--parsec-color-light-secondary-soft-text);
+  }
 }
 
 .folder-container {
   overflow-y: auto;
+  width: 100%;
 }
 
 .file-list-item {

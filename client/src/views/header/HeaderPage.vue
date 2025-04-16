@@ -321,6 +321,13 @@ async function openNotificationCenter(event: Event): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+// remove toolbar border added by ionic on iOS
+#connected-header {
+  ion-toolbar:last-of-type {
+    --border-width: 0;
+  }
+}
+
 .topbar {
   --background: var(--parsec-color-light-secondary-white);
   display: flex;
