@@ -77,7 +77,7 @@
 
       <!-- serverMode -->
       <ion-item class="summary-item-container ion-no-padding">
-        <div class="summary-item">
+        <div class="summary-item server">
           <ion-text class="summary-item__label subtitles-sm">
             {{ $msTranslate('CreateOrganization.overview.server') }}
           </ion-text>
@@ -99,7 +99,7 @@
 
       <!-- authentication mode -->
       <ion-item class="summary-item-container ion-no-padding">
-        <div class="summary-item">
+        <div class="summary-item authentication">
           <ion-text class="summary-item__label subtitles-sm">
             {{ $msTranslate('CreateOrganization.overview.authentication') }}
           </ion-text>
@@ -239,11 +239,23 @@ defineEmits<{
   flex-direction: column;
   border-radius: var(--parsec-radius-8);
   border: 1px solid var(--parsec-color-light-secondary-medium);
+
+  @include ms.responsive-breakpoint('sm') {
+    margin: 0.5rem 2rem;
+    border: none;
+    border-radius: 0;
+    gap: 0.75rem;
+  }
+
+  @include ms.responsive-breakpoint('xs') {
+    margin: 0.5rem 1.5rem;
+  }
 }
 
 .summary-item-container {
   --inner-padding-end: 0px;
 }
+
 .summary-item {
   display: flex;
   align-items: stretch;
@@ -252,12 +264,26 @@ defineEmits<{
   gap: 1rem;
   padding-right: 1rem;
 
+  @include ms.responsive-breakpoint('sm') {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding-right: 0;
+    border-radius: var(--parsec-radius-8);
+    overflow: hidden;
+    border: 1px solid var(--parsec-color-light-secondary-premiere);
+  }
+
   &-divider {
     width: 100%;
     height: 1px;
     background: var(--parsec-color-light-secondary-medium);
     z-index: 2;
     margin: 0;
+
+    @include ms.responsive-breakpoint('sm') {
+      display: none;
+    }
   }
 
   &__label {
@@ -267,6 +293,10 @@ defineEmits<{
     align-items: center;
     padding: 0 0.5rem;
     display: flex;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0.125rem 0.75rem;
+    }
   }
 
   &__text {
@@ -277,6 +307,11 @@ defineEmits<{
     color: var(--parsec-color-light-secondary-text);
     background: var(--parsec-color-light-secondary-white);
     padding: 1rem 0;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0.75rem;
+      background: transparent;
+    }
   }
 
   &__button {
@@ -285,11 +320,33 @@ defineEmits<{
     color: var(--parsec-color-light-secondary-text);
     align-self: center;
     margin-left: auto;
+
+    @include ms.responsive-breakpoint('sm') {
+      position: absolute;
+      right: 0;
+      top: 1.75rem;
+      height: fit-content;
+      font-size: 0.875rem;
+      color: var(--parsec-color-light-primary-500);
+    }
+  }
+
+  &.authentication,
+  &.server {
+    .summary-item__text {
+      background: var(--parsec-color-light-secondary-white);
+      color: var(--parsec-color-light-secondary-grey);
+      font-style: italic;
+    }
   }
 }
 
 .tos {
   padding: 1.5rem 0 0 0.75rem;
   color: var(--parsec-color-light-secondary-soft-text);
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0.5rem 2rem;
+  }
 }
 </style>

@@ -352,6 +352,7 @@ const filteredDevices = computed(() => {
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    gap: 1rem;
     max-width: 34.5rem;
 
     @include ms.responsive-breakpoint('md') {

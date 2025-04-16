@@ -145,6 +145,10 @@ async function onFieldUpdated(): Promise<void> {
   @include ms.responsive-breakpoint('sm') {
     padding: 0 2rem;
   }
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0 1.5rem;
+  }
 }
 
 .tos-checkbox {

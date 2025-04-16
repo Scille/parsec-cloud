@@ -6,6 +6,7 @@
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.create"
       subtitle="CreateOrganization.subtitle.nameYourOrg"
+      :small-display-stepper="true"
     />
     <div class="organization-name-page-content">
       <ms-input
@@ -115,6 +116,14 @@ onMounted(async () => {
   flex-direction: column;
   gap: 0.5rem;
   width: 100%;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0.5rem 2rem;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0.5rem 1.5rem;
+  }
 }
 
 .org-name-criteria {

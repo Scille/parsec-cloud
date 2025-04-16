@@ -6,6 +6,7 @@
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.create"
       subtitle="CreateOrganization.subtitle.needs"
+      :small-display-stepper="true"
     />
     <div class="server-choice">
       <!-- Saas -->

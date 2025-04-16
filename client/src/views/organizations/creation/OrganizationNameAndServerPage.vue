@@ -5,6 +5,7 @@
     <create-organization-modal-header
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.nameAndServer"
+      :small-display-stepper="true"
     />
 
     <div class="organization-name-and-server-page-content">
@@ -42,44 +43,43 @@
           :icon="warning"
         />{{ $msTranslate(error) }}
       </ion-text>
-
-      <ion-footer class="organization-name-and-server-page-footer">
-        <ion-buttons
-          slot="primary"
-          class="modal-footer-buttons"
-        >
-          <ion-button
-            fill="clear"
-            size="default"
-            id="previous-button"
-            @click="$emit('goBackRequested')"
-            v-show="!hidePrevious"
-          >
-            {{ $msTranslate('CreateOrganization.button.previous') }}
-            <ion-icon
-              slot="start"
-              :icon="chevronBack"
-              size="small"
-            />
-          </ion-button>
-          <ion-button
-            fill="solid"
-            size="default"
-            @click="$emit('organizationNameAndServerChosen', organizationName, serverAddr)"
-            :disabled="!valid"
-          >
-            <span>
-              {{ $msTranslate('CreateOrganization.button.next') }}
-            </span>
-            <ion-icon
-              slot="start"
-              :icon="chevronForward"
-              size="small"
-            />
-          </ion-button>
-        </ion-buttons>
-      </ion-footer>
     </div>
+    <ion-footer class="organization-name-and-server-page-footer">
+      <ion-buttons
+        slot="primary"
+        class="modal-footer-buttons"
+      >
+        <ion-button
+          fill="clear"
+          size="default"
+          id="previous-button"
+          @click="$emit('goBackRequested')"
+          v-show="!hidePrevious"
+        >
+          {{ $msTranslate('CreateOrganization.button.previous') }}
+          <ion-icon
+            slot="start"
+            :icon="chevronBack"
+            size="small"
+          />
+        </ion-button>
+        <ion-button
+          fill="solid"
+          size="default"
+          @click="$emit('organizationNameAndServerChosen', organizationName, serverAddr)"
+          :disabled="!valid"
+        >
+          <span>
+            {{ $msTranslate('CreateOrganization.button.next') }}
+          </span>
+          <ion-icon
+            slot="start"
+            :icon="chevronForward"
+            size="small"
+          />
+        </ion-button>
+      </ion-buttons>
+    </ion-footer>
   </ion-page>
 </template>
 
@@ -136,6 +136,14 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   height: 100%;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 0.5rem 2rem;
+  }
+
+  @include ms.responsive-breakpoint('xs') {
+    padding: 0.5rem 1.5rem;
+  }
 }
 
 .organization-name {

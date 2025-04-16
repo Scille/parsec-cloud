@@ -269,7 +269,7 @@
   [class*='-page-footer'] {
     @include ms.responsive-breakpoint('sm') {
       margin: 0 auto !important;
-      padding: 2rem 2rem 3rem;
+      padding: 1.5rem 1.5rem 3rem;
       gap: 1rem;
       flex-direction: column;
       max-width: 35rem;
