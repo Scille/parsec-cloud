@@ -299,9 +299,9 @@ async function openCreateOrganizationModal(bootstrapLink?: string, defaultServer
     component: CreateOrganizationModal,
     canDismiss: true,
     cssClass: 'create-organization-modal',
-    backdropDismiss: isLargeDisplay.value ? false : true,
+    backdropDismiss: false,
     showBackdrop: true,
-    breakpoints: isLargeDisplay.value ? undefined : [0, 0.5, 1],
+    breakpoints: isLargeDisplay.value ? undefined : [0.5, 1],
     handle: false,
     initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     componentProps: {

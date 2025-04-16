@@ -117,7 +117,7 @@
             @click="$emit('goBackRequested')"
           >
             <ion-icon :icon="arrowBack" />
-            {{ $msTranslate('clientArea.app.backButton') }}
+            <span v-if="isLargeDisplay">{{ $msTranslate('clientArea.app.backButton') }}</span>
           </ion-text>
           <ion-button
             v-show="!loading"
@@ -179,7 +179,10 @@
         </div>
       </ion-footer>
     </div>
-    <div class="saas-login-mockup">
+    <div
+      v-if="isLargeDisplay"
+      class="saas-login-mockup"
+    >
       <img
         src="@/assets/images/mockup-parsec-client.svg"
         alt="mockup"
@@ -190,7 +193,7 @@
 
 <script setup lang="ts">
 import { IonButton, IonText, IonFooter, IonIcon, IonSkeletonText } from '@ionic/vue';
-import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner, MsCheckbox } from 'megashark-lib';
+import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner, MsCheckbox, useWindowSize } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
 import { warning, arrowBack, arrowForward, close } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';
@@ -211,6 +214,7 @@ const emits = defineEmits<{
   (e: 'forgottenPasswordClicked'): void;
 }>();
 
+const { isLargeDisplay } = useWindowSize();
 const email = ref<string>(props.email ?? '');
 const password = ref<string>('');
 const emailInputRef = ref();
@@ -272,8 +276,13 @@ async function onLoginClicked(): Promise<void> {
   width: 100%;
   background: var(--parsec-color-light-primary-50);
   position: relative;
-  padding: 2.5rem;
+  padding: 2rem;
   min-height: 28em;
+
+  @include ms.responsive-breakpoint('sm') {
+    min-height: 32em;
+    padding: 0;
+  }
 
   &::before {
     content: url('@/assets/images/background/background-shapes.svg');
@@ -296,6 +305,10 @@ async function onLoginClicked(): Promise<void> {
     width: 100%;
     position: relative;
     z-index: 2;
+
+    @include ms.responsive-breakpoint('sm') {
+      max-width: 100%;
+    }
   }
 
   // include inputs
@@ -303,6 +316,10 @@ async function onLoginClicked(): Promise<void> {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0.5rem 2rem;
+    }
 
     .input-skeleton {
       display: flex;
@@ -364,14 +381,29 @@ async function onLoginClicked(): Promise<void> {
       width: 100%;
 
       &__item {
-        height: 2.5rem;
         border-radius: var(--parsec-radius-6);
         border: 1px solid transparent;
+
+        &:nth-child(1) ion-icon {
+          @include ms.responsive-breakpoint('sm') {
+            font-size: 1.5rem;
+          }
+        }
+
+        &:nth-child(2) {
+          @include ms.responsive-breakpoint('sm') {
+            width: 100%;
+          }
+        }
       }
 
       .skeleton-login-button {
         width: 100%;
         height: 2.75rem;
+      }
+
+      @include ms.responsive-breakpoint('sm') {
+        justify-content: space-between;
       }
     }
 
@@ -391,10 +423,21 @@ async function onLoginClicked(): Promise<void> {
   &-footer {
     margin-top: 2rem;
 
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0 2rem 1.5rem 2rem;
+    }
+
     .create-account {
       display: flex;
       gap: 1rem;
       flex-direction: column;
+      margin-bottom: 1.5rem;
+
+      @include ms.responsive-breakpoint('sm') {
+        justify-content: space-between;
+        text-align: center;
+        gap: 0.5rem;
+      }
 
       &::before {
         content: '';
@@ -402,6 +445,10 @@ async function onLoginClicked(): Promise<void> {
         height: 1px;
         background: var(--parsec-color-light-secondary-disabled);
         margin-bottom: 0.5rem;
+
+        @include ms.responsive-breakpoint('sm') {
+          display: none;
+        }
       }
 
       &__text {
@@ -418,15 +465,36 @@ async function onLoginClicked(): Promise<void> {
         transition: border-bottom 150ms linear;
         position: relative;
 
+        @include ms.responsive-breakpoint('sm') {
+          padding: 0.75rem 0;
+          text-wrap: nowrap;
+          justify-content: center;
+          width: 100%;
+          gap: 0.75rem;
+          border: none;
+          border-radius: var(--parsec-radius-8);
+        }
+
         ion-icon {
           position: absolute;
           right: -2rem;
           transition: right 150ms linear;
           color: transparent;
+
+          @include ms.responsive-breakpoint('sm') {
+            position: initial;
+            color: var(--parsec-color-light-primary-800);
+          }
         }
 
         &:hover {
           border-bottom: 1px solid var(--parsec-color-light-primary-800);
+
+          @include ms.responsive-breakpoint('sm') {
+            border: none;
+            background: var(--parsec-color-light-secondary-white);
+            box-shadow: var(--parsec-shadow-light);
+          }
 
           ion-icon {
             right: -1.25rem;

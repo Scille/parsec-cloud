@@ -29,7 +29,7 @@
         :icon="shapes"
         class="small-display-stepper__icon"
       />
-      <ion-text class="small-display-stepper__icon button-small">
+      <ion-text class="small-display-stepper__text button-medium">
         {{ $msTranslate('HomePage.noExistingOrganization.createOrganization') }}
       </ion-text>
     </div>
@@ -81,7 +81,7 @@ defineEmits<{
   gap: 1rem;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 2rem 0 1.5rem 2rem;
+    padding: 2rem 3rem 1.5rem 2rem;
     border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
   }
 
@@ -128,12 +128,16 @@ defineEmits<{
     align-items: center;
     justify-content: center;
     padding: 0.5rem;
-    gap: 0.75rem;
+    gap: 0.5rem;
 
     &__icon {
       color: var(--parsec-color-light-primary-600);
       border-radius: var(--parsec-radius-6);
-      font-size: 1.125rem;
+      font-size: 1rem;
+    }
+
+    &__text {
+      color: var(--parsec-color-light-primary-600);
     }
   }
 
