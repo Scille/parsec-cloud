@@ -227,6 +227,7 @@ jobs:
                     Format-Volume -FileSystem ReFS -Confirm:$false -Force
           # Return all volumes
           Get-Volume
+          New-Item -Path ${{ github.workspace }} -ItemType SymbolLink -Value "$($Volume.DriveLetter):\repo"
           Write-Output "DEV_DRIVE=$($Volume.DriveLetter):" >> $env:GITHUB_ENV
           Write-Output "GITHUB_WORKSPACE=$($Volume.DriveLetter):\parsec-cloud" >> $env:GITHUB_ENV
         working-directory: C:\
@@ -235,7 +236,6 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
           ref: ${{ inputs.commit_sha }}
-          path: ${{ env.GITHUB_WORKSPACE }}
         timeout-minutes: 5
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # pin v4.4.0
