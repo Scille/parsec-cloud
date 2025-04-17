@@ -215,9 +215,6 @@ jobs:
     name: "${{ matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
-    defaults:
-      run:
-        working-directory: ${{ matrix.platform == 'windows' && 'K:\\' || github.workspace }}
     steps:
       - name: Create Dev Drive using ReFS
         if: matrix.platform == 'windows'
@@ -227,8 +224,10 @@ jobs:
                     Initialize-Disk -Passthru |
                     New-Partition -DriveLetter K -UseMaximumSize |
                     Format-Volume -FileSystem ReFS -Confirm:$false -Force
-          Write-Output $Volume
+          # Return all volumes
+          Get-Volume
           Write-Output "DEV_DRIVE=$($Volume.DriveLetter):" >> $env:GITHUB_ENV
+          Write-Output "GITHUB_WORKSPACE=$($Volume.DriveLetter):\parsec-cloud" >> $env:GITHUB_ENV
         working-directory: C:\
         timeout-minutes: 2
 
