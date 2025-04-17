@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from base64 import b64decode
+from base64 import b64decode, urlsafe_b64encode
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import AsyncContextManager, AsyncGenerator, AsyncIterator
@@ -100,6 +100,7 @@ class AuthenticatedAccountRpcClient(BaseAuthenticatedAccountRpcClient):
         self.headers = {
             "Content-Type": "application/msgpack",
             "Api-Version": str(ApiVersion.API_LATEST_VERSION),
+            "X-Hmac-Key": urlsafe_b64encode(key.secret),
         }
         self.email = email
         self.key = key

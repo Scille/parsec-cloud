@@ -2,6 +2,8 @@
 
 from typing import Any
 
+from pydantic.networks import EmailStr
+
 from parsec._parsec import DateTime, DeviceID, InvitationToken, OrganizationID
 from parsec.components.auth import (
     AnonymousAccountAuthInfo,
@@ -125,9 +127,8 @@ class MemoryAuthComponent(BaseAuthComponent):
     ) -> AnonymousAccountAuthInfo | AuthAnonymousAccountAuthBadOutcome:
         return AnonymousAccountAuthInfo()
 
-    async def authenticated_account_auth(
-        self,
-        now: DateTime,
+    async def _get_authenticated_account_info(
+        self, email: EmailStr
     ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
-        # TODO check signature
+        # TODO: Retrieve actual info from state
         return AuthenticatedAccountAuthInfo()
