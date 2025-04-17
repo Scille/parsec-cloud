@@ -1,11 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { MsPage } from '@tests/e2e/helpers/types';
 
 type TestbedTemplate = 'coolorg' | 'empty';
 
-export async function initTestBed(page: MsPage, reuseConfigPath?: string, template: TestbedTemplate = 'coolorg'): Promise<string> {
+export async function initTestBed(page: Page, reuseConfigPath?: string, template: TestbedTemplate = 'coolorg'): Promise<string> {
   const TESTBED_SERVER = process.env.TESTBED_SERVER;
   if (TESTBED_SERVER === undefined) {
     throw new Error('Environ variable `TESTBED_SERVER` must be defined to use testbed');
