@@ -81,7 +81,8 @@ jobs:
     needs: version
     runs-on: ubuntu-22.04
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
-    if: inputs.version_patch_run_id != '' && always() || success()
+    # if: inputs.version_patch_run_id != '' && always() || success()
+    if: false
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
@@ -191,27 +192,27 @@ jobs:
             extensions: exe
             os_alias: win
             artifact_tag: windows-exe
-          - name: 🍎 macOS x86
-            platform: macos
-            os: macos-13
-            raw_latest_file: latest-mac.yml
-            extensions: dmg zip
-            os_alias: mac
-            artifact_tag: macos-dmg
-          - name: 🍎 macOS ARM
-            platform: macos
-            os: macos-15
-            raw_latest_file: latest-mac.yml
-            extensions: dmg zip
-            os_alias: mac
-            artifact_tag: macos-dmg
-          - name: 🐧 AppImage 4 Linux
-            platform: linux-gnu
-            os: ubuntu-22.04
-            raw_latest_file: latest-linux.yml
-            os_alias: linux
-            extensions: AppImage
-            artifact_tag: linux-appimage
+          # - name: 🍎 macOS x86
+          #   platform: macos
+          #   os: macos-13
+          #   raw_latest_file: latest-mac.yml
+          #   extensions: dmg zip
+          #   os_alias: mac
+          #   artifact_tag: macos-dmg
+          # - name: 🍎 macOS ARM
+          #   platform: macos
+          #   os: macos-15
+          #   raw_latest_file: latest-mac.yml
+          #   extensions: dmg zip
+          #   os_alias: mac
+          #   artifact_tag: macos-dmg
+          # - name: 🐧 AppImage 4 Linux
+          #   platform: linux-gnu
+          #   os: ubuntu-22.04
+          #   raw_latest_file: latest-linux.yml
+          #   os_alias: linux
+          #   extensions: AppImage
+          #   artifact_tag: linux-appimage
     name: "${{ matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
