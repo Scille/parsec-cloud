@@ -175,12 +175,18 @@ fn prepare_request(
     time_provider: &TimeProvider,
     account: &AccountPassword,
 ) -> RequestBuilder {
-    let mut content_headers = HeaderMap::with_capacity(4);
+    // TODO: user hmac key is sent alongside the request
+    //       until it can be provided by the internal state.
+    let mut content_headers = HeaderMap::with_capacity(4 + 1);
     content_headers.insert(API_VERSION_HEADER_NAME, api_version_header_value);
     content_headers.insert(CONTENT_TYPE, HeaderValue::from_static(PARSEC_CONTENT_TYPE));
     content_headers.insert(
         CONTENT_LENGTH,
         HeaderValue::from_str(&body.len().to_string()).expect("numeric value are valid char"),
+    );
+    content_headers.insert(
+        reqwest::header::HeaderName::from_static("x-hmac-key"),
+        HeaderValue::from_str(&BASE64URL.encode(account.hmac_key.as_ref())).expect("Always valid"),
     );
     let body_sha256 = libparsec_crypto::HashDigest::from_data(&body);
     let authorization_header_value = HeaderValue::from_str(&generate_authorization_header_value(
