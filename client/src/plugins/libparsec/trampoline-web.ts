@@ -1,6 +1,21 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ClientEvent } from '@/plugins/libparsec/definitions';
+import type {
+  ClientConfig,
+  ClientEvent,
+  ClientStartError,
+  ClientStopError,
+  DeviceAccessStrategy,
+  Handle,
+  Result,
+} from '@/plugins/libparsec/definitions';
+import { ClientStartErrorTag } from '@/plugins/libparsec/definitions';
+
+// @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
+// eslint-disable-next-line camelcase
+import init_module from 'libparsec_bindings_web';
+// @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
+import * as module from 'libparsec_bindings_web';
 
 const onEventBroadcast = new BroadcastChannel('libparsec_on_event');
 
@@ -29,6 +44,17 @@ export async function LoadWebLibParsecPlugin(): Promise<any> {
     throw new Error('libparsec is not available with Vitest, use playwright instead !');
   }
 
+  // SharedWorker is not available with Chrome for Android :/
+  // So in this case we fallback to have libparsec running in the tab, with some
+  // web locks to avoid having multiple tabs using the same device.
+  if (window.SharedWorker !== undefined) {
+    return await withSharedWorker();
+  } else {
+    return await withoutSharedWorker();
+  }
+}
+
+async function withSharedWorker(): Promise<any> {
   // In order to be accessible from all tabs, the libparsec web plugin runs in a shared worker.
   //
   // This makes communication between the GUI (i.e. this code which is running in a tab)
@@ -105,6 +131,158 @@ export async function LoadWebLibParsecPlugin(): Promise<any> {
   }
 
   const proxy = new Proxy(worker, new WorkerProxy());
+
+  return proxy;
+}
+
+async function withoutSharedWorker(): Promise<any> {
+  await init_module();
+  module.initLogger();
+
+  // Array of [<started client handle>, <keyFile>, <callback to release the lock>]
+  // Note the client handle can be undefined since we first acquire the lock, then
+  // start the client, and only then update the lock info to register the handle.
+  //
+  // Note only the locks that have been acquired in the current tab are present,
+  // so you shouldn't look into this array to check if a lock is already taken !
+  interface TabLockInfo {
+    handle: Handle | undefined;
+    keyFile: string;
+    releaseLock: () => void;
+  }
+  const tabLocks: Array<TabLockInfo> = [];
+
+  function releaseTabLock(keyFile: string | undefined, handle: Handle | undefined): boolean {
+    for (let i = 0; i < tabLocks.length; i += 1) {
+      const item = tabLocks[i];
+      if (item.handle === handle || item.keyFile === keyFile) {
+        item.releaseLock();
+        tabLocks.splice(i, 1);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function registerTabLock(keyFile: string, releaseLock: () => void): void {
+    // Note the `undefined` handle since we haven't started the client yet (hence
+    // `registerTabLockClientHandle` that will be called once the client is started).
+    tabLocks.push({ handle: undefined, keyFile, releaseLock });
+  }
+
+  function registerTabLockClientHandle(keyFile: string, handle: Handle): void {
+    for (let i = 0; i < tabLocks.length; i += 1) {
+      const item = tabLocks[i];
+      if (item.keyFile === keyFile) {
+        if (item.handle === undefined) {
+          item.handle = handle;
+        }
+        break;
+      }
+    }
+  }
+
+  function isLockFromThisTab(keyFile: string): boolean {
+    for (let i = 0; i < tabLocks.length; i += 1) {
+      if (tabLocks[i].keyFile === keyFile) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  class WorkerProxy {
+    get(target: any, name: any): any {
+      // Are you ready for another Javascript clusterfuck ?
+      // - Awaiting a promise is done recursively: if the promise returns another promise,
+      //   it is awaited too.
+      // - Promise are just syntactic sugar for calling `then` method on the promise object.
+      //
+      // This is a mess since it means the await mechanism has to rely on introspection
+      // to detect if the object should be awaited or not...
+      //
+      // Hence this guard: since we return this proxy object from an async function,
+      // Javascript will look for a `then` method on it and call it if it exists ><''
+      if (name === 'then') {
+        return undefined;
+      }
+
+      if (name === 'clientStart') {
+        return async (config: ClientConfig, access: DeviceAccessStrategy): Promise<Result<Handle, ClientStartError>> => {
+          const onLockTaken = new Promise((onLockTakenResolve: (value: undefined | ClientStartError) => void) => {
+            navigator.locks.request(
+              access.keyFile,
+              {
+                mode: 'exclusive',
+                ifAvailable: true,
+              },
+              // The lock will be kept as long as this function lives
+              async (lock: Lock | null) => {
+                if (lock === null) {
+                  // Lock already taken... but by whom ?
+                  if (isLockFromThisTab(access.keyFile)) {
+                    // Our tab has the lock, libparsec will handle this fine by
+                    // going idempotent (i.e. returning the already start client).
+                    onLockTakenResolve(undefined);
+                  } else {
+                    // Another tab has the lock, we can't start the client !
+                    onLockTakenResolve({
+                      tag: ClientStartErrorTag.DeviceUsedByAnotherProcess,
+                      error: 'Device already used in another tab',
+                    } as ClientStartError);
+                  }
+                } else {
+                  // We have the lock, it will be held as long as this function lives.
+
+                  // Register in the locks
+                  const onDone = new Promise((resolve: (value: any) => void) => {
+                    registerTabLock(access.keyFile, () => resolve(null));
+                  });
+
+                  onLockTakenResolve(undefined);
+                  await onDone;
+                }
+              },
+            );
+          });
+
+          const maybeLockError = await onLockTaken;
+          if (maybeLockError !== undefined) {
+            return { ok: false, error: maybeLockError };
+          }
+
+          const ret = (await target.clientStart(config, access)) as Result<Handle, ClientStartError>;
+
+          if (!ret.ok) {
+            // Release the lock since we failed to start the client !
+            releaseTabLock(access.keyFile, undefined);
+          } else {
+            registerTabLockClientHandle(access.keyFile, ret.value);
+          }
+
+          return ret;
+        };
+      }
+
+      if (name === 'clientStop') {
+        return async (client: Handle): Promise<Result<null, ClientStopError>> => {
+          const ret = (await target.clientStop(client)) as Result<null, ClientStopError>;
+
+          // We only release the lock if the client was successfully stopped, else
+          // we consider the device is still in use.
+          if (ret.ok) {
+            releaseTabLock(undefined, client);
+          }
+
+          return ret;
+        };
+      }
+
+      return target[name];
+    }
+  }
+
+  const proxy = new Proxy(module, new WorkerProxy());
 
   return proxy;
 }
