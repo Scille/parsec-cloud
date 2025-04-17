@@ -227,6 +227,8 @@ jobs:
                     Format-Volume -FileSystem ReFS -Confirm:$false -Force
           # Return all volumes
           Get-Volume
+          # Replace `github.workspace` dir with a created volume because `actions/checkout` do not allow checkin-out of `github.workspace`
+          Remove-Item -Path ${{ github.workspace }}
           New-Item -Path ${{ github.workspace }} -ItemType SymbolicLink -Value "$($Volume.DriveLetter):\repo"
           Write-Output "DEV_DRIVE=$($Volume.DriveLetter):" >> $env:GITHUB_ENV
           Write-Output "GITHUB_WORKSPACE=$($Volume.DriveLetter):\parsec-cloud" >> $env:GITHUB_ENV
