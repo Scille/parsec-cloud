@@ -227,7 +227,7 @@ jobs:
                     Format-Volume -FileSystem ReFS -Confirm:$false -Force
           # Return all volumes
           Get-Volume
-          New-Item -Path ${{ github.workspace }} -ItemType SymbolLink -Value "$($Volume.DriveLetter):\repo"
+          New-Item -Path ${{ github.workspace }} -ItemType SymbolicLink -Value "$($Volume.DriveLetter):\repo"
           Write-Output "DEV_DRIVE=$($Volume.DriveLetter):" >> $env:GITHUB_ENV
           Write-Output "GITHUB_WORKSPACE=$($Volume.DriveLetter):\parsec-cloud" >> $env:GITHUB_ENV
         working-directory: C:\
