@@ -233,7 +233,18 @@ jobs:
           New-Item -Path $NewWorkspace -ItemType Directory
           New-Item -Path ${{ github.workspace }} -ItemType SymbolicLink -Value $NewWorkspace
 
-          Get-ChildItem -Path $($Volume.DriveLetter) -Recurse
+          function Get-Permissions ($folder) {
+            (get-acl $folder).access | select `
+              @{Label="Identity";           Expression={$_.IdentityReference}}, `
+              @{Label="Right";              Expression={$_.FileSystemRights}}, `
+              @{Label="Access";             Expression={$_.AccessControlType}}, `
+              @{Label="Inherited";          Expression={$_.IsInherited}}, `
+              @{Label="Inheritance Flags";  Expression={$_.InheritanceFlags}}, `
+              @{Label="Propagation Flags";  Expression={$_.PropagationFlags}} `
+              | ft -auto
+          }
+
+          Get-Permissions $NewWorkspace
 
           Write-Output "DEV_DRIVE=$($Volume.DriveLetter):" >> $env:GITHUB_ENV
           Write-Output "GITHUB_WORKSPACE=$NewWorkspace" >> $env:GITHUB_ENV
