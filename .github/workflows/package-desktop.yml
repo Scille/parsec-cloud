@@ -246,7 +246,6 @@ jobs:
 
           Get-Permissions $NewWorkspace
 
-          dir $NewWorkspace\.git
           git init $NewWorkspace
 
           Write-Output "DEV_DRIVE=$($Volume.DriveLetter):" >> $env:GITHUB_ENV
