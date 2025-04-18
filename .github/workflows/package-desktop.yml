@@ -220,6 +220,19 @@ jobs:
       - name: Create Dev Drive using ReFS
         if: matrix.platform == 'windows'
         run: |
+          function Get-Permissions ($folder) {
+            (get-acl $folder).access | select `
+              @{Label="Identity";           Expression={$_.IdentityReference}}, `
+              @{Label="Right";              Expression={$_.FileSystemRights}}, `
+              @{Label="Access";             Expression={$_.AccessControlType}}, `
+              @{Label="Inherited";          Expression={$_.IsInherited}}, `
+              @{Label="Inheritance Flags";  Expression={$_.InheritanceFlags}}, `
+              @{Label="Propagation Flags";  Expression={$_.PropagationFlags}} `
+              | ft -auto
+          }
+
+          Get-Permissions ${{ github.workspace }}
+
           $Volume = New-VHD -Path C:/parsec_cloud_dev_drive.vhdx -SizeBytes 25GB |
                     Mount-VHD -Passthru |
                     Initialize-Disk -Passthru |
@@ -232,17 +245,6 @@ jobs:
           Remove-Item -Path ${{ github.workspace }}
           New-Item -Path $NewWorkspace -ItemType Directory
           New-Item -Path ${{ github.workspace }} -ItemType SymbolicLink -Value $NewWorkspace
-
-          function Get-Permissions ($folder) {
-            (get-acl $folder).access | select `
-              @{Label="Identity";           Expression={$_.IdentityReference}}, `
-              @{Label="Right";              Expression={$_.FileSystemRights}}, `
-              @{Label="Access";             Expression={$_.AccessControlType}}, `
-              @{Label="Inherited";          Expression={$_.IsInherited}}, `
-              @{Label="Inheritance Flags";  Expression={$_.InheritanceFlags}}, `
-              @{Label="Propagation Flags";  Expression={$_.PropagationFlags}} `
-              | ft -auto
-          }
 
           Get-Permissions $NewWorkspace
 
