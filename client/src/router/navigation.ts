@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ConnectionHandle, EntryName, WorkspaceHandle } from '@/parsec';
+import { ConnectionHandle, EntryName, listStartedClients, WorkspaceHandle } from '@/parsec';
 import { getConnectionHandle } from '@/router/params';
-import { ClientAreaQuery, Query, RouteBackup, Routes, getCurrentRoute, getRouter } from '@/router/types';
+import { ClientAreaQuery, getCurrentRoute, getRouter, Query, RouteBackup, Routes } from '@/router/types';
 import { Base64 } from 'megashark-lib';
 import { LocationQueryRaw, RouteParamsRaw } from 'vue-router';
 
@@ -85,16 +85,16 @@ export async function switchOrganization(handle: ConnectionHandle | null, backup
     await backupCurrentOrganization();
   }
 
-  // No handle, navigate to organization list
-  if (!handle) {
+  const startedClients = await listStartedClients();
+  // No handle, or an invalid handle, navigate to organization list
+  if (!handle || startedClients.find(([sHandle, _deviceId]) => sHandle === handle) === undefined) {
     await navigateTo(Routes.Home, { skipHandle: true, replace: true });
-  } else {
-    const backupIndex = routesBackup.findIndex((bk) => bk.handle === handle);
-    // Don't have any backup, just navigate to home
-    if (backupIndex === -1) {
-      window.electronAPI.log('error', 'Trying to switch to an organization for which we have no backup information');
-      return;
-    }
+    return;
+  }
+  const backupIndex = routesBackup.findIndex((bk) => bk.handle === handle);
+
+  if (backupIndex !== -1) {
+    // We have a backup, just navigate
     const backup = routesBackup[backupIndex];
     try {
       await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(backup) } });
@@ -106,9 +106,18 @@ export async function switchOrganization(handle: ConnectionHandle | null, backup
         replace: true,
         skipHandle: true,
         query: {
-          loginInfo: Base64.fromObject({ handle: backup.handle, data: { route: Routes.Workspaces, params: { handle: backup.handle } } }),
+          loginInfo: Base64.fromObject({ handle: handle, data: { route: Routes.Workspaces, params: { handle: handle } } }),
         },
       });
     }
+  } else {
+    // Don't have any backup, but we know the handle is valid, just navigate to default logged in page
+    await navigateTo(Routes.Loading, {
+      replace: true,
+      skipHandle: true,
+      query: {
+        loginInfo: Base64.fromObject({ handle: handle, data: { route: Routes.Workspaces, params: { handle: handle } } }),
+      },
+    });
   }
 }

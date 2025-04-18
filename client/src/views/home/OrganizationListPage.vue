@@ -119,6 +119,7 @@
             :device="device"
             :last-login-device="storedDeviceDataDict[device.deviceId]?.lastLogin"
             @click="$emit('organizationSelect', device)"
+            :logged-in="loggedInDevices.find((info) => info.device.deviceId === device.deviceId) !== undefined"
           />
         </div>
       </div>
@@ -150,14 +151,14 @@ import {
   useWindowSize,
 } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice, isDeviceLoggedIn } from '@/parsec';
+import { AvailableDevice, getLoggedInDevices, LoggedInDeviceInfo } from '@/parsec';
 import { Routes } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { IonButton, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import { DateTime } from 'luxon';
-import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const emits = defineEmits<{
   (e: 'organizationSelect', device: AvailableDevice): void;
@@ -193,11 +194,19 @@ const searchQuery = ref('');
 const searchInputRef = ref();
 const linkRef = ref();
 const link = ref('');
+const loggedInDevices = ref<Array<LoggedInDeviceInfo>>([]);
 
 interface OrganizationListSavedData {
   sortByAsc?: boolean;
   sortBy?: SortCriteria;
 }
+
+watch(
+  () => props.deviceList,
+  async () => {
+    loggedInDevices.value = await getLoggedInDevices();
+  },
+);
 
 let hotkeys: HotkeyGroup | null = null;
 
@@ -241,6 +250,7 @@ onMounted(async (): Promise<void> => {
   sortBy.value = storedData.sortBy;
   sortByAsc.value = storedData.sortByAsc;
   confLoaded.value = true;
+  loggedInDevices.value = await getLoggedInDevices();
 });
 
 onUnmounted(async () => {
@@ -260,6 +270,10 @@ async function onMsSorterChange(event: MsSorterChangeEvent): Promise<void> {
 }
 
 const filteredDevices = computed(() => {
+  function deviceIsLoggedIn(device: AvailableDevice): boolean {
+    return loggedInDevices.value.find((dInfo) => dInfo.device.deviceId === device.deviceId) !== undefined;
+  }
+
   return props.deviceList
     .filter((item) => {
       const lowerSearchString = searchQuery.value.toLocaleLowerCase();
@@ -269,7 +283,7 @@ const filteredDevices = computed(() => {
       );
     })
     .sort((a, b) => {
-      const loggedInWeight = (isDeviceLoggedIn(b) ? 3 : 0) - (isDeviceLoggedIn(a) ? 3 : 0);
+      const loggedInWeight = (deviceIsLoggedIn(b) ? 3 : 0) - (deviceIsLoggedIn(a) ? 3 : 0);
 
       const aLabel = a.humanHandle.label;
       const bLabel = b.humanHandle.label;

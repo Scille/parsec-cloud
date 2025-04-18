@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ApiVersion, EntryID, InvitationStatus, InvitationToken, WorkspaceID } from '@/parsec';
+import { ApiVersion, ConnectionHandle, EntryID, InvitationStatus, InvitationToken, WorkspaceID } from '@/parsec';
 import { GreetingAttemptID } from '@/plugins/libparsec';
 import { v4 as uuid4 } from 'uuid';
 
@@ -25,6 +25,8 @@ enum Events {
   GreetingAttemptReady = 1 << 15,
   GreetingAttemptCancelled = 1 << 16,
   GreetingAttemptJoined = 1 << 17,
+  ClientStarted = 1 << 18,
+  ClientStopped = 1 << 19,
 }
 
 interface WorkspaceCreatedData {
@@ -67,6 +69,10 @@ interface IncompatibleServerData {
   supportedVersions: Array<ApiVersion>;
 }
 
+interface ClientStatusUpdateData {
+  handle: ConnectionHandle;
+}
+
 type EventData =
   | WorkspaceCreatedData
   | InvitationUpdatedData
@@ -75,7 +81,8 @@ type EventData =
   | IncompatibleServerData
   | GreetingAttemptReadyData
   | GreetingAttemptCancelledData
-  | GreetingAttemptJoinedData;
+  | GreetingAttemptJoinedData
+  | ClientStatusUpdateData;
 
 interface Callback {
   id: string;

@@ -148,6 +148,7 @@ const queryInProgress = ref(false);
 const organizationListRef = ref<typeof OrganizationListPage>();
 const querying = ref(true);
 const deviceList: Ref<AvailableDevice[]> = ref([]);
+let eventCallbackId!: string;
 
 const slidePositions = ref({ appearFrom: Position.Left, disappearTo: Position.Right });
 
@@ -188,6 +189,14 @@ onMounted(async () => {
     { key: 'a', modifiers: Modifiers.Ctrl | Modifiers.Alt, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Home },
     openAboutModal,
   );
+  eventCallbackId = await injectionProvider
+    .getDefault()
+    .eventDistributor.registerCallback(
+      Events.ClientStarted | Events.ClientStopped,
+      async (_event: Events, _data?: EventData): Promise<void> => {
+        refreshDeviceList();
+      },
+    );
 
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 
@@ -201,6 +210,7 @@ onUnmounted(() => {
   }
   routeWatchCancel();
   stateWatchCancel();
+  injectionProvider.getDefault().eventDistributor.removeCallback(eventCallbackId);
 });
 
 async function openCreateOrJoin(event: Event): Promise<void> {
@@ -353,9 +363,9 @@ async function openJoinByLinkModal(link: string): Promise<void> {
 }
 
 async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
-  if (isDeviceLoggedIn(device)) {
-    const handle = getDeviceHandle(device);
-    switchOrganization(handle, false);
+  if (await isDeviceLoggedIn(device)) {
+    const handle = await getDeviceHandle(device);
+    switchOrganization(handle ?? null, false);
   } else {
     if (isTrialOrganizationDevice(device) && isExpired(getDurationBeforeExpiration(device.createdOn))) {
       const answer = await askQuestion('HomePage.expiredDevice.questionTitle', 'HomePage.expiredDevice.questionMessage', {
@@ -432,7 +442,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
   const eventDistributor = new EventDistributor();
   loginInProgress.value = true;
-  const result = await parsecLogin(eventDistributor, device, access);
+  const result = await parsecLogin(device, access);
   if (result.ok) {
     if (!storedDeviceDataDict.value[device.deviceId]) {
       storedDeviceDataDict.value[device.deviceId] = {

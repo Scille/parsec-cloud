@@ -11,6 +11,25 @@ import topLevelAwait from 'vite-plugin-top-level-await';
 import wasmPack from './scripts/vite_plugin_wasm_pack';
 
 const plugins: PluginOption[] = [vue(), topLevelAwait()];
+// Web workers are packaged separately and rely on their own set of plugins.
+//
+// This is because each worker makes additional calls to callbacks that would otherwise
+// be expected to be used only once (e.g. the copy of the .wasm file during build).
+//
+// And for a similar reason (not messing up with the plugin's internal state&cache),
+// we must instantiate new instances of the plugins for each worker.
+//
+// see:
+// - https://vite.dev/config/worker-options.html
+// - https://github.com/vitejs/vite/pull/6243#issuecomment-1001244758
+const workerPluginsFactories: (() => PluginOption)[] = [
+  (): PluginOption => {
+    return vue();
+  },
+  (): PluginOption => {
+    return topLevelAwait();
+  },
+];
 let platform: string;
 
 // Vite only expose in `import.meta.env` the environment variables with a `PARSEC_APP_` prefix,
@@ -45,16 +64,23 @@ if (process.env.PLATFORM !== undefined) {
 // 2) Add the packaging of the Wasm stuff if the platform requires it
 
 if (platform === 'web') {
-  plugins.push(wasmPack([{ path: '../bindings/web/', name: 'libparsec_bindings_web' }]));
+  // In release mode, main plugin is responsible for copying the Wasm file to the dist folder
+  plugins.push(wasmPack([{ path: '../bindings/web/', name: 'libparsec_bindings_web' }], true));
+  workerPluginsFactories.push((): PluginOption => {
+    return wasmPack([{ path: '../bindings/web/', name: 'libparsec_bindings_web' }], false);
+  });
 }
 
 if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
-  const sentryPlugin = sentryVitePlugin({
-    org: 'scille',
-    project: 'parsec3-frontend',
-    authToken: process.env.PARSEC_APP_SENTRY_AUTH_TOKEN,
-  });
-  plugins.push(sentryPlugin);
+  const sentryPluginFactory = (): PluginOption => {
+    return sentryVitePlugin({
+      org: 'scille',
+      project: 'parsec3-frontend',
+      authToken: process.env.PARSEC_APP_SENTRY_AUTH_TOKEN,
+    });
+  };
+  plugins.push(sentryPluginFactory());
+  workerPluginsFactories.push(sentryPluginFactory);
 } else {
   console.log('PARSEC_APP_SENTRY_AUTH_TOKEN is not set');
 }
@@ -121,6 +147,9 @@ const config: UserConfigExport = () => ({
   },
   worker: {
     format: 'es',
+    plugins: (): PluginOption => {
+      return workerPluginsFactories.map((factory) => factory());
+    },
   },
 });
 

@@ -19,7 +19,7 @@ pub use libparsec_types::prelude::*;
 
 use crate::{
     handle::{borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem},
-    listen_canceller, ClientConfig, ClientEvent, OnEventCallbackPlugged,
+    listen_canceller, ClientConfig, OnEventCallbackPlugged,
 };
 
 /*
@@ -84,18 +84,6 @@ impl From<libparsec_client::BootstrapOrganizationError> for BootstrapOrganizatio
 
 pub async fn bootstrap_organization(
     config: ClientConfig,
-
-    // Access to the event bus is done through this callback.
-    // Ad-hoc code should be added to the binding system to handle this (hence
-    // why this is passed as a parameter instead of as part of `ClientConfig`:
-    // we can have a simple `if func_name == "client_login"` that does a special
-    // cooking of it last param.
-    #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<
-        dyn Fn(Handle, ClientEvent) + Send + Sync,
-    >,
-    // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
-    #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(Handle, ClientEvent)>,
-
     bootstrap_organization_addr: ParsecOrganizationBootstrapAddr,
     save_strategy: DeviceSaveStrategy,
     human_handle: HumanHandle,
@@ -103,6 +91,7 @@ pub async fn bootstrap_organization(
     sequester_authority_verify_key: Option<SequesterVerifyKeyDer>,
 ) -> Result<AvailableDevice, BootstrapOrganizationError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
+    let on_event_callback = super::get_on_event_callback();
     let events_plugged = OnEventCallbackPlugged::new(
         // Pass invalid handle, since it's not needed by the possible raised events during a bootstrap
         Handle::from(0u32),
@@ -147,22 +136,11 @@ pub use libparsec_client::ClaimerRetrieveInfoError;
 
 pub async fn claimer_retrieve_info(
     config: ClientConfig,
-
-    // Access to the event bus is done through this callback.
-    // Ad-hoc code should be added to the binding system to handle this (hence
-    // why this is passed as a parameter instead of as part of `ClientConfig`:
-    // we can have a simple `if func_name == "client_login"` that does a special
-    // cooking of it last param.
-    #[cfg(not(target_arch = "wasm32"))] _on_event_callback: Arc<
-        dyn Fn(Handle, ClientEvent) + Send + Sync,
-    >,
-    // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
-    #[cfg(target_arch = "wasm32")] _on_event_callback: Arc<dyn Fn(Handle, ClientEvent)>,
-
     addr: ParsecInvitationAddr,
 ) -> Result<AnyClaimRetrievedInfo, ClaimerRetrieveInfoError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
     // TODO
+    // let on_event_callback = super::get_on_event_callback();
     // let events_plugged = Arc::new(OnEventCallbackPlugged::new(on_event_callback));
     let ctx = libparsec_client::claimer_retrieve_info(config, addr, None).await?;
 
