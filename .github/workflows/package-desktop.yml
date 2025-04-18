@@ -233,6 +233,8 @@ jobs:
           New-Item -Path $NewWorkspace -ItemType Directory
           New-Item -Path ${{ github.workspace }} -ItemType SymbolicLink -Value $NewWorkspace
 
+          Get-ChildItem -Path $($Volume.DriveLetter) -Recurse
+
           Write-Output "DEV_DRIVE=$($Volume.DriveLetter):" >> $env:GITHUB_ENV
           Write-Output "GITHUB_WORKSPACE=$NewWorkspace" >> $env:GITHUB_ENV
         working-directory: C:\
