@@ -61,6 +61,8 @@ class AuthAnonymousAccountAuthBadOutcome(BadOutcomeEnum):
 
 class AuthAuthenticatedAccountAuthBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
+    INVALID_SIGNATURE = auto()
+    TOKEN_TOO_OLD = auto()
 
 
 @dataclass
@@ -224,6 +226,7 @@ class BaseAuthComponent:
     def __init__(self, event_bus: EventBus, config: BackendConfig):
         self._config = config
         self._device_cache: dict[tuple[OrganizationID, DeviceID], AuthenticatedAuthInfo] = {}
+        self._account_cache: dict[EmailStr, AuthenticatedAccountAuthInfo] = {}
         event_bus.connect(self._on_event)
 
     def _on_event(self, event: Event) -> None:
@@ -270,8 +273,28 @@ class BaseAuthComponent:
     async def authenticated_account_auth(
         self,
         now: DateTime,
+        token: AccountPasswordAuthenticationToken,
+        body: bytes,
+        # FIXME: Remove me once the server have the user hmac key in its state
+        key: SecretKey,
     ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
-        raise NotImplementedError
+        try:
+            auth_info = self._account_cache[token.email]
+        except KeyError:
+            outcome = await self._get_authenticated_account_info(token.email)
+            match outcome:
+                case AuthenticatedAccountAuthInfo() as auth_info:
+                    self._account_cache[token.email] = auth_info
+                case bad_outcome:
+                    return bad_outcome
+
+        if not token.verify_signature(body, key):
+            return AuthAuthenticatedAccountAuthBadOutcome.INVALID_SIGNATURE
+
+        if timestamps_in_the_ballpark(token.timestamp, now) is not None:
+            return AuthAuthenticatedAccountAuthBadOutcome.TOKEN_TOO_OLD
+
+        return auth_info
 
     async def authenticated_auth(
         self,
@@ -315,4 +338,9 @@ class BaseAuthComponent:
     async def _get_authenticated_info(
         self, organization_id: OrganizationID, device_id: DeviceID, tos_acceptance_required: bool
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
+        raise NotImplementedError
+
+    async def _get_authenticated_account_info(
+        self, email: EmailStr
+    ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
         raise NotImplementedError

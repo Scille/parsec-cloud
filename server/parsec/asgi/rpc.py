@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from base64 import urlsafe_b64decode
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
@@ -26,6 +27,7 @@ from parsec._parsec import (
     DateTime,
     InvitationToken,
     OrganizationID,
+    SecretKey,
     anonymous_account_cmds,
     anonymous_cmds,
     authenticated_account_cmds,
@@ -417,6 +419,8 @@ class AccountParsedAuthHeaders:
     client_api_version: ApiVersion
     user_agent: str
     authentication_token: AccountPasswordAuthenticationToken | None
+    # TODO: Remove me once the hmac key is in server state.
+    hmac_key: SecretKey | None
 
 
 def _parse_account_auth_headers_or_abort(
@@ -455,6 +459,7 @@ def _parse_account_auth_headers_or_abort(
     # 4) Check authenticated headers
     if not with_account_headers:
         authentication_token = None
+        hmac_key = None
     else:
         try:
             raw_authorization = headers["Authorization"]
@@ -475,11 +480,21 @@ def _parse_account_auth_headers_or_abort(
                 CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
             )
 
+        # TODO: Remove me once we have access to user hmac key in server state.
+        try:
+            raw_hmac_key = headers["X-Hmac-Key"]
+            hmac_key = SecretKey(urlsafe_b64decode(raw_hmac_key))
+        except KeyError:
+            _handshake_abort(
+                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
+            )
+
     return AccountParsedAuthHeaders(
         settled_api_version=settled_api_version,
         client_api_version=client_api_version,
         user_agent=user_agent,
         authentication_token=authentication_token,
+        hmac_key=hmac_key,
     )
 
 
@@ -639,9 +654,12 @@ async def authenticated_account_api(request: Request) -> Response:
     )
 
     assert parsed.authentication_token is not None
-    # TODO: Validate authentication_token
+    assert parsed.hmac_key is not None
 
-    outcome = await backend.auth.authenticated_account_auth(DateTime.now())
+    body: bytes = await _rpc_get_body_with_limit_check(request)
+    outcome = await backend.auth.authenticated_account_auth(
+        now=DateTime.now(), token=parsed.authentication_token, body=body, key=parsed.hmac_key
+    )
     match outcome:
         case AuthenticatedAccountAuthInfo():  # TODO as auth_info:
             pass
@@ -657,8 +675,6 @@ async def authenticated_account_api(request: Request) -> Response:
         client_api_version=parsed.client_api_version,
         settled_api_version=parsed.settled_api_version,
     )
-
-    body: bytes = await _rpc_get_body_with_limit_check(request)
 
     try:
         req = AUTHENTICATED_ACCOUNT_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
