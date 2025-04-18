@@ -165,16 +165,21 @@ jobs:
 
       - name: E2E tests
         id: playwright
-        run: npm run test:e2e:headless
+        run: npm run test:e2e:headless -- --shard=1/1
         env:
           TESTBED_SERVER: parsec3://localhost:6777?no_ssl=true
           PARSEC_APP_TRIAL_SERVERS: localhost:6777?no_ssl=true
         working-directory: client
         timeout-minutes: 20
 
+      - name: Merge playwright shard report
+        if: steps.playwright.outcome != 'skipped' && !cancelled()
+        run: npx playwright merge-reports --config ./merge-playwright.config.ts ./blob-report
+        working-directory: client
+
       - name: Archive test results
         # Always upload playwright report when playwright tests are run
-        if: steps.playwright.outcome != 'skipped'
+        if: steps.playwright.outcome != 'skipped' && !cancelled()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin v4.6.2
         with:
           name: playwright-artifacts
