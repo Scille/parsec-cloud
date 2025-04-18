@@ -230,7 +230,7 @@ jobs:
           # Replace `github.workspace` dir with a created volume because `actions/checkout` do not allow checkin-out of `github.workspace`
           $NewWorkspace = "$($Volume.DriveLetter):\parsec-cloud"
           Remove-Item -Path ${{ github.workspace }}
-          New-Item -Path $Volume.DriveLetter -Name parsec-cloud -ItemType Directory
+          New-Item -Path $NewWorkspace -ItemType Directory
           New-Item -Path ${{ github.workspace }} -ItemType SymbolicLink -Value $NewWorkspace
 
           function Get-Permissions ($folder) {
