@@ -400,6 +400,11 @@
   &:has(.NewPassword)::part(content) {
     min-width: var(--parsec-modal-width-md);
   }
+
+  &:has(.ChooseNewAuthMethod)::part(content) {
+    --width: 100%;
+    max-width: var(--parsec-modal-width-lg);
+  }
 }
 
 .question-modal,

@@ -864,6 +864,7 @@
             "password": "Password"
         },
         "changeAuthenticationButton": "Change method",
+        "changePasswordButton": "Change password",
         "useKeyring": "System Authentication",
         "usePassword": "Password",
         "label": "Authentication method",
@@ -1318,8 +1319,9 @@
         "title": "Organization recovery files",
         "recoveryFile": "Recovery File",
         "recoveryKey": "Secret Key",
+        "advice": "We strongly recommend creating a recovery file for each organization.",
+        "adviceDone": "You have already created a recovery file.",
         "done": {
-            "label": "Recovery file already created",
             "subtitle": "A recovery file enables you to reclaim access to your data if you forget your password or lose your devices.",
             "subtitle2": "Without a recovery file, you wouldn't be able to recover your account in such a case, and you would need to be re-invited to the organization to regain access to your data.",
             "button": "Download file",
@@ -1329,7 +1331,6 @@
             "recreateNo": "Cancel"
         },
         "notDone": {
-            "label": "Action required",
             "subtitle": "A recovery file enables you to reclaim access to your data if you forget your password or lose your devices.",
             "subtitle2": "Without a recovery file, you wouldn't be able to recover your account in such a case, and you would need to be re-invited to the organization to regain access to your data.",
             "button": "Create a recovery file"

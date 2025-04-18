@@ -22,7 +22,7 @@
         <div class="topbar-left">
           <div
             id="back-block"
-            v-if="hasHistory() && !currentRouteIs(Routes.Workspaces)"
+            v-if="hasHistory() && !currentRouteIs(Routes.Workspaces) && !currentRouteIs(Routes.MyProfile)"
           >
             <header-back-button :short="currentRouteIsFileRoute() ? true : false" />
           </div>
@@ -65,7 +65,7 @@
         >
           <div
             class="topbar-right-button"
-            v-if="!currentRouteIs(Routes.History)"
+            v-if="!currentRouteIs(Routes.History) && !currentRouteIs(Routes.MyProfile)"
           >
             <invitations-button />
 
@@ -171,7 +171,7 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const notificationCenterButton = ref();
 const showHeader = computed(() => {
-  return !(currentRouteIs(Routes.Organization) && isSmallDisplay.value);
+  return !((currentRouteIs(Routes.Organization) || currentRouteIs(Routes.MyProfile)) && isSmallDisplay.value);
 });
 
 const routeWatchCancel = watchRoute(async () => {
@@ -436,7 +436,7 @@ async function openNotificationCenter(event: Event): Promise<void> {
   display: flex;
   align-items: center;
 
-  .topbar-left-workspaces-mobile {
+  &-workspaces-mobile {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;

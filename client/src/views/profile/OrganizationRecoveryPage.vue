@@ -2,23 +2,35 @@
 
 <template>
   <div class="organization-recovery-container">
-    <ion-label
-      class="button-small done"
-      v-show="hasRecoveryDevice"
-    >
-      {{ $msTranslate('OrganizationRecovery.done.label') }}
-    </ion-label>
-    <ion-label
-      class="body-sm danger"
-      v-show="!hasRecoveryDevice"
-    >
-      {{ $msTranslate('OrganizationRecovery.notDone.label') }}
-    </ion-label>
     <template v-if="!recoveryDeviceTemplate">
-      <div class="restore-password-button">
+      <div class="restore-password">
+        <div
+          class="restore-password__advice form-label"
+          :class="hasRecoveryDevice ? 'restore-password__advice--done' : ''"
+        >
+          <ion-icon
+            :icon="hasRecoveryDevice ? checkmarkCircle : informationCircle"
+            class="advice-icon"
+          />
+          <ion-text class="advice-text">
+            <span v-if="hasRecoveryDevice">
+              {{ $msTranslate('OrganizationRecovery.adviceDone') }}
+            </span>
+            <span v-else>
+              {{ $msTranslate('OrganizationRecovery.advice') }}
+            </span>
+          </ion-text>
+        </div>
+
+        <ion-text class="restore-password__description body">
+          <span>{{ $msTranslate('OrganizationRecovery.done.subtitle') }}</span>
+          <span>{{ $msTranslate('OrganizationRecovery.done.subtitle2') }}</span>
+        </ion-text>
+
         <ion-button
-          class="button-default"
+          class="button-normal restore-password-button"
           @click="goToExportRecoveryDevice()"
+          fill="clear"
         >
           {{ $msTranslate('ExportRecoveryDevicePage.actions.createRecoveryButton') }}
         </ion-button>
@@ -118,10 +130,10 @@
 
 <script setup lang="ts">
 import { listOwnDevices, OwnDeviceInfo, getClientInfo, exportRecoveryDevice } from '@/parsec';
-import { IonButton, IonIcon, IonText, IonLabel } from '@ionic/vue';
+import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { I18n, Translatable, askQuestion, Answer } from 'megashark-lib';
-import { checkmarkCircle, document as documentIcon, download, documentLock, reload } from 'ionicons/icons';
+import { checkmarkCircle, document as documentIcon, download, documentLock, reload, informationCircle } from 'ionicons/icons';
 import { inject, onMounted, ref } from 'vue';
 
 let code = '';
@@ -228,24 +240,76 @@ async function downloadFile(
 </script>
 
 <style scoped lang="scss">
-ion-label {
-  width: max-content;
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  padding: 0.125rem 1rem;
-  border-radius: var(--parsec-radius-12);
+.organization-recovery-container {
+  display: flex;
+  flex-direction: column;
+}
 
-  &.done {
-    background: var(--parsec-color-light-success-100);
-    color: var(--parsec-color-light-success-700);
+.restore-password {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  &__description {
+    margin-top: -0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--parsec-color-light-secondary-hard-grey);
   }
 
-  &.danger {
-    background: var(--parsec-color-light-danger-100);
-    color: var(--parsec-color-light-danger-700);
+  &__advice {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    background: var(--parsec-color-light-info-50);
+    padding: 0.625rem 0.75rem;
+    gap: 0.5rem;
+    border-radius: var(--parsec-radius-8);
+    color: var(--parsec-color-light-info-500);
+
+    .advice-icon {
+      font-size: 1rem;
+      color: var(--parsec-color-light-info-500);
+      flex-shrink: 0;
+    }
+
+    // eslint-disable-next-line vue-scoped-css/no-unused-selector
+    &--done {
+      background: var(--parsec-color-light-success-50);
+      color: var(--parsec-color-light-success-700);
+
+      .advice-icon {
+        color: var(--parsec-color-light-success-700);
+      }
+
+      .advice-text {
+        color: var(--parsec-color-light-success-700);
+      }
+    }
+  }
+
+  &-button {
+    --background: var(--parsec-color-light-secondary-text);
+    --background-hover: var(--parsec-color-light-secondary-contrast);
+    color: var(--parsec-color-light-secondary-white);
+    width: fit-content;
+
+    @include ms.responsive-breakpoint('xs') {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      transform: translateX(50%, 50%);
+      width: calc(100% - 4rem);
+      margin: auto;
+      z-index: 2;
+      box-shadow: var(--parsec-shadow-strong);
+      --overflow: visible;
+      overflow: visible;
+    }
   }
 }
+
 .recovery-list {
   display: flex;
   flex-wrap: wrap;

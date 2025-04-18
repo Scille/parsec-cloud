@@ -4,6 +4,7 @@
   <div class="devices-container">
     <ion-button
       id="add-device-button"
+      class="button-normal"
       fill="clear"
       @click="onAddDeviceClick()"
     >
@@ -121,6 +122,7 @@ async function onAddDeviceClick(): Promise<void> {
   display: flex;
   flex-direction: column;
   justify-content: end;
+  position: relative;
 }
 
 #add-device-button {
@@ -128,6 +130,19 @@ async function onAddDeviceClick(): Promise<void> {
   --background: var(--parsec-color-light-secondary-text);
   --background-hover: var(--parsec-color-light-secondary-contrast);
   color: var(--parsec-color-light-secondary-white);
+
+  @include ms.responsive-breakpoint('xs') {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    transform: translateX(50%, 50%);
+    width: calc(100% - 4rem);
+    margin: auto;
+    z-index: 2;
+    box-shadow: var(--parsec-shadow-strong);
+    --overflow: visible;
+    overflow: visible;
+  }
 }
 
 .devices-content {
