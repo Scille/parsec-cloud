@@ -4,9 +4,12 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
+use std::sync::Arc;
+
 use crate::{
-    test_register_low_level_send_hook, AuthenticatedAccountCmds, Bytes, ConnectionError, HeaderMap,
-    HeaderName, HeaderValue, ProxyConfig, ResponseMock, StatusCode,
+    authenticated_account_cmds::AccountPassword, test_register_low_level_send_hook,
+    AuthenticatedAccountCmds, Bytes, ConnectionError, HeaderMap, HeaderName, HeaderValue,
+    ProxyConfig, ResponseMock, StatusCode,
 };
 use libparsec_protocol::{
     authenticated_account_cmds::latest as authenticated_account_cmds, API_LATEST_VERSION,
@@ -29,8 +32,18 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
     // Good request
 
     let addr = ParsecAuthenticatedAccountAddr::new(env.server_addr.clone());
-    let cmds =
-        AuthenticatedAccountCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
+    let account = AccountPassword {
+        email: "foo@example.com".to_owned(),
+        time_provider: TimeProvider::default(),
+        hmac_key: SecretKey::generate(),
+    };
+    let cmds = AuthenticatedAccountCmds::new(
+        &env.discriminant_dir,
+        addr,
+        ProxyConfig::default(),
+        Arc::new(account),
+    )
+    .unwrap();
 
     if mocked {
         test_register_low_level_send_hook(&env.discriminant_dir, |request_builder| async {
@@ -42,7 +55,11 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
                 Some(&HeaderValue::from_static("application/msgpack"))
             );
 
-            assert!(headers.contains_key(AUTHORIZATION));
+            assert!(headers
+                .get(AUTHORIZATION)
+                .unwrap()
+                .as_bytes()
+                .starts_with(b"Bearer PARSEC-PASSWORD-HMAC-BLAKE2B.Zm9vQGV4YW1wbGUuY29t."));
 
             let body = request.body().unwrap().as_bytes().unwrap();
             let request = authenticated_account_cmds::AnyCmdReq::load(body).unwrap();
@@ -90,9 +107,18 @@ async fn invalid_token(env: &TestbedEnv, mocked: bool) {
     // Bad request: invalid account token
 
     let bad_addr = ParsecAuthenticatedAccountAddr::new(env.server_addr.clone());
-    let cmds =
-        AuthenticatedAccountCmds::new(&env.discriminant_dir, bad_addr, ProxyConfig::default())
-            .unwrap();
+    let account = AccountPassword {
+        email: "foo@example.com".to_owned(),
+        time_provider: TimeProvider::default(),
+        hmac_key: SecretKey::generate(),
+    };
+    let cmds = AuthenticatedAccountCmds::new(
+        &env.discriminant_dir,
+        bad_addr,
+        ProxyConfig::default(),
+        Arc::new(account),
+    )
+    .unwrap();
 
     if mocked {
         test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
@@ -121,8 +147,18 @@ macro_rules! register_rpc_http_hook {
             let addr = ParsecAuthenticatedAccountAddr::new(
                 env.server_addr.clone(),
             );
+            let account = AccountPassword {
+                email: "foo@example.com".to_owned(),
+                time_provider: TimeProvider::default(),
+                hmac_key: SecretKey::generate()
+            };
             let cmds =
-                AuthenticatedAccountCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
+                AuthenticatedAccountCmds::new(
+                    &env.discriminant_dir,
+                    addr,
+                    ProxyConfig::default(),
+                    Arc::new(account)
+                ).unwrap();
 
             test_register_low_level_send_hook(
                 &env.discriminant_dir,

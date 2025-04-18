@@ -87,16 +87,19 @@ Some indices are already present above, we will use an HMAC based authentication
 
 The HMAC code will be put in the `Authorization` HTTP header and will have the following format:
 
-```bash
-PARSEC-HMAC-BLAKE2B.${id}.${account_email}.${timestamp}.${signature}
+```jinja
+PARSEC-PASSWORD-HMAC-BLAKE2B.{{ base64(account_email) }}.{{ timestamp }}.{{ signature }}
 ```
+
+> [!IMPORTANT]
+> We use the URL-safe `base64` variant.
 
 The signature is generated like so:
 
 ```math
 \begin{gather}
 body\_sha256 = sha256(body) \\
-content = \text{"PARSEC-HMAC-BLAKE2B"} \Vert email \Vert timestamp \Vert body\_sha256 \\
+content = \text{"PARSEC-PASSWORD-HMAC-BLAKE2B"} \Vert \text{"."} \Vert base64(email) \Vert \text{"."} \Vert timestamp \Vert \text{"."} \Vert body\_sha256 \\
 code = hmac_{black2b}(shared\_secret, content) \\
 signature = base64(code)
 \end{gather}
