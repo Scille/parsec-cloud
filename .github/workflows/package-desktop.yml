@@ -220,7 +220,7 @@ jobs:
       - name: Create Dev Drive using ReFS
         if: matrix.platform == 'windows'
         run: |
-          $Volume = New-VHD -Path D:/parsec_cloud_dev_drive.vhdx -SizeBytes 25GB |
+          $Volume = New-VHD -Path C:/parsec_cloud_dev_drive.vhdx -SizeBytes 25GB |
                     Mount-VHD -Passthru |
                     Initialize-Disk -Passthru |
                     New-Partition -DriveLetter K -UseMaximumSize |
