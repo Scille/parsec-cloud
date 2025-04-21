@@ -74,7 +74,7 @@ jobs:
 
       - name: Check spelling in the repository
         id: cspell
-        uses: streetsidesoftware/cspell-action@8485bb4b688c68384c2f6db7ad931f5e3e63f21c # pin v6.10.1
+        uses: streetsidesoftware/cspell-action@357d91b7153520efd453f404d76424cff0a29797 # pin v6.11.0
         with:
           config: .cspell/cspell.config.yml
           # Generate spelling suggestions
