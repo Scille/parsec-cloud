@@ -125,7 +125,7 @@
                     download
                   >
                     <ms-image
-                      :image="Download"
+                      :image="DownloadIcon"
                       class="custom-button__icon"
                     />
                     {{ $msTranslate('clientArea.dashboard.invoices.download') }}
@@ -225,7 +225,7 @@ import {
   MsStripeCardDetails,
   PaymentMethod as MsPaymentMethod,
   formatTimeSince,
-  Download,
+  DownloadIcon,
   MsImage,
 } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
