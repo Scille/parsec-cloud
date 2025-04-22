@@ -25,10 +25,10 @@ permissions:
 
 jobs:
   test-web-app:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     name: 🌐 Web tests
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
-    timeout-minutes: 20
+    timeout-minutes: 10
     # Testbed server comes as a Docker image, so it will eventually goes out of sync
     # with the tests (typically a new API is introduced in the Parsec server, or a new
     # testbed template is introduced).
@@ -41,7 +41,7 @@ jobs:
           - 6777:6777
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
-        timeout-minutes: 5
+        timeout-minutes: 2
 
       - name: Retrieve runner specs
         id: runner-specs
@@ -131,6 +131,7 @@ jobs:
 
       # Install wasm-pack command
       - uses: taiki-e/install-action@ab3728c7ba6948b9b429627f4d55a68842b27f18 # pin v2.50.3
+        if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
 
@@ -155,6 +156,61 @@ jobs:
         working-directory: client
         timeout-minutes: 10
 
+  playwright-run:
+    if: needs.test-web-app.result == 'success'
+    needs:
+      - test-web-app
+    runs-on: ubuntu-24.04
+    name: 🌐 Web playwright tests
+    strategy:
+      fail-fast: false
+      matrix:
+        shard_index: [1, 2]
+        shard_total: [2]
+    services:
+      parsec-testbed-server:
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.4.0-a.7.dev.20188.d08b7c4
+        ports:
+          - 6777:6777
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
+        timeout-minutes: 2
+
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # pin v4.3.0
+        with:
+          node-version: ${{ env.node-version }}
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+        timeout-minutes: 2
+
+      - name: Setup cache-key
+        id: cache-key
+        run: >-
+          echo "key=web-${{ hashFiles(
+            'bindings/web/**',
+            'libparsec/**',
+            'rust-toolchain.toml',
+            'Cargo.lock'
+          ) }}-libparsec" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Restore libparsec if Rust hasn't been modified
+        id: cache-libparsec
+        uses: actions/cache/restore@5a3ec84eff668545956fd18022155c47e93e2684 # pin v4.2.3
+        with:
+          # We use the cache setup by `test-web-app`
+          fail-on-cache-miss: true
+          key: ${{ steps.cache-key.outputs.key }}
+          path: |
+            bindings/web/pkg/
+            bindings/web/pkg/
+        timeout-minutes: 2
+
+      - name: Install client deps
+        run: npm install --ignore-scripts
+        working-directory: client
+
       - name: Check testbed server is running
         run: curl http://localhost:6777
 
@@ -164,27 +220,55 @@ jobs:
         timeout-minutes: 5
 
       - name: E2E tests
-        id: playwright
-        run: npm run test:e2e:headless -- --shard=1/1
+        run: npm run test:e2e:headless -- --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}
         env:
           TESTBED_SERVER: parsec3://localhost:6777?no_ssl=true
           PARSEC_APP_TRIAL_SERVERS: localhost:6777?no_ssl=true
         working-directory: client
         timeout-minutes: 20
 
+      - name: Upload blob report to GitHub Actions Artifacts
+        if: "!cancelled()" # We always upload the artifacts even in case of failure of playwright.
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin v4.6.2
+        with:
+          name: blob-report-${{ matrix.shard_index }}
+          if-no-files-found: error
+          path: client/blob-report
+          retention-days: 1
+
+  playwright-reports:
+    # Run the report if `playwright-run` result in either a success or failure, skip if cancelled or skipped.
+    if: contains(fromJSON('["success", "failure"]'), needs.playwright-run.result)
+    needs:
+      - playwright-run
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
+        timeout-minutes: 2
+
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e  # pin v4.3.0
+        with:
+          node-version: ${{ env.node-version }}
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+        timeout-minutes: 2
+
+      - name: Download blob reports from GitHub Actions Artifacts
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # pin v4.2.1
+        with:
+          path: client/all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+
       - name: Merge playwright shard report
-        if: steps.playwright.outcome != 'skipped' && !cancelled()
-        run: npx playwright merge-reports --config ./merge-playwright.config.ts ./blob-report
+        run: npx playwright merge-reports --config ./merge-playwright.config.ts ./all-blob-reports
         working-directory: client
 
       - name: Archive test results
         # Always upload playwright report when playwright tests are run
-        if: steps.playwright.outcome != 'skipped' && !cancelled()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # pin v4.6.2
         with:
-          name: playwright-artifacts
+          name: playwright-report
           if-no-files-found: error
-          path: |
-            client/test-results/
-            client/test-results.json
-            client/playwright-report/
+          path: client/playwright-report
