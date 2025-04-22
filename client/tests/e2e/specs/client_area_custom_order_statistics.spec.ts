@@ -14,18 +14,18 @@ msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
   await expect(error).toBeHidden();
   const active = page.locator('.users-cards-list').nth(0);
   const activeUserItems = active.locator('.users-cards-list-item').locator('.users-cards-list-item-text');
-  await expect(activeUserItems).toHaveText(['4Administrators', '54Members', '1External']);
+  await expect(activeUserItems).toHaveText(['Administrators4', 'Members54', 'External1', 'Total59']);
 
   const revoked = page.locator('.users-cards-list').nth(1);
   const revokedUserItems = revoked.locator('.users-cards-list-item').locator('.users-cards-list-item-text');
-  await expect(revokedUserItems).toHaveText(['1Administrator', '1Member', '142Externals']);
+  await expect(revokedUserItems).toHaveText(['Administrator1', 'Member1', 'Externals142']);
 
   const storage = page.locator('.storage-data');
   const storageGlobal = storage.locator('.storage-data-global');
   await expect(storageGlobal.locator('ion-text')).toHaveText(['373 GB', '373 GBData', '381 MBMetadata']);
-  const consumption = storage.locator('.storage-data-consumption');
-  await expect(consumption.locator('.ms-warning')).toBeVisible();
-  await expect(consumption.locator('.ms-warning')).toHaveText('You have reached your storage limit.');
+  const usage = storage.locator('.storage-data-usage');
+  await expect(usage.locator('.ms-warning')).toBeVisible();
+  await expect(usage.locator('.ms-warning')).toHaveText('You have reached your storage limit.');
 });
 
 msTest('Test initial status for all orgs', async ({ clientAreaCustomOrder }) => {

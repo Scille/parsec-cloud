@@ -4,147 +4,96 @@
   <div class="client-page-statistics">
     <template v-if="organizationStats && contractDetails">
       <!-- active users -->
-      <div class="users active">
-        <div class="users-text">
-          <ion-title class="users-active-text__title title-h2">
-            {{ $msTranslate('clientArea.statistics.titles.users') }}
-            <span class="subtitles-normal">
+      <div class="users-container">
+        <!-- active users -->
+        <div class="users active">
+          <div class="users-text">
+            <ion-title class="users-active-text__title title-h4">
+              {{ $msTranslate('clientArea.statistics.titles.users') }}
               {{ $msTranslate('clientArea.statistics.titles.active') }}
-            </span>
-          </ion-title>
+            </ion-title>
+          </div>
+          <div class="users-cards-list">
+            <ion-card class="users-cards-list-item">
+              <div class="users-cards-list-item-text">
+                <ion-text class="users-cards-list-item-text__title body-sm">
+                  {{ $msTranslate({ key: 'clientArea.statistics.admin', count: organizationStats.adminUsersDetail.active }) }}
+                </ion-text>
+                <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.adminUsersDetail.active }}</ion-text>
+              </div>
+            </ion-card>
+            <ion-card class="users-cards-list-item">
+              <div class="users-cards-list-item-text">
+                <ion-text class="users-cards-list-item-text__title body-sm">
+                  {{ $msTranslate({ key: 'clientArea.statistics.standard', count: organizationStats.standardUsersDetail.active }) }}
+                </ion-text>
+                <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.standardUsersDetail.active }}</ion-text>
+              </div>
+            </ion-card>
+            <ion-card class="users-cards-list-item">
+              <div class="users-cards-list-item-text">
+                <ion-text class="users-cards-list-item-text__title body-sm">
+                  {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: organizationStats.outsiderUsersDetail.active }) }}
+                </ion-text>
+                <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.outsiderUsersDetail.active }}</ion-text>
+              </div>
+            </ion-card>
+            <ion-card class="users-cards-list-item">
+              <div class="users-cards-list-item-text">
+                <ion-text class="users-cards-list-item-text__title body-sm">{{ $msTranslate('clientArea.statistics.total') }}</ion-text>
+                <!-- eslint-disable vue/html-indent -->
+                <ion-text class="users-cards-list-item-text__number title-h1">
+                  {{
+                    organizationStats.outsiderUsersDetail.active +
+                    organizationStats.adminUsersDetail.active +
+                    organizationStats.standardUsersDetail.active
+                  }}
+                </ion-text>
+              </div>
+            </ion-card>
+          </div>
         </div>
-        <div class="users-cards-list">
-          <ion-card class="users-cards-list-item">
-            <div class="users-cards-list-item-icons">
-              <ion-icon
-                class="users-cards-list-item-icons__main"
-                :icon="person"
-              />
-              <ion-icon
-                class="users-cards-list-item-icons__secondary"
-                :icon="star"
-              />
-            </div>
-            <div class="users-cards-list-item-text">
-              <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.adminUsersDetail.active }}</ion-text>
-              <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{ $msTranslate({ key: 'clientArea.statistics.admin', count: organizationStats.adminUsersDetail.active }) }}
-              </ion-text>
-            </div>
-          </ion-card>
-          <ion-card class="users-cards-list-item">
-            <div class="users-cards-list-item-icons">
-              <ion-icon
-                class="users-cards-list-item-icons__main"
-                :icon="person"
-              />
-              <ion-icon
-                class="users-cards-list-item-icons__secondary"
-                :icon="pencil"
-              />
-            </div>
-            <div class="users-cards-list-item-text">
-              <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.standardUsersDetail.active }}</ion-text>
-              <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{ $msTranslate({ key: 'clientArea.statistics.standard', count: organizationStats.standardUsersDetail.active }) }}
-              </ion-text>
-            </div>
-          </ion-card>
-          <ion-card class="users-cards-list-item">
-            <div class="users-cards-list-item-icons">
-              <ion-icon
-                class="users-cards-list-item-icons__main"
-                :icon="person"
-              />
-              <ion-icon
-                class="users-cards-list-item-icons__secondary"
-                :icon="arrowForward"
-              />
-            </div>
-            <div class="users-cards-list-item-text">
-              <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.outsiderUsersDetail.active }}</ion-text>
-              <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: organizationStats.outsiderUsersDetail.active }) }}
-              </ion-text>
-            </div>
-          </ion-card>
-        </div>
-      </div>
-      <!-- revoked users -->
-      <div class="users revoked">
-        <div class="users-text">
-          <ion-title class="users-active-text__title title-h2">
-            {{ $msTranslate('clientArea.statistics.titles.users') }}
-            <span class="subtitles-normal">
+        <!-- revoked users -->
+        <div class="users revoked">
+          <div class="users-text">
+            <ion-title class="users-active-text__title title-h4">
+              {{ $msTranslate('clientArea.statistics.titles.users') }}
               {{ $msTranslate('clientArea.statistics.titles.revoked') }}
-            </span>
-          </ion-title>
-        </div>
-        <div class="users-cards-list">
-          <ion-card class="users-cards-list-item">
-            <div class="users-cards-list-item-icons">
-              <ion-icon
-                class="users-cards-list-item-icons__main"
-                :icon="person"
-              />
-              <ion-icon
-                class="users-cards-list-item-icons__secondary"
-                :icon="star"
-              />
-            </div>
-            <div class="users-cards-list-item-text">
-              <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.adminUsersDetail.revoked }}</ion-text>
-              <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{ $msTranslate({ key: 'clientArea.statistics.admin', count: organizationStats.adminUsersDetail.revoked }) }}
-              </ion-text>
-            </div>
-          </ion-card>
-          <ion-card class="users-cards-list-item">
-            <div class="users-cards-list-item-icons">
-              <ion-icon
-                class="users-cards-list-item-icons__main"
-                :icon="person"
-              />
-              <ion-icon
-                class="users-cards-list-item-icons__secondary"
-                :icon="pencil"
-              />
-            </div>
-            <div class="users-cards-list-item-text">
-              <ion-text class="users-cards-list-item-text__number title-h1">
-                {{ organizationStats.standardUsersDetail.revoked }}
-              </ion-text>
-              <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{ $msTranslate({ key: 'clientArea.statistics.standard', count: organizationStats.standardUsersDetail.revoked }) }}
-              </ion-text>
-            </div>
-          </ion-card>
-          <ion-card class="users-cards-list-item">
-            <div class="users-cards-list-item-icons">
-              <ion-icon
-                class="users-cards-list-item-icons__main"
-                :icon="person"
-              />
-              <ion-icon
-                class="users-cards-list-item-icons__secondary"
-                :icon="arrowForward"
-              />
-            </div>
-            <div class="users-cards-list-item-text">
-              <ion-text class="users-cards-list-item-text__number title-h1">
-                {{ organizationStats.outsiderUsersDetail.revoked }}
-              </ion-text>
-              <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: organizationStats.outsiderUsersDetail.revoked }) }}
-              </ion-text>
-            </div>
-          </ion-card>
+            </ion-title>
+          </div>
+          <div class="users-cards-list">
+            <ion-card class="users-cards-list-item">
+              <div class="users-cards-list-item-text">
+                <ion-text class="users-cards-list-item-text__title body-sm">
+                  {{ $msTranslate({ key: 'clientArea.statistics.admin', count: organizationStats.adminUsersDetail.revoked }) }}
+                </ion-text>
+                <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.adminUsersDetail.revoked }}</ion-text>
+              </div>
+            </ion-card>
+            <ion-card class="users-cards-list-item">
+              <div class="users-cards-list-item-text">
+                <ion-text class="users-cards-list-item-text__title body-sm">
+                  {{ $msTranslate({ key: 'clientArea.statistics.standard', count: organizationStats.standardUsersDetail.revoked }) }}
+                </ion-text>
+                <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.standardUsersDetail.revoked }}</ion-text>
+              </div>
+            </ion-card>
+            <ion-card class="users-cards-list-item">
+              <div class="users-cards-list-item-text">
+                <ion-text class="users-cards-list-item-text__title body-sm">
+                  {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: organizationStats.outsiderUsersDetail.revoked }) }}
+                </ion-text>
+                <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.outsiderUsersDetail.revoked }}</ion-text>
+              </div>
+            </ion-card>
+          </div>
         </div>
       </div>
 
       <!-- storage -->
       <div class="storage">
-        <ion-text class="storage__title title-h2">{{ $msTranslate('clientArea.statistics.titles.storage') }}</ion-text>
+        <ion-text class="storage__title title-h4">{{ $msTranslate('clientArea.statistics.titles.storage') }}</ion-text>
+
         <div class="storage-data">
           <div class="storage-data-global">
             <ion-text
@@ -164,12 +113,12 @@
               </ion-text>
             </div>
           </div>
-          <div class="storage-data-consumption">
-            <ion-text class="storage-data-consumption__title title-h5">
+          <div class="storage-data-usage">
+            <ion-text class="storage-data-usage__title title-h5">
               {{ $msTranslate('clientArea.statistics.detail') }}
             </ion-text>
 
-            <div class="consumption">
+            <div class="usage">
               <ms-report-text
                 :theme="MsReportTheme.Warning"
                 v-if="storagePercentage === 100"
@@ -182,22 +131,22 @@
               >
                 {{ $msTranslate('clientArea.statistics.almostFullUsed') }}
               </ms-report-text>
-              <ion-text class="consumption-number title-h3">
+              <ion-text class="usage-number title-h3">
                 {{ $msTranslate(formatFileSize(remainingStorageSize)) }}
                 <span class="subtitles-sm">{{ $msTranslate('clientArea.statistics.remaining') }}</span>
               </ion-text>
-              <div class="consumption-progress">
+              <div class="usage-progress">
                 <div
-                  class="consumption-progress__bar"
+                  class="usage-progress__bar"
                   :class="{ overused: storagePercentage >= 100 }"
                   id="useStorageBar"
                 />
                 <div
-                  class="consumption-progress__bar"
+                  class="usage-progress__bar"
                   id="remainingStorageBar"
                 />
               </div>
-              <div class="consumption-caption">
+              <div class="usage-caption">
                 <span
                   class="subtitles-sm"
                   :class="{ overused: storagePercentage >= 100 }"
@@ -216,7 +165,7 @@
       <div class="users active skeleton">
         <ion-skeleton-text
           :animated="true"
-          class="skeleton-loading-title"
+          class="skeleton-title"
         />
         <div class="users-cards-list">
           <ion-card
@@ -224,12 +173,6 @@
             v-for="index in 3"
             :key="index"
           >
-            <div class="users-cards-list-item-icons">
-              <ion-icon
-                class="users-cards-list-item-icons__main"
-                :icon="person"
-              />
-            </div>
             <div class="users-cards-list-item-text">
               <ion-skeleton-text
                 :animated="true"
@@ -247,7 +190,7 @@
       <div class="users revoked skeleton">
         <ion-skeleton-text
           :animated="true"
-          class="skeleton-loading-title"
+          class="skeleton-title"
         />
         <div class="users-cards-list">
           <ion-card
@@ -255,12 +198,6 @@
             v-for="index in 3"
             :key="index"
           >
-            <div class="users-cards-list-item-icons">
-              <ion-icon
-                class="users-cards-list-item-icons__main"
-                :icon="person"
-              />
-            </div>
             <div class="users-cards-list-item-text">
               <ion-skeleton-text
                 :animated="true"
@@ -301,18 +238,18 @@
               />
             </div>
           </div>
-          <div class="storage-data-consumption">
+          <div class="storage-data-usage">
             <ion-skeleton-text
               :animated="true"
               class="skeleton-loading-text"
             />
-            <div class="storage-data-consumption-content">
-              <div class="consumption-item">
+            <div class="storage-data-usage-content">
+              <div class="usage-item">
                 <div
                   id="firstBar"
-                  class="consumption"
+                  class="usage"
                 >
-                  <div class="consumption-number">
+                  <div class="usage-number">
                     <ion-skeleton-text
                       :animated="true"
                       class="skeleton-loading-text"
@@ -371,7 +308,7 @@ import { BmsAccessInstance, DataType, BmsOrganization, OrganizationStatsResultDa
 import { onMounted, ref, computed } from 'vue';
 import { IonCard, IonText, IonIcon, IonTitle, IonSkeletonText } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
-import { person, star, pencil, arrowForward } from 'ionicons/icons';
+import { arrowForward } from 'ionicons/icons';
 import { isDefaultOrganization } from '@/views/client-area/types';
 import { MsReportTheme, MsReportText } from 'megashark-lib';
 
@@ -425,15 +362,31 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+.client-page-statistics {
+  display: flex;
+  gap: 2rem;
+  flex-direction: column;
+  width: fit-content;
+}
+
+.users-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: var(--parsec-color-light-secondary-background);
+  border-radius: var(--parsec-radius-12);
+  width: fit-content;
+}
+
 .users {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 2.5rem;
+  gap: 1.25rem;
 
   &-text {
     display: flex;
-    color: var(--parsec-color-light-primary-700);
+    color: var(--parsec-color-light-secondary-text);
   }
 
   &-cards-list {
@@ -447,33 +400,8 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
       box-shadow: none;
       gap: 1rem;
       margin: 0;
-      min-width: 11.625rem;
-
-      &-icons {
-        display: flex;
-        position: relative;
-        width: fit-content;
-
-        &__main {
-          font-size: 2rem;
-          color: var(--parsec-color-light-primary-700);
-          border-radius: var(--parsec-radius-circle);
-          padding: 0.5rem;
-        }
-
-        &__secondary {
-          position: absolute;
-          bottom: 0;
-          right: 0;
-          border-radius: var(--parsec-radius-12);
-          // should be replaced with a variable in megashark-lib
-          box-shadow: 0px 1px 2px 0px rgba(14, 14, 14, 0.05);
-          font-size: 0.625rem;
-          color: var(--parsec-color-light-secondary-contrast);
-          background: var(--parsec-color-light-secondary-white);
-          padding: 0.25rem;
-        }
-      }
+      min-width: 9.125rem;
+      box-shadow: var(--parsec-shadow-soft);
 
       &-text {
         display: flex;
@@ -484,31 +412,21 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
           color: var(--parsec-color-light-secondary-contrast);
         }
 
-        &__text {
+        &__title {
           color: var(--parsec-color-light-secondary-hard-grey);
+          font-size: 11px;
+          text-transform: uppercase;
         }
       }
-    }
-  }
 
-  &.active {
-    .users-cards-list-item {
-      background: var(--parsec-color-light-primary-50);
-    }
+      &:nth-child(4) {
+        background: var(--parsec-color-light-secondary-text);
 
-    .users-cards-list-item-icons__main {
-      background: var(--parsec-color-light-primary-100);
-    }
-  }
-
-  &.revoked {
-    .users-cards-list-item {
-      background: var(--parsec-color-light-secondary-background);
-    }
-
-    .users-cards-list-item-icons__main {
-      background: var(--parsec-color-light-secondary-disabled);
-      color: var(--parsec-color-light-secondary-hard-grey);
+        .users-cards-list-item-text__title,
+        .users-cards-list-item-text__number {
+          color: var(--parsec-color-light-secondary-white);
+        }
+      }
     }
   }
 }
@@ -524,14 +442,14 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   max-width: 50rem;
 
   &__title {
-    color: var(--parsec-color-light-primary-700);
+    color: var(--parsec-color-light-secondary-text);
   }
 
   &-data {
     display: flex;
     gap: 3rem;
 
-    &-consumption {
+    &-usage {
       display: flex;
       flex-direction: column;
       gap: 1rem;
@@ -590,7 +508,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   }
 }
 
-.consumption {
+.usage {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -680,11 +598,11 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
     height: 1rem;
   }
 
-  .storage-data-consumption::before {
+  .storage-data-usage::before {
     content: none;
   }
 
-  .consumption-number {
+  .usage-number {
     .skeleton-loading-text {
       width: 2rem;
       height: 1rem;
