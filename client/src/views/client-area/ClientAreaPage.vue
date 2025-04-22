@@ -139,7 +139,7 @@
 import { IonPage, IonContent, IonSkeletonText, IonSplitPane, IonMenu, GestureDetail, createGesture } from '@ionic/vue';
 import ClientAreaHeader from '@/views/client-area/ClientAreaHeader.vue';
 import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
-import { BillingSystem, BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
+import { BillingSystem, BmsAccessInstance, BmsOrganization, DataType, CustomOrderStatus } from '@/services/bms';
 import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { DefaultBmsOrganization, ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import BillingDetailsPage from '@/views/client-area/billing-details/BillingDetailsPage.vue';
@@ -180,6 +180,14 @@ const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
 
 function setToastOffset(width: number): void {
   window.document.documentElement.style.setProperty('--ms-toast-offset', `${width}px`);
+}
+
+async function _isCustomOrderPaid(organization: BmsOrganization): Promise<boolean> {
+  const response = await BmsAccessInstance.get().getCustomOrderStatus(organization);
+  if (!response.isError && response.data && response.data.type === DataType.CustomOrderStatus) {
+    return response.data.status === CustomOrderStatus.InvoicePaid;
+  }
+  return false;
 }
 
 onMounted(async () => {
@@ -242,18 +250,20 @@ onMounted(async () => {
     }
 
     if (billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) {
-      // Custom order, if there are no organization we default to custom order processing, otherwise we default to contracts
-      currentPage.value = organizations.value.length === 0 ? ClientAreaPages.Orders : ClientAreaPages.Contracts;
-      if (currentOrganization.value !== DefaultBmsOrganization) {
-        // If we have an organization but it hasn't been bootstrapped, we default to Orders
-        const orgStatusResp = await BmsAccessInstance.get().getOrganizationStatus(currentOrganization.value.bmsId);
-        if (
-          !orgStatusResp.isError &&
-          orgStatusResp.data &&
-          orgStatusResp.data.type === DataType.OrganizationStatus &&
-          !orgStatusResp.data.isBootstrapped
-        ) {
-          currentPage.value = ClientAreaPages.Orders;
+      // If there are no organization has been paid, we set orders, otherwise we default to contracts
+      currentPage.value = ClientAreaPages.Orders;
+      // case where the user selected one specific organization
+      if (!isDefaultOrganization(currentOrganization.value)) {
+        if (await _isCustomOrderPaid(currentOrganization.value)) {
+          currentPage.value = ClientAreaPages.Contracts;
+        }
+      } else {
+        // Check if all organizations have been paid
+        for (const org of organizations.value) {
+          if (await _isCustomOrderPaid(org)) {
+            currentPage.value = ClientAreaPages.Contracts;
+            break;
+          }
         }
       }
     } else {
