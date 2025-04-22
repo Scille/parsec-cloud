@@ -45,7 +45,7 @@
         download
       >
         <ms-image
-          :image="downloaded"
+          :image="DownloadIcon"
           class="custom-button__icon"
         />
         {{ $msTranslate('clientArea.invoices.cell.download') }}
@@ -58,7 +58,7 @@
 import { Invoice, InvoiceType, SellsyInvoice } from '@/services/bms';
 import { getInvoiceStatusTranslationKey } from '@/services/translation';
 import { IonItem, IonText } from '@ionic/vue';
-import { MsImage, Download as downloaded, I18n } from 'megashark-lib';
+import { MsImage, DownloadIcon, I18n } from 'megashark-lib';
 
 defineProps<{
   invoice: Invoice;

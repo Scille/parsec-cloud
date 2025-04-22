@@ -132,7 +132,10 @@
                   <ion-text class="item-container__text body">
                     {{ $msTranslate('MyProfilePage.tabs.support.documentation') }}
                   </ion-text>
-                  <ion-icon :icon="open" />
+                  <ms-image
+                    class="item-container__open-icon"
+                    :image="OpenIcon"
+                  />
                 </div>
               </ion-text>
               <!-- Help & comments -->
@@ -145,7 +148,10 @@
                   <ion-text class="item-container__text body">
                     {{ $msTranslate('MyProfilePage.tabs.support.help') }}
                   </ion-text>
-                  <ion-icon :icon="open" />
+                  <ms-image
+                    class="item-container__open-icon"
+                    :image="OpenIcon"
+                  />
                 </div>
               </ion-text>
               <!-- About -->
@@ -271,7 +277,6 @@ import ProfileInfoCard from '@/components/profile/ProfileInfoCard.vue';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { IonContent, IonIcon, IonPage, IonRadio, IonHeader, IonRadioGroup, IonText, IonLabel } from '@ionic/vue';
 import {
-  open,
   phonePortrait,
   cog,
   fingerPrint,
@@ -286,7 +291,7 @@ import {
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 import { Env } from '@/services/environment';
 import { getCurrentRouteName, getCurrentRouteQuery, navigateTo, Routes, watchRoute, ProfilePages } from '@/router';
-import { Translatable, useWindowSize, askQuestion, Answer } from 'megashark-lib';
+import { Translatable, useWindowSize, askQuestion, Answer, OpenIcon, MsImage } from 'megashark-lib';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
@@ -613,7 +618,16 @@ onUnmounted(async () => {
           width: 100%;
           overflow: hidden;
           text-overflow: ellipsis;
-          white-space: nowrap
+          white-space: nowrap;
+        }
+
+        &__open-icon {
+          width: 1.25rem;
+          height: 1.25rem;
+          margin-left: auto;
+          --fill-color: var(--parsec-color-light-secondary-hard-grey);
+          opacity: 0.8;
+          flex-shrink: 0;
         }
       }
 
@@ -637,11 +651,6 @@ onUnmounted(async () => {
           font-size: 1.125rem;
           opacity: 0.8;
           flex-shrink: 0;
-        }
-
-        &:last-of-type {
-          font-size: 1.125rem;
-          opacity: 0.8;
         }
       }
 

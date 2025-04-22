@@ -55,7 +55,7 @@
                 v-if="isWeb()"
               >
                 <ms-image
-                  :image="Download"
+                  :image="DownloadIcon"
                   class="file-icon download-icon"
                 />
                 {{ $msTranslate('fileViewers.download') }}
@@ -110,7 +110,7 @@ import {
 } from '@/parsec';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
 import { link, informationCircle, open } from 'ionicons/icons';
-import { Base64, MsSpinner, MsImage, I18n, Download } from 'megashark-lib';
+import { Base64, MsSpinner, MsImage, I18n, DownloadIcon } from 'megashark-lib';
 import { ref, Ref, type Component, inject, onMounted, shallowRef, onUnmounted } from 'vue';
 import { ImageViewer, VideoViewer, SpreadsheetViewer, DocumentViewer, AudioViewer, TextViewer, PdfViewer } from '@/views/viewers';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';

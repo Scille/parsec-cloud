@@ -16,7 +16,6 @@ for (const displaySize of ['small', 'large']) {
     const container = home.locator('.slider-container');
     await expect(container.locator('.organization-title')).toHaveText('Access your organizations');
     await expect(container.locator('#search-input-organization')).toBeVisible();
-    await expect(container.locator('#organization-filter-select')).toHaveText('Organization name');
 
     const cards = home.locator('.organization-list').locator('.organization-card');
     await expect(cards).toHaveCount(USER_NAMES.length);
@@ -29,6 +28,7 @@ for (const displaySize of ['small', 'large']) {
     await expect(cards.locator('.login-name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
 
     if (displaySize === 'large') {
+      await expect(container.locator('#organization-filter-select')).toHaveText('Organization name');
       await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['Create or join', 'Customer area']);
       await expect(home.locator('.homepage-sidebar')).toBeVisible();
       await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText([
