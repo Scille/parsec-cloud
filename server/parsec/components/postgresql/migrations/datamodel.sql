@@ -193,7 +193,6 @@ CREATE TABLE shamir_recovery_share (
 );
 
 
-
 -- Alter user table to introduce a cross-reference between user id and shamir id
 ALTER TABLE user_ ADD FOREIGN KEY (
     shamir_recovery
@@ -249,7 +248,6 @@ CREATE TABLE invitation (
     --     created_on TIMESTAMPTZ NOT NULL,
     --     deleted_on TIMESTAMPTZ,
     --     deleted_reason INVITATION_DELETED_REASON,
-
 
     -- Updated in migration 0009
     created_by_device INTEGER REFERENCES device (_id),

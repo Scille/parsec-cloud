@@ -47,7 +47,6 @@ CREATE TABLE sequester_service (
     webhook_url TEXT, -- NULL if service_type != WEBHOOK;
     service_type SEQUESTER_SERVICE_TYPE NOT NULL,
 
-
     revoked_on TIMESTAMPTZ, -- NULL if not yet revoked
     revoked_sequester_certificate BYTEA, -- NULL if not yet revoked
     revoked_sequester_certifier INTEGER, -- NULL if not yet revoked
@@ -174,7 +173,6 @@ CREATE TABLE shamir_recovery_share (
 
     UNIQUE (organization, shamir_recovery, recipient)
 );
-
 
 
 -- Alter user table to introduce a cross-reference between user id and shamir id
