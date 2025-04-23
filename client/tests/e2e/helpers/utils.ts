@@ -12,19 +12,32 @@ interface QuestionOptions {
   expectedNegativeText?: string | RegExp;
 }
 
-export async function answerQuestion(page: Page, positiveAnswer: boolean, options?: QuestionOptions): Promise<void> {
+export async function answerQuestion(
+  page: Page,
+  positiveAnswer: boolean,
+  options?: QuestionOptions,
+  smallDisplay?: boolean,
+): Promise<void> {
   const modal = page.locator('.question-modal');
-  const positiveButton = modal.locator('#next-button');
+  const positiveButton = modal.locator(smallDisplay ? '#confirm-button' : '#next-button');
   const negativeButton = modal.locator('#cancel-button');
 
   await expect(modal).toBeVisible();
 
   if (options) {
     if (options.expectedTitleText) {
-      await expect(modal.locator('.ms-modal-header__title')).toHaveText(options.expectedTitleText);
+      if (smallDisplay) {
+        await expect(modal.locator('.ms-small-display-modal-header__title')).toHaveText(options.expectedTitleText);
+      } else {
+        await expect(modal.locator('.ms-modal-header__title')).toHaveText(options.expectedTitleText);
+      }
     }
     if (options.expectedQuestionText) {
-      await expect(modal.locator('.ms-modal-header__text')).toHaveText(options.expectedQuestionText);
+      if (smallDisplay) {
+        await expect(modal.locator('.ms-small-display-modal-header__text')).toHaveText(options.expectedQuestionText);
+      } else {
+        await expect(modal.locator('.ms-modal-header__text')).toHaveText(options.expectedQuestionText);
+      }
     }
     if (options.expectedPositiveText) {
       await expect(positiveButton).toHaveText(options.expectedPositiveText);
@@ -186,6 +199,18 @@ export async function sliderClick(page: Page, slider: Locator, progressPercent: 
   const box = await slider.boundingBox();
   if (box) {
     await page.mouse.click(box.x + (box.width * progressPercent) / 100, box.y);
+  }
+}
+
+export async function expandSheetModal(page: Page, modal: Locator): Promise<void> {
+  await page.waitForTimeout(500);
+  const box = await modal.boundingBox();
+  if (box) {
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.95);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2, box.y);
+    await page.mouse.up();
+    await page.waitForTimeout(500);
   }
 }
 

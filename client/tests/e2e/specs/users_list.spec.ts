@@ -649,3 +649,90 @@ msTest('Update multiple profiles', async ({ usersPage }) => {
   await expect(usersPage).toShowToast('The profiles have been changed!', 'Success');
   await expect(users.locator('.user-profile')).toHaveText(['Administrator', 'Administrator', 'Administrator', 'External']);
 });
+
+msTest('Small display selection', async ({ usersPage }) => {
+  await setSmallDisplay(usersPage);
+
+  const headerTexts = usersPage.locator('.small-display-header-title').locator('ion-text');
+  const headerOption = usersPage.locator('.small-display-header-title').locator('ion-icon');
+  await expect(headerTexts).toHaveCount(1);
+  await expect(headerTexts.nth(0)).toHaveText('Users');
+  const user1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
+  const user2 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2);
+  await expect(user1.locator('ion-checkbox')).not.toBeVisible();
+  await headerOption.click();
+
+  const modal = usersPage.locator('.user-context-sheet-modal');
+  await expect(modal).toBeVisible();
+  await expect(modal.locator('.button-left')).toHaveText('Selection');
+  await expect(modal.locator('.button-right')).toHaveText('Select all');
+
+  // Selection
+  await modal.locator('.button-right').click();
+  await expect(modal).not.toBeVisible();
+  await expect(headerTexts).toHaveCount(3);
+  await expect(headerTexts.nth(0)).toHaveText('Unselect');
+  await expect(headerTexts.nth(1)).toHaveText('2 users selected');
+  await expect(headerTexts.nth(2)).toHaveText('Cancel');
+  await expect(user1.locator('ion-checkbox')).toBeVisible();
+  await expect(user2.locator('ion-checkbox')).toBeVisible();
+  await expect(user1.locator('ion-checkbox')).toHaveState('checked');
+  await expect(user2.locator('ion-checkbox')).toHaveState('checked');
+  await user1.locator('ion-checkbox').click();
+  await expect(user1.locator('ion-checkbox')).toHaveState('unchecked');
+  await expect(headerTexts.nth(1)).toHaveText('One user selected');
+  await user1.locator('ion-checkbox').click();
+  await expect(headerTexts.nth(1)).toHaveText('2 users selected');
+  await headerTexts.nth(0).click();
+  await expect(headerTexts.nth(1)).toHaveText('Users');
+  await expect(user1.locator('ion-checkbox')).toHaveState('unchecked');
+  await expect(user2.locator('ion-checkbox')).toHaveState('unchecked');
+  await headerTexts.nth(2).click();
+  await expect(user1.locator('ion-checkbox')).not.toBeVisible();
+  await expect(user2.locator('ion-checkbox')).not.toBeVisible();
+  await expect(headerTexts).toHaveCount(1);
+});
+
+msTest('Small display member context menu', async ({ usersPage }) => {
+  await setSmallDisplay(usersPage);
+  const user1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
+  const modal = usersPage.locator('.user-context-sheet-modal');
+
+  await user1.locator('.user-options').click();
+  await expect(modal).toBeVisible();
+  await expect(modal.getByRole('group')).toHaveCount(2);
+  await expect(modal.getByRole('listitem')).toHaveText([
+    'Revoke this user',
+    'Copy workspace roles to...',
+    'Change profile',
+    'View details',
+  ]);
+});
+
+msTest('Small display external context menu', async ({ usersPage }) => {
+  await setSmallDisplay(usersPage);
+  const user2 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2);
+  const modal = usersPage.locator('.user-context-sheet-modal');
+
+  await user2.locator('.user-options').click();
+  await expect(modal).toBeVisible();
+  await expect(modal.getByRole('group')).toHaveCount(2);
+  await expect(modal.getByRole('listitem')).toHaveText(['Revoke this user', 'Copy workspace roles to...', 'View details']);
+});
+
+msTest('Small display multiple users context menu', async ({ usersPage }) => {
+  await setSmallDisplay(usersPage);
+  const user1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
+  const headerOption = usersPage.locator('.small-display-header-title').locator('ion-icon');
+  const modal = usersPage.locator('.user-context-sheet-modal');
+  await headerOption.click();
+
+  await expect(modal).toBeVisible();
+  await modal.locator('.button-right').click();
+
+  await user1.locator('.user-options').click();
+  await expect(modal.getByRole('group')).toHaveCount(1);
+  await expect(modal.getByRole('listitem')).toHaveText(['Revoke these users', 'Change profiles']);
+  await modal.getByRole('listitem').nth(1).click();
+  await expect(usersPage.locator('.update-profile-modal').locator('.ms-modal-content').locator('.warn-outsiders')).toBeVisible();
+});
