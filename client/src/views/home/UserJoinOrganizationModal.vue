@@ -6,7 +6,7 @@
     :class="UserJoinOrganizationStep[pageStep]"
   >
     <ms-wizard-stepper
-      v-if="pageStep > UserJoinOrganizationStep.WaitForHost"
+      v-if="pageStep > UserJoinOrganizationStep.WaitForHost && isLargeDisplay"
       :current-index="pageStep - 2"
       :titles="[
         'JoinOrganization.stepTitles.GetHostCode',
@@ -18,7 +18,7 @@
     <ion-button
       slot="icon-only"
       @click="cancelModal()"
-      v-if="pageStep !== UserJoinOrganizationStep.Finish && pageStep !== UserJoinOrganizationStep.Authentication"
+      v-if="pageStep !== UserJoinOrganizationStep.Finish && pageStep !== UserJoinOrganizationStep.Authentication && isLargeDisplay"
       class="closeBtn"
     >
       <ion-icon
@@ -30,23 +30,38 @@
     <div
       class="modal"
       :class="{
-        wizardTrue: pageStep > 1,
+        wizardTrue: pageStep > 1 && isLargeDisplay,
       }"
     >
-      <ion-header class="modal-header">
+      <ion-header
+        class="modal-header"
+        v-if="isLargeDisplay"
+      >
         <ion-title
-          v-if="getTitle(pageStep).title !== ''"
+          v-if="getStep(pageStep).title !== ''"
           class="modal-header__title title-h2"
         >
-          {{ $msTranslate(getTitle(pageStep).title) }}
+          {{ $msTranslate(getStep(pageStep).title) }}
         </ion-title>
         <ion-text
-          v-if="getTitle(pageStep).subtitle !== ''"
+          v-if="getStep(pageStep).subtitle !== ''"
           class="modal-header__text body"
         >
-          {{ $msTranslate(getTitle(pageStep).subtitle) }}
+          {{ $msTranslate(getStep(pageStep).subtitle) }}
         </ion-text>
       </ion-header>
+      <small-display-step-modal-header
+        v-else
+        @close-clicked="cancelModal()"
+        :title="getStep(pageStep).title"
+        :subtitle="getStep(pageStep).subtitle"
+        :step="{
+          icon: personAdd,
+          title: 'HomePage.noExistingOrganization.joinOrganization',
+          current: getStep(pageStep).currentStep,
+          total: 4,
+        }"
+      />
       <!-- modal content: create component for each part-->
       <div class="modal-content inner-content">
         <!-- part 1 (wait for host)-->
@@ -182,7 +197,7 @@
 
 <script setup lang="ts">
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
-
+import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import { getDefaultDeviceName } from '@/common/device';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
@@ -211,8 +226,9 @@ import {
   MsWizardStepper,
   Translatable,
   asyncComputed,
+  useWindowSize,
 } from 'megashark-lib';
-import { close } from 'ionicons/icons';
+import { close, personAdd } from 'ionicons/icons';
 import { computed, onMounted, ref, Ref } from 'vue';
 
 enum UserJoinOrganizationStep {
@@ -224,6 +240,7 @@ enum UserJoinOrganizationStep {
   Finish = 6,
 }
 
+const { isLargeDisplay } = useWindowSize();
 const pageStep = ref(UserJoinOrganizationStep.WaitForHost);
 const userInfoPage = ref();
 const authChoice = ref();
@@ -241,12 +258,13 @@ const props = defineProps<{
 
 const waitingForHost = ref(true);
 
-interface Title {
+interface StepInfo {
   title: Translatable;
   subtitle: Translatable;
+  currentStep?: number;
 }
 
-function getTitle(step: UserJoinOrganizationStep): Title {
+function getStep(step: UserJoinOrganizationStep): StepInfo {
   switch (step) {
     case UserJoinOrganizationStep.WaitForHost: {
       return {
@@ -258,24 +276,28 @@ function getTitle(step: UserJoinOrganizationStep): Title {
       return {
         title: 'JoinOrganization.titles.getHostCode',
         subtitle: 'JoinOrganization.subtitles.getHostCode',
+        currentStep: 1,
       };
     }
     case UserJoinOrganizationStep.ProvideGuestCode: {
       return {
         title: 'JoinOrganization.titles.provideGuestCode',
         subtitle: 'JoinOrganization.subtitles.provideGuestCode',
+        currentStep: 2,
       };
     }
     case UserJoinOrganizationStep.GetUserInfo: {
       return {
         title: 'JoinOrganization.titles.getUserInfo',
         subtitle: 'JoinOrganization.subtitles.getUserInfo',
+        currentStep: 3,
       };
     }
     case UserJoinOrganizationStep.Authentication: {
       return {
         title: 'JoinOrganization.titles.getAuthentication',
         subtitle: 'JoinOrganization.subtitles.getAuthentication',
+        currentStep: 4,
       };
     }
     case UserJoinOrganizationStep.Finish: {

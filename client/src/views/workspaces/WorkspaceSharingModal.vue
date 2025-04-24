@@ -559,10 +559,6 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
   .inner-content {
     height: 100%;
   }
-
-  &-header {
-    padding: 0 !important;
-  }
 }
 
 .modal-title {

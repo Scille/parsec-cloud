@@ -14,11 +14,9 @@ msTest('Profile popover default state', async ({ connected }) => {
   await expect(popover.locator('.invitations-list-header__button')).toHaveText('Invite a new member');
   const invitations = popover.locator('.invitation-list-item');
   await expect(invitations).toHaveCount(1);
-  await expect(invitations.locator('.invitation-email')).toHaveText('zack@example.invalid');
-  await expect(invitations.locator('.invitation-actions-date')).toHaveText('Jan 7, 2000', { useInnerText: true });
+  await expect(invitations.locator('.invitation-label')).toHaveText('zack@example.invalid');
+  await expect(invitations.locator('.invitation-date')).toHaveText('Jan 7, 2000', { useInnerText: true });
   const firstInv = invitations.nth(0);
-  await expect(firstInv.locator('.copy-link')).toBeHidden();
-  await firstInv.hover();
   await expect(firstInv.locator('.copy-link')).toBeVisible();
   await expect(firstInv.locator('.invitation-actions-buttons').locator('ion-button')).toHaveText(['Cancel', 'Greet']);
 });
@@ -82,8 +80,8 @@ msTest('Invite new user', async ({ connected }) => {
   const invitations = popover.locator('.invitation-list-item');
   await expect(invitations).toHaveCount(2);
   // cspell:disable-next-line
-  await expect(invitations.locator('.invitation-email')).toHaveText(['zack@example.invalid', 'zana@wraeclast']);
-  await expect(invitations.locator('.invitation-actions-date')).toHaveText(['Jan 7, 2000', 'now'], { useInnerText: true });
+  await expect(invitations.locator('.invitation-label')).toHaveText(['zack@example.invalid', 'zana@wraeclast']);
+  await expect(invitations.locator('.invitation-date')).toHaveText(['Jan 7, 2000', 'now'], { useInnerText: true });
 });
 
 msTest('Invite user with already existing email', async ({ connected }) => {

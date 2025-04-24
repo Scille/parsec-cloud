@@ -175,7 +175,7 @@ export async function openWorkspaceContextMenu(
         await openWorkspace(workspace, informationManager);
         break;
       case WorkspaceAction.Rename:
-        await openRenameWorkspaceModal(workspace, informationManager);
+        await openRenameWorkspaceModal(workspace, informationManager, isLargeDisplay);
         break;
       case WorkspaceAction.Favorite:
         await toggleFavorite(workspace, favorites, eventDistributor, storageManager);
@@ -242,17 +242,24 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName,
   }
 }
 
-async function openRenameWorkspaceModal(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
-  const newWorkspaceName = await getTextFromUser({
-    title: 'WorkspacesPage.RenameWorkspaceModal.pageTitle',
-    trim: true,
-    validator: workspaceNameValidator,
-    inputLabel: 'WorkspacesPage.RenameWorkspaceModal.label',
-    placeholder: 'WorkspacesPage.RenameWorkspaceModal.placeholder',
-    okButtonText: 'WorkspacesPage.RenameWorkspaceModal.rename',
-    defaultValue: workspace.currentName,
-    selectionRange: [0, workspace.currentName.length],
-  });
+async function openRenameWorkspaceModal(
+  workspace: WorkspaceInfo,
+  informationManager: InformationManager,
+  isLargeDisplay: boolean,
+): Promise<void> {
+  const newWorkspaceName = await getTextFromUser(
+    {
+      title: 'WorkspacesPage.RenameWorkspaceModal.pageTitle',
+      trim: true,
+      validator: workspaceNameValidator,
+      inputLabel: 'WorkspacesPage.RenameWorkspaceModal.label',
+      placeholder: 'WorkspacesPage.RenameWorkspaceModal.placeholder',
+      okButtonText: 'WorkspacesPage.RenameWorkspaceModal.rename',
+      defaultValue: workspace.currentName,
+      selectionRange: [0, workspace.currentName.length],
+    },
+    isLargeDisplay,
+  );
 
   if (newWorkspaceName) {
     await renameWorkspace(workspace, newWorkspaceName, informationManager);

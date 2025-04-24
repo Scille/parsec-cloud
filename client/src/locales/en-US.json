@@ -334,6 +334,9 @@
         "invitations": {
             "title": "No invitations | One invitation | {count} invitations",
             "smallDisplayTitle": "pending invitation | pending invitations"
+        },
+        "modalHeader": {
+            "step": "Step {current} of {total}"
         }
     },
     "WorkspaceSharing": {

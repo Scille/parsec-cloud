@@ -294,6 +294,29 @@ async function handleQuery(): Promise<void> {
   queryInProgress.value = false;
 }
 
+async function onJoinOrganizationClicked(): Promise<void> {
+  const link = await getTextFromUser(
+    {
+      title: 'JoinByLinkModal.pageTitle',
+      subtitle: 'JoinByLinkModal.pleaseEnterUrl',
+      trim: true,
+      validator: claimAndBootstrapLinkValidator,
+      inputLabel: 'JoinOrganization.linkFormLabel',
+      placeholder: 'JoinOrganization.linkFormPlaceholder',
+      okButtonText: 'JoinByLinkModal.join',
+    },
+    isLargeDisplay.value,
+  );
+
+  if (link) {
+    if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
+      await openCreateOrganizationModal(link);
+    } else {
+      await openJoinByLinkModal(link);
+    }
+  }
+}
+
 async function openCreateOrganizationModal(bootstrapLink?: string, defaultServerChoice?: ServerType): Promise<void> {
   const modal = await modalController.create({
     component: CreateOrganizationModal,
@@ -335,8 +358,12 @@ async function openJoinByLinkModal(link: string): Promise<void> {
   const modal = await modalController.create({
     component: component,
     canDismiss: true,
-    backdropDismiss: false,
     cssClass: 'join-organization-modal',
+    backdropDismiss: false,
+    showBackdrop: true,
+    breakpoints: isLargeDisplay.value ? undefined : [0.5, 1],
+    handle: false,
+    initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     componentProps: {
       invitationLink: link,
       informationManager: informationManager,
@@ -584,26 +611,6 @@ async function openAboutModal(): Promise<void> {
 
 async function goToCustomerAreaLogin(): Promise<void> {
   state.value = HomePageState.CustomerArea;
-}
-
-async function onJoinOrganizationClicked(): Promise<void> {
-  const link = await getTextFromUser({
-    title: 'JoinByLinkModal.pageTitle',
-    subtitle: 'JoinByLinkModal.pleaseEnterUrl',
-    trim: true,
-    validator: claimAndBootstrapLinkValidator,
-    inputLabel: 'JoinOrganization.linkFormLabel',
-    placeholder: 'JoinOrganization.linkFormPlaceholder',
-    okButtonText: 'JoinByLinkModal.join',
-  });
-
-  if (link) {
-    if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
-      await openCreateOrganizationModal(link);
-    } else {
-      await openJoinByLinkModal(link);
-    }
-  }
 }
 
 function getBackButtonTitle(): string {

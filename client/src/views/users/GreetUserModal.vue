@@ -3,7 +3,7 @@
 <template>
   <ion-page class="modal-stepper">
     <ms-wizard-stepper
-      v-show="pageStep > GreetUserStep.WaitForGuest && pageStep < GreetUserStep.Summary"
+      v-show="pageStep > GreetUserStep.WaitForGuest && pageStep < GreetUserStep.Summary && isLargeDisplay"
       :current-index="getStepperIndex()"
       :titles="['UsersPage.greet.steps.hostCode', 'UsersPage.greet.steps.guestCode', 'UsersPage.greet.steps.contactDetails']"
     />
@@ -11,7 +11,7 @@
       slot="icon-only"
       @click="cancelModal()"
       class="closeBtn"
-      v-show="pageStep !== GreetUserStep.Summary"
+      v-if="pageStep !== GreetUserStep.Summary && isLargeDisplay"
     >
       <ion-icon
         :icon="close"
@@ -19,14 +19,33 @@
       />
     </ion-button>
     <div class="modal">
-      <ion-header class="modal-header">
+      <ion-header
+        class="modal-header"
+        v-if="isLargeDisplay"
+      >
         <ion-title class="modal-header__title title-h2">
-          {{ $msTranslate(getTitleAndSubtitle()[0]) }}
+          {{ $msTranslate(getStep(pageStep).title) }}
         </ion-title>
-        <ion-text class="modal-header__text body">
-          {{ $msTranslate(getTitleAndSubtitle()[1]) }}
+        <ion-text
+          v-if="getStep(pageStep).subtitle"
+          class="modal-header__text body"
+        >
+          {{ $msTranslate(getStep(pageStep).subtitle) }}
         </ion-text>
       </ion-header>
+      <small-display-step-modal-header
+        v-else
+        @close-clicked="cancelModal()"
+        :title="getStep(pageStep).title"
+        :subtitle="getStep(pageStep).subtitle"
+        :step="{
+          icon: personAdd,
+          title: 'UsersPage.greet.titles.waitForGuest',
+          current: getStep(pageStep).currentStep,
+          total: 4,
+        }"
+      />
+
       <div class="modal-content inner-content">
         <!-- waiting step -->
         <div
@@ -154,7 +173,7 @@
 
 <script setup lang="ts">
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
-
+import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
@@ -173,8 +192,9 @@ import {
   MsWizardStepper,
   Translatable,
   MsDropdownChangeEvent,
+  useWindowSize,
 } from 'megashark-lib';
-import { close } from 'ionicons/icons';
+import { close, personAdd } from 'ionicons/icons';
 import { Ref, computed, onMounted, ref } from 'vue';
 
 enum GreetUserStep {
@@ -186,6 +206,7 @@ enum GreetUserStep {
   Summary = 6,
 }
 
+const { isLargeDisplay } = useWindowSize();
 const pageStep = ref(GreetUserStep.WaitForGuest);
 const props = defineProps<{
   invitation: UserInvitation;
@@ -218,21 +239,53 @@ const profileOptions: MsOptions = new MsOptions([
   },
 ]);
 
-function getTitleAndSubtitle(): [Translatable, Translatable] {
-  if (pageStep.value === GreetUserStep.WaitForGuest) {
-    return ['UsersPage.greet.titles.waitForGuest', ''];
-  } else if (pageStep.value === GreetUserStep.ProvideHostSasCode) {
-    return ['UsersPage.greet.titles.provideHostCode', 'UsersPage.greet.subtitles.provideHostCode'];
-  } else if (pageStep.value === GreetUserStep.GetGuestSasCode) {
-    return ['UsersPage.greet.titles.getGuestCode', 'UsersPage.greet.subtitles.getGuestCode'];
-  } else if (pageStep.value === GreetUserStep.WaitForGuestInfo) {
-    return ['UsersPage.greet.titles.contactDetails', ''];
-  } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
-    return ['UsersPage.greet.titles.contactDetails', 'UsersPage.greet.subtitles.checkUserInfo'];
-  } else if (pageStep.value === GreetUserStep.Summary) {
-    return ['UsersPage.greet.titles.summary', ''];
+interface StepInfo {
+  title: Translatable;
+  subtitle?: Translatable;
+  currentStep?: number;
+}
+
+function getStep(step: GreetUserStep): StepInfo {
+  switch (step) {
+    case GreetUserStep.WaitForGuest: {
+      return {
+        title: 'UsersPage.greet.titles.waitForGuest',
+      };
+    }
+    case GreetUserStep.ProvideHostSasCode: {
+      return {
+        title: 'UsersPage.greet.titles.provideHostCode',
+        subtitle: 'UsersPage.greet.subtitles.provideHostCode',
+        currentStep: 1,
+      };
+    }
+    case GreetUserStep.GetGuestSasCode: {
+      return {
+        title: 'UsersPage.greet.titles.getGuestCode',
+        subtitle: 'UsersPage.greet.subtitles.getGuestCode',
+        currentStep: 2,
+      };
+    }
+    case GreetUserStep.WaitForGuestInfo: {
+      return {
+        title: 'UsersPage.greet.titles.contactDetails',
+        currentStep: 3,
+      };
+    }
+    case GreetUserStep.CheckGuestInfo: {
+      return {
+        title: 'UsersPage.greet.titles.contactDetails',
+        subtitle: 'UsersPage.greet.subtitles.checkUserInfo',
+        currentStep: 3,
+      };
+    }
+    case GreetUserStep.Summary: {
+      return {
+        title: 'UsersPage.greet.titles.summary',
+        currentStep: 4,
+      };
+    }
   }
-  return ['', ''];
 }
 
 async function setUserProfile(event: MsDropdownChangeEvent): Promise<void> {

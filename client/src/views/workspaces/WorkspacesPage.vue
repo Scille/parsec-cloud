@@ -517,14 +517,17 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
 }
 
 async function openCreateWorkspaceModal(): Promise<void> {
-  const workspaceName = await getTextFromUser({
-    title: 'WorkspacesPage.CreateWorkspaceModal.pageTitle',
-    trim: true,
-    validator: workspaceNameValidator,
-    inputLabel: 'WorkspacesPage.CreateWorkspaceModal.label',
-    placeholder: 'WorkspacesPage.CreateWorkspaceModal.placeholder',
-    okButtonText: 'WorkspacesPage.CreateWorkspaceModal.create',
-  });
+  const workspaceName = await getTextFromUser(
+    {
+      title: 'WorkspacesPage.CreateWorkspaceModal.pageTitle',
+      trim: true,
+      validator: workspaceNameValidator,
+      inputLabel: 'WorkspacesPage.CreateWorkspaceModal.label',
+      placeholder: 'WorkspacesPage.CreateWorkspaceModal.placeholder',
+      okButtonText: 'WorkspacesPage.CreateWorkspaceModal.create',
+    },
+    isLargeDisplay.value,
+  );
 
   if (workspaceName) {
     await createWorkspace(workspaceName);

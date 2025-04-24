@@ -203,8 +203,8 @@ msTest('Host selects no SAS code', async ({ usersPage }) => {
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 1);
   await expect(greetData.title).toHaveText('Get guest code');
   await expect(greetData.subtitle).toHaveText('Click on the code given to you by the guest.');
-  await expect(greetData.content.locator('.button-none')).toHaveText('None shown');
-  await greetData.content.locator('.button-none').click();
+  await expect(greetData.content.locator('#noneChoicesButton')).toHaveText('None shown');
+  await greetData.content.locator('#noneChoicesButton').click();
 
   await expect(secondTab).toShowToast('The host has cancelled the process.', 'Error');
 
@@ -329,8 +329,8 @@ msTest('Guest selects no SAS code', async ({ usersPage }) => {
   // Check the enter code page from the guest and select the code
   await expect(joinData.title).toHaveText('Get host code');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 0);
-  await expect(joinData.content.locator('.button-none')).toHaveText('None shown');
-  await joinData.content.locator('.button-none').click();
+  await expect(joinData.content.locator('#noneChoicesButton')).toHaveText('None shown');
+  await joinData.content.locator('#noneChoicesButton').click();
 
   await expect(secondTab).toShowToast(
     'If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.',
