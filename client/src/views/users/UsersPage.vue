@@ -597,14 +597,17 @@ async function assignWorkspaceRoles(user: UserInfo): Promise<void> {
 }
 
 async function inviteUser(): Promise<void> {
-  const email = await getTextFromUser({
-    title: 'UsersPage.CreateUserInvitationModal.pageTitle',
-    trim: true,
-    validator: emailValidator,
-    inputLabel: 'UsersPage.CreateUserInvitationModal.label',
-    placeholder: 'UsersPage.CreateUserInvitationModal.placeholder',
-    okButtonText: 'UsersPage.CreateUserInvitationModal.create',
-  });
+  const email = await getTextFromUser(
+    {
+      title: 'UsersPage.CreateUserInvitationModal.pageTitle',
+      trim: true,
+      validator: emailValidator,
+      inputLabel: 'UsersPage.CreateUserInvitationModal.label',
+      placeholder: 'UsersPage.CreateUserInvitationModal.placeholder',
+      okButtonText: 'UsersPage.CreateUserInvitationModal.create',
+    },
+    isLargeDisplay.value,
+  );
   if (!email) {
     return;
   }

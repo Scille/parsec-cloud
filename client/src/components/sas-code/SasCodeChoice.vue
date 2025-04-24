@@ -1,68 +1,53 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-grid>
-    <ion-row>
-      <ion-col class="column">
-        <ion-button
-          class="button-choice code"
-          fill="outline"
-          :disabled="disabled"
-          @click="$emit('select', choices[0])"
-        >
-          {{ choices[0] }}
-        </ion-button>
-      </ion-col>
-      <ion-col class="column">
-        <ion-button
-          class="button-choice code"
-          fill="outline"
-          :disabled="disabled"
-          @click="$emit('select', choices[1])"
-        >
-          {{ choices[1] }}
-        </ion-button>
-      </ion-col>
-    </ion-row>
-    <ion-row>
-      <ion-col class="column">
-        <ion-button
-          class="button-choice code"
-          fill="outline"
-          :disabled="disabled"
-          @click="$emit('select', choices[2])"
-        >
-          {{ choices[2] }}
-        </ion-button>
-      </ion-col>
-      <ion-col class="column">
-        <ion-button
-          class="button-choice code"
-          fill="outline"
-          :disabled="disabled"
-          @click="$emit('select', choices[3])"
-        >
-          {{ choices[3] }}
-        </ion-button>
-      </ion-col>
-    </ion-row>
-    <ion-row>
-      <ion-col class="container-clear button-none">
-        <ion-button
-          class="button-clear"
-          fill="clear"
-          :disabled="disabled"
-          @click="$emit('select', null)"
-        >
-          {{ $msTranslate('SasCodeChoice.noneOfTheChoices') }}
-        </ion-button>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
+  <ion-buttons class="button-list">
+    <ion-button
+      class="button-choice code"
+      fill="outline"
+      :disabled="disabled"
+      @click="$emit('select', choices[0])"
+    >
+      {{ choices[0] }}
+    </ion-button>
+    <ion-button
+      class="button-choice code"
+      fill="outline"
+      :disabled="disabled"
+      @click="$emit('select', choices[1])"
+    >
+      {{ choices[1] }}
+    </ion-button>
+    <ion-button
+      class="button-choice code"
+      fill="outline"
+      :disabled="disabled"
+      @click="$emit('select', choices[2])"
+    >
+      {{ choices[2] }}
+    </ion-button>
+    <ion-button
+      class="button-choice code"
+      fill="outline"
+      :disabled="disabled"
+      @click="$emit('select', choices[3])"
+    >
+      {{ choices[3] }}
+    </ion-button>
+    <ion-button
+      class="button-medium"
+      id="noneChoicesButton"
+      fill="clear"
+      :disabled="disabled"
+      @click="$emit('select', null)"
+    >
+      {{ $msTranslate('SasCodeChoice.noneOfTheChoices') }}
+    </ion-button>
+  </ion-buttons>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonCol, IonGrid, IonRow } from '@ionic/vue';
+import { IonButton, IonButtons } from '@ionic/vue';
 
 defineProps<{
   choices: string[];
@@ -75,28 +60,48 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-.column {
-  padding: 0;
+.button-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
+  gap: 1.25rem;
+  align-self: center;
+  width: 100%;
+  max-width: 25rem;
+  position: relative;
+
+  @include ms.responsive-breakpoint('sm') {
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
 }
 
-.button-choice {
-  width: 8em;
+ion-button {
+  width: 100%;
   height: 4em;
-  background-color: var(--parsec-color-light-secondary-medium);
-  overflow: hidden;
-  margin: 0.75rem;
   border-radius: var(--parsec-radius-8);
-  color: var(--parsec-color-light-primary-600);
-  border: 3px solid var(--parsec-color-light-secondary-medium);
-  transition: all 0.2s ease;
-  --background-focused: none;
-  --background-focused-opacity: 0;
 
   &::part(native) {
+    margin: auto;
     border: none;
   }
 
+  &:last-child {
+    grid-area: 3 / 1 / 4 / 3;
+    position: relative;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    height: 4rem;
+    margin: 0;
+  }
+
   &:focus-within {
+    outline: 2px solid var(--parsec-color-light-primary-400);
+    outline-offset: 3px;
     background-color: var(--parsec-color-light-primary-100);
     border-color: var(--parsec-color-light-primary-600);
   }
@@ -107,7 +112,14 @@ defineEmits<{
   }
 }
 
-.container-clear {
-  text-align: center;
+.button-choice {
+  background-color: var(--parsec-color-light-secondary-premiere);
+  overflow: hidden;
+  margin: 0.75rem;
+  color: var(--parsec-color-light-primary-600);
+  transition: all 0.2s ease;
+  --background-focused: none;
+  --background-focused-opacity: 0;
+  --background-hover: none;
 }
 </style>

@@ -931,14 +931,17 @@ async function createFolder(): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
-  const folderName = await getTextFromUser({
-    title: 'FoldersPage.CreateFolderModal.title',
-    trim: true,
-    validator: entryNameValidator,
-    inputLabel: 'FoldersPage.CreateFolderModal.label',
-    placeholder: 'FoldersPage.CreateFolderModal.placeholder',
-    okButtonText: 'FoldersPage.CreateFolderModal.create',
-  });
+  const folderName = await getTextFromUser(
+    {
+      title: 'FoldersPage.CreateFolderModal.title',
+      trim: true,
+      validator: entryNameValidator,
+      inputLabel: 'FoldersPage.CreateFolderModal.label',
+      placeholder: 'FoldersPage.CreateFolderModal.placeholder',
+      okButtonText: 'FoldersPage.CreateFolderModal.create',
+    },
+    isLargeDisplay.value,
+  );
 
   if (!folderName) {
     return;
@@ -1073,16 +1076,19 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
   }
   const entry = entries[0];
   const ext = parsec.Path.getFileExtension(entry.name);
-  const newName = await getTextFromUser({
-    title: entry.isFile() ? 'FoldersPage.RenameModal.fileTitle' : 'FoldersPage.RenameModal.folderTitle',
-    trim: true,
-    validator: entryNameValidator,
-    inputLabel: entry.isFile() ? 'FoldersPage.RenameModal.fileLabel' : 'FoldersPage.RenameModal.folderLabel',
-    placeholder: entry.isFile() ? 'FoldersPage.RenameModal.filePlaceholder' : 'FoldersPage.RenameModal.folderPlaceholder',
-    okButtonText: 'FoldersPage.RenameModal.rename',
-    defaultValue: entry.name,
-    selectionRange: [0, entry.name.length - (ext.length > 0 ? ext.length + 1 : 0)],
-  });
+  const newName = await getTextFromUser(
+    {
+      title: entry.isFile() ? 'FoldersPage.RenameModal.fileTitle' : 'FoldersPage.RenameModal.folderTitle',
+      trim: true,
+      validator: entryNameValidator,
+      inputLabel: entry.isFile() ? 'FoldersPage.RenameModal.fileLabel' : 'FoldersPage.RenameModal.folderLabel',
+      placeholder: entry.isFile() ? 'FoldersPage.RenameModal.filePlaceholder' : 'FoldersPage.RenameModal.folderPlaceholder',
+      okButtonText: 'FoldersPage.RenameModal.rename',
+      defaultValue: entry.name,
+      selectionRange: [0, entry.name.length - (ext.length > 0 ? ext.length + 1 : 0)],
+    },
+    isLargeDisplay.value,
+  );
 
   if (!newName) {
     return;

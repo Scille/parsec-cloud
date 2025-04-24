@@ -85,25 +85,47 @@ async function updateInvitations(): Promise<void> {
 
 async function openInvitationsPopover(event: Event): Promise<void> {
   event.stopPropagation();
-  const popover = await popoverController.create({
-    component: InvitationsListPopover,
-    alignment: 'center',
-    event: event,
-    cssClass: 'invitations-list-popover',
-    showBackdrop: false,
-    componentProps: {
-      informationManager: informationManager,
-    },
-  });
-  await popover.present();
-  const { role, data } = await popover.onDidDismiss();
-  await popover.dismiss();
-  if (role === MsModalResult.Confirm && data.action) {
-    if (data.action === InvitationAction.Greet) {
-      await greetUser(data.invitation);
-    } else if (data.action === InvitationAction.Cancel) {
-      await cancelUserInvitation(data.invitation);
-    } else if (data.action === InvitationAction.Invite) {
+  let result: { data?: { action: InvitationAction; invitation?: UserInvitation }; role?: string };
+
+  if (isLargeDisplay.value) {
+    const popover = await popoverController.create({
+      component: InvitationsListPopover,
+      alignment: 'center',
+      event: event,
+      cssClass: 'invitations-list-popover',
+      showBackdrop: false,
+      componentProps: {
+        informationManager: informationManager,
+      },
+    });
+    await popover.present();
+    result = await popover.onDidDismiss();
+    await popover.dismiss();
+  } else {
+    const modal = await modalController.create({
+      component: InvitationsListModal,
+      cssClass: 'invitations-list-modal',
+      showBackdrop: true,
+      handle: false,
+      backdropDismiss: true,
+      breakpoints: isLargeDisplay.value ? undefined : [1],
+      // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
+      // expandToScroll: false, should be added to scroll with Ionic 8
+      initialBreakpoint: isLargeDisplay.value ? undefined : 1,
+      componentProps: {
+        informationManager: informationManager,
+      },
+    });
+    await modal.present();
+    result = await modal.onDidDismiss();
+    await modal.dismiss();
+  }
+  if (result.role === MsModalResult.Confirm && result.data && result.data.action) {
+    if (result.data.action === InvitationAction.Greet && result.data.invitation) {
+      await greetUser(result.data.invitation);
+    } else if (result.data.action === InvitationAction.Cancel && result.data.invitation) {
+      await cancelUserInvitation(result.data.invitation);
+    } else if (result.data.action === InvitationAction.Invite) {
       await navigateTo(Routes.Users, { query: { openInvite: true } });
       await updateInvitations();
     }

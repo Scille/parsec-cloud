@@ -334,6 +334,9 @@
         "invitations": {
             "title": "Aucune invitation | Une invitation | {count} invitations",
             "smallDisplayTitle": "invitation en cours | invitations en cours"
+        },
+        "modalHeader": {
+            "step": "Étape {current} sur {total}"
         }
     },
     "WorkspaceSharing": {
@@ -1141,7 +1144,7 @@
             "inviteFailedOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
             "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes à rejoindre l'organisation.",
             "inviteFailedUnknown": "Une erreur imprévue est survenue (raison : {reason}).",
-            "cancelSuccess": "Le lien d'invitation n'est plus valide.",
+            "cancelSuccess": "L'invitation a été supprimée.",
             "cancelFailed": "Impossible d'annuler l'invitation",
             "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
             "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
