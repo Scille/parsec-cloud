@@ -1152,8 +1152,14 @@
             "cancelInvitation": {
                 "title": "Annuler l'invitation",
                 "message": "L'invitation envoyée à {email} et le lien d'invitation ne seront plus valides. Êtes-vous sûr(e) de vouloir continuer ?",
-                "yes": "Annuler l'invitation",
-                "no": "Conserver l'invitation"
+                "yes": {
+                    "short": "Supprimer",
+                    "long": "Supprimer l'invitation"
+                },
+                "no": {
+                    "short": "Conserver",
+                    "long": "Conserver l'invitation"
+                }
             },
             "status": {
                 "pending": "En attente",

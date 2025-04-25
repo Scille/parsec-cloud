@@ -35,7 +35,7 @@ msTest('Copy invitation link', async ({ connected }) => {
   expect(await getClipboardText(connected)).toMatch(/^parsec3:\/\/.+$/);
 });
 
-msTest('Cancel invitation cancel', async ({ connected }) => {
+msTest('Cancel invitation - no', async ({ connected }) => {
   await connected.locator('.topbar').locator('#invitations-button').click();
   const popover = connected.locator('.invitations-list-popover');
   const inv = popover.locator('.invitation-list-item').nth(0);
@@ -46,12 +46,12 @@ msTest('Cancel invitation cancel', async ({ connected }) => {
     expectedQuestionText:
       'The invitation sent to zack@example.invalid and the invitation link \
     will no longer be valid. Are you sure you want to continue?',
-    expectedPositiveText: 'Cancel invitation',
+    expectedPositiveText: 'Delete invitation',
     expectedNegativeText: 'Keep invitation',
   });
 });
 
-msTest('Cancel invitation', async ({ connected }) => {
+msTest('Cancel invitation - yes', async ({ connected }) => {
   await connected.locator('.topbar').locator('#invitations-button').click();
   const popover = connected.locator('.invitations-list-popover');
   const inv = popover.locator('.invitation-list-item').nth(0);

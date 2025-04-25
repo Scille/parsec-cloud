@@ -3,7 +3,7 @@
 <template>
   <ion-button
     v-show="invitations.length > 0"
-    @click="openInvitationsPopover($event)"
+    @click="openInvitationsMenu($event)"
     id="invitations-button"
     class="button-medium"
     :class="{
@@ -42,6 +42,7 @@
 import { Answer, MsModalResult, askQuestion, useWindowSize } from 'megashark-lib';
 import { InvitationAction } from '@/components/users';
 import InvitationsListPopover from '@/components/users/InvitationsListPopover.vue';
+import InvitationsListModal from '@/components/users/InvitationsListModal.vue';
 import { ClientCancelInvitationErrorTag, UserInvitation, cancelInvitation, listUserInvitations } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
@@ -83,7 +84,7 @@ async function updateInvitations(): Promise<void> {
   }
 }
 
-async function openInvitationsPopover(event: Event): Promise<void> {
+async function openInvitationsMenu(event: Event): Promise<void> {
   event.stopPropagation();
   let result: { data?: { action: InvitationAction; invitation?: UserInvitation }; role?: string };
 
@@ -137,8 +138,8 @@ async function cancelUserInvitation(invitation: UserInvitation): Promise<void> {
     'UsersPage.invitation.cancelInvitation.title',
     { key: 'UsersPage.invitation.cancelInvitation.message', data: { email: invitation.claimerEmail } },
     {
-      yesText: 'UsersPage.invitation.cancelInvitation.yes',
-      noText: 'UsersPage.invitation.cancelInvitation.no',
+      yesText: isLargeDisplay.value ? 'UsersPage.invitation.cancelInvitation.yes.long' : 'UsersPage.invitation.cancelInvitation.yes.short',
+      noText: isLargeDisplay.value ? 'UsersPage.invitation.cancelInvitation.no.long' : 'UsersPage.invitation.cancelInvitation.no.short',
       yesIsDangerous: true,
     },
   );
@@ -186,6 +187,12 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
     canDismiss: true,
     backdropDismiss: false,
     cssClass: 'greet-organization-modal',
+    showBackdrop: true,
+    handle: false,
+    breakpoints: isLargeDisplay.value ? undefined : [1],
+    // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
+    // expandToScroll: false, should be added to scroll with Ionic 8
+    initialBreakpoint: isLargeDisplay.value ? undefined : 1,
     componentProps: {
       invitation: invitation,
       informationManager: informationManager,
