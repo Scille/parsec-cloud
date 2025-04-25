@@ -46,6 +46,7 @@
             <header-breadcrumbs
               :path-nodes="fullPath"
               @change="onNodeSelected"
+              :from-header-page="true"
             />
           </div>
 
@@ -435,6 +436,12 @@ async function openNotificationCenter(event: Event): Promise<void> {
 .topbar-left {
   display: flex;
   align-items: center;
+  margin-right: 0.5rem;
+  overflow: hidden;
+
+  @include ms.responsive-breakpoint('sm') {
+    gap: 0.5rem;
+  }
 
   &-workspaces-mobile {
     display: flex;

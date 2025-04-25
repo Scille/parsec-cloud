@@ -1,28 +1,80 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-breadcrumbs
-    class="breadcrumb"
-    @ion-collapsed-click="expandCollapsed()"
-    :max-items="maxBreadcrumbs"
-    :items-before-collapse="itemsBeforeCollapse"
-    :items-after-collapse="itemsAfterCollapse"
-  >
-    <ion-breadcrumb
-      v-for="path in fullPath"
-      @click="navigateTo(path)"
-      :path="path"
-      class="breadcrumb-element breadcrumb-normal"
-      :key="path.id"
+  <div>
+    <ion-breadcrumbs
+      v-if="isLargeDisplay"
+      class="breadcrumb"
+      @ion-collapsed-click="presentPopover($event)"
+      :max-items="maxBreadcrumbs"
+      :items-before-collapse="itemsBeforeCollapse"
+      :items-after-collapse="itemsAfterCollapse"
     >
-      <ion-icon
-        class="main-icon"
-        v-if="path.icon && isLargeDisplay"
-        :icon="path.icon"
-      />
-      {{ path.display ? path.display : $msTranslate(path.title) }}
-    </ion-breadcrumb>
-  </ion-breadcrumbs>
+      <ion-breadcrumb
+        v-for="path in pathNodes"
+        @click="navigateTo(path)"
+        :path="path"
+        class="breadcrumb-element breadcrumb-normal"
+        :key="path.id"
+      >
+        <ion-icon
+          class="main-icon"
+          v-if="path.icon"
+          :icon="path.icon"
+        />
+        <div class="breadcrumb-text">
+          {{ path.display ? path.display : $msTranslate(path.title) }}
+        </div>
+      </ion-breadcrumb>
+    </ion-breadcrumbs>
+    <div
+      v-if="isSmallDisplay && pathNodes.length > (fromHeaderPage ? 2 : 0)"
+      class="breadcrumb-small-container"
+    >
+      <ion-text
+        v-if="pathNodes.length > (fromHeaderPage ? 3 : 1)"
+        class="breadcrumb-normal breadcrumb-small"
+      >
+        {{ '...' }}
+      </ion-text>
+      <ion-text
+        v-if="pathNodes.length > (fromHeaderPage ? 3 : 1)"
+        class="breadcrumb-normal breadcrumb-small"
+      >
+        {{ '/' }}
+      </ion-text>
+      <ion-text
+        v-if="fromHeaderPage"
+        class="breadcrumb-normal breadcrumb-small"
+      >
+        {{ `${pathNodes[pathNodes.length - 2].display}` }}
+      </ion-text>
+      <ion-text
+        v-else
+        class="breadcrumb-normal breadcrumb-small breadcrumb-small-active"
+      >
+        {{ `${pathNodes[pathNodes.length - 1].display}` }}
+      </ion-text>
+      <ion-text
+        v-if="fromHeaderPage"
+        class="breadcrumb-normal breadcrumb-small"
+      >
+        {{ '/' }}
+      </ion-text>
+      <ion-button
+        v-if="pathNodes.length > 1"
+        @click="presentPopover"
+        class="breadcrumb-popover-button"
+        fill="outline"
+      >
+        <ion-icon
+          :icon="caretDown"
+          slot="icon-only"
+          class="breadcrumb-popover-button__icon"
+        />
+      </ion-button>
+    </div>
+  </div>
 </template>
 
 <script lang="ts">
@@ -40,10 +92,12 @@ export interface RouterPathNode {
 <script setup lang="ts">
 import { Query } from '@/router';
 import { Translatable, useWindowSize } from 'megashark-lib';
-import { IonBreadcrumb, IonBreadcrumbs, IonIcon } from '@ionic/vue';
-import { Ref, computed, ref } from 'vue';
+import { IonBreadcrumb, IonBreadcrumbs, IonButton, IonIcon, IonText, popoverController } from '@ionic/vue';
+import { Ref, ref } from 'vue';
+import HeaderBreadcrumbPopover from '@/components/header/HeaderBreadcrumbPopover.vue';
+import { caretDown } from 'ionicons/icons';
 
-const { isLargeDisplay } = useWindowSize();
+const { isLargeDisplay, isSmallDisplay } = useWindowSize();
 
 const props = withDefaults(
   defineProps<{
@@ -51,11 +105,13 @@ const props = withDefaults(
     itemsBeforeCollapse?: number;
     itemsAfterCollapse?: number;
     maxShown?: number;
+    fromHeaderPage?: boolean;
   }>(),
   {
     itemsBeforeCollapse: 2,
     itemsAfterCollapse: 2,
     maxShown: 4,
+    fromHeaderPage: false,
   },
 );
 
@@ -63,25 +119,42 @@ const emits = defineEmits<{
   (e: 'change', node: RouterPathNode): void;
 }>();
 
-// Using a computed to reset maxBreadcrumbs value automatically
-const fullPath = computed(() => {
-  // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-  maxBreadcrumbs.value = props.maxShown;
-  return props.pathNodes;
-});
-
 const maxBreadcrumbs: Ref<number | undefined> = ref(props.maxShown);
 let ignoreNextEvent = false;
 
-function expandCollapsed(): void {
-  maxBreadcrumbs.value = undefined;
+function getCollapsedItems(): Array<RouterPathNode> {
+  if (isLargeDisplay.value) {
+    return props.pathNodes.slice(props.itemsBeforeCollapse, props.itemsBeforeCollapse + props.pathNodes.length - props.maxShown);
+  }
+  if (props.fromHeaderPage) {
+    return props.pathNodes.slice(1, props.pathNodes.length - 1);
+  }
+  return props.pathNodes.slice(0, props.pathNodes.length - 1);
+}
+
+async function presentPopover(event: CustomEvent): Promise<void> {
   ignoreNextEvent = true;
+  const popover = await popoverController.create({
+    component: HeaderBreadcrumbPopover,
+    alignment: 'center',
+    event: event,
+    showBackdrop: false,
+    componentProps: {
+      breadcrumbs: getCollapsedItems(),
+    },
+  });
+  await popover.present();
+  const result = await popover.onDidDismiss();
+  await popover.dismiss();
+  if (result.data && result.data.breadcrumb) {
+    navigateTo(result.data.breadcrumb);
+  }
 }
 
 function navigateTo(path: RouterPathNode): void {
   // ignoreNextEvent is used so that when "..." is clicked, we
   // don't try to travel. Didn't find a better way to do this.
-  if (ignoreNextEvent) {
+  if (isLargeDisplay.value && ignoreNextEvent) {
     ignoreNextEvent = false;
     return;
   }
@@ -93,6 +166,8 @@ function navigateTo(path: RouterPathNode): void {
 .breadcrumb {
   padding: 0;
   color: var(--parsec-color-light-secondary-grey);
+  display: flex;
+  flex-wrap: nowrap;
 
   &-element {
     .main-icon {
@@ -154,6 +229,57 @@ function navigateTo(path: RouterPathNode): void {
     .main-icon {
       color: var(--parsec-color-light-primary-700);
       margin-right: 0.5rem;
+    }
+  }
+
+  &-text {
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.breadcrumb-small-container {
+  display: flex;
+  align-items: center;
+  color: var(--parsec-color-light-secondary-grey);
+  gap: 0.5rem;
+
+  .breadcrumb-small {
+    color: var(--parsec-color-light-secondary-grey);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: max-width 0.2s ease-in-out;
+
+    @include ms.responsive-breakpoint('sm') {
+      max-width: 17.5rem;
+    }
+
+    @include ms.responsive-breakpoint('xs') {
+      max-width: 6.25rem;
+    }
+
+    &-active {
+      color: var(--parsec-color-light-primary-700);
+    }
+  }
+
+  .breadcrumb-popover-button {
+    min-height: 0;
+    padding: 0.125rem;
+
+    &::part(native) {
+      --background: none;
+      --background-hover: none;
+      --background-focused: none;
+      border: 1px solid var(--parsec-color-light-secondary-light);
+      padding: 0.25rem;
+    }
+
+    &__icon {
+      font-size: 1rem;
+      color: var(--parsec-color-light-secondary-hard-grey);
     }
   }
 }
