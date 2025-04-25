@@ -4,8 +4,7 @@
 
 - [Get the sources](#get-the-sources)
 - [Shared requirements](#shared-requirements)
-- [Hacking the Python server](#hacking-the-python-server)
-  - [Run the Python tests](#run-the-python-tests)
+- [Hacking Parsec Server](#hacking-parsec-server)
 - [Hacking the clients](#hacking-the-clients)
   - [Base requirement](#base-requirement)
   - [Hacking the web client](#hacking-the-web-client)
@@ -121,55 +120,9 @@ To start hacking, follow the basic steps detailed below:
 
        > If you don't have installed `python` with `pyenv`, you need to replace `$(pyenv prefix 3.12.0)/bin/python` with the path where the python you want to use is located.
 
-## Hacking the Python server
+## Hacking Parsec Server
 
-Once you have installed the [basic requirements](#shared-requirements), you can proceed to setup to python virtual env with `poetry`.
-
-The python code is located in the folder `server`, The following steps and instruction will consider that you're in that folder.
-
-   <!-- markdownlint-disable-next-line no-inline-html -->
-1. Initialize a poetry env <a id="init-server-python-env" />
-
-   ```shell
-   python ./make.py python-dev-install
-   ```
-
-   > The Python server is built from the `server` directory.
-
-2. Start a shell with the initialized virtual env
-
-    ```shell
-    poetry shell
-    ```
-
-3. To run parsec do
-
-    ```shell
-    poetry run parsec
-    ```
-
-Happy Hacking 🐍
-
-### Run the Python tests
-
-Run the tests with `pytest`:
-
-```shell
-poetry run pytest tests
-```
-
-In addition, the following options are available:
-
-| Option           | Description                                              |
-| ---------------- | -------------------------------------------------------- |
-| ``--postgresql`` | Use PostgreSQL in the server instead of a mock in memory |
-| ``-n 4``         | Run tests in parallel (here `4` jobs)                    |
-
-Note you can mix&match the flags, e.g.
-
-```shell
-poetry run pytest tests --postgresql -n auto
-```
+Start by installing [shared requirements](#shared-requirements), then refer to [server/README.md](../../server/README.md).
 
 ## Hacking the clients
 
@@ -242,7 +195,6 @@ In addition to the [shared requirements](#shared-requirements), for working with
       ```shell
       npx electron . "<a file link or an invitation link>"
       ```
-
 
 ### Hacking the electron client
 
