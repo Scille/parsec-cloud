@@ -39,6 +39,10 @@
     &-header {
       padding-bottom: 0.5rem;
 
+      @include ms.responsive-breakpoint('sm') {
+        padding-bottom: 1.5rem;
+      }
+
       &:has(.modal-header__text) {
         padding-bottom: 1.5rem;
       }
@@ -327,9 +331,16 @@
 
 .greet-organization-modal {
   &::part(content) {
-    min-width: var(--parsec-modal-width-md);
-    max-width: var(--parsec-modal-width-md);
-    --height: fit-content;
+    max-width: var(--parsec-modal-width-lg);
+    position: relative;
+    display: block;
+    contain: content;
+
+    @include ms.responsive-breakpoint('sm') {
+      position: inherit;
+      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+      min-height: 22rem;
+    }
   }
 
   &:has(.Summary)::part(content) {
@@ -501,5 +512,11 @@
 .update-profile-modal {
   &::part(content) {
     max-width: var(--parsec-modal-width-md);
+  }
+}
+
+.invitations-list-modal {
+  &::part(content) {
+    border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
   }
 }

@@ -1152,8 +1152,14 @@
             "cancelInvitation": {
                 "title": "Cancel invitation",
                 "message": "The invitation sent to {email} and the invitation link will no longer be valid. Are you sure you want to continue?",
-                "yes": "Cancel invitation",
-                "no": "Keep invitation"
+                "yes": {
+                    "short": "Delete",
+                    "long": "Delete invitation"
+                },
+                "no": {
+                    "short": "Keep",
+                    "long": "Keep invitation"
+                }
             },
             "status": {
                 "pending": "Pending",

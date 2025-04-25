@@ -14,7 +14,6 @@
           @click="onInviteClick"
           class="invitations-list-header__button"
           size="small"
-          v-show="!currentRouteIsUserRoute()"
         >
           <ion-icon
             slot="start"
@@ -51,7 +50,6 @@ import { MsModalResult } from 'megashark-lib';
 import InvitationPopoverItem from '@/components/users/InvitationPopoverItem.vue';
 import { InvitationAction } from '@/components/users/types';
 import { UserInvitation, listUserInvitations } from '@/parsec';
-import { currentRouteIsUserRoute } from '@/router';
 import { InformationManager } from '@/services/informationManager';
 import { IonButton, IonIcon, IonList, IonText, popoverController } from '@ionic/vue';
 import { personAdd } from 'ionicons/icons';

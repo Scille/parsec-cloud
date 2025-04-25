@@ -12,32 +12,36 @@
         <ion-label class="cell invitation-label">
           {{ invitation.claimerEmail }}
         </ion-label>
+        <ion-text class="invitation-date body-sm">{{ $msTranslate(formatTimeSince(invitation.createdOn, '', 'short')) }}</ion-text>
       </div>
 
       <!-- invitation action -->
       <div class="invitation-actions">
-        <div class="invitation-actions-date">
-          <span class="default-state body-sm">{{ $msTranslate(formatTimeSince(invitation.createdOn, '', 'short')) }}</span>
-          <ion-button
-            fill="clear"
-            class="hover-state copy-link"
-            @click.stop="copyLink(invitation)"
-          >
-            {{ $msTranslate('UsersPage.invitation.copyLink') }}
-          </ion-button>
-        </div>
+        <ion-button
+          fill="clear"
+          class="copy-link"
+          @click.stop="copyLink(invitation)"
+        >
+          <ion-icon
+            :icon="link"
+            class="button-icon"
+          />
+          {{ $msTranslate('UsersPage.invitation.copyLink') }}
+        </ion-button>
 
         <ion-buttons class="invitation-actions-buttons">
           <ion-button
+            size="default"
             fill="clear"
-            class="danger"
+            class="danger button-medium"
             @click.stop="$emit('cancel', invitation)"
           >
             {{ $msTranslate('UsersPage.invitation.rejectUser') }}
           </ion-button>
           <ion-button
-            class="button-default"
-            fill="solid"
+            size="default"
+            fill="default"
+            class="button-medium"
             @click.stop="$emit('greetUser', invitation)"
           >
             {{ $msTranslate('UsersPage.invitation.greetUser') }}
@@ -51,8 +55,9 @@
 <script setup lang="ts">
 import { UserInvitation } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { IonButton, IonButtons, IonItem, IonLabel } from '@ionic/vue';
+import { IonIcon, IonButton, IonButtons, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { formatTimeSince, Clipboard } from 'megashark-lib';
+import { link } from 'ionicons/icons';
 
 const props = defineProps<{
   invitation: UserInvitation;
@@ -101,34 +106,30 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
   width: 100%;
   gap: 0.75rem;
 
-  .hover-state {
-    display: none;
-  }
-
   &:hover,
   &:focus {
     background: var(--parsec-color-light-primary-30);
     color: var(--parsec-color-light-secondary-text);
-
-    .default-state {
-      display: none;
-    }
-
-    .hover-state {
-      display: block;
-    }
   }
 }
 
 .invitation-email {
   width: 100%;
   overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   color: var(--parsec-color-light-secondary-text);
 
   .invitation-label {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .invitation-date {
+    color: var(--parsec-color-light-secondary-grey);
+    padding: 0 0.5rem;
   }
 }
 
@@ -137,13 +138,9 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
   align-items: center;
   width: 100%;
 
-  &-date {
-    color: var(--parsec-color-light-secondary-grey);
-  }
-
   .copy-link {
     background: none;
-    color: var(--parsec-color-light-secondary-text);
+    color: var(--parsec-color-light-secondary-soft-text);
     --padding-end: 0;
     --padding-start: 0;
     position: relative;
@@ -158,6 +155,11 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
       height: 1px;
       background: var(--parsec-color-light-secondary-text);
       transition: width 150ms ease-in-out;
+    }
+
+    ion-icon {
+      font-size: 1rem;
+      margin-right: 0.25rem;
     }
 
     &:hover {
@@ -178,6 +180,10 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
 
     ion-button {
       width: 100%;
+
+      &:last-child {
+        color: var(--parsec-color-light-secondary-white);
+      }
     }
   }
 }
