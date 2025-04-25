@@ -30,33 +30,38 @@
           </div>
         </div>
 
-        <div class="folder-container">
+        <div
+          class="folder-container"
+          ref="folderContainerRef"
+        >
           <div class="folder-container-header">
             <div
               class="folder-container-header__navigation"
               v-if="!resultFromSearch"
             >
-              <ion-buttons>
-                <ion-button
-                  fill="clear"
-                  @click="back()"
-                  class="navigation-back-button"
-                  :disabled="backStack.length === 0"
-                  :class="{ disabled: backStack.length === 0 }"
-                  ref="backButtonDisabled"
-                >
-                  <ion-icon :icon="chevronBack" />
-                </ion-button>
-                <ion-button
-                  fill="clear"
-                  @click="forward()"
-                  :disabled="forwardStack.length === 0"
-                  :class="{ disabled: forwardStack.length === 0 }"
-                  class="navigation-forward-button"
-                >
-                  <ion-icon :icon="chevronForward" />
-                </ion-button>
-              </ion-buttons>
+              <div ref="headerButtonsRef">
+                <ion-buttons>
+                  <ion-button
+                    fill="clear"
+                    @click="back()"
+                    class="navigation-back-button"
+                    :disabled="backStack.length === 0"
+                    :class="{ disabled: backStack.length === 0 }"
+                    ref="backButtonDisabled"
+                  >
+                    <ion-icon :icon="chevronBack" />
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    @click="forward()"
+                    :disabled="forwardStack.length === 0"
+                    :class="{ disabled: forwardStack.length === 0 }"
+                    class="navigation-forward-button"
+                  >
+                    <ion-icon :icon="chevronForward" />
+                  </ion-button>
+                </ion-buttons>
+              </div>
               <header-breadcrumbs
                 :path-nodes="headerPath"
                 @change="onPathChange"
@@ -64,9 +69,13 @@
                 :items-before-collapse="1"
                 :items-after-collapse="1"
                 :max-shown="2"
+                :available-width="breadcrumbsWidth"
               />
             </div>
-            <div class="folder-container-header__actions">
+            <div
+              class="folder-container-header__actions"
+              ref="topbarRightRef"
+            >
               <ms-search-input
                 v-show="false"
                 @change="onSearchChanged"
@@ -142,15 +151,16 @@
 </template>
 
 <script setup lang="ts">
+import { pxToRem } from '@/common/utils';
 import { IonPage, IonList, IonLabel, IonButtons, IonIcon, IonButton, IonListHeader, IonContent, IonText } from '@ionic/vue';
-import { computed, onBeforeUnmount, onMounted, ref, Ref, inject, onUnmounted } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, Ref, inject, onUnmounted, watch } from 'vue';
 import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, WorkspaceHistory, EntryName } from '@/parsec';
-import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, I18n } from 'megashark-lib';
+import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, I18n, useWindowSize } from 'megashark-lib';
 import { DateTime } from 'luxon';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel, HistoryFileListItem } from '@/components/files';
-import { chevronBack, chevronForward, warning } from 'ionicons/icons';
+import { chevronBack, chevronForward, home, warning } from 'ionicons/icons';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import { SortProperty } from '@/components/users';
@@ -165,6 +175,13 @@ const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
 const currentPath: Ref<FsPath> = ref('/');
 const headerPath: Ref<RouterPathNode[]> = ref([]);
+const pathLength = ref(0);
+const breadcrumbsWidth = ref(0);
+const folderContainerRef = ref();
+const headerButtonsRef = ref();
+const topbarRightRef = ref();
+const { windowWidth } = useWindowSize();
+
 const entries: Ref<WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>> = ref(
   new WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>(),
 );
@@ -182,6 +199,13 @@ const allSelected = computed(() => {
 
 const someSelected = computed(() => {
   return entries.value.selectedCount() > 0;
+});
+
+const topbarWidthWatchCancel = watch([windowWidth, pathLength], () => {
+  if (folderContainerRef.value?.clientWidth && headerButtonsRef.value?.offsetWidth && topbarRightRef.value?.offsetWidth) {
+    breadcrumbsWidth.value =
+      pxToRem(folderContainerRef.value?.clientWidth - headerButtonsRef.value?.offsetWidth - topbarRightRef.value?.offsetWidth) - 2;
+  }
 });
 
 const cancelRouteWatch = watchRoute(async () => {
@@ -228,6 +252,7 @@ onBeforeUnmount(async () => {
 
 onUnmounted(async () => {
   cancelRouteWatch();
+  topbarWidthWatchCancel();
 });
 
 async function onDateTimeChange(): Promise<void> {
@@ -286,7 +311,8 @@ async function listCurrentPath(): Promise<void> {
     headerPath.value.push({
       id: 0,
       display: workspaceInfo.value.currentName,
-      name: '',
+      route: Routes.History,
+      popoverIcon: home,
       query: { documentPath: path },
     });
     let id = 1;
@@ -295,11 +321,12 @@ async function listCurrentPath(): Promise<void> {
       headerPath.value.push({
         id: id,
         display: breadcrumb === '/' ? '' : breadcrumb,
-        name: '',
+        route: Routes.History,
         query: { documentPath: path },
       });
       id += 1;
     }
+    pathLength.value = headerPath.value.length;
   } finally {
     querying.value = false;
     if (history.isStarted()) {
