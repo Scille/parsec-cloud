@@ -31,12 +31,15 @@
         </div>
 
         <div class="folder-container">
-          <div class="folder-container-header">
+          <div
+            class="folder-container-header"
+            id="folder-container-id"
+          >
             <div
               class="folder-container-header__navigation"
               v-if="!resultFromSearch"
             >
-              <ion-buttons>
+              <ion-buttons id="header-buttons-id">
                 <ion-button
                   fill="clear"
                   @click="back()"
@@ -64,6 +67,7 @@
                 :items-before-collapse="1"
                 :items-after-collapse="1"
                 :max-shown="2"
+                :available-width="breadcrumbsWidth"
               />
             </div>
             <div class="folder-container-header__actions">
@@ -143,9 +147,9 @@
 
 <script setup lang="ts">
 import { IonPage, IonList, IonLabel, IonButtons, IonIcon, IonButton, IonListHeader, IonContent, IonText } from '@ionic/vue';
-import { computed, onBeforeUnmount, onMounted, ref, Ref, inject, onUnmounted } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, Ref, inject, onUnmounted, watch } from 'vue';
 import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, WorkspaceHistory, EntryName } from '@/parsec';
-import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, I18n } from 'megashark-lib';
+import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, I18n, useWindowSize } from 'megashark-lib';
 import { DateTime } from 'luxon';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
@@ -165,6 +169,9 @@ const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
 const currentPath: Ref<FsPath> = ref('/');
 const headerPath: Ref<RouterPathNode[]> = ref([]);
+const breadcrumbsWidth = ref(0);
+const { windowWidth } = useWindowSize();
+
 const entries: Ref<WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>> = ref(
   new WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>(),
 );
@@ -182,6 +189,14 @@ const allSelected = computed(() => {
 
 const someSelected = computed(() => {
   return entries.value.selectedCount() > 0;
+});
+
+const topbarWidthWatchCancel = watch([windowWidth, entries.value], () => {
+  const navBarWidth = document.getElementById('folder-container-id')?.offsetWidth;
+  const buttonsWidth = document.getElementById('header-buttons-id')?.offsetWidth;
+  if (navBarWidth && buttonsWidth) {
+    breadcrumbsWidth.value = (navBarWidth - buttonsWidth) / 16;
+  }
 });
 
 const cancelRouteWatch = watchRoute(async () => {
@@ -228,6 +243,7 @@ onBeforeUnmount(async () => {
 
 onUnmounted(async () => {
   cancelRouteWatch();
+  topbarWidthWatchCancel();
 });
 
 async function onDateTimeChange(): Promise<void> {

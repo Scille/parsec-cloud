@@ -16,8 +16,11 @@
     }"
   >
     <!-- :disabled="backStack.length === 0" -->
-    <div class="navigation">
-      <ion-buttons>
+    <div
+      class="navigation"
+      id="navigation-id"
+    >
+      <ion-buttons id="buttons-id">
         <ion-button
           fill="clear"
           @click="back()"
@@ -44,6 +47,7 @@
         class="navigation-breadcrumb"
         :items-before-collapse="1"
         :items-after-collapse="2"
+        :available-width="breadcrumbsWidth"
       />
     </div>
     <ion-list class="folder-list">
@@ -84,12 +88,12 @@
 <script setup lang="ts">
 import { getFileIcon } from '@/common/file';
 import { FolderSelectionOptions } from '@/components/files';
-import { Folder, MsImage, MsModalResult, MsModal } from 'megashark-lib';
+import { Folder, MsImage, MsModalResult, MsModal, useWindowSize } from 'megashark-lib';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { EntryStat, FsPath, Path, StartedWorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
 import { IonButton, IonButtons, IonText, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
-import { Ref, onMounted, ref } from 'vue';
+import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<FolderSelectionOptions>();
 const selectedPath: Ref<FsPath> = ref(props.startingPath);
@@ -98,6 +102,16 @@ const currentEntries: Ref<[EntryStat, boolean][]> = ref([]);
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
+const breadcrumbsWidth = ref(0);
+const { windowWidth } = useWindowSize();
+
+const topbarWidthWatchCancel = watch([windowWidth, currentEntries], () => {
+  const navBarWidth = document.getElementById('navigation-id')?.offsetWidth;
+  const buttonsWidth = document.getElementById('buttons-id')?.offsetWidth;
+  if (navBarWidth && buttonsWidth) {
+    breadcrumbsWidth.value = (navBarWidth - buttonsWidth) / 16;
+  }
+});
 
 onMounted(async () => {
   const result = await getWorkspaceInfo(props.workspaceHandle);
@@ -106,6 +120,8 @@ onMounted(async () => {
   }
   await update();
 });
+
+onUnmounted(() => topbarWidthWatchCancel());
 
 async function update(): Promise<void> {
   if (!workspaceInfo.value) {
