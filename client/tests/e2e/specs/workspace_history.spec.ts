@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { answerQuestion, expect, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, createFolder, expect, msTest, setSmallDisplay } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -106,4 +106,92 @@ msTest('Test viewer in history', async ({ documents }) => {
   const textContainer = documents.locator('.file-viewer').locator('.text-container');
   await expect(textContainer.locator('.margin').locator('.line-numbers')).toHaveCount(2);
   await expect(textContainer.locator('.editor-scrollable')).toHaveText('A simple text file');
+});
+
+msTest('Workspace history breadcrumbs', async ({ documents }) => {
+  async function clickOnBreadcrumb(i: number): Promise<void> {
+    await documents.locator('.navigation-breadcrumb').locator('ion-breadcrumb').nth(i).click();
+  }
+
+  async function headerContentMatch(breadcrumbs: Array<string | RegExp>): Promise<void> {
+    const bcs = documents.locator('.navigation-breadcrumb').locator('ion-breadcrumb');
+    expect(bcs).toHaveCount(breadcrumbs.length);
+    await expect(bcs).toHaveText(breadcrumbs, { useInnerText: true });
+  }
+
+  async function navigateDown(): Promise<void> {
+    await documents.locator('.folder-container').getByRole('listitem').nth(0).dblclick();
+  }
+
+  await navigateDown();
+  await createFolder(documents, 'Subdir 1');
+  await navigateDown();
+  await createFolder(documents, 'Subdir 2');
+  await navigateDown();
+  await createFolder(documents, 'Subdir 3');
+  await documents.locator('.sidebar').locator('#goHome').click();
+  await expect(documents).toBeWorkspacePage();
+  await expect(documents.locator('.workspace-card-item')).toHaveCount(1);
+  await documents.locator('.workspace-card-item').nth(0).locator('.icon-option-container').nth(0).click();
+  const contextMenu = documents.locator('.workspace-context-menu');
+  await expect(contextMenu).toBeVisible();
+  await contextMenu.locator('.menu-list').locator('ion-item-group').nth(1).locator('ion-item').nth(3).click();
+  await expect(documents).toBeWorkspaceHistoryPage();
+  await headerContentMatch(['wksp1']);
+  await navigateDown();
+  await headerContentMatch(['wksp1', 'Dir_Folder']);
+  await navigateDown();
+  await headerContentMatch(['wksp1', '', 'Subdir 1']);
+  await navigateDown();
+  await headerContentMatch(['wksp1', '', '', 'Subdir 2']);
+  await navigateDown();
+  await headerContentMatch(['wksp1', '', '', '', 'Subdir 3']);
+
+  const popoverItems = documents.locator('ion-popover').locator('.popover-item');
+  await clickOnBreadcrumb(1);
+  await expect(popoverItems).toHaveCount(3);
+  await popoverItems.nth(2).click();
+  await headerContentMatch(['wksp1', '', '', 'Subdir 2']);
+  await clickOnBreadcrumb(0);
+  await headerContentMatch(['wksp1']);
+
+  await setSmallDisplay(documents);
+  const smallBreadcrumbs = documents.locator('.navigation-breadcrumb').locator('.breadcrumb-small-container');
+
+  await expect(documents.locator('.navigation-breadcrumb').locator('ion-breadcrumbs')).not.toBeVisible();
+  await expect(smallBreadcrumbs).toBeVisible();
+  await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(1);
+  await expect(smallBreadcrumbs.locator('ion-text')).toHaveText('wksp1');
+  await navigateDown();
+  await expect(smallBreadcrumbs).toBeVisible();
+  await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(3);
+  await expect(smallBreadcrumbs.locator('ion-text').nth(0)).toHaveText('...');
+  await expect(smallBreadcrumbs.locator('ion-text').nth(1)).toHaveText('/');
+  await expect(smallBreadcrumbs.locator('ion-text').nth(2)).toHaveText('Dir_Folder');
+  await expect(smallBreadcrumbs.locator('.breadcrumb-popover-button')).toBeVisible();
+  await navigateDown();
+  await navigateDown();
+  await navigateDown();
+  await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(3);
+  await expect(smallBreadcrumbs.locator('ion-text').nth(0)).toHaveText('...');
+  await expect(smallBreadcrumbs.locator('ion-text').nth(1)).toHaveText('/');
+  await expect(smallBreadcrumbs.locator('ion-text').nth(2)).toHaveText('Subdir 3');
+  await smallBreadcrumbs.locator('.breadcrumb-popover-button').click();
+
+  await expect(popoverItems).toHaveCount(4);
+  await expect(popoverItems.nth(0)).toHaveText('wksp1');
+  await expect(popoverItems.nth(1)).toHaveText('Dir_Folder');
+  await expect(popoverItems.nth(2)).toHaveText('Subdir 1');
+  await expect(popoverItems.nth(3)).toHaveText('Subdir 2');
+  await popoverItems.nth(1).click();
+  await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(3);
+  await expect(smallBreadcrumbs.locator('ion-text').nth(0)).toHaveText('...');
+  await expect(smallBreadcrumbs.locator('ion-text').nth(1)).toHaveText('/');
+  await expect(smallBreadcrumbs.locator('ion-text').nth(2)).toHaveText('Dir_Folder');
+  await smallBreadcrumbs.locator('.breadcrumb-popover-button').click();
+  await expect(popoverItems).toHaveCount(1);
+  await expect(popoverItems).toHaveText('wksp1');
+  await popoverItems.click();
+  await expect(smallBreadcrumbs.locator('ion-text')).toHaveCount(1);
+  await expect(smallBreadcrumbs.locator('ion-text')).toHaveText('wksp1');
 });

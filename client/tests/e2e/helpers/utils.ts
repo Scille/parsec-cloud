@@ -280,11 +280,16 @@ export async function createWorkspace(workspacesPage: Page, name: string, displa
   await dismissToast(workspacesPage);
 }
 
-export async function createFolder(documentsPage: Page, name: string): Promise<void> {
-  const actionBar = documentsPage.locator('#folders-ms-action-bar');
-  const createFolderButton = actionBar.locator('.ms-action-bar-button:visible').nth(0);
-  await expect(createFolderButton).toHaveText('New folder');
-  await createFolderButton.click();
+export async function createFolder(documentsPage: Page, name: string, smallDisplay?: boolean): Promise<void> {
+  if (smallDisplay) {
+    await documentsPage.locator('#tab-bar').nth(1).locator('ion-fab-button').click();
+    await documentsPage.locator('#fab-modal').locator('.list-group-item').nth(0).click();
+  } else {
+    const actionBar = documentsPage.locator('#folders-ms-action-bar');
+    const createFolderButton = actionBar.locator('.ms-action-bar-button:visible').nth(0);
+    await expect(createFolderButton).toHaveText('New folder');
+    await createFolderButton.click();
+  }
   await fillInputModal(documentsPage, name);
 }
 
