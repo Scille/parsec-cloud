@@ -173,23 +173,12 @@ impl DeviceFile {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DeviceFileType {
     Keyring,
     Password,
     Recovery,
     Smartcard,
-}
-
-impl DeviceFileType {
-    pub fn dump(&self) -> Result<Vec<u8>, rmp_serde::encode::Error> {
-        rmp_serde::to_vec_named(self)
-    }
-
-    pub fn load(bytes: &[u8]) -> Result<Self, rmp_serde::decode::Error> {
-        rmp_serde::from_slice(bytes)
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -250,7 +239,7 @@ impl DeviceAccessStrategy {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct AvailableDevice {
     pub key_file_path: PathBuf,
     pub created_on: DateTime,
@@ -261,7 +250,6 @@ pub struct AvailableDevice {
     pub device_id: DeviceID,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
-    #[serde(rename = "type")]
     pub ty: DeviceFileType,
 }
 
