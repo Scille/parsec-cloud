@@ -19,7 +19,10 @@
           @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
           :image="SidebarToggle"
         />
-        <div class="topbar-left">
+        <div
+          class="topbar-left"
+          id="topbar-left"
+        >
           <div
             id="back-block"
             v-if="hasHistory() && !currentRouteIs(Routes.Workspaces) && !currentRouteIs(Routes.MyProfile)"
@@ -46,6 +49,8 @@
             <header-breadcrumbs
               :path-nodes="fullPath"
               @change="onNodeSelected"
+              :from-header-page="true"
+              :available-width="breadcrumbsWidth"
             />
           </div>
 
@@ -156,10 +161,10 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { home, notifications, search } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, ref, computed } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref, computed, watch } from 'vue';
 import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 
-const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
 const workspaceName = ref('');
@@ -172,6 +177,15 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const notificationCenterButton = ref();
 const showHeader = computed(() => {
   return !((currentRouteIs(Routes.Organization) || currentRouteIs(Routes.MyProfile)) && isSmallDisplay.value);
+});
+const breadcrumbsWidth = ref(0);
+
+const topbarWidthWatchCancel = watch([windowWidth, fullPath], () => {
+  const topbarWidth = document.getElementById('topbar-left')?.offsetWidth;
+  const backBlockWidth = document.getElementById('back-block')?.offsetWidth;
+  if (topbarWidth && backBlockWidth) {
+    breadcrumbsWidth.value = (topbarWidth - backBlockWidth) / 16;
+  }
 });
 
 const routeWatchCancel = watchRoute(async () => {
@@ -275,6 +289,7 @@ onUnmounted(async () => {
     hotkeyManager.unregister(hotkeys);
   }
   routeWatchCancel();
+  topbarWidthWatchCancel();
 });
 
 function getTitleForRoute(): Translatable {
@@ -435,6 +450,12 @@ async function openNotificationCenter(event: Event): Promise<void> {
 .topbar-left {
   display: flex;
   align-items: center;
+  margin-right: 0.5rem;
+  overflow: hidden;
+
+  @include ms.responsive-breakpoint('sm') {
+    gap: 0.5rem;
+  }
 
   &-workspaces-mobile {
     display: flex;
