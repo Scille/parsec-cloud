@@ -329,11 +329,8 @@ async def test_authenticated_vlob_create_rejected_by_sequester_service(
     sequestered_org: SequesteredOrgRpcClients,
     backend: Backend,
     monkeypatch: pytest.MonkeyPatch,
-    with_postgresql: bool,
+    xfail_if_postgresql: None,
 ) -> None:
-    if with_postgresql:
-        pytest.xfail("TODO: Webhook sequester service not implemented yet in PostgreSQL")
-
     outcome = await backend.sequester.update_config_for_service(
         organization_id=sequestered_org.organization_id,
         service_id=sequestered_org.sequester_service_2_id,
@@ -377,11 +374,8 @@ async def test_authenticated_vlob_create_sequester_service_unavailable(
     sequestered_org: SequesteredOrgRpcClients,
     backend: Backend,
     monkeypatch: pytest.MonkeyPatch,
-    with_postgresql: bool,
+    xfail_if_postgresql: None,
 ) -> None:
-    if with_postgresql:
-        pytest.xfail("TODO: Webhook sequester service not implemented yet in PostgreSQL")
-
     outcome = await backend.sequester.update_config_for_service(
         organization_id=sequestered_org.organization_id,
         service_id=sequestered_org.sequester_service_2_id,
