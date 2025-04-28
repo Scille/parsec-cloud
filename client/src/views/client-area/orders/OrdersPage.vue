@@ -17,7 +17,7 @@
       </div>
     </div>
 
-    <template v-if="orderRequests?.type === DataType.GetCustomOrderRequests && !error && organization && orderRequests">
+    <template v-if="orderRequests?.type === DataType.GetCustomOrderRequests && organization && orderRequests && !error">
       <order-in-progress
         v-for="order in orderRequests.requests"
         :key="order.id"

@@ -51,8 +51,13 @@
 .organization-filter .ms-search-input {
   border-color: var(--parsec-color-light-secondary-premiere);
   background: var(--parsec-color-light-secondary-premiere);
+  transition: border-color 0.15s ease-in-out;
 
   input::placeholder {
     color: var(--parsec-color-light-secondary-grey);
+  }
+
+  &:hover {
+    border-color: var(--parsec-color-light-secondary-light);
   }
 }

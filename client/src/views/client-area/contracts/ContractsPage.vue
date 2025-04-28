@@ -638,11 +638,12 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
       margin-left: auto;
 
       .custom-button {
-        background: var(--parsec-color-light-secondary-contrast);
+        background: var(--parsec-color-light-secondary-text);
+        border: none;
         color: var(--parsec-color-light-secondary-white);
 
         &:hover {
-          background: var(--parsec-color-light-secondary-text);
+          background: var(--parsec-color-light-secondary-contrast);
         }
       }
     }
@@ -751,6 +752,7 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
 }
 
 .organization-content {
+  margin-top: 2.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;

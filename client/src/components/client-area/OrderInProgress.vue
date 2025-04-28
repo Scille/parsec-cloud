@@ -36,7 +36,7 @@
 
     <!-- order details -->
     <div
-      v-if="open && orderDetails?.type === DataType.CustomOrderDetails"
+      v-if="open"
       class="order-content"
     >
       <div class="order-content-details">
@@ -46,7 +46,11 @@
         <!-- No organization created at this step, users and storage estimation -->
         <div
           class="details-list"
-          v-if="getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === (StatusStep.Received || StatusStep.Processing)"
+          v-if="
+            !request.organizationId &&
+            (getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Received ||
+              getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === StatusStep.Processing)
+          "
         >
           <div class="details-list-item">
             <ion-text class="details-list-item__title body-lg">
@@ -68,8 +72,9 @@
         <div
           class="details-list"
           v-if="
-            getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === (StatusStep.Confirmed || StatusStep.Available) &&
-            orderDetails
+            orderDetails &&
+            [StatusStep.Confirmed, StatusStep.InvoiceToBePaid, StatusStep.Available].includes(
+              getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName ?? StatusStep.Unknown)
           "
         >
           <div class="details-list-item">
@@ -133,7 +138,10 @@
           </div>
         </div>
 
-        <div class="details-list">
+        <div
+          class="details-list"
+          v-if="orderDetails"
+        >
           <!-- comment -->
           <div
             v-if="request.status === CustomOrderRequestStatus.Received || request.status === CustomOrderRequestStatus.Processing"
@@ -212,8 +220,9 @@
         <!-- invoice details -->
         <div
           v-if="
-            getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName === (StatusStep.Confirmed || StatusStep.InvoiceToBePaid) &&
-            orderDetails
+            orderDetails &&
+            [StatusStep.Confirmed, StatusStep.InvoiceToBePaid].includes(
+              getStatus(customOrderBmsStatus, customOrderSellsyStatus)?.stepName ?? StatusStep.Unknown)
           "
           class="details-invoice"
         >
