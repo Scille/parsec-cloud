@@ -33,7 +33,6 @@
         {{ $msTranslate(I18n.formatDate(request.orderDate, 'short')) }}
       </ion-text>
     </div>
-
     <!-- order details -->
     <div
       v-if="open"
@@ -57,7 +56,45 @@
               <ion-icon :icon="people" />
               {{ $msTranslate('clientArea.orders.new.usersNeed') }}
             </ion-text>
-            <ion-text class="details-list-item__data subtitles-normal">{{ $msTranslate(getUserOptions(request.users)) }}</ion-text>
+            <ion-text class="details-list-item__data subtitles-normal">
+              {{
+                $msTranslate({
+                  key: 'clientArea.orders.quantityOrdered.administrator',
+                  data: { count: request.adminUsers },
+                  count: request.adminUsers,
+                })
+              }}
+              <ion-icon
+                :icon="checkmark"
+                class="checkmark-icon"
+              />
+            </ion-text>
+            <ion-text class="details-list-item__data subtitles-normal">
+              {{
+                $msTranslate({
+                  key: 'clientArea.orders.quantityOrdered.standard',
+                  data: { count: request.standardUsers },
+                  count: request.standardUsers,
+                })
+              }}
+              <ion-icon
+                :icon="checkmark"
+                class="checkmark-icon"
+              />
+            </ion-text>
+            <ion-text class="details-list-item__data subtitles-normal">
+              {{
+                $msTranslate({
+                  key: 'clientArea.orders.quantityOrdered.outsider',
+                  data: { count: request.outsiderUsers },
+                  count: request.outsiderUsers,
+                })
+              }}
+              <ion-icon
+                :icon="checkmark"
+                class="checkmark-icon"
+              />
+            </ion-text>
           </div>
           <div class="details-list-item">
             <ion-text class="details-list-item__title body-lg">
@@ -153,7 +190,7 @@
               {{ $msTranslate('clientArea.orders.new.comment') }}
             </ion-text>
             <ion-text class="details-list-item__data subtitles-normal">
-              {{ $msTranslate(request.comment) }}
+              {{ $msTranslate(request.formula) }}
             </ion-text>
           </div>
           <!-- Starting date -->
@@ -304,21 +341,6 @@ enum StatusStep {
   Standby = 'standby',
   Cancelled = 'cancelled',
   Unknown = 'unknown',
-}
-
-function getUserOptions(user: number): Translatable {
-  switch (user) {
-    case 50:
-      return 'clientArea.orders.request.userNeeds.choices.50';
-    case 100:
-      return 'clientArea.orders.request.userNeeds.choices.100';
-    case 300:
-      return 'clientArea.orders.request.userNeeds.choices.300';
-    case 9999:
-      return 'clientArea.orders.request.userNeeds.choices.more';
-    default:
-      return '';
-  }
 }
 
 function getStorageOptions(storage: number): Translatable {
@@ -499,7 +521,7 @@ function toggleOpen(): boolean {
     }
     .available {
       background-color: var(--parsec-color-light-success-50);
-      color: var(--parsec-color-light-success-500);
+      color: var(--parsec-color-light-success-700);
     }
     .standby {
       background-color: var(--parsec-color-tags-orange-50);
