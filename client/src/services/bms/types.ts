@@ -186,12 +186,15 @@ interface RefreshTokenResultData {
 
 interface CustomOrderRequest {
   id: string;
+  label: string;
   organizationId?: OrganizationID;
   describedNeeds: string;
-  users: number;
+  adminUsers: number;
+  standardUsers: number;
+  outsiderUsers: number;
   storage: number;
   status: CustomOrderRequestStatus;
-  comment: string;
+  formula?: string;
   orderDate: DateTime;
 }
 

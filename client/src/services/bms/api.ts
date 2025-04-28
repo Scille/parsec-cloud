@@ -659,15 +659,17 @@ async function getCustomOrderRequests(token: AuthenticationToken): Promise<BmsRe
       isError: false,
       data: {
         type: DataType.GetCustomOrderRequests,
-        requests: axiosResponse.data.requests.map((req: any) => {
+        requests: axiosResponse.data.map((req: any) => {
           return {
             id: req.id,
-            organizationId: req.parsec_id,
+            organizationId: req.organization_name,
             describedNeeds: req.described_need,
-            users: req.standard_users,
+            adminUsers: req.admin_users,
+            standardUsers: req.standard_users,
+            outsiderUsers: req.outsider_users,
             storage: req.storage,
             status: req.status,
-            comment: req.comment,
+            formula: req.formula,
             orderDate: DateTime.fromISO(axiosResponse.data.created_at),
           };
         }),
