@@ -74,12 +74,15 @@ async function setupNewPage(page: MsPage, testbedPath?: string): Promise<void> {
   page.isReleased = false;
   page.openNewTab = async (): Promise<MsPage> => {
     const newTab = (await page.context().newPage()) as MsPage;
+    newTab.skipTestbedRelease = true;
     await setupNewPage(newTab, testbedPath);
     return newTab;
   };
   page.release = async (): Promise<void> => {
     if (!page.isReleased) {
-      await dropTestbed(page);
+      if (!page.skipTestbedRelease) {
+        await dropTestbed(page);
+      }
       await page.close();
     }
     page.isReleased = true;

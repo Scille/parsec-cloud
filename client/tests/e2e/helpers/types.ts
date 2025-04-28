@@ -8,6 +8,7 @@ export interface MsPage extends Page {
   orgInfo: OrganizationInformation;
   release: () => Promise<void>;
   isReleased: boolean;
+  skipTestbedRelease: boolean;
   openNewTab: () => Promise<MsPage>;
 }
 
