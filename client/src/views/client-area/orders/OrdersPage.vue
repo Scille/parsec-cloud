@@ -16,6 +16,7 @@
         </ion-button>
       </div>
     </div>
+    {{ orderRequests }}
 
     <template v-if="orderRequests?.type === DataType.GetCustomOrderRequests && organization && orderRequests && !error">
       <order-in-progress
