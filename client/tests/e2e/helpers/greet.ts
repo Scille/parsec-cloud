@@ -121,4 +121,15 @@ export async function addUser(
   await expect(greetData.modal).toBeHidden();
   await expect(usersPage).toShowToast(`${userName} can now access to the organization.`, 'Success');
   await expect(usersPage.locator('#users-page-user-list').getByRole('listitem')).toHaveCount(currentUserCount + 1);
+
+  // Joiner sets password
+  const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
+  await passwordChoice.scrollIntoViewIfNeeded();
+  await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
+  await expect(joinData.nextButton).toHaveDisabledAttribute();
+  await fillIonInput(passwordChoice.locator('ion-input').nth(1), 'AVeryL0ngP@ssw0rd');
+  await joinData.nextButton.scrollIntoViewIfNeeded();
+  await expect(joinData.nextButton).not.toHaveDisabledAttribute();
+  await joinData.nextButton.click();
+  await expect(joinData.title).toHaveText(/^You have joined the organization Org\d+!$/);
 }
