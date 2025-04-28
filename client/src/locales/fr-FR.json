@@ -1601,6 +1601,7 @@
             "data": "Données",
             "metadata": "Métadonnées",
             "error": "Impossible de récupérer les données de l'organisation.",
+            "notBootstrapped": "L'organisation n'est pas encore configurée.",
             "multipleOrganizations": "Vous possédez plusieurs organisations. Veuillez en choisir une en utilisant le bouton dans le coin supérieur gauche ou sélectionnez-là ci-dessous pour voir ses statistiques.",
             "noStats": "Aucune statistique à afficher.",
             "remaining": "restant",
