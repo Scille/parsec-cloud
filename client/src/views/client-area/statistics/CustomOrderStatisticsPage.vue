@@ -304,7 +304,14 @@
 </template>
 
 <script setup lang="ts">
-import { BmsAccessInstance, DataType, BmsOrganization, OrganizationStatsResultData, CustomOrderDetailsResultData } from '@/services/bms';
+import {
+  BmsAccessInstance,
+  DataType,
+  BmsOrganization,
+  OrganizationStatsResultData,
+  CustomOrderDetailsResultData,
+  OrganizationStatusResultData,
+} from '@/services/bms';
 import { onMounted, ref, computed } from 'vue';
 import { IonCard, IonText, IonIcon, IonTitle, IonSkeletonText } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
@@ -334,14 +341,27 @@ const querying = ref(true);
 const error = ref('');
 
 onMounted(async () => {
-  if (!isDefaultOrganization(props.currentOrganization)) {
-    const orgStatsResponse = await BmsAccessInstance.get().getOrganizationStats(props.currentOrganization.bmsId);
+  try {
+    if (isDefaultOrganization(props.currentOrganization)) {
+      return;
+    }
 
-    if (!orgStatsResponse.isError && orgStatsResponse.data && orgStatsResponse.data.type === DataType.OrganizationStats) {
-      organizationStats.value = orgStatsResponse.data;
-      totalData.value = organizationStats.value.dataSize + organizationStats.value.metadataSize;
-    } else {
-      error.value = 'clientArea.statistics.error';
+    if (!isDefaultOrganization(props.currentOrganization)) {
+      const orgStatsResponse = await BmsAccessInstance.get().getOrganizationStats(props.currentOrganization.bmsId);
+
+      if (!orgStatsResponse.isError && orgStatsResponse.data && orgStatsResponse.data.type === DataType.OrganizationStats) {
+        organizationStats.value = orgStatsResponse.data;
+        totalData.value = organizationStats.value.dataSize + organizationStats.value.metadataSize;
+      } else {
+        error.value = 'clientArea.statistics.error';
+      }
+    }
+
+    const organizationStatusResp = await BmsAccessInstance.get().getOrganizationStats(props.currentOrganization.bmsId);
+    const isBootstrapped = (organizationStatusResp.data as OrganizationStatusResultData).isBootstrapped ?? false;
+
+    if (isBootstrapped) {
+      return;
     }
 
     const contractDetailsResponse = await BmsAccessInstance.get().getCustomOrderDetails(props.currentOrganization);
@@ -352,8 +372,9 @@ onMounted(async () => {
     ) {
       contractDetails.value = contractDetailsResponse.data;
     }
+  } finally {
+    querying.value = false;
   }
-  querying.value = false;
 });
 
 async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
