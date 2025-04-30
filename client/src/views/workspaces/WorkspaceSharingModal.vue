@@ -10,7 +10,7 @@
         <div
           class="report-text-toggle"
           @click="isOpenReportTextContainer = !isOpenReportTextContainer"
-          v-if="isOnlyOwner() || orgHasExternalUsers"
+          v-if="isOnlyOwner() || (showCheckboxes && orgHasExternalUsers)"
         >
           <ion-text class="report-text-toggle__text button-medium">{{ $msTranslate('WorkspaceSharing.information') }}</ion-text>
           <ion-icon
@@ -41,7 +41,7 @@
           <ms-report-text
             :theme="MsReportTheme.Info"
             id="profile-assign-info"
-            v-if="orgHasExternalUsers"
+            v-if="showCheckboxes && orgHasExternalUsers"
           >
             <i18n-t
               keypath="WorkspaceSharing.batchSharing.outsiderRoleWarning"
@@ -144,7 +144,7 @@
               :client-profile="ownProfile"
               :client-role="ownRole"
               :is-current-user="true"
-              class="current-user"
+              class="current-user user-member-item"
             />
             <div
               v-for="entry in filteredSharedUserRoles"
@@ -159,7 +159,7 @@
                 v-model="entry.isSelected"
               />
               <workspace-user-role
-                class="workspace-user-role"
+                class="workspace-user-role user-member-item"
                 :class="showCheckboxes ? 'current-user' : ''"
                 :disabled="isSelectDisabled(entry.role) || showCheckboxes"
                 :user="entry.user"

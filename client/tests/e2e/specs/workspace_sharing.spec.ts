@@ -6,7 +6,7 @@ msTest('Workspace sharing modal default state', async ({ workspaceSharingModal }
   await expect(workspaceSharingModal.locator('.ms-modal-header__title')).toHaveText('wksp1');
   const content = workspaceSharingModal.locator('.ms-modal-content');
   await expect(content.locator('.only-owner-warning')).toBeVisible();
-  const users = content.locator('.user-list-members').locator('.content');
+  const users = content.locator('.user-member-item');
   await expect(users).toHaveCount(2);
   await expect(users.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
   await expect(users.locator('.filter-button')).toHaveText(['Owner', 'Reader']);
@@ -22,7 +22,7 @@ msTest('Workspace sharing modal default state', async ({ workspaceSharingModal }
 
 msTest('Update user role', async ({ workspaceSharingModal }) => {
   const content = workspaceSharingModal.locator('.ms-modal-content');
-  const users = content.locator('.user-list-members').locator('.content');
+  const users = content.locator('.user-member-item');
 
   await expect(users.nth(1).locator('.filter-button')).toHaveText('Reader');
   await users.nth(1).locator('.filter-button').click();
@@ -37,7 +37,7 @@ msTest('Update user role', async ({ workspaceSharingModal }) => {
 
 msTest('Share with external', async ({ workspaceSharingModal }) => {
   const content = workspaceSharingModal.locator('.ms-modal-content');
-  const users = content.locator('.user-list-members').locator('.content');
+  const users = content.locator('.user-member-item');
   const suggestions = content.locator('.user-list-suggestions-item');
 
   await expect(users).toHaveCount(2);
@@ -94,7 +94,7 @@ msTest.skip('Unshare workspace', async ({ workspaceSharingModal }) => {
 msTest('Filter users', async ({ workspaceSharingModal }) => {
   const content = workspaceSharingModal.locator('.ms-modal-content');
   const searchInput = content.locator('.ms-search-input');
-  const members = content.locator('.user-list-members').locator('.content');
+  const members = content.locator('.user-member-item');
   const suggestions = workspaceSharingModal.locator('.user-list-suggestions-item');
   await expect(members.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
   await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
@@ -116,7 +116,7 @@ msTest('Filter users', async ({ workspaceSharingModal }) => {
 msTest('Filter users no match', async ({ workspaceSharingModal }) => {
   const content = workspaceSharingModal.locator('.ms-modal-content');
   const searchInput = content.locator('.ms-search-input');
-  const members = content.locator('.user-list-members').locator('.content');
+  const members = content.locator('.user-member-item');
   const suggestions = workspaceSharingModal.locator('.user-list-suggestions-item');
   await expect(members.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
   await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
