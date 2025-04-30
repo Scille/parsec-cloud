@@ -1862,6 +1862,7 @@
         },
         "orders": {
             "loading": "Vos commandes arrivent...",
+            "noOrders": "Vous n'avez pas de commandes en cours.",
             "new": {
                 "title": "Vous avez besoin de créer une nouvelle organisation ?",
                 "button": "Demander une nouvelle organisation",

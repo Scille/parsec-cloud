@@ -97,7 +97,7 @@ msTest('Test no invoices', async ({ clientAreaCustomOrder }) => {
   const content = clientAreaCustomOrder.locator('.client-page-invoices');
   await expect(content.locator('.invoices-year-content-list-item')).toHaveCount(0);
   await expect(content.locator('.no-invoices')).toBeVisible();
-  await expect(content.locator('.no-invoices')).toHaveText("You don't have any invoice yet.");
+  await expect(content.locator('.no-invoices')).toHaveText('You do not have any invoice yet.');
 });
 
 for (const orgMode of ['oneOrg', 'allOrgs']) {

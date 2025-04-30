@@ -670,7 +670,7 @@ async function getCustomOrderRequests(token: AuthenticationToken): Promise<BmsRe
             storage: req.storage,
             status: req.status,
             formula: req.formula,
-            orderDate: DateTime.fromISO(axiosResponse.data.created_at),
+            orderDate: DateTime.fromISO(req.created_at),
           };
         }),
       },

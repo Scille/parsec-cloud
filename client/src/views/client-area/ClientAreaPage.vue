@@ -111,12 +111,7 @@
                 :organizations="organizations"
                 @organization-selected="onOrganizationSelected"
               />
-              <orders-page
-                v-if="currentPage === ClientAreaPages.Orders"
-                :organization="currentOrganization"
-                @organization-selected="onOrganizationSelected"
-                :information-manager="informationManager"
-              />
+              <orders-page v-if="currentPage === ClientAreaPages.Orders" />
               <custom-order-billing-details-page
                 v-if="currentPage === ClientAreaPages.CustomOrderBillingDetails"
                 :organization="currentOrganization"
@@ -250,7 +245,7 @@ onMounted(async () => {
     }
 
     if (billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) {
-      // If there are no organization has been paid, we set orders, otherwise we default to contracts
+      // If there are no paid organizations, we show orders, otherwise we default to contracts
       currentPage.value = ClientAreaPages.Orders;
       // case where the user selected one specific organization
       if (!isDefaultOrganization(currentOrganization.value)) {
@@ -258,12 +253,13 @@ onMounted(async () => {
           currentPage.value = ClientAreaPages.Contracts;
         }
       } else {
+        let allPaid = organizations.value.length > 0;
         // Check if all organizations have been paid
         for (const org of organizations.value) {
-          if (await _isCustomOrderPaid(org)) {
-            currentPage.value = ClientAreaPages.Contracts;
-            break;
-          }
+          allPaid &&= await _isCustomOrderPaid(org);
+        }
+        if (allPaid) {
+          currentPage.value = ClientAreaPages.Contracts;
         }
       }
     } else {

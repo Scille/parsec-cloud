@@ -344,14 +344,21 @@ export const msTest = debugTest.extend<{
     await MockBms.mockOrganizationStatus(home);
     await MockBms.mockBillingDetails(home);
     await MockBms.mockGetInvoices(home);
-    await MockBms.mockCreateCustomOrderRequest(home);
+    await MockBms.mockCustomOrderRequest(home);
 
     const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');
     await button.click();
+    await expect(home.locator('.saas-login')).toBeVisible();
+    await expect(home.locator('.saas-login__title')).toHaveText('Log in to your customer account');
+    const loginButton = home.locator('.saas-login-button').locator('ion-button');
+    await expect(loginButton).toHaveAttribute('disabled');
     await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
+    await home.waitForTimeout(100);
     await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
-    await home.locator('.saas-login-button').locator('ion-button').click();
+    await home.waitForTimeout(100);
+    await expect(loginButton).not.toHaveAttribute('disabled');
+    await loginButton.click();
     await expect(home).toHaveURL(/.+\/clientArea$/);
 
     // Switch to first org
@@ -378,12 +385,14 @@ export const msTest = debugTest.extend<{
     await MockBms.mockGetInvoices(home);
     await MockBms.mockCustomOrderStatus(home);
     await MockBms.mockCustomOrderDetails(home);
-    await MockBms.mockCreateCustomOrderRequest(home);
+    await MockBms.mockCustomOrderRequest(home);
     await MockBms.mockGetCustomOrderInvoices(home);
 
     const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');
     await button.click();
+    await expect(home.locator('.saas-login')).toBeVisible();
+    await expect(home.locator('.saas-login__title')).toHaveText('Log in to your customer account');
     const loginButton = home.locator('.saas-login-button').locator('ion-button');
     await expect(loginButton).toHaveAttribute('disabled');
     await fillIonInput(home.locator('.saas-login-content').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);

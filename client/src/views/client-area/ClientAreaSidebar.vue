@@ -382,10 +382,12 @@ onMounted(async () => {
   }
   if (billingSystem.value === BillingSystem.CustomOrder || billingSystem.value === BillingSystem.ExperimentalCandidate) {
     showMenu.value = true;
-    const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(props.currentOrganization);
-    if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus) {
-      if (statusResp.data.status === CustomOrderStatus.NothingLinked) {
-        showMenu.value = false;
+    if (!isDefaultOrganization(props.currentOrganization)) {
+      const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(props.currentOrganization);
+      if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus) {
+        if (statusResp.data.status === CustomOrderStatus.NothingLinked) {
+          showMenu.value = false;
+        }
       }
     }
   } else {

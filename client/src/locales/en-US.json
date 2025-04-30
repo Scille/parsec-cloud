@@ -1613,7 +1613,7 @@
         },
         "invoices": {
             "title": "Preview of your invoices",
-            "noInvoice": "You don't have any invoice yet.",
+            "noInvoice": "You do not have any invoice yet.",
             "filter": {
                 "title": "Filters:",
                 "year": "Year",
@@ -1735,7 +1735,7 @@
             },
             "invoices": {
                 "title": "Last invoices",
-                "noBill": "You don't have any bill yet",
+                "noBill": "You do not have any bill yet",
                 "date": "Date",
                 "organization": "Organization",
                 "price": {
@@ -1744,7 +1744,7 @@
                 },
                 "status": "Status",
                 "download": "Download",
-                "noInvoices": "You don't have any invoices yet"
+                "noInvoices": "You do not have any invoices yet"
             },
             "payment": {
                 "title": "Payment method",
@@ -1820,7 +1820,7 @@
             "loading": "Your contract arrives",
             "title": "Contract n°{number}",
             "previewOrganization": "Use of your organization",
-            "noContract": "You don't have any contract yet",
+            "noContract": "You do not have any contract yet",
             "duration": "Duration",
             "from": "From",
             "to": "To",
@@ -1852,7 +1852,7 @@
             },
             "invoice": {
                 "title": "Invoices {number}",
-                "noInvoice": "You don't have any invoice yet",
+                "noInvoice": "You do not have any invoice yet",
                 "paymentMethod": "Payment method: ",
                 "transfer": "Transfer",
                 "date": "Date: ",
@@ -1863,8 +1863,9 @@
         },
         "orders": {
             "loading": "Your orders are loading...",
+            "noOrders": "You do not have any pending orders.",
             "new": {
-                "title": "You need to create a new organization?",
+                "title": "Do you need to create a new organization?",
                 "button": "Request a new organization",
                 "sent": "Your request has been sent.",
                 "details": "Order details",
@@ -1906,7 +1907,7 @@
             },
             "progress": {
                 "orderNumber": "Order n°{number}",
-                "noOrder": "You don't have any order yet"
+                "noOrder": "You do not have any order yet"
             },
             "passed": {
                 "title": "Orders placed",
