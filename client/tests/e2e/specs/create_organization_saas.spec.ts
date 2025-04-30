@@ -164,8 +164,8 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(modal.locator('.creation-page').locator('.closeBtn')).toBeHidden();
   await home.waitForTimeout(1000);
 
-  await expect(modal.locator('.created-page')).toBeVisible();
   await expect(modal.locator('.creation-page')).toBeHidden();
+  await expect(modal.locator('.created-page')).toBeVisible();
   await expect(modal.locator('.created-page').locator('.closeBtn')).toBeHidden();
   await modal.locator('.created-page-footer').locator('ion-button').click();
   await expect(modal).toBeHidden();

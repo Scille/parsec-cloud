@@ -81,7 +81,7 @@ msTest('Empty invoice list', async ({ clientArea }) => {
   await expect(clientArea.locator('.invoices-year:visible')).toHaveCount(0);
   await expect(clientArea.locator('.main-content').locator('.form-error')).toBeHidden();
   await expect(clientArea.locator('.main-content').locator('.no-invoices')).toBeVisible();
-  await expect(clientArea.locator('.main-content').locator('.no-invoices')).toHaveText("You don't have any invoice yet.");
+  await expect(clientArea.locator('.main-content').locator('.no-invoices')).toHaveText('You do not have any invoice yet.');
 });
 
 msTest('Filter the invoices', async ({ clientArea }) => {

@@ -7,12 +7,16 @@ import { DEFAULT_ORGANIZATION_DATA_SLICE, DEFAULT_USER_INFORMATION } from '@test
 import { MsPage } from '@tests/e2e/helpers/types';
 import { DateTime } from 'luxon';
 
-async function mockRoute(
-  page: Page,
-  url: string | RegExp,
-  options: MockRouteOptions | undefined,
-  handler: (route: Route) => Promise<void>,
-): Promise<void> {
+type RouteHandler = (route: Route) => Promise<void>;
+
+interface MethodHandlers {
+  GET?: RouteHandler;
+  POST?: RouteHandler;
+  PUT?: RouteHandler;
+  PATCH?: RouteHandler;
+}
+
+async function mockRoute(page: Page, url: string | RegExp, options: MockRouteOptions | undefined, handlers: MethodHandlers): Promise<void> {
   async function _handleError(route: Route, options: MockMethodOptions): Promise<boolean> {
     if (options.timeout) {
       await route.abort('timedout');
@@ -50,6 +54,15 @@ async function mockRoute(
       if (await _handleError(route, options.PATCH)) {
         return;
       }
+    }
+
+    const handler = handlers[method as keyof RouteHandler] as RouteHandler;
+    if (!handler) {
+      console.warn(`${method} ${url}: Method not defined`);
+      await route.fulfill({
+        status: 405,
+      });
+      return;
     }
 
     await handler(route);
@@ -111,6 +124,7 @@ function createCustomOrderInvoices(overload: MockCustomOrderDetailsOverload = {}
     invoices.push({
       id: `custom_order_id${i + 1}`,
       created: overload.created ? overload.created.toISO() : licenseStart.toISO(),
+      due_date: licenseEnd.toISO(),
       number: `FACT00${i + 1}`,
       status: overload.status ? overload.status : STATUSES[Math.floor(Math.random() * STATUSES.length)],
       amounts: {
@@ -184,14 +198,16 @@ async function mockLogin(page: Page, options?: MockRouteOptions): Promise<void> 
   };
   const TOKEN = btoa(JSON.stringify(TOKEN_RAW));
 
-  await mockRoute(page, '**/api/token', options, async (route) => {
-    await route.fulfill({
-      status: 200,
-      json: {
-        access: TOKEN,
-        refresh: TOKEN,
-      },
-    });
+  await mockRoute(page, '**/api/token', options, {
+    POST: async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          access: TOKEN,
+          refresh: TOKEN,
+        },
+      });
+    },
   });
 }
 
@@ -201,8 +217,8 @@ interface MockUserOverload {
 }
 
 async function mockUserRoute(page: MsPage, overload: MockUserOverload = {}, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}`, options, async (route) => {
-    if (route.request().method() === 'GET') {
+  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}`, options, {
+    GET: async (route) => {
       let client = null;
       if (!overload.noClient) {
         client = {
@@ -225,7 +241,8 @@ async function mockUserRoute(page: MsPage, overload: MockUserOverload = {}, opti
           client: client,
         },
       });
-    } else if (route.request().method() === 'PATCH') {
+    },
+    PATCH: async (route) => {
       const data = await route.request().postDataJSON();
       if (data.client) {
         if (data.client.firstname) {
@@ -247,16 +264,13 @@ async function mockUserRoute(page: MsPage, overload: MockUserOverload = {}, opti
       await route.fulfill({
         status: 200,
       });
-    }
+    },
   });
 }
 
 async function mockCreateOrganization(page: Page, bootstrapAddr: string, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(
-    page,
-    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations`,
-    options,
-    async (route) => {
+  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations`, options, {
+    POST: async (route) => {
       await route.fulfill({
         status: 201,
         json: {
@@ -264,44 +278,47 @@ async function mockCreateOrganization(page: Page, bootstrapAddr: string, options
         },
       });
     },
-  );
+  });
 }
 
-async function mockListOrganizations(page: MsPage, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(
-    page,
-    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations`,
-    options,
-    async (route) => {
+interface MockListOrganizationOverload {
+  noOrg?: boolean;
+}
+
+async function mockListOrganizations(page: MsPage, options?: MockRouteOptions, overload?: MockListOrganizationOverload): Promise<void> {
+  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations`, options, {
+    GET: async (route) => {
+      const orgs = [];
+      if (!overload?.noOrg) {
+        orgs.push({
+          pk: page.orgInfo.bmsId,
+          created_at: '2024-12-04T00:00:00.000',
+          expiration_date: null,
+          name: page.orgInfo.name,
+          parsec_id: page.orgInfo.name,
+          suffix: page.orgInfo.name,
+          stripe_subscription_id: 'stripe_id',
+          bootstrap_link: '',
+        });
+        orgs.push({
+          pk: `${page.orgInfo.bmsId}-2`,
+          created_at: '2024-12-04T00:00:00.000',
+          expiration_date: null,
+          name: page.orgInfo.name,
+          parsec_id: `${page.orgInfo.name}-2`,
+          suffix: `${page.orgInfo.name}-2`,
+          stripe_subscription_id: 'stripe_id2',
+          bootstrap_link: '',
+        });
+      }
       await route.fulfill({
         status: 200,
         json: {
-          results: [
-            {
-              pk: page.orgInfo.bmsId,
-              created_at: '2024-12-04T00:00:00.000',
-              expiration_date: null,
-              name: page.orgInfo.name,
-              parsec_id: page.orgInfo.name,
-              suffix: page.orgInfo.name,
-              stripe_subscription_id: 'stripe_id',
-              bootstrap_link: '',
-            },
-            {
-              pk: `${page.orgInfo.bmsId}-2`,
-              created_at: '2024-12-04T00:00:00.000',
-              expiration_date: null,
-              name: page.orgInfo.name,
-              parsec_id: `${page.orgInfo.name}-2`,
-              suffix: `${page.orgInfo.name}-2`,
-              stripe_subscription_id: 'stripe_id2',
-              bootstrap_link: '',
-            },
-          ],
+          results: orgs,
         },
       });
     },
-  );
+  });
 }
 
 interface MockOrganizationStatsOverload {
@@ -337,20 +354,22 @@ async function mockOrganizationStats(page: Page, overload: MockOrganizationStats
     // eslint-disable-next-line max-len
     `*/**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/*/stats`,
     options,
-    async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: {
-          users_per_profile_detail: usersPerProfileDetail,
-          data_size: overload.dataSize ?? 400000000000,
-          metadata_size: overload.metadataSize ?? 400000000,
-          free_slice_size: overload.freeSliceSize ?? DEFAULT_ORGANIZATION_DATA_SLICE.free,
-          paying_slice_size: overload.payingSliceSize ?? DEFAULT_ORGANIZATION_DATA_SLICE.paying,
-          users: overload.users ?? 203,
-          active_users: overload.activeUsers ?? 59,
-          status: overload.status ?? 'ok',
-        },
-      });
+    {
+      GET: async (route) => {
+        await route.fulfill({
+          status: 200,
+          json: {
+            users_per_profile_detail: usersPerProfileDetail,
+            data_size: overload.dataSize ?? 400000000000,
+            metadata_size: overload.metadataSize ?? 400000000,
+            free_slice_size: overload.freeSliceSize ?? DEFAULT_ORGANIZATION_DATA_SLICE.free,
+            paying_slice_size: overload.payingSliceSize ?? DEFAULT_ORGANIZATION_DATA_SLICE.paying,
+            users: overload.users ?? 203,
+            active_users: overload.activeUsers ?? 59,
+            status: overload.status ?? 'ok',
+          },
+        });
+      },
     },
   );
 }
@@ -372,17 +391,19 @@ async function mockOrganizationStatus(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/*/status`,
     options,
-    async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: {
-          active_users_limit: overload.activeUsersLimit ?? 1000,
-          is_bootstrapped: overload.isBootstrapped ?? true,
-          is_frozen: overload.isFrozen ?? false,
-          is_initialized: overload.isInitialized ?? true,
-          user_profile_outsider_allowed: overload.outsiderAllowed ?? true,
-        },
-      });
+    {
+      GET: async (route) => {
+        await route.fulfill({
+          status: 200,
+          json: {
+            active_users_limit: overload.activeUsersLimit ?? 1000,
+            is_bootstrapped: overload.isBootstrapped ?? true,
+            is_frozen: overload.isFrozen ?? false,
+            is_initialized: overload.isInitialized ?? true,
+            user_profile_outsider_allowed: overload.outsiderAllowed ?? true,
+          },
+        });
+      },
     },
   );
 }
@@ -392,11 +413,8 @@ interface MockGetInvoicesOverload {
 }
 
 async function mockGetInvoices(page: MsPage, overload: MockGetInvoicesOverload = {}, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(
-    page,
-    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/invoices`,
-    options,
-    async (route) => {
+  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/invoices`, options, {
+    GET: async (route) => {
       let invoices = [];
       for (let year = 2019; year < 2022; year++) {
         for (let month = 1; month < 13; month++) {
@@ -425,7 +443,7 @@ async function mockGetInvoices(page: MsPage, overload: MockGetInvoicesOverload =
         },
       });
     },
-  );
+  });
 }
 
 interface MockBillingDetailsOverload {
@@ -443,72 +461,68 @@ interface MockBillingDetailsOverload {
 }
 
 async function mockBillingDetails(page: MsPage, overload: MockBillingDetailsOverload = {}, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(
-    page,
-    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/billing_details`,
-    options,
-    async (route) => {
-      if (route.request().method() === 'GET') {
-        const paymentMethods = [];
-        for (let i = 0; i < (overload.cardsCount ?? 1); i++) {
-          paymentMethods.push({
-            type: 'card',
-            id: `card${i}`,
-            brand: 'mastercard',
-            exp_date: '12/47',
-            last_digits: '4444',
-            default: true,
-          });
-        }
-        for (let i = 0; i < (overload.sepaCount ?? 1); i++) {
-          paymentMethods.push({
-            type: 'debit',
-            id: `debit${i}`,
-            bank_name: 'Bank',
-            last_digits: '1234',
-            default: overload.cardsCount === undefined || overload.cardsCount === 0 ? true : false,
-          });
-        }
-        await route.fulfill({
-          status: 200,
-          json: {
-            email: overload.email ?? page.userData.email,
-            name: overload.name ?? `${page.userData.firstName} ${page.userData.lastName}`,
-            address: {
-              line1: (overload.address && overload.address.line1) ?? page.userData.address.line1,
-              line2: (overload.address && overload.address.line2) ?? '',
-              city: (overload.address && overload.address.city) ?? page.userData.address.city,
-              postal_code: (overload.address && overload.address.postalCode) ?? page.userData.address.postalCode,
-              country: (overload.address && overload.address.country) ?? page.userData.address.country,
-            },
-            payment_methods: paymentMethods,
-          },
-        });
-      } else if (route.request().method() === 'PATCH') {
-        const data = await route.request().postDataJSON();
-        if (data.address) {
-          if (data.address.line1) {
-            page.userData.address.line1 = data.address.line1;
-          }
-          if (data.address.line2) {
-            page.userData.address.line2 = data.address.line2;
-          }
-          if (data.address.postal_code) {
-            page.userData.address.postalCode = data.address.postal_code;
-          }
-          if (data.address.city) {
-            page.userData.address.line1 = data.address.city;
-          }
-          if (data.address.country) {
-            page.userData.address.line1 = data.address.country;
-          }
-        }
-        await route.fulfill({
-          status: 200,
+  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/billing_details`, options, {
+    GET: async (route) => {
+      const paymentMethods = [];
+      for (let i = 0; i < (overload.cardsCount ?? 1); i++) {
+        paymentMethods.push({
+          type: 'card',
+          id: `card${i}`,
+          brand: 'mastercard',
+          exp_date: '12/47',
+          last_digits: '4444',
+          default: true,
         });
       }
+      for (let i = 0; i < (overload.sepaCount ?? 1); i++) {
+        paymentMethods.push({
+          type: 'debit',
+          id: `debit${i}`,
+          bank_name: 'Bank',
+          last_digits: '1234',
+          default: overload.cardsCount === undefined || overload.cardsCount === 0 ? true : false,
+        });
+      }
+      await route.fulfill({
+        status: 200,
+        json: {
+          email: overload.email ?? page.userData.email,
+          name: overload.name ?? `${page.userData.firstName} ${page.userData.lastName}`,
+          address: {
+            line1: (overload.address && overload.address.line1) ?? page.userData.address.line1,
+            line2: (overload.address && overload.address.line2) ?? '',
+            city: (overload.address && overload.address.city) ?? page.userData.address.city,
+            postal_code: (overload.address && overload.address.postalCode) ?? page.userData.address.postalCode,
+            country: (overload.address && overload.address.country) ?? page.userData.address.country,
+          },
+          payment_methods: paymentMethods,
+        },
+      });
     },
-  );
+    PATCH: async (route) => {
+      const data = await route.request().postDataJSON();
+      if (data.address) {
+        if (data.address.line1) {
+          page.userData.address.line1 = data.address.line1;
+        }
+        if (data.address.line2) {
+          page.userData.address.line2 = data.address.line2;
+        }
+        if (data.address.postal_code) {
+          page.userData.address.postalCode = data.address.postal_code;
+        }
+        if (data.address.city) {
+          page.userData.address.line1 = data.address.city;
+        }
+        if (data.address.country) {
+          page.userData.address.line1 = data.address.country;
+        }
+      }
+      await route.fulfill({
+        status: 200,
+      });
+    },
+  });
 }
 
 async function mockAddPaymentMethod(page: Page, options?: MockRouteOptions): Promise<void> {
@@ -516,13 +530,15 @@ async function mockAddPaymentMethod(page: Page, options?: MockRouteOptions): Pro
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/add_payment_method`,
     options,
-    async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: {
-          payment_method: '123456',
-        },
-      });
+    {
+      PUT: async (route) => {
+        await route.fulfill({
+          status: 200,
+          json: {
+            payment_method: '123456',
+          },
+        });
+      },
     },
   );
 }
@@ -532,13 +548,15 @@ async function mockSetDefaultPaymentMethod(page: Page, options?: MockRouteOption
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/default_payment_method`,
     options,
-    async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: {
-          payment_method: '123456',
-        },
-      });
+    {
+      PATCH: async (route) => {
+        await route.fulfill({
+          status: 200,
+          json: {
+            payment_method: '123456',
+          },
+        });
+      },
     },
   );
 }
@@ -548,50 +566,60 @@ async function mockDeletePaymentMethod(page: Page, options?: MockRouteOptions): 
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/delete_payment_method`,
     options,
-    async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: {
-          payment_method: '123456',
-        },
-      });
+    {
+      POST: async (route) => {
+        await route.fulfill({
+          status: 200,
+          json: {
+            payment_method: '123456',
+          },
+        });
+      },
     },
   );
 }
 
 async function mockUpdateEmailSendCode(page: Page, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(page, '**/email_validation/send_code', options, async (route) => {
-    await route.fulfill({
-      status: 200,
-    });
+  await mockRoute(page, '**/email_validation/send_code', options, {
+    POST: async (route) => {
+      await route.fulfill({
+        status: 200,
+      });
+    },
   });
 }
 
 async function mockUpdateEmail(page: MsPage, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/update_email`, options, async (route) => {
-    const data = await route.request().postDataJSON();
-    if (data.email) {
-      page.userData.email = data.email;
-    }
-    await route.fulfill({
-      status: 200,
-    });
+  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/update_email`, options, {
+    POST: async (route) => {
+      const data = await route.request().postDataJSON();
+      if (data.email) {
+        page.userData.email = data.email;
+      }
+      await route.fulfill({
+        status: 200,
+      });
+    },
   });
 }
 
 async function mockUpdateAuthentication(page: Page, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/update_authentication`, options, async (route) => {
-    await route.fulfill({
-      status: 204,
-    });
+  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/update_authentication`, options, {
+    POST: async (route) => {
+      await route.fulfill({
+        status: 204,
+      });
+    },
   });
 }
 
 async function mockChangePassword(page: Page, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(page, '**/users/change_password', options, async (route) => {
-    await route.fulfill({
-      status: 200,
-    });
+  await mockRoute(page, '**/users/change_password', options, {
+    POST: async (route) => {
+      await route.fulfill({
+        status: 200,
+      });
+    },
   });
 }
 
@@ -606,13 +634,17 @@ async function mockCustomOrderDetails(
     // eslint-disable-next-line max-len
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/custom_order_details`,
     options,
-    async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: {
-          [page.orgInfo.name]: createCustomOrderInvoices(overload)[0],
-        },
-      });
+    {
+      POST: async (route) => {
+        const postJSON = route.request().postDataJSON();
+        const orgId = postJSON.organization_ids[0] as string;
+        const data: { [key: string]: string } = {};
+        data[orgId.endsWith('-2') ? `${page.orgInfo.name}-2` : page.orgInfo.name] = createCustomOrderInvoices(overload)[0];
+        await route.fulfill({
+          status: 200,
+          json: data,
+        });
+      },
     },
   );
 }
@@ -622,64 +654,71 @@ interface MockCustomOrderStatusOverload {
 }
 
 async function mockCustomOrderStatus(page: MsPage, overload?: MockCustomOrderStatusOverload, options?: MockRouteOptions): Promise<void> {
-  const data: { [key: string]: string } = {};
-  data[page.orgInfo.name] = overload ? overload.status : 'invoice_paid';
-
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/custom_order_status`,
     options,
-    async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: data,
-      });
+    {
+      POST: async (route) => {
+        const postJSON = route.request().postDataJSON();
+        const orgId = postJSON.organization_ids[0] as string;
+        const data: { [key: string]: string } = {};
+        data[orgId.endsWith('-2') ? `${page.orgInfo.name}-2` : page.orgInfo.name] = overload ? overload.status : 'invoice_paid';
+
+        await route.fulfill({
+          status: 200,
+          json: data,
+        });
+      },
     },
   );
 }
 
-async function mockCreateCustomOrderRequest(page: MsPage, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(page, '**/custom_order_requests', options, async (route) => {
-    await route.fulfill({
-      status: 204,
-    });
-  });
+interface MockCustomOrderRequestOverload {
+  noRequest?: boolean;
 }
 
-async function mockGetCustomOrderRequests(page: MsPage, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(page, '**/custom_order_requests', options, async (route) => {
-    await route.fulfill({
-      status: 200,
-      json: {
-        requests: [
-          {
-            id: 'YY-00001',
-            described_need: 'I need a hero!',
-            standard_users: 300,
-            admin_users: 10,
-            outsider_users: 100,
-            storage: 1000,
-            status: 'STANDBY',
-            label: 'ORD-YY-000001',
-            formula: "I'm holding out for a hero 'till the end of the night",
-            created_at: '1988-04-07T00:00:00+00:00',
-          },
-          {
-            id: 'YY-00002',
-            described_need: 'I need your love!',
-            standard_users: 9999,
-            admin_users: 3,
-            outsider_users: 0,
-            storage: 9999,
-            parsec_id: 'Boston',
-            status: 'FINISHED',
-            label: 'ORD-YY-00002',
-            formula: 'I want you every way',
-            created_at: '1990-03-30T00:00:00+00:00',
-          },
-        ],
-      },
-    });
+async function mockCustomOrderRequest(page: MsPage, options?: MockRouteOptions, overload?: MockCustomOrderRequestOverload): Promise<void> {
+  await mockRoute(page, '**/custom_order_requests', options, {
+    POST: async (route) => {
+      await route.fulfill({
+        status: 204,
+      });
+    },
+    GET: async (route) => {
+      const requests = [];
+      if (!overload?.noRequest) {
+        requests.push({
+          id: 'YY-00001',
+          described_need: 'I need a hero!',
+          standard_users: 300,
+          admin_users: 10,
+          outsider_users: 100,
+          storage: 1000,
+          status: 'STANDBY',
+          label: 'ORD-YY-000001',
+          formula: "I'm holding out for a hero 'till the end of the night",
+          created_at: DateTime.fromObject({ year: 1988, month: 4, day: 7 }).toISO(),
+        });
+        requests.push({
+          id: 'YY-00002',
+          described_need: 'I need your love!',
+          standard_users: 9999,
+          admin_users: 3,
+          outsider_users: 0,
+          storage: 9999,
+          organization_name: 'BlackMesa',
+          status: 'FINISHED',
+          label: 'ORD-YY-00002',
+          formula: 'I want you every way',
+          created_at: DateTime.fromObject({ year: 1990, month: 3, day: 30 }).toISO(),
+        });
+      }
+      await route.fulfill({
+        status: 200,
+        json: requests,
+      });
+    },
   });
 }
 
@@ -701,11 +740,13 @@ async function mockGetCustomOrderInvoices(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/custom_order_invoices`,
     options,
-    async (route) => {
-      await route.fulfill({
-        status: 200,
-        json: formatResponse(route.request().postDataJSON()),
-      });
+    {
+      POST: async (route) => {
+        await route.fulfill({
+          status: 200,
+          json: formatResponse(route.request().postDataJSON()),
+        });
+      },
     },
   );
 }
@@ -728,7 +769,6 @@ export const MockBms = {
   mockCustomOrderStatus,
   mockCustomOrderDetails,
   mockUpdateEmailSendCode,
-  mockCreateCustomOrderRequest,
-  mockGetCustomOrderRequests,
+  mockCustomOrderRequest,
   mockGetCustomOrderInvoices,
 };
