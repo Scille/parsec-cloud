@@ -297,7 +297,9 @@
 }
 
 .user-list-item,
-.user-card-item {
+.user-card-item,
+.user-list-members-item,
+.user-list-suggestions-item {
   &.item-disabled {
     opacity: 1;
     position: relative;

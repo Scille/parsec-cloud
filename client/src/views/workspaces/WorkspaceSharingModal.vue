@@ -6,21 +6,64 @@
       :title="I18n.valueAsTranslatable(workspaceName)"
       :close-button="{ visible: true }"
     >
-      <ms-report-text
-        :theme="MsReportTheme.Info"
-        v-if="isOnlyOwner()"
-        class="only-owner-warning"
-      >
-        <i18n-t
-          keypath="WorkspaceSharing.onlyOwnerWarning"
-          scope="global"
+      <div class="report-text-container">
+        <div
+          class="report-text-toggle"
+          @click="isOpenReportTextContainer = !isOpenReportTextContainer"
+          v-if="isOnlyOwner() || orgHasExternalUsers"
         >
-          <template #owner>
-            <strong> {{ $msTranslate('WorkspaceSharing.owner') }} </strong>
-          </template>
-        </i18n-t>
-      </ms-report-text>
-      <div class="modal-head-content">
+          <ion-text class="report-text-toggle__text button-medium">{{ $msTranslate('WorkspaceSharing.information') }}</ion-text>
+          <ion-icon
+            class="report-text-toggle__icon"
+            :icon="chevronDown"
+            :class="{ rotate: isOpenReportTextContainer }"
+          />
+        </div>
+        <div
+          class="report-text-content"
+          :class="{ 'report-text-content--open': isOpenReportTextContainer }"
+          v-if="isOpenReportTextContainer"
+        >
+          <ms-report-text
+            :theme="MsReportTheme.Info"
+            v-if="isOnlyOwner()"
+            class="only-owner-warning"
+          >
+            <i18n-t
+              keypath="WorkspaceSharing.onlyOwnerWarning"
+              scope="global"
+            >
+              <template #owner>
+                <strong> {{ $msTranslate('WorkspaceSharing.owner') }} </strong>
+              </template>
+            </i18n-t>
+          </ms-report-text>
+          <ms-report-text
+            :theme="MsReportTheme.Info"
+            id="profile-assign-info"
+            v-if="orgHasExternalUsers"
+          >
+            <i18n-t
+              keypath="WorkspaceSharing.batchSharing.outsiderRoleWarning"
+              scope="global"
+            >
+              <template #external>
+                <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.external') }} </strong>
+              </template>
+              <template #contributor>
+                <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.contributor') }} </strong>
+              </template>
+              <template #reader>
+                <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.reader') }} </strong>
+              </template>
+            </i18n-t>
+          </ms-report-text>
+        </div>
+      </div>
+      <div
+        class="modal-head-content"
+        :class="{ 'has-report-text': isOpenReportTextContainer }"
+      >
         <ms-search-input
           class="modal-head-content__search"
           v-model="search"
@@ -28,7 +71,7 @@
         />
         <div class="modal-head-content-right">
           <ion-text
-            class="selected-counter"
+            class="selected-counter body"
             v-show="showCheckboxes && selectedUsers.length > 0"
           >
             {{ $msTranslate({ key: 'WorkspaceSharing.batchSharing.counter', data: { count: selectedUsers.length } }) }}
@@ -39,7 +82,13 @@
             v-show="batchSharingEnabled"
             fill="clear"
             class="button-small"
+            :class="{ 'done-button': showCheckboxes }"
           >
+            <ion-icon
+              v-if="!showCheckboxes"
+              class="checkbox-icon"
+              :icon="checkmarkCircle"
+            />
             {{ $msTranslate(showCheckboxes ? 'WorkspaceSharing.batchSharing.buttonFinish' : 'WorkspaceSharing.batchSharing.buttonSelect') }}
           </ion-text>
           <ms-dropdown
@@ -54,26 +103,6 @@
           />
         </div>
       </div>
-      <ms-report-text
-        :theme="MsReportTheme.Info"
-        id="profile-assign-info"
-        v-if="showCheckboxes && orgHasExternalUsers"
-      >
-        <i18n-t
-          keypath="WorkspaceSharing.batchSharing.outsiderRoleWarning"
-          scope="global"
-        >
-          <template #external>
-            <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.external') }} </strong>
-          </template>
-          <template #contributor>
-            <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.contributor') }} </strong>
-          </template>
-          <template #reader>
-            <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.reader') }} </strong>
-          </template>
-        </i18n-t>
-      </ms-report-text>
 
       <!-- content -->
       <div class="modal-container">
@@ -124,6 +153,7 @@
             >
               <ms-checkbox
                 class="member-checkbox"
+                :class="isSmallDisplay ? 'checkbox-mobile' : ''"
                 v-show="showCheckboxes"
                 :disabled="!(entry.role && canSelectUser(entry.user.profile, entry.role))"
                 v-model="entry.isSelected"
@@ -158,6 +188,7 @@
             >
               <ms-checkbox
                 class="suggested-checkbox"
+                :class="isSmallDisplay ? 'checkbox-mobile' : ''"
                 v-show="showCheckboxes"
                 v-model="entry.isSelected"
               />
@@ -199,13 +230,16 @@ import {
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
-import { I18n, MsReportText, MsReportTheme } from 'megashark-lib';
-import { IonList, IonPage, IonText } from '@ionic/vue';
+import { I18n, MsReportText, MsReportTheme, useWindowSize } from 'megashark-lib';
+import { IonList, IonPage, IonText, IonIcon } from '@ionic/vue';
+import { checkmarkCircle, chevronDown } from 'ionicons/icons';
 import { Ref, onMounted, ref, computed } from 'vue';
 import { canChangeRole } from '@/components/workspaces/utils';
 
 const search = ref('');
 let ownProfile = UserProfile.Outsider;
+const { isSmallDisplay } = useWindowSize();
+const isOpenReportTextContainer = ref(isSmallDisplay ? true : false);
 
 const props = defineProps<{
   workspaceId: WorkspaceID;
@@ -550,72 +584,173 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
 }
 </script>
 
-<!-- eslint-disable-next-line vue-scoped-css/enforce-style-type -->
-<style lang="scss">
-.ms-modal {
+<style scoped lang="scss">
+.report-text-container {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
 
-  .inner-content {
-    height: 100%;
+  @include ms.responsive-breakpoint('sm') {
+    position: relative;
+    z-index: 10;
+    margin: 0;
+  }
+
+  .report-text-toggle {
+    background: var(--parsec-color-light-info-50);
+    padding: 0.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    z-index: 10;
+    width: 100%;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.9;
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0.5rem 1.5rem;
+    }
+
+    &__text {
+      color: var(--parsec-color-light-info-700);
+    }
+
+    &__icon {
+      color: var(--parsec-color-light-info-700);
+      font-size: 1rem;
+      transition: transform 0.2s;
+      transform: rotate(0deg);
+
+      &.rotate {
+        transform: rotate(180deg);
+      }
+
+      &:last-child {
+        margin-left: auto;
+      }
+    }
+  }
+
+  .report-text-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    position: relative;
+    padding-inline: 2rem;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding-inline: 1.5rem;
+    }
   }
 }
 
-.modal-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--parsec-color-light-secondary-hard-grey);
-}
-
-.only-owner-warning {
-  margin-bottom: 1rem;
-}
-</style>
-
-<style scoped lang="scss">
 .modal-head-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0.5rem 0;
+  margin-top: 1rem;
+  overflow: hidden !important;
+  flex-shrink: 0;
+  padding-inline: 2rem;
+
+  &.has-report-text {
+    margin-top: 1rem;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    padding-inline: 1.5rem;
+    margin-top: 0.5rem;
+  }
 
   &__search {
     max-height: 2.25rem;
     max-width: 15rem;
     margin: 0;
+
+    @include ms.responsive-breakpoint('sm') {
+      max-width: 100%;
+    }
   }
 
   &-right {
     display: flex;
+    align-items: center;
     gap: 1rem;
+
+    @include ms.responsive-breakpoint('sm') {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      padding: 1rem 1.5rem 2rem;
+      justify-content: space-between;
+      background: var(--parsec-color-light-secondary-white);
+      border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
+      box-shadow: var(--parsec-shadow-strong);
+      z-index: 2;
+    }
+
+    .dropdown {
+      border: 1px solid var(--parsec-color-light-secondary-medium);
+      border-radius: var(--parsec-radius-8);
+    }
 
     #batch-activate-button {
       font-size: 0.875rem;
-      padding: 0.5rem 1rem;
+      padding: 0.625rem 1rem;
       color: var(--parsec-color-light-secondary-text);
-      background: var(--parsec-color-light-secondary-premiere);
-      border-radius: var(--parsec-radius-6);
+      border: 1px solid var(--parsec-color-light-secondary-medium);
+      border-radius: var(--parsec-radius-8);
       cursor: pointer;
       transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+      gap: 0.375rem;
+
+      @include ms.responsive-breakpoint('sm') {
+        order: 3;
+      }
+
+      .checkbox-icon {
+        color: var(--parsec-color-light-secondary-text);
+        font-size: 1rem;
+      }
 
       &:hover {
         background: var(--parsec-color-light-secondary-medium);
+      }
+
+      &:active {
+        box-shadow: none;
+      }
+
+      &.done-button {
+        background: var(--parsec-color-light-secondary-text);
+        color: var(--parsec-color-light-secondary-white);
+        border: none;
+
+        &:hover {
+          background: var(--parsec-color-light-secondary-contrast);
+        }
       }
     }
   }
 
   .selected-counter {
     color: var(--parsec-color-light-secondary-grey);
-    font-size: 0.9em;
-    margin: auto;
+    margin-right: auto;
     text-align: center;
-  }
-}
 
-#profile-assign-info {
-  margin-bottom: 0;
-  margin-top: 0.5rem;
+    @include ms.responsive-breakpoint('sm') {
+      margin: auto;
+      order: 2;
+    }
+  }
 }
 
 .modal-container {
@@ -623,6 +758,19 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding-inline: 2rem;
+  position: relative;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding-inline: 1.5rem;
+
+    &::after {
+      content: '';
+      position: relative;
+      width: 100%;
+      height: 8rem;
+    }
+  }
 }
 
 .user-list {
@@ -633,11 +781,10 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  position: relative;
 
   &-title {
     color: var(--parsec-color-light-secondary-grey);
-    background: var(--parsec-color-light-secondary-medium);
+    background: var(--parsec-color-light-secondary-premiere);
     border-radius: var(--parsec-radius-6);
     padding: 0.375rem 0.75rem;
     display: flex;
@@ -656,6 +803,12 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
     .member-checkbox,
     .suggested-checkbox {
       padding-left: 0.75rem;
+
+      @include ms.responsive-breakpoint('sm') {
+        padding-left: 0.625rem;
+        position: absolute;
+        justify-content: center;
+      }
     }
 
     &-item {
@@ -666,15 +819,20 @@ async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
       &:last-child .workspace-user-role::after {
         border-bottom: none;
       }
+    }
 
-      .workspace-user-role {
-        flex: 1;
-      }
+    .workspace-user-role,
+    .current-user {
+      flex: 1;
     }
   }
 
   .checkbox-space {
     padding-left: 3rem;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding-left: 0.5rem;
+    }
   }
 }
 </style>

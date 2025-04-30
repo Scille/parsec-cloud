@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="content">
+  <div class="workspace-user-role">
     <div class="content-user">
       <user-avatar-name
         :user-avatar="user.humanHandle.label"
@@ -82,12 +82,13 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
 </script>
 
 <style scoped lang="scss">
-.content {
+.workspace-user-role {
   padding: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: relative;
+  overflow: hidden;
 
   &::after {
     content: '';
@@ -101,6 +102,9 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
 }
 
 .content-user {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
   display: flex;
   align-items: center;
   gap: 0.5rem;
