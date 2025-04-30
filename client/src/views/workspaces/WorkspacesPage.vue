@@ -545,7 +545,7 @@ async function onWorkspaceFavoriteClick(workspace: WorkspaceInfo): Promise<void>
 }
 
 async function onWorkspaceShareClick(workspace: WorkspaceInfo): Promise<void> {
-  await workspaceShareClick(workspace, informationManager);
+  await workspaceShareClick(workspace, informationManager, isLargeDisplay.value);
   await refreshWorkspacesList();
 }
 

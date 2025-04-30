@@ -367,7 +367,8 @@
         },
         "onlyOwnerWarning": "Nous vous recommandons de promouvoir quelqu'un d'autre au poste de {owner}. Vous éviterez ainsi de perdre des données si vous quittez l'organisation.",
         "owner": "Propriétaire",
-        "noMatch": "Aucun utilisateur trouvé qui correspond à la recherche '{query}'."
+        "noMatch": "Aucun utilisateur trouvé qui correspond à la recherche '{query}'.",
+        "information": "Informations sur le partage"
     },
     "SettingsModal": {
         "pageTitle": "Paramètres",

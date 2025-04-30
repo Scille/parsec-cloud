@@ -367,7 +367,8 @@
         },
         "onlyOwnerWarning": "To prevent data loss if you ever leave the organization, we recommend promoting someone else to {owner} on this workspace.",
         "owner": "Owner",
-        "noMatch": "No user found that matches '{query}'."
+        "noMatch": "No user found that matches '{query}'.",
+        "information": "Sharing information"
     },
     "SettingsModal": {
         "pageTitle": "Settings",
