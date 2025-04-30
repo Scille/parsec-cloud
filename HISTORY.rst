@@ -4,6 +4,27 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.4.0-a.11 (2025-04-30)
+-------------------------------
+
+Features
+~~~~~~~~
+
+* Add responsive for create trial organization
+  (`#10143 <https://github.com/Scille/parsec-cloud/issues/10143>`__)
+
+* Added responsive for profile menu
+  (`#10165 <https://github.com/Scille/parsec-cloud/issues/10165>`__)
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Hosting Guide: add database and S3 backup and restore instructions
+  (`#6174 <https://github.com/Scille/parsec-cloud/issues/6174>`__)
+
+
+
 Parsec v3.4.0-a.10 (2025-04-16)
 -------------------------------
 
