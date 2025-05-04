@@ -28,6 +28,7 @@ from parsec.components.postgresql.user_get_user_info import (
     user_get_user_info_from_email,
 )
 from parsec.components.postgresql.user_list_frozen_users import user_list_frozen_users
+from parsec.components.postgresql.user_list_organizations import user_list_organizations
 from parsec.components.postgresql.user_list_users import user_list_users
 from parsec.components.postgresql.user_revoke_user import user_revoke_user
 from parsec.components.postgresql.user_test_dump_current_users import user_test_dump_current_users
@@ -54,7 +55,9 @@ from parsec.components.user import (
     UserGetCertificatesAsUserBadOutcome,
     UserInfo,
     UserListFrozenUsersBadOutcome,
+    UserListOrganizationsBadOutcome,
     UserListUsersBadOutcome,
+    UserOrgInfo,
     UserRevokeUserStoreBadOutcome,
     UserRevokeUserValidateBadOutcome,
     UserUpdateUserStoreBadOutcome,
@@ -357,3 +360,10 @@ class PGUserComponent(BaseUserComponent):
             author,
             tos_updated_on,
         )
+
+    @override
+    @no_transaction
+    async def list_organizations(
+        self, conn: AsyncpgConnection, user_email: str
+    ) -> list[UserOrgInfo] | UserListOrganizationsBadOutcome:
+        return await user_list_organizations(conn, user_email)

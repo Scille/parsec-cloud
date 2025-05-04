@@ -71,6 +71,12 @@ class UserInfo:
     frozen: bool
 
 
+@dataclass(slots=True)
+class UserOrgInfo:
+    org_id: OrganizationID
+    # TODO profile ? current, initial, history ? organization expired ? user id ? frozen ? revoked ?
+
+
 class UserCreateUserValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
     TIMESTAMP_MISMATCH = auto()
@@ -366,6 +372,10 @@ class UserListFrozenUsersBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
 
 
+class UserListOrganizationsBadOutcome(BadOutcomeEnum):
+    USER_NOT_FOUND = auto()
+
+
 class BaseUserComponent:
     #
     # Public methods
@@ -487,6 +497,11 @@ class BaseUserComponent:
     async def list_frozen_users(
         self, organization_id: OrganizationID, device_id: DeviceID
     ) -> list[UserID] | UserListFrozenUsersBadOutcome:
+        raise NotImplementedError
+
+    async def list_organizations(
+        self, user_email: str
+    ) -> list[UserOrgInfo] | UserListOrganizationsBadOutcome:
         raise NotImplementedError
 
     #
