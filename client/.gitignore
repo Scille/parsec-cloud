@@ -36,8 +36,6 @@ npm-debug.log*
 /electron/dist/
 /electron/out/
 /electron/electron/
-# `trampoline.ts` is set during build depending on the target
-/src/plugins/libparsec/trampoline.ts
 # Vite pre-build deps
 /.vite/deps
 /test-results/
