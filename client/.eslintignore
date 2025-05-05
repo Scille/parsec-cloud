@@ -1,5 +1,4 @@
 pkg/
-scripts/vite_plugin_wasm_pack.ts
 dist
 node_modules
 electron/build

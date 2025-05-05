@@ -3,7 +3,7 @@
 import fs from 'fs-extra';
 import crypto from 'crypto';
 import path from 'path';
-import { PluginOption } from 'vite';
+import { PluginOption, ResolvedConfig } from 'vite';
 
 type WasmPackCrate = {
   path: string;
@@ -23,8 +23,9 @@ function vitePluginWasmPack(
 ): PluginOption {
   const prefix = '@vite-plugin-wasm-pack@';
   const pkg = 'pkg'; // default folder of wasm-pack module
-  let configAssetsDir: string;
+  let configIsWorker: boolean;
   let configIsProduction: boolean;
+  let configAssetsDir: string;
 
   function retrieveCrate(source: string): WasmPackCrate | null {
     for (let i = 0; i < crates.length; i++) {
@@ -66,7 +67,8 @@ function vitePluginWasmPack(
     name: 'vite-plugin-wasm-pack',
     enforce: 'pre',
 
-    configResolved(resolvedConfig): void {
+    configResolved(resolvedConfig: ResolvedConfig): void {
+      configIsWorker = resolvedConfig.isWorker;
       configIsProduction = resolvedConfig.isProduction;
       configAssetsDir = resolvedConfig.build.assetsDir;
     },
@@ -131,12 +133,12 @@ function vitePluginWasmPack(
 
         if (relativePath) {
           const code = await fs.promises.readFile(getJsInternalPath(crate, relativePath), {
-            encoding: 'utf-8'
+            encoding: 'utf-8',
           });
           return code;
         } else {
           let code = await fs.promises.readFile(getJsEntryPointPath(crate), {
-            encoding: 'utf-8'
+            encoding: 'utf-8',
           });
 
           // Patch the load path according to the asset directory
@@ -150,12 +152,24 @@ function vitePluginWasmPack(
           const regex = /module_or_path = new URL\('(.+)'.+;/g;
           let found = false;
           code = code.replace(regex, (_match, _group1) => {
-            // Use a relative path since the `XXX_bg.wasm` file is expected to
-            // always be in the same directory as the `XXX.js` intermediary
-            // file that we are patching.
-            const assetUrl = wasmFileName;
+            // Here we are patching the URL path to the `XXX_bg.wasm` file.
+            //
+            // We'd rather avoid using an absolute path in order to allow the
+            // output to be served from an arbitrary prefix (e.g. `/client` when
+            // served from the Parsec server).
+            //
+            // However relative resolution is a bit tricky:
+            // - For web worker, the base path is the worker's script (e.g. `/assets/worker.js`)
+            //   which lives in the same asset folder as the `XXX_bg.wasm` file.
+            // - For the main web page, the base path is set with the `<base>`'s href
+            //   tag (e.g. `<base href="/client/">`). In this case, we need to append
+            //   the asset folder to the relative path (e.g. `./assets/XXX_bg.wasm`).
             found = true;
-            return `module_or_path = "${assetUrl}";`;
+            if (configIsWorker) {
+              return `module_or_path = "${wasmFileName}";`;
+            } else {
+              return `module_or_path = "${configAssetsDir}/${wasmFileName}";`;
+            }
           });
 
           if (!found) {
@@ -175,7 +189,7 @@ function vitePluginWasmPack(
           const wasmFileName = `${crate.name}_bg.wasm`;
           const wasmFilePath = path.join(crate.path, pkg, wasmFileName);
           return [wasmFileName, wasmFilePath];
-        })
+        }),
       );
       return () => {
         middlewares.use((req, res, next) => {
@@ -185,7 +199,7 @@ function vitePluginWasmPack(
             if (wasmFilePath) {
               res.setHeader(
                 'Cache-Control',
-                'no-cache, no-store, must-revalidate'
+                'no-cache, no-store, must-revalidate',
               );
               res.writeHead(200, { 'Content-Type': 'application/wasm' });
               fs.createReadStream(wasmFilePath).pipe(res);
@@ -208,10 +222,10 @@ function vitePluginWasmPack(
         this.emitFile({
           type: 'asset',
           fileName: `${configAssetsDir}/${wasmFileName}`,
-          source: content
+          source: content,
         });
       }
-    }
+    },
   };
 }
 
