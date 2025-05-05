@@ -39,7 +39,24 @@ uuid = { workspace = true }
 tokio = { workspace = true, features = ["fs"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-web-sys = { workspace = true, features = ["Window", "Storage"] }
+wasm-bindgen-futures = { workspace = true, features = ["futures-core-03-stream"] }
+web-sys = { workspace = true, features = [
+    "DomException",
+    "FileSystemDirectoryHandle",
+    "FileSystemGetDirectoryOptions",
+    "FileSystemGetFileOptions",
+    "FileSystemWritableFileStream",
+    "File",
+    "Blob",
+    "FileSystemHandle",
+    "FileSystemFileHandle",
+    "FileSystemHandleKind",
+    "Navigator",
+    "StorageManager",
+    "Window",
+    "WorkerGlobalScope",
+    "WorkerNavigator",
+] }
 serde_json = { workspace = true, features = ["std"] }
 data-encoding = { workspace = true }
 error_set = { workspace = true }

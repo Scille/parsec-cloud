@@ -16,7 +16,7 @@ pub struct TmpPath(PathBuf);
 impl TmpPath {
     pub fn create() -> Self {
         let mut path = if cfg!(target_arch = "wasm32") {
-            PathBuf::default()
+            "/".into()
         } else {
             std::env::temp_dir()
         };

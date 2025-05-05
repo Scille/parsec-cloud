@@ -24,7 +24,7 @@ async fn remove_ok(tmp_path: TmpPath, env: &TestbedEnv) {
 
     // 3. Check that the device as been removed.
     assert!(
-        !key_present_in_system(&key_file),
+        !key_present_in_system(&key_file).await,
         "Device file should have been removed"
     );
 }

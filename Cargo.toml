@@ -206,7 +206,7 @@ uuid = { version = "1.16.0", default-features = false }
 wasm-bindgen = { version = "0.2.97", default-features = false }
 wasm-bindgen-futures = { version = "0.4.47", default-features = false }
 wasm-bindgen-test = { version = "0.3.47", default-features = false, features = ["std"] }
-web-sys = { version = "0.3.72", default-features = false }
+web-sys = { version = "0.3.77", default-features = false }
 web-time = { version = "1.1.0", default-features = false }
 widestring = { version = "1.2.0", default-features = false }
 windows-sys = { version = "0.59.0", default-features = false }
@@ -215,6 +215,14 @@ winfsp_wrs_build = { version = "0.4.0", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
 zeroize = { version = "1.8.1", default-features = false }
 zstd = { version = "0.13.3", default-features = false }
+
+[patch.crates-io]
+# Patch web-sys for `Blob.bytes`
+# FIXME: Remove me once https://github.com/rustwasm/wasm-bindgen/pull/4506 is merged and released
+web-sys = { git = "https://github.com/FirelightFlagboy/wasm-bindgen.git", rev = "9402ae3bd1eea6d4a8c0d6b62dd62efa4c536d6e" }
+wasm-bindgen = { git = "https://github.com/FirelightFlagboy/wasm-bindgen.git", rev = "9402ae3bd1eea6d4a8c0d6b62dd62efa4c536d6e" }
+js-sys = { git = "https://github.com/FirelightFlagboy/wasm-bindgen.git", rev = "9402ae3bd1eea6d4a8c0d6b62dd62efa4c536d6e" }
+# End patch web-sys for `Blob.bytes`
 
 [workspace.dependencies.criterion]
 default-features = false
