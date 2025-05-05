@@ -74,7 +74,7 @@ async fn save_list(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
         unknown => panic!("Unknown kind: {unknown:?}"),
     };
 
-    assert!(!key_present_in_system(&key_file));
+    assert!(!key_present_in_system(&key_file).await);
 
     device
         .time_provider
@@ -83,7 +83,7 @@ async fn save_list(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
     device.time_provider.unmock_time();
 
     p_assert_eq!(available_device, expected_available_device);
-    assert!(key_present_in_system(&key_file));
+    assert!(key_present_in_system(&key_file).await);
 
     let devices = list_available_devices(&tmp_path).await.unwrap();
 

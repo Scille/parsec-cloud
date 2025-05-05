@@ -50,7 +50,7 @@ async fn bad_path(tmp_path: TmpPath, #[case] kind: BadPathKind) {
 #[parsec_test]
 async fn bad_file_content(tmp_path: TmpPath) {
     let key_file = tmp_path.join("devices/my_device.keys");
-    crate::tests::utils::create_device_file(&key_file, b"dummy");
+    crate::tests::utils::create_device_file(&key_file, b"dummy").await;
 
     let access = DeviceAccessStrategy::Password {
         key_file,
@@ -85,7 +85,7 @@ async fn invalid_salt_size(tmp_path: TmpPath) {
     // Store it in a path compatible with the legacy format
     let key_file =
         tmp_path.join("devices/c17fc4c8bf#corp#alice@laptop/c17fc4c8bf#corp#alice@laptop.keys");
-    crate::tests::utils::create_device_file(&key_file, content);
+    crate::tests::utils::create_device_file(&key_file, content).await;
 
     let access = DeviceAccessStrategy::Password {
         key_file,

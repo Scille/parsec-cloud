@@ -1,107 +1,110 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{path::Path, sync::Arc};
+use std::{path::Path, rc::Rc, sync::Arc};
 
-use itertools::Itertools;
+use libparsec_platform_async::{lock::Mutex, stream::StreamExt};
 use libparsec_types::{
     AvailableDevice, DateTime, DeviceAccessStrategy, DeviceFile, DeviceFilePassword, LocalDevice,
 };
 
-use super::error::*;
+use crate::web::wrapper::{DirEntry, DirOrFileHandle, OpenOptions};
+
+use super::{
+    error::*,
+    wrapper::{Directory, File},
+};
 
 pub struct Storage {
-    storage: web_sys::Storage,
+    root_dir: Directory,
 }
 
 impl Storage {
-    pub(crate) fn new() -> Result<Self, NewStorageError> {
-        let window = web_sys::window().ok_or(NewStorageError::NoWindow)?;
-        let storage = if cfg!(test) {
-            // Use session storage for tests, So the browser does not try to persist the data.
-            window.session_storage()
-        } else {
-            window.local_storage()
-        }
-        .map_err(NewStorageError::WindowError)
-        .and_then(|v| v.ok_or(NewStorageError::NoLocalStorage))?;
-        Ok(Self { storage })
+    pub(crate) async fn new() -> Result<Self, NewStorageError> {
+        let root_dir = Directory::get_root().await?;
+        Ok(Self { root_dir })
     }
 
-    pub(crate) fn list_available_devices(
+    pub(crate) async fn list_available_devices(
         &self,
         config_dir: &Path,
     ) -> Result<Vec<AvailableDevice>, ListAvailableDevicesError> {
         let devices_dir = crate::get_devices_dir(config_dir);
-        let device_prefix = format!("{}/", devices_dir.display());
-        log::debug!("Will list devices starting with `{device_prefix}`");
-        let items_count =
-            self.storage
-                .length()
-                .map_err(|e| ListAvailableDevicesError::GetItemStorage {
-                    key: "length".to_owned(),
-                    error: e,
-                })?;
-        Ok((0..items_count)
-            .filter_map(|i| {
-                let key = self.storage.key(i).ok().flatten();
-                match key {
-                    Some(key)
-                        if key.starts_with(&device_prefix)
-                            && key.ends_with(crate::DEVICE_FILE_EXT) =>
+        log::debug!(
+            "Will list devices starting with `{}` and having suffix {}",
+            devices_dir.display(),
+            crate::DEVICE_FILE_EXT
+        );
+        let dir = match self
+            .root_dir
+            .get_directory_from_path(&devices_dir, None)
+            .await
+        {
+            Ok(dir) => dir,
+            Err(GetDirectoryHandleError::NotFound { .. }) => {
+                log::debug!("Could not found devices dir");
+                return Ok(Vec::new());
+            }
+            Err(e) => return Err(e.into()),
+        };
+        let mut devices = Vec::<AvailableDevice>::new();
+        let dirs_to_explore = Rc::new(Mutex::new(Vec::from([dir])));
+        while let Some(dir) = {
+            let mut handle = dirs_to_explore.lock().await;
+            let res = handle.pop();
+            drop(handle);
+            res
+        } {
+            log::trace!("Explore dir {}", dir.path.display());
+            let mut entries_stream = dir.entries();
+            while let Some(entry) = entries_stream.next().await {
+                let DirEntry { path, handle } = entry;
+                log::trace!(
+                    "Testing entry {} with extension {:?}",
+                    path.display(),
+                    path.extension()
+                );
+                match handle {
+                    DirOrFileHandle::File(handle)
+                        if path.extension() == Some(crate::DEVICE_FILE_EXT.as_ref()) =>
                     {
-                        log::trace!("Device {key} included in list");
-                        Some(key)
+                        log::trace!("Try to load device {}", path.display());
+                        let dev = match load_available_device(&File { path, handle }).await {
+                            Ok(dev) => dev,
+                            // Ignore devices that we cannot deserialize
+                            Err(LoadAvailableDeviceError::RmpDecode(_)) => continue,
+                            Err(LoadAvailableDeviceError::ReadToEnd(e)) => {
+                                return Err(ListAvailableDevicesError::from(e))
+                            }
+                        };
+                        devices.push(dev)
                     }
-                    _ => {
-                        log::trace!("Device {key:?} not included in list");
-                        None
+                    DirOrFileHandle::File(_) => {
+                        log::trace!("Ignoring file {} because of bad suffix", path.display());
+                    }
+                    DirOrFileHandle::Dir(handle) => {
+                        dirs_to_explore
+                            .lock()
+                            .await
+                            .push(Directory { path, handle });
                     }
                 }
-            })
-            .sorted()
-            .filter_map(|key| {
-                self.load_available_device(&key)
-                    .inspect_err(|e| log::warn!("Cannot load device {key}: {e}"))
-                    .ok()
-            })
-            .collect::<Vec<_>>())
+            }
+        }
+
+        devices.sort_by(|a, b| a.key_file_path.cmp(&b.key_file_path));
+
+        Ok(devices)
     }
 
-    fn get_raw_device(&self, key: &str) -> Result<Vec<u8>, GetRawDeviceError> {
-        let raw_b64_data = self
-            .storage
-            .get_item(key)
-            .map_err(|e| GetRawDeviceError::GetItemStorage {
-                key: key.to_owned(),
-                error: e,
-            })
-            .and_then(|v| {
-                v.ok_or_else(|| GetRawDeviceError::Missing {
-                    key: key.to_owned(),
-                })
-            })?;
-        data_encoding::BASE64
-            .decode(raw_b64_data.as_bytes())
-            .map_err(GetRawDeviceError::B64Decode)
-    }
-
-    fn load_available_device(
-        &self,
-        key: &str,
-    ) -> Result<AvailableDevice, LoadAvailableDeviceError> {
-        let raw_data = self.get_raw_device(key)?;
-        crate::load_available_device_from_blob(key.into(), &raw_data)
-            .inspect_err(|e| log::warn!("Failed to load device from {key}: {e}"))
-            .map_err(Into::into)
-    }
-
-    pub(crate) fn load_device(
+    pub(crate) async fn load_device(
         &self,
         access: &DeviceAccessStrategy,
     ) -> Result<(Arc<LocalDevice>, DateTime), LoadDeviceError> {
-        let key_path = access.key_file();
-        let key = key_path.to_string_lossy();
-        let raw_data = self.get_raw_device(&key)?;
+        let file = self
+            .root_dir
+            .get_file_from_path(access.key_file(), None)
+            .await?;
+        let raw_data = file.read_to_end().await?;
         let device = DeviceFile::load(&raw_data)?;
         let (key, created_on) = match (access, &device) {
             (DeviceAccessStrategy::Keyring { .. }, DeviceFile::Keyring(_device)) => {
@@ -122,7 +125,7 @@ impl Storage {
         Ok((Arc::new(device), created_on))
     }
 
-    pub(crate) fn save_device(
+    pub(crate) async fn save_device(
         &self,
         access: &DeviceAccessStrategy,
         device: &LocalDevice,
@@ -130,8 +133,7 @@ impl Storage {
     ) -> Result<AvailableDevice, SaveDeviceError> {
         let protected_on = device.now();
         let server_url = crate::server_url_from_device(device);
-        let key_file_path = access.key_file();
-        let key_file = key_file_path.to_string_lossy();
+        let key_file = access.key_file();
 
         match access {
             DeviceAccessStrategy::Keyring { .. } => todo!("Save keyring device"),
@@ -153,13 +155,13 @@ impl Storage {
                     ciphertext,
                 });
 
-                self.save_device_file(&key_file, &file_data)?;
+                self.save_device_file(&key_file, &file_data).await?;
             }
             DeviceAccessStrategy::Smartcard { .. } => todo!("Save smartcard device"),
         }
 
         Ok(AvailableDevice {
-            key_file_path: key_file_path.to_owned(),
+            key_file_path: key_file.to_owned(),
             created_on,
             protected_on,
             server_url,
@@ -172,59 +174,78 @@ impl Storage {
         })
     }
 
-    pub(crate) fn save_device_file(
+    pub(crate) async fn save_device_file(
         &self,
-        key: &str,
+        key: &Path,
         file_data: &DeviceFile,
     ) -> Result<(), SaveDeviceFileError> {
         let data = file_data.dump();
-        let b64_data = data_encoding::BASE64.encode(&data);
-        log::trace!("Saving device using key={key}");
-        self.storage
-            .set_item(key, &b64_data)
-            .map_err(|e| SaveDeviceFileError::SetItemStorage {
-                key: key.to_owned(),
-                error: e,
-            })
+        log::trace!("Saving device file at {}", key.display());
+        let parent = if let Some(parent) = key.parent() {
+            Some(self.root_dir.create_dir_all(parent).await?)
+        } else {
+            None
+        };
+        let file = parent
+            .as_ref()
+            .unwrap_or(&self.root_dir)
+            .get_file(
+                key.file_name()
+                    .and_then(std::ffi::OsStr::to_str)
+                    .expect("Missing filename"),
+                Some(OpenOptions::create()),
+            )
+            .await?;
+        file.write_all(&data).await.map_err(Into::into)
     }
 
-    pub(crate) fn archive_device(&self, path: &Path) -> Result<(), ArchiveDeviceError> {
-        let key = path.to_string_lossy();
-        let device_data = self
-            .storage
-            .get_item(&key)
-            .map_err(|error| ArchiveDeviceError::GetItemStorage {
-                key: key.to_string(),
-                error,
-            })
-            .and_then(|v| {
-                v.ok_or_else(|| ArchiveDeviceError::Missing {
-                    key: key.to_string(),
-                })
-            })?;
+    pub(crate) async fn archive_device(&self, path: &Path) -> Result<(), ArchiveDeviceError> {
+        let old_device = self
+            .root_dir
+            .get_file_from_path(path, None)
+            .await
+            .map_err(ArchiveDeviceError::GetDeviceToArchive)?;
+        let old_data = old_device
+            .read_to_end()
+            .await
+            .map_err(ArchiveDeviceError::ReadDeviceToArchive)?;
 
-        let archived_key = format!("{key}.archived");
-        self.storage
-            .set_item(&archived_key, &device_data)
-            .map_err(|error| ArchiveDeviceError::SetItemStorage {
-                key: key.to_string(),
-                error,
-            })?;
-        self.storage
-            .remove_item(&key)
-            .map_err(|error| ArchiveDeviceError::RemoveItemStorage {
-                key: key.to_string(),
-                error,
-            })
+        let archive_path = crate::get_device_archive_path(path);
+        let archive_device = self
+            .root_dir
+            .get_file_from_path(&archive_path, Some(OpenOptions::create()))
+            .await
+            .map_err(ArchiveDeviceError::CreateArchiveDevice)?;
+        archive_device
+            .write_all(&old_data)
+            .await
+            .map_err(ArchiveDeviceError::WriteArchiveDevice)?;
+
+        self.root_dir
+            .remove_entry_from_path(path)
+            .await
+            .map_err(Into::into)
     }
 
-    pub(crate) fn remove_device(&self, path: &Path) -> Result<(), RemoveDeviceError> {
-        let key = path.to_string_lossy();
-        self.storage
-            .delete(&key)
-            .map_err(|e| RemoveDeviceError::RemoveItemStorage {
-                key: key.to_string(),
-                error: e,
-            })
+    pub(crate) async fn remove_device(&self, path: &Path) -> Result<(), RemoveDeviceError> {
+        self.root_dir
+            .remove_entry_from_path(path)
+            .await
+            .map_err(Into::into)
     }
+}
+
+async fn load_available_device(file: &File) -> Result<AvailableDevice, LoadAvailableDeviceError> {
+    let raw_data = file
+        .read_to_end()
+        .await
+        .map_err(LoadAvailableDeviceError::ReadToEnd)?;
+    crate::load_available_device_from_blob(file.path().to_owned(), &raw_data)
+        .inspect_err(|e| {
+            log::warn!(
+                "Failed to decode device from {}: {e}",
+                file.path().display()
+            )
+        })
+        .map_err(LoadAvailableDeviceError::RmpDecode)
 }
