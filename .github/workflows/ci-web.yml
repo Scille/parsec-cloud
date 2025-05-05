@@ -130,7 +130,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@ab3728c7ba6948b9b429627f4d55a68842b27f18 # pin v2.50.3
+      - uses: taiki-e/install-action@86c23eed46c17b80677df6d8151545ce3e236c61 # pin v2.50.7
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
@@ -177,7 +177,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         timeout-minutes: 2
 
-      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # pin v4.3.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # pin v4.4.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -247,7 +247,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         timeout-minutes: 2
 
-      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e  # pin v4.3.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # pin v4.4.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -255,7 +255,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Download blob reports from GitHub Actions Artifacts
-        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # pin v4.2.1
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # pin v4.3.0
         with:
           path: client/all-blob-reports
           pattern: blob-report-*
