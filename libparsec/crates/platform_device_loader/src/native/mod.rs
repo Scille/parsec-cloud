@@ -12,8 +12,8 @@ use uuid::Uuid;
 use libparsec_types::prelude::*;
 
 use crate::{
-    ArchiveDeviceError, ListAvailableDeviceError, LoadDeviceError, RemoveDeviceError,
-    SaveDeviceError, UpdateDeviceError, DEVICE_FILE_EXT,
+    get_device_archive_path, ArchiveDeviceError, ListAvailableDeviceError, LoadDeviceError,
+    RemoveDeviceError, SaveDeviceError, UpdateDeviceError, DEVICE_FILE_EXT,
 };
 
 const KEYRING_SERVICE: &str = "parsec";
@@ -343,18 +343,9 @@ pub async fn update_device(
     Ok((available_device, old_server_addr))
 }
 
-pub const ARCHIVE_DEVICE_EXT: &str = "archived";
-
 /// Archive a device identified by its path.
 pub async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
-    let archive_device_path = if let Some(current_file_extension) = device_path.extension() {
-        // Add ARCHIVE_DEVICE_EXT to the current file extension resulting in extension `.{current}.{ARCHIVE_DEVICE_EXT}`.
-        let mut ext = current_file_extension.to_owned();
-        ext.extend([".".as_ref(), ARCHIVE_DEVICE_EXT.as_ref()]);
-        device_path.with_extension(ext)
-    } else {
-        device_path.with_extension(ARCHIVE_DEVICE_EXT)
-    };
+    let archive_device_path = get_device_archive_path(device_path);
 
     log::debug!(
         "Archiving device {} to {}",

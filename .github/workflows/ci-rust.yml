@@ -162,6 +162,10 @@ jobs:
       - name: Test platform-device-loader on wasm
         if: inputs.run-wasm-tests
         run: wasm-pack test --headless --firefox libparsec/crates/platform_device_loader
+        env:
+          # RUST_LOG: wasm_bindgen_test_runner
+          # Default timeout is 20, increase it for slow runner
+          WASM_BINDGEN_TEST_TIMEOUT: 40
         timeout-minutes: 10
 
       - name: Build CLI binary

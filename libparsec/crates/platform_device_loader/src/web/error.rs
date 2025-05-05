@@ -1,16 +1,113 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::path::PathBuf;
+
 use libparsec_types::anyhow;
 use web_sys::wasm_bindgen::JsValue;
 
-#[derive(Debug, thiserror::Error)]
-pub enum NewStorageError {
-    #[error("No window context available, are we in a browser?")]
-    NoWindow,
-    #[error("No local storage available")]
-    NoLocalStorage,
-    #[error("Failed to access local storage ({:?})", .0)]
-    WindowError(JsValue),
+error_set::error_set! {
+    DomExceptionError = {
+        DomException {
+            exception: web_sys::DomException
+        }
+    };
+    CastError = {
+        #[display("Failed to cast to {ty} ({value:?}")]
+        Cast {
+            ty: &'static str,
+            value: JsValue
+        }
+    };
+    AwaitPromiseError = {
+        #[display("Failed to await JS promise ({error:?})")]
+        Promise {
+            error: JsValue
+        }
+    };
+    JsPromiseError = CastError || AwaitPromiseError;
+    NotFoundError = {
+        #[display("No such file or directory at {}", path.display())]
+        NotFound {
+            path: PathBuf,
+        }
+    };
+    GetRootDirectoryError = AwaitPromiseError || CastError || DomExceptionError || {
+        #[display("Storage not available")]
+        StorageNotAvailable { exception: web_sys::DomException }
+    };
+    GetDirectoryHandleError = CastError || AwaitPromiseError || DomExceptionError || NotFoundError || {
+        #[display("Item at {} is not a directory", path.display())]
+        NotADirectory {
+            path: PathBuf,
+        },
+    };
+    GetFileHandleError = CastError || AwaitPromiseError || DomExceptionError || NotFoundError || GetDirectoryHandleError || {
+        #[display("Item at {} is not a directory", path.display())]
+        NotAFile {
+            path: PathBuf
+        }
+    };
+    ReadToEndError = DomExceptionError
+        || NotFoundError
+        || CastError
+        || AwaitPromiseError
+        || {
+        #[display("Failed to get file object")]
+        GetFile { error: JsValue },
+    };
+    WriteAllError = CastError || NotFoundError || DomExceptionError || {
+        CreateWritable { error: JsValue },
+        CannotEdit {
+            path: PathBuf,
+            exception: web_sys::DomException
+        },
+        NoSpaceLeft { exception: web_sys::DomException },
+        Write {
+            error: JsValue
+        },
+        Close {
+            error: JsValue
+        }
+    };
+    NewStorageError = GetRootDirectoryError;
+    ListAvailableDevicesError = GetDirectoryHandleError
+        || AwaitPromiseError
+        || {
+            ReadToEnd(ReadToEndError)
+        };
+    DeviceMissingError = NotFoundError;
+    RmpDecodeError = {
+        RmpDecode(libparsec_types::RmpDecodeError)
+    };
+    LoadAvailableDeviceError = {
+        ReadToEnd(ReadToEndError),
+        RmpDecode(libparsec_types::RmpDecodeError)
+    };
+    InvalidPathError = {
+        #[display("Invalid path {}", path.display())]
+        InvalidPath {
+            path: PathBuf
+        }
+    };
+    LoadDeviceError = AwaitPromiseError
+        || RmpDecodeError
+        || {
+            GetFile(GetFileHandleError),
+            ReadFile(ReadToEndError),
+            InvalidFileType,
+            GetSecretKey(libparsec_crypto::CryptoError),
+            DecryptAndLoad(crate::DecryptDeviceFileError),
+        };
+    SaveDeviceError = SaveDeviceFileError;
+    SaveDeviceFileError = GetFileHandleError || WriteAllError;
+    RemoveEntryError = NotFoundError || DomExceptionError || AwaitPromiseError || GetDirectoryHandleError;
+    ArchiveDeviceError = RemoveEntryError || {
+        GetDeviceToArchive(GetFileHandleError),
+        ReadDeviceToArchive(ReadToEndError),
+        CreateArchiveDevice(GetFileHandleError),
+        WriteArchiveDevice(WriteAllError),
+    };
+    RemoveDeviceError = SaveDeviceError;
 }
 
 macro_rules! impl_from_new_storage_error {
@@ -34,85 +131,21 @@ impl_from_new_storage_error!(
     crate::RemoveDeviceError
 );
 
-error_set::error_set! {
-    GetItemStorageError = {
-        #[display("Failed to get item {key} from storage ({error:?})")]
-        GetItemStorage {
-            key: String,
-            error: JsValue
-        }
-    };
-    SetItemStorageError = {
-        #[display("Failed to set item {key} to storage ({error:?})")]
-        SetItemStorage {
-            key: String,
-            error: JsValue
-        }
-    };
-    RemoveItemStorageError = {
-        #[display("Failed to remove item {key} from storage ({error:?})")]
-        RemoveItemStorage {
-            key: String,
-            error: JsValue
-        }
-    };
-    JsonDeserializationError = {
-        JsonDecode(serde_json::Error)
-    };
-    RmpDecodeError = {
-        RmpDecode(libparsec_types::RmpDecodeError)
-    };
-    Base64DecodeError = {
-        B64Decode(data_encoding::DecodeError)
-    };
-    ListAvailableDevicesError = GetItemStorageError
-        || JsonDeserializationError
-        || LoadAvailableDeviceError;
-    DeviceMissingError = {
-        #[display("No device for '{key}'")]
-        Missing {
-            key: String
-        },
-    };
-    GetRawDeviceError = GetItemStorageError
-        || Base64DecodeError
-        || DeviceMissingError;
-    LoadAvailableDeviceError = GetRawDeviceError || RmpDecodeError;
-    InvalidPathError = {
-        #[display("Invalid path {}", path.display())]
-        InvalidPath {
-            path: std::path::PathBuf
-        }
-    };
-    LoadDeviceError = GetRawDeviceError
-        || RmpDecodeError
-        || {
-            InvalidFileType,
-            GetSecretKey(libparsec_crypto::CryptoError),
-            DecryptAndLoad(crate::DecryptDeviceFileError),
-        };
-    SaveDeviceError = SaveDeviceFileError;
-    SaveDeviceFileError = SetItemStorageError;
-    ArchiveDeviceError = GetItemStorageError
-        || SetItemStorageError
-        || DeviceMissingError
-        || RemoveItemStorageError
-        || JsonDeserializationError;
-    RemoveDeviceError = GetItemStorageError
-        || RemoveItemStorageError
-        || JsonDeserializationError;
-}
-
 impl From<LoadDeviceError> for crate::LoadDeviceError {
     fn from(value: LoadDeviceError) -> Self {
         match value {
+            LoadDeviceError::GetFile(get_file_error) => match get_file_error {
+                GetFileHandleError::NotFound { .. } => {
+                    Self::InvalidPath(anyhow::anyhow!("{get_file_error}"))
+                }
+                _ => Self::Internal(anyhow::anyhow!("{get_file_error}")),
+            },
+            LoadDeviceError::ReadFile(_) => Self::Internal(anyhow::anyhow!("{value}")),
             LoadDeviceError::InvalidFileType => Self::InvalidData,
             LoadDeviceError::GetSecretKey(_) => Self::DecryptionFailed,
-            LoadDeviceError::DecryptAndLoad(e) => e.into(),
-            LoadDeviceError::Missing { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            LoadDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            LoadDeviceError::DecryptAndLoad(_) => Self::DecryptionFailed,
+            LoadDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             LoadDeviceError::RmpDecode(_) => Self::InvalidData,
-            LoadDeviceError::B64Decode(_) => Self::InvalidData,
         }
     }
 }
@@ -120,7 +153,17 @@ impl From<LoadDeviceError> for crate::LoadDeviceError {
 impl From<SaveDeviceError> for crate::SaveDeviceError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
-            SaveDeviceError::SetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::NotAFile { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            SaveDeviceError::NotADirectory { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            SaveDeviceError::NotFound { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            SaveDeviceError::CreateWritable { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::CannotEdit { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::Write { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::Close { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::DomException { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::Cast { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::NoSpaceLeft { .. } => Self::Internal(anyhow::anyhow!("{value}")),
         }
     }
 }
@@ -131,10 +174,10 @@ impl From<LoadDeviceError> for crate::UpdateDeviceError {
             LoadDeviceError::InvalidFileType => Self::InvalidData,
             LoadDeviceError::GetSecretKey(_) => Self::DecryptionFailed,
             LoadDeviceError::DecryptAndLoad(e) => e.into(),
-            LoadDeviceError::Missing { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
-            LoadDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            LoadDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
             LoadDeviceError::RmpDecode(_) => Self::InvalidData,
-            LoadDeviceError::B64Decode(_) => Self::InvalidData,
+            LoadDeviceError::GetFile(_) => Self::Internal(anyhow::anyhow!("{value}")),
+            LoadDeviceError::ReadFile(_) => Self::Internal(anyhow::anyhow!("{value}")),
         }
     }
 }
@@ -142,7 +185,17 @@ impl From<LoadDeviceError> for crate::UpdateDeviceError {
 impl From<SaveDeviceError> for crate::UpdateDeviceError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
-            SaveDeviceError::SetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::NotAFile { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            SaveDeviceError::NotADirectory { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            SaveDeviceError::NotFound { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            SaveDeviceError::CreateWritable { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::CannotEdit { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::Write { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::Close { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::DomException { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::Cast { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            SaveDeviceError::NoSpaceLeft { .. } => Self::Internal(anyhow::anyhow!("{value}")),
         }
     }
 }
@@ -150,11 +203,19 @@ impl From<SaveDeviceError> for crate::UpdateDeviceError {
 impl From<RemoveDeviceError> for crate::UpdateDeviceError {
     fn from(value: RemoveDeviceError) -> Self {
         match value {
-            RemoveDeviceError::GetItemStorage { .. } => Self::Internal(anyhow::anyhow!("{value}")),
-            RemoveDeviceError::JsonDecode(_) => Self::InvalidData,
-            RemoveDeviceError::RemoveItemStorage { .. } => {
-                Self::Internal(anyhow::anyhow!("{value}"))
+            RemoveDeviceError::NotAFile { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            RemoveDeviceError::NotADirectory { .. } => {
+                Self::InvalidPath(anyhow::anyhow!("{value}"))
             }
+            RemoveDeviceError::Cast { .. } => Self::InvalidPath(anyhow::anyhow!("{value}")),
+            RemoveDeviceError::Promise { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            RemoveDeviceError::DomException { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            RemoveDeviceError::NotFound { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            RemoveDeviceError::CreateWritable { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            RemoveDeviceError::CannotEdit { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            RemoveDeviceError::NoSpaceLeft { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            RemoveDeviceError::Write { .. } => Self::Internal(anyhow::anyhow!("{value}")),
+            RemoveDeviceError::Close { .. } => Self::Internal(anyhow::anyhow!("{value}")),
         }
     }
 }

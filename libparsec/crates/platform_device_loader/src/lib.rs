@@ -29,6 +29,7 @@ pub const ARGON2ID_DEFAULT_OPSLIMIT: u32 = 3;
 pub const ARGON2ID_DEFAULT_PARALLELISM: u32 = 1;
 
 pub(crate) const DEVICE_FILE_EXT: &str = "keys";
+pub(crate) const ARCHIVE_DEVICE_EXT: &str = "archived";
 
 pub const PARSEC_BASE_CONFIG_DIR: &str = "PARSEC_BASE_CONFIG_DIR";
 pub const PARSEC_BASE_DATA_DIR: &str = "PARSEC_BASE_DATA_DIR";
@@ -37,7 +38,7 @@ pub const PARSEC_BASE_HOME_DIR: &str = "PARSEC_BASE_HOME_DIR";
 pub fn get_default_data_base_dir() -> PathBuf {
     #[cfg(target_arch = "wasm32")]
     {
-        PathBuf::from("")
+        PathBuf::from("/")
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -55,7 +56,7 @@ pub fn get_default_data_base_dir() -> PathBuf {
 pub fn get_default_config_dir() -> PathBuf {
     #[cfg(target_arch = "wasm32")]
     {
-        PathBuf::from("")
+        PathBuf::from("/")
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -73,7 +74,7 @@ pub fn get_default_config_dir() -> PathBuf {
 pub fn get_default_mountpoint_base_dir() -> PathBuf {
     #[cfg(target_arch = "wasm32")]
     {
-        PathBuf::from("")
+        PathBuf::from("/")
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -143,6 +144,7 @@ pub async fn load_device(
     #[cfg_attr(not(feature = "test-with-testbed"), allow(unused_variables))] config_dir: &Path,
     access: &DeviceAccessStrategy,
 ) -> Result<Arc<LocalDevice>, LoadDeviceError> {
+    log::debug!("Loading device at {}", access.key_file().display());
     #[cfg(feature = "test-with-testbed")]
     if let Some(result) = testbed::maybe_load_device(config_dir, access) {
         return result;
@@ -169,6 +171,7 @@ pub async fn save_device(
     access: &DeviceAccessStrategy,
     device: &LocalDevice,
 ) -> Result<AvailableDevice, SaveDeviceError> {
+    log::debug!("Saving device at {}", access.key_file().display());
     #[cfg(feature = "test-with-testbed")]
     if let Some(result) = testbed::maybe_save_device(config_dir, access, device) {
         return result;
@@ -264,6 +267,17 @@ pub enum ArchiveDeviceError {
     StorageNotAvailable,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
+}
+
+pub(crate) fn get_device_archive_path(path: &Path) -> PathBuf {
+    if let Some(current_file_extension) = path.extension() {
+        // Add ARCHIVE_DEVICE_EXT to the current file extension resulting in extension `.{current}.{ARCHIVE_DEVICE_EXT}`.
+        let mut ext = current_file_extension.to_owned();
+        ext.extend([".".as_ref(), ARCHIVE_DEVICE_EXT.as_ref()]);
+        path.with_extension(ext)
+    } else {
+        path.with_extension(ARCHIVE_DEVICE_EXT)
+    }
 }
 
 pub use platform::archive_device;
