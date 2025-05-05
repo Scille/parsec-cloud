@@ -1,6 +1,4 @@
 pkg/
-src/plugins/libparsec/trampoline.d.ts
-src/plugins/libparsec/trampoline.ts
 scripts/vite_plugin_wasm_pack.ts
 dist
 node_modules
