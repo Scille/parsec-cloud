@@ -99,7 +99,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@ab3728c7ba6948b9b429627f4d55a68842b27f18 # pin v2.50.3
+      - uses: taiki-e/install-action@86c23eed46c17b80677df6d8151545ce3e236c61 # pin v2.50.7
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
