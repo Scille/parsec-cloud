@@ -270,7 +270,7 @@
         </div>
       </div>
     </template>
-    <template v-else-if="!querying && !organizationStats && !error && organizations.length">
+    <template v-else-if="!querying && !organizationStats && !contractDetails && !error && organizations.length">
       <ion-text class="organization-choice-title body-lg">
         {{ $msTranslate('clientArea.statistics.multipleOrganizations') }}
       </ion-text>
@@ -291,7 +291,7 @@
         </div>
       </div>
     </template>
-    <template v-else-if="!querying && !organizationStats && !error">
+    <template v-else-if="!querying && !organizationStats && !contractDetails && !error">
       {{ $msTranslate('clientArea.statistics.noStats') }}
     </template>
     <ion-text
@@ -304,14 +304,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  BmsAccessInstance,
-  DataType,
-  BmsOrganization,
-  OrganizationStatsResultData,
-  CustomOrderDetailsResultData,
-  OrganizationStatusResultData,
-} from '@/services/bms';
+import { BmsAccessInstance, DataType, BmsOrganization, OrganizationStatsResultData, CustomOrderDetailsResultData } from '@/services/bms';
 import { onMounted, ref, computed } from 'vue';
 import { IonCard, IonText, IonIcon, IonTitle, IonSkeletonText } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
@@ -346,22 +339,26 @@ onMounted(async () => {
       return;
     }
 
-    if (!isDefaultOrganization(props.currentOrganization)) {
-      const orgStatsResponse = await BmsAccessInstance.get().getOrganizationStats(props.currentOrganization.bmsId);
-
-      if (!orgStatsResponse.isError && orgStatsResponse.data && orgStatsResponse.data.type === DataType.OrganizationStats) {
-        organizationStats.value = orgStatsResponse.data;
-        totalData.value = organizationStats.value.dataSize + organizationStats.value.metadataSize;
-      } else {
-        error.value = 'clientArea.statistics.error';
-      }
+    const organizationStatusResp = await BmsAccessInstance.get().getOrganizationStatus(props.currentOrganization.bmsId);
+    if (organizationStatusResp.isError || organizationStatusResp.data?.type !== DataType.OrganizationStatus) {
+      error.value = 'clientArea.statistics.error';
+      return;
     }
 
-    const organizationStatusResp = await BmsAccessInstance.get().getOrganizationStats(props.currentOrganization.bmsId);
-    const isBootstrapped = (organizationStatusResp.data as OrganizationStatusResultData).isBootstrapped ?? false;
+    const isBootstrapped = organizationStatusResp.data.isBootstrapped ?? false;
 
-    if (isBootstrapped) {
+    if (!isBootstrapped) {
+      error.value = 'clientArea.statistics.notBootstrapped';
       return;
+    }
+
+    const orgStatsResponse = await BmsAccessInstance.get().getOrganizationStats(props.currentOrganization.bmsId);
+
+    if (!orgStatsResponse.isError && orgStatsResponse.data?.type === DataType.OrganizationStats) {
+      organizationStats.value = orgStatsResponse.data;
+      totalData.value = organizationStats.value.dataSize + organizationStats.value.metadataSize;
+    } else {
+      error.value = 'clientArea.statistics.error';
     }
 
     const contractDetailsResponse = await BmsAccessInstance.get().getCustomOrderDetails(props.currentOrganization);
@@ -371,6 +368,8 @@ onMounted(async () => {
       contractDetailsResponse.data.type === DataType.CustomOrderDetails
     ) {
       contractDetails.value = contractDetailsResponse.data;
+    } else {
+      error.value = 'clientArea.statistics.error';
     }
   } finally {
     querying.value = false;
