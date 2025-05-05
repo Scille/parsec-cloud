@@ -34,12 +34,13 @@ async fn ignore_invalid_items(tmp_path: TmpPath) {
     // Also add dummy stuff that should be ignored
 
     // Empty file
-    crate::tests::utils::create_device_file(&devices_dir.join("empty.keys"), b"");
+    crate::tests::utils::create_device_file(&devices_dir.join("empty.keys"), b"").await;
     // Dummy file
-    crate::tests::utils::create_device_file(&devices_dir.join("dummy.keys"), b"dummy");
+    crate::tests::utils::create_device_file(&devices_dir.join("dummy.keys"), b"dummy").await;
     // Folder with dummy file
-    crate::tests::utils::create_device_file(&devices_dir.join("dir/a_file.keys"), b"dummy");
+    crate::tests::utils::create_device_file(&devices_dir.join("dir/a_file.keys"), b"dummy").await;
 
+    log::trace!("Listing available devices");
     let devices = list_available_devices(&tmp_path).await.unwrap();
     p_assert_eq!(devices, []);
 }
@@ -263,7 +264,7 @@ async fn list_devices(tmp_path: TmpPath) {
         (&smartcard_path, smartcard_raw),
         (&recovery_path, recovery_raw),
     ] {
-        crate::tests::utils::create_device_file(path, raw);
+        crate::tests::utils::create_device_file(path, raw).await;
     }
 
     // 3. Actual test !

@@ -37,14 +37,14 @@ async fn same_key_file(tmp_path: TmpPath) {
     );
 
     // Sanity check
-    assert!(!key_present_in_system(&key_file));
+    assert!(!key_present_in_system(&key_file).await);
 
     TimeProvider::root_provider().mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
     let available1 = save_device(Path::new(""), &access, &device).await.unwrap();
     TimeProvider::root_provider().unmock_time();
 
     // Sanity check
-    assert!(key_present_in_system(&key_file));
+    assert!(key_present_in_system(&key_file).await);
     p_assert_eq!(
         available1.created_on,
         "2000-01-01T00:00:00Z".parse().unwrap()
@@ -65,7 +65,7 @@ async fn same_key_file(tmp_path: TmpPath) {
     TimeProvider::root_provider().unmock_time();
 
     // Sanity check
-    assert!(key_present_in_system(&key_file));
+    assert!(key_present_in_system(&key_file).await);
     let expected_available2 = {
         let mut expected = available1.clone();
         expected.protected_on = "2000-01-02T00:00:00Z".parse().unwrap();
@@ -108,12 +108,12 @@ async fn different_key_file(tmp_path: TmpPath) {
     );
 
     // Sanity check
-    assert!(!key_present_in_system(&key_file));
+    assert!(!key_present_in_system(&key_file).await);
 
     save_device(Path::new(""), &access, &device).await.unwrap();
 
     // Sanity check
-    assert!(key_present_in_system(&key_file));
+    assert!(key_present_in_system(&key_file).await);
 
     let new_key_file = tmp_path.join("devices/alice@dev2.keys");
     let new_access = DeviceAccessStrategy::Password {
@@ -126,8 +126,8 @@ async fn different_key_file(tmp_path: TmpPath) {
         .unwrap();
 
     // Sanity check
-    assert!(!key_present_in_system(&key_file));
-    assert!(key_present_in_system(&new_key_file));
+    assert!(!key_present_in_system(&key_file).await);
+    assert!(key_present_in_system(&new_key_file).await);
 
     p_assert_eq!(
         *load_device(Path::new(""), &new_access).await.unwrap(),
