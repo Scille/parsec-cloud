@@ -4,10 +4,10 @@
 
 import type { ClientEvent, LibParsecPlugin } from '@/plugins/libparsec/definitions';
 
-// @ts-ignore
+// @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
 // eslint-disable-next-line camelcase
 import init_module from 'libparsec_bindings_web';
-// @ts-ignore
+// @ts-expect-error: `libparsec_bindings_web` is a wasm module with exotic loading
 import * as module from 'libparsec_bindings_web';
 
 interface SharedWorkerGlobalScope {
