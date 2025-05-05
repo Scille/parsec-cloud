@@ -5,7 +5,7 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
-import { defineConfig, loadEnv, PluginOption, UserConfigExport } from 'vite';
+import { ConfigEnv, defineConfig, loadEnv, PluginOption, UserConfigFnObject } from 'vite';
 import topLevelAwait from 'vite-plugin-top-level-await';
 // eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import wasmPack from './scripts/vite_plugin_wasm_pack';
@@ -92,7 +92,7 @@ if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
 const additionalData = '@use "megashark-lib/theme" as ms;';
 
 // https://vitejs.dev/config/
-const config: UserConfigExport = () => ({
+const config: UserConfigFnObject = (_env: ConfigEnv) => ({
   css: {
     preprocessorOptions: {
       scss: {
@@ -147,7 +147,7 @@ const config: UserConfigExport = () => ({
   },
   worker: {
     format: 'es',
-    plugins: (): PluginOption => {
+    plugins: (): PluginOption[] => {
       return workerPluginsFactories.map((factory) => factory());
     },
   },
