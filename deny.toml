@@ -85,15 +85,6 @@ id = "RUSTSEC-2023-0071"
 reason = "Currently no fix, but it's currently being worked on, see issue: https://github.com/RustCrypto/RSA/issues/19#issuecomment-1822995643"
 
 [[advisories.ignore]]
-id = "RUSTSEC-2024-0363"
-reason = """
-Possible SQL Injection where input manipulate the SQL query by overflowing the buffer len field (4 bytes).
-
-We are not affected since sqlx is used on the client side to store the files' data.
-Before being stored in SQLite, that data is splitted into chunk and encoded, so we are below the overflow limit of 4GB.
-"""
-
-[[advisories.ignore]]
 id = "RUSTSEC-2024-0436"
 reason = """
 paste is no longer maintained but in a correct state.
