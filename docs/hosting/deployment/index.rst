@@ -308,7 +308,7 @@ Installation
 
   .. code-block:: bash
 
-    python -m pip install 'parsec-cloud==3.4.0-a.12'
+    python -m pip install 'parsec-cloud==3.4.0-a.13+dev'
 
 4. Prepare the database by applying the migrations:
 
