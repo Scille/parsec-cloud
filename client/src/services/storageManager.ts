@@ -28,6 +28,7 @@ export interface Config {
   skipViewers: boolean;
   skipAccount: boolean;
   defaultAccountServer?: string;
+  skipLongPathsSupportWarning: boolean;
 }
 
 export class StorageManager {
@@ -49,6 +50,7 @@ export class StorageManager {
       skipViewers: false,
       skipAccount: false,
       defaultAccountServer: undefined,
+      skipLongPathsSupportWarning: false,
     };
   }
 
@@ -155,6 +157,7 @@ export class StorageManager {
       skipViewers: data.skipViewers,
       skipAccount: data.skipAccount,
       defaultAccountServer: data.defaultAccountServer,
+      skipLongPathsSupportWarning: data.skipLongPathsSupportWarning,
     });
     window.electronAPI.sendConfig(data);
   }
@@ -181,6 +184,7 @@ export class StorageManager {
       skipViewers: data.skipViewers !== undefined ? data.skipViewers : StorageManager.DEFAULT_CONFIG.skipViewers,
       skipAccount: data.skipAccount ?? StorageManager.DEFAULT_CONFIG.skipAccount,
       defaultAccountServer: data.defaultAccountServer ?? StorageManager.DEFAULT_CONFIG.defaultAccountServer,
+      skipLongPathsSupportWarning: data.skipLongPathsSupportWarning ?? StorageManager.DEFAULT_CONFIG.skipLongPathsSupportWarning,
     };
     return config;
   }
