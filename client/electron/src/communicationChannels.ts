@@ -26,4 +26,5 @@ export enum WindowToPageChannel {
   CleanUpBeforeUpdate = 'parsec-clean-up-before-update',
   IsDevMode = 'parsec-is-dev-mode',
   PrintToConsole = 'parsec-print-to-console',
+  LongPathsDisabled = 'parsec-long-paths-disabled',
 }
