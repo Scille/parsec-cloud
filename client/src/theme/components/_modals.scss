@@ -553,3 +553,10 @@
     border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
   }
 }
+
+.tab-menu-modal { 
+  &::part(handle) {
+    top: 1rem;
+    background: var(--parsec-color-light-secondary-light);
+  }
+}

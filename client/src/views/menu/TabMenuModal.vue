@@ -3,30 +3,25 @@
 <!-- this modal is temporary, it will be replaced by a modal from the megashark-lib -->
 
 <template>
-  <ion-modal
-    class="fab-modal"
-    trigger="open-modal"
-    :initial-breakpoint="1"
-    :breakpoints="[0, 1]"
-  >
+  <ion-page id="fab-modal">
     <ion-list class="fab-modal-list">
       <ion-item
         class="fab-modal-list__item ion-no-padding button-medium"
-        :disabled="true"
+        @click="onClick(AddElementAction.CreateWorkspace)"
       >
         <ion-icon
           class="item-icon"
-          :icon="add"
+          :icon="addCircle"
         />
         {{ $msTranslate('SideMenu.tabbar.newWorkspace') }}
       </ion-item>
       <ion-item
         class="fab-modal-list__item ion-no-padding button-medium"
-        :disabled="true"
+        @click="onClick(AddElementAction.CreateFolder)"
       >
-        <ms-image
+        <ion-icon
           class="item-icon"
-          :image="DocumentImport"
+          :icon="folderOpen"
         />
         {{ $msTranslate('SideMenu.tabbar.newFolder') }}
       </ion-item>
@@ -34,7 +29,7 @@
     <ion-list class="fab-modal-list">
       <ion-item
         class="fab-modal-list__item ion-no-padding button-medium"
-        :disabled="true"
+        @click="onClick(AddElementAction.ImportFolder)"
       >
         <ms-image
           class="item-icon"
@@ -44,7 +39,7 @@
       </ion-item>
       <ion-item
         class="fab-modal-list__item ion-no-padding button-medium"
-        :disabled="true"
+        @click="onClick(AddElementAction.ImportFile)"
       >
         <ms-image
           class="item-icon"
@@ -55,6 +50,7 @@
       <ion-item
         class="fab-modal-list__item ion-no-padding button-medium"
         :disabled="true"
+        v-if="false"
       >
         <ion-icon
           class="item-icon"
@@ -65,6 +61,7 @@
       <ion-item
         class="fab-modal-list__item ion-no-padding button-medium"
         :disabled="true"
+        v-if="false"
       >
         <ion-icon
           class="item-icon"
@@ -76,7 +73,7 @@
     <ion-list class="fab-modal-list">
       <ion-item
         class="fab-modal-list__item ion-no-padding button-medium"
-        :disabled="true"
+        @click="onClick(AddElementAction.AddUser)"
       >
         <ion-icon
           class="item-icon"
@@ -85,46 +82,59 @@
         {{ $msTranslate('SideMenu.tabbar.addUser') }}
       </ion-item>
     </ion-list>
-  </ion-modal>
+  </ion-page>
 </template>
+
+<script lang="ts">
+export enum AddElementAction {
+  CreateWorkspace,
+  CreateFolder,
+  ImportFolder,
+  ImportFile,
+  ScanDocument,
+  ImportPhoto,
+  AddUser,
+}
+</script>
 
 <script setup lang="ts">
 import { MsImage, DocumentImport } from 'megashark-lib';
-import { IonModal, IonIcon, IonItem, IonList } from '@ionic/vue';
-import { add, personAdd, images, scan } from 'ionicons/icons';
+import { IonPage, IonIcon, IonItem, IonList, modalController } from '@ionic/vue';
+import { personAdd, images, scan, addCircle, folderOpen } from 'ionicons/icons';
+
+async function onClick(action: AddElementAction): Promise<boolean> {
+  return modalController.dismiss({ action: action });
+}
 </script>
 
 <style scoped lang="scss">
-.fab-modal {
-  &::part(content) {
-    padding-top: 2rem;
+#fab-modal {
+  display: flex;
+  flex-direction: column;
+  padding-top: 1rem;
+  background-color: var(--parsec-color-light-background);
+}
+
+.fab-modal-list {
+  padding: 1rem 1.5rem;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
   }
 
-  &::part(handle) {
-    margin: 1rem auto;
-  }
+  &__item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    color: var(--parsec-color-light-secondary-soft-text);
 
-  &-list {
-    padding: 1rem 0.75rem;
-
-    &:not(:last-child) {
-      border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
-    }
-
-    &__item {
-      display: flex;
-      align-items: center;
-      padding: 0.5rem 0;
+    .item-icon {
+      font-size: 1.125rem;
+      width: 1.125rem;
+      height: 1.125rem;
       color: var(--parsec-color-light-secondary-soft-text);
-
-      .item-icon {
-        font-size: 1.125rem;
-        width: 1.125rem;
-        height: 1.125rem;
-        color: var(--parsec-color-light-secondary-soft-text);
-        --fill-color: var(--parsec-color-light-secondary-soft-text);
-        margin-inline-end: 0.75rem;
-      }
+      --fill-color: var(--parsec-color-light-secondary-soft-text);
+      margin-inline-end: 0.75rem;
     }
   }
 }

@@ -356,6 +356,24 @@
         </ion-text>
       </div>
 
+      <div class="tab-bar-list fab-button-container">
+        <ion-fab
+          class="fab-content"
+          size="small"
+          @click="openAddMenuModal"
+        >
+          <ion-fab-button
+            class="fab-button"
+            id="open-modal"
+          >
+            <ms-image
+              :image="AddIcon"
+              class="fab-icon"
+            />
+          </ion-fab-button>
+        </ion-fab>
+      </div>
+
       <div
         class="tab-bar-list-button"
         :class="currentRouteIs(Routes.Organization) ? 'active' : ''"
@@ -401,6 +419,8 @@ import {
   IonContent,
   IonHeader,
   IonIcon,
+  IonFab,
+  IonFabButton,
   IonItem,
   IonList,
   IonMenu,
@@ -409,6 +429,7 @@ import {
   IonText,
   menuController,
   popoverController,
+  modalController,
 } from '@ionic/vue';
 import {
   home,
@@ -451,7 +472,7 @@ import {
   getLoggedInDevices,
   getClientInfo,
 } from '@/parsec';
-import { ChevronExpand, MsImage, LogoIconGradient, I18n, MsModalResult } from 'megashark-lib';
+import { ChevronExpand, MsImage, LogoIconGradient, I18n, MsModalResult, AddIcon, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { recentDocumentManager, RecentFile } from '@/services/recentDocuments';
 import { openPath } from '@/services/fileOpener';
@@ -467,6 +488,7 @@ import { openWorkspaceContextMenu } from '@/components/workspaces';
 import { formatExpirationTime } from '@/common/organization';
 import useSidebarMenu from '@/services/sidebarMenu';
 import useUploadMenu from '@/services/fileUploadMenu';
+import TabMenuModal from '@/views/menu/TabMenuModal.vue';
 
 defineProps<{
   userInfo: ClientInfo;
@@ -489,7 +511,7 @@ const emits = defineEmits<{
 }>();
 
 const isManagement = currentRouteIsOrganizationManagementRoute;
-
+const { isLargeDisplay } = useWindowSize();
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
@@ -542,6 +564,23 @@ const currentWorkspace = computed(() => {
   }
   return undefined;
 });
+
+async function openAddMenuModal(): Promise<void> {
+  const modal = await modalController.create({
+    component: TabMenuModal,
+    cssClass: 'tab-menu-modal',
+    showBackdrop: true,
+    handle: true,
+    backdropDismiss: true,
+    breakpoints: isLargeDisplay.value ? undefined : [1],
+    // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
+    // expandToScroll: false, should be added to scroll with Ionic 8
+    initialBreakpoint: isLargeDisplay.value ? undefined : 1,
+  });
+  await modal.present();
+  await modal.onDidDismiss();
+  await modal.dismiss();
+}
 
 async function loadAll(): Promise<void> {
   favorites.value = (
@@ -1171,6 +1210,11 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
   border-top: 1px solid var(--parsec-color-light-secondary-premiere);
   display: none;
 
+  @include ms.responsive-breakpoint('sm') {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+  }
+
   &-button {
     display: flex;
     flex-grow: 1;
@@ -1218,9 +1262,31 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
     }
   }
 
-  @include ms.responsive-breakpoint('sm') {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+  .fab-button-container {
+    max-width: 3.75rem;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    margin: auto;
+    border: none;
+
+    .fab-content {
+      position: relative;
+    }
+
+    .fab-button {
+      width: 2.375rem;
+      height: 2.375rem;
+      --background: var(--parsec-color-light-primary-600);
+      --background-activated: var(--parsec-color-light-secondary-white);
+      --border-radius: var(--parsec-radius-12);
+      --box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+      --color: var(--parsec-color-light-secondary-inversed-contrast);
+
+      .fab-icon {
+        --fill-color: var(--parsec-color-light-secondary-inversed-contrast);
+      }
+    }
   }
 }
 </style>
