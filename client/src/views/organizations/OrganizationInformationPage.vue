@@ -53,6 +53,7 @@
         </div>
       </template>
     </ion-content>
+    <tab-bar-menu class="tab-bar-menu" />
   </ion-page>
 </template>
 
@@ -77,6 +78,7 @@ import OrganizationConfigurationInformation from '@/components/organizations/Org
 import OrganizationStorageInformation from '@/components/organizations/OrganizationStorageInformation.vue';
 import { isTrialOrganizationDevice } from '@/common/organization';
 import { useWindowSize } from 'megashark-lib';
+import TabBarMenu from '@/components/menu/TabBarMenu.vue';
 
 const { isSmallDisplay } = useWindowSize();
 
@@ -152,7 +154,8 @@ onMounted(async () => {
       @include ms.responsive-breakpoint('sm') {
         align-items: center;
         gap: 1.5rem;
-        padding: 1.5em;
+        padding: 1.5rem;
+        margin-bottom: 4.75rem;
       }
     }
   }

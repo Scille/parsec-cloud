@@ -159,6 +159,10 @@
           />
         </div>
       </div>
+      <tab-bar-menu
+        v-if="isSmallDisplay"
+        class="tab-bar-menu"
+      />
     </ion-content>
   </ion-page>
 </template>
@@ -218,6 +222,7 @@ import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { IonButton, IonContent, IonIcon, IonLabel, IonList, IonListHeader, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import TabBarMenu from '@/components/menu/TabBarMenu.vue';
 import { recentDocumentManager } from '@/services/recentDocuments';
 
 enum SortWorkspaceBy {

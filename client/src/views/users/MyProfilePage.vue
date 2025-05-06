@@ -2,10 +2,7 @@
 
 <template>
   <ion-page class="page">
-    <ion-content
-      class="page-content"
-      :fullscreen="true"
-    >
+    <ion-content class="profile-page-content">
       <ion-header
         v-if="clientInfo && isSmallDisplay"
         class="profile-page-header"
@@ -262,6 +259,10 @@
         </div>
       </div>
     </ion-content>
+    <tab-bar-menu
+      v-if="isSmallDisplay"
+      class="tab-bar-menu"
+    />
   </ion-page>
 </template>
 
@@ -292,6 +293,7 @@ import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 import { Env } from '@/services/environment';
 import { getCurrentRouteName, getCurrentRouteQuery, navigateTo, Routes, watchRoute, ProfilePages } from '@/router';
 import { Translatable, useWindowSize, askQuestion, Answer, OpenIcon, MsImage } from 'megashark-lib';
+import TabBarMenu from '@/components/menu/TabBarMenu.vue';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
@@ -409,7 +411,7 @@ onUnmounted(async () => {
   transition: all 0.2s ease-in-out;
 }
 
-.page-content::part(scroll) {
+.profile-page-content::part(scroll) {
   display: flex;
   flex-direction: column;
 }

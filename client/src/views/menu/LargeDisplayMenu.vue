@@ -2,7 +2,7 @@
 
 <template>
   <ion-split-pane
-    class="desktop-menu-container"
+    class="large-display-menu-container"
     content-id="main"
     menu-id="main-menu"
     :when="true"
@@ -322,69 +322,6 @@
         </ion-list>
       </ion-content>
     </ion-menu>
-
-    <div class="tab-bar-list">
-      <div
-        class="tab-bar-list-button"
-        :class="currentRouteIs(Routes.Workspaces) ? 'active' : ''"
-        @click="navigateTo(Routes.Workspaces)"
-      >
-        <ion-icon
-          :icon="business"
-          class="tab-bar-list-button__icon"
-        />
-        <ion-text class="tab-bar-list-button__text button-medium">
-          {{ $msTranslate('SideMenu.tabbar.workspaces') }}
-        </ion-text>
-      </div>
-
-      <div
-        class="tab-bar-list-button"
-        :disabled="!hasVisited(Routes.Documents)"
-        :class="{
-          active: currentRouteIs(Routes.Documents),
-          disabled: !hasVisited(Routes.Documents),
-        }"
-        @click="goToLastDocumentsPage"
-      >
-        <ion-icon
-          :icon="folder"
-          class="tab-bar-list-button__icon"
-        />
-        <ion-text class="tab-bar-list-button__text button-medium">
-          {{ $msTranslate('SideMenu.tabbar.files') }}
-        </ion-text>
-      </div>
-
-      <div
-        class="tab-bar-list-button"
-        :class="currentRouteIs(Routes.Organization) ? 'active' : ''"
-        @click="navigateTo(Routes.Organization)"
-      >
-        <ion-icon
-          :icon="prism"
-          class="tab-bar-list-button__icon"
-        />
-        <ion-text class="tab-bar-list-button__text button-medium">
-          {{ $msTranslate('SideMenu.tabbar.organization') }}
-        </ion-text>
-      </div>
-
-      <div
-        class="tab-bar-list-button"
-        :class="currentRouteIs(Routes.MyProfile) ? 'active' : ''"
-        @click="navigateTo(Routes.MyProfile)"
-      >
-        <ion-icon
-          :icon="personCircle"
-          class="tab-bar-list-button__icon"
-        />
-        <ion-text class="tab-bar-list-button__text button-medium">
-          {{ userInfo ? userInfo.humanHandle.label : '' }}
-        </ion-text>
-      </div>
-    </div>
-
     <ion-router-outlet id="main" />
   </ion-split-pane>
 </template>
@@ -422,9 +359,6 @@ import {
   star,
   snow,
   warning,
-  folder,
-  prism,
-  personCircle,
 } from 'ionicons/icons';
 import { SidebarWorkspaceItem, SidebarRecentFileItem, SidebarMenuList } from '@/components/sidebar';
 import {
@@ -436,8 +370,6 @@ import {
   navigateTo,
   navigateToWorkspace,
   switchOrganization,
-  hasVisited,
-  getLastVisited,
 } from '@/router';
 import {
   ClientInfo,
@@ -457,7 +389,6 @@ import { recentDocumentManager, RecentFile } from '@/services/recentDocuments';
 import { openPath } from '@/services/fileOpener';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import { StorageManagerKey, StorageManager } from '@/services/storageManager';
-import { SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu/utils';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { WorkspaceDefaultData, WORKSPACES_PAGE_DATA_KEY, WorkspacesPageSavedData } from '@/components/workspaces';
@@ -467,29 +398,17 @@ import { openWorkspaceContextMenu } from '@/components/workspaces';
 import { formatExpirationTime } from '@/common/organization';
 import useSidebarMenu from '@/services/sidebarMenu';
 import useUploadMenu from '@/services/fileUploadMenu';
+import { SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu';
 
 defineProps<{
   userInfo: ClientInfo;
 }>();
-
-async function goToLastDocumentsPage(): Promise<void> {
-  const routeBackup = getLastVisited(Routes.Documents);
-
-  if (!routeBackup) {
-    return;
-  }
-  await navigateTo(Routes.Documents, {
-    params: routeBackup.data.params,
-    query: { workspaceHandle: routeBackup.data.query.workspaceHandle, documentPath: routeBackup.data.query.documentPath },
-  });
-}
 
 const emits = defineEmits<{
   (event: 'sidebarWidthChanged', value: number): void;
 }>();
 
 const isManagement = currentRouteIsOrganizationManagementRoute;
-
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
@@ -734,7 +653,7 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
 </script>
 
 <style lang="scss" scoped>
-.desktop-menu-container {
+.large-display-menu-container {
   --side-min-width: var(--parsec-sidebar-menu-min-width);
 
   @include ms.responsive-breakpoint('sm') {
@@ -1160,67 +1079,6 @@ async function onRecentFilesMenuVisibilityChanged(visible: boolean): Promise<voi
 
   .title-h4 {
     padding: 1.5em 0 1em;
-  }
-}
-
-.tab-bar-list {
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  padding: 0.5rem 1rem 1.5rem;
-  justify-content: space-between;
-  border: none;
-  border-top: 1px solid var(--parsec-color-light-secondary-premiere);
-  display: none;
-
-  &-button {
-    display: flex;
-    flex-grow: 1;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.375rem;
-    cursor: pointer;
-    color: var(--parsec-color-light-secondary-text);
-
-    &.active {
-      color: var(--parsec-color-light-primary-600);
-      position: relative;
-
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: -0.5rem;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 0.25rem;
-        height: 0.25rem;
-        border-radius: var(--parsec-radius-circle);
-        background: var(--parsec-color-light-primary-600);
-      }
-    }
-
-    &.disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    &__icon {
-      font-size: 1.5rem;
-    }
-
-    &__text {
-      font-size: 0.75rem;
-      text-align: center;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-      max-width: 4.75rem;
-      width: 100%;
-    }
-  }
-
-  @include ms.responsive-breakpoint('sm') {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
   }
 }
 </style>
