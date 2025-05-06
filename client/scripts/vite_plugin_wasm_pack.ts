@@ -26,6 +26,7 @@ function vitePluginWasmPack(
   let configIsWorker: boolean;
   let configIsProduction: boolean;
   let configAssetsDir: string;
+  let configBase: string;
 
   function retrieveCrate(source: string): WasmPackCrate | null {
     for (let i = 0; i < crates.length; i++) {
@@ -71,6 +72,15 @@ function vitePluginWasmPack(
       configIsWorker = resolvedConfig.isWorker;
       configIsProduction = resolvedConfig.isProduction;
       configAssetsDir = resolvedConfig.build.assetsDir;
+      configBase = resolvedConfig.base;
+
+      if (!configBase.startsWith('/')) {
+        throw new Error('`BASE_URL` is required to be absolute (typically `BASE_URL="/client"`)');
+      }
+      // Sanity check: vite is supposed to take care of missing trailing `/` in BASE_URL
+      if (!configBase.endsWith('/')) {
+        throw new Error('`resolvedConfig.base` is missing a trailing `/`');
+      }
     },
 
     transform(code: string, id: string): void {
@@ -164,11 +174,17 @@ function vitePluginWasmPack(
             // - For the main web page, the base path is set with the `<base>`'s href
             //   tag (e.g. `<base href="/client/">`). In this case, we need to append
             //   the asset folder to the relative path (e.g. `./assets/XXX_bg.wasm`).
+            //
+            // TODO: for whatever reason, in the main web page, JS's `fetch` doesn't
+            // use the `document.baseURI` (i.e. `<base>`'s href) to resolve relative
+            // URLs (like it is supposed to !).
+            // So instead we do the resolve ourselves using `BASE_URL` (which hence must
+            // is required to itself be absolute !) and provide an absolute URL.
             found = true;
             if (configIsWorker) {
               return `module_or_path = "${wasmFileName}";`;
             } else {
-              return `module_or_path = "${configAssetsDir}/${wasmFileName}";`;
+              return `module_or_path = "${configBase}${configAssetsDir}/${wasmFileName}";`;
             }
           });
 
