@@ -246,6 +246,7 @@
           </div>
         </div>
       </div>
+      <tab-bar-menu class="tab-bar-menu" />
     </ion-content>
   </ion-page>
 </template>
@@ -337,6 +338,7 @@ import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick } from 'vu
 import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
+import TabBarMenu from '@/components/menu/TabBarMenu.vue';
 import { showDirectoryPicker, showSaveFilePicker } from 'native-file-system-adapter';
 
 interface FoldersPageSavedData {
