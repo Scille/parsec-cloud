@@ -85,22 +85,13 @@
   </ion-page>
 </template>
 
-<script lang="ts">
-export enum AddElementAction {
-  CreateWorkspace,
-  CreateFolder,
-  ImportFolder,
-  ImportFile,
-  ScanDocument,
-  ImportPhoto,
-  AddUser,
-}
-</script>
+<script lang="ts"></script>
 
 <script setup lang="ts">
 import { MsImage, DocumentImport } from 'megashark-lib';
 import { IonPage, IonIcon, IonItem, IonList, modalController } from '@ionic/vue';
 import { personAdd, images, scan, addCircle, folderOpen } from 'ionicons/icons';
+import { AddElementAction } from '@/views/menu';
 
 async function onClick(action: AddElementAction): Promise<boolean> {
   return modalController.dismiss({ action: action });
