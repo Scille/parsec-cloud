@@ -314,6 +314,15 @@
         "moveHere": "Move here",
         "cancel": "Cancel"
     },
+    "LongPathsSupportModal": {
+        "title": "Support for long paths",
+        "closeButton": "Close",
+        "noReminder": "Don't remind me again",
+        "labelInfo": "Support for long file paths is not activated on your system. Windows will only support paths up to 260 characters, which might cause problems when accessing some files.",
+        "labelFix": "We recommend that your activate the support for long paths on your machine (or ask an administrator to do it). Instructions can be found on {link}.",
+        "linkLabel": "Microsoft's website",
+        "fixUrl": "https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry#enable-long-paths-in-windows-10-version-1607-and-later"
+    },
     "MenuPage": {
         "about": "About",
         "contact": "Contact",

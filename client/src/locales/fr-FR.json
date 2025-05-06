@@ -314,6 +314,15 @@
         "moveHere": "Déplacer ici",
         "cancel": "Annuler"
     },
+    "LongPathsSupportModal": {
+        "title": "Support des chemins longs",
+        "closeButton": "Fermer",
+        "noReminder": "Ne plus me le rappeler",
+        "labelInfo": "Le support des chemins de fichiers longs n'est pas activé sur votre système. Windows ne supportera que des chemins inférieurs à 260 caractères, ce qui pourrait poser des problèmes d'accès à certains fichiers.",
+        "labelFix": "Nous vous recommandons d'activer le support des longs chemins de fichiers sur votre machine (ou de demander à un administrateur de le faire). Les instructions se trouvent sur {link}.",
+        "linkLabel": "le site de Microsoft",
+        "fixUrl": "https://learn.microsoft.com/fr-fr/windows/win32/fileio/maximum-file-path-limitation?tabs=registry#enable-long-paths-in-windows-10-version-1607-and-later"
+    },
     "MenuPage": {
         "about": "À propos",
         "contact": "Contact",

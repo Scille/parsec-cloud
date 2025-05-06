@@ -30,6 +30,7 @@ const ALLOWED_URL_LIST = [
   'https://sign.parsec.cloud',
   'https://sign-dev.parsec.cloud',
   'https://docs.parsec.cloud',
+  'https://learn.microsoft.com',
 ];
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
@@ -389,6 +390,12 @@ export class ElectronCapacitorApp {
         this.sendEvent(WindowToPageChannel.OpenLink, this.storedLink);
         this.storedLink = '';
       }
+
+      this.winRegistry.areLongPathsEnabled().then((longPathsEnabled) => {
+        if (!longPathsEnabled) {
+          this.sendEvent(WindowToPageChannel.LongPathsDisabled);
+        }
+      });
     }, 1500);
   }
 

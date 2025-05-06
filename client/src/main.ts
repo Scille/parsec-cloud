@@ -50,6 +50,7 @@ import { InjectionProvider, InjectionProviderKey } from '@/services/injectionPro
 import { Sentry } from '@/services/sentry';
 import { initViewers } from '@/services/viewers';
 import { LogLevel, WebLogger } from '@/services/webLogger';
+import LongPathsSupportModal from '@/views/about/LongPathsSupportModal.vue';
 import IncompatibleEnvironmentModal from '@/views/home/IncompatibleEnvironmentModal.vue';
 import { Answer, Base64, I18n, Locale, MegaSharkPlugin, StripeConfig, ThemeManager, Validity, askQuestion } from 'megashark-lib';
 
@@ -401,6 +402,32 @@ async function setupApp(): Promise<void> {
       });
       window.electronAPI.receive('parsec-print-to-console', async (level: LogLevel, message: string) => {
         console[level](message);
+      });
+      window.electronAPI.receive('parsec-long-paths-disabled', async () => {
+        if (config.skipLongPathsSupportWarning) {
+          window.electronAPI.log('info', 'Support for long paths is disabled but the user chose to ignore the warning.');
+          return;
+        }
+        if ((await modalController.getTop()) !== undefined) {
+          window.electronAPI.log(
+            'warn',
+            "Support for long paths is disabled but we can't warn the user because a modal is already opened.",
+          );
+          return;
+        }
+        const modal = await modalController.create({
+          component: LongPathsSupportModal,
+          canDismiss: true,
+          backdropDismiss: false,
+          cssClass: 'long-paths-support-modal',
+        });
+        await modal.present();
+        const { data } = await modal.onWillDismiss();
+        await modal.dismiss();
+        if (data?.skipLongPathsSupportWarning !== undefined) {
+          config.skipLongPathsSupportWarning = data.skipLongPathsSupportWarning;
+          await storageManager.storeConfig(config);
+        }
       });
 
       window.electronAPI.pageIsInitialized();
