@@ -563,3 +563,12 @@
     border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
   }
 }
+
+.tab-menu-modal {
+  margin-bottom: 4.78rem;
+  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+  &::part(handle) {
+    top: 1rem;
+    background: var(--parsec-color-light-secondary-light);
+  }
+}

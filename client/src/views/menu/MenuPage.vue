@@ -2,7 +2,7 @@
 
 <template>
   <ion-page>
-    <desktop-menu
+    <large-display-menu
       v-if="userInfo && !isMobile()"
       :user-info="userInfo"
       @sidebar-width-changed="onSidebarWidthChanged"
@@ -19,7 +19,7 @@ import { ClientInfo, getClientInfo as parsecGetClientInfo, isMobile } from '@/pa
 import { IonPage } from '@ionic/vue';
 import { Ref, onMounted, onUnmounted, ref } from 'vue';
 import MobileMenu from '@/views/menu/MobileMenu.vue';
-import DesktopMenu from '@/views/menu/DesktopMenu.vue';
+import LargeDisplayMenu from '@/views/menu/LargeDisplayMenu.vue';
 
 const sidebarWidth = ref<number>(0);
 const userInfo: Ref<ClientInfo | null> = ref(null);

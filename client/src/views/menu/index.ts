@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { SidebarSavedData } from '@/views/menu/utils';
+import AddMenuModal from '@/views/menu/AddMenuModal.vue';
 
-export { SidebarSavedData };
+export * from '@/views/menu/types';
+export * from '@/views/menu/utils';
+export { AddMenuModal };
