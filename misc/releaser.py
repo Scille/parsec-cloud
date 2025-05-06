@@ -381,7 +381,10 @@ _test_format_version(Version(1, 2, 3, dev=4, local="foo.bar"), "1.2.3-dev.4+foo.
 
 def run_git(*cmd: Any, verbose: bool = False) -> str:
     if DRY_GIT_COMMANDS:
-        print(f"{COLOR_DIM}[DRY] >> git {' '.join(map(str, cmd))}{COLOR_END}", file=sys.stderr)
+        print(
+            f"{COLOR_DIM}[DRY] >> git {' '.join(map(str, cmd))}{COLOR_END}",
+            file=sys.stderr,
+        )
         return ""
     return run_cmd("git", *cmd, verbose=verbose)
 
@@ -483,7 +486,12 @@ def ensure_working_on_the_correct_branch(
     # Force use of the release branch for the next patch version or nightly build
     if version.patch == 0 or nightly:
         print("Creating release branch...")
-        run_git("switch", "--force-create", release_branch, *([base_ref] if base_ref else []))
+        run_git(
+            "switch",
+            "--force-create",
+            release_branch,
+            *([base_ref] if base_ref else []),
+        )
     else:
         raise ReleaseError(
             f"""
@@ -632,7 +640,7 @@ def push_release(
             "push",
             "--set-upstream",
             "--atomic",
-            *(["--force"] if force_push else []),
+            *(["--force-with-lease"] if force_push else []),
             "origin",
             release_branch,
             *([] if skip_tag else [tag]),
@@ -824,10 +832,19 @@ def build_main(args: argparse.Namespace) -> None:
     # No need to create a dev version for a nightly release.
     if not args.nightly:
         create_bump_commit_to_dev_version(
-            release_version, license_eol_date, gpg_sign=args.gpg_sign, same_version=same_version
+            release_version,
+            license_eol_date,
+            gpg_sign=args.gpg_sign,
+            same_version=same_version,
         )
 
-    push_release(tag, release_branch, yes, force_push=args.nightly, skip_tag=skip_tag)
+    push_release(
+        tag,
+        release_branch,
+        yes,
+        force_push=args.nightly or args.force_push,
+        skip_tag=skip_tag,
+    )
 
 
 def check_main(args: argparse.Namespace) -> None:
@@ -1023,7 +1040,13 @@ def cli(description: str) -> argparse.Namespace:
     )
     build.add_argument("-y", "--yes", help="Reply `yes` to asked question", action="store_true")
     build.add_argument(
-        "--no-gpg-sign", dest="gpg_sign", action="store_false", help="Do not sign the commit or tag"
+        "--no-gpg-sign",
+        dest="gpg_sign",
+        action="store_false",
+        help="Do not sign the commit or tag",
+    )
+    build.add_argument(
+        "--force-push", action="store_true", help="Force push the release branch & tag"
     )
     build.add_argument(
         "--base",
