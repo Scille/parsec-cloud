@@ -23,6 +23,29 @@ export class WinRegistry {
     }
   }
 
+  async areLongPathsEnabled(): Promise<boolean> {
+    try {
+      if (process.platform !== 'win32' || !this.regedit) {
+        return true;
+      }
+      const KEY = 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem';
+      const values = await this.regedit.list([KEY]);
+      const longPathValue = values[KEY].values['LongPathsEnabled'];
+      if (!longPathValue) {
+        console.warn('`LongPathsEnabled` was not found in registry.');
+        return false;
+      }
+      if (longPathValue.type !== 'REG_DWORD') {
+        console.warn('`LongPathsEnabled`has incorrect type.');
+        return false;
+      }
+      console.debug(`'${KEY}\\LongPathsEnabled' has value ${longPathValue.value}`);
+      return (longPathValue.value as any as number) === 1;
+    } catch (e: any) {
+      console.error(`Error while trying to obtain 'LongPathsEnabled' value: ${e.toString()}`);
+    }
+  }
+
   async addMountpointToQuickAccess(mountpointPath: string, iconPath: string): Promise<void> {
     try {
       if (process.platform !== 'win32' || !this.regedit) {
