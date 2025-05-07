@@ -56,7 +56,7 @@
     <tab-bar-menu
       v-if="isSmallDisplay"
       class="tab-bar-menu"
-      @action-clicked="performWorkspaceAction($event.action)"
+      @action-clicked="performOrganizationAction($event.action)"
       :actions="tabBarMenuActions"
     />
   </ion-page>
@@ -119,7 +119,7 @@ async function inviteUser(): Promise<void> {
   await navigateTo(Routes.Users, { query: { openInvite: true } });
 }
 
-async function performWorkspaceAction(action: UserAction): Promise<void> {
+async function performOrganizationAction(action: UserAction): Promise<void> {
   if (!userInfo.value) {
     return;
   }

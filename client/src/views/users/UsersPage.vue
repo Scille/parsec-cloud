@@ -170,7 +170,7 @@
     <tab-bar-menu
       v-if="isSmallDisplay"
       class="tab-bar-menu"
-      @action-clicked="performWorkspaceAction($event.action)"
+      @action-clicked="performUserAction($event.action)"
       :actions="tabBarMenuActions"
     />
   </ion-page>
@@ -760,12 +760,12 @@ onMounted(async (): Promise<void> => {
   }
 });
 
-async function performWorkspaceAction(action: UserAction): Promise<void> {
+async function performUserAction(action: UserAction): Promise<void> {
   if (!clientInfo.value) {
     return;
   }
   if (action === UserAction.Invite) {
-    return await inviteUser();
+    await inviteUser();
   }
 }
 

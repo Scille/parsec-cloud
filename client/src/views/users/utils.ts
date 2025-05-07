@@ -3,9 +3,9 @@
 import { SmallDisplayCategoryUserContextMenu, SmallDisplayUserContextMenu } from '@/components/small-display';
 import { UserModel } from '@/components/users';
 import { UserProfile } from '@/parsec';
+import { UserAction } from '@/views/users/types';
 import UserContextMenu from '@/views/users/UserContextMenu.vue';
 import { modalController, popoverController } from '@ionic/vue';
-import { UserAction } from '@/views/users/types';
 
 async function canUpdateProfile(users: UserModel[], clientIsAdmin: boolean): Promise<boolean> {
   return clientIsAdmin && users.some((u) => u.currentProfile !== UserProfile.Outsider && !u.isRevoked());

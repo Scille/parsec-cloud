@@ -275,7 +275,6 @@ const msSorterLabels = {
 
 const tabBarMenuActions: Array<Array<MenuAction>> = [
   [{ action: WorkspaceAction.CreateWorkspace, label: 'WorkspacesPage.createWorkspace', icon: addCircle }],
-  [],
 ];
 
 const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
@@ -564,16 +563,13 @@ async function onWorkspaceShareClick(workspace: WorkspaceInfo): Promise<void> {
 }
 
 async function performWorkspaceAction(action: WorkspaceAction): Promise<void> {
-  if (!userInfo.value) {
-    return;
-  }
   if (action === WorkspaceAction.CreateWorkspace) {
     return await openCreateWorkspaceModal();
   }
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
-  const data = await openWorkspaceContextMenu(
+  await openWorkspaceContextMenu(
     event,
     workspace,
     favorites.value,
@@ -584,10 +580,6 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
     isLargeDisplay.value,
   );
   await refreshWorkspacesList();
-
-  if (!data) {
-    return;
-  }
 
   if (onFinished) {
     onFinished();

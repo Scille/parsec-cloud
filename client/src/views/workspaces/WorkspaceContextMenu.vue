@@ -148,8 +148,6 @@
   </ion-content>
 </template>
 
-<script lang="ts"></script>
-
 <script setup lang="ts">
 import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';

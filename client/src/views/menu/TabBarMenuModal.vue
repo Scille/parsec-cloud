@@ -30,8 +30,6 @@
   </ion-page>
 </template>
 
-<script lang="ts"></script>
-
 <script setup lang="ts">
 import { IonPage, IonIcon, IonItem, IonList, IonItemGroup, IonLabel, modalController } from '@ionic/vue';
 import { MenuAction } from '@/views/menu/types';
