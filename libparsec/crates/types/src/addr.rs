@@ -23,7 +23,10 @@ pub use url::Url;
 
 use libparsec_crypto::VerifyKey;
 
-use crate::{BootstrapToken, IndexInt, InvitationToken, InvitationType, OrganizationID, VlobID};
+use crate::{
+    BootstrapToken, EmailValidationToken, IndexInt, InvitationToken, InvitationType,
+    OrganizationID, VlobID,
+};
 
 pub const PARSEC_SCHEME: &str = "parsec3";
 const HTTP_OR_HTTPS_SCHEME: &str = "http(s)";
@@ -921,6 +924,59 @@ impl ParsecInvitationAddr {
     pub fn to_invited_url(&self) -> Url {
         self.base
             .to_http_url(Some(&format!("/invited/{}", &self.organization_id)))
+    }
+}
+/*
+ * ParsecAccountEmailValidationAddr
+ */
+
+/// Represent the URL to validate an email for parsec account
+///
+/// (e.g. ``parsec3://parsec.example.com/TODO``)  // cspell:disable-line
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct ParsecAccountEmailValidationAddr {
+    base: BaseParsecAddr,
+    token: EmailValidationToken,
+}
+
+impl_common_stuff!(ParsecAccountEmailValidationAddr);
+
+impl ParsecAccountEmailValidationAddr {
+    pub fn new(server_addr: impl Into<ParsecAddr>, token: EmailValidationToken) -> Self {
+        Self {
+            base: server_addr.into().base,
+            token,
+        }
+    }
+
+    fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
+        let base = BaseParsecAddr::from_url(parsed)?;
+        let pairs = parsed.0.query_pairs();
+
+        let token = extract_param_and_b64_msgpack_deserialize!(
+            &pairs,
+            PARSEC_PARAM_PAYLOAD,
+            EmailValidationToken
+        )?;
+
+        Ok(Self { base, token })
+    }
+
+    expose_base_parsec_addr_fields!();
+
+    fn _to_url(&self, mut url: Url) -> Url {
+        url.path_segments_mut()
+            .expect("expected url not to be a cannot-be-a-base");
+
+        let payload = b64_msgpack_serialize(&self.token);
+
+        url.query_pairs_mut()
+            .append_pair(PARSEC_PARAM_PAYLOAD, &payload);
+        url
+    }
+
+    pub fn token(&self) -> EmailValidationToken {
+        self.token
     }
 }
 

@@ -1,0 +1,10 @@
+You are creating a Parsec Account.
+
+Your next steps:
+
+1. If you haven't yet installed, download the Parsec client via the following link: https://parsec.cloud/en/start-parsec
+
+2. Once installed, open the following link to validate your email: {{ invitation_url }}
+
+
+For more information please refer to Parsec documentation: https://docs.parsec.cloud
