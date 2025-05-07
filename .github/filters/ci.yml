@@ -10,7 +10,7 @@ rust-dependencies-workspace: &rust-dependencies-workspace
   - Cargo.toml
   - Cargo.lock
 
-rust-cargo-deny:
+rust-cargo-deny: &rust-cargo-deny
   - deny.toml
   - *rust-dependencies-workspace
 
@@ -38,6 +38,7 @@ rust-changes: &rust-changes
   - *rust-python-binding
   - *rust-web-binding
   - *rust-cli
+  - *rust-cargo-deny
 
 # The rust jobs need to watch for:
 # - The change on the rust code.
