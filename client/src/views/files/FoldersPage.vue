@@ -246,7 +246,11 @@
           </div>
         </div>
       </div>
-      <tab-bar-menu class="tab-bar-menu" />
+      <tab-bar-menu
+        class="tab-bar-menu"
+        @action-clicked="createFolder()"
+        v-if="isSmallDisplay"
+      />
     </ion-content>
   </ion-page>
 </template>

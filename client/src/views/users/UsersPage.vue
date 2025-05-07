@@ -2,10 +2,7 @@
 
 <template>
   <ion-page>
-    <ion-content
-      :fullscreen="true"
-      class="content-scroll"
-    >
+    <ion-content class="content-scroll">
       <!-- contextual menu -->
       <ms-action-bar
         id="activate-users-ms-action-bar"
@@ -170,6 +167,10 @@
         </div>
       </div>
     </ion-content>
+    <tab-bar-menu
+      v-if="isSmallDisplay"
+      class="tab-bar-menu"
+    />
   </ion-page>
 </template>
 
@@ -226,6 +227,7 @@ import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 import { openUserContextMenu as _openUserContextMenu, openGlobalUserContextMenu as _openGlobalUserContextMenu } from '@/views/users/utils';
+import TabBarMenu from '@/components/menu/TabBarMenu.vue';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);

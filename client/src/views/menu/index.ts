@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import TabMenuModal from '@/views/menu/TabMenuModal.vue';
+import AddMenuModal from '@/views/menu/AddMenuModal.vue';
 
 export * from '@/views/menu/types';
 export * from '@/views/menu/utils';
-export { TabMenuModal };
+export { AddMenuModal };
