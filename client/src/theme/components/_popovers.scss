@@ -179,7 +179,11 @@
 #file-context-sheet-modal,
 #user-context-sheet-modal {
   .menu-list-small {
-    margin-top: 1.5rem;
+    margin-top: 0;
+
+    @include ms.responsive-breakpoint('sm') {
+      margin-top: 1.5rem;
+    }
   }
 }
 
