@@ -248,7 +248,8 @@
       </div>
       <tab-bar-menu
         class="tab-bar-menu"
-        @action-clicked="createFolder()"
+        @action-clicked="performFolderAction($event.action)"
+        :actions="tabBarMenuActions"
         v-if="isSmallDisplay"
       />
     </ion-content>
@@ -337,12 +338,12 @@ import {
   openGlobalContextMenu as _openGlobalContextMenu,
 } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
-import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin, download } from 'ionicons/icons';
+import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin, download, cloudUpload } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick } from 'vue';
 import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
-import TabBarMenu from '@/components/menu/TabBarMenu.vue';
+import { TabBarMenu, MenuAction } from '@/views/menu';
 import { showDirectoryPicker, showSaveFilePicker } from 'native-file-system-adapter';
 
 interface FoldersPageSavedData {
@@ -363,6 +364,14 @@ const msSorterLabels = {
   asc: 'FoldersPage.sort.asc',
   desc: 'FoldersPage.sort.desc',
 };
+
+const tabBarMenuActions: Array<Array<MenuAction>> = [
+  [{ action: FolderGlobalAction.CreateFolder, label: 'FoldersPage.createFolder', icon: folderOpen }],
+  [
+    { action: FolderGlobalAction.ImportFolder, label: 'FoldersPage.ImportFile.importFolderAction', icon: cloudUpload },
+    { action: FolderGlobalAction.ImportFiles, label: 'FoldersPage.ImportFile.importFilesAction', icon: cloudUpload },
+  ],
+];
 
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Documents)) {
@@ -1367,18 +1376,11 @@ async function openEntries(entries: EntryModel[]): Promise<void> {
   selectionEnabled.value = false;
 }
 
-async function openGlobalContextMenu(event: Event): Promise<void> {
-  const data = await _openGlobalContextMenu(
-    event,
-    ownRole.value,
-    isLargeDisplay.value,
-    folders.value.entriesCount() + files.value.entriesCount() === 0,
-  );
-
-  if (!data || !workspaceInfo.value) {
+async function performFolderAction(action: FolderGlobalAction): Promise<void> {
+  if (!workspaceInfo.value) {
     return;
   }
-  switch (data.action) {
+  switch (action) {
     case FolderGlobalAction.CreateFolder:
       return await createFolder();
     case FolderGlobalAction.ImportFiles:
@@ -1394,6 +1396,20 @@ async function openGlobalContextMenu(event: Event): Promise<void> {
     case FolderGlobalAction.Share:
       return await shareEntries();
   }
+}
+
+async function openGlobalContextMenu(event: Event): Promise<void> {
+  const data = await _openGlobalContextMenu(
+    event,
+    ownRole.value,
+    isLargeDisplay.value,
+    folders.value.entriesCount() + files.value.entriesCount() === 0,
+  );
+
+  if (!data || !workspaceInfo.value) {
+    return;
+  }
+  await performFolderAction(data.action);
 }
 
 async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {

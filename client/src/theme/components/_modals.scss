@@ -565,10 +565,18 @@
 }
 
 .tab-menu-modal {
-  margin-bottom: 4.78rem;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
   &::part(handle) {
     top: 1rem;
     background: var(--parsec-color-light-secondary-light);
+    display: none;
+
+    @include ms.responsive-breakpoint('sm') {
+      display: inline-block;
+    }
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    margin-bottom: 4.78rem;
+    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
   }
 }

@@ -5,7 +5,7 @@
     <div
       class="tab-bar-menu-button"
       :class="currentRouteIs(Routes.Workspaces) ? 'active' : ''"
-      @click="navigateTo(Routes.Workspaces)"
+      @click="switchTab(Routes.Workspaces)"
     >
       <ion-icon
         :icon="business"
@@ -38,7 +38,8 @@
       <ion-fab
         class="fab-content"
         size="small"
-        @click="isMenuOpen ? dismissModal() : openAddMenuModal()"
+        id="add-menu-fab-button"
+        @click="!isMenuOpen ? openMenuModal() : closeMenuModal()"
       >
         <ion-fab-button
           class="fab-button"
@@ -56,7 +57,7 @@
     <div
       class="tab-bar-menu-button"
       :class="currentRouteIs(Routes.Organization) ? 'active' : ''"
-      @click="navigateTo(Routes.Organization)"
+      @click="switchTab(Routes.Organization)"
     >
       <ion-icon
         :icon="prism"
@@ -66,11 +67,10 @@
         {{ $msTranslate('SideMenu.tabbar.organization') }}
       </ion-text>
     </div>
-
     <div
       class="tab-bar-menu-button"
       :class="currentRouteIs(Routes.MyProfile) ? 'active' : ''"
-      @click="navigateTo(Routes.MyProfile)"
+      @click="switchTab(Routes.MyProfile)"
     >
       <ion-icon
         :icon="personCircle"
@@ -89,15 +89,19 @@ import { folder, prism, personCircle, business } from 'ionicons/icons';
 import { hasVisited, Routes, navigateTo, currentRouteIs, getLastVisited } from '@/router';
 import { ClientInfo, getClientInfo as parsecGetClientInfo } from '@/parsec';
 import { ref, Ref, onMounted } from 'vue';
-import { AddIcon, MsImage } from 'megashark-lib';
-import AddMenuModal from '@/views/menu/AddMenuModal.vue';
+import { AddIcon, MsImage, MsModalResult } from 'megashark-lib';
+import TabBarMenuModal from '@/views/menu/TabBarMenuModal.vue';
+import { MenuAction } from '@/views/menu/types';
 
 const isMenuOpen = ref(false);
-
 const userInfo: Ref<ClientInfo | null> = ref(null);
 
-const emit = defineEmits<{
-  (e: 'actionClicked', data: any): void;
+const props = defineProps<{
+  actions: Array<Array<MenuAction>>;
+}>();
+
+const emits = defineEmits<{
+  (e: 'actionClicked', action: MenuAction): void;
 }>();
 
 onMounted(async () => {
@@ -116,13 +120,25 @@ async function goToLastDocumentsPage(): Promise<void> {
   if (!routeBackup) {
     return;
   }
+  await closeMenuModal();
   await navigateTo(Routes.Documents, {
     params: routeBackup.data.params,
     query: { workspaceHandle: routeBackup.data.query.workspaceHandle, documentPath: routeBackup.data.query.documentPath },
   });
 }
 
-async function dismissModal(): Promise<void> {
+async function switchTab(route: Routes): Promise<void> {
+  if (currentRouteIs(route)) {
+    return;
+  }
+  await closeMenuModal();
+  await navigateTo(route);
+}
+
+async function closeMenuModal(): Promise<void> {
+  if (!isMenuOpen.value) {
+    return;
+  }
   isMenuOpen.value = false;
 
   const modal = await modalController.getTop();
@@ -131,11 +147,14 @@ async function dismissModal(): Promise<void> {
   }
 }
 
-async function openAddMenuModal(): Promise<void> {
+async function openMenuModal(): Promise<void> {
+  if (isMenuOpen.value) {
+    return;
+  }
   isMenuOpen.value = true;
 
   const modal = await modalController.create({
-    component: AddMenuModal,
+    component: TabBarMenuModal,
     cssClass: 'tab-menu-modal',
     showBackdrop: true,
     handle: true,
@@ -144,14 +163,18 @@ async function openAddMenuModal(): Promise<void> {
     // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
     // expandToScroll: false, should be added to scroll with Ionic 8
     initialBreakpoint: 1,
+    componentProps: {
+      actions: props.actions,
+    },
   });
   await modal.present();
-  const { data } = await modal.onDidDismiss();
+  const { data, role } = await modal.onDidDismiss();
 
-  if (data) {
-    emit('actionClicked', data);
+  if (role === MsModalResult.Confirm && data?.action) {
+    emits('actionClicked', data.action);
   }
-  await dismissModal();
+  await modal.dismiss();
+  isMenuOpen.value = false;
 }
 </script>
 
@@ -229,13 +252,15 @@ async function openAddMenuModal(): Promise<void> {
     }
 
     .fab-button {
-      width: 2.375rem;
-      height: 2.375rem;
-      --background: var(--parsec-color-light-primary-600);
+      width: 2.75rem;
+      height: 2.75rem;
+      --background: var(--parsec-color-light-gradient-background);
+      --background-focused: var(--parsec-color-light-primary-700);
       --background-activated: var(--parsec-color-light-secondary-white);
       --border-radius: var(--parsec-radius-12);
-      --box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+      --box-shadow: var(--parsec-shadow-soft);
       --color: var(--parsec-color-light-secondary-inversed-contrast);
+      --transition: all 0.2s ease-in-out;
 
       .fab-icon {
         transition: all 0.2s ease-in-out;

@@ -162,6 +162,8 @@
       <tab-bar-menu
         v-if="isSmallDisplay"
         class="tab-bar-menu"
+        @action-clicked="performWorkspaceAction($event.action)"
+        :actions="tabBarMenuActions"
       />
     </ion-content>
   </ion-page>
@@ -222,8 +224,9 @@ import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { IonButton, IonContent, IonIcon, IonLabel, IonList, IonListHeader, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
-import TabBarMenu from '@/components/menu/TabBarMenu.vue';
+import { TabBarMenu, MenuAction } from '@/views/menu';
 import { recentDocumentManager } from '@/services/recentDocuments';
+import { WorkspaceAction } from '@/views/workspaces/types';
 
 enum SortWorkspaceBy {
   Name = 'name',
@@ -269,6 +272,11 @@ const msSorterLabels = {
   asc: 'HomePage.organizationList.sortOrderAsc',
   desc: 'HomePage.organizationList.sortOrderDesc',
 };
+
+const tabBarMenuActions: Array<Array<MenuAction>> = [
+  [{ action: WorkspaceAction.CreateWorkspace, label: 'WorkspacesPage.createWorkspace', icon: addCircle }],
+];
+
 const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
 let hotkeys: HotkeyGroup | null = null;
 
@@ -554,6 +562,12 @@ async function onWorkspaceShareClick(workspace: WorkspaceInfo): Promise<void> {
   await refreshWorkspacesList();
 }
 
+async function performWorkspaceAction(action: WorkspaceAction): Promise<void> {
+  if (action === WorkspaceAction.CreateWorkspace) {
+    return await openCreateWorkspaceModal();
+  }
+}
+
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event, onFinished?: () => void): Promise<void> {
   await openWorkspaceContextMenu(
     event,
@@ -566,6 +580,7 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
     isLargeDisplay.value,
   );
   await refreshWorkspacesList();
+
   if (onFinished) {
     onFinished();
   }

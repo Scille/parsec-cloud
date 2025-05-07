@@ -3,7 +3,8 @@
 import { SmallDisplayCategoryUserContextMenu, SmallDisplayUserContextMenu } from '@/components/small-display';
 import { UserModel } from '@/components/users';
 import { UserProfile } from '@/parsec';
-import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
+import { UserAction } from '@/views/users/types';
+import UserContextMenu from '@/views/users/UserContextMenu.vue';
 import { modalController, popoverController } from '@ionic/vue';
 
 async function canUpdateProfile(users: UserModel[], clientIsAdmin: boolean): Promise<boolean> {

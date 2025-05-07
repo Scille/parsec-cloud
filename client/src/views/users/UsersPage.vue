@@ -170,6 +170,8 @@
     <tab-bar-menu
       v-if="isSmallDisplay"
       class="tab-bar-menu"
+      @action-clicked="performUserAction($event.action)"
+      :actions="tabBarMenuActions"
     />
   </ion-page>
 </template>
@@ -216,7 +218,7 @@ import { Routes, getCurrentRouteQuery, watchRoute, currentRouteIsUserRoute, navi
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { UserAction } from '@/views/users/UserContextMenu.vue';
+import { UserAction } from '@/views/users/types';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
@@ -227,7 +229,7 @@ import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 import { openUserContextMenu as _openUserContextMenu, openGlobalUserContextMenu as _openGlobalUserContextMenu } from '@/views/users/utils';
-import TabBarMenu from '@/components/menu/TabBarMenu.vue';
+import { TabBarMenu, MenuAction } from '@/views/menu';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -301,6 +303,8 @@ const msSorterLabels = {
   asc: 'UsersPage.sort.asc',
   desc: 'UsersPage.sort.desc',
 };
+
+const tabBarMenuActions: Array<Array<MenuAction>> = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }], []];
 
 async function onSortChange(event: MsSorterChangeEvent): Promise<void> {
   currentSortProperty.value = event.option.key;
@@ -761,6 +765,15 @@ onMounted(async (): Promise<void> => {
     await navigateTo(Routes.Users, { replace: true, query: {} });
   }
 });
+
+async function performUserAction(action: UserAction): Promise<void> {
+  if (!clientInfo.value) {
+    return;
+  }
+  if (action === UserAction.Invite) {
+    await inviteUser();
+  }
+}
 
 onUnmounted(async () => {
   if (hotkeys) {

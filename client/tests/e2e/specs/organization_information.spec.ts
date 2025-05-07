@@ -49,7 +49,7 @@ for (const displaySize of ['small', 'large']) {
       await userSmall.locator('.options-button').click();
       await usersPage.locator('.user-context-sheet-modal').getByRole('listitem').nth(0).click();
       await usersPage.locator('.question-modal').locator('ion-button').nth(1).click();
-      await usersPage.locator('.tab-bar-list-button').nth(2).click();
+      await usersPage.locator('#add-menu-fab-button').click();
       await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
     } else {
       const user = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
@@ -63,10 +63,12 @@ for (const displaySize of ['small', 'large']) {
 
     const container = usersPage.locator('.organization-page').locator('.organization-page-content');
     const usersContainer = container.locator('.organization-users');
-    await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__description')).toHaveText('Active');
+    if (displaySize === 'large') {
+      await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__description')).toHaveText('Active');
+      await expect(usersContainer.locator('.users-list-item').nth(1).locator('.users-list-item__description')).toHaveText('Revoked');
+    }
     await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__title')).toHaveText('2');
     await expect(usersContainer.locator('.users-list-item').nth(1).locator('.users-list-item__title')).toHaveText('1');
-    await expect(usersContainer.locator('.users-list-item').nth(1).locator('.users-list-item__description')).toHaveText('Revoked');
     await expect(usersContainer.locator('.user-active-list').locator('.label-profile')).toHaveText(['Administrator', 'Member', 'External']);
     await expect(usersContainer.locator('.user-active-list').locator('.user-active-list-item__value')).toHaveText(['1', '0', '1']);
   });
