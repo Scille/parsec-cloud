@@ -53,7 +53,12 @@
         </div>
       </template>
     </ion-content>
-    <tab-bar-menu class="tab-bar-menu" />
+    <tab-bar-menu
+      v-if="isSmallDisplay"
+      class="tab-bar-menu"
+      @action-clicked="performOrganizationAction($event.action)"
+      :actions="tabBarMenuActions"
+    />
   </ion-page>
 </template>
 
@@ -67,7 +72,7 @@ import {
   AvailableDevice,
 } from '@/parsec';
 import { IonContent, IonIcon, IonPage, IonText, IonAvatar, popoverController } from '@ionic/vue';
-import { warning } from 'ionicons/icons';
+import { warning, personAdd } from 'ionicons/icons';
 import { switchOrganization } from '@/router';
 import { ChevronExpand, MsImage, LogoIconGradient, MsModalResult } from 'megashark-lib';
 import { Ref, onMounted, ref } from 'vue';
@@ -78,7 +83,9 @@ import OrganizationConfigurationInformation from '@/components/organizations/Org
 import OrganizationStorageInformation from '@/components/organizations/OrganizationStorageInformation.vue';
 import { isTrialOrganizationDevice } from '@/common/organization';
 import { useWindowSize } from 'megashark-lib';
-import TabBarMenu from '@/components/menu/TabBarMenu.vue';
+import { navigateTo, Routes } from '@/router';
+import { UserAction } from '@/views/users/types';
+import { TabBarMenu, MenuAction } from '@/views/menu';
 
 const { isSmallDisplay } = useWindowSize();
 
@@ -103,6 +110,21 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     const menuCtrls = useUploadMenu();
     menuCtrls.hide();
     switchOrganization(data.handle);
+  }
+}
+
+const tabBarMenuActions: Array<Array<MenuAction>> = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }], []];
+
+async function inviteUser(): Promise<void> {
+  await navigateTo(Routes.Users, { query: { openInvite: true } });
+}
+
+async function performOrganizationAction(action: UserAction): Promise<void> {
+  if (!userInfo.value) {
+    return;
+  }
+  if (action === UserAction.Invite) {
+    return await inviteUser();
   }
 }
 
