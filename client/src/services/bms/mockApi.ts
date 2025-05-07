@@ -197,7 +197,20 @@ export const MockedBmsApi = {
       },
     };
   }),
-  getOrganizationStatus: createMockFunction('getOrganizationStatus'),
+  getOrganizationStatus: createMockFunction('getOrganizationStatus', async (_token: AuthenticationToken, _query: OrganizationQueryData) => {
+    return {
+      status: 200,
+      isError: false,
+      data: {
+        type: DataType.OrganizationStatus,
+        activeUsersLimit: 100,
+        isBootstrapped: true,
+        isFrozen: false,
+        isInitialized: true,
+        outsidersAllowed: true,
+      },
+    };
+  }),
   getMonthlySubscriptionInvoices: createMockFunction('getMonthlySubscriptionInvoices'),
   refreshToken: createMockFunction('refreshToken'),
   getBillingDetails: createMockFunction('getBillingDetails'),

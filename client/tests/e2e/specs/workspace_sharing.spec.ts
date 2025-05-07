@@ -1,43 +1,65 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { createWorkspace, expect, fillIonInput, login, MsPage, msTest } from '@tests/e2e/helpers';
+import { createWorkspace, expect, fillIonInput, login, MsPage, msTest, setSmallDisplay } from '@tests/e2e/helpers';
 
-msTest('Workspace sharing modal default state', async ({ workspaceSharingModal }) => {
-  await expect(workspaceSharingModal.locator('.ms-modal-header__title')).toHaveText('wksp1');
-  const content = workspaceSharingModal.locator('.ms-modal-content');
-  await expect(content.locator('.only-owner-warning')).toBeVisible();
-  const users = content.locator('.user-list-members').locator('.content');
-  await expect(users).toHaveCount(2);
-  await expect(users.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
-  await expect(users.locator('.filter-button')).toHaveText(['Owner', 'Reader']);
-  await expect(users.nth(0).locator('.filter-button')).toHaveDisabledAttribute();
+for (const displaySize of ['small', 'large']) {
+  msTest(`Workspace sharing modal default state on ${displaySize} display`, async ({ workspaceSharingModal }) => {
+    if (displaySize === 'small') {
+      await setSmallDisplay(workspaceSharingModal.page() as MsPage);
+    }
 
-  const suggestions = workspaceSharingModal.locator('.user-list-suggestions-item');
-  await expect(suggestions).toHaveCount(1);
-  await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
-  await expect(suggestions.locator('.dropdown-container')).toHaveText(['Not shared']);
-  await expect(suggestions.nth(0).locator('.label-profile')).toHaveText('External');
-  await expect(suggestions.nth(0).locator('.label-profile')).toBeVisible();
-});
+    await expect(workspaceSharingModal.locator('.ms-modal-header__title')).toHaveText('wksp1');
+    const content = workspaceSharingModal.locator('.ms-modal-content');
+    await expect(content.locator('.only-owner-warning')).toBeVisible();
+    const users = content.locator('.user-member-item');
+    await expect(users).toHaveCount(2);
+    await expect(users.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
+    await expect(users.locator('.filter-button')).toHaveText(['Owner', 'Reader']);
+    await expect(users.nth(0).locator('.filter-button')).toHaveDisabledAttribute();
 
-msTest('Update user role', async ({ workspaceSharingModal }) => {
-  const content = workspaceSharingModal.locator('.ms-modal-content');
-  const users = content.locator('.user-list-members').locator('.content');
+    const suggestions = workspaceSharingModal.locator('.user-list-suggestions-item');
+    await expect(suggestions).toHaveCount(1);
+    await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
+    await expect(suggestions.locator('.dropdown-container')).toHaveText(['Not shared']);
+    await expect(suggestions.nth(0).locator('.label-profile')).toHaveText('External');
+    await expect(suggestions.nth(0).locator('.label-profile')).toBeVisible();
+  });
+}
 
-  await expect(users.nth(1).locator('.filter-button')).toHaveText('Reader');
-  await users.nth(1).locator('.filter-button').click();
-  const roleDropdown = workspaceSharingModal.page().locator('.dropdown-popover');
-  const roles = roleDropdown.getByRole('listitem');
-  await expect(roles.locator('.option-text__label')).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader', 'Not shared']);
-  // Set contributor
-  await roles.nth(2).click();
-  await expect(workspaceSharingModal.page()).toShowToast("Boby McBobFace's role has been updated to Contributor.", 'Success');
-  await expect(users.nth(1).locator('.filter-button')).toHaveText('Contributor');
-});
+for (const displaySize of ['small', 'large']) {
+  msTest(`Update user role on ${displaySize} display`, async ({ workspaceSharingModal }) => {
+    if (displaySize === 'small') {
+      await setSmallDisplay(workspaceSharingModal.page() as MsPage);
+    }
+    const content = workspaceSharingModal.locator('.ms-modal-content');
+    const users = content.locator('.user-member-item');
+
+    await expect(users.nth(1).locator('.filter-button')).toHaveText('Reader');
+    await users.nth(1).locator('.filter-button').click();
+
+    if (displaySize === 'small') {
+      const roleDropdown = workspaceSharingModal.page().locator('.sheet-modal');
+      const roles = roleDropdown.getByRole('listitem');
+      await expect(roles.locator('.option-text__label')).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader', 'Not shared']);
+      // Set contributor
+      await roles.nth(2).click();
+      await workspaceSharingModal.page().locator('.sheet-modal').locator('.button').nth(2).click();
+    } else {
+      const roleDropdown = workspaceSharingModal.page().locator('.dropdown-popover');
+      const roles = roleDropdown.getByRole('listitem');
+      await expect(roles.locator('.option-text__label')).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader', 'Not shared']);
+      // Set contributor
+      await roles.nth(2).click();
+    }
+
+    await expect(workspaceSharingModal.page()).toShowToast("Boby McBobFace's role has been updated to Contributor.", 'Success');
+    await expect(users.nth(1).locator('.filter-button')).toHaveText('Contributor');
+  });
+}
 
 msTest('Share with external', async ({ workspaceSharingModal }) => {
   const content = workspaceSharingModal.locator('.ms-modal-content');
-  const users = content.locator('.user-list-members').locator('.content');
+  const users = content.locator('.user-member-item');
   const suggestions = content.locator('.user-list-suggestions-item');
 
   await expect(users).toHaveCount(2);
@@ -94,7 +116,7 @@ msTest.skip('Unshare workspace', async ({ workspaceSharingModal }) => {
 msTest('Filter users', async ({ workspaceSharingModal }) => {
   const content = workspaceSharingModal.locator('.ms-modal-content');
   const searchInput = content.locator('.ms-search-input');
-  const members = content.locator('.user-list-members').locator('.content');
+  const members = content.locator('.user-member-item');
   const suggestions = workspaceSharingModal.locator('.user-list-suggestions-item');
   await expect(members.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
   await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);
@@ -116,7 +138,7 @@ msTest('Filter users', async ({ workspaceSharingModal }) => {
 msTest('Filter users no match', async ({ workspaceSharingModal }) => {
   const content = workspaceSharingModal.locator('.ms-modal-content');
   const searchInput = content.locator('.ms-search-input');
-  const members = content.locator('.user-list-members').locator('.content');
+  const members = content.locator('.user-member-item');
   const suggestions = workspaceSharingModal.locator('.user-list-suggestions-item');
   await expect(members.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
   await expect(suggestions.locator('.person-name')).toHaveText(['Malloryy McMalloryFace']);

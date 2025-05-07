@@ -28,6 +28,21 @@ msTest('Test initial status', async ({ clientAreaCustomOrder }) => {
   await expect(usage.locator('.ms-warning')).toHaveText('You have reached your storage limit.');
 });
 
+msTest('Test initial status org not bootstrapped', async ({ clientAreaCustomOrder }) => {
+  const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+
+  await MockBms.mockOrganizationStatus(clientAreaCustomOrder, { isBootstrapped: false });
+
+  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+
+  await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
+  await expect(title).toHaveText('Statistics');
+  const page = clientAreaCustomOrder.locator('.client-page-statistics');
+  const error = page.locator('.statistics-error');
+  await expect(error).toBeVisible();
+  await expect(error).toHaveText('Your organization is not bootstrapped yet.');
+});
+
 msTest('Test initial status for all orgs', async ({ clientAreaCustomOrder }) => {
   const orgSelector = clientAreaCustomOrder.locator('.sidebar-header').locator('.organization-card-header').locator('.card-header-title');
   await expect(orgSelector).toHaveText('All organizations');
@@ -70,6 +85,54 @@ msTest('Custom order stats generic error', async ({ clientAreaCustomOrder }) => 
 
 msTest('Custom order stats timeout error', async ({ clientAreaCustomOrder }) => {
   await MockBms.mockOrganizationStats(clientAreaCustomOrder, {}, { GET: { timeout: true } });
+
+  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+  await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
+
+  const container = clientAreaCustomOrder.locator('.client-page-statistics');
+  const error = container.locator('.statistics-error');
+  await expect(error).toBeVisible();
+  await expect(error).toHaveText('Failed to retrieve organization data.');
+});
+
+msTest('Custom order org status generic error', async ({ clientAreaCustomOrder }) => {
+  await MockBms.mockOrganizationStatus(clientAreaCustomOrder, {}, { GET: { errors: { status: 400 } } });
+
+  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+  await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
+
+  const container = clientAreaCustomOrder.locator('.client-page-statistics');
+  const error = container.locator('.statistics-error');
+  await expect(error).toBeVisible();
+  await expect(error).toHaveText('Failed to retrieve organization data.');
+});
+
+msTest('Custom order org status timeout error', async ({ clientAreaCustomOrder }) => {
+  await MockBms.mockOrganizationStatus(clientAreaCustomOrder, {}, { GET: { timeout: true } });
+
+  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+  await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
+
+  const container = clientAreaCustomOrder.locator('.client-page-statistics');
+  const error = container.locator('.statistics-error');
+  await expect(error).toBeVisible();
+  await expect(error).toHaveText('Failed to retrieve organization data.');
+});
+
+msTest('Custom order details generic error', async ({ clientAreaCustomOrder }) => {
+  await MockBms.mockCustomOrderDetails(clientAreaCustomOrder, {}, { POST: { errors: { status: 400 } } });
+
+  await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+  await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
+
+  const container = clientAreaCustomOrder.locator('.client-page-statistics');
+  const error = container.locator('.statistics-error');
+  await expect(error).toBeVisible();
+  await expect(error).toHaveText('Failed to retrieve organization data.');
+});
+
+msTest('Custom order details timeout error', async ({ clientAreaCustomOrder }) => {
+  await MockBms.mockCustomOrderDetails(clientAreaCustomOrder, {}, { POST: { timeout: true } });
 
   await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
   await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();

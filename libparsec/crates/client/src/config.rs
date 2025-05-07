@@ -5,7 +5,10 @@ use std::path::PathBuf;
 pub use libparsec_client_connection::ProxyConfig;
 use libparsec_types::prelude::*;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub const DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE: u64 = 512 * 1024 * 1024;
+#[cfg(target_arch = "wasm32")]
+pub const DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE: u64 = 32 * 1024 * 1024;
 
 #[derive(Debug, Clone, Copy)]
 pub enum WorkspaceStorageCacheSize {

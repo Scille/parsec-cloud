@@ -382,6 +382,39 @@
     min-width: var(--parsec-modal-width-lg);
     max-width: var(--parsec-modal-width-lg);
     height: 100%;
+
+    @include ms.responsive-breakpoint('sm') {
+      min-width: 100%;
+      max-width: 100%;
+    }
+  }
+
+  .ms-modal {
+    overflow: hidden;
+    padding: 0;
+
+    @include ms.responsive-breakpoint('sm') {
+    }
+
+    &-header {
+      padding: 2rem 2rem 1rem;
+
+      @include ms.responsive-breakpoint('sm') {
+        padding: 0;
+
+        &__title-container {
+          margin-bottom: 0;
+        }
+      }
+    }
+
+    &-content {
+      overflow: hidden;
+
+      @include ms.responsive-breakpoint('sm') {
+        padding: 0;
+      }
+    }
   }
 
   .ion-page {

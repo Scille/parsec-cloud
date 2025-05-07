@@ -76,9 +76,19 @@ export function canChangeRole(
   return { authorized: true };
 }
 
-export async function workspaceShareClick(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
+export async function workspaceShareClick(
+  workspace: WorkspaceInfo,
+  informationManager: InformationManager,
+  isLargeDisplay = true,
+): Promise<void> {
   const modal = await modalController.create({
     component: WorkspaceSharingModal,
+    showBackdrop: true,
+    handle: false,
+    breakpoints: isLargeDisplay ? undefined : [0, 1],
+    // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
+    // expandToScroll: false, should be added to scroll with Ionic 8
+    initialBreakpoint: isLargeDisplay ? undefined : 1,
     componentProps: {
       workspaceId: workspace.id,
       workspaceName: workspace.currentName,

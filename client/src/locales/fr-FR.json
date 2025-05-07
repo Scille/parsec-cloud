@@ -367,7 +367,8 @@
         },
         "onlyOwnerWarning": "Nous vous recommandons de promouvoir quelqu'un d'autre au poste de {owner}. Vous éviterez ainsi de perdre des données si vous quittez l'organisation.",
         "owner": "Propriétaire",
-        "noMatch": "Aucun utilisateur trouvé qui correspond à la recherche '{query}'."
+        "noMatch": "Aucun utilisateur trouvé qui correspond à la recherche '{query}'.",
+        "information": "Informations sur le partage"
     },
     "SettingsModal": {
         "pageTitle": "Paramètres",
@@ -1601,6 +1602,7 @@
             "data": "Données",
             "metadata": "Métadonnées",
             "error": "Impossible de récupérer les données de l'organisation.",
+            "notBootstrapped": "L'organisation n'est pas encore configurée.",
             "multipleOrganizations": "Vous possédez plusieurs organisations. Veuillez en choisir une en utilisant le bouton dans le coin supérieur gauche ou sélectionnez-là ci-dessous pour voir ses statistiques.",
             "noStats": "Aucune statistique à afficher.",
             "remaining": "restant",
