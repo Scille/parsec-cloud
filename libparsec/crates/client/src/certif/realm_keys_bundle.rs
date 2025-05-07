@@ -479,7 +479,7 @@ async fn recover_realm_keys_from_previous_bundles(
 
     // 7) Final step: do a key rotation with our recovered keys !
 
-    todo!()
+    todo!("do a key rotation with our recovered keys")
 }
 
 #[derive(Debug, thiserror::Error)]

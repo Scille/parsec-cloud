@@ -6,6 +6,7 @@ from pytest import LogCaptureFixture as VanillaLogCaptureFixture
 from .backend import *  # noqa
 from .client import *  # noqa
 from .data import *  # noqa
+from .letter_box import *  # noqa
 from .postgresql import *  # noqa
 
 

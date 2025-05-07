@@ -59,7 +59,7 @@ async def components_factory(
 
                 pki = None
                 sequester = PGSequesterComponent(pool=pool)
-                account = PGAccountComponent(pool=pool)
+                account = PGAccountComponent(pool=pool, config=config)
 
                 components = {
                     "event_bus": event_bus,

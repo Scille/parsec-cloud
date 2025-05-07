@@ -11,6 +11,7 @@ from parsec.backend import Backend, backend_factory
 from parsec.cli.testbed import TestbedBackend, TestbedTemplate
 from parsec.components.memory.organization import MemoryOrganization, OrganizationID
 from parsec.config import (
+    AccountConfig,
     BackendConfig,
     BaseBlockStoreConfig,
     BaseDatabaseConfig,
@@ -45,6 +46,7 @@ def backend_config(
         organization_spontaneous_bootstrap=False,
         organization_bootstrap_webhook_url=None,
         backend_mocked_data=backend_mocked_data,
+        account_config=AccountConfig(account_confirmation_email_resend_delay=5),
     )
 
 

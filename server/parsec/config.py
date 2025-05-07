@@ -23,6 +23,11 @@ def hide_password(url: str) -> str:
     return urlunparse(args)
 
 
+@dataclass(slots=True)
+class AccountConfig:
+    account_confirmation_email_resend_delay: int
+
+
 class BaseDatabaseConfig:
     # Overloaded by children
     type: Literal["POSTGRESQL", "MOCKED"]
@@ -188,6 +193,7 @@ class BackendConfig:
     db_config: BaseDatabaseConfig
     blockstore_config: BaseBlockStoreConfig
     email_config: SmtpEmailConfig | MockedEmailConfig
+    account_config: AccountConfig
 
     # URL of the server to use when generating redirect URLs.
     # This is currently used for two things:

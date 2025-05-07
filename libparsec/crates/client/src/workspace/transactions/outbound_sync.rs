@@ -700,7 +700,9 @@ async fn do_next_reshape_operation(
                     }
                     ReadChunkOrBlockError::Stopped => WorkspaceSyncError::Stopped,
                     // TODO: manifest seems to contain invalid data (or the server is lying to us)
-                    ReadChunkOrBlockError::ChunkNotFound => todo!(),
+                    ReadChunkOrBlockError::ChunkNotFound => todo!(
+                        "manifest seems to contain invalid data (or the server is lying to us)"
+                    ),
                     ReadChunkOrBlockError::NoRealmAccess => WorkspaceSyncError::NotAllowed,
                     ReadChunkOrBlockError::InvalidBlockAccess(err) => {
                         WorkspaceSyncError::InvalidBlockAccess(err)

@@ -50,7 +50,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             blockstore = blockstore_factory(config.blockstore_config, mocked_data=data)
             block = MemoryBlockComponent(data, blockstore)
             events = MemoryEventsComponent(data, config, event_bus)
-            account = MemoryAccountComponent(data, event_bus)
+            account = MemoryAccountComponent(data, config, event_bus)
 
             components = {
                 "mocked_data": data,
