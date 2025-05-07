@@ -12,6 +12,9 @@ class LetterBox:
     async def get_next(self) -> tuple[str, str]:
         return await self._recv_email.receive()
 
+    def count(self) -> int:
+        return len(self.emails)
+
     def _push(self, to_addr: str, message: str) -> None:
         email = (to_addr, message)
         self._send_email.send_nowait(email)
@@ -19,11 +22,22 @@ class LetterBox:
 
 
 @pytest.fixture
-def email_letterbox(monkeypatch):
+def email_invite_letterbox(monkeypatch):
     letterbox = LetterBox()
 
     async def _mocked_send_email(email_config, to_addr: str, message: str):
         letterbox._push(to_addr, message)
 
     monkeypatch.setattr("parsec.components.invite.send_email", _mocked_send_email)
+    return letterbox
+
+
+@pytest.fixture
+def email_account_letterbox(monkeypatch):
+    letterbox = LetterBox()
+
+    async def _mocked_send_email(email_config, to_addr: str, message: str):
+        letterbox._push(to_addr, message)
+
+    monkeypatch.setattr("parsec.components.account.send_email", _mocked_send_email)
     return letterbox

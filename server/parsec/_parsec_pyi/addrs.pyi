@@ -6,7 +6,13 @@ from typing import Union
 
 from parsec._parsec_pyi.crypto import VerifyKey
 from parsec._parsec_pyi.enumerate import InvitationType
-from parsec._parsec_pyi.ids import BootstrapToken, InvitationToken, OrganizationID, VlobID
+from parsec._parsec_pyi.ids import (
+    BootstrapToken,
+    EmailValidationToken,
+    InvitationToken,
+    OrganizationID,
+    VlobID,
+)
 
 class ParsecAddr:
     def __init__(self, hostname: str, port: int | None, use_ssl: bool) -> None: ...
@@ -74,6 +80,12 @@ class ParsecActionAddr:
         ParsecInvitationAddr,
         ParsecPkiEnrollmentAddr,
     ]: ...
+
+class ParsecAccountActionAddr:
+    @classmethod
+    def from_url(
+        cls, url: str, allow_http_redirection: bool = False
+    ) -> Union[ParsecAccountEmailValidationAddr, None]: ...
 
 class ParsecOrganizationBootstrapAddr(ParsecAddr):
     def __init__(
@@ -196,6 +208,39 @@ class ParsecInvitationAddr(ParsecAddr):
         invitation_type: InvitationType,
         token: InvitationToken,
     ) -> ParsecInvitationAddr: ...
+
+class ParsecAccountEmailValidationAddr(ParsecAddr):
+    def __init__(
+        self,
+        token: InvitationToken,
+        hostname: str,
+        port: int | None,
+        use_ssl: bool = True,
+    ) -> None: ...
+    def __hash__(self) -> int: ...
+    @property
+    def hostname(self) -> str: ...
+    @property
+    def port(self) -> int: ...
+    @property
+    def use_ssl(self) -> bool: ...
+    @property
+    def netloc(self) -> str: ...
+    @property
+    def token(self) -> EmailValidationToken: ...
+    def get_server_addr(self) -> ParsecAddr: ...
+    def to_url(self) -> str: ...
+    def to_http_redirection_url(self) -> str: ...
+    @classmethod
+    def from_url(
+        cls, url: str, allow_http_redirection: bool = False
+    ) -> ParsecAccountEmailValidationAddr: ...
+    @classmethod
+    def build(
+        cls,
+        server_addr: ParsecAddr,
+        token: EmailValidationToken,
+    ) -> ParsecAccountEmailValidationAddr: ...
 
 class ParsecPkiEnrollmentAddr(ParsecAddr):
     def __init__(
