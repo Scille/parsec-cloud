@@ -26,6 +26,7 @@ export interface Config {
   meteredConnection: boolean;
   unsyncFiles: boolean;
   skipViewers: boolean;
+  skipLongPathsSupportWarning: boolean;
 }
 
 export class StorageManager {
@@ -45,6 +46,7 @@ export class StorageManager {
       meteredConnection: false,
       unsyncFiles: false,
       skipViewers: false,
+      skipLongPathsSupportWarning: false,
     };
   }
 
@@ -149,6 +151,7 @@ export class StorageManager {
       synchroWifiOnly: data.meteredConnection,
       unsyncFiles: data.unsyncFiles,
       skipViewers: data.skipViewers,
+      skipLongPathsSupportWarning: data.skipLongPathsSupportWarning,
     });
     window.electronAPI.sendConfig(data);
   }
@@ -165,14 +168,15 @@ export class StorageManager {
     // We could just return directly but we create a new object explicitly
     // so we don't have any implicit deserialization that we don't want
     const config: Config = {
-      locale: data.locale ? data.locale : StorageManager.DEFAULT_CONFIG.locale,
-      theme: currentTheme ? currentTheme : StorageManager.DEFAULT_CONFIG.theme,
-      enableTelemetry: data.enableTelemetry !== undefined ? data.enableTelemetry : StorageManager.DEFAULT_CONFIG.enableTelemetry,
-      minimizeToTray: data.minimizeToTray !== undefined ? data.minimizeToTray : StorageManager.DEFAULT_CONFIG.minimizeToTray,
-      confirmBeforeQuit: data.confirmBeforeQuit !== undefined ? data.confirmBeforeQuit : StorageManager.DEFAULT_CONFIG.confirmBeforeQuit,
-      meteredConnection: data.meteredConnection !== undefined ? data.synchroWifiOnly : StorageManager.DEFAULT_CONFIG.meteredConnection,
-      unsyncFiles: data.unsyncFiles !== undefined ? data.unsyncFiles : StorageManager.DEFAULT_CONFIG.unsyncFiles,
-      skipViewers: data.skipViewers !== undefined ? data.skipViewers : StorageManager.DEFAULT_CONFIG.skipViewers,
+      locale: data.locale ?? StorageManager.DEFAULT_CONFIG.locale,
+      theme: currentTheme ?? StorageManager.DEFAULT_CONFIG.theme,
+      enableTelemetry: data.enableTelemetry ?? StorageManager.DEFAULT_CONFIG.enableTelemetry,
+      minimizeToTray: data.minimizeToTray ?? StorageManager.DEFAULT_CONFIG.minimizeToTray,
+      confirmBeforeQuit: data.confirmBeforeQuit ?? StorageManager.DEFAULT_CONFIG.confirmBeforeQuit,
+      meteredConnection: data.meteredConnection ?? StorageManager.DEFAULT_CONFIG.meteredConnection,
+      unsyncFiles: data.unsyncFiles ?? StorageManager.DEFAULT_CONFIG.unsyncFiles,
+      skipViewers: data.skipViewers ?? StorageManager.DEFAULT_CONFIG.skipViewers,
+      skipLongPathsSupportWarning: data.skipLongPathsSupportWarning ?? StorageManager.DEFAULT_CONFIG.skipLongPathsSupportWarning,
     };
     return config;
   }
