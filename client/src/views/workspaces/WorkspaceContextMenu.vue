@@ -148,24 +148,11 @@
   </ion-content>
 </template>
 
-<script lang="ts">
-export enum WorkspaceAction {
-  Rename,
-  MakeAvailableOffline,
-  CopyLink,
-  ShowDetails,
-  Share,
-  ShowHistory,
-  OpenInExplorer,
-  Mount,
-  Favorite,
-}
-</script>
-
 <script setup lang="ts">
 import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { cloudy, informationCircle, link, open, pencil, shareSocial, star, time } from 'ionicons/icons';
+import { WorkspaceAction } from '@/views/workspaces/types';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {
   return popoverController.dismiss({ action: action });

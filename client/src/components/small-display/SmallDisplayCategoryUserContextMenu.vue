@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { IonContent, IonPage } from '@ionic/vue';
 import { modalController } from '@ionic/vue';
-import { UserAction } from '@/views/users/UserContextMenu.vue';
+import { UserAction } from '@/views/users/types';
 import SmallDisplayContextMenuButtons from '@/components/small-display/SmallDisplayContextMenuButtons.vue';
 import { checkbox, checkmarkCircle } from 'ionicons/icons';
 

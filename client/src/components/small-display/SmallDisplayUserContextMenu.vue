@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, IonPage, modalController } from '@ionic/vue';
 import { informationCircle, personRemove, returnUpForward, repeat } from 'ionicons/icons';
-import { UserAction } from '@/views/users/UserContextMenu.vue';
+import { UserAction } from '@/views/users/types';
 
 defineProps<{
   multipleSelected?: boolean;

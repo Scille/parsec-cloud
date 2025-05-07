@@ -2,10 +2,7 @@
 
 <template>
   <ion-page class="page">
-    <ion-content
-      class="page-content"
-      :fullscreen="true"
-    >
+    <ion-content class="profile-page-content">
       <ion-header
         v-if="clientInfo && isSmallDisplay"
         class="profile-page-header"
@@ -262,6 +259,12 @@
         </div>
       </div>
     </ion-content>
+    <tab-bar-menu
+      v-if="isSmallDisplay"
+      class="tab-bar-menu"
+      @action-clicked="performProfileAction($event.action)"
+      :actions="tabBarMenuActions"
+    />
   </ion-page>
 </template>
 
@@ -287,11 +290,14 @@ import {
   chevronForward,
   chevronBack,
   logOut,
+  personAdd,
 } from 'ionicons/icons';
+import { UserAction } from '@/views/users/types';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 import { Env } from '@/services/environment';
 import { getCurrentRouteName, getCurrentRouteQuery, navigateTo, Routes, watchRoute, ProfilePages } from '@/router';
 import { Translatable, useWindowSize, askQuestion, Answer, OpenIcon, MsImage } from 'megashark-lib';
+import { TabBarMenu, MenuAction } from '@/views/menu';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
@@ -399,6 +405,21 @@ onMounted(async () => {
   await switchPageFromQuery();
 });
 
+async function inviteUser(): Promise<void> {
+  await navigateTo(Routes.Users, { query: { openInvite: true } });
+}
+
+const tabBarMenuActions: Array<Array<MenuAction>> = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }], []];
+
+async function performProfileAction(action: UserAction): Promise<void> {
+  if (!clientInfo.value) {
+    return;
+  }
+  if (action === UserAction.Invite) {
+    return await inviteUser();
+  }
+}
+
 onUnmounted(async () => {
   routeUnwatch();
 });
@@ -409,7 +430,7 @@ onUnmounted(async () => {
   transition: all 0.2s ease-in-out;
 }
 
-.page-content::part(scroll) {
+.profile-page-content::part(scroll) {
   display: flex;
   flex-direction: column;
 }
