@@ -37,12 +37,12 @@
     <div class="tab-bar-menu fab-button-container">
       <ion-fab
         class="fab-content"
-        :class="isFabClicked ? 'active' : ''"
         size="small"
-        @click="openAddMenuModal"
+        @click="isMenuOpen ? dismissModal() : openAddMenuModal()"
       >
         <ion-fab-button
           class="fab-button"
+          :class="isMenuOpen ? 'active' : ''"
           id="open-modal"
         >
           <ms-image
@@ -89,13 +89,16 @@ import { folder, prism, personCircle, business } from 'ionicons/icons';
 import { hasVisited, Routes, navigateTo, currentRouteIs, getLastVisited } from '@/router';
 import { ClientInfo, getClientInfo as parsecGetClientInfo } from '@/parsec';
 import { ref, Ref, onMounted } from 'vue';
-import { AddIcon, MsImage, useWindowSize } from 'megashark-lib';
-import TabMenuModal from '@/views/menu/TabMenuModal.vue';
+import { AddIcon, MsImage } from 'megashark-lib';
+import AddMenuModal from '@/views/menu/AddMenuModal.vue';
 
-const isFabClicked = ref(false);
-const { isLargeDisplay } = useWindowSize();
+const isMenuOpen = ref(false);
 
 const userInfo: Ref<ClientInfo | null> = ref(null);
+
+const emit = defineEmits<{
+  (e: 'actionClicked', data: any): void;
+}>();
 
 onMounted(async () => {
   const infoResult = await parsecGetClientInfo();
@@ -119,23 +122,36 @@ async function goToLastDocumentsPage(): Promise<void> {
   });
 }
 
+async function dismissModal(): Promise<void> {
+  isMenuOpen.value = false;
+
+  const modal = await modalController.getTop();
+  if (modal) {
+    await modal.dismiss();
+  }
+}
+
 async function openAddMenuModal(): Promise<void> {
-  isFabClicked.value = true;
+  isMenuOpen.value = true;
 
   const modal = await modalController.create({
-    component: TabMenuModal,
+    component: AddMenuModal,
     cssClass: 'tab-menu-modal',
     showBackdrop: true,
     handle: true,
     backdropDismiss: true,
-    breakpoints: isLargeDisplay.value ? undefined : [1],
+    breakpoints: [0, 1],
     // https://ionicframework.com/docs/api/modal#scrolling-content-at-all-breakpoints
     // expandToScroll: false, should be added to scroll with Ionic 8
-    initialBreakpoint: isLargeDisplay.value ? undefined : 1,
+    initialBreakpoint: 1,
   });
   await modal.present();
-  await modal.onDidDismiss();
-  await modal.dismiss();
+  const { data } = await modal.onDidDismiss();
+
+  if (data) {
+    emit('actionClicked', data);
+  }
+  await dismissModal();
 }
 </script>
 
@@ -203,6 +219,7 @@ async function openAddMenuModal(): Promise<void> {
     max-width: 3.75rem;
     display: flex;
     align-items: center;
+    justify-content: center;
     padding: 0;
     margin: auto;
     border: none;
@@ -221,7 +238,20 @@ async function openAddMenuModal(): Promise<void> {
       --color: var(--parsec-color-light-secondary-inversed-contrast);
 
       .fab-icon {
+        transition: all 0.2s ease-in-out;
+        transform: rotate(0deg);
         --fill-color: var(--parsec-color-light-secondary-inversed-contrast);
+      }
+
+      &.active {
+        --background: var(--parsec-color-light-secondary-inversed-contrast);
+        --background-activated: var(--parsec-color-light-primary-600);
+        --color: var(--parsec-color-light-primary-600);
+
+        .fab-icon {
+          --fill-color: var(--parsec-color-light-primary-600);
+          transform: rotate(45deg);
+        }
       }
     }
   }

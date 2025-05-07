@@ -259,7 +259,10 @@
         </div>
       </div>
     </ion-content>
-    <tab-bar-menu class="tab-bar-menu" />
+    <tab-bar-menu
+      v-if="isSmallDisplay"
+      class="tab-bar-menu"
+    />
   </ion-page>
 </template>
 

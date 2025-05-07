@@ -62,6 +62,7 @@
 #workspace-context-sheet-modal,
 #file-context-sheet-modal,
 #user-context-sheet-modal,
+#fab-modal,
 .filter-container {
   background-color: var(--parsec-color-light-secondary-inverted-contrast);
 
@@ -132,15 +133,19 @@
       --color: var(--parsec-color-light-primary-600);
       color: var(--parsec-color-light-primary-600);
 
-      ion-icon {
+      ion-icon,
+      .item-icon {
         color: var(--parsec-color-light-primary-600);
+        --fill-color: var(--parsec-color-light-primary-600);
       }
     }
 
-    ion-icon {
+    ion-icon,
+    .item-icon {
       font-size: 1.125rem;
       margin-right: 0.5em;
       color: var(--parsec-color-light-secondary-grey);
+      --fill-color: var(--parsec-color-light-secondary-grey);
     }
   }
 
@@ -155,7 +160,8 @@
       --padding-top: 0.5rem;
       --padding-bottom: 0.5rem;
 
-      ion-icon {
+      ion-icon,
+      .item-icon {
         font-size: 1.25rem;
         margin-right: 0.5em;
       }
@@ -168,6 +174,7 @@
 }
 
 // specific margin-top for handle
+#fab-modal,
 #workspace-context-sheet-modal,
 #file-context-sheet-modal,
 #user-context-sheet-modal {
