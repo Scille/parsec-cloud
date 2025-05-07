@@ -18,7 +18,8 @@ import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager } from '@/services/storageManager';
 import SmallDisplayWorkspaceContextMenu from '@/views/workspaces/SmallDisplayWorkspaceContextMenu.vue';
-import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
+import { WorkspaceAction } from '@/views/workspaces/types';
+import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
 import { Clipboard, DisplayState, Translatable, getTextFromUser } from 'megashark-lib';
@@ -129,7 +130,7 @@ export async function openWorkspaceContextMenu(
   storageManager: StorageManager,
   fromSidebar = false,
   isLargeDisplay = true,
-): Promise<void> {
+): Promise<{ action: WorkspaceAction } | undefined> {
   const clientProfile = await getClientProfile();
   let data: { action: WorkspaceAction } | undefined;
 
@@ -197,6 +198,7 @@ export async function openWorkspaceContextMenu(
         console.warn('No WorkspaceAction match found');
     }
   }
+  return data;
 }
 
 async function openWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
