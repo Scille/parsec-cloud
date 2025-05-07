@@ -19,7 +19,10 @@
           @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
           :image="SidebarToggle"
         />
-        <div class="topbar-left">
+        <div
+          class="topbar-left"
+          id="topbar-left"
+        >
           <div
             id="back-block"
             v-if="hasHistory() && !currentRouteIs(Routes.Workspaces) && !currentRouteIs(Routes.MyProfile)"
@@ -47,6 +50,7 @@
               :path-nodes="fullPath"
               @change="onNodeSelected"
               :from-header-page="true"
+              :topbar-width="breadcrumbsWidth / 16"
             />
           </div>
 
@@ -157,10 +161,10 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { home, notifications, search } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, ref, computed } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref, computed, watch } from 'vue';
 import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 
-const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
 const workspaceName = ref('');
@@ -173,6 +177,13 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const notificationCenterButton = ref();
 const showHeader = computed(() => {
   return !((currentRouteIs(Routes.Organization) || currentRouteIs(Routes.MyProfile)) && isSmallDisplay.value);
+});
+const breadcrumbsWidth = ref(0);
+
+const topbarWidthWatchCancel = watch([windowWidth, fullPath], () => {
+  if (document.getElementById('topbar-left') && document.getElementById('back-block')) {
+    breadcrumbsWidth.value = document.getElementById('topbar-left')?.offsetWidth! - document.getElementById('back-block')?.offsetWidth!;
+  }
 });
 
 const routeWatchCancel = watchRoute(async () => {
@@ -276,6 +287,7 @@ onUnmounted(async () => {
     hotkeyManager.unregister(hotkeys);
   }
   routeWatchCancel();
+  topbarWidthWatchCancel();
 });
 
 function getTitleForRoute(): Translatable {

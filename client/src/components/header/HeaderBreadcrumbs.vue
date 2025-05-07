@@ -3,7 +3,7 @@
 <template>
   <div>
     <ion-breadcrumbs
-      v-if="isLargeDisplay"
+      v-show="isLargeDisplay"
       class="breadcrumb"
       @ion-collapsed-click="presentPopover($event)"
       :max-items="maxBreadcrumbs"
@@ -16,6 +16,7 @@
         :path="path"
         class="breadcrumb-element breadcrumb-normal"
         :key="path.id"
+        ref="breadcrumbRef"
       >
         <ion-icon
           class="main-icon"
@@ -93,11 +94,28 @@ export interface RouterPathNode {
 import { Query } from '@/router';
 import { Translatable, useWindowSize } from 'megashark-lib';
 import { IonBreadcrumb, IonBreadcrumbs, IonButton, IonIcon, IonText, popoverController } from '@ionic/vue';
-import { Ref, ref } from 'vue';
+import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
 import HeaderBreadcrumbPopover from '@/components/header/HeaderBreadcrumbPopover.vue';
 import { caretDown } from 'ionicons/icons';
 
-const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
+const breadcrumbRef = ref();
+const breadcrumbWidthProperty = ref('');
+
+function setBreadcrumbWidth(): void {
+  if (props.topbarWidth > 0 && breadcrumbRef.value) {
+    let visibleNodes = props.pathNodes.length > props.maxShown ? props.maxShown : props.pathNodes.length;
+    visibleNodes -= props.fromHeaderPage ? 1 : 0;
+    let breadcrumbWidth = props.topbarWidth - (props.fromHeaderPage ? breadcrumbRef.value[0].$el.clientWidth / 16 : 0) - 1;
+
+    if (props.pathNodes.length === (props.fromHeaderPage ? 3 : 2)) {
+      breadcrumbWidth -= 1.25; // separator
+    } else if (props.pathNodes.length > props.maxShown) {
+      breadcrumbWidth -= 4.125; // collapsed element
+    }
+    breadcrumbWidthProperty.value = `${breadcrumbWidth / visibleNodes}rem`;
+  }
+}
 
 const props = withDefaults(
   defineProps<{
@@ -106,18 +124,40 @@ const props = withDefaults(
     itemsAfterCollapse?: number;
     maxShown?: number;
     fromHeaderPage?: boolean;
+    topbarWidth?: number;
   }>(),
   {
     itemsBeforeCollapse: 2,
-    itemsAfterCollapse: 2,
-    maxShown: 4,
+    itemsAfterCollapse: 1,
+    maxShown: 3,
     fromHeaderPage: false,
+    topbarWidth: 0,
+  },
+);
+
+const watchWindowWidthCancel = watch(windowWidth, () => {
+  setBreadcrumbWidth();
+});
+
+const watchNodeSizeCancel = watch(
+  () => props.pathNodes.length,
+  () => {
+    setBreadcrumbWidth();
   },
 );
 
 const emits = defineEmits<{
   (e: 'change', node: RouterPathNode): void;
 }>();
+
+onMounted(() => {
+  setBreadcrumbWidth();
+});
+
+onUnmounted(() => {
+  watchWindowWidthCancel();
+  watchNodeSizeCancel();
+});
 
 const maxBreadcrumbs: Ref<number | undefined> = ref(props.maxShown);
 let ignoreNextEvent = false;
@@ -177,6 +217,7 @@ function navigateTo(path: RouterPathNode): void {
     &::part(native) {
       cursor: pointer;
       padding: 0.25rem 0.5rem;
+      max-width: calc(v-bind(breadcrumbWidthProperty));
     }
 
     &::part(separator) {
