@@ -88,7 +88,7 @@ import { folder, prism, personCircle, business } from 'ionicons/icons';
 import { hasVisited, Routes, navigateTo, currentRouteIs, getLastVisited } from '@/router';
 import { ClientInfo, getClientInfo as parsecGetClientInfo } from '@/parsec';
 import { ref, Ref, onMounted } from 'vue';
-import { AddIcon, MsImage, MsModalResult, useWindowSize } from 'megashark-lib';
+import { AddIcon, MsImage, MsModalResult } from 'megashark-lib';
 import TabBarMenuModal from '@/views/menu/TabBarMenuModal.vue';
 import { MenuAction } from '@/views/menu/types';
 

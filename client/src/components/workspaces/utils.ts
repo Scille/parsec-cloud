@@ -130,7 +130,7 @@ export async function openWorkspaceContextMenu(
   storageManager: StorageManager,
   fromSidebar = false,
   isLargeDisplay = true,
-): Promise<{ action: WorkspaceAction } | undefined> {
+): Promise<void> {
   const clientProfile = await getClientProfile();
   let data: { action: WorkspaceAction } | undefined;
 
@@ -198,7 +198,6 @@ export async function openWorkspaceContextMenu(
         console.warn('No WorkspaceAction match found');
     }
   }
-  return data;
 }
 
 async function openWorkspace(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
