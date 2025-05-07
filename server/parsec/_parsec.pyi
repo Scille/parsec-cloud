@@ -6,6 +6,8 @@ from parsec._parsec_pyi import (
     testbed,  # Only define when build with `test-utils` feature
 )
 from parsec._parsec_pyi.addrs import (
+    ParsecAccountActionAddr,
+    ParsecAccountEmailValidationAddr,
     ParsecActionAddr,
     ParsecAddr,
     ParsecInvitationAddr,
@@ -173,6 +175,8 @@ __all__ = [
     "ParsecActionAddr",
     "ParsecAddr",
     "ParsecInvitationAddr",
+    "ParsecAccountEmailValidationAddr",
+    "ParsecAccountActionAddr",
     "ParsecOrganizationAddr",
     "ParsecOrganizationBootstrapAddr",
     "ParsecPkiEnrollmentAddr",

@@ -27,6 +27,16 @@ class RepOk(Rep):
         self,
     ) -> None: ...
 
+class RepEmailServerUnavailable(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepEmailRecipientRefused(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
 class RepInvalidEmail(Rep):
     def __init__(
         self,

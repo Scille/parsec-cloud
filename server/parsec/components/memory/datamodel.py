@@ -99,7 +99,9 @@ class MemoryDatamodel:
     # accounts are not associated to one organization
     # (email, account)
     accounts: dict[EmailStr, MemoryAccount] = field(default_factory=dict)
-    unverified_emails: dict[EmailStr, EmailValidationToken] = field(default_factory=dict)
+    unverified_emails: dict[EmailStr, tuple[EmailValidationToken, DateTime]] = field(
+        default_factory=dict
+    )
 
 
 @dataclass(slots=True)

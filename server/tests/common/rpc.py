@@ -88,12 +88,12 @@ class BaseAnonymousAccountRpcClient:
     async def _do_request(self, req: bytes, family: str) -> bytes:
         raise NotImplementedError
 
-    async def account_send_email_validation_token(
+    async def account_create_send_validation_email(
         self, email: str
-    ) -> anonymous_account_cmds.latest.account_send_email_validation_token.Rep:
-        req = anonymous_account_cmds.latest.account_send_email_validation_token.Req(email=email)
+    ) -> anonymous_account_cmds.latest.account_create_send_validation_email.Rep:
+        req = anonymous_account_cmds.latest.account_create_send_validation_email.Req(email=email)
         raw_rep = await self._do_request(req.dump(), "anonymous_account")
-        return anonymous_account_cmds.latest.account_send_email_validation_token.Rep.load(raw_rep)
+        return anonymous_account_cmds.latest.account_create_send_validation_email.Rep.load(raw_rep)
 
     async def ping(self, ping: str) -> anonymous_account_cmds.latest.ping.Rep:
         req = anonymous_account_cmds.latest.ping.Req(ping=ping)

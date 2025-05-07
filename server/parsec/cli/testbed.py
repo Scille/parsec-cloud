@@ -32,6 +32,7 @@ from parsec.backend import Backend, backend_factory
 from parsec.cli.options import debug_config_options, logging_config_options
 from parsec.cli.utils import cli_exception_handler
 from parsec.config import (
+    AccountConfig,
     BackendConfig,
     LogLevel,
     MockedBlockStoreConfig,
@@ -273,6 +274,7 @@ async def testbed_backend_factory(
         blockstore_config=blockstore_config,
         administration_token="s3cr3t",
         organization_spontaneous_bootstrap=True,
+        account_config=AccountConfig(account_confirmation_email_resend_delay=60),
     )
     async with backend_factory(config=config) as backend:
         yield TestbedBackend(backend=backend)
