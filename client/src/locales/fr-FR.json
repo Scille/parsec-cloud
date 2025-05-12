@@ -789,6 +789,7 @@
         "title": "Mes appareils",
         "description": "Vous pouvez consulter et ajouter de nouveaux appareils à votre profil pour accéder à cette organisation.",
         "addDevice": "Ajouter un nouvel appareil",
+        "greetDevice": "Ajouter un nouvel appareil",
         "noDevices": "Aucun appareil.",
         "activeDeviceBadge": "Actif",
         "joinedOn": "Rejoint :",
@@ -836,6 +837,7 @@
             "actions": {
                 "finish": "Terminer",
                 "start": "Démarrer",
+                "copyLink": "Copier le lien",
                 "sendEmail": "Envoyer le lien par email",
                 "reSendEmail": "Renvoyer l'email",
                 "waitBeforeResending": "Attendez {seconds}s",

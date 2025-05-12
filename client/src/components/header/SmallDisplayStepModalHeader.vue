@@ -4,10 +4,7 @@
   <ion-button
     v-if="!hideCloseButton"
     slot="icon-only"
-    class="closeBtn"
-    :class="{
-      'closeBtn-stepper': step,
-    }"
+    class="closeBtn closeBtn-stepper"
     @click="$emit('closeClicked')"
   >
     <ion-icon
@@ -15,48 +12,37 @@
       class="closeBtn__icon"
     />
   </ion-button>
-  <ion-header
-    class="modal-header"
-    :class="{
-      'modal-header-stepper': step,
-    }"
-  >
-    <div
-      class="modal-header-stepper-label"
-      v-if="step"
-    >
+  <ion-header class="modal-header">
+    <div class="modal-header-stepper">
       <ion-icon
-        :icon="step.icon"
-        class="modal-header-stepper-label__icon"
+        :icon="icon"
+        class="modal-header-stepper__icon"
       />
-      <ion-text class="modal-header-stepper-label__text button-medium">
-        {{ $msTranslate(step.title) }}
+      <ion-text class="modal-header-stepper__text button-medium">
+        {{ $msTranslate(title) }}
       </ion-text>
     </div>
     <div class="modal-header-title">
-      <ion-text
-        class="modal-header-title__step body"
-        v-if="step?.current !== undefined"
-      >
+      <ion-text class="modal-header-title__step body">
         {{
           $msTranslate({
             key: 'HeaderPage.modalHeader.step',
             data: {
-              current: step.current,
-              total: step.total,
+              current: currentStep,
+              total: steps.length,
             },
           })
         }}
       </ion-text>
       <ion-text class="modal-header-title__text title-h2">
-        {{ $msTranslate(title) }}
+        {{ $msTranslate(steps[currentStep].title) }}
       </ion-text>
     </div>
     <ion-text
       class="modal-header__subtitle body-lg"
-      v-if="subtitle"
+      v-if="steps[currentStep]?.subtitle"
     >
-      {{ $msTranslate(subtitle) }}
+      {{ $msTranslate(steps[currentStep]?.subtitle) }}
     </ion-text>
   </ion-header>
 </template>
@@ -68,13 +54,12 @@ import { Translatable } from 'megashark-lib';
 
 defineProps<{
   title: Translatable;
-  subtitle?: Translatable;
-  step?: {
-    icon: string;
+  icon: string;
+  steps: Array<{
     title: Translatable;
-    current: number | undefined;
-    total: number;
-  };
+    subtitle?: Translatable;
+  }>;
+  currentStep: number;
   hideCloseButton?: boolean;
 }>();
 
@@ -90,16 +75,36 @@ defineEmits<{
   text-wrap: wrap;
   margin-bottom: 1.5rem;
   gap: 1rem;
+  padding: 0 0 1.5rem;
 
   @include ms.responsive-breakpoint('sm') {
-    padding: 2rem 3rem 1.5rem 2rem;
     border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+  }
+
+  &-stepper {
+    background: var(--parsec-color-light-primary-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+    gap: 0.5rem;
+
+    &__icon {
+      color: var(--parsec-color-light-primary-600);
+      border-radius: var(--parsec-radius-6);
+      font-size: 1rem;
+    }
+
+    &__text {
+      color: var(--parsec-color-light-primary-600);
+    }
   }
 
   &-title {
     display: flex;
     flex-direction: column;
     gap: 0.375rem;
+    padding: 0.5rem 2rem 0;
 
     &__step {
       color: var(--parsec-color-light-secondary-grey);
@@ -124,37 +129,5 @@ defineEmits<{
   top: 3rem;
   right: 1rem;
   padding: 0.25rem;
-}
-
-// only visible with stepper
-.modal-header-stepper {
-  padding: 0 0 1.5rem;
-
-  &-label {
-    background: var(--parsec-color-light-primary-50);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.5rem;
-    gap: 0.5rem;
-
-    &__icon {
-      color: var(--parsec-color-light-primary-600);
-      border-radius: var(--parsec-radius-6);
-      font-size: 1rem;
-    }
-
-    &__text {
-      color: var(--parsec-color-light-primary-600);
-    }
-  }
-
-  .modal-header-title {
-    padding: 0.5rem 2rem 0;
-
-    &:has(.modal-header-title__step) {
-      padding: 0 2rem;
-    }
-  }
 }
 </style>

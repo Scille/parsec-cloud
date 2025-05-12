@@ -6,8 +6,8 @@
     :class="DeviceJoinOrganizationStep[pageStep]"
   >
     <ms-wizard-stepper
-      v-show="pageStep > DeviceJoinOrganizationStep.Information && pageStep < DeviceJoinOrganizationStep.Finish"
-      :current-index="pageStep - 1"
+      v-show="pageStep > DeviceJoinOrganizationStep.Information && pageStep < DeviceJoinOrganizationStep.Finish && isLargeDisplay"
+      :current-index="pageStep - 2"
       :titles="[
         'ClaimDeviceModal.stepper.GetHostCode',
         'ClaimDeviceModal.stepper.ProvideGuestCode',
@@ -17,7 +17,7 @@
     <ion-button
       slot="icon-only"
       @click="cancelModal()"
-      v-show="pageStep !== DeviceJoinOrganizationStep.Finish"
+      v-show="pageStep !== DeviceJoinOrganizationStep.Finish && isLargeDisplay"
       class="closeBtn"
     >
       <ion-icon
@@ -28,20 +28,39 @@
     <div
       class="modal"
       :class="{
-        wizardTrue: pageStep > DeviceJoinOrganizationStep.Information && pageStep != DeviceJoinOrganizationStep.Finish,
+        wizardTrue: pageStep > DeviceJoinOrganizationStep.Information && pageStep != DeviceJoinOrganizationStep.Finish && isLargeDisplay,
       }"
     >
-      <ion-header class="modal-header">
+      <ion-header
+        class="modal-header"
+        v-if="isLargeDisplay"
+      >
         <ion-title class="modal-header__title title-h2">
-          {{ $msTranslate(getTitleAndSubtitle().title) }}
+          {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
-          v-if="getTitleAndSubtitle().subtitle"
+          v-if="steps[pageStep]?.subtitle"
           class="modal-header__text body"
         >
-          {{ $msTranslate(getTitleAndSubtitle().subtitle) }}
+          {{ $msTranslate(steps[pageStep]?.subtitle) }}
         </ion-text>
       </ion-header>
+      <template v-else>
+        <small-display-modal-header
+          v-if="pageStep === DeviceJoinOrganizationStep.Information || pageStep === DeviceJoinOrganizationStep.Finish"
+          @close-clicked="cancelModal()"
+          :hide-close-button="pageStep === DeviceJoinOrganizationStep.Finish"
+          :title="steps[pageStep]?.title"
+        />
+        <small-display-step-modal-header
+          v-else
+          @close-clicked="cancelModal()"
+          :title="'DevicesPage.addDevice'"
+          :icon="phonePortrait"
+          :steps="steps.slice(1, steps.length - 1)"
+          :current-step="pageStep - 1"
+        />
+      </template>
       <!-- modal content: create component for each part-->
       <div class="modal-content inner-content">
         <!-- part 0 (manage by JoinByLink component)-->
@@ -122,8 +141,9 @@
 
 <script setup lang="ts">
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
-
 import { getDefaultDeviceName } from '@/common/device';
+import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
+import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
@@ -150,21 +170,23 @@ import {
   MsWizardStepper,
   Translatable,
   asyncComputed,
+  useWindowSize,
 } from 'megashark-lib';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
-import { checkmarkCircle, close } from 'ionicons/icons';
+import { checkmarkCircle, close, phonePortrait } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';
 
 enum DeviceJoinOrganizationStep {
-  Information = 0,
-  GetHostSasCode = 1,
-  ProvideGuestCode = 2,
-  Authentication = 3,
-  Finish = 4,
+  Information = 1,
+  GetHostSasCode = 2,
+  ProvideGuestCode = 3,
+  Authentication = 4,
+  Finish = 5,
 }
 
+const { isLargeDisplay } = useWindowSize();
 const pageStep = ref(DeviceJoinOrganizationStep.Information);
-let serverAddr: ParsedParsecAddrInvitationDevice | null = null;
+const serverAddr = ref<ParsedParsecAddrInvitationDevice | null>(null);
 const claimer = ref(new DeviceClaim());
 const authChoice = ref();
 const cancelled = ref(false);
@@ -176,48 +198,29 @@ const props = defineProps<{
 
 const waitingForHost = ref(true);
 
-interface Title {
-  title: Translatable;
-  subtitle?: string;
-}
-
-function getTitleAndSubtitle(): Title {
-  switch (pageStep.value) {
-    case DeviceJoinOrganizationStep.Information: {
-      return {
-        title: 'ClaimDeviceModal.titles.claimDevice',
-      };
-    }
-    case DeviceJoinOrganizationStep.GetHostSasCode: {
-      return {
-        title: 'ClaimDeviceModal.titles.getCode',
-        subtitle: 'ClaimDeviceModal.subtitles.getCode',
-      };
-    }
-    case DeviceJoinOrganizationStep.ProvideGuestCode: {
-      return {
-        title: 'ClaimDeviceModal.titles.provideCode',
-        subtitle: 'ClaimDeviceModal.subtitles.provideCode',
-      };
-    }
-    case DeviceJoinOrganizationStep.Authentication: {
-      return {
-        title: 'ClaimDeviceModal.titles.authentication',
-        subtitle: 'ClaimDeviceModal.subtitles.authentication',
-      };
-    }
-    case DeviceJoinOrganizationStep.Finish: {
-      return {
-        title: {
-          key: 'ClaimDeviceModal.titles.done',
-          data: {
-            org: serverAddr?.organizationId || '',
-          },
-        },
-      };
-    }
-  }
-}
+const steps = computed(() => [
+  { title: 'ClaimDeviceModal.titles.claimDevice' },
+  {
+    title: 'ClaimDeviceModal.titles.getCode',
+    subtitle: 'ClaimDeviceModal.subtitles.getCode',
+  },
+  {
+    title: 'ClaimDeviceModal.titles.provideCode',
+    subtitle: 'ClaimDeviceModal.subtitles.provideCode',
+  },
+  {
+    title: 'ClaimDeviceModal.titles.authentication',
+    subtitle: 'ClaimDeviceModal.titles.authentication',
+  },
+  {
+    title: {
+      key: 'ClaimDeviceModal.titles.done',
+      data: {
+        org: serverAddr.value ? serverAddr.value.organizationId : '',
+      },
+    },
+  },
+]);
 
 async function selectHostSas(selectedCode: string | null): Promise<void> {
   if (!selectedCode) {
@@ -259,7 +262,7 @@ async function showErrorAndRestart(message: Translatable): Promise<void> {
   await restartProcess();
 }
 
-function getNextButtonText(): string {
+function getNextButtonText(): Translatable {
   if (pageStep.value === DeviceJoinOrganizationStep.Information) {
     return 'ClaimDeviceModal.buttons.understand';
   } else if (pageStep.value === DeviceJoinOrganizationStep.Authentication) {
@@ -455,7 +458,7 @@ onMounted(async () => {
   const addrResult = await parseParsecAddr(props.invitationLink);
 
   if (addrResult.ok && addrResult.value.tag === ParsedParsecAddrTag.InvitationDevice) {
-    serverAddr = addrResult.value as ParsedParsecAddrInvitationDevice;
+    serverAddr.value = addrResult.value as ParsedParsecAddrInvitationDevice;
   }
   await startProcess();
 });

@@ -24,28 +24,30 @@
         v-if="isLargeDisplay"
       >
         <ion-title class="modal-header__title title-h2">
-          {{ $msTranslate(getStep(pageStep).title) }}
+          {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
-          v-if="getStep(pageStep).subtitle"
           class="modal-header__text body"
+          v-if="steps[pageStep]?.subtitle"
         >
-          {{ $msTranslate(getStep(pageStep).subtitle) }}
+          {{ $msTranslate(steps[pageStep]?.subtitle) }}
         </ion-text>
       </ion-header>
-      <small-display-step-modal-header
-        v-else
-        @close-clicked="cancelModal()"
-        :title="getStep(pageStep).title"
-        :subtitle="getStep(pageStep).subtitle"
-        :step="{
-          icon: personAdd,
-          title: 'UsersPage.greet.titles.waitForGuest',
-          current: getStep(pageStep).currentStep,
-          total: 4,
-        }"
-      />
-
+      <template v-else>
+        <small-display-modal-header
+          v-if="pageStep === GreetUserStep.WaitForGuest || pageStep === GreetUserStep.Summary"
+          @close-clicked="cancelModal()"
+          :title="steps[pageStep]?.title"
+        />
+        <small-display-step-modal-header
+          v-else
+          @close-clicked="cancelModal()"
+          :title="'UsersPage.greet.titles.waitForGuest'"
+          :icon="personAdd"
+          :steps="steps.slice(1, steps.length - 1)"
+          :current-step="pageStep - 1"
+        />
+      </template>
       <div class="modal-content inner-content">
         <!-- waiting step -->
         <div
@@ -174,6 +176,7 @@
 <script setup lang="ts">
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
+import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
@@ -198,12 +201,12 @@ import { close, personAdd } from 'ionicons/icons';
 import { Ref, computed, onMounted, ref } from 'vue';
 
 enum GreetUserStep {
-  WaitForGuest = 1,
-  ProvideHostSasCode = 2,
-  GetGuestSasCode = 3,
-  WaitForGuestInfo = 4,
-  CheckGuestInfo = 5,
-  Summary = 6,
+  WaitForGuest = 0,
+  ProvideHostSasCode = 1,
+  GetGuestSasCode = 2,
+  WaitForGuestInfo = 3,
+  CheckGuestInfo = 4,
+  Summary = 5,
 }
 
 const { isLargeDisplay } = useWindowSize();
@@ -239,54 +242,26 @@ const profileOptions: MsOptions = new MsOptions([
   },
 ]);
 
-interface StepInfo {
-  title: Translatable;
-  subtitle?: Translatable;
-  currentStep?: number;
-}
-
-function getStep(step: GreetUserStep): StepInfo {
-  switch (step) {
-    case GreetUserStep.WaitForGuest: {
-      return {
-        title: 'UsersPage.greet.titles.waitForGuest',
-      };
-    }
-    case GreetUserStep.ProvideHostSasCode: {
-      return {
-        title: 'UsersPage.greet.titles.provideHostCode',
-        subtitle: 'UsersPage.greet.subtitles.provideHostCode',
-        currentStep: 1,
-      };
-    }
-    case GreetUserStep.GetGuestSasCode: {
-      return {
-        title: 'UsersPage.greet.titles.getGuestCode',
-        subtitle: 'UsersPage.greet.subtitles.getGuestCode',
-        currentStep: 2,
-      };
-    }
-    case GreetUserStep.WaitForGuestInfo: {
-      return {
-        title: 'UsersPage.greet.titles.contactDetails',
-        currentStep: 3,
-      };
-    }
-    case GreetUserStep.CheckGuestInfo: {
-      return {
-        title: 'UsersPage.greet.titles.contactDetails',
-        subtitle: 'UsersPage.greet.subtitles.checkUserInfo',
-        currentStep: 3,
-      };
-    }
-    case GreetUserStep.Summary: {
-      return {
-        title: 'UsersPage.greet.titles.summary',
-        currentStep: 4,
-      };
-    }
-  }
-}
+const steps = ref([
+  {
+    title: 'UsersPage.greet.titles.waitForGuest',
+  },
+  {
+    title: 'UsersPage.greet.titles.provideHostCode',
+    subtitle: 'UsersPage.greet.subtitles.provideHostCode',
+  },
+  { title: 'UsersPage.greet.titles.getGuestCode', subtitle: 'UsersPage.greet.subtitles.getGuestCode' },
+  {
+    title: 'UsersPage.greet.titles.contactDetails',
+  },
+  {
+    title: 'UsersPage.greet.titles.contactDetails',
+    subtitle: 'UsersPage.greet.subtitles.checkUserInfo',
+  },
+  {
+    title: 'UsersPage.greet.titles.summary',
+  },
+]);
 
 async function setUserProfile(event: MsDropdownChangeEvent): Promise<void> {
   profile.value = event.option.key;
@@ -547,6 +522,10 @@ onMounted(async () => {
   justify-content: space-between;
   color: var(--parsec-color-light-secondary-text);
   gap: 1rem;
+
+  @include ms.responsive-breakpoint('sm') {
+    padding-inline: 1.5rem;
+  }
 
   .avatar {
     padding-left: 0.725rem;

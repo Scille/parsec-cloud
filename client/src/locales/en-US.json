@@ -789,6 +789,7 @@
         "title": "My devices",
         "description": "You can preview and add new devices to your profile to access this organization.",
         "addDevice": "Add a new device",
+        "greetDevice": "Greet a new device",
         "noDevices": "No devices.",
         "activeDeviceBadge": "Current",
         "joinedOn": "Joined:",
@@ -836,6 +837,7 @@
             "actions": {
                 "finish": "Finish",
                 "start": "Start",
+                "copyLink": "Copy link",
                 "sendEmail": "Send link by email",
                 "reSendEmail": "Resend email",
                 "waitBeforeResending": "Wait {seconds}s",

@@ -146,7 +146,6 @@ async function onAddDeviceClick(): Promise<void> {
 
 .devices-content {
   margin-top: 1rem;
-  max-height: 16em;
   overflow-y: auto;
 
   .devices-list {
