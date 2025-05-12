@@ -53,7 +53,7 @@ jobs:
     name: "🐧 Linux: 🦀 Rust tests"
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 30
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     # Testbed server comes as a Docker image, so it will eventually goes out of sync
     # with the tests (typically a new API is introduced in the Parsec server, or a new
     # testbed template is introduced).
