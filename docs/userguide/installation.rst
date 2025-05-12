@@ -94,47 +94,25 @@ Parsec is available for Linux, Mac, and Windows operating systems.
 
       **Install macFUSE**
 
-      This section describe how to install macFUSE.
+      This section describes how to install macFUSE.
 
-      1. Get the latest version from the `macFUSE <https://osxfuse.github.io/>`_ website.
+      1. Get the latest version from the `macFUSE website <https://osxfuse.github.io/>`_.
 
       .. image:: screens/macfuse_download.png
           :align: center
           :alt: macFUSE download screen
 
-      2. Open the ``.dmg`` file and follow instructions to install.
+      2. Open the macFUSE ``.dmg`` file and follow instructions to install.
 
-        - If the opening fails, two options are available in `System Settings > Privacy and Security`: either check the `App Store and identified developers` box, or click `Open Anyway` if you don't want to change this setting, which will need to be done once to open the ``.dmg``, and possibly once more to start the installer.
+        - If you cannot open the ``.dmg`` file because it was not downloaded from the App Store, head to `System Settings > Privacy and Security` on your Mac and scroll down to the `Security` section. You can either check `App Store & Known Developers` in the `Allow applications from` dropdown menu to make this installation and further updates smoother, or click `Open Anyway` for a one-time authorization.
+
+        - At the end of the installation, you will be prompted to approve this extension in `System Settings > Privacy and Security`. Scroll down to the `Security` section, and click `Allow` as illustrated below.
 
         .. image:: screens/macfuse_current_allow.png
             :align: center
-            :alt: macFUSE current allow screen
+            :alt: macFUSE approve screen
 
-      3. Finally, reboot your Mac to complete the installation.
-
-      .. note::
-
-          On macOS 12 and older, if the installer fails to start, check the `App Store and identified developers` box in `System Settings > Security & Privacy`:
-
-          .. image:: screens/macfuse_previous_system_preferences.png
-              :align: center
-              :alt: macOS path to Security and Privacy
-
-          .. image:: screens/macfuse_previous_allow_developer.png
-              :align: center
-              :alt: macOS previous allow identified developer
-
-          To change this setting, click the lock first which will require admin rights.
-
-          Once the installation is done, a `System Extension Updated` window will pop up. Click `Open Security Preferences`, and click the lock, then click `Allow`:
-
-          .. image:: screens/macfuse_previous_system_extension.png
-              :align: center
-              :alt: Previous System Extension Updated window
-
-          .. image:: screens/macfuse_previous_allow_extension.png
-              :align: center
-              :alt: macOS previous allow extension
+      3. You will then be prompted to restart your Mac to complete the installation. Be mindful that the **Parsec app** will not function properly until this restart is done.
 
 
 Update Parsec app

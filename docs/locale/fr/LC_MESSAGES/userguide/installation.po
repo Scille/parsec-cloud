@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-04-04 15:38+0200\n"
+"POT-Creation-Date: 2025-05-12 15:56+0200\n"
 "PO-Revision-Date: 2024-09-18 18:43+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -150,15 +150,15 @@ msgid "**Install macFUSE**"
 msgstr "**Installation de macFUSE**"
 
 #: ../../userguide/installation.rst:97
-msgid "This section describe how to install macFUSE."
+msgid "This section describes how to install macFUSE."
 msgstr "Cette section décrit comment installer macFUSE."
 
 #: ../../userguide/installation.rst:99
 msgid ""
-"Get the latest version from the `macFUSE <https://osxfuse.github.io/>`_ "
-"website."
+"Get the latest version from the `macFUSE website <https://osxfuse.github.io/"
+">`_."
 msgstr ""
-"Téléchargez la dernière version sur le site web de `macFUSE <https://osxfuse."
+"Téléchargez la dernière version sur le `site web de macFUSE <https://osxfuse."
 "github.io/>`_."
 
 #: ../../userguide/installation.rst:101
@@ -166,80 +166,59 @@ msgid "macFUSE download screen"
 msgstr "écran de téléchargement de macFUSE"
 
 #: ../../userguide/installation.rst:105
-msgid "Open the ``.dmg`` file and follow instructions to install."
-msgstr "Ouvrez le fichier ``.dmg`` et suivez les instructions d'installation."
+msgid "Open the macFUSE ``.dmg`` file and follow instructions to install."
+msgstr ""
+"Ouvrez le fichier ``.dmg`` de macFUSE et suivez les instructions "
+"d'installation."
 
 #: ../../userguide/installation.rst:107
 msgid ""
-"If the opening fails, two options are available in `System Settings > "
-"Privacy and Security`: either check the `App Store and identified "
-"developers` box, or click `Open Anyway` if you don't want to change this "
-"setting, which will need to be done once to open the ``.dmg``, and possibly "
-"once more to start the installer."
+"If you cannot open the ``.dmg`` file because it was not downloaded from the "
+"App Store, head to `System Settings > Privacy and Security` on your Mac and "
+"scroll down to the `Security` section. You can either check `App Store & "
+"Known Developers` in the `Allow applications from` dropdown menu to make "
+"this installation and further updates smoother, or click `Open Anyway` for a "
+"one-time authorization."
 msgstr ""
-"Si l'ouverture échoue, deux options sont disponibles dans `Réglages Système "
-"> Confidentialité et sécurité` : cochez la case `App Store et développeurs "
-"identifiés`, ou cliquez sur `Ouvrir quand meme` si vous ne voulez pas "
-"changer ce paramètre, ce qui devra être fait une fois pour ouvrir le ``."
-"dmg``, et éventuellement une fois de plus pour démarrer l'installateur."
+"Si vous ne parvenez pas à ouvrir le ``.dmg`` parce qu'il n'a pas été "
+"téléchargé depuis l'App Store, rendez-vous dans `Réglages Système > "
+"Confidentialité et Sécurité` sur votre Mac puis faites défiler vers le bas "
+"jusqu'à la section `Sécurité`. Vous pouvez soit cocher l'option `App Store "
+"et développeurs identifiés` dans le menu déroulant `Autoriser les "
+"applications depuis` pour une installation et des mises à jour plus fluides, "
+"soit cliquer sur `Ouvrir quand même` pour l'autoriser ponctuellement."
 
 #: ../../userguide/installation.rst:109
-msgid "macFUSE current allow screen"
+msgid ""
+"At the end of the installation, you will be prompted to approve this "
+"extension in `System Settings > Privacy and Security`. Scroll down to the "
+"`Security` section, and click `Allow` as illustrated below."
+msgstr ""
+"À l'issue de cette installation, il vous sera demandé d'autoriser cette "
+"extension dans `Réglages Système > Confidentialité et Sécurité`. Faites "
+"défiler vers le bas jusqu'à la section `Sécurité`, puis cliquez sur "
+"`Autoriser` comme illustré ci-dessous."
+
+#: ../../userguide/installation.rst:111
+msgid "macFUSE approve screen"
 msgstr "écran d'autorisation de macFUSE"
 
-#: ../../userguide/installation.rst:113
-msgid "Finally, reboot your Mac to complete the installation."
-msgstr "Enfin, redémarrez votre Mac pour finaliser l'installation."
-
-#: ../../userguide/installation.rst:117
-#, fuzzy
+#: ../../userguide/installation.rst:115
 msgid ""
-"On macOS 12 and older, if the installer fails to start, check the `App Store "
-"and identified developers` box in `System Settings > Security & Privacy`:"
+"You will then be prompted to restart your Mac to complete the installation. "
+"Be mindful that the **Parsec app** will not function properly until this "
+"restart is done."
 msgstr ""
-"À partir de macOS 12, si le programme d'installation ne démarre pas, cochez "
-"la case `App Store et développeurs identifiés` dans `Réglages Système > "
-"Confidentialité et sécurité` :"
+"Il vous sera ensuite demandé de redémarrer votre Mac pour finaliser cette "
+"installation. Il est important de préciser que l'**application Parsec** ne "
+"pourra pas fonctionner correctement tant que ce redémarrage n'a pas été "
+"effectué."
 
 #: ../../userguide/installation.rst:119
-msgid "macOS path to Security and Privacy"
-msgstr "macOS chemin vers Sécurité et Confidentialité"
-
-#: ../../userguide/installation.rst:123
-msgid "macOS previous allow identified developer"
-msgstr "macOS ancien autoriser développeurs identifiés"
-
-#: ../../userguide/installation.rst:127
-msgid ""
-"To change this setting, click the lock first which will require admin rights."
-msgstr ""
-"Pour changer ce paramètre, cliquez d'abord sur le cadenas, qui requiert les "
-"droits d'administrateur."
-
-#: ../../userguide/installation.rst:129
-msgid ""
-"Once the installation is done, a `System Extension Updated` window will pop "
-"up. Click `Open Security Preferences`, and click the lock, then click "
-"`Allow`:"
-msgstr ""
-"Une fois l'installation terminée, une fenêtre suggérant d'autoriser cette "
-"extension système apparaît. Cliquez sur `Ouvrir les préférences de "
-"sécurité`, puis cliquez sur `Autoriser` après avoir cliqué à nouveau sur le "
-"cadenas :"
-
-#: ../../userguide/installation.rst:131
-msgid "Previous System Extension Updated window"
-msgstr "Ancienne fenêtre de mise à jour d'extension système"
-
-#: ../../userguide/installation.rst:135
-msgid "macOS previous allow extension"
-msgstr "macOS ancien autoriser extension"
-
-#: ../../userguide/installation.rst:141
 msgid "Update Parsec app"
 msgstr "Mise à jour de l'application Parsec"
 
-#: ../../userguide/installation.rst:143
+#: ../../userguide/installation.rst:121
 msgid ""
 "Automatic updates are supported and enabled. When a new version is released, "
 "Parsec app updates automatically on startup."
@@ -248,7 +227,7 @@ msgstr ""
 "nouvelle version est publiée, l'application Parsec se met à jour "
 "automatiquement au démarrage."
 
-#: ../../userguide/installation.rst:145
+#: ../../userguide/installation.rst:123
 msgid ""
 "If Parsec app is running, A message is displayed. Simply click on the "
 "message to update the application."
@@ -256,11 +235,11 @@ msgstr ""
 "Si l'application Parsec est en cours d'exécution, un message s'affiche. Il "
 "suffit de cliquer sur le message pour mettre à jour l'application."
 
-#: ../../userguide/installation.rst:149
+#: ../../userguide/installation.rst:127
 msgid "Install an older version of Parsec"
 msgstr "Installer une ancienne version de Parsec"
 
-#: ../../userguide/installation.rst:153
+#: ../../userguide/installation.rst:131
 msgid ""
 "For security reasons, you should **always install the latest stable version "
 "of Parsec** as it contains the latest security fixes."
@@ -269,7 +248,7 @@ msgstr ""
 "version stable de Parsec** car elle contient les derniers correctifs de "
 "sécurité."
 
-#: ../../userguide/installation.rst:155
+#: ../../userguide/installation.rst:133
 msgid "If you need to access older versions, they are available on `GitHub`_."
 msgstr ""
 "Si vous avez besoin d'accéder à des versions plus anciennes, elle sont "
