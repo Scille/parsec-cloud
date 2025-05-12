@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const cp = require('child_process');
 const chokidar = require('chokidar');
+const { platform } = require('node:process');
 const electron = process.env.ELECTRON_OVERRIDE_DIST_PATH ? `${process.env.ELECTRON_OVERRIDE_DIST_PATH}/electron` : require('electron');
 
 let child = null;
@@ -17,7 +18,14 @@ const reloadWatcher = {
 
 function runBuild() {
   return new Promise((resolve) => {
-    const tempChild = cp.spawn(npmCmd, ['run', 'build']);
+    const tempChild = cp.spawn(
+      npmCmd,
+      ['run', 'build'],
+      // Recent versions of node (since >= 20) now require to set `shell: true` when executing batch script.
+      // eslint-disable-next-line max-len
+      // https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2#command-injection-via-args-parameter-of-child_processspawn-without-shell-option-enabled-on-windows-cve-2024-27980---high
+      platform === 'win32' ? { shell: true } : undefined,
+    );
     tempChild.once('exit', () => {
       resolve();
     });
