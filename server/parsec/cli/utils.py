@@ -222,7 +222,7 @@ class ParsecDateTimeClickType(click.ParamType):
         info_dict["formats"] = self.formats
         return info_dict
 
-    def get_metavar(self, param: click.Parameter) -> str:
+    def get_metavar(self, param: click.Parameter, ctx: click.Context) -> str | None:
         return "[2000-01-01|2000-01-01T00:00:00Z]"
 
     def convert(
