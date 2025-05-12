@@ -831,6 +831,7 @@
             "actions": {
                 "finish": "Terminer",
                 "start": "Démarrer",
+                "copyLink": "Copier le lien",
                 "sendEmail": "Envoyer le lien par email",
                 "reSendEmail": "Renvoyer l'email",
                 "waitBeforeResending": "Attendez {seconds}s",
