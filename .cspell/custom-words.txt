@@ -126,6 +126,7 @@ newsfragments
 nextest
 nigthly
 Niño
+no-brainer
 nonextensible
 nonminimal
 nosetests
