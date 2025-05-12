@@ -95,11 +95,16 @@ async function build_electron_bindings(cargo_flags) {
 }
 
 function process_rust_lib() {
-  const NEON_ARGS = [
-    // On Windows only .exe/.bat can be directly executed, `npx.cmd` is the bat version of `npx`
-    on_windows() ? "npx.cmd" : "npx",
-    'cargo-cp-artifact', '--npm', 'cdylib', OUTPUT_DIR + '/libparsec.node', '--', 'cat', BUILD_LOG
-  ];
+  const NEON_ARGS = [];
+  // On Windows only .exe/.bat can be directly executed, `npx.cmd` is the bat version of `npx`
+  on_windows() ? NEON_ARGS.push("npx.cmd") : NEON_ARGS.push("npx"),
+  NEON_ARGS.push(...['cargo-cp-artifact', '--npm', 'cdylib', OUTPUT_DIR + '/libparsec.node', '--']);
+  if (on_windows()) {
+    // `cat` does not exist by default on Windows
+    NEON_ARGS.push(...['type', path.win32.normalize(BUILD_LOG)]);
+  } else {
+    NEON_ARGS.push(...['cat', BUILD_LOG]);
+  }
 
   exec_cmd(
     NEON_ARGS,
