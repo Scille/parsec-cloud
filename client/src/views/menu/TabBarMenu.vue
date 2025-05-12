@@ -38,6 +38,7 @@
       <ion-fab
         class="fab-content"
         size="small"
+        id="add-menu-fab-button"
         @click="!isMenuOpen ? openMenuModal() : closeMenuModal()"
       >
         <ion-fab-button
@@ -251,13 +252,15 @@ async function openMenuModal(): Promise<void> {
     }
 
     .fab-button {
-      width: 2.375rem;
-      height: 2.375rem;
-      --background: var(--parsec-color-light-primary-600);
+      width: 2.75rem;
+      height: 2.75rem;
+      --background: var(--parsec-color-light-gradient-background);
+      --background-focused: var(--parsec-color-light-primary-700);
       --background-activated: var(--parsec-color-light-secondary-white);
       --border-radius: var(--parsec-radius-12);
-      --box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.3), 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
+      --box-shadow: var(--parsec-shadow-soft);
       --color: var(--parsec-color-light-secondary-inversed-contrast);
+      --transition: all 0.2s ease-in-out;
 
       .fab-icon {
         transition: all 0.2s ease-in-out;
