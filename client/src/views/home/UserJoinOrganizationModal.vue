@@ -37,31 +37,33 @@
         class="modal-header"
         v-if="isLargeDisplay"
       >
-        <ion-title
-          v-if="getStep(pageStep).title !== ''"
-          class="modal-header__title title-h2"
-        >
-          {{ $msTranslate(getStep(pageStep).title) }}
+        <ion-title class="modal-header__title title-h2">
+          {{ $msTranslate(steps[pageStep]?.title) }}
         </ion-title>
         <ion-text
-          v-if="getStep(pageStep).subtitle !== ''"
+          v-if="steps[pageStep]?.subtitle"
           class="modal-header__text body"
         >
-          {{ $msTranslate(getStep(pageStep).subtitle) }}
+          {{ $msTranslate(steps[pageStep]?.subtitle) }}
         </ion-text>
       </ion-header>
-      <small-display-step-modal-header
-        v-else
-        @close-clicked="cancelModal()"
-        :title="getStep(pageStep).title"
-        :subtitle="getStep(pageStep).subtitle"
-        :step="{
-          icon: personAdd,
-          title: 'HomePage.noExistingOrganization.joinOrganization',
-          current: getStep(pageStep).currentStep,
-          total: 4,
-        }"
-      />
+
+      <template v-else>
+        <small-display-modal-header
+          v-if="pageStep === UserJoinOrganizationStep.WaitForHost || pageStep === UserJoinOrganizationStep.Finish"
+          @close-clicked="cancelModal()"
+          :hide-close-button="pageStep === UserJoinOrganizationStep.Finish"
+          :title="steps[pageStep]?.title"
+        />
+        <small-display-step-modal-header
+          v-else
+          @close-clicked="cancelModal()"
+          :title="'HomePage.noExistingOrganization.joinOrganization'"
+          :icon="personAdd"
+          :steps="steps.slice(1, steps.length - 1)"
+          :current-step="pageStep - 1"
+        />
+      </template>
       <!-- modal content: create component for each part-->
       <div class="modal-content inner-content">
         <!-- part 1 (wait for host)-->
@@ -198,6 +200,7 @@
 <script setup lang="ts">
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import SmallDisplayStepModalHeader from '@/components/header/SmallDisplayStepModalHeader.vue';
+import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
 import { getDefaultDeviceName } from '@/common/device';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
@@ -232,12 +235,12 @@ import { close, personAdd } from 'ionicons/icons';
 import { computed, onMounted, ref, Ref } from 'vue';
 
 enum UserJoinOrganizationStep {
-  WaitForHost = 1,
-  GetHostSasCode = 2,
-  ProvideGuestCode = 3,
-  GetUserInfo = 4,
-  Authentication = 5,
-  Finish = 6,
+  WaitForHost = 0,
+  GetHostSasCode = 1,
+  ProvideGuestCode = 2,
+  GetUserInfo = 3,
+  Authentication = 4,
+  Finish = 5,
 }
 
 const { isLargeDisplay } = useWindowSize();
@@ -258,56 +261,32 @@ const props = defineProps<{
 
 const waitingForHost = ref(true);
 
-interface StepInfo {
-  title: Translatable;
-  subtitle: Translatable;
-  currentStep?: number;
-}
-
-function getStep(step: UserJoinOrganizationStep): StepInfo {
-  switch (step) {
-    case UserJoinOrganizationStep.WaitForHost: {
-      return {
-        title: 'JoinOrganization.titles.waitForHost',
-        subtitle: 'JoinOrganization.subtitles.waitForHost',
-      };
-    }
-    case UserJoinOrganizationStep.GetHostSasCode: {
-      return {
-        title: 'JoinOrganization.titles.getHostCode',
-        subtitle: 'JoinOrganization.subtitles.getHostCode',
-        currentStep: 1,
-      };
-    }
-    case UserJoinOrganizationStep.ProvideGuestCode: {
-      return {
-        title: 'JoinOrganization.titles.provideGuestCode',
-        subtitle: 'JoinOrganization.subtitles.provideGuestCode',
-        currentStep: 2,
-      };
-    }
-    case UserJoinOrganizationStep.GetUserInfo: {
-      return {
-        title: 'JoinOrganization.titles.getUserInfo',
-        subtitle: 'JoinOrganization.subtitles.getUserInfo',
-        currentStep: 3,
-      };
-    }
-    case UserJoinOrganizationStep.Authentication: {
-      return {
-        title: 'JoinOrganization.titles.getAuthentication',
-        subtitle: 'JoinOrganization.subtitles.getAuthentication',
-        currentStep: 4,
-      };
-    }
-    case UserJoinOrganizationStep.Finish: {
-      return {
-        title: { key: 'JoinOrganization.titles.finish', data: { org: organizationName.value } },
-        subtitle: 'JoinOrganization.subtitles.finish',
-      };
-    }
-  }
-}
+const steps = ref([
+  {
+    title: 'JoinOrganization.titles.waitForHost',
+    subtitle: 'JoinOrganization.subtitles.waitForHost',
+  },
+  {
+    title: 'JoinOrganization.titles.getHostCode',
+    subtitle: 'JoinOrganization.subtitles.getHostCode',
+  },
+  {
+    title: 'JoinOrganization.titles.provideGuestCode',
+    subtitle: 'JoinOrganization.subtitles.provideGuestCode',
+  },
+  {
+    title: 'JoinOrganization.titles.getUserInfo',
+    subtitle: 'JoinOrganization.subtitles.getUserInfo',
+  },
+  {
+    title: 'JoinOrganization.titles.getAuthentication',
+    subtitle: 'JoinOrganization.subtitles.getAuthentication',
+  },
+  {
+    title: { key: 'JoinOrganization.titles.finish', data: { org: organizationName.value } },
+    subtitle: 'JoinOrganization.subtitles.finish',
+  },
+]);
 
 async function showErrorAndRestart(message: Translatable): Promise<void> {
   props.informationManager.present(

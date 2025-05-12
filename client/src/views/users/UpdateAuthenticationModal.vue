@@ -10,6 +10,7 @@
       slot="icon-only"
       @click="cancel()"
       class="closeBtn"
+      v-if="isLargeDisplay"
     >
       <ion-icon
         :icon="close"
@@ -19,11 +20,20 @@
 
     <!-- modal content -->
     <div class="modal">
-      <ion-header class="modal-header">
+      <ion-header
+        class="modal-header"
+        v-if="isLargeDisplay"
+      >
         <ion-title class="modal-header__title title-h2">
           {{ $msTranslate(getTitle()) }}
         </ion-title>
       </ion-header>
+
+      <small-display-modal-header
+        v-else
+        @close-clicked="cancel()"
+        :title="getTitle()"
+      />
 
       <div class="modal-content inner-content">
         <div
@@ -91,11 +101,12 @@ import {
   isAuthenticationValid,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Translatable } from 'megashark-lib';
+import { Translatable, useWindowSize } from 'megashark-lib';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
+import SmallDisplayModalHeader from '@/components/header/SmallDisplayModalHeader.vue';
 import { DeviceAccessStrategyKeyring } from '@/plugins/libparsec';
 
 enum ChangeAuthenticationStep {
@@ -109,6 +120,7 @@ const props = defineProps<{
   informationManager: InformationManager;
 }>();
 
+const { isLargeDisplay } = useWindowSize();
 const pageStep = ref(ChangeAuthenticationStep.Undefined);
 const chooseAuthRef = ref();
 const currentPassword = ref('');
