@@ -143,8 +143,8 @@ async function onOptionsClick(event: Event): Promise<void> {
   border-radius: var(--parsec-radius-6);
   transition: color 150ms ease-out;
   position: absolute;
-  right: 0.75rem;
-  top: 0.75rem;
+  right: 1rem;
+  top: 3.75rem;
   z-index: 10;
 
   &__on {
