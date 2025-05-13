@@ -163,7 +163,6 @@ parts:
     build-environment:
       - ICON_PATH: &desktop-icon-path usr/share/icons/hicolor/512x512/apps/parsec.png
       - DESKTOP_PATH: &desktop-path usr/share/applications/parsec.desktop
-      - PARSEC_SCHEME: parsec3
     prime:
       - *desktop-icon-path
       - *desktop-path
@@ -172,17 +171,7 @@ parts:
       cp -v 512x512.png "$CRAFT_PART_INSTALL"/$ICON_PATH
 
       mkdir -p $(dirname "$CRAFT_PART_INSTALL"/$DESKTOP_PATH)
-      cat << EOF > "$CRAFT_PART_INSTALL"/$DESKTOP_PATH
-      [Desktop Entry]
-      Name=Parsec
-      Comment=Secure cloud framework
-      Exec=\${SNAP}/bin/desktop-launch %U
-      Icon=\${SNAP}/$ICON_PATH
-      Terminal=false
-      Type=Application
-      Categories=Office Network FileTransfer FileSystem Security
-      MimeType=x-scheme-handler/$PARSEC_SCHEME;
-      EOF
+      cp -v parsec.desktop "$CRAFT_PART_INSTALL"/$DESKTOP_PATH
 
   # Ideally, the gtk platform (i.e. gnome-platform) should be provided by snapcraft by using extensions.
   # However, it is not available under `classic` confinement.

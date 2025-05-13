@@ -1,0 +1,15 @@
+[Desktop Entry]
+Name=Parsec
+Comment=Secure file sharing in the cloud
+GenericName=File Sharing
+Exec=\${SNAP}/bin/desktop-launch %U
+Icon=\${SNAP}/usr/share/icons/hicolor/512x512/apps/parsec.png
+SingleMainWindow=true
+StartupNotify=false
+StartupWMClass=parsec
+Type=Application
+Terminal=false
+MimeType=x-scheme-handler/parsec3;
+Categories=Office;Network;FileTransfer;Filesystem;Security;
+Keywords=backup;cloud;collaboration;file;share;storage;synchronization;workspace;
+Keywords[fr]=sauvegarde;cloud;collaboration;fichier;partage;stockage;synchronisation;
