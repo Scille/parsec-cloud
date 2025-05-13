@@ -8,7 +8,7 @@
       :close-button="{ visible: true }"
       :confirm-button="{
         label: 'clientArea.orders.request.submit',
-        disabled: !isFormValid,
+        disabled: !isFormValid || querying,
         onClick: submit,
       }"
     >
@@ -120,6 +120,7 @@ const userNeeds = ref<number>(50);
 const storageNeeds = ref<number>(100);
 const description = ref<string>('');
 const error = ref('');
+const querying = ref(false);
 
 const isFormValid = computed(() => {
   return description.value.length > 0;
@@ -130,22 +131,26 @@ async function submit(): Promise<boolean> {
     return false;
   }
 
-  const response = await BmsAccessInstance.get().createCustomOrderRequest({
-    standardUsers: userNeeds.value,
-    storage: storageNeeds.value,
-    needs: description.value,
-  });
+  querying.value = true;
+  try {
+    const response = await BmsAccessInstance.get().createCustomOrderRequest({
+      standardUsers: userNeeds.value,
+      storage: storageNeeds.value,
+      needs: description.value,
+    });
 
-  if (response.isError) {
-    if (response.status === CONNECTION_ERROR_STATUS) {
-      error.value = 'clientArea.orders.request.connectionFailure';
-    } else {
-      error.value = 'clientArea.orders.request.serverFailure';
+    if (response.isError) {
+      if (response.status === CONNECTION_ERROR_STATUS) {
+        error.value = 'clientArea.orders.request.connectionFailure';
+      } else {
+        error.value = 'clientArea.orders.request.serverFailure';
+      }
+      return false;
     }
-    return false;
+    return await modalController.dismiss(null, MsModalResult.Confirm);
+  } finally {
+    querying.value = false;
   }
-
-  return await modalController.dismiss(null, MsModalResult.Confirm);
 }
 </script>
 
