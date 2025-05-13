@@ -111,7 +111,10 @@
                 :organizations="organizations"
                 @organization-selected="onOrganizationSelected"
               />
-              <orders-page v-if="currentPage === ClientAreaPages.Orders" />
+              <orders-page
+                v-if="currentPage === ClientAreaPages.Orders"
+                :information-manager="informationManager"
+              />
               <custom-order-billing-details-page
                 v-if="currentPage === ClientAreaPages.CustomOrderBillingDetails"
                 :organization="currentOrganization"
