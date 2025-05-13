@@ -1,8 +1,23 @@
 name: parsec
 base: core22
 version: 3.4.0-a.7+dev
-summary: Secure cloud framework
-description: Parsec is an open-source cloud-based application that allows simple yet cryptographically secure file hosting.
+summary: Secure file sharing in the cloud
+license: BUSL-1.1
+description: |
+  Parsec is a cloud-based application for simple, yet cryptographically secure file sharing.
+
+  Key features:
+  - Client-side encryption to ensure your data is only accessed by you and the people you share it with.
+  - Cryptographic signature to identify the author of each change.
+  - Easily and securely invite users to join your organization via link and token code.
+  - Virtual drive on your computer so you can access your data with your preferred software as usual.
+  - Browse data history and recover files from any point in time.
+  - Easy to self-host
+icon: client/electron/assets/512x512.png
+website: https://parsec.cloud
+contact: contact@parsec.cloud
+source-code: https://github.com/Scille/parsec-cloud
+issues: https://github.com/Scille/parsec-cloud/issues
 grade: stable
 confinement: classic
 type: app

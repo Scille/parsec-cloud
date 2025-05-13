@@ -1,7 +1,7 @@
 {
     "name": "parsec",
     "version": "3.4.0-a.7+dev",
-    "description": "Parsec.cloud",
+    "description": "Secure file sharing in the cloud",
     "author": {
         "name": "Scille SAS",
         "email": "contact@scille.fr"

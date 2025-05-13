@@ -111,13 +111,13 @@ const UNSIGNED_ARTIFACT_NAME =
 
 /**
  * @type {import('electron-builder').Configuration}
- * @see https://www.electron.build/configuration/configuration
+ * @see https://www.electron.build/configuration
  */
 const options = {
   /* eslint-disable max-len */
   /*
    * Doc mentions that it's used as a CFBundleIdentifier on MacOS, and as an Application User Model ID on Windows
-   * (https://www.electron.build/configuration/configuration.html#configuration)
+   * (https://www.electron.build/configuration#appid)
    * The doc for CFBundleIdentifier specifies that this should be in reverse-dns format
    *   https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070
    * The doc for Application User Model ID specifies that it should be in the `CompanyName.ProductName.SubProduct.VersionInformation` format
@@ -187,9 +187,8 @@ const options = {
   },
 
   linux: {
-    synopsis: 'Secure cloud framework',
-    description: 'Parsec is an open-source cloud-based application that allows simple yet cryptographically secure file hosting.',
-    category: 'Office Network FileTransfer FileSystem Security',
+    synopsis: 'Secure file sharing in the cloud',
+    category: 'Office;Network;FileTransfer;Filesystem;Security;',
     desktop: {
       MimeType: `x-scheme-handler/${PARSEC_SCHEME}`,
     },
