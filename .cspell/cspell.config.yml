@@ -89,6 +89,7 @@ overrides:
       - fr-fr
       - fr-fr-90
     filename:
+      - "**/client/electron/assets/parsec.desktop"
       - "**/client/electron/src/index.ts"
       - "**/client/electron/src/setup.ts"
       - "**/client/src/locales/fr-FR.json"
