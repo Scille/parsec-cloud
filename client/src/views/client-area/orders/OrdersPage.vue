@@ -54,7 +54,12 @@ import { BmsAccessInstance, GetCustomOrderRequestsResultData, DataType } from '@
 import NewOrderModal from '@/views/client-area/orders/NewOrderModal.vue';
 import OrderInProgress from '@/components/client-area/OrderInProgress.vue';
 import { ref, onMounted } from 'vue';
-import { MsSpinner } from 'megashark-lib';
+import { MsModalResult, MsSpinner } from 'megashark-lib';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+
+const props = defineProps<{
+  informationManager: InformationManager;
+}>();
 
 const error = ref<string>('');
 const querying = ref(true);
@@ -66,8 +71,18 @@ async function openNewOrderModal(): Promise<void> {
     cssClass: 'new-order-modal',
   });
   await modal.present();
-  await modal.onWillDismiss();
+  const { role } = await modal.onWillDismiss();
   await modal.dismiss();
+
+  if (role === MsModalResult.Confirm) {
+    props.informationManager.present(
+      new Information({
+        message: 'clientArea.orders.new.sent',
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+  }
 }
 
 onMounted(async () => {

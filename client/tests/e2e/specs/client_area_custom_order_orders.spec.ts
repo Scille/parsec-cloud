@@ -77,3 +77,53 @@ msTest('Get custom orders error', async ({ clientAreaCustomOrder }) => {
   await expect(container.locator('.no-orders')).toBeVisible();
   await expect(container.locator('.no-orders')).toHaveText('Failed to retrieve the information');
 });
+
+msTest('Order new org', async ({ clientAreaCustomOrder }) => {
+  const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+  await expect(title).toHaveText('Contract');
+  await MockBms.mockListOrganizations(clientAreaCustomOrder);
+  await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(2).click();
+  await expect(title).toHaveText('Orders');
+  const container = clientAreaCustomOrder.locator('.client-page-orders');
+  await expect(container.locator('.orders-new-title__button')).toHaveText('Request a new organization');
+  const modal = clientAreaCustomOrder.locator('.new-order-modal');
+  await expect(modal).toBeHidden();
+  await container.locator('.orders-new-title__button').click();
+  await expect(modal).toBeVisible();
+  await expect(modal.locator('.ms-modal-header__title')).toHaveText('Request a new on-premise contract');
+  const okButton = modal.locator('#next-button');
+  await expect(okButton).toHaveText('Send the request');
+  await expect(okButton).toBeTrulyDisabled();
+  await modal.locator('textarea').fill('Request info');
+  await expect(okButton).toBeTrulyEnabled();
+  await okButton.click();
+  await expect(modal).toBeHidden();
+  await expect(clientAreaCustomOrder).toShowToast('Your request has been sent.', 'Success');
+});
+
+msTest('Order new org fail', async ({ clientAreaCustomOrder }) => {
+  const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
+  await expect(title).toHaveText('Contract');
+  await MockBms.mockListOrganizations(clientAreaCustomOrder);
+  await MockBms.mockCustomOrderRequest(clientAreaCustomOrder, { POST: { timeout: true } });
+  await clientAreaCustomOrder.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(2).click();
+  await expect(title).toHaveText('Orders');
+  const container = clientAreaCustomOrder.locator('.client-page-orders');
+  await expect(container.locator('.orders-new-title__button')).toHaveText('Request a new organization');
+  const modal = clientAreaCustomOrder.locator('.new-order-modal');
+  await expect(modal).toBeHidden();
+  await container.locator('.orders-new-title__button').click();
+  await expect(modal).toBeVisible();
+  await expect(modal.locator('.ms-modal-header__title')).toHaveText('Request a new on-premise contract');
+  const okButton = modal.locator('#next-button');
+  await expect(okButton).toHaveText('Send the request');
+  await expect(okButton).toBeTrulyDisabled();
+  await modal.locator('textarea').fill('Request info');
+  await expect(okButton).toBeTrulyEnabled();
+  const error = modal.locator('.ms-error');
+  await expect(error).toBeHidden();
+  await okButton.click();
+  await expect(modal).toBeVisible();
+  await expect(error).toBeVisible();
+  await expect(error).toHaveText('An error occurred (Failed to contact the server).');
+});
