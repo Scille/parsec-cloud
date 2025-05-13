@@ -1,7 +1,6 @@
 .. image:: docs/parsec_doc_logo.png
     :align: center
 
-
 ======
 Parsec
 ======
@@ -14,9 +13,13 @@ Parsec
     :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-server.yml
     :alt: Latest Server Packaging CI
 
-.. image:: https://github.com/Scille/parsec-cloud/actions/workflows/package-client.yml/badge.svg
-    :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-client.yml
-    :alt: Latest App Packaging CI
+.. image:: https://github.com/Scille/parsec-cloud/actions/workflows/package-desktop.yml/badge.svg
+    :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-desktop.yml
+    :alt: Latest Desktop App Packaging CI
+
+.. image:: https://github.com/Scille/parsec-cloud/actions/workflows/package-webapp.yml/badge.svg
+    :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-webapp.yml
+    :alt: Latest Web App Packaging CI
 
 .. image:: https://img.shields.io/pypi/v/parsec-cloud.svg
     :target: https://pypi.python.org/pypi/parsec-cloud
@@ -30,45 +33,51 @@ Parsec
   :target: https://github.com/charliermarsh/ruff
   :alt: Code style: ruff
 
-Homepage: https://parsec.cloud
-
-Documentation: https://parsec-cloud.readthedocs.org.
-
-Parsec allows you to easily share your work and data in the cloud in total
-privacy thanks to end-to-end cryptographic security.
-
-
-.. image:: docs/parsec_snapshot.png
-    :align: center
-
+Parsec is a cloud-based application for simple, yet cryptographically secure file sharing.
 
 Key features:
 
-- Works as a virtual drive on you computer. You can access and modify all the data
-  stored in Parsec with your regular software just like you would on your local
-  hard-drive.
-- Never lose any data. Synchronization with the remote server never destroy any
-  data, hence you can browse data history and recover from any point in time.
-- Client-side cryptographic security. Data and metadata are only visible by you
-  and the ones you choose to share with.
-- Cryptographic signature. Each modification is signed by it author making trivial
-  to identify modifications.
-- Cloud provider agnostic. Server provides connectors for S3 and swift object storage.
-- Simplified enrollment. New user enrollment is simple as sharing a link and a token code.
+- Client-side encryption to ensure your data is only accessed by you and the people you share it with.
+- Cryptographic signature to identify the author of each change.
+- Easily and securely invite users to join your organization via link and token code.
+- Virtual drive on your computer so you can access your data with your preferred software as usual.
+- Browse data history and recover files from any point in time.
+- Easy to self-host
 
+.. image:: docs/parsec_snapshot.en.png
+    :align: center
 
-Installation methods
-====================
+🛡️ Security
+==========
 
-Windows installer
------------------
-Windows installers are available at https://github.com/Scille/parsec-cloud/releases/latest
+We take the security of our software products and services seriously.
 
-Linux Snap
-----------
-Available for Linux through Snapcraft at https://snapcraft.io/parsec
+If you believe you have found a security vulnerability, please report it to us
+through coordinated disclosure as described in our `Security Policy <SECURITY.md>`_.
+
+📘 Docs
+======
+
+See `Parsec Documentation <https://docs.parsec.cloud/>`_.
+
+📦 Install
+=========
+
+Windows
+-------
+Download latest Windows installer from `Releases <https://github.com/Scille/parsec-cloud/releases/latest>`_.
+
+Linux
+-----
+Install latest snap from the `Snap Store (parsec) <https://snapcraft.io/parsec>`_.
+
+macOS
+-----
+Download latest macOS installer from `Releases <https://github.com/Scille/parsec-cloud/releases/latest>`_.
+
+You will also need to download and install `MacFUSE <https://osxfuse.github.io/>`_.
 
 Self-hosted
 -----------
 
-If you want to self-host a Parsec server, take a look at `Hosting a Parsec server <https://github.com/Scille/parsec-cloud/blob/master/docs/HOSTING.md>`_
+Take a look at `Parsec Server Deployment <https://docs.parsec.cloud/en/latest/hosting/deployment/index.html>`_.
