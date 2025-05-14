@@ -12,21 +12,21 @@ a malicious server to insert backdoors in the web client in order to obtain the 
 For this reason, the choice of using the web client is a matter of convenience vs security trade-off
 and hence should be decided on a per-organization basis.
 
-This RFC proposes to add a new configuration to the organization called the "client source strategy".
+This RFC proposes to add a new configuration to the organization called the "allowed client agent".
 It can take two values:
 
 - Only native clients are allowed
 - Web clients are allowed alongside native clients
 
-## 3 - Changes
+## 2 - Changes
 
-## 3.1 - Server configuration
+### 2.1 - Server configuration
 
-Client source strategy is represented in the organization config as an enum:
+Allowed client agent is represented in the organization config as an enum:
 
 ```json5
 {
-    "name": "ClientSourceStrategy",
+    "name": "AllowedClientAgent",
     "variants": [
         {
             // The server will reject any connection to this organization
@@ -43,35 +43,36 @@ Client source strategy is represented in the organization config as an enum:
 }
 ```
 
-- Add a `client_source_strategy` column to the  `organization` table in the datamodel.
-- Add `organization_initial_client_source_strategy` to `BackendConfig`
-- Add `--organization-initial-client-source-strategy` option to run CLI
+- Add a `allowed_client_agent` column to the `organization` table in the datamodel.
+- Add `organization_initial_allowed_client_agent` to `BackendConfig`
+- Add `--organization-initial-allowed-client-agent` option to run CLI
 
-### 3.2 - Administration API related to organization configuration
+### 2.2 - Administration API related to organization configuration
 
-Add `client_source_strategy` fields to:
+Add `allowed_client_agent` fields to:
 
 - `GET /administration/organizations/{raw_organization_id}`
 - `PATCH /administration/organizations/{raw_organization_id}`
 
-### 3.3 - Additional HTTP error code (464: web client not allowed by organization)
+### 2.3 - Additional HTTP error code (464: web client not allowed by organization)
 
 For each anonymous/authenticated/invited API query, the Parsec server should check the `User-Agent`
 header to ensure respect the organization configuration:
 
-- If `ClientSourceStrategy` is `NativeOrWeb`, any user-agent is allowed.
-- If `ClientSourceStrategy` is `NativeOnly`, only user-agent starting with `Parsec-Client/` is allowed
+- If allowed client agent is `NativeOrWeb`, any user-agent is allowed.
+- If allowed client agent is `NativeOnly`, only user-agent starting with `Parsec-Client/` is allowed
   (e.g. `Parsec-Client/3.3.2 Windows`). Otherwise the request is rejected with HTTP 464.
 
-> Note: The HTTP code is specific to the fact the web client is not allowed, not to the fact
-> the client source strategy is not respected. The reason for this is twofold:
+> [!NOTE]
+> The HTTP code is specific to the fact the web client is not allowed, not to the fact
+> the allowed client agent is not respected. The reason for this is twofold:
 >
-> - It makes the HTTP code easier to understand (as the concept of "client source strategy" is not obvious)
+> - It makes the HTTP code easier to understand (as the concept of "allowed client agent" is not obvious)
 > - It simplifies client-side error handling (the client doesn't have to take into account the platform it runs on)
 
-### 3.4 - Authenticated API `event_listen`
+### 2.4 - Authenticated API `event_listen`
 
-Add `client_source_strategy` fields to the `OrganizationConfig` event.
+Add `allowed_client_agent` fields to the `OrganizationConfig` event.
 
 ```json5
 {
@@ -95,8 +96,8 @@ Add `client_source_strategy` fields to the `OrganizationConfig` event.
                         // […]
 
                         {
-                            "name": "client_source_strategy",
-                            "type": "ClientSourceStrategy"
+                            "name": "allowed_client_agent",
+                            "type": "AllowedClientAgent"
                         }
                     ]
                 },
@@ -106,7 +107,7 @@ Add `client_source_strategy` fields to the `OrganizationConfig` event.
             ]
         },
         {
-            "name": "ClientSourceStrategy",
+            "name": "AllowedClientAgent",
             "variants": [
                 {
                     // The server will reject any connection to this organization
@@ -125,7 +126,7 @@ Add `client_source_strategy` fields to the `OrganizationConfig` event.
 }
 ```
 
-### 3.5 - Client side
+### 2.5 - Client side
 
 - New variant `WebClientNotAllowedByOrganization` to error `libparsec_client_connection::ConnectionError`
 - GUI handling of such error (typically showing a message in a modal and going back to the authentication page).
