@@ -10,7 +10,7 @@ synchronized between devices.
 
 This is a concept that was removed in Parsec v3, hence those fields are never used and can be safely removed.
 
-> Note:
+> [!NOTE]
 >
 > - Backward compatibility is not a concern since our deserialization format simply
 >   ignores unknown fields.
@@ -22,6 +22,6 @@ This is a concept that was removed in Parsec v3, hence those fields are never us
 - Remove `user_realm_id` field
 - Remove `user_realm_key` field
 
-> Note:
+> [!NOTE]
 > Instead of hard remove from the schema, the `deprecated_in_revision` attribute
 > should be used on those fields in order to keep track of their existence.

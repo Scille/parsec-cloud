@@ -1,6 +1,6 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
-# `LocalDevice` storage in web client
+# `LocalDevice` storage for the web client
 
 ## 1 - Goals
 
@@ -12,16 +12,16 @@
 
 ### 2.1 - `LocalDevice` stored on native client
 
-The `LocalDevice` is a structure contains the secret data relative to a device
+The `LocalDevice` is contains the secret data related to a device
 (mainly the local key and the private part of user & device keys).
 
 On a Parsec client running natively, those data are typically stored as a device
 keys file encrypted by a secret key stored in the OS keyring.
 
-A password-based protection is also available, but it is being phased out (see RFC 1014),
+A password-based protection is also available, but it is being phased out (see [RFC 1014](1014-account-vault-for-device-stored-on-server.md)),
 as pushing yet-another password to the user is bad ergonomics.
 
-The reader may catch a sens of irony here, as the new mandatory Parsec Account (see RFC 1013)
+The reader may catch a sens of irony here, as the new mandatory Parsec Account (see [RFC 1013](1013-parsec-account.md))
 comes with a password-based authentication by default. However:
 
 - A password for a web account such a Parsec Account is a well understood concept...
@@ -36,7 +36,7 @@ comes with a password-based authentication by default. However:
 
 However on web the OS keyring is not available, hence this RFC to define what to do instead.
 
-An obvious alternative for this would be the [Credential Management API](https://developer.mozilla.org/en-US/docs/Web/API/Credential_Management_API).
+An option for this would be to use the [Credential Management API](https://developer.mozilla.org/en-US/docs/Web/API/Credential_Management_API).
 However, among its authentication methods:
 
 - `FederatedCredential` is deprecated.
@@ -45,18 +45,18 @@ However, among its authentication methods:
 - Only `PublicKeyCredential` is widely available, but it designed around signing operations
   (e.g. FIDO2) and not encryption like we need.
 
-So instead we roll our own solution:
+So instead we roll out our own approach:
 
-- The `LocalDevice` is stored (encrypted) in the web browser's
-  [LocalStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage).
-- The `LocalDevice` is encrypted by a secret key (the "web local device key")
+- The `LocalDevice` is encrypted by a secret key (the `WEB_LOCAL_DEVICE_KEY`)
   that is itself encrypted by the Account Vault key.
+- The `LocalDevice` is stored (encrypted) in the web browser's data storage.
 
 This way, the web local device key can be re-encrypted from anywhere whenever
 the Account Vault key changes, but only the web client that created the
 `LocalDevice` can use it.
 
-> Note: The drawback to this solution is that the local device cannot be loaded
+> [!Note]
+> The drawback to this solution is that the local device cannot be loaded
 > if the server is not reachable (e.g. offline mode).
 > This is acceptable for the web client however (especially since the web page
 > itself is hosted by the server !).
@@ -111,5 +111,6 @@ the Account Vault key changes, but only the web client that created the
 }
 ```
 
-> Note: `WebLocalDeviceKey` is only allowed for organization having their `ClientSourceStrategy`
-> configured with `NativeOrWeb` (see RFC 1017).
+> [!NOTE]
+> `WebLocalDeviceKey` is only allowed for organization having their `ClientSourceStrategy`
+> configured with `NativeOrWeb` (see [RFC 1017](1017-web-client-allowed-on-per-org-basis.md)).

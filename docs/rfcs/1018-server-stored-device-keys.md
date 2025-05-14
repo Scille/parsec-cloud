@@ -27,9 +27,9 @@ When designing Parsec account, there was a concern about storing server-side the
 
 - Highly sensitive data (as it allows to impersonate a device)
 - Not guaranteed to be protected by a high entropy secret (e.g. password, see
-  RFC 1014 on high vs low entropy secrets)
+  [RFC 1014](1014-account-vault-for-device-stored-on-server.md) on high vs low entropy secrets)
 
-However those issue may also apply to the current implementation where the device keys file
+However those issues may also apply to the current implementation where the device keys file
 only lives on the user machine disk:
 
 - The user machine can get stolen or compromised (e.g. malware, etc.), putting the device keys file
@@ -39,7 +39,7 @@ only lives on the user machine disk:
 The fact the user&device keys are currently stored locally on the user machine disk means they
 are always available when the device is under use. This is not strictly needed though since
 the device keys are only used in conjunction with the server (to authenticate to the server,
-sign new data, and encrypt/decrypt data to/from the server).
+sign new data, and encrypt/decrypt data to/from the server (local data are still encrypted at rest)).
 
 This is the basis of the design changes discussed here:
 
@@ -48,7 +48,7 @@ This is the basis of the design changes discussed here:
 - They are lazily fetched from the server when needed and only kept in memory.
 
 The choice of local key to protect the device keys bundle may seem odd since the encrypted
-data are indeed not stored locally. However it makes perfect sens since by doing this we
+data are indeed not stored locally. However it makes perfect sense since by doing this we
 ensure the device still corresponds to a single physical machine (the one in possession of
 the local key) that is merely relying on the server as a storage facility.
 
@@ -66,7 +66,7 @@ when login to Parsec.
 
 ### 2.3 - Special case for vault-stored devices
 
-Unlike other devices, auto-enrollment devices (see RFC 1015) are not locally stored.
+Unlike other devices, registration devices (see [RFC 1015](1015-registration-device.md)) are not locally stored.
 
 Those devices are stored server-side in the Parsec account vault. Hence in this
 case the device keys are still stored in the local device since:
@@ -74,8 +74,9 @@ case the device keys are still stored in the local device since:
 - It avoid a round trip to the server to fetch the device keys bundle.
 - We have to support the case of keys in the local device for legacy device keys files anyway.
 
-> Note: In case of web, while still stored locally, the local device is encrypted
-> with a high entropy key protected by the vault key and stored server-side (see RFC 1016).
+> [!NOTE]
+> In case of web, while still stored locally, the local device is encrypted
+> with a high entropy key protected by the vault key and stored server-side (see [RFC 1016](1016-local-device-storage-in-web-client.md)).
 > So in this case we might also leave the device keys in the local device.
 
 ## 4 - Datamodel
@@ -109,7 +110,7 @@ device keys files).
             // Note we don't use the `parsec3://` scheme here to avoid compatibility
             // issue if we later decide to change the scheme.
             "name": "server_url",
-            "type": "String"
+            "type": "Url"
         },
         {
             "name": "organization_id",
@@ -185,7 +186,8 @@ device keys files).
 }
 ```
 
-> Note: Option A is probably the best option anyway, since it requires less
+> [!NOTE]
+> Option A is probably the best option anyway, since it requires less
 > changes and we can limit the ugly part dealing with legacy to the deserialization
 > code (i.e. once deserialized, the in-memory `LocalDevice` would be similar to
 > `DeviceLocalBundle`).
@@ -211,7 +213,7 @@ Device keys bundle:
 }
 ```
 
-> Notes:
+> [!NOTE]
 >
 > - Since the device keys bundle is encrypted with the device's local key,
 >   the server is not able to swap the device keys bundle with another one.
@@ -258,7 +260,8 @@ Anonymous API:
 }
 ```
 
-> Note: A more robust approach would be to rely on HMAC authentication instead
+> [!NOTE]
+> A more robust approach would be to rely on HMAC authentication instead
 > of token-based authentication (as this avoid transmitting the token in clear).
 >
 > However this is considered overkill considering its added complexity (it requires
@@ -297,7 +300,7 @@ Authenticated API:
 }
 ```
 
-> Notes:
+> [!NOTES]
 >
 > - Device token is chosen by the client (instead of being returned by the server)
 >   as it allows to go idempotent when `already_exists` is returned, which in
