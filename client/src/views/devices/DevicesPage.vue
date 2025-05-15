@@ -28,7 +28,6 @@
           v-for="device in devices"
           :key="device.id"
           class="device-list-item ion-no-padding"
-          v-show="!device.isRecovery"
         >
           <device-card
             :device="device"
@@ -72,7 +71,7 @@ onUnmounted(async () => {
 async function refreshDevicesList(): Promise<void> {
   const result = await listOwnDevices();
   if (result.ok) {
-    devices.value = result.value;
+    devices.value = result.value.filter((d) => !d.isRecovery).sort((d) => (d.isCurrent ? -1 : 1));
   } else {
     informationManager.present(
       new Information({
