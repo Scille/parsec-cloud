@@ -8,12 +8,12 @@ msTest('Check devices list', async ({ myProfilePage }) => {
   await myProfilePage.locator('.menu-list__item').nth(1).click();
   await expect(myProfilePage.locator('#add-device-button')).toHaveText('Add a new device');
   const devices = myProfilePage.locator('#devices-list').getByRole('listitem');
-  await expect(devices.locator('.device-name')).toHaveText(['My alice@dev1 machine', 'My alice@dev2 machine']);
-  await expect(devices.locator('.join-date')).toHaveText(['Joined: Jan 2, 2000', 'Joined: Jan 4, 2000']);
+  await expect(devices.locator('.device-name')).toHaveText(['My alice@dev2 machine', 'My alice@dev1 machine']);
+  await expect(devices.locator('.join-date')).toHaveText(['Joined: Jan 4, 2000', 'Joined: Jan 2, 2000']);
   await expect(devices.locator('.label-id')).toHaveText([/^Technical ID: [a-f0-9]+$/, /^Technical ID: [a-f0-9]+$/]);
-  await expect(devices.nth(0).locator('.badge')).toBeHidden();
-  await expect(devices.nth(1).locator('.badge')).toBeVisible();
-  await expect(devices.nth(1).locator('.badge')).toHaveText('Current');
+  await expect(devices.nth(1).locator('.badge')).toBeHidden();
+  await expect(devices.nth(0).locator('.badge')).toBeVisible();
+  await expect(devices.nth(0).locator('.badge')).toHaveText('Current');
 });
 
 async function checkMenuItem(
