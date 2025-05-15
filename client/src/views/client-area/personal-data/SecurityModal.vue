@@ -76,6 +76,7 @@ const enum UpdatePasswordStep {
 }
 const currentStep = ref<UpdatePasswordStep>(UpdatePasswordStep.Password);
 const translationPrefix = 'clientArea.personalDataPage.modals.security';
+const querying = ref(false);
 
 const passwordRef = ref('');
 const passwordInput = ref();
@@ -86,7 +87,7 @@ const errors = ref({
 });
 
 const isConfirmButtonDisabled = asyncComputed(async (): Promise<boolean> => {
-  return !(await isFormValid());
+  return querying.value || !(await isFormValid());
 });
 
 onMounted(async () => {
@@ -107,23 +108,28 @@ async function submit(): Promise<boolean> {
 }
 
 async function updatePassword(): Promise<boolean> {
-  const response = await BmsAccessInstance.get().updateAuthentication(passwordRef.value, choosePasswordInput.value?.password ?? '');
+  try {
+    querying.value = true;
+    const response = await BmsAccessInstance.get().updateAuthentication(passwordRef.value, choosePasswordInput.value?.password ?? '');
 
-  if (response.isError) {
-    switch (response.status) {
-      case 400:
-        errors.value.global = `${translationPrefix}.newPasswordStep.invalidPassword`;
-        break;
-      case 403:
-        errors.value.password = `${translationPrefix}.passwordStep.wrongPassword`;
-        currentStep.value = UpdatePasswordStep.Password;
-        break;
-      default:
-        errors.value.global = 'globalErrors.unexpected';
+    if (response.isError) {
+      switch (response.status) {
+        case 400:
+          errors.value.global = `${translationPrefix}.newPasswordStep.invalidPassword`;
+          break;
+        case 403:
+          errors.value.password = `${translationPrefix}.passwordStep.wrongPassword`;
+          currentStep.value = UpdatePasswordStep.Password;
+          break;
+        default:
+          errors.value.global = 'globalErrors.unexpected';
+      }
+      return false;
     }
-    return false;
+    return await modalController.dismiss(null, MsModalResult.Confirm);
+  } finally {
+    querying.value = false;
   }
-  return await modalController.dismiss(null, MsModalResult.Confirm);
 }
 
 async function isFormValid(): Promise<boolean> {
