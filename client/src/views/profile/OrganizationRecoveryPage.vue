@@ -350,6 +350,11 @@ async function downloadFile(
       gap: 1rem;
       margin-top: 0.5rem;
 
+      @include ms.responsive-breakpoint('sm') {
+        gap: 0.5rem;
+        flex-direction: column;
+      }
+
       &__button {
         display: flex;
         align-items: center;
@@ -368,6 +373,7 @@ async function downloadFile(
         #downloadFileButton {
           display: flex;
           align-items: center;
+          --background: var(--parsec-color-light-secondary-text);
 
           ion-icon {
             font-size: 1rem;
