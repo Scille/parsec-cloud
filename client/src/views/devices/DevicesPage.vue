@@ -133,7 +133,7 @@ async function onAddDeviceClick(): Promise<void> {
 
   @include ms.responsive-breakpoint('xs') {
     position: fixed;
-    bottom: 2rem;
+    bottom: 7rem;
     left: 2rem;
     transform: translateX(50%, 50%);
     width: calc(100% - 4rem);

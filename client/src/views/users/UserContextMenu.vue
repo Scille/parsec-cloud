@@ -91,21 +91,10 @@
   </ion-content>
 </template>
 
-<script lang="ts">
-export enum UserAction {
-  Revoke,
-  Details,
-  AssignRoles,
-  UpdateProfile,
-  ToggleSelect,
-  SelectAll,
-  UnselectAll,
-}
-</script>
-
 <script setup lang="ts">
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { informationCircle, personRemove, returnUpForward, repeat } from 'ionicons/icons';
+import { UserAction } from '@/views/users/types';
 
 defineProps<{
   multipleSelected?: boolean;
