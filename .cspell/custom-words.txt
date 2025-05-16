@@ -48,6 +48,7 @@ derivated
 Déselect
 DESYNC
 detailmenu
+detectincognitojs
 devel
 DIGESTBYTES
 distdir

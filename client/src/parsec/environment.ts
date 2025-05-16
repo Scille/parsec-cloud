@@ -2,6 +2,7 @@
 
 import { Platform } from '@/parsec/types';
 import { isPlatform } from '@ionic/vue';
+import detectIncognito from 'detectincognitojs';
 
 // Vue templates cannot access `window`
 
@@ -35,4 +36,12 @@ export function usesTestbed(): boolean {
 
 export function isElectron(): boolean {
   return isPlatform('electron');
+}
+
+export async function isIncognito(): Promise<boolean> {
+  if (!isWeb()) {
+    return false;
+  }
+  const result = await detectIncognito();
+  return result.isPrivate;
 }
