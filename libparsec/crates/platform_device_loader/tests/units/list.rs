@@ -23,7 +23,7 @@ async fn list_no_devices(
         std::fs::create_dir(tmp_path.join("devices")).unwrap();
     }
 
-    let devices = list_available_devices(&tmp_path).await;
+    let devices = list_available_devices(&tmp_path).await.unwrap();
     p_assert_eq!(devices, []);
 }
 
@@ -40,7 +40,7 @@ async fn ignore_invalid_items(tmp_path: TmpPath) {
     // Folder with dummy file
     crate::tests::utils::create_device_file(&devices_dir.join("dir/a_file.keys"), b"dummy");
 
-    let devices = list_available_devices(&tmp_path).await;
+    let devices = list_available_devices(&tmp_path).await.unwrap();
     p_assert_eq!(devices, []);
 }
 
@@ -268,7 +268,7 @@ async fn list_devices(tmp_path: TmpPath) {
 
     // 3. Actual test !
 
-    let devices = list_available_devices(&tmp_path).await;
+    let devices = list_available_devices(&tmp_path).await.unwrap();
 
     let expected_devices = Vec::from([
         AvailableDevice {
@@ -334,7 +334,7 @@ async fn testbed(env: &TestbedEnv) {
         builder.new_user("mallory"); // mallory@dev1
     })
     .await;
-    let devices = list_available_devices(&env.discriminant_dir).await;
+    let devices = list_available_devices(&env.discriminant_dir).await.unwrap();
     p_assert_eq!(
         devices
             .into_iter()
