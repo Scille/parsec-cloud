@@ -7,7 +7,7 @@
       :close-button="{ visible: true }"
       :confirm-button="{
         label: `${translationPrefix}.nextButton`,
-        disabled: !isFormValid(),
+        disabled: !isFormValid() || querying,
         onClick: submit,
       }"
     >
@@ -69,6 +69,7 @@ const lastnameRef = ref(props.lastname);
 const phoneRef = ref(props.phone ?? '');
 const firstnameInput = ref();
 const errors: Ref<BmsError[]> = ref([]);
+const querying = ref(false);
 
 enum Fields {
   Phone = 'client.phone',
@@ -86,17 +87,22 @@ async function submit(): Promise<boolean> {
   if (!isFormValid()) {
     return false;
   }
-  const response = await BmsAccessInstance.get().updatePersonalInformation({
-    firstname: firstnameRef.value,
-    lastname: lastnameRef.value,
-    phone: props.phone === undefined && phoneRef.value.length === 0 ? undefined : phoneRef.value,
-  });
+  try {
+    querying.value = true;
+    const response = await BmsAccessInstance.get().updatePersonalInformation({
+      firstname: firstnameRef.value,
+      lastname: lastnameRef.value,
+      phone: props.phone === undefined && phoneRef.value.length === 0 ? undefined : phoneRef.value,
+    });
 
-  if (response.isError) {
-    errors.value = response.errors ?? [];
-    return false;
+    if (response.isError) {
+      errors.value = response.errors ?? [];
+      return false;
+    }
+    return await modalController.dismiss(null, MsModalResult.Confirm);
+  } finally {
+    querying.value = false;
   }
-  return await modalController.dismiss(null, MsModalResult.Confirm);
 }
 
 function isFormValid(): boolean {

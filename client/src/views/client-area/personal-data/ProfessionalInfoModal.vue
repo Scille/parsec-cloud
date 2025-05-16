@@ -7,7 +7,7 @@
       :close-button="{ visible: true }"
       :confirm-button="{
         label: `${translationPrefix}.nextButton`,
-        disabled: !isFormValid(),
+        disabled: !isFormValid() || querying,
         onClick: submit,
       }"
     >
@@ -63,6 +63,7 @@ const jobRef = ref(props.job);
 const representCompanyRef = ref(areFieldsFilled() ? Answer.Yes : Answer.No);
 const errors: Ref<BmsError[]> = ref([]);
 const representCompanyInput = ref();
+const querying = ref(false);
 
 onMounted(async () => {
   await representCompanyInput.value.setFocus();
@@ -72,17 +73,22 @@ async function submit(): Promise<boolean> {
   if (!isFormValid()) {
     return false;
   }
-  const data: any = {
-    company: representCompanyRef.value === Answer.Yes ? companyRef.value : null,
-    job: representCompanyRef.value === Answer.Yes ? jobRef.value : null,
-  };
-  const response = await BmsAccessInstance.get().updatePersonalInformation(data);
+  try {
+    querying.value = true;
+    const data: any = {
+      company: representCompanyRef.value === Answer.Yes ? companyRef.value : null,
+      job: representCompanyRef.value === Answer.Yes ? jobRef.value : null,
+    };
+    const response = await BmsAccessInstance.get().updatePersonalInformation(data);
 
-  if (response.isError) {
-    errors.value = response.errors ?? [];
-    return false;
+    if (response.isError) {
+      errors.value = response.errors ?? [];
+      return false;
+    }
+    return await modalController.dismiss(null, MsModalResult.Confirm);
+  } finally {
+    querying.value = false;
   }
-  return await modalController.dismiss(null, MsModalResult.Confirm);
 }
 
 function areFieldsFilled(): boolean {
