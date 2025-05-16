@@ -4306,6 +4306,11 @@ fn variant_archive_device_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "ArchiveDeviceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ArchiveDeviceError::StorageNotAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ArchiveDeviceErrorStorageNotAvailable").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
     }
     Ok(js_obj)
 }
@@ -7576,6 +7581,11 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ImportRecoveryDeviceError::StorageNotAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorStorageNotAvailable")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ImportRecoveryDeviceError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -8184,6 +8194,30 @@ fn variant_invite_list_item_rs_to_js<'a>(
             let js_status =
                 JsString::try_new(cx, enum_invitation_status_rs_to_js(status)).or_throw(cx)?;
             js_obj.set(cx, "status", js_status)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ListAvailableDeviceError
+
+#[allow(dead_code)]
+fn variant_list_available_device_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ListAvailableDeviceError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ListAvailableDeviceError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ListAvailableDeviceErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ListAvailableDeviceError::StorageNotAvailable { .. } => {
+            let js_tag = JsString::try_new(cx, "ListAvailableDeviceErrorStorageNotAvailable")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
@@ -11456,6 +11490,11 @@ fn variant_update_device_error_rs_to_js<'a>(
         }
         libparsec::UpdateDeviceError::InvalidPath { .. } => {
             let js_tag = JsString::try_new(cx, "UpdateDeviceErrorInvalidPath").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::UpdateDeviceError::StorageNotAvailable { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "UpdateDeviceErrorStorageNotAvailable").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -19329,14 +19368,31 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let ret = libparsec::list_available_devices(&path).await;
 
             deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = {
-                    // JsArray::new allocates with `undefined` value, that's why we `set` value
-                    let js_array = JsArray::new(&mut cx, ret.len());
-                    for (i, elem) in ret.into_iter().enumerate() {
-                        let js_elem = struct_available_device_rs_to_js(&mut cx, elem)?;
-                        js_array.set(&mut cx, i as u32, js_elem)?;
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            // JsArray::new allocates with `undefined` value, that's why we `set` value
+                            let js_array = JsArray::new(&mut cx, ok.len());
+                            for (i, elem) in ok.into_iter().enumerate() {
+                                let js_elem = struct_available_device_rs_to_js(&mut cx, elem)?;
+                                js_array.set(&mut cx, i as u32, js_elem)?;
+                            }
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
                     }
-                    js_array
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_list_available_device_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
                 };
                 Ok(js_ret)
             });

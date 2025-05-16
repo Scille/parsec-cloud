@@ -104,11 +104,21 @@ pub fn get_default_key_file(config_dir: &Path, device_id: DeviceID) -> PathBuf {
     device_path
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum ListAvailableDeviceError {
+    #[error("Device storage is not available")]
+    StorageNotAvailable,
+    #[error(transparent)]
+    Internal(anyhow::Error),
+}
+
 /// On web `config_dir` is used as database discriminant when using IndexedDB API
-pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
+pub async fn list_available_devices(
+    config_dir: &Path,
+) -> Result<Vec<AvailableDevice>, ListAvailableDeviceError> {
     #[cfg(feature = "test-with-testbed")]
     if let Some(result) = testbed::maybe_list_available_devices(config_dir) {
-        return result;
+        return Ok(result);
     }
 
     platform::list_available_devices(config_dir).await
@@ -116,6 +126,8 @@ pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
 
 #[derive(Debug, thiserror::Error)]
 pub enum LoadDeviceError {
+    #[error("Device storage is not available")]
+    StorageNotAvailable,
     #[error(transparent)]
     InvalidPath(anyhow::Error),
     #[error("Cannot deserialize file content")]
@@ -143,6 +155,8 @@ pub async fn load_device(
 
 #[derive(Debug, thiserror::Error)]
 pub enum SaveDeviceError {
+    #[error("Device storage is not available")]
+    StorageNotAvailable,
     #[error(transparent)]
     InvalidPath(anyhow::Error),
     #[error(transparent)]
@@ -165,6 +179,8 @@ pub async fn save_device(
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpdateDeviceError {
+    #[error("Device storage is not available")]
+    StorageNotAvailable,
     #[error(transparent)]
     InvalidPath(anyhow::Error),
     #[error("Cannot deserialize file content")]
@@ -178,6 +194,7 @@ pub enum UpdateDeviceError {
 impl From<LoadDeviceError> for UpdateDeviceError {
     fn from(value: LoadDeviceError) -> Self {
         match value {
+            LoadDeviceError::StorageNotAvailable => Self::StorageNotAvailable,
             LoadDeviceError::DecryptionFailed => Self::DecryptionFailed,
             LoadDeviceError::InvalidData => Self::InvalidData,
             LoadDeviceError::InvalidPath(e) => Self::InvalidPath(e),
@@ -189,6 +206,7 @@ impl From<LoadDeviceError> for UpdateDeviceError {
 impl From<SaveDeviceError> for UpdateDeviceError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
+            SaveDeviceError::StorageNotAvailable => Self::StorageNotAvailable,
             SaveDeviceError::InvalidPath(e) => Self::InvalidPath(e),
             SaveDeviceError::Internal(e) => Self::Internal(e),
         }
@@ -242,6 +260,8 @@ pub fn is_keyring_available() -> bool {
 
 #[derive(Debug, thiserror::Error)]
 pub enum ArchiveDeviceError {
+    #[error("Device storage is not available")]
+    StorageNotAvailable,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -250,6 +270,8 @@ pub use platform::archive_device;
 
 #[derive(Debug, thiserror::Error)]
 pub enum RemoveDeviceError {
+    #[error("Device storage is not available")]
+    StorageNotAvailable,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }

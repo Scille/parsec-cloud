@@ -41,7 +41,7 @@ impl Storage {
                     key: "length".to_owned(),
                     error: e,
                 })?;
-        (0..items_count)
+        Ok((0..items_count)
             .filter_map(|i| {
                 let key = self.storage.key(i).ok().flatten();
                 match key {
@@ -59,8 +59,12 @@ impl Storage {
                 }
             })
             .sorted()
-            .map(|key| self.load_available_device(&key).map_err(Into::into))
-            .collect::<Result<Vec<_>, _>>()
+            .filter_map(|key| {
+                self.load_available_device(&key)
+                    .inspect_err(|e| log::warn!("Cannot load device {key}: {e}"))
+                    .ok()
+            })
+            .collect::<Vec<_>>())
     }
 
     fn get_raw_device(&self, key: &str) -> Result<Vec<u8>, GetRawDeviceError> {

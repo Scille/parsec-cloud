@@ -63,11 +63,24 @@ class AvailableDevice(Structure):
     ty: DeviceFileType
 
 
-async def list_available_devices(path: Ref[Path]) -> list[AvailableDevice]:
+class ListAvailableDeviceError(ErrorVariant):
+    class StorageNotAvailable:
+        pass
+
+    class Internal:
+        pass
+
+
+async def list_available_devices(
+    path: Ref[Path],
+) -> Result[list[AvailableDevice], ListAvailableDeviceError]:
     raise NotImplementedError
 
 
 class ArchiveDeviceError(ErrorVariant):
+    class StorageNotAvailable:
+        pass
+
     class Internal:
         pass
 
@@ -77,6 +90,9 @@ async def archive_device(device_path: Ref[Path]) -> Result[None, ArchiveDeviceEr
 
 
 class UpdateDeviceError(ErrorVariant):
+    class StorageNotAvailable:
+        pass
+
     class InvalidPath:
         pass
 

@@ -85,7 +85,7 @@ async fn save_list(#[case] kind: DeviceFileType, tmp_path: TmpPath) {
     p_assert_eq!(available_device, expected_available_device);
     assert!(key_present_in_system(&key_file));
 
-    let devices = list_available_devices(&tmp_path).await;
+    let devices = list_available_devices(&tmp_path).await.unwrap();
 
     p_assert_eq!(devices, [expected_available_device]);
 }

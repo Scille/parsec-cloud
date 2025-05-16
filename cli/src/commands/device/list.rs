@@ -13,7 +13,7 @@ crate::clap_parser_with_shared_opts_builder!(
 pub async fn main(args: Args) -> anyhow::Result<()> {
     let config_dir = args.config_dir;
     log::trace!("Listing devices under {}", config_dir.display());
-    let devices = list_available_devices(&config_dir).await;
+    let devices = list_available_devices(&config_dir).await?;
     let config_dir_str = config_dir.to_string_lossy();
 
     if devices.is_empty() {
