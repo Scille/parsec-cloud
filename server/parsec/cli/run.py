@@ -25,6 +25,7 @@ from parsec.cli.utils import (
 )
 from parsec.components.organization import TosLocale, TosUrl
 from parsec.config import (
+    AccountConfig,
     BackendConfig,
     BaseBlockStoreConfig,
     BaseDatabaseConfig,
@@ -208,6 +209,14 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     default=None,
 )
 @click.option(
+    "--account_confirmation_email_resend_interval",
+    default=60,
+    show_default=True,
+    envvar="PARSEC_ACCOUNT_CONFIRMATION_EMAIL_RESEND_INTERVAL",
+    show_envvar=True,
+    help="Interval before resending an account creation confirmation email (in seconds)",
+)
+@click.option(
     "--server-addr",
     envvar="PARSEC_SERVER_ADDR",
     show_envvar=True,
@@ -364,6 +373,7 @@ def run_cmd(
     organization_initial_active_users_limit: int | None,
     organization_initial_user_profile_outsider_allowed: bool,
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
+    account_confirmation_email_resend_interval: int,
     server_addr: ParsecAddr,
     email_host: str,
     email_port: int,
@@ -426,6 +436,9 @@ def run_cmd(
             else ActiveUsersLimit.NO_LIMIT,
             organization_initial_user_profile_outsider_allowed=organization_initial_user_profile_outsider_allowed,
             organization_initial_tos=organization_initial_tos,
+            account_config=AccountConfig(
+                confirmation_email_resend_interval=account_confirmation_email_resend_interval
+            ),
         )
 
         click.echo(
