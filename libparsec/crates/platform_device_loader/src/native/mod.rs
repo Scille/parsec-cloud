@@ -12,8 +12,8 @@ use uuid::Uuid;
 use libparsec_types::prelude::*;
 
 use crate::{
-    ArchiveDeviceError, LoadDeviceError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
-    DEVICE_FILE_EXT,
+    ArchiveDeviceError, ListAvailableDeviceError, LoadDeviceError, RemoveDeviceError,
+    SaveDeviceError, UpdateDeviceError, DEVICE_FILE_EXT,
 };
 
 const KEYRING_SERVICE: &str = "parsec";
@@ -34,38 +34,45 @@ impl From<keyring::Error> for SaveDeviceError {
  * List available devices
  */
 
-fn find_device_files(path: PathBuf) -> Vec<PathBuf> {
+fn find_device_files(path: &Path) -> Result<Vec<PathBuf>, ListAvailableDeviceError> {
     // TODO: make file access on a worker thread !
 
-    let mut key_file_paths = vec![];
-
-    // `fs::read_dir` fails if path doesn't exists, is not a folder or is not
-    // accessible... In any case, there is not much we can do but to ignore it.
-    if let Ok(children) = std::fs::read_dir(path) {
-        for path in children.filter_map(|entry| entry.as_ref().map(std::fs::DirEntry::path).ok()) {
-            if path.extension() == Some(DEVICE_FILE_EXT.as_ref()) {
-                key_file_paths.push(path)
-            } else if path.is_dir() {
-                key_file_paths.append(&mut find_device_files(path))
+    match std::fs::read_dir(path) {
+        Ok(children) => {
+            let mut key_file_paths = vec![];
+            for path in
+                children.filter_map(|entry| entry.as_ref().map(std::fs::DirEntry::path).ok())
+            {
+                if path.extension() == Some(DEVICE_FILE_EXT.as_ref()) {
+                    key_file_paths.push(path)
+                } else if path.is_dir() {
+                    key_file_paths.append(&mut find_device_files(&path)?)
+                }
             }
+            Ok(key_file_paths)
+        }
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
+        Err(e) => {
+            log::error!("Cannot list available devices at {}: {e}", path.display());
+            Err(ListAvailableDeviceError::StorageNotAvailable)
         }
     }
-
-    key_file_paths
 }
 
-pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
+pub async fn list_available_devices(
+    config_dir: &Path,
+) -> Result<Vec<AvailableDevice>, ListAvailableDeviceError> {
     let devices_dir = crate::get_devices_dir(config_dir);
 
     // Consider `.keys` files in devices directory
-    let mut key_file_paths = find_device_files(devices_dir);
+    let mut key_file_paths = find_device_files(&devices_dir)?;
 
     // Sort paths so the discovery order is deterministic
     // In the case of duplicate files, that means only the first discovered device is considered
     key_file_paths.sort();
     log::trace!("Found the following device files: {key_file_paths:?}");
 
-    key_file_paths
+    Ok(key_file_paths
         .into_iter()
         // List only valid devices.
         .filter_map(|path| {
@@ -80,7 +87,7 @@ pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
         })
         // Ignore duplicate devices
         .unique_by(|v| v.device_id)
-        .collect()
+        .collect())
 }
 
 #[derive(Debug, thiserror::Error)]
