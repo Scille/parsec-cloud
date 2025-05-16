@@ -22,7 +22,7 @@
         <div class="topbar-left">
           <div
             id="back-block"
-            v-if="hasHistory() && !currentRouteIs(Routes.Workspaces) && !currentRouteIs(Routes.MyProfile)"
+            v-if="hasHistory() && !currentRouteIs(Routes.Workspaces)"
           >
             <header-back-button :short="currentRouteIsFileRoute() ? true : false" />
           </div>
