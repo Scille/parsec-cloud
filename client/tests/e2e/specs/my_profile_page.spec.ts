@@ -184,3 +184,26 @@ msTest('Logout from my profile page', async ({ myProfilePage }) => {
   await expect(logoutButton).toHaveText('Log out');
   await logoutButton.click();
 });
+
+msTest('Profile page back button', async ({ workspaces }) => {
+  await workspaces.locator('.topbar').locator('.profile-header').click();
+  const myProfileButton = workspaces.locator('.profile-header-popover').locator('.main-list').getByRole('listitem').nth(0);
+  await myProfileButton.click();
+  await expect(workspaces).toHavePageTitle('My profile');
+  await expect(workspaces).toBeMyProfilePage();
+  // Navigating into sub-menus, should not add anything to the history
+  const profile = workspaces.locator('.profile-page-container');
+  await profile.locator('.menu-list__item').nth(1).click();
+  await profile.locator('.menu-list__item').nth(2).click();
+  await profile.locator('.menu-list__item').nth(3).click();
+  await profile.locator('.menu-list__item').nth(1).click();
+
+  await expect(workspaces).toHavePageTitle('My profile');
+  await expect(workspaces).toBeMyProfilePage();
+
+  const backButton = workspaces.locator('.topbar-left').locator('.back-button');
+  await expect(backButton).toBeVisible();
+  await backButton.click();
+  await expect(workspaces.locator('#connected-header')).toContainText('My workspaces');
+  await expect(workspaces).toBeWorkspacePage();
+});
