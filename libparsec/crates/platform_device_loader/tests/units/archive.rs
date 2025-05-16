@@ -23,5 +23,5 @@ async fn archive_ok(tmp_path: TmpPath, env: &TestbedEnv) {
     archive_device(&key_file).await.unwrap();
 
     // 3. Check that the device as been archived.
-    assert!(key_is_archived(&key_file));
+    assert!(key_is_archived(&key_file).await);
 }

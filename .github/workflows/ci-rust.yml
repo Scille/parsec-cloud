@@ -161,7 +161,13 @@ jobs:
 
       - name: Test platform-device-loader on wasm
         if: inputs.run-wasm-tests
-        run: wasm-pack test --headless --firefox libparsec/crates/platform_device_loader
+        shell: bash -o pipefail -ex {0}
+        # Run the device loader test in small batches, without that it case some IO errors during testing.
+        # (`IO error while reading marker: failed to fill whole buffer`)
+        # Not sure of the reason why it happen nor where it originate
+        run: |
+          BATCHES=$(wasm-pack test --firefox --headless libparsec/crates/platform_device_loader -- --list | sed 's/::/#/g' | cut -d '#' -f -2 | sort | uniq | sed 's/#/::/g')
+          echo $BATCHES | xargs -n 1 --verbose -- wasm-pack test --headless --firefox libparsec/crates/platform_device_loader --
         timeout-minutes: 10
 
       - name: Build CLI binary
