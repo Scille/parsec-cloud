@@ -445,6 +445,9 @@ def is_keyring_available() -> bool:
 
 
 class ImportRecoveryDeviceError(ErrorVariant):
+    class StorageNotAvailable:
+        pass
+
     class Internal:
         pass
 

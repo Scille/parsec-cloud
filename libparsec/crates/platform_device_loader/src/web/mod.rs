@@ -8,7 +8,8 @@ use std::{path::Path, sync::Arc};
 use libparsec_types::prelude::*;
 
 use crate::{
-    ArchiveDeviceError, LoadDeviceError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
+    ArchiveDeviceError, ListAvailableDeviceError, LoadDeviceError, RemoveDeviceError,
+    SaveDeviceError, UpdateDeviceError,
 };
 use internal::Storage;
 
@@ -16,11 +17,13 @@ use internal::Storage;
  * List available devices
  */
 
-pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
+pub async fn list_available_devices(
+    config_dir: &Path,
+) -> Result<Vec<AvailableDevice>, ListAvailableDeviceError> {
     let Ok(storage) = Storage::new().inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {
-        return Vec::new();
+        return Err(ListAvailableDeviceError::StorageNotAvailable);
     };
     storage
         .list_available_devices(config_dir)
@@ -30,7 +33,7 @@ pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
         .inspect_err(|e| {
             log::error!("Failed to list available devices: {e}");
         })
-        .unwrap_or_default()
+        .map_err(|e| ListAvailableDeviceError::Internal(anyhow::anyhow!("{e}")))
 }
 
 /*
@@ -40,9 +43,11 @@ pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
 pub async fn load_device(
     access: &DeviceAccessStrategy,
 ) -> Result<(Arc<LocalDevice>, DateTime), LoadDeviceError> {
-    let storage = Storage::new().inspect_err(|e| {
+    let Ok(storage) = Storage::new().inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
-    })?;
+    }) else {
+        return Err(LoadDeviceError::StorageNotAvailable);
+    };
     storage.load_device(access).map_err(Into::into)
 }
 
@@ -51,9 +56,11 @@ pub async fn save_device(
     device: &LocalDevice,
     created_on: DateTime,
 ) -> Result<AvailableDevice, SaveDeviceError> {
-    let storage = Storage::new().inspect_err(|e| {
+    let Ok(storage) = Storage::new().inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
-    })?;
+    }) else {
+        return Err(SaveDeviceError::StorageNotAvailable);
+    };
     storage
         .save_device(access, device, created_on)
         .map_err(Into::into)
@@ -64,9 +71,11 @@ pub async fn update_device(
     new_access: &DeviceAccessStrategy,
     overwrite_server_addr: Option<ParsecAddr>,
 ) -> Result<(AvailableDevice, ParsecAddr), UpdateDeviceError> {
-    let storage = Storage::new().inspect_err(|e| {
+    let Ok(storage) = Storage::new().inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
-    })?;
+    }) else {
+        return Err(UpdateDeviceError::StorageNotAvailable);
+    };
 
     let (mut device, created_on) = storage.load_device(current_access)?;
 
@@ -98,15 +107,19 @@ pub async fn update_device(
 }
 
 pub async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
-    let storage = Storage::new().inspect_err(|e| {
+    let Ok(storage) = Storage::new().inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
-    })?;
+    }) else {
+        return Err(ArchiveDeviceError::StorageNotAvailable);
+    };
     storage.archive_device(device_path).map_err(Into::into)
 }
 
 pub async fn remove_device(device_path: &Path) -> Result<(), RemoveDeviceError> {
-    let storage = Storage::new().inspect_err(|e| {
+    let Ok(storage) = Storage::new().inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
-    })?;
+    }) else {
+        return Err(RemoveDeviceError::StorageNotAvailable);
+    };
     storage.remove_device(device_path).map_err(Into::into)
 }

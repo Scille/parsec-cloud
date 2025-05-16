@@ -468,14 +468,20 @@ export type AnyClaimRetrievedInfo =
 // ArchiveDeviceError
 export enum ArchiveDeviceErrorTag {
     Internal = 'ArchiveDeviceErrorInternal',
+    StorageNotAvailable = 'ArchiveDeviceErrorStorageNotAvailable',
 }
 
 export interface ArchiveDeviceErrorInternal {
     tag: ArchiveDeviceErrorTag.Internal
     error: string
 }
+export interface ArchiveDeviceErrorStorageNotAvailable {
+    tag: ArchiveDeviceErrorTag.StorageNotAvailable
+    error: string
+}
 export type ArchiveDeviceError =
   | ArchiveDeviceErrorInternal
+  | ArchiveDeviceErrorStorageNotAvailable
 
 // BootstrapOrganizationError
 export enum BootstrapOrganizationErrorTag {
@@ -2005,6 +2011,7 @@ export enum ImportRecoveryDeviceErrorTag {
     InvalidPath = 'ImportRecoveryDeviceErrorInvalidPath',
     Offline = 'ImportRecoveryDeviceErrorOffline',
     Stopped = 'ImportRecoveryDeviceErrorStopped',
+    StorageNotAvailable = 'ImportRecoveryDeviceErrorStorageNotAvailable',
     TimestampOutOfBallpark = 'ImportRecoveryDeviceErrorTimestampOutOfBallpark',
 }
 
@@ -2040,6 +2047,10 @@ export interface ImportRecoveryDeviceErrorStopped {
     tag: ImportRecoveryDeviceErrorTag.Stopped
     error: string
 }
+export interface ImportRecoveryDeviceErrorStorageNotAvailable {
+    tag: ImportRecoveryDeviceErrorTag.StorageNotAvailable
+    error: string
+}
 export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
     tag: ImportRecoveryDeviceErrorTag.TimestampOutOfBallpark
     error: string
@@ -2057,6 +2068,7 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorInvalidPath
   | ImportRecoveryDeviceErrorOffline
   | ImportRecoveryDeviceErrorStopped
+  | ImportRecoveryDeviceErrorStorageNotAvailable
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 // InviteInfoInvitationCreatedBy
@@ -2135,6 +2147,24 @@ export type InviteListItem =
   | InviteListItemDevice
   | InviteListItemShamirRecovery
   | InviteListItemUser
+
+// ListAvailableDeviceError
+export enum ListAvailableDeviceErrorTag {
+    Internal = 'ListAvailableDeviceErrorInternal',
+    StorageNotAvailable = 'ListAvailableDeviceErrorStorageNotAvailable',
+}
+
+export interface ListAvailableDeviceErrorInternal {
+    tag: ListAvailableDeviceErrorTag.Internal
+    error: string
+}
+export interface ListAvailableDeviceErrorStorageNotAvailable {
+    tag: ListAvailableDeviceErrorTag.StorageNotAvailable
+    error: string
+}
+export type ListAvailableDeviceError =
+  | ListAvailableDeviceErrorInternal
+  | ListAvailableDeviceErrorStorageNotAvailable
 
 // ListInvitationsError
 export enum ListInvitationsErrorTag {
@@ -2594,6 +2624,7 @@ export enum UpdateDeviceErrorTag {
     Internal = 'UpdateDeviceErrorInternal',
     InvalidData = 'UpdateDeviceErrorInvalidData',
     InvalidPath = 'UpdateDeviceErrorInvalidPath',
+    StorageNotAvailable = 'UpdateDeviceErrorStorageNotAvailable',
 }
 
 export interface UpdateDeviceErrorDecryptionFailed {
@@ -2612,11 +2643,16 @@ export interface UpdateDeviceErrorInvalidPath {
     tag: UpdateDeviceErrorTag.InvalidPath
     error: string
 }
+export interface UpdateDeviceErrorStorageNotAvailable {
+    tag: UpdateDeviceErrorTag.StorageNotAvailable
+    error: string
+}
 export type UpdateDeviceError =
   | UpdateDeviceErrorDecryptionFailed
   | UpdateDeviceErrorInternal
   | UpdateDeviceErrorInvalidData
   | UpdateDeviceErrorInvalidPath
+  | UpdateDeviceErrorStorageNotAvailable
 
 // UserClaimListInitialInfosError
 export enum UserClaimListInitialInfosErrorTag {
@@ -4718,7 +4754,7 @@ export interface LibParsecPlugin {
     ): Promise<null>
     listAvailableDevices(
         path: Path
-    ): Promise<Array<AvailableDevice>>
+    ): Promise<Result<Array<AvailableDevice>, ListAvailableDeviceError>>
     listStartedClients(
     ): Promise<Array<[Handle, DeviceID]>>
     mountpointToOsPath(
