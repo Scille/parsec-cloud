@@ -142,6 +142,7 @@ export const msTest = debugTest.extend<{
   workspaceSharingModal: Locator;
   clientArea: MsPage;
   clientAreaCustomOrder: MsPage;
+  workspacesStandard: MsPage;
 }>({
   context: async ({ browser }, use) => {
     const context = await browser.newContext();
@@ -167,6 +168,23 @@ export const msTest = debugTest.extend<{
     await expect(home.locator('.login-button')).toBeEnabled();
     await home.locator('.login-button').click();
     await expect(home.locator('#connected-header')).toContainText('My workspaces');
+    await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+    await expect(home).toBeWorkspacePage();
+
+    await use(home);
+  },
+
+  workspacesStandard: async ({ home }, use) => {
+    await home.locator('.organization-card').nth(1).click();
+    await expect(home.locator('#password-input')).toBeVisible();
+
+    await expect(home.locator('.login-button')).toHaveDisabledAttribute();
+
+    await home.locator('#password-input').locator('input').fill('P@ssw0rd.');
+    await expect(home.locator('.login-button')).toBeEnabled();
+    await home.locator('.login-button').click();
+    await expect(home.locator('#connected-header')).toContainText('My workspaces');
+    await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Boby McBobFace');
     await expect(home).toBeWorkspacePage();
 
     await use(home);

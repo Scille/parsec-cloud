@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
 import { addUser, answerQuestion, expect, fillInputModal, fillIonInput, msTest, setSmallDisplay, sortBy } from '@tests/e2e/helpers';
 
 const USERS = [
@@ -735,4 +735,22 @@ msTest('Small display multiple users context menu', async ({ usersPage }) => {
   await expect(modal.getByRole('listitem')).toHaveText(['Revoke these users', 'Change profiles']);
   await modal.getByRole('listitem').nth(1).click();
   await expect(usersPage.locator('.update-profile-modal').locator('.ms-modal-content').locator('.warn-outsiders')).toBeVisible();
+});
+
+msTest('No context menu with standard users and multiple selected', async ({ workspacesStandard }) => {
+  await workspacesStandard.locator('.sidebar').locator('#manageOrganization').click();
+  await expect(workspacesStandard).toHavePageTitle('Users');
+  await expect(workspacesStandard).toBeUserPage();
+  const usersPage = workspacesStandard;
+
+  let item!: Locator;
+  for (let i = 1; i < 3; i++) {
+    item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(i);
+    await item.hover();
+    await item.locator('ion-checkbox').click();
+  }
+  const menu = usersPage.locator('#user-context-menu');
+  await expect(menu).toBeHidden();
+  await item.click({ button: 'right' });
+  await expect(menu).toBeHidden();
 });
