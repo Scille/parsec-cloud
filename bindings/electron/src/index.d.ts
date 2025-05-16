@@ -475,8 +475,13 @@ export interface ArchiveDeviceErrorInternal {
     tag: "Internal"
     error: string
 }
+export interface ArchiveDeviceErrorStorageNotAvailable {
+    tag: "StorageNotAvailable"
+    error: string
+}
 export type ArchiveDeviceError =
   | ArchiveDeviceErrorInternal
+  | ArchiveDeviceErrorStorageNotAvailable
 
 
 // BootstrapOrganizationError
@@ -1747,6 +1752,10 @@ export interface ImportRecoveryDeviceErrorStopped {
     tag: "Stopped"
     error: string
 }
+export interface ImportRecoveryDeviceErrorStorageNotAvailable {
+    tag: "StorageNotAvailable"
+    error: string
+}
 export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
     tag: "TimestampOutOfBallpark"
     error: string
@@ -1764,6 +1773,7 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorInvalidPath
   | ImportRecoveryDeviceErrorOffline
   | ImportRecoveryDeviceErrorStopped
+  | ImportRecoveryDeviceErrorStorageNotAvailable
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 
@@ -1829,6 +1839,20 @@ export type InviteListItem =
   | InviteListItemDevice
   | InviteListItemShamirRecovery
   | InviteListItemUser
+
+
+// ListAvailableDeviceError
+export interface ListAvailableDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ListAvailableDeviceErrorStorageNotAvailable {
+    tag: "StorageNotAvailable"
+    error: string
+}
+export type ListAvailableDeviceError =
+  | ListAvailableDeviceErrorInternal
+  | ListAvailableDeviceErrorStorageNotAvailable
 
 
 // ListInvitationsError
@@ -2221,11 +2245,16 @@ export interface UpdateDeviceErrorInvalidPath {
     tag: "InvalidPath"
     error: string
 }
+export interface UpdateDeviceErrorStorageNotAvailable {
+    tag: "StorageNotAvailable"
+    error: string
+}
 export type UpdateDeviceError =
   | UpdateDeviceErrorDecryptionFailed
   | UpdateDeviceErrorInternal
   | UpdateDeviceErrorInvalidData
   | UpdateDeviceErrorInvalidPath
+  | UpdateDeviceErrorStorageNotAvailable
 
 
 // UserClaimListInitialInfosError
@@ -3996,7 +4025,7 @@ export function libparsecInitSetOnEventCallback(
 ): Promise<null>
 export function listAvailableDevices(
     path: string
-): Promise<Array<AvailableDevice>>
+): Promise<Result<Array<AvailableDevice>, ListAvailableDeviceError>>
 export function listStartedClients(
 ): Promise<Array<[number, string]>>
 export function mountpointToOsPath(

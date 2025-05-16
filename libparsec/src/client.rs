@@ -100,17 +100,15 @@ pub enum ClientStartError {
 
 impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartError {
     fn from(value: libparsec_platform_device_loader::LoadDeviceError) -> Self {
+        use libparsec_platform_device_loader::LoadDeviceError;
         match value {
-            libparsec_platform_device_loader::LoadDeviceError::InvalidPath(err) => {
-                Self::LoadDeviceInvalidPath(err)
+            e @ LoadDeviceError::StorageNotAvailable => {
+                ClientStartError::LoadDeviceInvalidPath(e.into())
             }
-            libparsec_platform_device_loader::LoadDeviceError::InvalidData => {
-                Self::LoadDeviceInvalidData
-            }
-            libparsec_platform_device_loader::LoadDeviceError::DecryptionFailed => {
-                Self::LoadDeviceDecryptionFailed
-            }
-            libparsec_platform_device_loader::LoadDeviceError::Internal(e) => Self::Internal(e),
+            LoadDeviceError::InvalidPath(err) => Self::LoadDeviceInvalidPath(err),
+            LoadDeviceError::InvalidData => Self::LoadDeviceInvalidData,
+            LoadDeviceError::DecryptionFailed => Self::LoadDeviceDecryptionFailed,
+            LoadDeviceError::Internal(e) => Self::Internal(e),
         }
     }
 }

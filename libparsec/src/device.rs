@@ -2,11 +2,15 @@
 
 use std::path::Path;
 
-pub use libparsec_platform_device_loader::{ArchiveDeviceError, UpdateDeviceError};
+pub use libparsec_platform_device_loader::{
+    ArchiveDeviceError, ListAvailableDeviceError, UpdateDeviceError,
+};
 use libparsec_types::prelude::*;
 pub use libparsec_types::AvailableDevice;
 
-pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
+pub async fn list_available_devices(
+    config_dir: &Path,
+) -> Result<Vec<AvailableDevice>, ListAvailableDeviceError> {
     libparsec_platform_device_loader::list_available_devices(config_dir).await
 }
 

@@ -101,10 +101,7 @@ async fn main() -> ExitCode {
                 let mountpoint_name_hint: EntryName = {
                     // Format snapshot as `yyyymmddThhmmssZ` format (shorter, and Windows doesn't allow `:` in paths)
                     let ts = {
-                        let ts = timestamp_of_interest
-                            .to_rfc3339()
-                            .replace('-', "")
-                            .replace(':', "");
+                        let ts = timestamp_of_interest.to_rfc3339().replace(['-', ':'], "");
                         match ts.split_once('.') {
                             Some((dt, _)) => format!("{}Z", dt),
                             None => ts.to_owned(),

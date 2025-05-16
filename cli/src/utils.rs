@@ -88,6 +88,7 @@ where
 
 #[derive(Debug)]
 pub enum LoadDeviceError {
+    StorageNotAvailable,
     /// No device found for the given prefix device ID
     DeviceNotFound {
         short_dev_id: String,
@@ -107,6 +108,7 @@ impl std::error::Error for LoadDeviceError {}
 impl Display for LoadDeviceError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            LoadDeviceError::StorageNotAvailable => writeln!(f, "Device storage is not available"),
             LoadDeviceError::DeviceNotFound {
                 short_dev_id: dev_id,
                 devices,
@@ -137,7 +139,9 @@ pub async fn load_device_file(
     config_dir: &Path,
     device_short_id: Option<String>,
 ) -> Result<AvailableDevice, LoadDeviceError> {
-    let devices = list_available_devices(config_dir).await;
+    let devices = list_available_devices(config_dir)
+        .await
+        .map_err(|_e| LoadDeviceError::StorageNotAvailable)?;
 
     if let Some(device_short_id) = device_short_id {
         let possible_devices = devices
