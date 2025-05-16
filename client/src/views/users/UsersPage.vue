@@ -442,6 +442,12 @@ async function openUserContextMenu(event: Event, user: UserModel, onFinished?: (
   if (selectedUsers.length === 0 || !selectedUsers.includes(user)) {
     selectedUsers = [user];
   }
+
+  // a Standard user can't do anything with multiple users
+  if (clientInfo.value?.currentProfile === UserProfile.Standard && selectedUsers.length > 1) {
+    return;
+  }
+
   const data = await _openUserContextMenu(event, selectedUsers, isAdmin.value, isLargeDisplay.value);
 
   const actions = new Map<UserAction, (user: UserModel) => Promise<void>>([
