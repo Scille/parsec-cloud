@@ -179,6 +179,7 @@ impl AuthenticatedCmds {
             461 => Err(ConnectionError::RevokedUser),
             462 => Err(ConnectionError::FrozenUser),
             463 => Err(ConnectionError::UserMustAcceptTos),
+            464 => Err(ConnectionError::WebClientNotAllowedByOrganization),
             498 => Err(ConnectionError::AuthenticationTokenExpired),
 
             // Other HTTP codes
@@ -294,6 +295,7 @@ impl AuthenticatedCmds {
             461 => return Err(ConnectionError::RevokedUser),
             462 => return Err(ConnectionError::FrozenUser),
             463 => return Err(ConnectionError::UserMustAcceptTos),
+            464 => return Err(ConnectionError::WebClientNotAllowedByOrganization),
             498 => return Err(ConnectionError::AuthenticationTokenExpired),
 
             // Other HTTP codes

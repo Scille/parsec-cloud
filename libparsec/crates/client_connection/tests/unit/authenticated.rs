@@ -192,8 +192,6 @@ async fn rpc_forbidden(env: &TestbedEnv, mocked: bool) {
     p_assert_matches!(rep, Err(ConnectionError::BadAuthenticationInfo));
 }
 
-// TODO: SSE not implemented in web yet
-#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "minimal")]
 async fn sse_ok_mocked(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
@@ -211,7 +209,7 @@ async fn sse_ok_mocked(env: &TestbedEnv) {
             headers,
             "\
             :keepalive\n\n\
-            data:haZzdGF0dXOib2ulZXZlbnSzT1JHQU5JWkFUSU9OX0NPTkZJR7JhY3RpdmVfdXNlcnNfbGltaXTAvXVzZXJfcHJvZmlsZV9vdXRzaWRlcl9hbGxvd2Vkw7Vzc2Vfa2VlcGFsaXZlX3NlY29uZHMe\nid:832ea0c75e0d4ca8aedf123a89b3fcc7\n\n\
+            data:hqZzdGF0dXOib2ulZXZlbnSzT1JHQU5JWkFUSU9OX0NPTkZJR7JhY3RpdmVfdXNlcnNfbGltaXTAtGFsbG93ZWRfY2xpZW50X2FnZW50rU5BVElWRV9PUl9XRUK1c3NlX2tlZXBhbGl2ZV9zZWNvbmRzHr11c2VyX3Byb2ZpbGVfb3V0c2lkZXJfYWxsb3dlZMM=\nid:832ea0c75e0d4ca8aedf123a89b3fcc7\n\n\
             event:missed_events\ndata:\n\n\
             data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\nid:4fe5b6ddf29f4c159e6002da2132d80f\n\n\
             :keepalive\n\n\
@@ -231,6 +229,9 @@ async fn sse_ok_mocked(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                allowed_client_agent: Maybe::Present(
+                    authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb
+                ),
             }
         ))
     );
@@ -253,7 +254,6 @@ async fn sse_ok_mocked(env: &TestbedEnv) {
     p_assert_matches!(sse.next().await, None);
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn sse_ok_with_server(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
@@ -297,6 +297,9 @@ async fn sse_ok_with_server(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                allowed_client_agent: Maybe::Present(
+                    authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb
+                ),
             }
         ))
     );
@@ -341,21 +344,16 @@ async fn sse_ok_with_server(env: &TestbedEnv) {
     );
 }
 
-// TODO: SSE not implemented in web yet
-// TODO: testbed send hook doesn't support SSE yet
-#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "minimal")]
 async fn sse_forbidden_mocked(env: &TestbedEnv) {
     sse_forbidden(env, true).await
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "minimal", with_server)]
 async fn sse_forbidden_with_server(env: &TestbedEnv) {
     sse_forbidden(env, false).await
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 async fn sse_forbidden(env: &TestbedEnv, mocked: bool) {
     let alice = env.local_device("alice@dev1");
     let bad_alice = {
@@ -406,8 +404,6 @@ async fn sse_unauthorized_mocked(env: &TestbedEnv) {
     p_assert_matches!(rep, Err(ConnectionError::MissingAuthenticationInfo));
 }
 
-// TODO: SSE not implemented in web yet
-#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "minimal")]
 async fn sse_event_id_mocked(
     #[values("good", "missing", "empty", "invalid_for_http_header")] kind: &'static str,
@@ -513,8 +509,6 @@ async fn sse_event_id_mocked(
     );
 }
 
-// TODO: SSE not implemented in web yet
-#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "minimal")]
 async fn sse_retry_mocked(
     #[values(
@@ -600,7 +594,7 @@ async fn sse_retry_mocked(
     }
 }
 
-// Uses disconnect proxy server which is only available in web
+// Uses disconnect proxy server which is not available in web
 #[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn sse_last_event_id_with_server(env: &TestbedEnv) {
@@ -656,6 +650,9 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                allowed_client_agent: Maybe::Present(
+                    authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb
+                ),
             }
         ))
     );
@@ -710,6 +707,9 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                allowed_client_agent: Maybe::Present(
+                    authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb
+                ),
             }
         ))
     );
@@ -752,6 +752,9 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
                 active_users_limit: ActiveUsersLimit::NoLimit,
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                allowed_client_agent: Maybe::Present(
+                    authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb
+                ),
             }
         ))
     );
@@ -881,6 +884,13 @@ register_rpc_http_hook!(
     }
 );
 register_rpc_http_hook!(
+    rpc_must_accept_tos_http_codes_464,
+    StatusCode::from_u16(464).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::WebClientNotAllowedByOrganization);
+    }
+);
+register_rpc_http_hook!(
     rpc_authentication_token_expired_http_codes_498,
     StatusCode::from_u16(498).unwrap(),
     |err| {
@@ -920,8 +930,6 @@ register_rpc_http_hook!(
 // only accept a static closure (i.e. `fn`, not `FnMut`).
 macro_rules! register_sse_http_hook {
     ($test_name: ident, $response_status_code: expr, $assert_err_cb: expr $(, $header_key:literal : $header_value:expr)* $(,)?) => {
-        // TODO: SSE not implemented in web yet
-        #[cfg(not(target_arch = "wasm32"))]
         #[parsec_test(testbed = "minimal")]
         async fn $test_name(env: &TestbedEnv) {
             let alice = env.local_device("alice@dev1");

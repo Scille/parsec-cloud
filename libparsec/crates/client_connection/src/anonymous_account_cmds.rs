@@ -122,6 +122,7 @@ impl AnonymousAccountCmds {
             )),
             // No 460: no organization here
             // No 461/462/463: no user here
+            // No 464: no organization here
             // No 498: no authentication here
 
             // Other HTTP codes

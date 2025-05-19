@@ -37,6 +37,7 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
 
             use ::pyo3::prelude::*;
             use ::pyo3::types::*;
+            use ::pyo3::exceptions::*;
             use libparsec_types::ProtocolRequest;
             use crate::*;
             use super::*;

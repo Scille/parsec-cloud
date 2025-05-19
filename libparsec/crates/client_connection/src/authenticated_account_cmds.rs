@@ -143,9 +143,8 @@ impl AuthenticatedAccountCmds {
                 *api_version, resp.headers(),
             )),
             // No 460: no organization
-            // No 464 to avoid oracle
-            // 464 => Err(ConnectionError::AccountNotFound),
             // No 461/462/463: no user here
+            // No 464: no organization here
             // No 498: invitation token cannot expire like an authentication token
 
             // Other HTTP codes
