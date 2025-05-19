@@ -7,70 +7,104 @@
     :detail="false"
   >
     <div class="invitation-list-item">
-      <!-- invitation email -->
-      <div class="invitation-email">
-        <ion-label class="cell invitation-label">
+      <div class="invitation-header">
+        <!-- invitation email -->
+        <ion-label class="cell invitation-header__email">
           {{ invitation.claimerEmail }}
         </ion-label>
-        <ion-text class="invitation-date body-sm">{{ $msTranslate(formatTimeSince(invitation.createdOn, '', 'short')) }}</ion-text>
+        <ion-button
+          size="default"
+          class="invitation-header__greet-button button-medium"
+          @click.stop="$emit('greetUser', invitation)"
+        >
+          {{ $msTranslate('UsersPage.invitation.greetUser') }}
+        </ion-button>
       </div>
 
       <!-- invitation action -->
-      <div class="invitation-actions">
-        <ion-button
-          fill="clear"
-          class="copy-link"
-          @click.stop="copyLink(invitation)"
-        >
-          <ion-icon
-            :icon="link"
-            class="button-icon"
-          />
-          {{ $msTranslate('UsersPage.invitation.copyLink') }}
-        </ion-button>
+      <div class="invitation-footer">
+        <div class="invitation-footer-manage">
+          <ion-text class="manage-text button-medium">{{ $msTranslate('UsersPage.invitation.manageInvitation') }}</ion-text>
+          <ion-button
+            fill="clear"
+            class="manage-button copy-link"
+            :class="copyLinkActive ? 'active' : ''"
+            @click.stop="copyLink(invitation)"
+            ref="copyLinkButton"
+          >
+            <ion-icon
+              :icon="copyLinkActive ? checkmarkCircle : link"
+              class="button-icon"
+            />
+          </ion-button>
 
-        <ion-buttons class="invitation-actions-buttons">
+          <ion-button
+            fill="clear"
+            class="manage-button send-email"
+            :disabled="sendEmailDisabled"
+            @click.stop="sendEmail(invitation)"
+            :class="sendEmailDisabled ? 'active' : ''"
+            ref="sendEmailButton"
+          >
+            <ion-icon
+              :icon="mail"
+              class="button-icon"
+            />
+          </ion-button>
+
           <ion-button
             size="default"
             fill="clear"
-            class="danger button-medium"
+            class="manage-button cancel-button"
             @click.stop="$emit('cancel', invitation)"
           >
-            {{ $msTranslate('UsersPage.invitation.rejectUser') }}
+            <ion-icon
+              :icon="trash"
+              class="button-icon"
+            />
           </ion-button>
-          <ion-button
-            size="default"
-            fill="default"
-            class="button-medium"
-            @click.stop="$emit('greetUser', invitation)"
-          >
-            {{ $msTranslate('UsersPage.invitation.greetUser') }}
-          </ion-button>
-        </ion-buttons>
+        </div>
+        <ion-text class="invitation-footer__date body-sm">{{ $msTranslate(formatTimeSince(invitation.createdOn, '', 'short')) }}</ion-text>
       </div>
     </div>
   </ion-item>
 </template>
 
 <script setup lang="ts">
-import { UserInvitation } from '@/parsec';
+import { ClientNewUserInvitationErrorTag, InvitationEmailSentStatus, inviteUser, UserInvitation } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { IonIcon, IonButton, IonButtons, IonItem, IonLabel, IonText } from '@ionic/vue';
-import { formatTimeSince, Clipboard } from 'megashark-lib';
-import { link } from 'ionicons/icons';
+import { IonIcon, IonButton, IonItem, IonLabel, IonText } from '@ionic/vue';
+import { formatTimeSince, Clipboard, askQuestion, Answer, Translatable, attachMouseOverTooltip } from 'megashark-lib';
+import { checkmarkCircle, link, mail, trash } from 'ionicons/icons';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   invitation: UserInvitation;
   informationManager: InformationManager;
 }>();
 
+const copyLinkActive = ref(false);
+
 defineEmits<{
   (e: 'cancel', invitation: UserInvitation): void;
   (e: 'greetUser', invitation: UserInvitation): void;
 }>();
 
+const sendEmailDisabled = ref(false);
+const sendEmailButton = ref();
+const copyLinkButton = ref();
+
+onMounted(async () => {
+  attachMouseOverTooltip(sendEmailButton.value.$el, 'UsersPage.invitation.sendEmail');
+  attachMouseOverTooltip(copyLinkButton.value.$el, 'UsersPage.invitation.copyLink');
+});
+
 async function copyLink(invitation: UserInvitation): Promise<void> {
   const result = await Clipboard.writeText(invitation.addr);
+  copyLinkActive.value = true;
+  setTimeout(() => {
+    copyLinkActive.value = false;
+  }, 5000);
   if (result) {
     props.informationManager.present(
       new Information({
@@ -87,6 +121,68 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
       }),
       PresentationMode.Toast,
     );
+  }
+}
+
+async function sendEmail(invitation: UserInvitation): Promise<void> {
+  sendEmailDisabled.value = true;
+  const answer = await askQuestion('UsersPage.invitation.sendEmailTitle', 'UsersPage.invitation.sendEmailMessage', {
+    yesText: 'UsersPage.invitation.sendEmail',
+  });
+
+  if (answer === Answer.No) {
+    sendEmailDisabled.value = false;
+    return;
+  }
+  const result = await inviteUser(invitation.claimerEmail);
+  if (result.ok && result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
+    props.informationManager.present(
+      new Information({
+        message: {
+          key: 'UsersPage.invitation.inviteSuccessMailSent',
+          data: {
+            email: invitation.claimerEmail,
+          },
+        },
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+    setTimeout(() => {
+      sendEmailDisabled.value = false;
+    }, 5000);
+  } else {
+    let message: Translatable = '';
+    if (result.ok) {
+      message = 'UsersPage.invitation.sendEmailFailed';
+    } else {
+      switch (result.error.tag) {
+        case ClientNewUserInvitationErrorTag.Offline:
+          message = 'UsersPage.invitation.inviteFailedOffline';
+          break;
+        case ClientNewUserInvitationErrorTag.NotAllowed:
+          message = 'UsersPage.invitation.inviteFailedNotAllowed';
+          break;
+        default:
+          message = {
+            key: 'UsersPage.invitation.inviteFailedUnknown',
+            data: {
+              reason: result.error.tag,
+            },
+          };
+          break;
+      }
+    }
+    props.informationManager.present(
+      new Information({
+        message,
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    setTimeout(() => {
+      sendEmailDisabled.value = false;
+    }, 2000);
   }
 }
 </script>
@@ -108,83 +204,101 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
 
   &:hover,
   &:focus {
-    background: var(--parsec-color-light-primary-30);
     color: var(--parsec-color-light-secondary-text);
   }
 }
 
-.invitation-email {
-  width: 100%;
-  overflow: hidden;
+.invitation-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  color: var(--parsec-color-light-secondary-text);
+  width: 100%;
+  justify-content: space-between;
+  gap: 1rem;
 
-  .invitation-label {
-    white-space: nowrap;
+  &__email {
+    color: var(--parsec-color-light-secondary-text);
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  .invitation-date {
-    color: var(--parsec-color-light-secondary-grey);
-    padding: 0 0.5rem;
+    white-space: nowrap;
   }
 }
 
-.invitation-actions {
+.invitation-footer {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
 
-  .copy-link {
-    background: none;
-    color: var(--parsec-color-light-secondary-soft-text);
-    --padding-end: 0;
-    --padding-start: 0;
-    position: relative;
-    cursor: pointer;
+  &-manage {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
 
-    &::after {
-      content: ' ';
-      position: absolute;
-      width: 0%;
-      left: 0;
-      bottom: 4px;
-      height: 1px;
-      background: var(--parsec-color-light-secondary-text);
-      transition: width 150ms ease-in-out;
+    .manage-text {
+      color: var(--parsec-color-light-secondary-grey);
     }
 
-    ion-icon {
-      font-size: 1rem;
-      margin-right: 0.25rem;
-    }
+    .manage-button {
+      background: none;
+      cursor: pointer;
 
-    &:hover {
-      --background-hover: none;
-      color: var(--parsec-color-light-secondary-text);
+      &::part(native) {
+        padding: 0;
+      }
 
-      &::after {
-        content: ' ';
-        position: absolute;
-        width: 100%;
+      .button-icon {
+        font-size: 1.25rem;
+        padding: 0.5rem;
+        background: var(--parsec-color-light-secondary-premiere);
+        border-radius: var(--parsec-radius-8);
+        color: var(--parsec-color-light-secondary-soft-text);
+        transition: all 0.15s ease-in-out;
+      }
+
+      &:hover {
+        .button-icon {
+          color: var(--parsec-color-light-secondary-text);
+          background: var(--parsec-color-light-secondary-medium);
+        }
+      }
+
+      &:hover {
+        &.cancel-button .button-icon {
+          background: var(--parsec-color-light-danger-100);
+          color: var(--parsec-color-light-danger-700);
+        }
+      }
+
+      &.cancel-button {
+        position: relative;
+        display: flex;
+        margin-left: 1rem;
+
+        &::after {
+          content: '';
+          position: relative;
+          display: block;
+          left: -3.125rem;
+          top: 0.5rem;
+          width: 1px;
+          height: 1.125rem;
+          background: var(--parsec-color-light-secondary-medium);
+        }
+      }
+
+      &.active {
+        .button-icon {
+          color: var(--parsec-color-light-success-700);
+          background: var(--parsec-color-light-success-50);
+        }
       }
     }
   }
 
-  &-buttons {
-    gap: 1rem;
-    margin-left: auto;
-
-    ion-button {
-      width: 100%;
-
-      &:last-child {
-        color: var(--parsec-color-light-secondary-white);
-      }
-    }
+  &__date {
+    color: var(--parsec-color-light-secondary-grey);
+    flex-shrink: 0;
   }
 }
 </style>

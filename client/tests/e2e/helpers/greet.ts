@@ -40,7 +40,6 @@ export async function initGreetUserModals(
   await setWriteClipboardPermission(hostPage.context(), true);
 
   const inv = popover.locator('.invitation-list-item').nth(1);
-  await inv.hover();
   await inv.locator('.copy-link').click();
   await expect(hostPage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
   const invitationLink = await getClipboardText(hostPage);
@@ -59,7 +58,7 @@ export async function initGreetUserModals(
   await expect(joinModal).toBeVisible();
 
   // Start the greet
-  await inv.locator('.invitation-actions-buttons').locator('ion-button').nth(1).click();
+  await inv.locator('.invitation-header').locator('ion-button').nth(0).click();
 
   const greetModal = hostPage.locator('.greet-organization-modal');
 
@@ -108,6 +107,7 @@ export async function addUser(
   await expect(joinData.content.locator('.button-choice')).toHaveCount(4);
   await joinData.content.locator('.button-choice', { hasText: greetCode }).click();
 
+  await expect(joinData.content.locator('.guest-code')).toBeVisible();
   const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
   expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
 
