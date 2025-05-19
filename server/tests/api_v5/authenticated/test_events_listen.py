@@ -18,6 +18,7 @@ from parsec._parsec import (
     VlobID,
     authenticated_cmds,
 )
+from parsec.config import AllowedClientAgent
 from parsec.events import Event, EventPinged
 from tests.common import (
     AuthenticatedRpcClient,
@@ -152,6 +153,7 @@ async def test_authenticated_events_listen_ok(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
             )
         )
 
@@ -172,13 +174,23 @@ async def test_authenticated_events_listen_ok(
 async def test_receive_server_config_as_first_event(
     minimalorg: MinimalorgRpcClients, backend: Backend
 ) -> None:
+    backend.config.sse_keepalive = 42
+    await backend.organization.update(
+        DateTime.now(),
+        minimalorg.organization_id,
+        active_users_limit=ActiveUsersLimit.limited_to(10),
+        user_profile_outsider_allowed=False,
+        allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
+    )
+
     async with minimalorg.alice.events_listen() as alice_sse:
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
             authenticated_cmds.latest.events_listen.APIEventOrganizationConfig(
-                active_users_limit=ActiveUsersLimit.NO_LIMIT,
-                user_profile_outsider_allowed=True,
-                sse_keepalive_seconds=30,
+                active_users_limit=ActiveUsersLimit.limited_to(10),
+                user_profile_outsider_allowed=False,
+                sse_keepalive_seconds=42,
+                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_ONLY,
             )
         )
 
@@ -210,6 +222,7 @@ async def test_user_not_receive_event_before_listen(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
             )
         )
 
@@ -249,6 +262,7 @@ async def test_conn_closed_on_bad_outcome(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
             )
         )
 
@@ -293,6 +307,7 @@ async def test_self_vlob_events_skipped(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
             )
         )
 
@@ -341,6 +356,7 @@ async def test_self_certificate_events_provided(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
             )
         )
 
@@ -412,6 +428,7 @@ async def test_receive_event_of_newly_shared_realm(
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
             )
         )
 
@@ -556,6 +573,7 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
             )
         )
 
@@ -581,6 +599,7 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
                 active_users_limit=ActiveUsersLimit.NO_LIMIT,
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
+                allowed_client_agent=authenticated_cmds.latest.events_listen.AllowedClientAgent.NATIVE_OR_WEB,
             )
         )
 
