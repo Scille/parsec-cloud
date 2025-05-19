@@ -277,6 +277,12 @@ impl_events!(
     FrozenSelfUser,
     /// This event is fired by the connection monitor.
     ///
+    /// The sever has informed us that the organization's configuration doesn't
+    /// allow web clients (i.e. clients with `User-Agent` not starting with
+    /// `Parsec-client/`).
+    WebClientNotAllowedByOrganization,
+    /// This event is fired by the connection monitor.
+    ///
     /// The server has informed us that the authenticated user has not accepted
     /// the Terms of Service (TOS) yet.
     MustAcceptTos,

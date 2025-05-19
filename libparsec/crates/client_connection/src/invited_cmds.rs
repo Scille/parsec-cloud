@@ -123,6 +123,7 @@ impl InvitedCmds {
             )),
             460 => Err(ConnectionError::ExpiredOrganization),
             // No 461/462/463: no user here
+            464 => Err(ConnectionError::WebClientNotAllowedByOrganization),
             // No 498: invitation token cannot expire like an authentication token
 
             // Other HTTP codes

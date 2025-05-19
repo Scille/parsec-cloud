@@ -118,6 +118,7 @@ impl AnonymousCmds {
             )),
             460 => Err(ConnectionError::ExpiredOrganization),
             // No 461/462/463: no user here
+            464 => Err(ConnectionError::WebClientNotAllowedByOrganization),
             // No 498: no authentication here
 
             // Other HTTP codes

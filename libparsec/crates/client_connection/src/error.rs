@@ -74,6 +74,11 @@ pub enum ConnectionError {
     #[error("User must accept the Terms of Service to be able to connect to the server")]
     UserMustAcceptTos,
 
+    /// The organization has been configured to refuse web clients (i.e.
+    /// clients with `User-Agent` not starting with `Parsec-client/`).
+    #[error("Web client is not allowed by the organization")]
+    WebClientNotAllowedByOrganization,
+
     /// The authentication token has expired
     ///
     /// This corresponds to a 498 error returned by the server to indicate that

@@ -69,7 +69,9 @@
                             },
                             {
                                 "name": "allowed_client_agent",
-                                "type": "AllowedClientAgent"
+                                "type": "AllowedClientAgent",
+                                // Should be considered as `NativeOrWeb` if not provided.
+                                "introduced_in": "5.1"
                             }
                         ]
                     },
