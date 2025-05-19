@@ -63,7 +63,7 @@ pub use user_revoke::CertifRevokeUserError;
 pub use user_update_profile::CertifUpdateUserProfileError;
 pub use workspace_bootstrap::CertifBootstrapWorkspaceError;
 
-use crate::{event_bus::EventBus, ClientConfig};
+use crate::{ClientConfig, event_bus::EventBus};
 
 // The following values define an offset to be used when processing
 // a require greater timestamp error. They are different to give priority

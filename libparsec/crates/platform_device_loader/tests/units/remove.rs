@@ -5,7 +5,7 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::{remove_device, save_device, tests::utils::key_present_in_system};
-use libparsec_tests_fixtures::{parsec_test, tmp_path, TestbedEnv, TmpPath};
+use libparsec_tests_fixtures::{TestbedEnv, TmpPath, parsec_test, tmp_path};
 use libparsec_types::DeviceAccessStrategy;
 
 #[parsec_test(testbed = "minimal")]

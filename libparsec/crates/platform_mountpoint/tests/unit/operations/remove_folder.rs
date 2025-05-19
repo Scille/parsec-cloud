@@ -3,8 +3,8 @@
 use std::{path::PathBuf, sync::Arc};
 
 use libparsec_client::{
-    workspace::{WorkspaceOps, WorkspaceStatEntryError},
     Client,
+    workspace::{WorkspaceOps, WorkspaceStatEntryError},
 };
 use libparsec_client_connection::{
     protocol::authenticated_cmds, test_register_sequence_of_send_hooks,

@@ -11,14 +11,14 @@ use std::{
 
 pub use bytes::Bytes;
 pub use reqwest::{
-    header::{HeaderMap, HeaderName, HeaderValue},
     Error as RequestError, StatusCode,
+    header::{HeaderMap, HeaderName, HeaderValue},
 };
 use reqwest::{RequestBuilder, Response};
 
 use libparsec_platform_async::pretend_stream_is_send_on_web;
 use libparsec_protocol::API_LATEST_VERSION;
-use libparsec_testbed::{test_get_testbed_component_store, TestbedEnv, TestbedKind};
+use libparsec_testbed::{TestbedEnv, TestbedKind, test_get_testbed_component_store};
 use libparsec_types::prelude::*;
 
 use crate::ConnectionResult;
@@ -495,7 +495,7 @@ pub fn test_register_send_hook_async<A, R>(
                     // Cast has failed, we don't panic here given we have no information
                     // about the type
                     Err(req_as_any) => {
-                        return HighLevelSendHookFnCallResult::TypeCastError(req_as_any)
+                        return HighLevelSendHookFnCallResult::TypeCastError(req_as_any);
                     }
                 };
                 let future: Pin<Box<dyn Future<Output = _> + Send>> = Box::pin(async move {

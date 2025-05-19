@@ -6,10 +6,10 @@ use libparsec_types::prelude::*;
 use crate::EventTooMuchDriftWithServerClock;
 
 use super::{
-    store::{CertifStoreError, RealmBootstrapState},
     CertifEnsureRealmCreatedError, CertifPollServerError, CertifRenameRealmError,
     CertifRotateRealmKeyError, CertificateBasedActionOutcome, CertificateOps,
     InvalidCertificateError, InvalidKeysBundleError,
+    store::{CertifStoreError, RealmBootstrapState},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -22,7 +22,9 @@ pub enum CertifBootstrapWorkspaceError {
     AuthorNotAllowed,
     // Note `InvalidManifest` here, this is because we self-repair in case of invalid
     // user manifest (given otherwise the client would be stuck for good !)
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -99,13 +101,13 @@ pub(super) async fn bootstrap_workspace(
             Ok(_) => (),
             Err(err) => match err {
                 CertifEnsureRealmCreatedError::Offline(e) => {
-                    return Err(CertifBootstrapWorkspaceError::Offline(e))
+                    return Err(CertifBootstrapWorkspaceError::Offline(e));
                 }
                 CertifEnsureRealmCreatedError::Stopped => {
-                    return Err(CertifBootstrapWorkspaceError::Stopped)
+                    return Err(CertifBootstrapWorkspaceError::Stopped);
                 }
                 CertifEnsureRealmCreatedError::AuthorNotAllowed => {
-                    return Err(CertifBootstrapWorkspaceError::AuthorNotAllowed)
+                    return Err(CertifBootstrapWorkspaceError::AuthorNotAllowed);
                 }
                 CertifEnsureRealmCreatedError::TimestampOutOfBallpark {
                     server_timestamp,
@@ -129,7 +131,7 @@ pub(super) async fn bootstrap_workspace(
                     });
                 }
                 CertifEnsureRealmCreatedError::Internal(err) => {
-                    return Err(err.context("Cannot do server-side realm creation").into())
+                    return Err(err.context("Cannot do server-side realm creation").into());
                 }
             },
         }

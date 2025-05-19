@@ -6,14 +6,14 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
+    EventWorkspaceOpsOutboundSyncNeeded,
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
+        WorkspaceOps,
         store::{
             EnsureManifestExistsWithParentError, ForUpdateFolderError, UpdateFolderManifestError,
         },
-        WorkspaceOps,
     },
-    EventWorkspaceOpsOutboundSyncNeeded,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -63,7 +63,7 @@ pub(crate) async fn create_file(
         None => {
             return Err(WorkspaceCreateFileError::EntryExists {
                 entry_id: ops.realm_id,
-            })
+            });
         }
         Some(name) => name,
     };

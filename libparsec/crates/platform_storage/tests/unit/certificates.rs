@@ -1119,11 +1119,7 @@ async fn add_and_get_certificate(
 
             assert_database_populated!(updater).await;
 
-            if commit {
-                Ok(())
-            } else {
-                Err(())
-            }
+            if commit { Ok(()) } else { Err(()) }
         })
         .await
         .unwrap();
@@ -1468,9 +1464,11 @@ async fn start_with_on_disk_db(tmp_path: TmpPath, alice: &Device) {
     storage.stop().await.unwrap();
 
     // Check the db files have been created
-    assert!(tmp_path
-        .join("de10a11cec0010000000000000000000/certificates-v1.sqlite")
-        .exists());
+    assert!(
+        tmp_path
+            .join("de10a11cec0010000000000000000000/certificates-v1.sqlite")
+            .exists()
+    );
 
     // Start when the db file already exists
     let storage = CertificatesStorage::start(&tmp_path, &alice.local_device())

@@ -7,8 +7,8 @@ use libparsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    self as libparsec_types, BlockAccess, BlockID, Blocksize, ChunkID, DataError, DataResult,
-    DateTime, DeviceID, FileManifest, VlobID, DEFAULT_BLOCK_SIZE,
+    self as libparsec_types, BlockAccess, BlockID, Blocksize, ChunkID, DEFAULT_BLOCK_SIZE,
+    DataError, DataResult, DateTime, DeviceID, FileManifest, VlobID,
 };
 
 use super::impl_local_manifest_dump;

@@ -5,10 +5,10 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::{
-    test_register_low_level_send_hook, Bytes, ConnectionError, HeaderMap, HeaderName, HeaderValue,
-    InvitedCmds, ProxyConfig, ResponseMock, StatusCode,
+    Bytes, ConnectionError, HeaderMap, HeaderName, HeaderValue, InvitedCmds, ProxyConfig,
+    ResponseMock, StatusCode, test_register_low_level_send_hook,
 };
-use libparsec_protocol::{invited_cmds::latest as invited_cmds, API_LATEST_VERSION};
+use libparsec_protocol::{API_LATEST_VERSION, invited_cmds::latest as invited_cmds};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -48,11 +48,13 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
             );
             // Cannot check `User-Agent` here given reqwest adds it in a later step
             // assert!(headers.get("User-Agent").unwrap().to_str().unwrap().starts_with("Parsec-Client/"));
-            assert!(headers
-                .get("Authorization")
-                .unwrap()
-                .as_bytes()
-                .starts_with(b"Bearer "));
+            assert!(
+                headers
+                    .get("Authorization")
+                    .unwrap()
+                    .as_bytes()
+                    .starts_with(b"Bearer ")
+            );
 
             let body = request.body().unwrap().as_bytes().unwrap();
             let request = invited_cmds::AnyCmdReq::load(body).unwrap();

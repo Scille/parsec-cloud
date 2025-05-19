@@ -5,13 +5,13 @@ use std::{fmt::Display, ops::Deref, path::Path, sync::Arc};
 use anyhow::anyhow;
 use dialoguer::FuzzySelect;
 use libparsec::{
+    AuthenticatedCmds, AvailableDevice, DeviceAccessStrategy, DeviceFileType, DeviceLabel,
+    HumanHandle, LocalDevice, Password, ProxyConfig, SASCode, UserProfile,
     internal::{Client, EventBus},
-    list_available_devices, AuthenticatedCmds, AvailableDevice, DeviceAccessStrategy,
-    DeviceFileType, DeviceLabel, HumanHandle, LocalDevice, Password, ProxyConfig, SASCode,
-    UserProfile,
+    list_available_devices,
 };
 use libparsec_platform_ipc::{
-    lock_device_for_use, try_lock_device_for_use, InUseDeviceLockGuard, TryLockDeviceForUseError,
+    InUseDeviceLockGuard, TryLockDeviceForUseError, lock_device_for_use, try_lock_device_for_use,
 };
 use spinners::{Spinner, Spinners, Stream};
 
@@ -462,9 +462,5 @@ pub fn read_password(read_from: ReadPasswordFrom) -> anyhow::Result<libparsec::P
 }
 
 pub fn maybe_plural(number: &u8) -> &str {
-    if *number == 1 {
-        ""
-    } else {
-        "s"
-    }
+    if *number == 1 { "" } else { "s" }
 }

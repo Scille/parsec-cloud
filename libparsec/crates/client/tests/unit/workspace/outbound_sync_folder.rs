@@ -12,10 +12,10 @@ use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
 use crate::{
-    workspace::{MoveEntryMode, OutboundSyncOutcome},
     EventWorkspaceOpsInboundSyncDone, EventWorkspaceOpsOutboundSyncAborted,
     EventWorkspaceOpsOutboundSyncDone, EventWorkspaceOpsOutboundSyncNeeded,
     EventWorkspaceOpsOutboundSyncStarted, WorkspaceOps,
+    workspace::{MoveEntryMode, OutboundSyncOutcome},
 };
 
 async fn assert_folder(

@@ -5,8 +5,8 @@ use itertools::Itertools;
 use libparsec::{UserID, UserProfile};
 
 use crate::utils::{
-    maybe_plural, poll_server_for_new_certificates, start_spinner, StartedClient, BULLET_CHAR,
-    GREEN_CHECKMARK,
+    BULLET_CHAR, GREEN_CHECKMARK, StartedClient, maybe_plural, poll_server_for_new_certificates,
+    start_spinner,
 };
 
 // TODO: should provide the recipients and their share count as a single parameter
@@ -92,7 +92,9 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
     let threshold = if let Some(t) = threshold {
         t
     } else {
-        println!("The threshold is the minimum number of recipients that one must gather to recover the account");
+        println!(
+            "The threshold is the minimum number of recipients that one must gather to recover the account"
+        );
         // note that this is a blocking call
         Input::<NonZeroU8>::new()
             .with_prompt(format!(
@@ -112,9 +114,13 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
                     .find(|x| x.id == *recipient)
                     .expect("missing recipient")
                     .human_handle;
-                format!("{BULLET_CHAR} User {user} will have {share} share{}", maybe_plural(&share.get()))
+                format!(
+                    "{BULLET_CHAR} User {user} will have {share} share{}",
+                    maybe_plural(&share.get())
+                )
             })
-            .join("\n"));
+            .join("\n")
+    );
     if !no_confirmation
         && !Confirm::new()
             .with_prompt("Do you want to proceed?")

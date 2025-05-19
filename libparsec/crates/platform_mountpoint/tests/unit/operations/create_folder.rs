@@ -2,7 +2,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
-use libparsec_client::{workspace::WorkspaceOps, Client};
+use libparsec_client::{Client, workspace::WorkspaceOps};
 use libparsec_client_connection::{
     protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
 };

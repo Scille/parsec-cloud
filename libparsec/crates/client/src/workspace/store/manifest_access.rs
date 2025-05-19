@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 use crate::certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError};
 
 use super::cache::{
-    populate_cache_from_local_storage_or_server, PopulateCacheFromLocalStorageOrServerError,
+    PopulateCacheFromLocalStorageOrServerError, populate_cache_from_local_storage_or_server,
 };
 
 #[derive(Debug, thiserror::Error)]

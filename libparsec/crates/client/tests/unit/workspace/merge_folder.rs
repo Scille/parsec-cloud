@@ -6,7 +6,7 @@ use std::sync::Arc;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::workspace::merge::{merge_local_folder_manifest, MergeLocalFolderManifestOutcome};
+use crate::workspace::merge::{MergeLocalFolderManifestOutcome, merge_local_folder_manifest};
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn no_remote_change(
@@ -1871,23 +1871,29 @@ async fn local_and_remote_changes(
         }
         "children_modified_in_both_with_confined_entries_and_remote_from_ourself" => {
             let initial_child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
-            let initial_confined_child_id = VlobID::from_hex("fec4e512c3304019b01ba81619ddf563").unwrap();
+            let initial_confined_child_id =
+                VlobID::from_hex("fec4e512c3304019b01ba81619ddf563").unwrap();
             let new_shared_child_id = VlobID::from_hex("68a698cc8f7e40b884fac9a4dd152459").unwrap();
-            let new_shared_confined_child_id = VlobID::from_hex("71994e1d17fd498cbd90e3319e823b97").unwrap();
+            let new_shared_confined_child_id =
+                VlobID::from_hex("71994e1d17fd498cbd90e3319e823b97").unwrap();
             let new_local_child_id = VlobID::from_hex("51d73d55ca8c4de19a6295d7c0445648").unwrap();
-            let new_local_confined_child_id = VlobID::from_hex("bb1e9b16ccd349e4bf2d6bfdea8e5f9a").unwrap();
-            let new_remote_confined_child_id = VlobID::from_hex("766c1021232f41eaa258f820865637d5").unwrap();
+            let new_local_confined_child_id =
+                VlobID::from_hex("bb1e9b16ccd349e4bf2d6bfdea8e5f9a").unwrap();
+            let new_remote_confined_child_id =
+                VlobID::from_hex("766c1021232f41eaa258f820865637d5").unwrap();
             let new_remote_child_id = VlobID::from_hex("c75621ee01824e5ebdde4fcdc84e47e2").unwrap();
 
             local
                 .base
                 .children
                 .insert("initial.txt".parse().unwrap(), initial_child_id);
+            local.base.children.insert(
+                "initial_confined.tmp".parse().unwrap(),
+                initial_confined_child_id,
+            );
             local
-                .base
-                .children
-                .insert("initial_confined.tmp".parse().unwrap(), initial_confined_child_id);
-            local.remote_confinement_points.insert(initial_confined_child_id);
+                .remote_confinement_points
+                .insert(initial_confined_child_id);
 
             local
                 .children
@@ -1895,36 +1901,45 @@ async fn local_and_remote_changes(
             local
                 .children
                 .insert("new_local.txt".parse().unwrap(), new_local_child_id);
+            local.children.insert(
+                "new_local_confined.tmp".parse().unwrap(),
+                new_local_confined_child_id,
+            );
             local
-                .children
-                .insert("new_local_confined.tmp".parse().unwrap(), new_local_confined_child_id);
-            local.local_confinement_points.insert(new_local_confined_child_id);
+                .local_confinement_points
+                .insert(new_local_confined_child_id);
             local
                 .children
                 .insert("new_shared.txt".parse().unwrap(), new_shared_child_id);
+            local.children.insert(
+                "new_shared_confined.tmp".parse().unwrap(),
+                new_shared_confined_child_id,
+            );
             local
-                .children
-                .insert("new_shared_confined.tmp".parse().unwrap(), new_shared_confined_child_id);
-            local.local_confinement_points.insert(new_shared_confined_child_id);
+                .local_confinement_points
+                .insert(new_shared_confined_child_id);
 
             remote
                 .children
                 .insert("initial.txt".parse().unwrap(), initial_child_id);
-            remote
-                .children
-                .insert("initial_confined.tmp".parse().unwrap(), initial_confined_child_id);
+            remote.children.insert(
+                "initial_confined.tmp".parse().unwrap(),
+                initial_confined_child_id,
+            );
             remote
                 .children
                 .insert("new_remote.txt".parse().unwrap(), new_remote_child_id);
-            remote
-                .children
-                .insert("new_remote_confined.tmp".parse().unwrap(), new_remote_confined_child_id);
+            remote.children.insert(
+                "new_remote_confined.tmp".parse().unwrap(),
+                new_remote_confined_child_id,
+            );
             remote
                 .children
                 .insert("new_shared.txt".parse().unwrap(), new_shared_child_id);
-            remote
-                .children
-                .insert("new_shared_confined.tmp".parse().unwrap(), new_shared_confined_child_id);
+            remote.children.insert(
+                "new_shared_confined.tmp".parse().unwrap(),
+                new_shared_confined_child_id,
+            );
             remote.author = local_author;
 
             // Modifications from entries are considered already known (given we are the
@@ -1937,26 +1952,26 @@ async fn local_and_remote_changes(
                 .base
                 .children
                 .insert("initial.txt".parse().unwrap(), initial_child_id);
-            expected
-                .base
-                .children
-                .insert("initial_confined.tmp".parse().unwrap(), initial_confined_child_id);
+            expected.base.children.insert(
+                "initial_confined.tmp".parse().unwrap(),
+                initial_confined_child_id,
+            );
             expected
                 .base
                 .children
                 .insert("new_remote.txt".parse().unwrap(), new_remote_child_id);
-            expected
-                .base
-                .children
-                .insert("new_remote_confined.tmp".parse().unwrap(), new_remote_confined_child_id);
+            expected.base.children.insert(
+                "new_remote_confined.tmp".parse().unwrap(),
+                new_remote_confined_child_id,
+            );
             expected
                 .base
                 .children
                 .insert("new_shared.txt".parse().unwrap(), new_shared_child_id);
-            expected
-                .base
-                .children
-                .insert("new_shared_confined.tmp".parse().unwrap(), new_shared_confined_child_id);
+            expected.base.children.insert(
+                "new_shared_confined.tmp".parse().unwrap(),
+                new_shared_confined_child_id,
+            );
 
             expected
                 .children
@@ -1964,21 +1979,33 @@ async fn local_and_remote_changes(
             expected
                 .children
                 .insert("new_local.txt".parse().unwrap(), new_local_child_id);
-            expected
-                .children
-                .insert("new_local_confined.tmp".parse().unwrap(), new_local_confined_child_id);
+            expected.children.insert(
+                "new_local_confined.tmp".parse().unwrap(),
+                new_local_confined_child_id,
+            );
             expected
                 .children
                 .insert("new_shared.txt".parse().unwrap(), new_shared_child_id);
-            expected
-                .children
-                .insert("new_shared_confined.tmp".parse().unwrap(), new_shared_confined_child_id);
+            expected.children.insert(
+                "new_shared_confined.tmp".parse().unwrap(),
+                new_shared_confined_child_id,
+            );
 
-            expected.remote_confinement_points.insert(initial_confined_child_id);
-            expected.remote_confinement_points.insert(new_remote_confined_child_id);
-            expected.remote_confinement_points.insert(new_shared_confined_child_id);
-            expected.local_confinement_points.insert(new_local_confined_child_id);
-            expected.local_confinement_points.insert(new_shared_confined_child_id);
+            expected
+                .remote_confinement_points
+                .insert(initial_confined_child_id);
+            expected
+                .remote_confinement_points
+                .insert(new_remote_confined_child_id);
+            expected
+                .remote_confinement_points
+                .insert(new_shared_confined_child_id);
+            expected
+                .local_confinement_points
+                .insert(new_local_confined_child_id);
+            expected
+                .local_confinement_points
+                .insert(new_shared_confined_child_id);
         }
         "outdated_psp_local_child_becomes_non_confined" => {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
@@ -2056,16 +2083,16 @@ async fn local_and_remote_changes(
                 .base
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
-            expected.children.insert(
-                "child.tmp".parse().unwrap(),
-                child_id,
-            );
+            expected
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
             expected.local_confinement_points.insert(child_id);
             expected.remote_confinement_points.insert(child_id);
             expected.need_sync = false;
             expected.updated = remote.updated;
         }
-        "outdated_psp_remote_confined_entry_local_rename_then_remote_also_rename_with_confined_name" => {
+        "outdated_psp_remote_confined_entry_local_rename_then_remote_also_rename_with_confined_name" =>
+        {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
 
             // The entry is initially remotely confined...
@@ -2099,7 +2126,8 @@ async fn local_and_remote_changes(
             expected.need_sync = false;
             expected.updated = remote.updated;
         }
-        "outdated_psp_remote_confined_entry_local_rename_with_confined_name_then_remote_also_rename" => {
+        "outdated_psp_remote_confined_entry_local_rename_with_confined_name_then_remote_also_rename" =>
+        {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
 
             // The entry is initially confined...
@@ -2123,9 +2151,9 @@ async fn local_and_remote_changes(
                 .insert("child-remote-rename.txt".parse().unwrap(), child_id);
 
             expected
-            .base
-            .children
-            .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+                .base
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
             // Here the file is renamed to the remote name, which is consistent
             // with the typical merge priority (the remote rename wins over the
             // local rename).
@@ -2162,10 +2190,9 @@ async fn local_and_remote_changes(
                 .base
                 .children
                 .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
-            expected.children.insert(
-                "child-local-rename.tmp".parse().unwrap(),
-                child_id,
-            );
+            expected
+                .children
+                .insert("child-local-rename.tmp".parse().unwrap(), child_id);
             expected.local_confinement_points.insert(child_id);
             expected.remote_confinement_points.insert(child_id);
             expected.need_sync = false;
@@ -2218,7 +2245,7 @@ async fn local_and_remote_changes(
             local.updated = local.base.updated;
             // ...the remote hasn't anything important to merge, but this should
             // refresh the confinement in local with the new prevent sync pattern.
-           remote.author = local_author;
+            remote.author = local_author;
 
             // Given the remote is from ourself, the merge considers we already know
             // about it and hence acknowledges it and preserve the local children.
@@ -2242,7 +2269,7 @@ async fn local_and_remote_changes(
             remote
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
-           remote.author = local_author;
+            remote.author = local_author;
 
             expected.base.author = local_author;
             expected
@@ -2260,16 +2287,19 @@ async fn local_and_remote_changes(
                 .insert("child.tmp".parse().unwrap(), child_id);
             local.need_sync = true;
             // A corresponding remote manifest is produced and acknowledged by the server
-            remote.children.insert("child.tmp".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
             remote.author = local_author;
-
 
             expected.base.author = local_author;
             expected
                 .base
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
-            expected.children.insert("child.tmp".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
             expected.local_confinement_points.insert(child_id);
             expected.remote_confinement_points.insert(child_id);
             expected.need_sync = true;

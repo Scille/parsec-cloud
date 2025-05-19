@@ -12,8 +12,8 @@ use uuid::Uuid;
 use libparsec_types::prelude::*;
 
 use crate::{
-    ArchiveDeviceError, LoadDeviceError, RemoveDeviceError, SaveDeviceError, UpdateDeviceError,
-    DEVICE_FILE_EXT,
+    ArchiveDeviceError, DEVICE_FILE_EXT, LoadDeviceError, RemoveDeviceError, SaveDeviceError,
+    UpdateDeviceError,
 };
 
 const KEYRING_SERVICE: &str = "parsec";
@@ -166,7 +166,7 @@ async fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), Sav
         None => {
             return Err(SaveDeviceError::InvalidPath(anyhow::anyhow!(
                 "Path is missing a file name"
-            )))
+            )));
         }
     };
 

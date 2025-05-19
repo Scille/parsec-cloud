@@ -7,9 +7,9 @@ use crate::{
     WorkspaceStorageCacheSize,
 };
 use libparsec_client_connection::{
-    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle,
-    test_send_hook_vlob_read_batch, test_send_hook_vlob_read_versions, AuthenticatedCmds,
-    ProxyConfig,
+    AuthenticatedCmds, ProxyConfig, test_register_sequence_of_send_hooks,
+    test_send_hook_realm_get_keys_bundle, test_send_hook_vlob_read_batch,
+    test_send_hook_vlob_read_versions,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -215,7 +215,7 @@ impl DataAccessStrategy {
         let ops = match self {
             #[cfg(target_arch = "wasm32")]
             DataAccessStrategy::RealmExport => {
-                return Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb)
+                return Err(StartWorkspaceHistoryOpsError::RealmExportNotSupportedOnWeb);
             }
             #[cfg(not(target_arch = "wasm32"))]
             DataAccessStrategy::RealmExport => {

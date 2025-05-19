@@ -3,9 +3,9 @@
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
 use sodiumoxide::crypto::box_::{
-    curve25519xsalsa20poly1305, gen_keypair, PUBLICKEYBYTES, SECRETKEYBYTES,
+    PUBLICKEYBYTES, SECRETKEYBYTES, curve25519xsalsa20poly1305, gen_keypair,
 };
-use sodiumoxide::crypto::scalarmult::{scalarmult, GroupElement, Scalar};
+use sodiumoxide::crypto::scalarmult::{GroupElement, Scalar, scalarmult};
 use sodiumoxide::crypto::sealedbox::{open, seal};
 
 use crate::{CryptoError, SecretKey};
@@ -48,7 +48,7 @@ impl PrivateKey {
     }
 
     pub fn to_bytes(&self) -> [u8; Self::SIZE] {
-        self.0 .0
+        self.0.0
     }
 }
 
@@ -101,7 +101,7 @@ impl PublicKey {
 impl AsRef<[u8]> for PublicKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
-        &self.0 .0
+        &self.0.0
     }
 }
 

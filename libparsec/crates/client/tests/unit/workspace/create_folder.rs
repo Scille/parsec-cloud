@@ -9,7 +9,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::{assert_ls, ls, workspace_ops_factory};
-use crate::{workspace::WorkspaceCreateFolderError, EventWorkspaceOpsOutboundSyncNeeded};
+use crate::{EventWorkspaceOpsOutboundSyncNeeded, workspace::WorkspaceCreateFolderError};
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn create_in_root(env: &TestbedEnv) {

@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use libparsec::{tmp_path, OrganizationID, ParsecAddr, TmpPath};
+use libparsec::{OrganizationID, ParsecAddr, TmpPath, tmp_path};
 use predicates::prelude::PredicateBooleanExt;
 
 use crate::{
-    commands::tos::config::{config_tos_for_org_req, TosReq},
+    commands::tos::config::{TosReq, config_tos_for_org_req},
     integration_tests::bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD, TestOrganization},
     utils::BULLET_CHAR,
 };
 

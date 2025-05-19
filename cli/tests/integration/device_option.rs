@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use libparsec::{tmp_path, HumanHandle, LocalDevice, TmpPath};
+use libparsec::{HumanHandle, LocalDevice, TmpPath, tmp_path};
 use predicates::prelude::PredicateBooleanExt;
 
 use super::bootstrap_cli_test;
@@ -30,10 +30,11 @@ async fn device_not_found(tmp_path: TmpPath) {
 
     // Ensure that A_DEVICE_THAT_DOES_NOT_EXIST is not the prefix of one of the known devices.
     devices.iter().for_each(|dev| {
-        assert!(!dev
-            .device_id
-            .hex()
-            .starts_with(A_DEVICE_THAT_DOES_NOT_EXIST));
+        assert!(
+            !dev.device_id
+                .hex()
+                .starts_with(A_DEVICE_THAT_DOES_NOT_EXIST)
+        );
     });
 
     let mut available_devices_string_list = String::new();

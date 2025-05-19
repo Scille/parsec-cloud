@@ -1,11 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
-    create_exception,
+    Bound, create_exception,
     exceptions::{PyException, PyValueError},
     prelude::*,
     types::{PyByteArray, PyBytes, PyType},
-    Bound,
 };
 
 create_exception!(_parsec, CryptoError, PyException);
@@ -376,7 +375,7 @@ impl SequesterPrivateKeyDer {
                 _ => {
                     return Err(PyValueError::new_err(
                         "Invalid argument: size_in_bits must be equal to 1024 | 2048 | 3072 | 4096",
-                    ))
+                    ));
                 }
             });
         Ok((Self(priv_key), SequesterPublicKeyDer(pub_key)))
@@ -475,7 +474,7 @@ impl SequesterSigningKeyDer {
                 _ => {
                     return Err(PyValueError::new_err(
                         "Invalid argument: size_in_bits must be equal to 1024 | 2048 | 3072 | 4096",
-                    ))
+                    ));
                 }
             });
         Ok((Self(priv_key), SequesterVerifyKeyDer(pub_key)))

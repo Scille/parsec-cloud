@@ -81,7 +81,7 @@ async fn setup_with_revoked_recipients(
 ) {
     env.customize(|builder| {
         builder.revoke_user("bob"); // Bob has 2 shares
-                                    // Threshold is 2, and Mallory & Mike remain with 1 share each
+        // Threshold is 2, and Mallory & Mike remain with 1 share each
         match kind {
             "prefetch" => {
                 builder.certificates_storage_fetch_certificates("mike@dev1");
@@ -108,7 +108,7 @@ async fn setup_but_unusable(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.revoke_user("bob"); // Bob has 2 shares
         builder.revoke_user("mallory"); // Mallory has 1 share
-                                        // Threshold is 2, and only Mike with 1 share remains
+        // Threshold is 2, and only Mike with 1 share remains
         builder.certificates_storage_fetch_certificates("mike@dev1");
     })
     .await;

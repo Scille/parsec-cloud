@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use libparsec_tests_lite::prelude::*;
 
-use crate::fixtures::{alice, bob, timestamp, Device};
+use crate::fixtures::{Device, alice, bob, timestamp};
 use crate::prelude::*;
 
 // TODO: check serde output to ensure handling of Option<T> depending of

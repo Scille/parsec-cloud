@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    IntoPy, PyObject, PyResult, Python,
     exceptions::PyValueError,
     pyclass, pymethods,
     types::{PyTuple, PyType},
-    IntoPy, PyObject, PyResult, Python,
 };
 
 // #[non_exhaustive] macro must be set for every enum like type,

@@ -4,7 +4,7 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use crate::{load_device, LoadDeviceError};
+use crate::{LoadDeviceError, load_device};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 

@@ -5,7 +5,7 @@ use std::{collections::HashMap, sync::Arc};
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     server_fetch::{
-        server_fetch_child_manifest, server_fetch_workspace_manifest, ServerFetchManifestError,
+        ServerFetchManifestError, server_fetch_child_manifest, server_fetch_workspace_manifest,
     },
 };
 use libparsec_client_connection::ConnectionError;
@@ -129,7 +129,7 @@ pub(super) async fn populate_cache_from_server(
                     arc_local_child_manifest.to_owned()
                 }
                 CacheResolvedEntry::NotFound => {
-                    return Err(PopulateCacheFromServerError::EntryNotFound)
+                    return Err(PopulateCacheFromServerError::EntryNotFound);
                 }
             }
         }

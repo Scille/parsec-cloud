@@ -6,13 +6,12 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    greater_timestamp, store::CertifStoreError, CertifPollServerError,
-    CertificateBasedActionOutcome, CertificateOps, GreaterTimestampOffset, InvalidCertificateError,
-    InvalidKeysBundleError,
+    CertifPollServerError, CertificateBasedActionOutcome, CertificateOps, GreaterTimestampOffset,
+    InvalidCertificateError, InvalidKeysBundleError, greater_timestamp, store::CertifStoreError,
 };
 use crate::{
-    certif::realm_keys_bundle::EncryptRealmKeysBundleAccessForUserError,
     EventTooMuchDriftWithServerClock,
+    certif::realm_keys_bundle::EncryptRealmKeysBundleAccessForUserError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -33,7 +32,9 @@ pub enum CertifShareRealmError {
     RoleIncompatibleWithOutsider,
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

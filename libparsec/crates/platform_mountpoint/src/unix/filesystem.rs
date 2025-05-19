@@ -883,7 +883,7 @@ impl fuser::Filesystem for Filesystem {
                             log::warn!("FUSE `open` operation cannot complete: {:?}", err);
                             reply.manual().error(libc::EIO)
                         }
-                    }
+                    };
                 }
             };
 
@@ -1001,7 +1001,7 @@ impl fuser::Filesystem for Filesystem {
                             log::warn!("FUSE `create` operation cannot complete: {:?}", err);
                             reply.manual().error(libc::EIO)
                         }
-                    }
+                    };
                 }
             };
 
@@ -1164,7 +1164,7 @@ impl fuser::Filesystem for Filesystem {
                                     );
                                     reply.manual().error(libc::EIO)
                                 }
-                            }
+                            };
                         }
                     };
 
@@ -1522,7 +1522,7 @@ impl fuser::Filesystem for Filesystem {
                             log::warn!("FUSE `opendir` operation cannot complete: {:?}", err);
                             reply.manual().error(libc::EIO)
                         }
-                    }
+                    };
                 }
             };
 
@@ -1601,7 +1601,7 @@ impl fuser::Filesystem for Filesystem {
                                 );
                                 reply.manual().error(libc::EIO)
                             }
-                        }
+                        };
                     }
                 };
 
@@ -1700,7 +1700,7 @@ impl fuser::Filesystem for Filesystem {
                                 log::warn!("FUSE `readdir` operation cannot complete: {:?}", err);
                                 reply.manual().error(libc::EIO)
                             }
-                        }
+                        };
                     }
                 };
 

@@ -18,9 +18,9 @@ use libparsec_serialization_format::parsec_data;
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::{self as libparsec_types, IndexInt};
 use crate::{
-    serialization::{format_v0_dump, format_vx_load},
     DataError, DataResult, DateTime, DeviceID, DeviceLabel, HumanHandle, MaybeRedacted, RealmRole,
     SequesterServiceID, UserID, UserProfile, VlobID,
+    serialization::{format_v0_dump, format_vx_load},
 };
 
 fn check_author_allow_root(
@@ -34,13 +34,13 @@ fn check_author_allow_root(
             return Err(DataError::UnexpectedAuthor {
                 expected: expected_author_id,
                 got: Some(author_id),
-            })
+            });
         }
         (CertificateSigner::Root, CertificateSigner::User(expected_author_id)) => {
             return Err(DataError::UnexpectedAuthor {
                 expected: expected_author_id,
                 got: None,
-            })
+            });
         }
         _ => (),
     }

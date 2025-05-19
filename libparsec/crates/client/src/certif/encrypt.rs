@@ -3,8 +3,8 @@
 use libparsec_types::prelude::*;
 
 use super::{
-    store::{CertificatesStoreReadGuard, GetCertificateError},
     UpTo,
+    store::{CertificatesStoreReadGuard, GetCertificateError},
 };
 
 #[derive(Debug, thiserror::Error)]

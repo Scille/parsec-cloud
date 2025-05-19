@@ -9,8 +9,9 @@ pub(crate) use manifest::*;
 pub(crate) use pki::*;
 
 use pyo3::{
+    Bound, PyResult,
     types::{PyModule, PyModuleMethods},
-    wrap_pyfunction, Bound, PyResult,
+    wrap_pyfunction,
 };
 
 pub(crate) fn add_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {

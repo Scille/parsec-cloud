@@ -6,12 +6,12 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use super::{
-    populate_cache::{populate_cache_from_server, PopulateCacheFromServerError},
     WorkspaceHistoryOps,
+    populate_cache::{PopulateCacheFromServerError, populate_cache_from_server},
 };
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
-    server_fetch::{server_fetch_block, ServerFetchBlockError},
+    server_fetch::{ServerFetchBlockError, server_fetch_block},
     workspace::history::CacheResolvedEntry,
 };
 
@@ -67,7 +67,7 @@ pub(super) async fn resolve_path(
         match cache_only_outcome {
             CacheOnlyPathResolutionOutcome::Done(manifest) => return Ok(manifest),
             CacheOnlyPathResolutionOutcome::EntryNotFound => {
-                return Err(WorkspaceHistoryResolvePathError::EntryNotFound)
+                return Err(WorkspaceHistoryResolvePathError::EntryNotFound);
             }
             // We got a cache miss
             CacheOnlyPathResolutionOutcome::NeedPopulateCache(cache_miss_entry_id) => {
@@ -157,7 +157,7 @@ fn cache_only_path_resolution(
                 // The root is always a folder
                 Some(CacheResolvedEntry::Exists(ArcLocalChildManifest::File(_))) => unreachable!(),
                 Some(CacheResolvedEntry::NotFound) => {
-                    return CacheOnlyPathResolutionOutcome::EntryNotFound
+                    return CacheOnlyPathResolutionOutcome::EntryNotFound;
                 }
                 None => return CacheOnlyPathResolutionOutcome::NeedPopulateCache(ops.realm_id),
             },
@@ -179,7 +179,7 @@ fn cache_only_path_resolution(
         let child_manifest = match cache_resolutions.get(&child_id) {
             Some(CacheResolvedEntry::Exists(manifest)) => manifest,
             Some(CacheResolvedEntry::NotFound) => {
-                return CacheOnlyPathResolutionOutcome::EntryNotFound
+                return CacheOnlyPathResolutionOutcome::EntryNotFound;
             }
             // Cache miss !
             // `part_index` is not incremented here, so we are going to
@@ -239,10 +239,10 @@ fn cache_only_retrieve_path_from_id(
         let parent_manifest = match cache_resolutions.get(&current_parent_id) {
             Some(CacheResolvedEntry::Exists(ArcLocalChildManifest::Folder(manifest))) => manifest,
             Some(CacheResolvedEntry::Exists(ArcLocalChildManifest::File(_))) => {
-                return CacheOnlyRetrievalPathOutcome::EntryNotFound
+                return CacheOnlyRetrievalPathOutcome::EntryNotFound;
             }
             Some(CacheResolvedEntry::NotFound) => {
-                return CacheOnlyRetrievalPathOutcome::EntryNotFound
+                return CacheOnlyRetrievalPathOutcome::EntryNotFound;
             }
             None => return CacheOnlyRetrievalPathOutcome::NeedPopulateCache(current_parent_id),
         };
@@ -291,10 +291,10 @@ pub(super) async fn retrieve_path_from_id(
         };
         match cache_only_outcome {
             CacheOnlyRetrievalPathOutcome::Done((entry_manifest, path)) => {
-                return Ok((entry_manifest, path))
+                return Ok((entry_manifest, path));
             }
             CacheOnlyRetrievalPathOutcome::EntryNotFound => {
-                return Err(WorkspaceHistoryResolvePathError::EntryNotFound)
+                return Err(WorkspaceHistoryResolvePathError::EntryNotFound);
             }
             // We got a cache miss
             CacheOnlyRetrievalPathOutcome::NeedPopulateCache(cache_miss_entry_id) => {
@@ -347,7 +347,7 @@ pub(super) async fn get_entry(
                 match cache_resolved_entry {
                     CacheResolvedEntry::Exists(manifest) => return Ok(manifest.to_owned()),
                     CacheResolvedEntry::NotFound => {
-                        return Err(WorkspaceHistoryGetEntryError::EntryNotFound)
+                        return Err(WorkspaceHistoryGetEntryError::EntryNotFound);
                     }
                 }
             }

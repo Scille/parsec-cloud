@@ -56,7 +56,7 @@ resolver = "2"
 # https://doc.rust-lang.org/cargo/reference/workspaces.html#the-package-table
 [workspace.package]
 authors = ["@Scille/parsec-dev", "@Scille/rust-code-owners"]
-edition = "2021"
+edition = "2024"
 homepage = "https://parsec.cloud"
 license = "BUSL-1.1"
 publish = false

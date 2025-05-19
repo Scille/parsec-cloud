@@ -7,9 +7,9 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    bootstrap_organization, test_organization_bootstrap_finalize_ctx_factory,
     BootstrapOrganizationError, Client, ClientConfig, EventBus, MountpointMountStrategy,
-    WorkspaceStorageCacheSize,
+    WorkspaceStorageCacheSize, bootstrap_organization,
+    test_organization_bootstrap_finalize_ctx_factory,
 };
 
 // should be the same as bootstrap token defined in server/parsec/backend.py L91 as TEST_BOOTSTRAP_TOKEN

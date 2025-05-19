@@ -6,20 +6,20 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
-    workspace::store::cache::{
-        populate_cache_from_local_storage, PopulateCacheFromLocalStorageError,
-    },
     InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError,
+    workspace::store::cache::{
+        PopulateCacheFromLocalStorageError, populate_cache_from_local_storage,
+    },
 };
 use libparsec_platform_storage::workspace::UpdateManifestData;
 
 use super::{
+    RetrievePathFromIDEntry,
     cache::{
-        populate_cache_from_local_storage_or_server, PopulateCacheFromLocalStorageOrServerError,
+        PopulateCacheFromLocalStorageOrServerError, populate_cache_from_local_storage_or_server,
     },
     per_manifest_update_lock::ManifestUpdateLockGuard,
     resolve_path::RetrievePathFromIdAndLockForUpdateError,
-    RetrievePathFromIDEntry,
 };
 
 pub(super) type UpdateManifestForSyncError = super::WorkspaceStoreOperationError;
@@ -132,7 +132,7 @@ pub(super) async fn for_update_sync_local_only(
         let entry_guard = match outcome {
             LockForUpdateOutcome::GoToStep3(entry_guard) => entry_guard,
             LockForUpdateOutcome::GoToStep4((entry_guard, manifest)) => {
-                break 'get_lock_and_manifest (entry_guard, Some(manifest))
+                break 'get_lock_and_manifest (entry_guard, Some(manifest));
             }
             LockForUpdateOutcome::WouldBlock => {
                 return Err(ForUpdateSyncLocalOnlyError::WouldBlock);
@@ -148,7 +148,7 @@ pub(super) async fn for_update_sync_local_only(
         match outcome {
             Ok(manifest) => break 'get_lock_and_manifest (entry_guard, Some(manifest)),
             Err(PopulateCacheFromLocalStorageError::EntryNotFound) => {
-                break 'get_lock_and_manifest (entry_guard, None)
+                break 'get_lock_and_manifest (entry_guard, None);
             }
             Err(err) => {
                 release_guard_on_error!(entry_guard);
@@ -294,7 +294,7 @@ impl<'a> SyncUpdater<'a> {
         };
         self.store
             .data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| UpdateManifestForSyncError::Stopped)?;
@@ -345,7 +345,7 @@ impl<'a> SyncUpdater<'a> {
         });
         self.store
             .data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| UpdateManifestForSyncError::Stopped)?;
@@ -485,7 +485,7 @@ impl<'a> SyncUpdater<'a> {
         let parent_manifest = match parent_manifest {
             ArcLocalChildManifest::Folder(parent_manifest) => parent_manifest,
             ArcLocalChildManifest::File(_) => {
-                return Err((self, IntoSyncConflictUpdaterError::ParentIsNotAFolder))
+                return Err((self, IntoSyncConflictUpdaterError::ParentIsNotAFolder));
             }
         };
 
@@ -554,14 +554,18 @@ impl SyncConflictUpdater<'_> {
                 self.original_parent_manifest.base.id
             );
             assert_eq!(parent_manifest.base, self.original_parent_manifest.base);
-            assert!(parent_manifest
-                .children
-                .iter()
-                .any(|(_, id)| *id == conflicting_new_child_manifest.id()));
-            assert!(parent_manifest
-                .children
-                .iter()
-                .any(|(_, id)| *id == child_manifest.id()));
+            assert!(
+                parent_manifest
+                    .children
+                    .iter()
+                    .any(|(_, id)| *id == conflicting_new_child_manifest.id())
+            );
+            assert!(
+                parent_manifest
+                    .children
+                    .iter()
+                    .any(|(_, id)| *id == child_manifest.id())
+            );
             match (&self.original_child_manifest, &child_manifest) {
                 (ArcLocalChildManifest::File(_), ArcLocalChildManifest::File(_)) => (),
                 (ArcLocalChildManifest::Folder(_), ArcLocalChildManifest::Folder(_)) => (),
@@ -605,7 +609,7 @@ impl SyncConflictUpdater<'_> {
         };
         self.store
             .data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| UpdateManifestForSyncError::Stopped)?;

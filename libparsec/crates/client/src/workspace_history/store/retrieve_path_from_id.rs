@@ -5,8 +5,8 @@ use std::collections::HashSet;
 use libparsec_types::prelude::*;
 
 use super::{
-    populate_cache::populate_manifest_cache, CacheResolvedEntry, PopulateManifestCacheError,
-    WorkspaceHistoryStore,
+    CacheResolvedEntry, PopulateManifestCacheError, WorkspaceHistoryStore,
+    populate_cache::populate_manifest_cache,
 };
 
 pub(crate) type WorkspaceHistoryStoreRetrievePathFromIDError = PopulateManifestCacheError;
@@ -27,10 +27,10 @@ pub(super) async fn retrieve_path_from_id(
         };
         match cache_only_outcome {
             CacheOnlyRetrievalPathOutcome::Done((entry_manifest, path)) => {
-                return Ok((entry_manifest, path))
+                return Ok((entry_manifest, path));
             }
             CacheOnlyRetrievalPathOutcome::EntryNotFound => {
-                return Err(WorkspaceHistoryStoreRetrievePathFromIDError::EntryNotFound)
+                return Err(WorkspaceHistoryStoreRetrievePathFromIDError::EntryNotFound);
             }
             // We got a cache miss
             CacheOnlyRetrievalPathOutcome::NeedPopulateCache(cache_miss_entry_id) => {
@@ -62,7 +62,7 @@ fn cache_only_retrieve_path_from_id(
         CacheResolvedEntry::Exists(manifest) => manifest,
         CacheResolvedEntry::NotFound => return CacheOnlyRetrievalPathOutcome::EntryNotFound,
         CacheResolvedEntry::CacheMiss => {
-            return CacheOnlyRetrievalPathOutcome::NeedPopulateCache(entry_id)
+            return CacheOnlyRetrievalPathOutcome::NeedPopulateCache(entry_id);
         }
     };
 
@@ -77,11 +77,11 @@ fn cache_only_retrieve_path_from_id(
         let parent_manifest = match cache.resolve_manifest_at(at, current_parent_id) {
             CacheResolvedEntry::Exists(ArcChildManifest::Folder(manifest)) => manifest,
             CacheResolvedEntry::Exists(ArcChildManifest::File(_)) => {
-                return CacheOnlyRetrievalPathOutcome::EntryNotFound
+                return CacheOnlyRetrievalPathOutcome::EntryNotFound;
             }
             CacheResolvedEntry::NotFound => return CacheOnlyRetrievalPathOutcome::EntryNotFound,
             CacheResolvedEntry::CacheMiss => {
-                return CacheOnlyRetrievalPathOutcome::NeedPopulateCache(current_parent_id)
+                return CacheOnlyRetrievalPathOutcome::NeedPopulateCache(current_parent_id);
             }
         };
 

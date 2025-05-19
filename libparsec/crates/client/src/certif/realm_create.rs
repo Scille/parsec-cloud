@@ -5,10 +5,10 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    store::{CertifStoreError, RealmBootstrapState},
     CertificateBasedActionOutcome, CertificateOps,
+    store::{CertifStoreError, RealmBootstrapState},
 };
-use crate::{greater_timestamp, EventTooMuchDriftWithServerClock, GreaterTimestampOffset};
+use crate::{EventTooMuchDriftWithServerClock, GreaterTimestampOffset, greater_timestamp};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifEnsureRealmCreatedError {
@@ -20,7 +20,9 @@ pub enum CertifEnsureRealmCreatedError {
     AuthorNotAllowed,
     // Note `InvalidManifest` here, this is because we self-repair in case of invalid
     // user manifest (given otherwise the client would be stuck for good !)
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

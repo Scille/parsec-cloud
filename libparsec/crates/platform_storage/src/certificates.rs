@@ -114,7 +114,7 @@ impl PerTopicLastTimestamps {
                 None => return false,
                 // We are not up to date with this realm
                 Some(self_realm_timestamp) if self_realm_timestamp < other_realm_timestamp => {
-                    return false
+                    return false;
                 }
                 _ => (),
             }

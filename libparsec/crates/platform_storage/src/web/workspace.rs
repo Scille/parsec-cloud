@@ -8,16 +8,16 @@ use libparsec_types::prelude::*;
 use wasm_bindgen::{JsCast, JsValue};
 
 use super::utils::{
-    js_to_rs_bytes, js_to_rs_string, js_to_rs_u32, js_to_rs_u64, js_to_rs_vlob_id,
-    rs_to_js_timestamp, rs_to_js_u64, with_transaction, CustomErrMarker,
+    CustomErrMarker, js_to_rs_bytes, js_to_rs_string, js_to_rs_u32, js_to_rs_u64, js_to_rs_vlob_id,
+    rs_to_js_timestamp, rs_to_js_u64, with_transaction,
 };
+use crate::PREVENT_SYNC_PATTERN_EMPTY_PATTERN;
 #[cfg(any(test, feature = "expose-test-methods"))]
 use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
 use crate::workspace::{
     MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, RawEncryptedBlock,
     RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData,
 };
-use crate::PREVENT_SYNC_PATTERN_EMPTY_PATTERN;
 
 pub(super) fn get_workspace_storage_db_name(
     data_base_dir: &Path,

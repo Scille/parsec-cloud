@@ -11,10 +11,10 @@ use libparsec_types::prelude::*;
 
 use super::utils::{assert_ls, ls, workspace_ops_factory};
 use crate::{
+    EventWorkspaceOpsOutboundSyncNeeded,
     workspace::{
         EntryStat, OpenOptions, WorkspaceFdReadError, WorkspaceFdWriteError, WorkspaceOpenFileError,
     },
-    EventWorkspaceOpsOutboundSyncNeeded,
 };
 
 #[parsec_test(testbed = "minimal_client_ready")]

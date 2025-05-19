@@ -22,9 +22,9 @@ use libparsec_platform_storage::workspace::{UpdateManifestData, WorkspaceStorage
 use libparsec_types::prelude::*;
 
 use crate::{
-    certif::CertificateOps,
-    server_fetch::{server_fetch_block, ServerFetchBlockError},
     InvalidBlockAccessError, InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError,
+    certif::CertificateOps,
+    server_fetch::{ServerFetchBlockError, server_fetch_block},
 };
 
 use cache::CurrentViewCache;
@@ -129,7 +129,7 @@ mod data {
 
     use super::*;
     #[cfg(debug_assertions)]
-    use libparsec_platform_async::{try_task_id, TaskID};
+    use libparsec_platform_async::{TaskID, try_task_id};
 
     /*
      * WorkspaceStoreData
@@ -179,39 +179,18 @@ mod data {
         /// - A task should never lock both current view cache and storage at the same time.
         /// - You should do the minimum amount of work inside the closure (e.g. avoid
         ///   doing encryption).
-        pub async fn with_storage<T, Fut>(
+        pub async fn with_storage<T>(
             &self,
-            cb: impl FnOnce(&'static mut Option<WorkspaceStorage>) -> Fut,
-        ) -> T
-        where
-            Fut: std::future::Future<Output = T>,
-        {
+            cb: impl AsyncFnOnce(&mut Option<WorkspaceStorage>) -> T,
+        ) -> T {
             let mut guard = self.storage.lock().await;
             let storage_mut_ref = &mut *guard;
-
-            unsafe fn pretend_static(
-                src: &mut Option<WorkspaceStorage>,
-            ) -> &'static mut Option<WorkspaceStorage> {
-                std::mem::transmute(src)
-            }
-            // SAFETY: It is not currently possible to express the fact the lifetime
-            // of a Future returned by a closure depends on the closure parameter if
-            // they are references.
-            // Here things are even worst because we have references coming from
-            // `for_write` body and from `cb` closure (so workarounds as boxed future
-            // don't work).
-            // However in practice all our references have a lifetime bound to the
-            // parent (i.e. `for_write`) or the grand-parent (i.e.
-            // `CertificateOps::add_certificates_batch`) which are going to poll this
-            // future directly, so the references' lifetimes *are* long enough.
-            // TODO: Remove this once async closure are available
-            let static_storage_mut_ref = unsafe { pretend_static(storage_mut_ref) };
 
             #[cfg(debug_assertions)]
             let _lock_tracker_guard =
                 DataLockTrackerGuard::register(&self.lock_tracking, DataLock::Storage);
 
-            let fut = cb(static_storage_mut_ref);
+            let fut = cb(storage_mut_ref);
             fut.await
         }
     }
@@ -281,7 +260,10 @@ mod data {
             let mut guard = lock_tracking.lock().expect("Mutex is poisoned !");
             for (candidate_id, candidate_lock) in guard.iter() {
                 if *candidate_id == id {
-                    panic!("Running future {:?} is trying to acquire {:?} lock while holding another {:?} lock !", id, lock, *candidate_lock);
+                    panic!(
+                        "Running future {:?} is trying to acquire {:?} lock while holding another {:?} lock !",
+                        id, lock, *candidate_lock
+                    );
                 }
             }
             guard.push((id, lock));
@@ -394,7 +376,7 @@ impl WorkspaceStore {
 
     pub async fn stop(&self) -> anyhow::Result<()> {
         self.data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 if let Some(storage) = maybe_storage.take() {
                     storage.stop().await
                 } else {
@@ -464,7 +446,7 @@ impl WorkspaceStore {
                         Err(EnsureManifestExistsWithParentError::InvalidManifest(err))
                     }
                     GetManifestError::Internal(err) => Err(err.into()),
-                }
+                };
             }
         };
 
@@ -617,7 +599,7 @@ impl WorkspaceStore {
 
         let maybe_encrypted = self
             .data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| ReadChunkOrBlockLocalOnlyError::Stopped)?;
@@ -664,7 +646,7 @@ impl WorkspaceStore {
             Err(err) => match err {
                 ReadChunkOrBlockLocalOnlyError::ChunkNotFound => (),
                 ReadChunkOrBlockLocalOnlyError::Stopped => {
-                    return Err(ReadChunkOrBlockError::Stopped)
+                    return Err(ReadChunkOrBlockError::Stopped);
                 }
                 ReadChunkOrBlockLocalOnlyError::Internal(err) => return Err(err.into()),
             },
@@ -747,7 +729,7 @@ impl WorkspaceStore {
 
         let encrypted = self.device.local_symkey.encrypt(&data);
         self.data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| ReadChunkOrBlockError::Stopped)?;
@@ -776,7 +758,7 @@ impl WorkspaceStore {
         // uploaded block or not.
         let maybe_encrypted = self
             .data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| GetNotUploadedChunkError::Stopped)?;
@@ -809,7 +791,7 @@ impl WorkspaceStore {
         chunk_id: ChunkID,
     ) -> Result<(), PromoteLocalOnlyChunkToUploadedBlockError> {
         self.data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| PromoteLocalOnlyChunkToUploadedBlockError::Stopped)?;
@@ -827,7 +809,7 @@ impl WorkspaceStore {
         limit: u32,
     ) -> Result<Vec<VlobID>, GetNeedSyncEntriesError> {
         self.data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| GetNeedSyncEntriesError::Stopped)?;
@@ -845,7 +827,7 @@ impl WorkspaceStore {
         limit: u32,
     ) -> Result<Vec<VlobID>, GetNeedSyncEntriesError> {
         self.data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| GetNeedSyncEntriesError::Stopped)?;
@@ -860,7 +842,7 @@ impl WorkspaceStore {
 
     pub async fn get_realm_checkpoint(&self) -> Result<IndexInt, GetRealmCheckpointError> {
         self.data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| GetRealmCheckpointError::Stopped)?;
@@ -879,7 +861,7 @@ impl WorkspaceStore {
         changes: &[(VlobID, VersionInt)],
     ) -> Result<(), UpdateRealmCheckpointError> {
         self.data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| UpdateRealmCheckpointError::Stopped)?;

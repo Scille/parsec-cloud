@@ -29,11 +29,13 @@ async fn unmount_with_fusermount(tmp_path: TmpPath, env: &TestbedEnv) {
             // filesystem to be unmounted even if it is still in use.
             // This is important given upon mounting, the filesystem gets polled by various
             // systems that can clash with our attempt at unmounting.
-            assert!(std::process::Command::new("fusermount")
-                .args(["-uz", mountpoint_path.to_str().unwrap()])
-                .status()
-                .unwrap()
-                .success());
+            assert!(
+                std::process::Command::new("fusermount")
+                    .args(["-uz", mountpoint_path.to_str().unwrap()])
+                    .status()
+                    .unwrap()
+                    .success()
+            );
 
             for _ in 0..10 {
                 let unmounted_st_dev = tokio::fs::metadata(&mountpoint_path)

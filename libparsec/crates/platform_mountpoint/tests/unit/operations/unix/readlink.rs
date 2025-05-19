@@ -3,7 +3,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 use libparsec_client::WorkspaceOps;
-use libparsec_tests_fixtures::{rstest, tmp_path, TestbedEnv, TmpPath};
+use libparsec_tests_fixtures::{TestbedEnv, TmpPath, rstest, tmp_path};
 use libparsec_tests_lite::{p_assert_matches, parsec_test};
 
 use crate::operations::utils::mount_and_test;

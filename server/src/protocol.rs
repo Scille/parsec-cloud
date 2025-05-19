@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    Bound, IntoPy, PyObject, PyResult, Python,
     exceptions::PyValueError,
     prelude::PyModuleMethods,
     pyclass, pymethods,
     types::{PyModule, PyType},
-    Bound, IntoPy, PyObject, PyResult, Python,
 };
 
 use libparsec_serialization_format::python_bindings_parsec_protocol_cmds_family;

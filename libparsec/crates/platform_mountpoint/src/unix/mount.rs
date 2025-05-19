@@ -72,7 +72,7 @@ impl Mountpoint {
         let mountpoint_base_dir = match mount_strategy {
             MountpointMountStrategy::Directory { base_dir } => base_dir.clone(),
             MountpointMountStrategy::DriveLetter => {
-                return Err(anyhow::anyhow!("Mount strategy not supported !"))
+                return Err(anyhow::anyhow!("Mount strategy not supported !"));
             }
             MountpointMountStrategy::Disabled => return Err(anyhow::anyhow!("Mount disabled !")),
         };

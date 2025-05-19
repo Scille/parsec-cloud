@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    FromPyObject, IntoPy, PyObject, PyResult,
     exceptions::PyNotImplementedError,
     pyclass::CompareOp,
     types::{PyAnyMethods, PyByteArray, PyBytes, PyTuple},
-    FromPyObject, IntoPy, PyObject, PyResult,
 };
 use std::{
     collections::hash_map::DefaultHasher,

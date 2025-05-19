@@ -5,10 +5,10 @@ use libparsec_platform_storage::certificates::UpTo;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
-use crate::{certif::store::LastShamirRecovery, CertificateOps, EventTooMuchDriftWithServerClock};
+use crate::{CertificateOps, EventTooMuchDriftWithServerClock, certif::store::LastShamirRecovery};
 
 use super::{
-    greater_timestamp, CertifStoreError, CertificateBasedActionOutcome, GreaterTimestampOffset,
+    CertifStoreError, CertificateBasedActionOutcome, GreaterTimestampOffset, greater_timestamp,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -17,7 +17,9 @@ pub enum CertifDeleteShamirRecoveryError {
     Stopped,
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    Bound, PyResult, Python,
     exceptions::PyValueError,
     pyclass, pymethods,
     types::{PyBytes, PyType},
-    Bound, PyResult, Python,
 };
 
 crate::binding_utils::gen_py_wrapper_class!(

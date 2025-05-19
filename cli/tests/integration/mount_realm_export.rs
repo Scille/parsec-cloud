@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use libparsec::{tmp_path, SequesterServiceID, TmpPath};
+use libparsec::{SequesterServiceID, TmpPath, tmp_path};
 use libparsec_tests_fixtures::p_assert_eq;
 
 async fn populate_realm_export_db(temp_dir: &Path) -> PathBuf {

@@ -28,7 +28,9 @@ pub enum ClientShareWorkspaceError {
     RoleIncompatibleWithOutsider,
     #[error("Cannot communicate with the server: {0}")]
     Offline(#[from] ConnectionError),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -73,10 +75,10 @@ pub async fn share_workspace(
                 CertificateBasedActionOutcome::LocalIdempotent
             }
             CertifBootstrapWorkspaceError::Offline(e) => {
-                return Err(ClientShareWorkspaceError::Offline(e))
+                return Err(ClientShareWorkspaceError::Offline(e));
             }
             CertifBootstrapWorkspaceError::Stopped => {
-                return Err(ClientShareWorkspaceError::Stopped)
+                return Err(ClientShareWorkspaceError::Stopped);
             }
             CertifBootstrapWorkspaceError::TimestampOutOfBallpark {
                 server_timestamp,
@@ -89,18 +91,18 @@ pub async fn share_workspace(
                     client_timestamp,
                     ballpark_client_early_offset,
                     ballpark_client_late_offset,
-                })
+                });
             }
             CertifBootstrapWorkspaceError::InvalidKeysBundle(err) => {
-                return Err(ClientShareWorkspaceError::InvalidKeysBundle(err))
+                return Err(ClientShareWorkspaceError::InvalidKeysBundle(err));
             }
             CertifBootstrapWorkspaceError::InvalidCertificate(err) => {
-                return Err(ClientShareWorkspaceError::InvalidCertificate(err))
+                return Err(ClientShareWorkspaceError::InvalidCertificate(err));
             }
             CertifBootstrapWorkspaceError::Internal(err) => {
                 return Err(err
                     .context("Cannot ensure workspace is bootstrapped")
-                    .into())
+                    .into());
             }
         },
     };

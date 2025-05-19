@@ -6,8 +6,8 @@ pub use libparsec_client::{
     MountpointMountStrategy, ProxyConfig, ServerConfig, WorkspaceStorageCacheSize,
 };
 pub use libparsec_platform_device_loader::{
-    get_default_config_dir, get_default_data_base_dir, get_default_mountpoint_base_dir,
-    PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
+    PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, get_default_config_dir,
+    get_default_data_base_dir, get_default_mountpoint_base_dir,
 };
 pub use libparsec_types::prelude::*;
 

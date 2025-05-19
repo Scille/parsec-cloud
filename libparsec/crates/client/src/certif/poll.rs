@@ -8,8 +8,8 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    store::CertifStoreError, CertifAddCertificatesBatchError, CertificateOps,
-    InvalidCertificateError, MaybeRedactedSwitch,
+    CertifAddCertificatesBatchError, CertificateOps, InvalidCertificateError, MaybeRedactedSwitch,
+    store::CertifStoreError,
 };
 
 #[derive(Debug, thiserror::Error)]

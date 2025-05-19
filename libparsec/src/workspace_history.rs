@@ -10,7 +10,7 @@ pub use libparsec_client::workspace::{
 };
 use libparsec_types::prelude::*;
 
-use crate::handle::{borrow_from_handle, Handle, HandleItem};
+use crate::handle::{Handle, HandleItem, borrow_from_handle};
 
 fn borrow_workspace(workspace: Handle) -> anyhow::Result<Arc<libparsec_client::WorkspaceOps>> {
     borrow_from_handle(workspace, |x| match x {

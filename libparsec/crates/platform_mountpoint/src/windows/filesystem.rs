@@ -3,13 +3,13 @@
 use once_cell::sync::Lazy;
 use std::sync::{Arc, Mutex};
 use winfsp_wrs::{
-    filetime_from_utc, u16cstr, CleanupFlags, CreateFileInfo, CreateOptions, DirInfo,
-    FileAccessRights, FileAttributes, FileInfo, FileSystemInterface, PSecurityDescriptor,
-    SecurityDescriptor, U16CStr, U16String, VolumeInfo, WriteMode, NTSTATUS, STATUS_ACCESS_DENIED,
+    CleanupFlags, CreateFileInfo, CreateOptions, DirInfo, FileAccessRights, FileAttributes,
+    FileInfo, FileSystemInterface, NTSTATUS, PSecurityDescriptor, STATUS_ACCESS_DENIED,
     STATUS_DEVICE_NOT_READY, STATUS_DIRECTORY_NOT_EMPTY, STATUS_FILE_IS_A_DIRECTORY,
     STATUS_HOST_UNREACHABLE, STATUS_INVALID_HANDLE, STATUS_MEDIA_WRITE_PROTECTED,
-    STATUS_NOT_A_DIRECTORY, STATUS_NO_SUCH_DEVICE, STATUS_OBJECT_NAME_COLLISION,
-    STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_NOT_FOUND,
+    STATUS_NO_SUCH_DEVICE, STATUS_NOT_A_DIRECTORY, STATUS_OBJECT_NAME_COLLISION,
+    STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_NOT_FOUND, SecurityDescriptor, U16CStr,
+    U16String, VolumeInfo, WriteMode, filetime_from_utc, u16cstr,
 };
 
 use libparsec_client::workspace::{
@@ -328,7 +328,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                             );
                             STATUS_ACCESS_DENIED
                         }
-                    })
+                    });
                 }
             };
 
@@ -564,7 +564,11 @@ impl FileSystemInterface for ParsecFileSystemInterface {
         let fc = file_context.lock().expect("Mutex is poisoned");
         log::debug!(
             "[WinFSP] overwrite_ex(file_context: {:?}, file_attributes: {:?}, replace_file_attributes: {:?}, allocation_size: {:?}, buffer_size: {})",
-            fc, file_attributes, replace_file_attributes, allocation_size, buffer.len()
+            fc,
+            file_attributes,
+            replace_file_attributes,
+            allocation_size,
+            buffer.len()
         );
 
         self.tokio_handle.block_on(async move {
@@ -964,7 +968,7 @@ impl FileSystemInterface for ParsecFileSystemInterface {
                 match outcome {
                     FolderReaderStatNextOutcome::NoMoreEntries => break Ok(()),
                     FolderReaderStatNextOutcome::Entry { .. } => {
-                        break Err(STATUS_DIRECTORY_NOT_EMPTY)
+                        break Err(STATUS_DIRECTORY_NOT_EMPTY);
                     }
                     // Current entry is invalid, just ignore it
                     FolderReaderStatNextOutcome::InvalidChild => {
@@ -985,7 +989,13 @@ impl FileSystemInterface for ParsecFileSystemInterface {
         replace_if_exists: bool,
     ) -> Result<(), NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        log::debug!("[WinFSP] rename(file_context: {:?}, file_name: {:?}, new_file_name: {:?}, replace_if_exists: {:?})", fc, file_name, new_file_name, replace_if_exists);
+        log::debug!(
+            "[WinFSP] rename(file_context: {:?}, file_name: {:?}, new_file_name: {:?}, replace_if_exists: {:?})",
+            fc,
+            file_name,
+            new_file_name,
+            replace_if_exists
+        );
 
         // `granted_access` is already handle by WinFSP
 

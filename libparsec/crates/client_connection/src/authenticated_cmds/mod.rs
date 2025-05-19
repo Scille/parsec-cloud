@@ -6,20 +6,20 @@ use bytes::Bytes;
 use data_encoding::BASE64URL;
 use eventsource_stream::Eventsource;
 use reqwest::{
-    header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
+    header::{ACCEPT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE, HeaderMap, HeaderValue},
 };
 use std::{fmt::Debug, marker::PhantomData, path::Path, sync::Arc};
 
 use libparsec_platform_http_proxy::ProxyConfig;
-use libparsec_protocol::{api_version_major_to_full, API_LATEST_MAJOR_VERSION};
+use libparsec_protocol::{API_LATEST_MAJOR_VERSION, api_version_major_to_full};
 use libparsec_types::prelude::*;
 
 #[cfg(feature = "test-with-testbed")]
-use crate::testbed::{get_send_hook, SendHookConfig};
+use crate::testbed::{SendHookConfig, get_send_hook};
 use crate::{
+    API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE, SSEStream,
     error::{ConnectionError, ConnectionResult},
-    SSEStream, API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
 };
 
 use self::sse::EVENT_STREAM_CONTENT_TYPE;

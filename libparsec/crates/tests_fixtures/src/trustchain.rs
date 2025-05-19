@@ -6,7 +6,7 @@
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{alice, bob, mallory, Device};
+use crate::{Device, alice, bob, mallory};
 
 #[fixture]
 #[once]

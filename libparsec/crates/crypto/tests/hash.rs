@@ -6,7 +6,7 @@
 
 use hex_literal::hex;
 use pretty_assertions::{assert_eq, assert_matches};
-use serde_test::{assert_tokens, Token};
+use serde_test::{Token, assert_tokens};
 
 use libparsec_crypto::{CryptoError, HashDigest};
 

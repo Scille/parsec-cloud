@@ -4,7 +4,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
-use crate::workspace::{store::PathConfinementPoint, EntryStat, OpenOptions, WorkspaceOps};
+use crate::workspace::{EntryStat, OpenOptions, WorkspaceOps, store::PathConfinementPoint};
 
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) {

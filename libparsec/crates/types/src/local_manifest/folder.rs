@@ -6,8 +6,8 @@ use libparsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    self as libparsec_types, impl_transparent_data_format_conversion, DataError, DataResult,
-    DateTime, DeviceID, EntryName, FolderManifest, PreventSyncPattern, VlobID,
+    self as libparsec_types, DataError, DataResult, DateTime, DeviceID, EntryName, FolderManifest,
+    PreventSyncPattern, VlobID, impl_transparent_data_format_conversion,
 };
 
 use super::{impl_local_manifest_dump, impl_local_manifest_load};

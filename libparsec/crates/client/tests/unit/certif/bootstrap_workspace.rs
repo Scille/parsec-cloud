@@ -4,9 +4,9 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use libparsec_client_connection::{
-    test_register_low_level_send_hook, test_register_send_hook,
-    test_register_sequence_of_send_hooks, test_send_hook_realm_get_keys_bundle, ConnectionError,
-    HeaderMap, ResponseMock, StatusCode,
+    ConnectionError, HeaderMap, ResponseMock, StatusCode, test_register_low_level_send_hook,
+    test_register_send_hook, test_register_sequence_of_send_hooks,
+    test_send_hook_realm_get_keys_bundle,
 };
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;

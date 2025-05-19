@@ -3,7 +3,7 @@
 use std::path::Path;
 
 use crate::{load_device, save_device};
-use libparsec_tests_fixtures::{tmp_path, TmpPath};
+use libparsec_tests_fixtures::{TmpPath, tmp_path};
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 

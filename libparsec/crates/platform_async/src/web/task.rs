@@ -3,12 +3,12 @@
 use futures::FutureExt;
 use pin_project::{pin_project, pinned_drop};
 use std::num::NonZeroU64;
-use std::sync::{atomic::AtomicU64, Mutex};
+use std::sync::{Mutex, atomic::AtomicU64};
 use std::{
     any::Any,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc,
+        atomic::{AtomicBool, Ordering},
     },
 };
 

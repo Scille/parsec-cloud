@@ -8,16 +8,17 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    encrypt::encrypt_for_sequester_services, store::CertifStoreError,
     CertificateBasedActionOutcome, CertificateOps, InvalidCertificateError,
+    encrypt::encrypt_for_sequester_services, store::CertifStoreError,
 };
 use crate::{
-    certif::{
-        realm_keys_bundle::{self, GenerateNextKeyBundleForRealmError},
-        CertifPollServerError,
-    },
-    greater_timestamp, CertifEncryptForSequesterServicesError, EventTooMuchDriftWithServerClock,
+    CertifEncryptForSequesterServicesError, EventTooMuchDriftWithServerClock,
     GreaterTimestampOffset, InvalidKeysBundleError,
+    certif::{
+        CertifPollServerError,
+        realm_keys_bundle::{self, GenerateNextKeyBundleForRealmError},
+    },
+    greater_timestamp,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -36,7 +37,9 @@ pub enum CertifRotateRealmKeyError {
     //       he has access to without a single one being valid.
     #[error("Cannot achieve a key rotation if the current keys bundle is corrupted: {0}")]
     CurrentKeysBundleCorrupted(Box<InvalidKeysBundleError>),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

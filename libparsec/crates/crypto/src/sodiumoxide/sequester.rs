@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
 
 use crate::{
-    deserialize_with_armor, serialize_with_armor, CryptoError, CryptoResult, SecretKey,
-    SequesterKeySize,
+    CryptoError, CryptoResult, SecretKey, SequesterKeySize, deserialize_with_armor,
+    serialize_with_armor,
 };
 
 /*

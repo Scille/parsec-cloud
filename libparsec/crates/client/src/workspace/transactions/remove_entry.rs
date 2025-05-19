@@ -6,15 +6,15 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
+    EventWorkspaceOpsOutboundSyncNeeded,
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
+        WorkspaceOps,
         store::{
             EnsureManifestExistsWithParentError, ForUpdateFolderError, GetManifestError,
             UpdateFolderManifestError,
         },
-        WorkspaceOps,
     },
-    EventWorkspaceOpsOutboundSyncNeeded,
 };
 
 pub(crate) enum RemoveEntryExpect {
@@ -134,7 +134,7 @@ pub(crate) async fn remove_entry(
 
         (RemoveEntryExpect::File, ArcLocalChildManifest::File(_)) => (),
         (RemoveEntryExpect::File, ArcLocalChildManifest::Folder(_)) => {
-            return Err(WorkspaceRemoveEntryError::EntryIsFolder)
+            return Err(WorkspaceRemoveEntryError::EntryIsFolder);
         }
 
         // A word about removing non-empty folder:

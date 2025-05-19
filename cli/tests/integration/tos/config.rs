@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use libparsec::{tmp_path, ClientGetTosError, TmpPath};
+use libparsec::{ClientGetTosError, TmpPath, tmp_path};
 
 use crate::{
-    commands::tos::config::{config_tos_for_org_req, TosReq},
+    commands::tos::config::{TosReq, config_tos_for_org_req},
     integration_tests::bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_ADMINISTRATION_TOKEN},
+    testenv_utils::{DEFAULT_ADMINISTRATION_TOKEN, TestOrganization},
     utils::start_client,
 };
 

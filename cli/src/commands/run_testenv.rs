@@ -6,8 +6,8 @@ use libparsec::ClientConfig;
 
 use crate::{
     testenv_utils::{
-        initialize_test_organization, new_environment, parsec_addr_from_http_url, TestenvConfig,
-        DEFAULT_DEVICE_PASSWORD,
+        DEFAULT_DEVICE_PASSWORD, TestenvConfig, initialize_test_organization, new_environment,
+        parsec_addr_from_http_url,
     },
     utils::{RESET, YELLOW},
 };

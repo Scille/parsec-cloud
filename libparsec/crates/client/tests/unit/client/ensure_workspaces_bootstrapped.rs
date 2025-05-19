@@ -219,12 +219,14 @@ async fn legacy_shared_before_bootstrapped(env: &TestbedEnv) {
                     "{:?}",
                     req.per_participant_keys_bundle_access
                 );
-                assert!(req
-                    .per_participant_keys_bundle_access
-                    .contains_key(&"alice".parse().unwrap()));
-                assert!(req
-                    .per_participant_keys_bundle_access
-                    .contains_key(&"mallory".parse().unwrap()));
+                assert!(
+                    req.per_participant_keys_bundle_access
+                        .contains_key(&"alice".parse().unwrap())
+                );
+                assert!(
+                    req.per_participant_keys_bundle_access
+                        .contains_key(&"mallory".parse().unwrap())
+                );
                 new_realm_certificates
                     .lock()
                     .unwrap()
@@ -404,12 +406,14 @@ async fn legacy_no_longer_access(env: &TestbedEnv) {
                 "{:?}",
                 req.per_participant_keys_bundle_access
             );
-            assert!(req
-                .per_participant_keys_bundle_access
-                .contains_key(&"alice".parse().unwrap()));
-            assert!(req
-                .per_participant_keys_bundle_access
-                .contains_key(&"bob".parse().unwrap()));
+            assert!(
+                req.per_participant_keys_bundle_access
+                    .contains_key(&"alice".parse().unwrap())
+            );
+            assert!(
+                req.per_participant_keys_bundle_access
+                    .contains_key(&"bob".parse().unwrap())
+            );
             authenticated_cmds::latest::realm_rotate_key::Rep::AuthorNotAllowed
         },
         // No more steps

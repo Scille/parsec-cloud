@@ -3,14 +3,13 @@
 use std::num::NonZeroU8;
 
 use crate::{
-    self as libparsec_types,
+    self as libparsec_types, DataError, DataResult, DateTime, DeviceID, InvitationToken,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataError, DataResult, DateTime, DeviceID, InvitationToken,
 };
 use libparsec_crypto::{
-    impl_key_debug, CryptoError, CryptoResult, PrivateKey, PublicKey, SecretKey, SigningKey,
-    VerifyKey,
+    CryptoError, CryptoResult, PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey,
+    impl_key_debug,
 };
 use libparsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};

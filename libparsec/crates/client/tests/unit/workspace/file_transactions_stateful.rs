@@ -1,18 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use proptest::{prelude::*, test_runner::Config};
-use proptest_state_machine::{prop_state_machine, ReferenceStateMachine, StateMachineTest};
+use proptest_state_machine::{ReferenceStateMachine, StateMachineTest, prop_state_machine};
 use std::{fs::File, os::unix::prelude::FileExt, path::PathBuf, sync::Arc};
 
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    workspace::{
-        tests::{utils::workspace_ops_factory, AsyncStateMachineTest},
-        OpenOptions,
-    },
     WorkspaceOps,
+    workspace::{
+        OpenOptions,
+        tests::{AsyncStateMachineTest, utils::workspace_ops_factory},
+    },
 };
 
 const MAX_SIZE: u64 = 64;

@@ -31,34 +31,58 @@ pub async fn shared_recovery_list(_args: Args, client: &StartedClient) -> anyhow
                     deleted_on,
                     deleted_by,
                     ..
-                } => println!("{BULLET_CHAR} Deleted shared recovery for {RED}{user_id}{RESET} - deleted by {deleted_by} on {deleted_on}"),
+                } => println!(
+                    "{BULLET_CHAR} Deleted shared recovery for {RED}{user_id}{RESET} - deleted by {deleted_by} on {deleted_on}"
+                ),
                 libparsec_client::OtherShamirRecoveryInfo::SetupAllValid {
-                    user_id, threshold, per_recipient_shares,..
-                } => println!("{BULLET_CHAR} Shared recovery for {GREEN}{}{RESET} with threshold {threshold}\n{}", users.get(&user_id).expect("missing author").human_handle, per_recipient_shares.iter().map(|(recipient, share)| {
-                    // this means that a user disappeared completely, it should not happen
-                    let user = &users.get(recipient).expect("missing recipient").human_handle;
-                    format!("\t{BULLET_CHAR} User {user} has {share} share{}",  maybe_plural(&share.get()))
-                }).join("\n")),
+                    user_id,
+                    threshold,
+                    per_recipient_shares,
+                    ..
+                } => println!(
+                    "{BULLET_CHAR} Shared recovery for {GREEN}{}{RESET} with threshold {threshold}\n{}",
+                    users.get(&user_id).expect("missing author").human_handle,
+                    per_recipient_shares
+                        .iter()
+                        .map(|(recipient, share)| {
+                            // this means that a user disappeared completely, it should not happen
+                            let user = &users
+                                .get(recipient)
+                                .expect("missing recipient")
+                                .human_handle;
+                            format!(
+                                "\t{BULLET_CHAR} User {user} has {share} share{}",
+                                maybe_plural(&share.get())
+                            )
+                        })
+                        .join("\n")
+                ),
                 libparsec_client::OtherShamirRecoveryInfo::SetupWithRevokedRecipients {
                     user_id,
                     threshold,
                     per_recipient_shares,
-                    revoked_recipients,..
-                } => println!("{BULLET_CHAR} Shared recovery for {YELLOW}{user_id}{RESET} - contains revoked recipient{maybe_plural}: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                    revoked_recipients,
+                    ..
+                } => println!(
+                    "{BULLET_CHAR} Shared recovery for {YELLOW}{user_id}{RESET} - contains revoked recipient{maybe_plural}: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
                     maybe_plural = maybe_plural(&(revoked_recipients.len() as u8)),
                     revoked = revoked_recipients.iter().join(", "),
                     revoked_len = revoked_recipients.len(),
-                    total = per_recipient_shares.len()),
+                    total = per_recipient_shares.len()
+                ),
                 libparsec_client::OtherShamirRecoveryInfo::SetupButUnusable {
                     user_id,
                     threshold,
                     per_recipient_shares,
-                    revoked_recipients,..
-                } => println!("{BULLET_CHAR} Unusable shared recovery for {RED}{user_id}{RESET} - contains revoked recipient{maybe_plural}: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
+                    revoked_recipients,
+                    ..
+                } => println!(
+                    "{BULLET_CHAR} Unusable shared recovery for {RED}{user_id}{RESET} - contains revoked recipient{maybe_plural}: {revoked} ({revoked_len} out of {total} total recipients, with threshold {threshold})",
                     maybe_plural = maybe_plural(&(revoked_recipients.len() as u8)),
                     revoked = revoked_recipients.iter().join(", "),
                     revoked_len = revoked_recipients.len(),
-                    total = per_recipient_shares.len()),
+                    total = per_recipient_shares.len()
+                ),
             }
         }
     }

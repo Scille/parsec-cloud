@@ -30,7 +30,9 @@ pub async fn list_user(args: Args, client: &StartedClient) -> anyhow::Result<()>
             let human_handle = info.human_handle;
             let profile = info.current_profile.to_string();
             if let (Some(revoked_on), Some(revoked_by)) = (info.revoked_on, info.revoked_by) {
-                println!("{YELLOW}{id}{RESET} - {human_handle}: {profile} | revoked on {revoked_on} by {revoked_by}");
+                println!(
+                    "{YELLOW}{id}{RESET} - {human_handle}: {profile} | revoked on {revoked_on} by {revoked_by}"
+                );
             } else {
                 println!("{YELLOW}{id}{RESET} - {human_handle}: {profile}");
             }

@@ -14,8 +14,8 @@ use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
 
 use crate::handle::{
-    borrow_from_handle, filter_close_handles, register_handle_with_init, take_and_close_handle,
-    FilterCloseHandle, Handle, HandleItem,
+    FilterCloseHandle, Handle, HandleItem, borrow_from_handle, filter_close_handles,
+    register_handle_with_init, take_and_close_handle,
 };
 
 fn borrow_workspace(workspace: Handle) -> anyhow::Result<Arc<libparsec_client::WorkspaceOps>> {

@@ -6,12 +6,12 @@ use std::{
 };
 
 use libparsec::{
-    authenticated_cmds::{latest::device_create, latest::user_create},
     AuthenticatedCmds, Bytes, CertificateSigner, ClientConfig, DateTime, DeviceAccessStrategy,
     DeviceCertificate, DeviceID, DeviceLabel, DevicePurpose, HumanHandle, LocalDevice,
-    MaybeRedacted, OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey,
-    SigningKeyAlgorithm, UserCertificate, UserProfile, PARSEC_BASE_CONFIG_DIR,
-    PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
+    MaybeRedacted, OrganizationID, PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR,
+    PARSEC_BASE_HOME_DIR, PARSEC_SCHEME, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey,
+    SigningKeyAlgorithm, UserCertificate, UserProfile,
+    authenticated_cmds::{latest::device_create, latest::user_create},
 };
 
 use crate::{
@@ -340,7 +340,11 @@ pub async fn new_environment(
 
     for (key, value) in env {
         // We set var for the current process
-        std::env::set_var(key, &value);
+        // SAFETY: The tests that use `new_environment` are run in isolation and `testenv_utils`
+        // bin call it one time (so no parallel modification)
+        unsafe {
+            std::env::set_var(key, &value);
+        }
 
         println!("   {export_keyword} {key}={value}");
     }

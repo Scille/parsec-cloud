@@ -3,6 +3,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 pub use libparsec_client::{
+    WorkspaceHistoryOpsStartError as WorkspaceHistory2StartError,
     workspace_history::{
         WorkspaceHistoryEntryStat as WorkspaceHistory2EntryStat,
         WorkspaceHistoryFdCloseError as WorkspaceHistory2FdCloseError,
@@ -14,12 +15,11 @@ pub use libparsec_client::{
         WorkspaceHistoryStatEntryError as WorkspaceHistory2StatEntryError,
         WorkspaceHistoryStatFolderChildrenError as WorkspaceHistory2StatFolderChildrenError,
     },
-    WorkspaceHistoryOpsStartError as WorkspaceHistory2StartError,
 };
 use libparsec_types::prelude::*;
 
 use crate::handle::{
-    borrow_from_handle, register_handle_with_init, take_and_close_handle, Handle, HandleItem,
+    Handle, HandleItem, borrow_from_handle, register_handle_with_init, take_and_close_handle,
 };
 
 fn borrow_workspace_history(

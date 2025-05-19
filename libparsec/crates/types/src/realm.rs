@@ -9,10 +9,10 @@ use libparsec_crypto::{KeyDerivation, SecretKey, SigningKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types,
+    self as libparsec_types, DataError, DataResult, DateTime, DeviceID, IndexInt,
+    UnsecureSkipValidationReason, VlobID,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataError, DataResult, DateTime, DeviceID, IndexInt, UnsecureSkipValidationReason, VlobID,
 };
 
 /*

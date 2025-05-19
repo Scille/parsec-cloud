@@ -4,14 +4,14 @@ use std::{path::Path, sync::Arc};
 
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError, ProxyConfig};
 use libparsec_platform_device_loader::{
-    get_default_key_file, save_device, PlatformImportRecoveryDeviceError, SaveDeviceError,
+    PlatformImportRecoveryDeviceError, SaveDeviceError, get_default_key_file, save_device,
 };
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_protocol::authenticated_cmds::latest::device_create;
 use libparsec_types::prelude::*;
 
 use crate::{
-    greater_timestamp, CertifPollServerError, GreaterTimestampOffset, InvalidCertificateError,
+    CertifPollServerError, GreaterTimestampOffset, InvalidCertificateError, greater_timestamp,
 };
 
 use super::Client;
@@ -61,7 +61,9 @@ pub enum ClientExportRecoveryDeviceError {
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -107,7 +109,9 @@ pub enum ImportRecoveryDeviceError {
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -249,7 +253,9 @@ pub enum RegisterNewDeviceError {
     Offline(#[from] ConnectionError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

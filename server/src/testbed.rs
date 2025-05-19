@@ -10,6 +10,9 @@ use std::num::NonZeroU8;
 use std::sync::Arc;
 
 use crate::{
+    BlockID, DateTime, DeviceID, DeviceLabel, HumanHandle, InvitationToken, PrivateKey, RealmRole,
+    SecretKey, SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterServiceID,
+    SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID, UserProfile, VlobID,
     data::{
         DeviceCertificate, RealmArchivingCertificate, RealmKeyRotationCertificate,
         RealmNameCertificate, RealmRoleCertificate, RevokedUserCertificate,
@@ -19,9 +22,6 @@ use crate::{
         UserUpdateCertificate,
     },
     protocol::ActiveUsersLimit,
-    BlockID, DateTime, DeviceID, DeviceLabel, HumanHandle, InvitationToken, PrivateKey, RealmRole,
-    SecretKey, SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterServiceID,
-    SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID, UserProfile, VlobID,
 };
 
 #[pyclass]

@@ -5,7 +5,7 @@ use std::{fmt::Debug, marker::PhantomData, task::Poll, time::Duration};
 use data_encoding::BASE64;
 use eventsource_stream::{Event, EventStreamError};
 
-use libparsec_platform_async::{stream::Stream, BoxStream};
+use libparsec_platform_async::{BoxStream, stream::Stream};
 use libparsec_protocol::API_LATEST_MAJOR_VERSION;
 use libparsec_types::ProtocolRequest;
 

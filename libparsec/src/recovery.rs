@@ -4,9 +4,9 @@ use libparsec_client::{ClientExportRecoveryDeviceError, ImportRecoveryDeviceErro
 use libparsec_types::DeviceSaveStrategy;
 use libparsec_types::{AvailableDevice, DeviceLabel};
 
-use crate::handle::{borrow_from_handle, HandleItem};
 use crate::ClientConfig;
 use crate::Handle;
+use crate::handle::{HandleItem, borrow_from_handle};
 
 pub async fn import_recovery_device(
     config: ClientConfig,

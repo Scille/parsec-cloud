@@ -2,7 +2,7 @@
 
 use libparsec_tests_lite::prelude::*;
 
-use crate::{event::Event, future::select, pin_mut, sleep, spawn, try_task_id, Duration, Instant};
+use crate::{Duration, Instant, event::Event, future::select, pin_mut, sleep, spawn, try_task_id};
 
 #[parsec_test]
 pub async fn sleep_simple() {

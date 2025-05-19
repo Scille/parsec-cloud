@@ -9,8 +9,8 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{self as libparsec_types};
 use crate::{
-    impl_transparent_data_format_conversion, DateTime, DeviceID, DeviceLabel, HumanHandle,
-    OrganizationID, UserID,
+    DateTime, DeviceID, DeviceLabel, HumanHandle, OrganizationID, UserID,
+    impl_transparent_data_format_conversion,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

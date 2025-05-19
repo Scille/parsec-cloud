@@ -850,7 +850,7 @@ impl ParsecInvitationAddr {
                         PARSEC_PARAM_ACTION,
                         PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY
                     ),
-                })
+                });
             }
         };
         let token = extract_param_and_b64_msgpack_deserialize!(

@@ -2,7 +2,7 @@
 
 #![allow(clippy::unwrap_used)]
 
-use crate::{export_recovery_device, import_recovery_device, PlatformImportRecoveryDeviceError};
+use crate::{PlatformImportRecoveryDeviceError, export_recovery_device, import_recovery_device};
 use libparsec_tests_lite::p_assert_matches;
 use libparsec_tests_lite::parsec_test;
 use libparsec_types::HumanHandle;

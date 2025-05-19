@@ -2,6 +2,7 @@
 
 use anyhow::Context;
 use libparsec::{
+    InvitationToken,
     authenticated_cmds::latest::invite_list::InviteListItem,
     internal::{
         DeviceGreetInProgress1Ctx, DeviceGreetInProgress2Ctx, DeviceGreetInProgress3Ctx,
@@ -9,7 +10,6 @@ use libparsec::{
         UserGreetInProgress2Ctx, UserGreetInProgress3Ctx, UserGreetInProgress4Ctx,
         UserGreetInitialCtx,
     },
-    InvitationToken,
 };
 use libparsec_client::{
     Client, ShamirRecoveryGreetInProgress1Ctx, ShamirRecoveryGreetInProgress2Ctx,

@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sodiumoxide::crypto::sign::{ed25519, gen_keypair, sign, verify_detached, Signature};
+use sodiumoxide::crypto::sign::{Signature, ed25519, gen_keypair, sign, verify_detached};
 
 use crate::CryptoError;
 
@@ -45,7 +45,7 @@ impl SigningKey {
 
     pub fn to_bytes(&self) -> [u8; Self::SIZE] {
         // SecretKey is composed of Seed then PublicKey, we export only seed here
-        <[u8; Self::SIZE]>::try_from(&self.0 .0[..Self::SIZE])
+        <[u8; Self::SIZE]>::try_from(&self.0.0[..Self::SIZE])
             .expect("The internal array is > Self::SIZE")
     }
 }
@@ -160,7 +160,7 @@ impl VerifyKey {
 impl AsRef<[u8]> for VerifyKey {
     #[inline]
     fn as_ref(&self) -> &[u8] {
-        &self.0 .0
+        &self.0.0
     }
 }
 

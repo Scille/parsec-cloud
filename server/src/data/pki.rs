@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    Bound, PyAny, PyObject, PyResult, Python,
     exceptions::PyValueError,
     pyclass, pymethods,
     types::{IntoPyDict, PyAnyMethods, PyBytes, PyDict, PyType},
-    Bound, PyAny, PyObject, PyResult, Python,
 };
 use std::{collections::HashMap, path::Path};
 

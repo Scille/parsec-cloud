@@ -7,7 +7,7 @@
 #[allow(unused_imports)]
 use neon::{
     prelude::*,
-    types::{buffer::TypedArray, JsBigInt},
+    types::{JsBigInt, buffer::TypedArray},
 };
 
 // CancelledGreetingAttemptReason

@@ -2,7 +2,7 @@
 
 use libparsec_types::prelude::*;
 
-use super::{store::CertifStoreError, CertificateOps};
+use super::{CertificateOps, store::CertifStoreError};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifForgetAllCertificatesError {

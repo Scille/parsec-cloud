@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_tests_fixtures::prelude::{parsec_test, tmp_path, TestbedEnv, TmpPath};
+use libparsec_tests_fixtures::prelude::{TestbedEnv, TmpPath, parsec_test, tmp_path};
 use libparsec_types::VlobID;
 
 use crate::{

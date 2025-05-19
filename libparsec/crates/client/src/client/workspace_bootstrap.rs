@@ -17,7 +17,9 @@ pub enum ClientEnsureWorkspacesBootstrappedError {
     Stopped,
     // Note the is no `InvalidManifest` here, this is because we self-repair in case of
     // invalid user manifest (given otherwise the client would be stuck for good !)
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

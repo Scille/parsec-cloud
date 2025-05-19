@@ -9,11 +9,10 @@ use serde::Deserialize;
 use serde_bytes::Bytes;
 use sodiumoxide::{
     crypto::{
-        pwhash::argon2id13::{derive_key, MemLimit, OpsLimit, Salt, SALTBYTES},
+        pwhash::argon2id13::{MemLimit, OpsLimit, SALTBYTES, Salt, derive_key},
         secretbox::{
-            gen_nonce, open, seal,
-            xsalsa20poly1305::{gen_key, Key, KEYBYTES, MACBYTES, NONCEBYTES},
-            Nonce,
+            Nonce, gen_nonce, open, seal,
+            xsalsa20poly1305::{KEYBYTES, Key, MACBYTES, NONCEBYTES, gen_key},
         },
     },
     randombytes::randombytes,

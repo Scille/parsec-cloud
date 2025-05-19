@@ -5,10 +5,10 @@ use libparsec_types::prelude::*;
 
 use super::Client;
 pub use crate::invite::{
-    list_invitations, DeviceGreetInitialCtx, InviteListItem, ListInvitationsError,
-    ShamirRecoveryGreetInitialCtx, UserGreetInitialCtx,
+    DeviceGreetInitialCtx, InviteListItem, ListInvitationsError, ShamirRecoveryGreetInitialCtx,
+    UserGreetInitialCtx, list_invitations,
 };
-use crate::{certif::InvalidCertificateError, CertifGetShamirRecoveryShareDataError};
+use crate::{CertifGetShamirRecoveryShareDataError, certif::InvalidCertificateError};
 
 pub fn start_user_invitation_greet(client: &Client, token: InvitationToken) -> UserGreetInitialCtx {
     UserGreetInitialCtx::new(

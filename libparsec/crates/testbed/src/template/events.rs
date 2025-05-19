@@ -10,7 +10,7 @@ use serde_with::serde_as;
 
 use super::crc_hash::CrcHash;
 use super::utils::{get_user_current_profile, user_id_from_device_id};
-use super::{utils, TestbedTemplate, TestbedTemplateBuilder};
+use super::{TestbedTemplate, TestbedTemplateBuilder, utils};
 
 #[derive(Default)]
 enum TestbedEventCacheEntry<T> {
@@ -2043,7 +2043,7 @@ impl TestbedEventNewShamirRecovery {
                         panic!("User `{}` already has a shamir recovery", user);
                     }
                     TestbedEvent::DeleteShamirRecovery(x) if x.setup_to_delete_user_id == user => {
-                        break
+                        break;
                     }
                     _ => (),
                 }
