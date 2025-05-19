@@ -19,6 +19,7 @@ from parsec.components.postgresql.utils import (
     Q,
     SqlQueryParam,
 )
+from parsec.config import AllowedClientAgent
 from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
 from parsec.types import Unset, UnsetType
 
@@ -30,6 +31,7 @@ def _q_update_factory(
     with_user_profile_outsider_allowed: bool,
     with_minimum_archiving_period: bool,
     with_tos: bool,
+    with_allowed_client_agent: bool,
 ) -> Q:
     fields = []
     if with_is_expired:
@@ -44,6 +46,8 @@ def _q_update_factory(
     if with_tos:
         fields.append("tos_updated_on = $tos_updated_on")
         fields.append("tos_per_locale_urls = $tos_per_locale_urls")
+    if with_allowed_client_agent:
+        fields.append("allowed_client_agent = $allowed_client_agent")
 
     return Q(
         f"""
@@ -65,12 +69,14 @@ async def organization_update(
     user_profile_outsider_allowed: UnsetType | bool = Unset,
     minimum_archiving_period: UnsetType | int = Unset,
     tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
+    allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
 ) -> None | OrganizationUpdateBadOutcome:
     with_is_expired = is_expired is not Unset
     with_active_users_limit = active_users_limit is not Unset
     with_user_profile_outsider_allowed = user_profile_outsider_allowed is not Unset
     with_minimum_archiving_period = minimum_archiving_period is not Unset
     with_tos = tos is not Unset
+    with_allowed_client_agent = allowed_client_agent is not Unset
 
     if (
         not with_is_expired
@@ -78,6 +84,7 @@ async def organization_update(
         and not with_user_profile_outsider_allowed
         and not with_minimum_archiving_period
         and not with_tos
+        and not with_allowed_client_agent
     ):
         # Nothing to update
         return
@@ -99,6 +106,8 @@ async def organization_update(
         else:
             fields["tos_updated_on"] = now
             fields["tos_per_locale_urls"] = tos
+    if with_allowed_client_agent:
+        fields["allowed_client_agent"] = allowed_client_agent.value
 
     q = _q_update_factory(
         with_is_expired=with_is_expired,
@@ -106,6 +115,7 @@ async def organization_update(
         with_user_profile_outsider_allowed=with_user_profile_outsider_allowed,
         with_minimum_archiving_period=with_minimum_archiving_period,
         with_tos=with_tos,
+        with_allowed_client_agent=with_allowed_client_agent,
     )
 
     now_is_expired = await conn.fetchval(*q(organization_id=id.str, **fields))

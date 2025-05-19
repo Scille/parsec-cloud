@@ -26,6 +26,7 @@ from parsec.cli.utils import (
 from parsec.components.organization import TosLocale, TosUrl
 from parsec.config import (
     AccountConfig,
+    AllowedClientAgent,
     BackendConfig,
     BaseBlockStoreConfig,
     BaseDatabaseConfig,
@@ -209,6 +210,19 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     default=None,
 )
 @click.option(
+    "--organization-initial-allowed-client-agent",
+    envvar="PARSEC_ORGANIZATION_INITIAL_ALLOWED_CLIENT_AGENT",
+    show_envvar=True,
+    type=AllowedClientAgent,
+    help="""Limit the type of Parsec client allowed to connect for the newly created organizations (default: NATIVE_OR_WEB)
+
+- NATIVE_ONLY: Only desktop client is allowed
+- NATIVE_OR_WEB: Desktop and web clients are allowed
+""",
+    default=AllowedClientAgent.NATIVE_OR_WEB,
+    metavar="[NATIVE_ONLY|NATIVE_OR_WEB]",
+)
+@click.option(
     "--account-confirmation-email-resend-delay",
     default=60,
     show_default=True,
@@ -373,6 +387,7 @@ def run_cmd(
     organization_initial_active_users_limit: int | None,
     organization_initial_user_profile_outsider_allowed: bool,
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
+    organization_initial_allowed_client_agent: AllowedClientAgent,
     account_confirmation_email_resend_delay: int,
     server_addr: ParsecAddr,
     email_host: str,
@@ -436,6 +451,7 @@ def run_cmd(
             else ActiveUsersLimit.NO_LIMIT,
             organization_initial_user_profile_outsider_allowed=organization_initial_user_profile_outsider_allowed,
             organization_initial_tos=organization_initial_tos,
+            organization_initial_allowed_client_agent=organization_initial_allowed_client_agent,
             account_config=AccountConfig(
                 account_confirmation_email_resend_delay=account_confirmation_email_resend_delay
             ),

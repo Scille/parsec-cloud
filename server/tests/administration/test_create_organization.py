@@ -19,6 +19,7 @@ from parsec.components.organization import (
     Unset,
     UnsetType,
 )
+from parsec.config import AllowedClientAgent
 from tests.common import Backend, MinimalorgRpcClients
 
 
@@ -100,6 +101,9 @@ def organization_initial_params(backend: Backend, request) -> Iterator[None]:
                 "fr_FR": "https://parsec.invalid/tos_fr.pdf",
                 "en_US": "https://parsec.invalid/tos_en.pdf",
             }
+            backend.config.organization_initial_allowed_client_agent = (
+                AllowedClientAgent.NATIVE_ONLY
+            )
         case unknown:
             assert False, unknown
     yield
@@ -174,6 +178,11 @@ async def test_ok(
         case tos:
             expected_tos = TermsOfService(updated_on=ANY, per_locale_urls=tos)
 
+    # Expected allowed_client_agent
+    expected_allowed_client_agent = args.get(
+        "allowed_client_agent", backend.config.organization_initial_allowed_client_agent
+    )
+
     dump = await backend.organization.test_dump_organizations()
     assert dump == {
         org_id: OrganizationDump(
@@ -185,6 +194,7 @@ async def test_ok(
             user_profile_outsider_allowed=expected_user_profile_outsider_allowed,
             minimum_archiving_period=expected_minimum_archiving_period,
             tos=expected_tos,
+            allowed_client_agent=expected_allowed_client_agent,
         )
     }
 
@@ -205,6 +215,7 @@ async def test_overwrite_existing(
         user_profile_outsider_allowed=False,
         minimum_archiving_period=2,
         tos={"en_HK": "https://parsec.invalid/tos_en.pdf"},
+        allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
         force_bootstrap_token=bootstrap_token,
     )
     assert isinstance(outcome, BootstrapToken)
@@ -223,6 +234,7 @@ async def test_overwrite_existing(
             tos=TermsOfService(
                 updated_on=t0, per_locale_urls={"en_HK": "https://parsec.invalid/tos_en.pdf"}
             ),
+            allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
         )
     }
 
@@ -236,6 +248,7 @@ async def test_overwrite_existing(
             "user_profile_outsider_allowed": True,
             "minimum_archiving_period": 1000,
             "tos": {"cn_HK": "https://parsec.invalid/tos_cn.pdf"},
+            "allowed_client_agent": "NATIVE_OR_WEB",
         },
     )
     assert response.status_code == 200, response.content
@@ -257,6 +270,7 @@ async def test_overwrite_existing(
             tos=TermsOfService(
                 updated_on=ANY, per_locale_urls={"cn_HK": "https://parsec.invalid/tos_cn.pdf"}
             ),
+            allowed_client_agent=AllowedClientAgent.NATIVE_OR_WEB,
         )
     }
 

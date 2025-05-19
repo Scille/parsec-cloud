@@ -45,6 +45,7 @@ class MemoryAuthComponent(BaseAuthComponent):
                     else TermsOfService(
                         updated_on=now, per_locale_urls=self._config.organization_initial_tos
                     ),
+                    allowed_client_agent=self._config.organization_initial_allowed_client_agent,
                     created_on=now,
                 )
                 self._data.organizations[organization_id] = org

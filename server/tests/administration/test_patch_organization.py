@@ -8,6 +8,7 @@ import pytest
 
 from parsec._parsec import ActiveUsersLimit
 from parsec.components.organization import OrganizationDump, TermsOfService
+from parsec.config import AllowedClientAgent
 from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
 from tests.common import Backend, CoolorgRpcClients
 
@@ -94,6 +95,7 @@ class PatchOrganizationParams(TypedDict):
             "user_profile_outsider_allowed": True,
             "minimum_archiving_period": 0,
             "tos": {"en_HK": "https://parsec.invalid/tos_en"},
+            "allowed_client_agent": "NATIVE_ONLY",
         },
     ),
 )
@@ -127,6 +129,9 @@ async def test_ok(
             tos=TermsOfService(updated_on=ANY, per_locale_urls=params["tos"])
             if "tos" in params
             else None,
+            allowed_client_agent=AllowedClientAgent(
+                params.get("allowed_client_agent", "NATIVE_OR_WEB")
+            ),
         )
     }
 

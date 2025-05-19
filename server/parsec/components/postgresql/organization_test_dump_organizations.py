@@ -15,6 +15,7 @@ from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import (
     Q,
 )
+from parsec.config import AllowedClientAgent
 
 _q_get_organizations = Q("""
 SELECT
@@ -26,7 +27,8 @@ SELECT
     user_profile_outsider_allowed,
     minimum_archiving_period,
     tos_updated_on,
-    tos_per_locale_urls
+    tos_per_locale_urls,
+    allowed_client_agent
 FROM organization
 ORDER BY organization_id
 """)
@@ -99,6 +101,12 @@ async def organization_test_dump_organizations(
             case unknown:
                 assert False, unknown
 
+        match row["allowed_client_agent"]:
+            case str() as allowed_client_agent_raw:
+                allowed_client_agent = AllowedClientAgent(allowed_client_agent_raw)
+            case unknown:
+                assert False, unknown
+
         items[organization_id] = OrganizationDump(
             organization_id=organization_id,
             bootstrap_token=bootstrap_token,
@@ -108,6 +116,7 @@ async def organization_test_dump_organizations(
             user_profile_outsider_allowed=user_profile_outsider_allowed,
             minimum_archiving_period=minimum_archiving_period,
             tos=tos,
+            allowed_client_agent=allowed_client_agent,
         )
 
     return items

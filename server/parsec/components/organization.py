@@ -23,7 +23,7 @@ from parsec._parsec import (
 from parsec.api import api
 from parsec.ballpark import TimestampOutOfBallpark, timestamps_in_the_ballpark
 from parsec.client_context import AnonymousClientContext, AuthenticatedClientContext
-from parsec.config import BackendConfig
+from parsec.config import AllowedClientAgent, BackendConfig
 from parsec.types import BadOutcomeEnum, Unset, UnsetType
 from parsec.webhooks import WebhooksComponent
 
@@ -66,6 +66,7 @@ class OrganizationDump:
     user_profile_outsider_allowed: bool
     minimum_archiving_period: int
     tos: TermsOfService | None
+    allowed_client_agent: AllowedClientAgent
 
 
 class OrganizationBootstrapValidateBadOutcome(BadOutcomeEnum):
@@ -180,6 +181,7 @@ class Organization:
     sequester_authority_verify_key_der: SequesterVerifyKeyDer | None
     sequester_services_certificates: tuple[bytes, ...] | None
     tos: TermsOfService | None
+    allowed_client_agent: AllowedClientAgent
 
     @property
     def is_bootstrapped(self) -> bool:
@@ -254,6 +256,7 @@ class BaseOrganizationComponent:
         user_profile_outsider_allowed: UnsetType | bool = Unset,
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
+        allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         raise NotImplementedError
@@ -312,6 +315,7 @@ class BaseOrganizationComponent:
         user_profile_outsider_allowed: UnsetType | bool = Unset,
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
+        allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         raise NotImplementedError
 
