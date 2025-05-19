@@ -87,7 +87,10 @@ import {
   DeviceFileType,
   getDeviceHandle,
   isDeviceLoggedIn,
+  isWeb,
+  ListAvailableDeviceErrorTag,
   listAvailableDevices,
+  listAvailableDevicesWithError,
   login as parsecLogin,
 } from '@/parsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
@@ -256,7 +259,26 @@ async function openCreateOrJoin(event: Event): Promise<void> {
 
 async function refreshDeviceList(): Promise<void> {
   querying.value = true;
-  deviceList.value = await listAvailableDevices();
+  const result = await listAvailableDevicesWithError();
+  if (!result.ok) {
+    let message = 'HomePage.organizationList.errors.generic';
+    if (result.error.tag === ListAvailableDeviceErrorTag.StorageNotAvailable) {
+      if (isWeb()) {
+        message = 'HomePage.organizationList.errors.noStorageWeb';
+      } else {
+        message = 'HomePage.organizationList.errors.noStorageDesktop';
+      }
+    }
+    informationManager.present(
+      new Information({
+        message: message,
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Modal,
+    );
+  } else {
+    deviceList.value = result.value;
+  }
   querying.value = false;
 }
 

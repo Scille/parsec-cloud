@@ -53,7 +53,14 @@ onMounted(async () => {
   window.electronAPI.log('info', 'Page was refreshed, login in a default device');
   injectionProvider.createNewInjections(DEV_DEFAULT_HANDLE, new EventDistributor());
   // Not filtering the devices, because we need alice first device, not the second one
-  const devices = await parsec.listAvailableDevices(false);
+  const listResult = await parsec.listAvailableDevicesWithError(false);
+  let devices: Array<parsec.AvailableDevice> = [];
+  if (!listResult.ok) {
+    window.electronAPI.log('error', `Error when listing the devices: ${listResult.error.tag} (${listResult.error.error})`);
+  } else {
+    devices = listResult.value;
+  }
+
   let device = devices.find((d) => d.humanHandle.label === 'Alicey McAliceFace' && d.deviceLabel.includes('dev1'));
 
   if (!device) {
