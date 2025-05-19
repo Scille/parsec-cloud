@@ -58,6 +58,7 @@ from parsec.components.auth import (
     InvitedAuthInfo,
 )
 from parsec.components.events import ClientBroadcastableEventStream, SseAPiEventsListenBadOutcome
+from parsec.config import AllowedClientAgent
 from parsec.events import EventOrganizationConfig
 from parsec.logging import get_logger
 
@@ -248,6 +249,7 @@ def settle_compatible_versions(
 # - 461: User is revoked
 # - 462: User is frozen
 # - 463: User must accept the TOS
+# - 464: Web client not allowed by organization configuration
 # - 498: Authentication token expired
 
 
@@ -263,6 +265,7 @@ class CustomHttpStatus(Enum):
     UserRevoked = 461
     UserFrozen = 462
     UserMustAcceptTos = 463
+    WebClientNotAllowedByOrganizationConfig = 464
     TokenExpired = 498
 
 
@@ -498,6 +501,21 @@ def _parse_account_auth_headers_or_abort(
     )
 
 
+def _check_user_agent_or_abort(
+    headers: ParsedAuthHeaders, allowed_client_agent: AllowedClientAgent
+) -> None:
+    match allowed_client_agent:
+        case AllowedClientAgent.NATIVE_OR_WEB:
+            return
+        case AllowedClientAgent.NATIVE_ONLY:
+            if not headers.user_agent.startswith("Parsec-Client/"):
+                _handshake_abort(
+                    CustomHttpStatus.WebClientNotAllowedByOrganizationConfig,
+                    api_version=headers.settled_api_version,
+                )
+            return
+
+
 async def run_request(
     backend: Backend,
     client_ctx: AuthenticatedClientContext
@@ -574,6 +592,8 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
                 CustomHttpStatus.OrganizationNotFound,
                 api_version=parsed.settled_api_version,
             )
+
+    _check_user_agent_or_abort(parsed, auth_info.organization_allowed_client_agent)
 
     # Handshake is done
 
@@ -663,9 +683,17 @@ async def authenticated_account_api(request: Request) -> Response:
     match outcome:
         case AuthenticatedAccountAuthInfo():  # TODO as auth_info:
             pass
-        case AuthAuthenticatedAccountAuthBadOutcome():
+        case (
+            AuthAuthenticatedAccountAuthBadOutcome.ACCOUNT_NOT_FOUND
+            | AuthAuthenticatedAccountAuthBadOutcome.INVALID_SIGNATURE
+        ):
             _handshake_abort(
                 CustomHttpStatus.BadAuthenticationInfo,
+                api_version=parsed.settled_api_version,
+            )
+        case AuthAuthenticatedAccountAuthBadOutcome.TOKEN_TOO_OLD:
+            _handshake_abort(
+                CustomHttpStatus.TokenExpired,
                 api_version=parsed.settled_api_version,
             )
 
@@ -725,6 +753,8 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
                 CustomHttpStatus.InvitationAlreadyUsedOrDeleted,
                 api_version=parsed.settled_api_version,
             )
+
+    _check_user_agent_or_abort(parsed, auth_info.organization_allowed_client_agent)
 
     # Handshake is done
 
@@ -812,6 +842,8 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
                 api_version=parsed.settled_api_version,
             )
 
+    _check_user_agent_or_abort(parsed, auth_info.organization_allowed_client_agent)
+
     # Handshake is done
 
     client_ctx = AuthenticatedClientContext(
@@ -896,6 +928,8 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
                 CustomHttpStatus.UserMustAcceptTos,
                 api_version=parsed.settled_api_version,
             )
+
+    _check_user_agent_or_abort(parsed, auth_info.organization_allowed_client_agent)
 
     # Handshake is done
 
@@ -1170,6 +1204,8 @@ async def tos_api(raw_organization_id: str, request: Request) -> Response:
             # We passed the `tos_acceptance_required=False` flag, so this
             # outcome should not happen.
             assert False, "Code should be unreachable!"
+
+    _check_user_agent_or_abort(parsed, auth_info.organization_allowed_client_agent)
 
     # Handshake is done
 
