@@ -167,6 +167,7 @@ class PGAuthComponent(BaseAuthComponent):
                     user_profile_outsider_allowed=self._config.organization_initial_user_profile_outsider_allowed,
                     minimum_archiving_period=self._config.organization_initial_minimum_archiving_period,
                     tos_per_locale_urls=self._config.organization_initial_tos,
+                    allowed_client_agent=self._config.organization_initial_allowed_client_agent,
                     bootstrap_token=None,
                 )
                 match outcome:

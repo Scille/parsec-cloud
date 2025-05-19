@@ -55,6 +55,7 @@ from parsec.components.sequester import (
     WebhookSequesterService,
 )
 from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListUsersBadOutcome
+from parsec.config import AllowedClientAgent
 from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
 from parsec.logging import get_logger
 from parsec.types import Base64Bytes, SequesterServiceIDField, Unset, UnsetType
@@ -265,6 +266,7 @@ class PatchOrganizationIn(BaseModel):
     active_users_limit: ActiveUsersLimitField | UnsetType = Unset
     minimum_archiving_period: UnsetType | int = Unset
     tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset
+    allowed_client_agent: UnsetType | AllowedClientAgent = Unset
 
     @field_validator("active_users_limit", mode="plain")
     @classmethod
@@ -278,6 +280,19 @@ class PatchOrganizationIn(BaseModel):
                 return ActiveUsersLimit.NO_LIMIT
             case int() if v >= 0:
                 return ActiveUsersLimit.limited_to(v)
+            case _:
+                raise ValueError("Expected null or positive integer")
+
+    @field_validator("allowed_client_agent", mode="plain")
+    @classmethod
+    def validate_allowed_client_agent(cls, v: Any) -> AllowedClientAgent | UnsetType:
+        match v:
+            case AllowedClientAgent():
+                return v
+            case v if v is Unset:
+                return v
+            case str():
+                return AllowedClientAgent(v)
             case _:
                 raise ValueError("Expected null or positive integer")
 
@@ -302,6 +317,7 @@ async def administration_patch_organization(
         user_profile_outsider_allowed=body.user_profile_outsider_allowed,
         minimum_archiving_period=body.minimum_archiving_period,
         tos=body.tos,
+        allowed_client_agent=body.allowed_client_agent,
     )
     match outcome:
         case None:

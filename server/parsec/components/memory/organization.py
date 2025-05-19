@@ -43,6 +43,7 @@ from parsec.components.organization import (
     TosUrl,
     organization_bootstrap_validate,
 )
+from parsec.config import AllowedClientAgent
 from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
 from parsec.types import Unset, UnsetType
 
@@ -68,6 +69,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         user_profile_outsider_allowed: UnsetType | bool = Unset,
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
+        allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         bootstrap_token = force_bootstrap_token or BootstrapToken.new()
@@ -95,6 +97,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 )
         else:
             cooked_tos = TermsOfService(updated_on=now, per_locale_urls=tos)
+        if allowed_client_agent is Unset:
+            allowed_client_agent = self._config.organization_initial_allowed_client_agent
+        assert isinstance(allowed_client_agent, AllowedClientAgent)
 
         self._data.organizations[id] = MemoryOrganization(
             organization_id=id,
@@ -102,8 +107,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed=user_profile_outsider_allowed,
             active_users_limit=active_users_limit,
             minimum_archiving_period=minimum_archiving_period,
-            created_on=now,
             tos=cooked_tos,
+            allowed_client_agent=allowed_client_agent,
+            created_on=now,
         )
 
         return bootstrap_token
@@ -140,6 +146,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             sequester_authority_verify_key_der=sequester_authority_verify_key_der,
             sequester_services_certificates=sequester_services_certificates,
             tos=org.tos,
+            allowed_client_agent=org.allowed_client_agent,
         )
 
     @override
@@ -350,6 +357,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         user_profile_outsider_allowed: UnsetType | bool = Unset,
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
+        allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         try:
             org = self._data.organizations[id]
@@ -369,6 +377,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 org.tos = None
             else:
                 org.tos = TermsOfService(updated_on=now, per_locale_urls=tos)
+        if allowed_client_agent is not Unset:
+            org.allowed_client_agent = allowed_client_agent
 
         # TODO: the event is triggered even if the orga was already expired, is this okay ?
         if org.is_expired:
@@ -410,6 +420,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 user_profile_outsider_allowed=org.user_profile_outsider_allowed,
                 minimum_archiving_period=org.minimum_archiving_period,
                 tos=org.tos,
+                allowed_client_agent=org.allowed_client_agent,
             )
         return items
 
