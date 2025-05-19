@@ -149,7 +149,12 @@
                 "hours": "Moins d'une heure | {hours} heures restantes",
                 "expired": "Expiré"
             },
-            "noLastLogin": "--"
+            "noLastLogin": "--",
+            "errors": {
+                "noStorage": "Impossible de lister ou de sauvegarder vos organisations : le stockage de l'application n'est pas disponible. Assurez-vous que votre disque a suffisamment d'espace et que vous avez les permissions d'accéder au dossier de configuration Parsec en lecture et en écriture.",
+                "noStorageWeb": "Impossible de lister ou de sauvegarder vos organisations : le stockage de l'application n'est pas disponible. Assurez-vous de ne pas naviguer en mode privé ou Incognito et que ce site a les permissions suffisantes pour accéder au stockage.",
+                "generic": "Impossible de lister vos organisations."
+            }
         },
         "noExistingOrganization": {
             "createOrJoin": "Créer ou rejoindre",
