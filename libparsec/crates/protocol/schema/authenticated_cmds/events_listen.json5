@@ -21,6 +21,22 @@
         ],
         "nested_types": [
             {
+                "name": "AllowedClientAgent",
+                "variants": [
+                    {
+                        // The server will reject any connection to this organization
+                        // from a web client.
+                        "name": "NativeOnly",
+                        "discriminant_value": "NATIVE_ONLY"
+                    },
+                    {
+                        // The server allows connection to this organization from a web client.
+                        "name": "NativeOrWeb",
+                        "discriminant_value": "NATIVE_OR_WEB"
+                    }
+                ]
+            },
+            {
                 "name": "APIEvent",
                 "discriminant_field": "event",
                 "variants": [
@@ -50,6 +66,10 @@
                             {
                                 "name": "sse_keepalive_seconds",
                                 "type": "RequiredOption<NonZeroInteger>"
+                            },
+                            {
+                                "name": "allowed_client_agent",
+                                "type": "AllowedClientAgent"
                             }
                         ]
                     },
