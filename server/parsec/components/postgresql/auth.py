@@ -25,7 +25,7 @@ from parsec.components.organization import OrganizationCreateBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization_create import organization_create
 from parsec.components.postgresql.utils import Q, no_transaction, transaction
-from parsec.config import BackendConfig
+from parsec.config import AllowedClientAgent, BackendConfig
 from parsec.logging import get_logger
 
 logger = get_logger()
@@ -35,7 +35,8 @@ _q_anonymous_get_info = Q(
     """
 SELECT
     _id as organization_internal_id,
-    is_expired AS organization_is_expired
+    is_expired AS organization_is_expired,
+    allowed_client_agent as organization_allowed_client_agent
 FROM organization
 WHERE organization_id = $organization_id
 -- Note we don't filter out non-bootstrapped organization here, this is because
@@ -49,6 +50,7 @@ _q_invited_get_info = Q(
 SELECT
     _id as organization_internal_id,
     is_expired as organization_is_expired,
+    allowed_client_agent as organization_allowed_client_agent,
     (
         SELECT _id FROM invitation WHERE organization = organization._id AND token = $token LIMIT 1
     ) as invitation_internal_id,
@@ -73,7 +75,8 @@ WITH my_organization AS (
     SELECT
         _id,
         is_expired,
-        tos_updated_on
+        tos_updated_on,
+        allowed_client_agent
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -127,6 +130,7 @@ my_user AS (
 SELECT
     (SELECT _id FROM my_organization) as organization_internal_id,
     (SELECT is_expired FROM my_organization) as organization_is_expired,
+    (SELECT allowed_client_agent FROM my_organization) as organization_allowed_client_agent,
     (SELECT _id FROM my_device) as device_internal_id,
     (SELECT verify_key FROM my_device) as device_verify_key,
     (SELECT user_id FROM my_user) as user_id,
@@ -199,9 +203,16 @@ class PGAuthComponent(BaseAuthComponent):
             case unknown:
                 assert False, repr(unknown)
 
+        match row["organization_allowed_client_agent"]:
+            case str() as raw_allowed_client_agent:
+                organization_allowed_client_agent = AllowedClientAgent(raw_allowed_client_agent)
+            case unknown:
+                assert False, repr(unknown)
+
         return AnonymousAuthInfo(
             organization_id=organization_id,
             organization_internal_id=organization_internal_id,
+            organization_allowed_client_agent=organization_allowed_client_agent,
         )
 
     @override
@@ -255,12 +266,19 @@ class PGAuthComponent(BaseAuthComponent):
             case unknown:
                 assert False, repr(unknown)
 
+        match row["organization_allowed_client_agent"]:
+            case str() as raw_allowed_client_agent:
+                organization_allowed_client_agent = AllowedClientAgent(raw_allowed_client_agent)
+            case unknown:
+                assert False, repr(unknown)
+
         return InvitedAuthInfo(
             organization_id=organization_id,
             token=token,
             type=invitation_type,
             organization_internal_id=organization_internal_id,
             invitation_internal_id=invitation_internal_id,
+            organization_allowed_client_agent=organization_allowed_client_agent,
         )
 
     @override
@@ -336,6 +354,12 @@ class PGAuthComponent(BaseAuthComponent):
                 case unknown:
                     assert False, repr(unknown)
 
+        match row["organization_allowed_client_agent"]:
+            case str() as raw_allowed_client_agent:
+                organization_allowed_client_agent = AllowedClientAgent(raw_allowed_client_agent)
+            case unknown:
+                assert False, repr(unknown)
+
         return AuthenticatedAuthInfo(
             organization_id=organization_id,
             user_id=user_id,
@@ -343,4 +367,5 @@ class PGAuthComponent(BaseAuthComponent):
             device_verify_key=device_verify_key,
             organization_internal_id=organization_internal_id,
             device_internal_id=device_internal_id,
+            organization_allowed_client_agent=organization_allowed_client_agent,
         )

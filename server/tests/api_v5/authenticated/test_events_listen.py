@@ -183,6 +183,9 @@ async def test_receive_server_config_as_first_event(
         allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
     )
 
+    # Native client must have `User-Agent` starting with `Parsec-Client/`
+    minimalorg.alice.headers["User-Agent"] = "Parsec-Client/X.Y Test"
+
     async with minimalorg.alice.events_listen() as alice_sse:
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.latest.events_listen.RepOk(
