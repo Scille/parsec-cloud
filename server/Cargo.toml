@@ -2,7 +2,7 @@
 name = "parsec"
 publish.workspace = true
 authors.workspace = true
-edition.workspace = true
+edition = "2021"
 homepage.workspace = true
 license.workspace = true
 version.workspace = true
@@ -30,7 +30,7 @@ libparsec_testbed = { workspace = true, optional = true }
 
 regex = { workspace = true, features = ["std", "perf", "unicode"] }
 paste = { workspace = true }
-pyo3 = { workspace = true, features = ["multiple-pymethods", "extension-module", "macros"] }
+pyo3 = { workspace = true, features = ["extension-module", "macros", "multiple-pymethods"] }
 uuid = { workspace = true, features = ["serde", "v4", "fast-rng"] }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 lazy_static = { workspace = true }

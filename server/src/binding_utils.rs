@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
-    FromPyObject, IntoPy, PyObject, PyResult,
     exceptions::PyNotImplementedError,
     pyclass::CompareOp,
-    types::{PyAnyMethods, PyByteArray, PyBytes, PyTuple},
+    types::{PyAnyMethods, PyByteArray, PyByteArrayMethods, PyBytes, PyBytesMethods, PyTuple},
+    Bound, FromPyObject, IntoPyObject, PyAny, PyResult,
 };
 use std::{
     collections::hash_map::DefaultHasher,
@@ -14,34 +14,43 @@ use std::{
 #[derive(FromPyObject)]
 pub(crate) struct PathWrapper(pub std::path::PathBuf);
 
-impl IntoPy<PyObject> for PathWrapper {
-    fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
+impl<'py> IntoPyObject<'py> for PathWrapper {
+    type Target = PyAny;
+    type Output = Bound<'py, Self::Target>;
+    type Error = std::convert::Infallible;
+
+    fn into_pyobject(self, py: pyo3::Python<'py>) -> Result<Self::Output, Self::Error> {
         // Pathlib is part of the standard library
         let pathlib_module = py
-            .import_bound("pathlib")
+            .import("pathlib")
             .expect("import `pathlib` module failed.");
         let path_ctor = pathlib_module
             .getattr("Path")
             .expect("can't get `Path` from `pathlib`.");
 
-        path_ctor
-            .call1(PyTuple::new_bound(py, [self.0]))
-            .expect("call to `Path` constructor failed.")
-            .into_py(py)
+        Ok(path_ctor
+            .call1(PyTuple::new(py, [self.0]).expect("Failed to create tuple when converting path"))
+            .expect("call to `Path` constructor failed."))
     }
 }
 
 #[derive(FromPyObject)]
 pub enum BytesWrapper<'py> {
-    Bytes(&'py PyBytes),
-    ByteArray(&'py PyByteArray),
+    Bytes(Bound<'py, PyBytes>),
+    ByteArray(Bound<'py, PyByteArray>),
 }
 
 impl From<BytesWrapper<'_>> for Vec<u8> {
     fn from(wrapper: BytesWrapper) -> Self {
         match wrapper {
             BytesWrapper::Bytes(bytes) => bytes.as_bytes().to_vec(),
-            BytesWrapper::ByteArray(byte_array) => byte_array.to_vec(),
+            BytesWrapper::ByteArray(byte_array) =>
+            // SAFETY: Using PyByteArray::as_bytes is safe as long as the corresponding memory is not modified.
+            // Here, the GIL is held during the entire access to `bytes` so there is no risk of another
+            // python thread modifying the bytearray behind our back.
+            {
+                unsafe { byte_array.as_bytes() }.to_vec()
+            }
         }
     }
 }
@@ -293,7 +302,12 @@ macro_rules! gen_py_wrapper_class_for_enum {
                     lazy_static::lazy_static! {
                         static ref VALUE: PyObject = {
                             Python::with_gil(|py| {
-                                $class($field_value).into_py(py)
+                                let val = $class($field_value);
+                                ::pyo3::conversion::IntoPyObjectExt::<'_>::into_py_any(val, py)
+                                    .expect(::std::concat!(
+                                            "Failed to initialise variant ",
+                                            ::std::stringify!($field_value)
+                                    ))
                             })
                         };
                     };
@@ -304,15 +318,17 @@ macro_rules! gen_py_wrapper_class_for_enum {
 
             #[classattr]
             #[pyo3(name = "VALUES")]
-            fn values() -> &'static PyObject {
+            fn values() -> &'static ::pyo3::Py<PyTuple> {
                 lazy_static::lazy_static! {
-                    static ref VALUES: PyObject = {
+                    static ref VALUES: ::pyo3::Py<PyTuple> = {
                         Python::with_gil(|py| {
-                            PyTuple::new_bound(py, [
+                            PyTuple::new(py, [
                                 $(
                                     $class :: $fn_name ()
                                 ),*
-                            ]).into_py(py)
+                            ])
+                                .map(::pyo3::Bound::unbind)
+                                .expect(::std::concat!("Cannot initialize values for ", ::std::stringify!($class)))
                         })
                     };
                 };

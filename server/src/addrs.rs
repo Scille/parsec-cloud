@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
-    Bound,
     exceptions::PyValueError,
-    prelude::{IntoPy, PyObject, PyResult, Python, ToPyObject, pyclass, pymethods},
+    prelude::{pyclass, pymethods, PyObject, PyResult, Python},
     types::{PyAnyMethods, PyBytes, PyDict, PyDictMethods, PyType},
+    Bound, IntoPyObjectExt,
 };
 use std::str::FromStr;
 
@@ -238,16 +238,16 @@ impl ParsecActionAddr {
             true => match libparsec_types::ParsecActionAddr::from_any(url) {
                 Ok(ba) => match ba {
                     libparsec_types::ParsecActionAddr::OrganizationBootstrap(v) => {
-                        Ok(ParsecOrganizationBootstrapAddr(v).into_py(py).to_object(py))
+                        ParsecOrganizationBootstrapAddr(v).into_py_any(py)
                     }
                     libparsec_types::ParsecActionAddr::WorkspacePath(v) => {
-                        Ok(ParsecWorkspacePathAddr(v).into_py(py).to_object(py))
+                        ParsecWorkspacePathAddr(v).into_py_any(py)
                     }
                     libparsec_types::ParsecActionAddr::Invitation(v) => {
-                        Ok(ParsecInvitationAddr(v).into_py(py).to_object(py))
+                        ParsecInvitationAddr(v).into_py_any(py)
                     }
                     libparsec_types::ParsecActionAddr::PkiEnrollment(v) => {
-                        Ok(ParsecPkiEnrollmentAddr(v).into_py(py).to_object(py))
+                        ParsecPkiEnrollmentAddr(v).into_py_any(py)
                     }
                 },
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
@@ -255,16 +255,16 @@ impl ParsecActionAddr {
             false => match url.parse::<libparsec_types::ParsecActionAddr>() {
                 Ok(ba) => match ba {
                     libparsec_types::ParsecActionAddr::OrganizationBootstrap(v) => {
-                        Ok(ParsecOrganizationBootstrapAddr(v).into_py(py).to_object(py))
+                        ParsecOrganizationBootstrapAddr(v).into_py_any(py)
                     }
                     libparsec_types::ParsecActionAddr::WorkspacePath(v) => {
-                        Ok(ParsecWorkspacePathAddr(v).into_py(py).to_object(py))
+                        ParsecWorkspacePathAddr(v).into_py_any(py)
                     }
                     libparsec_types::ParsecActionAddr::Invitation(v) => {
-                        Ok(ParsecInvitationAddr(v).into_py(py).to_object(py))
+                        ParsecInvitationAddr(v).into_py_any(py)
                     }
                     libparsec_types::ParsecActionAddr::PkiEnrollment(v) => {
-                        Ok(ParsecPkiEnrollmentAddr(v).into_py(py).to_object(py))
+                        ParsecPkiEnrollmentAddr(v).into_py_any(py)
                     }
                 },
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
@@ -501,7 +501,7 @@ impl ParsecWorkspacePathAddr {
 
     #[getter]
     fn encrypted_path<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, self.0.encrypted_path().as_slice())
+        PyBytes::new(py, self.0.encrypted_path().as_slice())
     }
 
     fn get_server_addr(&self) -> ParsecAddr {

@@ -7,10 +7,10 @@ use std::{
 };
 
 use pyo3::{
-    Bound,
     exceptions::{PyAttributeError, PyValueError},
     prelude::*,
     types::{PyBytes, PyDict, PySet, PyTuple, PyType},
+    Bound,
 };
 
 use libparsec_types::{CertificateSigner, IndexInt, UnsecureSkipValidationReason};
@@ -75,6 +75,7 @@ impl UserCertificate {
     }
 
     #[classmethod]
+    #[pyo3(signature = (signed, author_verify_key, expected_author = None, expected_user = None, expected_human_handle = None))]
     fn verify_and_load(
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
@@ -102,7 +103,7 @@ impl UserCertificate {
         author_signkey: &SigningKey,
         py: Python<'py>,
     ) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
@@ -270,7 +271,7 @@ impl DeviceCertificate {
         author_signkey: &SigningKey,
         py: Python<'py>,
     ) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
@@ -387,6 +388,7 @@ impl RevokedUserCertificate {
     }
 
     #[classmethod]
+    #[pyo3(signature = (signed, author_verify_key, expected_author, expected_user = None))]
     fn verify_and_load(
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
@@ -409,7 +411,7 @@ impl RevokedUserCertificate {
         author_signkey: &SigningKey,
         py: Python<'py>,
     ) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
@@ -486,7 +488,7 @@ impl UserUpdateCertificate {
         author_signkey: &SigningKey,
         py: Python<'py>,
     ) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
@@ -572,7 +574,7 @@ impl RealmRoleCertificate {
         author_signkey: &SigningKey,
         py: Python<'py>,
     ) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
@@ -661,7 +663,7 @@ impl RealmNameCertificate {
         author_signkey: &SigningKey,
         py: Python<'py>,
     ) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
@@ -694,7 +696,7 @@ impl RealmNameCertificate {
 
     #[getter]
     fn encrypted_name<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.encrypted_name)
+        PyBytes::new(py, &self.0.encrypted_name)
     }
 }
 
@@ -772,7 +774,7 @@ impl RealmKeyRotationCertificate {
         author_signkey: &SigningKey,
         py: Python<'py>,
     ) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
@@ -815,7 +817,7 @@ impl RealmKeyRotationCertificate {
 
     #[getter]
     fn key_canary<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.key_canary)
+        PyBytes::new(py, &self.0.key_canary)
     }
 }
 
@@ -930,7 +932,7 @@ impl RealmArchivingCertificate {
         author_signkey: &SigningKey,
         py: Python<'py>,
     ) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
@@ -1022,7 +1024,7 @@ impl ShamirRecoveryBriefCertificate {
         author_signkey: &SigningKey,
         py: Python<'py>,
     ) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
@@ -1121,7 +1123,7 @@ impl ShamirRecoveryShareCertificate {
         author_signkey: &SigningKey,
         py: Python<'py>,
     ) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
@@ -1154,7 +1156,7 @@ impl ShamirRecoveryShareCertificate {
 
     #[getter]
     fn ciphered_share<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.ciphered_share)
+        PyBytes::new(py, &self.0.ciphered_share)
     }
 }
 
@@ -1217,7 +1219,7 @@ impl ShamirRecoveryDeletionCertificate {
         author_signkey: &SigningKey,
         py: Python<'py>,
     ) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
@@ -1296,7 +1298,7 @@ impl SequesterAuthorityCertificate {
         author_signkey: &SigningKey,
         py: Python<'py>,
     ) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[getter]
@@ -1344,7 +1346,7 @@ impl SequesterServiceCertificate {
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump())
+        PyBytes::new(py, &self.0.dump())
     }
 
     #[getter]
@@ -1397,7 +1399,7 @@ impl SequesterRevokedServiceCertificate {
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &self.0.dump())
+        PyBytes::new(py, &self.0.dump())
     }
 
     #[getter]

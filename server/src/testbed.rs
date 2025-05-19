@@ -613,7 +613,7 @@ fn event_to_pyobject(
                 .certificates($template)
                 .next()
                 .expect("Must be present");
-            let raw = PyBytes::new_bound($py, &certif.signed).unbind();
+            let raw = PyBytes::new($py, &certif.signed).unbind();
             let wrapped_certif = paste::paste! {
                 [< $name Certificate >]::from(match &certif.certificate {
                     libparsec_types::AnyArcCertificate::$name(x) => x.to_owned(),
@@ -629,8 +629,8 @@ fn event_to_pyobject(
                 .certificates($template)
                 .next()
                 .expect("Must be present");
-            let raw = PyBytes::new_bound($py, &certif.signed).unbind();
-            let raw_redacted = PyBytes::new_bound($py, &certif.signed_redacted).unbind();
+            let raw = PyBytes::new($py, &certif.signed).unbind();
+            let raw_redacted = PyBytes::new($py, &certif.signed_redacted).unbind();
             let wrapped_certif = paste::paste! {
                 [< $name Certificate >]::from(match &certif.certificate {
                     libparsec_types::AnyArcCertificate::$name(x) => x.to_owned(),
@@ -686,13 +686,13 @@ fn event_to_pyobject(
                 }),
                 sequester_authority_raw_certificate: sequester_authority_certif
                     .as_ref()
-                    .map(|x| PyBytes::new_bound(py, &x.signed).unbind()),
+                    .map(|x| PyBytes::new(py, &x.signed).unbind()),
                 first_user_certificate: UserCertificate::from(match &user_certif.certificate {
                     libparsec_types::AnyArcCertificate::User(x) => x.to_owned(),
                     _ => unreachable!(),
                 }),
-                first_user_raw_certificate: PyBytes::new_bound(py, &user_certif.signed).unbind(),
-                first_user_raw_redacted_certificate: PyBytes::new_bound(
+                first_user_raw_certificate: PyBytes::new(py, &user_certif.signed).unbind(),
+                first_user_raw_redacted_certificate: PyBytes::new(
                     py,
                     &user_certif.signed_redacted,
                 )
@@ -703,12 +703,12 @@ fn event_to_pyobject(
                     libparsec_types::AnyArcCertificate::Device(x) => x.to_owned(),
                     _ => unreachable!(),
                 }),
-                first_user_first_device_raw_certificate: PyBytes::new_bound(
+                first_user_first_device_raw_certificate: PyBytes::new(
                     py,
                     &device_certif.signed,
                 )
                 .unbind(),
-                first_user_first_device_raw_redacted_certificate: PyBytes::new_bound(
+                first_user_first_device_raw_redacted_certificate: PyBytes::new(
                     py,
                     &device_certif.signed_redacted,
                 )
@@ -766,16 +766,16 @@ fn event_to_pyobject(
                 user_realm_key: x.user_realm_key.clone().into(),
                 local_symkey: x.local_symkey.clone().into(),
                 local_password: PyString::new_bound(py, &x.local_password).unbind(),
-                user_raw_certificate: PyBytes::new_bound(py, &user_certif.signed).unbind(),
-                user_raw_redacted_certificate: PyBytes::new_bound(py, &user_certif.signed_redacted)
+                user_raw_certificate: PyBytes::new(py, &user_certif.signed).unbind(),
+                user_raw_redacted_certificate: PyBytes::new(py, &user_certif.signed_redacted)
                     .unbind(),
                 user_certificate: UserCertificate::from(match &user_certif.certificate {
                     libparsec_types::AnyArcCertificate::User(x) => x.to_owned(),
                     _ => unreachable!(),
                 }),
-                first_device_raw_certificate: PyBytes::new_bound(py, &device_certif.signed)
+                first_device_raw_certificate: PyBytes::new(py, &device_certif.signed)
                     .unbind(),
-                first_device_raw_redacted_certificate: PyBytes::new_bound(
+                first_device_raw_redacted_certificate: PyBytes::new(
                     py,
                     &device_certif.signed_redacted,
                 )
@@ -886,7 +886,7 @@ fn event_to_pyobject(
                 key_index: x.key_index,
                 recipient_keys_bundle_access: x
                     .recipient_keys_bundle_access(template)
-                    .map(|x| PyBytes::new_bound(py, &x).unbind()),
+                    .map(|x| PyBytes::new(py, &x).unbind()),
                 raw_certificate,
                 certificate,
             };
@@ -917,7 +917,7 @@ fn event_to_pyobject(
                     for (participant, access) in x.per_participant_keys_bundle_access() {
                         pyobj.set_item(
                             UserID::from(participant).into_py(py),
-                            PyBytes::new_bound(py, &access),
+                            PyBytes::new(py, &access),
                         )?;
                     }
                     pyobj.unbind()
@@ -930,14 +930,14 @@ fn event_to_pyobject(
                             for (id, access) in x {
                                 pyobj.set_item(
                                     SequesterServiceID::from(id).into_py(py),
-                                    PyBytes::new_bound(py, &access),
+                                    PyBytes::new(py, &access),
                                 )?;
                             }
                             pyobj.into_py(py)
                         }
                     }
                 },
-                keys_bundle: PyBytes::new_bound(py, &x.keys_bundle(template)).unbind(),
+                keys_bundle: PyBytes::new(py, &x.keys_bundle(template)).unbind(),
                 key_index: x.key_index.into(),
                 raw_certificate,
                 certificate,
@@ -963,7 +963,7 @@ fn event_to_pyobject(
 
             let (brief_certificate, raw_brief_certificate) = {
                 let certif = certifs.next().expect("Must be present");
-                let raw_brief_certificate = PyBytes::new_bound(py, &certif.signed).unbind();
+                let raw_brief_certificate = PyBytes::new(py, &certif.signed).unbind();
                 let brief_certificate =
                     ShamirRecoveryBriefCertificate::from(match &certif.certificate {
                         libparsec_types::AnyArcCertificate::ShamirRecoveryBrief(x) => x.to_owned(),
@@ -976,7 +976,7 @@ fn event_to_pyobject(
                 let shares_certificates = PyList::empty_bound(py);
                 let raw_shares_certificates = PyList::empty_bound(py);
                 for certif in certifs {
-                    let raw = PyBytes::new_bound(py, &certif.signed);
+                    let raw = PyBytes::new(py, &certif.signed);
                     let wrapped_certif =
                         ShamirRecoveryShareCertificate::from(match &certif.certificate {
                             libparsec_types::AnyArcCertificate::ShamirRecoveryShare(x) => {
@@ -1003,7 +1003,7 @@ fn event_to_pyobject(
                 recovery_device: x.recovery_device.into(),
                 data_key: x.data_key.clone().into(),
                 reveal_token: x.reveal_token.into(),
-                ciphered_data: PyBytes::new_bound(py, &x.ciphered_data(template)).into(),
+                ciphered_data: PyBytes::new(py, &x.ciphered_data(template)).into(),
                 brief_certificate,
                 raw_brief_certificate,
                 shares_certificates: shares_certificates.unbind(),
@@ -1036,7 +1036,7 @@ fn event_to_pyobject(
                 key_index: x.key_index,
                 version: x.version,
                 vlob_id: x.vlob_id.into(),
-                encrypted: PyBytes::new_bound(py, &x.encrypted).into(),
+                encrypted: PyBytes::new(py, &x.encrypted).into(),
             };
             Some(obj.into_py(py))
         }
@@ -1049,7 +1049,7 @@ fn event_to_pyobject(
                 key_index: 0,
                 version: x.manifest.version,
                 vlob_id: x.manifest.id.into(),
-                encrypted: PyBytes::new_bound(py, &x.encrypted(template)).into(),
+                encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
             };
             Some(obj.into_py(py))
         }
@@ -1062,7 +1062,7 @@ fn event_to_pyobject(
                 key_index: x.key_index,
                 version: x.manifest.version,
                 vlob_id: x.manifest.id.into(),
-                encrypted: PyBytes::new_bound(py, &x.encrypted(template)).into(),
+                encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
             };
             Some(obj.into_py(py))
         }
@@ -1075,7 +1075,7 @@ fn event_to_pyobject(
                 key_index: x.key_index,
                 version: x.manifest.version,
                 vlob_id: x.manifest.id.into(),
-                encrypted: PyBytes::new_bound(py, &x.encrypted(template)).into(),
+                encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
             };
             Some(obj.into_py(py))
         }
@@ -1087,7 +1087,7 @@ fn event_to_pyobject(
                 realm: x.realm.into(),
                 block_id: x.block_id.into(),
                 key_index: x.key_index,
-                encrypted: PyBytes::new_bound(py, &x.encrypted).into(),
+                encrypted: PyBytes::new(py, &x.encrypted).into(),
             };
             Some(obj.into_py(py))
         }
@@ -1099,8 +1099,8 @@ fn event_to_pyobject(
                 realm: x.realm.into(),
                 block_id: x.block_id.into(),
                 key_index: x.key_index,
-                cleartext: PyBytes::new_bound(py, &x.cleartext).into(),
-                encrypted: PyBytes::new_bound(py, &x.encrypted(template)).into(),
+                cleartext: PyBytes::new(py, &x.cleartext).into(),
+                encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
             };
             Some(obj.into_py(py))
         }

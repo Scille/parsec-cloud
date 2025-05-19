@@ -25,7 +25,7 @@ impl ApiVersion {
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-        Ok(PyBytes::new_bound(
+        Ok(PyBytes::new(
             py,
             &self
                 .0

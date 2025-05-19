@@ -276,16 +276,13 @@ fn quote_reps(
                         let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &f.ty);
                         quote! {
                             match x {
-                                libparsec_types::Maybe::Present(x) => Ok(#conversion),
+                                libparsec_types::Maybe::Present(x) => #conversion,
                                 libparsec_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
                             }
                         }
                     } else {
                         let access_field_path = quote! { x };
-                        let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &f.ty);
-                        quote! {
-                            Ok(#conversion)
-                        }
+                         quote_type_as_fn_getter_conversion(&access_field_path, &f.ty)
                     };
 
                     quote!{
@@ -353,7 +350,7 @@ fn quote_reps(
             }
 
             fn dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-                Ok(PyBytes::new_bound(
+                Ok(PyBytes::new(
                     py,
                     &self.0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
                 ))
@@ -436,7 +433,7 @@ fn quote_req(
                     }
 
                     fn dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-                        Ok(PyBytes::new_bound(
+                        Ok(PyBytes::new(
                             py,
                             &self.0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
                         ))
@@ -464,16 +461,13 @@ fn quote_req(
                     let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &field.ty);
                     quote! {
                         match &self.0.#field_name {
-                            libparsec_types::Maybe::Present(x) => Ok(#conversion),
+                            libparsec_types::Maybe::Present(x) => #conversion,
                             libparsec_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
                         }
                     }
                 } else {
                     let access_field_path = quote! { (&self.0.#field_name) };
-                    let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &field.ty);
-                    quote! {
-                        Ok(#conversion)
-                    }
+                     quote_type_as_fn_getter_conversion(&access_field_path, &field.ty)
                 };
 
                 quote! {
@@ -513,7 +507,7 @@ fn quote_req(
                     #fn_new_and_getters_iml
 
                     fn dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
-                        Ok(PyBytes::new_bound(
+                        Ok(PyBytes::new(
                             py,
                             &self.0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
                         ))
@@ -607,18 +601,13 @@ fn quote_nested_type(
                         let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &f.ty);
                         quote! {
                             match x {
-                                libparsec_types::Maybe::Present(x) => Ok(#conversion),
+                                libparsec_types::Maybe::Present(x) => #conversion,
                                 libparsec_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
                             }
                         }
                     } else {
                         let access_field_path = quote! { x };
-                        let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &f.ty);
-                        quote! {
-                            {
-                                Ok(#conversion)
-                            }
-                        }
+                        quote_type_as_fn_getter_conversion(&access_field_path, &f.ty)
                     };
 
                     quote!{
@@ -719,18 +708,13 @@ fn quote_nested_type(
                     let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &field.ty);
                     quote! {
                         match &self.0.#field_name {
-                            libparsec_types::Maybe::Present(x) => Ok(#conversion),
+                            libparsec_types::Maybe::Present(x) => #conversion,
                             libparsec_types::Maybe::Absent => Err(PyAttributeError::new_err("")),
                         }
                     }
                 } else {
                     let access_field_path = quote! { (&self.0.#field_name) };
-                    let conversion = quote_type_as_fn_getter_conversion(&access_field_path, &field.ty);
-                    quote! {
-                        {
-                            Ok(#conversion)
-                        }
-                    }
+                    quote_type_as_fn_getter_conversion(&access_field_path, &field.ty)
                 };
 
                 quote! {
@@ -792,8 +776,8 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
                 {
                     let mut items = PyDict::new_bound(py);
                     for (k, v) in #field_path.iter() {
-                        let k = #conversion_key;
-                        let v = #conversion_value;
+                        let k = #conversion_key?;
+                        let v = #conversion_value?;
                         items.set_item(k, v).expect("Failed to set item in PyDict");
                     }
                     items.into_any()
@@ -807,7 +791,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
                 {
                     let mut items = PyList::empty_bound(py);
                     for y in #field_path.iter() {
-                        items.append(#conversion)?;
+                        items.append(#conversion?)?;
                     }
                     items.into_any()
                 }
@@ -860,9 +844,9 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             quote! {
                 {
                     let (#(#items_names),*) = #field_path;
-                    PyTuple::new_bound(py, [
+                    PyTuple::new(py, [
                         #(#items_conversions),*
-                    ]).into_any()
+                    ]).map(|v| v.into_any())
                 }
             }
         }
@@ -871,7 +855,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             quote! { #nested_name::from_raw(py, #field_path.to_owned()).into_any() }
         }
         FieldType::String => quote! { PyString::new_bound(py, #field_path).into_any() },
-        FieldType::Bytes => quote! { PyBytes::new_bound(py, #field_path).into_any() },
+        FieldType::Bytes => quote! { PyBytes::new(py, #field_path).into_any() },
         FieldType::Boolean => quote! { PyBool::new_bound(py, *#field_path).to_owned().into_any() },
         FieldType::Float => quote! { PyFloat::new_bound(py, *#field_path).into_any() },
         FieldType::Integer
