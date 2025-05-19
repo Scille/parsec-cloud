@@ -21,10 +21,11 @@
           fill="clear"
           class="copy-link"
           @click.stop="copyLink(invitation)"
+          :class="copyLinkActive ? 'active' : ''"
           :title="I18n.translate('UsersPage.invitation.copyLink')"
         >
           <ion-icon
-            :icon="link"
+            :icon="copyLinkActive ? checkmarkCircle : link"
             class="button-icon"
           />
         </ion-button>
@@ -34,6 +35,7 @@
           class="send-email"
           :disabled="sendEmailDisabled"
           @click.stop="sendEmail(invitation)"
+          :class="sendEmailDisabled ? 'active' : ''"
           :title="I18n.translate('UsersPage.invitation.sendEmail')"
         >
           <ion-icon
@@ -70,13 +72,15 @@ import { ClientNewUserInvitationErrorTag, InvitationEmailSentStatus, inviteUser,
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonIcon, IonButton, IonButtons, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { formatTimeSince, Clipboard, I18n, askQuestion, Answer, Translatable } from 'megashark-lib';
-import { link, mail } from 'ionicons/icons';
+import { checkmarkCircle, link, mail } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const props = defineProps<{
   invitation: UserInvitation;
   informationManager: InformationManager;
 }>();
+
+const copyLinkActive = ref(false);
 
 defineEmits<{
   (e: 'cancel', invitation: UserInvitation): void;
@@ -87,6 +91,10 @@ const sendEmailDisabled = ref(false);
 
 async function copyLink(invitation: UserInvitation): Promise<void> {
   const result = await Clipboard.writeText(invitation.addr);
+  copyLinkActive.value = true;
+  setTimeout(() => {
+    copyLinkActive.value = false;
+  }, 5000);
   if (result) {
     props.informationManager.present(
       new Information({
@@ -186,7 +194,6 @@ async function sendEmail(invitation: UserInvitation): Promise<void> {
 
   &:hover,
   &:focus {
-    background: var(--parsec-color-light-primary-30);
     color: var(--parsec-color-light-secondary-text);
   }
 }
@@ -219,36 +226,32 @@ async function sendEmail(invitation: UserInvitation): Promise<void> {
   .copy-link,
   .send-email {
     background: none;
-    color: var(--parsec-color-light-secondary-soft-text);
-    --padding-end: 0;
-    --padding-start: 0;
-    position: relative;
     cursor: pointer;
+    margin-right: 1rem;
 
-    &::after {
-      content: ' ';
-      position: absolute;
-      width: 0%;
-      left: 0;
-      bottom: 4px;
-      height: 1px;
-      background: var(--parsec-color-light-secondary-text);
-      transition: width 150ms ease-in-out;
+    &::part(native) {
+      padding: 0;
     }
 
-    ion-icon {
-      font-size: 1rem;
-      margin-right: 0.25rem;
+    .button-icon {
+      font-size: 1.25rem;
+      padding: 0.5rem;
+      background: var(--parsec-color-light-secondary-premiere);
+      border-radius: var(--parsec-radius-8);
+      color: var(--parsec-color-light-secondary-soft-text);
+      transition: all 0.15s ease-in-out;
     }
-
     &:hover {
-      --background-hover: none;
-      color: var(--parsec-color-light-secondary-text);
+      .button-icon {
+        color: var(--parsec-color-light-secondary-text);
+        background: var(--parsec-color-light-secondary-medium);
+      }
+    }
 
-      &::after {
-        content: ' ';
-        position: absolute;
-        width: 100%;
+    &.active {
+      .button-icon {
+        color: var(--parsec-color-light-success-700);
+        background: var(--parsec-color-light-success-50);
       }
     }
   }
