@@ -55,6 +55,7 @@ pub fn rep_ok() {
             ),
         ),
         (
+            // Legacy API<5.1 format
             // Generated from Parsec 3.2.5-a.0+dev
             // Content:
             //   status: 'ok'
@@ -73,10 +74,12 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::LimitedTo(8),
                     user_profile_outsider_allowed: true,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    allowed_client_agent: Maybe::Absent,
                 },
             ),
         ),
         (
+            // Legacy API<5.1 format
             // Generated from Parsec 3.2.5-a.0+dev
             // Content:
             //   status: 'ok'
@@ -95,6 +98,61 @@ pub fn rep_ok() {
                     active_users_limit: ActiveUsersLimit::NoLimit,
                     user_profile_outsider_allowed: false,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    allowed_client_agent: Maybe::Absent,
+                },
+            ),
+        ),
+        (
+            // Generated from Parsec 3.4.0-a.7+dev
+            // Content:
+            //   status: 'ok'
+            //   event: 'ORGANIZATION_CONFIG'
+            //   active_users_limit: 8
+            //   allowed_client_agent: 'NATIVE_OR_WEB'
+            //   sse_keepalive_seconds: 30
+            //   user_profile_outsider_allowed: True
+            &hex!(
+                "86a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
+                "4947b26163746976655f75736572735f6c696d697408b4616c6c6f7765645f636c6965"
+                "6e745f6167656e74ad4e41544956455f4f525f574542b57373655f6b656570616c6976"
+                "655f7365636f6e64731ebd757365725f70726f66696c655f6f757473696465725f616c"
+                "6c6f776564c3"
+            )[..],
+            authenticated_cmds::events_listen::Rep::Ok(
+                authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
+                    active_users_limit: ActiveUsersLimit::LimitedTo(8),
+                    user_profile_outsider_allowed: true,
+                    sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    allowed_client_agent: Maybe::Present(
+                        authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb,
+                    ),
+                },
+            ),
+        ),
+        (
+            // Generated from Parsec 3.4.0-a.7+dev
+            // Content:
+            //   status: 'ok'
+            //   event: 'ORGANIZATION_CONFIG'
+            //   active_users_limit: None
+            //   allowed_client_agent: 'NATIVE_ONLY'
+            //   sse_keepalive_seconds: 30
+            //   user_profile_outsider_allowed: False
+            &hex!(
+                "86a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
+                "4947b26163746976655f75736572735f6c696d6974c0b4616c6c6f7765645f636c6965"
+                "6e745f6167656e74ab4e41544956455f4f4e4c59b57373655f6b656570616c6976655f"
+                "7365636f6e64731ebd757365725f70726f66696c655f6f757473696465725f616c6c6f"
+                "776564c2"
+            )[..],
+            authenticated_cmds::events_listen::Rep::Ok(
+                authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
+                    active_users_limit: ActiveUsersLimit::NoLimit,
+                    user_profile_outsider_allowed: false,
+                    sse_keepalive_seconds: Some(30.try_into().unwrap()),
+                    allowed_client_agent: Maybe::Present(
+                        authenticated_cmds::events_listen::AllowedClientAgent::NativeOnly,
+                    ),
                 },
             ),
         ),

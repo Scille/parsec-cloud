@@ -70,6 +70,7 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
             active_users_limit,
             user_profile_outsider_allowed,
             sse_keepalive_seconds: _,
+            allowed_client_agent: _,
         } => {
             let event = EventServerConfigNotified {
                 active_users_limit,
@@ -235,6 +236,9 @@ fn handle_sse_error(
                 }
                 ConnectionError::RevokedUser => event_bus.send(&EventRevokedSelfUser),
                 ConnectionError::FrozenUser => event_bus.send(&EventFrozenSelfUser),
+                ConnectionError::WebClientNotAllowedByOrganization => {
+                    event_bus.send(&EventWebClientNotAllowedByOrganization)
+                }
                 ConnectionError::AuthenticationTokenExpired => {
                     event_bus.send(&EventClientErrorResponse {
                         error_type: ClientErrorResponseType::MissingAuthenticationInfo,
