@@ -5492,6 +5492,9 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                 ballpark_client_late_offset,
             })
         }
+        "ClientEventWebClientNotAllowedByOrganization" => {
+            Ok(libparsec::ClientEvent::WebClientNotAllowedByOrganization {})
+        }
         "ClientEventWorkspaceLocallyCreated" => {
             Ok(libparsec::ClientEvent::WorkspaceLocallyCreated {})
         }
@@ -6052,6 +6055,13 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &js_obj,
                 &"ballparkClientLateOffset".into(),
                 &js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ClientEvent::WebClientNotAllowedByOrganization { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventWebClientNotAllowedByOrganization".into(),
             )?;
         }
         libparsec::ClientEvent::WorkspaceLocallyCreated { .. } => {

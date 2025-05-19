@@ -830,6 +830,9 @@ export interface ClientEventTooMuchDriftWithServerClock {
     ballpark_client_early_offset: number
     ballpark_client_late_offset: number
 }
+export interface ClientEventWebClientNotAllowedByOrganization {
+    tag: "WebClientNotAllowedByOrganization"
+}
 export interface ClientEventWorkspaceLocallyCreated {
     tag: "WorkspaceLocallyCreated"
 }
@@ -891,6 +894,7 @@ export type ClientEvent =
   | ClientEventServerInvalidResponseContent
   | ClientEventServerInvalidResponseStatus
   | ClientEventTooMuchDriftWithServerClock
+  | ClientEventWebClientNotAllowedByOrganization
   | ClientEventWorkspaceLocallyCreated
   | ClientEventWorkspaceOpsInboundSyncDone
   | ClientEventWorkspaceOpsOutboundSyncAborted
