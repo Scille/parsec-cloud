@@ -21,12 +21,25 @@
           fill="clear"
           class="copy-link"
           @click.stop="copyLink(invitation)"
+          :title="I18n.translate('UsersPage.invitation.copyLink')"
         >
           <ion-icon
             :icon="link"
             class="button-icon"
           />
-          {{ $msTranslate('UsersPage.invitation.copyLink') }}
+        </ion-button>
+
+        <ion-button
+          fill="clear"
+          class="send-email"
+          :disabled="sendEmailDisabled"
+          @click.stop="sendEmail(invitation)"
+          :title="I18n.translate('UsersPage.invitation.sendEmail')"
+        >
+          <ion-icon
+            :icon="mail"
+            class="button-icon"
+          />
         </ion-button>
 
         <ion-buttons class="invitation-actions-buttons">
@@ -53,11 +66,12 @@
 </template>
 
 <script setup lang="ts">
-import { UserInvitation } from '@/parsec';
+import { ClientNewUserInvitationErrorTag, InvitationEmailSentStatus, inviteUser, UserInvitation } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonIcon, IonButton, IonButtons, IonItem, IonLabel, IonText } from '@ionic/vue';
-import { formatTimeSince, Clipboard } from 'megashark-lib';
-import { link } from 'ionicons/icons';
+import { formatTimeSince, Clipboard, I18n, askQuestion, Answer, Translatable } from 'megashark-lib';
+import { link, mail } from 'ionicons/icons';
+import { ref } from 'vue';
 
 const props = defineProps<{
   invitation: UserInvitation;
@@ -68,6 +82,8 @@ defineEmits<{
   (e: 'cancel', invitation: UserInvitation): void;
   (e: 'greetUser', invitation: UserInvitation): void;
 }>();
+
+const sendEmailDisabled = ref(false);
 
 async function copyLink(invitation: UserInvitation): Promise<void> {
   const result = await Clipboard.writeText(invitation.addr);
@@ -87,6 +103,68 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
       }),
       PresentationMode.Toast,
     );
+  }
+}
+
+async function sendEmail(invitation: UserInvitation): Promise<void> {
+  sendEmailDisabled.value = true;
+  const answer = await askQuestion('UsersPage.invitation.sendEmailTitle', 'UsersPage.invitation.sendEmailMessage', {
+    yesText: 'UsersPage.invitation.sendEmail',
+  });
+
+  if (answer === Answer.No) {
+    sendEmailDisabled.value = false;
+    return;
+  }
+  const result = await inviteUser(invitation.claimerEmail);
+  if (result.ok && result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
+    props.informationManager.present(
+      new Information({
+        message: {
+          key: 'UsersPage.invitation.inviteSuccessMailSent',
+          data: {
+            email: invitation.claimerEmail,
+          },
+        },
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+    setTimeout(() => {
+      sendEmailDisabled.value = false;
+    }, 5000);
+  } else {
+    let message: Translatable = '';
+    if (result.ok) {
+      message = 'UsersPage.invitation.inviteSuccessNoMail';
+    } else {
+      switch (result.error.tag) {
+        case ClientNewUserInvitationErrorTag.Offline:
+          message = 'UsersPage.invitation.inviteFailedOffline';
+          break;
+        case ClientNewUserInvitationErrorTag.NotAllowed:
+          message = 'UsersPage.invitation.inviteFailedNotAllowed';
+          break;
+        default:
+          message = {
+            key: 'UsersPage.invitation.inviteFailedUnknown',
+            data: {
+              reason: result.error.tag,
+            },
+          };
+          break;
+      }
+    }
+    props.informationManager.present(
+      new Information({
+        message,
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    setTimeout(() => {
+      sendEmailDisabled.value = false;
+    }, 2000);
   }
 }
 </script>
@@ -138,7 +216,8 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
   align-items: center;
   width: 100%;
 
-  .copy-link {
+  .copy-link,
+  .send-email {
     background: none;
     color: var(--parsec-color-light-secondary-soft-text);
     --padding-end: 0;

@@ -1146,6 +1146,9 @@
         "invitation": {
             "greetUser": "Accueillir",
             "rejectUser": "Annuler",
+            "sendEmailTitle": "Envoyer le lien par email",
+            "sendEmailMessage": "L'utilisateur devrait déjà avoir reçu un email contenant le lien. Êtes-vous sûr(e) de vouloir en envoyer un autre ?",
+            "sendEmail": "Envoyer l'email",
             "inviteSuccessMailSent": "Une invitation a été envoyée à {email}.",
             "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé. Veuillez transmettre le lien d'invitation manuellement.",
             "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par un autre utilisateur dans cette organisation.",

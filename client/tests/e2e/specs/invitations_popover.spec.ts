@@ -18,6 +18,7 @@ msTest('Profile popover default state', async ({ connected }) => {
   await expect(invitations.locator('.invitation-date')).toHaveText('Jan 7, 2000', { useInnerText: true });
   const firstInv = invitations.nth(0);
   await expect(firstInv.locator('.copy-link')).toBeVisible();
+  await expect(firstInv.locator('.send-email')).toBeVisible();
   await expect(firstInv.locator('.invitation-actions-buttons').locator('ion-button')).toHaveText(['Cancel', 'Greet']);
 });
 
@@ -25,7 +26,6 @@ msTest('Copy invitation link', async ({ connected }) => {
   await connected.locator('.topbar').locator('#invitations-button').click();
   const popover = connected.locator('.invitations-list-popover');
   const inv = popover.locator('.invitation-list-item').nth(0);
-  await inv.hover();
   await inv.locator('.copy-link').click();
   await expect(connected).toShowToast('Failed to copy the link. Your browser or device does not seem to support copy/paste.', 'Error');
   await setWriteClipboardPermission(connected.context(), true);
@@ -33,6 +33,21 @@ msTest('Copy invitation link', async ({ connected }) => {
   await inv.locator('.copy-link').click();
   await expect(connected).toShowToast('Invitation link has been copied to clipboard.', 'Info');
   expect(await getClipboardText(connected)).toMatch(/^parsec3:\/\/.+$/);
+});
+
+msTest('Resend email', async ({ connected }) => {
+  await connected.locator('.topbar').locator('#invitations-button').click();
+  const popover = connected.locator('.invitations-list-popover');
+  const inv = popover.locator('.invitation-list-item').nth(0);
+  await inv.locator('.send-email').click();
+  await answerQuestion(connected, true, {
+    expectedTitleText: 'Send the link by email',
+    expectedQuestionText: 'The user should already have received an email with the link. Are you sure you want to send another one?',
+    expectedPositiveText: 'Send email',
+    expectedNegativeText: 'No',
+  });
+  await expect(connected).toShowToast('An invitation to join the organization has been sent to zack@example.invalid.', 'Success');
+  await expect(inv.locator('.send-email')).toBeTrulyDisabled();
 });
 
 msTest('Cancel invitation - no', async ({ connected }) => {
