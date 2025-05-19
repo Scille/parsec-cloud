@@ -37,7 +37,10 @@
     }
 
     &-header {
-      padding-bottom: 0.5rem;
+      padding-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
 
       @include ms.responsive-breakpoint('sm') {
         padding-bottom: 1.5rem;
@@ -49,7 +52,6 @@
 
       &__title {
         padding: 0;
-        margin-bottom: 1rem;
         color: var(--parsec-color-light-primary-800);
         display: flex;
         align-items: center;

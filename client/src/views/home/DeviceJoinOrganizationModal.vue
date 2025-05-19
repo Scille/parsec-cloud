@@ -7,7 +7,7 @@
   >
     <ms-wizard-stepper
       v-show="pageStep > DeviceJoinOrganizationStep.Information && pageStep < DeviceJoinOrganizationStep.Finish && isLargeDisplay"
-      :current-index="pageStep - 2"
+      :current-index="pageStep - 1"
       :titles="[
         'ClaimDeviceModal.stepper.GetHostCode',
         'ClaimDeviceModal.stepper.ProvideGuestCode',
@@ -177,11 +177,11 @@ import { checkmarkCircle, close, phonePortrait } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';
 
 enum DeviceJoinOrganizationStep {
-  Information = 1,
-  GetHostSasCode = 2,
-  ProvideGuestCode = 3,
-  Authentication = 4,
-  Finish = 5,
+  Information = 0,
+  GetHostSasCode = 1,
+  ProvideGuestCode = 2,
+  Authentication = 3,
+  Finish = 4,
 }
 
 const { isLargeDisplay } = useWindowSize();
@@ -210,7 +210,7 @@ const steps = computed(() => [
   },
   {
     title: 'ClaimDeviceModal.titles.authentication',
-    subtitle: 'ClaimDeviceModal.titles.authentication',
+    subtitle: 'ClaimDeviceModal.subtitles.authentication',
   },
   {
     title: {

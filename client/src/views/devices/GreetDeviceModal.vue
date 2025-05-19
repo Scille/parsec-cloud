@@ -46,7 +46,7 @@
         <small-display-step-modal-header
           v-else
           @close-clicked="cancelModal()"
-          :title="'DevicesPage.addDevice'"
+          :title="'DevicesPage.greetDevice'"
           :icon="phonePortrait"
           :steps="steps.slice(1, steps.length - 1)"
           :current-step="pageStep - 1"
@@ -303,7 +303,7 @@ const greeter = ref(new DeviceGreet());
 const linkCopiedToClipboard = ref(false);
 const cancelled = ref(false);
 
-const steps = ref([
+const steps = computed(() => [
   { title: 'DevicesPage.greet.titles.waitForGuest' },
   {
     title: 'DevicesPage.greet.titles.provideHostCode',

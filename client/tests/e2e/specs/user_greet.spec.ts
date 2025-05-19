@@ -1,14 +1,136 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, expect, fillIonInput, initGreetUserModals, msTest } from '@tests/e2e/helpers';
+import { answerQuestion, expect, fillIonInput, initGreetUserModals, msTest, setSmallDisplay } from '@tests/e2e/helpers';
 
-msTest('Greet user whole process', async ({ usersPage }) => {
+msTest('Greet user whole process in small display', async ({ usersPage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 
   const secondTab = await usersPage.openNewTab();
 
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
+  await setSmallDisplay(usersPage);
+  await setSmallDisplay(secondTab);
+
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', 'small');
+
+  // Check the provide code page from the host and retrieve the code
+  await expect(greetData.title).toHaveText('Share your code');
+  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
+
+  // Check the enter code page from the guest and select the code
+  await expect(secondTab.locator('.modal-header__step')).toHaveText('Step 1 of 4');
+  await expect(joinData.title).toHaveText('Get host code');
+  await expect(joinData.content.locator('.button-choice')).toHaveCount(4);
+  await joinData.content.locator('.button-choice', { hasText: greetCode }).click();
+
+  // Check the provide code page from the guest and retrieve the code
+  await expect(usersPage.locator('.modal-header__step')).toHaveText('Step 1 of 4');
+  await expect(joinData.title).toHaveText('Share your code');
+  const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
+  expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
+
+  // Check the enter code page from the host and select the code
+  await expect(usersPage.locator('.modal-header__step')).toHaveText('Step 2 of 4');
+  await expect(greetData.title).toHaveText('Get guest code');
+  await expect(greetData.content.locator('.button-choice')).toHaveCount(4);
+  await greetData.content.locator('.button-choice', { hasText: joinCode }).click();
+
+  // Host waits for guest to fill out the information
+  await expect(usersPage.locator('.modal-header__step')).toHaveText('Step 3 of 4');
+  await expect(greetData.title).toHaveText('Contact details');
+  await expect(greetData.nextButton).toBeHidden();
+
+  // Fill out the joiner information
+  await expect(secondTab.locator('.modal-header__step')).toHaveText('Step 3 of 4');
+  await expect(joinData.title).toHaveText('Your contact details');
+  await expect(joinData.nextButton).toHaveDisabledAttribute();
+  await fillIonInput(joinData.content.locator('#get-user-info').locator('ion-input').nth(0), 'Gordon Freeman');
+  await expect(joinData.content.locator('#get-user-info').locator('ion-input').nth(1).locator('input')).toHaveValue(
+    'gordon.freeman@blackmesa.nm',
+  );
+  await joinData.nextButton.click();
+  await expect(joinData.nextButton).toBeHidden();
+  await expect(joinData.modal.locator('.spinner-container')).toBeVisible();
+  await expect(joinData.modal.locator('.spinner-container')).toHaveText('(Waiting for the administrator)');
+
+  // host reviews the information and chose profile
+  await expect(greetData.title).toHaveText('Contact details');
+  await expect(greetData.nextButton).toBeVisible();
+  await expect(greetData.nextButton).toHaveDisabledAttribute();
+  await expect(greetData.content.locator('.user-info-page').locator('ion-input').nth(0).locator('input')).toHaveValue('Gordon Freeman');
+  await expect(greetData.content.locator('.user-info-page').locator('ion-input').nth(1)).toHaveTheClass('input-disabled');
+  await expect(greetData.content.locator('.user-info-page').locator('ion-input').nth(1).locator('input')).toHaveValue(
+    'gordon.freeman@blackmesa.nm',
+  );
+  const profileButton = greetData.content.locator('.user-info-page').locator('.filter-button');
+  await expect(profileButton).toHaveText('Choose a profile');
+  await profileButton.click();
+  const profileDropdown = usersPage.locator('.sheet-modal');
+  await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Member', 'External']);
+  await profileDropdown.getByRole('listitem').nth(1).click();
+  await profileDropdown.locator('.buttons').locator('ion-button').nth(1).click();
+  await expect(profileButton).toHaveText('Member');
+  await expect(greetData.nextButton).toNotHaveDisabledAttribute();
+  await expect(greetData.nextButton).toHaveText('Approve');
+  await greetData.nextButton.click();
+
+  // Joiner chose auth
+  await expect(secondTab.locator('.modal-header__step')).toHaveText('Step 4 of 4');
+  await expect(joinData.title).toHaveText('Authentication');
+  await expect(joinData.nextButton).toHaveText('Join the organization');
+  await expect(joinData.nextButton).toHaveDisabledAttribute();
+
+  // host is done
+  await expect(greetData.title).toHaveText('User has been added successfully!');
+  await expect(greetData.nextButton).not.toHaveDisabledAttribute();
+  await expect(greetData.nextButton).toBeVisible();
+  await expect(greetData.content.locator('.final-step').locator('.person-name')).toHaveText('Gordon Freeman');
+  await expect(greetData.content.locator('.final-step').locator('.user-info__email').locator('.cell')).toHaveText(
+    'gordon.freeman@blackmesa.nm',
+  );
+  await expect(greetData.content.locator('.final-step').locator('.user-info__role').locator('.label-profile')).toHaveText('Member');
+  await greetData.nextButton.click();
+  await expect(greetData.modal).toBeHidden();
+  await expect(usersPage).toShowToast('Gordon Freeman can now access to the organization.', 'Success');
+  await expect(usersPage.locator('#users-page-user-list').getByRole('listitem').locator('.user-mobile-text__name')).toHaveText([
+    'Alicey McAliceFace',
+    'Boby McBobFace',
+    'Gordon Freeman',
+    'Malloryy McMalloryFace',
+  ]);
+
+  // Joiner sets password
+  const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item');
+  await expect(authRadio).toHaveCount(2);
+  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
+  await expect(authRadio.nth(0).locator('.item-radio__label')).toHaveText('System Authentication');
+  await expect(authRadio.nth(0).locator('.item-radio__text:visible')).toHaveText('Unavailable on web');
+  await expect(authRadio.nth(1)).toHaveText('Password');
+  const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
+  await passwordChoice.scrollIntoViewIfNeeded();
+  await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
+  await expect(joinData.nextButton).toHaveDisabledAttribute();
+  await fillIonInput(passwordChoice.locator('ion-input').nth(1), 'AVeryL0ngP@ssw0rd');
+  await joinData.nextButton.scrollIntoViewIfNeeded();
+  await expect(joinData.nextButton).not.toHaveDisabledAttribute();
+  await joinData.nextButton.click();
+  await expect(joinData.nextButton).not.toHaveDisabledAttribute();
+  await joinData.nextButton.click();
+  await expect(joinData.modal).toBeHidden();
+  await expect(secondTab).toShowToast('You successfully joined the organization.', 'Success');
+  // Automatically logged in
+  await expect(secondTab.locator('#connected-header')).toContainText('My workspaces');
+  await expect(secondTab).toBeWorkspacePage();
+});
+
+msTest('Greet user whole process in large display', async ({ usersPage }) => {
+  // Very slow test since it syncs the greet and join
+  msTest.setTimeout(120_000);
+
+  const secondTab = await usersPage.openNewTab();
+
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', 'large');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
@@ -134,7 +256,7 @@ msTest('Host selects invalid SAS code', async ({ usersPage }) => {
 
   const secondTab = await usersPage.openNewTab();
 
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', 'large');
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
@@ -179,7 +301,7 @@ msTest('Host selects no SAS code', async ({ usersPage }) => {
 
   const secondTab = await usersPage.openNewTab();
 
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', 'large');
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
@@ -227,7 +349,7 @@ msTest('Host closes greet process', async ({ usersPage }) => {
   msTest.setTimeout(120_000);
 
   const secondTab = await usersPage.openNewTab();
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', 'large');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
@@ -285,7 +407,7 @@ msTest('Guest selects invalid SAS code', async ({ usersPage }) => {
   msTest.setTimeout(120_000);
 
   const secondTab = await usersPage.openNewTab();
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', 'large');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
@@ -317,7 +439,7 @@ msTest('Guest selects no SAS code', async ({ usersPage }) => {
   msTest.setTimeout(120_000);
 
   const secondTab = await usersPage.openNewTab();
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', 'large');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
@@ -352,7 +474,7 @@ msTest('Guest closes greet process', async ({ usersPage }) => {
   msTest.setTimeout(120_000);
 
   const secondTab = await usersPage.openNewTab();
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', 'large');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
