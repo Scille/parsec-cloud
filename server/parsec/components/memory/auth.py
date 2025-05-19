@@ -59,6 +59,7 @@ class MemoryAuthComponent(BaseAuthComponent):
         return AnonymousAuthInfo(
             organization_id=organization_id,
             organization_internal_id=0,  # Only used by PostgreSQL implementation
+            organization_allowed_client_agent=org.allowed_client_agent,
         )
 
     async def invited_auth(
@@ -86,6 +87,7 @@ class MemoryAuthComponent(BaseAuthComponent):
             type=invitation.type,
             organization_internal_id=0,  # Only used by PostgreSQL implementation
             invitation_internal_id=0,  # Only used by PostgreSQL implementation
+            organization_allowed_client_agent=org.allowed_client_agent,
         )
 
     async def _get_authenticated_info(
@@ -120,6 +122,7 @@ class MemoryAuthComponent(BaseAuthComponent):
             device_verify_key=device.cooked.verify_key,
             organization_internal_id=0,  # Only used by PostgreSQL implementation
             device_internal_id=0,  # Only used by PostgreSQL implementation
+            organization_allowed_client_agent=org.allowed_client_agent,
         )
 
     async def anonymous_account_auth(

@@ -24,6 +24,7 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.components.user import UserInfo
+from parsec.config import AllowedClientAgent
 from tests.common import Backend, CoolorgRpcClients, RpcTransportError, ShamirOrgRpcClients
 
 
@@ -479,6 +480,7 @@ type HttpCommonErrorsTester = Callable[
         "author_frozen",
         "tos_not_accepted",
         "tos_updated_since_acceptation",
+        "web_client_not_allowed_by_organization_config",
     )
 )
 async def authenticated_http_common_errors_tester(
@@ -583,6 +585,16 @@ async def authenticated_http_common_errors_tester(
 
                 expected_http_status = 463
 
+            case "web_client_not_allowed_by_organization_config":
+                outcome = await backend.organization.update(
+                    now=DateTime.now(),
+                    id=coolorg.organization_id,
+                    allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
+                )
+                assert outcome is None
+
+                expected_http_status = 464
+
             case unknown:
                 assert False, unknown
 
@@ -598,7 +610,14 @@ async def authenticated_http_common_errors_tester(
 
 
 # TODO: not sure how to test "organization_not_found"
-@pytest.fixture(params=("organization_expired", "author_revoked", "author_frozen"))
+@pytest.fixture(
+    params=(
+        "organization_expired",
+        "author_revoked",
+        "author_frozen",
+        "web_client_not_allowed_by_organization_config",
+    )
+)
 async def tos_http_common_errors_tester(
     request: pytest.FixtureRequest, coolorg: CoolorgRpcClients, backend: Backend
 ) -> AsyncGenerator[HttpCommonErrorsTester, None]:
@@ -666,6 +685,16 @@ async def tos_http_common_errors_tester(
 
                 expected_http_status = 462
 
+            case "web_client_not_allowed_by_organization_config":
+                outcome = await backend.organization.update(
+                    now=DateTime.now(),
+                    id=coolorg.organization_id,
+                    allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
+                )
+                assert outcome is None
+
+                expected_http_status = 464
+
             case unknown:
                 assert False, unknown
 
@@ -681,7 +710,13 @@ async def tos_http_common_errors_tester(
 
 
 # TODO: not sure how to test "organization_not_found" & "invitation_not_found"
-@pytest.fixture(params=("organization_expired", "invitation_already_used"))
+@pytest.fixture(
+    params=(
+        "organization_expired",
+        "invitation_already_used",
+        "web_client_not_allowed_by_organization_config",
+    )
+)
 async def invited_http_common_errors_tester(
     request: pytest.FixtureRequest, coolorg: CoolorgRpcClients, backend: Backend
 ) -> AsyncGenerator[HttpCommonErrorsTester, None]:
@@ -713,6 +748,16 @@ async def invited_http_common_errors_tester(
 
                 expected_http_status = 410
 
+            case "web_client_not_allowed_by_organization_config":
+                outcome = await backend.organization.update(
+                    now=DateTime.now(),
+                    id=coolorg.organization_id,
+                    allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
+                )
+                assert outcome is None
+
+                expected_http_status = 464
+
             case unknown:
                 assert False, unknown
 
@@ -728,7 +773,7 @@ async def invited_http_common_errors_tester(
 
 
 # TODO: not sure how to test "organization_not_found"
-@pytest.fixture(params=("organization_expired",))
+@pytest.fixture(params=("organization_expired", "web_client_not_allowed_by_organization_config"))
 async def anonymous_http_common_errors_tester(
     request: pytest.FixtureRequest, coolorg: CoolorgRpcClients, backend: Backend
 ) -> AsyncGenerator[HttpCommonErrorsTester, None]:
@@ -746,6 +791,16 @@ async def anonymous_http_common_errors_tester(
                 assert outcome is None
 
                 expected_http_status = 460
+
+            case "web_client_not_allowed_by_organization_config":
+                outcome = await backend.organization.update(
+                    now=DateTime.now(),
+                    id=coolorg.organization_id,
+                    allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
+                )
+                assert outcome is None
+
+                expected_http_status = 464
 
             case unknown:
                 assert False, unknown
