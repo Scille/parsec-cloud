@@ -88,6 +88,7 @@ pub enum ClientEvent {
     InvitationAlreadyUsedOrDeleted,
     RevokedSelfUser,
     FrozenSelfUser,
+    WebClientNotAllowedByOrganization,
     MustAcceptTos,
     IncompatibleServer {
         api_version: ApiVersion,
@@ -159,6 +160,8 @@ pub(crate) struct OnEventCallbackPlugged {
         EventBusConnectionLifetime<libparsec_client::EventInvitationAlreadyUsedOrDeleted>,
     _revoked_self_user: EventBusConnectionLifetime<libparsec_client::EventRevokedSelfUser>,
     _frozen_self_user: EventBusConnectionLifetime<libparsec_client::EventFrozenSelfUser>,
+    _web_client_not_allowed_by_organization:
+        EventBusConnectionLifetime<libparsec_client::EventWebClientNotAllowedByOrganization>,
     _must_accept_tos: EventBusConnectionLifetime<libparsec_client::EventMustAcceptTos>,
     _incompatible_server: EventBusConnectionLifetime<libparsec_client::EventIncompatibleServer>,
     _client_error_response: EventBusConnectionLifetime<libparsec_client::EventClientErrorResponse>,
@@ -393,6 +396,14 @@ impl OnEventCallbackPlugged {
                 (on_event_callback)(handle, ClientEvent::FrozenSelfUser);
             })
         };
+        let web_client_not_allowed_by_organization = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(
+                move |_: &libparsec_client::EventWebClientNotAllowedByOrganization| {
+                    (on_event_callback)(handle, ClientEvent::WebClientNotAllowedByOrganization);
+                },
+            )
+        };
         let must_accept_tos = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |_: &libparsec_client::EventMustAcceptTos| {
@@ -510,6 +521,7 @@ impl OnEventCallbackPlugged {
             _invitation_already_used_or_deleted: invitation_already_used_or_deleted,
             _revoked_self_user: revoked_self_user,
             _frozen_self_user: frozen_self_user,
+            _web_client_not_allowed_by_organization: web_client_not_allowed_by_organization,
             _must_accept_tos: must_accept_tos,
             _incompatible_server: incompatible_server,
             _client_error_response: client_error_response,

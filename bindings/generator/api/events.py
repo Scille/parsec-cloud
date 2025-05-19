@@ -106,6 +106,9 @@ class ClientEvent(Variant):
     class FrozenSelfUser:
         pass
 
+    class WebClientNotAllowedByOrganization:
+        pass
+
     class MustAcceptTos:
         pass
 
