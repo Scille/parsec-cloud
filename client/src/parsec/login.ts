@@ -18,6 +18,7 @@ import {
   DeviceID,
   DeviceSaveStrategy,
   DeviceSaveStrategyTag,
+  ListAvailableDeviceError,
   OrganizationID,
   Result,
   UpdateDeviceError,
@@ -110,15 +111,20 @@ export async function getOrganizationHandles(orgId: OrganizationID): Promise<Arr
   return loggedInDevices.filter((item) => item.device.organizationId === orgId).map((item) => item.handle);
 }
 
-export async function listAvailableDevices(filter = true): Promise<Array<AvailableDevice>> {
-  const availableDevices = (await libparsec.listAvailableDevices(window.getConfigDir())).map((d) => {
+export async function listAvailableDevicesWithError(filter = true): Promise<Result<Array<AvailableDevice>, ListAvailableDeviceError>> {
+  const result = await libparsec.listAvailableDevices(window.getConfigDir());
+
+  if (!result.ok) {
+    return result;
+  }
+  const availableDevices = result.value.map((d) => {
     d.createdOn = DateTime.fromSeconds(d.createdOn as any as number);
     d.protectedOn = DateTime.fromSeconds(d.protectedOn as any as number);
     return d;
   });
 
   if (!filter) {
-    return availableDevices;
+    return { ok: true, value: availableDevices };
   }
   // Sort them by creation date
   const sortedDevices = availableDevices.sort((d1, d2) => d2.createdOn.toMillis() - d1.createdOn.toMillis());
@@ -133,7 +139,13 @@ export async function listAvailableDevices(filter = true): Promise<Array<Availab
       devices.push(ad);
     }
   }
-  return devices;
+  return { ok: true, value: devices };
+}
+
+export async function listAvailableDevices(filter = true): Promise<Array<AvailableDevice>> {
+  const result = await listAvailableDevicesWithError(filter);
+
+  return result.ok ? result.value : [];
 }
 
 export async function login(
