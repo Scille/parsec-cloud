@@ -7,7 +7,7 @@
   >
     <ms-wizard-stepper
       v-if="pageStep > UserJoinOrganizationStep.WaitForHost && isLargeDisplay"
-      :current-index="pageStep - 2"
+      :current-index="pageStep - 1"
       :titles="[
         'JoinOrganization.stepTitles.GetHostCode',
         'JoinOrganization.stepTitles.ProvideGuestCode',
@@ -261,7 +261,7 @@ const props = defineProps<{
 
 const waitingForHost = ref(true);
 
-const steps = ref([
+const steps = computed(() => [
   {
     title: 'JoinOrganization.titles.waitForHost',
     subtitle: 'JoinOrganization.subtitles.waitForHost',

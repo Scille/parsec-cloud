@@ -22,19 +22,19 @@
         {{ $msTranslate(title) }}
       </ion-text>
     </div>
-    <div class="modal-header-title">
-      <ion-text class="modal-header-title__step body">
+    <div class="modal-header-content">
+      <ion-text class="modal-header__step body">
         {{
           $msTranslate({
             key: 'HeaderPage.modalHeader.step',
             data: {
-              current: currentStep,
+              current: currentStep + 1,
               total: steps.length,
             },
           })
         }}
       </ion-text>
-      <ion-text class="modal-header-title__text title-h2">
+      <ion-text class="modal-header__title title-h2">
         {{ $msTranslate(steps[currentStep].title) }}
       </ion-text>
     </div>
@@ -100,17 +100,17 @@ defineEmits<{
     }
   }
 
-  &-title {
+  &-content {
     display: flex;
     flex-direction: column;
     gap: 0.375rem;
     padding: 0.5rem 2rem 0;
 
-    &__step {
+    .modal-header__step {
       color: var(--parsec-color-light-secondary-grey);
     }
 
-    &__text {
+    .modal-header__title {
       color: var(--parsec-color-light-primary-800);
     }
   }

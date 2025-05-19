@@ -8,6 +8,7 @@ import {
   fillIonInput,
   getClipboardText,
   msTest,
+  setSmallDisplay,
   setWriteClipboardPermission,
 } from '@tests/e2e/helpers';
 
@@ -20,7 +21,10 @@ interface ModalData {
   closeButton: Locator;
 }
 
-async function initModals(hostPage: Page, guestPage: Page): Promise<[ModalData, ModalData]> {
+async function initModals(hostPage: Page, guestPage: Page, displaySize?: 'small' | 'large'): Promise<[ModalData, ModalData]> {
+  if (displaySize === 'small') {
+    await hostPage.locator('.header-selected-item__back').click();
+  }
   await expect(hostPage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
   await hostPage.locator('.menu-list__item').nth(1).click();
   // Invite a new user and retrieve the invitation link
@@ -34,14 +38,25 @@ async function initModals(hostPage: Page, guestPage: Page): Promise<[ModalData, 
   await expect(greetModal.locator('.closeBtn')).toBeVisible();
 
   await setWriteClipboardPermission(hostPage.context(), true);
-  await greetModal.locator('#copy-link-btn').click();
+
+  if (displaySize === 'small') {
+    await greetModal.locator('#copy-link-btn-small').click();
+  } else {
+    await greetModal.locator('#copy-link-btn').click();
+  }
   await expect(hostPage).toShowToast('Invitation link has been copied to clipboard.', 'Info');
   const invitationLink = await getClipboardText(hostPage);
 
   // Use the invitation link in the second tab
   await guestPage.locator('#create-organization-button').click();
-  await expect(guestPage.locator('.homepage-popover')).toBeVisible();
-  await guestPage.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+
+  if (displaySize === 'small') {
+    await expect(guestPage.locator('.create-join-modal')).toBeVisible();
+    await guestPage.locator('.create-join-modal-list__item').nth(1).click();
+  } else {
+    await expect(guestPage.locator('.homepage-popover')).toBeVisible();
+    await guestPage.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+  }
   await fillInputModal(guestPage, invitationLink);
   const joinModal = guestPage.locator('.join-organization-modal');
   await expect(joinModal).toBeVisible();
@@ -76,25 +91,118 @@ async function initModals(hostPage: Page, guestPage: Page): Promise<[ModalData, 
   return [greetData, joinData];
 }
 
-msTest('Greet device whole process', async ({ myProfilePage }) => {
+msTest('Greet device whole process on small display', async ({ myProfilePage }) => {
   // Very slow test since it syncs the greet and join
   msTest.setTimeout(120_000);
 
   const secondTab = await myProfilePage.openNewTab();
 
-  const [greetData, joinData] = await initModals(myProfilePage, secondTab);
+  await setSmallDisplay(myProfilePage);
+  await setSmallDisplay(secondTab);
+
+  const [greetData, joinData] = await initModals(myProfilePage, secondTab, 'small');
 
   // Check the provide code page from the host and retrieve the code
-  await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code'], 0);
+
   await expect(greetData.title).toHaveText('Share your code');
-  await expect(greetData.subtitle).toHaveText('Click on the code below on the guest device.');
+
   const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
   expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the guest and select the code
   await expect(joinData.title).toHaveText('Get host code');
+
+  await expect(joinData.content.locator('.button-choice')).toHaveCount(4);
+  await joinData.content.locator('.button-choice', { hasText: greetCode }).click();
+
+  // Check the provide code page from the guest and retrieve the code
+  await expect(joinData.title).toHaveText('Share guest code');
+  await expect(myProfilePage.locator('.modal-header__step')).toHaveText('Step 1 of 3');
+  const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
+  expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
+
+  // Check the enter code page from the host and select the code
+  await expect(greetData.title).toHaveText('Get guest code');
+  await expect(myProfilePage.locator('.modal-header__step')).toHaveText('Step 2 of 3');
+
+  await expect(greetData.content.locator('.button-choice')).toHaveCount(4);
+  await greetData.content.locator('.button-choice', { hasText: joinCode }).click();
+
+  // Host waits for guest to choose auth
+  await expect(myProfilePage.locator('.modal-header__step')).toHaveText('Step 3 of 3');
+  await expect(greetData.title).toHaveText('Waiting for device information');
+
+  await expect(greetData.nextButton).toBeHidden();
+
+  // Guest choose auth
+  await expect(joinData.title).toHaveText('Authentication');
+  await expect(joinData.nextButton).toHaveText('Confirm');
+  await expect(joinData.nextButton).toHaveDisabledAttribute();
+
+  const authRadio = joinData.content.locator('.choose-auth-page').locator('.radio-list-item');
+  await expect(authRadio).toHaveCount(2);
+  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
+  await expect(authRadio.nth(0).locator('.item-radio__label')).toHaveText('System Authentication');
+  await expect(authRadio.nth(0).locator('.item-radio__text:visible')).toHaveText('Unavailable on web');
+  await expect(authRadio.nth(1)).toHaveText('Password');
+  const passwordChoice = joinData.content.locator('#get-password').locator('.choose-password');
+  await passwordChoice.scrollIntoViewIfNeeded();
+  await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
+  await expect(joinData.nextButton).toHaveDisabledAttribute();
+  await fillIonInput(passwordChoice.locator('ion-input').nth(1), 'AVeryL0ngP@ssw0rd');
+  await joinData.nextButton.scrollIntoViewIfNeeded();
+  await expect(joinData.nextButton).not.toHaveDisabledAttribute();
+  await joinData.nextButton.click();
+  await expect(joinData.title).toHaveText('Device has been added!');
+  await expect(joinData.modal.locator('.final-step').locator('.container-textinfo__text')).toHaveText(
+    'The device has been created and added to this organization. You can now use it to connect to Parsec.',
+  );
+  await expect(joinData.nextButton).toHaveText('Log in');
+  await expect(joinData.nextButton).not.toHaveDisabledAttribute();
+  await joinData.nextButton.click();
+  await expect(joinData.modal).toBeHidden();
+  await expect(secondTab).toShowToast('You can now access your organization from your new device.', 'Success');
+  // Automatically logged in
+  await expect(secondTab.locator('#connected-header')).toContainText('My workspaces');
+  await expect(secondTab).toBeWorkspacePage();
+
+  await secondTab.release();
+
+  // host is done
+  await expect(greetData.title).toHaveText('New device added');
+
+  await expect(greetData.nextButton).toHaveText('Finish');
+  await expect(greetData.nextButton).not.toHaveDisabledAttribute();
+  await expect(greetData.nextButton).toBeVisible();
+  await expect(greetData.content.locator('.final-step').locator('.device-name')).toHaveText('Web');
+  await expect(greetData.content.locator('.final-step').locator('.join-date')).toHaveText('Joined: Today');
+  await greetData.nextButton.click();
+  await expect(greetData.modal).toBeHidden();
+  await expect(myProfilePage).toShowToast('You can connect to this organization from your new device.', 'Success');
+});
+
+msTest('Greet device whole process on large display', async ({ myProfilePage }) => {
+  // Very slow test since it syncs the greet and join
+  msTest.setTimeout(120_000);
+
+  const secondTab = await myProfilePage.openNewTab();
+
+  const [greetData, joinData] = await initModals(myProfilePage, secondTab, 'large');
+
+  // Check the provide code page from the host and retrieve the code
+  await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code'], 0);
+  await expect(greetData.title).toHaveText('Share your code');
+  await expect(greetData.subtitle).toHaveText('Click on the code below on the guest device.');
+
+  const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
+  expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
+
+  // Check the enter code page from the guest and select the code
+  await expect(joinData.title).toHaveText('Get host code');
+
   await expect(joinData.subtitle).toHaveText('Click on the code you see on the main device.');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Authentication'], 0);
+
   await expect(joinData.content.locator('.button-choice')).toHaveCount(4);
   await joinData.content.locator('.button-choice', { hasText: greetCode }).click();
 
@@ -102,13 +210,15 @@ msTest('Greet device whole process', async ({ myProfilePage }) => {
   await expect(joinData.title).toHaveText('Share guest code');
   await expect(joinData.subtitle).toHaveText('On the main device, click on the code you see below.');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Authentication'], 1);
+
   const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
   expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the host and select the code
-  await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code'], 1);
   await expect(greetData.title).toHaveText('Get guest code');
+  await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code'], 1);
   await expect(greetData.subtitle).toHaveText('Click on the code that appears on the guest device.');
+
   await expect(greetData.content.locator('.button-choice')).toHaveCount(4);
   await greetData.content.locator('.button-choice', { hasText: joinCode }).click();
 
@@ -120,6 +230,7 @@ msTest('Greet device whole process', async ({ myProfilePage }) => {
   // Guest choose auth
   await expect(joinData.title).toHaveText('Authentication');
   await expect(joinData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Authentication'], 2);
+
   await expect(joinData.nextButton).toHaveText('Confirm');
   await expect(joinData.nextButton).toHaveDisabledAttribute();
 
@@ -151,6 +262,7 @@ msTest('Greet device whole process', async ({ myProfilePage }) => {
   await expect(secondTab).toBeWorkspacePage();
   const profile = secondTab.locator('.topbar').locator('.profile-header');
   await expect(profile.locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+
   await secondTab.release();
 
   // host is done

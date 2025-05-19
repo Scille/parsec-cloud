@@ -16,14 +16,21 @@ export async function initGreetUserModals(
   hostPage: Page,
   guestPage: Page,
   email: string,
+  displaySize?: 'small' | 'large',
 ): Promise<[GreetUserModalData, GreetUserModalData]> {
   // Invite a new user and retrieve the invitation link
-  await hostPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
+  if (displaySize === 'small') {
+    await hostPage.locator('.tab-bar-list-button').nth(2).click();
+    await hostPage.locator('.user-invite-button').click();
+  } else {
+    await hostPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
+  }
   await fillInputModal(hostPage, email);
   await expect(hostPage).toShowToast(`An invitation to join the organization has been sent to ${email}.`, 'Success');
   await hostPage.locator('.topbar').locator('#invitations-button').click();
-  const popover = hostPage.locator('.invitations-list-popover');
+  const popover = hostPage.locator(displaySize === 'small' ? '.invitations-list-modal' : '.invitations-list-popover');
   await setWriteClipboardPermission(hostPage.context(), true);
+
   const inv = popover.locator('.invitation-list-item').nth(1);
   await inv.hover();
   await inv.locator('.copy-link').click();
@@ -32,8 +39,13 @@ export async function initGreetUserModals(
 
   // Use the invitation link in the second tab
   await guestPage.locator('#create-organization-button').click();
-  await expect(guestPage.locator('.homepage-popover')).toBeVisible();
-  await guestPage.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+  if (displaySize === 'small') {
+    await expect(guestPage.locator('.create-join-modal')).toBeVisible();
+    await guestPage.locator('.create-join-modal').getByRole('listitem').nth(1).click();
+  } else {
+    await expect(guestPage.locator('.homepage-popover')).toBeVisible();
+    await guestPage.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+  }
   await fillInputModal(guestPage, invitationLink);
   const joinModal = guestPage.locator('.join-organization-modal');
   await expect(joinModal).toBeVisible();
