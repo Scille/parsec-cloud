@@ -1151,6 +1151,10 @@
         "invitation": {
             "greetUser": "Greet",
             "rejectUser": "Cancel",
+            "sendEmailTitle": "Resend the link by email",
+            "sendEmailMessage": "The user should already have received an email with the link. Are you sure you want to send another one?",
+            "sendEmail": "Resend email",
+            "sendEmailFailed": "The email could not be sent. You can try again or send the link yourself.",
             "inviteSuccessMailSent": "An invitation to join the organization has been sent to {email}.",
             "inviteSuccessNoMail": "The invitation was successfully created but we failed to send an email to {email}. Please send the invitation link yourself or try again.",
             "inviteFailedAlreadyMember": "The email {email} is already used by someone in this organization.",
@@ -1163,6 +1167,7 @@
             "linkCopiedToClipboard": "Invitation link has been copied to clipboard.",
             "linkNotCopiedToClipboard": "Failed to copy the link. Your browser or device does not seem to support copy/paste.",
             "copyLink": "Copy link",
+            "manageInvitation": "Manage invitation",
             "cancelInvitation": {
                 "title": "Cancel invitation",
                 "message": "The invitation sent to {email} and the invitation link will no longer be valid. Are you sure you want to continue?",

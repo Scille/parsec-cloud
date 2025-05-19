@@ -1151,8 +1151,12 @@
         "invitation": {
             "greetUser": "Accueillir",
             "rejectUser": "Annuler",
+            "sendEmailTitle": "Renvoyer le lien par email",
+            "sendEmailMessage": "L'utilisateur devrait déjà avoir reçu un email contenant le lien. Êtes-vous sûr(e) de vouloir en envoyer un autre ?",
+            "sendEmail": "Renvoyer l'email",
+            "sendEmailFailed": "L'email n'a pas pu être envoyé. Vous pouvez réessayer ou transmettre le lien d'invitation manuellement.",
             "inviteSuccessMailSent": "Une invitation a été envoyée à {email}.",
-            "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé. Veuillez transmettre le lien d'invitation manuellement.",
+            "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé à {email}. Veuillez transmettre le lien d'invitation manuellement.",
             "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par un autre utilisateur dans cette organisation.",
             "inviteFailedAlreadyInvited": "Une invitation a déjà été créée par un autre administrateur pour l'email {email}.",
             "inviteFailedOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
@@ -1163,6 +1167,7 @@
             "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
             "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
             "copyLink": "Copier le lien",
+            "manageInvitation": "Gérer l'invitation",
             "cancelInvitation": {
                 "title": "Annuler l'invitation",
                 "message": "L'invitation envoyée à {email} et le lien d'invitation ne seront plus valides. Êtes-vous sûr(e) de vouloir continuer ?",

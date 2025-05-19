@@ -647,11 +647,7 @@ async function inviteUser(): Promise<void> {
     let message: Translatable = '';
     switch (result.error.tag) {
       case ClientNewUserInvitationErrorTag.AlreadyMember:
-        if (result.error.error === 'invitation_exists') {
-          message = { key: 'UsersPage.invitation.inviteFailedAlreadyInvited', data: { email: email } };
-        } else {
-          message = { key: 'UsersPage.invitation.inviteFailedAlreadyMember', data: { email: email } };
-        }
+        message = { key: 'UsersPage.invitation.inviteFailedAlreadyMember', data: { email: email } };
         break;
       case ClientNewUserInvitationErrorTag.Offline:
         message = 'UsersPage.invitation.inviteFailedOffline';
