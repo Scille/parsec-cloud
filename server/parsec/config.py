@@ -187,6 +187,20 @@ class LogLevel(Enum):
     CRITICAL = logging.CRITICAL
 
 
+class AllowedClientAgent(Enum):
+    """
+    Client agent allowed to connect to an organization.
+
+    - `NATIVE_ONLY`: Only desktop client is allowed
+    - `NATIVE_OR_WEB`: Desktop and web clients are allowed
+    """
+
+    # Note the enum value is used in the PostgreSQL queries, so modifying it
+    # impacts the datamodel !
+    NATIVE_ONLY = "NATIVE_ONLY"
+    NATIVE_OR_WEB = "NATIVE_OR_WEB"
+
+
 @dataclass(slots=True, kw_only=True)
 class BackendConfig:
     debug: bool
@@ -221,6 +235,7 @@ class BackendConfig:
     organization_initial_user_profile_outsider_allowed: bool = True
     organization_initial_minimum_archiving_period: int = 2592000  # seconds (i.e 30 days)
     organization_initial_tos: dict[TosLocale, TosUrl] | None = None
+    organization_initial_allowed_client_agent: AllowedClientAgent = AllowedClientAgent.NATIVE_OR_WEB
 
     # Number of SSE events kept in memory to allow client to catch up on reconnection
     sse_events_cache_size: int = 1024

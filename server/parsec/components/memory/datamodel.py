@@ -51,6 +51,7 @@ from parsec._parsec import (
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
 from parsec.components.sequester import SequesterServiceType
+from parsec.config import AllowedClientAgent
 
 type CommonTopicCertificate = (
     UserCertificate
@@ -119,6 +120,7 @@ class MemoryOrganization:
     is_expired: bool = False
     minimum_archiving_period: int = 2592000  # 30 days
     tos: TermsOfService | None = None
+    allowed_client_agent: AllowedClientAgent = AllowedClientAgent.NATIVE_OR_WEB
 
     # None for non-sequestered organization
     sequester_services: dict[SequesterServiceID, MemorySequesterService] | None = None
