@@ -262,7 +262,7 @@ jobs:
           merge-multiple: true
 
       - name: Merge playwright shard report
-        run: npx playwright merge-reports --config ./merge-playwright.config.ts ./all-blob-reports
+        run: npx playwright merge-reports --config ./merge-playwright.ts ./all-blob-reports
         working-directory: client
 
       - name: Archive test results
