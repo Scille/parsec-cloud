@@ -19,7 +19,7 @@ from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.realm import PGRealmComponent
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import Q, transaction
-from parsec.config import BackendConfig
+from parsec.config import AllowedClientAgent, BackendConfig
 from parsec.events import Event, EventOrganizationConfig
 from parsec.logging import get_logger
 
@@ -100,7 +100,8 @@ WITH my_organization AS (
         _id,
         is_expired,
         user_profile_outsider_allowed,
-        active_users_limit
+        active_users_limit,
+        allowed_client_agent
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -146,6 +147,7 @@ SELECT
     (SELECT is_expired FROM my_organization) AS organization_is_expired,
     (SELECT user_profile_outsider_allowed FROM my_organization) AS organization_user_profile_outsider_allowed,
     (SELECT active_users_limit FROM my_organization) AS organization_active_users_limit,
+    (SELECT allowed_client_agent FROM my_organization) AS organization_allowed_client_agent,
     (SELECT _id FROM my_user) AS user_internal_id,
     (SELECT frozen FROM my_user) AS user_is_frozen,
     (SELECT revoked FROM my_user) AS user_is_revoked,
@@ -218,6 +220,12 @@ class PGEventsComponent(BaseEventsComponent):
             case unknown:
                 assert False, repr(unknown)
 
+        match row["organization_allowed_client_agent"]:
+            case str() as allowed_client_agent_raw:
+                allowed_client_agent = AllowedClientAgent(allowed_client_agent_raw)
+            case unknown:
+                assert False, repr(unknown)
+
         # 2) Check user
 
         match row["user_internal_id"]:
@@ -270,6 +278,7 @@ class PGEventsComponent(BaseEventsComponent):
             organization_id=organization_id,
             user_profile_outsider_allowed=organization_user_profile_outsider_allowed,
             active_users_limit=organization_active_users_limit,
+            allowed_client_agent=allowed_client_agent,
         )
 
         return org_config, user_current_profile, user_realms
