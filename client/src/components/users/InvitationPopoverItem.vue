@@ -29,10 +29,9 @@
             fill="clear"
             class="manage-button copy-link"
             :class="copyLinkActive ? 'active' : ''"
-            :title="I18n.translate('UsersPage.invitation.copyLink')"
             @click.stop="copyLink(invitation)"
-            >
-            <!-- @mouseenter="openInformationTooltip($event, 'UsersPage.invitation.copyLink')" -->
+            ref="copyLinkButton"
+          >
             <ion-icon
               :icon="copyLinkActive ? checkmarkCircle : link"
               class="button-icon"
@@ -45,7 +44,7 @@
             :disabled="sendEmailDisabled"
             @click.stop="sendEmail(invitation)"
             :class="sendEmailDisabled ? 'active' : ''"
-            :title="I18n.translate('UsersPage.invitation.sendEmail')"
+            ref="sendEmailButton"
           >
             <ion-icon
               :icon="mail"
@@ -75,9 +74,9 @@
 import { ClientNewUserInvitationErrorTag, InvitationEmailSentStatus, inviteUser, UserInvitation } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonIcon, IonButton, IonItem, IonLabel, IonText } from '@ionic/vue';
-import { formatTimeSince, Clipboard, I18n, askQuestion, Answer, Translatable, } from 'megashark-lib';
+import { formatTimeSince, Clipboard, askQuestion, Answer, Translatable, attachMouseOverTooltip } from 'megashark-lib';
 import { checkmarkCircle, link, mail, trash } from 'ionicons/icons';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   invitation: UserInvitation;
@@ -92,6 +91,13 @@ defineEmits<{
 }>();
 
 const sendEmailDisabled = ref(false);
+const sendEmailButton = ref();
+const copyLinkButton = ref();
+
+onMounted(async () => {
+  attachMouseOverTooltip(sendEmailButton.value.$el, 'UsersPage.invitation.sendEmail');
+  attachMouseOverTooltip(copyLinkButton.value.$el, 'UsersPage.invitation.copyLink');
+});
 
 async function copyLink(invitation: UserInvitation): Promise<void> {
   const result = await Clipboard.writeText(invitation.addr);
