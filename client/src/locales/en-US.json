@@ -1146,9 +1146,10 @@
         "invitation": {
             "greetUser": "Greet",
             "rejectUser": "Cancel",
-            "sendEmailTitle": "Send the link by email",
+            "sendEmailTitle": "Resend the link by email",
             "sendEmailMessage": "The user should already have received an email with the link. Are you sure you want to send another one?",
-            "sendEmail": "Send email",
+            "sendEmail": "Resend email",
+            "sendEmailFailed": "The email could not be sent. You can try again or send the link yourself.",
             "inviteSuccessMailSent": "An invitation to join the organization has been sent to {email}.",
             "inviteSuccessNoMail": "The invitation was successfully created but we failed to send an email to {email}. Please send the invitation link yourself or try again.",
             "inviteFailedAlreadyMember": "The email {email} is already used by someone in this organization.",

@@ -154,7 +154,7 @@ async function sendEmail(invitation: UserInvitation): Promise<void> {
   } else {
     let message: Translatable = '';
     if (result.ok) {
-      message = 'UsersPage.invitation.inviteSuccessNoMail';
+      message = 'UsersPage.invitation.sendEmailFailed';
     } else {
       switch (result.error.tag) {
         case ClientNewUserInvitationErrorTag.Offline:
