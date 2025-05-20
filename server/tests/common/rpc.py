@@ -5,14 +5,17 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    AccountAuthMethodID,
     BlockID,
     BootstrapToken,
     CancelledGreetingAttemptReason,
     DateTime,
+    EmailValidationToken,
     EnrollmentID,
     GreetingAttemptID,
     HashDigest,
     InvitationToken,
+    SecretKey,
     SequesterServiceID,
     UserID,
     VerifyKey,
@@ -95,6 +98,26 @@ class BaseAnonymousAccountRpcClient:
         req = anonymous_account_cmds.latest.account_create_send_validation_email.Req(email=email)
         raw_rep = await self._do_request(req.dump(), "anonymous_account")
         return anonymous_account_cmds.latest.account_create_send_validation_email.Rep.load(raw_rep)
+
+    async def account_create_with_password_proceed(
+        self,
+        validation_token: EmailValidationToken,
+        human_label: str,
+        password_algorithm: anonymous_account_cmds.latest.account_create_with_password_proceed.PasswordAlgorithm,
+        auth_method_hmac_key: SecretKey,
+        auth_method_id: AccountAuthMethodID,
+        vault_key_access: bytes,
+    ) -> anonymous_account_cmds.latest.account_create_with_password_proceed.Rep:
+        req = anonymous_account_cmds.latest.account_create_with_password_proceed.Req(
+            validation_token=validation_token,
+            human_label=human_label,
+            password_algorithm=password_algorithm,
+            auth_method_hmac_key=auth_method_hmac_key,
+            auth_method_id=auth_method_id,
+            vault_key_access=vault_key_access,
+        )
+        raw_rep = await self._do_request(req.dump(), "anonymous_account")
+        return anonymous_account_cmds.latest.account_create_with_password_proceed.Rep.load(raw_rep)
 
     async def ping(self, ping: str) -> anonymous_account_cmds.latest.ping.Rep:
         req = anonymous_account_cmds.latest.ping.Req(ping=ping)

@@ -176,6 +176,10 @@ class AnonymousAccountClientContext:
     client_api_version: ApiVersion
     settled_api_version: ApiVersion
     logger: ParsecBoundLogger = field(init=False)
+    client_user_agent: str
+    # there is no guarantee that asgi is able to provide the ip address
+    # see https://asgi.readthedocs.io/en/latest/specs/www.html#http-connection-scope
+    client_ip: str | None  # TODO replace by ipaddr #10384
 
     def __post_init__(self):
         # Generate a request ID just for the logs

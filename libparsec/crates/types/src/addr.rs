@@ -40,6 +40,7 @@ const PARSEC_ACTION_CLAIM_USER: &str = "claim_user";
 const PARSEC_ACTION_CLAIM_DEVICE: &str = "claim_device";
 const PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY: &str = "claim_shamir_recovery";
 const PARSEC_ACTION_PKI_ENROLLMENT: &str = "pki_enrollment";
+const PARSEC_ACCOUNT_ACTION_EMAIL_VALIDATION: &str = "create_account";
 
 /// Url has a special way to parse http/https schemes. This is because those kind
 /// of url have special needs (for instance host cannot be empty).
@@ -979,7 +980,7 @@ impl std::str::FromStr for ParsecAccountActionAddr {
 
 /// Represent the URL to validate an email for parsec account
 ///
-/// (e.g. ``parsec3://parsec.example.com?p=xBA8nAZGHV1EJRYFW8O8xS0L``)  // cspell:disable-line
+/// (e.g. ``parsec3://parsec.example.com?a=create_account&p=xBA8nAZGHV1EJRYFW8O8xS0L``)  // cspell:disable-line
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecAccountEmailValidationAddr {
     base: BaseParsecAddr,
@@ -1000,6 +1001,12 @@ impl ParsecAccountEmailValidationAddr {
         let base = BaseParsecAddr::from_url(parsed)?;
         let pairs = parsed.0.query_pairs();
 
+        extract_param_and_expect_value(
+            &pairs,
+            PARSEC_PARAM_ACTION,
+            PARSEC_ACCOUNT_ACTION_EMAIL_VALIDATION,
+        )?;
+
         let token = extract_param_and_b64_msgpack_deserialize!(
             &pairs,
             PARSEC_PARAM_PAYLOAD,
@@ -1018,6 +1025,7 @@ impl ParsecAccountEmailValidationAddr {
         let payload = b64_msgpack_serialize(&self.token);
 
         url.query_pairs_mut()
+            .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACCOUNT_ACTION_EMAIL_VALIDATION)
             .append_pair(PARSEC_PARAM_PAYLOAD, &payload);
         url
     }
