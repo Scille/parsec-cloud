@@ -412,18 +412,6 @@ async function setupApp(): Promise<void> {
       window.electronAPI.pageIsInitialized();
     }
     preventRightClick();
-
-    // <TMP>
-    // const modal = await modalController.create({
-    //   component: LongPathsSupportModal,
-    //   canDismiss: true,
-    //   backdropDismiss: false,
-    //   cssClass: 'long-paths-support-modal',
-    // });
-    // await modal.present();
-    // await modal.onWillDismiss();
-    // await modal.dismiss();
-    // </TMP>
   };
 
   // We can start the app with different cases :
