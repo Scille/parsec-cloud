@@ -5,12 +5,12 @@
     <ion-list>
       <ion-item
         class="popover-item ion-no-padding"
-        v-for="breadcrumb in breadcrumbs"
-        :key="breadcrumb.id"
+        v-for="(breadcrumb, index) in breadcrumbs"
+        :key="index"
         @click="onClick(breadcrumb)"
       >
         <ion-icon
-          :icon="firstElementIsWorkspace && breadcrumb.id === breadcrumbs[0].id ? home : returnDownForward"
+          :icon="breadcrumb.route === Routes.Workspaces && isSmallDisplay ? home : returnDownForward"
           class="popover-item__icon"
         />
         <ion-text class="button-medium">{{ breadcrumb.display }}</ion-text>
@@ -23,10 +23,13 @@
 import { IonContent, IonIcon, IonItem, IonText, IonList, popoverController } from '@ionic/vue';
 import { home, returnDownForward } from 'ionicons/icons';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import { Routes } from '@/router';
+import { useWindowSize } from 'megashark-lib';
+
+const { isSmallDisplay } = useWindowSize();
 
 defineProps<{
   breadcrumbs: RouterPathNode[];
-  firstElementIsWorkspace?: boolean;
 }>();
 
 async function onClick(breadcrumb: RouterPathNode): Promise<void> {

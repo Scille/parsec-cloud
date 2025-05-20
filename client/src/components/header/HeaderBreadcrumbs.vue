@@ -45,7 +45,7 @@
         {{ '/' }}
       </ion-text>
       <ion-text
-        class="breadcrumb-normal breadcrumb-small"
+        class="breadcrumb-normal breadcrumb-small breadcrumb-small-text"
         :class="fromHeaderPage ? '' : 'breadcrumb-small-active'"
       >
         {{ `${pathNodes[pathNodes.length - (fromHeaderPage ? 2 : 1)].display}` }}
@@ -56,18 +56,20 @@
       >
         {{ '/' }}
       </ion-text>
-      <ion-button
-        v-if="pathNodes.length > 1"
-        @click="openPopover"
-        class="breadcrumb-popover-button"
-        fill="outline"
-      >
-        <ion-icon
-          :icon="caretDown"
-          slot="icon-only"
-          class="breadcrumb-popover-button__icon"
-        />
-      </ion-button>
+      <div ref="smallDisplayButtonRef">
+        <ion-button
+          v-if="pathNodes.length > 1"
+          @click="openPopover"
+          class="breadcrumb-popover-button"
+          fill="outline"
+        >
+          <ion-icon
+            :icon="caretDown"
+            slot="icon-only"
+            class="breadcrumb-popover-button__icon"
+          />
+        </ion-button>
+      </div>
     </div>
   </div>
 </template>
@@ -78,14 +80,14 @@ export interface RouterPathNode {
   display?: string;
   title?: Translatable;
   icon?: string;
-  name: string;
+  route: Routes;
   params?: object;
   query?: Query;
 }
 </script>
 
 <script setup lang="ts">
-import { Query } from '@/router';
+import { Query, Routes } from '@/router';
 import { Translatable, useWindowSize } from 'megashark-lib';
 import { IonBreadcrumb, IonBreadcrumbs, IonButton, IonIcon, IonText, popoverController } from '@ionic/vue';
 import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
@@ -94,23 +96,37 @@ import { caretDown } from 'ionicons/icons';
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const breadcrumbRef = ref();
+const smallDisplayButtonRef = ref();
 const breadcrumbWidthProperty = ref('');
 
 function setBreadcrumbWidth(): void {
   if (props.availableWidth > 0 && breadcrumbRef.value) {
     let visibleNodes = props.pathNodes.length > props.maxShown ? props.maxShown : props.pathNodes.length;
-    visibleNodes -= props.fromHeaderPage ? 1 : 0;
     let breadcrumbWidth = props.availableWidth - 1;
 
-    if (props.fromHeaderPage) {
-      breadcrumbWidth -= breadcrumbRef.value[0].$el.clientWidth / 16; // First element is static in headerpage
+    if (isSmallDisplay.value && props.fromHeaderPage && props.pathNodes.length === props.maxShown) {
+      // "... /" not showing, difference of 2rem
+      breadcrumbWidth += 2;
     }
-    if (props.pathNodes.length === 3 || (!props.fromHeaderPage && props.pathNodes.length === 2)) {
-      breadcrumbWidth -= props.fromHeaderPage || props.pathNodes.length === 2 ? 1.25 : 2.5; // separator(s)
-    } else if (props.pathNodes.length > props.maxShown) {
-      breadcrumbWidth -= props.fromHeaderPage ? 4.125 : 5.375; // collapsed element + additional separator
+    if (props.pathNodes.length > props.maxShown || (isSmallDisplay.value && props.pathNodes.length !== 1)) {
+      // Deduce collapsed element or popover button width if present
+      breadcrumbWidth -= props.fromHeaderPage && isLargeDisplay.value ? 4.125 : 5.375;
     }
-    breadcrumbWidthProperty.value = `${breadcrumbWidth / visibleNodes}rem`;
+
+    if (isLargeDisplay.value) {
+      if (props.pathNodes.length <= props.maxShown) {
+        // Deduce separator(s) width if present, 1.25 rem / separator
+        breadcrumbWidth -= props.fromHeaderPage || props.pathNodes.length === 2 ? 1.25 : 2.5;
+      }
+      if (props.fromHeaderPage) {
+        // First element is static in headerpage, we deduce its 2.4rem width
+        visibleNodes -= 1;
+        breadcrumbWidth -= 2.4;
+      }
+      // Small display only has one element so this division is done only on large display
+      breadcrumbWidth /= visibleNodes;
+    }
+    breadcrumbWidthProperty.value = `${breadcrumbWidth}rem`;
   }
 }
 
@@ -178,7 +194,6 @@ async function openPopover(event: CustomEvent): Promise<void> {
     showBackdrop: false,
     componentProps: {
       breadcrumbs: getCollapsedItems(),
-      firstElementIsWorkspace: isSmallDisplay.value && props.fromHeaderPage,
     },
   });
   await popover.present();
@@ -289,15 +304,7 @@ function navigateTo(path: RouterPathNode): void {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-    transition: max-width 0.2s ease-in-out;
-
-    @include ms.responsive-breakpoint('sm') {
-      max-width: 17.5rem;
-    }
-
-    @include ms.responsive-breakpoint('xs') {
-      max-width: 6.25rem;
-    }
+    max-width: calc(v-bind(breadcrumbWidthProperty));
 
     &-active {
       color: var(--parsec-color-light-primary-700);

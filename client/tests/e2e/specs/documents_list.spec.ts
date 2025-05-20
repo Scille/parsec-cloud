@@ -233,7 +233,7 @@ for (const gridMode of [false, true]) {
     await expect(documents).toHaveHeader(['wksp1', 'Dir_Folder'], true, true);
     await createFolder(documents, 'Subdir');
     await navigateDown();
-    await expect(documents).toHaveHeader(['wksp1', 'Dir_Folder', 'Subdir'], true, true);
+    await expect(documents).toHaveHeader(['wksp1', '', 'Subdir'], true, true);
     await navigateUp();
     await expect(documents).toHaveHeader(['wksp1', 'Dir_Folder'], true, true);
     await navigateUp();

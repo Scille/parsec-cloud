@@ -30,36 +30,38 @@
           </div>
         </div>
 
-        <div class="folder-container">
-          <div
-            class="folder-container-header"
-            id="folder-container-id"
-          >
+        <div
+          class="folder-container"
+          ref="folderContainerRef"
+        >
+          <div class="folder-container-header">
             <div
               class="folder-container-header__navigation"
               v-if="!resultFromSearch"
             >
-              <ion-buttons id="header-buttons-id">
-                <ion-button
-                  fill="clear"
-                  @click="back()"
-                  class="navigation-back-button"
-                  :disabled="backStack.length === 0"
-                  :class="{ disabled: backStack.length === 0 }"
-                  ref="backButtonDisabled"
-                >
-                  <ion-icon :icon="chevronBack" />
-                </ion-button>
-                <ion-button
-                  fill="clear"
-                  @click="forward()"
-                  :disabled="forwardStack.length === 0"
-                  :class="{ disabled: forwardStack.length === 0 }"
-                  class="navigation-forward-button"
-                >
-                  <ion-icon :icon="chevronForward" />
-                </ion-button>
-              </ion-buttons>
+              <div ref="headerButtonsRef">
+                <ion-buttons>
+                  <ion-button
+                    fill="clear"
+                    @click="back()"
+                    class="navigation-back-button"
+                    :disabled="backStack.length === 0"
+                    :class="{ disabled: backStack.length === 0 }"
+                    ref="backButtonDisabled"
+                  >
+                    <ion-icon :icon="chevronBack" />
+                  </ion-button>
+                  <ion-button
+                    fill="clear"
+                    @click="forward()"
+                    :disabled="forwardStack.length === 0"
+                    :class="{ disabled: forwardStack.length === 0 }"
+                    class="navigation-forward-button"
+                  >
+                    <ion-icon :icon="chevronForward" />
+                  </ion-button>
+                </ion-buttons>
+              </div>
               <header-breadcrumbs
                 :path-nodes="headerPath"
                 @change="onPathChange"
@@ -70,7 +72,10 @@
                 :available-width="breadcrumbsWidth"
               />
             </div>
-            <div class="folder-container-header__actions">
+            <div
+              class="folder-container-header__actions"
+              ref="topbarRightRef"
+            >
               <ms-search-input
                 v-show="false"
                 @change="onSearchChanged"
@@ -146,6 +151,7 @@
 </template>
 
 <script setup lang="ts">
+import { pxToRem } from '@/common/utils';
 import { IonPage, IonList, IonLabel, IonButtons, IonIcon, IonButton, IonListHeader, IonContent, IonText } from '@ionic/vue';
 import { computed, onBeforeUnmount, onMounted, ref, Ref, inject, onUnmounted, watch } from 'vue';
 import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, WorkspaceHistory, EntryName } from '@/parsec';
@@ -169,7 +175,11 @@ const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
 const currentPath: Ref<FsPath> = ref('/');
 const headerPath: Ref<RouterPathNode[]> = ref([]);
+const pathLength = ref(0);
 const breadcrumbsWidth = ref(0);
+const folderContainerRef = ref();
+const headerButtonsRef = ref();
+const topbarRightRef = ref();
 const { windowWidth } = useWindowSize();
 
 const entries: Ref<WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>> = ref(
@@ -191,11 +201,10 @@ const someSelected = computed(() => {
   return entries.value.selectedCount() > 0;
 });
 
-const topbarWidthWatchCancel = watch([windowWidth, entries.value], () => {
-  const navBarWidth = document.getElementById('folder-container-id')?.offsetWidth;
-  const buttonsWidth = document.getElementById('header-buttons-id')?.offsetWidth;
-  if (navBarWidth && buttonsWidth) {
-    breadcrumbsWidth.value = (navBarWidth - buttonsWidth) / 16;
+const topbarWidthWatchCancel = watch([windowWidth, pathLength], () => {
+  if (folderContainerRef.value?.clientWidth && headerButtonsRef.value?.offsetWidth && topbarRightRef.value?.offsetWidth) {
+    breadcrumbsWidth.value =
+      pxToRem(folderContainerRef.value?.clientWidth - headerButtonsRef.value?.offsetWidth - topbarRightRef.value?.offsetWidth) - 2;
   }
 });
 
@@ -302,7 +311,7 @@ async function listCurrentPath(): Promise<void> {
     headerPath.value.push({
       id: 0,
       display: workspaceInfo.value.currentName,
-      name: '',
+      route: Routes.History,
       query: { documentPath: path },
     });
     let id = 1;
@@ -311,11 +320,12 @@ async function listCurrentPath(): Promise<void> {
       headerPath.value.push({
         id: id,
         display: breadcrumb === '/' ? '' : breadcrumb,
-        name: '',
+        route: Routes.History,
         query: { documentPath: path },
       });
       id += 1;
     }
+    pathLength.value = headerPath.value.length;
   } finally {
     querying.value = false;
     if (history.isStarted()) {

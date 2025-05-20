@@ -21,10 +21,10 @@
         />
         <div
           class="topbar-left"
-          id="topbar-left"
+          ref="topbarLeftRef"
         >
           <div
-            id="back-block"
+            ref="backBlockRef"
             v-if="hasHistory() && !currentRouteIs(Routes.Workspaces)"
           >
             <header-back-button :short="currentRouteIsFileRoute() ? true : false" />
@@ -121,6 +121,7 @@
 </template>
 
 <script setup lang="ts">
+import { pxToRem } from '@/common/utils';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
@@ -179,12 +180,12 @@ const showHeader = computed(() => {
   return !((currentRouteIs(Routes.Organization) || currentRouteIs(Routes.MyProfile)) && isSmallDisplay.value);
 });
 const breadcrumbsWidth = ref(0);
+const backBlockRef = ref();
+const topbarLeftRef = ref();
 
 const topbarWidthWatchCancel = watch([windowWidth, fullPath], () => {
-  const topbarWidth = document.getElementById('topbar-left')?.offsetWidth;
-  const backBlockWidth = document.getElementById('back-block')?.offsetWidth;
-  if (topbarWidth && backBlockWidth) {
-    breadcrumbsWidth.value = (topbarWidth - backBlockWidth) / 16;
+  if (topbarLeftRef.value?.offsetWidth && backBlockRef.value?.offsetWidth) {
+    breadcrumbsWidth.value = pxToRem(topbarLeftRef.value.offsetWidth - backBlockRef.value.offsetWidth);
   }
 });
 
@@ -202,7 +203,7 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 async function onNodeSelected(node: RouterPathNode): Promise<void> {
-  await navigateTo(node.name as Routes, { params: node.params, query: node.query });
+  await navigateTo(node.route as Routes, { params: node.params, query: node.query });
 }
 
 async function updateRoute(): Promise<void> {
@@ -217,7 +218,7 @@ async function updateRoute(): Promise<void> {
         id: 0,
         title: 'HeaderPage.titles.workspaces',
         icon: home,
-        name: Routes.Workspaces,
+        route: Routes.Workspaces,
         params: {},
       },
     ];
@@ -231,7 +232,7 @@ async function updateRoute(): Promise<void> {
     finalPath.push({
       id: 0,
       icon: home,
-      name: Routes.Workspaces,
+      route: Routes.Workspaces,
       params: {},
     });
 
@@ -240,7 +241,7 @@ async function updateRoute(): Promise<void> {
     finalPath.push({
       id: 1,
       display: workspaceName.value,
-      name: Routes.Documents,
+      route: Routes.Workspaces,
       query: { documentPath: '/' },
       params: getCurrentRouteParams(),
     });
@@ -249,7 +250,7 @@ async function updateRoute(): Promise<void> {
       finalPath.push({
         id: i + 2,
         display: workspacePath[i],
-        name: Routes.Documents,
+        route: Routes.Documents,
         query: { documentPath: `/${rebuildPath.join('/')}` },
         params: getCurrentRouteParams(),
       });
