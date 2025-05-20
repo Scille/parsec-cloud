@@ -3,8 +3,8 @@
 use std::{path::PathBuf, sync::Arc};
 
 use libparsec_client::{
-    workspace::{WorkspaceOps, WorkspaceStatEntryError},
     Client,
+    workspace::{WorkspaceOps, WorkspaceStatEntryError},
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;

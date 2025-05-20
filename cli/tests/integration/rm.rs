@@ -1,8 +1,8 @@
-use libparsec::{tmp_path, TmpPath};
+use libparsec::{TmpPath, tmp_path};
 
 use super::bootstrap_cli_test;
 use crate::{
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
     utils::start_client,
 };
 

@@ -4,7 +4,7 @@ use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
     types::{PyTuple, PyType},
-    IntoPy, PyObject, PyResult, Python,
+    PyObject, PyResult, Python,
 };
 
 // #[non_exhaustive] macro must be set for every enum like type,

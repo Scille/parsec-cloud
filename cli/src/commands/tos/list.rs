@@ -1,6 +1,6 @@
 use libparsec_client::Tos;
 
-use crate::utils::{StartedClient, BULLET_CHAR};
+use crate::utils::{BULLET_CHAR, StartedClient};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]

@@ -1,13 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::cmp::{min, Ordering};
+use std::cmp::{Ordering, min};
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
-    workspace_history::{WorkspaceHistoryOps, WorkspaceHistoryStoreGetBlockError},
     InvalidBlockAccessError, InvalidCertificateError, InvalidKeysBundleError,
+    workspace_history::{WorkspaceHistoryOps, WorkspaceHistoryStoreGetBlockError},
 };
 
 #[derive(Debug, thiserror::Error)]

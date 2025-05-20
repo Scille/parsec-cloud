@@ -16,17 +16,17 @@ pub use anonymous_account_cmds::AnonymousAccountCmds;
 pub use anonymous_cmds::AnonymousCmds;
 pub use authenticated_account_cmds::AuthenticatedAccountCmds;
 pub use authenticated_cmds::{
-    sse::{RateLimiter, SSEEvent, SSEResponseOrMissedEvents, SSEStream},
     AuthenticatedCmds, PARSEC_AUTH_METHOD,
+    sse::{RateLimiter, SSEEvent, SSEResponseOrMissedEvents, SSEStream},
 };
 pub use error::{ConnectionError, ConnectionResult};
 pub use invited_cmds::InvitedCmds;
 #[cfg(feature = "test-with-testbed")]
 // Also re-expose reqwest&bytes stuff to simplify building mock response
 pub use testbed::{
+    Bytes, HeaderMap, HeaderName, HeaderValue, ResponseMock, StatusCode,
     test_register_low_level_send_hook, test_register_low_level_send_hook_default,
-    test_register_low_level_send_hook_multicall, test_register_send_hook, Bytes, HeaderMap,
-    HeaderName, HeaderValue, ResponseMock, StatusCode,
+    test_register_low_level_send_hook_multicall, test_register_send_hook,
 };
 // Re-expose
 pub use libparsec_platform_http_proxy::ProxyConfig;

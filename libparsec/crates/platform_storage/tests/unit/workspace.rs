@@ -10,14 +10,14 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
+    PREVENT_SYNC_PATTERN_EMPTY_PATTERN,
     workspace::{
         DebugBlock, DebugChunk, DebugDump, DebugVlob, MarkPreventSyncPatternFullyAppliedError,
         UpdateManifestData,
     },
-    PREVENT_SYNC_PATTERN_EMPTY_PATTERN,
 };
 
-use super::{workspace_storage_non_speculative_init, WorkspaceStorage};
+use super::{WorkspaceStorage, workspace_storage_non_speculative_init};
 
 #[cfg(target_arch = "wasm32")]
 libparsec_tests_lite::platform::wasm_bindgen_test_configure!(run_in_browser);

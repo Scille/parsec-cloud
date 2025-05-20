@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use pyo3::{exceptions::PyValueError, prelude::*, types::PyType, PyResult};
+use pyo3::{PyResult, exceptions::PyValueError, prelude::*, types::PyType};
 
 crate::binding_utils::gen_py_wrapper_class!(
     DateTime,
@@ -119,7 +119,7 @@ impl DateTime {
                 return Err(PyValueError::new_err(format!(
                     "Could not subtract `{}` and `{}`",
                     self.0, other.0
-                )))
+                )));
             }
         };
         Ok(us as f64 / 1e6)

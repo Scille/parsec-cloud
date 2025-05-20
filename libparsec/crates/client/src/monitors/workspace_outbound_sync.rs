@@ -14,12 +14,12 @@ use libparsec_types::prelude::*;
 
 use super::Monitor;
 use crate::{
+    EventWorkspaceOpsInboundSyncDone,
     event_bus::{EventBus, EventMonitorCrashed, EventWorkspaceOpsOutboundSyncNeeded},
     workspace::{
         InboundSyncOutcome, OutboundSyncOutcome, WorkspaceGetNeedOutboundSyncEntriesError,
         WorkspaceOps, WorkspaceSyncError,
     },
-    EventWorkspaceOpsInboundSyncDone,
 };
 
 const WORKSPACE_OUTBOUND_SYNC_MONITOR_NAME: &str = "workspace_outbound_sync";
@@ -347,7 +347,9 @@ fn task_future_factory(
                                 // before re-enqueueing.
                                 yield_now().await;
 
-                                log::info!("Workspace {realm_id}: {entry_id} is busy so aborting sync to retry later");
+                                log::info!(
+                                    "Workspace {realm_id}: {entry_id} is busy so aborting sync to retry later"
+                                );
 
                                 // Note the send may fail if the syncer sub task has crashed,
                                 // in which case there is nothing we can do :(
@@ -376,7 +378,9 @@ fn task_future_factory(
                                 // before re-enqueueing.
                                 yield_now().await;
 
-                                log::info!("Workspace {realm_id}: {entry_id} is busy so aborting sync to retry later");
+                                log::info!(
+                                    "Workspace {realm_id}: {entry_id} is busy so aborting sync to retry later"
+                                );
 
                                 // Note the send may fail if the syncer sub task has crashed,
                                 // in which case there is nothing we can do :(
@@ -417,7 +421,9 @@ fn task_future_factory(
                             // Shouldn't occur in practice given the monitors are expected
                             // to be stopped before the opses. In any case we have no
                             // choice but to also stop.
-                            log::error!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                            log::error!(
+                                "Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop"
+                            );
                             return;
                         }
                         WorkspaceGetNeedOutboundSyncEntriesError::Internal(err) => {
@@ -516,7 +522,9 @@ fn task_future_factory(
                         match syncer_tx.send_async(entry_id).await {
                             Ok(_) => (),
                             Err(_) => {
-                                log::warn!("Workspace {realm_id}: stopping due to sub-task unexpectedly stopped");
+                                log::warn!(
+                                    "Workspace {realm_id}: stopping due to sub-task unexpectedly stopped"
+                                );
                                 return;
                             }
                         }

@@ -8,7 +8,7 @@ use std::{any::Any, ops::Deref, path::Path, sync::Arc};
 
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_testbed::{
-    test_get_testbed, test_get_testbed_component_store, TestbedEnv, TestbedEvent,
+    TestbedEnv, TestbedEvent, test_get_testbed, test_get_testbed_component_store,
 };
 use libparsec_types::prelude::*;
 

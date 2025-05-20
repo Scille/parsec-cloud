@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use blake2::Blake2bMac;
-use digest::{consts::U32, generic_array::GenericArray, Mac};
+use digest::{Mac, consts::U32, generic_array::GenericArray};
 use rand::RngCore;
 use serde::Deserialize;
 use serde_bytes::Bytes;

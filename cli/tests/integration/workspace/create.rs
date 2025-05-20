@@ -1,8 +1,8 @@
-use libparsec::{tmp_path, RealmRole, TmpPath};
+use libparsec::{RealmRole, TmpPath, tmp_path};
 
 use crate::{
     integration_tests::bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
     utils::start_client,
 };
 
@@ -26,7 +26,9 @@ async fn create_workspace(tmp_path: TmpPath) {
     let workspaces = client.list_workspaces().await;
 
     let workspace_name = "new-workspace".parse().unwrap();
-    assert!(workspaces
-        .iter()
-        .any(|w| w.current_name == workspace_name && w.current_self_role == RealmRole::Owner));
+    assert!(
+        workspaces
+            .iter()
+            .any(|w| w.current_name == workspace_name && w.current_self_role == RealmRole::Owner)
+    );
 }

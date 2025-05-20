@@ -67,7 +67,7 @@ impl TryFrom<&str> for ApiVersion {
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         if value.split('.').count() != 2 {
             return Err(
-                "Wrong number of `.` version string must be follow this pattern `<version>.<revision>`"
+                "Wrong number of `.` version string must be follow this pattern `<version>.<revision>`",
             );
         }
 

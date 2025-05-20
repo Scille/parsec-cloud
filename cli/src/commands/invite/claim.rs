@@ -4,18 +4,18 @@ use std::{path::PathBuf, sync::Arc};
 
 use anyhow::anyhow;
 use libparsec::{
-    internal::{
-        claimer_retrieve_info, AnyClaimRetrievedInfoCtx, DeviceClaimFinalizeCtx,
-        DeviceClaimInProgress1Ctx, DeviceClaimInProgress2Ctx, DeviceClaimInProgress3Ctx,
-        DeviceClaimInitialCtx, ShamirRecoveryClaimInProgress1Ctx,
-        ShamirRecoveryClaimInProgress2Ctx, ShamirRecoveryClaimInProgress3Ctx,
-        ShamirRecoveryClaimInitialCtx, ShamirRecoveryClaimMaybeFinalizeCtx,
-        ShamirRecoveryClaimMaybeRecoverDeviceCtx, ShamirRecoveryClaimPickRecipientCtx,
-        ShamirRecoveryClaimRecoverDeviceCtx, ShamirRecoveryClaimShare, UserClaimFinalizeCtx,
-        UserClaimInProgress1Ctx, UserClaimInProgress2Ctx, UserClaimInProgress3Ctx,
-        UserClaimInitialCtx, UserClaimListAdministratorsCtx,
-    },
     ClientConfig, DeviceAccessStrategy, ParsecInvitationAddr,
+    internal::{
+        AnyClaimRetrievedInfoCtx, DeviceClaimFinalizeCtx, DeviceClaimInProgress1Ctx,
+        DeviceClaimInProgress2Ctx, DeviceClaimInProgress3Ctx, DeviceClaimInitialCtx,
+        ShamirRecoveryClaimInProgress1Ctx, ShamirRecoveryClaimInProgress2Ctx,
+        ShamirRecoveryClaimInProgress3Ctx, ShamirRecoveryClaimInitialCtx,
+        ShamirRecoveryClaimMaybeFinalizeCtx, ShamirRecoveryClaimMaybeRecoverDeviceCtx,
+        ShamirRecoveryClaimPickRecipientCtx, ShamirRecoveryClaimRecoverDeviceCtx,
+        ShamirRecoveryClaimShare, UserClaimFinalizeCtx, UserClaimInProgress1Ctx,
+        UserClaimInProgress2Ctx, UserClaimInProgress3Ctx, UserClaimInitialCtx,
+        UserClaimListAdministratorsCtx, claimer_retrieve_info,
+    },
 };
 use libparsec_client::ShamirRecoveryClaimFinalizeCtx;
 

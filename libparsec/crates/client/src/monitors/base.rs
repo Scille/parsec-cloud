@@ -2,7 +2,7 @@
 
 use std::future::Future;
 
-use libparsec_platform_async::{spawn, JoinHandle};
+use libparsec_platform_async::{JoinHandle, spawn};
 use libparsec_types::prelude::*;
 
 use crate::event_bus::EventBus;

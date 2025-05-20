@@ -3,8 +3,8 @@
 use proc_macro2::{Span, TokenStream};
 use quote::{quote, quote_spanned};
 use syn::{
-    parse_macro_input, punctuated::Pair, spanned::Spanned, FnArg, ItemFn, LitInt, LitStr, Pat,
-    Type, TypeReference,
+    FnArg, ItemFn, LitInt, LitStr, Pat, Type, TypeReference, parse_macro_input, punctuated::Pair,
+    spanned::Spanned,
 };
 
 #[proc_macro_attribute]
@@ -100,7 +100,7 @@ fn validate_testbed_argument(sig: &mut syn::Signature) -> Result<(), TokenStream
             return Err(generate_compile_error(
                 sig.inputs.span(),
                 "Missing argument: `env: &TestbedEnv`",
-            ))
+            ));
         }
     }
     Ok(())
@@ -115,14 +115,14 @@ fn validate_testbed_argument_type(typed: &syn::PatType) -> Result<(), TokenStrea
                 return Err(generate_compile_error(
                     e.span(),
                     "The last argument reference type must be `TestbedEnv`",
-                ))
+                ));
             }
         },
         _ => {
             return Err(generate_compile_error(
                 typed.ty.span(),
                 "The last argument type must be `&TestbedEnv`",
-            ))
+            ));
         }
     }
     Ok(())
@@ -135,7 +135,7 @@ fn validate_testbed_argument_name(typed: &syn::PatType) -> Result<(), TokenStrea
             return Err(generate_compile_error(
                 typed.pat.span(),
                 "The last argument must be called `env`",
-            ))
+            ));
         }
     }
     Ok(())

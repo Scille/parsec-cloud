@@ -7,7 +7,7 @@ use std::{
 };
 
 use libparsec_platform_async::event::{Event, EventListener};
-use libparsec_testbed::{test_get_testbed_component_store, TestbedEnv};
+use libparsec_testbed::{TestbedEnv, test_get_testbed_component_store};
 use libparsec_types::prelude::*;
 
 use crate::TryLockDeviceForUseError;

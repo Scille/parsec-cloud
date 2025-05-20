@@ -14,8 +14,8 @@ use reqwest::StatusCode;
 use libparsec_types::prelude::*;
 
 use crate::{
-    test_get_template, TestbedEvent, TestbedEventBootstrapOrganization, TestbedEventNewDevice,
-    TestbedEventNewUser, TestbedTemplate, TestbedTemplateBuilder,
+    TestbedEvent, TestbedEventBootstrapOrganization, TestbedEventNewDevice, TestbedEventNewUser,
+    TestbedTemplate, TestbedTemplateBuilder, test_get_template,
 };
 
 // Testbed always works in memory, the path only acts as an identifier.
@@ -997,7 +997,7 @@ pub async fn test_new_testbed(
                     return Err(anyhow::anyhow!(
                         "Bad response body from testbed server: {:?}",
                         response_body
-                    ))
+                    ));
                 }
             }
         };
@@ -1135,7 +1135,7 @@ pub async fn test_drop_testbed(discriminant_dir: &Path) -> anyhow::Result<()> {
                 return Err(anyhow::anyhow!(
                     "No testbed with path `{:?}`",
                     discriminant_dir
-                ))
+                ));
             }
         }
     };

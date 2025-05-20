@@ -18,8 +18,9 @@ pub use libparsec_protocol::invited_cmds::latest::invite_info::{
 pub use libparsec_types::prelude::*;
 
 use crate::{
-    handle::{borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem},
-    listen_canceller, ClientConfig, OnEventCallbackPlugged,
+    ClientConfig, OnEventCallbackPlugged,
+    handle::{Handle, HandleItem, borrow_from_handle, register_handle, take_and_close_handle},
+    listen_canceller,
 };
 
 /*
@@ -36,7 +37,9 @@ pub enum BootstrapOrganizationError {
     InvalidToken,
     #[error("Bootstrap token already used")]
     AlreadyUsedToken,
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

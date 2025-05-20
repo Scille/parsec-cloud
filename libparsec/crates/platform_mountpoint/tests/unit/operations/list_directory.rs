@@ -2,7 +2,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
-use libparsec_client::{workspace::WorkspaceOps, Client};
+use libparsec_client::{Client, workspace::WorkspaceOps};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 

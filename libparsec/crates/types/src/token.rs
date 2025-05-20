@@ -18,9 +18,9 @@ macro_rules! new_token_type {
 
         impl Default for $name {
             fn default() -> Self {
-                use ::rand::{thread_rng, Rng};
+                use ::rand::{Rng, thread_rng};
 
-                let bytes = thread_rng().gen::<[u8; TOKEN_SIZE]>();
+                let bytes = thread_rng().r#gen::<[u8; TOKEN_SIZE]>();
                 Self::from(bytes)
             }
         }

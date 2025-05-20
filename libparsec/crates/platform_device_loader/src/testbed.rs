@@ -7,7 +7,7 @@ use std::{
 };
 
 use libparsec_testbed::{
-    test_get_testbed, test_get_testbed_component_store, TestbedEnv, TestbedEvent,
+    TestbedEnv, TestbedEvent, test_get_testbed, test_get_testbed_component_store,
 };
 use libparsec_types::prelude::*;
 

@@ -16,7 +16,7 @@ use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_types::prelude::*;
 
-use crate::{certif::CertificateOps, event_bus::EventBus, ClientConfig};
+use crate::{ClientConfig, certif::CertificateOps, event_bus::EventBus};
 pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 pub use history::*;
 use store::WorkspaceStore;

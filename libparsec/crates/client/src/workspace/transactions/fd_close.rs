@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use libparsec_types::prelude::*;
 
-use crate::{workspace::WorkspaceOps, EventWorkspaceOpsOutboundSyncNeeded};
+use crate::{EventWorkspaceOpsOutboundSyncNeeded, workspace::WorkspaceOps};
 
 use super::ReshapeAndFlushError;
 

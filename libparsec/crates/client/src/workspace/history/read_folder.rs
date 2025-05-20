@@ -108,7 +108,7 @@ impl WorkspaceHistoryFolderReader {
                     // invalid (e.g. the entry has been reparented during a move) and
                     // should just be ignored.
                     WorkspaceHistoryStatEntryError::EntryNotFound => {
-                        return Ok(WorkspaceHistoryFolderReaderStatNextOutcome::InvalidChild)
+                        return Ok(WorkspaceHistoryFolderReaderStatNextOutcome::InvalidChild);
                     }
                     WorkspaceHistoryStatEntryError::Offline(e) => {
                         WorkspaceHistoryFolderReaderStatEntryError::Offline(e)
@@ -187,7 +187,7 @@ impl WorkspaceHistoryFolderReader {
                                 invalid_manifest_error,
                             ),
                             WorkspaceHistoryGetEntryError::Internal(err) => err.into(),
-                        })
+                        });
                     }
                 };
 

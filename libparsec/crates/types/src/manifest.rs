@@ -9,10 +9,10 @@ use libparsec_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types,
+    self as libparsec_types, BlockID, DataError, DataResult, DateTime, DeviceID, EntryName,
+    SizeInt, VersionInt, VlobID,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    BlockID, DataError, DataResult, DateTime, DeviceID, EntryName, SizeInt, VersionInt, VlobID,
 };
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB

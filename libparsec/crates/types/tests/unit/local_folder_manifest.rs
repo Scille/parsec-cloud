@@ -6,7 +6,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::fixtures::{alice, timestamp, Device};
+use crate::fixtures::{Device, alice, timestamp};
 use crate::prelude::*;
 use libparsec_tests_lite::prelude::*;
 

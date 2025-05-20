@@ -7,13 +7,13 @@
 use std::sync::Arc;
 
 use crate::{
-    test_register_low_level_send_hook, AuthenticatedCmds, Bytes, ConnectionError, HeaderMap,
-    HeaderName, HeaderValue, ProxyConfig, ResponseMock, SSEResponseOrMissedEvents, StatusCode,
+    AuthenticatedCmds, Bytes, ConnectionError, HeaderMap, HeaderName, HeaderValue, ProxyConfig,
+    ResponseMock, SSEResponseOrMissedEvents, StatusCode, test_register_low_level_send_hook,
 };
 use libparsec_platform_async::stream::StreamExt;
+use libparsec_protocol::API_LATEST_VERSION;
 use libparsec_protocol::authenticated_cmds::latest as authenticated_cmds;
 use libparsec_protocol::tos_cmds::latest as tos_cmds;
-use libparsec_protocol::API_LATEST_VERSION;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -49,11 +49,13 @@ async fn rpc_ok(env: &TestbedEnv, mocked: bool) {
             );
             // Cannot check `User-Agent` here given reqwest adds it in a later step
             // assert!(headers.get("User-Agent").unwrap().to_str().unwrap().starts_with("Parsec-Client/"));
-            assert!(headers
-                .get("Authorization")
-                .unwrap()
-                .as_bytes()
-                .starts_with(b"Bearer PARSEC-SIGN-ED25519."));
+            assert!(
+                headers
+                    .get("Authorization")
+                    .unwrap()
+                    .as_bytes()
+                    .starts_with(b"Bearer PARSEC-SIGN-ED25519.")
+            );
 
             let body = request.body().unwrap().as_bytes().unwrap();
             let request = authenticated_cmds::AnyCmdReq::load(body).unwrap();
@@ -104,11 +106,13 @@ async fn rpc_ok_tos_family(env: &TestbedEnv, mocked: bool) {
             );
             // Cannot check `User-Agent` here given reqwest adds it in a later step
             // assert!(headers.get("User-Agent").unwrap().to_str().unwrap().starts_with("Parsec-Client/"));
-            assert!(headers
-                .get("Authorization")
-                .unwrap()
-                .as_bytes()
-                .starts_with(b"Bearer PARSEC-SIGN-ED25519."));
+            assert!(
+                headers
+                    .get("Authorization")
+                    .unwrap()
+                    .as_bytes()
+                    .starts_with(b"Bearer PARSEC-SIGN-ED25519.")
+            );
 
             let body = request.body().unwrap().as_bytes().unwrap();
             let request = tos_cmds::AnyCmdReq::load(body).unwrap();
@@ -434,11 +438,19 @@ async fn sse_event_id_mocked(
         };
     }
     match kind {
-        "good" => register_send_hook!("data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\nid:4fe5b6ddf29f4c159e6002da2132d80f\n\n"),
-        "missing" => register_send_hook!("data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\n\n"),
-        "empty" => register_send_hook!("data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\n\nid:\n"),
+        "good" => register_send_hook!(
+            "data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\nid:4fe5b6ddf29f4c159e6002da2132d80f\n\n"
+        ),
+        "missing" => {
+            register_send_hook!("data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\n\n")
+        }
+        "empty" => {
+            register_send_hook!("data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\n\nid:\n")
+        }
         // HTTP header only supports printable ASCII
-        "invalid_for_http_header" => register_send_hook!("data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\nid:你好\n\n"),
+        "invalid_for_http_header" => register_send_hook!(
+            "data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\nid:你好\n\n"
+        ),
         unknown => unreachable!("{}", unknown),
     }
 

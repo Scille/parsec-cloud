@@ -10,13 +10,13 @@ use libparsec_types::prelude::*;
 
 use super::Monitor;
 use crate::{
+    EventBusConnectionLifetime, EventMonitorCrashed, EventWorkspaceOpsInboundSyncDone,
+    EventWorkspaceOpsOutboundSyncNeeded,
     event_bus::{Broadcastable, EventBus, EventMissedServerEvents, EventRealmVlobUpdated},
     workspace::{
         InboundSyncOutcome, WorkspaceGetNeedInboundSyncEntriesError, WorkspaceOps,
         WorkspaceSyncError,
     },
-    EventBusConnectionLifetime, EventMonitorCrashed, EventWorkspaceOpsInboundSyncDone,
-    EventWorkspaceOpsOutboundSyncNeeded,
 };
 
 const WORKSPACE_INBOUND_SYNC_MONITOR_NAME: &str = "workspace_inbound_sync";
@@ -346,11 +346,15 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                                 // Shouldn't occur in practice given the monitors are expected
                                 // to be stopped before the opses. In any case we have no
                                 // choice but to also stop.
-                                log::error!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                                log::error!(
+                                    "Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop"
+                                );
                                 return;
                             }
                             WorkspaceGetNeedInboundSyncEntriesError::Internal(err) => {
-                                log::error!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
+                                log::error!(
+                                    "Workspace {realm_id}: stopping due to unexpected error: {err:?}"
+                                );
                                 return;
                             }
                         }

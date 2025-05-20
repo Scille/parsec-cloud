@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec::{authenticated_cmds::latest::invite_list::InviteListItem, InvitationStatus};
+use libparsec::{InvitationStatus, authenticated_cmds::latest::invite_list::InviteListItem};
 
 use crate::utils::*;
 

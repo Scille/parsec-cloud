@@ -7,8 +7,8 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    certif::{store::CertificatesStore, CertificateOps},
     ClientConfig, EventBus, MountpointMountStrategy, WorkspaceStorageCacheSize,
+    certif::{CertificateOps, store::CertificatesStore},
 };
 
 pub(crate) async fn certificates_ops_factory(

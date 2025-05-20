@@ -6,8 +6,8 @@ use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 
 use super::Monitor;
 use crate::{
-    event_bus::{EventBus, EventMissedServerEvents, EventMonitorCrashed},
     Client, ClientRefreshWorkspacesListError, EventNewCertificates,
+    event_bus::{EventBus, EventMissedServerEvents, EventMonitorCrashed},
 };
 
 const WORKSPACES_REFRESH_LIST_MONITOR_NAME: &str = "workspaces_refresh_list";
@@ -90,7 +90,10 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
 
                         err @ (ClientRefreshWorkspacesListError::InvalidEncryptedRealmName(_)
                         | ClientRefreshWorkspacesListError::InvalidKeysBundle(_)) => {
-                            log::error!("Stopping workspaces refresh list monitor due to unexpected outcome: {}", err);
+                            log::error!(
+                                "Stopping workspaces refresh list monitor due to unexpected outcome: {}",
+                                err
+                            );
                             return;
                         }
 

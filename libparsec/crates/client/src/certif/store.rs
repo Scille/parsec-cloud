@@ -33,7 +33,7 @@ use libparsec_types::prelude::*;
 
 use crate::certif::CertifPollServerError;
 
-use super::{realm_keys_bundle::RealmKeys, CertificateOps, InvalidCertificateError};
+use super::{CertificateOps, InvalidCertificateError, realm_keys_bundle::RealmKeys};
 
 /// This enum list all possible states for a realm.
 ///

@@ -9,10 +9,10 @@ use std::path::Path;
 use windows_sys::Win32::Foundation::ERROR_LOCK_VIOLATION;
 use windows_sys::Win32::Foundation::HANDLE;
 use windows_sys::Win32::Storage::FileSystem::{
-    LockFileEx, LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY,
+    LOCKFILE_EXCLUSIVE_LOCK, LOCKFILE_FAIL_IMMEDIATELY, LockFileEx,
 };
 
-use super::{get_lock_file_path, TryLockDeviceForUseError};
+use super::{TryLockDeviceForUseError, get_lock_file_path};
 
 // Note exclusive lock gets automatically released on file close (i.e. on drop).
 #[derive(Debug)]

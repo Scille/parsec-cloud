@@ -9,8 +9,8 @@ use libparsec_types::prelude::*;
 use crate::WorkspaceHistorySetTimestampOfInterestError;
 
 use super::utils::{
-    workspace_history_ops_with_server_access_factory, DataAccessStrategy,
-    StartWorkspaceHistoryOpsError,
+    DataAccessStrategy, StartWorkspaceHistoryOpsError,
+    workspace_history_ops_with_server_access_factory,
 };
 
 #[parsec_test(testbed = "workspace_history")]

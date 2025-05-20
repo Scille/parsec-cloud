@@ -5,11 +5,11 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::{
-    test_register_low_level_send_hook, AnonymousAccountCmds, ConnectionError, HeaderMap,
-    HeaderName, HeaderValue, ProxyConfig, ResponseMock, StatusCode,
+    AnonymousAccountCmds, ConnectionError, HeaderMap, HeaderName, HeaderValue, ProxyConfig,
+    ResponseMock, StatusCode, test_register_low_level_send_hook,
 };
 use libparsec_protocol::{
-    anonymous_account_cmds::latest as anonymous_account_cmds, API_LATEST_VERSION,
+    API_LATEST_VERSION, anonymous_account_cmds::latest as anonymous_account_cmds,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;

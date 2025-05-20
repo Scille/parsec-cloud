@@ -8,8 +8,8 @@ use indexed_db::{Factory, OwnedDatabase, Transaction};
 use libparsec_types::prelude::*;
 
 use super::utils::{
-    js_to_rs_bytes, js_to_rs_timestamp, js_to_rs_vlob_id, rs_to_js_filter, rs_to_js_timestamp,
-    with_transaction, CustomErrMarker,
+    CustomErrMarker, js_to_rs_bytes, js_to_rs_timestamp, js_to_rs_vlob_id, rs_to_js_filter,
+    rs_to_js_timestamp, with_transaction,
 };
 use crate::certificates::{
     FilterKind, GetCertificateError, GetCertificateQuery, PerTopicLastTimestamps,

@@ -5,7 +5,7 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    num::{NonZeroU64, NonZeroU8},
+    num::{NonZeroU8, NonZeroU64},
     sync::Arc,
 };
 

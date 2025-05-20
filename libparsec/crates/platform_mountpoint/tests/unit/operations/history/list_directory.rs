@@ -2,7 +2,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
-use libparsec_client::{workspace_history::WorkspaceHistoryOps, Client};
+use libparsec_client::{Client, workspace_history::WorkspaceHistoryOps};
 use libparsec_client_connection::{
     test_register_sequence_of_send_hooks, test_send_hook_vlob_read_batch,
 };

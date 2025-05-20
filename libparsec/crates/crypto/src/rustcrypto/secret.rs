@@ -4,13 +4,13 @@ use argon2::{Algorithm, Argon2, Params, Version};
 use blake2::Blake2bMac;
 use crypto_box::aead::Aead;
 use crypto_secretbox::{
-    aead::{rand_core::RngCore, OsRng},
     AeadCore, Key, XSalsa20Poly1305,
+    aead::{OsRng, rand_core::RngCore},
 };
 use digest::{
+    KeyInit, Mac,
     consts::{U5, U64},
     typenum::{IsLessOrEqual, LeEq, NonZero},
-    KeyInit, Mac,
 };
 use generic_array::ArrayLength;
 use serde::Deserialize;

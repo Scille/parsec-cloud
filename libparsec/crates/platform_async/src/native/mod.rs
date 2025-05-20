@@ -2,7 +2,7 @@
 
 use futures::FutureExt;
 
-pub use tokio::task::{try_id as try_task_id, Id as TaskID};
+pub use tokio::task::{Id as TaskID, try_id as try_task_id};
 
 pub struct Instant(std::time::Instant);
 

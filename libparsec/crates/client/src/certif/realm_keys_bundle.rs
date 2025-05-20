@@ -9,7 +9,7 @@ use libparsec_types::prelude::*;
 use crate::InvalidCertificateError;
 
 use super::{
-    encrypt::CertifEncryptForUserError, store::CertificatesStoreReadGuard, CertificateOps,
+    CertificateOps, encrypt::CertifEncryptForUserError, store::CertificatesStoreReadGuard,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -371,7 +371,7 @@ async fn recover_realm_keys_from_previous_bundles(
                 } => (keys_bundle, keys_bundle_access),
 
                 Rep::AuthorNotAllowed => {
-                    return Err(AttemptRealmKeysBundleHealingError::NotAllowed)
+                    return Err(AttemptRealmKeysBundleHealingError::NotAllowed);
                 }
                 // This key rotation has been done while we were not part of the realm,
                 // so we have no choice but to skip it.
@@ -431,7 +431,7 @@ async fn recover_realm_keys_from_previous_bundles(
                     }
                 }
                 ValidateKeysBundleError::Internal(err) => {
-                    return Err(err.context("Cannot validate realm keys bundle").into())
+                    return Err(err.context("Cannot validate realm keys bundle").into());
                 }
             },
         }
@@ -542,7 +542,9 @@ pub(super) async fn encrypt_realm_keys_bundle_access_for_user(
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidKeysBundleError {
-    #[error("`{recipient}`'s access for keys bundle with index {key_index} (key rotation by `{key_rotation_author}` on {key_rotation_timestamp}) for realm `{realm}` is corrupted: {error}")]
+    #[error(
+        "`{recipient}`'s access for keys bundle with index {key_index} (key rotation by `{key_rotation_author}` on {key_rotation_timestamp}) for realm `{realm}` is corrupted: {error}"
+    )]
     CorruptedAccess {
         realm: VlobID,
         key_index: IndexInt,
@@ -555,7 +557,9 @@ pub enum InvalidKeysBundleError {
     },
     /// Note the keys bundle is signed before being encrypted. So with this error we
     /// don't know which one of the key or data is at fault.
-    #[error("`{recipient}`'s access for keys bundle with index {key_index} (key rotation by `{key_rotation_author}` on {key_rotation_timestamp}) for realm `{realm}` is not able to decrypt the keys bundle")]
+    #[error(
+        "`{recipient}`'s access for keys bundle with index {key_index} (key rotation by `{key_rotation_author}` on {key_rotation_timestamp}) for realm `{realm}` is not able to decrypt the keys bundle"
+    )]
     Decryption {
         realm: VlobID,
         key_index: IndexInt,
@@ -563,7 +567,9 @@ pub enum InvalidKeysBundleError {
         key_rotation_timestamp: DateTime,
         recipient: UserID,
     },
-    #[error("Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}` is corrupted: {error}")]
+    #[error(
+        "Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}` is corrupted: {error}"
+    )]
     Corrupted {
         realm: VlobID,
         key_index: IndexInt,
@@ -571,21 +577,27 @@ pub enum InvalidKeysBundleError {
         timestamp: DateTime,
         error: DataError,
     },
-    #[error("Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}`: at that time author didn't exist !")]
+    #[error(
+        "Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}`: at that time author didn't exist !"
+    )]
     NonExistentAuthor {
         realm: VlobID,
         key_index: IndexInt,
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}`: at that time author was already revoked !")]
+    #[error(
+        "Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}`: at that time author was already revoked !"
+    )]
     RevokedAuthor {
         realm: VlobID,
         key_index: IndexInt,
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Keys bundle with index {expected_key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}`: wrong key index specified ({bad_key_index})")]
+    #[error(
+        "Keys bundle with index {expected_key_index} (key rotation by `{author}` on {timestamp}) for realm `{realm}`: wrong key index specified ({bad_key_index})"
+    )]
     KeyIndexMismatch {
         realm: VlobID,
         expected_key_index: IndexInt,
@@ -593,7 +605,9 @@ pub enum InvalidKeysBundleError {
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{expected_realm_id}`: wrong realm ID specified ({bad_realm_id})")]
+    #[error(
+        "Keys bundle with index {key_index} (key rotation by `{author}` on {timestamp}) for realm `{expected_realm_id}`: wrong realm ID specified ({bad_realm_id})"
+    )]
     RealmIDMismatch {
         expected_realm_id: VlobID,
         bad_realm_id: VlobID,
@@ -601,7 +615,9 @@ pub enum InvalidKeysBundleError {
         author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Keys bundle with index {key_index} (key rotation by `{expected_author}` on {timestamp}) for realm `{realm}`: wrong author specified ({bad_author})")]
+    #[error(
+        "Keys bundle with index {key_index} (key rotation by `{expected_author}` on {timestamp}) for realm `{realm}`: wrong author specified ({bad_author})"
+    )]
     AuthorMismatch {
         realm: VlobID,
         key_index: IndexInt,
@@ -609,7 +625,9 @@ pub enum InvalidKeysBundleError {
         bad_author: DeviceID,
         timestamp: DateTime,
     },
-    #[error("Keys bundle with index {key_index} (key rotation by `{author}` on {expected_timestamp}) for realm `{realm}`: wrong timestamp specified ({bad_timestamp})")]
+    #[error(
+        "Keys bundle with index {key_index} (key rotation by `{author}` on {expected_timestamp}) for realm `{realm}`: wrong timestamp specified ({bad_timestamp})"
+    )]
     TimestampMismatch {
         realm: VlobID,
         key_index: IndexInt,
@@ -967,16 +985,16 @@ pub(super) async fn generate_next_keys_bundle_for_realm(
             LoadLastKeysBundleError::NoKey => None,
 
             LoadLastKeysBundleError::Offline(e) => {
-                return Err(GenerateNextKeyBundleForRealmError::Offline(e))
+                return Err(GenerateNextKeyBundleForRealmError::Offline(e));
             }
             LoadLastKeysBundleError::NotAllowed => {
-                return Err(GenerateNextKeyBundleForRealmError::NotAllowed)
+                return Err(GenerateNextKeyBundleForRealmError::NotAllowed);
             }
             LoadLastKeysBundleError::InvalidKeysBundle(err) => {
-                return Err(GenerateNextKeyBundleForRealmError::InvalidKeysBundle(err))
+                return Err(GenerateNextKeyBundleForRealmError::InvalidKeysBundle(err));
             }
             LoadLastKeysBundleError::Internal(err) => {
-                return Err(GenerateNextKeyBundleForRealmError::Internal(err))
+                return Err(GenerateNextKeyBundleForRealmError::Internal(err));
             }
         },
     };

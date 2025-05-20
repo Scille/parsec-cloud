@@ -6,11 +6,11 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
+        WorkspaceOps,
         store::{
             GetManifestError, PathConfinementPoint, ResolvePathError, RetrievePathFromIDEntry,
             RetrievePathFromIDError,
         },
-        WorkspaceOps,
     },
 };
 
@@ -137,7 +137,7 @@ pub(crate) async fn stat_entry_by_id(
                     })?;
             match retrieval {
                 RetrievePathFromIDEntry::Missing => {
-                    return Err(WorkspaceStatEntryError::EntryNotFound)
+                    return Err(WorkspaceStatEntryError::EntryNotFound);
                 }
                 RetrievePathFromIDEntry::Unreachable { manifest } => {
                     (manifest, PathConfinementPoint::NotConfined)

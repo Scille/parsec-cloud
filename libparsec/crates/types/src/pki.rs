@@ -12,11 +12,10 @@ use libparsec_crypto::{PublicKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, impl_transparent_data_format_conversion,
+    self as libparsec_types, DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID,
+    HumanHandle, ParsecAddr, ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError,
+    PkiEnrollmentLocalPendingResult, UserID, UserProfile, impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle, ParsecAddr,
-    ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult,
-    UserID, UserProfile,
 };
 
 /*

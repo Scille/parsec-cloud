@@ -5,18 +5,20 @@ use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
 use crate::{
-    certif::realm_keys_bundle::{self, EncrytionUsage},
     CertifDecryptForRealmError,
+    certif::realm_keys_bundle::{self, EncrytionUsage},
 };
 
 use super::{
-    store::CertifForReadWithRequirementsError, CertificateOps, InvalidCertificateError,
-    InvalidKeysBundleError,
+    CertificateOps, InvalidCertificateError, InvalidKeysBundleError,
+    store::CertifForReadWithRequirementsError,
 };
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidBlockAccessError {
-    #[error("Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): hash digest mismatch !")]
+    #[error(
+        "Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): hash digest mismatch !"
+    )]
     HashDigestMismatch {
         realm_id: VlobID,
         manifest_id: VlobID,
@@ -25,7 +27,9 @@ pub enum InvalidBlockAccessError {
         manifest_author: DeviceID,
         block_id: BlockID,
     },
-    #[error("Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): size mismatch !")]
+    #[error(
+        "Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): size mismatch !"
+    )]
     SizeMismatch {
         realm_id: VlobID,
         manifest_id: VlobID,
@@ -34,7 +38,9 @@ pub enum InvalidBlockAccessError {
         manifest_author: DeviceID,
         block_id: BlockID,
     },
-    #[error("Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): cannot be decrypted by key index {key_index} !")]
+    #[error(
+        "Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): cannot be decrypted by key index {key_index} !"
+    )]
     CannotDecrypt {
         realm_id: VlobID,
         manifest_id: VlobID,
@@ -44,7 +50,9 @@ pub enum InvalidBlockAccessError {
         block_id: BlockID,
         key_index: IndexInt,
     },
-    #[error("Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): at that time, key index {key_index} didn't exist !")]
+    #[error(
+        "Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): at that time, key index {key_index} didn't exist !"
+    )]
     NonExistentKeyIndex {
         realm_id: VlobID,
         manifest_id: VlobID,
@@ -75,7 +83,9 @@ pub enum InvalidBlockAccessError {
     /// always invalid (so falling into case 2).
     /// If the key has never been valid, how could the block has been encrypted with it
     /// in the first place ? Hence why we consider the block as invalid.
-    #[error("Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): encrypted by key index {key_index} which appears corrupted !")]
+    #[error(
+        "Block access `{block_id}` from manifest `{manifest_id}` version {manifest_version} (in realm `{realm_id}`, create by `{manifest_author}` on {manifest_timestamp}): encrypted by key index {key_index} which appears corrupted !"
+    )]
     CorruptedKey {
         realm_id: VlobID,
         manifest_id: VlobID,

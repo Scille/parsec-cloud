@@ -134,7 +134,7 @@ impl ReparentingUpdater<'_> {
             None => {
                 store
                     .data
-                    .with_storage(|maybe_storage| async move {
+                    .with_storage(async |maybe_storage| {
                         let storage = maybe_storage
                             .as_mut()
                             .ok_or_else(|| UpdateManifestsForReparentingError::Stopped)?;
@@ -173,7 +173,7 @@ impl ReparentingUpdater<'_> {
 
                 store
                     .data
-                    .with_storage(|maybe_storage| async move {
+                    .with_storage(async |maybe_storage| {
                         let storage = maybe_storage
                             .as_mut()
                             .ok_or_else(|| UpdateManifestsForReparentingError::Stopped)?;

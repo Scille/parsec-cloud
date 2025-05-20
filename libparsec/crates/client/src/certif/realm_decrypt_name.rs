@@ -6,19 +6,23 @@ use libparsec_types::prelude::*;
 use crate::{CertifDecryptForRealmError, EncrytionUsage};
 
 use super::{
-    realm_keys_bundle, store::CertifStoreError, CertificateOps, InvalidKeysBundleError, UpTo,
+    CertificateOps, InvalidKeysBundleError, UpTo, realm_keys_bundle, store::CertifStoreError,
 };
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidEncryptedRealmNameError {
-    #[error("Realm name certificate (in realm `{realm}`, create by `{author}` on {timestamp}): cannot be decrypted by key index {key_index} !")]
+    #[error(
+        "Realm name certificate (in realm `{realm}`, create by `{author}` on {timestamp}): cannot be decrypted by key index {key_index} !"
+    )]
     CannotDecrypt {
         realm: VlobID,
         author: DeviceID,
         timestamp: DateTime,
         key_index: IndexInt,
     },
-    #[error("Realm name certificate (in realm `{realm}`, create by `{author}` on {timestamp}) can be decrypted but its content is corrupted: {error}")]
+    #[error(
+        "Realm name certificate (in realm `{realm}`, create by `{author}` on {timestamp}) can be decrypted but its content is corrupted: {error}"
+    )]
     CleartextCorrupted {
         realm: VlobID,
         author: DeviceID,
@@ -26,14 +30,18 @@ pub enum InvalidEncryptedRealmNameError {
         key_index: IndexInt,
         error: Box<DataError>,
     },
-    #[error("Realm name certificate (in realm `{realm}`, create by `{author}` on {timestamp}): encrypted by key index {key_index} which didn't exist at that time !")]
+    #[error(
+        "Realm name certificate (in realm `{realm}`, create by `{author}` on {timestamp}): encrypted by key index {key_index} which didn't exist at that time !"
+    )]
     NonExistentKeyIndex {
         realm: VlobID,
         author: DeviceID,
         timestamp: DateTime,
         key_index: IndexInt,
     },
-    #[error("Realm name certificate (in realm `{realm}`, create by `{author}` on {timestamp}): encrypted by key index {key_index} which appears corrupted !")]
+    #[error(
+        "Realm name certificate (in realm `{realm}`, create by `{author}` on {timestamp}): encrypted by key index {key_index} which appears corrupted !"
+    )]
     CorruptedKey {
         realm: VlobID,
         author: DeviceID,
@@ -159,7 +167,7 @@ pub(super) async fn decrypt_current_realm_name(
                                 }),
                             },
                         )),
-                    )
+                    );
                 }
             };
 

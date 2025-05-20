@@ -4,7 +4,7 @@ use std::{collections::HashMap, str::FromStr};
 
 use libparsec_tests_lite::prelude::*;
 
-use crate::fixtures::{alice, Device};
+use crate::fixtures::{Device, alice};
 use crate::prelude::*;
 
 #[test]

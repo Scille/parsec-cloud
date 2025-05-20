@@ -8,9 +8,9 @@ use super::{
     AuthenticatedCmds, CertificateOps, DataAccessFetchBlockError, DataAccessFetchManifestError,
 };
 use crate::server_fetch::{
+    ServerFetchBlockError, ServerFetchManifestError, ServerFetchVersionsManifestError,
     server_fetch_block, server_fetch_child_manifest, server_fetch_versions_workspace_manifest,
-    server_fetch_workspace_manifest, ServerFetchBlockError, ServerFetchManifestError,
-    ServerFetchVersionsManifestError,
+    server_fetch_workspace_manifest,
 };
 
 pub(super) struct ServerDataAccess {

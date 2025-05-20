@@ -10,8 +10,8 @@ use super::WorkspaceCreateFileError;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{ForUpdateFileError, ResolvePathError},
         FileUpdater, OpenedFile, OpenedFileCursor, ReadMode, WorkspaceOps, WriteMode,
+        store::{ForUpdateFileError, ResolvePathError},
     },
 };
 
@@ -161,7 +161,7 @@ pub async fn open_file(
                     ResolvePathError::Internal(err) => {
                         Err(err.context("cannot resolve path").into())
                     }
-                }
+                };
             }
         }
     };
@@ -311,25 +311,25 @@ pub async fn open_file_by_id(
                 ForUpdateFileError::Offline(e) => return Err(WorkspaceOpenFileError::Offline(e)),
                 ForUpdateFileError::Stopped => return Err(WorkspaceOpenFileError::Stopped),
                 ForUpdateFileError::EntryNotFound => {
-                    return Err(WorkspaceOpenFileError::EntryNotFound)
+                    return Err(WorkspaceOpenFileError::EntryNotFound);
                 }
                 ForUpdateFileError::EntryNotAFile { entry_id } => {
-                    return Err(WorkspaceOpenFileError::EntryNotAFile { entry_id })
+                    return Err(WorkspaceOpenFileError::EntryNotAFile { entry_id });
                 }
                 ForUpdateFileError::NoRealmAccess => {
-                    return Err(WorkspaceOpenFileError::NoRealmAccess)
+                    return Err(WorkspaceOpenFileError::NoRealmAccess);
                 }
                 ForUpdateFileError::InvalidKeysBundle(err) => {
-                    return Err(WorkspaceOpenFileError::InvalidKeysBundle(err))
+                    return Err(WorkspaceOpenFileError::InvalidKeysBundle(err));
                 }
                 ForUpdateFileError::InvalidCertificate(err) => {
-                    return Err(WorkspaceOpenFileError::InvalidCertificate(err))
+                    return Err(WorkspaceOpenFileError::InvalidCertificate(err));
                 }
                 ForUpdateFileError::InvalidManifest(err) => {
-                    return Err(WorkspaceOpenFileError::InvalidManifest(err))
+                    return Err(WorkspaceOpenFileError::InvalidManifest(err));
                 }
                 ForUpdateFileError::Internal(err) => {
-                    return Err(err.context("cannot resolve path").into())
+                    return Err(err.context("cannot resolve path").into());
                 }
             },
         };

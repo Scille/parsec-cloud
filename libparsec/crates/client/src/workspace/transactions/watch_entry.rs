@@ -4,10 +4,10 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
-    workspace::{store::ResolvePathError, WorkspaceOps},
     EventBusConnectionLifetime, EventWorkspaceOpsInboundSyncDone,
     EventWorkspaceOpsOutboundSyncNeeded, EventWorkspaceWatchedEntryChanged,
     InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError,
+    workspace::{WorkspaceOps, store::ResolvePathError},
 };
 
 pub(crate) struct EntryWatcher {

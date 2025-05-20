@@ -8,7 +8,7 @@ mod web;
 use libparsec_types::prelude::*;
 
 #[cfg(not(target_arch = "wasm32"))]
-pub use native::{HTTPS_PROXY, HTTP_PROXY};
+pub use native::{HTTP_PROXY, HTTPS_PROXY};
 
 #[derive(Default, Debug, Clone)]
 pub struct ProxyConfig {

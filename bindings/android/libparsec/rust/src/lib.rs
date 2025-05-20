@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use android_logger::Config;
-use jni::objects::{JClass, JObject, JString};
 use jni::JNIEnv;
+use jni::objects::{JClass, JObject, JString};
 use std::sync::Mutex;
 
 lazy_static::lazy_static! {

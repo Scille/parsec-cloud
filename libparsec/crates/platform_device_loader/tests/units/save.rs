@@ -9,7 +9,7 @@ use std::path::PathBuf;
 
 #[cfg(not(target_arch = "wasm32"))]
 use crate::SaveDeviceError;
-use crate::{load_device, save_device, LoadDeviceError};
+use crate::{LoadDeviceError, load_device, save_device};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 

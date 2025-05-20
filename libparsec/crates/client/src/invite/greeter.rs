@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use authenticated_cmds::latest::invite_greeter_step;
 use libparsec_client_connection::{
-    protocol::authenticated_cmds, AuthenticatedCmds, ConnectionError,
+    AuthenticatedCmds, ConnectionError, protocol::authenticated_cmds,
 };
 use libparsec_platform_async::event::EventListener;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
@@ -13,7 +13,7 @@ use libparsec_types::prelude::*;
 
 use crate::invite::common::{Throttle, WAIT_PEER_MAX_ATTEMPTS};
 use crate::{
-    greater_timestamp, EventBus, EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
+    EventBus, EventTooMuchDriftWithServerClock, GreaterTimestampOffset, greater_timestamp,
 };
 
 /*
@@ -270,7 +270,9 @@ pub enum GreetInProgressError {
     },
     #[error(transparent)]
     CorruptedInviteUserData(DataError),
-    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    #[error(
+        "Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart"
+    )]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,

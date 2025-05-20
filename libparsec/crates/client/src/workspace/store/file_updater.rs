@@ -12,7 +12,7 @@ use libparsec_platform_storage::workspace::UpdateManifestData;
 use super::per_manifest_update_lock::ManifestUpdateLockTakeOutcome;
 use super::{
     cache::{
-        populate_cache_from_local_storage_or_server, PopulateCacheFromLocalStorageOrServerError,
+        PopulateCacheFromLocalStorageOrServerError, populate_cache_from_local_storage_or_server,
     },
     per_manifest_update_lock::ManifestUpdateLockGuard,
 };
@@ -99,7 +99,7 @@ pub(super) async fn for_update_file(
         let update_guard = match outcome {
             LockForUpdateOutcome::GoToStep3(update_guard) => update_guard,
             LockForUpdateOutcome::GoToStep4((update_guard, manifest)) => {
-                break (update_guard, manifest)
+                break (update_guard, manifest);
             }
             LockForUpdateOutcome::WaitAndRetryStep1(listener) => {
                 if !wait {
@@ -204,7 +204,7 @@ impl FileUpdater {
             .map(|(chunk_id, cleartext)| (chunk_id, store.device.local_symkey.encrypt(cleartext)));
         store
             .data
-            .with_storage(|maybe_storage| async move {
+            .with_storage(async |maybe_storage| {
                 let storage = maybe_storage
                     .as_mut()
                     .ok_or_else(|| UpdateFileManifestAndContinueError::Stopped)?;

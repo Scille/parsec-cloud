@@ -1,16 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_client_connection::{
-    protocol::authenticated_cmds, AuthenticatedCmds, ConnectionError,
+    AuthenticatedCmds, ConnectionError, protocol::authenticated_cmds,
 };
 use libparsec_types::prelude::*;
 
 use crate::{
+    CertifValidateBlockError, InvalidBlockAccessError,
     certif::{
         CertifValidateManifestError, CertificateOps, InvalidCertificateError,
         InvalidKeysBundleError, InvalidManifestError,
     },
-    CertifValidateBlockError, InvalidBlockAccessError,
 };
 
 #[derive(Debug, thiserror::Error)]

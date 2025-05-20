@@ -1,7 +1,7 @@
-use libparsec::{tmp_path, TmpPath};
+use libparsec::{TmpPath, tmp_path};
 
 use crate::integration_tests::shared_recovery_create;
-use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
+use crate::testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization};
 use crate::utils::*;
 
 use crate::integration_tests::bootstrap_cli_test;

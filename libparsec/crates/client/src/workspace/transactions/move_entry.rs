@@ -6,15 +6,15 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
+    EventWorkspaceOpsOutboundSyncNeeded,
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
+        WorkspaceOps,
         store::{
             EnsureManifestExistsWithParentError, FolderUpdater, ForUpdateFolderError,
             ForUpdateReparentingError, ReparentingUpdater, UpdateFolderManifestError,
         },
-        WorkspaceOps,
     },
-    EventWorkspaceOpsOutboundSyncNeeded,
 };
 
 #[derive(Debug, Clone, Copy)]
@@ -457,7 +457,7 @@ async fn move_entry_different_parents(
                             ArcLocalChildManifest::Folder(_) => {
                                 return Err(WorkspaceMoveEntryError::DestinationExists {
                                     entry_id: dst_child_id,
-                                })
+                                });
                             }
                         },
 

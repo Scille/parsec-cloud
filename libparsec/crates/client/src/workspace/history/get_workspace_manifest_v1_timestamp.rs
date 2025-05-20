@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 use super::WorkspaceHistoryOps;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
-    server_fetch::{server_fetch_versions_workspace_manifest, ServerFetchVersionsManifestError},
+    server_fetch::{ServerFetchVersionsManifestError, server_fetch_versions_workspace_manifest},
 };
 
 #[derive(Debug, thiserror::Error)]

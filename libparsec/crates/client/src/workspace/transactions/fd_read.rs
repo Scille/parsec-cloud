@@ -4,8 +4,8 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use crate::{
-    workspace::{store::ReadChunkOrBlockError, ReadMode, WorkspaceOps},
     InvalidBlockAccessError, InvalidCertificateError, InvalidKeysBundleError,
+    workspace::{ReadMode, WorkspaceOps, store::ReadChunkOrBlockError},
 };
 
 #[derive(Debug, thiserror::Error)]

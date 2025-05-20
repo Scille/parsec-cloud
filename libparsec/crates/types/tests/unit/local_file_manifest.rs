@@ -6,7 +6,7 @@
 
 use std::num::NonZeroU64;
 
-use crate::fixtures::{alice, timestamp, Device};
+use crate::fixtures::{Device, alice, timestamp};
 use crate::prelude::*;
 use libparsec_tests_lite::prelude::*;
 

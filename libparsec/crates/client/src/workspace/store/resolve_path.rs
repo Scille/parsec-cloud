@@ -13,8 +13,8 @@ use crate::{
 
 use super::{
     cache::{
-        populate_cache_from_local_storage, populate_cache_from_local_storage_or_server,
         PopulateCacheFromLocalStorageError, PopulateCacheFromLocalStorageOrServerError,
+        populate_cache_from_local_storage, populate_cache_from_local_storage_or_server,
     },
     per_manifest_update_lock::ManifestUpdateLockGuard,
 };
@@ -139,7 +139,7 @@ async fn resolve_path_maybe_lock_for_update(
                 maybe_update_lock_guard,
             } => return Ok((manifest, confinement, maybe_update_lock_guard)),
             CacheOnlyPathResolutionOutcome::EntryNotFound => {
-                return Err(ResolvePathError::EntryNotFound)
+                return Err(ResolvePathError::EntryNotFound);
             }
             // We got a cache miss
             CacheOnlyPathResolutionOutcome::NeedPopulateCache(cache_miss_entry_id) => {
@@ -454,14 +454,14 @@ pub(crate) async fn resolve_path_for_reparenting(
                         Some(maybe_update_lock_guard.expect("always present"));
                     match manifest {
                         ArcLocalChildManifest::File(_) => {
-                            return Err(ResolvePathForReparentingError::DestinationNotFound)
+                            return Err(ResolvePathForReparentingError::DestinationNotFound);
                         }
                         ArcLocalChildManifest::Folder(manifest) => manifest,
                     }
                 }
 
                 CacheOnlyPathResolutionOutcome::EntryNotFound => {
-                    return Err(ResolvePathForReparentingError::DestinationNotFound)
+                    return Err(ResolvePathForReparentingError::DestinationNotFound);
                 }
 
                 other_outcome => {
@@ -490,14 +490,14 @@ pub(crate) async fn resolve_path_for_reparenting(
                         Some(maybe_update_lock_guard.expect("always present"));
                     match manifest {
                         ArcLocalChildManifest::File(_) => {
-                            return Err(ResolvePathForReparentingError::SourceNotFound)
+                            return Err(ResolvePathForReparentingError::SourceNotFound);
                         }
                         ArcLocalChildManifest::Folder(manifest) => manifest,
                     }
                 }
 
                 CacheOnlyPathResolutionOutcome::EntryNotFound => {
-                    return Err(ResolvePathForReparentingError::SourceNotFound)
+                    return Err(ResolvePathForReparentingError::SourceNotFound);
                 }
 
                 other_outcome => {
@@ -625,7 +625,7 @@ pub(crate) async fn resolve_path_for_reparenting(
 
         let (needed_before_resolution, who_need) = match outcome {
             CacheOnlyResolutionOutcome::Resolved(resolve_path_for_reparenting) => {
-                return Ok(resolve_path_for_reparenting)
+                return Ok(resolve_path_for_reparenting);
             }
             CacheOnlyResolutionOutcome::Need((needed_before_resolution, who_need)) => {
                 (needed_before_resolution, who_need)
@@ -707,7 +707,9 @@ fn cache_only_retrieve_path_from_id(
                 match cache.lock_update_manifests.take(entry_id) {
                     ManifestUpdateLockTakeOutcome::Taken(lock) => Some(lock),
                     ManifestUpdateLockTakeOutcome::NeedWait(need_wait) => {
-                        return CacheOnlyPathRetrievalOutcome::NeedWaitForTakenUpdateLock(need_wait)
+                        return CacheOnlyPathRetrievalOutcome::NeedWaitForTakenUpdateLock(
+                            need_wait,
+                        );
                     }
                 }
             } else {
@@ -953,10 +955,10 @@ pub(crate) async fn retrieve_path_from_id_and_lock_for_update(
                     }
                     // Other errors
                     Err(PopulateCacheFromLocalStorageError::Stopped) => {
-                        return Err(RetrievePathFromIdAndLockForUpdateError::Stopped)
+                        return Err(RetrievePathFromIdAndLockForUpdateError::Stopped);
                     }
                     Err(PopulateCacheFromLocalStorageError::Internal(err)) => {
-                        return Err(err.context("cannot fetch manifest").into())
+                        return Err(err.context("cannot fetch manifest").into());
                     }
                 }
             }
@@ -974,31 +976,31 @@ pub(crate) async fn retrieve_path_from_id_and_lock_for_update(
                     }
                     // Other errors
                     Err(PopulateCacheFromLocalStorageOrServerError::Offline(e)) => {
-                        return Err(RetrievePathFromIdAndLockForUpdateError::Offline(e))
+                        return Err(RetrievePathFromIdAndLockForUpdateError::Offline(e));
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::Stopped) => {
-                        return Err(RetrievePathFromIdAndLockForUpdateError::Stopped)
+                        return Err(RetrievePathFromIdAndLockForUpdateError::Stopped);
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::NoRealmAccess) => {
-                        return Err(RetrievePathFromIdAndLockForUpdateError::NoRealmAccess)
+                        return Err(RetrievePathFromIdAndLockForUpdateError::NoRealmAccess);
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::InvalidKeysBundle(err)) => {
                         return Err(RetrievePathFromIdAndLockForUpdateError::InvalidKeysBundle(
                             err,
-                        ))
+                        ));
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::InvalidCertificate(err)) => {
                         return Err(RetrievePathFromIdAndLockForUpdateError::InvalidCertificate(
                             err,
-                        ))
+                        ));
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::InvalidManifest(err)) => {
                         return Err(RetrievePathFromIdAndLockForUpdateError::InvalidManifest(
                             err,
-                        ))
+                        ));
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::Internal(err)) => {
-                        return Err(err.context("cannot fetch manifest").into())
+                        return Err(err.context("cannot fetch manifest").into());
                     }
                 }
             }
@@ -1056,25 +1058,25 @@ pub(crate) async fn retrieve_path_from_id(
                     }
                     // Other errors
                     Err(PopulateCacheFromLocalStorageOrServerError::Offline(e)) => {
-                        return Err(RetrievePathFromIDError::Offline(e))
+                        return Err(RetrievePathFromIDError::Offline(e));
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::Stopped) => {
-                        return Err(RetrievePathFromIDError::Stopped)
+                        return Err(RetrievePathFromIDError::Stopped);
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::NoRealmAccess) => {
-                        return Err(RetrievePathFromIDError::NoRealmAccess)
+                        return Err(RetrievePathFromIDError::NoRealmAccess);
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::InvalidKeysBundle(err)) => {
-                        return Err(RetrievePathFromIDError::InvalidKeysBundle(err))
+                        return Err(RetrievePathFromIDError::InvalidKeysBundle(err));
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::InvalidCertificate(err)) => {
-                        return Err(RetrievePathFromIDError::InvalidCertificate(err))
+                        return Err(RetrievePathFromIDError::InvalidCertificate(err));
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::InvalidManifest(err)) => {
-                        return Err(RetrievePathFromIDError::InvalidManifest(err))
+                        return Err(RetrievePathFromIDError::InvalidManifest(err));
                     }
                     Err(PopulateCacheFromLocalStorageOrServerError::Internal(err)) => {
-                        return Err(err.context("cannot fetch manifest").into())
+                        return Err(err.context("cannot fetch manifest").into());
                     }
                 }
             }

@@ -13,9 +13,9 @@ use std::{
 
 use super::utils::workspace_ops_factory;
 use crate::{
-    workspace::{InboundSyncOutcome, OutboundSyncOutcome},
     EventWorkspaceOpsInboundSyncDone, EventWorkspaceOpsOutboundSyncAborted,
     EventWorkspaceOpsOutboundSyncDone, EventWorkspaceOpsOutboundSyncStarted,
+    workspace::{InboundSyncOutcome, OutboundSyncOutcome},
 };
 
 enum Modification {

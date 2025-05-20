@@ -6,9 +6,9 @@
 
 #[allow(unused_imports)]
 use js_sys::*;
+use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
 #[allow(unused_imports)]
 use wasm_bindgen_futures::*;
 
@@ -9375,7 +9375,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -9535,7 +9535,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -9666,7 +9666,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -9825,7 +9825,7 @@ fn variant_other_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -11173,7 +11173,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -11318,7 +11318,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -11433,7 +11433,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -11576,7 +11576,7 @@ fn variant_self_shamir_recovery_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -12258,7 +12258,7 @@ fn variant_shamir_recovery_claim_maybe_recover_device_info_js_to_rs(
                             match custom_from_rs_u8(v) {
                                 Ok(val) => val,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                         };
@@ -16883,7 +16883,7 @@ pub fn clientListFrozenUsers(client_handle: u32) -> Promise {
                             match custom_to_rs_string(elem) {
                                 Ok(ok) => ok,
                                 Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
+                                    return Err(JsValue::from(TypeError::new(err.as_ref())));
                                 }
                             }
                             .as_ref()

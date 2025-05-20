@@ -85,29 +85,49 @@ fn bad_https_proxy() {
 // Where other tests are modifying the env variables `HTTP_PROXY` & `HTTPS_PROXY`.
 #[test]
 fn with_env() {
-    assert_eq!(env::var(crate::HTTPS_PROXY), Err(env::VarError::NotPresent), "HTTPS_PROXY is already configured. Meaning it could be in use elsewhere, this will likely conflict with this test");
-    assert_eq!(env::var(crate::HTTP_PROXY), Err(env::VarError::NotPresent), "HTTPS_PROXY is already configured. Meaning it could be in use elsewhere, this will likely conflict with this test");
+    assert_eq!(
+        env::var(crate::HTTPS_PROXY),
+        Err(env::VarError::NotPresent),
+        "HTTPS_PROXY is already configured. Meaning it could be in use elsewhere, this will likely conflict with this test"
+    );
+    assert_eq!(
+        env::var(crate::HTTP_PROXY),
+        Err(env::VarError::NotPresent),
+        "HTTP_PROXY is already configured. Meaning it could be in use elsewhere, this will likely conflict with this test"
+    );
 
     let config = ProxyConfig::default().with_env().unwrap();
     assert!(config.http_proxy.is_none());
     assert!(config.https_proxy.is_none());
 
-    env::remove_var(crate::HTTPS_PROXY);
-    env::set_var(crate::HTTP_PROXY, "https://only.http.proxy:1337");
+    // SAFETY: We assume that it's the only test in `http_proxy` that modify the env table or it's
+    // run in isolation from the possible tests that does it (like using nextest to run tests).
+    unsafe {
+        env::remove_var(crate::HTTPS_PROXY);
+        env::set_var(crate::HTTP_PROXY, "https://only.http.proxy:1337");
+    }
 
     let config = ProxyConfig::default().with_env().unwrap();
     assert_http_proxy_eq(&config, Some("https://only.http.proxy:1337"));
     assert_https_proxy_eq(&config, None);
 
-    env::remove_var(crate::HTTP_PROXY);
-    env::set_var(crate::HTTPS_PROXY, "https://only.https.proxy:1337");
+    // SAFETY: We assume that it's the only test in `http_proxy` that modify the env table or it's
+    // run in isolation from the possible tests that does it (like using nextest to run tests).
+    unsafe {
+        env::remove_var(crate::HTTP_PROXY);
+        env::set_var(crate::HTTPS_PROXY, "https://only.https.proxy:1337");
+    }
 
     let config = ProxyConfig::default().with_env().unwrap();
     assert_http_proxy_eq(&config, None);
     assert_https_proxy_eq(&config, Some("https://only.https.proxy:1337"));
 
-    env::set_var(crate::HTTP_PROXY, "https://both.http.proxy:1337");
-    env::set_var(crate::HTTPS_PROXY, "https://both.https.proxy:1337");
+    // SAFETY: We assume that it's the only test in `http_proxy` that modify the env table or it's
+    // run in isolation from the possible tests that does it (like using nextest to run tests).
+    unsafe {
+        env::set_var(crate::HTTP_PROXY, "https://both.http.proxy:1337");
+        env::set_var(crate::HTTPS_PROXY, "https://both.https.proxy:1337");
+    }
 
     let config = ProxyConfig::default().with_env().unwrap();
     assert_http_proxy_eq(&config, Some("https://both.http.proxy:1337"));

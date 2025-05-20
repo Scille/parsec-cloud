@@ -2,8 +2,8 @@
 
 use std::{collections::HashMap, num::NonZeroU8};
 
-pub use crate::certif::CertifSetupShamirRecoveryError as ClientSetupShamirRecoveryError;
 use crate::CertifPollServerError;
+pub use crate::certif::CertifSetupShamirRecoveryError as ClientSetupShamirRecoveryError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::UserID;
 

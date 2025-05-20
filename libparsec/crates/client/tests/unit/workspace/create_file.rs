@@ -5,8 +5,8 @@ use libparsec_types::prelude::*;
 
 use super::utils::{assert_ls, ls, workspace_ops_factory};
 use crate::{
-    workspace::{tests::utils::restart_workspace_ops, WorkspaceCreateFileError},
     EventWorkspaceOpsOutboundSyncNeeded,
+    workspace::{WorkspaceCreateFileError, tests::utils::restart_workspace_ops},
 };
 
 #[parsec_test(testbed = "minimal_client_ready")]

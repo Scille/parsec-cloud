@@ -6,8 +6,8 @@ use libparsec_platform_async::{pretend_future_is_send_on_web, sleep};
 
 use super::Monitor;
 use crate::{
-    event_bus::{EventBus, EventServerConfigChanged, EventServerConfigNotified},
     Client, ServerConfig,
+    event_bus::{EventBus, EventServerConfigChanged, EventServerConfigNotified},
 };
 
 const SERVER_CONFIG_MONITOR_NAME: &str = "server_config";

@@ -2,7 +2,7 @@
 
 use serde::Deserialize;
 use serde_bytes::Bytes;
-use sodiumoxide::crypto::kdf::{derive_from_key, gen_key, Key, KEYBYTES};
+use sodiumoxide::crypto::kdf::{KEYBYTES, Key, derive_from_key, gen_key};
 
 use crate::SecretKey;
 

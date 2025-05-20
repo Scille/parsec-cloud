@@ -2,10 +2,10 @@
 
 use std::{any::Any, path::PathBuf, sync::Arc};
 
-use sqlx::{sqlite::SqliteConnectOptions, ConnectOptions, Connection, SqliteConnection};
+use sqlx::{ConnectOptions, Connection, SqliteConnection, sqlite::SqliteConnectOptions};
 
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
-use libparsec_testbed::{test_get_testbed_component_store, TestbedEnv};
+use libparsec_testbed::{TestbedEnv, test_get_testbed_component_store};
 
 const STORE_ENTRY_KEY: &str = "platform_local_db_sqlx";
 

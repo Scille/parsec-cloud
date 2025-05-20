@@ -1,4 +1,4 @@
-use libparsec::{tmp_path, TmpPath};
+use libparsec::{TmpPath, tmp_path};
 
 use crate::{integration_tests::bootstrap_cli_test, testenv_utils::DEFAULT_ADMINISTRATION_TOKEN};
 

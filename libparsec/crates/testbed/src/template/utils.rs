@@ -184,11 +184,7 @@ pub(super) fn non_revoked_sequester_services(
             let revoked = events.iter().skip(i).any(
                 |e| matches!(e, TestbedEvent::RevokeSequesterService(x) if x.id == service.id),
             );
-            if revoked {
-                None
-            } else {
-                Some(service)
-            }
+            if revoked { None } else { Some(service) }
         }
         _ => None,
     }))

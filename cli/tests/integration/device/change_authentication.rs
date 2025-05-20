@@ -1,12 +1,12 @@
 use std::io::{BufReader, Write};
 
 use assert_cmd::cargo::CommandCargoExt;
-use libparsec::{tmp_path, TmpPath};
+use libparsec::{TmpPath, tmp_path};
 use libparsec_tests_fixtures::prelude::*;
 
 use crate::{
     integration_tests::{bootstrap_cli_test, wait_for},
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
 
 #[rstest::rstest]

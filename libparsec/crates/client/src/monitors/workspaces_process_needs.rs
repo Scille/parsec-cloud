@@ -6,8 +6,8 @@ use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 
 use super::Monitor;
 use crate::{
-    event_bus::{EventBus, EventMissedServerEvents, EventMonitorCrashed},
     Client, ClientProcessWorkspacesNeedsError, EventNewCertificates,
+    event_bus::{EventBus, EventMissedServerEvents, EventMonitorCrashed},
 };
 
 const WORKSPACES_PROCESS_NEEDS_MONITOR_NAME: &str = "workspaces_process_needs";
@@ -91,7 +91,10 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                             ..
                         }
                         | ClientProcessWorkspacesNeedsError::InvalidCertificate(_)) => {
-                            log::error!("Stopping workspaces process needs monitor due to unexpected outcome: {}", err);
+                            log::error!(
+                                "Stopping workspaces process needs monitor due to unexpected outcome: {}",
+                                err
+                            );
                             return;
                         }
                         ClientProcessWorkspacesNeedsError::Internal(err) => {

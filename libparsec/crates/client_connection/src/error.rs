@@ -38,7 +38,9 @@ pub enum ConnectionError {
     /// - Bad content-type
     /// - Body is not a valid message
     /// - Unknown command
-    #[error("Bad Content response received from the server (unexpected Content-Type header, body or RPC command)")]
+    #[error(
+        "Bad Content response received from the server (unexpected Content-Type header, body or RPC command)"
+    )]
     BadContent,
 
     /// The organization has expired
@@ -55,7 +57,9 @@ pub enum ConnectionError {
 
     /// Server does not support API version used by the client but did not
     /// include the `Supported-Api-Versions` header in the response.
-    #[error("Server does not support API version {api_version} but did not include the supported versions in the response")]
+    #[error(
+        "Server does not support API version {api_version} but did not include the supported versions in the response"
+    )]
     MissingSupportedApiVersions { api_version: ApiVersion },
 
     /// Failed to retrieve the response
@@ -83,11 +87,15 @@ pub enum ConnectionError {
     /// Basically, it's triggered if the computer's clock is more than 5 minutes
     /// off the server's time (in theory, modern computers all use NTP to
     /// synchronize their clocks regularly, but a manual sync might be needed)
-    #[error("Authentication token has expired. This could mean that the client's clock is too far behind or ahead of the server's")]
+    #[error(
+        "Authentication token has expired. This could mean that the client's clock is too far behind or ahead of the server's"
+    )]
     AuthenticationTokenExpired,
 
     /// Server does not support the API version used by the client
-    #[error("Server does not support API version {api_version}, supported versions are: {supported_api_versions:?}")]
+    #[error(
+        "Server does not support API version {api_version}, supported versions are: {supported_api_versions:?}"
+    )]
     UnsupportedApiVersion {
         api_version: ApiVersion,
         supported_api_versions: Vec<ApiVersion>,

@@ -8,11 +8,11 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
+        EntryStat, WorkspaceOps, WorkspaceStatEntryError,
         store::{
             EnsureManifestExistsWithParentError, PathConfinementPoint, ResolvePathError,
             RetrievePathFromIDEntry, RetrievePathFromIDError,
         },
-        EntryStat, WorkspaceOps, WorkspaceStatEntryError,
     },
 };
 
@@ -128,7 +128,7 @@ impl FolderReader {
                     // invalid (e.g. the entry has been reparented during a move) and
                     // should just be ignored.
                     WorkspaceStatEntryError::EntryNotFound => {
-                        return Ok(FolderReaderStatNextOutcome::InvalidChild)
+                        return Ok(FolderReaderStatNextOutcome::InvalidChild);
                     }
                     WorkspaceStatEntryError::Offline(e) => FolderReaderStatEntryError::Offline(e),
                     WorkspaceStatEntryError::Stopped => FolderReaderStatEntryError::Stopped,
@@ -233,7 +233,7 @@ pub async fn open_folder_reader_by_id(
         })?;
     let (manifest, confinement_point) = match retrieval {
         RetrievePathFromIDEntry::Missing => {
-            return Err(WorkspaceOpenFolderReaderError::EntryNotFound)
+            return Err(WorkspaceOpenFolderReaderError::EntryNotFound);
         }
         RetrievePathFromIDEntry::Unreachable { manifest } => {
             (manifest, PathConfinementPoint::NotConfined)

@@ -12,10 +12,10 @@ use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
 use crate::{
-    workspace::{InboundSyncOutcome, OpenOptions, OutboundSyncOutcome},
     EventWorkspaceOpsInboundSyncDone, EventWorkspaceOpsOutboundSyncAborted,
     EventWorkspaceOpsOutboundSyncDone, EventWorkspaceOpsOutboundSyncProgress,
     EventWorkspaceOpsOutboundSyncStarted, WorkspaceOps,
+    workspace::{InboundSyncOutcome, OpenOptions, OutboundSyncOutcome},
 };
 
 fn assert_local_and_base_blocks_similar(manifest: &LocalFileManifest) {

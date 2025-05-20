@@ -1,11 +1,11 @@
 use libparsec::{
-    authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path,
     AuthenticatedCmds, InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
+    authenticated_cmds::latest::invite_new_device, get_default_config_dir, tmp_path,
 };
 
 use crate::{
     integration_tests::bootstrap_cli_test,
-    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    testenv_utils::{DEFAULT_DEVICE_PASSWORD, TestOrganization},
 };
 
 #[rstest::rstest]
