@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-mod error;
-mod internal;
+pub(crate) mod error;
+pub(crate) mod internal;
+pub(crate) mod wrapper;
 
 use std::{path::Path, sync::Arc};
 
@@ -20,13 +21,14 @@ use internal::Storage;
 pub async fn list_available_devices(
     config_dir: &Path,
 ) -> Result<Vec<AvailableDevice>, ListAvailableDeviceError> {
-    let Ok(storage) = Storage::new().inspect_err(|e| {
+    let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {
         return Err(ListAvailableDeviceError::StorageNotAvailable);
     };
     storage
         .list_available_devices(config_dir)
+        .await
         .inspect(|v| {
             log::trace!("Found the following devices: {v:?}");
         })
@@ -43,12 +45,12 @@ pub async fn list_available_devices(
 pub async fn load_device(
     access: &DeviceAccessStrategy,
 ) -> Result<(Arc<LocalDevice>, DateTime), LoadDeviceError> {
-    let Ok(storage) = Storage::new().inspect_err(|e| {
+    let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {
         return Err(LoadDeviceError::StorageNotAvailable);
     };
-    storage.load_device(access).map_err(Into::into)
+    storage.load_device(access).await.map_err(Into::into)
 }
 
 pub async fn save_device(
@@ -56,13 +58,14 @@ pub async fn save_device(
     device: &LocalDevice,
     created_on: DateTime,
 ) -> Result<AvailableDevice, SaveDeviceError> {
-    let Ok(storage) = Storage::new().inspect_err(|e| {
+    let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {
         return Err(SaveDeviceError::StorageNotAvailable);
     };
     storage
         .save_device(access, device, created_on)
+        .await
         .map_err(Into::into)
 }
 
@@ -71,13 +74,13 @@ pub async fn update_device(
     new_access: &DeviceAccessStrategy,
     overwrite_server_addr: Option<ParsecAddr>,
 ) -> Result<(AvailableDevice, ParsecAddr), UpdateDeviceError> {
-    let Ok(storage) = Storage::new().inspect_err(|e| {
+    let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {
         return Err(UpdateDeviceError::StorageNotAvailable);
     };
 
-    let (mut device, created_on) = storage.load_device(current_access)?;
+    let (mut device, created_on) = storage.load_device(current_access).await?;
 
     let old_server_addr = ParsecAddr::new(
         device.organization_addr.hostname().to_owned(),
@@ -92,13 +95,13 @@ pub async fn update_device(
         );
     }
 
-    let available_device = storage.save_device(new_access, &device, created_on)?;
+    let available_device = storage.save_device(new_access, &device, created_on).await?;
 
     let key_file = current_access.key_file();
     let new_key_file = new_access.key_file();
 
     if key_file != new_key_file {
-        if let Err(err) = storage.remove_device(key_file) {
+        if let Err(err) = storage.remove_device(key_file).await {
             log::warn!("Cannot remove old key file {key_file:?}: {err}");
         }
     }
@@ -107,19 +110,22 @@ pub async fn update_device(
 }
 
 pub async fn archive_device(device_path: &Path) -> Result<(), ArchiveDeviceError> {
-    let Ok(storage) = Storage::new().inspect_err(|e| {
+    let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {
         return Err(ArchiveDeviceError::StorageNotAvailable);
     };
-    storage.archive_device(device_path).map_err(Into::into)
+    storage
+        .archive_device(device_path)
+        .await
+        .map_err(Into::into)
 }
 
 pub async fn remove_device(device_path: &Path) -> Result<(), RemoveDeviceError> {
-    let Ok(storage) = Storage::new().inspect_err(|e| {
+    let Ok(storage) = Storage::new().await.inspect_err(|e| {
         log::error!("Failed to access storage: {e}");
     }) else {
         return Err(RemoveDeviceError::StorageNotAvailable);
     };
-    storage.remove_device(device_path).map_err(Into::into)
+    storage.remove_device(device_path).await.map_err(Into::into)
 }
