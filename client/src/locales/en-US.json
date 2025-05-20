@@ -2,7 +2,7 @@
     "app": {
         "name": "Parsec Cloud",
         "developer": "Parsec Cloud",
-        "developerLink": "https://parsec.cloud",
+        "developerLink": "https://parsec.cloud/en",
         "projectSources": "https://github.com/Scille/parsec-cloud",
         "issueUrl": "https://github.com/Scille/parsec-cloud/issues/{issue}",
         "license": "BUSL-1.1",
@@ -219,7 +219,7 @@
         "acceptTOS": {
             "label": "By using Parsec, I accept the ",
             "tos": "Terms and Conditions",
-            "tosLink": "https://parsec.cloud/gtcs-parsec/",
+            "tosLink": "https://parsec.cloud/en/gtcs-parsec/",
             "and": " and ",
             "privacyPolicy": "Privacy Policy",
             "privacyPolicyLink": "https://parsec.cloud/en/politique-de-confidentialite/",
