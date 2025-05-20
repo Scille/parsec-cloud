@@ -7,61 +7,65 @@
     :detail="false"
   >
     <div class="invitation-list-item">
-      <!-- invitation email -->
-      <div class="invitation-email">
-        <ion-label class="cell invitation-label">
+      <div class="invitation-header">
+        <!-- invitation email -->
+        <ion-label class="cell invitation-header__email">
           {{ invitation.claimerEmail }}
         </ion-label>
-        <ion-text class="invitation-date body-sm">{{ $msTranslate(formatTimeSince(invitation.createdOn, '', 'short')) }}</ion-text>
+        <ion-button
+          size="default"
+          class="invitation-header__greet-button button-medium"
+          @click.stop="$emit('greetUser', invitation)"
+        >
+          {{ $msTranslate('UsersPage.invitation.greetUser') }}
+        </ion-button>
       </div>
 
       <!-- invitation action -->
-      <div class="invitation-actions">
-        <ion-button
-          fill="clear"
-          class="copy-link"
-          @click.stop="copyLink(invitation)"
-          :class="copyLinkActive ? 'active' : ''"
-          :title="I18n.translate('UsersPage.invitation.copyLink')"
-        >
-          <ion-icon
-            :icon="copyLinkActive ? checkmarkCircle : link"
-            class="button-icon"
-          />
-        </ion-button>
+      <div class="invitation-footer">
+        <div class="invitation-footer-manage">
+          <ion-text class="manage-text button-medium">{{ $msTranslate('UsersPage.invitation.manageInvitation') }}</ion-text>
+          <ion-button
+            fill="clear"
+            class="manage-button copy-link"
+            :class="copyLinkActive ? 'active' : ''"
+            :title="I18n.translate('UsersPage.invitation.copyLink')"
+            @click.stop="copyLink(invitation)"
+            >
+            <!-- @mouseenter="openInformationTooltip($event, 'UsersPage.invitation.copyLink')" -->
+            <ion-icon
+              :icon="copyLinkActive ? checkmarkCircle : link"
+              class="button-icon"
+            />
+          </ion-button>
 
-        <ion-button
-          fill="clear"
-          class="send-email"
-          :disabled="sendEmailDisabled"
-          @click.stop="sendEmail(invitation)"
-          :class="sendEmailDisabled ? 'active' : ''"
-          :title="I18n.translate('UsersPage.invitation.sendEmail')"
-        >
-          <ion-icon
-            :icon="mail"
-            class="button-icon"
-          />
-        </ion-button>
+          <ion-button
+            fill="clear"
+            class="manage-button send-email"
+            :disabled="sendEmailDisabled"
+            @click.stop="sendEmail(invitation)"
+            :class="sendEmailDisabled ? 'active' : ''"
+            :title="I18n.translate('UsersPage.invitation.sendEmail')"
+          >
+            <ion-icon
+              :icon="mail"
+              class="button-icon"
+            />
+          </ion-button>
 
-        <ion-buttons class="invitation-actions-buttons">
           <ion-button
             size="default"
             fill="clear"
-            class="danger button-medium"
+            class="manage-button cancel-button"
             @click.stop="$emit('cancel', invitation)"
           >
-            {{ $msTranslate('UsersPage.invitation.rejectUser') }}
+            <ion-icon
+              :icon="trash"
+              class="button-icon"
+            />
           </ion-button>
-          <ion-button
-            size="default"
-            fill="default"
-            class="button-medium"
-            @click.stop="$emit('greetUser', invitation)"
-          >
-            {{ $msTranslate('UsersPage.invitation.greetUser') }}
-          </ion-button>
-        </ion-buttons>
+        </div>
+        <ion-text class="invitation-footer__date body-sm">{{ $msTranslate(formatTimeSince(invitation.createdOn, '', 'short')) }}</ion-text>
       </div>
     </div>
   </ion-item>
@@ -70,9 +74,9 @@
 <script setup lang="ts">
 import { ClientNewUserInvitationErrorTag, InvitationEmailSentStatus, inviteUser, UserInvitation } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { IonIcon, IonButton, IonButtons, IonItem, IonLabel, IonText } from '@ionic/vue';
-import { formatTimeSince, Clipboard, I18n, askQuestion, Answer, Translatable } from 'megashark-lib';
-import { checkmarkCircle, link, mail } from 'ionicons/icons';
+import { IonIcon, IonButton, IonItem, IonLabel, IonText } from '@ionic/vue';
+import { formatTimeSince, Clipboard, I18n, askQuestion, Answer, Translatable, } from 'megashark-lib';
+import { checkmarkCircle, link, mail, trash } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const props = defineProps<{
@@ -198,75 +202,97 @@ async function sendEmail(invitation: UserInvitation): Promise<void> {
   }
 }
 
-.invitation-email {
-  width: 100%;
-  overflow: hidden;
+.invitation-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  color: var(--parsec-color-light-secondary-text);
+  width: 100%;
+  justify-content: space-between;
+  gap: 1rem;
 
-  .invitation-label {
-    white-space: nowrap;
+  &__email {
+    color: var(--parsec-color-light-secondary-text);
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  .invitation-date {
-    color: var(--parsec-color-light-secondary-grey);
-    padding: 0 0.5rem;
+    white-space: nowrap;
   }
 }
 
-.invitation-actions {
+.invitation-footer {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
 
-  .copy-link,
-  .send-email {
-    background: none;
-    cursor: pointer;
-    margin-right: 1rem;
+  &-manage {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
 
-    &::part(native) {
-      padding: 0;
+    .manage-text {
+      color: var(--parsec-color-light-secondary-grey);
     }
 
-    .button-icon {
-      font-size: 1.25rem;
-      padding: 0.5rem;
-      background: var(--parsec-color-light-secondary-premiere);
-      border-radius: var(--parsec-radius-8);
-      color: var(--parsec-color-light-secondary-soft-text);
-      transition: all 0.15s ease-in-out;
-    }
-    &:hover {
-      .button-icon {
-        color: var(--parsec-color-light-secondary-text);
-        background: var(--parsec-color-light-secondary-medium);
+    .manage-button {
+      background: none;
+      cursor: pointer;
+
+      &::part(native) {
+        padding: 0;
       }
-    }
 
-    &.active {
       .button-icon {
-        color: var(--parsec-color-light-success-700);
-        background: var(--parsec-color-light-success-50);
+        font-size: 1.25rem;
+        padding: 0.5rem;
+        background: var(--parsec-color-light-secondary-premiere);
+        border-radius: var(--parsec-radius-8);
+        color: var(--parsec-color-light-secondary-soft-text);
+        transition: all 0.15s ease-in-out;
+      }
+
+      &:hover {
+        .button-icon {
+          color: var(--parsec-color-light-secondary-text);
+          background: var(--parsec-color-light-secondary-medium);
+        }
+      }
+
+      &:hover {
+        &.cancel-button .button-icon {
+          background: var(--parsec-color-light-danger-100);
+          color: var(--parsec-color-light-danger-700);
+        }
+      }
+
+      &.cancel-button {
+        position: relative;
+        display: flex;
+        margin-left: 1rem;
+
+        &::after {
+          content: '';
+          position: relative;
+          display: block;
+          left: -3.125rem;
+          top: 0.5rem;
+          width: 1px;
+          height: 1.125rem;
+          background: var(--parsec-color-light-secondary-medium);
+        }
+      }
+
+      &.active {
+        .button-icon {
+          color: var(--parsec-color-light-success-700);
+          background: var(--parsec-color-light-success-50);
+        }
       }
     }
   }
 
-  &-buttons {
-    gap: 1rem;
-    margin-left: auto;
-
-    ion-button {
-      width: 100%;
-
-      &:last-child {
-        color: var(--parsec-color-light-secondary-white);
-      }
-    }
+  &__date {
+    color: var(--parsec-color-light-secondary-grey);
+    flex-shrink: 0;
   }
 }
 </style>
