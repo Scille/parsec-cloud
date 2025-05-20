@@ -613,11 +613,18 @@ async def anonymous_account_api(request: Request) -> Response:
         with_authenticated_headers=False,
     )
 
+    ip_addr = request.client
+    if ip_addr is None:
+        ip_addr = "unknown"
+    else:
+        ip_addr = ip_addr.host  # we don't care about port info
     # Handshake is done
 
     client_ctx = AnonymousAccountClientContext(
         client_api_version=parsed.client_api_version,
         settled_api_version=parsed.settled_api_version,
+        user_agent=parsed.user_agent,
+        user_ip=ip_addr,
     )
 
     body: bytes = await _rpc_get_body_with_limit_check(request)

@@ -12,6 +12,7 @@ from parsec._parsec import (
     DateTime,
     EmailValidationToken,
     ParsecAccountEmailValidationAddr,
+    SecretKey,
     anonymous_account_cmds,
 )
 from parsec.api import api
@@ -23,10 +24,23 @@ from parsec.types import BadOutcomeEnum
 
 EmailAdapter = TypeAdapter(EmailStr)
 
+PasswordAlgorithm = (
+    anonymous_account_cmds.latest.account_create_with_password_proceed.PasswordAlgorithm
+)
+
 
 class CreateEmailValidationTokenBadOutcome(BadOutcomeEnum):
     ACCOUNT_ALREADY_EXISTS = auto()
     TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
+
+
+class CreateAccountWithPasswordBadOutcome(BadOutcomeEnum):
+    INVALID_TOKEN = auto()
+
+
+class GetPasswordSecretKeyBadOutcome(BadOutcomeEnum):
+    USER_NOT_FOUND = auto()
+    UNABLE_TO_GET_SECRET_KEY = auto()
 
 
 class BaseAccountComponent:
@@ -39,6 +53,24 @@ class BaseAccountComponent:
         raise NotImplementedError
 
     async def check_signature(self):
+        raise NotImplementedError
+
+    def get_password_mac_key(
+        self, user_email: EmailStr
+    ) -> SecretKey | GetPasswordSecretKeyBadOutcome:
+        raise NotImplementedError
+
+    async def create_account_with_password(
+        self,
+        token: EmailValidationToken,
+        now: DateTime,
+        mac_key: SecretKey,
+        vault_key_access: bytes,
+        human_label: str,
+        created_by_user_agent: str,
+        created_by_ip: str,
+        password_secret_algorithm: PasswordAlgorithm,
+    ) -> None | CreateAccountWithPasswordBadOutcome:
         raise NotImplementedError
 
     @api
@@ -76,6 +108,29 @@ class BaseAccountComponent:
                 # Respond OK without sending token to prevent creating oracle
                 return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
 
+    @api
+    async def api_account_create_with_password_proceed(
+        self,
+        client_ctx: AnonymousAccountClientContext,
+        req: anonymous_account_cmds.latest.account_create_with_password_proceed.Req,
+    ) -> anonymous_account_cmds.latest.account_create_with_password_proceed.Rep:
+        now = DateTime.now()
+        outcome = await self.create_account_with_password(
+            req.validation_token,
+            now,
+            req.auth_method_hmac_key,
+            req.vault_key_access,
+            req.human_label,
+            client_ctx.user_agent,
+            client_ctx.user_ip,
+            req.password_algorithm,
+        )
+        match outcome:
+            case None:
+                return anonymous_account_cmds.latest.account_create_with_password_proceed.RepOk()
+            case CreateAccountWithPasswordBadOutcome.INVALID_TOKEN:
+                return anonymous_account_cmds.latest.account_create_with_password_proceed.RepInvalidValidationToken()
+
     async def _send_email_validation_token(
         self,
         token: EmailValidationToken,
@@ -105,6 +160,9 @@ class BaseAccountComponent:
         return now > last_email_datetime.add(
             seconds=self._config.account_config.account_confirmation_email_resend_delay
         )
+
+    def test_get_token_by_email(self, email: str) -> EmailValidationToken | None:
+        raise NotImplementedError
 
 
 def generate_email_validation_email(
