@@ -804,7 +804,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
                 {
                     let mut items = PySet::empty_bound(py)?;
                     for y in #field_path.iter() {
-                        items.add(#conversion)?;
+                        items.add(#conversion?)?;
                     }
                     items.into_any()
                 }
