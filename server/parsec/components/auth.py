@@ -192,7 +192,7 @@ class AccountPasswordAuthenticationToken:
                 raw_timestamp_us,
             )
         )
-        signature = key.hmac_full(header_and_payload + b"." + body_sha256)
+        signature = key.mac_512(header_and_payload + b"." + body_sha256)
         return b"%s.%s" % (header_and_payload, urlsafe_b64encode(signature))
 
     @classmethod
@@ -219,7 +219,7 @@ class AccountPasswordAuthenticationToken:
     def verify_signature(self, body: bytes, secret: SecretKey) -> bool:
         body_sha256 = hashlib.sha256(body).digest()
         try:
-            expected_signature = secret.hmac_full(self.header_and_payload + b"." + body_sha256)
+            expected_signature = secret.mac_512(self.header_and_payload + b"." + body_sha256)
             return self.signature == expected_signature
         except CryptoError:
             return False

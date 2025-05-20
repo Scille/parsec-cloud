@@ -12,7 +12,7 @@ use digest::{
     typenum::{IsLessOrEqual, LeEq, NonZero},
     KeyInit, Mac,
 };
-use generic_array::ArrayLength;
+use generic_array::{ArrayLength, GenericArray};
 use serde::Deserialize;
 use serde_bytes::Bytes;
 
@@ -60,7 +60,7 @@ impl SecretKey {
             .map_err(|_| CryptoError::Decryption)
     }
 
-    pub fn hmac<Size>(&self, data: &[u8]) -> Vec<u8>
+    fn mac<Size>(&self, data: &[u8]) -> GenericArray<u8, Size>
     where
         Size: ArrayLength<u8> + IsLessOrEqual<U64>,
         LeEq<Size, U64>: NonZero,
@@ -69,17 +69,15 @@ impl SecretKey {
             .unwrap_or_else(|_| unreachable!());
         hasher.update(data);
         let res = hasher.finalize();
-        let mut out = res.into_bytes().to_vec();
-        out.resize(Size::USIZE, 0);
-        out
+        res.into_bytes()
     }
 
-    pub fn hmac_full(&self, data: &[u8]) -> Vec<u8> {
-        self.hmac::<U64>(data)
+    pub fn mac_512(&self, data: &[u8]) -> [u8; 64] {
+        self.mac::<U64>(data).into()
     }
 
-    pub fn sas_code(&self, data: &[u8]) -> Vec<u8> {
-        self.hmac::<U5>(data)
+    pub fn sas_code(&self, data: &[u8]) -> [u8; 5] {
+        self.mac::<U5>(data).into()
     }
 
     pub fn generate_salt() -> Vec<u8> {
