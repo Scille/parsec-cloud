@@ -144,6 +144,10 @@ defineExpose({
   align-items: center;
   box-shadow: none;
 
+  @include ms.responsive-breakpoint('sm') {
+    margin: 0;
+  }
+
   .login-card {
     background: var(--parsec-color-light-secondary-white);
     border: 1px solid var(--parsec-color-light-secondary-medium);

@@ -1,15 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, expect, msTest, setSmallDisplay } from '@tests/e2e/helpers';
+import { answerQuestion, DisplaySize, expect, msTest, setSmallDisplay } from '@tests/e2e/helpers';
 
-for (const displaySize of ['small', 'large']) {
+for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
   msTest(`Org info default state on ${displaySize} display`, async ({ organizationPage }) => {
     const container = organizationPage.locator('.organization-page-content');
     const configContainer = container.locator('.organization-info');
     const usersContainer = container.locator('.organization-users');
     await usersContainer.locator('#invitations-button').isVisible();
 
-    if (displaySize === 'small') {
+    if (displaySize === DisplaySize.Small) {
       await setSmallDisplay(organizationPage);
       await expect(usersContainer.locator('.gradient-button-text').locator('.button-large')).toHaveText('pending invitation');
       await usersContainer.locator('.user-invite-button').isVisible();
@@ -42,14 +42,13 @@ for (const displaySize of ['small', 'large']) {
       .locator('.list-sidebar-content')
       .getByRole('listitem');
 
-    if (displaySize === 'small') {
+    if (displaySize === DisplaySize.Small) {
       await setSmallDisplay(usersPage);
       const userSmall = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
       await userSmall.hover();
       await userSmall.locator('.options-button').click();
       await usersPage.locator('.user-context-sheet-modal').getByRole('listitem').nth(0).click();
       await usersPage.locator('.question-modal').locator('ion-button').nth(1).click();
-      await usersPage.locator('#add-menu-fab-button').click();
       await expect(usersPage).toShowToast('Boby McBobFace has been revoked. They can no longer access this organization.', 'Success');
     } else {
       const user = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
@@ -61,13 +60,14 @@ for (const displaySize of ['small', 'large']) {
       await sidebarButtons.nth(1).click();
     }
 
-    const container = usersPage.locator('.organization-page').locator('.organization-page-content');
+    const container = usersPage.locator('.organization-page');
     const usersContainer = container.locator('.organization-users');
-    if (displaySize === 'large') {
-      await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__description')).toHaveText('Active');
-      await expect(usersContainer.locator('.users-list-item').nth(1).locator('.users-list-item__description')).toHaveText('Revoked');
+    if (displaySize === DisplaySize.Small) {
+      await usersPage.locator('.users-page').locator('.tab-bar-menu').locator('.tab-bar-menu-button').nth(2).click();
     }
+    await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__description')).toHaveText('Active');
     await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__title')).toHaveText('2');
+    await expect(usersContainer.locator('.users-list-item').nth(1).locator('.users-list-item__description')).toHaveText('Revoked');
     await expect(usersContainer.locator('.users-list-item').nth(1).locator('.users-list-item__title')).toHaveText('1');
     await expect(usersContainer.locator('.user-active-list').locator('.label-profile')).toHaveText(['Administrator', 'Member', 'External']);
     await expect(usersContainer.locator('.user-active-list').locator('.user-active-list-item__value')).toHaveText(['1', '0', '1']);

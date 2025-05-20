@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="page">
+  <ion-page class="page profile-page">
     <ion-content class="profile-page-content">
       <ion-header
         v-if="clientInfo && isSmallDisplay"
@@ -409,7 +409,7 @@ async function inviteUser(): Promise<void> {
   await navigateTo(Routes.Users, { query: { openInvite: true } });
 }
 
-const tabBarMenuActions: Array<Array<MenuAction>> = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }], []];
+const tabBarMenuActions: Array<Array<MenuAction>> = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]];
 
 async function performProfileAction(action: UserAction): Promise<void> {
   if (!clientInfo.value) {

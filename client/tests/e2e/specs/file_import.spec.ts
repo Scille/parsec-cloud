@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page, TestInfo } from '@playwright/test';
-import { createFolder, createWorkspace, dragAndDropFile, expect, msTest } from '@tests/e2e/helpers';
+import { createFolder, createWorkspace, DisplaySize, dragAndDropFile, expect, msTest, setSmallDisplay } from '@tests/e2e/helpers';
 import * as fs from 'fs';
 import path from 'path';
 
@@ -101,51 +101,88 @@ for (const mode of ['list', 'grid']) {
   });
 }
 
-msTest('Import folder with button', async ({ workspaces }, testInfo: TestInfo) => {
-  // Start with an empty workspace
-  await createWorkspace(workspaces, 'New_Workspace');
-  await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-  await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
-  const documents = workspaces;
+for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
+  msTest(`Import folder with button ${displaySize} display`, async ({ workspaces }, testInfo: TestInfo) => {
+    if (displaySize === DisplaySize.Small) {
+      await setSmallDisplay(workspaces);
+    }
 
-  await documents.locator('#folders-ms-action-bar').locator('#button-import').click();
-  const uploadMenu = documents.locator('.upload-menu');
-  await expect(uploadMenu).toBeHidden();
+    // Start with an empty workspace
+    await createWorkspace(workspaces, 'New_Workspace', displaySize);
+    await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+    const documents = workspaces;
 
-  const fileChooserPromise = documents.waitForEvent('filechooser');
-  await documents.locator('.import-popover').locator('.import-container').getByRole('listitem').nth(1).click();
-  const fileChooser = await fileChooserPromise;
-  expect(fileChooser.isMultiple()).toBe(false);
-  const importPath = path.join(testInfo.config.rootDir, 'data', 'imports');
-  await fileChooser.setFiles([importPath]);
-  await checkFilesUploaded(documents, 'list', 10);
-  await documents.locator('.folder-container').locator('.file-list-item').nth(0).dblclick();
-  await expect(workspaces).toHaveHeader(['New_Workspace', 'imports'], true, true);
-  await expect(documents.locator('.folder-container').locator('.file-list-item')).toHaveCount(fs.readdirSync(importPath).length);
-});
+    if (displaySize === DisplaySize.Small) {
+      const addButton = workspaces.locator('.folder-content').locator('#add-menu-fab-button');
+      await expect(addButton).toBeVisible();
+      await addButton.click();
+      const modal = workspaces.locator('.tab-menu-modal');
+      await expect(modal).toBeVisible();
+      await modal.locator('.list-group-item').filter({ hasText: 'Import a folder' }).click();
+    } else {
+      await documents.locator('#folders-ms-action-bar').locator('#button-import').click();
+    }
+    const uploadMenu = documents.locator('.upload-menu');
+    await expect(uploadMenu).toBeHidden();
 
-msTest('Import files with button', async ({ workspaces }, testInfo: TestInfo) => {
-  // Start with an empty workspace
-  await createWorkspace(workspaces, 'New_Workspace');
-  await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
-  await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
-  const documents = workspaces;
+    const fileChooserPromise = documents.waitForEvent('filechooser');
+    if (displaySize === DisplaySize.Large) {
+      await documents.locator('.import-popover').locator('.import-container').getByRole('listitem').nth(1).click();
+    }
+    const fileChooser = await fileChooserPromise;
+    expect(fileChooser.isMultiple()).toBe(false);
+    const importPath = path.join(testInfo.config.rootDir, 'data', 'imports');
+    await fileChooser.setFiles([importPath]);
+    await checkFilesUploaded(documents, 'list', 10);
+    await documents.locator('.folder-container').locator('.file-list-item').nth(0).dblclick();
+    await expect(workspaces).toHaveHeader(['New_Workspace', 'imports'], true, true);
+    await expect(documents.locator('.folder-container').locator('.file-list-item')).toHaveCount(fs.readdirSync(importPath).length);
+  });
+}
 
-  await documents.locator('#folders-ms-action-bar').locator('#button-import').click();
-  const uploadMenu = documents.locator('.upload-menu');
-  await expect(uploadMenu).toBeHidden();
+for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
+  msTest(`Import files with button ${displaySize} display`, async ({ workspaces }, testInfo: TestInfo) => {
+    if (displaySize === DisplaySize.Small) {
+      await setSmallDisplay(workspaces);
+    }
 
-  const fileChooserPromise = documents.waitForEvent('filechooser');
-  await documents.locator('.import-popover').locator('.import-container').getByRole('listitem').nth(0).click();
-  const fileChooser = await fileChooserPromise;
-  expect(fileChooser.isMultiple()).toBe(true);
-  await fileChooser.setFiles([
-    path.join(testInfo.config.rootDir, 'data', 'imports', 'yo.png'),
-    path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png'),
-  ]);
-  await checkFilesUploaded(documents, 'list', 2);
-  const actionBar = documents.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.counter')).toHaveText('2 items', { useInnerText: true });
-  const entries = documents.locator('.folder-container').locator('.file-list-item');
-  await expect(entries).toHaveCount(2);
-});
+    // Start with an empty workspace
+    await createWorkspace(workspaces, 'New_Workspace', displaySize);
+    await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
+    await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
+    const documents = workspaces;
+
+    if (displaySize === DisplaySize.Small) {
+      const addButton = workspaces.locator('.folder-content').locator('#add-menu-fab-button');
+      await expect(addButton).toBeVisible();
+      await addButton.click();
+      const modal = workspaces.locator('.tab-menu-modal');
+      await expect(modal).toBeVisible();
+      await modal.locator('.list-group-item').filter({ hasText: 'Import files' }).click();
+    } else {
+      await documents.locator('#folders-ms-action-bar').locator('#button-import').click();
+    }
+
+    const uploadMenu = documents.locator('.upload-menu');
+    await expect(uploadMenu).toBeHidden();
+
+    const fileChooserPromise = documents.waitForEvent('filechooser');
+    if (displaySize === DisplaySize.Large) {
+      await documents.locator('.import-popover').locator('.import-container').getByRole('listitem').nth(0).click();
+    }
+    const fileChooser = await fileChooserPromise;
+    expect(fileChooser.isMultiple()).toBe(true);
+    await fileChooser.setFiles([
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'yo.png'),
+      path.join(testInfo.config.rootDir, 'data', 'imports', 'hell_yeah.png'),
+    ]);
+    await checkFilesUploaded(documents, 'list', 2);
+    if (displaySize === DisplaySize.Large) {
+      const actionBar = documents.locator('#folders-ms-action-bar');
+      await expect(actionBar.locator('.counter')).toHaveText('2 items', { useInnerText: true });
+    }
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+    await expect(entries).toHaveCount(2);
+  });
+}

@@ -113,7 +113,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   }
 }
 
-const tabBarMenuActions: Array<Array<MenuAction>> = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }], []];
+const tabBarMenuActions: Array<Array<MenuAction>> = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]];
 
 async function inviteUser(): Promise<void> {
   await navigateTo(Routes.Users, { query: { openInvite: true } });

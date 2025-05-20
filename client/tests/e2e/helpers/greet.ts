@@ -1,7 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page } from '@playwright/test';
-import { expect, fillInputModal, fillIonInput, getClipboardText, MsPage, setWriteClipboardPermission } from '@tests/e2e/helpers';
+import {
+  DisplaySize,
+  expect,
+  fillInputModal,
+  fillIonInput,
+  getClipboardText,
+  MsPage,
+  setWriteClipboardPermission,
+} from '@tests/e2e/helpers';
 
 interface GreetUserModalData {
   modal: Locator;
@@ -16,19 +24,20 @@ export async function initGreetUserModals(
   hostPage: Page,
   guestPage: Page,
   email: string,
-  displaySize?: 'small' | 'large',
+  displaySize?: DisplaySize,
 ): Promise<[GreetUserModalData, GreetUserModalData]> {
   // Invite a new user and retrieve the invitation link
-  if (displaySize === 'small') {
-    await hostPage.locator('.tab-bar-list-button').nth(2).click();
-    await hostPage.locator('.user-invite-button').click();
+  if (displaySize === DisplaySize.Small) {
+    await expect(hostPage.locator('.users-page').locator('.fab-content')).toHaveId('add-menu-fab-button');
+    await hostPage.locator('.users-page').locator('#add-menu-fab-button').click();
+    await hostPage.locator('.list-group-item').nth(0).click();
   } else {
     await hostPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
   }
   await fillInputModal(hostPage, email);
   await expect(hostPage).toShowToast(`An invitation to join the organization has been sent to ${email}.`, 'Success');
   await hostPage.locator('.topbar').locator('#invitations-button').click();
-  const popover = hostPage.locator(displaySize === 'small' ? '.invitations-list-modal' : '.invitations-list-popover');
+  const popover = hostPage.locator(displaySize === DisplaySize.Small ? '.invitations-list-modal' : '.invitations-list-popover');
   await setWriteClipboardPermission(hostPage.context(), true);
 
   const inv = popover.locator('.invitation-list-item').nth(1);
@@ -39,7 +48,7 @@ export async function initGreetUserModals(
 
   // Use the invitation link in the second tab
   await guestPage.locator('#create-organization-button').click();
-  if (displaySize === 'small') {
+  if (displaySize === DisplaySize.Small) {
     await expect(guestPage.locator('.create-join-modal')).toBeVisible();
     await guestPage.locator('.create-join-modal').getByRole('listitem').nth(1).click();
   } else {
