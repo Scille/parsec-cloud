@@ -25,7 +25,7 @@ def gen_account_auth_token() -> tuple[AccountPasswordAuthenticationToken, Secret
         timestamp=timestamp,
         email=email,
         header_and_payload=header_and_payload,
-        signature=key.hmac_full(header_and_payload + b"." + body_sha256),
+        signature=key.mac_512(header_and_payload + b"." + body_sha256),
     )
 
     return (token, key, body)
