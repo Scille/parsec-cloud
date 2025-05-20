@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { createWorkspace, expect, fillIonInput, msTest } from '@tests/e2e/helpers';
+import { createWorkspace, expect, fillIonInput, msTest, setSmallDisplay, DisplaySize } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -102,34 +102,53 @@ for (const gridMode of [false, true]) {
   });
 }
 
-async function toggleFavorite(page: Page, index: number): Promise<void> {
+async function toggleFavorite(page: Page, index: number, displaySize: DisplaySize): Promise<void> {
   let item;
-  if (await isInGridMode(page)) {
-    item = page.locator('.workspace-card-item').nth(index);
+  if (displaySize === DisplaySize.Large) {
+    if (await isInGridMode(page)) {
+      item = page.locator('.workspace-card-item').nth(index);
+    } else {
+      item = page.locator('.workspaces-container').locator('.workspace-list-item').nth(index);
+    }
   } else {
-    item = page.locator('.workspaces-container').locator('.workspace-list-item').nth(index);
+    item = page.locator('.workspace-card-item').nth(index);
   }
   await item.locator('.workspace-favorite-icon').click();
 }
 
-msTest('Checks favorites', async ({ workspaces }) => {
-  await createWorkspace(workspaces, 'The Copper Coronet');
-  await expect(workspaces.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
-    'The Copper Coronet',
-    'wksp1',
-  ]);
-  await toggleFavorite(workspaces, 1);
-  // Put favorite in first
-  await expect(workspaces.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
-    'wksp1',
-    'The Copper Coronet',
-  ]);
-  // Check in list mode too
-  await toggleViewMode(workspaces);
-  await expect(workspaces.locator('.workspace-list-item').locator('.workspace-name__label')).toHaveText(['wksp1', 'The Copper Coronet']);
-  await toggleFavorite(workspaces, 1);
-  await expect(workspaces.locator('.workspace-list-item').locator('.workspace-name__label')).toHaveText(['The Copper Coronet', 'wksp1']);
-});
+for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
+  msTest(`Checks favorites ${displaySize} display`, async ({ workspaces }) => {
+    if (displaySize === DisplaySize.Small) {
+      await setSmallDisplay(workspaces);
+    }
+    await createWorkspace(workspaces, 'The Copper Coronet', displaySize);
+    await expect(workspaces.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
+      'The Copper Coronet',
+      'wksp1',
+    ]);
+    await toggleFavorite(workspaces, 1, displaySize);
+    // Put favorite in first
+    await expect(workspaces.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
+      'wksp1',
+      'The Copper Coronet',
+    ]);
+    // Check in list mode too‹
+    if (displaySize === DisplaySize.Large) {
+      await toggleViewMode(workspaces);
+      await expect(workspaces.locator('.workspace-list-item').locator('.workspace-name__label'))
+        .toHaveText(['wksp1', 'The Copper Coronet']);
+      await toggleFavorite(workspaces, 1, displaySize);
+      await expect(workspaces.locator('.workspace-list-item').locator('.workspace-name__label'))
+        .toHaveText(['The Copper Coronet', 'wksp1']);
+    } else {
+      await toggleFavorite(workspaces, 1, displaySize);
+      await expect(workspaces.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
+        'The Copper Coronet',
+        'wksp1',
+      ]);
+    }
+  });
+}
 
 for (const gridMode of [false, true]) {
   msTest(`Workspace filter in ${gridMode ? 'grid' : 'list'} mode`, async ({ workspaces }) => {
