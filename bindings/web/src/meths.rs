@@ -4627,6 +4627,13 @@ fn variant_archive_device_error_rs_to_js(
         libparsec::ArchiveDeviceError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ArchiveDeviceErrorInternal".into())?;
         }
+        libparsec::ArchiveDeviceError::StorageNotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ArchiveDeviceErrorStorageNotAvailable".into(),
+            )?;
+        }
     }
     Ok(js_obj)
 }
@@ -8385,6 +8392,13 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorStopped".into(),
             )?;
         }
+        libparsec::ImportRecoveryDeviceError::StorageNotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorStorageNotAvailable".into(),
+            )?;
+        }
         libparsec::ImportRecoveryDeviceError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
@@ -9063,6 +9077,34 @@ fn variant_invite_list_item_rs_to_js(
             Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
             let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ListAvailableDeviceError
+
+#[allow(dead_code)]
+fn variant_list_available_device_error_rs_to_js(
+    rs_obj: libparsec::ListAvailableDeviceError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ListAvailableDeviceError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ListAvailableDeviceErrorInternal".into(),
+            )?;
+        }
+        libparsec::ListAvailableDeviceError::StorageNotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ListAvailableDeviceErrorStorageNotAvailable".into(),
+            )?;
         }
     }
     Ok(js_obj)
@@ -12628,6 +12670,13 @@ fn variant_update_device_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"UpdateDeviceErrorInvalidPath".into(),
+            )?;
+        }
+        libparsec::UpdateDeviceError::StorageNotAvailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"UpdateDeviceErrorStorageNotAvailable".into(),
             )?;
         }
     }
@@ -18374,14 +18423,29 @@ pub fn listAvailableDevices(path: String) -> Promise {
         }?;
 
         let ret = libparsec::list_available_devices(&path).await;
-        Ok({
-            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-            let js_array = Array::new_with_length(ret.len() as u32);
-            for (i, elem) in ret.into_iter().enumerate() {
-                let js_elem = struct_available_device_rs_to_js(elem)?;
-                js_array.set(i as u32, js_elem);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = struct_available_device_rs_to_js(elem)?;
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
             }
-            js_array.into()
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_list_available_device_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
         })
     }))
 }
