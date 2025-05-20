@@ -424,91 +424,96 @@ To avoid DOS (Deny Of Service) attack, the server will limit the number of reque
 Anonymous account API:
 
 ```json5
-{
-  "cmd": "account_create_with_password_proceed",
-  "req": {
-    "fields": [
-      {
-        // Token received by email following use of `account_create_send_validation_email`
-        "name": "validation_token",
-        "type": "Token"
-      },
-      {
-        // Quality-of-life field to pre-fill the human handle's label during enrollment
-        "name": "human_label",
-        "type": "String"
-      },
-      {
-        // Algorithm used to turn the password into the `auth_method_master_secret`
-        // (itself used to generate `auth_method_mac_key` and `auth_method_secret_key`).
-        "name": "password_algorithm",
-        "type": "PasswordAlgorithm"
-      },
-      {
-        // UUID used to identify the authentication method in the `Authorization` HTTP header.
-        //
-        // This cannot be generated server-side since the client derives it from the
-        // `auth_method_master_secret`.
-        "name": "auth_method_id",
-        "type": "AccountAuthMethodID"
-      },
-      {
-        // Secret key shared between the client and the server and used for
-        // account authenticated API family's MAC authentication.
-        "name": "auth_method_mac_key",
-        "type": "SecretKey"
-      },
-      {
-        // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
-        "name": "vault_key_access",
-        "type": "Bytes"
-      }
-    ]
-  },
-  "reps": [
-    {
-      "status": "ok",
+[
+  {
+    "major_versions": [
+      5
+    ],
+    "cmd": "account_create_with_password_proceed",
+    "req": {
+      "fields": [
+        {
+          // Token received by email following use of `account_create_send_validation_email`
+          "name": "validation_token",
+          "type": "EmailValidationToken"
+        },
+        {
+          // Quality-of-life field to pre-fill the human handle's label during enrollment
+          "name": "human_label",
+          "type": "String"
+        },
+        {
+          // Algorithm used to turn the password into the `auth_method_master_secret`
+          // (itself used to generate `auth_method_hmac_key` and `auth_method_secret_key`).
+          "name": "password_algorithm",
+          "type": "PasswordAlgorithm"
+        },
+        {
+          // Secret key shared between the client and the server and used for
+          // account authenticated API family's HMAC authentication.
+          "name": "auth_method_hmac_key",
+          "type": "SecretKey"
+        },
+        {
+          // UUID used to identify the authentication method in the `Authorization` HTTP header.
+          //
+          // This cannot be generated server-side since the client derives it from the
+          // `auth_method_master_secret`.
+          "name": "auth_method_id",
+          "type": "AccountAuthMethodID"
+        },
+        {
+          // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+          "name": "vault_key_access",
+          "type": "Bytes"
+        }
+      ]
     },
-    {
-      "status": "invalid_validation_token"
-    },
-    {
+    "reps": [
+      {
+        "status": "ok"
+      },
+      {
+        "status": "invalid_validation_token"
+      },
+      {
       // In practice this error should never occur since collision on the ID is
       // virtually non-existent as long as the client generates a proper UUID.
       "status": "auth_method_id_already_exists"
-    }
-  ],
-  "nested_types": [
-    {
-      "name": "PasswordAlgorithm",
-      "discriminant_field": "type",
-      "variants": [
-        {
+      }
+    ],
+    "nested_types": [
+      {
+        "name": "PasswordAlgorithm",
+        "discriminant_field": "type",
+        "variants": [
+          {
             "name": "Argon2id",
             "discriminant_value": "ARGON2ID",
             "fields": [
-                {
-                    "name": "salt",
-                    "type": "Bytes"
-                },
-                {
-                    "name": "opslimit",
-                    "type": "Integer"
-                },
-                {
-                    "name": "memlimit_kb",
-                    "type": "Integer"
-                },
-                {
-                    "name": "parallelism",
-                    "type": "Integer"
-                }
+              {
+                "name": "salt",
+                "type": "Bytes"
+              },
+              {
+                "name": "opslimit",
+                "type": "Integer"
+              },
+              {
+                "name": "memlimit_kb",
+                "type": "Integer"
+              },
+              {
+                "name": "parallelism",
+                "type": "Integer"
+              }
             ]
-        }
-      ]
-    }
-  ]
-}
+          }
+        ]
+      }
+    ]
+  }
+]
 ```
 
 > [!NOTE]

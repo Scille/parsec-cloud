@@ -2,3 +2,4 @@
 
 from .test_ping import *  # noqa
 from .test_account_create_send_validation_email import *  # noqa
+from .test_account_create_with_password_proceed import *  # noqa

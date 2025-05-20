@@ -880,6 +880,7 @@ class MemoryAccount:
     # to allow pre-filling human handle during enrollment.
     human_label: str
     current_vault: MemoryAccountVault
+    # current vault is not part of previous vaults
     previous_vaults: list[MemoryAccountVault] = field(default_factory=list)
 
 

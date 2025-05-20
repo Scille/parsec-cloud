@@ -10,9 +10,11 @@ from enum import auto
 from pydantic import EmailStr, TypeAdapter
 
 from parsec._parsec import (
+    AccountAuthMethodID,
     DateTime,
     EmailValidationToken,
     ParsecAccountEmailValidationAddr,
+    SecretKey,
     anonymous_account_cmds,
 )
 from parsec.api import api
@@ -46,6 +48,16 @@ class AccountCreateEmailValidationTokenBadOutcome(BadOutcomeEnum):
     TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
 
 
+class AccountCreateAccountWithPasswordBadOutcome(BadOutcomeEnum):
+    INVALID_TOKEN = auto()
+    AUTH_METHOD_ALREADY_EXISTS = auto()
+
+
+class AccountGetPasswordSecretKeyBadOutcome(BadOutcomeEnum):
+    USER_NOT_FOUND = auto()
+    UNABLE_TO_GET_SECRET_KEY = auto()
+
+
 class BaseAccountComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
@@ -56,6 +68,25 @@ class BaseAccountComponent:
         raise NotImplementedError
 
     async def check_signature(self):
+        raise NotImplementedError
+
+    def get_password_mac_key(
+        self, user_email: EmailStr
+    ) -> SecretKey | AccountGetPasswordSecretKeyBadOutcome:
+        raise NotImplementedError
+
+    async def create_account_with_password(
+        self,
+        token: EmailValidationToken,
+        now: DateTime,
+        mac_key: SecretKey,
+        vault_key_access: bytes,
+        human_label: str,
+        created_by_user_agent: str,
+        created_by_ip: str | None,
+        password_secret_algorithm: PasswordAlgorithm,
+        auth_method_id: AccountAuthMethodID,
+    ) -> None | AccountCreateAccountWithPasswordBadOutcome:
         raise NotImplementedError
 
     @api
@@ -93,6 +124,47 @@ class BaseAccountComponent:
                 # Respond OK without sending token to prevent creating oracle
                 return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
 
+    @api
+    async def api_account_create_with_password_proceed(
+        self,
+        client_ctx: AnonymousAccountClientContext,
+        req: anonymous_account_cmds.latest.account_create_with_password_proceed.Req,
+    ) -> anonymous_account_cmds.latest.account_create_with_password_proceed.Rep:
+        now = DateTime.now()
+        match req.password_algorithm:
+            case (
+                anonymous_account_cmds.latest.account_create_with_password_proceed.PasswordAlgorithmArgon2id() as algo
+            ):
+                pass
+            case _:
+                # No other algorithm is supported/implemented for now
+                raise NotImplementedError
+
+        outcome = await self.create_account_with_password(
+            req.validation_token,
+            now,
+            req.auth_method_hmac_key,
+            req.vault_key_access,
+            req.human_label,
+            client_ctx.client_user_agent,
+            client_ctx.client_ip,
+            password_secret_algorithm=PasswordAlgorithm(
+                salt=algo.salt,
+                opslimit=algo.opslimit,
+                memlimit_kb=algo.memlimit_kb,
+                parallelism=algo.parallelism,
+            ),
+            auth_method_id=req.auth_method_id,
+        )
+
+        match outcome:
+            case None:
+                return anonymous_account_cmds.latest.account_create_with_password_proceed.RepOk()
+            case AccountCreateAccountWithPasswordBadOutcome.INVALID_TOKEN:
+                return anonymous_account_cmds.latest.account_create_with_password_proceed.RepInvalidValidationToken()
+            case AccountCreateAccountWithPasswordBadOutcome.AUTH_METHOD_ALREADY_EXISTS:
+                return anonymous_account_cmds.latest.account_create_with_password_proceed.RepAuthMethodIdAlreadyExists()
+
     async def _send_email_validation_token(
         self,
         token: EmailValidationToken,
@@ -122,6 +194,9 @@ class BaseAccountComponent:
         return now > last_email_datetime.add(
             seconds=self._config.account_config.account_confirmation_email_resend_delay
         )
+
+    def test_get_token_by_email(self, email: str) -> EmailValidationToken | None:
+        raise NotImplementedError
 
 
 def generate_email_validation_email(
