@@ -214,7 +214,7 @@ fn generate_authorization_header_value(
         body_sha256.as_ref(),
     ]
     .join(b".".as_slice());
-    let signature = secret.hmac_full(&content);
+    let signature = secret.mac_512(&content);
     let b64_signature = BASE64URL.encode(&signature);
 
     format!("Bearer {PARSEC_AUTH_METHOD}.{email_base64}.{timestamp}.{b64_signature}")
