@@ -1,4 +1,4 @@
-<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+Ï<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
   <ms-modal
@@ -11,10 +11,10 @@
     }"
   >
     <div class="long-paths-modal">
-      <ion-text>
+      <ion-text class="long-paths-modal__info body">
         {{ $msTranslate('LongPathsSupportModal.labelInfo') }}
       </ion-text>
-      <ion-text>
+      <ion-text class="long-paths-modal__recommendation body-lg">
         <i18n-t
           keypath="LongPathsSupportModal.labelFix"
           scope="global"
@@ -23,6 +23,7 @@
             <a
               :href="$msTranslate('LongPathsSupportModal.fixUrl')"
               target="_blank"
+              class="link"
             >
               {{ $msTranslate('LongPathsSupportModal.linkLabel') }}
             </a>
@@ -30,7 +31,10 @@
         </i18n-t>
       </ion-text>
     </div>
-    <ms-checkbox v-model="skipLongPathsSupportWarning">
+    <ms-checkbox
+      class="long-paths-modal__checkbox body"
+      v-model="skipLongPathsSupportWarning"
+    >
       <ion-text>
         {{ $msTranslate('LongPathsSupportModal.noReminder') }}
       </ion-text>
@@ -54,6 +58,41 @@ async function dismiss(): Promise<boolean> {
 .long-paths-modal {
   display: flex;
   flex-direction: column;
-  gap: 1.5em;
+  gap: 1rem;
+
+  &__info {
+    padding: 0.5rem 1rem;
+    background-color: var(--parsec-color-light-info-50);
+    color: var(--parsec-color-light-info-700);
+    border-radius: var(--parsec-radius-8);
+  }
+
+  &__recommendation {
+    color: var(--parsec-color-light-secondary-text);
+    border-radius: var(--parsec-radius-8);
+
+    .link {
+      color: var(--parsec-color-light-primary-500);
+
+      &:hover {
+        text-decoration: underline;
+        color: var(--parsec-color-light-primary-600);
+      }
+    }
+  }
+
+  &__checkbox {
+    position: absolute;
+    bottom: 2.25rem;
+    color: var(--parsec-color-light-secondary-soft-text);
+    padding: 0.25rem 0.25rem;
+    border-radius: var(--parsec-radius-8);
+    transition: background-color 0.2s ease-in-out;
+
+    &:hover {
+      color: var(--parsec-color-light-secondary-text);
+      background-color: var(--parsec-color-light-secondary-premiere);
+    }
+  }
 }
 </style>
