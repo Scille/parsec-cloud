@@ -12,6 +12,11 @@ interface QuestionOptions {
   expectedNegativeText?: string | RegExp;
 }
 
+export enum DisplaySize {
+  Small = 'small',
+  Large = 'large',
+}
+
 export async function answerQuestion(
   page: Page,
   positiveAnswer: boolean,
@@ -234,21 +239,33 @@ export async function workspacesInGridMode(workspacesPage: Page): Promise<boolea
   return (await workspacesPage.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
 }
 
-export async function createWorkspace(workspacesPage: Page, name: string): Promise<void> {
+export async function createWorkspace(workspacesPage: Page, name: string, displaySize?: DisplaySize): Promise<void> {
   let workspacesCount = 0;
   await expect(workspacesPage.locator('.no-workspaces-loading')).toBeHidden();
-  if (await workspacesInGridMode(workspacesPage)) {
-    workspacesCount = await workspacesPage.locator('.workspaces-container').locator('.workspace-card-item').count();
+
+  if (displaySize === DisplaySize.Small) {
+    const addButton = workspacesPage.locator('#add-menu-fab-button');
+    await expect(addButton).toBeVisible();
+    await addButton.click();
+    const modal = workspacesPage.locator('.tab-menu-modal');
+    await expect(modal).toBeVisible();
+    await modal.locator('.list-group-item').filter({ hasText: 'New workspace' }).click();
+    await fillInputModal(workspacesPage, name);
   } else {
-    workspacesCount = await workspacesPage.locator('.workspaces-container').locator('.workspace-list-item').count();
-  }
-  const actionBar = workspacesPage.locator('#workspaces-ms-action-bar');
-  await actionBar.locator('#button-new-workspace').click();
-  await fillInputModal(workspacesPage, name);
-  if (await workspacesInGridMode(workspacesPage)) {
-    await expect(workspacesPage.locator('.workspaces-container').locator('.workspace-card-item')).toHaveCount(workspacesCount + 1);
-  } else {
-    await expect(workspacesPage.locator('.workspaces-container').locator('.workspace-list-item')).toHaveCount(workspacesCount + 1);
+    if (await workspacesInGridMode(workspacesPage)) {
+      workspacesCount = await workspacesPage.locator('.workspaces-container').locator('.workspace-card-item').count();
+    } else {
+      workspacesCount = await workspacesPage.locator('.workspaces-container').locator('.workspace-list-item').count();
+    }
+    const actionBar = workspacesPage.locator('#workspaces-ms-action-bar');
+    await actionBar.locator('#button-new-workspace').click();
+    await fillInputModal(workspacesPage, name);
+
+    if (await workspacesInGridMode(workspacesPage)) {
+      await expect(workspacesPage.locator('.workspaces-container').locator('.workspace-card-item')).toHaveCount(workspacesCount + 1);
+    } else {
+      await expect(workspacesPage.locator('.workspaces-container').locator('.workspace-list-item')).toHaveCount(workspacesCount + 1);
+    }
   }
   await dismissToast(workspacesPage);
 }
