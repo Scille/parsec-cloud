@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page>
+  <ion-page class="users-page">
     <ion-content class="content-scroll">
       <!-- contextual menu -->
       <ms-action-bar
@@ -304,7 +304,7 @@ const msSorterLabels = {
   desc: 'UsersPage.sort.desc',
 };
 
-const tabBarMenuActions: Array<Array<MenuAction>> = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }], []];
+const tabBarMenuActions: Array<Array<MenuAction>> = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]];
 
 async function onSortChange(event: MsSorterChangeEvent): Promise<void> {
   currentSortProperty.value = event.option.key;

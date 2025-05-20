@@ -4,7 +4,7 @@
   <ion-page>
     <ion-content
       :fullscreen="true"
-      class="content-scroll"
+      class="content-scroll folder-content"
     >
       <ms-action-bar
         id="folders-ms-action-bar"

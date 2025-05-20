@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { answerQuestion, createFolder, expect, fillInputModal, msTest, setSmallDisplay } from '@tests/e2e/helpers';
+import { answerQuestion, createFolder, DisplaySize, expect, fillInputModal, msTest, setSmallDisplay } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#folders-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -27,7 +27,7 @@ const SIZE_MATCHER_ARRAY = new Array(1).fill('').concat(new Array(8).fill(SIZE_M
 for (const displaySize of ['small', 'large']) {
   msTest(`Documents page default state on ${displaySize} display`, async ({ documents }) => {
     const entries = documents.locator('.folder-container').locator('.file-list-item');
-    if (displaySize === 'small') {
+    if (displaySize === DisplaySize.Small) {
       await setSmallDisplay(documents);
       await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
       await expect(entries.locator('.data-date')).toHaveText(TIME_MATCHER_ARRAY);
@@ -132,21 +132,39 @@ msTest('Delete all documents', async ({ documents }) => {
   await expect(entries).toHaveCount(0);
 });
 
-msTest('Create a folder', async ({ documents }) => {
-  const actionBar = documents.locator('#folders-ms-action-bar');
-  const entries = documents.locator('.folder-container').locator('.file-list-item');
-  await expect(entries).toHaveCount(9);
-  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
-  await actionBar.locator('.ms-action-bar-button:visible').nth(0).click();
-  await fillInputModal(documents, 'My folder');
-  await expect(entries).toHaveCount(10);
-  // Don't ask.
-  await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText([
-    ...NAME_MATCHER_ARRAY.slice(0, 1),
-    'My folder',
-    ...NAME_MATCHER_ARRAY.slice(1),
-  ]);
-});
+for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
+  msTest(`Create a folder ${displaySize} display`, async ({ documents }) => {
+    if (displaySize === DisplaySize.Small) {
+      await setSmallDisplay(documents);
+    }
+
+    const entries = documents.locator('.folder-container').locator('.file-list-item');
+    await expect(entries).toHaveCount(9);
+    await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
+
+    if (displaySize === DisplaySize.Small) {
+      const addButton = documents.locator('.folder-content').locator('#add-menu-fab-button');
+      await expect(addButton).toBeVisible();
+      await addButton.click();
+      const modal = documents.locator('.tab-menu-modal');
+      await expect(modal).toBeVisible();
+      await modal.locator('.list-group-item').filter({ hasText: 'New folder' }).click();
+    } else {
+      const actionBar = documents.locator('#folders-ms-action-bar');
+      await actionBar.locator('#button-new-folder').click();
+    }
+
+    await fillInputModal(documents, 'My folder');
+
+    await expect(entries).toHaveCount(10);
+    // Don't ask.
+    await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText([
+      ...NAME_MATCHER_ARRAY.slice(0, 1),
+      'My folder',
+      ...NAME_MATCHER_ARRAY.slice(1),
+    ]);
+  });
+}
 
 msTest('Import context menu', async ({ documents }) => {
   await expect(documents.locator('.import-popover')).toBeHidden();
