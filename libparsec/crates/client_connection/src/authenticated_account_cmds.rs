@@ -23,7 +23,7 @@ use crate::{
 const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 
 /// Method name that will be used for the `Authorization` header
-pub const PARSEC_AUTH_METHOD: &str = "PARSEC-PASSWORD-HMAC-BLAKE2B";
+pub const PARSEC_AUTH_METHOD: &str = "PARSEC-PASSWORD-MAC-BLAKE2B";
 
 #[derive(Debug)]
 pub struct AccountPassword {
@@ -174,25 +174,16 @@ fn prepare_request(
     time_provider: &TimeProvider,
     account: &AccountPassword,
 ) -> RequestBuilder {
-    // TODO: user hmac key is sent alongside the request
-    //       until it can be provided by the internal state.
-    let mut content_headers = HeaderMap::with_capacity(4 + 1);
+    let mut content_headers = HeaderMap::with_capacity(4);
     content_headers.insert(API_VERSION_HEADER_NAME, api_version_header_value);
     content_headers.insert(CONTENT_TYPE, HeaderValue::from_static(PARSEC_CONTENT_TYPE));
     content_headers.insert(
         CONTENT_LENGTH,
         HeaderValue::from_str(&body.len().to_string()).expect("numeric value are valid char"),
     );
-    content_headers.insert(
-        reqwest::header::HeaderName::from_static("x-hmac-key"),
-        HeaderValue::from_str(&BASE64URL.encode(account.hmac_key.as_ref())).expect("Always valid"),
-    );
-    let body_sha256 = libparsec_crypto::HashDigest::from_data(&body);
     let authorization_header_value = HeaderValue::from_str(&generate_authorization_header_value(
-        &BASE64URL.encode(account.email.as_bytes()),
+        account,
         time_provider.now(),
-        &body_sha256,
-        &account.hmac_key,
     ))
     .expect("always valid");
     content_headers.insert(AUTHORIZATION, authorization_header_value);
@@ -200,24 +191,28 @@ fn prepare_request(
     request_builder.headers(content_headers).body(body)
 }
 
-fn generate_authorization_header_value(
-    email_base64: &str,
-    now: DateTime,
-    body_sha256: &HashDigest,
-    secret: &SecretKey,
-) -> String {
+/// Return the Bearer token to use for the `Authorization` header.
+///
+/// Authorization token format: `PARSEC-PASSWORD-MAC-BLAKE2B.<b64_email>.<timestamp>.<b64_signature>`
+/// with:
+///     <b64_email> = base64(<account.email>)
+///     <timestamp> = str(<seconds since UNIX epoch>)
+///     <b64_signature> = base64(blake2b(data=`PARSEC-PASSWORD-MAC-BLAKE2B.<b64_email>.<timestamp>`, key=`account.mac_key`))
+/// base64() is the URL-safe variant (https://tools.ietf.org/html/rfc4648#section-5).
+fn generate_authorization_header_value(account: &AccountPassword, now: DateTime) -> String {
+    let b64_email = BASE64URL.encode(account.email.as_bytes());
     let timestamp = now.as_timestamp_seconds().to_string();
+
     let content = [
         PARSEC_AUTH_METHOD.as_bytes(),
-        email_base64.as_bytes(),
+        b64_email.as_bytes(),
         timestamp.as_bytes(),
-        body_sha256.as_ref(),
     ]
     .join(b".".as_slice());
-    let signature = secret.mac_512(&content);
+    let signature = account.hmac_key.mac_512(&content);
     let b64_signature = BASE64URL.encode(&signature);
 
-    format!("Bearer {PARSEC_AUTH_METHOD}.{email_base64}.{timestamp}.{b64_signature}")
+    format!("Bearer {PARSEC_AUTH_METHOD}.{b64_email}.{timestamp}.{b64_signature}")
 }
 
 #[cfg(test)]
