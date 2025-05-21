@@ -886,6 +886,7 @@ fn {{ enum_rs_to_js_function_name(enum) }}(value: libparsec::{{ enum.name }}) ->
 {{ api.rust_code_to_inject }}
 {% endif %}
 
+use std::str::FromStr;
 #[allow(unused_imports)]
 use js_sys::*;
 #[allow(unused_imports)]

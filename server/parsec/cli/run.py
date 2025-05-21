@@ -8,7 +8,7 @@ from typing import Any
 
 import click
 
-from parsec._parsec import ActiveUsersLimit, ParsecAddr
+from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr
 from parsec._version import __version__ as server_version
 from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import backend_factory
@@ -41,7 +41,7 @@ from parsec.logging import get_logger
 logger = get_logger()
 
 DEFAULT_PORT = 6777
-DEFAULT_EMAIL_SENDER = "no-reply@parsec.com"
+DEFAULT_EMAIL_SENDER = EmailAddress("no-reply@parsec.com")
 
 
 def _parse_organization_initial_tos_url(raw_param: str | None) -> dict[TosLocale, TosUrl] | None:
@@ -414,7 +414,7 @@ def run_cmd(
     email_host_password: str | None,
     email_use_ssl: bool,
     email_use_tls: bool,
-    email_sender: str | None,
+    email_sender: EmailAddress | None,
     proxy_trusted_addresses: str | None,
     ssl_keyfile: Path | None,
     ssl_certfile: Path | None,

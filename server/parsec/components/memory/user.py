@@ -7,6 +7,7 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
+    EmailAddress,
     OrganizationID,
     RevokedUserCertificate,
     UserCertificate,
@@ -766,7 +767,7 @@ class MemoryUserComponent(BaseUserComponent):
         self,
         organization_id: OrganizationID,
         user_id: UserID | None,
-        user_email: str | None,
+        user_email: EmailAddress | None,
         frozen: bool,
     ) -> UserInfo | UserFreezeUserBadOutcome:
         try:
@@ -782,13 +783,13 @@ class MemoryUserComponent(BaseUserComponent):
                     user = org.users[user_id]
                 except KeyError:
                     return UserFreezeUserBadOutcome.USER_NOT_FOUND
-            case (None, str() as user_email):
+            case (None, EmailAddress() as user_email):
                 for user in org.users.values():
                     if user.cooked.human_handle.email == user_email:
                         break
                 else:
                     return UserFreezeUserBadOutcome.USER_NOT_FOUND
-            case (UserID(), str()):
+            case (UserID(), EmailAddress()):
                 return UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL
             case never:  # pyright: ignore [reportUnnecessaryComparison]
                 assert_never(never)

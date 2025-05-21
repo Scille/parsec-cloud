@@ -3,6 +3,7 @@
 
 from parsec._parsec import (
     DateTime,
+    EmailAddress,
     InvitationStatus,
     ShamirRecoveryDeletionCertificate,
     authenticated_cmds,
@@ -84,7 +85,7 @@ async def test_authenticated_invite_list_ok(
         now=t2,
         organization_id=minimalorg.organization_id,
         author=minimalorg.alice.device_id,
-        claimer_email="zack@example.invalid",
+        claimer_email=EmailAddress("zack@example.invalid"),
         send_email=False,
     )
     assert isinstance(outcome, tuple)
@@ -96,7 +97,7 @@ async def test_authenticated_invite_list_ok(
                 human_handle=minimalorg.alice.human_handle,
             ),
             status=InvitationStatus.PENDING,
-            claimer_email="zack@example.invalid",
+            claimer_email=EmailAddress("zack@example.invalid"),
             token=outcome[0],
         )
     )
@@ -107,7 +108,7 @@ async def test_authenticated_invite_list_ok(
         now=t4,
         organization_id=minimalorg.organization_id,
         author=minimalorg.alice.device_id,
-        claimer_email="deleted@example.invalid",
+        claimer_email=EmailAddress("deleted@example.invalid"),
         send_email=False,
     )
     assert isinstance(outcome, tuple)
@@ -126,7 +127,7 @@ async def test_authenticated_invite_list_ok(
                 human_handle=minimalorg.alice.human_handle,
             ),
             status=InvitationStatus.CANCELLED,
-            claimer_email="deleted@example.invalid",
+            claimer_email=EmailAddress("deleted@example.invalid"),
             token=outcome[0],
         )
     )
@@ -212,7 +213,7 @@ async def test_authenticated_invite_list_with_shared_user_invitations(
         now=t2,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
-        claimer_email="another_zack@example.invalid",
+        claimer_email=EmailAddress("another_zack@example.invalid"),
         send_email=False,
     )
     assert isinstance(outcome, tuple)
@@ -224,7 +225,7 @@ async def test_authenticated_invite_list_with_shared_user_invitations(
                 human_handle=coolorg.alice.human_handle,
             ),
             status=InvitationStatus.PENDING,
-            claimer_email="another_zack@example.invalid",
+            claimer_email=EmailAddress("another_zack@example.invalid"),
             token=outcome[0],
         )
     )

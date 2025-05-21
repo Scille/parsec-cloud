@@ -24,7 +24,7 @@ pub fn req() {
 
     let expected =
         authenticated_cmds::AnyCmdReq::InviteNewUser(authenticated_cmds::invite_new_user::Req {
-            claimer_email: "alice@dev1".to_owned(),
+            claimer_email: "alice@dev1".parse().unwrap(),
             send_email: true,
         });
 

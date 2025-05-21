@@ -546,7 +546,7 @@ impl TestbedEventBootstrapOrganization {
 
         let (human_handle, device_id) = match first_user_id.test_nickname() {
             Some(nickname) => {
-                let email = format!("{nickname}@example.com");
+                let email = format!("{nickname}@example.com").parse().unwrap();
                 let label = {
                     let mut buff = format!("{nickname}y Mc{nickname}Face");
                     let nickname_len = nickname.len();
@@ -556,14 +556,14 @@ impl TestbedEventBootstrapOrganization {
                     buff[nickname_len + 4..nickname_len + 5].make_ascii_uppercase();
                     buff
                 };
-                let human_handle = HumanHandle::new(&email, &label).unwrap();
+                let human_handle = HumanHandle::new(email, &label).unwrap();
                 let device_id = format!("{nickname}@dev1").parse().unwrap();
                 (human_handle, device_id)
             }
             None => {
                 let label = first_user_id.hex();
-                let email = format!("{label}@example.com");
-                let human_handle = HumanHandle::new(&email, &label).unwrap();
+                let email = format!("{label}@example.com").parse().unwrap();
+                let human_handle = HumanHandle::new(email, &label).unwrap();
                 let device_id = builder.counters.next_device_id();
                 (human_handle, device_id)
             }
@@ -930,7 +930,7 @@ impl TestbedEventNewUser {
 
         let (human_handle, device_id) = match user_id.test_nickname() {
             Some(nickname) => {
-                let email = format!("{nickname}@example.com");
+                let email = format!("{nickname}@example.com").parse().unwrap();
                 let label = {
                     let mut buff = format!("{nickname}y Mc{nickname}Face");
                     let nickname_len = nickname.len();
@@ -940,14 +940,14 @@ impl TestbedEventNewUser {
                     buff[nickname_len + 4..nickname_len + 5].make_ascii_uppercase();
                     buff
                 };
-                let human_handle = HumanHandle::new(&email, &label).unwrap();
+                let human_handle = HumanHandle::new(email, &label).unwrap();
                 let device_id = format!("{nickname}@dev1").parse().unwrap();
                 (human_handle, device_id)
             }
             None => {
                 let label = user_id.hex();
-                let email = format!("{label}@example.com");
-                let human_handle = HumanHandle::new(&email, &label).unwrap();
+                let email = format!("{label}@example.com").parse().unwrap();
+                let human_handle = HumanHandle::new(email, &label).unwrap();
                 let device_id = builder.counters.next_device_id();
                 (human_handle, device_id)
             }
@@ -2450,7 +2450,7 @@ no_certificate_event!(
     TestbedEventNewUserInvitation,
     [
         created_by: DeviceID,
-        claimer_email: String,
+        claimer_email: EmailAddress,
         created_on: DateTime,
         token: InvitationToken,
     ]
@@ -2459,7 +2459,7 @@ no_certificate_event!(
 impl TestbedEventNewUserInvitation {
     pub(super) fn from_builder(
         builder: &mut TestbedTemplateBuilder,
-        claimer_email: String,
+        claimer_email: EmailAddress,
     ) -> Self {
         // 1) Consistency checks
 

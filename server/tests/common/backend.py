@@ -5,7 +5,7 @@ from typing import AsyncIterator, Awaitable, Callable, TypeAlias
 
 import pytest
 
-from parsec._parsec import DateTime, ParsecAddr
+from parsec._parsec import DateTime, EmailAddress, ParsecAddr
 from parsec.asgi import AsgiApp, app_factory
 from parsec.backend import Backend, backend_factory
 from parsec.cli.testbed import TestbedBackend, TestbedTemplate
@@ -40,7 +40,7 @@ def backend_config(
         sse_keepalive=30,
         proxy_trusted_addresses=None,
         server_addr=ParsecAddr(hostname=SERVER_DOMAIN, port=None, use_ssl=True),
-        email_config=MockedEmailConfig("no-reply@parsec.com", tmpdir),
+        email_config=MockedEmailConfig(EmailAddress("no-reply@parsec.com"), tmpdir),
         blockstore_config=blockstore_config,
         administration_token="s3cr3t",
         organization_spontaneous_bootstrap=False,

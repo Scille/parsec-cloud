@@ -73,6 +73,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SequesterServiceID>()?;
     m.add_class::<EnrollmentID>()?;
     m.add_class::<HumanHandle>()?;
+    m.add_class::<EmailAddress>()?;
     m.add_class::<DeviceID>()?;
     m.add_class::<DeviceLabel>()?;
     m.add_class::<UserID>()?;

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    EmailAddress,
     HumanHandle,
     OrganizationID,
     UserID,
@@ -56,8 +57,8 @@ async def user_get_user_info(
             assert False, unknown
 
     match row["email"]:
-        case str() as email:
-            pass
+        case str() as raw_email:
+            email = EmailAddress(raw_email)
         case unknown:
             assert False, unknown
 
@@ -73,10 +74,10 @@ async def user_get_user_info(
 
 
 async def user_get_user_info_from_email(
-    conn: AsyncpgConnection, organization_id: OrganizationID, email: str
+    conn: AsyncpgConnection, organization_id: OrganizationID, email: EmailAddress
 ) -> UserInfo | None:
     row = await conn.fetchrow(
-        *_q_get_user_for_email(organization_id=organization_id.str, email=email)
+        *_q_get_user_for_email(organization_id=organization_id.str, email=str(email))
     )
 
     if row is None:
@@ -95,8 +96,8 @@ async def user_get_user_info_from_email(
             assert False, unknown
 
     match row["email"]:
-        case str() as email:
-            pass
+        case str() as raw_email:
+            email = EmailAddress(raw_email)
         case unknown:
             assert False, unknown
 

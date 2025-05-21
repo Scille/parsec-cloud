@@ -213,9 +213,9 @@ async def asyncpg_pool_factory(
     # - Uuid type
     async def _init_connection(conn: AsyncpgConnection) -> None:
         await handle_datetime(conn)
-        await handle_uuid(conn)
         await handle_integer(conn)
         await handle_json(conn)
+        await handle_uuid(conn)
 
     async with asyncpg.create_pool(
         url,

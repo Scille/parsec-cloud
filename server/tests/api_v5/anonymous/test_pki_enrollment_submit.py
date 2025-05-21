@@ -10,6 +10,7 @@ from parsec._parsec import (
     DeviceID,
     DeviceLabel,
     DevicePurpose,
+    EmailAddress,
     EnrollmentID,
     HumanHandle,
     PkiEnrollmentAnswerPayload,
@@ -31,7 +32,7 @@ from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 class Enrollment:
     enrollment_id: EnrollmentID
     submitter_der_x509_certificate: bytes
-    submitter_der_x509_certificate_email: str
+    submitter_der_x509_certificate_email: EmailAddress
     submit_payload_signature: bytes
     submit_payload: bytes
     submitted_on: DateTime
@@ -50,7 +51,7 @@ def submit_payload() -> bytes:
 async def existing_enrollment(coolorg: CoolorgRpcClients, submit_payload: bytes) -> Enrollment:
     enrollment_id = EnrollmentID.new()
     submitter_der_x509_certificate = b"<mike der x509 certificate>"
-    submitter_der_x509_certificate_email = "mike@example.invalid"
+    submitter_der_x509_certificate_email = EmailAddress("mike@example.invalid")
     submit_payload_signature = b"<mike submit payload signature>"
 
     rep = await coolorg.anonymous.pki_enrollment_submit(
@@ -80,7 +81,7 @@ async def test_anonymous_pki_enrollment_submit_ok(
         enrollment_id=EnrollmentID.new(),
         force=False,
         submitter_der_x509_certificate=b"<philip der x509 certificate>",
-        submitter_der_x509_certificate_email="philip@example.invalid",
+        submitter_der_x509_certificate_email=EmailAddress("philip@example.invalid"),
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload=submit_payload,
     )
@@ -164,7 +165,7 @@ async def test_anonymous_pki_enrollment_submit_x509_certificate_already_submitte
         enrollment_id=EnrollmentID.new(),
         force=False,
         submitter_der_x509_certificate=existing_enrollment.submitter_der_x509_certificate,
-        submitter_der_x509_certificate_email="philip@example.invalid",
+        submitter_der_x509_certificate_email=EmailAddress("philip@example.invalid"),
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload=submit_payload,
     )
@@ -195,7 +196,7 @@ async def test_anonymous_pki_enrollment_submit_enrollment_id_already_used(
         enrollment_id=existing_enrollment.enrollment_id,
         force=False,
         submitter_der_x509_certificate=b"<philip der x509 certificate>",
-        submitter_der_x509_certificate_email="philip@example.invalid",
+        submitter_der_x509_certificate_email=EmailAddress("philip@example.invalid"),
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload=submit_payload,
     )
@@ -230,7 +231,8 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         timestamp=t1,
         user_id=UserID.new(),
         human_handle=HumanHandle(
-            email=existing_enrollment.submitter_der_x509_certificate_email, label="Mike"
+            email=existing_enrollment.submitter_der_x509_certificate_email,
+            label="Mike",
         ),
         public_key=PrivateKey.generate().public_key,
         algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
@@ -312,7 +314,7 @@ async def test_anonymous_pki_enrollment_submit_invalid_payload_data(
         enrollment_id=EnrollmentID.new(),
         force=False,
         submitter_der_x509_certificate=b"<philip der x509 certificate>",
-        submitter_der_x509_certificate_email="philip@example.invalid",
+        submitter_der_x509_certificate_email=EmailAddress("philip@example.invalid"),
         submit_payload_signature=b"<philip submit payload signature>",
         submit_payload=b"<dummy data>",
     )
@@ -329,7 +331,7 @@ async def test_anonymous_pki_enrollment_submit_http_common_errors(
             enrollment_id=EnrollmentID.new(),
             force=False,
             submitter_der_x509_certificate=b"<philip der x509 certificate>",
-            submitter_der_x509_certificate_email="philip@example.invalid",
+            submitter_der_x509_certificate_email=EmailAddress("philip@example.invalid"),
             submit_payload_signature=b"<philip submit payload signature>",
             submit_payload=submit_payload,
         )

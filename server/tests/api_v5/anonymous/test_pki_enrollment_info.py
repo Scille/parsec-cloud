@@ -6,6 +6,7 @@ import pytest
 from parsec._parsec import (
     DateTime,
     DeviceLabel,
+    EmailAddress,
     EnrollmentID,
     PkiEnrollmentAnswerPayload,
     PkiEnrollmentSubmitPayload,
@@ -42,7 +43,7 @@ async def test_anonymous_pki_enrollment_info_ok(
         enrollment_id=enrollment_id,
         force=False,
         submitter_der_x509_certificate=b"<mike der x509 certificate>",
-        submitter_der_x509_certificate_email="mike@example.invalid",
+        submitter_der_x509_certificate_email=EmailAddress("mike@example.invalid"),
         submit_payload_signature=b"<mike submit payload signature>",
         submit_payload=submit_payload,
     )
@@ -118,7 +119,7 @@ async def test_anonymous_pki_enrollment_info_ok(
                 enrollment_id=new_enrollment_id,
                 force=True,
                 submitter_der_x509_certificate=b"<mike der x509 certificate>",
-                submitter_der_x509_certificate_email="mike@example.invalid",
+                submitter_der_x509_certificate_email=EmailAddress("mike@example.invalid"),
                 submit_payload_signature=b"<mike submit payload signature>",
                 submit_payload=submit_payload,
             )
@@ -184,7 +185,7 @@ async def test_anonymous_pki_enrollment_info_http_common_errors(
         enrollment_id=enrollment_id,
         force=False,
         submitter_der_x509_certificate=b"<mike der x509 certificate>",
-        submitter_der_x509_certificate_email="mike@example.invalid",
+        submitter_der_x509_certificate_email=EmailAddress("mike@example.invalid"),
         submit_payload_signature=b"<mike submit payload signature>",
         submit_payload=submit_payload,
     )

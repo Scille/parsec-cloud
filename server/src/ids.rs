@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::str::FromStr;
+
 use pyo3::{exceptions::PyValueError, prelude::*, types::PyType};
 
 // UUID based type
@@ -295,8 +297,8 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 #[pymethods]
 impl HumanHandle {
     #[new]
-    pub fn new(email: &str, label: &str) -> PyResult<Self> {
-        match libparsec_types::HumanHandle::new(email, label) {
+    pub fn new(email: EmailAddress, label: &str) -> PyResult<Self> {
+        match libparsec_types::HumanHandle::new(email.0, label) {
             Ok(human_handle) => Ok(Self(human_handle)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
@@ -313,12 +315,33 @@ impl HumanHandle {
     }
 
     #[getter]
-    fn email(&self) -> PyResult<&str> {
-        Ok(self.0.email())
+    fn email(&self) -> PyResult<EmailAddress> {
+        Ok(EmailAddress(self.0.email().clone()))
     }
 
     #[getter]
     fn label(&self) -> PyResult<&str> {
         Ok(self.0.label())
+    }
+}
+
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    EmailAddress,
+    libparsec_types::EmailAddress,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
+
+#[pymethods]
+impl EmailAddress {
+    #[new]
+    pub fn new(raw: &str) -> PyResult<Self> {
+        libparsec_types::EmailAddress::from_str(raw)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }

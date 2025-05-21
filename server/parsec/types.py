@@ -13,6 +13,7 @@ from parsec._parsec import (
     ActiveUsersLimit,
     DateTime,
     DeviceID,
+    EmailAddress,
     GreetingAttemptID,
     InvitationStatus,
     InvitationToken,
@@ -160,4 +161,9 @@ ActiveUsersLimitField = Annotated[
         lambda x: x if isinstance(x, ActiveUsersLimit) else ActiveUsersLimit.from_maybe_int(x)
     ),
     PlainSerializer(lambda x: x.to_maybe_int(), return_type=int | None),
+]
+EmailAddressField = Annotated[
+    EmailAddress,
+    PlainValidator(lambda x: x if isinstance(x, EmailAddress) else EmailAddress(x)),
+    PlainSerializer(lambda x: str(x), return_type=str),
 ]

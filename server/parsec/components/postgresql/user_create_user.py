@@ -224,7 +224,7 @@ async def user_create_user(
             organization_internal_id=db_common.organization_internal_id,
             author_internal_id=db_common.device_internal_id,
             created_on=user_certif.timestamp,
-            email=user_certif.human_handle.email,
+            email=str(user_certif.human_handle.email),
             label=user_certif.human_handle.label,
             user_id=user_certif.user_id,
             initial_profile=user_certif.profile.str,

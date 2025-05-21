@@ -42,9 +42,9 @@ fn organization_id_ko(#[case] raw: &str) {
 #[case::parenthesis_allowed("a@b.c", "()")]
 #[case::max_size_email_and_label(&format!("{}@x.y", "a".repeat(250)), &"x".repeat(254))]
 fn human_handle_ok(#[case] email: &str, #[case] label: &str) {
-    let human_handle = HumanHandle::new(email, label).unwrap();
+    let human_handle = HumanHandle::from_raw(email, label).unwrap();
     p_assert_eq!(human_handle.label(), label);
-    p_assert_eq!(human_handle.email(), email);
+    p_assert_eq!(human_handle.email().to_string(), email);
     p_assert_eq!(human_handle.as_ref(), format!("{label} <{email}>"));
 
     let human_handle2 = HumanHandle::from_str(&format!("{label} <{email}>")).unwrap();
@@ -87,7 +87,7 @@ fn human_handle_ko(
         }
     };
 
-    assert_match_against_expected_error(HumanHandle::new(email, label));
+    assert_match_against_expected_error(HumanHandle::from_raw(email, label));
     assert_match_against_expected_error(HumanHandle::from_str(&format!("{label} <{email}>")));
 }
 

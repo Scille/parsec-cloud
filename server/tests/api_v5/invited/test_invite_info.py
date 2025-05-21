@@ -2,7 +2,13 @@
 
 import pytest
 
-from parsec._parsec import DateTime, GreetingAttemptID, RevokedUserCertificate, invited_cmds
+from parsec._parsec import (
+    DateTime,
+    EmailAddress,
+    GreetingAttemptID,
+    RevokedUserCertificate,
+    invited_cmds,
+)
 from parsec.components.invite import (
     InvitationCreatedByUser,
     UserGreetingAdministrator,
@@ -128,7 +134,7 @@ async def test_invited_invite_info_for_user_with_multiple_admins(
         t0,
         coolorg.organization_id,
         coolorg.alice.device_id,
-        "non.zack@example.invalid",
+        EmailAddress("non.zack@example.invalid"),
         False,
     )
     assert isinstance(rep, tuple)

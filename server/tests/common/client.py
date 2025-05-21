@@ -8,13 +8,13 @@ from typing import AsyncContextManager, AsyncGenerator, AsyncIterator
 import pytest
 from httpx import ASGITransport, AsyncClient, Response
 from httpx_sse import EventSource, ServerSentEvent, aconnect_sse
-from pydantic import EmailStr
 
 from parsec._parsec import (
     AccountAuthMethodID,
     ApiVersion,
     DateTime,
     DeviceID,
+    EmailAddress,
     HumanHandle,
     InvitationToken,
     OrganizationID,
@@ -93,7 +93,7 @@ class AuthenticatedAccountRpcClient(BaseAuthenticatedAccountRpcClient):
     def __init__(
         self,
         raw_client: AsyncClient,
-        account_email: EmailStr,
+        account_email: EmailAddress,
         auth_method_id: AccountAuthMethodID,
         auth_method_mac_key: SecretKey,
     ):
@@ -255,7 +255,7 @@ class InvitedRpcClient(BaseInvitedRpcClient):
         }
 
     @property
-    def claimer_email(self) -> str:
+    def claimer_email(self) -> EmailAddress:
         assert isinstance(self.event, tb.TestbedEventNewUserInvitation)
         return self.event.claimer_email
 
@@ -403,10 +403,9 @@ class CoolorgRpcClients:
             return self._invited_zack
 
         for event in self.testbed_template.events:
-            if (
-                isinstance(event, tb.TestbedEventNewUserInvitation)
-                and event.claimer_email == "zack@example.invalid"
-            ):
+            if isinstance(
+                event, tb.TestbedEventNewUserInvitation
+            ) and event.claimer_email == EmailAddress("zack@example.invalid"):
                 self._invited_zack = InvitedRpcClient(
                     self.raw_client, self.organization_id, event=event
                 )

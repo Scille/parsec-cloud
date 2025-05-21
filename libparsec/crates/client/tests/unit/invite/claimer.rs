@@ -42,7 +42,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         move |_req: protocol::invited_cmds::latest::invite_info::Req| {
             protocol::invited_cmds::latest::invite_info::Rep::Ok(
                 protocol::invited_cmds::latest::invite_info::InvitationType::User {
-                    claimer_email: "john@example.com".to_owned(),
+                    claimer_email: "john@example.com".parse().unwrap(),
                     created_by: protocol::invited_cmds::latest::invite_info::InvitationCreatedBy::User {
                         user_id: alice.user_id.to_owned(),
                         human_handle: alice.human_handle.to_owned(),
@@ -65,7 +65,10 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     p_assert_matches!(&ctx, AnyClaimRetrievedInfoCtx::User(_));
     let ctx = match ctx {
         AnyClaimRetrievedInfoCtx::User(list_administrators_ctx) => {
-            p_assert_eq!(list_administrators_ctx.claimer_email(), "john@example.com");
+            p_assert_eq!(
+                list_administrators_ctx.claimer_email().as_ref(),
+                "john@example.com"
+            );
             let ctxs = list_administrators_ctx.list_initial_ctxs();
             assert_eq!(ctxs.len(), 1);
             let ctx = ctxs.into_iter().next().unwrap();

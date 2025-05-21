@@ -34,7 +34,7 @@ anyio = ">=3.7.1,<4.0.0"
 click = "^8.0"
 httpx = ">=0.25,<0.29"
 pbr = { version = ">=5.9,<7.0" }
-pydantic = { version = "^2.10.6", extras = ["email"] }
+pydantic = { version = "^2.10.6" }
 pydantic-core = "^2.27.2"
 sentry-sdk = "2.27.0"
 starlette = ">=0.37.2,<0.47.0"

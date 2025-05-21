@@ -19,9 +19,10 @@ use crate::{
         UserUpdateCertificate,
     },
     protocol::ActiveUsersLimit,
-    BlockID, DateTime, DeviceID, DeviceLabel, HumanHandle, InvitationToken, PrivateKey, RealmRole,
-    SecretKey, SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterServiceID,
-    SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID, UserProfile, VlobID,
+    BlockID, DateTime, DeviceID, DeviceLabel, EmailAddress, HumanHandle, InvitationToken,
+    PrivateKey, RealmRole, SecretKey, SequesterPrivateKeyDer, SequesterPublicKeyDer,
+    SequesterServiceID, SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID,
+    UserProfile, VlobID,
 };
 
 #[pyclass]
@@ -256,7 +257,7 @@ event_wrapper!(
 event_wrapper!(
     TestbedEventNewUserInvitation,
     [
-        claimer_email: String,
+        claimer_email: EmailAddress,
         created_by: DeviceID,
         created_on: DateTime,
         token: InvitationToken,
@@ -264,7 +265,7 @@ event_wrapper!(
     |_py, x: &TestbedEventNewUserInvitation| -> PyResult<String> {
         Ok(format!(
             "claimer_email={:?}, created_by={:?}, created_on={:?}, token={:?}",
-            x.claimer_email, x.created_by.0, x.created_on.0, x.token.0,
+            x.claimer_email.0, x.created_by.0, x.created_on.0, x.token.0,
         ))
     }
 );
@@ -845,7 +846,7 @@ fn event_to_pyobject(
 
         libparsec_testbed::TestbedEvent::NewUserInvitation(x) => {
             let obj = TestbedEventNewUserInvitation {
-                claimer_email: x.claimer_email.clone(),
+                claimer_email: EmailAddress(x.claimer_email.clone()),
                 created_by: x.created_by.clone().into(),
                 created_on: x.created_on.into(),
                 token: x.token.into(),

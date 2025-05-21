@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use anyhow::Context;
-use libparsec::{InvitationType, ParsecInvitationAddr};
+use libparsec::{EmailAddress, InvitationType, ParsecInvitationAddr};
 
 use crate::utils::*;
 
@@ -9,7 +9,7 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
     pub struct Args {
         /// Claimer email (i.e.: The invitee)
-        email: String,
+        email: EmailAddress,
         /// Send email to the invitee
         #[arg(short, long, default_value_t)]
         send_email: bool,

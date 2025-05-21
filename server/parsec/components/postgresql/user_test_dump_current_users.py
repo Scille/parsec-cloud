@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from parsec._parsec import (
     DeviceID,
+    EmailAddress,
     HumanHandle,
     OrganizationID,
     UserID,
@@ -70,7 +71,8 @@ async def user_test_dump_current_users(
     items: dict[UserID, UserDump] = {}
     for row in rows:
         user_id = UserID.from_hex(row["user_id"])
-        human_handle = HumanHandle(email=row["human_email"], label=row["human_label"])
+        email = EmailAddress(row["human_email"])
+        human_handle = HumanHandle(email=email, label=row["human_label"])
         items[user_id] = UserDump(
             user_id=user_id,
             human_handle=human_handle,

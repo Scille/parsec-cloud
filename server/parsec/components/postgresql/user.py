@@ -7,6 +7,7 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
+    EmailAddress,
     OrganizationID,
     RevokedUserCertificate,
     UserCertificate,
@@ -254,7 +255,7 @@ class PGUserComponent(BaseUserComponent):
         return await user_get_user_info(conn, organization_id, user_id)
 
     async def get_user_info_from_email(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, email: str
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, email: EmailAddress
     ) -> UserInfo | None:
         return await user_get_user_info_from_email(conn, organization_id, email)
 
@@ -328,7 +329,7 @@ class PGUserComponent(BaseUserComponent):
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         user_id: UserID | None,
-        user_email: str | None,
+        user_email: EmailAddress | None,
         frozen: bool,
     ) -> UserInfo | UserFreezeUserBadOutcome:
         return await user_freeze_user(conn, organization_id, user_id, user_email, frozen)

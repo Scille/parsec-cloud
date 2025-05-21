@@ -18,7 +18,8 @@ pub fn validate_human_handle_label(raw: &str) -> bool {
 
 /// Validate an email without doing a unicode normalization.
 pub fn validate_email(raw: &str) -> bool {
-    libparsec_types::HumanHandle::email_is_valid(raw)
+    use std::str::FromStr;
+    libparsec_types::EmailAddress::from_str(raw).is_ok()
 }
 
 /// Validate a label without doing a unicode normalization.

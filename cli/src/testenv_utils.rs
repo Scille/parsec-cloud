@@ -49,7 +49,7 @@ pub async fn initialize_test_organization(
         client_config.clone(),
         organization_addr,
         "laptop".parse().expect("Unreachable"),
-        HumanHandle::new("alice@example.com", "Alice").expect("Unreachable"),
+        HumanHandle::from_raw("alice@example.com", "Alice").expect("Unreachable"),
         DEFAULT_DEVICE_PASSWORD.to_string().into(),
         None,
     )
@@ -86,7 +86,7 @@ pub async fn initialize_test_organization(
         &cmds,
         alice_device.clone(),
         "laptop".parse().expect("Unreachable"),
-        HumanHandle::new("bob@example.com", "Bob").expect("Unreachable"),
+        HumanHandle::from_raw("bob@example.com", "Bob").expect("Unreachable"),
         UserProfile::Standard,
     )
     .await?;
@@ -97,7 +97,7 @@ pub async fn initialize_test_organization(
         &cmds,
         alice_device.clone(),
         "laptop".parse().expect("Unreachable"),
-        HumanHandle::new("toto@example.com", "Toto").expect("Unreachable"),
+        HumanHandle::from_raw("toto@example.com", "Toto").expect("Unreachable"),
         UserProfile::Outsider,
     )
     .await?;

@@ -31,14 +31,14 @@ SqlQueryParam = (
     | int
     | bool
     | float
-    | DateTime
-    | UserID
-    | DeviceID
-    | VlobID
-    | BlockID
-    | SequesterServiceID
-    | GreetingAttemptID
     | ActiveUsersLimit
+    | BlockID
+    | DateTime
+    | DeviceID
+    | GreetingAttemptID
+    | SequesterServiceID
+    | UserID
+    | VlobID
     | Iterable["SqlQueryParam"]
 )
 

@@ -4,7 +4,7 @@ from unittest.mock import ANY
 
 import pytest
 
-from parsec._parsec import DateTime, InvitationStatus, UserProfile, authenticated_cmds
+from parsec._parsec import DateTime, EmailAddress, InvitationStatus, UserProfile, authenticated_cmds
 from parsec.components.invite import (
     InvitationCreatedByUser,
     SendEmailBadOutcome,
@@ -29,7 +29,7 @@ async def test_authenticated_invite_new_user_ok_new(
 ) -> None:
     with backend.event_bus.spy() as spy:
         rep = await minimalorg.alice.invite_new_user(
-            claimer_email="new@example.invalid",
+            claimer_email=EmailAddress("new@example.invalid"),
             send_email=send_email,
         )
         assert isinstance(rep, authenticated_cmds.latest.invite_new_user.RepOk)
@@ -53,7 +53,7 @@ async def test_authenticated_invite_new_user_ok_new(
             UserInvitation(
                 token=invitation_token,
                 created_on=ANY,
-                claimer_email="new@example.invalid",
+                claimer_email=EmailAddress("new@example.invalid"),
                 created_by=InvitationCreatedByUser(
                     user_id=minimalorg.alice.user_id, human_handle=minimalorg.alice.human_handle
                 ),
@@ -85,7 +85,7 @@ async def test_authenticated_invite_new_user_ok_already_exist(
             now=t1,
             organization_id=minimalorg.organization_id,
             author=minimalorg.alice.device_id,
-            claimer_email="new@example.invalid",
+            claimer_email=EmailAddress("new@example.invalid"),
             send_email=False,
         )
         assert isinstance(outcome, tuple)
@@ -106,7 +106,7 @@ async def test_authenticated_invite_new_user_ok_already_exist(
 
     with backend.event_bus.spy() as spy:
         rep = await minimalorg.alice.invite_new_user(
-            claimer_email="new@example.invalid",
+            claimer_email=EmailAddress("new@example.invalid"),
             send_email=False,
         )
         assert isinstance(rep, authenticated_cmds.latest.invite_new_user.RepOk)
@@ -145,7 +145,7 @@ async def test_authenticated_invite_new_user_author_not_allowed(
             assert False, unknown
 
     rep = await author.invite_new_user(
-        claimer_email="new@example.invalid",
+        claimer_email=EmailAddress("new@example.invalid"),
         send_email=False,
     )
     assert rep == authenticated_cmds.latest.invite_new_user.RepAuthorNotAllowed()
@@ -182,7 +182,7 @@ async def test_authenticated_invite_new_user_send_email_bad_outcome(
 
     with backend.event_bus.spy() as spy:
         rep = await minimalorg.alice.invite_new_user(
-            claimer_email="new@example.invalid",
+            claimer_email=EmailAddress("new@example.invalid"),
             send_email=True,
         )
         assert isinstance(rep, authenticated_cmds.latest.invite_new_user.RepOk)
@@ -211,7 +211,7 @@ async def test_authenticated_invite_new_user_send_email_bad_outcome(
             UserInvitation(
                 token=invitation_token,
                 created_on=ANY,
-                claimer_email="new@example.invalid",
+                claimer_email=EmailAddress("new@example.invalid"),
                 created_by=InvitationCreatedByUser(
                     user_id=minimalorg.alice.user_id, human_handle=minimalorg.alice.human_handle
                 ),
@@ -245,7 +245,7 @@ async def test_authenticated_invite_new_user_with_shared_user_invitations(
     with backend.event_bus.spy() as spy:
         # Bob invites zack, although an existing invitation created by Alice already exists
         rep = await coolorg.bob.invite_new_user(
-            claimer_email="zack@example.invalid",
+            claimer_email=EmailAddress("zack@example.invalid"),
             send_email=False,
         )
 
@@ -275,7 +275,7 @@ async def test_authenticated_invite_new_user_http_common_errors(
 ) -> None:
     async def do():
         await coolorg.alice.invite_new_user(
-            claimer_email="new@example.invalid",
+            claimer_email=EmailAddress("new@example.invalid"),
             send_email=False,
         )
 

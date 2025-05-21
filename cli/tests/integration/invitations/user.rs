@@ -54,7 +54,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
 
     let rep = cmds
         .send(invite_new_user::Req {
-            claimer_email: "a@b.c".into(),
+            claimer_email: "a@b.c".parse().unwrap(),
             send_email: false,
         })
         .await

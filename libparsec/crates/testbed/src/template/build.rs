@@ -581,10 +581,10 @@ impl TestbedEventNewDeviceInvitationBuilder<'_> {
  * TestbedEventNewUserInvitation
  */
 
-impl_event_builder!(NewUserInvitation, [claimer_email: String]);
+impl_event_builder!(NewUserInvitation, [claimer_email: EmailAddress]);
 
 impl TestbedEventNewUserInvitationBuilder<'_> {
-    impl_customize_field_meth!(claimer_email, String);
+    impl_customize_field_meth!(claimer_email, EmailAddress);
     impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
     impl_customize_field_meth!(token, InvitationToken);

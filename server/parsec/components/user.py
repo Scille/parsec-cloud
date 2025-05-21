@@ -10,6 +10,7 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
+    EmailAddress,
     HumanHandle,
     OrganizationID,
     RevokedUserCertificate,
@@ -470,7 +471,7 @@ class BaseUserComponent:
         self,
         organization_id: OrganizationID,
         user_id: UserID | None,
-        user_email: str | None,
+        user_email: EmailAddress | None,
         frozen: bool,
     ) -> UserInfo | UserFreezeUserBadOutcome:
         raise NotImplementedError

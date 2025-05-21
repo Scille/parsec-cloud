@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import assert_never
 
 from parsec._parsec import (
+    EmailAddress,
     HumanHandle,
     OrganizationID,
     UserID,
@@ -108,7 +109,7 @@ async def user_freeze_user(
     conn: AsyncpgConnection,
     organization_id: OrganizationID,
     user_id: UserID | None,
-    user_email: str | None,
+    user_email: EmailAddress | None,
     frozen: bool,
 ) -> UserInfo | UserFreezeUserBadOutcome:
     # Note we don't need to lock the `common` topic here given setting the `frozen`
@@ -121,11 +122,11 @@ async def user_freeze_user(
             q = _q_freeze_from_user_id(
                 organization_id=organization_id.str, user_id=user_id, frozen=frozen
             )
-        case (None, str() as user_email):
+        case (None, EmailAddress() as user_email):
             q = _q_freeze_from_email(
-                organization_id=organization_id.str, user_email=user_email, frozen=frozen
+                organization_id=organization_id.str, user_email=str(user_email), frozen=frozen
             )
-        case (UserID(), str()):
+        case (UserID(), EmailAddress()):
             return UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL
         case never:  # pyright: ignore [reportUnnecessaryComparison]
             assert_never(never)
@@ -150,8 +151,8 @@ async def user_freeze_user(
             assert False, unknown
 
     match row["human_handle_email"]:
-        case str() as human_handle_email:
-            pass
+        case str() as raw_human_handle_email:
+            human_handle_email = EmailAddress(raw_human_handle_email)
         case unknown:
             assert False, unknown
 

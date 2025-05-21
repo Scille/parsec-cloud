@@ -14,6 +14,7 @@ from parsec._parsec import (
     CancelledGreetingAttemptReason,
     DateTime,
     DeviceID,
+    EmailAddress,
     GreeterOrClaimer,
     GreetingAttemptID,
     HashDigest,
@@ -97,7 +98,7 @@ class UserInvitation:
     status: InvitationStatus
 
     # User-specific fields
-    claimer_email: str
+    claimer_email: EmailAddress
     administrators: list[UserGreetingAdministrator]
 
 
@@ -140,12 +141,12 @@ Invitation = UserInvitation | DeviceInvitation | ShamirRecoveryInvitation
 
 def generate_invite_email(
     invitation_type: InvitationType,
-    from_addr: str,
-    to_addr: str,
+    from_addr: EmailAddress,
+    to_addr: EmailAddress,
     organization_id: OrganizationID,
     invitation_url: str,
     server_url: str,
-    reply_to: str | None = None,
+    reply_to: EmailAddress | None = None,
     greeter_name: str | None = None,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
@@ -181,8 +182,8 @@ def generate_invite_email(
         message["Subject"] = f"[Parsec] {greeter_name} invited you to {organization_id.str}"
     else:
         message["Subject"] = f"[Parsec] New device invitation to {organization_id.str}"
-    message["From"] = from_addr
-    message["To"] = to_addr
+    message["From"] = str(from_addr)
+    message["To"] = str(to_addr)
     if reply_to is not None and greeter_name is not None:
         # Contrary to the other address fields, the greeter name can include non-ascii characters
         # Example: "Jean-José" becomes "=?utf-8?q?Jean-Jos=C3=A9?="
@@ -524,7 +525,7 @@ class BaseInviteComponent:
         self,
         organization_id: OrganizationID,
         token: InvitationToken,
-        claimer_email: str,
+        claimer_email: EmailAddress,
         greeter_human_handle: HumanHandle,
     ) -> None | SendEmailBadOutcome:
         if not self._config.server_addr:
@@ -559,7 +560,7 @@ class BaseInviteComponent:
         self,
         organization_id: OrganizationID,
         token: InvitationToken,
-        email: str,
+        email: EmailAddress,
     ) -> None | SendEmailBadOutcome:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
@@ -591,7 +592,7 @@ class BaseInviteComponent:
         self,
         organization_id: OrganizationID,
         token: InvitationToken,
-        email: str,
+        email: EmailAddress,
         greeter_human_handle: HumanHandle,
     ) -> None | SendEmailBadOutcome:
         if not self._config.server_addr:
@@ -630,7 +631,7 @@ class BaseInviteComponent:
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
-        claimer_email: str,
+        claimer_email: EmailAddress,
         send_email: bool,
         # Only needed for testbed template
         force_token: InvitationToken | None = None,

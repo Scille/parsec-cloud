@@ -302,8 +302,8 @@ async def start_backend(
         db_config=db_config,
         blockstore_config=blockstore_config,
         administration_token=None,  # type: ignore
-        email_config=None,  # type: ignore
-        server_addr=None,  # type: ignore
+        email_config=None,
+        server_addr=None,
     )
     # Cannot directly initialize a `CliBackendConfig` since its
     # `administration_token`/`email_config`/`server_addr` fields have not setter.

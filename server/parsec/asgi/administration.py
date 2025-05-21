@@ -58,7 +58,7 @@ from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListU
 from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
 from parsec.logging import get_logger
-from parsec.types import Base64Bytes, SequesterServiceIDField, Unset, UnsetType
+from parsec.types import Base64Bytes, EmailAddressField, SequesterServiceIDField, Unset, UnsetType
 
 if TYPE_CHECKING:
     from parsec.backend import Backend
@@ -510,7 +510,7 @@ async def administration_organization_users(
             "users": [
                 {
                     "user_id": user.user_id.hex,
-                    "user_email": user.human_handle.email,
+                    "user_email": str(user.human_handle.email),
                     "user_name": user.human_handle.label,
                     "frozen": user.frozen,
                 }
@@ -523,7 +523,7 @@ async def administration_organization_users(
 class UserFreezeIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     frozen: bool
-    user_email: str | None = None
+    user_email: EmailAddressField | None = None
     user_id: UserIDField | None = None
 
     @field_validator("user_id", mode="plain")
@@ -573,7 +573,7 @@ async def administration_organization_users_freeze(
         status_code=200,
         content={
             "user_id": user.user_id.hex,
-            "user_email": user.human_handle.email,
+            "user_email": str(user.human_handle.email),
             "user_name": user.human_handle.label,
             "frozen": user.frozen,
         },
