@@ -103,6 +103,12 @@ const routes: Array<RouteRecordRaw> = [
                     redirect: { name: Routes.Workspaces },
                   },
                   {
+                    path: '/:handle(\\d+)/:unknown(.*)*',
+                    redirect: (to): any => {
+                      return { path: `/${to.params.handle}`, query: {} };
+                    },
+                  },
+                  {
                     path: `/:handle(\\d+)/${Routes.Users}`,
                     name: Routes.Users,
                     component: () => import('@/views/users/UsersPage.vue'),
