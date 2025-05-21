@@ -675,7 +675,7 @@ async def authenticated_account_api(request: Request) -> Response:
             pass
         case (
             AuthAuthenticatedAccountAuthBadOutcome.ACCOUNT_NOT_FOUND
-            | AuthAuthenticatedAccountAuthBadOutcome.INVALID_SIGNATURE
+            | AuthAuthenticatedAccountAuthBadOutcome.INVALID_TOKEN
         ):
             _handshake_abort(
                 CustomHttpStatus.BadAuthenticationInfo,
@@ -810,7 +810,7 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
             )
         case (
             AuthAuthenticatedAuthBadOutcome.DEVICE_NOT_FOUND
-            | AuthAuthenticatedAuthBadOutcome.INVALID_SIGNATURE
+            | AuthAuthenticatedAuthBadOutcome.INVALID_TOKEN
         ):
             _handshake_abort(
                 CustomHttpStatus.BadAuthenticationInfo,
@@ -897,7 +897,7 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
             )
         case (
             AuthAuthenticatedAuthBadOutcome.DEVICE_NOT_FOUND
-            | AuthAuthenticatedAuthBadOutcome.INVALID_SIGNATURE
+            | AuthAuthenticatedAuthBadOutcome.INVALID_TOKEN
         ):
             _handshake_abort(
                 CustomHttpStatus.BadAuthenticationInfo,
@@ -1174,7 +1174,7 @@ async def tos_api(raw_organization_id: str, request: Request) -> Response:
             )
         case (
             AuthAuthenticatedAuthBadOutcome.DEVICE_NOT_FOUND
-            | AuthAuthenticatedAuthBadOutcome.INVALID_SIGNATURE
+            | AuthAuthenticatedAuthBadOutcome.INVALID_TOKEN
         ):
             _handshake_abort(
                 CustomHttpStatus.BadAuthenticationInfo,
