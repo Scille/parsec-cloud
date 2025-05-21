@@ -665,7 +665,9 @@
             "cannotDownloadFolders": "Impossible de télécharger des dossiers.",
             "foldersNotDownloaded": "Les dossiers ne seront pas téléchargés.",
             "allFailed": "Impossible de démarrer le téléchargement des fichiers.",
-            "someFailed": "Impossible de démarrer le téléchargement de certains fichiers."
+            "someFailed": "Impossible de démarrer le téléchargement de certains fichiers.",
+            "noPermissions": "Ce site n'a pas les autorisations requises pour sauvegarder un fichier sur votre disque. Veuillez donner les permissions d'édition de fichier à ce site si vous souhaitez télécharger un fichier.",
+            "openFailed": "Impossible d'ouvrir le fichier. Vous pouvez essayer en utilisant la liste des téléchargement de votre navigateur."
         },
         "uploadsLeft": "{amount} imports en attente",
         "copiesLeft": "{amount} copies en attente",
