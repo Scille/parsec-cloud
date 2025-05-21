@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from base64 import urlsafe_b64decode
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
@@ -27,7 +26,6 @@ from parsec._parsec import (
     DateTime,
     InvitationToken,
     OrganizationID,
-    SecretKey,
     anonymous_account_cmds,
     anonymous_cmds,
     authenticated_account_cmds,
@@ -419,15 +417,13 @@ class AccountParsedAuthHeaders:
     client_api_version: ApiVersion
     user_agent: str
     authentication_token: AccountPasswordAuthenticationToken | None
-    # TODO: Remove me once the hmac key is in server state.
-    hmac_key: SecretKey | None
 
 
 def _parse_account_auth_headers_or_abort(
     headers: Headers,
     # TODO: Use FastAPI' path parsing to handle this once it is fixed upstream
     # (see https://github.com/tiangolo/fastapi/pull/10109)
-    with_account_headers: bool,
+    with_authenticated_headers: bool,
     expected_content_type: str | None,
     expected_accept_type: str | None,
 ) -> AccountParsedAuthHeaders:
@@ -457,9 +453,9 @@ def _parse_account_auth_headers_or_abort(
         _handshake_abort(CustomHttpStatus.BadAcceptType, api_version=settled_api_version)
 
     # 4) Check authenticated headers
-    if not with_account_headers:
+    if not with_authenticated_headers:
         authentication_token = None
-        hmac_key = None
+
     else:
         try:
             raw_authorization = headers["Authorization"]
@@ -480,21 +476,11 @@ def _parse_account_auth_headers_or_abort(
                 CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
             )
 
-        # TODO: Remove me once we have access to user hmac key in server state.
-        try:
-            raw_hmac_key = headers["X-Hmac-Key"]
-            hmac_key = SecretKey(urlsafe_b64decode(raw_hmac_key))
-        except KeyError:
-            _handshake_abort(
-                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
-            )
-
     return AccountParsedAuthHeaders(
         settled_api_version=settled_api_version,
         client_api_version=client_api_version,
         user_agent=user_agent,
         authentication_token=authentication_token,
-        hmac_key=hmac_key,
     )
 
 
@@ -628,7 +614,7 @@ async def anonymous_account_api(request: Request) -> Response:
     backend: Backend = request.app.state.backend
     parsed = _parse_account_auth_headers_or_abort(
         headers=request.headers,
-        with_account_headers=False,
+        with_authenticated_headers=False,
         expected_accept_type=None,
         expected_content_type=CONTENT_TYPE_MSGPACK,
     )
@@ -657,17 +643,16 @@ async def authenticated_account_api(request: Request) -> Response:
     backend: Backend = request.app.state.backend
     parsed = _parse_account_auth_headers_or_abort(
         headers=request.headers,
-        with_account_headers=True,
+        with_authenticated_headers=True,
         expected_accept_type=None,
         expected_content_type=CONTENT_TYPE_MSGPACK,
     )
 
     assert parsed.authentication_token is not None
-    assert parsed.hmac_key is not None
 
     body: bytes = await _rpc_get_body_with_limit_check(request)
     outcome = await backend.auth.authenticated_account_auth(
-        now=DateTime.now(), token=parsed.authentication_token, body=body, key=parsed.hmac_key
+        now=DateTime.now(), token=parsed.authentication_token
     )
     match outcome:
         case AuthenticatedAccountAuthInfo():  # TODO as auth_info:

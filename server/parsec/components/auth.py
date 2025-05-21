@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import hashlib
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 from dataclasses import dataclass
 from enum import auto
@@ -70,7 +69,8 @@ class AnonymousAuthInfo:
 
 @dataclass
 class AuthenticatedAccountAuthInfo:
-    pass
+    # Key used to authenticate the client request
+    mac_key: SecretKey
 
 
 @dataclass
@@ -136,8 +136,8 @@ class AuthenticatedToken:
             signature = urlsafe_b64decode(raw_signature)
             device_id = DeviceID.from_hex(raw_device_id.decode("ascii"))
             timestamp = DateTime.from_timestamp_seconds(int(raw_timestamp_us))
-        except ValueError:
-            raise ValueError("Invalid token format")
+        except ValueError as e:
+            raise ValueError("Invalid token format") from e
 
         return cls(
             device_id=device_id,
@@ -158,33 +158,30 @@ class AuthenticatedToken:
 
 @dataclass
 class AccountPasswordAuthenticationToken:
-    timestamp: DateTime
     email: EmailStr
+    timestamp: DateTime
     header_and_payload: bytes
     signature: bytes
 
-    HEADER = b"PARSEC-PASSWORD-HMAC-BLAKE2B"
+    HEADER = b"PARSEC-PASSWORD-MAC-BLAKE2B"
 
     # Only used for tests, but coherent to have it here
     @staticmethod
     def generate_raw(
-        timestamp: DateTime,
         email: EmailStr,
-        body: bytes,
-        key: SecretKey,
+        timestamp: DateTime,
+        mac_key: SecretKey,
     ) -> bytes:
-        raw_timestamp_us = str(timestamp.as_timestamp_seconds()).encode("ascii")
         raw_email = urlsafe_b64encode(email.encode("utf8"))
-        body_sha256 = hashlib.sha256(body).digest()
-        header_and_payload = b".".join(
-            (
-                AccountPasswordAuthenticationToken.HEADER,
-                raw_email,
-                raw_timestamp_us,
-            )
+        raw_timestamp_us = str(timestamp.as_timestamp_seconds()).encode("ascii")
+        header_and_payload = b"%s.%s.%s" % (
+            AccountPasswordAuthenticationToken.HEADER,
+            raw_email,
+            raw_timestamp_us,
         )
-        signature = key.mac_512(header_and_payload + b"." + body_sha256)
-        return b"%s.%s" % (header_and_payload, urlsafe_b64encode(signature))
+        signature = mac_key.mac_512(header_and_payload)
+        raw_signature = urlsafe_b64encode(signature)
+        return b"%s.%s" % (header_and_payload, raw_signature)
 
     @classmethod
     def from_raw(cls, raw: bytes) -> "AccountPasswordAuthenticationToken":
@@ -193,27 +190,23 @@ class AccountPasswordAuthenticationToken:
             header, raw_email, raw_timestamp_us = header_and_payload.split(b".")
             if header != cls.HEADER:
                 raise ValueError
+            signature = urlsafe_b64decode(raw_signature)
             email = urlsafe_b64decode(raw_email).decode("utf8")
             validate_email(email)
             timestamp = DateTime.from_timestamp_seconds(int(raw_timestamp_us))
-            signature = urlsafe_b64decode(raw_signature)
         except ValueError as e:
-            raise ValueError("Invalid token") from e
+            raise ValueError("Invalid token format") from e
 
         return cls(
-            timestamp=timestamp,
             email=email,
+            timestamp=timestamp,
             header_and_payload=header_and_payload,
             signature=signature,
         )
 
-    def verify(self, body: bytes, secret: SecretKey) -> bool:
-        body_sha256 = hashlib.sha256(body).digest()
-        try:
-            expected_signature = secret.mac_512(self.header_and_payload + b"." + body_sha256)
-            return self.signature == expected_signature
-        except CryptoError:
-            return False
+    def verify(self, mac_key: SecretKey) -> bool:
+        expected_signature = mac_key.mac_512(self.header_and_payload)
+        return self.signature == expected_signature
 
 
 class BaseAuthComponent:
@@ -262,9 +255,6 @@ class BaseAuthComponent:
         self,
         now: DateTime,
         token: AccountPasswordAuthenticationToken,
-        body: bytes,
-        # FIXME: Remove me once the server have the user hmac key in its state
-        key: SecretKey,
     ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
         try:
             auth_info = self._account_cache[token.email]
@@ -276,7 +266,7 @@ class BaseAuthComponent:
                 case bad_outcome:
                     return bad_outcome
 
-        if not token.verify(body, key):
+        if not token.verify(auth_info.mac_key):
             return AuthAuthenticatedAccountAuthBadOutcome.INVALID_TOKEN
 
         if timestamps_in_the_ballpark(token.timestamp, now) is not None:
