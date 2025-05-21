@@ -2,17 +2,11 @@
 
 from typing import Any
 
-from pydantic.networks import EmailStr
-
 from parsec._parsec import DateTime, DeviceID, InvitationToken, OrganizationID
 from parsec.components.auth import (
-    AnonymousAccountAuthInfo,
     AnonymousAuthInfo,
-    AuthAnonymousAccountAuthBadOutcome,
     AuthAnonymousAuthBadOutcome,
-    AuthAuthenticatedAccountAuthBadOutcome,
     AuthAuthenticatedAuthBadOutcome,
-    AuthenticatedAccountAuthInfo,
     AuthenticatedAuthInfo,
     AuthInvitedAuthBadOutcome,
     BaseAuthComponent,
@@ -124,15 +118,3 @@ class MemoryAuthComponent(BaseAuthComponent):
             device_internal_id=0,  # Only used by PostgreSQL implementation
             organization_allowed_client_agent=org.allowed_client_agent,
         )
-
-    async def anonymous_account_auth(
-        self,
-        now: DateTime,
-    ) -> AnonymousAccountAuthInfo | AuthAnonymousAccountAuthBadOutcome:
-        return AnonymousAccountAuthInfo()
-
-    async def _get_authenticated_account_info(
-        self, email: EmailStr
-    ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
-        # TODO: Retrieve actual info from state
-        return AuthenticatedAccountAuthInfo()

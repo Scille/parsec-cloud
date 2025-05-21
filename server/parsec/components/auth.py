@@ -55,10 +55,6 @@ class AuthAuthenticatedAuthBadOutcome(BadOutcomeEnum):
     TOKEN_TOO_OLD = auto()
 
 
-class AuthAnonymousAccountAuthBadOutcome(BadOutcomeEnum):
-    pass
-
-
 class AuthAuthenticatedAccountAuthBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
     INVALID_SIGNATURE = auto()
@@ -70,11 +66,6 @@ class AnonymousAuthInfo:
     organization_id: OrganizationID
     organization_internal_id: int
     organization_allowed_client_agent: AllowedClientAgent
-
-
-@dataclass
-class AnonymousAccountAuthInfo:
-    pass
 
 
 @dataclass
@@ -265,12 +256,6 @@ class BaseAuthComponent:
     async def invited_auth(
         self, now: DateTime, organization_id: OrganizationID, token: InvitationToken
     ) -> InvitedAuthInfo | AuthInvitedAuthBadOutcome:
-        raise NotImplementedError
-
-    async def anonymous_account_auth(
-        self,
-        now: DateTime,
-    ) -> AnonymousAccountAuthInfo | AuthAnonymousAccountAuthBadOutcome:
         raise NotImplementedError
 
     async def authenticated_account_auth(

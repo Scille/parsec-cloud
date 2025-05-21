@@ -45,9 +45,7 @@ from parsec.client_context import (
 )
 from parsec.components.auth import (
     AccountPasswordAuthenticationToken,
-    AnonymousAccountAuthInfo,
     AnonymousAuthInfo,
-    AuthAnonymousAccountAuthBadOutcome,
     AuthAnonymousAuthBadOutcome,
     AuthAuthenticatedAccountAuthBadOutcome,
     AuthAuthenticatedAuthBadOutcome,
@@ -635,14 +633,6 @@ async def anonymous_account_api(request: Request) -> Response:
         expected_accept_type=None,
         expected_content_type=CONTENT_TYPE_MSGPACK,
     )
-
-    outcome = await backend.auth.anonymous_account_auth(DateTime.now())
-    match outcome:
-        case AnonymousAccountAuthInfo():  # TODO as auth_info:
-            pass
-        case AuthAnonymousAccountAuthBadOutcome():
-            # No bad case expected (for now)
-            raise NotImplementedError
 
     # Handshake is done
 
