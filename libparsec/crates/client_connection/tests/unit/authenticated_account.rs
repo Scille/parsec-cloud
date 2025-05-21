@@ -18,12 +18,14 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 use reqwest::header::AUTHORIZATION;
 
-#[parsec_test(testbed = "minimal")]
+#[parsec_test(testbed = "empty")]
 async fn ok_mocked(env: &TestbedEnv) {
     ok(env, true).await
 }
 
-#[parsec_test(testbed = "minimal", with_server)]
+// TODO
+#[ignore = "no authentication yet"]
+#[parsec_test(testbed = "empty", with_server)]
 async fn ok_with_server(env: &TestbedEnv) {
     ok(env, false).await
 }
@@ -59,7 +61,7 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
                 .get(AUTHORIZATION)
                 .unwrap()
                 .as_bytes()
-                .starts_with(b"Bearer PARSEC-PASSWORD-HMAC-BLAKE2B.Zm9vQGV4YW1wbGUuY29t."));
+                .starts_with(b"Bearer PARSEC-PASSWORD-MAC-BLAKE2B.Zm9vQGV4YW1wbGUuY29t."));
 
             let body = request.body().unwrap().as_bytes().unwrap();
             let request = authenticated_account_cmds::AnyCmdReq::load(body).unwrap();
@@ -91,14 +93,16 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
     );
 }
 
+// TODO
 #[ignore = "no authentication yet"]
-#[parsec_test(testbed = "minimal")]
+#[parsec_test(testbed = "empty")]
 async fn invalid_token_mocked(env: &TestbedEnv) {
     invalid_token(env, true).await
 }
 
+// TODO
 #[ignore = "no authentication yet"]
-#[parsec_test(testbed = "minimal", with_server)]
+#[parsec_test(testbed = "empty", with_server)]
 async fn invalid_token_with_server(env: &TestbedEnv) {
     invalid_token(env, false).await
 }
@@ -106,7 +110,7 @@ async fn invalid_token_with_server(env: &TestbedEnv) {
 async fn invalid_token(env: &TestbedEnv, mocked: bool) {
     // Bad request: invalid account token
 
-    let bad_addr = ParsecAuthenticatedAccountAddr::new(env.server_addr.clone());
+    let addr = ParsecAuthenticatedAccountAddr::new(env.server_addr.clone());
     let account = AccountPassword {
         email: "foo@example.com".to_owned(),
         time_provider: TimeProvider::default(),
@@ -114,7 +118,7 @@ async fn invalid_token(env: &TestbedEnv, mocked: bool) {
     };
     let cmds = AuthenticatedAccountCmds::new(
         &env.discriminant_dir,
-        bad_addr,
+        addr,
         ProxyConfig::default(),
         Arc::new(account),
     )
