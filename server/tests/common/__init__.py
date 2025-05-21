@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pytest import LogCaptureFixture as VanillaLogCaptureFixture
 
+from .account import *  # noqa
 from .backend import *  # noqa
 from .client import *  # noqa
 from .data import *  # noqa
