@@ -157,6 +157,7 @@ import { InformationManager } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import CustomOrderProcessingPage from '@/views/client-area/dashboard/CustomOrderProcessingPage.vue';
 import CustomOrderInvoicesPage from '@/views/client-area/invoices/CustomOrderInvoicesPage.vue';
+import { useSmallDisplayWarning } from '@/services/smallDisplayWarning';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
@@ -169,6 +170,8 @@ const sidebarWidthProperty = ref('');
 const loggedIn = ref(false);
 const refresh = ref(0);
 const querying = ref(true);
+
+useSmallDisplayWarning(informationManager);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
