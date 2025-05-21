@@ -8,7 +8,7 @@ import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
 import { MsContext, MsPage } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
 
-async function setupNewPage(page: MsPage, testbedPath?: string): Promise<void> {
+export async function setupNewPage(page: MsPage, testbedPath?: string, location: string = '/'): Promise<void> {
   page.on('console', (msg) => console.log('> ', msg.text()));
 
   await page.addInitScript(() => {
@@ -63,7 +63,7 @@ async function setupNewPage(page: MsPage, testbedPath?: string): Promise<void> {
       };
     };
   });
-  await page.goto('/');
+  await page.goto(location);
   await page.waitForLoadState('domcontentloaded');
 
   await expect(page.locator('#app')).toHaveAttribute('app-state', 'initializing');

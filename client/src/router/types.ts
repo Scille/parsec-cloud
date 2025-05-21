@@ -105,7 +105,7 @@ const routes: Array<RouteRecordRaw> = [
                   {
                     path: '/:handle(\\d+)/:unknown(.*)*',
                     redirect: (to): any => {
-                      return { path: `/${to.params.handle}`, query: {} };
+                      return { path: `/${to.params.handle}/${Routes.Workspaces}`, query: {} };
                     },
                   },
                   {
