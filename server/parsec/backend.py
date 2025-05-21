@@ -154,9 +154,6 @@ class Backend:
     async def test_drop_organization(self, id: OrganizationID) -> None:
         await self.organization.test_drop_organization(id)
 
-    async def test_new_account(self) -> str:
-        return await self.account.test_new_account()
-
     async def test_load_template(self, template: TestbedTemplateContent) -> OrganizationID:
         org_id = OrganizationID(f"{template.id.title().replace('_', '')}OrgTemplate")
         match await self.organization.create(

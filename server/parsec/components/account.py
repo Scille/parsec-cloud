@@ -5,7 +5,6 @@ from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import auto
-from uuid import uuid4
 
 from pydantic import EmailStr, TypeAdapter
 
@@ -41,17 +40,6 @@ class BaseAccountComponent:
 
     async def check_signature(self):
         raise NotImplementedError
-
-    async def test_new_account(self) -> str:
-        # generate unique data
-        # the email is generated too to avoid concurrence during tests
-
-        email = f"{uuid4().hex[:4]}@invalid.com"
-
-        # create account
-        await self.create_email_validation_token(email, DateTime.now())
-
-        return email
 
     @api
     async def api_account_create_send_validation_email(
