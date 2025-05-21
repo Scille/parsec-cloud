@@ -46,7 +46,7 @@ def test_account_auth_roundtrip() -> None:
     assert got == expected
 
 
-def test_account_auth_token_verify_signature() -> None:
+def test_account_auth_token_verify() -> None:
     token, key, body = gen_account_auth_token()
 
-    assert token.verify_signature(body, key)
+    assert token.verify(body, key)

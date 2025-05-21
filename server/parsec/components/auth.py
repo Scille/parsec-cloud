@@ -51,13 +51,13 @@ class AuthAuthenticatedAuthBadOutcome(BadOutcomeEnum):
     USER_FROZEN = auto()
     USER_MUST_ACCEPT_TOS = auto()
     DEVICE_NOT_FOUND = auto()
-    INVALID_SIGNATURE = auto()
+    INVALID_TOKEN = auto()
     TOKEN_TOO_OLD = auto()
 
 
 class AuthAuthenticatedAccountAuthBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
-    INVALID_SIGNATURE = auto()
+    INVALID_TOKEN = auto()
     TOKEN_TOO_OLD = auto()
 
 
@@ -146,7 +146,7 @@ class AuthenticatedToken:
             signature=signature,
         )
 
-    def verify_signature(self, verify_key: VerifyKey) -> bool:
+    def verify(self, verify_key: VerifyKey) -> bool:
         try:
             verify_key.verify_with_signature(
                 signature=self.signature, message=self.header_and_payload
@@ -207,7 +207,7 @@ class AccountPasswordAuthenticationToken:
             signature=signature,
         )
 
-    def verify_signature(self, body: bytes, secret: SecretKey) -> bool:
+    def verify(self, body: bytes, secret: SecretKey) -> bool:
         body_sha256 = hashlib.sha256(body).digest()
         try:
             expected_signature = secret.mac_512(self.header_and_payload + b"." + body_sha256)
@@ -276,8 +276,8 @@ class BaseAuthComponent:
                 case bad_outcome:
                     return bad_outcome
 
-        if not token.verify_signature(body, key):
-            return AuthAuthenticatedAccountAuthBadOutcome.INVALID_SIGNATURE
+        if not token.verify(body, key):
+            return AuthAuthenticatedAccountAuthBadOutcome.INVALID_TOKEN
 
         if timestamps_in_the_ballpark(token.timestamp, now) is not None:
             return AuthAuthenticatedAccountAuthBadOutcome.TOKEN_TOO_OLD
@@ -315,8 +315,8 @@ class BaseAuthComponent:
                 case bad_outcome:
                     return bad_outcome
 
-        if not token.verify_signature(auth_info.device_verify_key):
-            return AuthAuthenticatedAuthBadOutcome.INVALID_SIGNATURE
+        if not token.verify(auth_info.device_verify_key):
+            return AuthAuthenticatedAuthBadOutcome.INVALID_TOKEN
 
         if timestamps_in_the_ballpark(token.timestamp, now) is not None:
             return AuthAuthenticatedAuthBadOutcome.TOKEN_TOO_OLD
