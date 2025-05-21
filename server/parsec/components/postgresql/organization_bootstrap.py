@@ -239,7 +239,7 @@ async def organization_bootstrap(
             sequester_authority_certificate=sequester_authority_certificate,
             sequester_authority_verify_key_der=sequester_authority_verify_key_der,
             bootstrapped_on=user_certif.timestamp,
-            email=user_certif.human_handle.email,
+            email=str(user_certif.human_handle.email),
             label=user_certif.human_handle.label,
             user_id=user_certif.user_id,
             initial_profile=user_certif.profile.str,

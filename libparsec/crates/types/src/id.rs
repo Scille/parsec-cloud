@@ -1,11 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use email_address_parser::EmailAddress;
 use serde::{Deserialize, Serialize};
-use serde_with::{DeserializeFromStr, SerializeDisplay};
-use std::hash::Hash;
-use std::str::FromStr;
-use std::{convert::TryFrom, fmt::Display};
+use serde_with::{serde_as, DeserializeFromStr, SerializeDisplay};
+use std::{convert::TryFrom, fmt::Display, hash::Hash, ops::Deref, str::FromStr};
 use unicode_normalization::UnicodeNormalization;
 
 use crate::impl_from_maybe;
@@ -512,11 +509,12 @@ impl<T> From<MaybeRedacted<T>> for Option<T> {
  * HumanHandle
  */
 
+#[serde_as]
 #[derive(Clone, Serialize, Deserialize, Eq, PartialOrd)]
 #[serde(try_from = "(&str, &str)", into = "(String, String)")]
 #[non_exhaustive] // Prevent initialization without going through the factory
 pub struct HumanHandle {
-    email: String,
+    email: EmailAddress,
     // Label is purely informative
     label: String,
     // Cache the display str
@@ -573,7 +571,7 @@ impl TryFrom<&str> for HumanHandle {
             .chars()
             .position(|c| c == '>')
             .ok_or(HumanHandleParseError::MissingEmail)?;
-        Self::new(&s[start + 1..stop], &s[..start - 1])
+        Self::from_raw(&s[start + 1..stop], &s[..start - 1])
     }
 }
 
@@ -588,19 +586,14 @@ impl FromStr for HumanHandle {
 }
 
 impl HumanHandle {
-    pub fn new(email: &str, label: &str) -> Result<Self, HumanHandleParseError> {
+    pub fn new(email: EmailAddress, label: &str) -> Result<Self, HumanHandleParseError> {
         // A word about `<string>.nfc()`: In the unicode code we have multiple forms to represent the same glyph.
         // We have 2 notable forms _Normalization From canonical Decomposition_ (NFD) and _Normalization From canonical Composition_ (NFC)
         // For example: the `small letter A with acute` (á) would be encoded in NFD as `small letter a + acute accent` as for NFC `small letter a with acute`.
         //
         // So we need to normalize the string to have consistant comparison latter on.
-        let email = email.nfc().collect::<String>();
         let label = label.nfc().collect::<String>();
         let display = format!("{label} <{email}>");
-
-        if !Self::email_is_valid(email.as_str()) {
-            return Err(HumanHandleParseError::InvalidEmail);
-        }
         if !Self::label_is_valid(label.as_str()) {
             return Err(HumanHandleParseError::InvalidLabel);
         }
@@ -610,6 +603,13 @@ impl HumanHandle {
             label,
             display,
         })
+    }
+
+    pub fn from_raw(email: &str, label: &str) -> Result<Self, HumanHandleParseError> {
+        email
+            .parse()
+            .map_err(|_| HumanHandleParseError::InvalidEmail)
+            .and_then(|email| Self::new(email, label))
     }
 
     /// Redacted certificate doesn't provide the real human handle, here we build
@@ -622,7 +622,14 @@ impl HumanHandle {
     /// is used to do the conversion while retaining ID unicity.
     pub fn new_redacted(user_id: UserID) -> Self {
         let label = user_id.hex();
-        let email = format!("{}@{}", &label, HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN);
+        let email = EmailAddress::new(
+            email_address_parser::EmailAddress::new(
+                &label,
+                HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN,
+                None,
+            )
+            .expect("Invalid generated redacted email"),
+        );
         let display = format!("{label} <{email}>");
 
         Self {
@@ -633,21 +640,7 @@ impl HumanHandle {
     }
 
     pub fn uses_redacted_domain(&self) -> bool {
-        matches!(
-            self.email.rsplit_once('@'),
-            Some((_, domain)) if domain == HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN
-        )
-    }
-
-    pub fn email_is_valid(email: &str) -> bool {
-        if email.len() < 255 {
-            if let Some(parsed) = EmailAddress::parse(email, None) {
-                if parsed.get_domain() != HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN {
-                    return true;
-                }
-            }
-        }
-        false
+        self.email.get_domain() == HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN
     }
 
     pub fn label_is_valid(label: &str) -> bool {
@@ -662,7 +655,7 @@ impl HumanHandle {
             })
     }
 
-    pub fn email(&self) -> &str {
+    pub fn email(&self) -> &EmailAddress {
         &self.email
     }
 
@@ -675,17 +668,132 @@ impl TryFrom<(&str, &str)> for HumanHandle {
     type Error = HumanHandleParseError;
 
     fn try_from((email, label): (&str, &str)) -> Result<Self, Self::Error> {
-        Self::new(email, label)
+        Self::from_raw(email, label)
     }
 }
 
 impl From<HumanHandle> for (String, String) {
     fn from(item: HumanHandle) -> (String, String) {
-        (item.email, item.label)
+        (item.email.to_string(), item.label)
     }
 }
 
 crate::impl_from_maybe!(Option<HumanHandle>);
+
+#[derive(Clone, SerializeDisplay, DeserializeFromStr)]
+pub struct EmailAddress {
+    value: email_address_parser::EmailAddress,
+    display: String,
+}
+
+impl EmailAddress {
+    fn new(email: email_address_parser::EmailAddress) -> Self {
+        let display = email.to_string();
+        Self {
+            value: email,
+            display,
+        }
+    }
+}
+
+impl PartialEq for EmailAddress {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
+}
+
+impl Eq for EmailAddress {}
+
+impl Hash for EmailAddress {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.value.hash(state);
+    }
+}
+
+impl Deref for EmailAddress {
+    type Target = email_address_parser::EmailAddress;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl AsRef<str> for EmailAddress {
+    fn as_ref(&self) -> &str {
+        &self.display
+    }
+}
+
+impl PartialOrd for EmailAddress {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for EmailAddress {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.get_domain()
+            .cmp(other.get_domain())
+            .then_with(|| self.get_local_part().cmp(other.get_local_part()))
+    }
+}
+
+impl std::fmt::Debug for EmailAddress {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.value, f)
+    }
+}
+
+impl Display for EmailAddress {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.display)
+    }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum EmailAddressParseError {
+    #[error("Failed to parse email: {}", .0)]
+    ParseError(#[from] ::core::fmt::Error),
+    #[error("Invalid email domain")]
+    InvalidDomain,
+}
+
+impl FromStr for EmailAddress {
+    type Err = EmailAddressParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // A word about `<string>.nfc()`: In the unicode code we have multiple forms to represent the same glyph.
+        // We have 2 notable forms _Normalization From canonical Decomposition_ (NFD) and _Normalization From canonical Composition_ (NFC)
+        // For example: the `small letter A with acute` (á) would be encoded in NFD as `small letter a + acute accent` as for NFC `small letter a with acute`.
+        //
+        // So we need to normalize the string to have consistant comparison latter on.
+        let normalized = s.nfc().collect::<String>();
+        normalized
+            .parse::<email_address_parser::EmailAddress>()
+            .map_err(EmailAddressParseError::ParseError)
+            .and_then(Self::try_from)
+    }
+}
+
+impl TryFrom<&str> for EmailAddress {
+    type Error = <Self as FromStr>::Err;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        value.parse()
+    }
+}
+
+impl TryFrom<email_address_parser::EmailAddress> for EmailAddress {
+    type Error = EmailAddressParseError;
+
+    fn try_from(value: email_address_parser::EmailAddress) -> Result<Self, Self::Error> {
+        if value.get_domain() == HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN {
+            Err(EmailAddressParseError::InvalidDomain)
+        } else {
+            Ok(Self::new(value))
+        }
+    }
+}
 
 /*
  * UserProfile

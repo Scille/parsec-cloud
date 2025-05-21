@@ -7,11 +7,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import auto
 
-from pydantic import EmailStr, TypeAdapter
-
 from parsec._parsec import (
     AccountAuthMethodID,
     DateTime,
+    EmailAddress,
     EmailValidationToken,
     HashDigest,
     ParsecAccountEmailValidationAddr,
@@ -40,9 +39,6 @@ PasswordAlgorithm = PasswordAlgorithmArgon2ID
 """
 The algorithm and full configuration to obtain the `auth_method_master_secret` from the user's password.
 """
-
-
-EmailAdapter = TypeAdapter(EmailStr)
 
 
 class AccountCreateEmailValidationTokenBadOutcome(BadOutcomeEnum):
@@ -80,7 +76,7 @@ class BaseAccountComponent:
         self._config = config
 
     async def create_email_validation_token(
-        self, email: EmailStr, now: DateTime
+        self, email: EmailAddress, now: DateTime
     ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
         raise NotImplementedError
 
@@ -88,7 +84,7 @@ class BaseAccountComponent:
         raise NotImplementedError
 
     def get_password_mac_key(
-        self, user_email: EmailStr
+        self, user_email: EmailAddress
     ) -> SecretKey | AccountGetPasswordSecretKeyBadOutcome:
         raise NotImplementedError
 
@@ -123,18 +119,10 @@ class BaseAccountComponent:
         client_ctx: AnonymousAccountClientContext,
         req: anonymous_account_cmds.latest.account_create_send_validation_email.Req,
     ) -> anonymous_account_cmds.latest.account_create_send_validation_email.Rep:
-        try:
-            # TODO use specific email type #10211
-            email_parsed = EmailAdapter.validate_python(req.email)
-        except ValueError:
-            return (
-                anonymous_account_cmds.latest.account_create_send_validation_email.RepInvalidEmail()
-            )
-
-        outcome = await self.create_email_validation_token(email_parsed, DateTime.now())
+        outcome = await self.create_email_validation_token(req.email, DateTime.now())
         match outcome:
             case EmailValidationToken() as token:
-                outcome = await self._send_email_validation_token(token, email_parsed)
+                outcome = await self._send_email_validation_token(token, req.email)
                 match outcome:
                     case None:
                         return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
@@ -196,7 +184,7 @@ class BaseAccountComponent:
     async def _send_email_validation_token(
         self,
         token: EmailValidationToken,
-        claimer_email: str,
+        claimer_email: EmailAddress,
     ) -> None | SendEmailBadOutcome:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
@@ -223,7 +211,7 @@ class BaseAccountComponent:
             seconds=self._config.account_config.account_confirmation_email_resend_delay
         )
 
-    def test_get_token_by_email(self, email: str) -> EmailValidationToken | None:
+    def test_get_token_by_email(self, email: EmailAddress) -> EmailValidationToken | None:
         raise NotImplementedError
 
     @api
@@ -262,8 +250,8 @@ class BaseAccountComponent:
 
 
 def generate_email_validation_email(
-    from_addr: str,
-    to_addr: str,
+    from_addr: EmailAddress,
+    to_addr: EmailAddress,
     validation_url: str,
     server_url: str,
 ) -> Message:
@@ -284,8 +272,8 @@ def generate_email_validation_email(
     message = MIMEMultipart("alternative")
 
     message["Subject"] = "Parsec Account: Confirm your email address"
-    message["From"] = from_addr
-    message["To"] = to_addr
+    message["From"] = str(from_addr)
+    message["To"] = str(to_addr)
 
     # Turn parts into MIMEText objects
     part1 = MIMEText(text, "plain")

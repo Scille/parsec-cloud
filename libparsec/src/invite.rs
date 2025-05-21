@@ -146,7 +146,7 @@ pub async fn claimer_retrieve_info(
 
     match ctx {
         libparsec_client::AnyClaimRetrievedInfoCtx::User(ctx) => {
-            let claimer_email = ctx.claimer_email().to_string();
+            let claimer_email = ctx.claimer_email().to_owned();
             let created_by = ctx.created_by().to_owned();
             let administrators = ctx.administrators().to_owned();
             let preferred_greeter = ctx.preferred_greeter().to_owned();
@@ -298,7 +298,7 @@ pub async fn claimer_greeter_abort_operation(
 pub enum AnyClaimRetrievedInfo {
     User {
         handle: Handle,
-        claimer_email: String,
+        claimer_email: EmailAddress,
         created_by: InviteInfoInvitationCreatedBy,
         administrators: Vec<UserGreetingAdministrator>,
         preferred_greeter: Option<UserGreetingAdministrator>,
@@ -1052,7 +1052,7 @@ pub struct NewInvitationInfo {
 
 pub async fn client_new_user_invitation(
     client: Handle,
-    claimer_email: String,
+    claimer_email: EmailAddress,
     send_email: bool,
 ) -> Result<NewInvitationInfo, ClientNewUserInvitationError> {
     let client = borrow_from_handle(client, |x| match x {
@@ -1145,7 +1145,7 @@ pub enum InviteListItem {
         token: InvitationToken,
         created_on: DateTime,
         created_by: InviteListInvitationCreatedBy,
-        claimer_email: String,
+        claimer_email: EmailAddress,
         status: InvitationStatus,
     },
     Device {

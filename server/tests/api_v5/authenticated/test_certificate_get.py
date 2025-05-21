@@ -9,6 +9,7 @@ from parsec._parsec import (
     DeviceID,
     DeviceLabel,
     DevicePurpose,
+    EmailAddress,
     HashAlgorithm,
     HumanHandle,
     InvitationToken,
@@ -80,7 +81,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         timestamp=t1,
         user_id=alice_user_id,
         profile=UserProfile.ADMIN,
-        human_handle=HumanHandle(label="Alice", email="alice@example.invalid"),
+        human_handle=HumanHandle(label="Alice", email=EmailAddress("alice@example.invalid")),
         public_key=alice_privkey.public_key,
         algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
     ).dump_and_sign(root_key)
@@ -150,7 +151,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         timestamp=t2,
         user_id=bob_user_id,
         profile=UserProfile.STANDARD,
-        human_handle=HumanHandle(label="Bob", email="bob@example.invalid"),
+        human_handle=HumanHandle(label="Bob", email=EmailAddress("bob@example.invalid")),
         public_key=bob_privkey.public_key,
         algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
     ).dump_and_sign(alice_signkey)
@@ -237,7 +238,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         timestamp=t4,
         user_id=mallory_user_id,
         profile=UserProfile.OUTSIDER,
-        human_handle=HumanHandle(label="Mallory", email="mallory@example.invalid"),
+        human_handle=HumanHandle(label="Mallory", email=EmailAddress("mallory@example.invalid")),
         public_key=mallory_privkey.public_key,
         algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
     ).dump_and_sign(alice_signkey)

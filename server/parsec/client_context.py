@@ -5,12 +5,11 @@ from dataclasses import dataclass, field
 from typing import NoReturn
 from uuid import uuid4
 
-from pydantic import EmailStr
-
 from parsec._parsec import (
     AccountAuthMethodID,
     ApiVersion,
     DeviceID,
+    EmailAddress,
     InvitationToken,
     InvitationType,
     OrganizationID,
@@ -196,7 +195,7 @@ class AnonymousAccountClientContext:
 class AuthenticatedAccountClientContext:
     client_api_version: ApiVersion
     settled_api_version: ApiVersion
-    account_email: EmailStr
+    account_email: EmailAddress
     auth_method_id: AccountAuthMethodID
     logger: ParsecBoundLogger = field(init=False)
 

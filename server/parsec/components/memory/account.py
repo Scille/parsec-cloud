@@ -2,11 +2,10 @@
 
 from typing import override
 
-from pydantic import EmailStr
-
 from parsec._parsec import (
     AccountAuthMethodID,
     DateTime,
+    EmailAddress,
     EmailValidationToken,
     HashDigest,
     SecretKey,
@@ -44,7 +43,7 @@ class MemoryAccountComponent(BaseAccountComponent):
 
     @override
     async def create_email_validation_token(
-        self, email: EmailStr, now: DateTime
+        self, email: EmailAddress, now: DateTime
     ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
         if email in self._data.accounts:
             return AccountCreateEmailValidationTokenBadOutcome.ACCOUNT_ALREADY_EXISTS
@@ -114,7 +113,7 @@ class MemoryAccountComponent(BaseAccountComponent):
 
     @override
     def get_password_mac_key(
-        self, user_email: EmailStr
+        self, user_email: EmailAddress
     ) -> SecretKey | AccountGetPasswordSecretKeyBadOutcome:
         account = self._data.accounts.get(user_email)
         if account is None:
@@ -136,7 +135,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         return secret_key
 
     @override
-    def test_get_token_by_email(self, email: str) -> EmailValidationToken | None:
+    def test_get_token_by_email(self, email: EmailAddress) -> EmailValidationToken | None:
         """Use only in tests, nothing is checked."""
         return self._data.unverified_emails[email][0]
 

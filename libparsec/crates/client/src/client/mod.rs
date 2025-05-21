@@ -558,7 +558,7 @@ impl Client {
 
     pub async fn new_user_invitation(
         &self,
-        claimer_email: String,
+        claimer_email: EmailAddress,
         send_email: bool,
     ) -> Result<(InvitationToken, InvitationEmailSentStatus), ClientNewUserInvitationError> {
         crate::invite::new_user_invitation(&self.cmds, claimer_email, send_email).await

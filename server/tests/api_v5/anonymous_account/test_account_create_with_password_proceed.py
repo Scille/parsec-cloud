@@ -3,6 +3,7 @@
 
 from parsec._parsec import (
     AccountAuthMethodID,
+    EmailAddress,
     EmailValidationToken,
     SecretKey,
     anonymous_account_cmds,
@@ -15,7 +16,7 @@ async def test_anonymous_account_account_create_with_password_proceed_ok(
     anonymous_account: AnonymousAccountRpcClient,
     backend: Backend,
 ) -> None:
-    email = "alice@invalid.com"
+    email = EmailAddress("alice@invalid.com")
     # 1st account creation request
 
     rep = await anonymous_account.account_create_send_validation_email(email=email)
@@ -49,7 +50,7 @@ async def test_anonymous_account_account_create_with_password_proceed_invalid_va
     anonymous_account: AnonymousAccountRpcClient,
     backend: Backend,
 ):
-    email = "alice@invalid.com"
+    email = EmailAddress("alice@invalid.com")
     # 1st account creation request
 
     rep = await anonymous_account.account_create_send_validation_email(email=email)
@@ -109,7 +110,7 @@ async def test_anonymous_account_account_create_with_password_proceed_auth_metho
     backend: Backend,
 ):
     # 1st ok account creation
-    email = "alice@invalid.com"
+    email = EmailAddress("alice@invalid.com")
     # 1st account creation request
 
     rep = await anonymous_account.account_create_send_validation_email(email=email)
@@ -133,7 +134,7 @@ async def test_anonymous_account_account_create_with_password_proceed_auth_metho
     assert rep == anonymous_account_cmds.latest.account_create_with_password_proceed.RepOk()
 
     # Second account creation
-    email = "bob@invalid.com"
+    email = EmailAddress("bob@invalid.com")
     rep = await anonymous_account.account_create_send_validation_email(email=email)
     assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
 

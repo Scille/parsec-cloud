@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, HumanHandle, UserID
+from parsec._parsec import DateTime, EmailAddress, HumanHandle, UserID
 
 class InvitationType:
     pass
@@ -12,14 +12,14 @@ class InvitationType:
 class InvitationTypeUser(InvitationType):
     def __init__(
         self,
-        claimer_email: str,
+        claimer_email: EmailAddress,
         created_by: InvitationCreatedBy,
         administrators: list[UserGreetingAdministrator],
     ) -> None: ...
     @property
     def administrators(self) -> list[UserGreetingAdministrator]: ...
     @property
-    def claimer_email(self) -> str: ...
+    def claimer_email(self) -> EmailAddress: ...
     @property
     def created_by(self) -> InvitationCreatedBy: ...
 

@@ -69,20 +69,20 @@ pub fn rep_ok() {
                 "9b68ba5cdf428ea0017fc6bcc04d4a"
             )[..],
             invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::InvitationType::User {
-                claimer_email: "alice@dev1".to_owned(),
+                claimer_email: "alice@dev1".parse().unwrap(),
                 created_by: invited_cmds::invite_info::InvitationCreatedBy::User {
-                    human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
+                    human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
                     user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                 },
                 administrators: vec![
                     invited_cmds::invite_info::UserGreetingAdministrator {
-                        human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
+                        human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
                         user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                         online_status: invited_cmds::invite_info::UserOnlineStatus::Unknown,
                         last_greeting_attempt_joined_on: None,
                     },
                     invited_cmds::invite_info::UserGreetingAdministrator {
-                        human_handle: HumanHandle::new("carl@dev1", "carl").unwrap(),
+                        human_handle: HumanHandle::from_raw("carl@dev1", "carl").unwrap(),
                         user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4b").unwrap(),
                         online_status: invited_cmds::invite_info::UserOnlineStatus::Online,
                         last_greeting_attempt_joined_on: Some(
@@ -116,19 +116,19 @@ pub fn rep_ok() {
                 "4c5f53455256494345ad736572766963655f6c6162656ca44c444150"
             )[..],
             invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::InvitationType::User {
-                claimer_email: "alice@dev1".to_owned(),
+                claimer_email: "alice@dev1".parse().unwrap(),
                 created_by: invited_cmds::invite_info::InvitationCreatedBy::ExternalService {
                     service_label: "LDAP".to_owned(),
                 },
                 administrators: vec![
                     invited_cmds::invite_info::UserGreetingAdministrator {
-                        human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
+                        human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
                         user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                         online_status: invited_cmds::invite_info::UserOnlineStatus::Unknown,
                         last_greeting_attempt_joined_on: None,
                     },
                     invited_cmds::invite_info::UserGreetingAdministrator {
-                        human_handle: HumanHandle::new("carl@dev1", "carl").unwrap(),
+                        human_handle: HumanHandle::from_raw("carl@dev1", "carl").unwrap(),
                         user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4b").unwrap(),
                         online_status: invited_cmds::invite_info::UserOnlineStatus::Online,
                         last_greeting_attempt_joined_on: Some(
@@ -155,9 +155,9 @@ pub fn rep_ok() {
             )[..],
             invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::InvitationType::Device {
                 claimer_user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
-                claimer_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
+                claimer_human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
                 created_by: invited_cmds::invite_info::InvitationCreatedBy::User {
-                    human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
+                    human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
                     user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                 },
             }),
@@ -192,23 +192,25 @@ pub fn rep_ok() {
             invited_cmds::invite_info::Rep::Ok(
                 invited_cmds::invite_info::InvitationType::ShamirRecovery {
                     claimer_user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4c").unwrap(),
-                    claimer_human_handle: HumanHandle::new("carl@example.com", "carl").unwrap(),
+                    claimer_human_handle: HumanHandle::from_raw("carl@example.com", "carl")
+                        .unwrap(),
                     created_by: invited_cmds::invite_info::InvitationCreatedBy::User {
-                        human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
+                        human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
                         user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                     },
                     shamir_recovery_created_on: "2000-1-1T01:00:00Z".parse().unwrap(),
                     recipients: vec![
                         invited_cmds::invite_info::ShamirRecoveryRecipient {
                             user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
-                            human_handle: HumanHandle::new("alice@example.com", "alice").unwrap(),
+                            human_handle: HumanHandle::from_raw("alice@example.com", "alice")
+                                .unwrap(),
                             shares: 1.try_into().unwrap(),
                             revoked_on: None,
                             online_status: invited_cmds::invite_info::UserOnlineStatus::Online,
                         },
                         invited_cmds::invite_info::ShamirRecoveryRecipient {
                             user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4b").unwrap(),
-                            human_handle: HumanHandle::new("bob@example.com", "bob").unwrap(),
+                            human_handle: HumanHandle::from_raw("bob@example.com", "bob").unwrap(),
                             shares: 1.try_into().unwrap(),
                             revoked_on: Some("2000-1-2T01:00:00Z".parse().unwrap()),
                             online_status: invited_cmds::invite_info::UserOnlineStatus::Unknown,

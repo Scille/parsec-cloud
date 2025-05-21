@@ -13,6 +13,7 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     DeviceLabel,
+    EmailAddress,
     HashAlgorithm,
     OrganizationID,
     SecretKeyAlgorithm,
@@ -37,7 +38,7 @@ class OrganizationBootstrapWebhook(BaseModel):
     organization_id: OrganizationIDField
     device_id: DeviceIDField
     device_label: DeviceLabelField
-    human_email: str
+    human_email: EmailAddress
     human_label: str
 
 
@@ -51,7 +52,7 @@ class WebhooksComponent:
         organization_id: OrganizationID,
         device_id: DeviceID,
         device_label: DeviceLabel,
-        human_email: str,
+        human_email: EmailAddress,
         human_label: str,
     ) -> None:
         if not self._config.organization_bootstrap_webhook_url:

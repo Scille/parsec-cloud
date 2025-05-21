@@ -20,7 +20,7 @@
                 },
                 {
                     "name": "submitter_der_x509_certificate_email",
-                    "type": "String"
+                    "type": "EmailAddress"
                 },
                 {
                     "name": "submit_payload_signature",

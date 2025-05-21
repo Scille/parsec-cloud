@@ -12,6 +12,7 @@ from parsec._parsec import (
     CancelledGreetingAttemptReason,
     DateTime,
     DeviceID,
+    EmailAddress,
     GreeterOrClaimer,
     GreetingAttemptID,
     HumanHandle,
@@ -95,7 +96,7 @@ class BaseInvitationInfo:
 
 @dataclass(frozen=True)
 class UserInvitationInfo(BaseInvitationInfo):
-    claimer_email: str
+    claimer_email: EmailAddress
 
 
 @dataclass(frozen=True)
@@ -144,7 +145,9 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
                 case (str() as created_by_email, str() as created_by_label):
                     created_by = InvitationCreatedByUser(
                         user_id=UserID.from_hex(created_by_user_id_str),
-                        human_handle=HumanHandle(email=created_by_email, label=created_by_label),
+                        human_handle=HumanHandle(
+                            email=EmailAddress(created_by_email), label=created_by_label
+                        ),
                     )
                 case unknown:
                     assert False, repr(unknown)
@@ -173,8 +176,8 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
 
     if type == InvitationType.USER:
         match record["user_invitation_claimer_email"]:
-            case str() as claimer_email:
-                pass
+            case str() as raw_claimer_email:
+                claimer_email = EmailAddress(raw_claimer_email)
             case unknown:
                 assert False, repr(unknown)
 
@@ -213,7 +216,7 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
         ):
             case (str() as claimer_human_email, str() as claimer_human_label):
                 claimer_human_handle = HumanHandle(
-                    email=claimer_human_email, label=claimer_human_label
+                    email=EmailAddress(claimer_human_email), label=claimer_human_label
                 )
             case unknown:
                 assert False, repr(unknown)
@@ -258,7 +261,8 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
                 str() as shamir_recovery_setup_human_label,
             ):
                 claimer_human_handle = HumanHandle(
-                    email=shamir_recovery_setup_human_email, label=shamir_recovery_setup_human_label
+                    email=EmailAddress(shamir_recovery_setup_human_email),
+                    label=shamir_recovery_setup_human_label,
                 )
             case unknown:
                 assert False, repr(unknown)
@@ -985,13 +989,13 @@ GROUP BY user_.user_id, human.email, human.label
 
 
 async def query_retrieve_active_human_by_email(
-    conn: AsyncpgConnection, organization_id: OrganizationID, email: str
+    conn: AsyncpgConnection, organization_id: OrganizationID, email: EmailAddress
 ) -> UserID | None:
     result = await conn.fetchrow(
         *_q_retrieve_active_human_by_email(
             organization_id=organization_id.str,
             now=DateTime.now(),
-            email=email,
+            email=str(email),
         )
     )
     if result:
@@ -1121,19 +1125,22 @@ async def _do_new_invitation(
     organization_id: OrganizationID,
     author_user_id: UserID,
     author_device_id: DeviceID,
-    user_invitation_claimer_email: str | None,
+    user_invitation_claimer_email: EmailAddress | None,
     device_invitation_claimer_user_id: UserID | None,
     shamir_recovery_setup: int | None,
     created_on: DateTime,
     invitation_type: InvitationType,
     suggested_token: InvitationToken,
 ) -> InvitationToken:
+    raw_user_invitation_email = (
+        str(user_invitation_claimer_email) if user_invitation_claimer_email else None
+    )
     match invitation_type:
         case InvitationType.USER:
             assert user_invitation_claimer_email is not None
             q = _q_retrieve_compatible_user_invitation(
                 organization_id=organization_id.str,
-                user_invitation_claimer_email=user_invitation_claimer_email,
+                user_invitation_claimer_email=raw_user_invitation_email,
             )
         case InvitationType.DEVICE:
             q = _q_retrieve_compatible_device_invitation(
@@ -1163,7 +1170,7 @@ async def _do_new_invitation(
                 organization_id=organization_id.str,
                 type=invitation_type.str,
                 token=token.hex,
-                user_invitation_claimer_email=user_invitation_claimer_email,
+                user_invitation_claimer_email=raw_user_invitation_email,
                 device_invitation_claimer_user_id=device_invitation_claimer_user_id,
                 shamir_recovery_setup=shamir_recovery_setup,
                 created_by=author_device_id,
@@ -1213,7 +1220,8 @@ async def _human_handle_from_user_id(
         )
     )
     if result:
-        return HumanHandle(email=result["email"], label=result["label"])
+        email = EmailAddress(result["email"])
+        return HumanHandle(email=email, label=result["label"])
     return None
 
 
@@ -1237,7 +1245,7 @@ class PGInviteComponent(BaseInviteComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
-        claimer_email: str,
+        claimer_email: EmailAddress,
         send_email: bool,
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
@@ -1462,7 +1470,7 @@ class PGInviteComponent(BaseInviteComponent):
         recipients = [
             ShamirRecoveryRecipient(
                 user_id=UserID.from_hex(row["user_id"]),
-                human_handle=HumanHandle(email=row["email"], label=row["label"]),
+                human_handle=HumanHandle(email=EmailAddress(row["email"]), label=row["label"]),
                 shares=row["shares"],
                 revoked_on=row["revoked_on"],
                 online_status=UserOnlineStatus.UNKNOWN,
@@ -1491,7 +1499,7 @@ class PGInviteComponent(BaseInviteComponent):
 
             match (row["email"], row["label"]):
                 case (str() as raw_email, str() as raw_label):
-                    human_handle = HumanHandle(email=raw_email, label=raw_label)
+                    human_handle = HumanHandle(email=EmailAddress(raw_email), label=raw_label)
                 case unknown:
                     assert False, repr(unknown)
 

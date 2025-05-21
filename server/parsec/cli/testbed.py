@@ -13,7 +13,7 @@ import structlog
 from fastapi import APIRouter, BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from parsec._parsec import OrganizationID, ParsecAddr
+from parsec._parsec import EmailAddress, OrganizationID, ParsecAddr
 
 try:
     from parsec._parsec import testbed
@@ -256,7 +256,7 @@ async def testbed_backend_factory(
         sse_keepalive=30,
         proxy_trusted_addresses=None,
         server_addr=server_addr,
-        email_config=MockedEmailConfig("no-reply@parsec.com", tmpdir),
+        email_config=MockedEmailConfig(EmailAddress("no-reply@parsec.com"), tmpdir),
         blockstore_config=blockstore_config,
         administration_token="s3cr3t",
         organization_spontaneous_bootstrap=True,

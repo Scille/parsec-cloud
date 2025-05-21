@@ -104,12 +104,12 @@ async fn main() -> ExitCode {
     // Copy the realm export database since SQLite modifies the file in place
     // even when only doing read operations.
     struct RemoveDirOnDrop<'a>(&'a Path);
-    impl<'a> Drop for RemoveDirOnDrop<'a> {
+    impl Drop for RemoveDirOnDrop<'_> {
         fn drop(&mut self) {
             let _ = std::fs::remove_dir_all(self.0);
         }
     }
-    let temp_dir = std::env::temp_dir().join(&format!(
+    let temp_dir = std::env::temp_dir().join(format!(
         "parsec-mountpoint-example-realm_export_for_sequester-{}",
         uuid::Uuid::new_v4()
     ));
@@ -164,10 +164,7 @@ async fn main() -> ExitCode {
             let mountpoint_name_hint: EntryName = {
                 // Format snapshot as `yyyymmddThhmmssZ` format (shorter, and Windows doesn't allow `:` in paths)
                 let ts = {
-                    let ts = timestamp_of_interest
-                        .to_rfc3339()
-                        .replace('-', "")
-                        .replace(':', "");
+                    let ts = timestamp_of_interest.to_rfc3339().replace(['-', ':'], "");
                     match ts.split_once('.') {
                         Some((dt, _)) => format!("{}Z", dt),
                         None => ts.to_owned(),

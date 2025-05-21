@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    EmailAddress,
     HumanHandle,
     OrganizationID,
     UserID,
@@ -45,8 +46,8 @@ async def user_list_users(
                 assert False, row
 
         match row["human_email"]:
-            case str() as human_email:
-                pass
+            case str() as raw_human_email:
+                human_email = EmailAddress(raw_human_email)
             case _:
                 assert False, row
 

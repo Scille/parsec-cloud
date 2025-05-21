@@ -20,7 +20,7 @@ async fn ok(tmp_path: TmpPath) {
     let device = LocalDevice::generate_new_device(
         initial_organization_addr,
         UserProfile::Admin,
-        HumanHandle::new("alice@dev1", "alice").unwrap(),
+        HumanHandle::from_raw("alice@dev1", "alice").unwrap(),
         "alice label".parse().unwrap(),
         None,
         None,

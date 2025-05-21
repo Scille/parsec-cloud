@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, EnrollmentID
+from parsec._parsec import DateTime, EmailAddress, EnrollmentID
 
 class Req:
     def __init__(
@@ -12,7 +12,7 @@ class Req:
         enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: str,
+        submitter_der_x509_certificate_email: EmailAddress,
         submit_payload_signature: bytes,
         submit_payload: bytes,
     ) -> None: ...
@@ -28,7 +28,7 @@ class Req:
     @property
     def submitter_der_x509_certificate(self) -> bytes: ...
     @property
-    def submitter_der_x509_certificate_email(self) -> str: ...
+    def submitter_der_x509_certificate_email(self) -> EmailAddress: ...
 
 class Rep:
     @staticmethod

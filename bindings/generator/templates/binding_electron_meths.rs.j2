@@ -871,6 +871,7 @@ fn {{ meth.name }}(mut cx: FunctionContext) -> JsResult<JsPromise> {
 {{ api.rust_code_to_inject }}
 {% endif %}
 
+use std::str::FromStr;
 #[allow(unused_imports)]
 use neon::{prelude::*, types::{buffer::TypedArray, JsBigInt}};
 {# Enum #}

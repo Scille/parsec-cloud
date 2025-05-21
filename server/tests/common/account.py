@@ -12,7 +12,7 @@ import base64
 import pytest
 from httpx import AsyncClient
 
-from parsec._parsec import AccountAuthMethodID, DateTime, SecretKey
+from parsec._parsec import AccountAuthMethodID, DateTime, EmailAddress, SecretKey
 from parsec.backend import Backend
 from parsec.components.account import PasswordAlgorithmArgon2ID
 from parsec.components.memory.account import MemoryAccountComponent
@@ -24,7 +24,7 @@ from parsec.components.memory.datamodel import (
 from tests.common.client import AnonymousAccountRpcClient, AuthenticatedAccountRpcClient
 
 # Note `alice@invalid.com` is Alice's email in `CoolOrg`, `MinimalOrg` etc.
-ALICE_ACCOUNT_EMAIL = "alice@example.com"
+ALICE_ACCOUNT_EMAIL = EmailAddress("alice@example.com")
 ALICE_ACCOUNT_AUTH_METHOD_MAC_KEY = SecretKey(
     base64.b64decode("0UdFSrwcYKyfhAkTdorrLM46+cwHh49XelCMdoxI4qA=")
 )
@@ -32,7 +32,7 @@ ALICE_ACCOUNT_AUTH_METHOD_ID = AccountAuthMethodID.from_hex("9aae259f748045cc9fe
 ALICE_ACCOUNT_CREATED_ON = DateTime(2000, 1, 1)
 
 
-BOB_ACCOUNT_EMAIL = "bob@example.com"
+BOB_ACCOUNT_EMAIL = EmailAddress("bob@example.com")
 BOB_ACCOUNT_AUTH_METHOD_MAC_KEY = SecretKey(
     base64.b64decode("YtFH3Mr8iA5rrduaQPc5fbr+8rGZIU7SZ8wMqwSubhU=")
 )

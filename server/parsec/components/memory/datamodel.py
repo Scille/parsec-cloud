@@ -10,8 +10,6 @@ from enum import Enum, auto
 from itertools import chain
 from typing import AsyncIterator, Iterable, Iterator, Literal
 
-from pydantic import EmailStr
-
 from parsec._parsec import (
     AccountAuthMethodID,
     ActiveUsersLimit,
@@ -21,6 +19,7 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
+    EmailAddress,
     EmailValidationToken,
     EnrollmentID,
     GreeterOrClaimer,
@@ -103,8 +102,8 @@ class MemoryDatamodel:
     organizations: dict[OrganizationID, MemoryOrganization] = field(default_factory=dict)
     # accounts are not associated to one organization
     # (email, account)
-    accounts: dict[EmailStr, MemoryAccount] = field(default_factory=dict)
-    unverified_emails: dict[EmailStr, tuple[EmailValidationToken, DateTime]] = field(
+    accounts: dict[EmailAddress, MemoryAccount] = field(default_factory=dict)
+    unverified_emails: dict[EmailAddress, tuple[EmailValidationToken, DateTime]] = field(
         default_factory=dict
     )
 
@@ -517,7 +516,7 @@ class MemoryInvitation:
     created_by: InvitationCreatedBy
 
     # Required when type=USER or type=SHAMIR_RECOVERY
-    claimer_email: str | None
+    claimer_email: EmailAddress | None
 
     # Required when type=DEVICE or type=SHAMIR_RECOVERY
     claimer_user_id: UserID | None
@@ -875,7 +874,7 @@ class MemoryShamirShare:
 @dataclass(slots=True)
 class MemoryAccount:
     # Main identifier for the account.
-    account_email: EmailStr
+    account_email: EmailAddress
     # Not used by Parsec Account but works as a quality-of-life feature
     # to allow pre-filling human handle during enrollment.
     human_label: str

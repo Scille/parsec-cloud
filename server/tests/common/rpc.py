@@ -10,6 +10,7 @@ from parsec._parsec import (
     BootstrapToken,
     CancelledGreetingAttemptReason,
     DateTime,
+    EmailAddress,
     EmailValidationToken,
     EnrollmentID,
     GreetingAttemptID,
@@ -72,7 +73,7 @@ class BaseAnonymousRpcClient:
         enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: str,
+        submitter_der_x509_certificate_email: EmailAddress,
         submit_payload_signature: bytes,
         submit_payload: bytes,
     ) -> anonymous_cmds.latest.pki_enrollment_submit.Rep:
@@ -93,7 +94,7 @@ class BaseAnonymousAccountRpcClient:
         raise NotImplementedError
 
     async def account_create_send_validation_email(
-        self, email: str
+        self, email: EmailAddress
     ) -> anonymous_account_cmds.latest.account_create_send_validation_email.Rep:
         req = anonymous_account_cmds.latest.account_create_send_validation_email.Req(email=email)
         raw_rep = await self._do_request(req.dump(), "anonymous_account")
@@ -243,7 +244,7 @@ class BaseAuthenticatedRpcClient:
         return authenticated_cmds.latest.invite_new_shamir_recovery.Rep.load(raw_rep)
 
     async def invite_new_user(
-        self, claimer_email: str, send_email: bool
+        self, claimer_email: EmailAddress, send_email: bool
     ) -> authenticated_cmds.latest.invite_new_user.Rep:
         req = authenticated_cmds.latest.invite_new_user.Req(
             claimer_email=claimer_email, send_email=send_email

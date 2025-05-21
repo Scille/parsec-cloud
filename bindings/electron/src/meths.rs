@@ -9,6 +9,7 @@ use neon::{
     prelude::*,
     types::{buffer::TypedArray, JsBigInt},
 };
+use std::str::FromStr;
 
 // CancelledGreetingAttemptReason
 
@@ -1582,15 +1583,23 @@ fn struct_human_handle_js_to_rs<'a>(
 ) -> NeonResult<libparsec::HumanHandle> {
     let email = {
         let js_val: Handle<JsString> = obj.get(cx, "email")?;
-        js_val.value(cx)
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
     let label = {
         let js_val: Handle<JsString> = obj.get(cx, "label")?;
         js_val.value(cx)
     };
     {
-        let custom_init = |email: String, label: String| -> Result<_, String> {
-            libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
+        let custom_init = |email: libparsec::EmailAddress, label: String| -> Result<_, String> {
+            libparsec::HumanHandle::new(email, &label).map_err(|e| e.to_string())
         };
         custom_init(email, label).or_else(|e| cx.throw_error(e))
     }
@@ -1603,21 +1612,25 @@ fn struct_human_handle_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_email = {
-        let custom_getter = |obj| {
-            fn access(obj: &libparsec::HumanHandle) -> &str {
-                obj.email()
+        let custom_getter =
+            |obj: &libparsec::HumanHandle| -> libparsec::EmailAddress { obj.email().clone() };
+        JsString::try_new(cx, {
+            let custom_to_rs_string =
+                |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
+            match custom_to_rs_string(custom_getter(&rs_obj)) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err),
             }
-            access(obj)
-        };
-        JsString::try_new(cx, custom_getter(&rs_obj)).or_throw(cx)?
+        })
+        .or_throw(cx)?
     };
     js_obj.set(cx, "email", js_email)?;
     let js_label = {
-        let custom_getter = |obj| {
-            fn access(obj: &libparsec::HumanHandle) -> &str {
-                obj.label()
+        let custom_getter = |obj| -> &str {
+            fn a(o: &libparsec::HumanHandle) -> &str {
+                o.label()
             }
-            access(obj)
+            a(obj)
         };
         JsString::try_new(cx, custom_getter(&rs_obj)).or_throw(cx)?
     };
@@ -4121,7 +4134,15 @@ fn variant_any_claim_retrieved_info_js_to_rs<'a>(
             };
             let claimer_email = {
                 let js_val: Handle<JsString> = obj.get(cx, "claimerEmail")?;
-                js_val.value(cx)
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
             };
             let created_by = {
                 let js_val: Handle<JsObject> = obj.get(cx, "createdBy")?;
@@ -4267,7 +4288,15 @@ fn variant_any_claim_retrieved_info_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_handle = JsNumber::new(cx, handle as f64);
             js_obj.set(cx, "handle", js_handle)?;
-            let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
+            let js_claimer_email = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
+                match custom_to_rs_string(claimer_email) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
             js_obj.set(cx, "claimerEmail", js_claimer_email)?;
             let js_created_by = variant_invite_info_invitation_created_by_rs_to_js(cx, created_by)?;
             js_obj.set(cx, "createdBy", js_created_by)?;
@@ -8005,7 +8034,15 @@ fn variant_invite_list_item_js_to_rs<'a>(
             };
             let claimer_email = {
                 let js_val: Handle<JsString> = obj.get(cx, "claimerEmail")?;
-                js_val.value(cx)
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
             };
             let status = {
                 let js_val: Handle<JsString> = obj.get(cx, "status")?;
@@ -8197,7 +8234,15 @@ fn variant_invite_list_item_rs_to_js<'a>(
             js_obj.set(cx, "createdOn", js_created_on)?;
             let js_created_by = variant_invite_list_invitation_created_by_rs_to_js(cx, created_by)?;
             js_obj.set(cx, "createdBy", js_created_by)?;
-            let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
+            let js_claimer_email = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
+                match custom_to_rs_string(claimer_email) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
             js_obj.set(cx, "claimerEmail", js_claimer_email)?;
             let js_status =
                 JsString::try_new(cx, enum_invitation_status_rs_to_js(status)).or_throw(cx)?;
@@ -17059,7 +17104,15 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     };
     let claimer_email = {
         let js_val = cx.argument::<JsString>(1)?;
-        js_val.value(&mut cx)
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
     let send_email = {
         let js_val = cx.argument::<JsBoolean>(2)?;

@@ -4,13 +4,12 @@ from base64 import urlsafe_b64decode, urlsafe_b64encode
 from dataclasses import dataclass
 from enum import auto
 
-from pydantic import EmailStr
-
 from parsec._parsec import (
     AccountAuthMethodID,
     CryptoError,
     DateTime,
     DeviceID,
+    EmailAddress,
     InvitationToken,
     InvitationType,
     OrganizationID,
@@ -69,7 +68,7 @@ class AnonymousAuthInfo:
 
 @dataclass
 class AuthenticatedAccountAuthInfo:
-    account_email: EmailStr
+    account_email: EmailAddress
     auth_method_id: AccountAuthMethodID
     account_internal_id: int
     auth_method_internal_id: int

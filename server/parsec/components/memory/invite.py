@@ -8,6 +8,7 @@ from parsec._parsec import (
     CancelledGreetingAttemptReason,
     DateTime,
     DeviceID,
+    EmailAddress,
     GreetingAttemptID,
     InvitationStatus,
     InvitationToken,
@@ -192,7 +193,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
-        claimer_email: str,
+        claimer_email: EmailAddress,
         send_email: bool,
         # Only needed for testbed template
         force_token: InvitationToken | None = None,

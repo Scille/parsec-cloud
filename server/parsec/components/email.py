@@ -10,6 +10,7 @@ from enum import auto
 
 import anyio
 
+from parsec._parsec import EmailAddress
 from parsec.config import EmailConfig, MockedEmailConfig, SmtpEmailConfig
 from parsec.logging import get_logger
 from parsec.types import BadOutcomeEnum
@@ -24,7 +25,7 @@ class SendEmailBadOutcome(BadOutcomeEnum):
 
 
 def _smtp_send_email(
-    email_config: SmtpEmailConfig, to_addr: str, message: Message
+    email_config: SmtpEmailConfig, to_addr: EmailAddress, message: Message
 ) -> None | SendEmailBadOutcome:
     try:
         context = ssl.create_default_context()
@@ -41,7 +42,7 @@ def _smtp_send_email(
                     logger.warning("Email TLS connection isn't encrypted")
             if email_config.host_user and email_config.host_password:
                 server.login(email_config.host_user, email_config.host_password)
-            server.sendmail(email_config.sender, to_addr, message.as_string())
+            server.sendmail(str(email_config.sender), str(to_addr), message.as_string())
 
     except smtplib.SMTPConnectError:
         return SendEmailBadOutcome.SERVER_UNAVAILABLE
@@ -60,7 +61,7 @@ def _smtp_send_email(
 
 
 def _mocked_send_email(
-    email_config: MockedEmailConfig, to_addr: str, message: Message
+    email_config: MockedEmailConfig, to_addr: EmailAddress, message: Message
 ) -> None | SendEmailBadOutcome:
     with tempfile.NamedTemporaryFile(
         prefix="tmp-email-", suffix=".html", dir=email_config.tmpdir, mode="w"
@@ -76,7 +77,7 @@ def _mocked_send_email(
 
 
 async def send_email(
-    email_config: EmailConfig, to_addr: str, message: Message
+    email_config: EmailConfig, to_addr: EmailAddress, message: Message
 ) -> None | SendEmailBadOutcome:
     if isinstance(email_config, SmtpEmailConfig):
         _send_email = _smtp_send_email

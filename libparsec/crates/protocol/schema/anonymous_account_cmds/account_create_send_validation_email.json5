@@ -8,8 +8,7 @@
       "fields": [
         {
           "name": "email",
-          // TODO #10211 replace by EmailAddress
-          "type": "String"
+          "type": "EmailAddress"
         }
       ]
     },
