@@ -145,7 +145,7 @@ defineExpose({
   box-shadow: none;
 
   @include ms.responsive-breakpoint('sm') {
-    margin: 0;
+    margin: 0 auto;
   }
 
   .login-card {
