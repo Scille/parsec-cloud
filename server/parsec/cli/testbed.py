@@ -131,9 +131,6 @@ class TestbedBackend:
         await self.backend.test_drop_organization(id)
         del self.template_per_org[id]
 
-    async def new_account(self) -> str:
-        return await self.backend.test_new_account()
-
 
 testbed_router = APIRouter(tags=["testbed"])
 
@@ -234,17 +231,6 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
     await testbed.drop_organization(organization_id)
 
     return Response(status_code=200, content=b"")
-
-
-@testbed_router.post("/testbed/account/new")
-async def test_account(request: Request) -> Response:
-    # post /account/new?
-    # -> email uuid@invalid.com; hmac_key bytes
-    testbed: TestbedBackend = request.app.state.testbed
-
-    email = await testbed.new_account()
-
-    return Response(status_code=200, content=f"{email}".encode("utf8"))
 
 
 @asynccontextmanager
