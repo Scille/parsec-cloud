@@ -424,8 +424,6 @@ def _parse_account_auth_headers_or_abort(
     # TODO: Use FastAPI' path parsing to handle this once it is fixed upstream
     # (see https://github.com/tiangolo/fastapi/pull/10109)
     with_authenticated_headers: bool,
-    expected_content_type: str | None,
-    expected_accept_type: str | None,
 ) -> AccountParsedAuthHeaders:
     # 1) Check API version
     # Parse `Api-version` from the HTTP Header and return the version implemented
@@ -445,12 +443,10 @@ def _parse_account_auth_headers_or_abort(
         )
     # From now on the version is settled, our reply must have the `Api-Version` header
 
-    # 3) Check User-Agent, Content-Type & Accept
+    # 3) Check User-Agent, Content-Type
     user_agent = headers.get("User-Agent", "unknown")
-    if expected_content_type and headers.get("Content-Type") != expected_content_type:
+    if headers.get("Content-Type") != CONTENT_TYPE_MSGPACK:
         _handshake_abort_bad_content(api_version=settled_api_version)
-    if expected_accept_type and headers.get("Accept") != expected_accept_type:
-        _handshake_abort(CustomHttpStatus.BadAcceptType, api_version=settled_api_version)
 
     # 4) Check authenticated headers
     if not with_authenticated_headers:
@@ -615,8 +611,6 @@ async def anonymous_account_api(request: Request) -> Response:
     parsed = _parse_account_auth_headers_or_abort(
         headers=request.headers,
         with_authenticated_headers=False,
-        expected_accept_type=None,
-        expected_content_type=CONTENT_TYPE_MSGPACK,
     )
 
     # Handshake is done
@@ -644,8 +638,6 @@ async def authenticated_account_api(request: Request) -> Response:
     parsed = _parse_account_auth_headers_or_abort(
         headers=request.headers,
         with_authenticated_headers=True,
-        expected_accept_type=None,
-        expected_content_type=CONTENT_TYPE_MSGPACK,
     )
 
     assert parsed.authentication_token is not None
