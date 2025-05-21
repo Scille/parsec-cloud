@@ -177,6 +177,7 @@ import { inject, onMounted, onUnmounted, computed, ref } from 'vue';
 import type { Component } from 'vue';
 import { DateTime } from 'luxon';
 import { FIFO } from '@/common/queue';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 
 interface OperationItem {
   data: FileOperationData;
@@ -188,6 +189,7 @@ interface OperationItem {
 const MAX_DONE_ERROR_ITEMS: number = 10;
 
 const menu = useUploadMenu();
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const errorHappenedInUpload = ref<boolean>(false);
@@ -371,12 +373,23 @@ async function onOperationFinishedClick(operationData: FileOperationData, state:
   }
   if (operationData.getDataType() === FileOperationDataType.Import) {
     await navigateToWorkspace(operationData.workspaceHandle, (operationData as ImportData).path, (operationData as ImportData).file.name);
+    menu.minimize();
   } else if (operationData.getDataType() === FileOperationDataType.Download) {
-    const file = await (operationData as DownloadData).saveHandle.getFile();
-    const url = URL.createObjectURL(file);
-    window.open(url);
+    try {
+      const file = await (operationData as DownloadData).saveHandle.getFile();
+      const url = URL.createObjectURL(file);
+      window.open(url);
+      menu.minimize();
+    } catch (e: any) {
+      informationManager.present(
+        new Information({
+          message: 'FoldersPage.DownloadFile.openFailed',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+    }
   }
-  menu.minimize();
 }
 
 async function cancelOperation(importId: string): Promise<void> {
