@@ -233,6 +233,10 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
+.summary-page {
+  overflow: auto;
+}
+
 .summary-list {
   padding: 0;
   display: flex;
