@@ -364,7 +364,6 @@ def _parse_auth_headers_or_abort(
             expected_bearer, raw_authenticated_token = raw_authorization.split()
             if expected_bearer.lower() != "bearer":
                 raise ValueError
-
             authenticated_token = AuthenticatedToken.from_raw(raw_authenticated_token.encode())
         except ValueError:
             _handshake_abort(
@@ -385,9 +384,9 @@ def _parse_auth_headers_or_abort(
 
         try:
             expected_bearer, raw_invitation_token = raw_authorization.split()
-            invited_token = InvitationToken.from_hex(raw_invitation_token)
             if expected_bearer.lower() != "bearer":
                 raise ValueError
+            invited_token = InvitationToken.from_hex(raw_invitation_token)
         except ValueError:
             _handshake_abort(
                 CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
