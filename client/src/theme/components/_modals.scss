@@ -270,11 +270,12 @@
     max-width: 35.75rem;
   }
 
-  .authentication-page {
+  .authentication-page,
+  .summary-page {
     --height: 100%;
     height: 100%;
 
-    @media only screen and (max-height: 768px) {
+    @media only screen and (max-height: 580px) {
       --height: 500px;
       height: 500px;
     }
