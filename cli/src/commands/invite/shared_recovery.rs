@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec::{InvitationEmailSentStatus, InvitationType, ParsecInvitationAddr};
+use libparsec::{EmailAddress, InvitationEmailSentStatus, InvitationType, ParsecInvitationAddr};
 
 use crate::utils::*;
 
@@ -8,7 +8,7 @@ crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
     pub struct Args {
         /// Claimer email (i.e.: The invitee)
-        email: String,
+        email: EmailAddress,
         /// Send email to the invitee
         #[arg(long, default_value_t)]
         send_email: bool,
@@ -28,7 +28,7 @@ pub async fn invite_shared_recovery(args: Args, client: &StartedClient) -> anyho
     let users = client.list_users(true, None, None).await?;
     let user_info = users
         .iter()
-        .find(|u| u.human_handle.email() == email)
+        .find(|u| u.human_handle.email() == &email)
         .ok_or_else(|| anyhow::anyhow!("User with email {} not found", email))?;
 
     let mut handle = start_spinner("Creating a shared recovery invitation".into());

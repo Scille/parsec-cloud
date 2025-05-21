@@ -104,7 +104,7 @@ async fn main() -> ExitCode {
     // Copy the realm export database since SQLite modifies the file in place
     // even when only doing read operations.
     struct RemoveDirOnDrop<'a>(&'a Path);
-    impl<'a> Drop for RemoveDirOnDrop<'a> {
+    impl Drop for RemoveDirOnDrop<'_> {
         fn drop(&mut self) {
             let _ = std::fs::remove_dir_all(self.0);
         }

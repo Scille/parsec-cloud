@@ -44,7 +44,7 @@ fn organization_id_ko(#[case] raw: &str) {
 fn human_handle_ok(#[case] email: &str, #[case] label: &str) {
     let human_handle = HumanHandle::new(email, label).unwrap();
     p_assert_eq!(human_handle.label(), label);
-    p_assert_eq!(human_handle.email(), email);
+    p_assert_eq!(human_handle.email().to_string(), email);
     p_assert_eq!(human_handle.as_ref(), format!("{label} <{email}>"));
 
     let human_handle2 = HumanHandle::from_str(&format!("{label} <{email}>")).unwrap();

@@ -301,8 +301,8 @@ impl HumanHandle {
     }
 
     #[getter]
-    fn email(&self) -> PyResult<&str> {
-        Ok(self.0.email())
+    fn email(&self) -> PyResult<EmailAddress> {
+        Ok(EmailAddress(self.0.email().clone()))
     }
 
     #[getter]
@@ -310,3 +310,14 @@ impl HumanHandle {
         Ok(self.0.label())
     }
 }
+
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    EmailAddress,
+    libparsec_types::EmailAddress,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
