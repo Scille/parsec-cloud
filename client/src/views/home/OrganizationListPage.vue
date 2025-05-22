@@ -407,7 +407,6 @@ const filteredDevices = computed(() => {
     z-index: 100;
 
     @include ms.responsive-breakpoint('md') {
-      margin: auto;
       width: 100%;
     }
   }

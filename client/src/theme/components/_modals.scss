@@ -24,6 +24,10 @@
 
 /* -- modal-stepper -- */
 .modal-stepper {
+  .ms-wizard-stepper {
+    height: auto !important;
+  }
+
   // global
   .modal {
     padding: 2rem;
@@ -34,6 +38,7 @@
 
     &.wizardTrue {
       padding-top: 2.5rem;
+      height: auto !important;
     }
 
     &-header {
@@ -140,11 +145,23 @@
 }
 
 .create-join-modal {
+  height: 100%;
+
+  @media only screen and (max-height: 580px) {
+    --height: auto;
+  }
+
+  @media only screen and (max-height: 500px) {
+    --height: 90vh;
+  }
+
   &::part(content) {
-    max-height: 37.5rem;
-    height: 70%;
-    border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+    border-radius: var(--parsec-radius-12);
     max-width: var(--parsec-modal-width-sm);
+
+    @include ms.responsive-breakpoint('sm') {
+      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+    }
   }
 
   .modal-header-title {
@@ -174,25 +191,32 @@
     @include ms.responsive-breakpoint('sm') {
       position: inherit;
       border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
-      min-height: 22rem;
     }
   }
 
-  &:has(.Authentication)::part(content) {
-    max-height: 48rem;
+  .Information,
+  .GetHostSasCode,
+  .ProvideGuestCode,
+  .GetUserInfo,
+  .Authentication {
+    --height: 100%;
+    height: 100%;
 
-    @media only screen and (max-height: 700px) {
-      max-height: 100%;
+    @media only screen and (max-height: 580px) {
+      --height: 500px;
+      height: 500px;
+    }
+
+    @media only screen and (max-height: 500px) {
+      --height: 90vh;
+      height: 90vh;
     }
   }
 
   .Authentication {
-    max-height: 48rem;
-    overflow: hidden;
-    display: flex;
-
     @media only screen and (max-height: 700px) {
-      max-height: 30rem;
+      --height: 90vh;
+      height: 90vh;
     }
 
     .modal-footer {
@@ -202,52 +226,29 @@
       right: -2rem;
       background: var(--parsec-color-light-secondary-white);
 
+      @include ms.responsive-breakpoint('sm') {
+        box-shadow: var(--parsec-shadow-light);
+        border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+      }
+
       #next-button {
         margin-top: 1rem;
+
+        @include ms.responsive-breakpoint('sm') {
+          margin-top: 0;
+        }
       }
     }
 
     .wizardTrue {
-      overflow-y: auto;
       position: relative;
       padding: 2rem 2rem 0 2rem;
-
-      &::after {
-        content: '';
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 3rem;
-        background: linear-gradient(0deg, var(--parsec-color-light-secondary-white) 0%, transparent 100%);
-      }
+      height: auto;
     }
   }
 }
 
 .create-organization-modal {
-  &::part(content) {
-    min-width: var(--parsec-modal-width-md);
-    max-width: var(--parsec-modal-width-md);
-
-    @include ms.responsive-breakpoint('sm') {
-      min-width: 100%;
-      max-width: 100%;
-      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
-    }
-  }
-
-  .page-modal-container {
-    padding: 2rem;
-    display: flex;
-    height: auto;
-    width: 100%;
-
-    @include ms.responsive-breakpoint('sm') {
-      padding: 0;
-    }
-  }
-
   &:has(.OrgNameStep)::part(content),
   &:has(.UserInfoStep)::part(content),
   &:has(.organization-name-page.active)::part(content),
@@ -265,24 +266,69 @@
     }
   }
 
+  .page-modal-container {
+    padding: 2rem;
+    display: flex;
+    height: auto;
+    width: 100%;
+
+    @include ms.responsive-breakpoint('sm') {
+      padding: 0;
+    }
+  }
+
+  &:has(.authentication-page.active),
+  &:has(.summary-page.active) {
+    height: auto;
+
+    &::part(content) {
+      min-width: var(--parsec-modal-width-md);
+      max-width: var(--parsec-modal-width-md);
+      overflow: auto;
+      height: auto;
+
+      @media only screen and (max-height: 700px) {
+        --height: 95vh;
+        height: 95vh;
+      }
+
+      @include ms.responsive-breakpoint('sm') {
+        min-width: 100%;
+        max-width: 100%;
+      }
+    }
+
+    ion-footer {
+      position: sticky;
+      bottom: 0;
+      right: -2rem;
+      background: var(--parsec-color-light-secondary-white);
+
+      @include ms.responsive-breakpoint('sm') {
+        box-shadow: var(--parsec-shadow-light);
+        border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+      }
+
+      #next-button {
+        margin-top: 1rem;
+
+        @include ms.responsive-breakpoint('sm') {
+          margin-top: 0;
+        }
+      }
+    }
+  }
+
   &:has(.saas-forgot-password)::part(content) {
     min-width: 35.75rem;
     max-width: 35.75rem;
   }
 
-  .authentication-page,
-  .summary-page {
-    --height: 100%;
-    height: 100%;
-
-    @media only screen and (max-height: 580px) {
-      --height: 500px;
-      height: 500px;
-    }
-
-    @media only screen and (max-height: 500px) {
-      --height: 100vh;
-      height: 100vh;
+  &:has(.creation-page),
+  &:has(.created-page) {
+    .modal-content {
+      max-height: 90vh;
+      --max-height: 90vh;
     }
   }
 
@@ -348,6 +394,25 @@
     min-width: var(--parsec-modal-width-sm);
   }
 
+  .GetHostSasCode,
+  .ProvideHostSasCode,
+  .CheckGuestInfo,
+  .GetGuestSasCode {
+    --height: 100%;
+    height: 100%;
+    overflow: auto;
+
+    @media only screen and (max-height: 580px) {
+      --height: 500px;
+      height: 500px;
+    }
+
+    @media only screen and (max-height: 500px) {
+      --height: 90vh;
+      height: 90vh;
+    }
+  }
+
   // manage the two columns on Contact details step
   .user-info-page {
     flex-wrap: wrap;
@@ -363,6 +428,10 @@
       &:nth-child(3),
       &:nth-child(4) {
         width: calc(50% - 0.75rem);
+
+        @include ms.responsive-breakpoint('sm') {
+          width: 100%;
+        }
       }
       // input will be changed with a custom dropdown: https://github.com/Scille/parsec-cloud/issues/4603
       &:nth-child(4) {
@@ -372,6 +441,11 @@
 
     .dropdown-container {
       width: calc(50% - 0.75rem);
+
+      @include ms.responsive-breakpoint('sm') {
+        width: 100%;
+        --border-color: var(--parsec-color-light-secondary-medium);
+      }
     }
   }
 }

@@ -468,6 +468,6 @@ onMounted(async () => {
 }
 
 .guest-code {
-  margin: 4.7rem auto;
+  margin: auto;
 }
 </style>

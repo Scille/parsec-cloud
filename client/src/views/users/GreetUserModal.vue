@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="modal-stepper">
+  <ion-page
+    class="modal-stepper"
+    :class="GreetUserStep[pageStep]"
+  >
     <ms-wizard-stepper
       v-show="pageStep > GreetUserStep.WaitForGuest && pageStep < GreetUserStep.Summary && isLargeDisplay"
       :current-index="getStepperIndex()"
