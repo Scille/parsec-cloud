@@ -109,7 +109,6 @@ import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
 import { openSettingsModal } from '@/views/settings';
-import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import {
   Base64,
@@ -128,6 +127,7 @@ import { getServerTypeFromAddress, ServerType } from '@/services/parsecServers';
 import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import { SmallDisplayCreateJoinModal } from '@/components/small-display';
+import { modalController, popoverController, IonContent, IonPage } from '@ionic/vue';
 
 enum HomePageState {
   OrganizationList = 'organization-list',
