@@ -41,7 +41,7 @@ msTest('Check if each tab is displayed', async ({ myProfilePage }) => {
   await checkMenuItem(myProfilePage, 0, 'Settings', 'Settings', 'settings');
   await checkMenuItem(myProfilePage, 1, 'My devices', 'My devices', 'devices');
   await checkMenuItem(myProfilePage, 2, 'Authentication', 'Authentication', 'authentication');
-  await checkMenuItem(myProfilePage, 3, 'Organization recovery', 'Organization recovery files', 'recovery');
+  await checkMenuItem(myProfilePage, 3, 'Recovery file', 'Recovery file', 'recovery');
   await expect(myProfilePage.locator('.item-container__text').nth(5)).toHaveText('Feedback');
   await expect(myProfilePage.locator('.item-container__text').nth(6)).toHaveText('About');
   await checkMenuItem(myProfilePage, 6, 'About', 'About', 'about');
@@ -55,17 +55,17 @@ msTest('Open authentication section', async ({ myProfilePage }) => {
 });
 
 msTest('Check if restore-password section is displayed', async ({ myProfilePage }) => {
-  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Organization recovery');
+  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery file');
   await myProfilePage.locator('.menu-list__item').nth(3).click();
   const restorePassword = myProfilePage.locator('.recovery');
   await expect(restorePassword).toBeVisible();
-  await expect(restorePassword.locator('.item-header__title')).toHaveText('Organization recovery files');
+  await expect(restorePassword.locator('.item-header__title')).toHaveText('Recovery file');
   await expect(restorePassword.locator('.restore-password__description span').nth(0)).toHaveText(
-    'A recovery file enables you to reclaim access to your data if you forget your password or lose your devices.',
+    'A recovery file allows you to regain access to this organization if you forgot your password or lose your devices.',
   );
   await expect(restorePassword.locator('.restore-password__description span').nth(1)).toHaveText(
-    `Without a recovery file, you wouldn't be able to recover your account in such a case,
-  and you would need to be re-invited to the organization to regain access to your data.`,
+    `Without a recovery file, you will not be able to recover your account in such a case,
+  and you will need to be re-invited to the organization.`,
   );
   await expect(restorePassword.locator('.restore-password-button')).toHaveText('Create a recovery file');
 });

@@ -110,7 +110,7 @@
             "settings": "Settings",
             "devices": "My devices",
             "authentication": "Authentication",
-            "recovery": "Organization recovery",
+            "recovery": "Recovery file",
             "contactUs": "Contact us",
             "documentation": "Documentation",
             "logout": "Log out",
@@ -926,7 +926,7 @@
             "recoveryKey": "Secret Key"
         },
         "subtitles": {
-            "aboutRecoveryFiles": "A recovery file enables you to reclaim access to your data if you forgot your password or lose your devices.",
+            "aboutRecoveryFiles": "A recovery file allows you to regain access to this organization if you forgot your password or lose your devices.",
             "keepFilesSeparate": "You will need to save the recovery file and its secret key. Make sure both are not stored in the same place.",
             "warningUniqueness": "Please note that these files are not stored by Parsec. If you lose one or both, you will need to create a new recovery file.",
             "fileExplanation": "The recovery file allows you to reset your password using the corresponding secret key.",
@@ -979,7 +979,7 @@
             },
             "finish": {
                 "first": "You can now log in to Parsec.",
-                "second": "We advise that you create a recovery file in the event that you forget your password or log in to your session."
+                "second": "We strongly recommend creating a recovery file in case you forget your password or lose access to your device."
             }
         },
         "titles": {
@@ -1318,7 +1318,7 @@
                 "settings": "Settings",
                 "devices": "My devices",
                 "authentication": "Authentication",
-                "recovery": "Organization recovery"
+                "recovery": "Recovery file"
             },
             "support": {
                 "title": "Support",
@@ -1334,14 +1334,14 @@
         }
     },
     "OrganizationRecovery": {
-        "title": "Organization recovery files",
+        "title": "Recovery file",
         "recoveryFile": "Recovery File",
         "recoveryKey": "Secret Key",
         "advice": "We strongly recommend creating a recovery file for each organization.",
         "adviceDone": "You have already created a recovery file.",
         "done": {
-            "subtitle": "A recovery file enables you to reclaim access to your data if you forget your password or lose your devices.",
-            "subtitle2": "Without a recovery file, you wouldn't be able to recover your account in such a case, and you would need to be re-invited to the organization to regain access to your data.",
+            "subtitle": "A recovery file allows you to regain access to this organization if you forgot your password or lose your devices.",
+            "subtitle2": "Without a recovery file, you will not be able to recover your account in such a case, and you will need to be re-invited to the organization.",
             "button": "Download file",
             "recreateQuestionTitle": "Create a new recovery file?",
             "recreateQuestionMessage": "You have already created a recovery file in the past. Do you want to create a new one?",
@@ -1349,8 +1349,8 @@
             "recreateNo": "Cancel"
         },
         "notDone": {
-            "subtitle": "A recovery file enables you to reclaim access to your data if you forget your password or lose your devices.",
-            "subtitle2": "Without a recovery file, you wouldn't be able to recover your account in such a case, and you would need to be re-invited to the organization to regain access to your data.",
+            "subtitle": "A recovery file allows you to regain access to this organization if you forgot your password or lose your devices.",
+            "subtitle2": "Without a recovery file, you will not be able to recover your account in such a case, and you will need to be re-invited to the organization.",
             "button": "Create a recovery file"
         }
     },

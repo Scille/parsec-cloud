@@ -87,7 +87,7 @@ The Secret Key is used to unlock the Recovery File and get access to your data.
 Create a recovery files
 -----------------------
 
-When you access your profile, in the ``Organization recovery`` page, click on ``Create a recovery file``.
+When you access your profile, in the ``Recovery file`` page, click on ``Create a recovery file``.
 
 .. image:: screens/profile_popover.png
     :align: center

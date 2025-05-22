@@ -13,7 +13,7 @@ msTest('Profile popover default state', async ({ connected }) => {
   await expect(header.locator('.profile')).toHaveText('Administrator');
 
   const buttons = popover.locator('.main-list').getByRole('listitem');
-  await expect(buttons).toHaveText(['Settings', 'My devices', 'Authentication', 'Organization recovery', 'Log out']);
+  await expect(buttons).toHaveText(['Settings', 'My devices', 'Authentication', 'Recovery file', 'Log out']);
 
   const footer = popover.locator('.footer-list');
   await expect(footer.locator('ion-item')).toHaveText(['Documentation', 'Feedback', /About \(v.+\)/]);
