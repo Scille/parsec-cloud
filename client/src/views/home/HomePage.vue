@@ -322,6 +322,10 @@ async function handleQuery(): Promise<void> {
     }
   } else if (query.createOrg) {
     openCreateOrganizationModal(undefined, query.createOrg);
+  } else if (query.bmsLogin) {
+    state.value = HomePageState.CustomerArea;
+    // Should just reset the query in the URL without reloading the page
+    await navigateTo(Routes.Home, { skipHandle: true });
   }
   queryInProgress.value = false;
 }

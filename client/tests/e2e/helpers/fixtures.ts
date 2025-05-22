@@ -8,7 +8,16 @@ import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
 import { MsContext, MsPage } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
 
-export async function setupNewPage(page: MsPage, testbedPath?: string, location: string = '/'): Promise<void> {
+interface SetupOptions {
+  testbedPath?: string;
+  location?: string;
+  skipGoto?: boolean;
+}
+
+export async function setupNewPage(
+  page: MsPage,
+  opts: SetupOptions = { testbedPath: undefined, location: '/', skipGoto: false },
+): Promise<void> {
   page.on('console', (msg) => console.log('> ', msg.text()));
 
   await page.addInitScript(() => {
@@ -63,19 +72,21 @@ export async function setupNewPage(page: MsPage, testbedPath?: string, location:
       };
     };
   });
-  await page.goto(location);
+  if (!opts.skipGoto) {
+    await page.goto(opts.location ?? '/');
+  }
   await page.waitForLoadState('domcontentloaded');
 
   await expect(page.locator('#app')).toHaveAttribute('app-state', 'initializing');
 
-  await initTestBed(page, testbedPath);
+  const testbed = await initTestBed(page, opts.testbedPath);
   page.userData = generateDefaultUserData();
   page.orgInfo = generateDefaultOrganizationInformation();
   page.isReleased = false;
   page.openNewTab = async (): Promise<MsPage> => {
     const newTab = (await page.context().newPage()) as MsPage;
     newTab.skipTestbedRelease = true;
-    await setupNewPage(newTab, testbedPath);
+    await setupNewPage(newTab, { testbedPath: testbed });
     return newTab;
   };
   page.release = async (): Promise<void> => {

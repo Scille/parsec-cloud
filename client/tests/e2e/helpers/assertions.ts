@@ -327,6 +327,21 @@ export const expect = baseExpect.extend({
     };
   },
 
+  async toBeClientAreaPage(page: Page): Promise<AssertReturnType> {
+    try {
+      await expect(page).toHaveURL(/\/clientArea\??.*$/);
+    } catch (error: any) {
+      return {
+        message: () => `Page is not client area page (url is '${error.matcherResult.actual}')`,
+        pass: false,
+      };
+    }
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
+
   async toBeTrulyDisabled(locator: Locator): Promise<AssertReturnType> {
     let errorMessage = '';
     let pass = true;
