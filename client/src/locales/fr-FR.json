@@ -110,7 +110,7 @@
             "settings": "Paramètres",
             "devices": "Mes appareils",
             "authentication": "Authentification",
-            "recovery": "Récupération d'organisation",
+            "recovery": "Fichier de récupération",
             "contactUs": "Nous contacter",
             "documentation": "Documentation",
             "logout": "Déconnexion",
@@ -926,7 +926,7 @@
             "recoveryKey": "Clé secrète"
         },
         "subtitles": {
-            "aboutRecoveryFiles": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
+            "aboutRecoveryFiles": "Un fichier de récupération vous permet de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
             "keepFilesSeparate": "Vous devez enregistrer le fichier de récupération et sa clé secrète. Assurez-vous que les deux ne sont pas stockés au même endroit.",
             "warningUniqueness": "Veuillez noter que ces fichiers ne sont pas stockés par Parsec. Si vous perdez l'un de ces fichiers ou les deux, vous devrez créer un nouveau fichier de récupération.",
             "fileExplanation": "Le fichier de récupération vous permet de réinitialiser votre mot de passe à l'aide de la clé secrète correspondante.",
@@ -979,7 +979,7 @@
             },
             "finish": {
                 "first": "Vous pouvez maintenant vous connecter à Parsec.",
-                "second": "Nous vous conseillons de créer un fichier de récupération au cas où vous oublieriez votre mot de passe."
+                "second": "Nous vous conseillons vivement de créer un fichier de récupération au cas où vous oublieriez votre mot de passe ou perdriez l'accès à votre appareil."
             }
         },
         "titles": {
@@ -1318,7 +1318,7 @@
                 "settings": "Paramètres",
                 "devices": "Mes appareils",
                 "authentication": "Authentification",
-                "recovery": "Récupération d'organisation"
+                "recovery": "Fichier de récupération"
             },
             "support": {
                 "title": "Support",
@@ -1334,13 +1334,13 @@
         }
     },
     "OrganizationRecovery": {
-        "title": "Fichiers de récupération d'organisation",
+        "title": "Fichier de récupération",
         "recoveryFile": "Fichier de récupération",
         "recoveryKey": "Clé secrète",
         "advice": "Nous vous conseillons de créer un fichier de récupération pour chaque organisation.",
         "adviceDone": "Vous avez déjà créé un fichier de récupération.",
         "done": {
-            "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
+            "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
             "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
             "button": "Créer un fichier de récupération",
             "recreateQuestionTitle": "Créer un nouveau fichier de récupération ?",
@@ -1349,7 +1349,7 @@
             "recreateNo": "Annuler"
         },
         "notDone": {
-            "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
+            "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
             "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
             "button": "Créer un fichier de récupération"
         }

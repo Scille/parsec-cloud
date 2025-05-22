@@ -3,10 +3,10 @@
 import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, msTest } from '@tests/e2e/helpers';
 
 msTest('Export and use recovery files', async ({ myProfilePage }) => {
-  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Organization recovery');
+  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery file');
   await myProfilePage.locator('.menu-list__item').nth(3).click();
   const recovery = myProfilePage.locator('.recovery');
-  await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery files');
+  await expect(recovery.locator('.item-header__title')).toHaveText('Recovery file');
   await expect(recovery.locator('.organization-recovery-container').locator('.restore-password__advice')).toBeVisible();
   await expect(recovery.locator('.restore-password-button')).toHaveText('Create a recovery file');
   const recoveryFiles = recovery.locator('.recovery-list');
@@ -100,10 +100,10 @@ msTest('Export and use recovery files', async ({ myProfilePage }) => {
 
 for (const error of ['invalid-passphrase', 'invalid-file']) {
   msTest(`Export and use recovery files with errors (${error})`, async ({ myProfilePage }) => {
-    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Organization recovery');
+    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery file');
     await myProfilePage.locator('.menu-list__item').nth(3).click();
     const recovery = myProfilePage.locator('.recovery');
-    await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery files');
+    await expect(recovery.locator('.item-header__title')).toHaveText('Recovery file');
     await expect(recovery.locator('.organization-recovery-container').locator('.restore-password__advice')).toBeVisible();
     await expect(recovery.locator('.restore-password-button')).toHaveText('Create a recovery file');
     const recoveryFiles = recovery.locator('.recovery-list');

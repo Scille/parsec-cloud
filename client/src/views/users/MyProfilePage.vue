@@ -94,7 +94,7 @@
                   />
                 </div>
               </ion-radio>
-              <!-- Organization Recovery -->
+              <!-- Recovery file -->
               <ion-radio
                 slot="start"
                 :value="ProfilePages.Recovery"
@@ -235,7 +235,7 @@
             </div>
             <authentication-page />
           </div>
-          <!-- organization recovery tab -->
+          <!-- recovery file tab -->
           <div
             v-if="myProfileTab === ProfilePages.Recovery"
             class="profile-content-item recovery"
