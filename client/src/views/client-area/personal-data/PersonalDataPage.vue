@@ -22,6 +22,7 @@
         title="clientArea.personalDataPage.authentication.title"
         :rows="getAuthenticationRows()"
         @update="openAuthenticationModal"
+        :read-only="personalData.billingSystem !== BillingSystem.Stripe"
       />
       <ms-summary-card
         title="clientArea.personalDataPage.security.title"
@@ -33,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { BmsAccessInstance, BmsOrganization, PersonalInformationResultData } from '@/services/bms';
+import { BillingSystem, BmsAccessInstance, BmsOrganization, PersonalInformationResultData } from '@/services/bms';
 import { modalController, ModalOptions } from '@ionic/vue';
 import {
   createSummaryCardItem,
