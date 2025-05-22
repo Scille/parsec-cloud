@@ -345,7 +345,7 @@
         }
     },
     "WorkspaceSharing": {
-        "searchPlaceholder": "ex : Jean Martin",
+        "searchPlaceholder": "Jean Martin",
         "currentUserLabel": "Moi",
         "unshareSuccess": "L'espace de travail n'est plus partagé avec {user}.",
         "updateRoleSuccess": "Le rôle de {user} est désormais {role}.",
@@ -745,7 +745,7 @@
             "unknown": "Inconnu"
         },
         "sortBy": "Trier par :",
-        "technicalId": "ID technique :"
+        "technicalId": "ID interne :"
     },
     "SideMenu": {
         "workspaces": "Espaces de travail",
@@ -787,7 +787,7 @@
     },
     "DevicesPage": {
         "title": "Mes appareils",
-        "description": "Vous pouvez consulter et ajouter de nouveaux appareils à votre profil pour accéder à cette organisation.",
+        "description": "Les appareils listés ci-dessous vous permettent d'accéder à cette organisation.",
         "addDevice": "Ajouter un nouvel appareil",
         "greetDevice": "Accueillir un nouvel appareil",
         "noDevices": "Aucun appareil.",

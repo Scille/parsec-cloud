@@ -152,7 +152,7 @@
             "noLastLogin": "--",
             "errors": {
                 "noStorage": "Unable to list or save your organizations: the application storage is not available. Make sure your disk is not running out of space and that you have read and write permissions to Parsec's configuration folder.",
-                "noStorageWeb": "Unable to list or save your organizations: the application storage is not available. Make sure you're not browsing in private or incognito mode and that this website has enough permissions to access access your browser's storage.",
+                "noStorageWeb": "Unable to list or save your organizations: the application storage is not available. Make sure you're not browsing in private or incognito mode and that this website has enough permissions to access your browser's storage.",
                 "generic": "Cannot list your organizations."
             }
         },
@@ -345,7 +345,7 @@
         }
     },
     "WorkspaceSharing": {
-        "searchPlaceholder": "e.g.: John Smith",
+        "searchPlaceholder": "John Smith",
         "currentUserLabel": "Me",
         "unshareSuccess": "The workspace is no longer shared with {user}.",
         "updateRoleSuccess": "{user}'s role has been updated to {role}.",
@@ -745,7 +745,7 @@
             "unknown": "Unknown"
         },
         "sortBy": "Sort by:",
-        "technicalId": "Technical ID:"
+        "technicalId": "Internal ID:"
     },
     "SideMenu": {
         "workspaces": "Workspaces",
@@ -787,7 +787,7 @@
     },
     "DevicesPage": {
         "title": "My devices",
-        "description": "You can preview and add new devices to your profile to access this organization.",
+        "description": "The devices listed below allow you to access this organization.",
         "addDevice": "Add a new device",
         "greetDevice": "Greet a new device",
         "noDevices": "No devices.",

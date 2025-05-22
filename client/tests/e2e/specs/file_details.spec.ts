@@ -59,7 +59,7 @@ for (const testData of TEST_DATA) {
     await expect(details.nth(testData.isFile ? 2 : 1).locator('.file-info-details-item__title')).toHaveText('Version');
     await expect(details.nth(testData.isFile ? 2 : 1).locator('.file-info-details-item__value')).toHaveText(/^\d+$/);
 
-    await expect(modal.locator('.label-id')).toHaveText(/^(Technical ID: )[a-f0-9-]+$/);
+    await expect(modal.locator('.label-id')).toHaveText(/^(Internal ID: )[a-f0-9-]+$/);
 
     await expect(modal.locator('.file-info-path-value__text')).toHaveText(new RegExp(`^/${nameMatcher}$`));
 

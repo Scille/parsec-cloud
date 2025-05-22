@@ -44,7 +44,7 @@ msTest('User details modal', async ({ usersPage }) => {
   const timeItems = modal.locator('.ms-modal-content').locator('.time-list-item');
   await expect(timeItems.nth(0).locator('.time-list-item__title')).toHaveText('Joined');
   await expect(timeItems.nth(0).locator('.time-list-item__text')).toHaveText('Jan 3, 2000');
-  await expect(modal.locator('.label-id')).toHaveText(/^(Technical ID: )[a-f0-9]+$/);
+  await expect(modal.locator('.label-id')).toHaveText(/^(Internal ID: )[a-f0-9]+$/);
   await expect(modal.locator('.workspace-list')).toBeVisible();
   await expect(modal.locator('.workspace-empty')).toBeHidden();
   await expect(modal.locator('.workspace-list').locator('.workspace-list-item').locator('.item-container__name')).toHaveText('wksp1');
