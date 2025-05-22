@@ -48,8 +48,10 @@ export async function LoadWebLibParsecPlugin(): Promise<any> {
   // So in this case we fallback to have libparsec running in the tab, with some
   // web locks to avoid having multiple tabs using the same device.
   if (window.SharedWorker !== undefined) {
+    console.log('Starting libparsec in shared worker mode');
     return await withSharedWorker();
   } else {
+    console.log('Starting libparsec in non worker mode');
     return await withoutSharedWorker();
   }
 }
@@ -70,6 +72,9 @@ async function withSharedWorker(): Promise<any> {
     name: 'libparsec',
   });
   worker.port.start();
+  worker.onerror = (e: Event): void => {
+    console.error(`libparsec_worker: an error occurred: ${e}`);
+  };
 
   const inFlight: Array<{ id: number; resolve: (value: unknown) => void }> = [];
   let nextInFlightId = 1;
@@ -87,6 +92,10 @@ async function withSharedWorker(): Promise<any> {
       }
     }
     console.error('libparsec_port: Invalid message ID libparsec', e.data);
+  };
+
+  worker.port.onmessageerror = (e: MessageEvent): void => {
+    console.error(`libparsec_port: failed deserializing message: ${e}`);
   };
 
   class WorkerProxy {
