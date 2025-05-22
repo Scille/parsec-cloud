@@ -150,7 +150,7 @@ async function withSharedWorker(): Promise<any> {
 
 async function withoutSharedWorker(): Promise<any> {
   await init_module();
-  module.initLogger();
+  module.initLogger(import.meta.env.PARSEC_APP_DEFAULT_LIB_LOG_LEVEL);
 
   // Array of [<started client handle>, <keyFile>, <callback to release the lock>]
   // Note the client handle can be undefined since we first acquire the lock, then

@@ -22,7 +22,7 @@ INDEX_HTML_SRC = """<!DOCTYPE html>
         console.log("loading libparsec...");
         import initModule, * as libparsec from './libparsec_bindings_web.js';
         await initModule();
-        libparsec.initLogger();
+        libparsec.initLogger("trace");
         window.libparsec = libparsec;
         console.log("libparsec is loaded !");
     </script>
