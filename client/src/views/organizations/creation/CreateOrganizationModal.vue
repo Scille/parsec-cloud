@@ -115,9 +115,19 @@ async function onBackToServerChoice(): Promise<void> {
 <style lang="scss" scoped>
 .modal-content {
   min-width: 32em;
+  --height: 100%;
+  height: 100%;
+  overflow: auto;
+
+  @media only screen and (max-height: 500px) {
+    --height: 90vh;
+    height: 90vh;
+  }
 
   @include ms.responsive-breakpoint('sm') {
     min-width: 100%;
+    --max-height: 80vh;
+    max-height: 80vh;
   }
 }
 </style>

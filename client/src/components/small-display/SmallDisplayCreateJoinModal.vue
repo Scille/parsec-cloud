@@ -69,8 +69,14 @@ async function onCloseRequested(): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
+#create-join-modal {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
 .create-join-modal-content {
-  padding: 0 1.5rem;
+  padding: 0 1.5rem 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;

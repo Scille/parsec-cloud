@@ -91,9 +91,6 @@ async function onFieldUpdated(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.authentication-page {
-  overflow: auto;
-}
 .authentication-content {
   @include ms.responsive-breakpoint('sm') {
     padding: 0 1rem;
