@@ -215,7 +215,7 @@ onMounted(async () => {
       loggedIn.value = await BmsAccessInstance.get().tryAutoLogin();
       if (!loggedIn.value) {
         // Redirect to the login page if auto-login fails
-        await navigateTo(Routes.ClientAreaLogin, { skipHandle: true });
+        await navigateTo(Routes.Home, { skipHandle: true, query: { bmsLogin: true } });
         return;
       }
     } else {

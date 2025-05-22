@@ -17,7 +17,6 @@ export enum Routes {
   About = 'about',
   MyProfile = 'myProfile',
   Loading = 'loading',
-  ClientAreaLogin = 'clientLogin',
   ClientArea = 'clientArea',
   History = 'history',
   Viewer = 'viewer',
@@ -43,11 +42,6 @@ const routes: Array<RouteRecordRaw> = [
     path: `/${Routes.Loading}`,
     name: Routes.Loading,
     component: () => import('@/views/layouts/LoadingLayout.vue'),
-  },
-  {
-    path: `/${Routes.ClientAreaLogin}`,
-    name: Routes.ClientAreaLogin,
-    component: () => import('@/views/client-area/ClientAreaLoginPage.vue'),
   },
   {
     path: `/${Routes.ClientArea}`,
@@ -238,6 +232,7 @@ export interface Query {
   fileTypeInfo?: string;
   timestamp?: string;
   profilePage?: ProfilePages;
+  bmsLogin?: true;
 }
 
 export interface ClientAreaQuery {

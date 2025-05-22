@@ -200,6 +200,7 @@ export class StorageManager {
 
 class StorageManagerInstance {
   private _instance: StorageManager | null = null;
+  private _isInit: boolean = false;
 
   get(): StorageManager {
     if (!this._instance) {
@@ -209,7 +210,10 @@ class StorageManagerInstance {
   }
 
   async init(): Promise<void> {
-    await this.get().create();
+    if (!this._isInit) {
+      await this.get().create();
+      this._isInit = true;
+    }
   }
 }
 
