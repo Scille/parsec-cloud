@@ -50,7 +50,7 @@ async function maybeInit(): Promise<LibParsecPlugin> {
   if (_libparsec === undefined) {
     console.log('Initializing libparsec module');
     await init_module();
-    module.initLogger();
+    module.initLogger(import.meta.env.PARSEC_APP_DEFAULT_LIB_LOG_LEVEL);
 
     module.libparsecInitSetOnEventCallback((handle: number, event: ClientEvent) => {
       onEventBroadcast.postMessage({ handle, event });
