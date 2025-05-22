@@ -71,13 +71,16 @@ async function withSharedWorker(): Promise<any> {
     type: 'module',
     name: 'libparsec',
   });
-  worker.port.start();
   worker.onerror = (e: Event): void => {
     console.error(`libparsec_worker: an error occurred: ${e}`);
   };
 
   const inFlight: Array<{ id: number; resolve: (value: unknown) => void }> = [];
   let nextInFlightId = 1;
+
+  worker.port.onmessageerror = (e: MessageEvent): void => {
+    console.error(`libparsec_port: error on the worker side: ${e.data}`);
+  };
 
   worker.port.onmessage = (e: MessageEvent): void => {
     // console.debug('libparsec_port: onmessage', e.data);
@@ -94,9 +97,10 @@ async function withSharedWorker(): Promise<any> {
     console.error('libparsec_port: Invalid message ID libparsec', e.data);
   };
 
-  worker.port.onmessageerror = (e: MessageEvent): void => {
-    console.error(`libparsec_port: failed deserializing message: ${e}`);
-  };
+  // Notify that we are ready to process messages.
+  // Need to be done after setting up the events listener.
+  console.log('Client is ready to process event from worker');
+  worker.port.start();
 
   class WorkerProxy {
     get(target: SharedWorker, name: any): any {
@@ -146,7 +150,7 @@ async function withSharedWorker(): Promise<any> {
 
 async function withoutSharedWorker(): Promise<any> {
   await init_module();
-  module.initLogger();
+  module.initLogger(import.meta.env.PARSEC_APP_DEFAULT_LIB_LOG_LEVEL);
 
   // Array of [<started client handle>, <keyFile>, <callback to release the lock>]
   // Note the client handle can be undefined since we first acquire the lock, then

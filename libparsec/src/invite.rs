@@ -99,16 +99,20 @@ pub async fn bootstrap_organization(
     );
     // TODO: connect event_bus to on_event_callback
 
-    let finalize_ctx = libparsec_client::bootstrap_organization(
-        config.clone(),
-        events_plugged.event_bus,
-        bootstrap_organization_addr,
-        human_handle,
-        device_label,
-        sequester_authority_verify_key,
-    )
-    .await
-    .inspect_err(|e| log::error!("Failed to bootstrap organization: {e}"))?;
+    let finalize_ctx = {
+        let org_id = bootstrap_organization_addr.organization_id().clone();
+        libparsec_client::bootstrap_organization(
+            config.clone(),
+            events_plugged.event_bus,
+            bootstrap_organization_addr,
+            human_handle,
+            device_label,
+            sequester_authority_verify_key,
+        )
+        .await
+        .inspect(|_ctx| log::debug!("Organization {org_id} is now bootstrapped"))
+        .inspect_err(|e| log::error!("Failed to bootstrap organization {org_id}: {e}"))
+    }?;
 
     let access = {
         let key_file = libparsec_platform_device_loader::get_default_key_file(
