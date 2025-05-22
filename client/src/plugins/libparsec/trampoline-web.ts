@@ -71,13 +71,16 @@ async function withSharedWorker(): Promise<any> {
     type: 'module',
     name: 'libparsec',
   });
-  worker.port.start();
   worker.onerror = (e: Event): void => {
     console.error(`libparsec_worker: an error occurred: ${e}`);
   };
 
   const inFlight: Array<{ id: number; resolve: (value: unknown) => void }> = [];
   let nextInFlightId = 1;
+
+  worker.port.onmessageerror = (e: MessageEvent): void => {
+    console.error(`libparsec_port: error on the worker side: ${e.data}`);
+  };
 
   worker.port.onmessage = (e: MessageEvent): void => {
     // console.debug('libparsec_port: onmessage', e.data);
@@ -94,9 +97,10 @@ async function withSharedWorker(): Promise<any> {
     console.error('libparsec_port: Invalid message ID libparsec', e.data);
   };
 
-  worker.port.onmessageerror = (e: MessageEvent): void => {
-    console.error(`libparsec_port: failed deserializing message: ${e}`);
-  };
+  // Notify that we are ready to process messages.
+  // This needs to be done after setting up the event listener.
+  console.log('Client is ready to process events from worker');
+  worker.port.start();
 
   class WorkerProxy {
     get(target: SharedWorker, name: any): any {

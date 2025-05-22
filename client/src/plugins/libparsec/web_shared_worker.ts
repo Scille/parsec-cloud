@@ -13,14 +13,17 @@ import * as module from 'libparsec_bindings_web';
 interface SharedWorkerGlobalScope {
   onconnect: (msg: MessageEvent) => void;
 }
-const _self: SharedWorkerGlobalScope = self as any;
+declare const self: SharedWorkerGlobalScope;
 
 const onEventBroadcast = new BroadcastChannel('libparsec_on_event');
 
-_self.onconnect = async (msg: MessageEvent): Promise<void> => {
+self.onconnect = async (msg: MessageEvent): Promise<void> => {
   const libparsec = await maybeInit();
   const port = msg.ports[0];
-  port.start();
+
+  port.onmessageerror = (msg: MessageEvent): void => {
+    console.error(`libparsec_port: error on the client side: ${msg.data}`);
+  };
 
   port.onmessage = async (msg: MessageEvent): Promise<void> => {
     const { id, name, args } = msg.data as { id: number; name: string; args: [...any] };
@@ -34,18 +37,25 @@ _self.onconnect = async (msg: MessageEvent): Promise<void> => {
     const result = await (libparsec[name as keyof LibParsecPlugin] as (...args: any[]) => Promise<any>)(...args);
     port.postMessage({ id, result });
   };
+
+  // Notify the client that the worker is ready to process messages.
+  // This needs to be done after setting up the event listener.
+  console.log('Worker is ready to process events from client');
+  port.start();
 };
 
 let _libparsec: LibParsecPlugin | undefined = undefined;
 async function maybeInit(): Promise<LibParsecPlugin> {
-  // Initialization is done once when the sharded worker is created.
+  // Initialization is done once the shared worker is created.
   if (_libparsec === undefined) {
+    console.log('Initializing libparsec module');
     await init_module();
     module.initLogger();
 
     module.libparsecInitSetOnEventCallback((handle: number, event: ClientEvent) => {
       onEventBroadcast.postMessage({ handle, event });
     });
+    console.log('Done initializing libparsec module');
 
     _libparsec = module;
   }
