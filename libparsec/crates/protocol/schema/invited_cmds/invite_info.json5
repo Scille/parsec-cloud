@@ -22,7 +22,7 @@
                         "fields": [
                             {
                                 "name": "claimer_email",
-                                "type": "String"
+                                "type": "EmailAddress"
                             },
                             {
                                 "name": "created_by",

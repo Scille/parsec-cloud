@@ -4,7 +4,14 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, HumanHandle, InvitationStatus, InvitationToken, UserID
+from parsec._parsec import (
+    DateTime,
+    EmailAddress,
+    HumanHandle,
+    InvitationStatus,
+    InvitationToken,
+    UserID,
+)
 
 class InvitationCreatedBy:
     pass
@@ -30,11 +37,11 @@ class InviteListItemUser(InviteListItem):
         token: InvitationToken,
         created_on: DateTime,
         created_by: InvitationCreatedBy,
-        claimer_email: str,
+        claimer_email: EmailAddress,
         status: InvitationStatus,
     ) -> None: ...
     @property
-    def claimer_email(self) -> str: ...
+    def claimer_email(self) -> EmailAddress: ...
     @property
     def created_by(self) -> InvitationCreatedBy: ...
     @property
