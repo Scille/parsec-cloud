@@ -9,6 +9,7 @@ use neon::{
     prelude::*,
     types::{buffer::TypedArray, JsBigInt},
 };
+use std::str::FromStr;
 
 // CancelledGreetingAttemptReason
 

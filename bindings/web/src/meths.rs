@@ -6,6 +6,7 @@
 
 #[allow(unused_imports)]
 use js_sys::*;
+use std::str::FromStr;
 #[allow(unused_imports)]
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
