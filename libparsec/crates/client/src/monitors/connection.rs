@@ -71,6 +71,7 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
             user_profile_outsider_allowed,
             sse_keepalive_seconds: _,
             allowed_client_agent: _,
+            account_vault_strategy: _,
         } => {
             let event = EventServerConfigNotified {
                 active_users_limit,
