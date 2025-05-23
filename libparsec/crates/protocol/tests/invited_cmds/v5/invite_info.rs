@@ -69,7 +69,7 @@ pub fn rep_ok() {
                 "9b68ba5cdf428ea0017fc6bcc04d4a"
             )[..],
             invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::InvitationType::User {
-                claimer_email: "alice@dev1".to_owned(),
+                claimer_email: "alice@dev1".parse().unwrap(),
                 created_by: invited_cmds::invite_info::InvitationCreatedBy::User {
                     human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
                     user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
@@ -116,7 +116,7 @@ pub fn rep_ok() {
                 "4c5f53455256494345ad736572766963655f6c6162656ca44c444150"
             )[..],
             invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::InvitationType::User {
-                claimer_email: "alice@dev1".to_owned(),
+                claimer_email: "alice@dev1".parse().unwrap(),
                 created_by: invited_cmds::invite_info::InvitationCreatedBy::ExternalService {
                     service_label: "LDAP".to_owned(),
                 },

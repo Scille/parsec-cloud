@@ -581,7 +581,7 @@ impl TestbedEventNewDeviceInvitationBuilder<'_> {
  * TestbedEventNewUserInvitation
  */
 
-impl_event_builder!(NewUserInvitation, [claimer_email: String]);
+impl_event_builder!(NewUserInvitation, [claimer_email: EmailAddress]);
 
 impl TestbedEventNewUserInvitationBuilder<'_> {
     impl_customize_field_meth!(claimer_email, String);

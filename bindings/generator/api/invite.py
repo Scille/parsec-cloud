@@ -14,6 +14,7 @@ from .common import (
     ErrorVariant,
     Handle,
     HumanHandle,
+    EmailAddress,
     InvitationStatus,
     InvitationToken,
     NonZeroU8,
@@ -189,7 +190,7 @@ class UserGreetingAdministrator(Structure):
 class AnyClaimRetrievedInfo(Variant):
     class User:
         handle: Handle
-        claimer_email: str
+        claimer_email: EmailAddress
         created_by: InviteInfoInvitationCreatedBy
         administrators: list[UserGreetingAdministrator]
         preferred_greeter: Optional[UserGreetingAdministrator]
@@ -565,7 +566,7 @@ class NewInvitationInfo(Structure):
 
 async def client_new_user_invitation(
     client: Handle,
-    claimer_email: str,
+    claimer_email: EmailAddress,
     send_email: bool,
 ) -> Result[
     NewInvitationInfo,
@@ -659,7 +660,7 @@ class InviteListItem(Variant):
         token: InvitationToken
         created_on: DateTime
         created_by: InviteListInvitationCreatedBy
-        claimer_email: str
+        claimer_email: EmailAddress
         status: InvitationStatus
 
     class Device:

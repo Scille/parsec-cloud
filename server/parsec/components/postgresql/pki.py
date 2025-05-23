@@ -251,7 +251,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: str | None,
+        submitter_der_x509_certificate_email: EmailAddress | None,
         submit_payload_signature: bytes,
         submit_payload: bytes,
         submitted_on: DateTime,

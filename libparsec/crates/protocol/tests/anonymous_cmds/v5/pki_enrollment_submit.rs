@@ -38,7 +38,7 @@ pub fn req() {
             submit_payload: hex!("64756d6d79").as_ref().into(),
             submit_payload_signature: hex!("64756d6d79").as_ref().into(),
             submitter_der_x509_certificate: hex!("64756d6d79").as_ref().into(),
-            submitter_der_x509_certificate_email: "mail@mail.com".to_string(),
+            submitter_der_x509_certificate_email: "mail@mail.com".parse().unwrap(),
         },
     );
 

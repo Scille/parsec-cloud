@@ -74,7 +74,7 @@ async def user_get_user_info(
 
 
 async def user_get_user_info_from_email(
-    conn: AsyncpgConnection, organization_id: OrganizationID, email: str
+    conn: AsyncpgConnection, organization_id: OrganizationID, email: EmailAddress
 ) -> UserInfo | None:
     row = await conn.fetchrow(
         *_q_get_user_for_email(organization_id=organization_id.str, email=email)

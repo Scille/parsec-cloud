@@ -16,6 +16,7 @@ from parsec._parsec import (
     UserProfile,
     VerifyKey,
 )
+from parsec._parsec_pyi.ids import EmailAddress
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
@@ -61,7 +62,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: str,
+        submitter_der_x509_certificate_email: EmailAddress,
         submit_payload_signature: bytes,
         submit_payload: bytes,
     ) -> None | PkiEnrollmentSubmitBadOutcome | PkiEnrollmentSubmitX509CertificateAlreadySubmitted:

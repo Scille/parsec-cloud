@@ -32,7 +32,7 @@ from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 class Enrollment:
     enrollment_id: EnrollmentID
     submitter_der_x509_certificate: bytes
-    submitter_der_x509_certificate_email: str
+    submitter_der_x509_certificate_email: EmailAddress
     submit_payload_signature: bytes
     submit_payload: bytes
     submitted_on: DateTime

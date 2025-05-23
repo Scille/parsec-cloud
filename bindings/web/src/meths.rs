@@ -4438,7 +4438,14 @@ fn variant_any_claim_retrieved_info_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid EmailAddress"))?
             };
             let created_by = {
                 let js_val = Reflect::get(&obj, &"createdBy".into())?;
@@ -4606,7 +4613,15 @@ fn variant_any_claim_retrieved_info_rs_to_js(
             Reflect::set(&js_obj, &"tag".into(), &"AnyClaimRetrievedInfoUser".into())?;
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-            let js_claimer_email = claimer_email.into();
+            let js_claimer_email = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: &libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
+                match custom_to_rs_string(claimer_email) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
             Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
             let js_created_by = variant_invite_info_invitation_created_by_rs_to_js(created_by)?;
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
@@ -8895,7 +8910,14 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid EmailAddress"))?
             };
             let status = {
                 let js_val = Reflect::get(&obj, &"status".into())?;
@@ -9099,7 +9121,15 @@ fn variant_invite_list_item_rs_to_js(
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
             let js_created_by = variant_invite_list_invitation_created_by_rs_to_js(created_by)?;
             Reflect::set(&js_obj, &"createdBy".into(), &js_created_by)?;
-            let js_claimer_email = claimer_email.into();
+            let js_claimer_email = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: &libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
+                match custom_to_rs_string(claimer_email) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
             Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
             let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
@@ -17259,6 +17289,13 @@ pub fn clientNewShamirRecoveryInvitation(
 #[wasm_bindgen]
 pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: bool) -> Promise {
     future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let claimer_email = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(claimer_email).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
         let ret = libparsec::client_new_user_invitation(client, claimer_email, send_email).await;
         Ok(match ret {
             Ok(value) => {

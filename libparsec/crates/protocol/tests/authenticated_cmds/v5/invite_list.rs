@@ -82,7 +82,7 @@ pub fn rep_ok() {
                     human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
                     user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                 },
-                claimer_email: "alice@dev1".to_owned(),
+                claimer_email: "alice@dev1".parse().unwrap(),
                 status: InvitationStatus::Pending,
             },
             authenticated_cmds::invite_list::InviteListItem::Device {
@@ -167,7 +167,7 @@ pub fn rep_ok() {
                     human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
                     user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                 },
-                claimer_email: "alice@example.com".to_owned(),
+                claimer_email: "alice@example.com".parse().unwrap(),
                 status: InvitationStatus::Pending,
             },
             authenticated_cmds::invite_list::InviteListItem::Device {

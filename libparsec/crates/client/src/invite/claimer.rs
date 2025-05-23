@@ -320,7 +320,7 @@ pub async fn claimer_retrieve_info(
 pub struct UserClaimListAdministratorsCtx {
     config: Arc<ClientConfig>,
     cmds: Arc<InvitedCmds>,
-    claimer_email: String,
+    claimer_email: EmailAddress,
     created_by: InviteInfoInvitationCreatedBy,
     administrators: Vec<UserGreetingAdministrator>,
     time_provider: TimeProvider,
@@ -330,7 +330,7 @@ impl UserClaimListAdministratorsCtx {
     pub fn new(
         config: Arc<ClientConfig>,
         cmds: Arc<InvitedCmds>,
-        claimer_email: String,
+        claimer_email: EmailAddress,
         created_by: InviteInfoInvitationCreatedBy,
         administrators: Vec<UserGreetingAdministrator>,
         time_provider: TimeProvider,
@@ -971,7 +971,7 @@ impl BaseClaimInitialCtx {
 #[derive(Debug)]
 pub struct UserClaimInitialCtx {
     base: BaseClaimInitialCtx,
-    claimer_email: String,
+    claimer_email: EmailAddress,
     last_greeting_attempt_joined_on: Option<DateTime>,
     online_status: UserOnlineStatus,
 }
@@ -980,7 +980,7 @@ impl UserClaimInitialCtx {
     pub fn new(
         config: Arc<ClientConfig>,
         cmds: Arc<InvitedCmds>,
-        claimer_email: String,
+        claimer_email: EmailAddress,
         administrator: UserGreetingAdministrator,
         time_provider: TimeProvider,
     ) -> Self {

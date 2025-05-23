@@ -19,6 +19,7 @@ from parsec._parsec import (
     SequesterServiceID,
     VlobID,
 )
+from parsec._parsec_pyi.ids import EmailAddress
 from parsec.components.sequester import RejectedBySequesterService, SequesterServiceUnavailable
 from parsec.config import BackendConfig
 from parsec.logging import get_logger
@@ -37,7 +38,7 @@ class OrganizationBootstrapWebhook(BaseModel):
     organization_id: OrganizationIDField
     device_id: DeviceIDField
     device_label: DeviceLabelField
-    human_email: str
+    human_email: EmailAddress
     human_label: str
 
 
@@ -51,7 +52,7 @@ class WebhooksComponent:
         organization_id: OrganizationID,
         device_id: DeviceID,
         device_label: DeviceLabel,
-        human_email: str,
+        human_email: EmailAddress,
         human_label: str,
     ) -> None:
         if not self._config.organization_bootstrap_webhook_url:

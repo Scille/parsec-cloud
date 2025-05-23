@@ -33,6 +33,7 @@ from parsec._parsec import (
 from parsec._parsec import (
     testbed as tb,
 )
+from parsec._parsec_pyi.ids import EmailAddress
 from parsec.asgi import AsgiApp
 from parsec.components.auth import (
     AccountPasswordAuthenticationToken,
@@ -525,7 +526,7 @@ class AccountRpcClient:
     # - make the template in the testbed
     # - manage multiple accounts
     raw_client: AsyncClient
-    email: str
+    email: EmailAddress
     _authenticated_account: AuthenticatedAccountRpcClient | None = None
     _anonymous_account: AnonymousAccountRpcClient | None = None
     _hmac_key: SecretKey | None = None

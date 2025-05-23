@@ -15,6 +15,7 @@ from parsec._parsec import (
     ParsecAccountEmailValidationAddr,
     anonymous_account_cmds,
 )
+from parsec._parsec_pyi.ids import EmailAddress
 from parsec.api import api
 from parsec.client_context import AnonymousAccountClientContext
 from parsec.components.email import SendEmailBadOutcome, send_email
@@ -91,7 +92,7 @@ class BaseAccountComponent:
     async def _send_email_validation_token(
         self,
         token: EmailValidationToken,
-        claimer_email: str,
+        claimer_email: EmailAddress,
     ) -> None | SendEmailBadOutcome:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG

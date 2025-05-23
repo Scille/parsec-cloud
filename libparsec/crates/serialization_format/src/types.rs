@@ -235,6 +235,7 @@ generate_field_type_enum!(
     SequesterServiceID => libparsec_types::SequesterServiceID,
     DeviceLabel => libparsec_types::DeviceLabel,
     HumanHandle => libparsec_types::HumanHandle,
+    EmailAddress => libparsec_types::EmailAddress,
     UserProfile => libparsec_types::UserProfile,
     RealmRole => libparsec_types::RealmRole,
     BootstrapToken => libparsec_types::BootstrapToken,

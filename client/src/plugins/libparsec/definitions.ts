@@ -456,7 +456,7 @@ export interface AnyClaimRetrievedInfoShamirRecovery {
 export interface AnyClaimRetrievedInfoUser {
     tag: AnyClaimRetrievedInfoTag.User
     handle: Handle
-    claimerEmail: string
+    claimerEmail: EmailAddress
     createdBy: InviteInfoInvitationCreatedBy
     administrators: Array<UserGreetingAdministrator>
     preferredGreeter: UserGreetingAdministrator | null
@@ -2146,7 +2146,7 @@ export interface InviteListItemUser {
     token: InvitationToken
     createdOn: DateTime
     createdBy: InviteListInvitationCreatedBy
-    claimerEmail: string
+    claimerEmail: EmailAddress
     status: InvitationStatus
 }
 export type InviteListItem =
@@ -4608,7 +4608,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<NewInvitationInfo, ClientNewShamirRecoveryInvitationError>>
     clientNewUserInvitation(
         client: Handle,
-        claimer_email: string,
+        claimer_email: EmailAddress,
         send_email: boolean
     ): Promise<Result<NewInvitationInfo, ClientNewUserInvitationError>>
     clientRenameWorkspace(

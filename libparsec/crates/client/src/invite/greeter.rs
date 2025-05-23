@@ -40,7 +40,7 @@ pub enum NewUserInvitationError {
 
 pub async fn new_user_invitation(
     cmds: &AuthenticatedCmds,
-    claimer_email: String,
+    claimer_email: EmailAddress,
     send_email: bool,
 ) -> Result<(InvitationToken, InvitationEmailSentStatus), NewUserInvitationError> {
     use authenticated_cmds::latest::invite_new_user::{

@@ -256,7 +256,7 @@ event_wrapper!(
 event_wrapper!(
     TestbedEventNewUserInvitation,
     [
-        claimer_email: String,
+        claimer_email: EmailAddress,
         created_by: DeviceID,
         created_on: DateTime,
         token: InvitationToken,

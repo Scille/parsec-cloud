@@ -206,7 +206,7 @@ class BasePkiEnrollmentComponent:
         enrollment_id: EnrollmentID,
         force: bool,
         submitter_der_x509_certificate: bytes,
-        submitter_der_x509_certificate_email: str,
+        submitter_der_x509_certificate_email: EmailAddress,
         submit_payload_signature: bytes,
         submit_payload: bytes,
     ) -> None | PkiEnrollmentSubmitBadOutcome | PkiEnrollmentSubmitX509CertificateAlreadySubmitted:

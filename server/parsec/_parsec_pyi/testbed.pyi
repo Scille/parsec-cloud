@@ -152,7 +152,7 @@ class TestbedEventRevokeUser:
     raw_certificate: bytes
 
 class TestbedEventNewUserInvitation:
-    claimer_email: str
+    claimer_email: EmailAddress
     created_by: DeviceID
     created_on: DateTime
     token: InvitationToken

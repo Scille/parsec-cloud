@@ -48,6 +48,7 @@ from parsec._parsec import (
     VerifyKey,
     VlobID,
 )
+from parsec._parsec_pyi.ids import EmailAddress
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
 from parsec.components.sequester import SequesterServiceType
@@ -504,7 +505,7 @@ class MemoryInvitation:
     created_by: InvitationCreatedBy
 
     # Required when type=USER or type=SHAMIR_RECOVERY
-    claimer_email: str | None
+    claimer_email: EmailAddress | None
 
     # Required when type=DEVICE or type=SHAMIR_RECOVERY
     claimer_user_id: UserID | None

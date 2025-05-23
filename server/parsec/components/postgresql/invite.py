@@ -96,7 +96,7 @@ class BaseInvitationInfo:
 
 @dataclass(frozen=True)
 class UserInvitationInfo(BaseInvitationInfo):
-    claimer_email: str
+    claimer_email: EmailAddress
 
 
 @dataclass(frozen=True)
@@ -989,7 +989,7 @@ GROUP BY user_.user_id, human.email, human.label
 
 
 async def query_retrieve_active_human_by_email(
-    conn: AsyncpgConnection, organization_id: OrganizationID, email: str
+    conn: AsyncpgConnection, organization_id: OrganizationID, email: EmailAddress
 ) -> UserID | None:
     result = await conn.fetchrow(
         *_q_retrieve_active_human_by_email(
@@ -1125,7 +1125,7 @@ async def _do_new_invitation(
     organization_id: OrganizationID,
     author_user_id: UserID,
     author_device_id: DeviceID,
-    user_invitation_claimer_email: str | None,
+    user_invitation_claimer_email: EmailAddress | None,
     device_invitation_claimer_user_id: UserID | None,
     shamir_recovery_setup: int | None,
     created_on: DateTime,
@@ -1241,7 +1241,7 @@ class PGInviteComponent(BaseInviteComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
-        claimer_email: str,
+        claimer_email: EmailAddress,
         send_email: bool,
         # Only needed for testbed template
         force_token: InvitationToken | None = None,

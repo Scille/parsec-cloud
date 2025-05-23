@@ -149,7 +149,7 @@ async def test_ok(
             response = await client.post(
                 url,
                 headers={"Authorization": f"Bearer {backend.config.administration_token}"},
-                json={"user_email": coolorg.alice.human_handle.email, "frozen": False},
+                json={"user_email": str(coolorg.alice.human_handle.email), "frozen": False},
             )
             assert response.status_code == 200, response.content
             assert response.json() == {

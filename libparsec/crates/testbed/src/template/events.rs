@@ -2450,7 +2450,7 @@ no_certificate_event!(
     TestbedEventNewUserInvitation,
     [
         created_by: DeviceID,
-        claimer_email: String,
+        claimer_email: EmailAddress,
         created_on: DateTime,
         token: InvitationToken,
     ]
@@ -2459,7 +2459,7 @@ no_certificate_event!(
 impl TestbedEventNewUserInvitation {
     pub(super) fn from_builder(
         builder: &mut TestbedTemplateBuilder,
-        claimer_email: String,
+        claimer_email: EmailAddress,
     ) -> Self {
         // 1) Consistency checks
 

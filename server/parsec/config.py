@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlparse, urlunparse
 
 from parsec._parsec import ActiveUsersLimit, ParsecAddr
+from parsec._parsec_pyi.ids import EmailAddress
 
 if TYPE_CHECKING:
     from parsec.components.memory.organization import MemoryOrganization, OrganizationID
@@ -159,7 +160,7 @@ class SmtpEmailConfig:
     host_password: str | None
     use_ssl: bool
     use_tls: bool
-    sender: str
+    sender: EmailAddress
 
     def __str__(self) -> str:
         # Do not show the password in the logs
@@ -172,7 +173,7 @@ class SmtpEmailConfig:
 class MockedEmailConfig:
     type = "MOCKED"
 
-    sender: str
+    sender: EmailAddress
     tmpdir: str
 
 

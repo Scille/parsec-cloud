@@ -27,7 +27,7 @@ pub const PARSEC_AUTH_METHOD: &str = "PARSEC-PASSWORD-HMAC-BLAKE2B";
 
 #[derive(Debug)]
 pub struct AccountPassword {
-    pub email: String,
+    pub email: EmailAddress,
     pub time_provider: TimeProvider,
     pub hmac_key: SecretKey,
 }

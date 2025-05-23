@@ -22,7 +22,7 @@ pub fn req() {
     .as_ref();
 
     let req = anonymous_account_cmds::account_create_send_validation_email::Req {
-        email: "alice@invalid.com".to_owned(),
+        email: "alice@invalid.com".parse().unwrap(),
     };
 
     let expected = anonymous_account_cmds::AnyCmdReq::AccountCreateSendValidationEmail(req.clone());

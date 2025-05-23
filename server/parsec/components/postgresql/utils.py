@@ -13,6 +13,7 @@ from parsec._parsec import (
     BlockID,
     DateTime,
     DeviceID,
+    EmailAddress,
     GreetingAttemptID,
     SequesterServiceID,
     UserID,
@@ -31,14 +32,15 @@ SqlQueryParam = (
     | int
     | bool
     | float
-    | DateTime
-    | UserID
-    | DeviceID
-    | VlobID
-    | BlockID
-    | SequesterServiceID
-    | GreetingAttemptID
     | ActiveUsersLimit
+    | BlockID
+    | DateTime
+    | DeviceID
+    | EmailAddress
+    | GreetingAttemptID
+    | SequesterServiceID
+    | UserID
+    | VlobID
     | Iterable["SqlQueryParam"]
 )
 
