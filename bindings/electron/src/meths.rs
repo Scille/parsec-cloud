@@ -1582,7 +1582,14 @@ fn struct_human_handle_js_to_rs<'a>(
 ) -> NeonResult<libparsec::HumanHandle> {
     let email = {
         let js_val: Handle<JsString> = obj.get(cx, "email")?;
-        js_val.value(cx)
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, String> { s.parse().map_err(|e| e.to_string()) };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
     let label = {
         let js_val: Handle<JsString> = obj.get(cx, "label")?;

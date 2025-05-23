@@ -124,7 +124,9 @@ class U8(U8BasedType):
 
 class NonZeroU8(U8BasedType):
     custom_from_rs_u8 = "|x: u8| -> Result<std::num::NonZeroU8, _> { std::num::NonZeroU8::try_from(x).map_err(|e| e.to_string()) }"
-    custom_to_rs_u8 = "|x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) }"
+    custom_to_rs_u8 = (
+        "|x: std::num::NonZeroU8| -> Result<u8, &'static str> { Ok(x.get()) }"
+    )
 
 
 class I32(I32BasedType):
@@ -161,9 +163,7 @@ class Handle(U32BasedType):
 
 class ApiVersion(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ApiVersion::try_from(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|x: libparsec::ApiVersion| -> Result<String, &'static str> { Ok(x.to_string()) }"
-    )
+    custom_to_rs_string = "|x: libparsec::ApiVersion| -> Result<String, &'static str> { Ok(x.to_string()) }"
 
 
 class OrganizationID(StrBasedType):
@@ -172,20 +172,30 @@ class OrganizationID(StrBasedType):
 
 class UserID(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<libparsec::UserID, _> { libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    )
 
 
 class DeviceID(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<libparsec::DeviceID, _> { libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    )
 
 
 class DeviceLabel(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string()) }"
 
 
+class EmailAddress(StrBasedType):
+    custom_from_rs_string = (
+        "|s: String| -> Result<_, String> { s.parse().map_err(|e| e.to_string()) }"
+    )
+
+
 class HumanHandle(Structure):
-    email: str
+    email: EmailAddress
     label: str
     custom_getters: ClassVar = {
         "email": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &str { obj.email() } access(obj) }",
@@ -227,9 +237,7 @@ class FsPath(StrBasedType):
 
 class SequesterServiceID(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<libparsec::SequesterServiceID, _> { libparsec::SequesterServiceID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|x: libparsec::SequesterServiceID| -> Result<String, &'static str> { Ok(x.hex()) }"
-    )
+    custom_to_rs_string = "|x: libparsec::SequesterServiceID| -> Result<String, &'static str> { Ok(x.hex()) }"
 
 
 class SequesterVerifyKeyDer(BytesBasedType):
@@ -251,21 +259,19 @@ class EntryName(StrBasedType):
 
 class VlobID(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<libparsec::VlobID, _> { libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) }"
+    )
 
 
 class InvitationToken(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<libparsec::InvitationToken, _> { libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) }"
-    )
+    custom_to_rs_string = "|x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) }"
 
 
 class GreetingAttemptID(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<libparsec::GreetingAttemptID, _> { libparsec::GreetingAttemptID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|x: libparsec::GreetingAttemptID| -> Result<String, &'static str> { Ok(x.hex()) }"
-    )
+    custom_to_rs_string = "|x: libparsec::GreetingAttemptID| -> Result<String, &'static str> { Ok(x.hex()) }"
 
 
 class UserProfile(Enum):
