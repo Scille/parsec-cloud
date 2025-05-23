@@ -152,14 +152,14 @@ serialized before being send to the server.
 
 ```rust
 pub enum AccountVaultItem {
-    AutoEnrollmentDevice(AccountVaultItemAutoEnrollmentDevice)
+    RegistrationDevice(AccountVaultItemRegistrationDevice)
     WebLocalDeviceKey(AccountVaultItemWebLocalDeviceKey)
 }
 ```
 
 ```json5
 {
-    "label": "AccountVaultItemAutoEnrollmentDevice",
+    "label": "AccountVaultItemRegistrationDevice",
     "type": "account_vault_item_auto_enrollment_device",
     "other_fields": [
         {
