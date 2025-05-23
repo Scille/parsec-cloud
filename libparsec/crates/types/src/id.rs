@@ -621,7 +621,7 @@ impl HumanHandle {
     /// is used to do the conversion while retaining ID unicity.
     pub fn new_redacted(user_id: UserID) -> Self {
         let label = user_id.hex();
-        let email = EmailAddress(
+        let email = EmailAddress::new(
             email_address_parser::EmailAddress::new(
                 &label,
                 HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN,
@@ -679,14 +679,47 @@ impl From<HumanHandle> for (String, String) {
 
 crate::impl_from_maybe!(Option<HumanHandle>);
 
-#[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, Hash)]
-pub struct EmailAddress(email_address_parser::EmailAddress);
+#[derive(Clone, SerializeDisplay, DeserializeFromStr)]
+pub struct EmailAddress {
+    value: email_address_parser::EmailAddress,
+    display: String,
+}
+
+impl EmailAddress {
+    fn new(email: email_address_parser::EmailAddress) -> Self {
+        let display = email.to_string();
+        Self {
+            value: email,
+            display,
+        }
+    }
+}
+
+impl PartialEq for EmailAddress {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
+}
+
+impl Eq for EmailAddress {}
+
+impl Hash for EmailAddress {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.value.hash(state);
+    }
+}
 
 impl Deref for EmailAddress {
     type Target = email_address_parser::EmailAddress;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.value
+    }
+}
+
+impl AsRef<str> for EmailAddress {
+    fn as_ref(&self) -> &str {
+        &self.display
     }
 }
 
@@ -706,13 +739,13 @@ impl Ord for EmailAddress {
 
 impl std::fmt::Debug for EmailAddress {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Debug::fmt(&self.0, f)
+        std::fmt::Display::fmt(&self.value, f)
     }
 }
 
 impl Display for EmailAddress {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Display::fmt(&self.0, f)
+        f.write_str(&self.display)
     }
 }
 
@@ -741,6 +774,14 @@ impl FromStr for EmailAddress {
     }
 }
 
+impl TryFrom<&str> for EmailAddress {
+    type Error = <Self as FromStr>::Err;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        value.parse()
+    }
+}
+
 impl TryFrom<email_address_parser::EmailAddress> for EmailAddress {
     type Error = EmailAddressParseError;
 
@@ -748,7 +789,7 @@ impl TryFrom<email_address_parser::EmailAddress> for EmailAddress {
         if value.get_domain() == HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN {
             Err(EmailAddressParseError::InvalidDomain)
         } else {
-            Ok(Self(value))
+            Ok(Self::new(value))
         }
     }
 }

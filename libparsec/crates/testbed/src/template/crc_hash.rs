@@ -3,8 +3,10 @@
 // `std::hash::Hash` is not stable across platforms (e.g. it uses native
 // endianness when hashing numbers), hence we have to roll our own system.
 
+use core::hash;
 use std::{
     collections::{HashMap, HashSet},
+    hash::Hash,
     num::{NonZeroU64, NonZeroU8},
     sync::Arc,
 };
@@ -157,6 +159,13 @@ macro_rules! impl_crc_hash_for_str_based {
 impl_crc_hash_for_str_based!(HumanHandle);
 impl_crc_hash_for_str_based!(DeviceLabel);
 impl_crc_hash_for_str_based!(EntryName);
+
+impl CrcHash for EmailAddress {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(stringify!(EmailAddress).as_bytes());
+        self.hash(hasher);
+    }
+}
 
 macro_rules! impl_crc_hash_for_uuid_based {
     ($name:ident) => {
