@@ -416,6 +416,10 @@ To list all protected device from all vault except current/active one:
                                 "name": "vault_key_access",
                                 // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
                                 "type": "Bytes"
+                            },
+                            {
+                                "name": "algorithm",
+                                "type": "PasswordAlgorithm"
                             }
                         ]
                     }
