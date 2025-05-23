@@ -216,6 +216,7 @@ class GetOrganizationOut(BaseModel):
     active_users_limit: int | None
     minimum_archiving_period: int
     tos: GetOrganizationOutTos | None
+    allowed_client_agent: AllowedClientAgent
 
 
 @administration_router.get("/administration/organizations/{raw_organization_id}")
@@ -249,6 +250,7 @@ async def administration_get_organization(
             updated_on=organization.tos.updated_on,
             per_locale_urls=organization.tos.per_locale_urls,
         ),
+        allowed_client_agent=organization.allowed_client_agent,
     )
 
 
