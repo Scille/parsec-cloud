@@ -1,0 +1,27 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "vault_key_rotation",
+        "req": {
+            "fields": [
+                {
+                    "name": "key_access",
+                    // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+                    "type": "Bytes"
+                },
+                {
+                    "name": "items",
+                    // Map with `item_fingerprint` as key and serialized `AccountVaultItem` as value
+                    "type": "Map<HashDigest, Bytes>"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            }
+        ]
+    }
+]

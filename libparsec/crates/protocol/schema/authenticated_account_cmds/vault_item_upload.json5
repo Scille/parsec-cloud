@@ -1,0 +1,31 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "vault_item_upload",
+        "req": {
+            "fields": [
+                {
+                    "name": "item_fingerprint",
+                    // Arbitrary hash of relevant fields of the item to avoid duplicates
+                    // Typically for registration device: `hash( 'REGISTRATION_DEVICE' + <organization ID> + <device ID>)`
+                    "type": "Bytes"
+                },
+                {
+                    "name": "item",
+                    // Serialized `AccountVaultItem`, the server considers it opaque.
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "fingerprint_already_exists"
+            }
+        ]
+    }
+]
