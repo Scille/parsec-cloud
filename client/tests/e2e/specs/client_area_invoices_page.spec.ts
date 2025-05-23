@@ -1,13 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { MockBms, expect, msTest } from '@tests/e2e/helpers';
+import { MockBms, clientAreaNavigateTo, expect, msTest } from '@tests/e2e/helpers';
 
 msTest('List the invoices', async ({ clientArea }) => {
   await MockBms.mockGetInvoices(clientArea);
+  await clientAreaNavigateTo(clientArea, 'Invoices');
 
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(2).click();
-  await expect(title).toHaveText('Invoices');
   const containers = clientArea.locator('.invoices-year');
   await expect(containers).toHaveCount(3);
   await expect(containers.locator('.invoices-year-text')).toHaveText(['2021', '2020', '2019']);
@@ -53,10 +51,8 @@ msTest('List the invoices', async ({ clientArea }) => {
 
 msTest('List the invoices generic error', async ({ clientArea }) => {
   await MockBms.mockGetInvoices(clientArea, {}, { GET: { errors: { status: 400 } } });
+  await clientAreaNavigateTo(clientArea, 'Invoices');
 
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(2).click();
-  await expect(title).toHaveText('Invoices');
   await expect(clientArea.locator('.invoices-year:visible')).toHaveCount(0);
   await expect(clientArea.locator('.main-content').locator('.form-error')).toHaveText('Could not retrieve your invoices.');
   await expect(clientArea.locator('.main-content').locator('.no-invoices')).toBeHidden();
@@ -64,10 +60,8 @@ msTest('List the invoices generic error', async ({ clientArea }) => {
 
 msTest('List the invoices timeout', async ({ clientArea }) => {
   await MockBms.mockGetInvoices(clientArea, {}, { GET: { timeout: true } });
+  await clientAreaNavigateTo(clientArea, 'Invoices');
 
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(2).click();
-  await expect(title).toHaveText('Invoices');
   await expect(clientArea.locator('.invoices-year:visible')).toHaveCount(0);
   await expect(clientArea.locator('.main-content').locator('.form-error')).toHaveText('Could not retrieve your invoices.');
   await expect(clientArea.locator('.main-content').locator('.no-invoices')).toBeHidden();
@@ -75,9 +69,8 @@ msTest('List the invoices timeout', async ({ clientArea }) => {
 
 msTest('Empty invoice list', async ({ clientArea }) => {
   await MockBms.mockGetInvoices(clientArea, { count: 0 });
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(2).click();
-  await expect(title).toHaveText('Invoices');
+  await clientAreaNavigateTo(clientArea, 'Invoices');
+
   await expect(clientArea.locator('.invoices-year:visible')).toHaveCount(0);
   await expect(clientArea.locator('.main-content').locator('.form-error')).toBeHidden();
   await expect(clientArea.locator('.main-content').locator('.no-invoices')).toBeVisible();
@@ -86,10 +79,8 @@ msTest('Empty invoice list', async ({ clientArea }) => {
 
 msTest('Filter the invoices', async ({ clientArea }) => {
   await MockBms.mockGetInvoices(clientArea);
+  await clientAreaNavigateTo(clientArea, 'Invoices');
 
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(2).click();
-  await expect(title).toHaveText('Invoices');
   const containers = clientArea.locator('.invoices-year:visible');
   await expect(containers).toHaveCount(3);
   await expect(containers.nth(0).locator('.invoices-year-content-list-item')).toHaveCount(12);

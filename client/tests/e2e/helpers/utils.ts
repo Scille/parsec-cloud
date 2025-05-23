@@ -235,6 +235,14 @@ export async function clientAreaSwitchOrganization(page: Page, organization: str
   await expect(popover).toBeHidden();
 }
 
+export async function clientAreaNavigateTo(page: Page, label: string): Promise<void> {
+  const button = page.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').filter({ hasText: label });
+  await expect(button).toBeVisible();
+
+  await button.click();
+  await expect(page.locator('.header-content').locator('.header-title')).toHaveText(label);
+}
+
 export async function workspacesInGridMode(workspacesPage: Page): Promise<boolean> {
   return (await workspacesPage.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
 }

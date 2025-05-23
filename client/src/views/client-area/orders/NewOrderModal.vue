@@ -48,7 +48,7 @@
                 id="label"
                 class="form-label"
               >
-                {{ $msTranslate('clientArea.orders.request.storageNeeds.label') }}
+                {{ $msTranslate('clientArea.orders.request.description.label') }}
               </ion-text>
               <ms-textarea
                 class="form-input form-field"
