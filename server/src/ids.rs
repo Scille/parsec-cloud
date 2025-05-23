@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::str::FromStr;
+
 use pyo3::{exceptions::PyValueError, prelude::*, types::PyType};
 
 // UUID based type
@@ -321,3 +323,13 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
     __richcmp__ ord,
     __hash__,
 );
+
+#[pymethods]
+impl EmailAddress {
+    #[new]
+    pub fn new(raw: &str) -> PyResult<Self> {
+        libparsec_types::EmailAddress::from_str(raw)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+}
