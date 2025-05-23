@@ -75,10 +75,10 @@ interface CustomOrderStatusTranslations {
 }
 
 export function getCustomOrderStatusTranslationKey(
-  statusBms: CustomOrderStatus,
-  statusSellsy: CustomOrderRequestStatus,
+  customOrderStatus: CustomOrderStatus,
+  customOrderRequestStatus: CustomOrderRequestStatus,
 ): CustomOrderStatusTranslations {
-  const key = `${statusBms}-${statusSellsy}`;
+  const key = `${customOrderStatus}-${customOrderRequestStatus}`;
 
   switch (key) {
     case `${CustomOrderStatus.NothingLinked}-${CustomOrderRequestStatus.Received}`:

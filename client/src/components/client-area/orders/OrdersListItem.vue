@@ -16,14 +16,14 @@
           {{
             $msTranslate({
               key: 'clientArea.orders.progress.orderNumber',
-              data: { number: request.id },
+              data: { number: request.label },
             })
           }}
           <span
             class="order-tag button-small"
-            :class="getStatus(request.status, customOrderSellsyStatus).status"
+            :class="getStatus(request.status, customOrderStatus).status"
           >
-            {{ $msTranslate(getStatus(request.status, customOrderSellsyStatus).name) }}
+            {{ $msTranslate(getStatus(request.status, customOrderStatus).name) }}
           </span>
         </ion-text>
         <ion-text class="order-header__date subtitles-normal">
@@ -43,6 +43,8 @@
             {{ $msTranslate('clientArea.orders.new.details') }}
           </ion-text>
           <!-- No organization created at this step, users and storage estimation -->
+          <!-- TODO: adapt this block for Received, Processing cases -->
+          <!-- https://www.figma.com/design/8WXUivEfT1x4FTzCr3WNxd/Parsec-Client?node-id=1639-10776&t=USnczIuFbxX3pegn-11 -->
           <div
             class="details-list"
             v-if="!orderDetails"
@@ -107,7 +109,7 @@
             v-if="
               orderDetails &&
               [StatusStep.Confirmed, StatusStep.InvoiceToBePaid, StatusStep.Available].includes(
-                getStatus(request.status, customOrderSellsyStatus).status,
+                getStatus(request.status, customOrderStatus).status,
               )
             "
           >
@@ -232,7 +234,7 @@
           <div class="details-list">
             <!-- comment -->
             <div
-              v-if="getStatus(request.status, customOrderSellsyStatus).status === StatusStep.Confirmed && orderDetails"
+              v-if="getStatus(request.status, customOrderStatus).status === StatusStep.Confirmed && orderDetails"
               class="details-list-item"
             >
               <ion-text class="details-list-item__title body-lg">
@@ -258,7 +260,7 @@
           <div
             v-if="
               orderDetails &&
-              [StatusStep.Confirmed, StatusStep.InvoiceToBePaid].includes(getStatus(request.status, customOrderSellsyStatus).status)
+              [StatusStep.Confirmed, StatusStep.InvoiceToBePaid].includes(getStatus(request.status, customOrderStatus).status)
             "
             class="details-invoice"
           >
@@ -272,13 +274,13 @@
             </div>
             <ion-text class="details-invoice-price">
               <span
-                v-if="getStatus(request.status, customOrderSellsyStatus).status === StatusStep.Confirmed"
+                v-if="getStatus(request.status, customOrderStatus).status === StatusStep.Confirmed"
                 class="body-lg"
               >
                 {{ $msTranslate('clientArea.orders.invoiceToBePaid.waiting') }}
               </span>
               <span
-                v-if="getStatus(request.status, customOrderSellsyStatus).status === StatusStep.InvoiceToBePaid"
+                v-if="getStatus(request.status, customOrderStatus).status === StatusStep.InvoiceToBePaid"
                 class="title-h4"
               >
                 {{
@@ -293,8 +295,8 @@
         </div>
         <order-tracking-progress
           class="order-content-tracking"
-          :sellsy-status="request.status"
-          :bms-status="customOrderSellsyStatus"
+          :custom-order-request-status="request.status"
+          :custom-order-status="customOrderStatus"
         />
       </div>
     </template>
@@ -334,13 +336,13 @@ import {
   DataType,
 } from '@/services/bms';
 import { ref, onMounted } from 'vue';
-import OrderTrackingProgress from '@/components/client-area/OrderTrackingProgress.vue';
+import OrderTrackingProgress from '@/components/client-area/orders/OrderTrackingProgress.vue';
 import { Translatable, I18n } from 'megashark-lib';
 
 const error = ref<string>('');
 const querying = ref(true);
 const orderDetails = ref<CustomOrderDetailsResultData | undefined>(undefined);
-const customOrderSellsyStatus = ref<CustomOrderStatus>(CustomOrderStatus.Unknown);
+const customOrderStatus = ref<CustomOrderStatus>(CustomOrderStatus.NothingLinked);
 const open = ref(false);
 
 const props = defineProps<{
@@ -400,7 +402,7 @@ onMounted(async () => {
       error.value = 'clientArea.contracts.errors.noInfo';
       return;
     }
-    customOrderSellsyStatus.value = orderDetailsStatus.data.status;
+    customOrderStatus.value = orderDetailsStatus.data.status;
   } finally {
     querying.value = false;
   }
@@ -411,8 +413,11 @@ interface StepNameAndStatus {
   name: Translatable;
 }
 
-function getStatus(statusBms: CustomOrderRequestStatus | undefined, statusSellsy: CustomOrderStatus | undefined): StepNameAndStatus {
-  switch (statusBms) {
+function getStatus(
+  customOrderRequestStatus: CustomOrderRequestStatus | undefined,
+  customOrderStatus: CustomOrderStatus | undefined,
+): StepNameAndStatus {
+  switch (customOrderRequestStatus) {
     case CustomOrderRequestStatus.Received:
       return {
         status: StatusStep.Received,
@@ -434,19 +439,19 @@ function getStatus(statusBms: CustomOrderRequestStatus | undefined, statusSellsy
         name: 'clientArea.dashboard.step.cancel.tag',
       };
     case CustomOrderRequestStatus.Finished:
-      if (statusSellsy === CustomOrderStatus.EstimateLinked) {
+      if (customOrderStatus === CustomOrderStatus.EstimateLinked) {
         return {
           status: StatusStep.Confirmed,
           name: 'clientArea.dashboard.step.confirmed.tag',
         };
       }
-      if (statusSellsy === CustomOrderStatus.NothingLinked || statusSellsy === CustomOrderStatus.InvoiceToBePaid) {
+      if (customOrderStatus === CustomOrderStatus.NothingLinked || customOrderStatus === CustomOrderStatus.InvoiceToBePaid) {
         return {
           status: StatusStep.InvoiceToBePaid,
           name: 'clientArea.dashboard.step.invoiceToBePaid.tag',
         };
       }
-      if (statusSellsy === CustomOrderStatus.InvoicePaid) {
+      if (customOrderStatus === CustomOrderStatus.InvoicePaid) {
         return {
           status: StatusStep.Available,
           name: 'clientArea.dashboard.step.organizationAvailable.tag',

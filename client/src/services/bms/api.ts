@@ -662,6 +662,7 @@ async function getCustomOrderRequests(token: AuthenticationToken): Promise<BmsRe
         requests: axiosResponse.data.map((req: any) => {
           return {
             id: req.id,
+            label: req.label,
             organizationId: req.organization_name,
             describedNeeds: req.described_need,
             adminUsers: req.admin_users,
