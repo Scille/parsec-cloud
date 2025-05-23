@@ -8,7 +8,7 @@ import pytest
 
 from parsec._parsec import ActiveUsersLimit
 from parsec.components.organization import OrganizationDump, TermsOfService
-from parsec.config import AllowedClientAgent
+from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
 from tests.common import Backend, CoolorgRpcClients
 
@@ -96,6 +96,7 @@ class PatchOrganizationParams(TypedDict):
             "minimum_archiving_period": 0,
             "tos": {"en_HK": "https://parsec.invalid/tos_en"},
             "allowed_client_agent": "NATIVE_ONLY",
+            "account_vault_strategy": "FORBIDDEN",
         },
     ),
 )
@@ -131,6 +132,9 @@ async def test_ok(
             else None,
             allowed_client_agent=AllowedClientAgent(
                 params.get("allowed_client_agent", "NATIVE_OR_WEB")
+            ),
+            account_vault_strategy=AccountVaultStrategy(
+                params.get("account_vault_strategy", "ALLOWED")
             ),
         )
     }

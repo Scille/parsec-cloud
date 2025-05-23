@@ -19,7 +19,7 @@ from parsec.components.organization import (
     Unset,
     UnsetType,
 )
-from parsec.config import AllowedClientAgent
+from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from tests.common import Backend, MinimalorgRpcClients
 
 
@@ -104,6 +104,9 @@ def organization_initial_params(backend: Backend, request) -> Iterator[None]:
             backend.config.organization_initial_allowed_client_agent = (
                 AllowedClientAgent.NATIVE_ONLY
             )
+            backend.config.organization_initial_account_vault_strategy = (
+                AccountVaultStrategy.FORBIDDEN
+            )
         case unknown:
             assert False, unknown
     yield
@@ -183,6 +186,12 @@ async def test_ok(
         "allowed_client_agent", backend.config.organization_initial_allowed_client_agent
     )
 
+    # Expected expected_account_vault_strategy
+    expected_account_vault_strategy = args.get(
+        "expected_account_vault_strategy",
+        backend.config.organization_initial_account_vault_strategy,
+    )
+
     dump = await backend.organization.test_dump_organizations()
     assert dump == {
         org_id: OrganizationDump(
@@ -195,6 +204,7 @@ async def test_ok(
             minimum_archiving_period=expected_minimum_archiving_period,
             tos=expected_tos,
             allowed_client_agent=expected_allowed_client_agent,
+            account_vault_strategy=expected_account_vault_strategy,
         )
     }
 
@@ -216,6 +226,7 @@ async def test_overwrite_existing(
         minimum_archiving_period=2,
         tos={"en_HK": "https://parsec.invalid/tos_en.pdf"},
         allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
+        account_vault_strategy=AccountVaultStrategy.FORBIDDEN,
         force_bootstrap_token=bootstrap_token,
     )
     assert isinstance(outcome, BootstrapToken)
@@ -235,6 +246,7 @@ async def test_overwrite_existing(
                 updated_on=t0, per_locale_urls={"en_HK": "https://parsec.invalid/tos_en.pdf"}
             ),
             allowed_client_agent=AllowedClientAgent.NATIVE_ONLY,
+            account_vault_strategy=AccountVaultStrategy.FORBIDDEN,
         )
     }
 
@@ -249,6 +261,7 @@ async def test_overwrite_existing(
             "minimum_archiving_period": 1000,
             "tos": {"cn_HK": "https://parsec.invalid/tos_cn.pdf"},
             "allowed_client_agent": "NATIVE_OR_WEB",
+            "account_vault_strategy": "ALLOWED",
         },
     )
     assert response.status_code == 200, response.content
@@ -271,6 +284,7 @@ async def test_overwrite_existing(
                 updated_on=ANY, per_locale_urls={"cn_HK": "https://parsec.invalid/tos_cn.pdf"}
             ),
             allowed_client_agent=AllowedClientAgent.NATIVE_OR_WEB,
+            account_vault_strategy=AccountVaultStrategy.ALLOWED,
         )
     }
 

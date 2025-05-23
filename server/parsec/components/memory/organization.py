@@ -43,7 +43,7 @@ from parsec.components.organization import (
     TosUrl,
     organization_bootstrap_validate,
 )
-from parsec.config import AllowedClientAgent
+from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
 from parsec.types import Unset, UnsetType
 
@@ -70,6 +70,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
         allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
+        account_vault_strategy: UnsetType | AccountVaultStrategy = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         bootstrap_token = force_bootstrap_token or BootstrapToken.new()
@@ -100,6 +101,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         if allowed_client_agent is Unset:
             allowed_client_agent = self._config.organization_initial_allowed_client_agent
         assert isinstance(allowed_client_agent, AllowedClientAgent)
+        if account_vault_strategy is Unset:
+            account_vault_strategy = self._config.organization_initial_account_vault_strategy
+        assert isinstance(account_vault_strategy, AccountVaultStrategy)
 
         self._data.organizations[id] = MemoryOrganization(
             organization_id=id,
@@ -109,6 +113,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             minimum_archiving_period=minimum_archiving_period,
             tos=cooked_tos,
             allowed_client_agent=allowed_client_agent,
+            account_vault_strategy=account_vault_strategy,
             created_on=now,
         )
 
@@ -147,6 +152,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             sequester_services_certificates=sequester_services_certificates,
             tos=org.tos,
             allowed_client_agent=org.allowed_client_agent,
+            account_vault_strategy=org.account_vault_strategy,
         )
 
     @override
@@ -358,6 +364,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
         allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
+        account_vault_strategy: UnsetType | AccountVaultStrategy = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         try:
             org = self._data.organizations[id]
@@ -379,6 +386,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 org.tos = TermsOfService(updated_on=now, per_locale_urls=tos)
         if allowed_client_agent is not Unset:
             org.allowed_client_agent = allowed_client_agent
+        if account_vault_strategy is not Unset:
+            org.account_vault_strategy = account_vault_strategy
 
         # TODO: the event is triggered even if the orga was already expired, is this okay ?
         if org.is_expired:
@@ -421,6 +430,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 minimum_archiving_period=org.minimum_archiving_period,
                 tos=org.tos,
                 allowed_client_agent=org.allowed_client_agent,
+                account_vault_strategy=org.account_vault_strategy,
             )
         return items
 
