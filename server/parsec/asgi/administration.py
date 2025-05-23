@@ -55,7 +55,7 @@ from parsec.components.sequester import (
     WebhookSequesterService,
 )
 from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListUsersBadOutcome
-from parsec.config import AllowedClientAgent
+from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
 from parsec.logging import get_logger
 from parsec.types import Base64Bytes, SequesterServiceIDField, Unset, UnsetType
@@ -217,6 +217,7 @@ class GetOrganizationOut(BaseModel):
     minimum_archiving_period: int
     tos: GetOrganizationOutTos | None
     allowed_client_agent: AllowedClientAgent
+    account_vault_strategy: AccountVaultStrategy
 
 
 @administration_router.get("/administration/organizations/{raw_organization_id}")
@@ -251,6 +252,7 @@ async def administration_get_organization(
             per_locale_urls=organization.tos.per_locale_urls,
         ),
         allowed_client_agent=organization.allowed_client_agent,
+        account_vault_strategy=organization.account_vault_strategy,
     )
 
 
@@ -269,6 +271,7 @@ class PatchOrganizationIn(BaseModel):
     minimum_archiving_period: UnsetType | int = Unset
     tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset
     allowed_client_agent: UnsetType | AllowedClientAgent = Unset
+    account_vault_strategy: UnsetType | AccountVaultStrategy = Unset
 
     @field_validator("active_users_limit", mode="plain")
     @classmethod
@@ -298,6 +301,19 @@ class PatchOrganizationIn(BaseModel):
             case _:
                 raise ValueError("Expected string")
 
+    @field_validator("account_vault_strategy", mode="plain")
+    @classmethod
+    def validate_account_vault_strategy(cls, v: Any) -> AccountVaultStrategy | UnsetType:
+        match v:
+            case AccountVaultStrategy():
+                return v
+            case v if v is Unset:
+                return v
+            case str():
+                return AccountVaultStrategy(v)
+            case _:
+                raise ValueError("Expected string")
+
 
 @administration_router.patch("/administration/organizations/{raw_organization_id}")
 @log_request
@@ -320,6 +336,7 @@ async def administration_patch_organization(
         minimum_archiving_period=body.minimum_archiving_period,
         tos=body.tos,
         allowed_client_agent=body.allowed_client_agent,
+        account_vault_strategy=body.account_vault_strategy,
     )
     match outcome:
         case None:
