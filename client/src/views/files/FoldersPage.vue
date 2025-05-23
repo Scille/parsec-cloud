@@ -1297,7 +1297,18 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
           PresentationMode.Modal,
         );
       } else if (e.name === 'AbortError') {
-        window.electronAPI.log('debug', 'User cancelled the showSaveFilePicker');
+        if ((e.toString() as string).toLocaleLowerCase().includes('user aborted')) {
+          window.electronAPI.log('debug', 'User cancelled the showSaveFilePicker');
+        } else {
+          informationManager.present(
+            new Information({
+              message: 'FoldersPage.DownloadFile.selectFolderFailed',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Toast,
+          );
+          window.electronAPI.log('error', `Could not create the file: ${e.toString()}`);
+        }
       } else {
         window.electronAPI.log('error', `Failed to select destination file: ${e.toString()}`);
       }
