@@ -20,7 +20,9 @@ use libparsec_types::prelude::*;
 //   * Incompatible changes to `invite_info` to allow for multiple greeters during a user invitation
 //   * Support for Shamir recovery commands, invitation and greeting procedure
 //   * Incompatible change to `vlob_update` to add `realm_id` field as request parameter
-// - v5.1 (Parsec 3.5+): Add `allowed_client_agent` field to `events_listen` response
+// - v5.1 (Parsec 3.5+):
+//   * Add `allowed_client_agent` field to `events_listen` response
+//   * Add `account_vault_strategy` field to `events_listen` response
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
     revision: 3,

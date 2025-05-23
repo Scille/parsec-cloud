@@ -75,6 +75,7 @@ pub fn rep_ok() {
                     user_profile_outsider_allowed: true,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
                     allowed_client_agent: Maybe::Absent,
+                    account_vault_strategy: Maybe::Absent,
                 },
             ),
         ),
@@ -99,6 +100,7 @@ pub fn rep_ok() {
                     user_profile_outsider_allowed: false,
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
                     allowed_client_agent: Maybe::Absent,
+                    account_vault_strategy: Maybe::Absent,
                 },
             ),
         ),
@@ -107,16 +109,18 @@ pub fn rep_ok() {
             // Content:
             //   status: 'ok'
             //   event: 'ORGANIZATION_CONFIG'
+            //   account_vault_strategy: 'ALLOWED'
             //   active_users_limit: 8
             //   allowed_client_agent: 'NATIVE_OR_WEB'
             //   sse_keepalive_seconds: 30
             //   user_profile_outsider_allowed: True
             &hex!(
-                "86a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
-                "4947b26163746976655f75736572735f6c696d697408b4616c6c6f7765645f636c6965"
-                "6e745f6167656e74ad4e41544956455f4f525f574542b57373655f6b656570616c6976"
-                "655f7365636f6e64731ebd757365725f70726f66696c655f6f757473696465725f616c"
-                "6c6f776564c3"
+            "87a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
+            "4947b66163636f756e745f7661756c745f7374726174656779a7414c4c4f574544b261"
+            "63746976655f75736572735f6c696d697408b4616c6c6f7765645f636c69656e745f61"
+            "67656e74ad4e41544956455f4f525f574542b57373655f6b656570616c6976655f7365"
+            "636f6e64731ebd757365725f70726f66696c655f6f757473696465725f616c6c6f7765"
+            "64c3"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
@@ -126,6 +130,9 @@ pub fn rep_ok() {
                     allowed_client_agent: Maybe::Present(
                         authenticated_cmds::events_listen::AllowedClientAgent::NativeOrWeb,
                     ),
+                    account_vault_strategy: Maybe::Present(
+                        authenticated_cmds::events_listen::AccountVaultStrategy::Allowed,
+                    ),
                 },
             ),
         ),
@@ -134,16 +141,18 @@ pub fn rep_ok() {
             // Content:
             //   status: 'ok'
             //   event: 'ORGANIZATION_CONFIG'
+            //   account_vault_strategy: 'FORBIDDEN'
             //   active_users_limit: None
             //   allowed_client_agent: 'NATIVE_ONLY'
             //   sse_keepalive_seconds: 30
             //   user_profile_outsider_allowed: False
             &hex!(
-                "86a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
-                "4947b26163746976655f75736572735f6c696d6974c0b4616c6c6f7765645f636c6965"
-                "6e745f6167656e74ab4e41544956455f4f4e4c59b57373655f6b656570616c6976655f"
-                "7365636f6e64731ebd757365725f70726f66696c655f6f757473696465725f616c6c6f"
-                "776564c2"
+            "87a6737461747573a26f6ba56576656e74b34f5247414e495a4154494f4e5f434f4e46"
+            "4947b66163636f756e745f7661756c745f7374726174656779a9464f5242494444454e"
+            "b26163746976655f75736572735f6c696d6974c0b4616c6c6f7765645f636c69656e74"
+            "5f6167656e74ab4e41544956455f4f4e4c59b57373655f6b656570616c6976655f7365"
+            "636f6e64731ebd757365725f70726f66696c655f6f757473696465725f616c6c6f7765"
+            "64c2"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::OrganizationConfig {
@@ -152,6 +161,9 @@ pub fn rep_ok() {
                     sse_keepalive_seconds: Some(30.try_into().unwrap()),
                     allowed_client_agent: Maybe::Present(
                         authenticated_cmds::events_listen::AllowedClientAgent::NativeOnly,
+                    ),
+                    account_vault_strategy: Maybe::Present(
+                        authenticated_cmds::events_listen::AccountVaultStrategy::Forbidden,
                     ),
                 },
             ),
