@@ -246,12 +246,6 @@
           </div>
         </div>
       </div>
-      <tab-bar-menu
-        class="tab-bar-menu"
-        @action-clicked="performFolderAction($event.action)"
-        :actions="tabBarMenuActions"
-        v-if="isSmallDisplay"
-      />
     </ion-content>
   </ion-page>
 </template>
@@ -336,14 +330,14 @@ import {
   FolderGlobalAction,
   openEntryContextMenu as _openEntryContextMenu,
   openGlobalContextMenu as _openGlobalContextMenu,
+  isFolderGlobalAction,
 } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
-import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin, download, cloudUpload } from 'ionicons/icons';
+import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin, download } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick } from 'vue';
-import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
-import { TabBarMenu, MenuAction } from '@/views/menu';
 import { showDirectoryPicker, showSaveFilePicker } from 'native-file-system-adapter';
 
 interface FoldersPageSavedData {
@@ -364,14 +358,6 @@ const msSorterLabels = {
   asc: 'FoldersPage.sort.asc',
   desc: 'FoldersPage.sort.desc',
 };
-
-const tabBarMenuActions: Array<Array<MenuAction>> = [
-  [{ action: FolderGlobalAction.CreateFolder, label: 'FoldersPage.createFolder', icon: folderOpen }],
-  [
-    { action: FolderGlobalAction.ImportFolder, label: 'FoldersPage.ImportFile.importFolderAction', icon: cloudUpload },
-    { action: FolderGlobalAction.ImportFiles, label: 'FoldersPage.ImportFile.importFilesAction', icon: cloudUpload },
-  ],
-];
 
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Documents)) {
@@ -548,6 +534,11 @@ async function handleEvents(event: Events, data?: EventData): Promise<void> {
         }
       }
     }
+  } else if (event === Events.MenuAction) {
+    const menuAction = (data as MenuActionData).action;
+    if (isFolderGlobalAction(menuAction.action)) {
+      await performFolderAction(menuAction.action);
+    }
   }
 }
 
@@ -575,7 +566,7 @@ onMounted(async () => {
   await defineShortcuts();
 
   eventCbId = await eventDistributor.registerCallback(
-    Events.EntryUpdated | Events.WorkspaceUpdated | Events.EntrySynced | Events.EntrySyncStarted,
+    Events.EntryUpdated | Events.WorkspaceUpdated | Events.EntrySynced | Events.EntrySyncStarted | Events.MenuAction,
     handleEvents,
   );
 

@@ -2,6 +2,7 @@
 
 import { ApiVersion, ConnectionHandle, EntryID, InvitationStatus, InvitationToken, WorkspaceID } from '@/parsec';
 import { GreetingAttemptID } from '@/plugins/libparsec';
+import { MenuAction } from '@/views/menu';
 import { v4 as uuid4 } from 'uuid';
 
 export const EventDistributorKey = 'eventDistributor';
@@ -27,6 +28,7 @@ enum Events {
   GreetingAttemptJoined = 1 << 17,
   ClientStarted = 1 << 18,
   ClientStopped = 1 << 19,
+  MenuAction = 1 << 20,
 }
 
 interface WorkspaceCreatedData {
@@ -73,6 +75,10 @@ interface ClientStatusUpdateData {
   handle: ConnectionHandle;
 }
 
+interface MenuActionData {
+  action: MenuAction;
+}
+
 type EventData =
   | WorkspaceCreatedData
   | InvitationUpdatedData
@@ -82,7 +88,8 @@ type EventData =
   | GreetingAttemptReadyData
   | GreetingAttemptCancelledData
   | GreetingAttemptJoinedData
-  | ClientStatusUpdateData;
+  | ClientStatusUpdateData
+  | MenuActionData;
 
 interface Callback {
   id: string;
@@ -161,4 +168,13 @@ class EventDistributor {
   }
 }
 
-export { EntrySyncData, EventData, EventDistributor, Events, InvitationUpdatedData, UpdateAvailabilityData, WorkspaceCreatedData };
+export {
+  EntrySyncData,
+  EventData,
+  EventDistributor,
+  Events,
+  InvitationUpdatedData,
+  MenuActionData,
+  UpdateAvailabilityData,
+  WorkspaceCreatedData,
+};

@@ -167,12 +167,6 @@
         </div>
       </div>
     </ion-content>
-    <tab-bar-menu
-      v-if="isSmallDisplay"
-      class="tab-bar-menu"
-      @action-clicked="performUserAction($event.action)"
-      :actions="tabBarMenuActions"
-    />
   </ion-page>
 </template>
 
@@ -229,7 +223,6 @@ import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 import { openUserContextMenu as _openUserContextMenu, openGlobalUserContextMenu as _openGlobalUserContextMenu } from '@/views/users/utils';
-import { TabBarMenu, MenuAction } from '@/views/menu';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -303,8 +296,6 @@ const msSorterLabels = {
   asc: 'UsersPage.sort.asc',
   desc: 'UsersPage.sort.desc',
 };
-
-const tabBarMenuActions: Array<Array<MenuAction>> = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]];
 
 async function onSortChange(event: MsSorterChangeEvent): Promise<void> {
   currentSortProperty.value = event.option.key;
@@ -765,15 +756,6 @@ onMounted(async (): Promise<void> => {
     await navigateTo(Routes.Users, { replace: true, query: {} });
   }
 });
-
-async function performUserAction(action: UserAction): Promise<void> {
-  if (!clientInfo.value) {
-    return;
-  }
-  if (action === UserAction.Invite) {
-    await inviteUser();
-  }
-}
 
 onUnmounted(async () => {
   if (hotkeys) {
