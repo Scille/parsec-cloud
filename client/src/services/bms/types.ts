@@ -419,7 +419,6 @@ class SellsyInvoice implements Invoice {
     return this.invoice.amountWithTaxes;
   }
 
-  // TODO: Replace with real organization ID
   getOrganizationId(): OrganizationID {
     return this.invoice.organizationId;
   }
