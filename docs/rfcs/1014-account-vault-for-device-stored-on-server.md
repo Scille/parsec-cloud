@@ -297,7 +297,7 @@ Authenticated account API:
                     {
                         "name": "items",
                         // Map with `item_fingerprint` as key and serialized `AccountVaultItem` as value
-                        "type": "Map<Bytes, Bytes>"
+                        "type": "Map<HashDigest, Bytes>"
                     }
                 ]
             }
@@ -327,7 +327,7 @@ Authenticated account API:
                 {
                     "name": "items",
                     // Map with `item_fingerprint` as key and serialized `AccountVaultItem` as value
-                    "type": "Map<Bytes, Bytes>"
+                    "type": "Map<HashDigest, Bytes>"
                 }
             ]
         },
@@ -388,7 +388,7 @@ To list all protected device from all vault except current/active one:
                     {
                         "name": "vault_items",
                         // Map with `item_fingerprint` as key and serialized `AccountVaultItem` as value
-                        "type": "Map<Bytes, Bytes>"
+                        "type": "Map<HashDigest, Bytes>"
                     }
                 ]
             },
