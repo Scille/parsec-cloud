@@ -125,7 +125,7 @@ pub fn alice(coolorg: &Organization) -> Device {
         user_id: ALICE_USER_ID,
         device_id: ALICE_DEV1_DEVICE_ID,
         device_label: "My dev1 machine".parse().unwrap(),
-        human_handle: HumanHandle::new("alice@example.com", "Alicey McAliceFace").unwrap(),
+        human_handle: HumanHandle::from_raw("alice@example.com", "Alicey McAliceFace").unwrap(),
         signing_key: SigningKey::from(hex!(
             "d544f66ece9c85d5b80275db9124b5f04bb038081622bed139c1e789c5217400"
         )),
@@ -152,7 +152,7 @@ pub fn bob(coolorg: &Organization) -> Device {
         user_id: BOB_USER_ID,
         device_id: BOB_DEV1_DEVICE_ID,
         device_label: "My dev1 machine".parse().unwrap(),
-        human_handle: HumanHandle::new("bob@example.com", "Boby McBobFace").unwrap(),
+        human_handle: HumanHandle::from_raw("bob@example.com", "Boby McBobFace").unwrap(),
         signing_key: SigningKey::from(hex!(
             "85f47472a2c0f30f01b769617db248f3ec8d96a490602a9262f95e9e43432b30"
         )),
@@ -179,7 +179,8 @@ pub fn mallory(coolorg: &Organization) -> Device {
         user_id: MALLORY_USER_ID,
         device_id: MALLORY_DEV1_DEVICE_ID,
         device_label: "My dev1 machine".parse().unwrap(),
-        human_handle: HumanHandle::new("mallory@example.com", "Mallory McMalloryFace").unwrap(),
+        human_handle: HumanHandle::from_raw("mallory@example.com", "Mallory McMalloryFace")
+            .unwrap(),
         signing_key: SigningKey::generate(),
         private_key: PrivateKey::generate(),
         profile: UserProfile::Standard,

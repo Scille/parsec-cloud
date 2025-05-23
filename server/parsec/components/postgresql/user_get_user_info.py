@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    EmailAddress,
     HumanHandle,
     OrganizationID,
     UserID,
@@ -67,7 +68,7 @@ async def user_get_user_info(
         case unknown:
             assert False, unknown
 
-    human_handle = HumanHandle(email, label)
+    human_handle = HumanHandle(EmailAddress(email), label)
 
     return UserInfo(user_id, human_handle, frozen)
 
@@ -106,6 +107,6 @@ async def user_get_user_info_from_email(
         case unknown:
             assert False, unknown
 
-    human_handle = HumanHandle(email, label)
+    human_handle = HumanHandle(EmailAddress(email), label)
 
     return UserInfo(user_id, human_handle, frozen)

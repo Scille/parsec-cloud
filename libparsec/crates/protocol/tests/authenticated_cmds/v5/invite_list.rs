@@ -79,7 +79,7 @@ pub fn rep_ok() {
                 token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 created_by: authenticated_cmds::invite_list::InvitationCreatedBy::User {
-                    human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
+                    human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
                     user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                 },
                 claimer_email: "alice@dev1".to_owned(),
@@ -89,7 +89,7 @@ pub fn rep_ok() {
                 token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 created_by: authenticated_cmds::invite_list::InvitationCreatedBy::User {
-                    human_handle: HumanHandle::new("carl@dev1", "carl").unwrap(),
+                    human_handle: HumanHandle::from_raw("carl@dev1", "carl").unwrap(),
                     user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4b").unwrap(),
                 },
                 status: InvitationStatus::Pending,
@@ -164,7 +164,7 @@ pub fn rep_ok() {
                 token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 created_by: authenticated_cmds::invite_list::InvitationCreatedBy::User {
-                    human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
+                    human_handle: HumanHandle::from_raw("bob@dev1", "bob").unwrap(),
                     user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                 },
                 claimer_email: "alice@example.com".to_owned(),
@@ -174,7 +174,7 @@ pub fn rep_ok() {
                 token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 created_on: "2000-1-2T01:00:00Z".parse().unwrap(),
                 created_by: authenticated_cmds::invite_list::InvitationCreatedBy::User {
-                    human_handle: HumanHandle::new("carl@dev1", "carl").unwrap(),
+                    human_handle: HumanHandle::from_raw("carl@dev1", "carl").unwrap(),
                     user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4b").unwrap(),
                 },
                 status: InvitationStatus::Pending,

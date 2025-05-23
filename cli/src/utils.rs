@@ -404,7 +404,7 @@ pub fn choose_human_handle(input: &mut String) -> anyhow::Result<HumanHandle> {
 
         let name = input.trim();
 
-        match HumanHandle::new(&email, name) {
+        match HumanHandle::from_raw(&email, name) {
             Ok(human_handle) => return Ok(human_handle),
             Err(e) => eprintln!("{e}"),
         }

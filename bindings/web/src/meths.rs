@@ -6,6 +6,7 @@
 
 #[allow(unused_imports)]
 use js_sys::*;
+use std::str::FromStr;
 #[allow(unused_imports)]
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -1706,7 +1707,14 @@ fn struct_human_handle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, 
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid EmailAddress"))?
     };
     let label = {
         let js_val = Reflect::get(&obj, &"label".into())?;
@@ -1717,8 +1725,8 @@ fn struct_human_handle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, 
             .ok_or_else(|| TypeError::new("Not a string"))?
     };
     {
-        let custom_init = |email: String, label: String| -> Result<_, String> {
-            libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
+        let custom_init = |email: libparsec::EmailAddress, label: String| -> Result<_, String> {
+            libparsec::HumanHandle::new(email, &label).map_err(|e| e.to_string())
         };
         custom_init(email, label).map_err(|e| e.into())
     }
@@ -1729,12 +1737,20 @@ fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValu
     let js_obj = Object::new().into();
     let js_email = {
         let custom_getter = |obj| {
-            fn access(obj: &libparsec::HumanHandle) -> &str {
+            fn access(obj: &libparsec::HumanHandle) -> &libparsec::EmailAddress {
                 obj.email()
             }
             access(obj)
         };
-        custom_getter(&rs_obj).into()
+        JsValue::from_str({
+            let custom_to_rs_string =
+                |x: &libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
+            match custom_to_rs_string(custom_getter(&rs_obj)) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            }
+            .as_ref()
+        })
     };
     Reflect::set(&js_obj, &"email".into(), &js_email)?;
     let js_label = {

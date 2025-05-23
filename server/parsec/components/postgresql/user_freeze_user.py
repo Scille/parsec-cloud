@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import assert_never
 
 from parsec._parsec import (
+    EmailAddress,
     HumanHandle,
     OrganizationID,
     UserID,
@@ -162,7 +163,7 @@ async def user_freeze_user(
             assert False, unknown
 
     human_handle = HumanHandle(
-        email=human_handle_email,
+        email=EmailAddress(human_handle_email),
         label=human_handle_label,
     )
     info = UserInfo(

@@ -10,6 +10,7 @@ from parsec._parsec import (
     DeviceID,
     DeviceLabel,
     DevicePurpose,
+    EmailAddress,
     EnrollmentID,
     HumanHandle,
     PkiEnrollmentAnswerPayload,
@@ -230,7 +231,8 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         timestamp=t1,
         user_id=UserID.new(),
         human_handle=HumanHandle(
-            email=existing_enrollment.submitter_der_x509_certificate_email, label="Mike"
+            email=EmailAddress(existing_enrollment.submitter_der_x509_certificate_email),
+            label="Mike",
         ),
         public_key=PrivateKey.generate().public_key,
         algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,

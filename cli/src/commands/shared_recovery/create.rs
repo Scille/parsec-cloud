@@ -2,7 +2,7 @@ use std::{collections::HashMap, num::NonZeroU8};
 
 use dialoguer::{Confirm, Input};
 use itertools::Itertools;
-use libparsec::{UserID, UserProfile};
+use libparsec::{EmailAddress, UserID, UserProfile};
 
 use crate::utils::{
     maybe_plural, poll_server_for_new_certificates, start_spinner, StartedClient, BULLET_CHAR,
@@ -18,7 +18,7 @@ crate::clap_parser_with_shared_opts_builder!(
         /// Author must not be included as recipient.
         /// User email is expected.
         #[arg(short, long, num_args = 1..=255)]
-        recipients: Option<Vec<String>>,
+        recipients: Option<Vec<EmailAddress>>,
         /// Share weights. Requires Share recipient list.
         /// Must have the same length as recipients.
         /// Defaults to one per recipient.
@@ -51,7 +51,7 @@ pub async fn create_shared_recovery(args: Args, client: &StartedClient) -> anyho
     let recipients_ids: Vec<_> = if let Some(recipients) = recipients {
         let recipient_info: HashMap<_, _> = users
             .iter()
-            .filter(|info| recipients.contains(&info.human_handle.email().to_owned()))
+            .filter(|info| recipients.contains(info.human_handle.email()))
             .map(|info| (info.human_handle.email().to_owned(), info.id))
             .collect();
         if recipient_info.len() != recipients.len() {

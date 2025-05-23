@@ -9,6 +9,7 @@ use neon::{
     prelude::*,
     types::{buffer::TypedArray, JsBigInt},
 };
+use std::str::FromStr;
 
 // CancelledGreetingAttemptReason
 
@@ -1582,15 +1583,23 @@ fn struct_human_handle_js_to_rs<'a>(
 ) -> NeonResult<libparsec::HumanHandle> {
     let email = {
         let js_val: Handle<JsString> = obj.get(cx, "email")?;
-        js_val.value(cx)
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
     };
     let label = {
         let js_val: Handle<JsString> = obj.get(cx, "label")?;
         js_val.value(cx)
     };
     {
-        let custom_init = |email: String, label: String| -> Result<_, String> {
-            libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
+        let custom_init = |email: libparsec::EmailAddress, label: String| -> Result<_, String> {
+            libparsec::HumanHandle::new(email, &label).map_err(|e| e.to_string())
         };
         custom_init(email, label).or_else(|e| cx.throw_error(e))
     }
@@ -1604,12 +1613,20 @@ fn struct_human_handle_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_email = {
         let custom_getter = |obj| {
-            fn access(obj: &libparsec::HumanHandle) -> &str {
+            fn access(obj: &libparsec::HumanHandle) -> &libparsec::EmailAddress {
                 obj.email()
             }
             access(obj)
         };
-        JsString::try_new(cx, custom_getter(&rs_obj)).or_throw(cx)?
+        JsString::try_new(cx, {
+            let custom_to_rs_string =
+                |x: &libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) };
+            match custom_to_rs_string(custom_getter(&rs_obj)) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        })
+        .or_throw(cx)?
     };
     js_obj.set(cx, "email", js_email)?;
     let js_label = {

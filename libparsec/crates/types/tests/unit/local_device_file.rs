@@ -342,7 +342,7 @@ fn available_device() {
         organization_id: org.clone(),
         user_id: "alice".parse().unwrap(),
         device_id: "alice@dev1".parse().unwrap(),
-        human_handle: HumanHandle::new("john@example.com", "John Doe").unwrap(),
+        human_handle: HumanHandle::from_raw("john@example.com", "John Doe").unwrap(),
         device_label: "MyPc".parse().unwrap(),
         ty: DeviceFileType::Password,
     };

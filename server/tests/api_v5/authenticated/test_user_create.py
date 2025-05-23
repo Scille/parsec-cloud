@@ -9,6 +9,7 @@ from parsec._parsec import (
     DeviceID,
     DeviceLabel,
     DevicePurpose,
+    EmailAddress,
     HumanHandle,
     PrivateKey,
     PrivateKeyAlgorithm,
@@ -34,7 +35,7 @@ from tests.common import (
 
 NEW_MIKE_USER_ID = UserID.new()
 NEW_MIKE_DEVICE_ID = DeviceID.new()
-NEW_MIKE_HUMAN_HANDLE = HumanHandle(email="mike@ifd.invalid", label="Mike")
+NEW_MIKE_HUMAN_HANDLE = HumanHandle(email=EmailAddress("mike@ifd.invalid"), label="Mike")
 NEW_MIKE_DEVICE_LABEL = DeviceLabel("New device")
 NEW_MIKE_SIGNING_KEY = SigningKey.generate()
 NEW_MIKE_PRIVATE_KEY = PrivateKey.generate()

@@ -125,7 +125,7 @@ fn serde_local_device_data_x(#[case] data: &[u8], #[case] initial_profile: UserP
         user_id: "alice".parse().unwrap(),
         device_id: "alice@dev1".parse().unwrap(),
         device_label: "My dev1 machine".parse().unwrap(),
-        human_handle: HumanHandle::new("alice@example.com", "Alicey McAliceFace").unwrap(),
+        human_handle: HumanHandle::from_raw("alice@example.com", "Alicey McAliceFace").unwrap(),
         signing_key: SigningKey::from(hex!(
             "d544f66ece9c85d5b80275db9124b5f04bb038081622bed139c1e789c5217400"
         )),

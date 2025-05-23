@@ -86,6 +86,7 @@ export enum UserProfile {
 export type ApiVersion = string
 export type DeviceID = string
 export type DeviceLabel = string
+export type EmailAddress = string
 export type EntryName = string
 export type FsPath = string
 export type GreetingAttemptID = string
@@ -219,7 +220,7 @@ export interface FileStat {
 }
 
 export interface HumanHandle {
-    email: string
+    email: EmailAddress
     label: string
 }
 
