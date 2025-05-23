@@ -24,6 +24,16 @@ class AllowedClientAgent:
     @property
     def str(self) -> str: ...
 
+class AccountVaultStrategy:
+    VALUES: tuple[AccountVaultStrategy]
+    ALLOWED: AccountVaultStrategy
+    FORBIDDEN: AccountVaultStrategy
+
+    @classmethod
+    def from_str(cls, value: str) -> AccountVaultStrategy: ...
+    @property
+    def str(self) -> str: ...
+
 class APIEvent:
     pass
 
@@ -39,7 +49,10 @@ class APIEventOrganizationConfig(APIEvent):
         active_users_limit: ActiveUsersLimit,
         sse_keepalive_seconds: int | None,
         allowed_client_agent: AllowedClientAgent,
+        account_vault_strategy: AccountVaultStrategy,
     ) -> None: ...
+    @property
+    def account_vault_strategy(self) -> AccountVaultStrategy: ...
     @property
     def active_users_limit(self) -> ActiveUsersLimit: ...
     @property
