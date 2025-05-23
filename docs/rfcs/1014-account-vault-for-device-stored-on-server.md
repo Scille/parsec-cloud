@@ -222,32 +222,37 @@ pub enum AccountVaultItem {
 Authenticated account API:
 
 ```json5
-{
-    "cmd": "vault_item_upload",
-    "req": {
-        "fields": [
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "vault_item_upload",
+        "req": {
+            "fields": [
+                {
+                    "name": "item_fingerprint",
+                    // Arbitrary hash of relevant fields of the item to avoid duplicates
+                    // Typically for registration device: `hash( 'REGISTRATION_DEVICE' + <organization ID> + <device ID>)`
+                    "type": "Bytes"
+                },
+                {
+                    "name": "item",
+                    // Serialized `AccountVaultItem`, the server considers it opaque.
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
             {
-                "name": "item_fingerprint",
-                // Arbitrary hash of relevant fields of the item to avoid duplicates
-                // Typically for registration device: `hash( 'REGISTRATION_DEVICE' + <organization ID> + <device ID>)`
-                "type": "Bytes"
+                "status": "ok"
             },
             {
-                "name": "item",
-                // Serialized `AccountVaultItem`, the server considers it opaque.
-                "type": "Bytes",
+                "status": "fingerprint_already_exists"
             }
         ]
-    },
-    "reps": [
-        {
-            "status": "ok"
-        },
-        {
-            "status": "fingerprint_already_exists"
-        }
-    ]
-}
+    }
+]
 ```
 
 > [!NOTE]
@@ -273,12 +278,46 @@ Authenticated account API:
 Authenticated account API:
 
 ```json5
-{
-    "cmd": "vault_item_list",
-    "req": {},
-    "reps": [
-        {
-            "status": "ok",
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "vault_item_list",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "key_access",
+                        // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "items",
+                        // Map with `item_fingerprint` as key and serialized `AccountVaultItem` as value
+                        "type": "Map<Bytes, Bytes>"
+                    }
+                ]
+            }
+        ]
+    }
+]
+```
+
+### 5.3 - Rotate the vault key
+
+Authenticated account API:
+
+```json5
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "vault_key_rotation",
+        "req": {
             "fields": [
                 {
                     "name": "key_access",
@@ -291,38 +330,14 @@ Authenticated account API:
                     "type": "Map<Bytes, Bytes>"
                 }
             ]
-        }
-    ]
-}
-```
-
-### 5.3 - Rotate the vault key
-
-Authenticated account API:
-
-```json5
-{
-    "cmd": "vault_key_rotation",
-    "req": {
-        "fields": [
+        },
+        "reps": [
             {
-                "name": "key_access",
-                // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
-                "type": "Bytes"
-            },
-            {
-                "name": "items",
-                // Map with `item_fingerprint` as key and serialized `AccountVaultItem` as value
-                "type": "Map<Bytes, Bytes>"
+                "status": "ok"
             }
         ]
-    },
-    "reps": [
-        {
-            "status": "ok"
-        }
-    ]
-}
+    }
+]
 ```
 
 Upon receiving this request, the server duplicates the current authentication method
@@ -340,98 +355,103 @@ Authenticated account API:
 To list all protected device from all vault except current/active one:
 
 ```json5
-{
-    "cmd": "vault_item_recovery_list",
-    "req": {},
-    "reps": [
-        {
-            "status": "ok",
-            "fields": [
-                {
-                    "name": "current_vault",
-                    "type": "VaultItemRecoveryVault"
-                },
-                {
-                    "name": "previous_vaults",
-                    "type": "List<VaultItemRecoveryVault>"
-                }
-            ]
-        }
-    ],
-    "nested_types": [
-        {
-            "name": "VaultItemRecoveryVault",
-            "fields": [
-                {
-                    "name": "auth_methods",
-                    "type": "List<VaultItemRecoveryAuthMethod>"
-                },
-                {
-                    "name": "vault_items",
-                    // Map with `item_fingerprint` as key and serialized `AccountVaultItem` as value
-                    "type": "Map<Bytes, Bytes>"
-                }
-            ]
-        },
-        {
-            "name": "VaultItemRecoveryAuthMethod",
-            "discriminant_field": "type",
-            "variants": [
-                {
-                    "name": "Password",
-                    "discriminant_value": "PASSWORD",
-                    "fields": [
-                        {
-                            "name": "created_on",
-                            "type": "DateTime"
-                        },
-                        {
-                            "name": "created_by_ip",
-                            "type": "String"
-                        },
-                        {
-                            "name": "created_by_user_agent",
-                            "type": "String"
-                        },
-                        {
-                            "name": "vault_key_access",
-                            // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
-                            "type": "Bytes"
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            "name": "PasswordAlgorithm",
-            "discriminant_field": "type",
-            "variants": [
-                {
-                    "name": "Argon2id",
-                    "discriminant_value": "ARGON2ID",
-                    "fields": [
-                        {
-                            "name": "salt",
-                            "type": "Bytes"
-                        },
-                        {
-                            "name": "opslimit",
-                            "type": "Integer"
-                        },
-                        {
-                            "name": "memlimit_kb",
-                            "type": "Integer"
-                        },
-                        {
-                            "name": "parallelism",
-                            "type": "Integer"
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
-}
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "vault_item_recovery_list",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "current_vault",
+                        "type": "VaultItemRecoveryVault"
+                    },
+                    {
+                        "name": "previous_vaults",
+                        "type": "List<VaultItemRecoveryVault>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "VaultItemRecoveryVault",
+                "fields": [
+                    {
+                        "name": "auth_methods",
+                        "type": "List<VaultItemRecoveryAuthMethod>"
+                    },
+                    {
+                        "name": "vault_items",
+                        // Map with `item_fingerprint` as key and serialized `AccountVaultItem` as value
+                        "type": "Map<Bytes, Bytes>"
+                    }
+                ]
+            },
+            {
+                "name": "VaultItemRecoveryAuthMethod",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "Password",
+                        "discriminant_value": "PASSWORD",
+                        "fields": [
+                            {
+                                "name": "created_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "created_by_ip",
+                                "type": "String"
+                            },
+                            {
+                                "name": "created_by_user_agent",
+                                "type": "String"
+                            },
+                            {
+                                "name": "vault_key_access",
+                                // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+                                "type": "Bytes"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "PasswordAlgorithm",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "Argon2id",
+                        "discriminant_value": "ARGON2ID",
+                        "fields": [
+                            {
+                                "name": "salt",
+                                "type": "Bytes"
+                            },
+                            {
+                                "name": "opslimit",
+                                "type": "Integer"
+                            },
+                            {
+                                "name": "memlimit_kb",
+                                "type": "Integer"
+                            },
+                            {
+                                "name": "parallelism",
+                                "type": "Integer"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
 ```
 
 Recovery can be done in two ways:
