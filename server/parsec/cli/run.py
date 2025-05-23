@@ -214,20 +214,19 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     "--organization-initial-allowed-client-agent",
     envvar="PARSEC_ORGANIZATION_INITIAL_ALLOWED_CLIENT_AGENT",
     show_envvar=True,
-    type=AllowedClientAgent,
+    type=click.Choice(AllowedClientAgent),
     help="""Limit the type of Parsec client allowed to connect for the newly created organizations (default: NATIVE_OR_WEB)
 
 - NATIVE_ONLY: Only desktop client is allowed
 - NATIVE_OR_WEB: Desktop and web clients are allowed
 """,
     default=AllowedClientAgent.NATIVE_OR_WEB,
-    metavar="[NATIVE_ONLY|NATIVE_OR_WEB]",
 )
 @click.option(
     "--organization-initial-account-vault-strategy",
     envvar="PARSEC_ORGANIZATION_INITIAL_ACCOUNT_VAULT_STRATEGY",
     show_envvar=True,
-    type=AccountVaultStrategy,
+    type=click.Choice(AccountVaultStrategy),
     help="""Specify if the account vault can be used for the newly created organizations (default: ALLOWED)
 
     The account vault allows the user to store sensitive data (e.g. device keys)
@@ -239,7 +238,6 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     access to his vault).
 """,
     default=AccountVaultStrategy.ALLOWED,
-    metavar="[ALLOWED|FORBIDDEN]",
 )
 @click.option(
     "--account-confirmation-email-resend-delay",
