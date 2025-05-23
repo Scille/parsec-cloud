@@ -322,6 +322,13 @@
         </ion-list>
       </ion-content>
     </ion-menu>
+    <tab-bar-menu
+      class="tab-bar-menu"
+      v-if="isSmallDisplay"
+      :user-info="userInfo"
+      @action-clicked="onActionClicked"
+      :actions="actions"
+    />
     <ion-router-outlet id="main" />
   </ion-split-pane>
 </template>
@@ -347,6 +354,7 @@ import {
   menuController,
   popoverController,
 } from '@ionic/vue';
+import TabBarMenu from '@/views/menu/TabBarMenu.vue';
 import {
   home,
   business,
@@ -359,6 +367,10 @@ import {
   star,
   snow,
   warning,
+  cloudUpload,
+  folderOpen,
+  addCircle,
+  personAdd,
 } from 'ionicons/icons';
 import { SidebarWorkspaceItem, SidebarRecentFileItem, SidebarMenuList } from '@/components/sidebar';
 import {
@@ -370,6 +382,7 @@ import {
   navigateTo,
   navigateToWorkspace,
   switchOrganization,
+  watchRoute,
 } from '@/router';
 import {
   ClientInfo,
@@ -383,7 +396,7 @@ import {
   getLoggedInDevices,
   getClientInfo,
 } from '@/parsec';
-import { ChevronExpand, MsImage, LogoIconGradient, I18n, MsModalResult } from 'megashark-lib';
+import { ChevronExpand, MsImage, LogoIconGradient, I18n, MsModalResult, useWindowSize } from 'megashark-lib';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { recentDocumentManager, RecentFile } from '@/services/recentDocuments';
 import { openPath } from '@/services/fileOpener';
@@ -398,7 +411,10 @@ import { openWorkspaceContextMenu } from '@/components/workspaces';
 import { formatExpirationTime } from '@/common/organization';
 import useSidebarMenu from '@/services/sidebarMenu';
 import useUploadMenu from '@/services/fileUploadMenu';
-import { SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu';
+import { MenuAction, SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu';
+import { FolderGlobalAction } from '@/views/files';
+import { WorkspaceAction } from '@/views/workspaces';
+import { UserAction } from '@/views/users';
 
 defineProps<{
   userInfo: ClientInfo;
@@ -426,6 +442,9 @@ const expirationDuration = ref<Duration | undefined>(undefined);
 const currentDevice = ref<AvailableDevice | null>(null);
 const isTrialOrg = ref(false);
 let timeoutId: number | undefined = undefined;
+
+const { isSmallDisplay, windowWidth } = useWindowSize();
+const actions = ref<Array<Array<MenuAction>>>([]);
 
 const MIN_WIDTH = 150;
 const MAX_WIDTH = 370;
@@ -517,6 +536,32 @@ async function updateDividerPosition(value?: number): Promise<void> {
   }
 }
 
+function setActions(): void {
+  if (currentRouteIs(Routes.Documents)) {
+    actions.value = [
+      [{ action: FolderGlobalAction.CreateFolder, label: 'FoldersPage.createFolder', icon: folderOpen }],
+      [
+        { action: FolderGlobalAction.ImportFolder, label: 'FoldersPage.ImportFile.importFolderAction', icon: cloudUpload },
+        { action: FolderGlobalAction.ImportFiles, label: 'FoldersPage.ImportFile.importFilesAction', icon: cloudUpload },
+      ],
+    ];
+  } else if (currentRouteIs(Routes.Workspaces)) {
+    actions.value = [[{ action: WorkspaceAction.CreateWorkspace, label: 'WorkspacesPage.createWorkspace', icon: addCircle }]];
+  } else if (currentRouteIs(Routes.Users) || currentRouteIs(Routes.MyProfile) || currentRouteIs(Routes.Organization)) {
+    actions.value = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]];
+  } else {
+    actions.value = [];
+  }
+}
+
+const watchWindowWidthCancel = watch(windowWidth, async () => {
+  updateDividerPosition();
+});
+
+const watchRouteCancel = watchRoute(async () => {
+  setActions();
+});
+
 onMounted(async () => {
   eventDistributorCbId = await eventDistributor.registerCallback(
     Events.WorkspaceCreated | Events.WorkspaceFavorite | Events.WorkspaceUpdated | Events.ExpiredOrganization,
@@ -528,6 +573,8 @@ onMounted(async () => {
       }
     },
   );
+
+  setActions();
 
   const savedSidebarData = await storageManager.retrieveComponentData<SidebarSavedData>(SIDEBAR_MENU_DATA_KEY, SidebarDefaultData);
 
@@ -566,7 +613,6 @@ onMounted(async () => {
     }
   }
 
-  window.addEventListener('resize', () => updateDividerPosition());
   updateDividerPosition();
 });
 
@@ -578,8 +624,13 @@ onUnmounted(async () => {
     clearTimeout(timeoutId);
   }
   watchSidebarWidthCancel();
-  window.removeEventListener('resize', () => updateDividerPosition());
+  watchRouteCancel();
+  watchWindowWidthCancel();
 });
+
+async function onActionClicked(action: MenuAction): Promise<void> {
+  await eventDistributor.dispatchEvent(Events.MenuAction, { action: action });
+}
 
 async function goToWorkspace(workspace: WorkspaceInfo): Promise<void> {
   recentDocumentManager.addWorkspace(workspace);

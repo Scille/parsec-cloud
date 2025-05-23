@@ -36,6 +36,7 @@
 
     <div class="tab-bar-menu fab-button-container">
       <ion-fab
+        v-show="actions.length > 0"
         class="fab-content"
         size="small"
         id="add-menu-fab-button"

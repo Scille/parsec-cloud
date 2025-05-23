@@ -106,7 +106,7 @@
 
         <ion-item
           button
-          v-show="!multipleFiles"
+          v-if="!multipleFiles"
           @click="onClick(FileAction.ShowDetails)"
           class="ion-no-padding list-group-item"
         >
@@ -118,7 +118,7 @@
       </ion-item-group>
       <ion-item-group
         class="list-group"
-        v-show="!multipleFiles"
+        v-if="!multipleFiles"
       >
         <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
@@ -127,7 +127,7 @@
         </ion-item>
         <ion-item
           button
-          v-show="!multipleFiles"
+          v-if="!multipleFiles"
           @click="onClick(FileAction.CopyLink)"
           class="ion-no-padding list-group-item"
         >
