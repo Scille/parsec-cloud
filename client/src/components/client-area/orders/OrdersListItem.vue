@@ -16,7 +16,7 @@
           {{
             $msTranslate({
               key: 'clientArea.orders.progress.orderNumber',
-              data: { number: request.id },
+              data: { number: request.label },
             })
           }}
           <span
