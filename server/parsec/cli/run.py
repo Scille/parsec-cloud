@@ -26,6 +26,7 @@ from parsec.cli.utils import (
 from parsec.components.organization import TosLocale, TosUrl
 from parsec.config import (
     AccountConfig,
+    AccountVaultStrategy,
     AllowedClientAgent,
     BackendConfig,
     BaseBlockStoreConfig,
@@ -223,6 +224,24 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     metavar="[NATIVE_ONLY|NATIVE_OR_WEB]",
 )
 @click.option(
+    "--organization-initial-account-vault-strategy",
+    envvar="PARSEC_ORGANIZATION_INITIAL_ACCOUNT_VAULT_STRATEGY",
+    show_envvar=True,
+    type=AccountVaultStrategy,
+    help="""Specify if the account vault can be used for the newly created organizations (default: ALLOWED)
+
+    The account vault allows the user to store sensitive data (e.g. device keys)
+    server-side.
+
+    This typically allows simplified authentication on a new machine (i.e. no need to
+    exchange codes with an already authentication machine) at a the cost of slightly
+    less security (since the server can try to brute-force the user's password to gain
+    access to his vault).
+""",
+    default=AccountVaultStrategy.ALLOWED,
+    metavar="[ALLOWED|FORBIDDEN]",
+)
+@click.option(
     "--account-confirmation-email-resend-delay",
     default=60,
     show_default=True,
@@ -388,6 +407,7 @@ def run_cmd(
     organization_initial_user_profile_outsider_allowed: bool,
     organization_initial_tos: dict[TosLocale, TosUrl] | None,
     organization_initial_allowed_client_agent: AllowedClientAgent,
+    organization_initial_account_vault_strategy: AccountVaultStrategy,
     account_confirmation_email_resend_delay: int,
     server_addr: ParsecAddr,
     email_host: str,
@@ -452,6 +472,7 @@ def run_cmd(
             organization_initial_user_profile_outsider_allowed=organization_initial_user_profile_outsider_allowed,
             organization_initial_tos=organization_initial_tos,
             organization_initial_allowed_client_agent=organization_initial_allowed_client_agent,
+            organization_initial_account_vault_strategy=organization_initial_account_vault_strategy,
             account_config=AccountConfig(
                 account_confirmation_email_resend_delay=account_confirmation_email_resend_delay
             ),

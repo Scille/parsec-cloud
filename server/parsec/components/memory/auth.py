@@ -40,6 +40,7 @@ class MemoryAuthComponent(BaseAuthComponent):
                         updated_on=now, per_locale_urls=self._config.organization_initial_tos
                     ),
                     allowed_client_agent=self._config.organization_initial_allowed_client_agent,
+                    account_vault_strategy=self._config.organization_initial_account_vault_strategy,
                     created_on=now,
                 )
                 self._data.organizations[organization_id] = org
