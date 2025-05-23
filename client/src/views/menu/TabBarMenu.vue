@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="tab-bar-menu">
+  <div
+    class="tab-bar-menu"
+    id="tab-bar"
+  >
     <div
       class="tab-bar-menu-button"
       :class="currentRouteIs(Routes.Workspaces) ? 'active' : ''"

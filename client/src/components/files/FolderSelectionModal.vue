@@ -96,7 +96,7 @@ import { Folder, MsImage, MsModalResult, MsModal, useWindowSize } from 'megashar
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { EntryStat, FsPath, Path, StartedWorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
 import { IonButton, IonButtons, IonText, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
-import { chevronBack, chevronForward } from 'ionicons/icons';
+import { chevronBack, chevronForward, home } from 'ionicons/icons';
 import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<FolderSelectionOptions>();
@@ -155,7 +155,8 @@ async function update(): Promise<void> {
   headerPath.value.push({
     id: 0,
     display: workspaceInfo.value ? workspaceInfo.value.currentName : '',
-    route: Routes.Workspaces,
+    route: Routes.Documents,
+    popoverIcon: home,
     query: { documentPath: path },
   });
   let id = 1;

@@ -203,7 +203,7 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 async function onNodeSelected(node: RouterPathNode): Promise<void> {
-  await navigateTo(node.route as Routes, { params: node.params, query: node.query });
+  await navigateTo(node.route, { params: node.params, query: node.query });
 }
 
 async function updateRoute(): Promise<void> {
@@ -241,7 +241,8 @@ async function updateRoute(): Promise<void> {
     finalPath.push({
       id: 1,
       display: workspaceName.value,
-      route: Routes.Workspaces,
+      route: Routes.Documents,
+      popoverIcon: home,
       query: { documentPath: '/' },
       params: getCurrentRouteParams(),
     });

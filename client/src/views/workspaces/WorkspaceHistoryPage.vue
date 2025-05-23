@@ -160,7 +160,7 @@ import { DateTime } from 'luxon';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel, HistoryFileListItem } from '@/components/files';
-import { chevronBack, chevronForward, warning } from 'ionicons/icons';
+import { chevronBack, chevronForward, home, warning } from 'ionicons/icons';
 import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes, watchRoute } from '@/router';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import { SortProperty } from '@/components/users';
@@ -312,6 +312,7 @@ async function listCurrentPath(): Promise<void> {
       id: 0,
       display: workspaceInfo.value.currentName,
       route: Routes.History,
+      popoverIcon: home,
       query: { documentPath: path },
     });
     let id = 1;

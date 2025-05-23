@@ -80,6 +80,7 @@ export interface RouterPathNode {
   display?: string;
   title?: Translatable;
   icon?: string;
+  popoverIcon?: string;
   route: Routes;
   params?: object;
   query?: Query;
@@ -178,9 +179,6 @@ let ignoreNextEvent = false;
 function getCollapsedItems(): Array<RouterPathNode> {
   if (isLargeDisplay.value) {
     return props.pathNodes.slice(props.itemsBeforeCollapse, props.itemsBeforeCollapse + props.pathNodes.length - props.maxShown);
-  }
-  if (props.fromHeaderPage) {
-    return props.pathNodes.slice(1, props.pathNodes.length - 1);
   }
   return props.pathNodes.slice(0, props.pathNodes.length - 1);
 }
