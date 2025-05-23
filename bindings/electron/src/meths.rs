@@ -1612,7 +1612,7 @@ fn struct_human_handle_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_email = {
         let custom_getter = |obj| {
-            fn access(obj: &libparsec::HumanHandle) -> &str {
+            fn access(obj: &libparsec::HumanHandle) -> &EmailAddress {
                 obj.email()
             }
             access(obj)

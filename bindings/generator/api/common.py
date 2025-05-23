@@ -196,7 +196,7 @@ class HumanHandle(Structure):
     email: EmailAddress
     label: str
     custom_getters: ClassVar = {
-        "email": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &str { obj.email() } access(obj) }",
+        "email": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &EmailAddress { obj.email() } access(obj) }",
         "label": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &str { obj.label() } access(obj) }",
     }
     custom_init: str = """
