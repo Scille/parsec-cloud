@@ -204,7 +204,7 @@
           </div>
           <!-- Settings tab -->
           <div
-            v-if="myProfileTab === ProfilePages.Settings"
+            v-if="myProfileTab === ProfilePages.Settings || (isLargeDisplay && myProfileTab === undefined)"
             class="profile-content-item"
           >
             <div class="item-header">
@@ -259,12 +259,6 @@
         </div>
       </div>
     </ion-content>
-    <tab-bar-menu
-      v-if="isSmallDisplay"
-      class="tab-bar-menu"
-      @action-clicked="performProfileAction($event.action)"
-      :actions="tabBarMenuActions"
-    />
   </ion-page>
 </template>
 
@@ -277,7 +271,7 @@ import AboutView from '@/views/about/AboutView.vue';
 import AuthenticationPage from '@/views/profile/AuthenticationPage.vue';
 import OrganizationRecoveryPage from '@/views/profile/OrganizationRecoveryPage.vue';
 import ProfileInfoCard from '@/components/profile/ProfileInfoCard.vue';
-import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { IonContent, IonIcon, IonPage, IonRadio, IonHeader, IonRadioGroup, IonText, IonLabel } from '@ionic/vue';
 import {
   phonePortrait,
@@ -290,14 +284,12 @@ import {
   chevronForward,
   chevronBack,
   logOut,
-  personAdd,
 } from 'ionicons/icons';
-import { UserAction } from '@/views/users/types';
+import { isUserAction, UserAction } from '@/views/users/types';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 import { Env } from '@/services/environment';
 import { getCurrentRouteName, getCurrentRouteQuery, navigateTo, Routes, watchRoute, ProfilePages } from '@/router';
 import { Translatable, useWindowSize, askQuestion, Answer, OpenIcon, MsImage } from 'megashark-lib';
-import { TabBarMenu, MenuAction } from '@/views/menu';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
@@ -305,6 +297,7 @@ const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const myProfileTab = ref(isSmallDisplay ? undefined : ProfilePages.Settings);
+let eventCbId: string | undefined = undefined;
 
 const routeUnwatch = watchRoute(async () => {
   if (getCurrentRouteName() !== Routes.MyProfile) {
@@ -375,6 +368,10 @@ async function switchPageFromQuery(): Promise<void> {
   const page = getCurrentRouteQuery().profilePage;
   if (page && Object.values(ProfilePages).includes(page)) {
     myProfileTab.value = page;
+  } else {
+    if (isSmallDisplay) {
+      myProfileTab.value = undefined;
+    }
   }
 }
 
@@ -385,6 +382,15 @@ async function switchPage(): Promise<void> {
 async function goBack(): Promise<void> {
   myProfileTab.value = undefined;
   await navigateTo(Routes.MyProfile, { replace: true });
+}
+
+async function performProfileAction(action: UserAction): Promise<void> {
+  if (!clientInfo.value) {
+    return;
+  }
+  if (action === UserAction.Invite) {
+    await navigateTo(Routes.Users, { query: { openInvite: true } });
+  }
 }
 
 onMounted(async () => {
@@ -402,25 +408,18 @@ onMounted(async () => {
   } else {
     clientInfo.value = result.value;
   }
+  eventCbId = await eventDistributor.registerCallback(Events.MenuAction, async (event: Events, data?: EventData) => {
+    if (event === Events.MenuAction && isUserAction((data as MenuActionData).action.action)) {
+      await performProfileAction((data as MenuActionData).action.action);
+    }
+  });
   await switchPageFromQuery();
 });
 
-async function inviteUser(): Promise<void> {
-  await navigateTo(Routes.Users, { query: { openInvite: true } });
-}
-
-const tabBarMenuActions: Array<Array<MenuAction>> = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]];
-
-async function performProfileAction(action: UserAction): Promise<void> {
-  if (!clientInfo.value) {
-    return;
-  }
-  if (action === UserAction.Invite) {
-    return await inviteUser();
-  }
-}
-
 onUnmounted(async () => {
+  if (eventCbId) {
+    await eventDistributor.removeCallback(eventCbId);
+  }
   routeUnwatch();
 });
 </script>

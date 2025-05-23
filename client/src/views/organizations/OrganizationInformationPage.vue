@@ -53,12 +53,6 @@
         </div>
       </template>
     </ion-content>
-    <tab-bar-menu
-      v-if="isSmallDisplay"
-      class="tab-bar-menu"
-      @action-clicked="performOrganizationAction($event.action)"
-      :actions="tabBarMenuActions"
-    />
   </ion-page>
 </template>
 
@@ -72,10 +66,10 @@ import {
   AvailableDevice,
 } from '@/parsec';
 import { IonContent, IonIcon, IonPage, IonText, IonAvatar, popoverController } from '@ionic/vue';
-import { warning, personAdd } from 'ionicons/icons';
+import { warning } from 'ionicons/icons';
 import { switchOrganization } from '@/router';
 import { ChevronExpand, MsImage, LogoIconGradient, MsModalResult } from 'megashark-lib';
-import { Ref, onMounted, ref } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 import useUploadMenu from '@/services/fileUploadMenu';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import OrganizationUserInformation from '@/components/organizations/OrganizationUserInformation.vue';
@@ -84,8 +78,8 @@ import OrganizationStorageInformation from '@/components/organizations/Organizat
 import { isTrialOrganizationDevice } from '@/common/organization';
 import { useWindowSize } from 'megashark-lib';
 import { navigateTo, Routes } from '@/router';
-import { UserAction } from '@/views/users/types';
-import { TabBarMenu, MenuAction } from '@/views/menu';
+import { isUserAction, UserAction } from '@/views/users/types';
+import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 
 const { isSmallDisplay } = useWindowSize();
 
@@ -94,6 +88,7 @@ const userInfo: Ref<ClientInfo | null> = ref(null);
 const isTrialOrg = ref(false);
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
 const querying = ref(true);
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 async function openOrganizationChoice(event: Event): Promise<void> {
   const popover = await popoverController.create({
@@ -113,20 +108,16 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   }
 }
 
-const tabBarMenuActions: Array<Array<MenuAction>> = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]];
-
-async function inviteUser(): Promise<void> {
-  await navigateTo(Routes.Users, { query: { openInvite: true } });
-}
-
 async function performOrganizationAction(action: UserAction): Promise<void> {
   if (!userInfo.value) {
     return;
   }
   if (action === UserAction.Invite) {
-    return await inviteUser();
+    await navigateTo(Routes.Users, { query: { openInvite: true } });
   }
 }
+
+let eventCbId: string | undefined = undefined;
 
 onMounted(async () => {
   const result = await getOrganizationInfo();
@@ -152,7 +143,19 @@ onMounted(async () => {
     window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
   }
 
+  eventCbId = await eventDistributor.registerCallback(Events.MenuAction, async (event: Events, data?: EventData) => {
+    if (event === Events.MenuAction && isUserAction((data as MenuActionData).action.action)) {
+      await performOrganizationAction((data as MenuActionData).action.action);
+    }
+  });
+
   querying.value = false;
+});
+
+onUnmounted(async () => {
+  if (eventCbId) {
+    await eventDistributor.removeCallback(eventCbId);
+  }
 });
 </script>
 
