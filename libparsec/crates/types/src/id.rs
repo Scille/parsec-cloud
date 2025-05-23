@@ -570,7 +570,7 @@ impl TryFrom<&str> for HumanHandle {
             .chars()
             .position(|c| c == '>')
             .ok_or(HumanHandleParseError::MissingEmail)?;
-        Self::new(&s[start + 1..stop], &s[..start - 1])
+        Self::from_raw(&s[start + 1..stop], &s[..start - 1])
     }
 }
 
@@ -585,19 +585,14 @@ impl FromStr for HumanHandle {
 }
 
 impl HumanHandle {
-    pub fn new(email: &str, label: &str) -> Result<Self, HumanHandleParseError> {
+    pub fn new(email: EmailAddress, label: &str) -> Result<Self, HumanHandleParseError> {
         // A word about `<string>.nfc()`: In the unicode code we have multiple forms to represent the same glyph.
         // We have 2 notable forms _Normalization From canonical Decomposition_ (NFD) and _Normalization From canonical Composition_ (NFC)
         // For example: the `small letter A with acute` (á) would be encoded in NFD as `small letter a + acute accent` as for NFC `small letter a with acute`.
         //
         // So we need to normalize the string to have consistant comparison latter on.
-        let email = email.nfc().collect::<String>();
         let label = label.nfc().collect::<String>();
         let display = format!("{label} <{email}>");
-        let Ok(email) = email.parse() else {
-            return Err(HumanHandleParseError::InvalidEmail);
-        };
-
         if !Self::label_is_valid(label.as_str()) {
             return Err(HumanHandleParseError::InvalidLabel);
         }
@@ -607,6 +602,13 @@ impl HumanHandle {
             label,
             display,
         })
+    }
+
+    pub fn from_raw(email: &str, label: &str) -> Result<Self, HumanHandleParseError> {
+        email
+            .parse()
+            .map_err(|_| HumanHandleParseError::InvalidEmail)
+            .and_then(|email| Self::new(email, label))
     }
 
     /// Redacted certificate doesn't provide the real human handle, here we build
@@ -665,7 +667,7 @@ impl TryFrom<(&str, &str)> for HumanHandle {
     type Error = HumanHandleParseError;
 
     fn try_from((email, label): (&str, &str)) -> Result<Self, Self::Error> {
-        Self::new(email, label)
+        Self::from_raw(email, label)
     }
 }
 
@@ -726,7 +728,14 @@ impl FromStr for EmailAddress {
     type Err = EmailAddressParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse::<email_address_parser::EmailAddress>()
+        // A word about `<string>.nfc()`: In the unicode code we have multiple forms to represent the same glyph.
+        // We have 2 notable forms _Normalization From canonical Decomposition_ (NFD) and _Normalization From canonical Composition_ (NFC)
+        // For example: the `small letter A with acute` (á) would be encoded in NFD as `small letter a + acute accent` as for NFC `small letter a with acute`.
+        //
+        // So we need to normalize the string to have consistant comparison latter on.
+        let normalized = s.nfc().collect::<String>();
+        normalized
+            .parse::<email_address_parser::EmailAddress>()
             .map_err(EmailAddressParseError::ParseError)
             .and_then(Self::try_from)
     }

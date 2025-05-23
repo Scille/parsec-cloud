@@ -196,8 +196,8 @@ class HumanHandle(Structure):
         "label": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &str { obj.label() } access(obj) }",
     }
     custom_init: str = """
-        |email: String, label: String| -> Result<_, String> {
-            libparsec::HumanHandle::new(&email, &label).map_err(|e| e.to_string())
+        |email: EmailAddress, label: String| -> Result<_, String> {
+            libparsec::HumanHandle::new(email, &label).map_err(|e| e.to_string())
         }
     """
 

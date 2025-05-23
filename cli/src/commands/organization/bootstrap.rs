@@ -3,7 +3,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 use libparsec::{
-    AvailableDevice, ClientConfig, DeviceLabel, DeviceSaveStrategy, HumanHandle,
+    AvailableDevice, ClientConfig, DeviceLabel, DeviceSaveStrategy, EmailAddress, HumanHandle,
     ParsecOrganizationBootstrapAddr, Password, SequesterVerifyKeyDer,
 };
 
@@ -23,7 +23,7 @@ pub struct Args {
     label: String,
     /// User email
     #[arg(short, long)]
-    email: String,
+    email: EmailAddress,
     /// Sequester authority verify key path
     #[arg(long)]
     sequester_key: Option<PathBuf>,
@@ -70,7 +70,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     } = args;
     log::trace!("Bootstrapping organization (addr={addr})");
 
-    let human_handle = HumanHandle::new(&email, &label)
+    let human_handle = HumanHandle::new(email, &label)
         .map_err(|e| anyhow::anyhow!("Cannot create human handle: {e}"))?;
 
     let password = read_password(if password_stdin {

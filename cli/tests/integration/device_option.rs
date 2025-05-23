@@ -122,7 +122,7 @@ async fn multiple_device_found(tmp_path: TmpPath) {
             client_config.clone(),
             org_addr,
             "dev1".parse().unwrap(),
-            libparsec::HumanHandle::new("first@dev1.com", "First").unwrap(),
+            libparsec::HumanHandle::from_raw("first@dev1.com", "First").unwrap(),
             crate::testenv_utils::DEFAULT_DEVICE_PASSWORD
                 .to_string()
                 .into(),
@@ -198,7 +198,7 @@ async fn create_second_device(
     let second_device = Arc::new(LocalDevice::generate_new_device(
         cmds.addr().clone(),
         libparsec::UserProfile::Standard,
-        HumanHandle::new("second@dev2.com", "Second").map_err(anyhow::Error::msg)?,
+        HumanHandle::from_raw("second@dev2.com", "Second").map_err(anyhow::Error::msg)?,
         "second".parse().map_err(anyhow::Error::msg)?,
         None,
         Some(second_device_id),

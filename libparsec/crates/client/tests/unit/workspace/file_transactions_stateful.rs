@@ -155,7 +155,7 @@ impl AsyncStateMachineTest for FileTransactionStateMachine {
         let device = LocalDevice::generate_new_device(
             url,
             UserProfile::Admin,
-            HumanHandle::new("alice@dev1", "alice").unwrap(),
+            HumanHandle::from_raw("alice@dev1", "alice").unwrap(),
             "alice label".parse().unwrap(),
             None,
             None,
