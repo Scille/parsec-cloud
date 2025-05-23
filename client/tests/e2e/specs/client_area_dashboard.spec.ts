@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, msTest } from '@tests/e2e/helpers';
+import { clientAreaSwitchOrganization, expect, MockBms, msTest } from '@tests/e2e/helpers';
 
 msTest('Test dashboard', async ({ clientArea }) => {
   const title = clientArea.locator('.header-content').locator('.header-title');
@@ -35,4 +35,19 @@ msTest('Test dashboard', async ({ clientArea }) => {
   await expect(paymentButton).toHaveText('Update');
   await paymentButton.click();
   await expect(title).toHaveText('Payment methods');
+});
+
+msTest('Test sidebar goto org', async ({ clientArea }) => {
+  const title = clientArea.locator('.header-content').locator('.header-title');
+  await expect(title).toHaveText('Dashboard');
+  await MockBms.mockOrganizationStatus(clientArea, { isBootstrapped: false });
+  await clientAreaSwitchOrganization(clientArea, 'BlackMesa-2');
+  const gotoButton = clientArea.locator('.sidebar').locator('.organization-card-button');
+  await expect(gotoButton).toBeHidden();
+  await MockBms.mockOrganizationStatus(clientArea, { isBootstrapped: true });
+  await clientAreaSwitchOrganization(clientArea, 'BlackMesa');
+  await expect(gotoButton).toBeVisible();
+  await gotoButton.click();
+  await expect(clientArea).toBeHomePage();
+  await expect(clientArea).toHaveURL('/home?bmsOrganizationId=BlackMesa');
 });

@@ -208,7 +208,7 @@ export const expect = baseExpect.extend({
 
   async toBeHomePage(page: Page): Promise<AssertReturnType> {
     try {
-      await expect(page).toHaveURL(/\/home$/);
+      await expect(page).toHaveURL(/\/home\??.*$/);
     } catch (error: any) {
       return {
         message: () => `Page is not home page (url is '${error.matcherResult.actual}')`,
