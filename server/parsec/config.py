@@ -201,6 +201,26 @@ class AllowedClientAgent(Enum):
     NATIVE_OR_WEB = "NATIVE_OR_WEB"
 
 
+class AccountVaultStrategy(Enum):
+    """
+    The account vault allows the user to store sensitive data (e.g. device keys)
+    server-side.
+
+    This typically allows simplified authentication on a new machine (i.e. no need
+    for device-to-device enrollment) at a the cost of slightly less security (since
+    the server can try to brute-force the user's password to gain access to his vault).
+
+    Note this configuration is purely advisory since only the client can decrypt his
+    user's vault content, and hence it would be pointless to try to enforce it on the
+    server side.
+    """
+
+    # Note the enum value is used in the PostgreSQL queries, so modifying it
+    # impacts the datamodel !
+    ALLOWED = "ALLOWED"
+    FORBIDDEN = "FORBIDDEN"
+
+
 @dataclass(slots=True, kw_only=True)
 class BackendConfig:
     debug: bool
@@ -236,6 +256,7 @@ class BackendConfig:
     organization_initial_minimum_archiving_period: int = 2592000  # seconds (i.e 30 days)
     organization_initial_tos: dict[TosLocale, TosUrl] | None = None
     organization_initial_allowed_client_agent: AllowedClientAgent = AllowedClientAgent.NATIVE_OR_WEB
+    organization_initial_account_vault_strategy: AccountVaultStrategy = AccountVaultStrategy.ALLOWED
 
     # Number of SSE events kept in memory to allow client to catch up on reconnection
     sse_events_cache_size: int = 1024
