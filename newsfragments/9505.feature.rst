@@ -1,1 +1,0 @@
-Added small-display global and specific contextual menus for members and files, as well as correct handling of contextual menu when selecting multiple members
