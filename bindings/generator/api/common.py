@@ -189,9 +189,7 @@ class DeviceLabel(StrBasedType):
 
 
 class EmailAddress(StrBasedType):
-    custom_from_rs_string = (
-        "|s: String| -> Result<_, String> { s.parse().map_err(|e| e.to_string()) }"
-    )
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string()) }"
 
 
 class HumanHandle(Structure):

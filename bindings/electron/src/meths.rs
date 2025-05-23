@@ -1583,8 +1583,9 @@ fn struct_human_handle_js_to_rs<'a>(
     let email = {
         let js_val: Handle<JsString> = obj.get(cx, "email")?;
         {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, String> { s.parse().map_err(|e| e.to_string()) };
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+            };
             match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),

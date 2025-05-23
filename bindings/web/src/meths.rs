@@ -1708,8 +1708,9 @@ fn struct_human_handle_js_to_rs(obj: JsValue) -> Result<libparsec::HumanHandle, 
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))
             .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, String> { s.parse().map_err(|e| e.to_string()) };
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string())
+                };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })
             .map_err(|_| TypeError::new("Not a valid EmailAddress"))?
