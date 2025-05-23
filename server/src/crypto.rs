@@ -28,13 +28,16 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     Ok(())
 }
 
-crate::binding_utils::gen_py_wrapper_class!(
+// Note the `_for_id` flavor of this macro, this is to allow `HashDigest` to
+// be used as key in a dictionary
+crate::binding_utils::gen_py_wrapper_class_for_id!(
     HashDigest,
     libparsec_types::HashDigest,
     __repr__,
     __copy__,
     __deepcopy__,
     __richcmp__ eq,
+    __hash__,
 );
 
 #[pymethods]
