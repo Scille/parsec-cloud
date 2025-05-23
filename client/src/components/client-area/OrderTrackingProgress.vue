@@ -3,10 +3,10 @@
 <template>
   <div
     class="process-container"
-    v-if="bmsStatus !== CustomOrderStatus.Unknown && sellsyStatus"
+    v-if="customOrderStatus !== CustomOrderStatus.Unknown && customOrderRequestStatus"
   >
     <ms-report-text
-      v-if="sellsyStatus === CustomOrderRequestStatus.Standby"
+      v-if="customOrderRequestStatus === CustomOrderRequestStatus.Standby"
       :theme="MsReportTheme.Warning"
       class="process-stop-container"
     >
@@ -17,7 +17,7 @@
     </ms-report-text>
 
     <ms-report-text
-      v-if="sellsyStatus === CustomOrderRequestStatus.Cancelled"
+      v-if="customOrderRequestStatus === CustomOrderRequestStatus.Cancelled"
       :theme="MsReportTheme.Error"
       class="process-stop-container"
     >
@@ -77,47 +77,48 @@ import { getCustomOrderStatusTranslationKey } from '@/services/translation';
 const customOrderIndex = ref<number>(0);
 
 const props = defineProps<{
-  sellsyStatus: CustomOrderRequestStatus;
-  bmsStatus: CustomOrderStatus;
+  customOrderRequestStatus: CustomOrderRequestStatus;
+  customOrderStatus: CustomOrderStatus;
 }>();
 
 interface Step {
   title: Translatable;
   description: Translatable;
-  statusBms: CustomOrderStatus;
-  statusRequest: CustomOrderRequestStatus;
+  customOrderStatus: CustomOrderStatus;
+  customOrderRequestStatus: CustomOrderRequestStatus;
 }
 
 const steps: Step[] = [
   {
     ...getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Received),
-    statusBms: CustomOrderStatus.NothingLinked,
-    statusRequest: CustomOrderRequestStatus.Received,
+    customOrderStatus: CustomOrderStatus.NothingLinked,
+    customOrderRequestStatus: CustomOrderRequestStatus.Received,
   },
   {
     ...getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Processing),
-    statusBms: CustomOrderStatus.NothingLinked,
-    statusRequest: CustomOrderRequestStatus.Processing,
+    customOrderStatus: CustomOrderStatus.NothingLinked,
+    customOrderRequestStatus: CustomOrderRequestStatus.Processing,
   },
   {
     ...getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Finished),
-    statusBms: CustomOrderStatus.NothingLinked,
-    statusRequest: CustomOrderRequestStatus.Finished,
+    customOrderStatus: CustomOrderStatus.NothingLinked,
+    customOrderRequestStatus: CustomOrderRequestStatus.Finished,
   },
   {
     ...getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoiceToBePaid, CustomOrderRequestStatus.Finished),
-    statusBms: CustomOrderStatus.InvoiceToBePaid,
-    statusRequest: CustomOrderRequestStatus.Finished,
+    customOrderStatus: CustomOrderStatus.InvoiceToBePaid,
+    customOrderRequestStatus: CustomOrderRequestStatus.Finished,
   },
   {
     ...getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoicePaid, CustomOrderRequestStatus.Finished),
-    statusBms: CustomOrderStatus.InvoicePaid,
-    statusRequest: CustomOrderRequestStatus.Finished,
+    customOrderStatus: CustomOrderStatus.InvoicePaid,
+    customOrderRequestStatus: CustomOrderRequestStatus.Finished,
   },
 ];
 
 onMounted(async () => {
-  customOrderIndex.value = steps.findIndex((step: Step) => step.statusBms === props.bmsStatus && step.statusRequest === props.sellsyStatus);
+  customOrderIndex.value = steps.findIndex(
+    (step: Step) => step.customOrderStatus === props.customOrderStatus && step.customOrderRequestStatus === props.customOrderRequestStatus);
 });
 </script>
 
