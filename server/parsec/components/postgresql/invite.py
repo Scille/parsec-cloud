@@ -12,6 +12,7 @@ from parsec._parsec import (
     CancelledGreetingAttemptReason,
     DateTime,
     DeviceID,
+    EmailAddress,
     GreeterOrClaimer,
     GreetingAttemptID,
     HumanHandle,
@@ -144,7 +145,9 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
                 case (str() as created_by_email, str() as created_by_label):
                     created_by = InvitationCreatedByUser(
                         user_id=UserID.from_hex(created_by_user_id_str),
-                        human_handle=HumanHandle(email=created_by_email, label=created_by_label),
+                        human_handle=HumanHandle(
+                            email=EmailAddress(created_by_email), label=created_by_label
+                        ),
                     )
                 case unknown:
                     assert False, repr(unknown)
@@ -213,7 +216,7 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
         ):
             case (str() as claimer_human_email, str() as claimer_human_label):
                 claimer_human_handle = HumanHandle(
-                    email=claimer_human_email, label=claimer_human_label
+                    email=EmailAddress(claimer_human_email), label=claimer_human_label
                 )
             case unknown:
                 assert False, repr(unknown)
@@ -258,7 +261,8 @@ def invitation_info_from_record(record: Record) -> InvitationInfo:
                 str() as shamir_recovery_setup_human_label,
             ):
                 claimer_human_handle = HumanHandle(
-                    email=shamir_recovery_setup_human_email, label=shamir_recovery_setup_human_label
+                    email=EmailAddress(shamir_recovery_setup_human_email),
+                    label=shamir_recovery_setup_human_label,
                 )
             case unknown:
                 assert False, repr(unknown)
@@ -1491,7 +1495,7 @@ class PGInviteComponent(BaseInviteComponent):
 
             match (row["email"], row["label"]):
                 case (str() as raw_email, str() as raw_label):
-                    human_handle = HumanHandle(email=raw_email, label=raw_label)
+                    human_handle = HumanHandle(email=EmailAddress(raw_email), label=raw_label)
                 case unknown:
                     assert False, repr(unknown)
 

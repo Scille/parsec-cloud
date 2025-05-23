@@ -15,6 +15,7 @@ from parsec._parsec import (
     DeviceID,
     DeviceLabel,
     DevicePurpose,
+    EmailAddress,
     HumanHandle,
     OrganizationID,
     PrivateKey,
@@ -352,7 +353,7 @@ async def test_anonymous_organization_bootstrap_timestamp_out_of_ballpark(
     device_id = DeviceID.new()
     user_id = UserID.new()
     user_priv_key = PrivateKey.generate()
-    user_human_handle = HumanHandle("foo@bar.com", str(user_id))
+    user_human_handle = HumanHandle(EmailAddress("foo@bar.com"), str(user_id))
     device_label = DeviceLabel("device label")
 
     user_certificate = UserCertificate(

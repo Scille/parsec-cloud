@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    EmailAddress,
     HumanHandle,
     OrganizationID,
     UserID,
@@ -56,7 +57,7 @@ async def user_list_users(
             case _:
                 assert False, row
 
-        human_handle = HumanHandle(email=human_email, label=human_label)
+        human_handle = HumanHandle(email=EmailAddress(human_email), label=human_label)
 
         match row["frozen"]:
             case bool() as frozen:
