@@ -242,6 +242,9 @@ Authenticated account API:
     "reps": [
         {
             "status": "ok"
+        },
+        {
+            "status": "fingerprint_already_exists"
         }
     ]
 }
@@ -253,14 +256,13 @@ Authenticated account API:
 >   it doesn't try to enforce checks on the uploaded data (e.g. check that the
 >   organization exists, ensure the human handle of the uploaded device corresponds
 >   to the email of the account etc.).
-> - Similarly, there is no check to avoid duplicated items in the vault. This is because
->   uploading an item means this item has just been created (hence it cannot be known
->   by another concurrent Parsec client).
->   So the only concern would be on equivalent items (e.g. two registration devices for
->   the same organization/user couple), but this is unlikely and it is no big deal since
->   it is trivial to only consider the first one.
+> - Similarly, the fingerprint only offers a very basic protection against duplication:
+>   it ensure unity of a given item (useful for idempotent upload and knowing which
+>   item still needs to be recovered), but not against equivalent items (e.g. two
+>   registration devices for the same organization/user couple).
+>   This is considered okay considering it is unlikely and not a big deal anyway.
 > - Since `VaultKeyAccess` is not encrypted nor signed (only serialized), it can be
->   tempered by the server. We consider this acceptable since:
+>   tempered by the server.
 >   For this reason, the client should check the decrypted content against the clear text
 >   organization/user/device IDs.
 >   Finally having part of the data in clear text is convenient to avoid having to decrypt
