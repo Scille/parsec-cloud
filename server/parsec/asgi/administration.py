@@ -296,7 +296,7 @@ class PatchOrganizationIn(BaseModel):
             case str():
                 return AllowedClientAgent(v)
             case _:
-                raise ValueError("Expected null or positive integer")
+                raise ValueError("Expected string")
 
 
 @administration_router.patch("/administration/organizations/{raw_organization_id}")
