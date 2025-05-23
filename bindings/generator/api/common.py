@@ -186,17 +186,20 @@ class DeviceLabel(StrBasedType):
 
 class EmailAddress(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::EmailAddress::from_str(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: &libparsec::EmailAddress| -> Result<_, &'static str> { Ok(x.to_string()) }"
+    )
 
 
 class HumanHandle(Structure):
     email: EmailAddress
     label: str
     custom_getters: ClassVar = {
-        "email": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &EmailAddress { obj.email() } access(obj) }",
+        "email": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &libparsec::EmailAddress { obj.email() } access(obj) }",
         "label": "|obj| { fn access(obj: &libparsec::HumanHandle) -> &str { obj.label() } access(obj) }",
     }
     custom_init: str = """
-        |email: EmailAddress, label: String| -> Result<_, String> {
+        |email: libparsec::EmailAddress, label: String| -> Result<_, String> {
             libparsec::HumanHandle::new(email, &label).map_err(|e| e.to_string())
         }
     """
