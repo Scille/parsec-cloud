@@ -1,13 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, MockBms, msTest } from '@tests/e2e/helpers';
+import { clientAreaNavigateTo, expect, MockBms, msTest } from '@tests/e2e/helpers';
 import { DateTime } from 'luxon';
 import { setTimeout } from 'timers/promises';
 
 msTest('List payment methods', async ({ clientArea }) => {
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(3).click();
-  await expect(title).toHaveText('Payment methods');
+  await clientAreaNavigateTo(clientArea, 'Payment methods');
 
   const activeContainer = clientArea.locator('.client-page-method').locator('.method-cards-active');
   const activeCard = activeContainer.locator('.ms-stripe-card');
@@ -31,9 +29,7 @@ msTest('List payment methods', async ({ clientArea }) => {
       setDefault.fail ? { PATCH: { errors: { status: 401, attribute: 'payment_method' } } } : undefined,
     );
 
-    const title = clientArea.locator('.header-content').locator('.header-title');
-    await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(3).click();
-    await expect(title).toHaveText('Payment methods');
+    await clientAreaNavigateTo(clientArea, 'Payment methods');
     const addButton = clientArea.locator('.client-page-method').locator('.method-cards-saved-header').locator('.custom-button');
     await expect(addButton).toHaveText('Add a new card');
     const modal = clientArea.locator('.credit-card-modal');
@@ -79,9 +75,7 @@ msTest('List payment methods', async ({ clientArea }) => {
 
 msTest('No payment methods', async ({ clientArea }) => {
   await MockBms.mockBillingDetails(clientArea, { cardsCount: 0, sepaCount: 0 });
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(3).click();
-  await expect(title).toHaveText('Payment methods');
+  await clientAreaNavigateTo(clientArea, 'Payment methods');
 
   await expect(clientArea.locator('.client-page-method').locator('.no-payment-method')).toBeVisible();
   await expect(clientArea.locator('.client-page-method').locator('.no-payment-method')).toHaveText("You don't have a payment method set.");

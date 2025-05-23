@@ -1472,9 +1472,10 @@
                 "summary": "Dashboard",
                 "stats": "Statistics",
                 "invoices": "Invoices",
-                "billingMethod": "Payment method",
+                "billingMethod": "Payment methods",
                 "billingDetails": "Billing details",
                 "contract": "Contract",
+                "personalData": "My profile",
                 "orders": "Orders"
             },
             "help": {

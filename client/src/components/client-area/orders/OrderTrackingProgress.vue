@@ -1,34 +1,31 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
-    class="process-container"
-    v-if="bmsStatus !== CustomOrderStatus.Unknown && sellsyStatus"
-  >
+  <div class="process-container">
     <ms-report-text
-      v-if="sellsyStatus === CustomOrderRequestStatus.Standby"
+      v-if="orderStep === OrderStep.Standby"
       :theme="MsReportTheme.Warning"
       class="process-stop-container"
     >
       <div class="process-stop-text">
-        <ion-text class="title-h4">{{ $msTranslate('clientArea.dashboard.step.standby.title') }}</ion-text>
-        <ion-text class="body">{{ $msTranslate('clientArea.dashboard.step.standby.description') }}</ion-text>
+        <ion-text class="title-h4">{{ $msTranslate(getOrderStepTranslations(OrderStep.Standby).title) }}</ion-text>
+        <ion-text class="body">{{ $msTranslate(getOrderStepTranslations(OrderStep.Standby).description) }}</ion-text>
       </div>
     </ms-report-text>
 
     <ms-report-text
-      v-if="sellsyStatus === CustomOrderRequestStatus.Cancelled"
+      v-if="orderStep === OrderStep.Cancelled"
       :theme="MsReportTheme.Error"
       class="process-stop-container"
     >
       <div class="process-stop-text">
-        <ion-text class="title-h4">{{ $msTranslate('clientArea.dashboard.step.cancel.title') }}</ion-text>
-        <ion-text class="body">{{ $msTranslate('clientArea.dashboard.step.cancel.description') }}</ion-text>
+        <ion-text class="title-h4">{{ $msTranslate(getOrderStepTranslations(OrderStep.Cancelled).title) }}</ion-text>
+        <ion-text class="body">{{ $msTranslate(getOrderStepTranslations(OrderStep.Cancelled).description) }}</ion-text>
       </div>
     </ms-report-text>
     <div
       class="process-step"
-      v-for="(step, index) in steps"
+      v-for="(step, index) in orderSteps"
       :key="index"
       :class="{
         'process-step-todo': customOrderIndex < index,
@@ -53,13 +50,13 @@
       </div>
       <div class="process-step-text">
         <ion-text class="process-step-text__title title-h3">
-          {{ $msTranslate(step.title) }}
+          {{ $msTranslate(getOrderStepTranslations(step).title) }}
         </ion-text>
         <ion-text
           class="process-step-text__info body"
           v-if="customOrderIndex === index"
         >
-          {{ $msTranslate(step.description) }}
+          {{ $msTranslate(getOrderStepTranslations(step).description) }}
         </ion-text>
       </div>
     </div>
@@ -69,55 +66,26 @@
 <script setup lang="ts">
 import { IonIcon, IonText } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { CustomOrderStatus, CustomOrderRequestStatus } from '@/services/bms';
 import { ref, onMounted } from 'vue';
-import { MsReportText, MsReportTheme, Translatable } from 'megashark-lib';
-import { getCustomOrderStatusTranslationKey } from '@/services/translation';
+import { MsReportText, MsReportTheme } from 'megashark-lib';
+import { getOrderStepTranslations, OrderStep } from '@/components/client-area/orders/utils';
 
 const customOrderIndex = ref<number>(0);
 
 const props = defineProps<{
-  sellsyStatus: CustomOrderRequestStatus;
-  bmsStatus: CustomOrderStatus;
+  orderStep: OrderStep;
 }>();
 
-interface Step {
-  title: Translatable;
-  description: Translatable;
-  statusBms: CustomOrderStatus;
-  statusRequest: CustomOrderRequestStatus;
-}
-
-const steps: Step[] = [
-  {
-    ...getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Received),
-    statusBms: CustomOrderStatus.NothingLinked,
-    statusRequest: CustomOrderRequestStatus.Received,
-  },
-  {
-    ...getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Processing),
-    statusBms: CustomOrderStatus.NothingLinked,
-    statusRequest: CustomOrderRequestStatus.Processing,
-  },
-  {
-    ...getCustomOrderStatusTranslationKey(CustomOrderStatus.NothingLinked, CustomOrderRequestStatus.Finished),
-    statusBms: CustomOrderStatus.NothingLinked,
-    statusRequest: CustomOrderRequestStatus.Finished,
-  },
-  {
-    ...getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoiceToBePaid, CustomOrderRequestStatus.Finished),
-    statusBms: CustomOrderStatus.InvoiceToBePaid,
-    statusRequest: CustomOrderRequestStatus.Finished,
-  },
-  {
-    ...getCustomOrderStatusTranslationKey(CustomOrderStatus.InvoicePaid, CustomOrderRequestStatus.Finished),
-    statusBms: CustomOrderStatus.InvoicePaid,
-    statusRequest: CustomOrderRequestStatus.Finished,
-  },
+const orderSteps: OrderStep[] = [
+  OrderStep.Received,
+  OrderStep.Processing,
+  OrderStep.Confirmed,
+  OrderStep.InvoiceToBePaid,
+  OrderStep.Available,
 ];
 
 onMounted(async () => {
-  customOrderIndex.value = steps.findIndex((step: Step) => step.statusBms === props.bmsStatus && step.statusRequest === props.sellsyStatus);
+  customOrderIndex.value = orderSteps.findIndex((step: OrderStep) => step === props.orderStep);
 });
 </script>
 

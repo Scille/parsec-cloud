@@ -1472,9 +1472,10 @@
                 "summary": "Tableau de bord",
                 "stats": "Statistiques",
                 "invoices": "Factures",
-                "billingMethod": "Méthode de paiement",
+                "billingMethod": "Moyens de paiement",
                 "billingDetails": "Coordonnées de facturation",
                 "contract": "Contrat",
+                "personalData": "Mon profil",
                 "orders": "Commandes"
             },
             "help": {
