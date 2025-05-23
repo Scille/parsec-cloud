@@ -1,0 +1,101 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "vault_item_recovery_list",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "current_vault",
+                        "type": "VaultItemRecoveryVault"
+                    },
+                    {
+                        "name": "previous_vaults",
+                        "type": "List<VaultItemRecoveryVault>"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "VaultItemRecoveryVault",
+                "fields": [
+                    {
+                        "name": "auth_methods",
+                        "type": "List<VaultItemRecoveryAuthMethod>"
+                    },
+                    {
+                        "name": "vault_items",
+                        // Map with `item_fingerprint` as key and serialized `AccountVaultItem` as value
+                        "type": "Map<HashDigest, Bytes>"
+                    }
+                ]
+            },
+            {
+                "name": "VaultItemRecoveryAuthMethod",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "Password",
+                        "discriminant_value": "PASSWORD",
+                        "fields": [
+                            {
+                                "name": "created_on",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "created_by_ip",
+                                "type": "String"
+                            },
+                            {
+                                "name": "created_by_user_agent",
+                                "type": "String"
+                            },
+                            {
+                                "name": "vault_key_access",
+                                // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
+                                "type": "Bytes"
+                            },
+                            {
+                                "name": "algorithm",
+                                "type": "PasswordAlgorithm"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "name": "PasswordAlgorithm",
+                "discriminant_field": "type",
+                "variants": [
+                    {
+                        "name": "Argon2id",
+                        "discriminant_value": "ARGON2ID",
+                        "fields": [
+                            {
+                                "name": "salt",
+                                "type": "Bytes"
+                            },
+                            {
+                                "name": "opslimit",
+                                "type": "Integer"
+                            },
+                            {
+                                "name": "memlimit_kb",
+                                "type": "Integer"
+                            },
+                            {
+                                "name": "parallelism",
+                                "type": "Integer"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

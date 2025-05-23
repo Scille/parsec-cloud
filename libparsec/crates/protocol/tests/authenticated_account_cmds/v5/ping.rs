@@ -21,15 +21,13 @@ pub fn req() {
         ping: "ping".to_owned(),
     };
 
-    let expected = authenticated_account_cmds::AnyCmdReq::Ping(req);
+    let expected = authenticated_account_cmds::AnyCmdReq::Ping(req.clone());
     let data = authenticated_account_cmds::AnyCmdReq::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let authenticated_account_cmds::AnyCmdReq::Ping(req2) = data;
-
-    let raw2 = req2.dump().unwrap();
+    let raw2 = req.dump().unwrap();
 
     let data2 = authenticated_account_cmds::AnyCmdReq::load(&raw2).unwrap();
 
