@@ -336,7 +336,7 @@ import {
   DataType,
 } from '@/services/bms';
 import { ref, onMounted } from 'vue';
-import OrderTrackingProgress from '@/components/client-area/OrderTrackingProgress.vue';
+import OrderTrackingProgress from '@/components/client-area/orders/OrderTrackingProgress.vue';
 import { Translatable, I18n } from 'megashark-lib';
 
 const error = ref<string>('');

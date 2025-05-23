@@ -16,13 +16,11 @@
         </ion-button>
       </div>
     </div>
-    <template v-if="!querying && !error && orderRequests && orderRequests.requests.length > 0">
-      <order-in-progress
-        v-for="order in orderRequests.requests"
-        :key="order.id"
-        :request="order"
-      />
-    </template>
+
+    <orders-list
+      v-if="!querying && !error && orderRequests"
+      :orders="orderRequests.requests"
+    />
 
     <!-- loading -->
     <template v-if="querying">
@@ -30,13 +28,6 @@
         <ms-spinner />
         <ion-text class="body-lg loading-text">{{ $msTranslate('clientArea.orders.loading') }}</ion-text>
       </div>
-    </template>
-
-    <!-- no orders -->
-    <template v-if="!querying && !error && orderRequests && orderRequests.requests.length === 0">
-      <ion-text class="body-lg no-orders">
-        {{ $msTranslate('clientArea.orders.noOrders') }}
-      </ion-text>
     </template>
 
     <!-- error -->
@@ -52,7 +43,7 @@
 import { IonText, IonButton, modalController } from '@ionic/vue';
 import { BmsAccessInstance, GetCustomOrderRequestsResultData, DataType } from '@/services/bms';
 import NewOrderModal from '@/views/client-area/orders/NewOrderModal.vue';
-import OrderInProgress from '@/components/client-area/OrderInProgress.vue';
+import { OrdersList } from '@/components/client-area';
 import { ref, onMounted } from 'vue';
 import { MsModalResult, MsSpinner } from 'megashark-lib';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
