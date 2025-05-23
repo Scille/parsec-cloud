@@ -2,25 +2,23 @@
 
 <template>
   <ion-page>
-    <large-display-menu
-      v-if="userInfo && !isMobile()"
+    <main-menu
+      v-if="userInfo"
       :user-info="userInfo"
       @sidebar-width-changed="onSidebarWidthChanged"
-    />
-    <mobile-menu
-      v-if="userInfo && isMobile()"
-      :user-info="userInfo"
     />
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { ClientInfo, getClientInfo as parsecGetClientInfo, isMobile } from '@/parsec';
+import { ClientInfo, getClientInfo as parsecGetClientInfo } from '@/parsec';
 import { IonPage } from '@ionic/vue';
 import { Ref, onMounted, onUnmounted, ref } from 'vue';
-import MobileMenu from '@/views/menu/MobileMenu.vue';
-import LargeDisplayMenu from '@/views/menu/LargeDisplayMenu.vue';
 
+import MainMenu from '@/views/menu/MainMenu.vue';
+import { useWindowSize } from 'megashark-lib';
+
+const { isSmallDisplay } = useWindowSize();
 const sidebarWidth = ref<number>(0);
 const userInfo: Ref<ClientInfo | null> = ref(null);
 
@@ -30,7 +28,7 @@ function onSidebarWidthChanged(value: number): void {
 }
 
 async function updateWindowWidth(): Promise<void> {
-  if (window.innerWidth <= 768) {
+  if (isSmallDisplay.value) {
     setToastOffset(0);
   } else {
     setToastOffset(sidebarWidth.value);
@@ -45,14 +43,11 @@ onMounted(async () => {
   } else {
     window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
   }
-
-  window.addEventListener('resize', updateWindowWidth);
   updateWindowWidth();
 });
 
 onUnmounted(async () => {
   setToastOffset(0);
-  window.removeEventListener('resize', updateWindowWidth);
 });
 
 function setToastOffset(width: number): void {

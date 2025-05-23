@@ -143,7 +143,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
 
     if (displaySize === DisplaySize.Small) {
-      const addButton = documents.locator('.folder-content').locator('#add-menu-fab-button');
+      const addButton = documents.locator('.tab-bar-menu').locator('#add-menu-fab-button');
       await expect(addButton).toBeVisible();
       await addButton.click();
       const modal = documents.locator('.tab-menu-modal');

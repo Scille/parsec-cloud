@@ -159,12 +159,6 @@
           />
         </div>
       </div>
-      <tab-bar-menu
-        v-if="isSmallDisplay"
-        class="tab-bar-menu"
-        @action-clicked="performWorkspaceAction($event.action)"
-        :actions="tabBarMenuActions"
-      />
     </ion-content>
   </ion-page>
 </template>
@@ -217,16 +211,15 @@ import {
   mountWorkspace as parsecMountWorkspace,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
-import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { IonButton, IonContent, IonIcon, IonLabel, IonList, IonListHeader, IonPage, IonText } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
-import { TabBarMenu, MenuAction } from '@/views/menu';
 import { recentDocumentManager } from '@/services/recentDocuments';
-import { WorkspaceAction } from '@/views/workspaces/types';
+import { isWorkspaceAction, WorkspaceAction } from '@/views/workspaces/types';
 
 enum SortWorkspaceBy {
   Name = 'name',
@@ -273,10 +266,6 @@ const msSorterLabels = {
   desc: 'HomePage.organizationList.sortOrderDesc',
 };
 
-const tabBarMenuActions: Array<Array<MenuAction>> = [
-  [{ action: WorkspaceAction.CreateWorkspace, label: 'WorkspacesPage.createWorkspace', icon: addCircle }],
-];
-
 const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
 let hotkeys: HotkeyGroup | null = null;
 
@@ -306,8 +295,8 @@ onMounted(async (): Promise<void> => {
   );
 
   eventCbId = await eventDistributor.registerCallback(
-    Events.WorkspaceFavorite | Events.WorkspaceUpdated | Events.WorkspaceCreated,
-    async (event: Events, _data?: EventData) => {
+    Events.WorkspaceFavorite | Events.WorkspaceUpdated | Events.WorkspaceCreated | Events.MenuAction,
+    async (event: Events, data?: EventData) => {
       switch (event) {
         case Events.WorkspaceFavorite:
           await loadFavorites();
@@ -315,6 +304,11 @@ onMounted(async (): Promise<void> => {
         case Events.WorkspaceUpdated:
         case Events.WorkspaceCreated:
           await refreshWorkspacesList();
+          break;
+        case Events.MenuAction:
+          if (isWorkspaceAction((data as MenuActionData).action.action)) {
+            await performWorkspaceAction((data as MenuActionData).action.action);
+          }
           break;
         default:
           console.log(`Unhandled event ${event}`);

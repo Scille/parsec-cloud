@@ -4,9 +4,10 @@
   <ion-page>
     <ion-header
       id="connected-header"
-      v-if="showHeader"
+      v-show="showHeader"
     >
       <ion-toolbar
+        v-if="showHeader"
         class="topbar"
         :class="currentRouteIs(Routes.History) ? 'topbar-history' : ''"
       >
@@ -171,7 +172,10 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const notificationCenterButton = ref();
 const showHeader = computed(() => {
-  return !((currentRouteIs(Routes.Organization) || currentRouteIs(Routes.MyProfile)) && isSmallDisplay.value);
+  if (isSmallDisplay.value && (currentRouteIs(Routes.Organization) || currentRouteIs(Routes.MyProfile))) {
+    return false;
+  }
+  return true;
 });
 
 const routeWatchCancel = watchRoute(async () => {
