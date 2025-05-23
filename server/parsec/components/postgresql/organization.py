@@ -58,7 +58,7 @@ from parsec.components.postgresql.utils import (
     q_organization_internal_id,
     transaction,
 )
-from parsec.config import AllowedClientAgent, BackendConfig
+from parsec.config import AccountVaultStrategy, AllowedClientAgent, BackendConfig
 from parsec.types import Unset, UnsetType
 from parsec.webhooks import WebhooksComponent
 
@@ -78,7 +78,8 @@ SELECT
     minimum_archiving_period,
     tos_updated_on,
     tos_per_locale_urls,
-    allowed_client_agent
+    allowed_client_agent,
+    account_vault_strategy
 FROM organization
 WHERE organization_id = $organization_id
 {"FOR UPDATE" if for_update else ""}
@@ -129,6 +130,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
         allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
+        account_vault_strategy: UnsetType | AccountVaultStrategy = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         bootstrap_token = force_bootstrap_token or BootstrapToken.new()
@@ -143,6 +145,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         optional_tos = self._config.organization_initial_tos if tos is Unset else tos
         if allowed_client_agent is Unset:
             allowed_client_agent = self._config.organization_initial_allowed_client_agent
+        if account_vault_strategy is Unset:
+            account_vault_strategy = self._config.organization_initial_account_vault_strategy
 
         outcome = await organization_create(
             conn,
@@ -153,6 +157,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             minimum_archiving_period,
             optional_tos,
             allowed_client_agent,
+            account_vault_strategy,
             bootstrap_token,
         )
         match outcome:
@@ -242,6 +247,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             case unknown:
                 assert False, unknown
 
+        match row["account_vault_strategy"]:
+            case str() as account_vault_strategy_raw:
+                account_vault_strategy = AccountVaultStrategy(account_vault_strategy_raw)
+            case unknown:
+                assert False, unknown
+
         return Organization(
             organization_id=id,
             bootstrap_token=bootstrap_token,
@@ -257,6 +268,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             minimum_archiving_period=row["minimum_archiving_period"],
             tos=tos,
             allowed_client_agent=allowed_client_agent,
+            account_vault_strategy=account_vault_strategy,
         )
 
     @override
@@ -333,6 +345,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         minimum_archiving_period: UnsetType | int = Unset,
         tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
         allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
+        account_vault_strategy: UnsetType | AccountVaultStrategy = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         return await organization_update(
             conn,
@@ -344,6 +357,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             minimum_archiving_period,
             tos,
             allowed_client_agent,
+            account_vault_strategy,
         )
 
     @override

@@ -16,7 +16,7 @@ from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import (
     Q,
 )
-from parsec.config import AllowedClientAgent
+from parsec.config import AccountVaultStrategy, AllowedClientAgent
 
 _q_insert_organization = Q(
     """
@@ -33,7 +33,8 @@ WITH new_organization AS (
         minimum_archiving_period,
         tos_updated_on,
         tos_per_locale_urls,
-        allowed_client_agent
+        allowed_client_agent,
+        account_vault_strategy
     )
     VALUES (
         $organization_id,
@@ -50,7 +51,8 @@ WITH new_organization AS (
             ELSE $created_on
             END,
         $tos_per_locale_urls,
-        $allowed_client_agent
+        $allowed_client_agent,
+        $account_vault_strategy
     )
     -- If the organization exists but hasn't been bootstrapped yet, we can
     -- simply overwrite it.
@@ -65,7 +67,8 @@ WITH new_organization AS (
             minimum_archiving_period = EXCLUDED.minimum_archiving_period,
             tos_updated_on = EXCLUDED.tos_updated_on,
             tos_per_locale_urls = EXCLUDED.tos_per_locale_urls,
-            allowed_client_agent = EXCLUDED.allowed_client_agent
+            allowed_client_agent = EXCLUDED.allowed_client_agent,
+            account_vault_strategy = EXCLUDED.account_vault_strategy
         WHERE organization.root_verify_key IS NULL
     RETURNING _id
 ),
@@ -98,6 +101,7 @@ async def organization_create(
     minimum_archiving_period: int,
     tos_per_locale_urls: dict[TosLocale, TosUrl] | None,
     allowed_client_agent: AllowedClientAgent,
+    account_vault_strategy: AccountVaultStrategy,
     bootstrap_token: BootstrapToken | None,
 ) -> int | OrganizationCreateBadOutcome:
     organization_internal_id = await conn.fetchval(
@@ -112,6 +116,7 @@ async def organization_create(
             minimum_archiving_period=minimum_archiving_period,
             tos_per_locale_urls=tos_per_locale_urls,
             allowed_client_agent=allowed_client_agent.value,
+            account_vault_strategy=account_vault_strategy.value,
         )
     )
     match organization_internal_id:

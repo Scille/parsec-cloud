@@ -172,6 +172,7 @@ class PGAuthComponent(BaseAuthComponent):
                     minimum_archiving_period=self._config.organization_initial_minimum_archiving_period,
                     tos_per_locale_urls=self._config.organization_initial_tos,
                     allowed_client_agent=self._config.organization_initial_allowed_client_agent,
+                    account_vault_strategy=self._config.organization_initial_account_vault_strategy,
                     bootstrap_token=None,
                 )
                 match outcome:
