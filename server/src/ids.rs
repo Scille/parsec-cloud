@@ -283,8 +283,8 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 #[pymethods]
 impl HumanHandle {
     #[new]
-    pub fn new(email: &str, label: &str) -> PyResult<Self> {
-        match libparsec_types::HumanHandle::new(email, label) {
+    pub fn new(email: EmailAddress, label: &str) -> PyResult<Self> {
+        match libparsec_types::HumanHandle::new(email.0, label) {
             Ok(human_handle) => Ok(Self(human_handle)),
             Err(err) => Err(PyValueError::new_err(err.to_string())),
         }

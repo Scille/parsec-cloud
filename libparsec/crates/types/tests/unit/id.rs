@@ -87,7 +87,7 @@ fn human_handle_ko(
         }
     };
 
-    assert_match_against_expected_error(HumanHandle::new(email, label));
+    assert_match_against_expected_error(HumanHandle::from_raw(email, label));
     assert_match_against_expected_error(HumanHandle::from_str(&format!("{label} <{email}>")));
 }
 
