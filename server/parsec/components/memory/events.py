@@ -89,6 +89,7 @@ class MemoryEventsComponent(BaseEventsComponent):
             user_profile_outsider_allowed=org.user_profile_outsider_allowed,
             active_users_limit=org.active_users_limit,
             allowed_client_agent=org.allowed_client_agent,
+            account_vault_strategy=org.account_vault_strategy,
         )
 
         user_realms = set()
