@@ -252,11 +252,6 @@ def realm_rotate_key_validate(
     return data
 
 
-class RealmCheckBadOutcome(BadOutcomeEnum):
-    REALM_NOT_FOUND = auto()
-    USER_NOT_IN_REALM = auto()
-
-
 class RealmCreateStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
