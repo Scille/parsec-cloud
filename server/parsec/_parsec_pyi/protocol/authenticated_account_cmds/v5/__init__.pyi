@@ -4,10 +4,25 @@
 
 from __future__ import annotations
 
-from . import ping
+from . import ping, vault_item_list, vault_item_recovery_list, vault_item_upload, vault_key_rotation
 
 class AnyCmdReq:
     @classmethod
-    def load(cls, raw: bytes) -> ping.Req: ...
+    def load(
+        cls, raw: bytes
+    ) -> (
+        ping.Req
+        | vault_item_list.Req
+        | vault_item_recovery_list.Req
+        | vault_item_upload.Req
+        | vault_key_rotation.Req
+    ): ...
 
-__all__ = ["AnyCmdReq", "ping"]
+__all__ = [
+    "AnyCmdReq",
+    "ping",
+    "vault_item_list",
+    "vault_item_recovery_list",
+    "vault_item_upload",
+    "vault_key_rotation",
+]
