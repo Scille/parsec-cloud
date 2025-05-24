@@ -11,6 +11,7 @@ from parsec._parsec import (
     DateTime,
     EnrollmentID,
     GreetingAttemptID,
+    HashDigest,
     InvitationToken,
     SequesterServiceID,
     UserID,
@@ -460,6 +461,38 @@ class BaseAuthenticatedAccountRpcClient:
         req = authenticated_account_cmds.latest.ping.Req(ping=ping)
         raw_rep = await self._do_request(req.dump(), "authenticated_account")
         return authenticated_account_cmds.latest.ping.Rep.load(raw_rep)
+
+    async def vault_item_list(
+        self,
+    ) -> authenticated_account_cmds.latest.vault_item_list.Rep:
+        req = authenticated_account_cmds.latest.vault_item_list.Req()
+        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        return authenticated_account_cmds.latest.vault_item_list.Rep.load(raw_rep)
+
+    async def vault_item_recovery_list(
+        self,
+    ) -> authenticated_account_cmds.latest.vault_item_recovery_list.Rep:
+        req = authenticated_account_cmds.latest.vault_item_recovery_list.Req()
+        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        return authenticated_account_cmds.latest.vault_item_recovery_list.Rep.load(raw_rep)
+
+    async def vault_item_upload(
+        self, item_fingerprint: bytes, item: bytes
+    ) -> authenticated_account_cmds.latest.vault_item_upload.Rep:
+        req = authenticated_account_cmds.latest.vault_item_upload.Req(
+            item_fingerprint=item_fingerprint, item=item
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        return authenticated_account_cmds.latest.vault_item_upload.Rep.load(raw_rep)
+
+    async def vault_key_rotation(
+        self, key_access: bytes, items: dict[HashDigest, bytes]
+    ) -> authenticated_account_cmds.latest.vault_key_rotation.Rep:
+        req = authenticated_account_cmds.latest.vault_key_rotation.Req(
+            key_access=key_access, items=items
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        return authenticated_account_cmds.latest.vault_key_rotation.Rep.load(raw_rep)
 
 
 class BaseInvitedRpcClient:
