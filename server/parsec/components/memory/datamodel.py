@@ -34,6 +34,7 @@ from parsec._parsec import (
     RealmRole,
     RealmRoleCertificate,
     RevokedUserCertificate,
+    SecretKey,
     SequesterAuthorityCertificate,
     SequesterRevokedServiceCertificate,
     SequesterServiceCertificate,
@@ -47,6 +48,7 @@ from parsec._parsec import (
     UserUpdateCertificate,
     VerifyKey,
     VlobID,
+    anonymous_account_cmds,
 )
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
@@ -68,6 +70,10 @@ type RealmTopicCertificate = (
     | RealmKeyRotationCertificate
     | RealmNameCertificate
     | RealmArchivingCertificate
+)
+
+PasswordAlgorithm = (
+    anonymous_account_cmds.latest.account_create_with_password_proceed.PasswordAlgorithm
 )
 
 
@@ -862,4 +868,31 @@ class MemoryShamirShare:
 
 @dataclass(slots=True)
 class MemoryAccount:
+    # Main identifier for the account.
     user_email: EmailStr
+    # Not used by Parsec Account but works as a quality-of-life feature
+    # to allow pre-filling human handle during enrollment.
+    human_label: str
+    vaults: list[bytes]
+    authentication_methods: list[MemoryAuthenticationMethod]
+
+
+@dataclass(slots=True)
+class MemoryAuthenticationMethod:
+    created_on: DateTime
+    # IP address of the HTTP request that created the authentication method
+    # (either by account creation, vault key rotation or account recovery)
+    created_by_ip: str  # TODO replace by ipaddr #10384
+    # User agent header of the HTTP request that created the vault.
+    created_by_user_agent: str
+    # Secret key used for HMAC based authentication with the server
+    mac_key: SecretKey
+    # Vault key encrypted with the `auth_method_secret_key` see rfc 1014
+    vault_key_access: bytes
+    # The algorithm to obtain the `auth_method_master_secret`, it depends on
+    # the authentication method used, this attribute should contains the full configuration
+    # needed to do this operation (Typically, for the password it should be something like
+    # `{"name": "ARGON2ID", "opslimit": 65536, "memlimit_kb": 3, "parallelism": 1}`).
+    password_secret_algorithm: PasswordAlgorithm
+    # Indicate if this method is enabled or not.
+    enabled: bool

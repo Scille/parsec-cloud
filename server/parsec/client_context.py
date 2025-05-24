@@ -173,6 +173,8 @@ class AnonymousAccountClientContext:
     client_api_version: ApiVersion
     settled_api_version: ApiVersion
     logger: ParsecBoundLogger = field(init=False)
+    user_agent: str
+    user_ip: str
 
     def __post_init__(self):
         # Generate a request ID just for the logs
