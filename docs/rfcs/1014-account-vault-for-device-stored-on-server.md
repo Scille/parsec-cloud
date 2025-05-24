@@ -405,6 +405,8 @@ To list all protected device from all vault except current/active one:
                                 "type": "DateTime"
                             },
                             {
+                                // TODO: Use `IPAddress` type once implemented
+                                // see https://github.com/Scille/parsec-cloud/issues/10384
                                 "name": "created_by_ip",
                                 "type": "String"
                             },
