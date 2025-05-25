@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from typing import NoReturn
 from uuid import uuid4
 
+from pydantic import EmailStr
+
 from parsec._parsec import (
     ApiVersion,
     DeviceID,
@@ -189,6 +191,7 @@ class AnonymousAccountClientContext:
 class AuthenticatedAccountClientContext:
     client_api_version: ApiVersion
     settled_api_version: ApiVersion
+    account_email: EmailStr
     logger: ParsecBoundLogger = field(init=False)
 
     def __post_init__(self):
@@ -199,4 +202,12 @@ class AuthenticatedAccountClientContext:
             request=request_id,
             api=f"{self.settled_api_version.version}.{self.settled_api_version.revision}",
             auth="authenticated_account",
+        )
+
+    def account_not_found_abort(self) -> NoReturn:
+        from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
+
+        _handshake_abort(
+            CustomHttpStatus.BadAuthenticationInfo,
+            api_version=self.settled_api_version,
         )

@@ -647,7 +647,7 @@ async def authenticated_account_api(request: Request) -> Response:
         now=DateTime.now(), token=parsed.authentication_token
     )
     match outcome:
-        case AuthenticatedAccountAuthInfo():  # TODO as auth_info:
+        case AuthenticatedAccountAuthInfo() as auth_info:
             pass
         case (
             AuthAuthenticatedAccountAuthBadOutcome.ACCOUNT_NOT_FOUND
@@ -668,6 +668,7 @@ async def authenticated_account_api(request: Request) -> Response:
     client_ctx = AuthenticatedAccountClientContext(
         client_api_version=parsed.client_api_version,
         settled_api_version=parsed.settled_api_version,
+        account_email=auth_info.account_email,
     )
 
     try:
