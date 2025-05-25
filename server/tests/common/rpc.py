@@ -477,7 +477,7 @@ class BaseAuthenticatedAccountRpcClient:
         return authenticated_account_cmds.latest.vault_item_recovery_list.Rep.load(raw_rep)
 
     async def vault_item_upload(
-        self, item_fingerprint: bytes, item: bytes
+        self, item_fingerprint: HashDigest, item: bytes
     ) -> authenticated_account_cmds.latest.vault_item_upload.Rep:
         req = authenticated_account_cmds.latest.vault_item_upload.Req(
             item_fingerprint=item_fingerprint, item=item

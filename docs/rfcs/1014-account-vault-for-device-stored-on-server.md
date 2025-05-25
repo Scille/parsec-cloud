@@ -234,7 +234,7 @@ Authenticated account API:
                     "name": "item_fingerprint",
                     // Arbitrary hash of relevant fields of the item to avoid duplicates
                     // Typically for registration device: `hash( 'REGISTRATION_DEVICE' + <organization ID> + <device ID>)`
-                    "type": "Bytes"
+                    "type": "HashDigest"
                 },
                 {
                     "name": "item",
