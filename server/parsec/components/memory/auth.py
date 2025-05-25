@@ -5,7 +5,7 @@ from typing import Any, override
 from parsec._parsec import DateTime, DeviceID, InvitationToken, OrganizationID
 from parsec.ballpark import timestamps_in_the_ballpark
 from parsec.components.auth import (
-    AccountPasswordAuthenticationToken,
+    AccountAuthenticationToken,
     AnonymousAuthInfo,
     AuthAnonymousAuthBadOutcome,
     AuthAuthenticatedAccountAuthBadOutcome,
@@ -131,16 +131,13 @@ class MemoryAuthComponent(BaseAuthComponent):
     async def authenticated_account_auth(
         self,
         now: DateTime,
-        token: AccountPasswordAuthenticationToken,
+        token: AccountAuthenticationToken,
     ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
-        try:
-            account = self._data.accounts[token.email]
-        except KeyError:
-            return AuthAuthenticatedAccountAuthBadOutcome.ACCOUNT_NOT_FOUND
-
-        # TODO: This code works on the assumption that there is always an active
-        #  password-based authentication methods.
-        auth_method = next(iter(account.current_vault.active_authentication_methods))
+        match self._data.get_account_from_auth_method(auth_method_id=token.auth_method_id):
+            case (account, auth_method):
+                pass
+            case None:
+                return AuthAuthenticatedAccountAuthBadOutcome.ACCOUNT_NOT_FOUND
 
         if not token.verify(auth_method.mac_key):
             return AuthAuthenticatedAccountAuthBadOutcome.INVALID_TOKEN
@@ -150,5 +147,7 @@ class MemoryAuthComponent(BaseAuthComponent):
 
         return AuthenticatedAccountAuthInfo(
             account_email=account.account_email,
+            auth_method_id=auth_method.id,
             account_internal_id=0,  # Only used by PostgreSQL implementation
+            auth_method_internal_id=0,  # Only used by PostgreSQL implementation
         )

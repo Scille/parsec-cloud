@@ -13,6 +13,7 @@ from typing import AsyncIterator, Iterable, Iterator, Literal
 from pydantic import EmailStr
 
 from parsec._parsec import (
+    AccountAuthMethodID,
     ActiveUsersLimit,
     BlockID,
     BootstrapToken,
@@ -106,6 +107,14 @@ class MemoryDatamodel:
     unverified_emails: dict[EmailStr, tuple[EmailValidationToken, DateTime]] = field(
         default_factory=dict
     )
+
+    def get_account_from_auth_method(
+        self, auth_method_id: AccountAuthMethodID
+    ) -> tuple[MemoryAccount, MemoryAuthenticationMethod] | None:
+        for account in self.accounts.values():
+            for auth_method in account.current_vault.active_authentication_methods:
+                if auth_method.id == auth_method_id:
+                    return account, auth_method
 
 
 @dataclass(slots=True)
@@ -878,20 +887,21 @@ class MemoryAccount:
 class MemoryAccountVault:
     items: dict[HashDigest, bytes]
     # `authentication_methods` is guaranteed to have at least 1 element
-    authentication_methods: list[MemoryAuthenticationMethod]
+    authentication_methods: dict[AccountAuthMethodID, MemoryAuthenticationMethod]
 
     def __post_init__(self):
         assert len(self.authentication_methods) > 0  # Sanity check
 
     @property
     def active_authentication_methods(self) -> Iterable[MemoryAuthenticationMethod]:
-        for method in self.authentication_methods:
-            if method.disabled_on is None:
-                yield method
+        for auth_method in self.authentication_methods.values():
+            if auth_method.disabled_on is None:
+                yield auth_method
 
 
 @dataclass(slots=True)
 class MemoryAuthenticationMethod:
+    id: AccountAuthMethodID
     created_on: DateTime
     # IP address of the HTTP request that created the authentication method
     # (either by account creation, vault key rotation or account recovery)

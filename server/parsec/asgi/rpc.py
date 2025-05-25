@@ -42,7 +42,7 @@ from parsec.client_context import (
     InvitedClientContext,
 )
 from parsec.components.auth import (
-    AccountPasswordAuthenticationToken,
+    AccountAuthenticationToken,
     AnonymousAuthInfo,
     AuthAnonymousAuthBadOutcome,
     AuthAuthenticatedAccountAuthBadOutcome,
@@ -416,7 +416,7 @@ class AccountParsedAuthHeaders:
     settled_api_version: ApiVersion
     client_api_version: ApiVersion
     user_agent: str
-    authentication_token: AccountPasswordAuthenticationToken | None
+    authentication_token: AccountAuthenticationToken | None
 
 
 def _parse_account_auth_headers_or_abort(
@@ -464,7 +464,7 @@ def _parse_account_auth_headers_or_abort(
             expected_bearer, raw_authentication_token = raw_authorization.split()
             if expected_bearer.lower() != "bearer":
                 raise ValueError
-            authentication_token = AccountPasswordAuthenticationToken.from_raw(
+            authentication_token = AccountAuthenticationToken.from_raw(
                 raw_authentication_token.encode()
             )
         except ValueError:
@@ -669,6 +669,7 @@ async def authenticated_account_api(request: Request) -> Response:
         client_api_version=parsed.client_api_version,
         settled_api_version=parsed.settled_api_version,
         account_email=auth_info.account_email,
+        auth_method_id=auth_info.auth_method_id,
     )
 
     try:

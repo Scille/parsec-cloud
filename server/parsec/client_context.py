@@ -8,6 +8,7 @@ from uuid import uuid4
 from pydantic import EmailStr
 
 from parsec._parsec import (
+    AccountAuthMethodID,
     ApiVersion,
     DeviceID,
     InvitationToken,
@@ -192,6 +193,7 @@ class AuthenticatedAccountClientContext:
     client_api_version: ApiVersion
     settled_api_version: ApiVersion
     account_email: EmailStr
+    auth_method_id: AccountAuthMethodID
     logger: ParsecBoundLogger = field(init=False)
 
     def __post_init__(self):
