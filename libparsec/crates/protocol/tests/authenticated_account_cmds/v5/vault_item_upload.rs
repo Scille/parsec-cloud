@@ -5,6 +5,7 @@
 #![allow(clippy::unwrap_used)]
 
 use libparsec_tests_lite::prelude::*;
+use libparsec_types::prelude::*;
 
 use super::authenticated_account_cmds;
 
@@ -14,18 +15,20 @@ pub fn req() {
     // Generated from Parsec 3.4.0-a.7+dev
     // Content:
     //   cmd: 'vault_item_upload'
-    //   item_fingerprint: 0x3c64756d6d792066696e6765727072696e743e
+    //   item_fingerprint: 0x2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae
     //   item: 0x3c64756d6d79206974656d3e
     let raw: &[u8] = hex!(
         "83a3636d64b17661756c745f6974656d5f75706c6f6164b06974656d5f66696e676572"
-        "7072696e74c4133c64756d6d792066696e6765727072696e743ea46974656dc40c3c64"
-        "756d6d79206974656d3e"
+        "7072696e74c4202c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e88"
+        "6266e7aea46974656dc40c3c64756d6d79206974656d3e"
     )
     .as_ref();
 
     let req = authenticated_account_cmds::vault_item_upload::Req {
         item: b"<dummy item>".as_ref().into(),
-        item_fingerprint: b"<dummy fingerprint>".as_ref().into(),
+        item_fingerprint: HashDigest::from(hex!(
+            "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
+        )),
     };
 
     let expected = authenticated_account_cmds::AnyCmdReq::VaultItemUpload(req.clone());
