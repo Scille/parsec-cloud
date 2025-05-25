@@ -4,10 +4,8 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use std::sync::Arc;
-
 use crate::{
-    authenticated_account_cmds::AccountPassword, test_register_low_level_send_hook,
+    authenticated_account_cmds::AccountAuthMethod, test_register_low_level_send_hook,
     AuthenticatedAccountCmds, Bytes, ConnectionError, HeaderMap, HeaderName, HeaderValue,
     ProxyConfig, ResponseMock, StatusCode,
 };
@@ -34,16 +32,16 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
     // Good request
 
     let addr = ParsecAuthenticatedAccountAddr::new(env.server_addr.clone());
-    let account = AccountPassword {
-        email: "foo@example.com".to_owned(),
+    let auth_method = AccountAuthMethod {
         time_provider: TimeProvider::default(),
+        id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e").unwrap(),
         hmac_key: SecretKey::generate(),
     };
     let cmds = AuthenticatedAccountCmds::new(
         &env.discriminant_dir,
         addr,
         ProxyConfig::default(),
-        Arc::new(account),
+        auth_method,
     )
     .unwrap();
 
@@ -61,7 +59,7 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
                 .get(AUTHORIZATION)
                 .unwrap()
                 .as_bytes()
-                .starts_with(b"Bearer PARSEC-PASSWORD-MAC-BLAKE2B.Zm9vQGV4YW1wbGUuY29t."));
+                .starts_with(b"Bearer PARSEC-MAC-BLAKE2B.9aae259f748045cc9fe7146eab0b132e."));
 
             let body = request.body().unwrap().as_bytes().unwrap();
             let request = authenticated_account_cmds::AnyCmdReq::load(body).unwrap();
@@ -111,8 +109,8 @@ async fn invalid_token(env: &TestbedEnv, mocked: bool) {
     // Bad request: invalid account token
 
     let addr = ParsecAuthenticatedAccountAddr::new(env.server_addr.clone());
-    let account = AccountPassword {
-        email: "foo@example.com".to_owned(),
+    let auth_method = AccountAuthMethod {
+        id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e").unwrap(),
         time_provider: TimeProvider::default(),
         hmac_key: SecretKey::generate(),
     };
@@ -120,7 +118,7 @@ async fn invalid_token(env: &TestbedEnv, mocked: bool) {
         &env.discriminant_dir,
         addr,
         ProxyConfig::default(),
-        Arc::new(account),
+        auth_method,
     )
     .unwrap();
 
@@ -151,8 +149,8 @@ macro_rules! register_rpc_http_hook {
             let addr = ParsecAuthenticatedAccountAddr::new(
                 env.server_addr.clone(),
             );
-            let account = AccountPassword {
-                email: "foo@example.com".to_owned(),
+            let auth_method = AccountAuthMethod {
+                id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e").unwrap(),
                 time_provider: TimeProvider::default(),
                 hmac_key: SecretKey::generate()
             };
@@ -161,7 +159,7 @@ macro_rules! register_rpc_http_hook {
                     &env.discriminant_dir,
                     addr,
                     ProxyConfig::default(),
-                    Arc::new(account)
+                    auth_method
                 ).unwrap();
 
             test_register_low_level_send_hook(

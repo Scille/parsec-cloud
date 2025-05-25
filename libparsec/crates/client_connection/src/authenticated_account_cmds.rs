@@ -7,7 +7,6 @@ use reqwest::{
     Client, RequestBuilder, Url,
 };
 use std::path::Path;
-use std::{fmt::Debug, sync::Arc};
 
 use libparsec_platform_http_proxy::ProxyConfig;
 use libparsec_protocol::{api_version_major_to_full, API_LATEST_VERSION};
@@ -23,12 +22,12 @@ use crate::{
 const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 
 /// Method name that will be used for the `Authorization` header
-pub const PARSEC_AUTH_METHOD: &str = "PARSEC-PASSWORD-MAC-BLAKE2B";
+pub const PARSEC_AUTH_METHOD: &str = "PARSEC-MAC-BLAKE2B";
 
 #[derive(Debug)]
-pub struct AccountPassword {
-    pub email: String,
+pub struct AccountAuthMethod {
     pub time_provider: TimeProvider,
+    pub id: AccountAuthMethodID,
     pub hmac_key: SecretKey,
 }
 
@@ -42,7 +41,7 @@ pub struct AuthenticatedAccountCmds {
     #[cfg(feature = "test-with-testbed")]
     send_hook: SendHookConfig,
     time_provider: TimeProvider,
-    account: Arc<AccountPassword>,
+    account: AccountAuthMethod,
 }
 
 impl AuthenticatedAccountCmds {
@@ -50,7 +49,7 @@ impl AuthenticatedAccountCmds {
         config_dir: &Path,
         addr: ParsecAuthenticatedAccountAddr,
         proxy: ProxyConfig,
-        account: Arc<AccountPassword>,
+        account: AccountAuthMethod,
     ) -> anyhow::Result<Self> {
         let client = crate::build_client_with_proxy(proxy)?;
         Ok(Self::from_client(client, config_dir, addr, account))
@@ -60,7 +59,7 @@ impl AuthenticatedAccountCmds {
         client: Client,
         _config_dir: &Path,
         addr: ParsecAuthenticatedAccountAddr,
-        account: Arc<AccountPassword>,
+        account: AccountAuthMethod,
     ) -> Self {
         let url = addr.to_authenticated_account_url();
 
@@ -84,7 +83,7 @@ impl AuthenticatedAccountCmds {
 
     pub async fn send<T>(&self, request: T) -> ConnectionResult<<T>::Response>
     where
-        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
+        T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + std::fmt::Debug + 'static,
     {
         #[cfg(feature = "test-with-testbed")]
         let request = {
@@ -172,7 +171,7 @@ fn prepare_request(
     api_version_header_value: HeaderValue,
     body: Vec<u8>,
     time_provider: &TimeProvider,
-    account: &AccountPassword,
+    auth_method: &AccountAuthMethod,
 ) -> RequestBuilder {
     let mut content_headers = HeaderMap::with_capacity(4);
     content_headers.insert(API_VERSION_HEADER_NAME, api_version_header_value);
@@ -182,7 +181,7 @@ fn prepare_request(
         HeaderValue::from_str(&body.len().to_string()).expect("numeric value are valid char"),
     );
     let authorization_header_value = HeaderValue::from_str(&generate_authorization_header_value(
-        account,
+        auth_method,
         time_provider.now(),
     ))
     .expect("always valid");
@@ -193,26 +192,23 @@ fn prepare_request(
 
 /// Return the Bearer token to use for the `Authorization` header.
 ///
-/// Authorization token format: `PARSEC-PASSWORD-MAC-BLAKE2B.<b64_email>.<timestamp>.<b64_signature>`
+/// Authorization token format: `PARSEC-MAC-BLAKE2B.<auth_method_id_hex>.<timestamp>.<b64_signature>`
 /// with:
-///     <b64_email> = base64(<account.email>)
+///     <auth_method_id_hex> = hex(<auth_method.id>)
 ///     <timestamp> = str(<seconds since UNIX epoch>)
-///     <b64_signature> = base64(blake2b(data=`PARSEC-PASSWORD-MAC-BLAKE2B.<b64_email>.<timestamp>`, key=`account.mac_key`))
+///     <b64_signature> = base64(blake2b(data=`PARSEC-MAC-BLAKE2B.<auth_method_id_hex>.<timestamp>`, key=`auth_method.mac_key`))
 /// base64() is the URL-safe variant (https://tools.ietf.org/html/rfc4648#section-5).
-fn generate_authorization_header_value(account: &AccountPassword, now: DateTime) -> String {
-    let b64_email = BASE64URL.encode(account.email.as_bytes());
+fn generate_authorization_header_value(auth_method: &AccountAuthMethod, now: DateTime) -> String {
+    let auth_method_id_hex = auth_method.id.hex();
     let timestamp = now.as_timestamp_seconds().to_string();
-
-    let content = [
-        PARSEC_AUTH_METHOD.as_bytes(),
-        b64_email.as_bytes(),
-        timestamp.as_bytes(),
-    ]
-    .join(b".".as_slice());
-    let signature = account.hmac_key.mac_512(&content);
+    let header_and_body = format!(
+        "{}.{}.{}",
+        PARSEC_AUTH_METHOD, &auth_method_id_hex, &timestamp
+    );
+    let signature = auth_method.hmac_key.mac_512(header_and_body.as_bytes());
     let b64_signature = BASE64URL.encode(&signature);
 
-    format!("Bearer {PARSEC_AUTH_METHOD}.{b64_email}.{timestamp}.{b64_signature}")
+    format!("Bearer {}.{}", &header_and_body, &b64_signature)
 }
 
 #[cfg(test)]
