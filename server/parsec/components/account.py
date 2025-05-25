@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from dataclasses import dataclass
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -20,6 +21,22 @@ from parsec.components.email import SendEmailBadOutcome, send_email
 from parsec.config import BackendConfig
 from parsec.templates import get_template
 from parsec.types import BadOutcomeEnum
+
+
+@dataclass(slots=True)
+class PasswordAlgorithmArgon2ID:
+    salt: bytes
+    opslimit: int
+    memlimit_kb: int
+    parallelism: int
+
+
+# `PasswordAlgorithm` is expected to become a variant once more algorithms are provided
+PasswordAlgorithm = PasswordAlgorithmArgon2ID
+"""
+The algorithm and full configuration to obtain the `auth_method_master_secret` from the user's password.
+"""
+
 
 EmailAdapter = TypeAdapter(EmailStr)
 

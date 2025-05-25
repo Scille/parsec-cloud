@@ -69,8 +69,8 @@ class AnonymousAuthInfo:
 
 @dataclass
 class AuthenticatedAccountAuthInfo:
-    # Key used to authenticate the client request
-    mac_key: SecretKey
+    account_email: EmailStr
+    account_internal_id: int
 
 
 @dataclass

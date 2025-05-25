@@ -24,6 +24,7 @@ from parsec._parsec import (
     EnrollmentID,
     GreeterOrClaimer,
     GreetingAttemptID,
+    HashDigest,
     InvitationStatus,
     InvitationToken,
     InvitationType,
@@ -34,6 +35,7 @@ from parsec._parsec import (
     RealmRole,
     RealmRoleCertificate,
     RevokedUserCertificate,
+    SecretKey,
     SequesterAuthorityCertificate,
     SequesterRevokedServiceCertificate,
     SequesterServiceCertificate,
@@ -48,6 +50,7 @@ from parsec._parsec import (
     VerifyKey,
     VlobID,
 )
+from parsec.components.account import PasswordAlgorithm
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
 from parsec.components.sequester import SequesterServiceType
@@ -862,4 +865,48 @@ class MemoryShamirShare:
 
 @dataclass(slots=True)
 class MemoryAccount:
-    user_email: EmailStr
+    # Main identifier for the account.
+    account_email: EmailStr
+    # Not used by Parsec Account but works as a quality-of-life feature
+    # to allow pre-filling human handle during enrollment.
+    human_label: str
+    current_vault: MemoryAccountVault
+    previous_vaults: list[MemoryAccountVault] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class MemoryAccountVault:
+    items: dict[HashDigest, bytes]
+    # `authentication_methods` is guaranteed to have at least 1 element
+    authentication_methods: list[MemoryAuthenticationMethod]
+
+    def __post_init__(self):
+        assert len(self.authentication_methods) > 0  # Sanity check
+
+    @property
+    def active_authentication_methods(self) -> Iterable[MemoryAuthenticationMethod]:
+        for method in self.authentication_methods:
+            if method.disabled_on is None:
+                yield method
+
+
+@dataclass(slots=True)
+class MemoryAuthenticationMethod:
+    created_on: DateTime
+    # IP address of the HTTP request that created the authentication method
+    # (either by account creation, vault key rotation or account recovery)
+    # Can be unknown since this information is optional in ASGI (see
+    # https://asgi.readthedocs.io/en/latest/specs/www.html#http-connection-scope).
+    created_by_ip: str | None  # TODO replace by ipaddr #10384
+    # User agent header of the HTTP request that created the vault.
+    created_by_user_agent: str
+    # Secret key used for HMAC based authentication with the server
+    mac_key: SecretKey
+    # Vault key encrypted with the `auth_method_secret_key` see rfc 1014
+    vault_key_access: bytes
+    # TODO: currently only password-based authentication method are supported,
+    # in the near future we will add other types. Hence this field will most
+    # likely be replaced by a variant describing the authentication method.
+    # The algorithm to obtain the `auth_method_master_secret`.
+    password_secret_algorithm: PasswordAlgorithm
+    disabled_on: DateTime | None = None
