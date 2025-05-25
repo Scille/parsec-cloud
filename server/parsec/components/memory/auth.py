@@ -3,10 +3,14 @@
 from typing import Any
 
 from parsec._parsec import DateTime, DeviceID, InvitationToken, OrganizationID
+from parsec.ballpark import timestamps_in_the_ballpark
 from parsec.components.auth import (
+    AccountPasswordAuthenticationToken,
     AnonymousAuthInfo,
     AuthAnonymousAuthBadOutcome,
+    AuthAuthenticatedAccountAuthBadOutcome,
     AuthAuthenticatedAuthBadOutcome,
+    AuthenticatedAccountAuthInfo,
     AuthenticatedAuthInfo,
     AuthInvitedAuthBadOutcome,
     BaseAuthComponent,
@@ -118,4 +122,29 @@ class MemoryAuthComponent(BaseAuthComponent):
             organization_internal_id=0,  # Only used by PostgreSQL implementation
             device_internal_id=0,  # Only used by PostgreSQL implementation
             organization_allowed_client_agent=org.allowed_client_agent,
+        )
+
+    async def authenticated_account_auth(
+        self,
+        now: DateTime,
+        token: AccountPasswordAuthenticationToken,
+    ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
+        try:
+            account = self._data.accounts[token.email]
+        except KeyError:
+            return AuthAuthenticatedAccountAuthBadOutcome.ACCOUNT_NOT_FOUND
+
+        # TODO: This code works on the assumption that there is always an active
+        #  password-based authentication methods.
+        auth_method = next(iter(account.current_vault.active_authentication_methods))
+
+        if not token.verify(auth_method.mac_key):
+            return AuthAuthenticatedAccountAuthBadOutcome.INVALID_TOKEN
+
+        if timestamps_in_the_ballpark(token.timestamp, now) is not None:
+            return AuthAuthenticatedAccountAuthBadOutcome.TOKEN_TOO_OLD
+
+        return AuthenticatedAccountAuthInfo(
+            account_email=account.account_email,
+            account_internal_id=0,  # Only used by PostgreSQL implementation
         )
