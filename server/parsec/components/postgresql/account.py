@@ -3,7 +3,10 @@
 from pydantic import EmailStr
 
 from parsec._parsec import DateTime, EmailValidationToken
-from parsec.components.account import BaseAccountComponent, CreateEmailValidationTokenBadOutcome
+from parsec.components.account import (
+    AccountCreateEmailValidationTokenBadOutcome,
+    BaseAccountComponent,
+)
 from parsec.components.postgresql import AsyncpgPool
 from parsec.config import BackendConfig
 
@@ -15,7 +18,7 @@ class PGAccountComponent(BaseAccountComponent):
 
     async def create_email_validation_token(
         self, email: EmailStr, now: DateTime
-    ) -> EmailValidationToken | CreateEmailValidationTokenBadOutcome:
+    ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
         raise NotImplementedError
 
     async def check_signature(self):
