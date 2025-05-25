@@ -11,6 +11,7 @@ from httpx_sse import EventSource, ServerSentEvent, aconnect_sse
 from pydantic import EmailStr
 
 from parsec._parsec import (
+    AccountAuthMethodID,
     ApiVersion,
     DateTime,
     DeviceID,
@@ -35,7 +36,7 @@ from parsec._parsec import (
 )
 from parsec.asgi import AsgiApp
 from parsec.components.auth import (
-    AccountPasswordAuthenticationToken,
+    AccountAuthenticationToken,
     AuthenticatedToken,
 )
 from tests.common.backend import SERVER_DOMAIN, TestbedBackend
@@ -92,8 +93,9 @@ class AuthenticatedAccountRpcClient(BaseAuthenticatedAccountRpcClient):
     def __init__(
         self,
         raw_client: AsyncClient,
-        email: EmailStr,
-        mac_key: SecretKey,
+        account_email: EmailStr,
+        auth_method_id: AccountAuthMethodID,
+        auth_method_mac_key: SecretKey,
     ):
         self.raw_client = raw_client
         self.url = f"http://{SERVER_DOMAIN}/authenticated_account"
@@ -101,15 +103,16 @@ class AuthenticatedAccountRpcClient(BaseAuthenticatedAccountRpcClient):
             "Content-Type": "application/msgpack",
             "Api-Version": str(ApiVersion.API_LATEST_VERSION),
         }
-        self.email = email
-        self.mac_key = mac_key
+        self.account_email = account_email
+        self.auth_method_id = auth_method_id
+        self.auth_method_mac_key = auth_method_mac_key
         self.now_factory = DateTime.now
 
     async def _do_request(self, req: bytes, family: str) -> bytes:
-        token = AccountPasswordAuthenticationToken.generate_raw(
+        token = AccountAuthenticationToken.generate_raw(
             timestamp=self.now_factory(),
-            email=self.email,
-            mac_key=self.mac_key,
+            auth_method_id=self.auth_method_id,
+            auth_method_mac_key=self.auth_method_mac_key,
         )
         headers = {**self.headers, "Authorization": f"Bearer {token.decode()}"}
         rep = await self.raw_client.post(self.url, headers=headers, content=req)

@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from enum import auto
 
 from pydantic import EmailStr
-from pydantic.networks import validate_email
 
 from parsec._parsec import (
+    AccountAuthMethodID,
     CryptoError,
     DateTime,
     DeviceID,
@@ -70,7 +70,9 @@ class AnonymousAuthInfo:
 @dataclass
 class AuthenticatedAccountAuthInfo:
     account_email: EmailStr
+    auth_method_id: AccountAuthMethodID
     account_internal_id: int
+    auth_method_internal_id: int
 
 
 @dataclass
@@ -157,55 +159,54 @@ class AuthenticatedToken:
 
 
 @dataclass
-class AccountPasswordAuthenticationToken:
-    email: EmailStr
+class AccountAuthenticationToken:
+    auth_method_id: AccountAuthMethodID
     timestamp: DateTime
     header_and_payload: bytes
     signature: bytes
 
-    HEADER = b"PARSEC-PASSWORD-MAC-BLAKE2B"
+    HEADER = b"PARSEC-MAC-BLAKE2B"
 
     # Only used for tests, but coherent to have it here
     @staticmethod
     def generate_raw(
-        email: EmailStr,
         timestamp: DateTime,
-        mac_key: SecretKey,
+        auth_method_id: AccountAuthMethodID,
+        auth_method_mac_key: SecretKey,
     ) -> bytes:
-        raw_email = urlsafe_b64encode(email.encode("utf8"))
+        raw_auth_method_id = auth_method_id.hex.encode("ascii")
         raw_timestamp_us = str(timestamp.as_timestamp_seconds()).encode("ascii")
         header_and_payload = b"%s.%s.%s" % (
-            AccountPasswordAuthenticationToken.HEADER,
-            raw_email,
+            AccountAuthenticationToken.HEADER,
+            raw_auth_method_id,
             raw_timestamp_us,
         )
-        signature = mac_key.mac_512(header_and_payload)
+        signature = auth_method_mac_key.mac_512(header_and_payload)
         raw_signature = urlsafe_b64encode(signature)
         return b"%s.%s" % (header_and_payload, raw_signature)
 
     @classmethod
-    def from_raw(cls, raw: bytes) -> "AccountPasswordAuthenticationToken":
+    def from_raw(cls, raw: bytes) -> "AccountAuthenticationToken":
         try:
             header_and_payload, raw_signature = raw.rsplit(b".", 1)
-            header, raw_email, raw_timestamp_us = header_and_payload.split(b".")
+            header, raw_auth_method_id, raw_timestamp_us = header_and_payload.split(b".")
             if header != cls.HEADER:
                 raise ValueError
             signature = urlsafe_b64decode(raw_signature)
-            email = urlsafe_b64decode(raw_email).decode("utf8")
-            validate_email(email)
+            auth_method_id = AccountAuthMethodID.from_hex(raw_auth_method_id.decode("ascii"))
             timestamp = DateTime.from_timestamp_seconds(int(raw_timestamp_us))
         except ValueError as e:
             raise ValueError("Invalid token format") from e
 
         return cls(
-            email=email,
+            auth_method_id=auth_method_id,
             timestamp=timestamp,
             header_and_payload=header_and_payload,
             signature=signature,
         )
 
-    def verify(self, mac_key: SecretKey) -> bool:
-        expected_signature = mac_key.mac_512(self.header_and_payload)
+    def verify(self, auth_method_mac_key: SecretKey) -> bool:
+        expected_signature = auth_method_mac_key.mac_512(self.header_and_payload)
         return self.signature == expected_signature
 
 
@@ -297,6 +298,6 @@ class BaseAuthComponent:
     async def authenticated_account_auth(
         self,
         now: DateTime,
-        token: AccountPasswordAuthenticationToken,
+        token: AccountAuthenticationToken,
     ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
         raise NotImplementedError
