@@ -65,6 +65,16 @@ class AccountVaultItemUploadBadOutcome(BadOutcomeEnum):
     FINGERPRINT_ALREADY_EXISTS = auto()
 
 
+class AccountVaultItemListBadOutcome(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class VaultItems:
+    key_access: bytes
+    items: dict[HashDigest, bytes]
+
+
 class BaseAccountComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
@@ -99,6 +109,12 @@ class BaseAccountComponent:
     async def vault_item_upload(
         self, auth_method_id: AccountAuthMethodID, item_fingerprint: HashDigest, item: bytes
     ) -> None | AccountVaultItemUploadBadOutcome:
+        raise NotImplementedError
+
+    async def vault_item_list(
+        self,
+        auth_method_id: AccountAuthMethodID,
+    ) -> VaultItems | AccountVaultItemListBadOutcome:
         raise NotImplementedError
 
     @api
@@ -227,6 +243,21 @@ class BaseAccountComponent:
             case AccountVaultItemUploadBadOutcome.FINGERPRINT_ALREADY_EXISTS:
                 return authenticated_account_cmds.latest.vault_item_upload.RepFingerprintAlreadyExists()
             case AccountVaultItemUploadBadOutcome.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
+
+    @api
+    async def api_account_vault_item_list(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.vault_item_list.Req,
+    ) -> authenticated_account_cmds.latest.vault_item_list.Rep:
+        outcome = await self.vault_item_list(auth_method_id=client_ctx.auth_method_id)
+        match outcome:
+            case VaultItems():
+                return authenticated_account_cmds.latest.vault_item_list.RepOk(
+                    key_access=outcome.key_access, items=outcome.items
+                )
+            case AccountVaultItemListBadOutcome.ACCOUNT_NOT_FOUND:
                 client_ctx.account_not_found_abort()
 
 

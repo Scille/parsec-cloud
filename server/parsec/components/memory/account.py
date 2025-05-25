@@ -15,9 +15,11 @@ from parsec.components.account import (
     AccountCreateAccountWithPasswordBadOutcome,
     AccountCreateEmailValidationTokenBadOutcome,
     AccountGetPasswordSecretKeyBadOutcome,
+    AccountVaultItemListBadOutcome,
     AccountVaultItemUploadBadOutcome,
     BaseAccountComponent,
     PasswordAlgorithm,
+    VaultItems,
 )
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
@@ -163,3 +165,19 @@ class MemoryAccountComponent(BaseAccountComponent):
             return AccountVaultItemUploadBadOutcome.FINGERPRINT_ALREADY_EXISTS
 
         account.current_vault.items[item_fingerprint] = item
+
+    @override
+    async def vault_item_list(
+        self,
+        auth_method_id: AccountAuthMethodID,
+    ) -> VaultItems | AccountVaultItemListBadOutcome:
+        match self._data.get_account_from_auth_method(auth_method_id=auth_method_id):
+            case (account, auth_method):
+                pass
+            case None:
+                return AccountVaultItemListBadOutcome.ACCOUNT_NOT_FOUND
+
+        return VaultItems(
+            key_access=auth_method.vault_key_access,
+            items=account.current_vault.items,
+        )
