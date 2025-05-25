@@ -4,11 +4,18 @@ from typing import override
 
 from pydantic import EmailStr
 
-from parsec._parsec import AccountAuthMethodID, DateTime, EmailValidationToken, SecretKey
+from parsec._parsec import (
+    AccountAuthMethodID,
+    DateTime,
+    EmailValidationToken,
+    HashDigest,
+    SecretKey,
+)
 from parsec.components.account import (
     AccountCreateAccountWithPasswordBadOutcome,
     AccountCreateEmailValidationTokenBadOutcome,
     AccountGetPasswordSecretKeyBadOutcome,
+    AccountVaultItemUploadBadOutcome,
     BaseAccountComponent,
     PasswordAlgorithm,
 )
@@ -141,3 +148,18 @@ class MemoryAccountComponent(BaseAccountComponent):
                     if auth_id == id:
                         return True
         return False
+
+    @override
+    async def vault_item_upload(
+        self, auth_method_id: AccountAuthMethodID, item_fingerprint: HashDigest, item: bytes
+    ) -> None | AccountVaultItemUploadBadOutcome:
+        match self._data.get_account_from_auth_method(auth_method_id=auth_method_id):
+            case (account, _):
+                pass
+            case None:
+                return AccountVaultItemUploadBadOutcome.ACCOUNT_NOT_FOUND
+
+        if item_fingerprint in account.current_vault.items:
+            return AccountVaultItemUploadBadOutcome.FINGERPRINT_ALREADY_EXISTS
+
+        account.current_vault.items[item_fingerprint] = item
