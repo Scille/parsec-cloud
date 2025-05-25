@@ -80,6 +80,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<InvitationToken>()?;
     m.add_class::<EmailValidationToken>()?;
     m.add_class::<GreetingAttemptID>()?;
+    m.add_class::<AccountAuthMethodID>()?;
 
     // Time
     m.add_class::<DateTime>()?;

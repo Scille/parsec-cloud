@@ -61,6 +61,7 @@ from parsec._parsec_pyi.enumerate import (
     UserProfile,
 )
 from parsec._parsec_pyi.ids import (
+    AccountAuthMethodID,
     BlockID,
     BootstrapToken,
     ChunkID,
@@ -155,6 +156,7 @@ __all__ = [
     "RealmRole",
     "UserProfile",
     # Ids
+    "AccountAuthMethodID",
     "BlockID",
     "BootstrapToken",
     "ChunkID",

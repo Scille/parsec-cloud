@@ -140,6 +140,18 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 );
 gen_uuid!(GreetingAttemptID);
 
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    AccountAuthMethodID,
+    libparsec_types::AccountAuthMethodID,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ ord,
+    __hash__,
+);
+gen_uuid!(AccountAuthMethodID);
+
 // Other ids
 
 crate::binding_utils::gen_py_wrapper_class_for_id!(

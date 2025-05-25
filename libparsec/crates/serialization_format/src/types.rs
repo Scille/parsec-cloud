@@ -233,6 +233,7 @@ generate_field_type_enum!(
     VlobID => libparsec_types::VlobID,
     EnrollmentID => libparsec_types::EnrollmentID,
     SequesterServiceID => libparsec_types::SequesterServiceID,
+    AccountAuthMethodID => libparsec_types::AccountAuthMethodID,
     DeviceLabel => libparsec_types::DeviceLabel,
     HumanHandle => libparsec_types::HumanHandle,
     UserProfile => libparsec_types::UserProfile,

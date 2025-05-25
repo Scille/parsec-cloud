@@ -904,6 +904,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::VlobID => quote_rs_to_py_class!(crate::ids::VlobID),
         FieldType::EnrollmentID => quote_rs_to_py_class!(crate::ids::EnrollmentID),
         FieldType::SequesterServiceID => quote_rs_to_py_class!(crate::ids::SequesterServiceID),
+        FieldType::AccountAuthMethodID => quote_rs_to_py_class!(crate::ids::AccountAuthMethodID),
         FieldType::DeviceLabel => quote_rs_to_py_class!(crate::ids::DeviceLabel),
         FieldType::HumanHandle => quote_rs_to_py_class!(crate::ids::HumanHandle),
         FieldType::UserProfile => quote_rs_to_py_class!(crate::enumerate::UserProfile),
@@ -1002,6 +1003,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::VlobID => quote! { crate::ids::VlobID },
         FieldType::EnrollmentID => quote! { crate::ids::EnrollmentID },
         FieldType::SequesterServiceID => quote! { crate::ids::SequesterServiceID },
+        FieldType::AccountAuthMethodID => quote! { crate::ids::AccountAuthMethodID },
         FieldType::DeviceLabel => quote! { crate::ids::DeviceLabel },
         FieldType::HumanHandle => quote! { crate::ids::HumanHandle },
         FieldType::UserProfile => quote! { crate::enumerate::UserProfile },
@@ -1141,6 +1143,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::VlobID
         | FieldType::EnrollmentID
         | FieldType::SequesterServiceID
+        | FieldType::AccountAuthMethodID
         | FieldType::DeviceLabel
         | FieldType::HumanHandle
         | FieldType::UserProfile
