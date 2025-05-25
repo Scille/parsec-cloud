@@ -13,12 +13,14 @@ from parsec._parsec import (
     AccountAuthMethodID,
     DateTime,
     EmailValidationToken,
+    HashDigest,
     ParsecAccountEmailValidationAddr,
     SecretKey,
     anonymous_account_cmds,
+    authenticated_account_cmds,
 )
 from parsec.api import api
-from parsec.client_context import AnonymousAccountClientContext
+from parsec.client_context import AnonymousAccountClientContext, AuthenticatedAccountClientContext
 from parsec.components.email import SendEmailBadOutcome, send_email
 from parsec.config import BackendConfig
 from parsec.templates import get_template
@@ -58,6 +60,11 @@ class AccountGetPasswordSecretKeyBadOutcome(BadOutcomeEnum):
     UNABLE_TO_GET_SECRET_KEY = auto()
 
 
+class AccountVaultItemUploadBadOutcome(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
+    FINGERPRINT_ALREADY_EXISTS = auto()
+
+
 class BaseAccountComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
@@ -87,6 +94,11 @@ class BaseAccountComponent:
         password_secret_algorithm: PasswordAlgorithm,
         auth_method_id: AccountAuthMethodID,
     ) -> None | AccountCreateAccountWithPasswordBadOutcome:
+        raise NotImplementedError
+
+    async def vault_item_upload(
+        self, auth_method_id: AccountAuthMethodID, item_fingerprint: HashDigest, item: bytes
+    ) -> None | AccountVaultItemUploadBadOutcome:
         raise NotImplementedError
 
     @api
@@ -197,6 +209,25 @@ class BaseAccountComponent:
 
     def test_get_token_by_email(self, email: str) -> EmailValidationToken | None:
         raise NotImplementedError
+
+    @api
+    async def api_account_vault_item_upload(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.vault_item_upload.Req,
+    ) -> authenticated_account_cmds.latest.vault_item_upload.Rep:
+        outcome = await self.vault_item_upload(
+            auth_method_id=client_ctx.auth_method_id,
+            item_fingerprint=req.item_fingerprint,
+            item=req.item,
+        )
+        match outcome:
+            case None:
+                return authenticated_account_cmds.latest.vault_item_upload.RepOk()
+            case AccountVaultItemUploadBadOutcome.FINGERPRINT_ALREADY_EXISTS:
+                return authenticated_account_cmds.latest.vault_item_upload.RepFingerprintAlreadyExists()
+            case AccountVaultItemUploadBadOutcome.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
 
 
 def generate_email_validation_email(
