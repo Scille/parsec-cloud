@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Any
+from typing import Any, override
 
 from parsec._parsec import DateTime, DeviceID, InvitationToken, OrganizationID
 from parsec.ballpark import timestamps_in_the_ballpark
@@ -25,6 +25,7 @@ class MemoryAuthComponent(BaseAuthComponent):
         super().__init__(*args, **kwargs)
         self._data = data
 
+    @override
     async def anonymous_auth(
         self, now: DateTime, organization_id: OrganizationID, spontaneous_bootstrap: bool
     ) -> AnonymousAuthInfo | AuthAnonymousAuthBadOutcome:
@@ -61,6 +62,7 @@ class MemoryAuthComponent(BaseAuthComponent):
             organization_allowed_client_agent=org.allowed_client_agent,
         )
 
+    @override
     async def invited_auth(
         self, now: DateTime, organization_id: OrganizationID, token: InvitationToken
     ) -> InvitedAuthInfo | AuthInvitedAuthBadOutcome:
@@ -89,6 +91,7 @@ class MemoryAuthComponent(BaseAuthComponent):
             organization_allowed_client_agent=org.allowed_client_agent,
         )
 
+    @override
     async def _get_authenticated_info(
         self, organization_id: OrganizationID, device_id: DeviceID, tos_acceptance_required: bool
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
@@ -124,6 +127,7 @@ class MemoryAuthComponent(BaseAuthComponent):
             organization_allowed_client_agent=org.allowed_client_agent,
         )
 
+    @override
     async def authenticated_account_auth(
         self,
         now: DateTime,
