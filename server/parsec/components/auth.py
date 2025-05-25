@@ -213,7 +213,6 @@ class BaseAuthComponent:
     def __init__(self, event_bus: EventBus, config: BackendConfig):
         self._config = config
         self._device_cache: dict[tuple[OrganizationID, DeviceID], AuthenticatedAuthInfo] = {}
-        self._account_cache: dict[EmailStr, AuthenticatedAccountAuthInfo] = {}
         event_bus.connect(self._on_event)
 
     def _on_event(self, event: Event) -> None:
@@ -250,29 +249,6 @@ class BaseAuthComponent:
         self, now: DateTime, organization_id: OrganizationID, token: InvitationToken
     ) -> InvitedAuthInfo | AuthInvitedAuthBadOutcome:
         raise NotImplementedError
-
-    async def authenticated_account_auth(
-        self,
-        now: DateTime,
-        token: AccountPasswordAuthenticationToken,
-    ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
-        try:
-            auth_info = self._account_cache[token.email]
-        except KeyError:
-            outcome = await self._get_authenticated_account_info(token.email)
-            match outcome:
-                case AuthenticatedAccountAuthInfo() as auth_info:
-                    self._account_cache[token.email] = auth_info
-                case bad_outcome:
-                    return bad_outcome
-
-        if not token.verify(auth_info.mac_key):
-            return AuthAuthenticatedAccountAuthBadOutcome.INVALID_TOKEN
-
-        if timestamps_in_the_ballpark(token.timestamp, now) is not None:
-            return AuthAuthenticatedAccountAuthBadOutcome.TOKEN_TOO_OLD
-
-        return auth_info
 
     async def authenticated_auth(
         self,
@@ -318,7 +294,9 @@ class BaseAuthComponent:
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
         raise NotImplementedError
 
-    async def _get_authenticated_account_info(
-        self, email: EmailStr
+    async def authenticated_account_auth(
+        self,
+        now: DateTime,
+        token: AccountPasswordAuthenticationToken,
     ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
         raise NotImplementedError
