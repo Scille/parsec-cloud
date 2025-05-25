@@ -225,6 +225,8 @@ Attributes:
 
 - `account`. An authentication method is related to a single account.
 - `vault`. An authentication method is related to a single vault.
+- `auth_method_id: UUID`. Each authentication method has a unique identifier, it is derived from the
+  `auth_method_master_secret` and is used in the `Authorization` HTTP header.
 - `created_on: DateTime`
 - `created_by_ip: String`. IP address of the HTTP request that created the authentication method
   (either by account creation, vault key rotation or account recovery)
@@ -346,7 +348,7 @@ with the existing `authenticated` API family.
 The MAC code will be put in the `Authorization` HTTP header and will have the following format:
 
 ```jinja
-PARSEC-PASSWORD-MAC-BLAKE2B.{{ base64(account_email) }}.{{ timestamp }}.{{ signature }}
+PARSEC-MAC-BLAKE2B.{{ hex(auth_method_id) }}.{{ timestamp }}.{{ signature }}
 ```
 
 > [!IMPORTANT]
@@ -356,7 +358,7 @@ The signature is generated like so:
 
 ```math
 \begin{gather}
-content = \text{"PARSEC-PASSWORD-MAC-BLAKE2B"} \Vert \text{"."} \Vert base64(email) \Vert \text{"."} \Vert timestamp \\
+content = \text{"PARSEC-MAC-BLAKE2B"} \Vert \text{"."} \Vert hex(auth_method_id) \Vert \text{"."} \Vert timestamp \\
 code = mac_{black2b}(shared\_secret, content) \\
 signature = base64(code)
 \end{gather}
@@ -443,6 +445,14 @@ Anonymous account API:
         "type": "PasswordAlgorithm"
       },
       {
+        // UUID used to identify the authentication method in the `Authorization` HTTP header.
+        //
+        // This cannot be generated server-side since the client derives it from the
+        // `auth_method_master_secret`.
+        "name": "auth_method_id",
+        "type": "AccountAuthMethodID"
+      },
+      {
         // Secret key shared between the client and the server and used for
         // account authenticated API family's MAC authentication.
         "name": "auth_method_mac_key",
@@ -461,6 +471,11 @@ Anonymous account API:
     },
     {
       "status": "invalid_validation_token"
+    },
+    {
+      // In practice this error should never occur since collision on the ID is
+      // virtually non-existent as long as the client generates a proper UUID.
+      "status": "auth_method_id_already_exists"
     }
   ],
   "nested_types": [
