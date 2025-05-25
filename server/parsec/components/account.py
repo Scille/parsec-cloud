@@ -24,7 +24,7 @@ from parsec.types import BadOutcomeEnum
 EmailAdapter = TypeAdapter(EmailStr)
 
 
-class CreateEmailValidationTokenBadOutcome(BadOutcomeEnum):
+class AccountCreateEmailValidationTokenBadOutcome(BadOutcomeEnum):
     ACCOUNT_ALREADY_EXISTS = auto()
     TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
 
@@ -35,7 +35,7 @@ class BaseAccountComponent:
 
     async def create_email_validation_token(
         self, email: EmailStr, now: DateTime
-    ) -> EmailValidationToken | CreateEmailValidationTokenBadOutcome:
+    ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
         raise NotImplementedError
 
     async def check_signature(self):
@@ -70,8 +70,8 @@ class BaseAccountComponent:
                         return anonymous_account_cmds.latest.account_create_send_validation_email.RepEmailRecipientRefused()
 
             case (
-                CreateEmailValidationTokenBadOutcome.ACCOUNT_ALREADY_EXISTS
-                | CreateEmailValidationTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
+                AccountCreateEmailValidationTokenBadOutcome.ACCOUNT_ALREADY_EXISTS
+                | AccountCreateEmailValidationTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
             ):
                 # Respond OK without sending token to prevent creating oracle
                 return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
