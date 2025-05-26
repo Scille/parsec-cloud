@@ -45,3 +45,13 @@ export async function isIncognito(): Promise<boolean> {
   const result = await detectIncognito();
   return result.isPrivate;
 }
+
+type Browser = 'Chrome' | 'Firefox' | 'Safari' | 'Edge' | 'Brave' | 'Chromium';
+
+export async function detectBrowser(): Promise<Browser | undefined> {
+  if (!isWeb()) {
+    return;
+  }
+  const result = await detectIncognito();
+  return result.browserName as Browser;
+}
