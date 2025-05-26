@@ -22,7 +22,9 @@
         "clientRevoked": "Vous avez été révoqué(e) de cette organisation. Vous avez toujours accès à certaines données, mais l'accès à la plupart des fonctionnalités vous sera refusé.",
         "expiredOrganization": "Cette organisation a expiré. Veuillez contacter un administrateur.",
         "unexpected": "Une erreur inattendue est survenue. Veuillez réessayer plus tard.",
-        "smallDisplayWarning": "Nous travaillons actuellement sur les formats d'écran plus petits pour Parsec afin de la rendre complètement compatible. Nous vous recommandons vivement d'utiliser un écran plus large pour y accéder."
+        "smallDisplayWarning": "Nous travaillons actuellement sur les formats d'écran plus petits pour Parsec afin de la rendre complètement compatible. Nous vous recommandons vivement d'utiliser un écran plus large pour y accéder.",
+        "incompatibleEnvironment": "Votre navigateur n'est pas encore compatible avec Parsec.",
+        "incompatibleWithSafari": "Parsec ne prend pas encore en charge Safari. Vous pouvez essayer avec Chrome, Firefox ou Edge."
     },
     "formatter": {
         "version": "(v{version}) "
