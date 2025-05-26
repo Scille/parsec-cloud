@@ -71,6 +71,35 @@ class AccountVaultKeyRotation(BadOutcomeEnum):
     NEW_AUTH_METHOD_ID_ALREADY_EXISTS = auto()
 
 
+class AccountVaultItemRecoveryList(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class VaultItemRecoveryAuthMethodPassword:
+    created_on: DateTime
+    created_by_ip: str | None
+    created_by_user_agent: str
+    vault_key_access: bytes
+    algorithm: PasswordAlgorithm
+    disabled_on: DateTime | None
+
+
+VaultItemRecoveryAuthMethod = VaultItemRecoveryAuthMethodPassword
+
+
+@dataclass(slots=True)
+class VaultItemRecoveryVault:
+    auth_methods: list[VaultItemRecoveryAuthMethod]
+    vault_items: dict[HashDigest, bytes]
+
+
+@dataclass(slots=True)
+class VaultItemRecoveryList:
+    current_vault: VaultItemRecoveryVault
+    previous_vaults: list[VaultItemRecoveryVault]
+
+
 @dataclass(slots=True)
 class VaultItems:
     key_access: bytes
@@ -123,6 +152,12 @@ class BaseAccountComponent:
         new_vault_key_access: bytes,
         items: dict[HashDigest, bytes],
     ) -> None | AccountVaultKeyRotation:
+        raise NotImplementedError
+
+    async def vault_item_recovery_list(
+        self,
+        auth_method_id: AccountAuthMethodID,
+    ) -> VaultItemRecoveryList | AccountVaultItemRecoveryList:
         raise NotImplementedError
 
     @api
@@ -301,6 +336,58 @@ class BaseAccountComponent:
             case AccountVaultKeyRotation.NEW_AUTH_METHOD_ID_ALREADY_EXISTS:
                 return authenticated_account_cmds.latest.vault_key_rotation.RepNewAuthMethodIdAlreadyExists()
             case AccountVaultKeyRotation.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
+
+    @api
+    async def api_account_vault_item_recovery_list(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.vault_item_recovery_list.Req,
+    ) -> authenticated_account_cmds.latest.vault_item_recovery_list.Rep:
+        outcome = await self.vault_item_recovery_list(
+            auth_method_id=client_ctx.auth_method_id,
+        )
+        match outcome:
+            case VaultItemRecoveryList() as vaults:
+
+                def _convert_auth_methods(
+                    auth_method: VaultItemRecoveryAuthMethod,
+                ) -> authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod:
+                    match auth_method:
+                        # Single `case` in this match since so far there is only a single
+                        # kind of password algorithm...
+                        case VaultItemRecoveryAuthMethodPassword():
+                            match auth_method.algorithm:
+                                case PasswordAlgorithmArgon2ID() as a:
+                                    algorithm = authenticated_account_cmds.latest.vault_item_recovery_list.PasswordAlgorithmArgon2id(
+                                        salt=a.salt,
+                                        opslimit=a.opslimit,
+                                        memlimit_kb=a.memlimit_kb,
+                                        parallelism=a.parallelism,
+                                    )
+
+                            return authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethodPassword(
+                                created_on=auth_method.created_on,
+                                created_by_ip=auth_method.created_by_ip,
+                                created_by_user_agent=auth_method.created_by_user_agent,
+                                vault_key_access=auth_method.vault_key_access,
+                                algorithm=algorithm,
+                                disabled_on=auth_method.disabled_on,
+                            )
+
+                def _convert_vault(
+                    vault: VaultItemRecoveryVault,
+                ) -> authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryVault:
+                    return authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryVault(
+                        auth_methods=[_convert_auth_methods(m) for m in vault.auth_methods],
+                        vault_items=vault.vault_items,
+                    )
+
+                return authenticated_account_cmds.latest.vault_item_recovery_list.RepOk(
+                    current_vault=_convert_vault(vaults.current_vault),
+                    previous_vaults=[_convert_vault(v) for v in vaults.previous_vaults],
+                )
+            case AccountVaultItemRecoveryList.ACCOUNT_NOT_FOUND:
                 client_ctx.account_not_found_abort()
 
 
