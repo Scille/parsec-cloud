@@ -197,6 +197,10 @@ class AuthenticatedAccountClientContext:
     settled_api_version: ApiVersion
     account_email: EmailAddress
     auth_method_id: AccountAuthMethodID
+    client_user_agent: str
+    # In ASGI the client IP address is optional
+    # see https://asgi.readthedocs.io/en/latest/specs/www.html#http-connection-scope
+    client_ip_address: str | None
     logger: ParsecBoundLogger = field(init=False)
 
     def __post_init__(self):
