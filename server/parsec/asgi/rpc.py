@@ -673,6 +673,8 @@ async def authenticated_account_api(request: Request) -> Response:
         settled_api_version=parsed.settled_api_version,
         account_email=auth_info.account_email,
         auth_method_id=auth_info.auth_method_id,
+        client_user_agent=parsed.user_agent,
+        client_ip_address=request.client.host if request.client is not None else None,
     )
 
     try:
