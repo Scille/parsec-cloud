@@ -23,8 +23,8 @@
         "expiredOrganization": "This organization has expired. Please contact an administrator.",
         "unexpected": "An unexpected error occurred. Please try again.",
         "smallDisplayWarning": "We are currently working on small displays for Parsec so it's not yet fully compatible . We strongly recommend that you use a larger display to access it.",
-        "incompatibleEnvironment": "Incompatible environment",
-        "incompatibleWithSafari": "Parsec does not yet support Safari. You may try with another browser."
+        "incompatibleEnvironment": "Your browser is not compatible with Parsec yet.",
+        "incompatibleWithSafari": "Parsec does not yet support Safari. You may try with Chrome, Firefox or Edge."
     },
     "formatter": {
         "version": "(v{version})"

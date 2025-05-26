@@ -263,6 +263,7 @@ async function setupApp(): Promise<void> {
     if ((await detectBrowser()) === 'Safari') {
       const modal = await modalController.create({
         component: IncompatibleEnvironmentModal,
+        cssClass: 'incompatible-environment-modal',
         componentProps: {
           message: 'globalErrors.incompatibleWithSafari',
         },
