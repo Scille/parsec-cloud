@@ -171,8 +171,8 @@ This feature is described in detail in [RFC 1014](1014-account-vault-for-device-
 ### 3.2 Keys
 
 - `auth_method_master_secret`: A secret obtained from the authentication method.
-- `auth_method_hmac_key`: A symmetric key obtained from deriving `auth_method_master_secret`
-  and used for HMAC based authentication with the server.
+- `auth_method_mac_key`: A symmetric key obtained from deriving `auth_method_master_secret`
+  and used for MAC based authentication with the server.
 - `auth_method_secret_key`: A symmetric key obtained from deriving `auth_method_master_secret`
   and used to encrypt the `vault_key`.
 - `vault_key`: A symmetric key used to encrypt the Vault items.
@@ -189,7 +189,7 @@ sequenceDiagram
   autonumber
   participant P as User Password
   participant MS as auth_method_master_secret
-  participant HK as auth_method_hmac_key
+  participant HK as auth_method_mac_key
   participant SK as auth_method_secret_key
   participant S as Server Account APIs
   participant V as Vault items
@@ -229,7 +229,7 @@ Attributes:
 - `created_by_ip: String`. IP address of the HTTP request that created the authentication method
   (either by account creation, vault key rotation or account recovery)
 - `created_by_user_agent: String`. User agent header of the HTTP request that created the vault.
-- `hmac_key: SecretKey`. Secret key used for HMAC based authentication with the server.
+- `mac_key: SecretKey`. Secret key used for MAC based authentication with the server.
 - `vault_key_access: Bytes`. Vault key encrypted with the `auth_method_secret_key`
   (see [RFC 1014](1014-account-vault-for-device-stored-on-server.md) for its internal format).
 - `master_secret_algorithm: KeyAlgorithm`. The algorithm to obtain the `auth_method_master_secret`, it depends on
@@ -438,14 +438,14 @@ Anonymous account API:
       },
       {
         // Algorithm used to turn the password into the `auth_method_master_secret`
-        // (itself used to generate `auth_method_hmac_key` and `auth_method_secret_key`).
+        // (itself used to generate `auth_method_mac_key` and `auth_method_secret_key`).
         "name": "password_algorithm",
         "type": "PasswordAlgorithm"
       },
       {
         // Secret key shared between the client and the server and used for
-        // account authenticated API family's HMAC authentication.
-        "name": "auth_method_hmac_key",
+        // account authenticated API family's MAC authentication.
+        "name": "auth_method_mac_key",
         "type": "SecretKey"
       },
       {
@@ -532,7 +532,7 @@ Anonymous account API:
       "fields": {
         {
           // Algorithm used to turn the password into the `auth_method_master_secret`
-          // (itself used to generate `auth_method_hmac_key` and `auth_method_secret_key`).
+          // (itself used to generate `auth_method_mac_key` and `auth_method_secret_key`).
           "name": "password_algorithm",
           "type": "PasswordAlgorithm"
         }
@@ -590,14 +590,14 @@ Authenticated account API:
     "fields": [
       {
         // Algorithm used to turn the password into the `auth_method_master_secret`
-        // (itself used to generate `auth_method_hmac_key` and `auth_method_secret_key`).
+        // (itself used to generate `auth_method_mac_key` and `auth_method_secret_key`).
         "name": "password_algorithm",
         "type": "PasswordAlgorithm"
       },
       {
         // Secret key shared between the client and the server and used for
-        // account authenticated API family's HMAC authentication.
-        "name": "auth_method_hmac_key",
+        // account authenticated API family's MAC authentication.
+        "name": "auth_method_mac_key",
         "type": "SecretKey"
       },
       {
