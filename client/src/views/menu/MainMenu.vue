@@ -403,7 +403,7 @@ import { openPath } from '@/services/fileOpener';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import { StorageManagerKey, StorageManager } from '@/services/storageManager';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
-import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { WorkspaceDefaultData, WORKSPACES_PAGE_DATA_KEY, WorkspacesPageSavedData } from '@/components/workspaces';
 import { getDurationBeforeExpiration, isTrialOrganizationDevice } from '@/common/organization';
 import { Duration } from 'luxon';
@@ -414,7 +414,7 @@ import useUploadMenu from '@/services/fileUploadMenu';
 import { MenuAction, SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/menu';
 import { FolderGlobalAction } from '@/views/files';
 import { WorkspaceAction } from '@/views/workspaces';
-import { UserAction } from '@/views/users';
+import { isUserAction, UserAction } from '@/views/users';
 
 defineProps<{
   userInfo: ClientInfo;
@@ -544,9 +544,13 @@ function setActions(): void {
         { action: FolderGlobalAction.ImportFolder, label: 'FoldersPage.ImportFile.importFolderAction', icon: cloudUpload },
         { action: FolderGlobalAction.ImportFiles, label: 'FoldersPage.ImportFile.importFilesAction', icon: cloudUpload },
       ],
+      [{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }],
     ];
   } else if (currentRouteIs(Routes.Workspaces)) {
-    actions.value = [[{ action: WorkspaceAction.CreateWorkspace, label: 'WorkspacesPage.createWorkspace', icon: addCircle }]];
+    actions.value = [
+      [{ action: WorkspaceAction.CreateWorkspace, label: 'WorkspacesPage.createWorkspace', icon: addCircle }],
+      [{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }],
+    ];
   } else if (currentRouteIs(Routes.Users) || currentRouteIs(Routes.MyProfile) || currentRouteIs(Routes.Organization)) {
     actions.value = [[{ action: UserAction.Invite, label: 'UsersPage.inviteUser', icon: personAdd }]];
   } else {
@@ -564,12 +568,19 @@ const watchRouteCancel = watchRoute(async () => {
 
 onMounted(async () => {
   eventDistributorCbId = await eventDistributor.registerCallback(
-    Events.WorkspaceCreated | Events.WorkspaceFavorite | Events.WorkspaceUpdated | Events.ExpiredOrganization,
-    async (event: Events, _data?: EventData) => {
+    Events.WorkspaceCreated | Events.WorkspaceFavorite | Events.WorkspaceUpdated | Events.ExpiredOrganization | Events.MenuAction,
+    async (event: Events, data?: EventData) => {
       if (event === Events.WorkspaceCreated || event === Events.WorkspaceFavorite || event === Events.WorkspaceUpdated) {
         await loadAll();
       } else if (event === Events.ExpiredOrganization) {
         isExpired.value = true;
+      } else if (event === Events.MenuAction) {
+        if (isUserAction((data as MenuActionData).action.action)) {
+          const userAction = (data as MenuActionData).action.action as UserAction;
+          if (userAction === UserAction.Invite) {
+            await navigateTo(Routes.Users, { query: { openInvite: true } });
+          }
+        }
       }
     },
   );

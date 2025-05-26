@@ -114,7 +114,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     const documents = workspaces;
 
     if (displaySize === DisplaySize.Small) {
-      const addButton = workspaces.locator('.folder-content').locator('#add-menu-fab-button');
+      const addButton = workspaces.locator('.tab-bar-menu').locator('#add-menu-fab-button');
       await expect(addButton).toBeVisible();
       await addButton.click();
       const modal = workspaces.locator('.tab-menu-modal');
@@ -154,7 +154,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     const documents = workspaces;
 
     if (displaySize === DisplaySize.Small) {
-      const addButton = workspaces.locator('.folder-content').locator('#add-menu-fab-button');
+      const addButton = workspaces.locator('.tab-bar-menu').locator('#add-menu-fab-button');
       await expect(addButton).toBeVisible();
       await addButton.click();
       const modal = workspaces.locator('.tab-menu-modal');

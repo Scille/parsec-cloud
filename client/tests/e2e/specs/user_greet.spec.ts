@@ -10,7 +10,6 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
 
   await setSmallDisplay(usersPage);
   await setSmallDisplay(secondTab);
-  await expect(usersPage.locator('.users-page').locator('.fab-content')).toHaveId('add-menu-fab-button');
 
   const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', DisplaySize.Small);
 
