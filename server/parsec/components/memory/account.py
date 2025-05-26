@@ -14,10 +14,15 @@ from parsec.components.account import (
     AccountCreateAccountWithPasswordBadOutcome,
     AccountCreateEmailValidationTokenBadOutcome,
     AccountVaultItemListBadOutcome,
+    AccountVaultItemRecoveryList,
     AccountVaultItemUploadBadOutcome,
     AccountVaultKeyRotation,
     BaseAccountComponent,
     PasswordAlgorithm,
+    PasswordAlgorithmArgon2ID,
+    VaultItemRecoveryAuthMethodPassword,
+    VaultItemRecoveryList,
+    VaultItemRecoveryVault,
     VaultItems,
 )
 from parsec.components.events import EventBus
@@ -200,3 +205,40 @@ class MemoryAccountComponent(BaseAccountComponent):
         )
 
         return None
+
+    @override
+    async def vault_item_recovery_list(
+        self,
+        auth_method_id: AccountAuthMethodID,
+    ) -> VaultItemRecoveryList | AccountVaultItemRecoveryList:
+        match self._data.get_account_from_auth_method(auth_method_id=auth_method_id):
+            case (account, _):
+                pass
+            case None:
+                return AccountVaultItemRecoveryList.ACCOUNT_NOT_FOUND
+
+        def _convert_vault(vault: MemoryAccountVault) -> VaultItemRecoveryVault:
+            return VaultItemRecoveryVault(
+                auth_methods=[
+                    VaultItemRecoveryAuthMethodPassword(
+                        created_on=auth_method.created_on,
+                        created_by_ip=auth_method.created_by_ip,
+                        created_by_user_agent=auth_method.created_by_user_agent,
+                        vault_key_access=auth_method.vault_key_access,
+                        algorithm=PasswordAlgorithmArgon2ID(
+                            salt=auth_method.password_secret_algorithm.salt,
+                            opslimit=auth_method.password_secret_algorithm.opslimit,
+                            memlimit_kb=auth_method.password_secret_algorithm.memlimit_kb,
+                            parallelism=auth_method.password_secret_algorithm.parallelism,
+                        ),
+                        disabled_on=auth_method.disabled_on,
+                    )
+                    for auth_method in vault.authentication_methods.values()
+                ],
+                vault_items=vault.items,
+            )
+
+        return VaultItemRecoveryList(
+            current_vault=_convert_vault(account.current_vault),
+            previous_vaults=[_convert_vault(v) for v in account.previous_vaults],
+        )
