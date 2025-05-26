@@ -320,7 +320,24 @@ Authenticated account API:
         "req": {
             "fields": [
                 {
-                    "name": "key_access",
+                    // A new authentication method is created since this command invalidates all existing ones
+                    "name": "new_auth_method_id",
+                    "type": "AccountAuthMethodID"
+                },
+                {
+                    // Secret key shared between the client and the server and used for
+                    // account authenticated API family's MAC authentication.
+                    "name": "new_auth_method_mac_key",
+                    "type": "SecretKey"
+                },
+                {
+                    // Algorithm used to turn the password into the `auth_method_master_secret`
+                    // (itself used to generate `auth_method_mac_key` and `auth_method_secret_key`).
+                    "name": "new_password_algorithm",
+                    "type": "PasswordAlgorithm"
+                },
+                {
+                    "name": "new_vault_key_access",
                     // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
                     "type": "Bytes"
                 },
@@ -334,17 +351,54 @@ Authenticated account API:
         "reps": [
             {
                 "status": "ok"
+            },
+            {
+                "status": "items_mismatch"
+            },
+            {
+                // In practice this error should never occur since collision on the ID is
+                // virtually non-existent as long as the client generates a proper UUID.
+                "status": "new_auth_method_id_already_exists"
+            }
+        ],
+        "nested_types": [
+            {
+            "name": "PasswordAlgorithm",
+            "discriminant_field": "type",
+            "variants": [
+                {
+                    "name": "Argon2id",
+                    "discriminant_value": "ARGON2ID",
+                    "fields": [
+                        {
+                            "name": "salt",
+                            "type": "Bytes"
+                        },
+                        {
+                            "name": "opslimit",
+                            "type": "Integer"
+                        },
+                        {
+                            "name": "memlimit_kb",
+                            "type": "Integer"
+                        },
+                        {
+                            "name": "parallelism",
+                            "type": "Integer"
+                        }
+                    ]
+                }
+            ]
             }
         ]
     }
 ]
 ```
 
-Upon receiving this request, the server duplicates the current authentication method
-(i.e. the one used to authenticate the current request) and link it to a newly created vault.
+Upon receiving this request, the server creates a new vault and authentication method.
 
 > [!IMPORTANT]
-> Doing a vault key rotation means switching to a brand new vault. Hence the other
+> Doing a vault key rotation means switching to a brand new vault. Hence all
 > authentication methods are no longer valid (since they are related to the old vault)
 > and therefore would not be able to decrypt the devices encrypted with the new key.
 
