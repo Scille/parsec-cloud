@@ -459,10 +459,14 @@ To list all protected device from all vault except current/active one:
                                 "type": "DateTime"
                             },
                             {
+                                "name": "disabled_on",
+                                "type": "RequiredOption<DateTime>"
+                            },
+                            {
                                 // TODO: Use `IPAddress` type once implemented
                                 // see https://github.com/Scille/parsec-cloud/issues/10384
                                 "name": "created_by_ip",
-                                "type": "String"
+                                "type": "RequiredOption<String>"
                             },
                             {
                                 "name": "created_by_user_agent",
