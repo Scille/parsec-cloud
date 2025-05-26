@@ -510,10 +510,19 @@ class BaseAuthenticatedAccountRpcClient:
         return authenticated_account_cmds.latest.vault_item_upload.Rep.load(raw_rep)
 
     async def vault_key_rotation(
-        self, key_access: bytes, items: dict[HashDigest, bytes]
+        self,
+        new_auth_method_id: AccountAuthMethodID,
+        new_auth_method_mac_key: SecretKey,
+        new_password_algorithm: authenticated_account_cmds.latest.vault_key_rotation.PasswordAlgorithm,
+        new_vault_key_access: bytes,
+        items: dict[HashDigest, bytes],
     ) -> authenticated_account_cmds.latest.vault_key_rotation.Rep:
         req = authenticated_account_cmds.latest.vault_key_rotation.Req(
-            key_access=key_access, items=items
+            new_auth_method_id=new_auth_method_id,
+            new_auth_method_mac_key=new_auth_method_mac_key,
+            new_password_algorithm=new_password_algorithm,
+            new_vault_key_access=new_vault_key_access,
+            items=items,
         )
         raw_rep = await self._do_request(req.dump(), "authenticated_account")
         return authenticated_account_cmds.latest.vault_key_rotation.Rep.load(raw_rep)

@@ -17,20 +17,41 @@ pub fn req() {
     // Generated from Parsec 3.4.0-a.7+dev
     // Content:
     //   cmd: 'vault_key_rotation'
-    //   key_access: 0x3c6b6579206163636573733e
+    //   new_auth_method_id: ext(2, 0x96691586ce5b4789ae8a0a4c052e8986)
+    //   new_auth_method_mac_key: 0xa2754dba7066a49f487737790388548c2af0ddfbed609805184ca5023afe1983
+    //   new_password_algorithm: { type: 'ARGON2ID', memlimit_kb: 3, opslimit: 65536, parallelism: 1, salt: 0x3c73616c7420323e, }
+    //   new_vault_key_access: 0x3c6b6579206163636573733e
     //   items: {
     //     0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560: 0x646174612031,
-    //     0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6: 0x646174612032
+    //     0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6: 0x646174612032,
     //   }
     let raw: &[u8] = hex!(
-        "83a3636d64b27661756c745f6b65795f726f746174696f6eaa6b65795f616363657373"
-        "c40c3c6b6579206163636573733ea56974656d7382c420076a27c79e5ace2a3d47f9dd"
-        "2e83e4ff6ea8872b3c2218f66c92b89b55f36560c406646174612031c420e37ce3b00a"
-        "1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6c406646174612032"
+        "86a3636d64b27661756c745f6b65795f726f746174696f6eb26e65775f617574685f6d"
+        "6574686f645f6964d80296691586ce5b4789ae8a0a4c052e8986b76e65775f61757468"
+        "5f6d6574686f645f6d61635f6b6579c420a2754dba7066a49f487737790388548c2af0"
+        "ddfbed609805184ca5023afe1983b66e65775f70617373776f72645f616c676f726974"
+        "686d85a474797065a84152474f4e324944ab6d656d6c696d69745f6b6203a86f70736c"
+        "696d6974ce00010000ab706172616c6c656c69736d01a473616c74c4083c73616c7420"
+        "323eb46e65775f7661756c745f6b65795f616363657373c40c3c6b6579206163636573"
+        "733ea56974656d7382c420076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f6"
+        "6c92b89b55f36560c406646174612031c420e37ce3b00a1f15b3de62029972345420b7"
+        "6313a885c6ccc6e3b5547857b3ecc6c406646174612032"
     )
     .as_ref();
 
     let req = authenticated_account_cmds::vault_key_rotation::Req {
+        new_auth_method_id: AccountAuthMethodID::from_hex("96691586ce5b4789ae8a0a4c052e8986")
+            .unwrap(),
+        new_auth_method_mac_key: SecretKey::from(hex!(
+            "a2754dba7066a49f487737790388548c2af0ddfbed609805184ca5023afe1983"
+        )),
+        new_password_algorithm:
+            authenticated_account_cmds::vault_key_rotation::PasswordAlgorithm::Argon2id {
+                salt: Bytes::from_static(b"<salt 2>"),
+                opslimit: 65536,
+                memlimit_kb: 3,
+                parallelism: 1,
+            },
         items: HashMap::from_iter([
             (
                 HashDigest::from(hex!(
@@ -45,7 +66,7 @@ pub fn req() {
                 b"data 2".as_ref().into(),
             ),
         ]),
-        key_access: b"<key access>".as_ref().into(),
+        new_vault_key_access: b"<key access>".as_ref().into(),
     };
 
     let expected = authenticated_account_cmds::AnyCmdReq::VaultKeyRotation(req.clone());
@@ -65,13 +86,57 @@ pub fn req() {
 // Responses
 
 pub fn rep_ok() {
-    // Generated from Parsec 3.3.3-a.0+dev
+    // Generated from Parsec 3.4.0-a.7+dev
     // Content:
     //   status: 'ok'
-    //   pong: 'pong'
-    let raw: &[u8] = hex!("82a6737461747573a26f6ba4706f6e67a4706f6e67").as_ref();
+    let raw: &[u8] = hex!("81a6737461747573a26f6b").as_ref();
 
     let expected = authenticated_account_cmds::vault_key_rotation::Rep::Ok {};
+    println!("***expected: {:?}", expected.dump().unwrap());
+    let data = authenticated_account_cmds::vault_key_rotation::Rep::load(raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_account_cmds::vault_key_rotation::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
+
+pub fn rep_items_mismatch() {
+    // Generated from Parsec 3.4.0-a.7+dev
+    // Content:
+    //   status: 'items_mismatch'
+    let raw: &[u8] = hex!("81a6737461747573ae6974656d735f6d69736d61746368").as_ref();
+
+    let expected = authenticated_account_cmds::vault_key_rotation::Rep::ItemsMismatch {};
+    println!("***expected: {:?}", expected.dump().unwrap());
+    let data = authenticated_account_cmds::vault_key_rotation::Rep::load(raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_account_cmds::vault_key_rotation::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
+
+pub fn rep_new_auth_method_id_already_exists() {
+    // Generated from Parsec 3.4.0-a.7+dev
+    // Content:
+    //   status: 'new_auth_method_id_already_exists'
+    let raw: &[u8] = hex!(
+        "81a6737461747573d9216e65775f617574685f6d6574686f645f69645f616c72656164"
+        "795f657869737473"
+    )
+    .as_ref();
+
+    let expected =
+        authenticated_account_cmds::vault_key_rotation::Rep::NewAuthMethodIdAlreadyExists {};
     println!("***expected: {:?}", expected.dump().unwrap());
     let data = authenticated_account_cmds::vault_key_rotation::Rep::load(raw).unwrap();
 

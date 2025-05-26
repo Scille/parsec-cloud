@@ -4,15 +4,42 @@
 
 from __future__ import annotations
 
-from parsec._parsec import HashDigest
+from parsec._parsec import AccountAuthMethodID, HashDigest, SecretKey
+
+class PasswordAlgorithm:
+    pass
+
+class PasswordAlgorithmArgon2id(PasswordAlgorithm):
+    def __init__(self, salt: bytes, opslimit: int, memlimit_kb: int, parallelism: int) -> None: ...
+    @property
+    def memlimit_kb(self) -> int: ...
+    @property
+    def opslimit(self) -> int: ...
+    @property
+    def parallelism(self) -> int: ...
+    @property
+    def salt(self) -> bytes: ...
 
 class Req:
-    def __init__(self, key_access: bytes, items: dict[HashDigest, bytes]) -> None: ...
+    def __init__(
+        self,
+        new_auth_method_id: AccountAuthMethodID,
+        new_auth_method_mac_key: SecretKey,
+        new_password_algorithm: PasswordAlgorithm,
+        new_vault_key_access: bytes,
+        items: dict[HashDigest, bytes],
+    ) -> None: ...
     def dump(self) -> bytes: ...
     @property
     def items(self) -> dict[HashDigest, bytes]: ...
     @property
-    def key_access(self) -> bytes: ...
+    def new_auth_method_id(self) -> AccountAuthMethodID: ...
+    @property
+    def new_auth_method_mac_key(self) -> SecretKey: ...
+    @property
+    def new_password_algorithm(self) -> PasswordAlgorithm: ...
+    @property
+    def new_vault_key_access(self) -> bytes: ...
 
 class Rep:
     @staticmethod
@@ -27,6 +54,16 @@ class RepUnknownStatus(Rep):
     def reason(self) -> str | None: ...
 
 class RepOk(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepItemsMismatch(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepNewAuthMethodIdAlreadyExists(Rep):
     def __init__(
         self,
     ) -> None: ...
