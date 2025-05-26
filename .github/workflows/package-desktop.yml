@@ -112,7 +112,7 @@ jobs:
         timeout-minutes: 15
 
       - name: Setup LXD
-        uses: canonical/setup-lxd@54a5806e490d92e207b57183cf111ed54bbdeff4 # pin v0.1.2
+        uses: canonical/setup-lxd@a3c85fc6fb7fff43fcfeae87659e41a8f635b7dd # pin v0.1.3
         timeout-minutes: 2
 
       - name: Patch snapcraft for nightly build
@@ -159,7 +159,7 @@ jobs:
           yq --null-input ".linux-gnu.$ARCH.client.snap = \"$FINAL_ARTIFACT_NAME\"" | tee artifacts.yml
 
       # Install syft
-      - uses: taiki-e/install-action@941e8a4d9d7cdb696bd4f017cf54aca281f8ffff # pin v2.51.2
+      - uses: taiki-e/install-action@6c6479b49816fcc0975a31af977bdc1f847c2920 # pin v2.52.1
         with:
           tool: syft@0.84.0
 
@@ -386,7 +386,7 @@ jobs:
         timeout-minutes: 1
 
       # Install syft
-      - uses: taiki-e/install-action@941e8a4d9d7cdb696bd4f017cf54aca281f8ffff # pin v2.51.2
+      - uses: taiki-e/install-action@6c6479b49816fcc0975a31af977bdc1f847c2920 # pin v2.52.1
         with:
           tool: syft@0.84.0
 
