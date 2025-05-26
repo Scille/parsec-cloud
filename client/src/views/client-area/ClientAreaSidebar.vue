@@ -69,17 +69,17 @@
       </template>
 
       <!-- show it only when there is one organization selected -->
-      <template v-if="!isDefaultOrganization(currentOrganization) && status">
+      <template v-if="!isDefaultOrganization(currentOrganization) && orgStatus">
         <ion-text class="organization-card-state body">
           {{ $msTranslate('clientArea.sidebar.state.title') }}
-          <span>{{ $msTranslate(status.isFrozen ? 'clientArea.sidebar.state.frozen' : 'clientArea.sidebar.state.active') }}</span>
+          <span>{{ $msTranslate(orgStatus.isFrozen ? 'clientArea.sidebar.state.frozen' : 'clientArea.sidebar.state.active') }}</span>
         </ion-text>
       </template>
 
       <!-- button: go to organization -->
       <div
         class="organization-card-button custom-button custom-button-fill"
-        v-show="showMenu && !isDefaultOrganization(currentOrganization)"
+        v-show="!isDefaultOrganization(currentOrganization) && orgStatus?.isBootstrapped"
         @click="goToOrganization"
       >
         <ion-icon
@@ -356,7 +356,7 @@ const props = defineProps<{
   organizations: Array<BmsOrganization>;
   currentPage: ClientAreaPages;
 }>();
-const status = ref<OrganizationStatusResultData | null>(null);
+const orgStatus = ref<OrganizationStatusResultData | null>(null);
 const billingSystem = ref(BmsAccessInstance.get().getPersonalInformation().billingSystem);
 const showMenu = ref(false);
 const querying = ref(false);
@@ -373,11 +373,11 @@ async function goToPageClicked(page: ClientAreaPages): Promise<void> {
 onMounted(async () => {
   querying.value = true;
   if (isDefaultOrganization(props.currentOrganization)) {
-    status.value = null;
+    orgStatus.value = null;
   } else {
     const response = await BmsAccessInstance.get().getOrganizationStatus(props.currentOrganization.bmsId);
     if (!response.isError && response.data) {
-      status.value = response.data as OrganizationStatusResultData;
+      orgStatus.value = response.data as OrganizationStatusResultData;
     }
   }
   if (billingSystem.value === BillingSystem.CustomOrder || billingSystem.value === BillingSystem.ExperimentalCandidate) {

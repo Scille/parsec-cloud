@@ -173,7 +173,7 @@ quote = { version = "1.0.40", default-features = false }
 rand = { version = "0.8.5", default-features = false }
 regex = { version = "1.11.1", default-features = false }
 regex-syntax = { version = "0.8.4", default-features = false }
-reqwest = { version = "0.12.12", default-features = false }
+reqwest = { version = "0.12.15", default-features = false }
 reqwest-eventsource = { version = "0.6.0", default-features = false }
 rexpect = "0.6.1"
 rmp-serde = { version = "1.3.0", default-features = false }
@@ -196,13 +196,13 @@ blahaj = "0.6.0"
 smallvec = { version = "1.15.0", default-features = false }
 sodiumoxide = { version = "0.2.7", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
-sqlx = { version = "0.8.5", default-features = false }
+sqlx = { version = "0.8.6", default-features = false }
 syn = { version = "2.0.101", default-features = false }
 thiserror = { version = "2.0.12", default-features = false }
-tokio = { version = "1.45.0", default-features = false }
+tokio = { version = "1.45.1", default-features = false }
 unicode-normalization = { version = "0.1.24", default-features = false }
 url = { version = "2.5.4", default-features = false }
-uuid = { version = "1.16.0", default-features = false }
+uuid = { version = "1.17.0", default-features = false }
 wasm-bindgen = { version = "0.2.97", default-features = false }
 wasm-bindgen-futures = { version = "0.4.47", default-features = false }
 wasm-bindgen-test = { version = "0.3.47", default-features = false, features = ["std"] }

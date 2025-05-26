@@ -655,3 +655,12 @@
     border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
   }
 }
+
+.incompatible-environment-modal {
+  .ms-modal-header {
+    display: none;
+  }
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+  }
+}

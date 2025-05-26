@@ -22,7 +22,9 @@
         "clientRevoked": "You have been revoked from this organization. You can still see some of the data you had access to, but most features of Parsec will not work.",
         "expiredOrganization": "This organization has expired. Please contact an administrator.",
         "unexpected": "An unexpected error occurred. Please try again.",
-        "smallDisplayWarning": "We are currently working on small displays for Parsec so it's not yet fully compatible . We strongly recommend that you use a larger display to access it."
+        "smallDisplayWarning": "We are currently working on small displays for Parsec so it's not yet fully compatible. We strongly recommend that you use a larger display to access it.",
+        "incompatibleEnvironment": "Your browser is not compatible with Parsec yet.",
+        "incompatibleWithSafari": "Parsec does not yet support Safari. Please use another browser such as Chrome, Firefox or Edge."
     },
     "formatter": {
         "version": "(v{version})"
@@ -665,7 +667,10 @@
             "cannotDownloadFolders": "Cannot download folders.",
             "foldersNotDownloaded": "Folders will not be downloaded.",
             "allFailed": "Could not start the download of any file.",
-            "someFailed": "Could not start the download of some files."
+            "someFailed": "Unable to start downloading some files.",
+            "selectFolderFailed": "Unable to save files in this folder. Make sure you have enough permissions.",
+            "noPermissions": "Parsec doesn't have the necessary permissions to save a file on your disk. Please allow file editing permissions on this website if you want to be able to download a file.",
+            "openFailed": "Could not open the file. You can try using your browser's downloads list."
         },
         "uploadsLeft": "{amount} imports pending",
         "copiesLeft": "{amount} copies pending",

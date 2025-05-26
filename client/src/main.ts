@@ -33,6 +33,7 @@ import {
   ClientEventTag,
   ConnectionHandle,
   Platform,
+  detectBrowser,
   getOrganizationHandle,
   isElectron,
   listAvailableDevices,
@@ -48,6 +49,7 @@ import { InjectionProvider, InjectionProviderKey } from '@/services/injectionPro
 import { Sentry } from '@/services/sentry';
 import { initViewers } from '@/services/viewers';
 import { LogLevel, WebLogger } from '@/services/webLogger';
+import IncompatibleEnvironmentModal from '@/views/home/IncompatibleEnvironmentModal.vue';
 import { Answer, Base64, I18n, Locale, MegaSharkPlugin, StripeConfig, ThemeManager, Validity, askQuestion } from 'megashark-lib';
 
 enum AppState {
@@ -256,6 +258,20 @@ async function setupApp(): Promise<void> {
       window.isDev = (): boolean => true;
     } else {
       window.usesTestbed = (): boolean => false;
+    }
+
+    if ((await detectBrowser()) === 'Safari') {
+      const modal = await modalController.create({
+        component: IncompatibleEnvironmentModal,
+        cssClass: 'incompatible-environment-modal',
+        componentProps: {
+          message: 'globalErrors.incompatibleWithSafari',
+        },
+        backdropDismiss: false,
+        showBackdrop: true,
+        canDismiss: false,
+      });
+      await modal.present();
     }
 
     // Libparsec initialization
