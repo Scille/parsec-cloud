@@ -15,6 +15,7 @@ from parsec.components.account import (
     AccountCreateEmailValidationTokenBadOutcome,
     AccountVaultItemListBadOutcome,
     AccountVaultItemUploadBadOutcome,
+    AccountVaultKeyRotation,
     BaseAccountComponent,
     PasswordAlgorithm,
     VaultItems,
@@ -152,3 +153,50 @@ class MemoryAccountComponent(BaseAccountComponent):
             key_access=auth_method.vault_key_access,
             items=account.current_vault.items,
         )
+
+    @override
+    async def vault_key_rotation(
+        self,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+        created_by_ip: str | None,
+        created_by_user_agent: str,
+        new_auth_method_id: AccountAuthMethodID,
+        new_auth_method_mac_key: SecretKey,
+        new_password_algorithm: PasswordAlgorithm,
+        new_vault_key_access: bytes,
+        items: dict[HashDigest, bytes],
+    ) -> None | AccountVaultKeyRotation:
+        match self._data.get_account_from_auth_method(auth_method_id=auth_method_id):
+            case (account, _):
+                pass
+            case None:
+                return AccountVaultKeyRotation.ACCOUNT_NOT_FOUND
+
+        for account in self._data.accounts.values():
+            for vault in (account.current_vault, *account.previous_vaults):
+                if new_auth_method_id in vault.authentication_methods:
+                    return AccountVaultKeyRotation.NEW_AUTH_METHOD_ID_ALREADY_EXISTS
+
+        if account.current_vault.items.keys() != items.keys():
+            return AccountVaultKeyRotation.ITEMS_MISMATCH
+
+        for auth_method in account.current_vault.authentication_methods.values():
+            auth_method.disabled_on = now
+        account.previous_vaults.append(account.current_vault)
+        account.current_vault = MemoryAccountVault(
+            items=items,
+            authentication_methods={
+                new_auth_method_id: MemoryAuthenticationMethod(
+                    id=new_auth_method_id,
+                    created_on=now,
+                    created_by_ip=created_by_ip,
+                    created_by_user_agent=created_by_user_agent,
+                    mac_key=new_auth_method_mac_key,
+                    vault_key_access=new_vault_key_access,
+                    password_secret_algorithm=new_password_algorithm,
+                )
+            },
+        )
+
+        return None
