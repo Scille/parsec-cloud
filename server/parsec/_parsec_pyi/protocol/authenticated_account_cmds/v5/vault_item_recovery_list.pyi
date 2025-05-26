@@ -22,7 +22,8 @@ class VaultItemRecoveryAuthMethodPassword(VaultItemRecoveryAuthMethod):
     def __init__(
         self,
         created_on: DateTime,
-        created_by_ip: str,
+        disabled_on: DateTime | None,
+        created_by_ip: str | None,
         created_by_user_agent: str,
         vault_key_access: bytes,
         algorithm: PasswordAlgorithm,
@@ -30,11 +31,13 @@ class VaultItemRecoveryAuthMethodPassword(VaultItemRecoveryAuthMethod):
     @property
     def algorithm(self) -> PasswordAlgorithm: ...
     @property
-    def created_by_ip(self) -> str: ...
+    def created_by_ip(self) -> str | None: ...
     @property
     def created_by_user_agent(self) -> str: ...
     @property
     def created_on(self) -> DateTime: ...
+    @property
+    def disabled_on(self) -> DateTime | None: ...
     @property
     def vault_key_access(self) -> bytes: ...
 
