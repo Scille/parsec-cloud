@@ -211,9 +211,8 @@ msTest('Profile page back button', async ({ workspaces }) => {
 msTest('Open modal to greet user from ProfilePage in small display', async ({ usersPage }) => {
   await setSmallDisplay(usersPage);
 
-  await usersPage.locator('.users-page').locator('.tab-bar-menu-button').nth(3).click();
-  await expect(usersPage.locator('.profile-page').locator('.fab-content')).toHaveId('add-menu-fab-button');
-  await usersPage.locator('.profile-page').locator('#add-menu-fab-button').click();
+  await usersPage.locator('.tab-bar-menu').locator('.tab-bar-menu-button').nth(3).click();
+  await usersPage.locator('.tab-bar-menu').locator('#add-menu-fab-button').click();
   await usersPage.locator('.list-group-item').nth(0).click();
   await expect(usersPage.locator('.modal-sheet')).toBeVisible();
 });

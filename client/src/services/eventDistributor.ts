@@ -114,7 +114,7 @@ class EventDistributor {
     async function sendToAll(callbacks: Array<Callback>, event: Events, data?: EventData): Promise<void> {
       for (const cb of callbacks) {
         if (event & cb.events) {
-          await cb.funct(event, data);
+          cb.funct(event, data);
         }
       }
     }

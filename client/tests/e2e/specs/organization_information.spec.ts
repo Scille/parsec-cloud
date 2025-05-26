@@ -63,7 +63,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     const container = usersPage.locator('.organization-page');
     const usersContainer = container.locator('.organization-users');
     if (displaySize === DisplaySize.Small) {
-      await usersPage.locator('.users-page').locator('.tab-bar-menu').locator('.tab-bar-menu-button').nth(2).click();
+      await usersPage.locator('.tab-bar-menu').locator('.tab-bar-menu-button').nth(2).click();
     }
     await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__description')).toHaveText('Active');
     await expect(usersContainer.locator('.users-list-item').nth(0).locator('.users-list-item__title')).toHaveText('2');

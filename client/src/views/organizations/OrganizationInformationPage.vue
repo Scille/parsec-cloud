@@ -69,7 +69,7 @@ import { IonContent, IonIcon, IonPage, IonText, IonAvatar, popoverController } f
 import { warning } from 'ionicons/icons';
 import { switchOrganization } from '@/router';
 import { ChevronExpand, MsImage, LogoIconGradient, MsModalResult } from 'megashark-lib';
-import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
+import { Ref, onMounted, ref } from 'vue';
 import useUploadMenu from '@/services/fileUploadMenu';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import OrganizationUserInformation from '@/components/organizations/OrganizationUserInformation.vue';
@@ -77,9 +77,6 @@ import OrganizationConfigurationInformation from '@/components/organizations/Org
 import OrganizationStorageInformation from '@/components/organizations/OrganizationStorageInformation.vue';
 import { isTrialOrganizationDevice } from '@/common/organization';
 import { useWindowSize } from 'megashark-lib';
-import { navigateTo, Routes } from '@/router';
-import { isUserAction, UserAction } from '@/views/users/types';
-import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 
 const { isSmallDisplay } = useWindowSize();
 
@@ -88,7 +85,6 @@ const userInfo: Ref<ClientInfo | null> = ref(null);
 const isTrialOrg = ref(false);
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
 const querying = ref(true);
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 async function openOrganizationChoice(event: Event): Promise<void> {
   const popover = await popoverController.create({
@@ -107,17 +103,6 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     switchOrganization(data.handle);
   }
 }
-
-async function performOrganizationAction(action: UserAction): Promise<void> {
-  if (!userInfo.value) {
-    return;
-  }
-  if (action === UserAction.Invite) {
-    await navigateTo(Routes.Users, { query: { openInvite: true } });
-  }
-}
-
-let eventCbId: string | undefined = undefined;
 
 onMounted(async () => {
   const result = await getOrganizationInfo();
@@ -142,20 +127,7 @@ onMounted(async () => {
   } else {
     window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
   }
-
-  eventCbId = await eventDistributor.registerCallback(Events.MenuAction, async (event: Events, data?: EventData) => {
-    if (event === Events.MenuAction && isUserAction((data as MenuActionData).action.action)) {
-      await performOrganizationAction((data as MenuActionData).action.action);
-    }
-  });
-
   querying.value = false;
-});
-
-onUnmounted(async () => {
-  if (eventCbId) {
-    await eventDistributor.removeCallback(eventCbId);
-  }
 });
 </script>
 
@@ -180,7 +152,6 @@ onUnmounted(async () => {
         align-items: center;
         gap: 1.5rem;
         padding: 1.5rem;
-        margin-bottom: 4.75rem;
       }
     }
   }

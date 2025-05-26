@@ -271,7 +271,7 @@ import AboutView from '@/views/about/AboutView.vue';
 import AuthenticationPage from '@/views/profile/AuthenticationPage.vue';
 import OrganizationRecoveryPage from '@/views/profile/OrganizationRecoveryPage.vue';
 import ProfileInfoCard from '@/components/profile/ProfileInfoCard.vue';
-import { EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
+import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { IonContent, IonIcon, IonPage, IonRadio, IonHeader, IonRadioGroup, IonText, IonLabel } from '@ionic/vue';
 import {
   phonePortrait,
@@ -285,7 +285,6 @@ import {
   chevronBack,
   logOut,
 } from 'ionicons/icons';
-import { isUserAction, UserAction } from '@/views/users/types';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 import { Env } from '@/services/environment';
 import { getCurrentRouteName, getCurrentRouteQuery, navigateTo, Routes, watchRoute, ProfilePages } from '@/router';
@@ -297,7 +296,6 @@ const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const myProfileTab = ref(isSmallDisplay ? undefined : ProfilePages.Settings);
-let eventCbId: string | undefined = undefined;
 
 const routeUnwatch = watchRoute(async () => {
   if (getCurrentRouteName() !== Routes.MyProfile) {
@@ -384,15 +382,6 @@ async function goBack(): Promise<void> {
   await navigateTo(Routes.MyProfile, { replace: true });
 }
 
-async function performProfileAction(action: UserAction): Promise<void> {
-  if (!clientInfo.value) {
-    return;
-  }
-  if (action === UserAction.Invite) {
-    await navigateTo(Routes.Users, { query: { openInvite: true } });
-  }
-}
-
 onMounted(async () => {
   const deviceResult = await getCurrentAvailableDevice();
   const result = await getClientInfo();
@@ -408,18 +397,10 @@ onMounted(async () => {
   } else {
     clientInfo.value = result.value;
   }
-  eventCbId = await eventDistributor.registerCallback(Events.MenuAction, async (event: Events, data?: EventData) => {
-    if (event === Events.MenuAction && isUserAction((data as MenuActionData).action.action)) {
-      await performProfileAction((data as MenuActionData).action.action);
-    }
-  });
   await switchPageFromQuery();
 });
 
 onUnmounted(async () => {
-  if (eventCbId) {
-    await eventDistributor.removeCallback(eventCbId);
-  }
   routeUnwatch();
 });
 </script>

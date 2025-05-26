@@ -28,8 +28,7 @@ export async function initGreetUserModals(
 ): Promise<[GreetUserModalData, GreetUserModalData]> {
   // Invite a new user and retrieve the invitation link
   if (displaySize === DisplaySize.Small) {
-    await expect(hostPage.locator('.users-page').locator('.fab-content')).toHaveId('add-menu-fab-button');
-    await hostPage.locator('.users-page').locator('#add-menu-fab-button').click();
+    await hostPage.locator('.tab-bar-menu').locator('#add-menu-fab-button').click();
     await hostPage.locator('.list-group-item').nth(0).click();
   } else {
     await hostPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
