@@ -63,7 +63,7 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
   await expect(greetData.content.locator('.user-info-page').locator('ion-input').nth(1).locator('input')).toHaveValue(
     'gordon.freeman@blackmesa.nm',
   );
-  const profileButton = greetData.content.locator('.user-info-page').locator('.filter-button');
+  const profileButton = greetData.content.locator('.user-info-page').locator('.dropdown-button');
   await expect(profileButton).toHaveText('Choose a profile');
   await profileButton.click();
   const profileDropdown = usersPage.locator('.sheet-modal');
@@ -187,7 +187,7 @@ msTest('Greet user whole process in large display', async ({ usersPage }) => {
   await expect(greetData.content.locator('.user-info-page').locator('ion-input').nth(1).locator('input')).toHaveValue(
     'gordon.freeman@blackmesa.nm',
   );
-  const profileButton = greetData.content.locator('.user-info-page').locator('.filter-button');
+  const profileButton = greetData.content.locator('.user-info-page').locator('.dropdown-button');
   await expect(profileButton).toHaveText('Choose a profile');
   await profileButton.click();
   const profileDropdown = usersPage.locator('.dropdown-popover');

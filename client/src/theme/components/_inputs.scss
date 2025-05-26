@@ -32,14 +32,17 @@
 }
 
 .workspace-sharing-modal {
-  .filter-button {
+  .current-user .dropdown-button-content .input-text {
+    color: var(--parsec-color-light-secondary-grey);
+  }
+
+  .dropdown-button {
     --background: none;
     --background-hover: var(--parsec-color-light-secondary-premiere);
     color: var(--parsec-color-light-secondary-text);
 
     &::part(native) {
-      border: none;
-      padding: 0.5rem 1rem !important;
+      border-color: var(--parsec-color-light-secondary-white);
     }
 
     .ms-dropdown-icon {
