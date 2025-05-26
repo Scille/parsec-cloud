@@ -65,6 +65,12 @@ class AccountVaultItemListBadOutcome(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
 
 
+class AccountVaultKeyRotation(BadOutcomeEnum):
+    ACCOUNT_NOT_FOUND = auto()
+    ITEMS_MISMATCH = auto()
+    NEW_AUTH_METHOD_ID_ALREADY_EXISTS = auto()
+
+
 @dataclass(slots=True)
 class VaultItems:
     key_access: bytes
@@ -103,6 +109,20 @@ class BaseAccountComponent:
         self,
         auth_method_id: AccountAuthMethodID,
     ) -> VaultItems | AccountVaultItemListBadOutcome:
+        raise NotImplementedError
+
+    async def vault_key_rotation(
+        self,
+        now: DateTime,
+        auth_method_id: AccountAuthMethodID,
+        created_by_ip: str | None,
+        created_by_user_agent: str,
+        new_auth_method_id: AccountAuthMethodID,
+        new_auth_method_mac_key: SecretKey,
+        new_password_algorithm: PasswordAlgorithm,
+        new_vault_key_access: bytes,
+        items: dict[HashDigest, bytes],
+    ) -> None | AccountVaultKeyRotation:
         raise NotImplementedError
 
     @api
@@ -238,6 +258,49 @@ class BaseAccountComponent:
                     key_access=outcome.key_access, items=outcome.items
                 )
             case AccountVaultItemListBadOutcome.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
+
+    @api
+    async def api_account_vault_key_rotation(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.vault_key_rotation.Req,
+    ) -> authenticated_account_cmds.latest.vault_key_rotation.Rep:
+        match req.new_password_algorithm:
+            case (
+                authenticated_account_cmds.latest.vault_key_rotation.PasswordAlgorithmArgon2id() as raw
+            ):
+                new_password_algorithm = PasswordAlgorithmArgon2ID(
+                    salt=raw.salt,
+                    opslimit=raw.opslimit,
+                    memlimit_kb=raw.memlimit_kb,
+                    parallelism=raw.parallelism,
+                )
+            # `PasswordAlgorithm` is an abstract type
+            case (
+                authenticated_account_cmds.latest.vault_key_rotation.PasswordAlgorithm() as unknown
+            ):
+                assert False, unknown
+
+        outcome = await self.vault_key_rotation(
+            now=DateTime.now(),
+            created_by_ip=client_ctx.client_ip_address,
+            created_by_user_agent=client_ctx.client_user_agent,
+            auth_method_id=client_ctx.auth_method_id,
+            new_auth_method_id=req.new_auth_method_id,
+            new_auth_method_mac_key=req.new_auth_method_mac_key,
+            new_password_algorithm=new_password_algorithm,
+            new_vault_key_access=req.new_vault_key_access,
+            items=req.items,
+        )
+        match outcome:
+            case None:
+                return authenticated_account_cmds.latest.vault_key_rotation.RepOk()
+            case AccountVaultKeyRotation.ITEMS_MISMATCH:
+                return authenticated_account_cmds.latest.vault_key_rotation.RepItemsMismatch()
+            case AccountVaultKeyRotation.NEW_AUTH_METHOD_ID_ALREADY_EXISTS:
+                return authenticated_account_cmds.latest.vault_key_rotation.RepNewAuthMethodIdAlreadyExists()
+            case AccountVaultKeyRotation.ACCOUNT_NOT_FOUND:
                 client_ctx.account_not_found_abort()
 
 
