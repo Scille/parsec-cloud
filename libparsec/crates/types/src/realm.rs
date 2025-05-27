@@ -127,3 +127,7 @@ impl RealmKeysBundleAccess {
         format_v0_dump(&self)
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/realm.rs"]
+mod tests;
