@@ -14,8 +14,8 @@ for (const displaySize of ['small', 'large']) {
     const users = content.locator('.user-member-item');
     await expect(users).toHaveCount(2);
     await expect(users.locator('.person-name')).toHaveText(['Alicey McAliceFace', 'Boby McBobFace']);
-    await expect(users.locator('.filter-button')).toHaveText(['Owner', 'Reader']);
-    await expect(users.nth(0).locator('.filter-button')).toHaveDisabledAttribute();
+    await expect(users.locator('.dropdown-button')).toHaveText(['Owner', 'Reader']);
+    await expect(users.nth(0).locator('.dropdown-button')).toHaveDisabledAttribute();
 
     const suggestions = workspaceSharingModal.locator('.user-list-suggestions-item');
     await expect(suggestions).toHaveCount(1);
@@ -34,8 +34,8 @@ for (const displaySize of ['small', 'large']) {
     const content = workspaceSharingModal.locator('.ms-modal-content');
     const users = content.locator('.user-member-item');
 
-    await expect(users.nth(1).locator('.filter-button')).toHaveText('Reader');
-    await users.nth(1).locator('.filter-button').click();
+    await expect(users.nth(1).locator('.dropdown-button')).toHaveText('Reader');
+    await users.nth(1).locator('.dropdown-button').click();
 
     if (displaySize === 'small') {
       const roleDropdown = workspaceSharingModal.page().locator('.sheet-modal');
@@ -53,7 +53,7 @@ for (const displaySize of ['small', 'large']) {
     }
 
     await expect(workspaceSharingModal.page()).toShowToast("Boby McBobFace's role has been updated to Contributor.", 'Success');
-    await expect(users.nth(1).locator('.filter-button')).toHaveText('Contributor');
+    await expect(users.nth(1).locator('.dropdown-button')).toHaveText('Contributor');
   });
 }
 
@@ -66,8 +66,8 @@ msTest('Share with external', async ({ workspaceSharingModal }) => {
   await expect(suggestions).toHaveCount(1);
 
   const user = suggestions.nth(0);
-  await expect(user.locator('.filter-button')).toHaveText('Not shared');
-  await user.locator('.filter-button').click();
+  await expect(user.locator('.dropdown-button')).toHaveText('Not shared');
+  await user.locator('.dropdown-button').click();
   const roleDropdown = workspaceSharingModal.page().locator('.dropdown-popover');
   const roles = roleDropdown.getByRole('listitem');
   await expect(roles.locator('.option-text__label')).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader', 'Not shared']);
@@ -84,7 +84,7 @@ msTest('Share with external', async ({ workspaceSharingModal }) => {
   await expect(workspaceSharingModal.page()).toShowToast("Malloryy McMalloryFace's role has been updated to Contributor.", 'Success');
   await expect(users).toHaveCount(3);
   await expect(suggestions).toHaveCount(0);
-  await expect(users.nth(2).locator('.filter-button')).toHaveText('Contributor');
+  await expect(users.nth(2).locator('.dropdown-button')).toHaveText('Contributor');
 });
 
 // Can't test it right now because the testbed doesn't support to tabs using the same org
@@ -99,14 +99,14 @@ msTest.skip('Unshare workspace', async ({ workspaceSharingModal }) => {
 
   const content = workspaceSharingModal.locator('.ms-modal-content');
   const user2 = content.locator('.user-list').locator('.content').nth(1);
-  await expect(user2.locator('.filter-button')).toHaveText('Reader');
-  await user2.locator('.filter-button').click();
+  await expect(user2.locator('.dropdown-button')).toHaveText('Reader');
+  await user2.locator('.dropdown-button').click();
   const roleDropdown = workspaceSharingModal.page().locator('.dropdown-popover');
   const roles = roleDropdown.getByRole('list').getByRole('listitem');
   // Unshare
   await roles.nth(4).click();
   await expect(workspaceSharingModal.page()).toShowToast('The workspace is no longer shared with Boby McBobFace.', 'Success');
-  await expect(user2.locator('.filter-button')).toHaveText('Not shared');
+  await expect(user2.locator('.dropdown-button')).toHaveText('Not shared');
 
   await expect(workspaces).toHaveCount(1);
   await expect(workspaces.locator('.workspace-card-content__title')).toHaveText(['Bob Workspace']);
