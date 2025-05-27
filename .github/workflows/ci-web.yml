@@ -36,7 +36,7 @@ jobs:
     # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
     services:
       parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.4.0-a.7.dev.20231.8d180ff
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.4.0-a.7.dev.20235.af70739
         ports:
           - 6777:6777
     steps:
@@ -169,7 +169,7 @@ jobs:
         shard_total: [2]
     services:
       parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.4.0-a.7.dev.20231.8d180ff
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.4.0-a.7.dev.20235.af70739
         ports:
           - 6777:6777
     timeout-minutes: 20
