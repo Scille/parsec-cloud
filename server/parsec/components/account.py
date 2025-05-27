@@ -71,7 +71,7 @@ class BaseAccountComponent:
         raise NotImplementedError
 
     def get_password_mac_key(
-        self, user_email: EmailStr
+        self, auth_method_id: AccountAuthMethodID
     ) -> SecretKey | AccountGetPasswordSecretKeyBadOutcome:
         raise NotImplementedError
 

@@ -103,28 +103,27 @@ class MemoryAccountComponent(BaseAccountComponent):
     async def check_signature(self):
         pass
 
+    def get_auth_method(
+        self, auth_method_id: AccountAuthMethodID
+    ) -> MemoryAuthenticationMethod | None:
+        for account in self._data.accounts.values():
+            for method_id, method in account.current_vault.authentication_methods.items():
+                if method_id == auth_method_id:
+                    return method
+        return None
+
     @override
     def get_password_mac_key(
-        self, user_email: EmailStr
+        self, auth_method_id: AccountAuthMethodID
     ) -> SecretKey | AccountGetPasswordSecretKeyBadOutcome:
-        account = self._data.accounts.get(user_email)
-        if account is None:
+        auth_method = self.get_auth_method(auth_method_id)
+        if auth_method is None:
             return AccountGetPasswordSecretKeyBadOutcome.USER_NOT_FOUND
-        assert isinstance(account, MemoryAccount)
-        # No need to check if the authentication method is password because
-        # currently it is the only authentication method supported
-
-        secret_key = next(
-            (
-                v.mac_key
-                for v in account.current_vault.authentication_methods.values()
-                if v.disabled_on is None
-            ),
-            None,
-        )
-        if secret_key is None:
+        if auth_method.disabled_on is not None:
             return AccountGetPasswordSecretKeyBadOutcome.UNABLE_TO_GET_SECRET_KEY
-        return secret_key
+        # TODO: No need to check if the authentication method is password because
+        # currently it is the only authentication method supported
+        return auth_method.mac_key
 
     @override
     def test_get_token_by_email(self, email: str) -> EmailValidationToken | None:
