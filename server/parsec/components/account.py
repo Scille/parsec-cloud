@@ -80,14 +80,6 @@ class BaseAccountComponent:
     ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
         raise NotImplementedError
 
-    async def check_signature(self):
-        raise NotImplementedError
-
-    def get_password_mac_key(
-        self, user_email: EmailAddress
-    ) -> SecretKey | AccountGetPasswordSecretKeyBadOutcome:
-        raise NotImplementedError
-
     async def create_account_with_password(
         self,
         token: EmailValidationToken,
