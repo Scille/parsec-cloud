@@ -1482,6 +1482,7 @@
                 "billingMethod": "Méthode de paiement",
                 "billingDetails": "Coordonnées de facturation",
                 "contract": "Contrat",
+                "personalData": "Mon profil",
                 "orders": "Commandes"
             },
             "help": {
