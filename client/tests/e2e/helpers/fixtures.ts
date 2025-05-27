@@ -255,7 +255,7 @@ export const msTest = debugTest.extend<{
     // Share the workspace with Alice
     const content = sharingModal.locator('.ms-modal-content');
     const users = content.locator('.user-list-suggestions').locator('.user-list-suggestions-item');
-    await users.nth(0).locator('.filter-button').click();
+    await users.nth(0).locator('.dropdown-button').click();
     const roleDropdown = sharingModal.page().locator('.dropdown-popover');
     const roles = roleDropdown.getByRole('listitem');
     // Set reader

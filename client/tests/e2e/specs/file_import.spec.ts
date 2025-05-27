@@ -121,7 +121,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       await expect(modal).toBeVisible();
       await modal.locator('.list-group-item').filter({ hasText: 'Import a folder' }).click();
     } else {
-      await documents.locator('#folders-ms-action-bar').locator('#button-import').click();
+      await documents.locator('#folders-ms-action-bar').getByText('Import').click();
     }
     const uploadMenu = documents.locator('.upload-menu');
     await expect(uploadMenu).toBeHidden();
@@ -161,7 +161,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       await expect(modal).toBeVisible();
       await modal.locator('.list-group-item').filter({ hasText: 'Import files' }).click();
     } else {
-      await documents.locator('#folders-ms-action-bar').locator('#button-import').click();
+      await documents.locator('#folders-ms-action-bar').getByText('Import').click();
     }
 
     const uploadMenu = documents.locator('.upload-menu');

@@ -266,7 +266,7 @@ export async function createWorkspace(workspacesPage: Page, name: string, displa
       workspacesCount = await workspacesPage.locator('.workspaces-container').locator('.workspace-list-item').count();
     }
     const actionBar = workspacesPage.locator('#workspaces-ms-action-bar');
-    await actionBar.locator('#button-new-workspace').click();
+    await actionBar.getByText('New workspace').click();
     await fillInputModal(workspacesPage, name);
 
     if (await workspacesInGridMode(workspacesPage)) {

@@ -9,102 +9,8 @@
       <ms-action-bar
         id="folders-ms-action-bar"
         v-if="isLargeDisplay"
+        :buttons="actionBarOptionsFoldersPage"
       >
-        <div v-if="selectedFilesCount === 0">
-          <ms-action-bar-button
-            id="button-new-folder"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="'FoldersPage.createFolder'"
-            :icon="folderOpen"
-            @click="createFolder()"
-          />
-          <ms-action-bar-button
-            id="button-import"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="'FoldersPage.import'"
-            :image="DocumentImport"
-            @click="onImportClicked($event)"
-          />
-        </div>
-        <div v-else-if="selectedFilesCount === 1">
-          <ms-action-bar-button
-            id="button-rename"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="'FoldersPage.fileContextMenu.actionRename'"
-            :icon="pencil"
-            @click="renameEntries(getSelectedEntries())"
-          />
-          <ms-action-bar-button
-            id="button-moveto"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="'FoldersPage.fileContextMenu.actionMoveTo'"
-            :icon="arrowRedo"
-            @click="moveEntriesTo(getSelectedEntries())"
-          />
-          <ms-action-bar-button
-            id="button-makeacopy"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="'FoldersPage.fileContextMenu.actionMakeACopy'"
-            :icon="copy"
-            @click="copyEntries(getSelectedEntries())"
-          />
-          <ms-action-bar-button
-            id="button-delete"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="'FoldersPage.fileContextMenu.actionDelete'"
-            :icon="trashBin"
-            @click="deleteEntries(getSelectedEntries())"
-          />
-          <ms-action-bar-button
-            id="button-download"
-            v-show="parsec.isWeb()"
-            button-label="FoldersPage.fileContextMenu.actionDownload"
-            :icon="download"
-            @click="downloadEntries(getSelectedEntries())"
-          />
-          <ms-action-bar-button
-            id="button-details"
-            :button-label="'FoldersPage.fileContextMenu.actionDetails'"
-            :icon="informationCircle"
-            @click="showDetails(getSelectedEntries())"
-          />
-          <ms-action-bar-button
-            id="button-copy-link"
-            :button-label="'FoldersPage.fileContextMenu.actionCopyLink'"
-            :icon="link"
-            @click="copyLink(getSelectedEntries())"
-          />
-        </div>
-        <div v-else>
-          <ms-action-bar-button
-            id="button-moveto"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="'FoldersPage.fileContextMenu.actionMoveTo'"
-            :icon="arrowRedo"
-            @click="moveEntriesTo(getSelectedEntries())"
-          />
-          <ms-action-bar-button
-            id="button-makeacopy"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="'FoldersPage.fileContextMenu.actionMakeACopy'"
-            :icon="copy"
-            @click="copyEntries(getSelectedEntries())"
-          />
-          <ms-action-bar-button
-            id="button-delete"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="'FoldersPage.fileContextMenu.actionDelete'"
-            :icon="trashBin"
-            @click="deleteEntries(getSelectedEntries())"
-          />
-          <ms-action-bar-button
-            id="button-download"
-            v-show="parsec.isWeb()"
-            button-label="FoldersPage.fileContextMenu.actionDownload"
-            :icon="download"
-            @click="downloadEntries(getSelectedEntries())"
-          />
-        </div>
         <div class="right-side">
           <workspace-tag-role
             :role="ownRole"
@@ -263,7 +169,6 @@ import {
   DocumentImport,
   DisplayState,
   MsActionBar,
-  MsActionBarButton,
   MsGridListToggle,
   MsSorter,
   MsSorterChangeEvent,
@@ -345,6 +250,7 @@ interface FoldersPageSavedData {
 }
 
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+
 const msSorterOptions: MsOptions = new MsOptions([
   {
     label: 'FoldersPage.sort.byName',
@@ -1514,6 +1420,126 @@ async function onDropAsReader(): Promise<void> {
     PresentationMode.Toast,
   );
 }
+
+const actionBarOptionsFoldersPage = computed(() => {
+  const actionArray = [];
+
+  if (selectedFilesCount.value === 0 && ownRole.value !== parsec.WorkspaceRole.Reader) {
+    actionArray.push(
+      {
+        label: 'FoldersPage.createFolder',
+        icon: folderOpen,
+        onClick: async () => {
+          await createFolder();
+        },
+      },
+      {
+        label: 'FoldersPage.import',
+        image: DocumentImport,
+        onClick: async (event: MouseEvent) => {
+          await onImportClicked(event);
+        },
+      },
+    );
+  }
+  if (selectedFilesCount.value === 1) {
+    if (ownRole.value !== parsec.WorkspaceRole.Reader) {
+      actionArray.push(
+        {
+          label: 'FoldersPage.fileContextMenu.actionRename',
+          icon: pencil,
+          onClick: async () => {
+            await renameEntries(getSelectedEntries());
+          },
+        },
+        {
+          label: 'FoldersPage.fileContextMenu.actionMoveTo',
+          icon: arrowRedo,
+          onClick: async () => {
+            await moveEntriesTo(getSelectedEntries());
+          },
+        },
+        {
+          label: 'FoldersPage.fileContextMenu.actionMakeACopy',
+          icon: copy,
+          onClick: async () => {
+            await copyEntries(getSelectedEntries());
+          },
+        },
+        {
+          label: 'FoldersPage.fileContextMenu.actionDelete',
+          icon: trashBin,
+          onClick: async () => {
+            await deleteEntries(getSelectedEntries());
+          },
+        },
+      );
+    }
+    if (parsec.isWeb()) {
+      actionArray.push({
+        label: 'FoldersPage.fileContextMenu.actionDownload',
+        icon: download,
+        onClick: async () => {
+          await downloadEntries(getSelectedEntries());
+        },
+      });
+    }
+    actionArray.push(
+      {
+        label: 'FoldersPage.fileContextMenu.actionDetails',
+        icon: informationCircle,
+        onClick: async () => {
+          await showDetails(getSelectedEntries());
+        },
+      },
+      {
+        label: 'FoldersPage.fileContextMenu.actionCopyLink',
+        icon: link,
+        onClick: async () => {
+          await copyLink(getSelectedEntries());
+        },
+      },
+    );
+  }
+  if (selectedFilesCount.value > 1) {
+    if (ownRole.value !== parsec.WorkspaceRole.Reader) {
+      actionArray.push(
+        {
+          label: 'FoldersPage.fileContextMenu.actionMoveTo',
+          icon: arrowRedo,
+          onClick: async () => {
+            await moveEntriesTo(getSelectedEntries());
+          },
+        },
+        {
+          label: 'FoldersPage.fileContextMenu.actionMakeACopy',
+          icon: copy,
+          onClick: async () => {
+            await copyEntries(getSelectedEntries());
+          },
+        },
+        {
+          label: 'FoldersPage.fileContextMenu.actionDelete',
+          icon: trashBin,
+          onClick: async () => {
+            await deleteEntries(getSelectedEntries());
+          },
+        },
+      );
+    }
+    if (parsec.isWeb()) {
+      actionArray.push({
+        label: 'FoldersPage.fileContextMenu.actionDownload',
+        icon: download,
+        onClick: async () => {
+          await downloadEntries(getSelectedEntries());
+        },
+      });
+    }
+  }
+
+  return actionArray;
+});
 </script>
 
 <style scoped lang="scss">
