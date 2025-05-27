@@ -79,9 +79,9 @@ case the device keys are still stored in the local device since:
 > with a high entropy key protected by the vault key and stored server-side (see [RFC 1016](1016-local-device-storage-in-web-client.md)).
 > So in this case we might also leave the device keys in the local device.
 
-## 4 - Datamodel
+## 3 - Datamodel
 
-### 4.1 - Option A: Update `LocalDevice`
+### 3.1 - Option A: Update `LocalDevice`
 
 Changes:
 
@@ -91,7 +91,7 @@ Changes:
 - Add validation rule to ensure `signing_key`&`private_key` are both set or
   `keys_bundle_token` is set.
 
-### 4.2 - (not chosen) Option B: New `DeviceLocalBundle`
+### 3.2 - (not chosen) Option B: New `DeviceLocalBundle`
 
 Option A has the advantage of being backward compatible with the current, however it
 doesn't offer a clean separation of `signing_key`&`private_key` on one side and
@@ -192,7 +192,7 @@ device keys files).
 > code (i.e. once deserialized, the in-memory `LocalDevice` would be similar to
 > `DeviceLocalBundle`).
 
-### 4.3 - New `DeviceKeysBundle`
+### 3.3 - New `DeviceKeysBundle`
 
 Device keys bundle:
 
@@ -223,9 +223,9 @@ Device keys bundle:
 >   can be checked against their corresponding public keys present in the device
 >   and user certificates.
 
-## 5 - API
+## 4 - API
 
-### 5.1 - New `device_get_keys_bundle`
+### 4.1 - New `device_get_keys_bundle`
 
 Anonymous API:
 
@@ -267,7 +267,7 @@ Anonymous API:
 > However this is considered overkill considering its added complexity (it requires
 > introducing a new command family) and the fact returned data are encrypted anyway.
 
-### 5.2 - New `device_store_keys_bundle`
+### 4.2 - New `device_store_keys_bundle`
 
 Authenticated API:
 
