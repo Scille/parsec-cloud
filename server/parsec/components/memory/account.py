@@ -13,7 +13,6 @@ from parsec._parsec import (
 from parsec.components.account import (
     AccountCreateAccountWithPasswordBadOutcome,
     AccountCreateEmailValidationTokenBadOutcome,
-    AccountGetPasswordSecretKeyBadOutcome,
     AccountVaultItemListBadOutcome,
     AccountVaultItemUploadBadOutcome,
     BaseAccountComponent,
@@ -106,33 +105,6 @@ class MemoryAccountComponent(BaseAccountComponent):
 
         # remove from unverified emails at the end
         self._data.unverified_emails.pop(email)
-
-    @override
-    async def check_signature(self):
-        pass
-
-    @override
-    def get_password_mac_key(
-        self, user_email: EmailAddress
-    ) -> SecretKey | AccountGetPasswordSecretKeyBadOutcome:
-        account = self._data.accounts.get(user_email)
-        if account is None:
-            return AccountGetPasswordSecretKeyBadOutcome.USER_NOT_FOUND
-        assert isinstance(account, MemoryAccount)
-        # No need to check if the authentication method is password because
-        # currently it is the only authentication method supported
-
-        secret_key = next(
-            (
-                v.mac_key
-                for v in account.current_vault.authentication_methods.values()
-                if v.disabled_on is None
-            ),
-            None,
-        )
-        if secret_key is None:
-            return AccountGetPasswordSecretKeyBadOutcome.UNABLE_TO_GET_SECRET_KEY
-        return secret_key
 
     @override
     def test_get_token_by_email(self, email: EmailAddress) -> EmailValidationToken | None:
