@@ -15,6 +15,7 @@ mod data;
 mod enumerate;
 mod ids;
 mod misc;
+mod net;
 mod protocol;
 #[cfg(feature = "test-utils")]
 mod testbed;
@@ -27,6 +28,7 @@ pub(crate) use crypto::*;
 pub(crate) use enumerate::*;
 pub(crate) use ids::*;
 pub(crate) use misc::*;
+pub(crate) use net::*;
 #[cfg(feature = "test-utils")]
 pub(crate) use testbed::*;
 pub(crate) use time::*;
@@ -82,6 +84,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<EmailValidationToken>()?;
     m.add_class::<GreetingAttemptID>()?;
     m.add_class::<AccountAuthMethodID>()?;
+    m.add_class::<HostAddr>()?;
 
     // Time
     m.add_class::<DateTime>()?;

@@ -8,6 +8,7 @@ from parsec._parsec import (
     EmailAddress,
     EmailValidationToken,
     HashDigest,
+    HostAddr,
     SecretKey,
 )
 from parsec.components.account import (
@@ -65,7 +66,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         vault_key_access: bytes,
         human_label: str,
         created_by_user_agent: str,
-        created_by_ip: str | None,
+        created_by_host: HostAddr | None,
         password_secret_algorithm: PasswordAlgorithm,
         auth_method_id: AccountAuthMethodID,
     ) -> None | AccountCreateAccountWithPasswordBadOutcome:
@@ -81,7 +82,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         # create authentication method
         auth_method = MemoryAuthenticationMethod(
             created_on=now,
-            created_by_ip=created_by_ip,
+            created_by_host=created_by_host,
             created_by_user_agent=created_by_user_agent,
             mac_key=mac_key,
             vault_key_access=vault_key_access,

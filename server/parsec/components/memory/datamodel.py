@@ -25,6 +25,7 @@ from parsec._parsec import (
     GreeterOrClaimer,
     GreetingAttemptID,
     HashDigest,
+    HostAddr,
     InvitationStatus,
     InvitationToken,
     InvitationType,
@@ -907,7 +908,7 @@ class MemoryAuthenticationMethod:
     # (either by account creation, vault key rotation or account recovery)
     # Can be unknown since this information is optional in ASGI (see
     # https://asgi.readthedocs.io/en/latest/specs/www.html#http-connection-scope).
-    created_by_ip: str | None  # TODO replace by ipaddr #10384
+    created_by_host: HostAddr | None
     # User agent header of the HTTP request that created the vault.
     created_by_user_agent: str
     # Secret key used for HMAC based authentication with the server

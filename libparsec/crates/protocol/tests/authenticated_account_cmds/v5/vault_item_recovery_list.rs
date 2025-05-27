@@ -42,96 +42,120 @@ pub fn rep_ok() {
     // Content:
     //   status: 'ok'
     //   current_vault: {
-    //     auth_methods: [
-    //       {
-    //         type: 'PASSWORD',
-    //         algorithm: { type: 'ARGON2ID', memlimit_kb: 3, opslimit: 65536, parallelism: 1, salt: 0x3c73616c7420343e },
-    //         created_by_ip: '127.0.0.4',
-    //         created_by_user_agent: 'Parsec-Client/3.4.4 Windows',
-    //         created_on: ext(1, 946944000000000) i.e. 2000-01-04T01:00:00Z,
-    //         vault_key_access: 0x3c7661756c745f6b65795f61636365737320343e
-    //       },
-    //     ],
-    //     vault_items: {
-    //       0x546e2c936f85bc9994e31361a58910b379b6292ff6dd465bb803629b9c75c5ca: 0x646174612033,
-    //       0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6: 0x646174612032,
-    //     },
-    //   }
-    //   previous_vaults: [
-    //     {
-    //       auth_methods: [
-    //         {
-    //           type: 'PASSWORD',
-    //           algorithm: { type: 'ARGON2ID', memlimit_kb: 3, opslimit: 65536, parallelism: 1, salt: 0x3c73616c7420323e },
-    //           created_by_ip: '127.0.0.2',
-    //           created_by_user_agent: 'Parsec-Client/3.4.2 Windows',
-    //           created_on: ext(1, 946771200000000) i.e. 2000-01-02T01:00:00Z,
-    //           vault_key_access: 0x3c7661756c745f6b65795f61636365737320323e
-    //         },
-    //         {
-    //           type: 'PASSWORD',
-    //           algorithm: { type: 'ARGON2ID', memlimit_kb: 3, opslimit: 65536, parallelism: 1, salt: 0x3c73616c7420313e },
-    //           created_by_ip: '127.0.0.1',
-    //           created_by_user_agent: 'Parsec-Client/3.4.1 Windows',
-    //           created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z,
-    //           vault_key_access: 0x3c7661756c745f6b65795f61636365737320313e
-    //         },
-    //       ],
-    //       vault_items: {
-    //         0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560: 0x646174612031,
-    //         0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6: 0x646174612032,
-    //       },
-    //     },
-    //     {
-    //       auth_methods: [
-    //         {
-    //           type: 'PASSWORD',
-    //           algorithm: { type: 'ARGON2ID', memlimit_kb: 3, opslimit: 65536, parallelism: 1, salt: 0x3c73616c7420313e },
-    //           created_by_ip: '127.0.0.1',
-    //           created_by_user_agent: 'Parsec-Client/3.4.1 Windows',
-    //           created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z,
-    //           vault_key_access: 0x3c7661756c745f6b65795f61636365737320313e,
-    //         },
-    //       ],
-    //       vault_items: { },
-    //     },
-    //   ]
+    //      auth_methods: [
+    //          {
+    //              type: 'PASSWORD',
+    //              algorithm: {
+    //                  type: 'ARGON2ID',
+    //                  memlimit_kb: 3,
+    //                  opslimit: 65536,
+    //                  parallelism: 1,
+    //                  salt: 0x3c73616c7420343e,
+    //              },
+    //              created_by_host: '127.0.0.4',
+    //              created_by_user_agent: 'Parsec-Client/3.4.4 Windows',
+    //              created_on: ext(1, 946944000000000) i.e. 2000-01-04T01:00:00Z,
+    //              vault_key_access: 0x3c7661756c745f6b65795f61636365737320343e,
+    //          },
+    //      ],
+    //      vault_items: {
+    //          0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6: 0x646174612032,
+    //          0x546e2c936f85bc9994e31361a58910b379b6292ff6dd465bb803629b9c75c5ca: 0x646174612033,
+    //      },
+    //  },
+    //  previous_vaults: [
+    //      {
+    //          auth_methods: [
+    //              {
+    //                  type: 'PASSWORD',
+    //                  algorithm: {
+    //                      type: 'ARGON2ID',
+    //                      memlimit_kb: 3,
+    //                      opslimit: 65536,
+    //                      parallelism: 1,
+    //                      salt: 0x3c73616c7420323e,
+    //                  },
+    //                  created_by_host: '127.0.0.2',
+    //                  created_by_user_agent: 'Parsec-Client/3.4.2 Windows',
+    //                  created_on: ext(1, 946771200000000) i.e. 2000-01-02T01:00:00Z,
+    //                  vault_key_access: 0x3c7661756c745f6b65795f61636365737320323e,
+    //              },
+    //              {
+    //                  type: 'PASSWORD',
+    //                  algorithm: {
+    //                      type: 'ARGON2ID',
+    //                      memlimit_kb: 3,
+    //                      opslimit: 65536,
+    //                      parallelism: 1,
+    //                      salt: 0x3c73616c7420313e,
+    //                  },
+    //                  created_by_host: '127.0.0.1',
+    //                  created_by_user_agent: 'Parsec-Client/3.4.1 Windows',
+    //                  created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z,
+    //                  vault_key_access: 0x3c7661756c745f6b65795f61636365737320313e,
+    //              },
+    //          ],
+    //          vault_items: {
+    //              0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6: 0x646174612032,
+    //              0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560: 0x646174612031,
+    //          },
+    //      },
+    //      {
+    //          auth_methods: [
+    //              {
+    //                  type: 'PASSWORD',
+    //                  algorithm: {
+    //                      type: 'ARGON2ID',
+    //                      memlimit_kb: 3,
+    //                      opslimit: 65536,
+    //                      parallelism: 1,
+    //                      salt: 0x3c73616c7420313e,
+    //                  },
+    //                  created_by_host: '127.0.0.1',
+    //                  created_by_user_agent: 'Parsec-Client/3.4.1 Windows',
+    //                  created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z,
+    //                  vault_key_access: 0x3c7661756c745f6b65795f61636365737320313e,
+    //              },
+    //          ],
+    //          vault_items: { },
+    //      },
+    //  ]
     let raw: &[u8] = hex!(
-        "83a6737461747573a26f6bad63757272656e745f7661756c7482ac617574685f6d6574"
-        "686f64739186a474797065a850415353574f5244a9616c676f726974686d85a4747970"
-        "65a84152474f4e324944ab6d656d6c696d69745f6b6203a86f70736c696d6974ce0001"
-        "0000ab706172616c6c656c69736d01a473616c74c4083c73616c7420343ead63726561"
-        "7465645f62795f6970a93132372e302e302e34b5637265617465645f62795f75736572"
-        "5f6167656e74bb5061727365632d436c69656e742f332e342e342057696e646f7773aa"
-        "637265617465645f6f6ed70100035d3d94be0000b07661756c745f6b65795f61636365"
-        "7373c4143c7661756c745f6b65795f61636365737320343eab7661756c745f6974656d"
-        "7382c420546e2c936f85bc9994e31361a58910b379b6292ff6dd465bb803629b9c75c5"
-        "cac406646174612033c420e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6"
-        "e3b5547857b3ecc6c406646174612032af70726576696f75735f7661756c74739282ac"
-        "617574685f6d6574686f64739286a474797065a850415353574f5244a9616c676f7269"
-        "74686d85a474797065a84152474f4e324944ab6d656d6c696d69745f6b6203a86f7073"
-        "6c696d6974ce00010000ab706172616c6c656c69736d01a473616c74c4083c73616c74"
-        "20323ead637265617465645f62795f6970a93132372e302e302e32b563726561746564"
-        "5f62795f757365725f6167656e74bb5061727365632d436c69656e742f332e342e3220"
-        "57696e646f7773aa637265617465645f6f6ed70100035d15590f4000b07661756c745f"
-        "6b65795f616363657373c4143c7661756c745f6b65795f61636365737320323e86a474"
-        "797065a850415353574f5244a9616c676f726974686d85a474797065a84152474f4e32"
-        "4944ab6d656d6c696d69745f6b6203a86f70736c696d6974ce00010000ab706172616c"
-        "6c656c69736d01a473616c74c4083c73616c7420313ead637265617465645f62795f69"
-        "70a93132372e302e302e31b5637265617465645f62795f757365725f6167656e74bb50"
-        "61727365632d436c69656e742f332e342e312057696e646f7773aa637265617465645f"
-        "6f6ed70100035d013b37e000b07661756c745f6b65795f616363657373c4143c766175"
-        "6c745f6b65795f61636365737320313eab7661756c745f6974656d7382c420076a27c7"
-        "9e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560c4066461746120"
-        "31c420e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
-        "c40664617461203282ac617574685f6d6574686f64739186a474797065a85041535357"
-        "4f5244a9616c676f726974686d85a474797065a84152474f4e324944ab6d656d6c696d"
-        "69745f6b6203a86f70736c696d6974ce00010000ab706172616c6c656c69736d01a473"
-        "616c74c4083c73616c7420313ead637265617465645f62795f6970a93132372e302e30"
-        "2e31b5637265617465645f62795f757365725f6167656e74bb5061727365632d436c69"
-        "656e742f332e342e312057696e646f7773aa637265617465645f6f6ed70100035d013b"
-        "37e000b07661756c745f6b65795f616363657373c4143c7661756c745f6b65795f6163"
-        "6365737320313eab7661756c745f6974656d7380"
+    "83a6737461747573a26f6bad63757272656e745f7661756c7482ac617574685f6d6574"
+    "686f64739186a474797065a850415353574f5244a9616c676f726974686d85a4747970"
+    "65a84152474f4e324944ab6d656d6c696d69745f6b6203a86f70736c696d6974ce0001"
+    "0000ab706172616c6c656c69736d01a473616c74c4083c73616c7420343eaf63726561"
+    "7465645f62795f686f7374a93132372e302e302e34b5637265617465645f62795f7573"
+    "65725f6167656e74bb5061727365632d436c69656e742f332e342e342057696e646f77"
+    "73aa637265617465645f6f6ed70100035d3d94be0000b07661756c745f6b65795f6163"
+    "63657373c4143c7661756c745f6b65795f61636365737320343eab7661756c745f6974"
+    "656d7382c420e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857"
+    "b3ecc6c406646174612032c420546e2c936f85bc9994e31361a58910b379b6292ff6dd"
+    "465bb803629b9c75c5cac406646174612033af70726576696f75735f7661756c747392"
+    "82ac617574685f6d6574686f64739286a474797065a850415353574f5244a9616c676f"
+    "726974686d85a474797065a84152474f4e324944ab6d656d6c696d69745f6b6203a86f"
+    "70736c696d6974ce00010000ab706172616c6c656c69736d01a473616c74c4083c7361"
+    "6c7420323eaf637265617465645f62795f686f7374a93132372e302e302e32b5637265"
+    "617465645f62795f757365725f6167656e74bb5061727365632d436c69656e742f332e"
+    "342e322057696e646f7773aa637265617465645f6f6ed70100035d15590f4000b07661"
+    "756c745f6b65795f616363657373c4143c7661756c745f6b65795f6163636573732032"
+    "3e86a474797065a850415353574f5244a9616c676f726974686d85a474797065a84152"
+    "474f4e324944ab6d656d6c696d69745f6b6203a86f70736c696d6974ce00010000ab70"
+    "6172616c6c656c69736d01a473616c74c4083c73616c7420313eaf637265617465645f"
+    "62795f686f7374a93132372e302e302e31b5637265617465645f62795f757365725f61"
+    "67656e74bb5061727365632d436c69656e742f332e342e312057696e646f7773aa6372"
+    "65617465645f6f6ed70100035d013b37e000b07661756c745f6b65795f616363657373"
+    "c4143c7661756c745f6b65795f61636365737320313eab7661756c745f6974656d7382"
+    "c420e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6c4"
+    "06646174612032c420076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92"
+    "b89b55f36560c40664617461203182ac617574685f6d6574686f64739186a474797065"
+    "a850415353574f5244a9616c676f726974686d85a474797065a84152474f4e324944ab"
+    "6d656d6c696d69745f6b6203a86f70736c696d6974ce00010000ab706172616c6c656c"
+    "69736d01a473616c74c4083c73616c7420313eaf637265617465645f62795f686f7374"
+    "a93132372e302e302e31b5637265617465645f62795f757365725f6167656e74bb5061"
+    "727365632d436c69656e742f332e342e312057696e646f7773aa637265617465645f6f"
+    "6ed70100035d013b37e000b07661756c745f6b65795f616363657373c4143c7661756c"
+    "745f6b65795f61636365737320313eab7661756c745f6974656d7380"
     )
     .as_ref();
 
@@ -140,7 +164,7 @@ pub fn rep_ok() {
             auth_methods: vec![
                 authenticated_account_cmds::vault_item_recovery_list::VaultItemRecoveryAuthMethod::Password {
                     created_on: "2000-01-04T00:00:00Z".parse().unwrap(),
-                    created_by_ip: "127.0.0.4".to_string(),
+                    created_by_host: "127.0.0.4".parse().unwrap(),
                     created_by_user_agent: "Parsec-Client/3.4.4 Windows".to_string(),
                     vault_key_access: b"<vault_key_access 4>".as_ref().into(),
                     algorithm: authenticated_account_cmds::vault_item_recovery_list::PasswordAlgorithm::Argon2id {
@@ -171,7 +195,7 @@ pub fn rep_ok() {
                 auth_methods: vec![
                     authenticated_account_cmds::vault_item_recovery_list::VaultItemRecoveryAuthMethod::Password {
                         created_on: "2000-01-02T00:00:00Z".parse().unwrap(),
-                        created_by_ip: "127.0.0.2".to_string(),
+                        created_by_host: "127.0.0.2".parse().unwrap(),
                         created_by_user_agent: "Parsec-Client/3.4.2 Windows".to_string(),
                         vault_key_access: b"<vault_key_access 2>".as_ref().into(),
                         algorithm: authenticated_account_cmds::vault_item_recovery_list::PasswordAlgorithm::Argon2id {
@@ -183,7 +207,7 @@ pub fn rep_ok() {
                     },
                     authenticated_account_cmds::vault_item_recovery_list::VaultItemRecoveryAuthMethod::Password {
                         created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-                        created_by_ip: "127.0.0.1".to_string(),
+                        created_by_host: "127.0.0.1".parse().unwrap(),
                         created_by_user_agent: "Parsec-Client/3.4.1 Windows".to_string(),
                         vault_key_access: b"<vault_key_access 1>".as_ref().into(),
                         algorithm: authenticated_account_cmds::vault_item_recovery_list::PasswordAlgorithm::Argon2id {
@@ -213,7 +237,7 @@ pub fn rep_ok() {
                 auth_methods: vec![
                     authenticated_account_cmds::vault_item_recovery_list::VaultItemRecoveryAuthMethod::Password {
                         created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-                        created_by_ip: "127.0.0.1".to_string(),
+                        created_by_host: "127.0.0.1".parse().unwrap(),
                         created_by_user_agent: "Parsec-Client/3.4.1 Windows".to_string(),
                         vault_key_access: b"<vault_key_access 1>".as_ref().into(),
                         algorithm: authenticated_account_cmds::vault_item_recovery_list::PasswordAlgorithm::Argon2id {

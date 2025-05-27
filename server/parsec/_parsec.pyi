@@ -89,6 +89,7 @@ from parsec._parsec_pyi.manifest import (
     child_manifest_verify_and_load,
 )
 from parsec._parsec_pyi.misc import ApiVersion
+from parsec._parsec_pyi.net import HostAddr
 from parsec._parsec_pyi.pki import (
     LocalPendingEnrollment,
     PkiEnrollmentAnswerPayload,
@@ -211,4 +212,6 @@ __all__ = [
     "anonymous_account_cmds",
     # Testbed
     "testbed",
+    # Net
+    "HostAddr",
 ]

@@ -12,7 +12,7 @@ import base64
 import pytest
 from httpx import AsyncClient
 
-from parsec._parsec import AccountAuthMethodID, DateTime, EmailAddress, SecretKey
+from parsec._parsec import AccountAuthMethodID, DateTime, EmailAddress, HostAddr, SecretKey
 from parsec.backend import Backend
 from parsec.components.account import PasswordAlgorithmArgon2ID
 from parsec.components.memory.account import MemoryAccountComponent
@@ -56,7 +56,7 @@ async def alice_account(
                 ALICE_ACCOUNT_AUTH_METHOD_ID: MemoryAuthenticationMethod(
                     id=ALICE_ACCOUNT_AUTH_METHOD_ID,
                     created_on=ALICE_ACCOUNT_CREATED_ON,
-                    created_by_ip="127.0.0.1",
+                    created_by_host=HostAddr("127.0.0.1"),
                     created_by_user_agent="Parsec-Client/3.4.0 Linux",
                     mac_key=ALICE_ACCOUNT_AUTH_METHOD_MAC_KEY,
                     vault_key_access=b"<alice_vault_key_access>",
@@ -91,7 +91,7 @@ async def bob_account(
                 BOB_ACCOUNT_AUTH_METHOD_ID: MemoryAuthenticationMethod(
                     id=BOB_ACCOUNT_AUTH_METHOD_ID,
                     created_on=BOB_ACCOUNT_CREATED_ON,
-                    created_by_ip="127.0.0.1",
+                    created_by_host=HostAddr("127.0.0.1"),
                     created_by_user_agent="Parsec-Client/3.4.0 Linux",
                     mac_key=BOB_ACCOUNT_AUTH_METHOD_MAC_KEY,
                     vault_key_access=b"<bob_vault_key_access>",

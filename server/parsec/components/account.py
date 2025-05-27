@@ -13,6 +13,7 @@ from parsec._parsec import (
     EmailAddress,
     EmailValidationToken,
     HashDigest,
+    HostAddr,
     ParsecAccountEmailValidationAddr,
     SecretKey,
     anonymous_account_cmds,
@@ -96,7 +97,7 @@ class BaseAccountComponent:
         vault_key_access: bytes,
         human_label: str,
         created_by_user_agent: str,
-        created_by_ip: str | None,
+        created_by_host: HostAddr | None,
         password_secret_algorithm: PasswordAlgorithm,
         auth_method_id: AccountAuthMethodID,
     ) -> None | AccountCreateAccountWithPasswordBadOutcome:
@@ -163,7 +164,7 @@ class BaseAccountComponent:
             req.vault_key_access,
             req.human_label,
             client_ctx.client_user_agent,
-            client_ctx.client_ip,
+            client_ctx.client_host,
             password_secret_algorithm=PasswordAlgorithm(
                 salt=algo.salt,
                 opslimit=algo.opslimit,

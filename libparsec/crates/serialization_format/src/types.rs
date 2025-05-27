@@ -237,6 +237,7 @@ generate_field_type_enum!(
     DeviceLabel => libparsec_types::DeviceLabel,
     HumanHandle => libparsec_types::HumanHandle,
     EmailAddress => libparsec_types::EmailAddress,
+    HostAddr => libparsec_types::HostAddr,
     UserProfile => libparsec_types::UserProfile,
     RealmRole => libparsec_types::RealmRole,
     BootstrapToken => libparsec_types::BootstrapToken,

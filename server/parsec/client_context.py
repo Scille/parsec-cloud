@@ -10,6 +10,7 @@ from parsec._parsec import (
     ApiVersion,
     DeviceID,
     EmailAddress,
+    HostAddr,
     InvitationToken,
     InvitationType,
     OrganizationID,
@@ -176,9 +177,9 @@ class AnonymousAccountClientContext:
     settled_api_version: ApiVersion
     logger: ParsecBoundLogger = field(init=False)
     client_user_agent: str
-    # there is no guarantee that asgi is able to provide the ip address
+    # there is no guarantee that asgi is able to provide the host address
     # see https://asgi.readthedocs.io/en/latest/specs/www.html#http-connection-scope
-    client_ip: str | None  # TODO replace by ipaddr #10384
+    client_host: HostAddr | None
 
     def __post_init__(self):
         # Generate a request ID just for the logs
