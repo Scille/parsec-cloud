@@ -762,11 +762,15 @@ impl FromStr for EmailAddress {
     type Err = EmailAddressParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // A word about `<string>.nfc()`: In the unicode code we have multiple forms to represent the same glyph.
-        // We have 2 notable forms _Normalization From canonical Decomposition_ (NFD) and _Normalization From canonical Composition_ (NFC)
-        // For example: the `small letter A with acute` (á) would be encoded in NFD as `small letter a + acute accent` as for NFC `small letter a with acute`.
+        // A word about `<string>.nfc()`
+        // In Unicode there may be multiple ways to represent the same character.
+        // The Unicode standard defines Normalization Forms (such as NFC and NFD)
+        // to be able to determine if two Unicode strings are equivalent.
+        // For example: the `small letter A with acute` (á) would be encoded in NFD
+        // as `small letter a + acute accent` and in NFC as `small letter a with acute`.
+        // See: https://www.unicode.org/reports/tr15/#Norm_Forms
         //
-        // So we need to normalize the string to have consistant comparison latter on.
+        // So we need to normalize the string to have consistent comparison later on.
         let normalized = s.nfc().collect::<String>();
         normalized
             .parse::<email_address_parser::EmailAddress>()
