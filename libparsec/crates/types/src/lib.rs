@@ -49,6 +49,7 @@ pub const PATH_URL_KEY_DERIVATION_UUID: uuid::Uuid =
 /// this module (and, in turn, 3rd party crates should use `libparsec_test_fixtures`)
 pub mod fixtures;
 
+mod account;
 mod addr;
 mod certif;
 pub mod data_macros;
@@ -73,6 +74,7 @@ mod shamir;
 mod time;
 mod token;
 
+pub use account::*;
 pub use addr::*;
 pub use certif::*;
 pub use error::*;

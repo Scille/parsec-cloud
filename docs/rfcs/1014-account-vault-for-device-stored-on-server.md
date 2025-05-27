@@ -200,7 +200,7 @@ pub enum AccountVaultItem {
         {
           // `SecretKey` encrypted by the vault key.
           // This key is itself used to decrypt the `LocalDevice` stored on
-          // the web client's LocalStorage.
+          // the web client's storage.
           "name": "encrypted_data",
           "type": "Bytes"
         }
