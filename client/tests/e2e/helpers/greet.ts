@@ -31,7 +31,7 @@ export async function initGreetUserModals(
     await hostPage.locator('.tab-bar-menu').locator('#add-menu-fab-button').click();
     await hostPage.locator('.list-group-item').nth(0).click();
   } else {
-    await hostPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
+    await hostPage.locator('#activate-users-ms-action-bar').getByText('Invite a user').click();
   }
   await fillInputModal(hostPage, email);
   await expect(hostPage).toShowToast(`An invitation to join the organization has been sent to ${email}.`, 'Success');
@@ -124,7 +124,7 @@ export async function addUser(
   await expect(greetData.content.locator('.user-info-page').locator('ion-input').nth(0).locator('input')).toHaveValue(userName);
   await expect(greetData.content.locator('.user-info-page').locator('ion-input').nth(1)).toHaveTheClass('input-disabled');
   await expect(greetData.content.locator('.user-info-page').locator('ion-input').nth(1).locator('input')).toHaveValue(email);
-  const profileButton = greetData.content.locator('.user-info-page').locator('.filter-button');
+  const profileButton = greetData.content.locator('.user-info-page').locator('.dropdown-button');
   await profileButton.click();
   const profileDropdown = usersPage.locator('.dropdown-popover');
   await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Member', 'External']);

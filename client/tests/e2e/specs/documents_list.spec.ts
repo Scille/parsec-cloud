@@ -151,7 +151,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
       await modal.locator('.list-group-item').filter({ hasText: 'New folder' }).click();
     } else {
       const actionBar = documents.locator('#folders-ms-action-bar');
-      await actionBar.locator('#button-new-folder').click();
+      await actionBar.getByText('New folder').click();
     }
 
     await fillInputModal(documents, 'My folder');

@@ -9,15 +9,8 @@
       <ms-action-bar
         id="workspaces-ms-action-bar"
         v-if="isLargeDisplay"
+        :buttons="actionBarOptionsWorkspacesPage"
       >
-        <!-- contextual menu -->
-        <ms-action-bar-button
-          v-show="clientProfile != UserProfile.Outsider"
-          id="button-new-workspace"
-          :button-label="'WorkspacesPage.createWorkspace'"
-          :icon="addCircle"
-          @click="openCreateWorkspaceModal()"
-        />
         <div class="right-side">
           <div class="counter">
             <ion-text class="body">
@@ -172,7 +165,6 @@ import {
   NoWorkspace,
   DisplayState,
   MsActionBar,
-  MsActionBarButton,
   MsGridListToggle,
   MsSorter,
   MsSorterChangeEvent,
@@ -579,6 +571,20 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
     onFinished();
   }
 }
+
+const actionBarOptionsWorkspacesPage = computed(() => {
+  const actionsArray = [];
+
+  actionsArray.push({
+    id: 'button-new-workspace',
+    label: 'WorkspacesPage.createWorkspace',
+    icon: addCircle,
+    onClick: async (): Promise<void> => {
+      await openCreateWorkspaceModal();
+    },
+  });
+  return actionsArray;
+});
 </script>
 
 <style lang="scss" scoped>

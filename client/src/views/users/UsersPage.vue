@@ -7,43 +7,8 @@
       <ms-action-bar
         id="activate-users-ms-action-bar"
         v-if="isLargeDisplay"
+        :buttons="actionBarOptionsUsersPage"
       >
-        <div v-show="users.selectedCount() === 0 && isAdmin">
-          <ms-action-bar-button
-            :icon="personAdd"
-            id="button-invite-user"
-            :button-label="'UsersPage.inviteUser'"
-            @click="inviteUser"
-          />
-        </div>
-        <!-- revoke or view common workspace -->
-        <div
-          v-show="users.selectedCount() >= 1 && isAdmin"
-          class="action-bar-buttons"
-        >
-          <ms-action-bar-button
-            :icon="personRemove"
-            id="button-revoke-user"
-            :button-label="{ key: 'UsersPage.userContextMenu.actionRevoke', count: users.selectedCount() }"
-            @click="revokeSelectedUsers"
-          />
-
-          <ms-action-bar-button
-            v-show="users.getSelectedUsers().filter((u: UserModel) => u.currentProfile !== UserProfile.Outsider).length > 0"
-            :icon="repeat"
-            id="button-update-profile"
-            :button-label="{ key: 'UsersPage.userContextMenu.actionUpdateProfile', count: users.selectedCount() }"
-            @click="updateSelectedUserProfiles"
-          />
-        </div>
-        <div v-show="users.selectedCount() === 1">
-          <ms-action-bar-button
-            :icon="informationCircle"
-            id="button-common-workspaces"
-            :button-label="'UsersPage.userContextMenu.actionDetails'"
-            @click="openSelectedUserDetails"
-          />
-        </div>
         <div class="right-side">
           <div class="counter">
             <ion-text
@@ -181,7 +146,6 @@ import {
   NoActiveUser,
   DisplayState,
   MsActionBar,
-  MsActionBarButton,
   MsGridListToggle,
   MsSearchInput,
   MsSorter,
@@ -218,7 +182,7 @@ import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
 import { IonContent, IonPage, IonText, modalController } from '@ionic/vue';
 import { informationCircle, personAdd, personRemove, repeat } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, ref, toRaw } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref, toRaw, computed } from 'vue';
 import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
@@ -762,13 +726,59 @@ onUnmounted(async () => {
   }
   routeWatchCancel();
 });
+
+const actionBarOptionsUsersPage = computed(() => {
+  const actionArray = [];
+
+  if (users.value.selectedCount() === 0 && isAdmin.value) {
+    actionArray.push({
+      label: 'UsersPage.inviteUser',
+      icon: personAdd,
+      onClick: async (): Promise<void> => {
+        await inviteUser();
+      },
+    });
+  }
+
+  if (users.value.selectedCount() >= 1 && isAdmin.value) {
+    actionArray.push({
+      label: { key: 'UsersPage.userContextMenu.actionRevoke', count: users.value.selectedCount() },
+      icon: personRemove,
+      onClick: async (): Promise<void> => {
+        await revokeSelectedUsers();
+      },
+    });
+  }
+
+  if (
+    users.value.selectedCount() >= 1 &&
+    users.value.getSelectedUsers().some((u: UserModel) => u.currentProfile !== UserProfile.Outsider) &&
+    isAdmin.value
+  ) {
+    actionArray.push({
+      label: { key: 'UsersPage.userContextMenu.actionUpdateProfile', count: users.value.selectedCount() },
+      icon: repeat,
+      onClick: async (): Promise<void> => {
+        await updateSelectedUserProfiles();
+      },
+    });
+  }
+
+  if (users.value.selectedCount() === 1) {
+    actionArray.push({
+      label: 'UsersPage.userContextMenu.actionDetails',
+      icon: informationCircle,
+      onClick: async (): Promise<void> => {
+        await openSelectedUserDetails();
+      },
+    });
+  }
+
+  return actionArray;
+});
 </script>
 
 <style scoped lang="scss">
-.action-bar-buttons {
-  gap: 0 !important;
-}
-
 .mobile-filters {
   display: flex;
   justify-content: space-between;

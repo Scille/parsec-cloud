@@ -33,7 +33,7 @@ for (const gridMode of [false, true]) {
     }
     const actionBar = connected.locator('#workspaces-ms-action-bar');
     await expect(actionBar.locator('.ms-action-bar-button')).toHaveCount(1);
-    await expect(actionBar.locator('#button-new-workspace')).toHaveText('New workspace');
+    await expect(actionBar.getByText('New workspace')).toHaveText('New workspace');
     await expect(actionBar.locator('.counter')).toHaveText('No items');
     await expect(actionBar.locator('#workspace-filter-select')).toHaveText('Name');
     if (gridMode) {
