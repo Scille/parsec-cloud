@@ -215,9 +215,9 @@ pub enum AccountVaultItem {
 > organization device storage strategy by simply pretending to upload to a
 > different organization that allows server-side device storage.
 
-## 5 - APIs
+## 3 - APIs
 
-### 5.1 - Add a new vault item
+### 3.1 - Add a new vault item
 
 Authenticated account API:
 
@@ -273,7 +273,7 @@ Authenticated account API:
 >   Finally having part of the data in clear text is convenient to avoid having to decrypt
 >   all items just to display the user the list of available registration devices.
 
-### 5.2 - List vault items
+### 3.2 - List vault items
 
 Authenticated account API:
 
@@ -306,7 +306,7 @@ Authenticated account API:
 ]
 ```
 
-### 5.3 - Rotate the vault key
+### 3.3 - Rotate the vault key
 
 Authenticated account API:
 
@@ -402,7 +402,7 @@ Upon receiving this request, the server creates a new vault and authentication m
 > authentication methods are no longer valid (since they are related to the old vault)
 > and therefore would not be able to decrypt the devices encrypted with the new key.
 
-## 5.4 - Recover vault item from older vaults
+## 3.4 - Recover vault item from older vaults
 
 Authenticated account API:
 
