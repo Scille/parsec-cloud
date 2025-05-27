@@ -19,7 +19,7 @@
 
     <orders-list
       v-if="!querying && !error && orderRequests"
-      :orders="orderRequests.requests"
+      :orders="orderRequests"
     />
 
     <!-- loading -->
@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import { IonText, IonButton, modalController } from '@ionic/vue';
-import { BmsAccessInstance, GetCustomOrderRequestsResultData, DataType } from '@/services/bms';
+import { BmsAccessInstance, DataType, CustomOrderRequest } from '@/services/bms';
 import NewOrderModal from '@/views/client-area/orders/NewOrderModal.vue';
 import { OrdersList } from '@/components/client-area';
 import { ref, onMounted } from 'vue';
@@ -54,7 +54,26 @@ const props = defineProps<{
 
 const error = ref<string>('');
 const querying = ref(true);
-const orderRequests = ref<GetCustomOrderRequestsResultData | undefined>(undefined);
+const orderRequests = ref<Array<CustomOrderRequest>>([]);
+
+onMounted(async () => {
+  await getCustomOrderRequests();
+});
+
+async function getCustomOrderRequests(): Promise<void> {
+  querying.value = true;
+  try {
+    const orderRequestsRep = await BmsAccessInstance.get().getCustomOrderRequests();
+
+    if (!orderRequestsRep.isError && orderRequestsRep.data && orderRequestsRep.data.type === DataType.GetCustomOrderRequests) {
+      orderRequests.value = orderRequestsRep.data.requests.reverse();
+    } else {
+      error.value = 'clientArea.contracts.errors.noInfo';
+    }
+  } finally {
+    querying.value = false;
+  }
+}
 
 async function openNewOrderModal(): Promise<void> {
   const modal = await modalController.create({
@@ -73,22 +92,9 @@ async function openNewOrderModal(): Promise<void> {
       }),
       PresentationMode.Toast,
     );
+    await getCustomOrderRequests();
   }
 }
-
-onMounted(async () => {
-  querying.value = true;
-
-  const orderRequestsRep = await BmsAccessInstance.get().getCustomOrderRequests();
-
-  if (!orderRequestsRep.isError && orderRequestsRep.data && orderRequestsRep.data.type === DataType.GetCustomOrderRequests) {
-    orderRequests.value = orderRequestsRep.data;
-  } else {
-    error.value = 'clientArea.contracts.errors.noInfo';
-  }
-
-  querying.value = false;
-});
 </script>
 
 <style scoped lang="scss">
