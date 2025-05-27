@@ -1,0 +1,24 @@
+{
+    "label": "AccountVaultItemRegistrationDevice",
+    "type": "account_vault_item_auto_enrollment_device",
+    // Introduced in Parsec 3.5.0
+    "introduced_in_revision": 350,
+    "other_fields": [
+        {
+          "name": "organization_id",
+          "type": "OrganizationID"
+        },
+        // Device ID is not provided here since it is not relevant:
+        // this item is only used to give access to this organization/user
+        // couple.
+        {
+        "name": "user_id",
+        "type": "UserID"
+        },
+        {
+          // `LocalDevice` encrypted by the vault key
+          "name": "encrypted_data",
+          "type": "Bytes"
+        }
+    ]
+}
