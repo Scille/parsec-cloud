@@ -38,13 +38,9 @@ export const expectMedia = baseExpect.extend({
     }
   },
 
-  // Since we cannot check the duration properly for the moment, we are just checking if the media has a non-null duration.
-  async toHaveNonNullDuration(locator: Locator): Promise<AssertReturnType> {
+  async toHaveDuration(locator: Locator, duration: number): Promise<AssertReturnType> {
     try {
-      const actualDuration = await locator.evaluate((el) => {
-        return (el as HTMLMediaElement).duration;
-      });
-      baseExpect(actualDuration).not.toBeNull();
+      await baseExpect(locator).toHaveJSProperty('duration', duration);
       return {
         message: () => '',
         pass: true,
@@ -54,7 +50,7 @@ export const expectMedia = baseExpect.extend({
         return (el as HTMLMediaElement).duration;
       });
       return {
-        message: () => `Expected media to have a non-null duration but has '${actualDuration}'`,
+        message: () => `Expected media to have a duration of '${duration}' but has '${actualDuration}'`,
         pass: false,
       };
     }

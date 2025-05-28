@@ -87,7 +87,7 @@ msTest('Audio viewer', async ({ documents }) => {
   await expect(fileViewerBackground).toBeVisible();
   await expect(fileViewerBackground.locator('.file-viewer-background-icon')).toBeVisible();
 
-  await expectMedia(audio).toHaveNonNullDuration();
+  await expectMedia(audio).toHaveDuration(7.967347);
   await expectMedia(audio).toHaveCurrentTime(0.0);
 
   // Volume control
@@ -135,8 +135,7 @@ msTest('Audio viewer', async ({ documents }) => {
   await backdrop.click();
   await sliderClick(documents, fluxBar, 90);
   await documents.waitForTimeout(1000);
-  // disable for now, the value is inconsistent on CI
-  // await expectMedia(audio).toHaveCurrentTime(7.967347);
+  await expectMedia(audio).toHaveCurrentTime(7.967347);
   expect(await Media.getPausedState(audio)).toBe(true);
 
   // Playback speed
