@@ -243,6 +243,21 @@ class SequesterVerifyKeyDer(BytesBasedType):
     pass
 
 
+class SecretKey(BytesBasedType):
+    pass
+
+
+class Bytes(BytesBasedType):
+    """
+    libparsec's bytes
+    """
+
+    custom_from_rs_bytes = (
+        "|b: &[u8]| -> Result<libparsec::Bytes,  String> { Ok(libparsec::Bytes::from(b.to_vec())) }"
+    )
+    custom_to_rs_bytes = "|x: libparsec::Bytes| -> Result<Vec<u8>, &'static str> { Ok(x.into()) }"
+
+
 class SASCode(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { s.parse::<libparsec::SASCode>().map_err(|e| e.to_string()) }"
 
@@ -265,6 +280,20 @@ class InvitationToken(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<libparsec::InvitationToken, _> { libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
     custom_to_rs_string = (
         "|x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) }"
+    )
+
+
+class EmailValidationToken(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::EmailValidationToken, _> { libparsec::EmailValidationToken::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::EmailValidationToken| -> Result<String, &'static str> { Ok(x.hex()) }"
+    )
+
+
+class AccountAuthMethodID(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<libparsec::AccountAuthMethodID, _> { libparsec::AccountAuthMethodID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|x: libparsec::AccountAuthMethodID| -> Result<String, &'static str> { Ok(x.hex()) }"
     )
 
 

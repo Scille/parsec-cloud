@@ -83,16 +83,19 @@ export enum UserProfile {
     Outsider = 'UserProfileOutsider',
     Standard = 'UserProfileStandard',
 }
+export type AccountAuthMethodID = string
 export type ApiVersion = string
 export type DeviceID = string
 export type DeviceLabel = string
 export type EmailAddress = string
+export type EmailValidationToken = string
 export type EntryName = string
 export type FsPath = string
 export type GreetingAttemptID = string
 export type InvitationToken = string
 export type OrganizationID = string
 export type ParsecAddr = string
+export type ParsecAnonymousAccountAddr = string
 export type ParsecInvitationAddr = string
 export type ParsecOrganizationAddr = string
 export type ParsecOrganizationBootstrapAddr = string
@@ -104,6 +107,8 @@ export type SASCode = string
 export type SequesterServiceID = string
 export type UserID = string
 export type VlobID = string
+export type Bytes = Uint8Array
+export type SecretKey = Uint8Array
 export type SequesterVerifyKeyDer = Uint8Array
 export type NonZeroU8 = number
 export type U8 = number
@@ -416,6 +421,96 @@ export interface WorkspaceUserAccessInfo {
     currentProfile: UserProfile
     currentRole: RealmRole
 }
+
+// AccountCreateProceedError
+export enum AccountCreateProceedErrorTag {
+    AuthMethodIdAlreadyExists = 'AccountCreateProceedErrorAuthMethodIdAlreadyExists',
+    CryptoError = 'AccountCreateProceedErrorCryptoError',
+    Internal = 'AccountCreateProceedErrorInternal',
+    InvalidValidationToken = 'AccountCreateProceedErrorInvalidValidationToken',
+    Offline = 'AccountCreateProceedErrorOffline',
+    Stopped = 'AccountCreateProceedErrorStopped',
+}
+
+export interface AccountCreateProceedErrorAuthMethodIdAlreadyExists {
+    tag: AccountCreateProceedErrorTag.AuthMethodIdAlreadyExists
+    error: string
+}
+export interface AccountCreateProceedErrorCryptoError {
+    tag: AccountCreateProceedErrorTag.CryptoError
+    error: string
+}
+export interface AccountCreateProceedErrorInternal {
+    tag: AccountCreateProceedErrorTag.Internal
+    error: string
+}
+export interface AccountCreateProceedErrorInvalidValidationToken {
+    tag: AccountCreateProceedErrorTag.InvalidValidationToken
+    error: string
+}
+export interface AccountCreateProceedErrorOffline {
+    tag: AccountCreateProceedErrorTag.Offline
+    error: string
+}
+export interface AccountCreateProceedErrorStopped {
+    tag: AccountCreateProceedErrorTag.Stopped
+    error: string
+}
+export type AccountCreateProceedError =
+  | AccountCreateProceedErrorAuthMethodIdAlreadyExists
+  | AccountCreateProceedErrorCryptoError
+  | AccountCreateProceedErrorInternal
+  | AccountCreateProceedErrorInvalidValidationToken
+  | AccountCreateProceedErrorOffline
+  | AccountCreateProceedErrorStopped
+
+// AccountSendEmailValidationTokenError
+export enum AccountSendEmailValidationTokenErrorTag {
+    EmailParseError = 'AccountSendEmailValidationTokenErrorEmailParseError',
+    EmailRecipientRefused = 'AccountSendEmailValidationTokenErrorEmailRecipientRefused',
+    EmailServerUnavailable = 'AccountSendEmailValidationTokenErrorEmailServerUnavailable',
+    Internal = 'AccountSendEmailValidationTokenErrorInternal',
+    InvalidEmail = 'AccountSendEmailValidationTokenErrorInvalidEmail',
+    Offline = 'AccountSendEmailValidationTokenErrorOffline',
+    Stopped = 'AccountSendEmailValidationTokenErrorStopped',
+}
+
+export interface AccountSendEmailValidationTokenErrorEmailParseError {
+    tag: AccountSendEmailValidationTokenErrorTag.EmailParseError
+    error: string
+}
+export interface AccountSendEmailValidationTokenErrorEmailRecipientRefused {
+    tag: AccountSendEmailValidationTokenErrorTag.EmailRecipientRefused
+    error: string
+}
+export interface AccountSendEmailValidationTokenErrorEmailServerUnavailable {
+    tag: AccountSendEmailValidationTokenErrorTag.EmailServerUnavailable
+    error: string
+}
+export interface AccountSendEmailValidationTokenErrorInternal {
+    tag: AccountSendEmailValidationTokenErrorTag.Internal
+    error: string
+}
+export interface AccountSendEmailValidationTokenErrorInvalidEmail {
+    tag: AccountSendEmailValidationTokenErrorTag.InvalidEmail
+    error: string
+}
+export interface AccountSendEmailValidationTokenErrorOffline {
+    tag: AccountSendEmailValidationTokenErrorTag.Offline
+    error: string
+}
+export interface AccountSendEmailValidationTokenErrorStopped {
+    tag: AccountSendEmailValidationTokenErrorTag.Stopped
+    error: string
+}
+export type AccountSendEmailValidationTokenError =
+  | AccountSendEmailValidationTokenErrorEmailParseError
+  | AccountSendEmailValidationTokenErrorEmailRecipientRefused
+  | AccountSendEmailValidationTokenErrorEmailServerUnavailable
+  | AccountSendEmailValidationTokenErrorInternal
+  | AccountSendEmailValidationTokenErrorInvalidEmail
+  | AccountSendEmailValidationTokenErrorOffline
+  | AccountSendEmailValidationTokenErrorStopped
 
 // ActiveUsersLimit
 export enum ActiveUsersLimitTag {
@@ -4442,6 +4537,18 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorStopped
 
 export interface LibParsecPlugin {
+    accountCreateProceed(
+        human_label: string,
+        validation_token: EmailValidationToken,
+        config_dir: Path,
+        addr: ParsecAnonymousAccountAddr,
+        password: Password
+    ): Promise<Result<null, AccountCreateProceedError>>
+    accountSendEmailValidationToken(
+        email: string,
+        config_dir: Path,
+        addr: ParsecAnonymousAccountAddr
+    ): Promise<Result<null, AccountSendEmailValidationTokenError>>
     archiveDevice(
         device_path: Path
     ): Promise<Result<null, ArchiveDeviceError>>
