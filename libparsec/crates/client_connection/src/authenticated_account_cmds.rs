@@ -24,7 +24,7 @@ const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 /// Method name that will be used for the `Authorization` header
 pub const PARSEC_AUTH_METHOD: &str = "PARSEC-MAC-BLAKE2B";
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AccountAuthMethod {
     pub time_provider: TimeProvider,
     pub id: AccountAuthMethodID,
