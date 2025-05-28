@@ -4255,6 +4255,125 @@ fn struct_workspace_user_access_info_rs_to_js(
     Ok(js_obj)
 }
 
+// AccountCreateProceedError
+
+#[allow(dead_code)]
+fn variant_account_create_proceed_error_rs_to_js(
+    rs_obj: libparsec::AccountCreateProceedError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountCreateProceedError::AuthMethodIdAlreadyExists { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateProceedErrorAuthMethodIdAlreadyExists".into(),
+            )?;
+        }
+        libparsec::AccountCreateProceedError::CryptoError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateProceedErrorCryptoError".into(),
+            )?;
+        }
+        libparsec::AccountCreateProceedError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateProceedErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountCreateProceedError::InvalidValidationToken { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateProceedErrorInvalidValidationToken".into(),
+            )?;
+        }
+        libparsec::AccountCreateProceedError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateProceedErrorOffline".into(),
+            )?;
+        }
+        libparsec::AccountCreateProceedError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountCreateProceedErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// AccountSendEmailValidationTokenError
+
+#[allow(dead_code)]
+fn variant_account_send_email_validation_token_error_rs_to_js(
+    rs_obj: libparsec::AccountSendEmailValidationTokenError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::AccountSendEmailValidationTokenError::EmailParseError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountSendEmailValidationTokenErrorEmailParseError".into(),
+            )?;
+        }
+        libparsec::AccountSendEmailValidationTokenError::EmailRecipientRefused { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountSendEmailValidationTokenErrorEmailRecipientRefused".into(),
+            )?;
+        }
+        libparsec::AccountSendEmailValidationTokenError::EmailServerUnavailable { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountSendEmailValidationTokenErrorEmailServerUnavailable".into(),
+            )?;
+        }
+        libparsec::AccountSendEmailValidationTokenError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountSendEmailValidationTokenErrorInternal".into(),
+            )?;
+        }
+        libparsec::AccountSendEmailValidationTokenError::InvalidEmail { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountSendEmailValidationTokenErrorInvalidEmail".into(),
+            )?;
+        }
+        libparsec::AccountSendEmailValidationTokenError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountSendEmailValidationTokenErrorOffline".into(),
+            )?;
+        }
+        libparsec::AccountSendEmailValidationTokenError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"AccountSendEmailValidationTokenErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ActiveUsersLimit
 
 #[allow(dead_code)]
@@ -15818,6 +15937,109 @@ fn variant_workspace_watch_entry_one_shot_error_rs_to_js(
         }
     }
     Ok(js_obj)
+}
+
+// account_create_proceed
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountCreateProceed(
+    human_label: String,
+    validation_token: String,
+    config_dir: String,
+    addr: String,
+    password: String,
+) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let validation_token = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::EmailValidationToken, _> {
+                libparsec::EmailValidationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(validation_token).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAnonymousAccountAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let password = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
+            custom_from_rs_string(password).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::account_create_proceed(
+            human_label,
+            validation_token,
+            &config_dir,
+            addr,
+            password,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_create_proceed_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// account_send_email_validation_token
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn accountSendEmailValidationToken(email: String, config_dir: String, addr: String) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let addr = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecAnonymousAccountAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::account_send_email_validation_token(&email, &config_dir, addr).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_account_send_email_validation_token_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
 }
 
 // archive_device

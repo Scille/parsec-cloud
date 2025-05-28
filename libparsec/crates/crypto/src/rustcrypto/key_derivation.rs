@@ -40,6 +40,11 @@ impl KeyDerivation {
 
         SecretKey(subkey.into_bytes())
     }
+
+    #[expect(unused_variables)]
+    pub fn derive_uuid_from_uuid(&self, id: uuid::Uuid) -> uuid::Uuid {
+        todo!("done in #10471")
+    }
 }
 
 impl From<[u8; KeyDerivation::SIZE]> for KeyDerivation {
