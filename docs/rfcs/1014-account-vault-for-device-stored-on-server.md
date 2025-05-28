@@ -163,8 +163,8 @@ pub enum AccountVaultItem {
     "type": "account_vault_item_auto_enrollment_device",
     "other_fields": [
         {
-          "name": "organization_id",
-          "type": "OrganizationID"
+            "name": "organization_id",
+            "type": "OrganizationID"
         },
         // Device ID is not provided here since it is not relevant:
         // this item is only used to give access to this organization/user
@@ -174,9 +174,9 @@ pub enum AccountVaultItem {
         "type": "UserID"
         },
         {
-          // `LocalDevice` encrypted by the vault key
-          "name": "encrypted_data",
-          "type": "Bytes"
+            // `LocalDevice` encrypted by the vault key
+            "name": "encrypted_data",
+            "type": "Bytes"
         }
     ]
 }
@@ -188,8 +188,8 @@ pub enum AccountVaultItem {
     "type": "account_vault_item_web_local_device_key",
     "other_fields": [
         {
-          "name": "organization_id",
-          "type": "OrganizationID"
+            "name": "organization_id",
+            "type": "OrganizationID"
         },
         // User ID is not provided here since it is not relevant:
         // this item is only used by clients looking to decrypt a given device.
@@ -198,11 +198,11 @@ pub enum AccountVaultItem {
             "type": "DeviceID"
         },
         {
-          // `SecretKey` encrypted by the vault key.
-          // This key is itself used to decrypt the `LocalDevice` stored on
-          // the web client's storage.
-          "name": "encrypted_data",
-          "type": "Bytes"
+            // `SecretKey` encrypted by the vault key.
+            // This key is itself used to decrypt the `LocalDevice` stored on
+            // the web client's storage.
+            "name": "encrypted_data",
+            "type": "Bytes"
         }
     ]
 }
