@@ -81,7 +81,8 @@ jobs:
     needs: version
     runs-on: ubuntu-22.04
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
-    if: inputs.version_patch_run_id != '' && always() || success()
+    # if: inputs.version_patch_run_id != '' && always() || success()
+    if: false
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
@@ -191,31 +192,76 @@ jobs:
             extensions: exe
             os_alias: win
             artifact_tag: windows-exe
-          - name: 🍎 macOS x86
-            platform: macos
-            os: macos-13
-            raw_latest_file: latest-mac.yml
-            extensions: dmg zip
-            os_alias: mac
-            artifact_tag: macos-dmg
-          - name: 🍎 macOS ARM
-            platform: macos
-            os: macos-15
-            raw_latest_file: latest-mac.yml
-            extensions: dmg zip
-            os_alias: mac
-            artifact_tag: macos-dmg
-          - name: 🐧 AppImage 4 Linux
-            platform: linux-gnu
-            os: ubuntu-22.04
-            raw_latest_file: latest-linux.yml
-            os_alias: linux
-            extensions: AppImage
-            artifact_tag: linux-appimage
+          # - name: 🍎 macOS x86
+          #   platform: macos
+          #   os: macos-13
+          #   raw_latest_file: latest-mac.yml
+          #   extensions: dmg zip
+          #   os_alias: mac
+          #   artifact_tag: macos-dmg
+          # - name: 🍎 macOS ARM
+          #   platform: macos
+          #   os: macos-15
+          #   raw_latest_file: latest-mac.yml
+          #   extensions: dmg zip
+          #   os_alias: mac
+          #   artifact_tag: macos-dmg
+          # - name: 🐧 AppImage 4 Linux
+          #   platform: linux-gnu
+          #   os: ubuntu-22.04
+          #   raw_latest_file: latest-linux.yml
+          #   os_alias: linux
+          #   extensions: AppImage
+          #   artifact_tag: linux-appimage
     name: "${{ matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
+      - name: Create Dev Drive using ReFS
+        if: matrix.platform == 'windows'
+        run: |
+          function Get-Permissions ($folder) {
+            (get-acl $folder).access | select `
+              @{Label="Identity";           Expression={$_.IdentityReference}}, `
+              @{Label="Owner";              Expression={$_.Owner}}, `
+              @{Label="Right";              Expression={$_.FileSystemRights}}, `
+              @{Label="Access";             Expression={$_.AccessControlType}}, `
+              @{Label="Inherited";          Expression={$_.IsInherited}}, `
+              @{Label="Inheritance Flags";  Expression={$_.InheritanceFlags}}, `
+              @{Label="Propagation Flags";  Expression={$_.PropagationFlags}} `
+              | ft -auto
+          }
+
+          Get-Permissions ${{ github.workspace }}
+
+          $Volume = New-VHD -Path C:/parsec_cloud_dev_drive.vhdx -SizeBytes 25GB |
+                    Mount-VHD -Passthru |
+                    Initialize-Disk -Passthru |
+                    New-Partition -DriveLetter K -UseMaximumSize |
+                    Format-Volume -FileSystem ReFS -Confirm:$false -Force
+
+          # Return all volumes
+          Get-Volume
+
+          # Replace `github.workspace` dir with a created volume because `actions/checkout` do not allow checkin-out of `github.workspace`
+          $NewWorkspace = "$($Volume.DriveLetter):\parsec-cloud"
+          Remove-Item -Path ${{ github.workspace }}
+          New-Item -Path $NewWorkspace -ItemType Directory
+          # New-Item -Path ${{ github.workspace }} -ItemType SymbolicLink -Value $NewWorkspace
+
+          Get-Permissions $NewWorkspace
+
+          Write-Output "Hello World" >> $NewWorkspace\foo.txt
+
+          git config --global --add safe.directory $NewWorkspace
+          git init "$($Volume.DriveLetter):\"
+          git init $NewWorkspace
+
+          Write-Output "DEV_DRIVE=$($Volume.DriveLetter):" >> $env:GITHUB_ENV
+          Write-Output "GITHUB_WORKSPACE=$NewWorkspace" >> $env:GITHUB_ENV
+        working-directory: C:\
+        timeout-minutes: 2
+
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
           ref: ${{ inputs.commit_sha }}
