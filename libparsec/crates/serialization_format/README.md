@@ -37,3 +37,51 @@ docs to learn more about it.
 [`procedural macros`]: https://doc.rust-lang.org/reference/procedural-macros.html#function-like-procedural-macros
 [`syn`]: https://docs.rs/syn/latest/syn/
 [`quote`]: https://docs.rs/crate/quote/latest
+
+## FAQ
+
+### Why do we use a list over a map for the field values?
+
+We use this form:
+
+```json5
+fields: [
+  {
+    name: foo,
+    ty: String
+  },
+  {
+    name: bar,
+    ty: Integer
+    introduced_in: "340"
+  }
+]
+```
+
+Because we also have the optional value `introduced_in` that is not always present, it prevents us to use the following form:
+
+
+```json5
+fields: {
+  foo: String,
+  bar: Integer
+}
+```
+
+We are also limited by `miniserde` that does not accept a different form for the same field (`string | object`)
+
+The middle ground would be
+
+```json5
+fields: {
+  foo: {
+    ty: String
+  },
+  bar: {
+    ty: Integer,
+    introduced_in: "340"
+  }
+}
+```
+
+But there is no much gain with the original form
