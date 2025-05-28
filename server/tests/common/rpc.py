@@ -11,7 +11,6 @@ from parsec._parsec import (
     CancelledGreetingAttemptReason,
     DateTime,
     EmailAddress,
-    EmailValidationToken,
     EnrollmentID,
     GreetingAttemptID,
     HashDigest,
@@ -96,20 +95,10 @@ class BaseAnonymousAccountRpcClient:
 
     async def account_create_proceed(
         self,
-        validation_token: EmailValidationToken,
-        human_label: str,
-        auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
-        auth_method_hmac_key: SecretKey,
-        auth_method_id: AccountAuthMethodID,
-        vault_key_access: bytes,
+        account_create_step: anonymous_account_cmds.latest.account_create_proceed.AccountCreateStep,
     ) -> anonymous_account_cmds.latest.account_create_proceed.Rep:
         req = anonymous_account_cmds.latest.account_create_proceed.Req(
-            validation_token=validation_token,
-            human_label=human_label,
-            auth_method_password_algorithm=auth_method_password_algorithm,
-            auth_method_hmac_key=auth_method_hmac_key,
-            auth_method_id=auth_method_id,
-            vault_key_access=vault_key_access,
+            account_create_step=account_create_step
         )
         raw_rep = await self._do_request(req.dump(), "anonymous_account")
         return anonymous_account_cmds.latest.account_create_proceed.Rep.load(raw_rep)

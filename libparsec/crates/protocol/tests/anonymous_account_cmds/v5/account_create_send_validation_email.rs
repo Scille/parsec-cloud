@@ -65,28 +65,6 @@ pub fn rep_ok() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_invalid_email() {
-    // Generated from Parsec 3.4.0-a.7+dev
-    // Content:
-    //   status: 'invalid_email'
-    let raw: &[u8] = hex!("81a6737461747573ad696e76616c69645f656d61696c").as_ref();
-
-    let expected =
-        anonymous_account_cmds::account_create_send_validation_email::Rep::InvalidEmail {};
-    let data =
-        anonymous_account_cmds::account_create_send_validation_email::Rep::load(raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
-
-    let data2 =
-        anonymous_account_cmds::account_create_send_validation_email::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected);
-}
-
 pub fn rep_email_server_unavailable() {
     // Generated from Parsec 3.4.0-a.7+dev
     // Content:

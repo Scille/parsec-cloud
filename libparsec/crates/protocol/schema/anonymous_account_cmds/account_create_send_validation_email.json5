@@ -23,9 +23,6 @@
       {
         // The SMTP server rejected the email recipient
         "status": "email_recipient_refused"
-      },
-      {
-        "status": "invalid_email"
       }
     ]
   }

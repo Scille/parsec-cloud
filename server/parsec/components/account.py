@@ -256,39 +256,42 @@ class BaseAccountComponent:
         client_ctx: AnonymousAccountClientContext,
         req: anonymous_account_cmds.latest.account_create_proceed.Req,
     ) -> anonymous_account_cmds.latest.account_create_proceed.Rep:
-        now = DateTime.now()
-        match req.auth_method_password_algorithm:
-            case UntrustedPasswordAlgorithmArgon2id() as algo:
-                pass
-            case _:
-                # No other algorithm is supported/implemented for now
-                raise NotImplementedError
+        # TODO #10599
+        # now = DateTime.now()
+        # match req.auth_method_password_algorithm:
+        #     case UntrustedPasswordAlgorithmArgon2id() as algo:
+        #         pass
+        #     case _:
+        #         # No other algorithm is supported/implemented for now
+        #         raise NotImplementedError
 
-        outcome = await self.create_account(
-            token=req.validation_token,
-            now=now,
-            mac_key=req.auth_method_hmac_key,
-            vault_key_access=req.vault_key_access,
-            human_label=req.human_label,
-            created_by_user_agent=client_ctx.client_user_agent,
-            created_by_ip=client_ctx.client_ip_address,
-            auth_method_id=req.auth_method_id,
-            auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
-                opslimit=algo.opslimit,
-                memlimit_kb=algo.memlimit_kb,
-                parallelism=algo.parallelism,
-            ),
-        )
+        # outcome = await self.create_account(
+        #     token=req.validation_token,
+        #     now=now,
+        #     mac_key=req.auth_method_hmac_key,
+        #     vault_key_access=req.vault_key_access,
+        #     human_label=req.human_label,
+        #     created_by_user_agent=client_ctx.client_user_agent,
+        #     created_by_ip=client_ctx.client_ip_address,
+        #     auth_method_id=req.auth_method_id,
+        #     auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
+        #         opslimit=algo.opslimit,
+        #         memlimit_kb=algo.memlimit_kb,
+        #         parallelism=algo.parallelism,
+        #     ),
+        # )
 
-        match outcome:
-            case None:
-                return anonymous_account_cmds.latest.account_create_proceed.RepOk()
-            case AccountCreateAccountBadOutcome.INVALID_TOKEN:
-                return (
-                    anonymous_account_cmds.latest.account_create_proceed.RepInvalidValidationToken()
-                )
-            case AccountCreateAccountBadOutcome.AUTH_METHOD_ALREADY_EXISTS:
-                return anonymous_account_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
+        # match outcome:
+        #     case None:
+        #         return anonymous_account_cmds.latest.account_create_proceed.RepOk()
+        #     case AccountCreateAccountBadOutcome.INVALID_TOKEN:
+        #         return (
+        #             anonymous_account_cmds.latest.account_create_proceed.RepInvalidValidationCode()
+        #         )
+        #     case AccountCreateAccountBadOutcome.AUTH_METHOD_ALREADY_EXISTS:
+        #         return anonymous_account_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
+
+        return anonymous_account_cmds.latest.account_create_proceed.RepOk()
 
     async def _send_email_validation_token(
         self,
