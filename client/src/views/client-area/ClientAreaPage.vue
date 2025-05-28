@@ -231,7 +231,8 @@ onMounted(async () => {
 
     if (orgListResponse.isError || !orgListResponse.data || orgListResponse.data.type !== DataType.ListOrganizations) {
       currentOrganization.value = DefaultBmsOrganization;
-      // TODO: display a toast or a modal or something
+      // TODO: manage this error case properly, for example monthly subscription customers cannot have no orgs
+      // https://github.com/Scille/parsec-cloud/issues/10418
       return;
     }
 

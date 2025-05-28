@@ -246,6 +246,7 @@ const defaultCard = ref<MsPaymentMethod.Card | undefined>(undefined);
 const currentDate = DateTime.now();
 const querying = ref(false);
 // TODO: retrieve this from the backend if it ever becomes available
+// https://github.com/Scille/parsec-cloud/issues/10416
 const estimations = ref<undefined | { amount: number }>(undefined);
 
 onMounted(async () => {

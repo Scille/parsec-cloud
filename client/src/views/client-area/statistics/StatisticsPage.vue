@@ -373,6 +373,9 @@ function getExtraData(): CircleProgressData | undefined {
 
 onMounted(async () => {
   if (!isDefaultOrganization(props.currentOrganization)) {
+    // TODO: If the organization is not bootstrapped (needs to request status),
+    // we should redirect directly to dashboard page or show an error message like the CustomOrderStatisticsPage.
+    // https://github.com/Scille/parsec-cloud/issues/10417
     const response = await BmsAccessInstance.get().getOrganizationStats(props.currentOrganization.bmsId);
 
     if (!response.isError && response.data && response.data.type === DataType.OrganizationStats) {

@@ -277,7 +277,7 @@
           <ion-item
             button
             lines="none"
-            :disabled="clientAreaPagesDisabled[ClientAreaPages.CustomOrderBillingDetails]"
+            :disabled="!showMenu"
             class="button-medium menu-client-list-item"
             v-show="false"
             :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderBillingDetails }"
@@ -293,6 +293,8 @@
       </div>
     </div>
 
+    <!-- TODO: check if this block still needs to be hidden or should be shown / removed -->
+    <!-- https://github.com/Scille/parsec-cloud/issues/10414 -->
     <div
       class="contact"
       v-show="false"
@@ -402,7 +404,6 @@ const billingSystem = ref(BmsAccessInstance.get().getPersonalInformation().billi
 const showMenu = ref(false);
 const querying = ref(false);
 
-// TODO: extend this to all client area pages if needed
 const clientAreaPagesDisabled = ref<Partial<Record<ClientAreaPages, boolean>>>({
   [ClientAreaPages.Contracts]: false,
   [ClientAreaPages.CustomOrderBillingDetails]: false,
