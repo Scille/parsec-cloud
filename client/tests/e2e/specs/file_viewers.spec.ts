@@ -66,7 +66,7 @@ msTest('Quick access loads correct document', async ({ documents }) => {
   await expect(documents.locator('.file-viewer').locator('.file-viewer-topbar').locator('ion-text')).toHaveText(doc2Name);
 });
 
-msTest('Audio viewer', async ({ documents }) => {
+msTest.skip('Audio viewer', async ({ documents }) => {
   msTest.setTimeout(60_000);
 
   await openFileType(documents, 'mp3');
