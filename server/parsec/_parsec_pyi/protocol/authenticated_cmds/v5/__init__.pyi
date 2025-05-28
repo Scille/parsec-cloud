@@ -20,6 +20,7 @@ from . import (
     invite_new_shamir_recovery,
     invite_new_user,
     list_frozen_users,
+    organization_info,
     ping,
     pki_enrollment_accept,
     pki_enrollment_list,
@@ -62,6 +63,7 @@ class AnyCmdReq:
         | invite_new_shamir_recovery.Req
         | invite_new_user.Req
         | list_frozen_users.Req
+        | organization_info.Req
         | ping.Req
         | pki_enrollment_accept.Req
         | pki_enrollment_list.Req
@@ -101,6 +103,7 @@ __all__ = [
     "invite_new_shamir_recovery",
     "invite_new_user",
     "list_frozen_users",
+    "organization_info",
     "ping",
     "pki_enrollment_accept",
     "pki_enrollment_list",
