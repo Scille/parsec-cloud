@@ -38,8 +38,3 @@ class RepEmailRecipientRefused(Rep):
     def __init__(
         self,
     ) -> None: ...
-
-class RepInvalidEmail(Rep):
-    def __init__(
-        self,
-    ) -> None: ...

@@ -1,12 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use bytes::Bytes;
+use libparsec_crypto::SecretKey;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 use thiserror::Error;
 
-use libparsec_crypto::SecretKey;
 use libparsec_serialization_format::parsec_data;
 
 use crate::{

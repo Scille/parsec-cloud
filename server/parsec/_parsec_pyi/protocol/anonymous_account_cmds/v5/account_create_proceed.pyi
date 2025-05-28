@@ -6,22 +6,33 @@ from __future__ import annotations
 
 from parsec._parsec import (
     AccountAuthMethodID,
-    EmailValidationToken,
+    EmailAddress,
+    HumanHandle,
     SecretKey,
     UntrustedPasswordAlgorithm,
+    ValidationCode,
 )
 
-class Req:
+class AccountCreateStep:
+    pass
+
+class AccountCreateStepNumber0CheckCode(AccountCreateStep):
+    def __init__(self, validation_code: ValidationCode, email: EmailAddress) -> None: ...
+    @property
+    def email(self) -> EmailAddress: ...
+    @property
+    def validation_code(self) -> ValidationCode: ...
+
+class AccountCreateStepNumber1Create(AccountCreateStep):
     def __init__(
         self,
-        validation_token: EmailValidationToken,
-        human_label: str,
+        validation_code: ValidationCode,
+        human_handle: HumanHandle,
         auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         auth_method_hmac_key: SecretKey,
         auth_method_id: AccountAuthMethodID,
         vault_key_access: bytes,
     ) -> None: ...
-    def dump(self) -> bytes: ...
     @property
     def auth_method_hmac_key(self) -> SecretKey: ...
     @property
@@ -29,11 +40,17 @@ class Req:
     @property
     def auth_method_password_algorithm(self) -> UntrustedPasswordAlgorithm | None: ...
     @property
-    def human_label(self) -> str: ...
+    def human_handle(self) -> HumanHandle: ...
     @property
-    def validation_token(self) -> EmailValidationToken: ...
+    def validation_code(self) -> ValidationCode: ...
     @property
     def vault_key_access(self) -> bytes: ...
+
+class Req:
+    def __init__(self, account_create_step: AccountCreateStep) -> None: ...
+    def dump(self) -> bytes: ...
+    @property
+    def account_create_step(self) -> AccountCreateStep: ...
 
 class Rep:
     @staticmethod
@@ -52,7 +69,7 @@ class RepOk(Rep):
         self,
     ) -> None: ...
 
-class RepInvalidValidationToken(Rep):
+class RepInvalidValidationCode(Rep):
     def __init__(
         self,
     ) -> None: ...

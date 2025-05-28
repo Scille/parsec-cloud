@@ -431,6 +431,91 @@ export interface WorkspaceUserAccessInfo {
 }
 
 
+// AccountCreateProceedError
+export interface AccountCreateProceedErrorAuthMethodIdAlreadyExists {
+    tag: "AuthMethodIdAlreadyExists"
+    error: string
+}
+export interface AccountCreateProceedErrorCryptoError {
+    tag: "CryptoError"
+    error: string
+}
+export interface AccountCreateProceedErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountCreateProceedErrorInvalidValidationCode {
+    tag: "InvalidValidationCode"
+    error: string
+}
+export interface AccountCreateProceedErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface AccountCreateProceedErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type AccountCreateProceedError =
+  | AccountCreateProceedErrorAuthMethodIdAlreadyExists
+  | AccountCreateProceedErrorCryptoError
+  | AccountCreateProceedErrorInternal
+  | AccountCreateProceedErrorInvalidValidationCode
+  | AccountCreateProceedErrorOffline
+  | AccountCreateProceedErrorStopped
+
+
+// AccountCreateStep
+export interface AccountCreateStepCheckCode {
+    tag: "CheckCode"
+    validation_code: string
+    email: string
+}
+export interface AccountCreateStepCreate {
+    tag: "Create"
+    human_handle: HumanHandle
+    password: string
+    validation_code: string
+}
+export type AccountCreateStep =
+  | AccountCreateStepCheckCode
+  | AccountCreateStepCreate
+
+
+// AccountSendEmailValidationTokenError
+export interface AccountSendEmailValidationTokenErrorEmailParseError {
+    tag: "EmailParseError"
+    error: string
+}
+export interface AccountSendEmailValidationTokenErrorEmailRecipientRefused {
+    tag: "EmailRecipientRefused"
+    error: string
+}
+export interface AccountSendEmailValidationTokenErrorEmailServerUnavailable {
+    tag: "EmailServerUnavailable"
+    error: string
+}
+export interface AccountSendEmailValidationTokenErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface AccountSendEmailValidationTokenErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface AccountSendEmailValidationTokenErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type AccountSendEmailValidationTokenError =
+  | AccountSendEmailValidationTokenErrorEmailParseError
+  | AccountSendEmailValidationTokenErrorEmailRecipientRefused
+  | AccountSendEmailValidationTokenErrorEmailServerUnavailable
+  | AccountSendEmailValidationTokenErrorInternal
+  | AccountSendEmailValidationTokenErrorOffline
+  | AccountSendEmailValidationTokenErrorStopped
+
+
 // ActiveUsersLimit
 export interface ActiveUsersLimitLimitedTo {
     tag: "LimitedTo"
@@ -3712,6 +3797,16 @@ export type WorkspaceWatchEntryOneShotError =
   | WorkspaceWatchEntryOneShotErrorStopped
 
 
+export function accountCreateProceed(
+    step: AccountCreateStep,
+    config_dir: string,
+    addr: string
+): Promise<Result<null, AccountCreateProceedError>>
+export function accountCreateSendValidationEmail(
+    email: string,
+    config_dir: string,
+    addr: string
+): Promise<Result<null, AccountSendEmailValidationTokenError>>
 export function archiveDevice(
     device_path: string
 ): Promise<Result<null, ArchiveDeviceError>>
