@@ -2,10 +2,17 @@
 # RUST #
 ########
 
-rust-libparsec: &rust-libparsec
-  - libparsec/**
+libparsec-rust-file: &libparsec-rust-file libparsec/**/*.rs
+
+libparsec-schema-file: &libparsec-schema-file libparsec/**/*.json5
 
 # Only list root Cargo files,
+# We only need those, since changes like:
+# - Version bump of one of our crate
+# - An addition/deletion of a dependency
+# - A new added crate
+# - A renamed crate
+# will be reflected in the lock file
 rust-dependencies-workspace: &rust-dependencies-workspace
   - Cargo.toml
   - Cargo.lock
@@ -17,14 +24,14 @@ rust-cargo-deny: &rust-cargo-deny
 rust-toolchain: &rust-toolchain rust-toolchain.toml
 
 rust-python-binding: &rust-python-binding
-  - server/src/**
+  - server/src/**/*.rs
   - server/Cargo.toml
 
-rust-web-binding: &rust-web-binding bindings/web/**
+rust-web-binding: &rust-web-binding bindings/web/**/*.rs
 
-rust-platform-crates: &rust-platform-crates libparsec/crates/platform_*/**
+rust-platform-crates: &rust-platform-crates libparsec/crates/platform_*/**/*.rs
 
-rust-cli: &rust-cli cli/**
+rust-cli: &rust-cli cli/**/*.rs
 
 rust-test-wasm: &rust-test-wasm
   - *rust-platform-crates
@@ -33,7 +40,8 @@ rust-test-wasm: &rust-test-wasm
 
 rust-changes: &rust-changes
   - *rust-dependencies-workspace
-  - *rust-libparsec
+  - *libparsec-rust-file
+  - *libparsec-schema-file
   - *rust-toolchain
   - *rust-python-binding
   - *rust-web-binding
@@ -87,7 +95,8 @@ python-jobs:
   - .github/actions/**
   - *python-changes
   - *rust-dependencies-workspace
-  - *rust-libparsec
+  - *libparsec-rust-file
+  - *libparsec-schema-file
   - *rust-toolchain
   - *rust-python-binding
 
@@ -136,7 +145,8 @@ new-client-dependencies-project: &new-client-dependencies-project
 web-jobs:
   - .github/workflows/ci-web.yml
   - *rust-dependencies-workspace
-  - *rust-libparsec
+  - *libparsec-rust-file
+  - *libparsec-schema-file
   - *rust-toolchain
   - *rust-web-binding
   - *new-client-dependencies-project
