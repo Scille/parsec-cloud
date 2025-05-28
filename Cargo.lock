@@ -2008,6 +2008,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_account"
+version = "3.4.0-a.7+dev"
+dependencies = [
+ "libparsec_client_connection",
+ "libparsec_platform_async",
+ "libparsec_platform_device_loader",
+ "libparsec_protocol",
+ "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
+ "libparsec_types",
+ "thiserror 2.0.12",
+]
+
+[[package]]
 name = "libparsec_bindings_android"
 version = "3.4.0-a.7+dev"
 dependencies = [
