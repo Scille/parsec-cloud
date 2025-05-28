@@ -1990,6 +1990,7 @@ name = "libparsec"
 version = "3.4.0-a.7+dev"
 dependencies = [
  "env_logger",
+ "libparsec_account",
  "libparsec_client",
  "libparsec_client_connection",
  "libparsec_crypto",
