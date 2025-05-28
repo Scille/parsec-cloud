@@ -1,0 +1,26 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "organization_info",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        // Total metadata size generated since the creation of the organization.
+                        "name": "total_metadata_bytes",
+                        "type": "Size"
+                    },
+                    {
+                        // Total block size generated since the creation of the organization.
+                        "name": "total_block_bytes",
+                        "type": "Size"
+                    }
+                ]
+            }
+        ]
+    }
+]
