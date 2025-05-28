@@ -4,24 +4,25 @@
 
 from __future__ import annotations
 
-from parsec._parsec import (
-    AccountAuthMethodID,
-    EmailValidationToken,
-    SecretKey,
-    UntrustedPasswordAlgorithm,
-)
+from parsec._parsec import AccountAuthMethodID, EmailAddress, SecretKey, UntrustedPasswordAlgorithm
 
-class Req:
+class AccountCreateStep:
+    pass
+
+class AccountCreateStepNumber0CheckCode(AccountCreateStep):
+    def __init__(self, code: str) -> None: ...
+    @property
+    def code(self) -> str: ...
+
+class AccountCreateStepNumber1Create(AccountCreateStep):
     def __init__(
         self,
-        validation_token: EmailValidationToken,
         human_label: str,
         auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         auth_method_hmac_key: SecretKey,
         auth_method_id: AccountAuthMethodID,
         vault_key_access: bytes,
     ) -> None: ...
-    def dump(self) -> bytes: ...
     @property
     def auth_method_hmac_key(self) -> SecretKey: ...
     @property
@@ -31,9 +32,15 @@ class Req:
     @property
     def human_label(self) -> str: ...
     @property
-    def validation_token(self) -> EmailValidationToken: ...
-    @property
     def vault_key_access(self) -> bytes: ...
+
+class Req:
+    def __init__(self, email: EmailAddress, account_create_step: AccountCreateStep) -> None: ...
+    def dump(self) -> bytes: ...
+    @property
+    def account_create_step(self) -> AccountCreateStep: ...
+    @property
+    def email(self) -> EmailAddress: ...
 
 class Rep:
     @staticmethod

@@ -16,6 +16,7 @@ from .validation import *
 from .workspace import *
 from .workspace_history import *
 from .workspace_history2 import *
+from .account import *
 
 
 def libparsec_init_set_on_event_callback(
