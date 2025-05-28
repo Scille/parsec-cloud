@@ -35,3 +35,4 @@ from .test_invite_greeter_step import *  # noqa
 from .test_invite_complete import *  # noqa
 from .test_list_frozen_users import *  # noqa
 from .test_invite_new_shamir_recovery import *  # noqa
+from .test_organization_info import *  # noqa

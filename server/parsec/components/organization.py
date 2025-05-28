@@ -18,6 +18,7 @@ from parsec._parsec import (
     VerifyKey,
     VlobID,
     anonymous_cmds,
+    authenticated_cmds,
     tos_cmds,
 )
 from parsec.api import api
@@ -420,3 +421,18 @@ class BaseOrganizationComponent:
                 client_ctx.organization_not_found_abort()
             case OrganizationGetTosBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
+
+    @api
+    async def api_organization_info(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.organization_info.Req,
+    ) -> authenticated_cmds.latest.organization_info.Rep:
+        outcome = await self.organization_stats(client_ctx.organization_id)
+        match outcome:
+            case OrganizationStats() as stats:
+                return authenticated_cmds.latest.organization_info.RepOk(
+                    total_block_bytes=stats.data_size, total_metadata_bytes=stats.metadata_size
+                )
+            case OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
