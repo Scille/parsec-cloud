@@ -220,7 +220,7 @@ jobs:
         timeout-minutes: 5
 
       - name: E2E tests
-        run: npm run test:e2e:headless -- --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }}
+        run: npm run test:e2e:headless -- --shard=${{ matrix.shard_index }}/${{ matrix.shard_total }} -g "Audio viewer"
         env:
           TESTBED_SERVER: parsec3://localhost:6777?no_ssl=true
           PARSEC_APP_TRIAL_SERVERS: localhost:6777?no_ssl=true
