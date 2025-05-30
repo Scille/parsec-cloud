@@ -31,7 +31,7 @@
     </template>
 
     <!-- error -->
-    <template v-if="error || !orderRequests">
+    <template v-if="!querying && error">
       <ion-text class="body-lg no-orders">
         {{ $msTranslate(error) }}
       </ion-text>

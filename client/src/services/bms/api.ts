@@ -654,6 +654,13 @@ async function getCustomOrderRequests(token: AuthenticationToken): Promise<BmsRe
       validateStatus: (status) => status === 200,
     });
 
+    if (!axiosResponse.data) {
+      return {
+        status: 404,
+        isError: true,
+      };
+    }
+
     return {
       status: axiosResponse.status,
       isError: false,
