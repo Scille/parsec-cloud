@@ -16,13 +16,11 @@
         </ion-button>
       </div>
     </div>
-    <template v-if="!querying && !error && orderRequests && orderRequests.requests.length > 0">
-      <order-in-progress
-        v-for="order in orderRequests.requests"
-        :key="order.id"
-        :request="order"
-      />
-    </template>
+
+    <orders-list
+      v-if="!querying && !error && orderRequests"
+      :orders="orderRequests"
+    />
 
     <!-- loading -->
     <template v-if="querying">
@@ -32,15 +30,8 @@
       </div>
     </template>
 
-    <!-- no orders -->
-    <template v-if="!querying && !error && orderRequests && orderRequests.requests.length === 0">
-      <ion-text class="body-lg no-orders">
-        {{ $msTranslate('clientArea.orders.noOrders') }}
-      </ion-text>
-    </template>
-
     <!-- error -->
-    <template v-if="error || !orderRequests">
+    <template v-if="!querying && error">
       <ion-text class="body-lg no-orders">
         {{ $msTranslate(error) }}
       </ion-text>
@@ -50,9 +41,9 @@
 
 <script setup lang="ts">
 import { IonText, IonButton, modalController } from '@ionic/vue';
-import { BmsAccessInstance, GetCustomOrderRequestsResultData, DataType } from '@/services/bms';
+import { BmsAccessInstance, DataType, CustomOrderRequest } from '@/services/bms';
 import NewOrderModal from '@/views/client-area/orders/NewOrderModal.vue';
-import OrderInProgress from '@/components/client-area/OrderInProgress.vue';
+import { OrdersList } from '@/components/client-area';
 import { ref, onMounted } from 'vue';
 import { MsModalResult, MsSpinner } from 'megashark-lib';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -63,7 +54,26 @@ const props = defineProps<{
 
 const error = ref<string>('');
 const querying = ref(true);
-const orderRequests = ref<GetCustomOrderRequestsResultData | undefined>(undefined);
+const orderRequests = ref<Array<CustomOrderRequest>>([]);
+
+onMounted(async () => {
+  await getCustomOrderRequests();
+});
+
+async function getCustomOrderRequests(): Promise<void> {
+  querying.value = true;
+  try {
+    const orderRequestsRep = await BmsAccessInstance.get().getCustomOrderRequests();
+
+    if (!orderRequestsRep.isError && orderRequestsRep.data && orderRequestsRep.data.type === DataType.GetCustomOrderRequests) {
+      orderRequests.value = orderRequestsRep.data.requests.reverse();
+    } else {
+      error.value = 'clientArea.contracts.errors.noInfo';
+    }
+  } finally {
+    querying.value = false;
+  }
+}
 
 async function openNewOrderModal(): Promise<void> {
   const modal = await modalController.create({
@@ -82,22 +92,9 @@ async function openNewOrderModal(): Promise<void> {
       }),
       PresentationMode.Toast,
     );
+    await getCustomOrderRequests();
   }
 }
-
-onMounted(async () => {
-  querying.value = true;
-
-  const orderRequestsRep = await BmsAccessInstance.get().getCustomOrderRequests();
-
-  if (!orderRequestsRep.isError && orderRequestsRep.data && orderRequestsRep.data.type === DataType.GetCustomOrderRequests) {
-    orderRequests.value = orderRequestsRep.data;
-  } else {
-    error.value = 'clientArea.contracts.errors.noInfo';
-  }
-
-  querying.value = false;
-});
 </script>
 
 <style scoped lang="scss">

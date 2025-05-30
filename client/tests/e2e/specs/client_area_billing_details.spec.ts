@@ -1,11 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DEFAULT_USER_INFORMATION, MockBms, expect, fillIonInput, msTest } from '@tests/e2e/helpers';
+import { DEFAULT_USER_INFORMATION, MockBms, clientAreaNavigateTo, expect, fillIonInput, msTest } from '@tests/e2e/helpers';
 
 msTest('Test initial status', async ({ clientArea }) => {
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(4).click();
-  await expect(title).toHaveText('Billing details');
+  await clientAreaNavigateTo(clientArea, 'Billing details');
 
   const inputs = clientArea.locator('.main-content').locator('ion-input');
   await expect(inputs.nth(0).locator('input')).toHaveValue(DEFAULT_USER_INFORMATION.address.line1);
@@ -40,9 +38,7 @@ msTest('Test initial status', async ({ clientArea }) => {
 });
 
 msTest('Test update address', async ({ clientArea }) => {
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(4).click();
-  await expect(title).toHaveText('Billing details');
+  await clientAreaNavigateTo(clientArea, 'Billing details');
   await clientArea.locator('.main-content').locator('.toggle-button').click();
 
   const inputs = clientArea.locator('.main-content').locator('ion-input');
@@ -60,9 +56,7 @@ msTest('Test update address', async ({ clientArea }) => {
 msTest('Test update address generic error', async ({ clientArea }) => {
   await MockBms.mockBillingDetails(clientArea, {}, { PATCH: { errors: { status: 400 } } });
 
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(4).click();
-  await expect(title).toHaveText('Billing details');
+  await clientAreaNavigateTo(clientArea, 'Billing details');
   await clientArea.locator('.main-content').locator('.toggle-button').click();
 
   const inputs = clientArea.locator('.main-content').locator('ion-input');
@@ -79,9 +73,8 @@ msTest('Test update address generic error', async ({ clientArea }) => {
 
 msTest('Test update address timeout', async ({ clientArea }) => {
   await MockBms.mockBillingDetails(clientArea, {}, { PATCH: { timeout: true } });
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(4).click();
-  await expect(title).toHaveText('Billing details');
+
+  await clientAreaNavigateTo(clientArea, 'Billing details');
   await clientArea.locator('.main-content').locator('.toggle-button').click();
 
   const inputs = clientArea.locator('.main-content').locator('ion-input');
@@ -97,9 +90,7 @@ msTest('Test update address timeout', async ({ clientArea }) => {
 });
 
 msTest('Test cancel update address', async ({ clientArea }) => {
-  const title = clientArea.locator('.header-content').locator('.header-title');
-  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(4).click();
-  await expect(title).toHaveText('Billing details');
+  await clientAreaNavigateTo(clientArea, 'Billing details');
   await clientArea.locator('.main-content').locator('.toggle-button').click();
 
   const inputs = clientArea.locator('.main-content').locator('ion-input');

@@ -1,12 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { clientAreaSwitchOrganization, expect, MockBms, msTest } from '@tests/e2e/helpers';
+import { clientAreaNavigateTo, clientAreaSwitchOrganization, expect, MockBms, msTest } from '@tests/e2e/helpers';
 
 msTest('Test initial status for an org', async ({ clientAreaCustomOrder }) => {
   const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
-  await expect(title).toHaveText('Contract');
+  await expect(title).toHaveText('Orders');
 
   await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+  await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
   const error = container.locator('.form-error');
@@ -55,7 +56,8 @@ msTest('Test initial status for all orgs', async ({ clientAreaCustomOrder }) => 
   await expect(orgSelector).toHaveText('All organizations');
 
   const title = clientAreaCustomOrder.locator('.header-content').locator('.header-title');
-  await expect(title).toHaveText('Contract');
+  await expect(title).toHaveText('Orders');
+  await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
   const error = container.locator('.form-error');
@@ -81,6 +83,7 @@ msTest('Custom order contract stats generic error', async ({ clientAreaCustomOrd
   await MockBms.mockOrganizationStats(clientAreaCustomOrder, {}, { GET: { errors: { status: 400 } } });
 
   await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+  await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
   const error = container.locator('.form-error');
@@ -92,6 +95,7 @@ msTest('Custom order contract stats timeout error', async ({ clientAreaCustomOrd
   await MockBms.mockOrganizationStats(clientAreaCustomOrder, {}, { GET: { timeout: true } });
 
   await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+  await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
   const error = container.locator('.form-error');
@@ -103,6 +107,7 @@ msTest('Custom order contract details generic error', async ({ clientAreaCustomO
   await MockBms.mockCustomOrderDetails(clientAreaCustomOrder, {}, { POST: { errors: { status: 400 } } });
 
   await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+  await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
   const error = container.locator('.form-error');
@@ -114,6 +119,7 @@ msTest('Custom order contract details timeout error', async ({ clientAreaCustomO
   await MockBms.mockCustomOrderDetails(clientAreaCustomOrder, {}, { POST: { timeout: true } });
 
   await clientAreaSwitchOrganization(clientAreaCustomOrder, 'BlackMesa');
+  await clientAreaNavigateTo(clientAreaCustomOrder, 'Contract');
 
   const container = clientAreaCustomOrder.locator('.client-contract-page');
   const error = container.locator('.form-error');

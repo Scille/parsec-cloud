@@ -183,10 +183,12 @@ function setToastOffset(width: number): void {
   window.document.documentElement.style.setProperty('--ms-toast-offset', `${width}px`);
 }
 
-async function _isCustomOrderPaid(organization: BmsOrganization): Promise<boolean> {
+async function _isCustomOrderProvisioned(organization: BmsOrganization): Promise<boolean> {
   const response = await BmsAccessInstance.get().getCustomOrderStatus(organization);
   if (!response.isError && response.data && response.data.type === DataType.CustomOrderStatus) {
-    return response.data.status === CustomOrderStatus.InvoicePaid;
+    return [CustomOrderStatus.ContractEnded, CustomOrderStatus.InvoiceToBePaid, CustomOrderStatus.InvoicePaid].includes(
+      response.data.status,
+    );
   }
   return false;
 }
@@ -229,7 +231,8 @@ onMounted(async () => {
 
     if (orgListResponse.isError || !orgListResponse.data || orgListResponse.data.type !== DataType.ListOrganizations) {
       currentOrganization.value = DefaultBmsOrganization;
-      // TODO: display a toast or a modal or something
+      // TODO: manage this error case properly, for example monthly subscription customers cannot have no orgs
+      // https://github.com/Scille/parsec-cloud/issues/10418
       return;
     }
 
@@ -251,20 +254,11 @@ onMounted(async () => {
     }
 
     if (billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) {
-      // If there are no paid organizations, we show orders, otherwise we default to contracts
+      // we default to orders page
       currentPage.value = ClientAreaPages.Orders;
-      // case where the user selected one specific organization
+      // but if the user selected one specific organization & it is provisioned, we default to contracts page
       if (!isDefaultOrganization(currentOrganization.value)) {
-        if (await _isCustomOrderPaid(currentOrganization.value)) {
-          currentPage.value = ClientAreaPages.Contracts;
-        }
-      } else {
-        let allPaid = organizations.value.length > 0;
-        // Check if all organizations have been paid
-        for (const org of organizations.value) {
-          allPaid &&= await _isCustomOrderPaid(org);
-        }
-        if (allPaid) {
+        if (await _isCustomOrderProvisioned(currentOrganization.value)) {
           currentPage.value = ClientAreaPages.Contracts;
         }
       }

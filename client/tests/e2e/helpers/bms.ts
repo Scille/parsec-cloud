@@ -78,7 +78,7 @@ interface MockMethodOptions {
   };
 }
 
-interface MockRouteOptions {
+export interface MockRouteOptions {
   PATCH?: MockMethodOptions;
   GET?: MockMethodOptions;
   PUT?: MockMethodOptions;
@@ -104,6 +104,16 @@ interface MockCustomOrderDetailsOverload {
   outsiderOrdered?: number;
   storageOrdered?: number;
 }
+
+export type MockClientAreaOverload =
+  | MockBillingDetailsOverload
+  | MockCustomOrderDetailsOverload
+  | MockCustomOrderRequestOverload
+  | MockCustomOrderStatusOverload
+  | MockGetInvoicesOverload
+  | MockListOrganizationOverload
+  | MockOrganizationStatsOverload
+  | MockOrganizationStatusOverload;
 
 function createCustomOrderInvoices(overload: MockCustomOrderDetailsOverload = {}): Array<any> {
   const invoices: Array<any> = [];
@@ -285,7 +295,7 @@ interface MockListOrganizationOverload {
   noOrg?: boolean;
 }
 
-async function mockListOrganizations(page: MsPage, options?: MockRouteOptions, overload?: MockListOrganizationOverload): Promise<void> {
+async function mockListOrganizations(page: MsPage, overload?: MockListOrganizationOverload, options?: MockRouteOptions): Promise<void> {
   await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations`, options, {
     GET: async (route) => {
       const orgs = [];
@@ -678,7 +688,7 @@ interface MockCustomOrderRequestOverload {
   noRequest?: boolean;
 }
 
-async function mockCustomOrderRequest(page: MsPage, options?: MockRouteOptions, overload?: MockCustomOrderRequestOverload): Promise<void> {
+async function mockCustomOrderRequest(page: MsPage, overload?: MockCustomOrderRequestOverload, options?: MockRouteOptions): Promise<void> {
   await mockRoute(page, '**/custom_order_requests', options, {
     POST: async (route) => {
       await route.fulfill({
@@ -695,8 +705,8 @@ async function mockCustomOrderRequest(page: MsPage, options?: MockRouteOptions, 
           admin_users: 10,
           outsider_users: 100,
           storage: 1000,
-          status: 'STANDBY',
-          label: 'ORD-YY-000001',
+          status: 'FINISHED',
+          label: 'ORD-YY-00001',
           formula: "I'm holding out for a hero 'till the end of the night",
           created_at: DateTime.fromObject({ year: 1988, month: 4, day: 7 }).toISO(),
         });
@@ -724,8 +734,8 @@ async function mockCustomOrderRequest(page: MsPage, options?: MockRouteOptions, 
 
 async function mockGetCustomOrderInvoices(
   page: MsPage,
-  options?: MockRouteOptions,
   overload: MockCustomOrderDetailsOverload = {},
+  options?: MockRouteOptions,
 ): Promise<void> {
   function formatResponse(postData: any): any {
     const ret: any = {};

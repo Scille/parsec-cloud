@@ -50,9 +50,10 @@ msTest('Log into the customer area failed', async ({ home }) => {
 msTest('Switch pages', async ({ clientArea }) => {
   const pages = [
     { button: 'Dashboard', title: 'Dashboard', url: 'dashboard' },
+    { button: 'My profile', title: 'My profile', url: 'personal-data' },
     { button: 'Statistics', title: 'Statistics', url: 'statistics' },
     { button: 'Invoices', title: 'Invoices', url: 'invoices' },
-    { button: 'Payment method', title: 'Payment methods', url: 'payment-methods' },
+    { button: 'Payment methods', title: 'Payment methods', url: 'payment-methods' },
     { button: 'Billing details', title: 'Billing details', url: 'billing-details' },
   ];
 

@@ -2,7 +2,7 @@
 
 import { Locator, TestInfo, test as base } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
-import { MockBms } from '@tests/e2e/helpers/bms';
+import { MockBms, MockClientAreaOverload, MockRouteOptions } from '@tests/e2e/helpers/bms';
 import { DEFAULT_USER_INFORMATION, generateDefaultOrganizationInformation, generateDefaultUserData } from '@tests/e2e/helpers/data';
 import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
 import { MsContext, MsPage } from '@tests/e2e/helpers/types';
@@ -140,6 +140,7 @@ export const msTest = debugTest.extend<{
   home: MsPage;
   secondTab: MsPage;
   connected: MsPage;
+  workspacesStandard: MsPage;
   workspaces: MsPage;
   documents: MsPage;
   documentsReadOnly: MsPage;
@@ -153,7 +154,15 @@ export const msTest = debugTest.extend<{
   workspaceSharingModal: Locator;
   clientArea: MsPage;
   clientAreaCustomOrder: MsPage;
-  workspacesStandard: MsPage;
+  clientAreaCustomOrderInitialMocks?: Partial<
+    Record<
+      keyof typeof MockBms,
+      {
+        overload?: MockClientAreaOverload;
+        options?: MockRouteOptions;
+      }
+    >
+  >;
 }>({
   context: async ({ browser }, use) => {
     const context = await browser.newContext();
@@ -403,19 +412,28 @@ export const msTest = debugTest.extend<{
     await use(home);
   },
 
-  clientAreaCustomOrder: async ({ home }, use) => {
+  clientAreaCustomOrder: async ({ home, clientAreaCustomOrderInitialMocks }, use) => {
     home.userData.reset();
     await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home, { billingSystem: 'CUSTOM_ORDER' });
-    await MockBms.mockListOrganizations(home);
-    await MockBms.mockOrganizationStats(home);
-    await MockBms.mockOrganizationStatus(home);
-    await MockBms.mockBillingDetails(home);
-    await MockBms.mockGetInvoices(home);
-    await MockBms.mockCustomOrderStatus(home);
-    await MockBms.mockCustomOrderDetails(home);
-    await MockBms.mockCustomOrderRequest(home);
-    await MockBms.mockGetCustomOrderInvoices(home);
+
+    const mockKeys: (keyof typeof MockBms)[] = [
+      'mockListOrganizations',
+      'mockOrganizationStats',
+      'mockOrganizationStatus',
+      'mockBillingDetails',
+      'mockGetInvoices',
+      'mockCustomOrderStatus',
+      'mockCustomOrderDetails',
+      'mockCustomOrderRequest',
+      'mockGetCustomOrderInvoices',
+    ];
+
+    for (const key of mockKeys) {
+      const overload = clientAreaCustomOrderInitialMocks?.[key]?.overload;
+      const options = clientAreaCustomOrderInitialMocks?.[key]?.options;
+      await MockBms[key](home, overload as any, options);
+    }
 
     const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');
@@ -434,4 +452,12 @@ export const msTest = debugTest.extend<{
 
     await use(home);
   },
+
+  clientAreaCustomOrderInitialMocks: [
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, use): Promise<void> => {
+      await use(undefined);
+    },
+    { option: true },
+  ],
 });

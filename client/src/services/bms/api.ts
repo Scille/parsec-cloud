@@ -654,6 +654,13 @@ async function getCustomOrderRequests(token: AuthenticationToken): Promise<BmsRe
       validateStatus: (status) => status === 200,
     });
 
+    if (!axiosResponse.data) {
+      return {
+        status: 404,
+        isError: true,
+      };
+    }
+
     return {
       status: axiosResponse.status,
       isError: false,
@@ -662,6 +669,7 @@ async function getCustomOrderRequests(token: AuthenticationToken): Promise<BmsRe
         requests: axiosResponse.data.map((req: any) => {
           return {
             id: req.id,
+            label: req.label,
             organizationId: req.organization_name,
             describedNeeds: req.described_need,
             adminUsers: req.admin_users,
