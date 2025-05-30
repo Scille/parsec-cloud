@@ -43,6 +43,26 @@ macro_rules! impl_decrypt_and_load {
 }
 
 /*
+ * PasswordAlgorithm
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+/// Auth method can be of two types:
+/// - ClientProvided, for which the client is able to store
+///   `auth_method_master_secret` all by itself.
+/// - Password, for which the client must obtain some configuration
+///   (i.e. this type !) from the server in order to know how
+///   to turn the password into `auth_method_master_secret`.
+pub enum PasswordAlgorithm {
+    Argon2id {
+        salt: Bytes,
+        opslimit: u32,
+        memlimit_kb: u32,
+        parallelism: u32,
+    },
+}
+
+/*
  * AccountVaultItemWebLocalDeviceKey
  */
 
