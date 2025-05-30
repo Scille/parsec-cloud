@@ -943,6 +943,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         }
         FieldType::GreeterOrClaimer => quote_rs_to_py_class!(crate::enumerate::GreeterOrClaimer),
         FieldType::EmailAddress => quote_rs_to_py_class!(crate::ids::EmailAddress),
+        FieldType::PasswordAlgorithm => quote_rs_to_py_class!(crate::account::PasswordAlgorithm),
     }
 }
 
@@ -1037,6 +1038,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         }
         FieldType::GreeterOrClaimer => quote! { crate::enumerate::GreeterOrClaimer },
         FieldType::EmailAddress => quote! { crate::ids::EmailAddress },
+        FieldType::PasswordAlgorithm => quote!(crate::account::PasswordAlgorithm),
     }
 }
 
@@ -1169,7 +1171,8 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::X509Certificate
         | FieldType::GreetingAttemptID
         | FieldType::CancelledGreetingAttemptReason
-        | FieldType::GreeterOrClaimer => quote! { #field_name.0 },
+        | FieldType::GreeterOrClaimer
+        | FieldType::PasswordAlgorithm => quote! { #field_name.0 },
         // No conversion for the rest
         _ => quote! { #field_name },
     }
