@@ -3,7 +3,7 @@
     "major_versions": [
       5
     ],
-    "cmd": "account_create_with_password_proceed",
+    "cmd": "account_create_proceed",
     "req": {
       "fields": [
         {
@@ -17,10 +17,14 @@
           "type": "String"
         },
         {
-          // Algorithm used to turn the password into the `auth_method_master_secret`
-          // (itself used to generate `auth_method_hmac_key` and `auth_method_secret_key`).
-          "name": "password_algorithm",
-          "type": "PasswordAlgorithm"
+            // Auth method can be of two types:
+            // - ClientProvided, for which the client is able to store
+            //   `auth_method_master_secret` all by itself.
+            // - Password, for which the client must obtain some configuration
+            //   (i.e. this field !) from the server in order to know how
+            //   to turn the password into `auth_method_master_secret`.
+            "name": "auth_method_password_algorithm",
+            "type": "RequiredOption<PasswordAlgorithm>"
         },
         {
           // Secret key shared between the client and the server and used for
@@ -54,36 +58,6 @@
         // In practice this error should never occur since collision on the ID is
         // virtually non-existent as long as the client generates a proper UUID.
         "status": "auth_method_id_already_exists"
-      }
-    ],
-    "nested_types": [
-      {
-        "name": "PasswordAlgorithm",
-        "discriminant_field": "type",
-        "variants": [
-          {
-            "name": "Argon2id",
-            "discriminant_value": "ARGON2ID",
-            "fields": [
-              {
-                "name": "salt",
-                "type": "Bytes"
-              },
-              {
-                "name": "opslimit",
-                "type": "Integer"
-              },
-              {
-                "name": "memlimit_kb",
-                "type": "Integer"
-              },
-              {
-                "name": "parallelism",
-                "type": "Integer"
-              }
-            ]
-          }
-        ]
       }
     ]
   }
