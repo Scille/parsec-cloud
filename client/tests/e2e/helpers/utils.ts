@@ -239,7 +239,7 @@ export async function clientAreaNavigateTo(page: Page, label: string, expectDisa
   const button = page.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').filter({ hasText: label });
   await expect(button).toBeVisible();
   if (expectDisabled) {
-    await expect(button).toBeDisabled();
+    await expect(button.locator('button')).toBeDisabled();
   } else {
     await button.click();
     await expect(page.locator('.header-content').locator('.header-title')).toHaveText(label);

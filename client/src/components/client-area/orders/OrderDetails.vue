@@ -35,7 +35,7 @@
           {{ $msTranslate('clientArea.orders.new.comment') }}
         </ion-text>
         <ion-text class="details-list-item__data subtitles-normal">
-          {{ $msTranslate(request.describedNeeds) }}
+          {{ request.describedNeeds }}
         </ion-text>
       </div>
     </div>
