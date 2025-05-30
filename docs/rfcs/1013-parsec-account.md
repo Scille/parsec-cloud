@@ -153,6 +153,18 @@ on the server.
 This feature is described in detail in [RFC 1014](1014-account-vault-for-device-stored-on-server.md)
 (for the storing part) and [RFC 1015](1015-registration-device.md) (for how the registration device works).
 
+### 2.6 - Password vs password-less authentication methods
+
+From the client point of view, account authentication always starts by retrieving `auth_method_master_secret`,
+from which all `auth_method_id`/`auth_method_mac_key`/`auth_method_secret_key` are derived (see [`Keys`]).
+
+The detail of how to retrieve `auth_method_master_secret` depends of the authentication method, which can be of two types:
+
+- ClientProvided, for which the client is able to store `auth_method_master_secret` all by itself.
+
+- Password, for which the client must obtain some configuration from the server in order to know how
+  to turn the password into `auth_method_master_secret`.
+
 ## 3 - Datamodel
 
 ### 3.1 - Glossary
@@ -168,7 +180,9 @@ This feature is described in detail in [RFC 1014](1014-account-vault-for-device-
   an Registration Device (see [RFC 1015](1015-registration-device.md)).
 - **Identity**: couple organization ID + user ID. An account can store access to multiple identities.
 
-### 3.2 Keys
+### 3.2 - Keys
+
+[`Keys`]: #32---keys
 
 - `auth_method_master_secret`: A secret obtained from the authentication method.
 - `auth_method_mac_key`: A symmetric key obtained from deriving `auth_method_master_secret`
@@ -234,11 +248,11 @@ Attributes:
 - `mac_key: SecretKey`. Secret key used for MAC based authentication with the server.
 - `vault_key_access: Bytes`. Vault key encrypted with the `auth_method_secret_key`
   (see [RFC 1014](1014-account-vault-for-device-stored-on-server.md) for its internal format).
-- `master_secret_algorithm: KeyAlgorithm`. The algorithm to obtain the `auth_method_master_secret`, it depends on
-  the authentication method used, this attribute should contains the full configuration
-  needed to do this operation (Typically, for the password it should be something like
-  `{"name": "ARGON2ID", "opslimit": 65536, "memlimit_kb": 3, "parallelism": 1}`).
-- `enabled: bool` (server side-only): Indicate if this method is enabled or not.
+- `password_algorithm: PasswordAlgorithm`. The algorithm to derive `auth_method_master_secret`
+  given the password. This attribute should contains the full configuration needed to do this
+  operation (e.g.`{"name": "ARGON2ID", "salt": b"<salt>", "opslimit": 65536, "memlimit_kb": 3, "parallelism": 1}`).
+  This field is left empty for authentication methods that don't rely on password.
+- `disabled_on: DateTime` (server side-only): Indicate if this method is enabled or not.
 
 > [!NOTE]
 >
@@ -429,7 +443,7 @@ Anonymous account API:
     "major_versions": [
       5
     ],
-    "cmd": "account_create_with_password_proceed",
+    "cmd": "account_create_proceed",
     "req": {
       "fields": [
         {
@@ -443,11 +457,15 @@ Anonymous account API:
           "type": "String"
         },
         {
-          // Algorithm used to turn the password into the `auth_method_master_secret`
-          // (itself used to generate `auth_method_hmac_key` and `auth_method_secret_key`).
-          "name": "password_algorithm",
-          "type": "PasswordAlgorithm"
-        },
+            // Auth method can be of two types:
+            // - ClientProvided, for which the client is able to store
+            //   `auth_method_master_secret` all by itself.
+            // - Password, for which the client must obtain some configuration
+            //   (i.e. this field !) from the server in order to know how
+            //   to turn the password into `auth_method_master_secret`.
+            "name": "auth_method_password_algorithm",
+            "type": "RequiredOption<PasswordAlgorithm>"
+        }
         {
           // Secret key shared between the client and the server and used for
           // account authenticated API family's HMAC authentication.
@@ -480,36 +498,6 @@ Anonymous account API:
       // In practice this error should never occur since collision on the ID is
       // virtually non-existent as long as the client generates a proper UUID.
       "status": "auth_method_id_already_exists"
-      }
-    ],
-    "nested_types": [
-      {
-        "name": "PasswordAlgorithm",
-        "discriminant_field": "type",
-        "variants": [
-          {
-            "name": "Argon2id",
-            "discriminant_value": "ARGON2ID",
-            "fields": [
-              {
-                "name": "salt",
-                "type": "Bytes"
-              },
-              {
-                "name": "opslimit",
-                "type": "Integer"
-              },
-              {
-                "name": "memlimit_kb",
-                "type": "Integer"
-              },
-              {
-                "name": "parallelism",
-                "type": "Integer"
-              }
-            ]
-          }
-        ]
       }
     ]
   }
@@ -558,36 +546,6 @@ Anonymous account API:
         }
       }
     }
-  ],
-  "nested_types": [
-    {
-      "name": "PasswordAlgorithm",
-      "discriminant_field": "type",
-      "variants": [
-        {
-            "name": "Argon2id",
-            "discriminant_value": "ARGON2ID",
-            "fields": [
-                {
-                    "name": "salt",
-                    "type": "Bytes"
-                },
-                {
-                    "name": "opslimit",
-                    "type": "Integer"
-                },
-                {
-                    "name": "memlimit_kb",
-                    "type": "Integer"
-                },
-                {
-                    "name": "parallelism",
-                    "type": "Integer"
-                }
-            ]
-        }
-      ]
-    }
   ]
 }
 ```
@@ -632,36 +590,6 @@ Authenticated account API:
       "status": "ok",
     }
   ],
-  "nested_types": [
-    {
-      "name": "PasswordAlgorithm",
-      "discriminant_field": "type",
-      "variants": [
-        {
-            "name": "Argon2id",
-            "discriminant_value": "ARGON2ID",
-            "fields": [
-                {
-                    "name": "salt",
-                    "type": "Bytes"
-                },
-                {
-                    "name": "opslimit",
-                    "type": "Integer"
-                },
-                {
-                    "name": "memlimit_kb",
-                    "type": "Integer"
-                },
-                {
-                    "name": "parallelism",
-                    "type": "Integer"
-                }
-            ]
-        }
-      ]
-    }
-  ]
 }
 ```
 
@@ -727,11 +655,17 @@ Anonymous account API:
       {
         "name": "validation_token",
         "type": "Token"
-      }
+      },
       {
-        "name": "auth_method_key_params",
-        "type": "KeyAlgorithm"
-      }
+          // Auth method can be of two types:
+          // - ClientProvided, for which the client is able to store
+          //   `auth_method_master_secret` all by itself.
+          // - Password, for which the client must obtain some configuration
+          //   (i.e. this field !) from the server in order to know how
+          //   to turn the password into `auth_method_master_secret`.
+          "name": "auth_method_password_algorithm",
+          "type": "RequiredOption<PasswordAlgorithm>"
+      },
       {
         "name": "vault_key_access",
         // `VaultKeyAccess` encrypted with the `auth_method_secret_key`
