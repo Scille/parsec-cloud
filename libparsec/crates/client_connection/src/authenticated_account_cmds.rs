@@ -36,7 +36,7 @@ pub struct AccountAuthMethod {
 pub struct AuthenticatedAccountCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
     client: Client,
-    addr: ParsecAuthenticatedAccountAddr,
+    addr: ParsecAddr,
     url: Url,
     #[cfg(feature = "test-with-testbed")]
     send_hook: SendHookConfig,
@@ -47,7 +47,7 @@ pub struct AuthenticatedAccountCmds {
 impl AuthenticatedAccountCmds {
     pub fn new(
         config_dir: &Path,
-        addr: ParsecAuthenticatedAccountAddr,
+        addr: ParsecAddr,
         proxy: ProxyConfig,
         account: AccountAuthMethod,
     ) -> anyhow::Result<Self> {
@@ -58,7 +58,7 @@ impl AuthenticatedAccountCmds {
     pub fn from_client(
         client: Client,
         _config_dir: &Path,
-        addr: ParsecAuthenticatedAccountAddr,
+        addr: ParsecAddr,
         account: AccountAuthMethod,
     ) -> Self {
         let url = addr.to_authenticated_account_url();
@@ -77,7 +77,7 @@ impl AuthenticatedAccountCmds {
         }
     }
 
-    pub fn addr(&self) -> &ParsecAuthenticatedAccountAddr {
+    pub fn addr(&self) -> &ParsecAddr {
         &self.addr
     }
 
