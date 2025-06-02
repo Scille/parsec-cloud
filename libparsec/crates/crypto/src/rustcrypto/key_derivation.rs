@@ -1,14 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use blake2::Blake2bMac;
-use digest::{consts::U32, generic_array::GenericArray, Mac};
+use digest::Mac;
+use generic_array::{
+    typenum::{
+        consts::{U32, U64},
+        IsLessOrEqual, LeEq, NonZero,
+    },
+    ArrayLength, GenericArray,
+};
 use rand::RngCore;
 use serde::Deserialize;
 use serde_bytes::Bytes;
 
 use crate::SecretKey;
-
-type Blake2bMac256 = Blake2bMac<U32>;
 
 #[derive(Clone, PartialEq, Eq, Deserialize, Hash)]
 #[serde(try_from = "&Bytes")]
@@ -25,6 +30,18 @@ impl KeyDerivation {
     }
 
     pub fn derive_secret_key_from_uuid(&self, id: uuid::Uuid) -> SecretKey {
+        SecretKey(self.derive_raw_form_uuid(id))
+    }
+
+    pub fn derive_uuid_from_uuid(&self, id: uuid::Uuid) -> uuid::Uuid {
+        uuid::Uuid::from_bytes(self.derive_raw_form_uuid(id).into())
+    }
+
+    fn derive_raw_form_uuid<Size>(&self, id: uuid::Uuid) -> GenericArray<u8, Size>
+    where
+        Size: ArrayLength<u8> + IsLessOrEqual<U64>,
+        LeEq<Size, U64>: NonZero,
+    {
         // We follow what libsodium does here
         // (see https://github.com/jedisct1/libsodium/blob/4a15ab7cd0a4b78a7356e5f488d5345b8d314549/src/libsodium/crypto_kdf/blake2b/kdf_blake2b.c#L31-L52)
 
@@ -34,11 +51,11 @@ impl KeyDerivation {
         let mut personal: [u8; 16] = [0u8; 16];
         personal[..8].copy_from_slice(&id.as_bytes()[8..]);
 
-        let subkey = Blake2bMac256::new_with_salt_and_personal(&self.0, &salt, &personal)
+        let subkey = Blake2bMac::<Size>::new_with_salt_and_personal(&self.0, &salt, &personal)
             .expect("subkey has always a valid size")
             .finalize();
 
-        SecretKey(subkey.into_bytes())
+        subkey.into_bytes()
     }
 }
 

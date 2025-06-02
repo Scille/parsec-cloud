@@ -1,5 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use generic_array::{
+    typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
+    ArrayLength, GenericArray,
+};
 use serde::Deserialize;
 use serde_bytes::Bytes;
 use sodiumoxide::crypto::kdf::{derive_from_key, gen_key, Key, KEYBYTES};
@@ -28,17 +32,30 @@ impl KeyDerivation {
     }
 
     pub fn derive_secret_key_from_uuid(&self, id: uuid::Uuid) -> SecretKey {
+        let raw: [u8; SecretKey::SIZE] = self.derive_raw_form_uuid(id).into();
+        SecretKey::from(raw)
+    }
+
+    pub fn derive_uuid_from_uuid(&self, id: uuid::Uuid) -> uuid::Uuid {
+        uuid::Uuid::from_bytes(self.derive_raw_form_uuid(id).into())
+    }
+
+    fn derive_raw_form_uuid<Size>(&self, id: uuid::Uuid) -> GenericArray<u8, Size>
+    where
+        Size: ArrayLength<u8> + IsLessOrEqual<U64>,
+        LeEq<Size, U64>: NonZero,
+    {
         let id_low: &[u8; 8] = id.as_bytes()[..8].try_into().unwrap();
         let id_high: &[u8; 8] = id.as_bytes()[8..].try_into().unwrap();
 
         let subkey_id = u64::from_le_bytes(*id_low);
         let context = id_high;
 
-        let mut subkey = [0u8; SecretKey::SIZE];
+        let mut subkey = GenericArray::default();
         derive_from_key(&mut subkey, subkey_id, *context, &self.0)
             .expect("subkey has always a valid size");
 
-        SecretKey::from(subkey)
+        subkey
     }
 }
 
