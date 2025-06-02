@@ -925,9 +925,10 @@ class MemoryAuthenticationMethod:
     created_on: DateTime
     # IP address of the HTTP request that created the authentication method
     # (either by account creation, vault key rotation or account recovery)
-    # Can be unknown since this information is optional in ASGI (see
+    # Can be unknown (i.e. empty string) since this information is optional in
+    # ASGI (see
     # https://asgi.readthedocs.io/en/latest/specs/www.html#http-connection-scope).
-    created_by_ip: str | None  # TODO replace by ipaddr #10384
+    created_by_ip: str | Literal[""]
     # User agent header of the HTTP request that created the vault.
     created_by_user_agent: str
     # Secret key used for HMAC based authentication with the server

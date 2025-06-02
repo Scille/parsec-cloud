@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import NoReturn
+from typing import Literal, NoReturn
 from uuid import uuid4
 
 from parsec._parsec import (
@@ -176,9 +176,9 @@ class AnonymousAccountClientContext:
     settled_api_version: ApiVersion
     logger: ParsecBoundLogger = field(init=False)
     client_user_agent: str
-    # there is no guarantee that asgi is able to provide the ip address
+    # In ASGI the client IP address is optional
     # see https://asgi.readthedocs.io/en/latest/specs/www.html#http-connection-scope
-    client_ip: str | None  # TODO replace by ipaddr #10384
+    client_ip_address: str | Literal[""]
 
     def __post_init__(self):
         # Generate a request ID just for the logs
@@ -200,7 +200,7 @@ class AuthenticatedAccountClientContext:
     client_user_agent: str
     # In ASGI the client IP address is optional
     # see https://asgi.readthedocs.io/en/latest/specs/www.html#http-connection-scope
-    client_ip_address: str | None
+    client_ip_address: str | Literal[""]
     logger: ParsecBoundLogger = field(init=False)
 
     def __post_init__(self):

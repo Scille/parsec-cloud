@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import override
+from typing import Literal, override
 
 from parsec._parsec import (
     AccountAuthMethodID,
@@ -69,7 +69,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         vault_key_access: bytes,
         human_label: str,
         created_by_user_agent: str,
-        created_by_ip: str | None,
+        created_by_ip: str | Literal[""],
         auth_method_id: AccountAuthMethodID,
         auth_method_password_algorithm: PasswordAlgorithm | None,
     ) -> None | AccountCreateAccountBadOutcome:
@@ -155,7 +155,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         self,
         now: DateTime,
         auth_method_id: AccountAuthMethodID,
-        created_by_ip: str | None,
+        created_by_ip: str | Literal[""],
         created_by_user_agent: str,
         new_auth_method_id: AccountAuthMethodID,
         new_auth_method_mac_key: SecretKey,

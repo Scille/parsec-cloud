@@ -6,6 +6,7 @@ from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import auto
+from typing import Literal
 
 from parsec._parsec import (
     AccountAuthMethodID,
@@ -65,7 +66,8 @@ class AccountVaultItemRecoveryList(BadOutcomeEnum):
 @dataclass(slots=True)
 class VaultItemRecoveryAuthMethod:
     created_on: DateTime
-    created_by_ip: str | None
+    # IP address or empty string if not available
+    created_by_ip: str | Literal[""]
     created_by_user_agent: str
     vault_key_access: bytes
     password_algorithm: PasswordAlgorithm | None
@@ -107,7 +109,7 @@ class BaseAccountComponent:
         vault_key_access: bytes,
         human_label: str,
         created_by_user_agent: str,
-        created_by_ip: str | None,
+        created_by_ip: str | Literal[""],
         auth_method_id: AccountAuthMethodID,
         auth_method_password_algorithm: PasswordAlgorithm | None,
     ) -> None | AccountCreateAccountBadOutcome:
@@ -128,7 +130,7 @@ class BaseAccountComponent:
         self,
         now: DateTime,
         auth_method_id: AccountAuthMethodID,
-        created_by_ip: str | None,
+        created_by_ip: str | Literal[""],
         created_by_user_agent: str,
         new_auth_method_id: AccountAuthMethodID,
         new_auth_method_mac_key: SecretKey,
@@ -192,7 +194,7 @@ class BaseAccountComponent:
             vault_key_access=req.vault_key_access,
             human_label=req.human_label,
             created_by_user_agent=client_ctx.client_user_agent,
-            created_by_ip=client_ctx.client_ip,
+            created_by_ip=client_ctx.client_ip_address,
             auth_method_id=req.auth_method_id,
             auth_method_password_algorithm=PasswordAlgorithmArgon2id(
                 salt=algo.salt,

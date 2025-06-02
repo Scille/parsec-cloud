@@ -124,7 +124,7 @@ async def test_authenticated_account_vault_key_rotation_new_auth_method_id_alrea
             outcome = await backend.account.vault_key_rotation(
                 now=DateTime.now(),
                 auth_method_id=alice_account.auth_method_id,
-                created_by_ip=None,
+                created_by_ip="",
                 created_by_user_agent="test-user-agent",
                 new_auth_method_id=new_auth_method_id,
                 new_auth_method_mac_key=new_key,
