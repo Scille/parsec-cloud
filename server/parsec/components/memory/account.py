@@ -11,7 +11,7 @@ from parsec._parsec import (
     SecretKey,
 )
 from parsec.components.account import (
-    AccountCreateAccountWithPasswordBadOutcome,
+    AccountCreateAccountBadOutcome,
     AccountCreateEmailValidationTokenBadOutcome,
     AccountVaultItemListBadOutcome,
     AccountVaultItemRecoveryList,
@@ -19,8 +19,7 @@ from parsec.components.account import (
     AccountVaultKeyRotation,
     BaseAccountComponent,
     PasswordAlgorithm,
-    PasswordAlgorithmArgon2ID,
-    VaultItemRecoveryAuthMethodPassword,
+    VaultItemRecoveryAuthMethod,
     VaultItemRecoveryList,
     VaultItemRecoveryVault,
     VaultItems,
@@ -62,7 +61,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         return token
 
     @override
-    async def create_account_with_password(
+    async def create_account(
         self,
         token: EmailValidationToken,
         now: DateTime,
@@ -71,34 +70,34 @@ class MemoryAccountComponent(BaseAccountComponent):
         human_label: str,
         created_by_user_agent: str,
         created_by_ip: str | None,
-        password_secret_algorithm: PasswordAlgorithm,
         auth_method_id: AccountAuthMethodID,
-    ) -> None | AccountCreateAccountWithPasswordBadOutcome:
+        auth_method_password_algorithm: PasswordAlgorithm | None,
+    ) -> None | AccountCreateAccountBadOutcome:
         # look for an email linked to the provided token
         unverified_email = next(
             (k for (k, v) in self._data.unverified_emails.items() if v[0] == token), None
         )
         if unverified_email is None:
             # the provided token is not in unverified emails
-            return AccountCreateAccountWithPasswordBadOutcome.INVALID_TOKEN
+            return AccountCreateAccountBadOutcome.INVALID_TOKEN
         email = unverified_email
 
         # create authentication method
         auth_method = MemoryAuthenticationMethod(
+            id=auth_method_id,
             created_on=now,
             created_by_ip=created_by_ip,
             created_by_user_agent=created_by_user_agent,
             mac_key=mac_key,
             vault_key_access=vault_key_access,
-            password_secret_algorithm=password_secret_algorithm,
+            password_algorithm=auth_method_password_algorithm,
             disabled_on=None,
-            id=auth_method_id,
         )
 
         authentication_methods = {auth_method_id: auth_method}
         # check for auth method uniqueness
         if self.auth_method_id_already_exists(auth_method_id):
-            return AccountCreateAccountWithPasswordBadOutcome.AUTH_METHOD_ALREADY_EXISTS
+            return AccountCreateAccountBadOutcome.AUTH_METHOD_ALREADY_EXISTS
 
         vault = MemoryAccountVault(items={}, authentication_methods=authentication_methods)
 
@@ -160,7 +159,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         created_by_user_agent: str,
         new_auth_method_id: AccountAuthMethodID,
         new_auth_method_mac_key: SecretKey,
-        new_password_algorithm: PasswordAlgorithm,
+        new_auth_method_password_algorithm: PasswordAlgorithm | None,
         new_vault_key_access: bytes,
         items: dict[HashDigest, bytes],
     ) -> None | AccountVaultKeyRotation:
@@ -189,7 +188,7 @@ class MemoryAccountComponent(BaseAccountComponent):
                     created_by_user_agent=created_by_user_agent,
                     mac_key=new_auth_method_mac_key,
                     vault_key_access=new_vault_key_access,
-                    password_secret_algorithm=new_password_algorithm,
+                    password_algorithm=new_auth_method_password_algorithm,
                 )
             },
         )
@@ -210,17 +209,12 @@ class MemoryAccountComponent(BaseAccountComponent):
         def _convert_vault(vault: MemoryAccountVault) -> VaultItemRecoveryVault:
             return VaultItemRecoveryVault(
                 auth_methods=[
-                    VaultItemRecoveryAuthMethodPassword(
+                    VaultItemRecoveryAuthMethod(
                         created_on=auth_method.created_on,
                         created_by_ip=auth_method.created_by_ip,
                         created_by_user_agent=auth_method.created_by_user_agent,
                         vault_key_access=auth_method.vault_key_access,
-                        algorithm=PasswordAlgorithmArgon2ID(
-                            salt=auth_method.password_secret_algorithm.salt,
-                            opslimit=auth_method.password_secret_algorithm.opslimit,
-                            memlimit_kb=auth_method.password_secret_algorithm.memlimit_kb,
-                            parallelism=auth_method.password_secret_algorithm.parallelism,
-                        ),
+                        password_algorithm=auth_method.password_algorithm,
                         disabled_on=auth_method.disabled_on,
                     )
                     for auth_method in vault.authentication_methods.values()

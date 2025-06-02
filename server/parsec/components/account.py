@@ -14,6 +14,8 @@ from parsec._parsec import (
     EmailValidationToken,
     HashDigest,
     ParsecAccountEmailValidationAddr,
+    PasswordAlgorithm,
+    PasswordAlgorithmArgon2id,
     SecretKey,
     anonymous_account_cmds,
     authenticated_account_cmds,
@@ -26,27 +28,12 @@ from parsec.templates import get_template
 from parsec.types import BadOutcomeEnum
 
 
-@dataclass(slots=True)
-class PasswordAlgorithmArgon2ID:
-    salt: bytes
-    opslimit: int
-    memlimit_kb: int
-    parallelism: int
-
-
-# `PasswordAlgorithm` is expected to become a variant once more algorithms are provided
-PasswordAlgorithm = PasswordAlgorithmArgon2ID
-"""
-The algorithm and full configuration to obtain the `auth_method_master_secret` from the user's password.
-"""
-
-
 class AccountCreateEmailValidationTokenBadOutcome(BadOutcomeEnum):
     ACCOUNT_ALREADY_EXISTS = auto()
     TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
 
 
-class AccountCreateAccountWithPasswordBadOutcome(BadOutcomeEnum):
+class AccountCreateAccountBadOutcome(BadOutcomeEnum):
     INVALID_TOKEN = auto()
     AUTH_METHOD_ALREADY_EXISTS = auto()
 
@@ -76,16 +63,13 @@ class AccountVaultItemRecoveryList(BadOutcomeEnum):
 
 
 @dataclass(slots=True)
-class VaultItemRecoveryAuthMethodPassword:
+class VaultItemRecoveryAuthMethod:
     created_on: DateTime
     created_by_ip: str | None
     created_by_user_agent: str
     vault_key_access: bytes
-    algorithm: PasswordAlgorithm
+    password_algorithm: PasswordAlgorithm | None
     disabled_on: DateTime | None
-
-
-VaultItemRecoveryAuthMethod = VaultItemRecoveryAuthMethodPassword
 
 
 @dataclass(slots=True)
@@ -115,7 +99,7 @@ class BaseAccountComponent:
     ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
         raise NotImplementedError
 
-    async def create_account_with_password(
+    async def create_account(
         self,
         token: EmailValidationToken,
         now: DateTime,
@@ -124,9 +108,9 @@ class BaseAccountComponent:
         human_label: str,
         created_by_user_agent: str,
         created_by_ip: str | None,
-        password_secret_algorithm: PasswordAlgorithm,
         auth_method_id: AccountAuthMethodID,
-    ) -> None | AccountCreateAccountWithPasswordBadOutcome:
+        auth_method_password_algorithm: PasswordAlgorithm | None,
+    ) -> None | AccountCreateAccountBadOutcome:
         raise NotImplementedError
 
     async def vault_item_upload(
@@ -148,7 +132,7 @@ class BaseAccountComponent:
         created_by_user_agent: str,
         new_auth_method_id: AccountAuthMethodID,
         new_auth_method_mac_key: SecretKey,
-        new_password_algorithm: PasswordAlgorithm,
+        new_auth_method_password_algorithm: PasswordAlgorithm | None,
         new_vault_key_access: bytes,
         items: dict[HashDigest, bytes],
     ) -> None | AccountVaultKeyRotation:
@@ -188,45 +172,45 @@ class BaseAccountComponent:
                 return anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
 
     @api
-    async def api_account_create_with_password_proceed(
+    async def api_account_create_proceed(
         self,
         client_ctx: AnonymousAccountClientContext,
-        req: anonymous_account_cmds.latest.account_create_with_password_proceed.Req,
-    ) -> anonymous_account_cmds.latest.account_create_with_password_proceed.Rep:
+        req: anonymous_account_cmds.latest.account_create_proceed.Req,
+    ) -> anonymous_account_cmds.latest.account_create_proceed.Rep:
         now = DateTime.now()
-        match req.password_algorithm:
-            case (
-                anonymous_account_cmds.latest.account_create_with_password_proceed.PasswordAlgorithmArgon2id() as algo
-            ):
+        match req.auth_method_password_algorithm:
+            case PasswordAlgorithmArgon2id() as algo:
                 pass
             case _:
                 # No other algorithm is supported/implemented for now
                 raise NotImplementedError
 
-        outcome = await self.create_account_with_password(
-            req.validation_token,
-            now,
-            req.auth_method_hmac_key,
-            req.vault_key_access,
-            req.human_label,
-            client_ctx.client_user_agent,
-            client_ctx.client_ip,
-            password_secret_algorithm=PasswordAlgorithm(
+        outcome = await self.create_account(
+            token=req.validation_token,
+            now=now,
+            mac_key=req.auth_method_hmac_key,
+            vault_key_access=req.vault_key_access,
+            human_label=req.human_label,
+            created_by_user_agent=client_ctx.client_user_agent,
+            created_by_ip=client_ctx.client_ip,
+            auth_method_id=req.auth_method_id,
+            auth_method_password_algorithm=PasswordAlgorithmArgon2id(
                 salt=algo.salt,
                 opslimit=algo.opslimit,
                 memlimit_kb=algo.memlimit_kb,
                 parallelism=algo.parallelism,
             ),
-            auth_method_id=req.auth_method_id,
         )
 
         match outcome:
             case None:
-                return anonymous_account_cmds.latest.account_create_with_password_proceed.RepOk()
-            case AccountCreateAccountWithPasswordBadOutcome.INVALID_TOKEN:
-                return anonymous_account_cmds.latest.account_create_with_password_proceed.RepInvalidValidationToken()
-            case AccountCreateAccountWithPasswordBadOutcome.AUTH_METHOD_ALREADY_EXISTS:
-                return anonymous_account_cmds.latest.account_create_with_password_proceed.RepAuthMethodIdAlreadyExists()
+                return anonymous_account_cmds.latest.account_create_proceed.RepOk()
+            case AccountCreateAccountBadOutcome.INVALID_TOKEN:
+                return (
+                    anonymous_account_cmds.latest.account_create_proceed.RepInvalidValidationToken()
+                )
+            case AccountCreateAccountBadOutcome.AUTH_METHOD_ALREADY_EXISTS:
+                return anonymous_account_cmds.latest.account_create_proceed.RepAuthMethodIdAlreadyExists()
 
     async def _send_email_validation_token(
         self,
@@ -301,20 +285,18 @@ class BaseAccountComponent:
         client_ctx: AuthenticatedAccountClientContext,
         req: authenticated_account_cmds.latest.vault_key_rotation.Req,
     ) -> authenticated_account_cmds.latest.vault_key_rotation.Rep:
-        match req.new_password_algorithm:
-            case (
-                authenticated_account_cmds.latest.vault_key_rotation.PasswordAlgorithmArgon2id() as raw
-            ):
-                new_password_algorithm = PasswordAlgorithmArgon2ID(
+        match req.new_auth_method_password_algorithm:
+            case None as new_auth_method_password_algorithm:
+                pass
+            case PasswordAlgorithmArgon2id() as raw:
+                new_auth_method_password_algorithm = PasswordAlgorithmArgon2id(
                     salt=raw.salt,
                     opslimit=raw.opslimit,
                     memlimit_kb=raw.memlimit_kb,
                     parallelism=raw.parallelism,
                 )
             # `PasswordAlgorithm` is an abstract type
-            case (
-                authenticated_account_cmds.latest.vault_key_rotation.PasswordAlgorithm() as unknown
-            ):
+            case PasswordAlgorithm() as unknown:
                 assert False, unknown
 
         outcome = await self.vault_key_rotation(
@@ -324,7 +306,7 @@ class BaseAccountComponent:
             auth_method_id=client_ctx.auth_method_id,
             new_auth_method_id=req.new_auth_method_id,
             new_auth_method_mac_key=req.new_auth_method_mac_key,
-            new_password_algorithm=new_password_algorithm,
+            new_auth_method_password_algorithm=new_auth_method_password_algorithm,
             new_vault_key_access=req.new_vault_key_access,
             items=req.items,
         )
@@ -353,27 +335,28 @@ class BaseAccountComponent:
                 def _convert_auth_methods(
                     auth_method: VaultItemRecoveryAuthMethod,
                 ) -> authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod:
-                    match auth_method:
-                        # Single `case` in this match since so far there is only a single
-                        # kind of password algorithm...
-                        case VaultItemRecoveryAuthMethodPassword():
-                            match auth_method.algorithm:
-                                case PasswordAlgorithmArgon2ID() as a:
-                                    algorithm = authenticated_account_cmds.latest.vault_item_recovery_list.PasswordAlgorithmArgon2id(
-                                        salt=a.salt,
-                                        opslimit=a.opslimit,
-                                        memlimit_kb=a.memlimit_kb,
-                                        parallelism=a.parallelism,
-                                    )
-
-                            return authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethodPassword(
-                                created_on=auth_method.created_on,
-                                created_by_ip=auth_method.created_by_ip,
-                                created_by_user_agent=auth_method.created_by_user_agent,
-                                vault_key_access=auth_method.vault_key_access,
-                                algorithm=algorithm,
-                                disabled_on=auth_method.disabled_on,
+                    match auth_method.password_algorithm:
+                        case None:
+                            password_algorithm = None
+                        case PasswordAlgorithmArgon2id() as a:
+                            password_algorithm = PasswordAlgorithmArgon2id(
+                                salt=a.salt,
+                                opslimit=a.opslimit,
+                                memlimit_kb=a.memlimit_kb,
+                                parallelism=a.parallelism,
                             )
+                        # `PasswordAlgorithm` is an abstract type
+                        case PasswordAlgorithm() as unknown:
+                            assert False, unknown
+
+                    return authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod(
+                        created_on=auth_method.created_on,
+                        created_by_ip=auth_method.created_by_ip,
+                        created_by_user_agent=auth_method.created_by_user_agent,
+                        vault_key_access=auth_method.vault_key_access,
+                        password_algorithm=password_algorithm,
+                        disabled_on=auth_method.disabled_on,
+                    )
 
                 def _convert_vault(
                     vault: VaultItemRecoveryVault,
