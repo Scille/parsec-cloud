@@ -613,14 +613,13 @@ async def anonymous_account_api(request: Request) -> Response:
         with_authenticated_headers=False,
     )
 
-    ip_addr = None if request.client is None else request.client.host
     # Handshake is done
 
     client_ctx = AnonymousAccountClientContext(
         client_api_version=parsed.client_api_version,
         settled_api_version=parsed.settled_api_version,
         client_user_agent=parsed.user_agent,
-        client_ip=ip_addr,  # TODO 10384
+        client_ip_address=request.client.host if request.client is not None else "",
     )
 
     body: bytes = await _rpc_get_body_with_limit_check(request)
@@ -674,7 +673,7 @@ async def authenticated_account_api(request: Request) -> Response:
         account_email=auth_info.account_email,
         auth_method_id=auth_info.auth_method_id,
         client_user_agent=parsed.user_agent,
-        client_ip_address=request.client.host if request.client is not None else None,
+        client_ip_address=request.client.host if request.client is not None else "",
     )
 
     try:

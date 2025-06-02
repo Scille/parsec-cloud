@@ -57,7 +57,7 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
     outcome = await backend.account.vault_key_rotation(
         now=new_vault_created_on,
         auth_method_id=alice_account.auth_method_id,
-        created_by_ip=None,
+        created_by_ip="",
         created_by_user_agent="dummy-user-agent",
         new_auth_method_id=new_auth_method_id,
         new_auth_method_mac_key=new_auth_method_mac_key,
@@ -90,7 +90,7 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
                 authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod(
                     created_on=DateTime(2000, 1, 31),
                     disabled_on=None,
-                    created_by_ip=None,
+                    created_by_ip="",
                     created_by_user_agent="dummy-user-agent",
                     vault_key_access=b"<alice_new_vault_key_access>",
                     password_algorithm=PasswordAlgorithmArgon2id(
