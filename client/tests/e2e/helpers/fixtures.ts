@@ -2,13 +2,22 @@
 
 import { Locator, TestInfo, test as base } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
-import { MockBms } from '@tests/e2e/helpers/bms';
+import { MockBms, MockClientAreaOverload, MockRouteOptions } from '@tests/e2e/helpers/bms';
 import { DEFAULT_USER_INFORMATION, generateDefaultOrganizationInformation, generateDefaultUserData } from '@tests/e2e/helpers/data';
 import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
 import { MsContext, MsPage } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
 
-async function setupNewPage(page: MsPage, testbedPath?: string): Promise<void> {
+interface SetupOptions {
+  testbedPath?: string;
+  location?: string;
+  skipGoto?: boolean;
+}
+
+export async function setupNewPage(
+  page: MsPage,
+  opts: SetupOptions = { testbedPath: undefined, location: '/', skipGoto: false },
+): Promise<void> {
   page.on('console', (msg) => console.log('> ', msg.text()));
 
   await page.addInitScript(() => {
@@ -63,19 +72,21 @@ async function setupNewPage(page: MsPage, testbedPath?: string): Promise<void> {
       };
     };
   });
-  await page.goto('/');
+  if (!opts.skipGoto) {
+    await page.goto(opts.location ?? '/');
+  }
   await page.waitForLoadState('domcontentloaded');
 
   await expect(page.locator('#app')).toHaveAttribute('app-state', 'initializing');
 
-  await initTestBed(page, testbedPath);
+  const testbed = await initTestBed(page, opts.testbedPath);
   page.userData = generateDefaultUserData();
   page.orgInfo = generateDefaultOrganizationInformation();
   page.isReleased = false;
   page.openNewTab = async (): Promise<MsPage> => {
     const newTab = (await page.context().newPage()) as MsPage;
     newTab.skipTestbedRelease = true;
-    await setupNewPage(newTab, testbedPath);
+    await setupNewPage(newTab, { testbedPath: testbed });
     return newTab;
   };
   page.release = async (): Promise<void> => {
@@ -129,6 +140,7 @@ export const msTest = debugTest.extend<{
   home: MsPage;
   secondTab: MsPage;
   connected: MsPage;
+  workspacesStandard: MsPage;
   workspaces: MsPage;
   documents: MsPage;
   documentsReadOnly: MsPage;
@@ -142,6 +154,15 @@ export const msTest = debugTest.extend<{
   workspaceSharingModal: Locator;
   clientArea: MsPage;
   clientAreaCustomOrder: MsPage;
+  clientAreaCustomOrderInitialMocks?: Partial<
+    Record<
+      keyof typeof MockBms,
+      {
+        overload?: MockClientAreaOverload;
+        options?: MockRouteOptions;
+      }
+    >
+  >;
 }>({
   context: async ({ browser }, use) => {
     const context = await browser.newContext();
@@ -167,6 +188,23 @@ export const msTest = debugTest.extend<{
     await expect(home.locator('.login-button')).toBeEnabled();
     await home.locator('.login-button').click();
     await expect(home.locator('#connected-header')).toContainText('My workspaces');
+    await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Alicey McAliceFace');
+    await expect(home).toBeWorkspacePage();
+
+    await use(home);
+  },
+
+  workspacesStandard: async ({ home }, use) => {
+    await home.locator('.organization-card').nth(1).click();
+    await expect(home.locator('#password-input')).toBeVisible();
+
+    await expect(home.locator('.login-button')).toHaveDisabledAttribute();
+
+    await home.locator('#password-input').locator('input').fill('P@ssw0rd.');
+    await expect(home.locator('.login-button')).toBeEnabled();
+    await home.locator('.login-button').click();
+    await expect(home.locator('#connected-header')).toContainText('My workspaces');
+    await expect(home.locator('.topbar-right').locator('.text-content-name')).toHaveText('Boby McBobFace');
     await expect(home).toBeWorkspacePage();
 
     await use(home);
@@ -374,19 +412,28 @@ export const msTest = debugTest.extend<{
     await use(home);
   },
 
-  clientAreaCustomOrder: async ({ home }, use) => {
+  clientAreaCustomOrder: async ({ home, clientAreaCustomOrderInitialMocks }, use) => {
     home.userData.reset();
     await MockBms.mockLogin(home);
     await MockBms.mockUserRoute(home, { billingSystem: 'CUSTOM_ORDER' });
-    await MockBms.mockListOrganizations(home);
-    await MockBms.mockOrganizationStats(home);
-    await MockBms.mockOrganizationStatus(home);
-    await MockBms.mockBillingDetails(home);
-    await MockBms.mockGetInvoices(home);
-    await MockBms.mockCustomOrderStatus(home);
-    await MockBms.mockCustomOrderDetails(home);
-    await MockBms.mockCustomOrderRequest(home);
-    await MockBms.mockGetCustomOrderInvoices(home);
+
+    const mockKeys: (keyof typeof MockBms)[] = [
+      'mockListOrganizations',
+      'mockOrganizationStats',
+      'mockOrganizationStatus',
+      'mockBillingDetails',
+      'mockGetInvoices',
+      'mockCustomOrderStatus',
+      'mockCustomOrderDetails',
+      'mockCustomOrderRequest',
+      'mockGetCustomOrderInvoices',
+    ];
+
+    for (const key of mockKeys) {
+      const overload = clientAreaCustomOrderInitialMocks?.[key]?.overload;
+      const options = clientAreaCustomOrderInitialMocks?.[key]?.options;
+      await MockBms[key](home, overload as any, options);
+    }
 
     const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');
@@ -405,4 +452,12 @@ export const msTest = debugTest.extend<{
 
     await use(home);
   },
+
+  clientAreaCustomOrderInitialMocks: [
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, use): Promise<void> => {
+      await use(undefined);
+    },
+    { option: true },
+  ],
 });

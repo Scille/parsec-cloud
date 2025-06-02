@@ -10,7 +10,7 @@ msTest('Check devices list', async ({ myProfilePage }) => {
   const devices = myProfilePage.locator('#devices-list').getByRole('listitem');
   await expect(devices.locator('.device-name')).toHaveText(['My alice@dev1 machine', 'My alice@dev2 machine']);
   await expect(devices.locator('.join-date')).toHaveText(['Joined: Jan 2, 2000', 'Joined: Jan 4, 2000']);
-  await expect(devices.locator('.label-id')).toHaveText([/^Technical ID: [a-f0-9]+$/, /^Technical ID: [a-f0-9]+$/]);
+  await expect(devices.locator('.label-id')).toHaveText([/^Internal ID: [a-f0-9]+$/, /^Internal ID: [a-f0-9]+$/]);
   await expect(devices.nth(0).locator('.badge')).toBeHidden();
   await expect(devices.nth(1).locator('.badge')).toBeVisible();
   await expect(devices.nth(1).locator('.badge')).toHaveText('Current');
@@ -183,4 +183,27 @@ msTest('Logout from my profile page', async ({ myProfilePage }) => {
 
   await expect(logoutButton).toHaveText('Log out');
   await logoutButton.click();
+});
+
+msTest('Profile page back button', async ({ workspaces }) => {
+  await workspaces.locator('.topbar').locator('.profile-header').click();
+  const myProfileButton = workspaces.locator('.profile-header-popover').locator('.main-list').getByRole('listitem').nth(0);
+  await myProfileButton.click();
+  await expect(workspaces).toHavePageTitle('My profile');
+  await expect(workspaces).toBeMyProfilePage();
+  // Navigating into sub-menus, should not add anything to the history
+  const profile = workspaces.locator('.profile-page-container');
+  await profile.locator('.menu-list__item').nth(1).click();
+  await profile.locator('.menu-list__item').nth(2).click();
+  await profile.locator('.menu-list__item').nth(3).click();
+  await profile.locator('.menu-list__item').nth(1).click();
+
+  await expect(workspaces).toHavePageTitle('My profile');
+  await expect(workspaces).toBeMyProfilePage();
+
+  const backButton = workspaces.locator('.topbar-left').locator('.back-button');
+  await expect(backButton).toBeVisible();
+  await backButton.click();
+  await expect(workspaces.locator('#connected-header')).toContainText('My workspaces');
+  await expect(workspaces).toBeWorkspacePage();
 });

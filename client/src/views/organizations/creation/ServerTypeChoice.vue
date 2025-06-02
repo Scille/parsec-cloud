@@ -136,6 +136,21 @@ function getImagePath(): string {
     display: flex;
     justify-content: space-between;
     margin-top: 2.5rem;
+
+    @include ms.responsive-breakpoint('sm') {
+      position: sticky;
+      bottom: 0;
+      padding-bottom: 2rem;
+      right: -2rem;
+      background: var(--parsec-color-light-secondary-white);
+      flex-direction: column-reverse;
+      border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+      box-shadow: var(--parsec-shadow-strong);
+    }
+
+    @media only screen and (max-height: 600px) {
+      max-height: 25rem;
+    }
   }
 }
 

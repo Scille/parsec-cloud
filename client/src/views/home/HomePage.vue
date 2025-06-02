@@ -128,6 +128,7 @@ import { getServerTypeFromAddress, ServerType } from '@/services/parsecServers';
 import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import { SmallDisplayCreateJoinModal } from '@/components/small-display';
+import { useSmallDisplayWarning } from '@/services/smallDisplayWarning';
 
 enum HomePageState {
   OrganizationList = 'organization-list',
@@ -152,6 +153,8 @@ const organizationListRef = ref<typeof OrganizationListPage>();
 const querying = ref(true);
 const deviceList: Ref<AvailableDevice[]> = ref([]);
 let eventCallbackId!: string;
+
+useSmallDisplayWarning(informationManager);
 
 const slidePositions = ref({ appearFrom: Position.Left, disappearTo: Position.Right });
 
@@ -322,6 +325,10 @@ async function handleQuery(): Promise<void> {
     }
   } else if (query.createOrg) {
     openCreateOrganizationModal(undefined, query.createOrg);
+  } else if (query.bmsLogin) {
+    state.value = HomePageState.CustomerArea;
+    // Should just reset the query in the URL without reloading the page
+    await navigateTo(Routes.Home, { skipHandle: true });
   }
   queryInProgress.value = false;
 }

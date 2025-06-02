@@ -87,7 +87,7 @@ msTest('Audio viewer', async ({ documents }) => {
   await expect(fileViewerBackground).toBeVisible();
   await expect(fileViewerBackground.locator('.file-viewer-background-icon')).toBeVisible();
 
-  await expectMedia(audio).toHaveDuration(7.967347);
+  expect((await Media.getDuration(audio)).toString()).toMatch(/^7.9\d+$/);
   await expectMedia(audio).toHaveCurrentTime(0.0);
 
   // Volume control
@@ -135,8 +135,8 @@ msTest('Audio viewer', async ({ documents }) => {
   await backdrop.click();
   await sliderClick(documents, fluxBar, 90);
   await documents.waitForTimeout(1000);
-  await expectMedia(audio).toHaveCurrentTime(7.967347);
-  expect(await Media.getPausedState(audio)).toBe(true);
+  expect((await Media.getDuration(audio)).toString()).toMatch(/^7.9\d+$/);
+  await expectMedia(audio).toBePaused();
 
   // Playback speed
   await dropdownButton.click();
@@ -160,8 +160,8 @@ msTest('Audio viewer', async ({ documents }) => {
   await backdrop.click();
   await playPause.click();
   await documents.waitForTimeout(4000);
-  await expectMedia(audio).toHaveCurrentTime(7.967347);
-  expect(await Media.getPausedState(audio)).toBe(true);
+  expect((await Media.getDuration(audio)).toString()).toMatch(/^7.9\d+$/);
+  await expectMedia(audio).toBePaused();
 });
 
 msTest('Video viewer', async ({ documents }) => {

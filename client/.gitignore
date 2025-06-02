@@ -39,7 +39,7 @@ npm-debug.log*
 # Vite pre-build deps
 /.vite/deps
 /test-results/
+/test-results.json
 /playwright-report/
 /playwright/.cache/
-.env.playwright
 .env.development.local

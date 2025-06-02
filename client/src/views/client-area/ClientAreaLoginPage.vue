@@ -53,22 +53,22 @@ async function goToClientArea(): Promise<void> {
 function getCurrentSectionClass(): string {
   switch (section.value) {
     case Sections.BmsLogin:
-      return 'saas-login-container';
+      return 'saas-login-page-container';
     case Sections.BmsForgotPassword:
-      return 'saas-forgot-password-container';
+      return 'saas-forgot-password-page-container';
   }
 }
 </script>
 
 <style scoped lang="scss">
-.saas-login-container,
-.saas-forgot-password-container {
+.saas-login-page-container,
+.saas-forgot-password-page-container {
   display: flex;
   max-width: 48rem;
   margin: 0 auto;
 }
 
-.saas-login-container {
+.saas-login-page-container {
   width: 100%;
   overflow-y: auto;
 }

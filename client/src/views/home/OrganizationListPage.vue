@@ -369,10 +369,6 @@ const filteredDevices = computed(() => {
     gap: 1rem;
     max-width: 34.5rem;
 
-    @include ms.responsive-breakpoint('md') {
-      margin: auto;
-    }
-
     #search-input-organization:focus-within {
       outline: none;
       border: 1px solid var(--parsec-color-light-primary-300);
@@ -411,7 +407,6 @@ const filteredDevices = computed(() => {
     z-index: 100;
 
     @include ms.responsive-breakpoint('md') {
-      margin: auto;
       width: 100%;
     }
   }

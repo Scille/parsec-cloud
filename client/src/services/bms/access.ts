@@ -380,6 +380,7 @@ class BmsAccess {
   }
 
   private async restoreAccess(): Promise<void> {
+    await storageManagerInstance.init();
     const bmsAccess = await storageManagerInstance.get().retrieveBmsAccess();
 
     if (bmsAccess) {

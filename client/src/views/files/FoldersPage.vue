@@ -1287,7 +1287,31 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
       });
       await fileOperationManager.downloadEntry(workspaceInfo.value.handle, workspaceInfo.value.id, saveHandle, filesOnly[0].path);
     } catch (e: any) {
-      window.electronAPI.log('error', `Failed to select destination file: ${e.toString()}`);
+      if (e.name === 'NotAllowedError') {
+        window.electronAPI.log('error', 'No permission for showSaveFilePicker');
+        informationManager.present(
+          new Information({
+            message: 'FoldersPage.DownloadFile.noPermissions',
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Modal,
+        );
+      } else if (e.name === 'AbortError') {
+        if ((e.toString() as string).toLocaleLowerCase().includes('user aborted')) {
+          window.electronAPI.log('debug', 'User cancelled the showSaveFilePicker');
+        } else {
+          informationManager.present(
+            new Information({
+              message: 'FoldersPage.DownloadFile.selectFolderFailed',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Toast,
+          );
+          window.electronAPI.log('error', `Could not create the file: ${e.toString()}`);
+        }
+      } else {
+        window.electronAPI.log('error', `Failed to select destination file: ${e.toString()}`);
+      }
     }
   } else {
     // Multiple, we use the showDirectoryPicker and get multiple handles

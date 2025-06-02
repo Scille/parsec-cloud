@@ -69,17 +69,17 @@
       </template>
 
       <!-- show it only when there is one organization selected -->
-      <template v-if="!isDefaultOrganization(currentOrganization) && status">
+      <template v-if="!isDefaultOrganization(currentOrganization) && orgStatus">
         <ion-text class="organization-card-state body">
           {{ $msTranslate('clientArea.sidebar.state.title') }}
-          <span>{{ $msTranslate(status.isFrozen ? 'clientArea.sidebar.state.frozen' : 'clientArea.sidebar.state.active') }}</span>
+          <span>{{ $msTranslate(orgStatus.isFrozen ? 'clientArea.sidebar.state.frozen' : 'clientArea.sidebar.state.active') }}</span>
         </ion-text>
       </template>
 
       <!-- button: go to organization -->
       <div
         class="organization-card-button custom-button custom-button-fill"
-        v-show="showMenu && !isDefaultOrganization(currentOrganization)"
+        v-show="!isDefaultOrganization(currentOrganization) && orgStatus?.isBootstrapped"
         @click="goToOrganization"
       >
         <ion-icon
@@ -97,175 +97,204 @@
   </ion-header>
 
   <ion-content class="ion-padding sidebar-content">
-    <!-- menu client -->
+    <!-- global menu client -->
     <div class="menu-client">
-      <!-- menu list -->
-      <ion-list
-        v-if="billingSystem === BillingSystem.Stripe"
-        class="menu-client-list"
-      >
-        <!-- summary -->
-        <ion-item
-          button
-          lines="none"
-          class="menu-default menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Dashboard }"
-          @click="goToPageClicked(ClientAreaPages.Dashboard)"
-        >
-          <ion-icon
-            class="menu-client-list-item__icon"
-            :icon="grid"
-          />
-          {{ $msTranslate('clientArea.sidebar.menu.summary') }}
-        </ion-item>
+      <div class="menu-client-block">
+        <!-- menu list -->
+        <ion-list class="menu-client-list">
+          <!-- dashboard -->
+          <ion-item
+            button
+            lines="none"
+            v-if="billingSystem === BillingSystem.Stripe"
+            class="menu-default menu-client-list-item"
+            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Dashboard }"
+            @click="goToPageClicked(ClientAreaPages.Dashboard)"
+          >
+            <ion-icon
+              class="menu-client-list-item__icon"
+              :icon="grid"
+            />
+            {{ $msTranslate('clientArea.sidebar.menu.summary') }}
+          </ion-item>
 
-        <!-- stats -->
-        <ion-item
-          button
-          lines="none"
-          class="button-medium menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Statistics }"
-          @click="goToPageClicked(ClientAreaPages.Statistics)"
-        >
-          <ion-icon
-            class="menu-client-list-item__icon"
-            :icon="podium"
-          />
-          {{ $msTranslate('clientArea.sidebar.menu.stats') }}
-        </ion-item>
+          <!-- orders -->
+          <ion-item
+            button
+            lines="none"
+            v-if="billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate"
+            class="button-medium menu-client-list-item"
+            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Orders }"
+            @click="goToPageClicked(ClientAreaPages.Orders)"
+          >
+            <ion-icon
+              class="menu-client-list-item__icon"
+              :icon="cube"
+            />
+            {{ $msTranslate('clientArea.sidebar.menu.orders') }}
+          </ion-item>
 
-        <!-- invoices -->
-        <ion-item
-          button
-          lines="none"
-          class="button-medium menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Invoices }"
-          @click="goToPageClicked(ClientAreaPages.Invoices)"
-        >
-          <ion-icon
-            class="menu-client-list-item__icon"
-            :icon="newspaper"
-          />
-          {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
-        </ion-item>
+          <!-- profile -->
+          <ion-item
+            button
+            lines="none"
+            class="menu-default menu-client-list-item"
+            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.PersonalData }"
+            @click="goToPageClicked(ClientAreaPages.PersonalData)"
+          >
+            <ion-icon
+              class="menu-client-list-item__icon"
+              :icon="person"
+            />
+            {{ $msTranslate('clientArea.sidebar.menu.personalData') }}
+          </ion-item>
+        </ion-list>
+      </div>
 
-        <!-- payment -->
-        <ion-item
-          button
-          lines="none"
-          class="button-medium menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.PaymentMethods }"
-          @click="goToPageClicked(ClientAreaPages.PaymentMethods)"
+      <!-- specific submenu depending on billing system -->
+      <div class="menu-client-block">
+        <ion-list
+          v-if="billingSystem === BillingSystem.Stripe"
+          class="menu-client-list"
         >
-          <ion-icon
-            class="menu-client-list-item__icon"
-            :icon="card"
-          />
-          {{ $msTranslate('clientArea.sidebar.menu.billingMethod') }}
-        </ion-item>
+          <!-- stats -->
+          <ion-item
+            button
+            lines="none"
+            :disabled="clientAreaPagesDisabled[ClientAreaPages.Statistics]"
+            class="button-medium menu-client-list-item"
+            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Statistics }"
+            @click="goToPageClicked(ClientAreaPages.Statistics)"
+          >
+            <ion-icon
+              class="menu-client-list-item__icon"
+              :icon="podium"
+            />
+            {{ $msTranslate('clientArea.sidebar.menu.stats') }}
+          </ion-item>
 
-        <!-- billing -->
-        <ion-item
-          button
-          lines="none"
-          class="button-medium menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.BillingDetails }"
-          @click="goToPageClicked(ClientAreaPages.BillingDetails)"
-        >
-          <ion-icon
-            class="menu-client-list-item__icon"
-            :icon="idCard"
-          />
-          {{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}
-        </ion-item>
-      </ion-list>
+          <!-- invoices -->
+          <ion-item
+            button
+            lines="none"
+            class="button-medium menu-client-list-item"
+            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Invoices }"
+            @click="goToPageClicked(ClientAreaPages.Invoices)"
+          >
+            <ion-icon
+              class="menu-client-list-item__icon"
+              :icon="newspaper"
+            />
+            {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
+          </ion-item>
 
-      <ion-list
-        v-if="billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate"
-        class="menu-client-list"
-      >
-        <!-- contracts -->
-        <ion-item
-          button
-          lines="none"
-          :disabled="!showMenu"
-          class="button-medium menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Contracts }"
-          @click="goToPageClicked(ClientAreaPages.Contracts)"
-        >
-          <ion-icon
-            class="menu-client-list-item__icon"
-            :icon="albums"
-          />
-          {{ $msTranslate('clientArea.sidebar.menu.contract') }}
-        </ion-item>
+          <!-- payment -->
+          <ion-item
+            button
+            lines="none"
+            class="button-medium menu-client-list-item"
+            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.PaymentMethods }"
+            @click="goToPageClicked(ClientAreaPages.PaymentMethods)"
+          >
+            <ion-icon
+              class="menu-client-list-item__icon"
+              :icon="card"
+            />
+            {{ $msTranslate('clientArea.sidebar.menu.billingMethod') }}
+          </ion-item>
 
-        <!-- stats -->
-        <ion-item
-          button
-          lines="none"
-          :disabled="!showMenu"
-          class="button-medium menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderStatistics }"
-          @click="goToPageClicked(ClientAreaPages.CustomOrderStatistics)"
-        >
-          <ion-icon
-            class="menu-client-list-item__icon"
-            :icon="podium"
-          />
-          {{ $msTranslate('clientArea.sidebar.menu.stats') }}
-        </ion-item>
+          <!-- billing -->
+          <ion-item
+            button
+            lines="none"
+            class="button-medium menu-client-list-item"
+            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.BillingDetails }"
+            @click="goToPageClicked(ClientAreaPages.BillingDetails)"
+          >
+            <ion-icon
+              class="menu-client-list-item__icon"
+              :icon="idCard"
+            />
+            {{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}
+          </ion-item>
+        </ion-list>
 
-        <!-- orders -->
-        <ion-item
-          button
-          lines="none"
-          class="button-medium menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Orders }"
-          @click="goToPageClicked(ClientAreaPages.Orders)"
+        <ion-list
+          v-if="billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate"
+          class="menu-client-list"
         >
-          <ion-icon
-            class="menu-client-list-item__icon"
-            :icon="cube"
-          />
-          {{ $msTranslate('clientArea.sidebar.menu.orders') }}
-        </ion-item>
+          <!-- contracts -->
+          <ion-item
+            button
+            lines="none"
+            :disabled="clientAreaPagesDisabled[ClientAreaPages.Contracts]"
+            class="button-medium menu-client-list-item"
+            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Contracts }"
+            @click="goToPageClicked(ClientAreaPages.Contracts)"
+          >
+            <ion-icon
+              class="menu-client-list-item__icon"
+              :icon="albums"
+            />
+            {{ $msTranslate('clientArea.sidebar.menu.contract') }}
+          </ion-item>
 
-        <!-- invoices -->
-        <ion-item
-          button
-          lines="none"
-          :disabled="!showMenu"
-          class="button-medium menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderInvoices }"
-          @click="goToPageClicked(ClientAreaPages.CustomOrderInvoices)"
-        >
-          <ion-icon
-            class="menu-client-list-item__icon"
-            :icon="newspaper"
-          />
-          {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
-        </ion-item>
+          <!-- stats -->
+          <ion-item
+            button
+            lines="none"
+            :disabled="clientAreaPagesDisabled[ClientAreaPages.CustomOrderStatistics]"
+            class="button-medium menu-client-list-item"
+            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderStatistics }"
+            @click="goToPageClicked(ClientAreaPages.CustomOrderStatistics)"
+          >
+            <ion-icon
+              class="menu-client-list-item__icon"
+              :icon="podium"
+            />
+            {{ $msTranslate('clientArea.sidebar.menu.stats') }}
+          </ion-item>
 
-        <!-- billing -->
-        <ion-item
-          button
-          lines="none"
-          :disabled="!showMenu"
-          class="button-medium menu-client-list-item"
-          v-show="false"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderBillingDetails }"
-          @click="goToPageClicked(ClientAreaPages.CustomOrderBillingDetails)"
-        >
-          <ion-icon
-            class="menu-client-list-item__icon"
-            :icon="idCard"
-          />
-          {{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}
-        </ion-item>
-      </ion-list>
+          <!-- invoices -->
+          <ion-item
+            button
+            lines="none"
+            :disabled="clientAreaPagesDisabled[ClientAreaPages.CustomOrderInvoices]"
+            class="button-medium menu-client-list-item"
+            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderInvoices }"
+            @click="goToPageClicked(ClientAreaPages.CustomOrderInvoices)"
+          >
+            <ion-icon
+              class="menu-client-list-item__icon"
+              :icon="newspaper"
+            />
+            {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
+          </ion-item>
+
+          <!-- billing -->
+          <!-- TODO: unhide this, when BillingDetails for custom orders is developed -->
+          <!-- https://github.com/Scille/parsec-cloud/issues/10415 -->
+          <ion-item
+            button
+            lines="none"
+            :disabled="!showMenu"
+            class="button-medium menu-client-list-item"
+            v-show="false"
+            :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderBillingDetails }"
+            @click="goToPageClicked(ClientAreaPages.CustomOrderBillingDetails)"
+          >
+            <ion-icon
+              class="menu-client-list-item__icon"
+              :icon="idCard"
+            />
+            {{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}
+          </ion-item>
+        </ion-list>
+      </div>
     </div>
 
+    <!-- TODO: check if this block still needs to be hidden or should be shown / removed -->
+    <!-- https://github.com/Scille/parsec-cloud/issues/10414 -->
     <div
       class="contact"
       v-show="false"
@@ -322,7 +351,21 @@
 
 <script setup lang="ts">
 import { askQuestion, Answer, ChevronExpand, MsImage, MsModalResult, MsInformationTooltip } from 'megashark-lib';
-import { arrowForward, card, chatbubbleEllipses, home, logOut, podium, grid, idCard, newspaper, add, cube, albums } from 'ionicons/icons';
+import {
+  arrowForward,
+  card,
+  chatbubbleEllipses,
+  home,
+  logOut,
+  podium,
+  grid,
+  idCard,
+  newspaper,
+  add,
+  cube,
+  albums,
+  person,
+} from 'ionicons/icons';
 import {
   BmsAccessInstance,
   BmsOrganization,
@@ -356,10 +399,18 @@ const props = defineProps<{
   organizations: Array<BmsOrganization>;
   currentPage: ClientAreaPages;
 }>();
-const status = ref<OrganizationStatusResultData | null>(null);
+const orgStatus = ref<OrganizationStatusResultData | null>(null);
 const billingSystem = ref(BmsAccessInstance.get().getPersonalInformation().billingSystem);
 const showMenu = ref(false);
 const querying = ref(false);
+
+const clientAreaPagesDisabled = ref<Partial<Record<ClientAreaPages, boolean>>>({
+  [ClientAreaPages.Contracts]: false,
+  [ClientAreaPages.CustomOrderBillingDetails]: false,
+  [ClientAreaPages.CustomOrderInvoices]: false,
+  [ClientAreaPages.CustomOrderStatistics]: false,
+  [ClientAreaPages.Statistics]: false,
+});
 
 const emits = defineEmits<{
   (e: 'pageSelected', page: ClientAreaPages): void;
@@ -373,20 +424,40 @@ async function goToPageClicked(page: ClientAreaPages): Promise<void> {
 onMounted(async () => {
   querying.value = true;
   if (isDefaultOrganization(props.currentOrganization)) {
-    status.value = null;
+    orgStatus.value = null;
   } else {
     const response = await BmsAccessInstance.get().getOrganizationStatus(props.currentOrganization.bmsId);
     if (!response.isError && response.data) {
-      status.value = response.data as OrganizationStatusResultData;
+      orgStatus.value = response.data as OrganizationStatusResultData;
+    }
+
+    // Check if org have possibly stats, if not disable the pages
+    const isBootstrapped = orgStatus.value?.isBootstrapped ?? false;
+
+    let disableStatisticsPages = true;
+    if (isBootstrapped) {
+      const orgStatsResponse = await BmsAccessInstance.get().getOrganizationStats(props.currentOrganization.bmsId);
+
+      if (!orgStatsResponse.isError && orgStatsResponse.data?.type === DataType.OrganizationStats) {
+        disableStatisticsPages = false;
+      }
+    }
+
+    if (disableStatisticsPages) {
+      clientAreaPagesDisabled.value[ClientAreaPages.Statistics] = true;
+      clientAreaPagesDisabled.value[ClientAreaPages.CustomOrderStatistics] = true;
     }
   }
+
   if (billingSystem.value === BillingSystem.CustomOrder || billingSystem.value === BillingSystem.ExperimentalCandidate) {
     showMenu.value = true;
     if (!isDefaultOrganization(props.currentOrganization)) {
       const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(props.currentOrganization);
       if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus) {
-        if (statusResp.data.status === CustomOrderStatus.NothingLinked) {
+        if ([CustomOrderStatus.NothingLinked, CustomOrderStatus.EstimateLinked].includes(statusResp.data.status)) {
           showMenu.value = false;
+          clientAreaPagesDisabled.value[ClientAreaPages.Contracts] = true;
+          clientAreaPagesDisabled.value[ClientAreaPages.CustomOrderInvoices] = true;
         }
       }
     }
@@ -588,19 +659,23 @@ async function createOrganization(): Promise<void> {
 .menu-client {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 4rem;
   position: relative;
   margin-left: 0.5rem;
 
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -3rem;
-    left: -2rem;
-    width: calc(100% + 4rem);
-    height: 1px;
-    background: var(--parsec-color-light-secondary-disabled);
-    z-index: 2;
+  &-block {
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -2rem;
+      left: -2rem;
+      width: calc(100% + 4rem);
+      height: 1px;
+      background: var(--parsec-color-light-secondary-disabled);
+      z-index: 2;
+    }
   }
 
   &-list {

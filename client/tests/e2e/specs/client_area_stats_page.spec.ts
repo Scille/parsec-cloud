@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DEFAULT_ORGANIZATION_DATA_SLICE, MockBms, expect, msTest } from '@tests/e2e/helpers';
+import { DEFAULT_ORGANIZATION_DATA_SLICE, MockBms, clientAreaNavigateTo, expect, msTest } from '@tests/e2e/helpers';
 
 [
   {
@@ -46,8 +46,7 @@ import { DEFAULT_ORGANIZATION_DATA_SLICE, MockBms, expect, msTest } from '@tests
 ].forEach(({ overload, totalData, freePercentage, payingData }) => {
   msTest(`Test stats progress bars Data(${totalData})`, async ({ clientArea }) => {
     await MockBms.mockOrganizationStats(clientArea, overload);
-
-    await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(1).click();
+    await clientAreaNavigateTo(clientArea, 'Statistics');
 
     await expect(clientArea.locator('.storage').locator('.storage-detail-data__total')).toHaveText(totalData);
     await expect(clientArea.locator('.storage').locator('.circle__amount')).toHaveText(freePercentage);

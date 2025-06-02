@@ -208,7 +208,7 @@ export const expect = baseExpect.extend({
 
   async toBeHomePage(page: Page): Promise<AssertReturnType> {
     try {
-      await expect(page).toHaveURL(/\/home$/);
+      await expect(page).toHaveURL(/\/home\??.*$/);
     } catch (error: any) {
       return {
         message: () => `Page is not home page (url is '${error.matcherResult.actual}')`,
@@ -318,6 +318,21 @@ export const expect = baseExpect.extend({
     } catch (error: any) {
       return {
         message: () => `Page is not viewer page (url is '${error.matcherResult.actual}')`,
+        pass: false,
+      };
+    }
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
+
+  async toBeClientAreaPage(page: Page): Promise<AssertReturnType> {
+    try {
+      await expect(page).toHaveURL(/\/clientArea\??.*$/);
+    } catch (error: any) {
+      return {
+        message: () => `Page is not client area page (url is '${error.matcherResult.actual}')`,
         pass: false,
       };
     }

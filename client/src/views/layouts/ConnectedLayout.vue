@@ -22,6 +22,7 @@ import { MsModalResult, openSpinnerModal } from 'megashark-lib';
 import { DateTime } from 'luxon';
 import { StorageManagerKey, StorageManager } from '@/services/storageManager';
 import { recentDocumentManager } from '@/services/recentDocuments';
+import { useSmallDisplayWarning } from '@/services/smallDisplayWarning';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -31,6 +32,7 @@ const modalOpened = ref(false);
 let timeoutId: number | null = null;
 let callbackId: string | null = null;
 const lastAccepted: Ref<DateTime | null> = ref(null);
+const { setInformationManager } = useSmallDisplayWarning();
 
 onMounted(async () => {
   const handle = getConnectionHandle();
@@ -53,6 +55,8 @@ onMounted(async () => {
   provide(FileOperationManagerKey, injections.fileOperationManager);
   provide(InformationManagerKey, injections.informationManager);
   provide(EventDistributorKey, injections.eventDistributor);
+
+  setInformationManager(injections.informationManager);
 
   const clientInfoResult = await getClientInfo(handle);
   // The handle is invalid

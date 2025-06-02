@@ -594,6 +594,10 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
+.modal-stepper {
+  overflow: auto;
+}
+
 .organization-name {
   display: flex;
   flex-direction: column;
@@ -606,6 +610,6 @@ onMounted(async () => {
 }
 
 .guest-code {
-  margin: 4.7rem auto;
+  margin: auto;
 }
 </style>
