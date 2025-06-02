@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, HashDigest
+from parsec._parsec import DateTime, HashDigest, PasswordAlgorithm
 
 class VaultItemRecoveryVault:
     def __init__(
@@ -16,9 +16,6 @@ class VaultItemRecoveryVault:
     def vault_items(self) -> dict[HashDigest, bytes]: ...
 
 class VaultItemRecoveryAuthMethod:
-    pass
-
-class VaultItemRecoveryAuthMethodPassword(VaultItemRecoveryAuthMethod):
     def __init__(
         self,
         created_on: DateTime,
@@ -26,10 +23,8 @@ class VaultItemRecoveryAuthMethodPassword(VaultItemRecoveryAuthMethod):
         created_by_ip: str | None,
         created_by_user_agent: str,
         vault_key_access: bytes,
-        algorithm: PasswordAlgorithm,
+        password_algorithm: PasswordAlgorithm | None,
     ) -> None: ...
-    @property
-    def algorithm(self) -> PasswordAlgorithm: ...
     @property
     def created_by_ip(self) -> str | None: ...
     @property
@@ -39,21 +34,9 @@ class VaultItemRecoveryAuthMethodPassword(VaultItemRecoveryAuthMethod):
     @property
     def disabled_on(self) -> DateTime | None: ...
     @property
+    def password_algorithm(self) -> PasswordAlgorithm | None: ...
+    @property
     def vault_key_access(self) -> bytes: ...
-
-class PasswordAlgorithm:
-    pass
-
-class PasswordAlgorithmArgon2id(PasswordAlgorithm):
-    def __init__(self, salt: bytes, opslimit: int, memlimit_kb: int, parallelism: int) -> None: ...
-    @property
-    def memlimit_kb(self) -> int: ...
-    @property
-    def opslimit(self) -> int: ...
-    @property
-    def parallelism(self) -> int: ...
-    @property
-    def salt(self) -> bytes: ...
 
 class Req:
     def __init__(

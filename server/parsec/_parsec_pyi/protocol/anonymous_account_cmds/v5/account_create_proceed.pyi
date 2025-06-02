@@ -4,28 +4,14 @@
 
 from __future__ import annotations
 
-from parsec._parsec import AccountAuthMethodID, EmailValidationToken, SecretKey
-
-class PasswordAlgorithm:
-    pass
-
-class PasswordAlgorithmArgon2id(PasswordAlgorithm):
-    def __init__(self, salt: bytes, opslimit: int, memlimit_kb: int, parallelism: int) -> None: ...
-    @property
-    def memlimit_kb(self) -> int: ...
-    @property
-    def opslimit(self) -> int: ...
-    @property
-    def parallelism(self) -> int: ...
-    @property
-    def salt(self) -> bytes: ...
+from parsec._parsec import AccountAuthMethodID, EmailValidationToken, PasswordAlgorithm, SecretKey
 
 class Req:
     def __init__(
         self,
         validation_token: EmailValidationToken,
         human_label: str,
-        password_algorithm: PasswordAlgorithm,
+        auth_method_password_algorithm: PasswordAlgorithm | None,
         auth_method_hmac_key: SecretKey,
         auth_method_id: AccountAuthMethodID,
         vault_key_access: bytes,
@@ -36,9 +22,9 @@ class Req:
     @property
     def auth_method_id(self) -> AccountAuthMethodID: ...
     @property
-    def human_label(self) -> str: ...
+    def auth_method_password_algorithm(self) -> PasswordAlgorithm | None: ...
     @property
-    def password_algorithm(self) -> PasswordAlgorithm: ...
+    def human_label(self) -> str: ...
     @property
     def validation_token(self) -> EmailValidationToken: ...
     @property

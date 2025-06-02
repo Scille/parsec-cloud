@@ -4,28 +4,14 @@
 
 from __future__ import annotations
 
-from parsec._parsec import AccountAuthMethodID, HashDigest, SecretKey
-
-class PasswordAlgorithm:
-    pass
-
-class PasswordAlgorithmArgon2id(PasswordAlgorithm):
-    def __init__(self, salt: bytes, opslimit: int, memlimit_kb: int, parallelism: int) -> None: ...
-    @property
-    def memlimit_kb(self) -> int: ...
-    @property
-    def opslimit(self) -> int: ...
-    @property
-    def parallelism(self) -> int: ...
-    @property
-    def salt(self) -> bytes: ...
+from parsec._parsec import AccountAuthMethodID, HashDigest, PasswordAlgorithm, SecretKey
 
 class Req:
     def __init__(
         self,
         new_auth_method_id: AccountAuthMethodID,
         new_auth_method_mac_key: SecretKey,
-        new_password_algorithm: PasswordAlgorithm,
+        new_auth_method_password_algorithm: PasswordAlgorithm | None,
         new_vault_key_access: bytes,
         items: dict[HashDigest, bytes],
     ) -> None: ...
@@ -37,7 +23,7 @@ class Req:
     @property
     def new_auth_method_mac_key(self) -> SecretKey: ...
     @property
-    def new_password_algorithm(self) -> PasswordAlgorithm: ...
+    def new_auth_method_password_algorithm(self) -> PasswordAlgorithm | None: ...
     @property
     def new_vault_key_access(self) -> bytes: ...
 
