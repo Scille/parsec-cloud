@@ -217,15 +217,19 @@ def _smtp_send_email(
 ) -> None | SendEmailBadOutcome:
     try:
         context = ssl.create_default_context()
+        logger.debug("SSL Context", context=context)
         if email_config.use_ssl:
+            logger.debug("Configure SMTP client with SSL")
             server: smtplib.SMTP | smtplib.SMTP_SSL = smtplib.SMTP_SSL(
                 email_config.host, email_config.port, context=context
             )
         else:
+            logger.debug("Configure SMTP client without SSL")
             server = smtplib.SMTP(email_config.host, email_config.port)
 
         with server:
             if email_config.use_tls and not email_config.use_ssl:
+                logger.debug("Start SMTP session in TLS mode")
                 if server.starttls(context=context)[0] != 220:
                     logger.warning("Email TLS connection isn't encrypted")
             if email_config.host_user and email_config.host_password:
