@@ -28,7 +28,7 @@ pub const PARSEC_AUTH_METHOD: &str = "PARSEC-MAC-BLAKE2B";
 pub struct AccountAuthMethod {
     pub time_provider: TimeProvider,
     pub id: AccountAuthMethodID,
-    pub hmac_key: SecretKey,
+    pub mac_key: SecretKey,
 }
 
 /// Send commands in an authenticated account context.
@@ -205,7 +205,7 @@ fn generate_authorization_header_value(auth_method: &AccountAuthMethod, now: Dat
         "{}.{}.{}",
         PARSEC_AUTH_METHOD, &auth_method_id_hex, &timestamp
     );
-    let signature = auth_method.hmac_key.mac_512(header_and_body.as_bytes());
+    let signature = auth_method.mac_key.mac_512(header_and_body.as_bytes());
     let b64_signature = BASE64URL.encode(&signature);
 
     format!("Bearer {}.{}", &header_and_body, &b64_signature)

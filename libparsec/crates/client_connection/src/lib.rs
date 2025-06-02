@@ -14,7 +14,7 @@ mod testbed_send_hook_helpers;
 
 pub use anonymous_account_cmds::AnonymousAccountCmds;
 pub use anonymous_cmds::AnonymousCmds;
-pub use authenticated_account_cmds::AuthenticatedAccountCmds;
+pub use authenticated_account_cmds::{AccountAuthMethod, AuthenticatedAccountCmds};
 pub use authenticated_cmds::{
     sse::{RateLimiter, SSEEvent, SSEResponseOrMissedEvents, SSEStream},
     AuthenticatedCmds, PARSEC_AUTH_METHOD,
