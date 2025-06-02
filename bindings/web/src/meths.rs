@@ -1914,6 +1914,48 @@ fn struct_open_options_rs_to_js(rs_obj: libparsec::OpenOptions) -> Result<JsValu
     Ok(js_obj)
 }
 
+// OrganizationInfo
+
+#[allow(dead_code)]
+fn struct_organization_info_js_to_rs(obj: JsValue) -> Result<libparsec::OrganizationInfo, JsValue> {
+    let total_block_bytes = {
+        let js_val = Reflect::get(&obj, &"totalBlockBytes".into())?;
+        {
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            v
+        }
+    };
+    let total_metadata_bytes = {
+        let js_val = Reflect::get(&obj, &"totalMetadataBytes".into())?;
+        {
+            let v = u64::try_from(js_val)
+                .map_err(|_| TypeError::new("Not a BigInt representing an u64 number"))?;
+            v
+        }
+    };
+    Ok(libparsec::OrganizationInfo {
+        total_block_bytes,
+        total_metadata_bytes,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_organization_info_rs_to_js(
+    rs_obj: libparsec::OrganizationInfo,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_total_block_bytes = JsValue::from(rs_obj.total_block_bytes);
+    Reflect::set(&js_obj, &"totalBlockBytes".into(), &js_total_block_bytes)?;
+    let js_total_metadata_bytes = JsValue::from(rs_obj.total_metadata_bytes);
+    Reflect::set(
+        &js_obj,
+        &"totalMetadataBytes".into(),
+        &js_total_metadata_bytes,
+    )?;
+    Ok(js_obj)
+}
+
 // ServerConfig
 
 #[allow(dead_code)]
@@ -6791,6 +6833,34 @@ fn variant_client_new_user_invitation_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientNewUserInvitationErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientOrganizationInfoError
+
+#[allow(dead_code)]
+fn variant_client_organization_info_error_rs_to_js(
+    rs_obj: libparsec::ClientOrganizationInfoError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientOrganizationInfoError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientOrganizationInfoErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientOrganizationInfoError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientOrganizationInfoErrorOffline".into(),
             )?;
         }
     }
@@ -17305,6 +17375,31 @@ pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: b
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_new_user_invitation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    }))
+}
+
+// client_organization_info
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientOrganizationInfo(client_handle: u32) -> Promise {
+    future_to_promise(libparsec::WithTaskIDFuture::from(async move {
+        let ret = libparsec::client_organization_info(client_handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_organization_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_organization_info_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

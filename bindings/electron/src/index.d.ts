@@ -222,6 +222,12 @@ export interface OpenOptions {
 }
 
 
+export interface OrganizationInfo {
+    totalBlockBytes: number
+    totalMetadataBytes: number
+}
+
+
 export interface ServerConfig {
     userProfileOutsiderAllowed: boolean
     activeUsersLimit: ActiveUsersLimit
@@ -1162,6 +1168,20 @@ export type ClientNewUserInvitationError =
   | ClientNewUserInvitationErrorInternal
   | ClientNewUserInvitationErrorNotAllowed
   | ClientNewUserInvitationErrorOffline
+
+
+// ClientOrganizationInfoError
+export interface ClientOrganizationInfoErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientOrganizationInfoErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type ClientOrganizationInfoError =
+  | ClientOrganizationInfoErrorInternal
+  | ClientOrganizationInfoErrorOffline
 
 
 // ClientRenameWorkspaceError
@@ -3880,6 +3900,9 @@ export function clientNewUserInvitation(
     claimer_email: string,
     send_email: boolean
 ): Promise<Result<NewInvitationInfo, ClientNewUserInvitationError>>
+export function clientOrganizationInfo(
+    client_handle: number
+): Promise<Result<OrganizationInfo, ClientOrganizationInfoError>>
 export function clientRenameWorkspace(
     client: number,
     realm_id: string,
