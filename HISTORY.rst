@@ -4,6 +4,12 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.4.0-rc.5 (2025-06-02)
+-------------------------------
+
+No significant changes.
+
+
 Parsec v3.4.0-rc.4 (2025-05-22)
 -------------------------------
 
