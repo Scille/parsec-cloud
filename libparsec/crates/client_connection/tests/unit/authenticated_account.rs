@@ -35,7 +35,7 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
     let auth_method = AccountAuthMethod {
         time_provider: TimeProvider::default(),
         id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e").unwrap(),
-        hmac_key: SecretKey::generate(),
+        mac_key: SecretKey::generate(),
     };
     let cmds = AuthenticatedAccountCmds::new(
         &env.discriminant_dir,
@@ -112,7 +112,7 @@ async fn invalid_token(env: &TestbedEnv, mocked: bool) {
     let auth_method = AccountAuthMethod {
         id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e").unwrap(),
         time_provider: TimeProvider::default(),
-        hmac_key: SecretKey::generate(),
+        mac_key: SecretKey::generate(),
     };
     let cmds = AuthenticatedAccountCmds::new(
         &env.discriminant_dir,
@@ -152,7 +152,7 @@ macro_rules! register_rpc_http_hook {
             let auth_method = AccountAuthMethod {
                 id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e").unwrap(),
                 time_provider: TimeProvider::default(),
-                hmac_key: SecretKey::generate()
+                mac_key: SecretKey::generate()
             };
             let cmds =
                 AuthenticatedAccountCmds::new(
