@@ -31,7 +31,7 @@ async fn ok_with_server(env: &TestbedEnv) {
 async fn ok(env: &TestbedEnv, mocked: bool) {
     // Good request
 
-    let addr = ParsecAuthenticatedAccountAddr::new(env.server_addr.clone());
+    let addr = env.server_addr.clone();
     let auth_method = AccountAuthMethod {
         time_provider: TimeProvider::default(),
         id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e").unwrap(),
@@ -108,7 +108,7 @@ async fn invalid_token_with_server(env: &TestbedEnv) {
 async fn invalid_token(env: &TestbedEnv, mocked: bool) {
     // Bad request: invalid account token
 
-    let addr = ParsecAuthenticatedAccountAddr::new(env.server_addr.clone());
+    let addr = env.server_addr.clone();
     let auth_method = AccountAuthMethod {
         id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e").unwrap(),
         time_provider: TimeProvider::default(),
@@ -146,9 +146,7 @@ macro_rules! register_rpc_http_hook {
     ($test_name: ident, $response_status_code: expr, $assert_err_cb: expr $(, $header_key:literal : $header_value:expr)* $(,)?) => {
         #[parsec_test(testbed = "minimal")]
         async fn $test_name(env: &TestbedEnv) {
-            let addr = ParsecAuthenticatedAccountAddr::new(
-                env.server_addr.clone(),
-            );
+            let addr = env.server_addr.clone();
             let auth_method = AccountAuthMethod {
                 id: AccountAuthMethodID::from_hex("9aae259f748045cc9fe7146eab0b132e").unwrap(),
                 time_provider: TimeProvider::default(),

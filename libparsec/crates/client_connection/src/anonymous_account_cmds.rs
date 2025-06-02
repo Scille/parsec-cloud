@@ -26,27 +26,19 @@ const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 pub struct AnonymousAccountCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
     client: Client,
-    addr: ParsecAnonymousAccountAddr,
+    addr: ParsecAddr,
     url: Url,
     #[cfg(feature = "test-with-testbed")]
     send_hook: SendHookConfig,
 }
 
 impl AnonymousAccountCmds {
-    pub fn new(
-        config_dir: &Path,
-        addr: ParsecAnonymousAccountAddr,
-        proxy: ProxyConfig,
-    ) -> anyhow::Result<Self> {
+    pub fn new(config_dir: &Path, addr: ParsecAddr, proxy: ProxyConfig) -> anyhow::Result<Self> {
         let client = crate::build_client_with_proxy(proxy)?;
         Ok(Self::from_client(client, config_dir, addr))
     }
 
-    pub fn from_client(
-        client: Client,
-        _config_dir: &Path,
-        addr: ParsecAnonymousAccountAddr,
-    ) -> Self {
+    pub fn from_client(client: Client, _config_dir: &Path, addr: ParsecAddr) -> Self {
         let url = addr.to_anonymous_account_url();
 
         #[cfg(feature = "test-with-testbed")]
@@ -61,7 +53,7 @@ impl AnonymousAccountCmds {
         }
     }
 
-    pub fn addr(&self) -> &ParsecAnonymousAccountAddr {
+    pub fn addr(&self) -> &ParsecAddr {
         &self.addr
     }
 
