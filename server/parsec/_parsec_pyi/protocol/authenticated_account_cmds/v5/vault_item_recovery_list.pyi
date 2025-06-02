@@ -20,13 +20,13 @@ class VaultItemRecoveryAuthMethod:
         self,
         created_on: DateTime,
         disabled_on: DateTime | None,
-        created_by_ip: str | None,
+        created_by_ip: str,
         created_by_user_agent: str,
         vault_key_access: bytes,
         password_algorithm: PasswordAlgorithm | None,
     ) -> None: ...
     @property
-    def created_by_ip(self) -> str | None: ...
+    def created_by_ip(self) -> str: ...
     @property
     def created_by_user_agent(self) -> str: ...
     @property

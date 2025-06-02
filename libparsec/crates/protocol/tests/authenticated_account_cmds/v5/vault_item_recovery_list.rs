@@ -82,7 +82,7 @@ pub fn rep_ok() {
     //           vault_key_access: 0x3c7661756c745f6b65795f61636365737320323e,
     //         },
     //         {
-    //           created_by_ip: None,
+    //           created_by_ip: '',
     //           created_by_user_agent: 'Parsec-Client/3.4.1 Windows',
     //           created_on: ext(1, 946857600000000) i.e. 2000-01-03T01:00:00Z,
     //           disabled_on: ext(1, 946944000000000) i.e. 2000-01-04T01:00:00Z,
@@ -123,14 +123,14 @@ pub fn rep_ok() {
         "6974686d81a84172676f6e32696484a473616c74c4083c73616c7420323ea86f70736c"
         "696d6974ce00010000ab6d656d6c696d69745f6b6203ab706172616c6c656c69736d01"
         "b07661756c745f6b65795f616363657373c4143c7661756c745f6b65795f6163636573"
-        "7320323e86ad637265617465645f62795f6970c0b5637265617465645f62795f757365"
+        "7320323e86ad637265617465645f62795f6970a0b5637265617465645f62795f757365"
         "725f6167656e74bb5061727365632d436c69656e742f332e342e312057696e646f7773"
         "aa637265617465645f6f6ed70100035d2976e6a000ab64697361626c65645f6f6ed701"
         "00035d3d94be0000b270617373776f72645f616c676f726974686dc0b07661756c745f"
         "6b65795f616363657373c4143c7661756c745f6b65795f61636365737320313eab7661"
-        "756c745f6974656d7382c420e37ce3b00a1f15b3de62029972345420b76313a885c6cc"
-        "c6e3b5547857b3ecc6c406646174612032c420076a27c79e5ace2a3d47f9dd2e83e4ff"
-        "6ea8872b3c2218f66c92b89b55f36560c406646174612031"
+        "756c745f6974656d7382c420076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218"
+        "f66c92b89b55f36560c406646174612031c420e37ce3b00a1f15b3de62029972345420"
+        "b76313a885c6ccc6e3b5547857b3ecc6c406646174612032"
     )
     .as_ref();
 
@@ -140,7 +140,7 @@ pub fn rep_ok() {
                 authenticated_account_cmds::vault_item_recovery_list::VaultItemRecoveryAuthMethod {
                     created_on: "2000-01-04T00:00:00Z".parse().unwrap(),
                     disabled_on: None,
-                    created_by_ip: Some("127.0.0.4".to_string()),
+                    created_by_ip: "127.0.0.4".to_string(),
                     created_by_user_agent: "Parsec-Client/3.4.4 Windows".to_string(),
                     vault_key_access: b"<vault_key_access 4>".as_ref().into(),
                     password_algorithm: Some(PasswordAlgorithm::Argon2id {
@@ -172,7 +172,7 @@ pub fn rep_ok() {
                     authenticated_account_cmds::vault_item_recovery_list::VaultItemRecoveryAuthMethod {
                         created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
                         disabled_on: Some("2000-01-02T00:00:00Z".parse().unwrap()),
-                        created_by_ip: Some("127.0.0.1".to_string()),
+                        created_by_ip: "127.0.0.1".to_string(),
                         created_by_user_agent: "Parsec-Client/3.4.1 Windows".to_string(),
                         vault_key_access: b"<vault_key_access 1>".as_ref().into(),
                         password_algorithm: Some(PasswordAlgorithm::Argon2id {
@@ -190,7 +190,7 @@ pub fn rep_ok() {
                     authenticated_account_cmds::vault_item_recovery_list::VaultItemRecoveryAuthMethod {
                         created_on: "2000-01-02T00:00:00Z".parse().unwrap(),
                         disabled_on: Some("2000-01-04T00:00:00Z".parse().unwrap()),
-                        created_by_ip: Some("127.0.0.2".to_string()),
+                        created_by_ip: "127.0.0.2".to_string(),
                         created_by_user_agent: "Parsec-Client/3.4.2 Windows".to_string(),
                         vault_key_access: b"<vault_key_access 2>".as_ref().into(),
                         password_algorithm: Some(PasswordAlgorithm::Argon2id {
@@ -203,7 +203,7 @@ pub fn rep_ok() {
                     authenticated_account_cmds::vault_item_recovery_list::VaultItemRecoveryAuthMethod {
                         created_on: "2000-01-03T00:00:00Z".parse().unwrap(),
                         disabled_on: Some("2000-01-04T00:00:00Z".parse().unwrap()),
-                        created_by_ip: None,
+                        created_by_ip: "".to_string(),
                         created_by_user_agent: "Parsec-Client/3.4.1 Windows".to_string(),
                         vault_key_access: b"<vault_key_access 1>".as_ref().into(),
                         password_algorithm: None,
