@@ -163,7 +163,7 @@ class SmtpEmailConfig:
 
     def __str__(self) -> str:
         # Do not show the password in the logs
-        return f"{self.__class__.__name__}(sender={self.sender}, host={self.host}, port={self.port}, use_ssl={self.use_ssl})"
+        return f"{self.__class__.__name__}(sender={self.sender}, host={self.host}, port={self.port}, use_ssl={self.use_ssl}, use_tls={self.use_tls})"
 
     __repr__ = __str__
 

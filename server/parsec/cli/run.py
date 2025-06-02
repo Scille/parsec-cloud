@@ -450,6 +450,7 @@ def run_cmd(
                 use_tls=email_use_tls,
                 sender=email_sender,
             )
+        logger.debug("Email config", config=email_config)
 
         app_config = BackendConfig(
             administration_token=administration_token,
