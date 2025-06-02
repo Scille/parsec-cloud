@@ -8,7 +8,7 @@ from parsec._parsec import (
     authenticated_account_cmds,
 )
 from parsec.backend import Backend
-from parsec.components.account import PasswordAlgorithmArgon2ID
+from parsec.components.account import PasswordAlgorithmArgon2id
 from tests.common import AuthenticatedAccountRpcClient, HttpCommonErrorsTester
 
 
@@ -21,13 +21,13 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
     assert rep == authenticated_account_cmds.latest.vault_item_recovery_list.RepOk(
         current_vault=authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryVault(
             auth_methods=[
-                authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethodPassword(
+                authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod(
                     created_on=DateTime(2000, 1, 1),
                     disabled_on=None,
                     created_by_ip="127.0.0.1",
                     created_by_user_agent="Parsec-Client/3.4.0 Linux",
                     vault_key_access=b"<alice_vault_key_access>",
-                    algorithm=authenticated_account_cmds.latest.vault_item_recovery_list.PasswordAlgorithmArgon2id(
+                    password_algorithm=PasswordAlgorithmArgon2id(
                         salt=b"<alice_dummy_salt>",
                         opslimit=65536,
                         memlimit_kb=3,
@@ -61,7 +61,7 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
         created_by_user_agent="dummy-user-agent",
         new_auth_method_id=new_auth_method_id,
         new_auth_method_mac_key=new_auth_method_mac_key,
-        new_password_algorithm=PasswordAlgorithmArgon2ID(
+        new_auth_method_password_algorithm=PasswordAlgorithmArgon2id(
             salt=b"<alice_new_dummy_salt>",
             opslimit=42,
             memlimit_kb=4,
@@ -87,13 +87,13 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
     expected = authenticated_account_cmds.latest.vault_item_recovery_list.RepOk(
         current_vault=authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryVault(
             auth_methods=[
-                authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethodPassword(
+                authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod(
                     created_on=DateTime(2000, 1, 31),
                     disabled_on=None,
                     created_by_ip=None,
                     created_by_user_agent="dummy-user-agent",
                     vault_key_access=b"<alice_new_vault_key_access>",
-                    algorithm=authenticated_account_cmds.latest.vault_item_recovery_list.PasswordAlgorithmArgon2id(
+                    password_algorithm=PasswordAlgorithmArgon2id(
                         salt=b"<alice_new_dummy_salt>",
                         opslimit=42,
                         memlimit_kb=4,
@@ -109,13 +109,13 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
         previous_vaults=[
             authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryVault(
                 auth_methods=[
-                    authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethodPassword(
+                    authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod(
                         created_on=DateTime(2000, 1, 1),
                         disabled_on=DateTime(2000, 1, 31),
                         created_by_ip="127.0.0.1",
                         created_by_user_agent="Parsec-Client/3.4.0 Linux",
                         vault_key_access=b"<alice_vault_key_access>",
-                        algorithm=authenticated_account_cmds.latest.vault_item_recovery_list.PasswordAlgorithmArgon2id(
+                        password_algorithm=PasswordAlgorithmArgon2id(
                             salt=b"<alice_dummy_salt>",
                             opslimit=65536,
                             memlimit_kb=3,

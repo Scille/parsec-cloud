@@ -29,6 +29,7 @@ from parsec._parsec import (
     InvitationToken,
     InvitationType,
     OrganizationID,
+    PasswordAlgorithm,
     RealmArchivingCertificate,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
@@ -50,7 +51,6 @@ from parsec._parsec import (
     VerifyKey,
     VlobID,
 )
-from parsec.components.account import PasswordAlgorithm
 from parsec.components.invite import InvitationCreatedBy
 from parsec.components.organization import TermsOfService
 from parsec.components.sequester import SequesterServiceType
@@ -934,10 +934,12 @@ class MemoryAuthenticationMethod:
     mac_key: SecretKey
     # Vault key encrypted with the `auth_method_secret_key` see rfc 1014
     vault_key_access: bytes
-    # TODO: currently only password-based authentication method are supported,
-    # in the near future we will add other types. Hence this field will most
-    # likely be replaced by a variant describing the authentication method.
-    # The algorithm to obtain the `auth_method_master_secret`.
-    password_secret_algorithm: PasswordAlgorithm
+    # Auth method can be of two types:
+    # - ClientProvided, for which the client is able to store
+    #   `auth_method_master_secret` all by itself.
+    # - Password, for which the client must obtain some configuration
+    #   (i.e. this field !) from the server in order to know how
+    #   to turn the password into `auth_method_master_secret`.
+    password_algorithm: PasswordAlgorithm | None
     # Note that only the current vault contains auth methods that are not disabled
     disabled_on: DateTime | None = None
