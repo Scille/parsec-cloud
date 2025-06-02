@@ -30,6 +30,11 @@ It is currently divided into two crates:
 > The `client` crate can be seen as the "main" crate implementing most of the
 > functional logic of the application.
 
+### Account crate
+
+As it name suggest, the `account` crate implements the client-side part of Parsec Account
+(e.g. create an account, login, list available registration devices and invitations etc.).
+
 ### Base types crates
 
 The base types can be divided into:
