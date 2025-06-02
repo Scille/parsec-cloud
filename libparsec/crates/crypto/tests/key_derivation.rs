@@ -22,6 +22,36 @@ fn consts() {
 test_serde!(serde, KeyDerivation);
 
 #[test]
+fn derive_uuid_from_uuid_stability() {
+    let id = uuid::uuid!("cadc3f583b8647f2a3227400fc02e096");
+
+    let kd1 = KeyDerivation::generate();
+    let gen_id = kd1.derive_uuid_from_uuid(id);
+
+    let kd2 = KeyDerivation::generate();
+    let gen_id2 = kd2.derive_uuid_from_uuid(id);
+    assert_ne!(gen_id, gen_id2);
+
+    let kd1_bis = KeyDerivation::try_from(kd1.as_ref()).unwrap();
+    let gen_id_bis = kd1_bis.derive_uuid_from_uuid(id);
+    assert_eq!(gen_id_bis, gen_id);
+}
+
+#[test]
+fn derive_uuid_from_uuid_spec() {
+    let kd = KeyDerivation::from(hex!(
+        "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
+    ));
+    let id = uuid::uuid!("cadc3f583b8647f2a3227400fc02e096");
+    let gen_id = kd.derive_uuid_from_uuid(id);
+
+    println!("gen_id: {:X?}", gen_id);
+
+    let expected_gen_id = uuid::uuid!("6e4e1d47d0eb03670695f081d678f0da");
+    assert_eq!(gen_id, expected_gen_id);
+}
+
+#[test]
 fn derive_secret_key_from_uuid_stability() {
     let id = uuid::uuid!("cadc3f583b8647f2a3227400fc02e096");
 
