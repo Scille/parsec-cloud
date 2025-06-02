@@ -5,6 +5,10 @@ from __future__ import annotations
 from parsec._parsec_pyi import (
     testbed,  # Only define when build with `test-utils` feature
 )
+from parsec._parsec_pyi.account import (
+    PasswordAlgorithm,
+    PasswordAlgorithmArgon2id,
+)
 from parsec._parsec_pyi.addrs import (
     ParsecAccountActionAddr,
     ParsecAccountEmailValidationAddr,
@@ -113,6 +117,9 @@ from parsec._parsec_pyi.time import DateTime
 
 __all__ = [
     "ApiVersion",
+    # Account
+    "PasswordAlgorithm",
+    "PasswordAlgorithmArgon2id",
     # Data Error
     # Certif
     "DeviceCertificate",
