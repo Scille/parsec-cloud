@@ -15,6 +15,7 @@ from .common import (
     OrganizationID,
     Path,
     Result,
+    SizeInt,
     Structure,
     UserID,
     UserProfile,
@@ -734,4 +735,23 @@ async def client_update_user_profile(
     user: UserID,
     new_profile: UserProfile,
 ) -> Result[None, ClientUserUpdateProfileError]:
+    raise NotImplementedError
+
+
+class OrganizationInfo(Structure):
+    total_block_bytes: SizeInt
+    total_metadata_bytes: SizeInt
+
+
+class ClientOrganizationInfoError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_organization_info(
+    client_handle: Handle,
+) -> Result[OrganizationInfo, ClientOrganizationInfoError]:
     raise NotImplementedError

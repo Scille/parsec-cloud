@@ -1775,6 +1775,50 @@ fn struct_open_options_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// OrganizationInfo
+
+#[allow(dead_code)]
+fn struct_organization_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::OrganizationInfo> {
+    let total_block_bytes = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "totalBlockBytes")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    let total_metadata_bytes = {
+        let js_val: Handle<JsBigInt> = obj.get(cx, "totalMetadataBytes")?;
+        {
+            let v = js_val
+                .to_u64(cx)
+                .or_else(|_| cx.throw_type_error("Not an u64 number"))?;
+            v
+        }
+    };
+    Ok(libparsec::OrganizationInfo {
+        total_block_bytes,
+        total_metadata_bytes,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_organization_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::OrganizationInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_total_block_bytes = JsBigInt::from_u64(cx, rs_obj.total_block_bytes);
+    js_obj.set(cx, "totalBlockBytes", js_total_block_bytes)?;
+    let js_total_metadata_bytes = JsBigInt::from_u64(cx, rs_obj.total_metadata_bytes);
+    js_obj.set(cx, "totalMetadataBytes", js_total_metadata_bytes)?;
+    Ok(js_obj)
+}
+
 // ServerConfig
 
 #[allow(dead_code)]
@@ -6201,6 +6245,31 @@ fn variant_client_new_user_invitation_error_rs_to_js<'a>(
         libparsec::ClientNewUserInvitationError::Offline { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClientNewUserInvitationErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientOrganizationInfoError
+
+#[allow(dead_code)]
+fn variant_client_organization_info_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientOrganizationInfoError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientOrganizationInfoError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientOrganizationInfoErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientOrganizationInfoError::Offline { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientOrganizationInfoErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -17156,6 +17225,56 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_organization_info
+fn client_organization_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client_handle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_organization_info(client_handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_organization_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_organization_info_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_rename_workspace
 fn client_rename_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -24611,6 +24730,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         client_new_shamir_recovery_invitation,
     )?;
     cx.export_function("clientNewUserInvitation", client_new_user_invitation)?;
+    cx.export_function("clientOrganizationInfo", client_organization_info)?;
     cx.export_function("clientRenameWorkspace", client_rename_workspace)?;
     cx.export_function("clientRevokeUser", client_revoke_user)?;
     cx.export_function("clientSetupShamirRecovery", client_setup_shamir_recovery)?;

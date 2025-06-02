@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 
 mod list_frozen_users;
+mod organization_info;
 mod recovery_device;
 mod shamir_recovery_delete;
 mod shamir_recovery_list;
@@ -56,6 +57,7 @@ use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 
 use libparsec_types::prelude::*;
+pub use organization_info::{ClientOrganizationInfoError, OrganizationInfo};
 pub use recovery_device::{
     import_recovery_device, register_new_device, ClientExportRecoveryDeviceError,
     ImportRecoveryDeviceError, RegisterNewDeviceError,
@@ -653,6 +655,10 @@ impl Client {
         new_profile: UserProfile,
     ) -> Result<(), ClientUserUpdateProfileError> {
         user_update_profile::update_profile(self, user_id, new_profile).await
+    }
+
+    pub async fn organization_info(&self) -> Result<OrganizationInfo, ClientOrganizationInfoError> {
+        organization_info::organization_info(self).await
     }
 }
 

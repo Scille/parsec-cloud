@@ -9,9 +9,10 @@ pub use libparsec_client::{
     ClientGetSelfShamirRecoveryError, ClientGetTosError, ClientGetUserDeviceError,
     ClientListFrozenUsersError, ClientListShamirRecoveriesForOthersError,
     ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
-    ClientRenameWorkspaceError, ClientRevokeUserError, ClientSetupShamirRecoveryError,
-    ClientShareWorkspaceError, ClientUserUpdateProfileError, DeviceInfo, OtherShamirRecoveryInfo,
-    SelfShamirRecoveryInfo, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
+    ClientOrganizationInfoError, ClientRenameWorkspaceError, ClientRevokeUserError,
+    ClientSetupShamirRecoveryError, ClientShareWorkspaceError, ClientUserUpdateProfileError,
+    DeviceInfo, OrganizationInfo, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo, Tos, UserInfo,
+    WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -623,4 +624,15 @@ pub async fn client_update_user_profile(
     let client = borrow_client(client)?;
 
     client.update_user_profile(user, new_profile).await
+}
+
+/*
+ * Organization info
+ */
+pub async fn client_organization_info(
+    client: Handle,
+) -> Result<OrganizationInfo, ClientOrganizationInfoError> {
+    let client = borrow_client(client)?;
+
+    client.organization_info().await
 }

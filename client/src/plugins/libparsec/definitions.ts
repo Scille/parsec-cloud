@@ -238,6 +238,11 @@ export interface OpenOptions {
     createNew: boolean
 }
 
+export interface OrganizationInfo {
+    totalBlockBytes: SizeInt
+    totalMetadataBytes: SizeInt
+}
+
 export interface ServerConfig {
     userProfileOutsiderAllowed: boolean
     activeUsersLimit: ActiveUsersLimit
@@ -1325,6 +1330,24 @@ export type ClientNewUserInvitationError =
   | ClientNewUserInvitationErrorInternal
   | ClientNewUserInvitationErrorNotAllowed
   | ClientNewUserInvitationErrorOffline
+
+// ClientOrganizationInfoError
+export enum ClientOrganizationInfoErrorTag {
+    Internal = 'ClientOrganizationInfoErrorInternal',
+    Offline = 'ClientOrganizationInfoErrorOffline',
+}
+
+export interface ClientOrganizationInfoErrorInternal {
+    tag: ClientOrganizationInfoErrorTag.Internal
+    error: string
+}
+export interface ClientOrganizationInfoErrorOffline {
+    tag: ClientOrganizationInfoErrorTag.Offline
+    error: string
+}
+export type ClientOrganizationInfoError =
+  | ClientOrganizationInfoErrorInternal
+  | ClientOrganizationInfoErrorOffline
 
 // ClientRenameWorkspaceError
 export enum ClientRenameWorkspaceErrorTag {
@@ -4611,6 +4634,9 @@ export interface LibParsecPlugin {
         claimer_email: EmailAddress,
         send_email: boolean
     ): Promise<Result<NewInvitationInfo, ClientNewUserInvitationError>>
+    clientOrganizationInfo(
+        client_handle: Handle
+    ): Promise<Result<OrganizationInfo, ClientOrganizationInfoError>>
     clientRenameWorkspace(
         client: Handle,
         realm_id: VlobID,
