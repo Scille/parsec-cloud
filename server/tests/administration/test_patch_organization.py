@@ -7,7 +7,7 @@ import httpx
 import pytest
 
 from parsec._parsec import ActiveUsersLimit
-from parsec.components.organization import OrganizationDump, TermsOfService
+from parsec.components.organization import OrganizationDump, TermsOfService, TosLocale, TosUrl
 from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
 from tests.common import Backend, CoolorgRpcClients
@@ -79,6 +79,7 @@ class PatchOrganizationParams(TypedDict):
     is_expired: NotRequired[bool]
     active_user_limit: NotRequired[int]
     user_profile_outsider_allowed: NotRequired[bool]
+    tos: NotRequired[dict[TosLocale, TosUrl]]
 
 
 @pytest.mark.parametrize(
@@ -86,12 +87,12 @@ class PatchOrganizationParams(TypedDict):
     (
         {},
         {"is_expired": True},
-        {"active_user_limit": 1},
+        {"active_users_limit": 1},
         {"user_profile_outsider_allowed": False},
         {"minimum_archiving_period": 1},
         {
             "is_expired": False,
-            "active_user_limit": None,
+            "active_users_limit": None,
             "user_profile_outsider_allowed": True,
             "minimum_archiving_period": 0,
             "tos": {"en_HK": "https://parsec.invalid/tos_en"},
