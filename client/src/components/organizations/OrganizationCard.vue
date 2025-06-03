@@ -3,7 +3,10 @@
 <template>
   <div
     class="organization-card"
-    :class="orgNameOnly ? 'header-only' : ''"
+    :class="{
+      'header-only': orgNameOnly,
+      'organization-card-logged-in': loggedIn,
+    }"
   >
     <div class="organization-card-header">
       <ion-text
@@ -21,12 +24,6 @@
     <ion-card-content class="organization-card-content">
       <div class="organization-card-content-text">
         <ion-text class="organization-name title-h4">{{ device.organizationId }}</ion-text>
-        <ion-text
-          class="organization-connected body-sm"
-          v-show="loggedIn"
-        >
-          {{ $msTranslate('HomePage.organizationList.loggedIn') }}
-        </ion-text>
       </div>
       <div class="organization-card-content-login">
         <div
@@ -58,10 +55,25 @@
     >
       {{ $msTranslate(formatExpirationTime(expirationDuration)) }}
     </ion-text>
+    <ion-text
+      class="organization-card-badge-connected button-small"
+      v-if="loggedIn"
+    >
+      <ion-icon
+        :icon="checkmarkCircle"
+        class="connected-icon"
+      />
+      <span
+        class="connected-text"
+        v-if="isLargeDisplay"
+      >
+        {{ $msTranslate('HomePage.organizationList.loggedIn') }}
+      </span>
+    </ion-text>
     <img
       src="@/assets/images/arrow-forward-circle.svg"
       class="organization-card-icon"
-      v-if="!orgNameOnly && !(isTrialOrg && isSmallDisplay)"
+      v-if="!orgNameOnly && !(isTrialOrg && isSmallDisplay) && !loggedIn"
     />
   </div>
 </template>
@@ -70,12 +82,12 @@
 import { AvailableDevice } from '@/parsec';
 import { IonText, IonIcon, IonCardContent } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
-import { person, time } from 'ionicons/icons';
+import { checkmarkCircle, person, time } from 'ionicons/icons';
 import { MsImage, formatTimeSince, I18n, LogoIconWhite, useWindowSize } from 'megashark-lib';
 import { formatExpirationTime, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
 import { Duration, DateTime } from 'luxon';
 
-const { isSmallDisplay } = useWindowSize();
+const { isSmallDisplay, isLargeDisplay } = useWindowSize();
 const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration>();
 
@@ -117,12 +129,18 @@ function getLastLoginText(): string {
   box-shadow: none;
   overflow: hidden;
   cursor: pointer;
-  transition: all 150ms linear;
+  transition:
+    box-shadow 150ms linear,
+    border 150ms linear;
   position: relative;
   flex-shrink: 0;
 
-  @include ms.responsive-breakpoint('xs') {
-    padding-right: 0.5rem;
+  &-logged-in {
+    padding-right: 1.5rem;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    padding-right: 1rem;
   }
 
   // when using the card as a header only
@@ -201,6 +219,8 @@ function getLastLoginText(): string {
     gap: 0.25rem;
     width: 100%;
     height: 100%;
+    overflow: hidden;
+    flex-shrink: 1;
 
     @include ms.responsive-breakpoint('xs') {
       padding: 0.75rem 0;
@@ -218,13 +238,6 @@ function getLastLoginText(): string {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
-      }
-
-      .organization-connected {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--parsec-color-light-success-700);
       }
     }
 
@@ -280,31 +293,57 @@ function getLastLoginText(): string {
     width: 1.5rem;
     margin-left: auto;
     flex-shrink: 0;
-    transition: all 150ms linear;
+    transition: right 150ms linear;
 
     @include ms.responsive-breakpoint('xs') {
       position: relative;
+      right: 0.25rem;
     }
   }
-}
 
-.organization-card-expiration {
-  border-radius: var(--parsec-radius-12);
-  padding: 0.1875rem 0.5rem;
-  width: fit-content;
-  align-self: center;
-  height: fit-content;
-  flex-shrink: 0;
-  background: var(--parsec-color-light-secondary-text);
-  color: var(--parsec-color-light-secondary-white);
-
-  @include ms.responsive-breakpoint('xs') {
-    position: absolute;
-    right: 1.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-left: auto;
+  &-badge-connected {
+    display: flex;
+    margin: auto;
+    align-items: center;
+    padding: 0.1875rem 0.5rem;
+    gap: 0.25rem;
+    color: var(--parsec-color-light-success-700);
+    background: var(--parsec-color-light-success-50);
+    border: 1px solid var(--parsec-color-light-success-700);
+    border-radius: var(--parsec-radius-12);
+    height: fit-content;
     flex-shrink: 0;
+
+    ion-icon {
+      color: var(--parsec-color-light-success-700);
+      font-size: 0.8125rem;
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      border: none;
+      background: transparent;
+
+      ion-icon {
+        font-size: 1.375rem;
+        padding: 0;
+      }
+    }
+  }
+
+  &-expiration {
+    border-radius: var(--parsec-radius-12);
+    padding: 0.1875rem 0.5rem;
+    width: fit-content;
+    align-self: center;
+    height: fit-content;
+    flex-shrink: 0;
+    background: var(--parsec-color-light-secondary-text);
+    color: var(--parsec-color-light-secondary-white);
+
+    @include ms.responsive-breakpoint('xs') {
+      margin-left: auto;
+      flex-shrink: 0;
+    }
   }
 }
 </style>
