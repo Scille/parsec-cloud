@@ -121,7 +121,7 @@
                   </span>
                   <a
                     class="custom-button custom-button-ghost button-medium"
-                    :href="invoice.getLink()"
+                    @click="Env.Links.openLink(invoice.getLink())"
                     download
                   >
                     <ms-image
@@ -231,6 +231,7 @@ import {
 import { onMounted, ref } from 'vue';
 import { formatFileSize } from '@/common/file';
 import { DateTime } from 'luxon';
+import { Env } from '@/services/environment';
 
 const props = defineProps<{
   organization: BmsOrganization;
