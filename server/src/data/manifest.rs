@@ -1,5 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+// FIXME: Remove me once we migrate to pyo3@0.24
+// Pyo3 generate useless conversion in the generated code, it was fixed in
+// https://github.com/PyO3/pyo3/pull/4838 that was release in 0.24
+#![allow(clippy::useless_conversion)]
+
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pyfunction, pymethods,
@@ -499,6 +504,7 @@ impl UserManifest {
 
     #[classmethod]
     #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (encrypted, key, author_verify_key, expected_author, expected_timestamp, expected_id=None, expected_version=None))]
     fn decrypt_verify_and_load(
         _cls: Bound<'_, PyType>,
         encrypted: &[u8],
@@ -591,6 +597,7 @@ impl UserManifest {
 
 #[pyfunction]
 #[allow(clippy::too_many_arguments)]
+#[pyo3(signature = (encrypted, key, author_verify_key, expected_author, expected_timestamp, expected_id=None, expected_version=None))]
 pub(crate) fn child_manifest_decrypt_verify_and_load(
     py: Python,
     encrypted: &[u8],
@@ -615,6 +622,7 @@ pub(crate) fn child_manifest_decrypt_verify_and_load(
 }
 
 #[pyfunction]
+#[pyo3(signature = (signed, author_verify_key, expected_author, expected_timestamp, expected_id=None, expected_version=None))]
 pub(crate) fn child_manifest_verify_and_load(
     py: Python,
     signed: &[u8],

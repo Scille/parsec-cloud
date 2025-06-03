@@ -1,5 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+// FIXME: Remove me once we migrate to pyo3@0.24
+// Pyo3 generate useless conversion in the generated code, it was fixed in
+// https://github.com/PyO3/pyo3/pull/4838 that was release in 0.24
+#![cfg_attr(feature = "test-utils", allow(clippy::useless_conversion))]
+
 use std::str::FromStr;
 
 use pyo3::{exceptions::PyValueError, prelude::*, types::PyType};
@@ -212,7 +217,7 @@ impl UserID {
     #[staticmethod]
     fn test_from_nickname(nickname: &str) -> PyResult<Self> {
         libparsec_types::UserID::test_from_nickname(nickname)
-            .map_err(|err| PyValueError::new_err(err))
+            .map_err(PyValueError::new_err)
             .map(Self)
     }
 }
@@ -278,7 +283,7 @@ impl DeviceID {
     #[staticmethod]
     fn test_from_nickname(nickname: &str) -> PyResult<Self> {
         libparsec_types::DeviceID::test_from_nickname(nickname)
-            .map_err(|err| PyValueError::new_err(err))
+            .map_err(PyValueError::new_err)
             .map(Self)
     }
 }

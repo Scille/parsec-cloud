@@ -3,8 +3,7 @@
 use pyo3::{
     exceptions::PyException,
     prelude::{pymodule, PyModule, PyResult, Python},
-    types::PyAnyMethods,
-    types::PyTuple,
+    types::{PyAnyMethods, PyModuleMethods, PyTuple},
     Bound,
 };
 
