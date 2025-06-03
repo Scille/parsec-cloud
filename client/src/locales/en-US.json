@@ -514,11 +514,13 @@
             "name": "Name",
             "updatedBy": "Updated By",
             "lastUpdate": "Last Updated",
+            "creation": "Creation date",
             "size": "Size"
         },
         "sort": {
             "byName": "Name",
             "byLastUpdate": "Last update",
+            "byCreation": "Creation date",
             "bySize": "Size",
             "asc": "Ascending",
             "desc": "Descending"

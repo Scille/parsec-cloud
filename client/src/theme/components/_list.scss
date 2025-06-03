@@ -173,6 +173,16 @@
     }
   }
 
+  .label-creationDate,
+  .file-creationDate {
+    min-width: 11.25rem;
+    flex-shrink: 1;
+
+    @include ms.responsive-breakpoint('xl') {
+      display: none;
+    }
+  }
+
   .label-size,
   .file-size {
     min-width: 8.25rem;

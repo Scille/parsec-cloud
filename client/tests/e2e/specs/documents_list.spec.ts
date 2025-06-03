@@ -71,12 +71,43 @@ msTest('Documents page default state in a read only workspace', async ({ documen
   await expect(entries).toHaveCount(9);
   await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
   await expect(entries.locator('.file-lastUpdate')).toHaveText(TIME_MATCHER_ARRAY);
+  await expect(entries.locator('.file-creationDate')).toHaveText(TIME_MATCHER_ARRAY);
   await expect(entries.locator('.file-size')).toHaveText(SIZE_MATCHER_ARRAY);
   // Useless click just to move the mouse
   await documentsReadOnly.locator('.folder-list-header__label').nth(1).click();
   for (const checkbox of await entries.locator('ion-checkbox').all()) {
     await expect(checkbox).toBeHidden();
   }
+});
+
+msTest('Sort document by creation date', async ({ documents }) => {
+  const actionBar = documents.locator('#folders-ms-action-bar');
+  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['New folder', 'Import']);
+  await expect(actionBar.locator('.counter')).toHaveText('9 items', { useInnerText: true });
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+
+  const sorterPopoverButton = actionBar.locator('#select-popover-button');
+  await expect(sorterPopoverButton).toHaveText('Name');
+  await sorterPopoverButton.click();
+  const sorterPopover = documents.locator('.sorter-popover');
+  await expect(sorterPopover).toBeVisible();
+  await expect(sorterPopover.getByRole('listitem').nth(3)).toHaveText('Creation date');
+  await sorterPopover.getByRole('listitem').nth(3).click();
+  await expect(sorterPopover).toBeHidden();
+
+  const firstEntryBefore = await entries.nth(1).locator('.file-name__label').textContent();
+  const lastEntryBefore = await entries.nth(8).locator('.file-name__label').textContent();
+
+  await sorterPopoverButton.click();
+  await expect(sorterPopover).toBeVisible();
+  await sorterPopover.locator('.order-button').click();
+  await expect(sorterPopover).toBeHidden();
+
+  const firstEntryAfter = await entries.nth(1).locator('.file-name__label').textContent();
+  const lastEntryAfter = await entries.nth(8).locator('.file-name__label').textContent();
+
+  expect(firstEntryAfter).toBe(lastEntryBefore);
+  expect(lastEntryAfter).toBe(firstEntryBefore);
 });
 
 msTest('Select all documents', async ({ documents }) => {

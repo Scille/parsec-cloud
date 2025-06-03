@@ -351,6 +351,7 @@ const msSorterOptions: MsOptions = new MsOptions([
     key: SortProperty.Name,
   },
   { label: 'FoldersPage.sort.byLastUpdate', key: SortProperty.LastUpdate },
+  { label: 'FoldersPage.sort.byCreation', key: SortProperty.CreationDate },
   { label: 'FoldersPage.sort.bySize', key: SortProperty.Size },
 ]);
 

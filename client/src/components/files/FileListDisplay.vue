@@ -42,6 +42,9 @@
           <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate">
             {{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}
           </ion-label>
+          <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-creationDate">
+            {{ $msTranslate('FoldersPage.listDisplayTitles.creation') }}
+          </ion-label>
           <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-size">
             {{ $msTranslate('FoldersPage.listDisplayTitles.size') }}
           </ion-label>
