@@ -34,6 +34,7 @@ MajorVersion: TypeAlias = int
 
 class CmdReq(TypedDict):
     fields: list[Field]
+    unit: NotRequired[str]
 
 
 class Field(TypedDict):
