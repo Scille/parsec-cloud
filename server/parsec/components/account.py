@@ -96,6 +96,27 @@ class BaseAccountComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
 
+    async def get_password_algorithm_or_fake_it(self, email: EmailAddress) -> PasswordAlgorithm:
+        """
+        Return the password algorithm configuration corresponding to the account
+        of the given email address.
+
+        If the email address doesn't correspond to a valid account, a fake (stable)
+        configuration is returned in order to prevent an attacker guessing whether
+        the email address is present in the database or not.
+        """
+        raise NotImplementedError
+
+    def _generate_fake_password_algorithm(self, email: EmailAddress) -> PasswordAlgorithm:
+        # TODO: the generated config must be realistic, unpredictable and stable
+        #       (introduce a `SECRET_KEY` environ variable and derive from there ?)
+        return PasswordAlgorithmArgon2id(
+            memlimit_kb=128 * 1024,  # 128 Mo
+            opslimit=3,
+            parallelism=1,
+            salt=b"0" * 16,
+        )
+
     async def create_email_validation_token(
         self, email: EmailAddress, now: DateTime
     ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
@@ -145,6 +166,17 @@ class BaseAccountComponent:
         auth_method_id: AccountAuthMethodID,
     ) -> VaultItemRecoveryList | AccountVaultItemRecoveryList:
         raise NotImplementedError
+
+    @api
+    async def api_auth_method_password_get_algorithm(
+        self,
+        client_ctx: AnonymousAccountClientContext,
+        req: anonymous_account_cmds.latest.auth_method_password_get_algorithm.Req,
+    ) -> anonymous_account_cmds.latest.auth_method_password_get_algorithm.Rep:
+        password_algorithm = await self.get_password_algorithm_or_fake_it(req.email)
+        return anonymous_account_cmds.latest.auth_method_password_get_algorithm.RepOk(
+            password_algorithm=password_algorithm
+        )
 
     @api
     async def api_account_create_send_validation_email(

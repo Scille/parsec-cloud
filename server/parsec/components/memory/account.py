@@ -46,6 +46,22 @@ class MemoryAccountComponent(BaseAccountComponent):
         self._event_bus = event_bus
 
     @override
+    async def get_password_algorithm_or_fake_it(self, email: EmailAddress) -> PasswordAlgorithm:
+        try:
+            account = self._data.accounts[email]
+            active_authentication_methods = account.current_vault.active_authentication_methods
+        except KeyError:
+            active_authentication_methods = ()
+
+        for auth_method in active_authentication_methods:
+            if auth_method.password_algorithm is not None:
+                return auth_method.password_algorithm
+
+        # Account does not exists or it does not have an active password algorithm.
+        # In either case, a fake configuration is returned.
+        return self._generate_fake_password_algorithm(email)
+
+    @override
     async def create_email_validation_token(
         self, email: EmailAddress, now: DateTime
     ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
