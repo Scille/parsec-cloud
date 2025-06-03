@@ -47,6 +47,7 @@ impl ActiveUsersLimit {
     }
 
     #[classmethod]
+    #[pyo3(signature = (count=None))]
     fn from_maybe_int<'py>(
         cls: Bound<'py, PyType>,
         py: Python<'py>,
@@ -54,7 +55,7 @@ impl ActiveUsersLimit {
     ) -> PyObject {
         match count {
             Some(x) => Self::limited_to(cls, x).into_py(py),
-            None => Self::no_limit().to_owned(),
+            None => Self::no_limit().into_py(py),
         }
     }
 

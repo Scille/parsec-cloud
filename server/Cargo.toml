@@ -16,10 +16,15 @@ name = "parsec"
 crate-type = ["cdylib"]
 
 [features]
+default = ["gil-refs"]
+# FIXME: create_exception gen code gated behind feature `gil-refs` causing warning about unexpected feature
+# https://github.com/PyO3/pyo3/issues/4743
+# Should be fixed in pyo3@0.23
+gil-refs = ["pyo3/gil-refs"]
 # Remember kid: RustCrypto is used if `use-sodiumoxide` is not set !
 use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
-test-utils = ["dep:libparsec_testbed", "libparsec_types/test-mock-time"]
+test-utils = ["dep:libparsec_testbed", "libparsec_types/test-mock-time", "pyo3/py-clone"]
 
 [dependencies]
 libparsec_crypto = { workspace = true }
@@ -30,7 +35,12 @@ libparsec_testbed = { workspace = true, optional = true }
 
 regex = { workspace = true, features = ["std", "perf", "unicode"] }
 paste = { workspace = true }
-pyo3 = { workspace = true, features = ["multiple-pymethods", "extension-module", "macros"] }
+pyo3 = { workspace = true, features = [
+    "multiple-pymethods",
+    "extension-module",
+    "macros",
+    "gil-refs",
+] }
 uuid = { workspace = true, features = ["serde", "v4", "fast-rng"] }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 lazy_static = { workspace = true }

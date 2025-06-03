@@ -1,5 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+// FIXME: Remove me once we migrate to pyo3@0.24
+// Pyo3 generate useless conversion in the generated code, it was fixed in
+// https://github.com/PyO3/pyo3/pull/4838 that was release in 0.24
+#![allow(clippy::useless_conversion)]
+
 use pyo3::{
     exceptions::PyValueError,
     prelude::*,
@@ -419,7 +424,7 @@ event_wrapper!(
             x.author.0,
             x.user_id.0,
             x.threshold,
-            x.per_recipient_shares.iter().map(|(k, v)| (k.0.clone(), v)).collect::<HashMap<_, _>>(),
+            x.per_recipient_shares.iter().map(|(k, v)| (k.0, v)).collect::<HashMap<_, _>>(),
         ))
     }
 );
@@ -551,7 +556,7 @@ pub(crate) fn test_load_testbed_customization<'py>(
 
         // 1) Load the events constituting the customization
         let mut customization_events =
-            rmp_serde::from_slice::<Vec<libparsec_testbed::TestbedEvent>>(&customization)
+            rmp_serde::from_slice::<Vec<libparsec_testbed::TestbedEvent>>(customization)
                 .map_err(|err| PyValueError::new_err(err.to_string()))?;
 
         // 2) Apply the customization to the template
@@ -815,7 +820,7 @@ fn event_to_pyobject(
             let obj = TestbedEventUpdateUserProfile {
                 timestamp: x.timestamp.into(),
                 author: x.author.into(),
-                user: x.user.clone().into(),
+                user: x.user.into(),
                 profile: UserProfile::convert(x.profile),
                 raw_certificate,
                 certificate,
@@ -828,7 +833,7 @@ fn event_to_pyobject(
             let obj = TestbedEventRevokeUser {
                 timestamp: x.timestamp.into(),
                 author: x.author.into(),
-                user: x.user.clone().into(),
+                user: x.user.into(),
                 raw_certificate,
                 certificate,
             };
@@ -837,7 +842,7 @@ fn event_to_pyobject(
 
         libparsec_testbed::TestbedEvent::NewDeviceInvitation(x) => {
             let obj = TestbedEventNewDeviceInvitation {
-                created_by: x.created_by.clone().into(),
+                created_by: x.created_by.into(),
                 created_on: x.created_on.into(),
                 token: x.token.into(),
             };
@@ -847,7 +852,7 @@ fn event_to_pyobject(
         libparsec_testbed::TestbedEvent::NewUserInvitation(x) => {
             let obj = TestbedEventNewUserInvitation {
                 claimer_email: EmailAddress(x.claimer_email.clone()),
-                created_by: x.created_by.clone().into(),
+                created_by: x.created_by.into(),
                 created_on: x.created_on.into(),
                 token: x.token.into(),
             };
@@ -856,8 +861,8 @@ fn event_to_pyobject(
 
         libparsec_testbed::TestbedEvent::NewShamirRecoveryInvitation(x) => {
             let obj = TestbedEventNewShamirRecoveryInvitation {
-                claimer: x.claimer.clone().into(),
-                created_by: x.created_by.clone().into(),
+                claimer: x.claimer.into(),
+                created_by: x.created_by.into(),
                 created_on: x.created_on.into(),
                 token: x.token.into(),
             };
@@ -882,7 +887,7 @@ fn event_to_pyobject(
                 timestamp: x.timestamp.into(),
                 author: x.author.into(),
                 realm: x.realm.into(),
-                user: x.user.clone().into(),
+                user: x.user.into(),
                 role: x.role.map(RealmRole::convert),
                 key_index: x.key_index,
                 recipient_keys_bundle_access: x
@@ -999,7 +1004,7 @@ fn event_to_pyobject(
                 per_recipient_shares: x
                     .per_recipient_shares
                     .iter()
-                    .map(|(k, v)| (k.clone().into(), *v))
+                    .map(|(k, v)| ((*k).into(), *v))
                     .collect(),
                 recovery_device: x.recovery_device.into(),
                 data_key: x.data_key.clone().into(),
@@ -1045,7 +1050,7 @@ fn event_to_pyobject(
         libparsec_testbed::TestbedEvent::CreateOrUpdateUserManifestVlob(x) => {
             let obj = TestbedEventCreateOrUpdateOpaqueVlob {
                 timestamp: x.manifest.timestamp.into(),
-                author: x.manifest.author.clone().into(),
+                author: x.manifest.author.into(),
                 realm: x.manifest.id.into(),
                 key_index: 0,
                 version: x.manifest.version,
@@ -1058,7 +1063,7 @@ fn event_to_pyobject(
         libparsec_testbed::TestbedEvent::CreateOrUpdateFileManifestVlob(x) => {
             let obj = TestbedEventCreateOrUpdateOpaqueVlob {
                 timestamp: x.manifest.timestamp.into(),
-                author: x.manifest.author.clone().into(),
+                author: x.manifest.author.into(),
                 realm: x.realm.into(),
                 key_index: x.key_index,
                 version: x.manifest.version,
@@ -1071,7 +1076,7 @@ fn event_to_pyobject(
         libparsec_testbed::TestbedEvent::CreateOrUpdateFolderManifestVlob(x) => {
             let obj = TestbedEventCreateOrUpdateOpaqueVlob {
                 timestamp: x.manifest.timestamp.into(),
-                author: x.manifest.author.clone().into(),
+                author: x.manifest.author.into(),
                 realm: x.realm.into(),
                 key_index: x.key_index,
                 version: x.manifest.version,
@@ -1142,8 +1147,8 @@ fn event_to_pyobject(
                         let pyobj = PyDict::new_bound(py);
                         for (locale, url) in tos {
                             pyobj.set_item(
-                                PyString::new_bound(py, &locale),
-                                PyString::new_bound(py, &url),
+                                PyString::new_bound(py, locale),
+                                PyString::new_bound(py, url),
                             )?;
                         }
                         pyobj.unbind().into_any()

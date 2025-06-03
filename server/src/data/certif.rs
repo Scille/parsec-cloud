@@ -1,5 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+// FIXME: Remove me once we migrate to pyo3@0.24
+// Pyo3 generate useless conversion in the generated code, it was fixed in
+// https://github.com/PyO3/pyo3/pull/4838 that was release in 0.24
+#![allow(clippy::useless_conversion)]
+
 use std::{
     collections::{HashMap, HashSet},
     num::NonZeroU8,
@@ -75,6 +80,7 @@ impl UserCertificate {
     }
 
     #[classmethod]
+    #[pyo3(signature = (signed, author_verify_key, expected_author=None, expected_user=None, expected_human_handle=None))]
     fn verify_and_load(
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
@@ -245,6 +251,7 @@ impl DeviceCertificate {
     }
 
     #[classmethod]
+    #[pyo3(signature = (signed, author_verify_key, expected_author=None, expected_device=None))]
     fn verify_and_load(
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
@@ -387,6 +394,7 @@ impl RevokedUserCertificate {
     }
 
     #[classmethod]
+    #[pyo3(signature = (signed, author_verify_key, expected_author, expected_user=None))]
     fn verify_and_load(
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
@@ -464,6 +472,7 @@ impl UserUpdateCertificate {
     }
 
     #[classmethod]
+    #[pyo3(signature = (signed, author_verify_key, expected_author, expected_user=None))]
     fn verify_and_load(
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
@@ -548,6 +557,7 @@ impl RealmRoleCertificate {
     }
 
     #[classmethod]
+    #[pyo3(signature = (signed, author_verify_key, expected_author, expected_realm=None, expected_user=None))]
     fn verify_and_load(
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
@@ -639,6 +649,7 @@ impl RealmNameCertificate {
     }
 
     #[classmethod]
+    #[pyo3(signature = (signed, author_verify_key, expected_author, expected_realm=None))]
     fn verify_and_load(
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
@@ -750,6 +761,7 @@ impl RealmKeyRotationCertificate {
     }
 
     #[classmethod]
+    #[pyo3(signature = (signed, author_verify_key, expected_author, expected_realm=None))]
     fn verify_and_load(
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
@@ -908,6 +920,7 @@ impl RealmArchivingCertificate {
     }
 
     #[classmethod]
+    #[pyo3(signature = (signed, author_verify_key, expected_author, expected_realm=None))]
     fn verify_and_load(
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
@@ -1099,6 +1112,7 @@ impl ShamirRecoveryShareCertificate {
     }
 
     #[classmethod]
+    #[pyo3(signature = (signed, author_verify_key, expected_author, expected_recipient=None))]
     fn verify_and_load(
         _cls: &Bound<'_, PyType>,
         signed: &[u8],
