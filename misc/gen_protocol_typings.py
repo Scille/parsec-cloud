@@ -420,7 +420,10 @@ def collect_specs() -> SpecsByFamily:
                     ]
                 )
             )
+            assert isinstance(cmd_specs, list), f"{repr(cmd_specs)[:100]}..."
             for cmd_spec in cmd_specs:
+                assert isinstance(cmd_spec, dict), f"{repr(cmd_spec)[:100]}..."
+                assert "major_versions" in cmd_spec, f"{repr(cmd_spec)[:100]}..."
                 for version in cmd_spec["major_versions"]:
                     family_specs.setdefault(version, [])
                     family_specs[version].append(cmd_spec)
@@ -462,7 +465,10 @@ if __name__ == "__main__":
                     ]
                 )
             )
+            assert isinstance(cmd_specs, list), f"{repr(cmd_specs)[:100]}..."
             for cmd_spec in cmd_specs:
+                assert isinstance(cmd_spec, dict), f"{repr(cmd_spec)[:100]}..."
+                assert "major_versions" in cmd_spec, f"{repr(cmd_spec)[:100]}..."
                 gen_pyi_file_for_cmd_spec(
                     OUTPUT_PROTOCOL_TYPING_DIR,
                     family_path.name,
