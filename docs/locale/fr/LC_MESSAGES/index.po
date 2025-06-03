@@ -6,31 +6,26 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-18 17:44+0200\n"
+"POT-Creation-Date: 2025-06-03 18:59+0200\n"
 "PO-Revision-Date: 2024-09-18 17:46+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
-"Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"Generated-By: Babel 2.15.0\n"
-"X-Generator: Poedit 3.5\n"
+"Generated-By: Babel 2.17.0\n"
 
 #: ../../index.rst:25
 msgid "User Guide"
 msgstr "Guide Utilisateur"
 
-#: ../../index.rst:40
+#: ../../index.rst:41
 msgid "Hosting Guide"
 msgstr "Guide d'Hébergement"
 
-#: ../../index.rst:52
-msgid "Advanced concepts"
-msgstr "Concepts avancés"
-
-#: ../../index.rst:62
+#: ../../index.rst:55
 msgid "Development"
 msgstr "Développement"
 
@@ -47,7 +42,7 @@ msgstr ""
 msgid "Parsec Documentation"
 msgstr "Documentation de Parsec"
 
-#: ../../index.rst:-1
+#: ../../index.rst:13
 msgid "parsec banner"
 msgstr "bannière parsec"
 
