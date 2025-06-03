@@ -1,22 +1,23 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use argon2::{Algorithm, Argon2, Params, Version};
 use blake2::Blake2bMac;
 use crypto_box::aead::Aead;
 use crypto_secretbox::{
     aead::{rand_core::RngCore, OsRng},
     AeadCore, Key, XSalsa20Poly1305,
 };
-use digest::{
-    consts::{U5, U64},
-    typenum::{IsLessOrEqual, LeEq, NonZero},
-    KeyInit, Mac,
+use digest::{KeyInit, Mac};
+use generic_array::{
+    typenum::{
+        consts::{U5, U64},
+        IsLessOrEqual, LeEq, NonZero,
+    },
+    ArrayLength, GenericArray,
 };
-use generic_array::{ArrayLength, GenericArray};
 use serde::Deserialize;
 use serde_bytes::Bytes;
 
-use crate::{CryptoError, Password};
+use crate::{from_argon2id_password, CryptoError, Password};
 
 // https://github.com/sodiumoxide/sodiumoxide/blob/3057acb1a030ad86ed8892a223d64036ab5e8523/libsodium-sys/src/sodium_bindings.rs#L137
 const SALTBYTES: usize = 16;
@@ -94,25 +95,9 @@ impl SecretKey {
         memlimit_kb: u32,
         parallelism: u32,
     ) -> Result<Self, CryptoError> {
-        let mut key = [0; XSalsa20Poly1305::KEY_SIZE];
-
-        let argon = Argon2::new(
-            Algorithm::Argon2id,
-            Version::V0x13,
-            Params::new(
-                memlimit_kb,
-                opslimit,
-                parallelism,
-                Some(XSalsa20Poly1305::KEY_SIZE),
-            )
-            .map_err(|_| CryptoError::DataSize)?,
-        );
-
-        argon
-            .hash_password_into(password.as_bytes(), salt, &mut key)
-            .map_err(|_| CryptoError::DataSize)?;
-
-        Ok(Self::from(key))
+        let raw: [u8; Self::SIZE] =
+            from_argon2id_password(password, salt, opslimit, memlimit_kb, parallelism)?.into();
+        Ok(Self::from(raw))
     }
 }
 
