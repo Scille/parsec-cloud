@@ -13,7 +13,7 @@ use rand::RngCore;
 use serde::Deserialize;
 use serde_bytes::Bytes;
 
-use crate::SecretKey;
+use crate::{from_argon2id_password, CryptoError, Password, SecretKey};
 
 #[derive(Clone, PartialEq, Eq, Deserialize, Hash)]
 #[serde(try_from = "&Bytes")]
@@ -56,6 +56,18 @@ impl KeyDerivation {
             .finalize();
 
         subkey.into_bytes()
+    }
+
+    pub fn from_argon2id_password(
+        password: &Password,
+        salt: &[u8],
+        opslimit: u32,
+        memlimit_kb: u32,
+        parallelism: u32,
+    ) -> Result<Self, CryptoError> {
+        let raw: [u8; Self::SIZE] =
+            from_argon2id_password(password, salt, opslimit, memlimit_kb, parallelism)?.into();
+        Ok(Self::from(raw))
     }
 }
 
