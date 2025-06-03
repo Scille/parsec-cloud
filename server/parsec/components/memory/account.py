@@ -119,13 +119,9 @@ class MemoryAccountComponent(BaseAccountComponent):
 
     def auth_method_id_already_exists(self, id: AccountAuthMethodID) -> bool:
         for account in self._data.accounts.values():
-            for auth_id in account.current_vault.authentication_methods.keys():
-                if auth_id == id:
+            for vault in (account.current_vault, *account.previous_vaults):
+                if id in vault.authentication_methods:
                     return True
-            for vault in account.previous_vaults:
-                for auth_id in vault.authentication_methods.keys():
-                    if auth_id == id:
-                        return True
         return False
 
     @override
