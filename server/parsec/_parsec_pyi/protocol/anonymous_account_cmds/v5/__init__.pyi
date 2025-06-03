@@ -4,12 +4,28 @@
 
 from __future__ import annotations
 
-from . import account_create_proceed, account_create_send_validation_email, ping
+from . import (
+    account_create_proceed,
+    account_create_send_validation_email,
+    auth_method_password_get_algorithm,
+    ping,
+)
 
 class AnyCmdReq:
     @classmethod
     def load(
         cls, raw: bytes
-    ) -> account_create_proceed.Req | account_create_send_validation_email.Req | ping.Req: ...
+    ) -> (
+        account_create_proceed.Req
+        | account_create_send_validation_email.Req
+        | auth_method_password_get_algorithm.Req
+        | ping.Req
+    ): ...
 
-__all__ = ["AnyCmdReq", "account_create_proceed", "account_create_send_validation_email", "ping"]
+__all__ = [
+    "AnyCmdReq",
+    "account_create_proceed",
+    "account_create_send_validation_email",
+    "auth_method_password_get_algorithm",
+    "ping",
+]
