@@ -156,9 +156,10 @@
           <ion-text class="create-account__text body">{{ $msTranslate('clientArea.app.noAccount') }}</ion-text>
           <a
             class="create-account__link button-medium"
-            target="_blank"
-            @click="$event.stopPropagation()"
-            :href="Env.getSignUrl()"
+            @click="
+              $event.stopPropagation();
+              Env.Links.openLink(Env.getSignUrl());
+            "
           >
             {{ $msTranslate('clientArea.app.createAccount') }}
             <ion-icon :icon="arrowForward" />
@@ -459,6 +460,7 @@ async function onLoginClicked(): Promise<void> {
         display: flex;
         align-items: center;
         width: fit-content;
+        cursor: pointer;
         color: var(--parsec-color-light-primary-800);
         padding-bottom: 0.25rem;
         border-bottom: 1px solid transparent;
