@@ -23,6 +23,9 @@ use native as platform;
 #[cfg(target_arch = "wasm32")]
 use web as platform;
 
+// ⚠️ Changing Argon2id default config also requires updating the fake config generator
+// on server side (see `server/parsec/components/account.py`), otherwise it would
+// become trivial for a attacker to determine which config is fake !
 pub const ARGON2ID_DEFAULT_MEMLIMIT_KB: u32 = 128 * 1024; // 128 Mo
 pub const ARGON2ID_DEFAULT_OPSLIMIT: u32 = 3;
 // Be careful when changing parallelism: libsodium only supports 1 thread !
