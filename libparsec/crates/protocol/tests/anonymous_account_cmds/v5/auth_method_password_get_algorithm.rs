@@ -1,0 +1,84 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+// `allow-unwrap-in-test` don't behave as expected, see:
+// https://github.com/rust-lang/rust-clippy/issues/11119
+#![allow(clippy::unwrap_used)]
+
+use bytes::Bytes;
+
+use libparsec_tests_lite::prelude::*;
+use libparsec_types::prelude::*;
+
+use super::anonymous_account_cmds;
+
+// Request
+
+pub fn req() {
+    // Generated from Parsec 3.4.0-a.7+dev
+    // Content:
+    //   cmd: 'auth_method_password_get_algorithm'
+    //   email: 'alice@invalid.com'
+    let raw: &[u8] = hex!(
+        "82a3636d64d922617574685f6d6574686f645f70617373776f72645f6765745f616c67"
+        "6f726974686da5656d61696cb1616c69636540696e76616c69642e636f6d"
+    )
+    .as_ref();
+
+    let req = anonymous_account_cmds::auth_method_password_get_algorithm::Req {
+        email: "alice@invalid.com".parse().unwrap(),
+    };
+
+    let expected = anonymous_account_cmds::AnyCmdReq::AuthMethodPasswordGetAlgorithm(req.clone());
+    println!("***expected: {:?}", req.dump().unwrap());
+
+    let data = anonymous_account_cmds::AnyCmdReq::load(raw).unwrap();
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let anonymous_account_cmds::AnyCmdReq::AuthMethodPasswordGetAlgorithm(req2) = data else {
+        unreachable!()
+    };
+
+    let raw2 = req2.dump().unwrap();
+
+    let data2 = anonymous_account_cmds::AnyCmdReq::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
+
+// Responses
+
+pub fn rep_ok() {
+    // Generated from Parsec 3.4.0-a.7+dev
+    // Content:
+    //   status: 'ok'
+    //   password_algorithm: { Argon2id: { salt: 0x3c73616c7420323e, opslimit: 65536, memlimit_kb: 3, parallelism: 1, }, }
+    let raw: &[u8] = hex!(
+        "82a6737461747573a26f6bb270617373776f72645f616c676f726974686d81a8417267"
+        "6f6e32696484a473616c74c4083c73616c7420323ea86f70736c696d6974ce00010000"
+        "ab6d656d6c696d69745f6b6203ab706172616c6c656c69736d01"
+    )
+    .as_ref();
+
+    let expected = anonymous_account_cmds::auth_method_password_get_algorithm::Rep::Ok {
+        password_algorithm: PasswordAlgorithm::Argon2id {
+            salt: Bytes::from_static(b"<salt 2>"),
+            opslimit: 65536,
+            memlimit_kb: 3,
+            parallelism: 1,
+        },
+    };
+    println!("***expected: {:?}", expected.dump().unwrap());
+
+    let data = anonymous_account_cmds::auth_method_password_get_algorithm::Rep::load(raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 =
+        anonymous_account_cmds::auth_method_password_get_algorithm::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
