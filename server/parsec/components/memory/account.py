@@ -178,10 +178,8 @@ class MemoryAccountComponent(BaseAccountComponent):
             case None:
                 return AccountVaultKeyRotation.ACCOUNT_NOT_FOUND
 
-        for account in self._data.accounts.values():
-            for vault in (account.current_vault, *account.previous_vaults):
-                if new_auth_method_id in vault.authentication_methods:
-                    return AccountVaultKeyRotation.NEW_AUTH_METHOD_ID_ALREADY_EXISTS
+        if self.auth_method_id_already_exists(new_auth_method_id):
+            return AccountVaultKeyRotation.NEW_AUTH_METHOD_ID_ALREADY_EXISTS
 
         if account.current_vault.items.keys() != items.keys():
             return AccountVaultKeyRotation.ITEMS_MISMATCH
