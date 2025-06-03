@@ -49,7 +49,7 @@
             </ion-text>
             <div class="contract-header-invoice__button">
               <a
-                :href="contractDetails.link"
+                @click="Env.Links.openLink(contractDetails.link)"
                 class="custom-button custom-button-fill button-medium"
                 download
               >
@@ -407,6 +407,7 @@ import {
 } from '@/services/bms';
 import { onMounted, ref, computed } from 'vue';
 import { isDefaultOrganization } from '@/views/client-area/types';
+import { Env } from '@/services/environment';
 
 const props = defineProps<{
   currentOrganization: BmsOrganization;

@@ -41,7 +41,7 @@
       </span>
       <a
         class="custom-button custom-button-ghost button-medium"
-        :href="invoice.getLink()"
+        @click="Env.Links.openLink(invoice.getLink())"
         download
       >
         <ms-image
@@ -56,6 +56,7 @@
 
 <script setup lang="ts">
 import { Invoice, InvoiceType, SellsyInvoice } from '@/services/bms';
+import { Env } from '@/services/environment';
 import { getInvoiceStatusTranslationKey } from '@/services/translation';
 import { IonItem, IonText } from '@ionic/vue';
 import { MsImage, DownloadIcon, I18n } from 'megashark-lib';
@@ -103,6 +104,7 @@ defineProps<{
   .badge-status {
     border-radius: var(--parsec-radius-32);
     padding-inline: 0.5rem;
+    flex-shrink: 0;
     background: var(--parsec-color-light-secondary-disabled);
     color: var(--parsec-color-light-secondary-text);
 
