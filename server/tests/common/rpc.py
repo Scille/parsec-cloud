@@ -121,6 +121,13 @@ class BaseAnonymousAccountRpcClient:
         raw_rep = await self._do_request(req.dump(), "anonymous_account")
         return anonymous_account_cmds.latest.account_create_send_validation_email.Rep.load(raw_rep)
 
+    async def auth_method_password_get_algorithm(
+        self, email: EmailAddress
+    ) -> anonymous_account_cmds.latest.auth_method_password_get_algorithm.Rep:
+        req = anonymous_account_cmds.latest.auth_method_password_get_algorithm.Req(email=email)
+        raw_rep = await self._do_request(req.dump(), "anonymous_account")
+        return anonymous_account_cmds.latest.auth_method_password_get_algorithm.Rep.load(raw_rep)
+
     async def ping(self, ping: str) -> anonymous_account_cmds.latest.ping.Rep:
         req = anonymous_account_cmds.latest.ping.Req(ping=ping)
         raw_rep = await self._do_request(req.dump(), "anonymous_account")
