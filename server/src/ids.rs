@@ -344,4 +344,9 @@ impl EmailAddress {
             .map(Self)
             .map_err(|e| PyValueError::new_err(e.to_string()))
     }
+
+    #[getter]
+    fn str(&self) -> &str {
+        self.0.as_ref()
+    }
 }
