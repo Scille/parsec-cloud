@@ -111,6 +111,9 @@ class MemoryDatamodel:
         self, auth_method_id: AccountAuthMethodID
     ) -> tuple[MemoryAccount, MemoryAuthenticationMethod] | None:
         for account in self.accounts.values():
+            # Skip deleted account
+            if account.deleted_on is not None:
+                continue
             for auth_method in account.current_vault.active_authentication_methods:
                 if auth_method.id == auth_method_id:
                     return account, auth_method
@@ -881,6 +884,7 @@ class MemoryAccount:
     current_vault: MemoryAccountVault
     # current vault is not part of previous vaults
     previous_vaults: list[MemoryAccountVault] = field(default_factory=list)
+    deleted_on: DateTime | None = None
 
 
 @dataclass(slots=True)
