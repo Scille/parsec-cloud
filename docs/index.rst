@@ -50,15 +50,6 @@ You can also use the search function in the top left corner.
     hosting/administration/index
     hosting/sequester/index
 
-
-.. toctree::
-    :maxdepth: 1
-    :caption: Advanced concepts
-    :name: section-advanced-concepts
-
-    architecture
-    cryptography
-
 .. only:: html
 
    .. toctree::

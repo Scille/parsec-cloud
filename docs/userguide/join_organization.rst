@@ -56,7 +56,6 @@ Then, share your code to the host and wait until it is selected.
   If one of the codes to share is not present in the other's list, it means
   there is a very high probability you are victim of a
   `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_.
-  You can read more about that process at the :ref:`Cryptography <doc_cryptography>` section.
 
 
 
