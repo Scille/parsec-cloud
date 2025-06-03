@@ -91,6 +91,13 @@
         </ion-label>
       </div>
 
+      <!-- last update -->
+      <div class="file-creationDate">
+        <ion-label class="label-last-update cell">
+          {{ $msTranslate(formatTimeSince(entry.created, '--', 'short')) }}
+        </ion-label>
+      </div>
+
       <!-- file size -->
       <div class="file-size">
         <ion-label

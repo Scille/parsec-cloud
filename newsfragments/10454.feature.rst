@@ -1,0 +1,1 @@
+Files and folders can now be filtered by creation date.

@@ -7,6 +7,7 @@ export enum SortProperty {
   Name,
   Size,
   LastUpdate,
+  CreationDate,
 }
 
 export enum ImportType {
@@ -75,6 +76,8 @@ export class EntryCollection<Model extends EntryModel> {
         diff = ascending ? item2.name.localeCompare(item1.name) : item1.name.localeCompare(item2.name);
       } else if (property === SortProperty.LastUpdate) {
         diff = ascending ? (item1.updated > item2.updated ? 1 : 0) : item2.updated > item1.updated ? 1 : 0;
+      } else if (property === SortProperty.CreationDate) {
+        diff = ascending ? (item1.created > item2.created ? 1 : 0) : item2.created > item1.created ? 1 : 0;
       } else if (property === SortProperty.Size) {
         const size1 = item1.isFile() ? (item1 as FileModel).size : 0;
         const size2 = item1.isFile() ? (item2 as FileModel).size : 0;
