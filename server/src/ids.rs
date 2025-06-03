@@ -184,8 +184,8 @@ impl OrganizationID {
     }
 
     #[getter]
-    fn str(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
+    fn str(&self) -> &str {
+        self.0.as_ref()
     }
 }
 
@@ -250,8 +250,8 @@ impl DeviceLabel {
     }
 
     #[getter]
-    fn str(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
+    fn str(&self) -> &str {
+        self.0.as_ref()
     }
 }
 
@@ -310,18 +310,18 @@ impl HumanHandle {
     }
 
     #[getter]
-    fn str(&self) -> PyResult<&str> {
-        Ok(self.0.as_ref())
+    fn str(&self) -> &str {
+        self.0.as_ref()
     }
 
     #[getter]
-    fn email(&self) -> PyResult<EmailAddress> {
-        Ok(EmailAddress(self.0.email().clone()))
+    fn email(&self) -> EmailAddress {
+        EmailAddress(self.0.email().clone())
     }
 
     #[getter]
-    fn label(&self) -> PyResult<&str> {
-        Ok(self.0.label())
+    fn label(&self) -> &str {
+        self.0.label()
     }
 }
 
