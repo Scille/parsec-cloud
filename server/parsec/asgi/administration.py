@@ -8,7 +8,6 @@ from io import StringIO
 from typing import (
     TYPE_CHECKING,
     Annotated,
-    Any,
     Awaitable,
     Callable,
     Literal,
@@ -19,7 +18,7 @@ from typing import (
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from parsec._parsec import (
     BootstrapToken,
@@ -28,7 +27,6 @@ from parsec._parsec import (
     ParsecOrganizationBootstrapAddr,
     SequesterRevokedServiceCertificate,
     SequesterServiceCertificate,
-    UserID,
     UserProfile,
 )
 from parsec.components.organization import (
@@ -476,17 +474,6 @@ class UserFreezeIn(BaseModel):
     frozen: bool
     user_email: EmailAddressField | None = None
     user_id: UserIDField | None = None
-
-    @field_validator("user_id", mode="plain")
-    @classmethod
-    def validate_user_id(cls, v: Any) -> UserID | None:
-        match v:
-            case UserID():
-                return v
-            case None:
-                return None
-            case raw:
-                return UserID.from_hex(raw)
 
 
 @administration_router.post("/administration/organizations/{raw_organization_id}/users/freeze")
