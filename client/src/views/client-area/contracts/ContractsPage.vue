@@ -49,7 +49,7 @@
             </ion-text>
             <div class="contract-header-invoice__button">
               <a
-                @click="Env.Links.openLink(contractDetails.link)"
+                @click="Env.Links.openUrl(contractDetails.link)"
                 class="custom-button custom-button-fill button-medium"
                 download
               >

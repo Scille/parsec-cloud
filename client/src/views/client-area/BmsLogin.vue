@@ -158,7 +158,7 @@
             class="create-account__link button-medium"
             @click="
               $event.stopPropagation();
-              Env.Links.openLink(Env.getSignUrl());
+              Env.Links.openUrl(Env.getSignUrl());
             "
           >
             {{ $msTranslate('clientArea.app.createAccount') }}

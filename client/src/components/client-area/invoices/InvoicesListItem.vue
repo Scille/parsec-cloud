@@ -41,7 +41,7 @@
       </span>
       <a
         class="custom-button custom-button-ghost button-medium"
-        @click="Env.Links.openLink(invoice.getLink())"
+        @click="Env.Links.openUrl(invoice.getLink())"
         download
       >
         <ms-image

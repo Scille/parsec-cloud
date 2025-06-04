@@ -155,11 +155,6 @@ async function openTOS(tosLink: string): Promise<void> {
   await openUrl(tosLink);
 }
 
-async function openLink(link: string): Promise<void> {
-  window.electronAPI.authorizeURL(link);
-  window.open(link, '_blank');
-}
-
 async function openLogs(): Promise<void> {
   const logs = await window.electronAPI.getLogs();
 
@@ -187,7 +182,7 @@ export const Env = {
     openSourcesLink,
     openDeveloperLink,
     openTOS,
-    openLink,
+    openUrl,
     openLogs,
   },
 };

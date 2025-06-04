@@ -2013,6 +2013,11 @@
         "mediaNotSupported": "Ce média ne peut pas être joué.",
         "retrievingFileContent": "Récupération du contenu du fichier...",
         "statsFailed": "Impossible de récupérer les informations du fichier.",
+        "openLink": {
+            "title": "Ouvrir un lien externe",
+            "question": "Ce lien sera ouvert en dehors de l'application. Voulez-vous continuer ?",
+            "yes": "Ouvrir le lien"
+        },
         "controls": {
             "zoom": {
                 "in": "Zoomer",

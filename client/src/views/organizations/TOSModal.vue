@@ -95,9 +95,6 @@ using '${link}'`,
 
 onMounted(async () => {
   link.value = getLinkForLocale();
-  if (link.value) {
-    window.electronAPI.authorizeURL(link.value);
-  }
 });
 
 async function openTOS(): Promise<void> {

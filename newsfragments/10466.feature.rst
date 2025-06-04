@@ -1,0 +1,1 @@
+Allows opening links in Word Document viewer and ask for confirmation before opening them
