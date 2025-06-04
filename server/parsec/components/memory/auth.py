@@ -133,7 +133,7 @@ class MemoryAuthComponent(BaseAuthComponent):
         now: DateTime,
         token: AccountAuthenticationToken,
     ) -> AuthenticatedAccountAuthInfo | AuthAuthenticatedAccountAuthBadOutcome:
-        match self._data.get_account_from_auth_method(auth_method_id=token.auth_method_id):
+        match self._data.get_account_from_active_auth_method(auth_method_id=token.auth_method_id):
             case (account, auth_method):
                 pass
             case None:

@@ -107,16 +107,31 @@ class MemoryDatamodel:
         default_factory=dict
     )
 
-    def get_account_from_auth_method(
+    def get_account_from_active_auth_method(
         self, auth_method_id: AccountAuthMethodID
     ) -> tuple[MemoryAccount, MemoryAuthenticationMethod] | None:
         for account in self.accounts.values():
-            # Skip deleted account
-            if account.deleted_on is not None:
+            try:
+                auth_method = account.current_vault.authentication_methods[auth_method_id]
+            except KeyError:
                 continue
-            for auth_method in account.current_vault.active_authentication_methods:
-                if auth_method.id == auth_method_id:
-                    return account, auth_method
+
+            if auth_method.disabled_on:
+                return None
+            # Sanity check since auth methods gets disabled when the account is deleted
+            assert account.deleted_on is None
+
+            return (account, auth_method)
+
+    def get_account_from_any_auth_method(
+        self, auth_method_id: AccountAuthMethodID
+    ) -> tuple[MemoryAccount, MemoryAuthenticationMethod] | None:
+        for account in self.accounts.values():
+            for vault in (account.current_vault, *account.previous_vaults):
+                try:
+                    return (account, vault.authentication_methods[auth_method_id])
+                except KeyError:
+                    pass
 
 
 @dataclass(slots=True)
