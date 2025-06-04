@@ -105,6 +105,8 @@ class CreateOrganizationIn(BaseModel):
     active_users_limit: ActiveUsersLimitField | UnsetType = Unset
     minimum_archiving_period: NonNegativeInt | UnsetType = Unset
     tos: dict[TosLocale, TosUrl] | UnsetType = Unset
+    allowed_client_agent: UnsetType | AllowedClientAgentField = Unset
+    account_vault_strategy: UnsetType | AccountVaultStrategyField = Unset
 
 
 class CreateOrganizationOut(BaseModel):
@@ -171,6 +173,8 @@ async def administration_create_organizations(
         active_users_limit=body.active_users_limit,
         minimum_archiving_period=body.minimum_archiving_period,
         tos=body.tos,
+        allowed_client_agent=body.allowed_client_agent,
+        account_vault_strategy=body.account_vault_strategy,
     )
     match outcome:
         case BootstrapToken() as bootstrap_token:
