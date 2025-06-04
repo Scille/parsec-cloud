@@ -253,6 +253,7 @@ class BackendConfig:
         default_factory=lambda: ActiveUsersLimit.NO_LIMIT
     )
     organization_initial_user_profile_outsider_allowed: bool = True
+    # Note minimum archiving period must be a positive value !
     organization_initial_minimum_archiving_period: int = 2592000  # seconds (i.e 30 days)
     organization_initial_tos: dict[TosLocale, TosUrl] | None = None
     organization_initial_allowed_client_agent: AllowedClientAgent = AllowedClientAgent.NATIVE_OR_WEB
@@ -269,3 +270,10 @@ class BackendConfig:
         kwargs = {field.name: repr(getattr(self, field.name)) for field in fields(self)}
         kwargs["administration_token"] = "***"
         return kwargs
+
+    def __post_init__(self):
+        # Sanity checks
+        assert self.sse_keepalive is None or self.sse_keepalive >= 0, self.sse_keepalive
+        assert self.organization_initial_minimum_archiving_period >= 0, (
+            self.organization_initial_minimum_archiving_period
+        )

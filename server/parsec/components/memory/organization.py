@@ -73,6 +73,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         account_vault_strategy: UnsetType | AccountVaultStrategy = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
+        if minimum_archiving_period is not Unset:
+            assert minimum_archiving_period >= 0  # Sanity check
+
         bootstrap_token = force_bootstrap_token or BootstrapToken.new()
         org = self._data.organizations.get(id)
         # Allow overwriting of not-yet-bootstrapped organization
@@ -366,6 +369,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
         account_vault_strategy: UnsetType | AccountVaultStrategy = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
+        if minimum_archiving_period is not Unset:
+            assert minimum_archiving_period >= 0  # Sanity check
+
         try:
             org = self._data.organizations[id]
         except KeyError:
