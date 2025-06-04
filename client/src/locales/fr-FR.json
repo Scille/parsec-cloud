@@ -1442,14 +1442,48 @@
         "queryFailed": "Une erreur empêche de trouver les utilisateurs."
     },
     "loginPage": {
-        "title": "Connexion au compte Parsec",
-        "server": "Adresse du serveur",
-        "email": "Adresse email",
+        "title": "Mon compte Parsec",
         "forgotPassword": "Mot de passe oublié ?",
         "noAccount": "Pas de compte Parsec ?",
-        "createAccount": "Créer un compte",
-        "password": "Mot de passe",
+        "createAccount": {
+            "title": {
+                "default": "Créer un compte",
+                "codeTitle": "Validez votre email",
+                "authenticationTitle": "Choisissez votre méthode d'authentification",
+                "creatingTitle": "Création de votre compte",
+                "createdTitle": "Compte créé !"
+            },
+            "subtitle": {
+                "default": "Saisissez vos coordonnées pour commencer votre inscription.",
+                "codeSubtitle": "Un code de vérification a été envoyé à votre adresse email. Veuillez le saisir pour continuer.",
+                "authenticationSubtitle": "Choisissez une méthode d'authentification pour vous connecter à votre compte."
+            },
+            "description": "Pas encore de compte Parsec ?",
+            "createAccountButton": "Créer un compte",
+            "alreadyHaveAnAccount": "Vous avez déjà un compte ?",
+            "loginButton": "Se connecter",
+            "nextButton": "Suivant",
+            "resendCode": "Renvoyer un code",
+            "welcome": "Bienvenue sur Parsec",
+            "welcomeDescription": "Votre compte Parsec Share a bien été créé. Vous avez désormais accès à Parsec.",
+            "accessToOrganizationButton": "Accéder aux organisations",
+            "errors": {
+                "invalidCode": "Le code est incorrect.",
+                "resendCodeFailed": "Impossible de renvoyer le code.",
+                "accountCreationFailed": "Impossible de créer votre compte.",
+                "accountCreationOkLoginFailed": "Votre compte a été créé mais nous n'avons pas pu vous connecter automatiquement."
+            }
+        },
+        "inputFields": {
+            "server": "Adresse du serveur",
+            "firstname": "Prénom",
+            "lastname": "Nom de famille",
+            "email": "Adresse email",
+            "password": "Mot de passe",
+            "confirmPassword": "Confirmer le mot de passe"
+        },
         "login": "Se connecter",
+        "loginFailed": "Impossible de se connecter. Veuillez vérifier votre adresse email et mot de passe.",
         "clientArea": {
             "title": "Espace client",
             "button": "Accéder"

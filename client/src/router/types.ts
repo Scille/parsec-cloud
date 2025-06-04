@@ -11,6 +11,7 @@ import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-route
 export enum Routes {
   Home = 'home',
   Account = 'account',
+  CreateAccount = 'createAccount',
   Workspaces = 'workspaces',
   Documents = 'documents',
   Users = 'users',
@@ -49,6 +50,19 @@ const routes: Array<RouteRecordRaw> = [
     path: `/${Routes.Account}`,
     name: Routes.Account,
     component: () => import('@/views/home/AccountHomePage.vue'),
+    beforeEnter: (_to, _from, next): boolean => {
+      if (!Env.isAccountEnabled()) {
+        next(`/${Routes.Home}`);
+      } else {
+        next();
+      }
+      return true;
+    },
+  },
+  {
+    path: `/${Routes.CreateAccount}`,
+    name: Routes.CreateAccount,
+    component: () => import('@/views/account/CreateAccountPage.vue'),
     beforeEnter: (_to, _from, next): boolean => {
       if (!Env.isAccountEnabled()) {
         next(`/${Routes.Home}`);

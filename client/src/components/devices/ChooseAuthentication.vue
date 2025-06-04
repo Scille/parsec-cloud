@@ -55,6 +55,7 @@
       <ms-choose-password-input
         ref="choosePassword"
         class="choose-password"
+        @on-enter-keyup="$emit('enterPressed')"
       />
     </div>
   </ion-list>
@@ -81,6 +82,10 @@ defineExpose({
   authentication,
   getSaveStrategy,
 });
+
+defineEmits<{
+  (e: 'enterPressed'): void;
+}>();
 
 onMounted(async () => {
   keyringAvailable.value = await isKeyringAvailable();

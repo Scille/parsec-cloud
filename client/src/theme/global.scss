@@ -134,3 +134,28 @@ svg {
 .flip-vertical-ion-icon > ion-icon {
   transform: scaleY(-1);
 }
+
+.create-account-page {
+  .choose-auth-page {
+    padding: 0;
+  }
+
+  .radio-list {
+    display: none !important;
+  }
+
+  .choose-auth-page {
+    contain: layout;
+  }
+
+  .choose-password {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .inputs-container {
+    flex-direction: column;
+  }
+}
