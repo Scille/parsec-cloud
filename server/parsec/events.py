@@ -16,7 +16,7 @@ from parsec._parsec import (
 from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.types import (
     ActiveUsersLimitField,
-    Base64Bytes,
+    Base64BytesField,
     DateTimeField,
     DeviceIDField,
     GreetingAttemptIDField,
@@ -260,7 +260,7 @@ class EventVlob(BaseModel, ClientBroadcastableEvent):
     timestamp: DateTimeField
     vlob_id: VlobIDField
     version: int
-    blob: Base64Bytes | None
+    blob: Base64BytesField | None
     last_common_certificate_timestamp: DateTimeField
     last_realm_certificate_timestamp: DateTimeField
 

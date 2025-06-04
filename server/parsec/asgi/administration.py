@@ -58,7 +58,13 @@ from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListU
 from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
 from parsec.logging import get_logger
-from parsec.types import Base64Bytes, EmailAddressField, SequesterServiceIDField, Unset, UnsetType
+from parsec.types import (
+    Base64BytesField,
+    EmailAddressField,
+    SequesterServiceIDField,
+    Unset,
+    UnsetType,
+)
 
 if TYPE_CHECKING:
     from parsec.backend import Backend
@@ -649,7 +655,7 @@ SequesterServiceConfigField = Annotated[
 
 class SequesterServiceCreateIn(BaseModel):
     model_config = ConfigDict(strict=True)
-    service_certificate: Base64Bytes
+    service_certificate: Base64BytesField
     config: SequesterServiceConfigField
 
 
@@ -701,7 +707,7 @@ async def administration_organization_sequester_service_create(
 
 class SequesterServiceRevokeIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
-    revoked_service_certificate: Base64Bytes
+    revoked_service_certificate: Base64BytesField
 
 
 @administration_router.post(
