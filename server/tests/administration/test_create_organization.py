@@ -16,7 +16,6 @@ from parsec._parsec import (
 from parsec.components.organization import (
     OrganizationDump,
     TermsOfService,
-    Unset,
     UnsetType,
 )
 from parsec.config import AccountVaultStrategy, AllowedClientAgent
@@ -46,16 +45,58 @@ async def test_create_organization_auth(client: httpx.AsyncClient) -> None:
     assert response.status_code == 403, response.content
 
 
-@pytest.mark.parametrize("kind", ("bad_json", "bad_data"))
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "invalid_json",
+        "bad_type_organization_id",
+        "bad_value_organization_id",
+        "bad_type_user_profile_outsider_allowed",
+        "bad_type_active_users_limit",
+        "bad_value_active_users_limit",
+        "bad_type_minimum_archiving_period",
+        "bad_value_minimum_archiving_period",
+        "bad_type_tos",
+        "bad_value_tos",
+        "bad_type_allowed_client_agent",
+        "bad_value_allowed_client_agent",
+        "bad_type_account_vault_strategy",
+        "bad_value_account_vault_strategy",
+    ),
+)
 async def test_bad_data(client: httpx.AsyncClient, backend: Backend, kind: str) -> None:
     url = "http://parsec.invalid/administration/organizations"
 
     body_args: dict[str, Any]
     match kind:
-        case "bad_json":
+        case "invalid_json":
             body_args = {"content": b"<dummy>"}
-        case "bad_data":
-            body_args = {"json": {"dummy": "dummy"}}
+        case "bad_type_organization_id":
+            body_args = {"json": {"id": 42}}
+        case "bad_value_organization_id":
+            body_args = {"json": {"id": "<>"}}
+        case "bad_type_user_profile_outsider_allowed":
+            body_args = {"json": {"id": "CoolOrg", "user_profile_outsider_allowed": "True"}}
+        case "bad_type_active_users_limit":
+            body_args = {"json": {"id": "CoolOrg", "active_users_limit": "42"}}
+        case "bad_value_active_users_limit":
+            body_args = {"json": {"id": "CoolOrg", "active_users_limit": -1}}
+        case "bad_type_minimum_archiving_period":
+            body_args = {"json": {"id": "CoolOrg", "minimum_archiving_period": "42"}}
+        case "bad_value_minimum_archiving_period":
+            body_args = {"json": {"id": "CoolOrg", "minimum_archiving_period": -1}}
+        case "bad_type_tos":
+            body_args = {"json": {"id": "CoolOrg", "tos": "{}"}}
+        case "bad_value_tos":
+            body_args = {"json": {"id": "CoolOrg", "tos": {"fr": 42}}}
+        case "bad_type_allowed_client_agent":
+            body_args = {"json": {"id": "CoolOrg", "allowed_client_agent": None}}
+        case "bad_value_allowed_client_agent":
+            body_args = {"json": {"id": "CoolOrg", "allowed_client_agent": "dummy"}}
+        case "bad_type_account_vault_strategy":
+            body_args = {"json": {"id": "CoolOrg", "account_vault_strategy": 42}}
+        case "bad_value_account_vault_strategy":
+            body_args = {"json": {"id": "CoolOrg", "account_vault_strategy": "dummy"}}
         case unknown:
             assert False, unknown
 
@@ -124,6 +165,8 @@ def organization_initial_params(backend: Backend, request) -> Iterator[None]:
                 "en_HK": "https://parsec.invalid/tos_en.pdf",
                 "cn_HK": "https://parsec.invalid/tos_cn.pdf",
             },
+            "allowed_client_agent": "NATIVE_ONLY",
+            "account_vault_strategy": "FORBIDDEN",
         },
         {"active_user_limit": None, "user_profile_outsider_allowed": False},
     ),
@@ -151,7 +194,7 @@ async def test_ok(
     bootstrap_token = ParsecOrganizationBootstrapAddr.from_url(body["bootstrap_url"]).token
 
     # Expected active_users_limit
-    match args.get("active_users_limit", Unset):
+    match args.get("active_users_limit", UnsetType.Unset):
         case UnsetType.Unset:
             expected_active_users_limit = backend.config.organization_initial_active_users_limit
         case None:
@@ -182,15 +225,20 @@ async def test_ok(
             expected_tos = TermsOfService(updated_on=ANY, per_locale_urls=tos)
 
     # Expected allowed_client_agent
-    expected_allowed_client_agent = args.get(
-        "allowed_client_agent", backend.config.organization_initial_allowed_client_agent
-    )
+    match args.get("allowed_client_agent", UnsetType.Unset):
+        case UnsetType.Unset:
+            expected_allowed_client_agent = backend.config.organization_initial_allowed_client_agent
+        case raw:
+            expected_allowed_client_agent = AllowedClientAgent(raw)
 
     # Expected expected_account_vault_strategy
-    expected_account_vault_strategy = args.get(
-        "expected_account_vault_strategy",
-        backend.config.organization_initial_account_vault_strategy,
-    )
+    match args.get("account_vault_strategy", UnsetType.Unset):
+        case UnsetType.Unset:
+            expected_account_vault_strategy = (
+                backend.config.organization_initial_account_vault_strategy
+            )
+        case raw:
+            expected_account_vault_strategy = AccountVaultStrategy(raw)
 
     dump = await backend.organization.test_dump_organizations()
     assert dump == {
