@@ -24,6 +24,7 @@ from parsec._parsec import (
     UserProfile,
     VlobID,
 )
+from parsec.config import AccountVaultStrategy, AllowedClientAgent
 
 
 # Unset singleton used as default value in function parameter when `None`
@@ -166,4 +167,14 @@ EmailAddressField = Annotated[
     EmailAddress,
     PlainValidator(lambda x: x if isinstance(x, EmailAddress) else EmailAddress(x)),
     PlainSerializer(lambda x: str(x), return_type=str),
+]
+AllowedClientAgentField = Annotated[
+    AllowedClientAgent,
+    PlainValidator(lambda x: x if isinstance(x, AllowedClientAgent) else AllowedClientAgent(x)),
+    PlainSerializer(lambda x: x.value),
+]
+AccountVaultStrategyField = Annotated[
+    AccountVaultStrategy,
+    PlainValidator(lambda x: x if isinstance(x, AccountVaultStrategy) else AccountVaultStrategy(x)),
+    PlainSerializer(lambda x: x.value),
 ]

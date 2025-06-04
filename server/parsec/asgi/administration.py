@@ -59,6 +59,8 @@ from parsec.config import AccountVaultStrategy, AllowedClientAgent
 from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
 from parsec.logging import get_logger
 from parsec.types import (
+    AccountVaultStrategyField,
+    AllowedClientAgentField,
     Base64BytesField,
     EmailAddressField,
     SequesterServiceIDField,
@@ -276,8 +278,8 @@ class PatchOrganizationIn(BaseModel):
     active_users_limit: ActiveUsersLimitField | UnsetType = Unset
     minimum_archiving_period: UnsetType | int = Unset
     tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset
-    allowed_client_agent: UnsetType | AllowedClientAgent = Unset
-    account_vault_strategy: UnsetType | AccountVaultStrategy = Unset
+    allowed_client_agent: UnsetType | AllowedClientAgentField = Unset
+    account_vault_strategy: UnsetType | AccountVaultStrategyField = Unset
 
     @field_validator("active_users_limit", mode="plain")
     @classmethod
@@ -293,32 +295,6 @@ class PatchOrganizationIn(BaseModel):
                 return ActiveUsersLimit.limited_to(v)
             case _:
                 raise ValueError("Expected null or positive integer")
-
-    @field_validator("allowed_client_agent", mode="plain")
-    @classmethod
-    def validate_allowed_client_agent(cls, v: Any) -> AllowedClientAgent | UnsetType:
-        match v:
-            case AllowedClientAgent():
-                return v
-            case v if v is Unset:
-                return v
-            case str():
-                return AllowedClientAgent(v)
-            case _:
-                raise ValueError("Expected string")
-
-    @field_validator("account_vault_strategy", mode="plain")
-    @classmethod
-    def validate_account_vault_strategy(cls, v: Any) -> AccountVaultStrategy | UnsetType:
-        match v:
-            case AccountVaultStrategy():
-                return v
-            case v if v is Unset:
-                return v
-            case str():
-                return AccountVaultStrategy(v)
-            case _:
-                raise ValueError("Expected string")
 
 
 @administration_router.patch("/administration/organizations/{raw_organization_id}")
