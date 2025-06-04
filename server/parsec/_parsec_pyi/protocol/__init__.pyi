@@ -18,8 +18,10 @@ class ActiveUsersLimit:
 
     @classmethod
     def from_maybe_int(cls, count: int | None) -> ActiveUsersLimit: ...
+    "`ValueError` is raised if `count` is not a u64"
     @classmethod
     def limited_to(cls, user_count_limit: int) -> ActiveUsersLimit: ...
+    "`ValueError` is raised if `count` is not a u64"
     def to_maybe_int(self) -> int | None: ...
     "Returns the user limit count as an integer or None if there's no limit specified"
 
