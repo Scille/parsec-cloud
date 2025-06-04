@@ -36,7 +36,9 @@ async def test_bad_auth(
     assert response.status_code == 403, response.content
 
 
-@pytest.mark.parametrize("kind", ("bad_json", "bad_data"))
+@pytest.mark.parametrize(
+    "kind", ("invalid_json", "bad_type_user_id", "bad_value_user_id", "bad_type_frozen")
+)
 async def test_bad_data(
     client: httpx.AsyncClient, backend: Backend, coolorg: CoolorgRpcClients, kind: str
 ) -> None:
@@ -44,10 +46,18 @@ async def test_bad_data(
 
     body_args: dict[str, Any]
     match kind:
-        case "bad_json":
+        case "invalid_json":
             body_args = {"content": b"<dummy>"}
-        case "bad_data":
-            body_args = {"json": {"dummy": "dummy"}}
+        case "bad_type_user_id":
+            body_args = {"json": {"frozen": False, "user_id": 42}}
+        case "bad_value_user_id":
+            body_args = {"json": {"frozen": False, "user_id": "<>"}}
+        case "bad_type_user_email":
+            body_args = {"json": {"frozen": False, "user_email": 42}}
+        case "bad_value_user_email":
+            body_args = {"json": {"frozen": False, "user_email": "<>"}}
+        case "bad_type_frozen":
+            body_args = {"json": {"user_email": "zack@example.com", "frozen": 42}}
         case unknown:
             assert False, unknown
 

@@ -38,7 +38,24 @@ async def test_get_organization_auth(client: httpx.AsyncClient, coolorg: Coolorg
     assert response.status_code == 403, response.content
 
 
-@pytest.mark.parametrize("kind", ("bad_json", "bad_data"))
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "invalid_json",
+        "bad_type_is_expired",
+        "bad_type_user_profile_outsider_allowed",
+        "bad_type_active_users_limit",
+        "bad_value_active_users_limit",
+        "bad_type_minimum_archiving_period",
+        "bad_value_minimum_archiving_period",
+        "bad_type_tos",
+        "bad_value_tos",
+        "bad_type_allowed_client_agent",
+        "bad_value_allowed_client_agent",
+        "bad_type_account_vault_strategy",
+        "bad_value_account_vault_strategy",
+    ),
+)
 async def test_bad_data(
     client: httpx.AsyncClient, backend: Backend, coolorg: CoolorgRpcClients, kind: str
 ) -> None:
@@ -46,10 +63,32 @@ async def test_bad_data(
 
     body_args: dict[str, Any]
     match kind:
-        case "bad_json":
+        case "invalid_json":
             body_args = {"content": b"<dummy>"}
-        case "bad_data":
-            body_args = {"json": {"is_expired": "dummy"}}
+        case "bad_type_is_expired":
+            body_args = {"json": {"is_expired": "False"}}  # Only real bool is valid !
+        case "bad_type_user_profile_outsider_allowed":
+            body_args = {"json": {"user_profile_outsider_allowed": "True"}}
+        case "bad_type_active_users_limit":
+            body_args = {"json": {"active_users_limit": "42"}}
+        case "bad_value_active_users_limit":
+            body_args = {"json": {"active_users_limit": -1}}
+        case "bad_type_minimum_archiving_period":
+            body_args = {"json": {"minimum_archiving_period": "42"}}
+        case "bad_value_minimum_archiving_period":
+            body_args = {"json": {"minimum_archiving_period": -1}}
+        case "bad_type_tos":
+            body_args = {"json": {"tos": "{}"}}
+        case "bad_value_tos":
+            body_args = {"json": {"tos": {"fr": 42}}}
+        case "bad_type_allowed_client_agent":
+            body_args = {"json": {"allowed_client_agent": None}}
+        case "bad_value_allowed_client_agent":
+            body_args = {"json": {"allowed_client_agent": "dummy"}}
+        case "bad_type_account_vault_strategy":
+            body_args = {"json": {"account_vault_strategy": 42}}
+        case "bad_value_account_vault_strategy":
+            body_args = {"json": {"account_vault_strategy": "dummy"}}
         case unknown:
             assert False, unknown
 
