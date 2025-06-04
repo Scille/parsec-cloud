@@ -69,7 +69,7 @@ def base64_bytes_serializer(val: Buffer) -> str:
 # In a nutshell, Pydantic's base64 serialization only works for serialization
 # formats that natively support the bytes type, i.e. formats that don't need
 # base64 in the first place :/
-Base64Bytes = Annotated[
+Base64BytesField = Annotated[
     bytes, PlainValidator(base64_bytes_validator), PlainSerializer(base64_bytes_serializer)
 ]
 
