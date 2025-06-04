@@ -4,5 +4,5 @@ import { expect, msTest } from '@tests/e2e/helpers';
 
 msTest('Parsec account login initial page', async ({ parsecAccount }) => {
   const container = parsecAccount.locator('.homepage-content');
-  await expect(container.locator('.saas-login__title')).toHaveText('Login to your Parsec account');
+  await expect(container.locator('.account-login__title')).toHaveText('My Parsec account');
 });

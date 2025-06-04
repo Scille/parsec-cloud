@@ -2,8 +2,11 @@
 
 import { getCurrentRoute } from '@/router/types';
 import { WatchStopHandle, watch } from 'vue';
+import { RouteLocationNormalizedLoaded } from 'vue-router';
 
-export function watchRoute(callback: () => Promise<void>): WatchStopHandle {
+export function watchRoute(
+  callback: (newRoute: RouteLocationNormalizedLoaded, oldRoute: RouteLocationNormalizedLoaded) => Promise<void>,
+): WatchStopHandle {
   const currentRoute = getCurrentRoute();
   return watch(currentRoute, callback);
 }

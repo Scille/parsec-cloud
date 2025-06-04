@@ -386,7 +386,7 @@ export const msTest = debugTest.extend<{
     await MockBms.mockGetInvoices(home);
     await MockBms.mockCustomOrderRequest(home);
 
-    const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
+    const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');
     await button.click();
     const saasContainer = home.locator('.saas-login');
@@ -437,7 +437,7 @@ export const msTest = debugTest.extend<{
       await MockBms[key](home, overload as any, options);
     }
 
-    const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
+    const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
     await expect(button).toHaveText('Customer area');
     await button.click();
     const saasContainer = home.locator('.saas-login');

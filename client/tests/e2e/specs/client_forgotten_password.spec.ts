@@ -4,7 +4,7 @@ import { DEFAULT_USER_INFORMATION, MockBms, expect, fillIonInput, msTest } from 
 
 msTest('Client area forgot password', async ({ home }) => {
   await MockBms.mockChangePassword(home);
-  const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
+  const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
   await expect(button).toHaveText('Customer area');
   await button.click();
   await expect(home.locator('.saas-login-link__forgotten-password')).toHaveText('Forgot your password?');
@@ -28,7 +28,7 @@ msTest('Client area forgot password', async ({ home }) => {
 
 msTest('Client area forgot password failed', async ({ home }) => {
   await MockBms.mockChangePassword(home, { POST: { errors: { status: 400 } } });
-  const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
+  const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
   await button.click();
   await home.locator('.saas-login-link__forgotten-password').click();
   const container = home.locator('.saas-forgot-password');
@@ -48,7 +48,7 @@ msTest('Client area forgot password failed', async ({ home }) => {
 
 msTest('Client area forgot password go back', async ({ home }) => {
   await MockBms.mockChangePassword(home);
-  const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
+  const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
   await button.click();
   await home.locator('.saas-login-link__forgotten-password').click();
   const container = home.locator('.saas-forgot-password');

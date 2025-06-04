@@ -11,7 +11,7 @@ msTest('Log into the customer area', async ({ home }) => {
   await MockBms.mockBillingDetails(home);
   await MockBms.mockGetInvoices(home);
 
-  const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
+  const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
   await expect(button).toHaveText('Customer area');
   await button.click();
   await expect(home).toHaveURL(/.+\/home$/);
@@ -35,7 +35,7 @@ msTest('Log into the customer area', async ({ home }) => {
 msTest('Log into the customer area failed', async ({ home }) => {
   await MockBms.mockLogin(home, { POST: { errors: { status: 401, attribute: 'email' } } });
 
-  const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
+  const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
   await expect(button).toHaveText('Customer area');
   await button.click();
   await expect(home).toHaveURL(/.+\/home$/);
@@ -133,7 +133,7 @@ for (const frozen of [false, true]) {
     await MockBms.mockGetInvoices(home);
     await MockBms.mockOrganizationStatus(home, { isFrozen: frozen });
 
-    const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
+    const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
     await button.click();
     await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
@@ -163,7 +163,7 @@ msTest('Login in and refresh no remember me', async ({ home }) => {
   await MockBms.mockBillingDetails(home);
   await MockBms.mockGetInvoices(home);
 
-  const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
+  const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
   await expect(button).toHaveText('Customer area');
   await button.click();
   await expect(home).toBeHomePage();
@@ -191,7 +191,7 @@ msTest('Login in and refresh with remember me', async ({ home }) => {
   await MockBms.mockBillingDetails(home);
   await MockBms.mockGetInvoices(home);
 
-  const button = home.locator('.topbar-right').locator('#trigger-customer-area-button');
+  const button = home.locator('.homepage-header').locator('#trigger-customer-area-button');
   await expect(button).toHaveText('Customer area');
   await button.click();
   await expect(home).toBeHomePage();
