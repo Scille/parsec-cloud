@@ -86,7 +86,7 @@ async def organization_test_dump_organizations(
                 assert False, unknown
 
         match row["minimum_archiving_period"]:
-            case int() as minimum_archiving_period:
+            case int() as minimum_archiving_period if minimum_archiving_period >= 0:
                 pass
             case unknown:
                 assert False, unknown

@@ -133,6 +133,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         account_vault_strategy: UnsetType | AccountVaultStrategy = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
+        if minimum_archiving_period is not Unset:
+            assert minimum_archiving_period >= 0  # Sanity check
+
         bootstrap_token = force_bootstrap_token or BootstrapToken.new()
         if active_users_limit is Unset:
             active_users_limit = self._config.organization_initial_active_users_limit
@@ -253,6 +256,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             case unknown:
                 assert False, unknown
 
+        match row["minimum_archiving_period"]:
+            case int() as minimum_archiving_period if minimum_archiving_period >= 0:
+                pass
+            case unknown:
+                assert False, unknown
+
         return Organization(
             organization_id=id,
             bootstrap_token=bootstrap_token,
@@ -265,7 +274,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             sequester_authority_certificate=sequester_authority_certificate,
             sequester_authority_verify_key_der=sequester_authority_verify_key_der,
             sequester_services_certificates=sequester_services_certificates,
-            minimum_archiving_period=row["minimum_archiving_period"],
+            minimum_archiving_period=minimum_archiving_period,
             tos=tos,
             allowed_client_agent=allowed_client_agent,
             account_vault_strategy=account_vault_strategy,
@@ -347,6 +356,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         allowed_client_agent: UnsetType | AllowedClientAgent = Unset,
         account_vault_strategy: UnsetType | AccountVaultStrategy = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
+        if minimum_archiving_period is not Unset:
+            assert minimum_archiving_period >= 0  # Sanity check
+
         return await organization_update(
             conn,
             now,

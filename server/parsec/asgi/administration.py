@@ -18,7 +18,7 @@ from typing import (
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
 
 from parsec._parsec import (
     BootstrapToken,
@@ -103,7 +103,7 @@ class CreateOrganizationIn(BaseModel):
     # - field set to `None`: `None` is a valid value to use for this field
     user_profile_outsider_allowed: bool | UnsetType = Unset
     active_users_limit: ActiveUsersLimitField | UnsetType = Unset
-    minimum_archiving_period: int | UnsetType = Unset
+    minimum_archiving_period: NonNegativeInt | UnsetType = Unset
     tos: dict[TosLocale, TosUrl] | UnsetType = Unset
 
 
@@ -204,7 +204,7 @@ class GetOrganizationOut(BaseModel):
     is_expired: bool
     user_profile_outsider_allowed: bool
     active_users_limit: int | None
-    minimum_archiving_period: int
+    minimum_archiving_period: NonNegativeInt
     tos: GetOrganizationOutTos | None
     allowed_client_agent: AllowedClientAgent
     account_vault_strategy: AccountVaultStrategy
@@ -258,7 +258,7 @@ class PatchOrganizationIn(BaseModel):
     # - field set to `None`: `None` is a valid value to use for this field
     user_profile_outsider_allowed: bool | UnsetType = Unset
     active_users_limit: ActiveUsersLimitField | UnsetType = Unset
-    minimum_archiving_period: UnsetType | int = Unset
+    minimum_archiving_period: NonNegativeInt | UnsetType = Unset
     tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset
     allowed_client_agent: UnsetType | AllowedClientAgentField = Unset
     account_vault_strategy: UnsetType | AccountVaultStrategyField = Unset
