@@ -117,18 +117,14 @@ class MemoryAccountComponent(BaseAccountComponent):
         """Use only in tests, nothing is checked."""
         return self._data.unverified_emails[email][0]
 
-    def auth_method_id_already_exists(self, id: AccountAuthMethodID) -> bool:
-        for account in self._data.accounts.values():
-            for vault in (account.current_vault, *account.previous_vaults):
-                if id in vault.authentication_methods:
-                    return True
-        return False
+    def auth_method_id_already_exists(self, auth_method_id: AccountAuthMethodID) -> bool:
+        return self._data.get_account_from_any_auth_method(auth_method_id) is not None
 
     @override
     async def vault_item_upload(
         self, auth_method_id: AccountAuthMethodID, item_fingerprint: HashDigest, item: bytes
     ) -> None | AccountVaultItemUploadBadOutcome:
-        match self._data.get_account_from_auth_method(auth_method_id=auth_method_id):
+        match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
             case (account, _):
                 pass
             case None:
@@ -144,7 +140,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         self,
         auth_method_id: AccountAuthMethodID,
     ) -> VaultItems | AccountVaultItemListBadOutcome:
-        match self._data.get_account_from_auth_method(auth_method_id=auth_method_id):
+        match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
             case (account, auth_method):
                 pass
             case None:
@@ -168,7 +164,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         new_vault_key_access: bytes,
         items: dict[HashDigest, bytes],
     ) -> None | AccountVaultKeyRotation:
-        match self._data.get_account_from_auth_method(auth_method_id=auth_method_id):
+        match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
             case (account, _):
                 pass
             case None:
@@ -205,7 +201,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         self,
         auth_method_id: AccountAuthMethodID,
     ) -> VaultItemRecoveryList | AccountVaultItemRecoveryList:
-        match self._data.get_account_from_auth_method(auth_method_id=auth_method_id):
+        match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
             case (account, _):
                 pass
             case None:
