@@ -20,9 +20,12 @@
           @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
           :image="SidebarToggle"
         />
-        <div class="topbar-left">
+        <div
+          class="topbar-left"
+          ref="topbarLeftRef"
+        >
           <div
-            id="back-block"
+            ref="backBlockRef"
             v-if="hasHistory() && !currentRouteIs(Routes.Workspaces)"
           >
             <header-back-button :short="currentRouteIsFileRoute() ? true : false" />
@@ -47,6 +50,8 @@
             <header-breadcrumbs
               :path-nodes="fullPath"
               @change="onNodeSelected"
+              :from-header-page="true"
+              :available-width="breadcrumbsWidth"
             />
           </div>
 
@@ -117,6 +122,7 @@
 </template>
 
 <script setup lang="ts">
+import { pxToRem } from '@/common/utils';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
@@ -157,10 +163,10 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { home, notifications, search } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, ref, computed } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref, computed, watch } from 'vue';
 import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 
-const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
 const workspaceName = ref('');
@@ -177,6 +183,15 @@ const showHeader = computed(() => {
   }
   return true;
 });
+const breadcrumbsWidth = ref(0);
+const backBlockRef = ref();
+const topbarLeftRef = ref();
+
+const topbarWidthWatchCancel = watch([windowWidth, fullPath], () => {
+  if (topbarLeftRef.value?.offsetWidth && backBlockRef.value?.offsetWidth) {
+    breadcrumbsWidth.value = pxToRem(topbarLeftRef.value.offsetWidth - backBlockRef.value.offsetWidth);
+  }
+});
 
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIsLoggedRoute()) {
@@ -192,7 +207,7 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 async function onNodeSelected(node: RouterPathNode): Promise<void> {
-  await navigateTo(node.name as Routes, { params: node.params, query: node.query });
+  await navigateTo(node.route, { params: node.params, query: node.query });
 }
 
 async function updateRoute(): Promise<void> {
@@ -207,7 +222,7 @@ async function updateRoute(): Promise<void> {
         id: 0,
         title: 'HeaderPage.titles.workspaces',
         icon: home,
-        name: Routes.Workspaces,
+        route: Routes.Workspaces,
         params: {},
       },
     ];
@@ -221,7 +236,7 @@ async function updateRoute(): Promise<void> {
     finalPath.push({
       id: 0,
       icon: home,
-      name: Routes.Workspaces,
+      route: Routes.Workspaces,
       params: {},
     });
 
@@ -230,7 +245,8 @@ async function updateRoute(): Promise<void> {
     finalPath.push({
       id: 1,
       display: workspaceName.value,
-      name: Routes.Documents,
+      route: Routes.Documents,
+      popoverIcon: home,
       query: { documentPath: '/' },
       params: getCurrentRouteParams(),
     });
@@ -239,7 +255,7 @@ async function updateRoute(): Promise<void> {
       finalPath.push({
         id: i + 2,
         display: workspacePath[i],
-        name: Routes.Documents,
+        route: Routes.Documents,
         query: { documentPath: `/${rebuildPath.join('/')}` },
         params: getCurrentRouteParams(),
       });
@@ -279,6 +295,7 @@ onUnmounted(async () => {
     hotkeyManager.unregister(hotkeys);
   }
   routeWatchCancel();
+  topbarWidthWatchCancel();
 });
 
 function getTitleForRoute(): Translatable {
@@ -439,6 +456,12 @@ async function openNotificationCenter(event: Event): Promise<void> {
 .topbar-left {
   display: flex;
   align-items: center;
+  margin-right: 0.5rem;
+  overflow: hidden;
+
+  @include ms.responsive-breakpoint('sm') {
+    gap: 0.5rem;
+  }
 
   &-workspaces-mobile {
     display: flex;

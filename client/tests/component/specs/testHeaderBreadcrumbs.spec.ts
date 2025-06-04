@@ -6,6 +6,7 @@ import { getDefaultProvideConfig, mockRouter, resetRoutesCalled } from '@tests/c
 mockRouter();
 
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import { Routes } from '@/router';
 import { mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it } from 'vitest';
 
@@ -19,21 +20,21 @@ describe('Header breadcrumbs', () => {
       {
         id: 1,
         display: 'First Node',
-        name: 'route1',
+        route: Routes.Workspaces,
         params: { param1: 1 },
         query: { openInvite: true },
       },
       {
         id: 2,
         display: 'Second Node',
-        name: 'route2',
+        route: Routes.Documents,
         params: { param2: 2 },
         query: { openInvite: true },
       },
       {
         id: 3,
         display: 'Third Node',
-        name: 'route3',
+        route: Routes.Documents,
         params: { param3: 3 },
         query: { openInvite: true },
       },

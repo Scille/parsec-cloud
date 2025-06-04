@@ -16,34 +16,40 @@
     }"
   >
     <!-- :disabled="backStack.length === 0" -->
-    <div class="navigation">
-      <ion-buttons>
-        <ion-button
-          fill="clear"
-          @click="back()"
-          class="navigation-back-button"
-          :disabled="backStack.length === 0"
-          :class="{ disabled: backStack.length === 0 }"
-          ref="backButtonDisabled"
-        >
-          <ion-icon :icon="chevronBack" />
-        </ion-button>
-        <ion-button
-          fill="clear"
-          @click="forward()"
-          :disabled="forwardStack.length === 0"
-          :class="{ disabled: forwardStack.length === 0 }"
-          class="navigation-forward-button"
-        >
-          <ion-icon :icon="chevronForward" />
-        </ion-button>
-      </ion-buttons>
+    <div
+      class="navigation"
+      ref="navigationRef"
+    >
+      <div ref="buttonsRef">
+        <ion-buttons>
+          <ion-button
+            fill="clear"
+            @click="back()"
+            class="navigation-back-button"
+            :disabled="backStack.length === 0"
+            :class="{ disabled: backStack.length === 0 }"
+            ref="backButtonDisabled"
+          >
+            <ion-icon :icon="chevronBack" />
+          </ion-button>
+          <ion-button
+            fill="clear"
+            @click="forward()"
+            :disabled="forwardStack.length === 0"
+            :class="{ disabled: forwardStack.length === 0 }"
+            class="navigation-forward-button"
+          >
+            <ion-icon :icon="chevronForward" />
+          </ion-button>
+        </ion-buttons>
+      </div>
       <header-breadcrumbs
         :path-nodes="headerPath"
         @change="onPathChange"
         class="navigation-breadcrumb"
         :items-before-collapse="1"
         :items-after-collapse="2"
+        :available-width="breadcrumbsWidth"
       />
     </div>
     <ion-list class="folder-list">
@@ -83,21 +89,37 @@
 
 <script setup lang="ts">
 import { getFileIcon } from '@/common/file';
+import { pxToRem } from '@/common/utils';
+import { Routes } from '@/router';
 import { FolderSelectionOptions } from '@/components/files';
-import { Folder, MsImage, MsModalResult, MsModal } from 'megashark-lib';
+import { Folder, MsImage, MsModalResult, MsModal, useWindowSize } from 'megashark-lib';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { EntryStat, FsPath, Path, StartedWorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
 import { IonButton, IonButtons, IonText, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
-import { chevronBack, chevronForward } from 'ionicons/icons';
-import { Ref, onMounted, ref } from 'vue';
+import { chevronBack, chevronForward, home } from 'ionicons/icons';
+import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = defineProps<FolderSelectionOptions>();
 const selectedPath: Ref<FsPath> = ref(props.startingPath);
 const headerPath: Ref<RouterPathNode[]> = ref([]);
+const pathLength = ref(0);
 const currentEntries: Ref<[EntryStat, boolean][]> = ref([]);
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
+const breadcrumbsWidth = ref(0);
+const navigationRef = ref();
+const buttonsRef = ref();
+const { windowWidth, isSmallDisplay } = useWindowSize();
+
+const topbarWidthWatchCancel = watch([windowWidth, pathLength], () => {
+  if (navigationRef.value?.offsetWidth && buttonsRef.value?.offsetWidth) {
+    breadcrumbsWidth.value = pxToRem(navigationRef.value.offsetWidth - buttonsRef.value.offsetWidth);
+    if (isSmallDisplay.value) {
+      breadcrumbsWidth.value += pathLength.value > 1 ? 2 : 1;
+    }
+  }
+});
 
 onMounted(async () => {
   const result = await getWorkspaceInfo(props.workspaceHandle);
@@ -106,6 +128,8 @@ onMounted(async () => {
   }
   await update();
 });
+
+onUnmounted(() => topbarWidthWatchCancel());
 
 async function update(): Promise<void> {
   if (!workspaceInfo.value) {
@@ -131,7 +155,8 @@ async function update(): Promise<void> {
   headerPath.value.push({
     id: 0,
     display: workspaceInfo.value ? workspaceInfo.value.currentName : '',
-    name: '',
+    route: Routes.Documents,
+    popoverIcon: home,
     query: { documentPath: path },
   });
   let id = 1;
@@ -140,11 +165,12 @@ async function update(): Promise<void> {
     headerPath.value.push({
       id: id,
       display: comp === '/' ? '' : comp,
-      name: '',
+      route: Routes.Documents,
       query: { documentPath: path },
     });
     id += 1;
   }
+  pathLength.value = headerPath.value.length;
 }
 
 async function isEntryDisabled(entry: EntryStat): Promise<boolean> {

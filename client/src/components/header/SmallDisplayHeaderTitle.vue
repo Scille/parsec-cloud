@@ -26,7 +26,7 @@
       class="title__text title-h2"
       :class="selectionEnabled ? 'title__text--selection' : ''"
     >
-      {{ $msTranslate(props.title) }}
+      <span class="title__text--content">{{ $msTranslate(props.title) }}</span>
     </ion-text>
     <slot />
     <ion-text
@@ -76,6 +76,7 @@ defineEmits<{
   border-radius: var(--parsec-radius-12);
   border-bottom: 1px solid var(--parsec-color-light-secondary-premiere);
   background-color: var(--parsec-color-light-secondary-background);
+  gap: 0.5rem;
 
   &--selection {
     padding: 0.125rem 0.25rem;
@@ -89,6 +90,12 @@ defineEmits<{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  &--content {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
 
   &--selection {
     justify-content: center;
