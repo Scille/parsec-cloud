@@ -47,6 +47,7 @@ async def alice_account(
 ) -> AuthenticatedAccountRpcClient:
     # TODO: Replace this by a proper call to `backend.account.create_account()` once available
     assert isinstance(backend.account, MemoryAccountComponent)
+    assert ALICE_ACCOUNT_EMAIL not in backend.account._data.accounts
     backend.account._data.accounts[ALICE_ACCOUNT_EMAIL] = MemoryAccount(
         account_email=ALICE_ACCOUNT_EMAIL,
         human_label="Alicey McAliceFace",
@@ -82,6 +83,7 @@ async def bob_account(
 ) -> AuthenticatedAccountRpcClient:
     # TODO: Replace this by a proper call to `backend.account.create_account()` once available
     assert isinstance(backend.account, MemoryAccountComponent)
+    assert BOB_ACCOUNT_EMAIL not in backend.account._data.accounts
     backend.account._data.accounts[BOB_ACCOUNT_EMAIL] = MemoryAccount(
         account_email=BOB_ACCOUNT_EMAIL,
         human_label="Boby McBobFace",
