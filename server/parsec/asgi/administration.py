@@ -22,7 +22,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from parsec._parsec import (
-    ActiveUsersLimit,
     BootstrapToken,
     DateTime,
     OrganizationID,
@@ -108,21 +107,6 @@ class CreateOrganizationIn(BaseModel):
     active_users_limit: ActiveUsersLimitField | UnsetType = Unset
     minimum_archiving_period: int | UnsetType = Unset
     tos: dict[TosLocale, TosUrl] | UnsetType = Unset
-
-    @field_validator("active_users_limit", mode="plain")
-    @classmethod
-    def validate_active_users_limit(cls, v: Any) -> ActiveUsersLimit | UnsetType:
-        match v:
-            case ActiveUsersLimit():
-                return v
-            case v if v is Unset:
-                return v
-            case None:
-                return ActiveUsersLimit.NO_LIMIT
-            case int() if v >= 0:
-                return ActiveUsersLimit.limited_to(v)
-            case _:
-                raise ValueError("Expected null or positive integer")
 
 
 class CreateOrganizationOut(BaseModel):
@@ -280,21 +264,6 @@ class PatchOrganizationIn(BaseModel):
     tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset
     allowed_client_agent: UnsetType | AllowedClientAgentField = Unset
     account_vault_strategy: UnsetType | AccountVaultStrategyField = Unset
-
-    @field_validator("active_users_limit", mode="plain")
-    @classmethod
-    def validate_active_users_limit(cls, v: Any) -> ActiveUsersLimit | UnsetType:
-        match v:
-            case ActiveUsersLimit():
-                return v
-            case v if v is Unset:
-                return v
-            case None:
-                return ActiveUsersLimit.NO_LIMIT
-            case int() if v >= 0:
-                return ActiveUsersLimit.limited_to(v)
-            case _:
-                raise ValueError("Expected null or positive integer")
 
 
 @administration_router.patch("/administration/organizations/{raw_organization_id}")
