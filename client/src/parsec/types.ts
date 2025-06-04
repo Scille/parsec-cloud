@@ -355,7 +355,8 @@ interface OrganizationInfo {
 
 // Replace later
 enum AccountErrorTag {
-  InvalidPassword,
+  InvalidAuthentication = 'invalid-authentication',
+  InvalidCode = 'invalid-code',
 }
 
 // Replace later

@@ -29,18 +29,25 @@ for (const displaySize of ['small', 'large']) {
 
     if (displaySize === 'large') {
       await expect(container.locator('#organization-filter-select')).toHaveText('Organization name');
-      await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['Create or join', 'Customer area']);
+      await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['Create or join']);
       await expect(home.locator('.homepage-sidebar')).toBeVisible();
       await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText([
         'About',
         'Documentation',
         'Contact',
         'Settings',
+        'Customer area',
       ]);
     } else {
-      await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['', 'Customer area']);
+      await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['']);
       await expect(home.locator('.homepage-sidebar')).toBeHidden();
-      await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText(['About', 'Doc.', 'Contact', 'Settings']);
+      await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText([
+        'About',
+        'Doc.',
+        'Contact',
+        'Settings',
+        'Customer area',
+      ]);
     }
   });
 }
@@ -176,7 +183,14 @@ msTest('Logout and go back to devices list', async ({ home }) => {
 });
 
 msTest('Check header buttons', async ({ home }) => {
-  await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveCount(4);
+  await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveCount(5);
+  await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText([
+    'About',
+    'Documentation',
+    'Contact',
+    'Settings',
+    'Customer area',
+  ]);
 });
 
 msTest('Open documentation', async ({ home }) => {

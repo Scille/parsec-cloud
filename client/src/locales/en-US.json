@@ -1441,6 +1441,56 @@
         "noMatch": "No users found",
         "queryFailed": "An error prevents us from listing the users."
     },
+    "loginPage": {
+        "title": "My Parsec account",
+        "forgotPassword": "Forgot password?",
+        "noAccount": "No Parsec account?",
+        "createAccount": {
+            "title": {
+                "default": "Create an account",
+                "codeTitle": "Validate your email",
+                "authenticationTitle": "Choose your authentication method",
+                "creatingTitle": "Creating your account",
+                "createdTitle": "Account created!"
+            },
+            "subtitle": {
+                "default": "Enter your details to begin registration.",
+                "codeSubtitle": "A verification code has been sent to your email address. Please enter it to continue.",
+                "authenticationSubtitle": "Choose an authentication method to log in to your account."
+            },
+            "description": "No Parsec account yet?",
+            "createAccountButton": "Create an account",
+            "alreadyHaveAnAccount": "Already have an account?",
+            "loginButton": "Log in",
+            "nextButton": "Next",
+            "resendCode": "Resend code",
+            "welcome": "Welcome to Parsec",
+            "welcomeDescription": "Your Parsec Share account has been created successfully. You now have access to Parsec.",
+            "accessToOrganizationButton": "Access organizations",
+            "errors": {
+                "invalidCode": "The code is invalid.",
+                "resendCodeFailed": "Could not resend the code.",
+                "accountCreationFailed": "Failed to create your account.",
+                "accountCreationOkLoginFailed": "Your account has been created but we could not log you in automatically."
+            }
+        },
+        "inputFields": {
+            "server": "Server address",
+            "firstname": "Firstname",
+            "lastname": "Lastname",
+            "email": "Email address",
+            "password": "Password",
+            "confirmPassword": "Confirm password"
+        },
+        "login": "Log in",
+        "loginFailed": "Failed to log in. Please check your email and password.",
+        "clientArea": {
+            "title": "Client area",
+            "button": "Access"
+        },
+        "logOut": "Log out",
+        "skip": "Skip this step"
+    },
     "clientArea": {
         "app": {
             "titleLinkOrganization": "Link your customer account to your new organization",
@@ -1969,22 +2019,6 @@
                 "extend": "Extend contract"
             }
         }
-    },
-    "loginPage": {
-        "title": "Login to your Parsec account",
-        "server": "Server address",
-        "email": "Email address",
-        "forgotPassword": "Forgot password?",
-        "noAccount": "No Parsec account?",
-        "createAccount": "Create an account",
-        "password": "Password",
-        "login": "Log in",
-        "clientArea": {
-            "title": "Client area",
-            "button": "Access"
-        },
-        "logOut": "Log out",
-        "skip": "Skip this step"
     },
     "workspaceHistory": {
         "actions": {

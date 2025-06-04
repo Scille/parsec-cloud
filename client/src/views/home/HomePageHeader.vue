@@ -12,18 +12,6 @@
       >
         {{ $msTranslate('notificationCenter.newVersionAvailable') }}
       </ion-button>
-      <ion-button
-        v-if="accountLoggedIn"
-        @click="logOutParsecAccount"
-      >
-        {{ $msTranslate('loginPage.logOut') }}
-      </ion-button>
-      <ion-button
-        v-else-if="Env.isAccountEnabled()"
-        @click="goToParsecAccountLogin"
-      >
-        {{ $msTranslate('loginPage.title') }}
-      </ion-button>
 
       <ion-buttons class="menu-secondary-buttons">
         <!-- about button -->
@@ -68,6 +56,16 @@
             {{ $msTranslate('MenuPage.settings') }}
           </span>
         </ion-button>
+        <!-- customer area button -->
+        <ion-button
+          class="menu-secondary-buttons__item"
+          v-show="!Env.isStripeDisabled()"
+          id="trigger-customer-area-button"
+          @click="$emit('customerAreaClick')"
+          v-if="!showBackButton"
+        >
+          {{ $msTranslate('HomePage.topbar.customerArea') }}
+        </ion-button>
       </ion-buttons>
     </div>
     <div class="topbar">
@@ -97,19 +95,27 @@
           size="default"
           id="create-organization-button"
           class="button-default"
-          v-if="displayCreateJoin"
+          v-if="displayCreateJoin && !showBackButton"
         >
           <ion-icon :icon="add" />
           <span v-if="isLargeDisplay">{{ $msTranslate('HomePage.noExistingOrganization.createOrJoin') }}</span>
         </ion-button>
-        <!-- customer area button -->
+
         <ion-button
-          v-show="!Env.isStripeDisabled()"
-          id="trigger-customer-area-button"
-          @click="$emit('customerAreaClick')"
-          v-if="!showBackButton"
+          v-if="accountLoggedIn && !showBackButton"
+          @click="logOutParsecAccount"
+          class="logout-button"
         >
-          {{ $msTranslate('HomePage.topbar.customerArea') }}
+          {{ $msTranslate('loginPage.logOut') }}
+        </ion-button>
+
+        <ion-button
+          v-else-if="Env.isAccountEnabled() && !showBackButton"
+          @click="goToParsecAccountLogin"
+          class="login-button"
+        >
+          <ion-icon :icon="personCircle" />
+          {{ $msTranslate('loginPage.title') }}
         </ion-button>
       </div>
     </div>
@@ -118,7 +124,7 @@
 
 <script setup lang="ts">
 import { IonButton, IonButtons, IonIcon, modalController, IonText } from '@ionic/vue';
-import { add, arrowBack, cog, informationCircle, open } from 'ionicons/icons';
+import { add, arrowBack, cog, informationCircle, open, personCircle } from 'ionicons/icons';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Translatable, MsModalResult, useWindowSize } from 'megashark-lib';
@@ -359,6 +365,32 @@ const emits = defineEmits<{
         }
       }
     }
+
+    #trigger-customer-area-button {
+      color: var(--parsec-color-light-primary-500);
+      border-radius: var(--parsec-radius-8);
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        bottom: 0.125rem;
+        left: 1rem;
+        height: 1px;
+        width: 0px;
+        background: transparent;
+        transition: all 150ms linear;
+      }
+
+      &:hover {
+        color: var(--parsec-color-light-primary-600);
+
+        &::before {
+          width: calc(100% - 2rem);
+          background: var(--parsec-color-light-primary-600);
+        }
+      }
+    }
   }
 }
 
@@ -406,6 +438,7 @@ const emits = defineEmits<{
       position: relative;
       --overflow: visible;
       margin: 1px 0;
+      padding-left: 1rem;
 
       &::part(native) {
         background: none;
@@ -415,9 +448,10 @@ const emits = defineEmits<{
       }
 
       ion-icon {
+        font-size: 1rem;
         margin-right: 0.5rem;
         position: absolute;
-        left: -1.75rem;
+        left: -1.5rem;
         transition: left 150ms linear;
       }
 
@@ -425,7 +459,7 @@ const emits = defineEmits<{
         border-color: transparent;
 
         ion-icon {
-          left: -2.25rem;
+          left: -2rem;
         }
       }
     }
@@ -456,6 +490,7 @@ const emits = defineEmits<{
   }
 
   ion-icon {
+    font-size: 1rem;
     margin-right: 0.5rem;
 
     @include ms.responsive-breakpoint('sm') {
@@ -469,29 +504,49 @@ const emits = defineEmits<{
   }
 }
 
-#trigger-customer-area-button {
-  color: var(--parsec-color-light-secondary-soft-text);
+.login-button,
+.logout-button {
   border-radius: var(--parsec-radius-32);
   transition: all 150ms linear;
-  --background: var(--parsec-color-light-primary-50);
-  color: var(--parsec-color-light-primary-700);
-  border: 1px solid var(--parsec-color-light-primary-100);
   height: fit-content;
+  min-height: 1rem;
 
   &::part(native) {
     --background-hover: none;
     border-radius: var(--parsec-radius-32);
     padding: 0.5rem 0.825rem;
-    height: auto;
   }
 
   ion-icon {
+    font-size: 1rem;
     margin-right: 0.5rem;
+  }
+}
+
+.login-button {
+  color: var(--parsec-color-light-primary-700);
+  border: 1px solid var(--parsec-color-light-primary-100);
+
+  &::part(native) {
+    --background: var(--parsec-color-light-primary-50);
   }
 
   &:hover {
     color: var(--parsec-color-light-primary-600);
     box-shadow: var(--parsec-shadow-light);
+  }
+}
+
+.logout-button {
+  color: var(--parsec-color-light-danger-500);
+  border: 1px solid transparent;
+
+  &::part(native) {
+    --background: transparent;
+  }
+
+  &:hover {
+    background: var(--parsec-color-light-danger-50);
   }
 }
 </style>

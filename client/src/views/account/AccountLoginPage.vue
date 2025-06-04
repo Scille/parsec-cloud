@@ -1,35 +1,35 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="saas-login">
-    <ion-text class="saas-login__title title-h1">{{ $msTranslate('loginPage.title') }}</ion-text>
-    <div class="saas-login-container">
-      <div class="saas-login-content">
-        <div class="saas-login-content-list">
+  <div class="account-login">
+    <ion-text class="account-login__title title-h1">{{ $msTranslate('loginPage.title') }}</ion-text>
+    <div class="account-login-container">
+      <div class="account-login-content">
+        <div class="account-login-content-list">
           <ms-input
-            class="saas-login-content__input"
+            class="account-login-content__input"
             ref="serverInputRef"
             v-model="server"
-            label="loginPage.server"
+            label="loginPage.inputFields.server"
             @on-enter-keyup="onLoginClicked()"
             :validator="parsecAddrValidator"
           />
           <!-- email -->
           <ms-input
-            class="saas-login-content__input"
+            class="account-login-content__input"
             ref="emailInputRef"
             v-model="email"
-            label="loginPage.email"
+            label="loginPage.inputFields.email"
             @on-enter-keyup="onLoginClicked()"
             :validator="emailValidator"
           />
           <!-- password -->
           <div class="input-password">
             <ms-password-input
-              class="saas-login-content__input"
+              class="account-login-content__input"
               ref="passwordInputRef"
               v-model="password"
-              label="loginPage.password"
+              label="loginPage.inputFields.password"
               @on-enter-keyup="onLoginClicked()"
             />
           </div>
@@ -37,16 +37,16 @@
         <!-- server -->
 
         <!-- back and login buttons -->
-        <div class="saas-login-button">
+        <div class="account-login-button">
           <ion-button
             :disabled="disabled || !validInfo"
             @click="onLoginClicked"
-            class="saas-login-button__item"
+            class="account-login-button__item"
             size="large"
           >
             {{ $msTranslate('loginPage.login') }}
             <ms-spinner
-              class="saas-login-button__spinner"
+              class="account-login-button__spinner"
               v-show="querying"
             />
           </ion-button>
@@ -73,7 +73,7 @@ import { emailValidator, parsecAddrValidator } from '@/common/validators';
 import { warning } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';
 import { Env } from '@/services/environment';
-import { AccountHandle, ParsecAccount } from '@/parsec';
+import { AccountHandle, DeviceAccessStrategyTag, ParsecAccount } from '@/parsec';
 
 defineProps<{
   disabled?: boolean;
@@ -122,12 +122,20 @@ async function onLoginClicked(): Promise<void> {
   }
   querying.value = true;
   try {
-    const result = await ParsecAccount.login(email.value, password.value, server.value);
+    const result = await ParsecAccount.login(
+      email.value,
+      {
+        tag: DeviceAccessStrategyTag.Password,
+        password: password.value,
+        keyFile: '/',
+      },
+      server.value,
+    );
 
     if (result.ok) {
       emits('loginSuccess', result.value);
     } else {
-      loginError.value = 'FAILED TO LOG IN';
+      loginError.value = 'loginPage.loginFailed';
     }
   } finally {
     querying.value = false;
@@ -136,7 +144,7 @@ async function onLoginClicked(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.saas-login {
+.account-login {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -190,7 +198,7 @@ async function onLoginClicked(): Promise<void> {
       flex-direction: column;
       align-items: center;
 
-      .saas-login-content__input {
+      .account-login-content__input {
         width: 100%;
       }
     }
@@ -210,6 +218,18 @@ async function onLoginClicked(): Promise<void> {
 
     &__item {
       width: 100%;
+    }
+  }
+
+  .login-button-error {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    position: relative;
+
+    ion-icon {
+      position: relative;
+      top: 0.125rem;
     }
   }
 }

@@ -8,10 +8,25 @@
         <home-page-sidebar class="homepage-sidebar" />
         <!-- main content -->
         <div class="homepage-content">
-          <account-login-page
-            @login-success="onLoginSuccess"
-            :disabled="disableGoTo"
-          />
+          <div class="homepage-parsec-account account">
+            <account-login-page
+              @login-success="onLoginSuccess"
+              :disabled="disableGoTo"
+            />
+
+            <div class="account-create">
+              <ion-text class="account-create__description body">{{ $msTranslate('loginPage.createAccount.description') }}</ion-text>
+              <ion-button
+                class="account-create__button"
+                @click="goToCreateAccount"
+                :disabled="disableGoTo"
+              >
+                {{ $msTranslate('loginPage.createAccount.createAccountButton') }}
+              </ion-button>
+            </div>
+          </div>
+
+          <!-- Client Area -->
           <div class="homepage-client-area">
             <ion-text class="homepage-client-area__title title-h4">
               {{ $msTranslate('loginPage.clientArea.title') }}
@@ -20,21 +35,30 @@
               @click="goToCustomerArea"
               :disabled="disableGoTo"
               fill="clear"
+              class="homepage-client-area__button"
             >
               {{ $msTranslate('loginPage.clientArea.button') }}
             </ion-button>
-          </div>
-          <ion-button
-            class="homepage-content__skip"
-            @click="onSkipClicked"
-            :disabled="disableGoTo"
-          >
-            {{ $msTranslate('loginPage.skip') }}
-            <ion-icon
-              :icon="chevronForward"
-              class="homepage-content__skip-icon"
+            <img
+              src="@/assets/images/background/background-shapes-small.svg"
+              class="homepage-client-area__blob"
             />
-          </ion-button>
+          </div>
+
+          <!-- Skip button -->
+          <div class="homepage-skip">
+            <ion-button
+              class="homepage-skip__button"
+              @click="onSkipClicked"
+              :disabled="disableGoTo"
+            >
+              {{ $msTranslate('loginPage.skip') }}
+              <ion-icon
+                :icon="chevronForward"
+                class="homepage-skip__icon"
+              />
+            </ion-button>
+          </div>
 
           <ion-buttons class="menu-secondary-buttons">
             <!-- about button -->
@@ -122,6 +146,10 @@ async function onSkipClicked(): Promise<void> {
   disableGoTo.value = false;
 }
 
+async function goToCreateAccount(): Promise<void> {
+  await navigateTo(Routes.CreateAccount, { skipHandle: true });
+}
+
 async function goToCustomerArea(): Promise<void> {
   disableGoTo.value = true;
   const query = getCurrentRouteQuery();
@@ -142,7 +170,6 @@ async function goToCustomerArea(): Promise<void> {
     var(--parsec-color-light-secondary-inversed-contrast, #fcfcfc) 0%,
     var(--parsec-color-light-secondary-background, #f9f9fb) 100%
   );
-  z-index: -10;
 
   // Should be edited later with responsive
   .homepage-sidebar {
@@ -179,52 +206,126 @@ async function goToCustomerArea(): Promise<void> {
     gap: 2rem;
     padding: 2rem 0;
     width: 100%;
-    height: 100%;
-    max-width: 25rem;
-    position: relative;
+    max-width: 28rem;
     align-items: center;
     margin: auto;
 
     @include ms.responsive-breakpoint('lg') {
-      padding: 4.26rem 3rem 0;
+      padding: 2rem 0;
     }
 
     @include ms.responsive-breakpoint('sm') {
+      max-width: 30rem;
+    }
+
+    @include ms.responsive-breakpoint('xs') {
       padding: 1.5rem 1.5rem 0;
+      max-width: 100%;
+    }
+  }
+
+  .homepage-skip {
+    border-top: 1px solid var(--parsec-color-light-secondary-medium);
+    width: 100%;
+    display: flex;
+    padding-top: 1rem;
+    justify-content: center;
+
+    &__icon {
+      font-size: 1rem;
+      margin-left: 0.375rem;
+      color: var(--parsec-color-light-secondary-grey);
     }
 
-    .homepage-client-area {
-      display: flex;
-      width: 100%;
-      justify-content: space-between;
-      border-radius: var(--parsec-radius-12);
-      box-shadow: var(--parsec-shadow-soft);
-      background: var(--parsec-color-light-primary-30);
-      align-items: center;
-      padding: 1rem;
-
-      &__title {
-        color: var(--parsec-color-light-primary-700);
-      }
-    }
-
-    &__skip {
+    &__button {
       width: fit-content;
-      color: var(--parsec-color-light-secondary-text);
+      color: var(--parsec-color-light-secondary-grey);
       font-size: 0.875rem;
-      --background: transparent;
-      --background-hover: var(--parsec-color-light-secondary-premiere);
-      padding: 0;
 
-      &-icon {
-        font-size: 1rem;
-        margin-left: 0.5rem;
-        color: var(--parsec-color-light-secondary-text);
+      &::part(native) {
+        --background: transparent;
+        --background-hover: transparent;
+        padding: 0.125rem;
       }
 
       &:hover {
         color: var(--parsec-color-light-secondary-contrast);
+
+        .homepage-skip__icon {
+          color: var(--parsec-color-light-secondary-contrast);
+        }
       }
+    }
+  }
+
+  .homepage-parsec-account {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+
+    .account-create {
+      gap: 0.5rem;
+      display: flex;
+      align-items: center;
+
+      &__button {
+        color: var(--parsec-color-light-secondary-text);
+        font-weight: 600;
+
+        &::part(native) {
+          --background-hover: transparent;
+          --background: transparent;
+          padding: 0.125rem;
+        }
+
+        &:hover {
+          color: var(--parsec-color-light-secondary-text-hover);
+          text-decoration: underline;
+        }
+      }
+
+      &__description {
+        color: var(--parsec-color-light-secondary-hard-grey);
+      }
+    }
+  }
+
+  .homepage-client-area {
+    display: flex;
+    width: 100%;
+    height: fit-content;
+    justify-content: space-between;
+    border-radius: var(--parsec-radius-12);
+    box-shadow: var(--parsec-shadow-soft);
+    background: var(--parsec-color-light-primary-30);
+    align-items: center;
+    padding: 0.75rem 1rem 0.75rem 1.5rem;
+    overflow: hidden;
+    position: relative;
+
+    &__title {
+      color: var(--parsec-color-light-primary-700);
+    }
+
+    &__button {
+      color: var(--parsec-color-light-primary-700);
+      --background-hover: transparent;
+      z-index: 2;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    &__blob {
+      position: absolute;
+      width: 100%;
+      max-width: 200px;
+      right: -4rem;
+      bottom: 1rem;
+      z-index: 1;
     }
   }
 
@@ -249,6 +350,8 @@ async function goToCustomerArea(): Promise<void> {
 .menu-secondary-buttons {
   display: flex;
   margin-top: auto;
+  position: absolute;
+  bottom: 2rem;
 
   @include ms.responsive-breakpoint('md') {
     margin-left: auto;
