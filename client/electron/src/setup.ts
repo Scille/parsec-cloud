@@ -17,21 +17,8 @@ import AppUpdater, { UpdaterState, createAppUpdater } from './updater';
 import { electronIsDev } from './utils';
 import { WinRegistry } from './winRegistry';
 
+const AUTHORIZED_PROTOCOLS = ['http', 'https', 'parsec3'];
 const CHECK_UPDATE_INTERVAL = 1000 * 60 * 60; // 1 hour
-const ALLOWED_URL_LIST = [
-  'https://my.parsec.cloud/',
-  'https://parsec.cloud/',
-  'https://github.com/Scille/',
-  'https://raw.githubusercontent.com/Scille/',
-  'https://spdx.org/licenses/',
-  'https://docs.parsec.cloud/',
-  'https://bms-dev.parsec.cloud/',
-  'https://bms.parsec.cloud',
-  'https://sign.parsec.cloud',
-  'https://sign-dev.parsec.cloud',
-  'https://docs.parsec.cloud',
-  'https://learn.microsoft.com',
-];
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
 const reloadWatcher = {
@@ -234,12 +221,6 @@ export class ElectronCapacitorApp {
 
     if (this.updater) {
       await this.updater.checkForUpdates();
-    }
-  }
-
-  addAuthorizedURL(url: string): void {
-    if (!ALLOWED_URL_LIST.includes(url)) {
-      ALLOWED_URL_LIST.push(url);
     }
   }
 
@@ -517,7 +498,7 @@ export class ElectronCapacitorApp {
     // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {
       function isAuthorizedUrl(url: string): boolean {
-        return ALLOWED_URL_LIST.some((prefix) => url.startsWith(prefix));
+        return AUTHORIZED_PROTOCOLS.some((protocol) => url.startsWith(protocol));
       }
 
       // Open browser on trying to reach an external link, but only if we know about it.
@@ -525,7 +506,7 @@ export class ElectronCapacitorApp {
         if (isAuthorizedUrl(details.url)) {
           shell.openExternal(details.url);
         } else {
-          console.warn(`App tried to open unauthorized URL ${details.url}`);
+          this.log('warn', `App tried to open unauthorized URL ${details.url}`);
         }
       }
       if (!details.url.includes(this.customScheme)) {

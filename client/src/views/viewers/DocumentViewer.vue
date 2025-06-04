@@ -53,7 +53,7 @@ const props = defineProps<{
 
 const loading = ref(true);
 const documentContainer = ref();
-const documentContent = ref();
+const documentContent = ref<HTMLDivElement>();
 const pages = ref<HTMLElement[]>([]);
 const zoomControl = ref();
 const zoomLevel = ref(1);
@@ -63,13 +63,13 @@ const error = ref('');
 onMounted(async () => {
   try {
     loading.value = true;
-    await renderAsync(props.contentInfo.data.buffer, documentContent.value, undefined, {
+    await renderAsync(props.contentInfo.data.buffer, documentContent.value!, undefined, {
       ignoreLastRenderedPageBreak: false,
       className: 'docx-page',
     });
 
     // recommended way to get all pages by the library developer
-    pages.value = Array.from(documentContent.value.querySelectorAll('section.docx-page'));
+    pages.value = Array.from(documentContent.value!.querySelectorAll('section.docx-page'));
     loading.value = false;
   } catch (e: any) {
     window.electronAPI.log('error', `Failed to load docx file: ${e}`);

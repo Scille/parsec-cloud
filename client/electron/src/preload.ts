@@ -46,9 +46,6 @@ process.once('loaded', async () => {
     openConfigDir: () => {
       ipcRenderer.send(PageToWindowChannel.OpenConfigDir);
     },
-    authorizeURL: (url: string) => {
-      ipcRenderer.send(PageToWindowChannel.AuthorizeURL, url);
-    },
     seeInExplorer: (path: string) => {
       ipcRenderer.send(PageToWindowChannel.SeeInExplorer, path);
     },

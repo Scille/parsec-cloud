@@ -11,7 +11,6 @@ export enum PageToWindowChannel {
   Log = 'parsec-log',
   PageIsInitialized = 'parsec-page-is-initialized',
   OpenConfigDir = 'parsec-open-config-dir',
-  AuthorizeURL = 'parsec-authorized-url',
   CriticalError = 'parsec-critical-error',
   MacfuseNotInstalled = 'parsec-macfuse-not-installed',
   SeeInExplorer = 'parsec-see-in-explorer',

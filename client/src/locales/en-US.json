@@ -2014,6 +2014,11 @@
         "mediaNotSupported": "This media is not supported.",
         "retrievingFileContent": "Retrieving the file content...",
         "statsFailed": "Can not get file information.",
+        "openLink": {
+            "title": "Open an external link",
+            "question": "This will open the link outside of the application. Do you want to continue?",
+            "yes": "Open the link"
+        },
         "controls": {
             "zoom": {
                 "in": "Zoom in",

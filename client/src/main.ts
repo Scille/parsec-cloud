@@ -535,9 +535,6 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
     openConfigDir: (): void => {
       console.log('OpenConfigDir: Not available');
     },
-    authorizeURL: (_url: string): void => {
-      console.log('AuthorizeURL: Not available');
-    },
     seeInExplorer: (_path: string): void => {
       console.log('SeeInExplorer: Not available');
     },
@@ -674,7 +671,6 @@ declare global {
       log: (level: LogLevel, message: string) => void;
       pageIsInitialized: () => void;
       openConfigDir: () => void;
-      authorizeURL: (url: string) => void;
       seeInExplorer: (path: string) => void;
       getLogs: () => Promise<Array<string>>;
       initError: (error?: string) => void;

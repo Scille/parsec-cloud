@@ -110,7 +110,7 @@ import {
 } from '@/parsec';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons, modalController } from '@ionic/vue';
 import { link, informationCircle, open } from 'ionicons/icons';
-import { Base64, MsSpinner, MsImage, I18n, DownloadIcon } from 'megashark-lib';
+import { Base64, MsSpinner, MsImage, I18n, DownloadIcon, askQuestion, Answer } from 'megashark-lib';
 import { ref, Ref, type Component, inject, onMounted, shallowRef, onUnmounted } from 'vue';
 import { ImageViewer, VideoViewer, SpreadsheetViewer, DocumentViewer, AudioViewer, TextViewer, PdfViewer } from '@/views/viewers';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -419,14 +419,29 @@ async function showDetails(): Promise<void> {
 }
 
 async function onClick(event: MouseEvent): Promise<void> {
-  if (event.target) {
-    const target = event.target as Element;
-    if (target.tagName.toLocaleLowerCase() === 'a') {
-      const href = (target as HTMLLinkElement).href;
-      if (href) {
-        await Env.Links.openLink(href);
-      }
-    }
+  event.preventDefault();
+  if (!event.target) {
+    return;
+  }
+  const target = event.target as Element;
+  let linkTag!: HTMLAnchorElement;
+  if (target.tagName === 'A') {
+    linkTag = target as HTMLAnchorElement;
+  } else if (target.tagName === 'SPAN' && target.parentElement && target.parentElement.tagName === 'A') {
+    linkTag = target.parentElement as HTMLAnchorElement;
+  } else {
+    return;
+  }
+  // `.href` get resolved, `getAttribute('href') is what actually in the href`
+  const link = linkTag.href;
+  const href = linkTag.getAttribute('href') ?? '';
+  // We exclude invalid links or anchors
+  if (!link || href.startsWith('#') || !URL.canParse(link)) {
+    return;
+  }
+  const answer = await askQuestion('fileViewers.openLink.title', 'fileViewers.openLink.question', { yesText: 'fileViewers.openLink.yes' });
+  if (answer === Answer.Yes) {
+    Env.Links.openUrl(link);
   }
 }
 

@@ -241,10 +241,6 @@ ipcMain.on(PageToWindowChannel.OpenConfigDir, async () => {
   await shell.openExternal(parsecConfigDir.startsWith('file://') ? parsecConfigDir : `file://${parsecConfigDir}`);
 });
 
-ipcMain.on(PageToWindowChannel.AuthorizeURL, async (_event, url: string) => {
-  myCapacitorApp.addAuthorizedURL(url);
-});
-
 ipcMain.on(PageToWindowChannel.MacfuseNotInstalled, async (_event) => {
   const isFRLocale: boolean = app.getLocale().startsWith('fr');
   const url: string = isFRLocale ? INSTALL_GUIDE_URL_FR : INSTALL_GUIDE_URL_EN;
