@@ -884,6 +884,7 @@ class MemoryAccount:
     current_vault: MemoryAccountVault
     # current vault is not part of previous vaults
     previous_vaults: list[MemoryAccountVault] = field(default_factory=list)
+    # Note that any active auth methods gets disabled when the account is deleted
     deleted_on: DateTime | None = None
 
 
@@ -923,4 +924,5 @@ class MemoryAuthenticationMethod:
     # likely be replaced by a variant describing the authentication method.
     # The algorithm to obtain the `auth_method_master_secret`.
     password_secret_algorithm: PasswordAlgorithm
+    # Note that only the current vault contains auth methods that are not disabled
     disabled_on: DateTime | None = None
