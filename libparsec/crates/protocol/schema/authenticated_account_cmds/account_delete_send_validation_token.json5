@@ -1,0 +1,22 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "account_delete_send_validation_token",
+        "req": {},
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // The email could not be sent due to SMTP server issue
+                "status": "email_server_unavailable"
+            },
+            {
+                // The SMTP server rejected the email recipient
+                "status": "email_recipient_refused"
+            }
+        ]
+    }
+]
