@@ -6,7 +6,7 @@ from collections.abc import Buffer
 from enum import Enum, auto
 from typing import Annotated, Final
 
-from pydantic import GetPydanticSchema, PlainSerializer, PlainValidator, ValidationError
+from pydantic import GetPydanticSchema, PlainSerializer, PlainValidator
 from pydantic_core import core_schema
 
 from parsec._parsec import (
@@ -52,7 +52,7 @@ def base64_bytes_validator(val: object) -> Buffer:
         case Buffer():
             return val
         case _:
-            raise ValidationError()
+            raise ValueError("Invalid base64")
 
 
 def base64_bytes_serializer(val: Buffer) -> str:
