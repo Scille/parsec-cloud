@@ -1,9 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+// FIXME: Remove me once we migrate to pyo3@0.24
+// Pyo3 generate useless conversion in the generated code, it was fixed in
+// https://github.com/PyO3/pyo3/pull/4838 that was release in 0.24
+#![allow(clippy::useless_conversion)]
+
 use pyo3::{
-    prelude::PyModuleMethods,
+    exceptions::PyValueError,
+    prelude::{PyAnyMethods, PyModuleMethods},
     pyclass, pymethods,
-    types::{PyModule, PyType},
+    types::{PyInt, PyModule, PyType},
     Bound, IntoPy, PyObject, PyResult, Python,
 };
 
@@ -25,10 +31,15 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl ActiveUsersLimit {
     #[classmethod]
-    fn limited_to(_cls: Bound<'_, PyType>, user_count_limit: u64) -> Self {
-        Self(libparsec_types::ActiveUsersLimit::LimitedTo(
+    fn limited_to(_cls: Bound<'_, PyType>, user_count_limit: Bound<'_, PyInt>) -> PyResult<Self> {
+        // We cannot let PyO3 handles `u64` conversion since it raises an `OverflowError` (which
+        // doesn't inherit from `ValueError`) if `user_count_limit` is negative or too big :(
+        let user_count_limit: u64 = user_count_limit
+            .extract()
+            .map_err(|_| PyValueError::new_err("Expected u64"))?;
+        Ok(Self(libparsec_types::ActiveUsersLimit::LimitedTo(
             user_count_limit,
-        ))
+        )))
     }
 
     #[classattr]
@@ -51,11 +62,11 @@ impl ActiveUsersLimit {
     fn from_maybe_int<'py>(
         cls: Bound<'py, PyType>,
         py: Python<'py>,
-        count: Option<u64>,
-    ) -> PyObject {
+        count: Option<Bound<'py, PyInt>>,
+    ) -> PyResult<PyObject> {
         match count {
-            Some(x) => Self::limited_to(cls, x).into_py(py),
-            None => Self::no_limit().into_py(py),
+            Some(x) => Self::limited_to(cls, x).map(|x| x.into_py(py)),
+            None => Ok(Self::no_limit().into_py(py)),
         }
     }
 
