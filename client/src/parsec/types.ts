@@ -342,7 +342,7 @@ interface OrganizationInfo {
     outsiders: number;
     frozen: number;
   };
-  size: {
+  size?: {
     metadata: number;
     data: number;
   };

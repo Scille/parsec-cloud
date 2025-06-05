@@ -26,6 +26,7 @@ import {
   UserProfile,
 } from '@/parsec/types';
 import { listUsers } from '@/parsec/user';
+import { getConnectionHandle } from '@/router';
 import { DateTime } from 'luxon';
 
 export async function createOrganization(
@@ -104,6 +105,12 @@ export async function parseParsecAddr(addr: string): Promise<Result<ParsedParsec
 }
 
 export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, OrganizationInfoError>> {
+  const handle = getConnectionHandle();
+
+  if (!handle) {
+    return { ok: false, error: { tag: OrganizationInfoErrorTag.Internal } };
+  }
+
   const usersResult = await listUsers(false);
   const clientInfoResult = await getClientInfo();
 
@@ -111,6 +118,16 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
     return { ok: false, error: { tag: OrganizationInfoErrorTag.Internal } };
   }
 
+  const orgInfoResult = await libparsec.clientOrganizationInfo(handle);
+
+  let orgSize: { metadata: number; data: number } | undefined = undefined;
+
+  if (orgInfoResult.ok) {
+    orgSize = {
+      metadata: Number(orgInfoResult.value.totalMetadataBytes),
+      data: Number(orgInfoResult.value.totalBlockBytes),
+    };
+  }
   return {
     ok: true,
     value: {
@@ -123,10 +140,7 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
         outsiders: usersResult.value.filter((user) => user.currentProfile === UserProfile.Outsider && !user.isRevoked()).length,
         frozen: usersResult.value.filter((user) => user.isFrozen() && !user.isRevoked()).length,
       },
-      size: {
-        metadata: 14_234_953,
-        data: 5_348_491_032,
-      },
+      size: orgSize,
       outsidersAllowed: clientInfoResult.value.serverConfig.userProfileOutsiderAllowed,
       userLimit:
         clientInfoResult.value.serverConfig.activeUsersLimit.tag === ActiveUsersLimitTag.LimitedTo
