@@ -81,10 +81,23 @@ class BadOutcomeEnum(BadOutcome, Enum):
 # -- Field types annotations --------------------------------------------------
 
 
+# Base64BytesField
+#
+# Why a custom type if Pydantic already has `Base64Bytes` type?
+#
+# Long story short, Pydantic's `Base64Bytes` wants the input to deserialize to
+# be bytes, which doesn't work for JSON since a str is provided.
+#
+# In a nutshell, Pydantic's base64 serialization only works for serialization
+# formats that natively support the bytes type, i.e. formats that don't need
+# base64 in the first place :/
+
+
 def base64_bytes_validator(val: object) -> Buffer:
     match val:
         case str():
-            return b64decode(val)
+            # validate to ensure input string does not contain non-alphabet characters
+            return b64decode(val, validate=True)
         case Buffer():
             return val
         case _:
@@ -95,16 +108,6 @@ def base64_bytes_serializer(val: Buffer) -> str:
     return b64encode(val).decode("ascii")
 
 
-# Why a custom type since Pydantic already has a `Base64Bytes` field ?
-#
-# Long story short, Pydantic's `Base64Bytes`:
-# - Adds `\n` in the the base64 output
-# - Want the input to deserialize to be bytes, which doesn't work for JSON since
-#   a str is provided.
-#
-# In a nutshell, Pydantic's base64 serialization only works for serialization
-# formats that natively support the bytes type, i.e. formats that don't need
-# base64 in the first place :/
 Base64BytesField = Annotated[
     bytes, PlainValidator(base64_bytes_validator), PlainSerializer(base64_bytes_serializer)
 ]
