@@ -7,6 +7,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     const container = organizationPage.locator('.organization-page-content');
     const configContainer = container.locator('.organization-info');
     const usersContainer = container.locator('.organization-users');
+    const storageContainer = container.locator('.organization-storage');
     await usersContainer.locator('#invitations-button').isVisible();
 
     if (displaySize === DisplaySize.Small) {
@@ -33,6 +34,9 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     await expect(usersContainer.locator('.users-list-item').nth(2).locator('.users-list-item__description')).toHaveText('Frozen');
     await expect(usersContainer.locator('.user-active-list').locator('.label-profile')).toHaveText(['Administrator', 'Member', 'External']);
     await expect(usersContainer.locator('.user-active-list').locator('.user-active-list-item__value')).toHaveText(['1', '1', '1']);
+
+    await expect(storageContainer.locator('.storage-list-item__value').nth(0)).toHaveText(/^\d+(\.\d{2})? (B|KB|MB)$/);
+    await expect(storageContainer.locator('.storage-list-item__value').nth(1)).toHaveText(/^\d+(\.\d{2})? (B|KB|MB)$/);
   });
 
   msTest(`Org info after one revocation ${displaySize} display`, async ({ usersPage }) => {

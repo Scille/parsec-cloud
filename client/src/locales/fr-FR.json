@@ -724,6 +724,7 @@
             "addUser": "Ajouter un utilisateur"
         },
         "size": {
+            "information": "Ce stockage comprend les espaces de travail de tous les utilisateurs ainsi que l'historique des changements de fichiers/dossiers.",
             "metadata": "Métadonnées",
             "total": "Données totales",
             "title": "Stockage",

@@ -9,48 +9,89 @@
       <div
         class="organization-header"
         @click="openOrganizationChoice($event)"
-        v-if="isSmallDisplay && userInfo && !querying"
+        v-if="isSmallDisplay"
       >
-        <ion-avatar class="organization-header-avatar body-lg">
-          <span v-if="!isTrialOrg">{{ userInfo.organizationId.substring(0, 2) }}</span>
+        <template v-if="userInfo">
+          <ion-avatar class="organization-header-avatar body-lg">
+            <span v-if="!isTrialOrg">{{ userInfo.organizationId.substring(0, 2) }}</span>
+            <ms-image
+              v-else
+              :image="LogoIconGradient"
+              class="avatar-logo"
+            />
+          </ion-avatar>
+          <ion-text class="organization-header-text title-h2">{{ userInfo.organizationId }}</ion-text>
           <ms-image
-            v-else
-            :image="LogoIconGradient"
-            class="avatar-logo"
+            :image="ChevronExpand"
+            class="header-icon"
           />
-        </ion-avatar>
-        <ion-text class="organization-header-text title-h2">{{ userInfo.organizationId }}</ion-text>
-        <ms-image
-          :image="ChevronExpand"
-          class="header-icon"
-        />
+        </template>
+        <template v-else-if="!error">
+          <div class="skeleton-content">
+            <ion-skeleton-text
+              :animated="true"
+              class="skeleton-content__text"
+            />
+          </div>
+        </template>
+        <template v-else>
+          <ms-report-text
+            :theme="MsReportTheme.Error"
+            class="organization-page-error"
+          >
+            {{ $msTranslate(error) }}
+          </ms-report-text>
+        </template>
       </div>
 
       <template v-if="orgInfo && userInfo">
-        <organization-user-information
-          :org-info="orgInfo"
-          :user-info="userInfo"
-        />
-        <!-- ------------- Information ------------- -->
-        <organization-configuration-information :org-info="orgInfo" />
+        <div class="organization-sections">
+          <organization-user-information
+            :org-info="orgInfo"
+            :user-info="userInfo"
+          />
+          <!-- ------------- Information ------------- -->
+          <organization-configuration-information :org-info="orgInfo" />
 
-        <!-- ------------- Storage list ------------- -->
-        <organization-storage-information
-          v-show="false"
-          :org-info="orgInfo"
-        />
+          <!-- ------------- Storage list ------------- -->
+          <organization-storage-information :org-info="orgInfo" />
+        </div>
       </template>
 
-      <template v-else-if="!querying">
-        <div class="information-not-found">
-          <ion-icon
-            :icon="warning"
-            size="large"
+      <template v-else-if="!error">
+        <div
+          class="skeleton"
+          v-for="n in 3"
+          :key="n"
+        >
+          <ion-skeleton-text
+            :animated="true"
+            class="skeleton__title"
           />
-          <ion-text class="body">
-            {{ $msTranslate('OrganizationPage.getInfoFailed') }}
-          </ion-text>
+          <div class="skeleton-content">
+            <ion-skeleton-text
+              :animated="true"
+              class="skeleton-content__text"
+            />
+            <ion-skeleton-text
+              :animated="true"
+              class="skeleton-content__text"
+            />
+            <ion-skeleton-text
+              :animated="true"
+              class="skeleton-content__text"
+            />
+          </div>
         </div>
+      </template>
+
+      <template v-else>
+        <ms-report-text
+          :theme="MsReportTheme.Error"
+          class="organization-page-error"
+        >
+          {{ $msTranslate(error) }}
+        </ms-report-text>
       </template>
     </ion-content>
   </ion-page>
@@ -63,13 +104,11 @@ import {
   getOrganizationInfo,
   getClientInfo as parsecGetClientInfo,
   getCurrentAvailableDevice,
-  AvailableDevice,
 } from '@/parsec';
-import { IonContent, IonIcon, IonPage, IonText, IonAvatar, popoverController } from '@ionic/vue';
-import { warning } from 'ionicons/icons';
-import { switchOrganization } from '@/router';
-import { ChevronExpand, MsImage, LogoIconGradient, MsModalResult } from 'megashark-lib';
-import { Ref, onMounted, ref } from 'vue';
+import { IonContent, IonPage, IonText, IonAvatar, popoverController, IonSkeletonText } from '@ionic/vue';
+import { currentRouteIs, Routes, switchOrganization, watchRoute } from '@/router';
+import { ChevronExpand, MsImage, LogoIconGradient, MsModalResult, MsReportText, MsReportTheme } from 'megashark-lib';
+import { Ref, onMounted, onUnmounted, ref } from 'vue';
 import useUploadMenu from '@/services/fileUploadMenu';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import OrganizationUserInformation from '@/components/organizations/OrganizationUserInformation.vue';
@@ -83,8 +122,41 @@ const { isSmallDisplay } = useWindowSize();
 const orgInfo: Ref<OrganizationInfo | null> = ref(null);
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const isTrialOrg = ref(false);
-const currentDevice: Ref<AvailableDevice | null> = ref(null);
-const querying = ref(true);
+const error = ref('');
+
+const watchRouteCancel = watchRoute(async () => {
+  if (currentRouteIs(Routes.Organization)) {
+    await updateInformation();
+  }
+});
+
+async function updateInformation(): Promise<void> {
+  getOrganizationInfo().then((result) => {
+    if (result.ok) {
+      orgInfo.value = result.value;
+      error.value = '';
+    } else {
+      error.value = 'OrganizationPage.getInfoFailed';
+      window.electronAPI.log('error', `Failed to retrieve organization info: ${result.error.tag})`);
+    }
+  });
+  parsecGetClientInfo().then((result) => {
+    if (result.ok) {
+      error.value = '';
+      userInfo.value = result.value;
+    } else {
+      error.value = 'OrganizationPage.getInfoFailed';
+      window.electronAPI.log('error', `Failed to retrieve user info: ${result.error.tag} (${result.error.error})`);
+    }
+  });
+  getCurrentAvailableDevice().then((result) => {
+    if (result.ok) {
+      isTrialOrg.value = isTrialOrganizationDevice(result.value);
+    } else {
+      window.electronAPI.log('error', `Failed to retrieve current device: ${result.error.tag}`);
+    }
+  });
+}
 
 async function openOrganizationChoice(event: Event): Promise<void> {
   const popover = await popoverController.create({
@@ -105,54 +177,59 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 }
 
 onMounted(async () => {
-  const result = await getOrganizationInfo();
-  const infoResult = await parsecGetClientInfo();
+  await updateInformation();
+});
 
-  const currentDeviceResult = await getCurrentAvailableDevice();
-
-  if (currentDeviceResult.ok) {
-    currentDevice.value = currentDeviceResult.value;
-    isTrialOrg.value = isTrialOrganizationDevice(currentDevice.value);
-  } else {
-    window.electronAPI.log('error', `Failed to retrieve current device ${JSON.stringify(currentDeviceResult.error)}`);
-  }
-
-  if (!result.ok) {
-    return;
-  }
-  orgInfo.value = result.value;
-
-  if (infoResult.ok) {
-    userInfo.value = infoResult.value;
-  } else {
-    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
-  }
-  querying.value = false;
+onUnmounted(() => {
+  watchRouteCancel();
 });
 </script>
 
 <style scoped lang="scss">
 .organization-page {
-  background: var(--parsec-color-light-secondary-premiere) !important;
+  background: var(--parsec-color-light-secondary-premiere);
   display: flex;
   flex-wrap: wrap;
   justify-content: start;
   gap: 2rem;
+
+  &:has(.organization-page-error) {
+    background: var(--parsec-color-light-secondary-background);
+  }
 
   &-content {
     --background: none;
 
     &::part(scroll) {
       display: flex;
-      flex-direction: column;
       gap: 2rem;
       padding: 2em;
 
+      @include ms.responsive-breakpoint('xl') {
+        flex-wrap: wrap;
+      }
+
       @include ms.responsive-breakpoint('sm') {
-        align-items: center;
         gap: 1.5rem;
         padding: 1.5rem;
+        justify-content: center;
+        align-items: baseline;
       }
+    }
+  }
+
+  .organization-sections {
+    display: flex;
+    gap: 2rem;
+    height: fit-content;
+
+    @include ms.responsive-breakpoint('xl') {
+      flex-wrap: wrap;
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      gap: 1.5rem;
+      justify-content: center;
     }
   }
 }
@@ -161,6 +238,7 @@ onMounted(async () => {
   display: flex;
   width: 100%;
   max-width: 30rem;
+  height: fit-content;
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem;
@@ -196,22 +274,37 @@ onMounted(async () => {
   }
 }
 
-.information-not-found {
-  margin: 2rem;
-  max-width: fit-content;
-  background: var(--parsec-color-light-danger-50);
-  color: var(--parsec-color-light-danger-700);
-  padding: 1rem;
-  display: flex;
-  gap: 0.75rem;
-  border-left: 0.25rem solid var(--parsec-color-light-danger-700);
+.organization-page-error {
+  height: fit-content;
+}
 
-  ion-text {
-    padding: 0.25rem 0;
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 30rem;
+
+  &__title {
+    width: 100%;
+    height: 1.5rem;
+    max-width: 10rem;
   }
 
-  ion-icon {
-    font-size: 1rem !important;
+  .skeleton-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 30rem;
+    padding: 1.5rem;
+    border-radius: var(--parsec-radius-8);
+    background: var(--parsec-color-light-secondary-white);
+
+    &__text {
+      width: 100%;
+      height: 2rem;
+    }
   }
 }
 </style>
