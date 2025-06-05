@@ -8,7 +8,7 @@ use hex_literal::hex;
 use pretty_assertions::assert_eq;
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::{KeyDerivation, SecretKey};
+use libparsec_crypto::{CryptoError, KeyDerivation, SecretKey};
 
 #[macro_use]
 mod common;
@@ -20,6 +20,36 @@ fn consts() {
 }
 
 test_serde!(serde, KeyDerivation);
+
+#[test]
+fn derive_uuid_from_uuid_stability() {
+    let id = uuid::uuid!("cadc3f583b8647f2a3227400fc02e096");
+
+    let kd1 = KeyDerivation::generate();
+    let gen_id = kd1.derive_uuid_from_uuid(id);
+
+    let kd2 = KeyDerivation::generate();
+    let gen_id2 = kd2.derive_uuid_from_uuid(id);
+    assert_ne!(gen_id, gen_id2);
+
+    let kd1_bis = KeyDerivation::try_from(kd1.as_ref()).unwrap();
+    let gen_id_bis = kd1_bis.derive_uuid_from_uuid(id);
+    assert_eq!(gen_id_bis, gen_id);
+}
+
+#[test]
+fn derive_uuid_from_uuid_spec() {
+    let kd = KeyDerivation::from(hex!(
+        "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
+    ));
+    let id = uuid::uuid!("cadc3f583b8647f2a3227400fc02e096");
+    let gen_id = kd.derive_uuid_from_uuid(id);
+
+    println!("gen_id: {:X?}", gen_id);
+
+    let expected_gen_id = uuid::uuid!("6e4e1d47d0eb03670695f081d678f0da");
+    assert_eq!(gen_id, expected_gen_id);
+}
 
 #[test]
 fn derive_secret_key_from_uuid_stability() {
@@ -80,4 +110,59 @@ fn hash() {
 
     assert_eq!(hash(&kd1), hash(&kd1));
     assert_ne!(hash(&kd1), hash(&kd2));
+}
+
+#[test]
+fn from_argon2id_password() {
+    let password = "P@ssw0rd.".to_owned().into();
+    let salt = hex!("cffcc16d78cbc0e773aa5ee7b2210159");
+
+    let expected = SecretKey::from(hex!(
+        "a2754dba7066a49f487737790388548c2af0ddfbed609805184ca5023afe1983"
+    ));
+
+    assert_eq!(
+        SecretKey::from_argon2id_password(&password, &salt, 1, 8, 1,).unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn from_argon2id_password_salt_too_small() {
+    let too_small = b"dummy";
+
+    assert!(matches!(
+        KeyDerivation::from_argon2id_password(&"Passw0rd".to_owned().into(), too_small, 1, 8, 1,),
+        Err(CryptoError::DataSize)
+    ));
+}
+
+#[test]
+fn from_argon2id_password_opslimit_too_small() {
+    let salt = hex!("cffcc16d78cbc0e773aa5ee7b2210159");
+
+    assert!(matches!(
+        KeyDerivation::from_argon2id_password(&"Passw0rd".to_owned().into(), &salt, 0, 8, 1,),
+        Err(CryptoError::DataSize)
+    ));
+}
+
+#[test]
+fn from_argon2id_password_memlimit_too_small() {
+    let salt = hex!("cffcc16d78cbc0e773aa5ee7b2210159");
+
+    assert!(matches!(
+        KeyDerivation::from_argon2id_password(&"Passw0rd".to_owned().into(), &salt, 1, 7, 1,),
+        Err(CryptoError::DataSize)
+    ));
+}
+
+#[test]
+fn from_argon2id_password_parallelism_too_small() {
+    let salt = hex!("cffcc16d78cbc0e773aa5ee7b2210159");
+
+    assert!(matches!(
+        KeyDerivation::from_argon2id_password(&"Passw0rd".to_owned().into(), &salt, 1, 8, 0,),
+        Err(CryptoError::DataSize)
+    ));
 }

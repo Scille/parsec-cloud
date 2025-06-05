@@ -12,7 +12,6 @@ use libparsec_protocol::{
     anonymous_account_cmds::latest as anonymous_account_cmds, API_LATEST_VERSION,
 };
 use libparsec_tests_fixtures::prelude::*;
-use libparsec_types::prelude::*;
 
 #[parsec_test(testbed = "minimal")]
 async fn ok_mocked(env: &TestbedEnv) {
@@ -25,7 +24,7 @@ async fn ok_with_server(env: &TestbedEnv) {
 }
 
 async fn ok(env: &TestbedEnv, mocked: bool) {
-    let addr = ParsecAnonymousAccountAddr::new(env.server_addr.clone());
+    let addr = env.server_addr.clone();
     let cmds =
         AnonymousAccountCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
 
@@ -80,9 +79,7 @@ macro_rules! register_rpc_http_hook {
     ($test_name: ident, $response_status_code: expr, $assert_err_cb: expr $(, $header_key:literal : $header_value:expr)* $(,)?) => {
         #[parsec_test(testbed = "minimal")]
         async fn $test_name(env: &TestbedEnv) {
-            let addr = ParsecAnonymousAccountAddr::new(
-                env.server_addr.clone(),
-            );
+            let addr = env.server_addr.clone();
             let cmds =
                 AnonymousAccountCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
 
