@@ -125,6 +125,7 @@ async function inviteUser(): Promise<void> {
   max-width: 30rem;
   align-items: center;
   flex-direction: column;
+  height: fit-content;
 }
 
 .card-header {

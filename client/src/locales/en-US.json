@@ -724,6 +724,7 @@
             "addUser": "Add a user"
         },
         "size": {
+            "information": "This storage includes the workspaces of all users as well as the history of file/folder changes.",
             "metadata": "Meta-data",
             "total": "Global data",
             "title": "Storage",

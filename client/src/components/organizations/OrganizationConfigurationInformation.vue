@@ -115,6 +115,7 @@ async function copyAddress(address: string): Promise<void> {
   gap: 1rem;
   width: 100%;
   max-width: 30rem;
+  height: fit-content;
 
   .card-header {
     display: flex;
