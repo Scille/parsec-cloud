@@ -7,7 +7,17 @@ from enum import Enum, auto
 from typing import Annotated, Final
 
 from pydantic import GetPydanticSchema, PlainSerializer, PlainValidator
-from pydantic_core import core_schema
+from pydantic_core.core_schema import (
+    chain_schema,
+    int_schema,
+    is_instance_schema,
+    json_or_python_schema,
+    no_info_plain_validator_function,
+    none_schema,
+    plain_serializer_function_ser_schema,
+    str_schema,
+    union_schema,
+)
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -78,6 +88,61 @@ class BadOutcomeEnum(BadOutcome, Enum):
     pass
 
 
+# -- Pydantic schema function helper ------------------------------------------
+
+
+def get_pydantic_schema(
+    type, validator_func, serializer_func, from_schema=None, allowed_none=False
+):
+    """
+    Helper to get a pydantic schema for custom `type` annotation.
+
+    By default, the schemas used to deserialize JSON/Python inputs are based on `str_schema`_
+    but you can specify a different `from_schema` (such as `int_schema`, `bool_schema`, etc).
+    See `pydantic_core_schema`_ for more information.
+
+    Args:
+        type: the custom type to generate the pydantic schema
+        validator_func: the function to deserialize an input into an instance of `type`
+        serializer_func: the function to serialize an instance of `type`
+        from_schema: the base schema to be used for input (`str_schema` by default)
+        allowed_none: set to `True` if the input value can be `None` (`False` by default)
+
+    .. _pydantic_core_schema: https://docs.pydantic.dev/latest/api/pydantic_core_schema/
+    .. _str_schema: https://docs.pydantic.dev/latest/api/pydantic_core_schema/#pydantic_core.core_schema.str_schema
+    """
+    # If not specified, use a str_schema as it is the most common case
+    from_schema = str_schema() if from_schema is None else from_schema
+
+    # Construct a schema to deserialize a value from base input type (e.g. `str_schema` or `int_schema`)
+    # into an instance of `type`. Note this is a `chain_schema` so the input will be
+    # validated against all schemas in the specified order.
+    type_from_base_schema = chain_schema(
+        [
+            # First, check if it's a valid value from base type,
+            from_schema if not allowed_none else union_schema([none_schema(), from_schema]),
+            # then that it can be converted to the concrete type
+            no_info_plain_validator_function(validator_func),
+        ]
+    )
+    return GetPydanticSchema(
+        lambda _source_type, _handler: json_or_python_schema(
+            # schema to deserialize a JSON input into an instance of `type`
+            json_schema=type_from_base_schema,
+            # schema to deserialize a Python input into an instance of `type`
+            # checks if it's already a `type` instance or if it can be converted from base type
+            python_schema=union_schema(
+                [
+                    is_instance_schema(type),
+                    type_from_base_schema,
+                ]
+            ),
+            # schema to serialize an instance of `type`
+            serialization=plain_serializer_function_ser_schema(serializer_func),
+        )
+    )
+
+
 # -- Field types annotations --------------------------------------------------
 
 
@@ -85,12 +150,14 @@ class BadOutcomeEnum(BadOutcome, Enum):
 #
 # Why a custom type if Pydantic already has `Base64Bytes` type?
 #
-# Long story short, Pydantic's `Base64Bytes` wants the input to deserialize to
-# be bytes, which doesn't work for JSON since a str is provided.
+# Long story short, Pydantic's `Base64Bytes` wants the input to be bytes,
+# which doesn't work for JSON since a str is provided.
 #
 # In a nutshell, Pydantic's base64 serialization only works for serialization
 # formats that natively support the bytes type, i.e. formats that don't need
 # base64 in the first place :/
+#
+# We might have use `Base64Str` but this is a str type, not a bytes type.
 
 
 def base64_bytes_validator(val: object) -> Buffer:
@@ -119,92 +186,98 @@ OrganizationIDField = Annotated[
     PlainSerializer(lambda x: x.str, return_type=str),
 ]
 
-user_id_from_str_schema = core_schema.chain_schema(
-    [  # check if it's a valid string, then that it can be converted to UserID
-        core_schema.str_schema(),
-        core_schema.no_info_plain_validator_function(lambda v: UserID.from_hex(v)),
-    ]
-)
 UserIDField = Annotated[
     UserID,
-    GetPydanticSchema(
-        lambda _source_type, _handler: core_schema.json_or_python_schema(
-            json_schema=user_id_from_str_schema,
-            python_schema=core_schema.union_schema(
-                [
-                    # check if it's a UserID first, if not use schema from str
-                    core_schema.is_instance_schema(UserID),
-                    user_id_from_str_schema,
-                ]
-            ),
-            serialization=core_schema.plain_serializer_function_ser_schema(
-                lambda v: v.hex if isinstance(v, UserID) else v
-            ),
-        ),
+    get_pydantic_schema(
+        UserID, lambda v: UserID.from_hex(v), lambda v: v.hex if isinstance(v, UserID) else v
     ),
 ]
 DeviceIDField = Annotated[
     DeviceID,
-    PlainValidator(lambda x: x if isinstance(x, DeviceID) else DeviceID.from_hex(x)),
-    PlainSerializer(lambda x: x.hex, return_type=str),
+    get_pydantic_schema(
+        DeviceID, lambda v: DeviceID.from_hex(v), lambda v: v.hex if isinstance(v, DeviceID) else v
+    ),
 ]
 SequesterServiceIDField = Annotated[
     SequesterServiceID,
-    PlainValidator(
-        lambda x: x if isinstance(x, SequesterServiceID) else SequesterServiceID.from_hex(x)
+    get_pydantic_schema(
+        SequesterServiceID,
+        lambda v: SequesterServiceID.from_hex(v),
+        lambda v: v.hex if isinstance(v, SequesterServiceID) else v,
     ),
-    PlainSerializer(lambda x: x.hex, return_type=str),
 ]
 InvitationTokenField = Annotated[
     InvitationToken,
-    PlainValidator(lambda x: x if isinstance(x, InvitationToken) else InvitationToken.from_hex(x)),
-    PlainSerializer(lambda x: x.hex, return_type=str),
+    get_pydantic_schema(
+        InvitationToken,
+        lambda v: InvitationToken.from_hex(v),
+        lambda v: v.hex if isinstance(v, InvitationToken) else v,
+    ),
 ]
 GreetingAttemptIDField = Annotated[
     GreetingAttemptID,
-    PlainValidator(
-        lambda x: x if isinstance(x, GreetingAttemptID) else GreetingAttemptID.from_hex(x)
+    get_pydantic_schema(
+        GreetingAttemptID,
+        lambda v: GreetingAttemptID.from_hex(v),
+        lambda v: v.hex if isinstance(v, GreetingAttemptID) else v,
     ),
-    PlainSerializer(lambda x: x.hex, return_type=str),
 ]
 InvitationStatusField = Annotated[
     InvitationStatus,
-    PlainValidator(
-        lambda x: x if isinstance(x, InvitationStatus) else InvitationStatus.from_str(x)
+    get_pydantic_schema(
+        InvitationStatus,
+        lambda v: InvitationStatus.from_str(v),
+        lambda v: v.str if isinstance(v, InvitationStatus) else v,
     ),
-    PlainSerializer(lambda x: x.str, return_type=str),
 ]
 RealmRoleField = Annotated[
     RealmRole,
-    PlainValidator(lambda x: x if isinstance(x, RealmRole) else RealmRole.from_str(x)),
-    PlainSerializer(lambda x: x.str, return_type=str),
+    get_pydantic_schema(
+        RealmRole,
+        lambda v: RealmRole.from_str(v),
+        lambda v: v.str if isinstance(v, RealmRole) else v,
+    ),
 ]
 VlobIDField = Annotated[
     VlobID,
-    PlainValidator(lambda x: x if isinstance(x, VlobID) else VlobID.from_hex(x)),
-    PlainSerializer(lambda x: x.hex, return_type=str),
+    get_pydantic_schema(
+        VlobID, lambda v: VlobID.from_hex(v), lambda v: v.hex if isinstance(v, VlobID) else v
+    ),
 ]
 DateTimeField = Annotated[
     DateTime,
-    PlainValidator(lambda x: x if isinstance(x, DateTime) else DateTime.from_rfc3339(x)),
-    PlainSerializer(lambda x: x.to_rfc3339(), return_type=str),
+    get_pydantic_schema(
+        DateTime,
+        lambda v: DateTime.from_rfc3339(v),
+        lambda v: v.to_rfc3339() if isinstance(v, DateTime) else v,
+    ),
 ]
+
 UserProfileField = Annotated[
     UserProfile,
-    PlainValidator(lambda x: x if isinstance(x, UserProfile) else UserProfile.from_str(x)),
-    PlainSerializer(lambda x: x.str, return_type=str),
+    get_pydantic_schema(
+        UserProfile,
+        lambda v: UserProfile.from_str(v),
+        lambda v: v.str if isinstance(v, UserProfile) else v,
+    ),
 ]
 ActiveUsersLimitField = Annotated[
     ActiveUsersLimit,
-    PlainValidator(
-        lambda x: x if isinstance(x, ActiveUsersLimit) else ActiveUsersLimit.from_maybe_int(x)
+    get_pydantic_schema(
+        ActiveUsersLimit,
+        lambda v: ActiveUsersLimit.from_maybe_int(v),
+        lambda v: v.to_maybe_int() if isinstance(v, ActiveUsersLimit) else v,
+        from_schema=int_schema(),
+        allowed_none=True,
     ),
-    PlainSerializer(lambda x: x.to_maybe_int(), return_type=int | None),
 ]
 EmailAddressField = Annotated[
     EmailAddress,
-    PlainValidator(lambda x: x if isinstance(x, EmailAddress) else EmailAddress(x)),
-    PlainSerializer(lambda x: str(x), return_type=str),
+    get_pydantic_schema(
+        EmailAddress,
+        lambda v: EmailAddress(v),
+        lambda v: v.str if isinstance(v, EmailAddress) else v,
+    ),
 ]
 AllowedClientAgentField = Annotated[
     AllowedClientAgent,
