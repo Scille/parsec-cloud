@@ -1,0 +1,17 @@
+Hello!
+
+You have requested to delete your Parsec Account.
+
+To confirm your Parsec Account deletion:
+
+1. Make sure to download and install Parsec app (https://parsec.cloud/en/start-parsec)
+2. Once installed, click on the link below to delete your Parsec Account:
+{{ deletion_url }}
+
+Thank you,
+
+Parsec Cloud team
+https://parsec.cloud/
+
+If you didn’t request this email, then someone has access to your account you should take the appropriate actions.
+Sorry about that. You can safely ignore this email or get in touch with us to report it.

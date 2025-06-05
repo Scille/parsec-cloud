@@ -12,6 +12,7 @@ from typing import AsyncIterator, Iterable, Iterator, Literal
 
 from parsec._parsec import (
     AccountAuthMethodID,
+    AccountDeletionToken,
     ActiveUsersLimit,
     BlockID,
     BootstrapToken,
@@ -104,6 +105,9 @@ class MemoryDatamodel:
     # (email, account)
     accounts: dict[EmailAddress, MemoryAccount] = field(default_factory=dict)
     unverified_emails: dict[EmailAddress, tuple[EmailValidationToken, DateTime]] = field(
+        default_factory=dict
+    )
+    accounts_deletion_requested: dict[EmailAddress, tuple[AccountDeletionToken, DateTime]] = field(
         default_factory=dict
     )
 
