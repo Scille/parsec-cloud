@@ -1,4 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+// cspell:ignore xBCgAAAAAAAAAAAAAAAAAAAB
 
 use rstest_reuse::{self, apply, template};
 use std::str::FromStr;
@@ -27,6 +28,7 @@ const WORKSPACE_PATH_PARAM_KEY_INDEX: IndexInt = 1;
 // cspell:disable-next-line
 const WORKSPACE_PATH_PARAM_WORKSPACE_ID: &[u8] = &hex!("2d4ded1274064608833b7f57f01156e2");
 const INVITATION_TYPE: &str = "claim_user";
+const ACCOUNT_DELETE_PARAM: &str = "xBCgAAAAAAAAAAAAAAAAAAAB";
 
 /*
  * Helpers to parametrize the tests on different addr types
@@ -139,6 +141,14 @@ impl Testbed for InvitationAddrTestbed {
     }
 }
 
+struct ParsecAccountDeletionAddrTestbed {}
+impl Testbed for ParsecAccountDeletionAddrTestbed {
+    impl_testbed_common!(ParsecAccountDeletionAddr);
+    fn url(&self) -> String {
+        format!("{PARSEC_SCHEME}://{DOMAIN}?a=delete_account&p={ACCOUNT_DELETE_PARAM}")
+    }
+}
+
 #[template]
 #[rstest(
     testbed,
@@ -147,6 +157,7 @@ impl Testbed for InvitationAddrTestbed {
     case::organization_bootstrap_addr(&OrganizationBootstrapAddrTestbed{}),
     case::workspace_path_addr(&WorkspacePathAddrTestbed{}),
     case::invitation_addr(&InvitationAddrTestbed{}),
+    case::delete_account_addr(&ParsecAccountDeletionAddrTestbed{}),
 )]
 fn all_addr(testbed: &dyn Testbed) {}
 

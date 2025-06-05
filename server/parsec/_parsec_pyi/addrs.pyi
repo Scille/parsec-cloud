@@ -7,6 +7,7 @@ from typing import Union
 from parsec._parsec_pyi.crypto import VerifyKey
 from parsec._parsec_pyi.enumerate import InvitationType
 from parsec._parsec_pyi.ids import (
+    AccountDeletionToken,
     BootstrapToken,
     EmailValidationToken,
     InvitationToken,
@@ -241,6 +242,39 @@ class ParsecAccountEmailValidationAddr(ParsecAddr):
         server_addr: ParsecAddr,
         token: EmailValidationToken,
     ) -> ParsecAccountEmailValidationAddr: ...
+
+class ParsecAccountDeletionAddr(ParsecAddr):
+    def __init__(
+        self,
+        token: InvitationToken,
+        hostname: str,
+        port: int | None,
+        use_ssl: bool = True,
+    ) -> None: ...
+    def __hash__(self) -> int: ...
+    @property
+    def hostname(self) -> str: ...
+    @property
+    def port(self) -> int: ...
+    @property
+    def use_ssl(self) -> bool: ...
+    @property
+    def netloc(self) -> str: ...
+    @property
+    def token(self) -> AccountDeletionToken: ...
+    def get_server_addr(self) -> ParsecAddr: ...
+    def to_url(self) -> str: ...
+    def to_http_redirection_url(self) -> str: ...
+    @classmethod
+    def from_url(
+        cls, url: str, allow_http_redirection: bool = False
+    ) -> ParsecAccountDeletionAddr: ...
+    @classmethod
+    def build(
+        cls,
+        server_addr: ParsecAddr,
+        token: AccountDeletionToken,
+    ) -> ParsecAccountDeletionAddr: ...
 
 class ParsecPkiEnrollmentAddr(ParsecAddr):
     def __init__(
