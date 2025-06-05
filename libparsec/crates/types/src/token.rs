@@ -133,6 +133,7 @@ macro_rules! new_token_type {
 new_token_type!(BootstrapToken);
 new_token_type!(InvitationToken);
 new_token_type!(EmailValidationToken);
+new_token_type!(AccountDeletionToken);
 
 #[cfg(test)]
 #[path = "../tests/unit/token.rs"]

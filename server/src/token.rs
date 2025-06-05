@@ -80,3 +80,15 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
     __hash__,
 );
 gen_token!(EmailValidationToken);
+
+crate::binding_utils::gen_py_wrapper_class_for_id!(
+    AccountDeletionToken,
+    libparsec_types::AccountDeletionToken,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __str__,
+    __richcmp__ eq,
+    __hash__,
+);
+gen_token!(AccountDeletionToken);
