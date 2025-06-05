@@ -27,9 +27,11 @@ from parsec._parsec import (
 from parsec.config import AccountVaultStrategy, AllowedClientAgent
 
 
-# Unset singleton used as default value in function parameter when `None`
-# can be a valid value.
-# We implement this as an enum to satisfy type checker (see
+# The Unset singleton is used as default value in functions when `None` can be a
+# valid value (so `None` and `Unset` will have a different meaning).
+# This idiom is commonly known as a "sentinel value" and there is not a standard
+# way to implement it (see https://peps.python.org/pep-0661/).
+# We implement it here as an enum to satisfy type checker (see
 # https://github.com/python/typing/issues/689#issuecomment-561425237)
 class UnsetType(Enum):
     Unset = auto()
@@ -38,12 +40,45 @@ class UnsetType(Enum):
 Unset: Final = UnsetType.Unset
 
 
+# -- Bad outcome types --------------------------------------------------------
+
+
 class BadOutcome:
+    """
+    Base class for bad outcomes returned from Parsec API.
+
+    Inherit from this class if the bad outcome needs to include additional
+    attributes. For example:
+
+    ```python
+    @dataclass(slots=True)
+    class BadKeyIndex(BadOutcome):
+        last_realm_certificate_timestamp: DateTime
+    ```
+    """
+
     pass
 
 
 class BadOutcomeEnum(BadOutcome, Enum):
+    """
+    Base class for bad outcomes enums returned from Parsec API.
+
+    Inherit from this class if the bad outcome does not need to include
+    additional attributes, only . For example:
+
+    ```python
+    class SendEmailBadOutcome(BadOutcomeEnum):
+        SERVER_UNAVAILABLE = auto()
+        RECIPIENT_REFUSED = auto()
+        BAD_SMTP_CONFIG = auto()
+    ```
+    """
+
     pass
+
+
+# -- Field types annotations --------------------------------------------------
 
 
 def base64_bytes_validator(val: object) -> Buffer:
