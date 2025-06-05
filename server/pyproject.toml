@@ -166,7 +166,6 @@ ignore = [
     "tests/cli/test_sequester.py",
     "../misc/bench.py",
 ]
-stubPath = "parsec/stubs/"
 reportUnusedImport = true
 reportUnusedClass = true
 reportUnusedFunction = true
