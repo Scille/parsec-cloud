@@ -4,6 +4,7 @@ from typing import Literal, override
 
 from parsec._parsec import (
     AccountAuthMethodID,
+    AccountDeletionToken,
     DateTime,
     EmailAddress,
     EmailValidationToken,
@@ -12,6 +13,7 @@ from parsec._parsec import (
 )
 from parsec.components.account import (
     AccountCreateAccountBadOutcome,
+    AccountCreateAccountDeletionTokenBadOutcome,
     AccountCreateEmailValidationTokenBadOutcome,
     AccountVaultItemListBadOutcome,
     AccountVaultItemRecoveryList,
@@ -242,3 +244,17 @@ class MemoryAccountComponent(BaseAccountComponent):
             current_vault=_convert_vault(account.current_vault),
             previous_vaults=[_convert_vault(v) for v in account.previous_vaults],
         )
+
+    @override
+    async def create_email_deletion_token(
+        self, email: EmailAddress, now: DateTime
+    ) -> AccountDeletionToken | AccountCreateAccountDeletionTokenBadOutcome:
+        try:
+            (_, last_email_datetime) = self._data.accounts_deletion_requested[email]
+            if not self.should_resend_token(now, last_email_datetime):
+                return AccountCreateAccountDeletionTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
+        except KeyError:
+            pass
+        token = AccountDeletionToken.new()
+        self._data.accounts_deletion_requested[email] = (token, now)
+        return token

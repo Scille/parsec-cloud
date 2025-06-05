@@ -10,10 +10,12 @@ from typing import Literal
 
 from parsec._parsec import (
     AccountAuthMethodID,
+    AccountDeletionToken,
     DateTime,
     EmailAddress,
     EmailValidationToken,
     HashDigest,
+    ParsecAccountDeletionAddr,
     ParsecAccountEmailValidationAddr,
     PasswordAlgorithm,
     PasswordAlgorithmArgon2id,
@@ -61,6 +63,10 @@ class AccountVaultKeyRotation(BadOutcomeEnum):
 
 class AccountVaultItemRecoveryList(BadOutcomeEnum):
     ACCOUNT_NOT_FOUND = auto()
+
+
+class AccountCreateAccountDeletionTokenBadOutcome(BadOutcomeEnum):
+    TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
 
 
 @dataclass(slots=True)
@@ -407,6 +413,59 @@ class BaseAccountComponent:
             case AccountVaultItemRecoveryList.ACCOUNT_NOT_FOUND:
                 client_ctx.account_not_found_abort()
 
+    async def _send_email_deletion_token(
+        self, token: AccountDeletionToken, email: EmailAddress
+    ) -> None | SendEmailBadOutcome:
+        if not self._config.server_addr:
+            return SendEmailBadOutcome.BAD_SMTP_CONFIG
+
+        deletion_url = ParsecAccountDeletionAddr.build(
+            server_addr=self._config.server_addr,
+            token=token,
+        ).to_http_redirection_url()
+
+        message = generate_email_deletion_email(
+            from_addr=self._config.email_config.sender,
+            to_addr=email,
+            deletion_url=deletion_url,
+            server_url=self._config.server_addr.to_http_url(),
+        )
+
+        return await send_email(
+            email_config=self._config.email_config, to_addr=email, message=message
+        )
+
+    async def create_email_deletion_token(
+        self,
+        email: EmailAddress,
+        now: DateTime,
+    ) -> AccountDeletionToken | AccountCreateAccountDeletionTokenBadOutcome:
+        raise NotImplementedError
+
+    @api
+    async def api_account_delete_send_validation_email(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.account_delete_send_validation_token.Req,
+    ) -> authenticated_account_cmds.latest.account_delete_send_validation_token.Rep:
+        outcome = await self.create_email_deletion_token(client_ctx.account_email, DateTime.now())
+        match outcome:
+            case AccountDeletionToken() as token:
+                outcome = await self._send_email_deletion_token(token, client_ctx.account_email)
+                match outcome:
+                    case None:
+                        return authenticated_account_cmds.latest.account_delete_send_validation_token.RepOk()
+                    case (
+                        SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE
+                    ):
+                        return authenticated_account_cmds.latest.account_delete_send_validation_token.RepEmailServerUnavailable()
+                    case SendEmailBadOutcome.RECIPIENT_REFUSED:
+                        return authenticated_account_cmds.latest.account_delete_send_validation_token.RepEmailRecipientRefused()
+            case AccountCreateAccountDeletionTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND:
+                return (
+                    authenticated_account_cmds.latest.account_delete_send_validation_token.RepOk()
+                )
+
 
 def generate_email_validation_email(
     from_addr: EmailAddress,
@@ -431,6 +490,44 @@ def generate_email_validation_email(
     message = MIMEMultipart("alternative")
 
     message["Subject"] = "Parsec Account: Confirm your email address"
+    message["From"] = str(from_addr)
+    message["To"] = str(to_addr)
+
+    # Turn parts into MIMEText objects
+    part1 = MIMEText(text, "plain")
+    part2 = MIMEText(html, "html")
+
+    # Add HTML/plain-text parts to MIMEMultipart message
+    # The email client will try to render the last part first
+    message.attach(part1)
+    message.attach(part2)
+
+    return message
+
+
+def generate_email_deletion_email(
+    from_addr: EmailAddress,
+    to_addr: EmailAddress,
+    deletion_url: str,
+    server_url: str,
+) -> Message:
+    # Quick fix to have a similar behavior between Rust and Python
+    if server_url.endswith("/"):
+        server_url = server_url[:-1]
+
+    html = get_template("account_email_deletion.html").render(
+        deletion_url=deletion_url,
+        server_url=server_url,
+    )
+    text = get_template("account_email_deletion.txt").render(
+        deletion_url=deletion_url,
+        server_url=server_url,
+    )
+
+    # mail settings
+    message = MIMEMultipart("alternative")
+
+    message["Subject"] = "Parsec Account: Confirm account deletion"
     message["From"] = str(from_addr)
     message["To"] = str(to_addr)
 
