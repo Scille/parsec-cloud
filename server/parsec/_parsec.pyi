@@ -11,6 +11,7 @@ from parsec._parsec_pyi.account import (
 )
 from parsec._parsec_pyi.addrs import (
     ParsecAccountActionAddr,
+    ParsecAccountDeletionAddr,
     ParsecAccountEmailValidationAddr,
     ParsecActionAddr,
     ParsecAddr,
@@ -189,6 +190,7 @@ __all__ = [
     "ParsecAddr",
     "ParsecInvitationAddr",
     "ParsecAccountEmailValidationAddr",
+    "ParsecAccountDeletionAddr",
     "ParsecAccountActionAddr",
     "ParsecOrganizationAddr",
     "ParsecOrganizationBootstrapAddr",

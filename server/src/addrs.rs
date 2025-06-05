@@ -14,8 +14,8 @@ use pyo3::{
 use std::str::FromStr;
 
 use crate::{
-    BootstrapToken, BytesWrapper, EmailValidationToken, InvitationToken, InvitationType,
-    OrganizationID, VerifyKey, VlobID,
+    AccountDeletionToken, BootstrapToken, BytesWrapper, EmailValidationToken, InvitationToken,
+    InvitationType, OrganizationID, VerifyKey, VlobID,
 };
 
 crate::binding_utils::gen_py_wrapper_class!(
@@ -879,6 +879,126 @@ impl ParsecAccountEmailValidationAddr {
         token: EmailValidationToken,
     ) -> Self {
         Self(libparsec_types::ParsecAccountEmailValidationAddr::new(
+            server_addr.0,
+            token.0,
+        ))
+    }
+}
+
+crate::binding_utils::gen_py_wrapper_class!(
+    ParsecAccountDeletionAddr,
+    libparsec_types::ParsecAccountDeletionAddr,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+    __hash__,
+);
+
+#[pymethods]
+impl ParsecAccountDeletionAddr {
+    #[new]
+    #[pyo3(signature = ( token, **py_kwargs))]
+    fn new(token: AccountDeletionToken, py_kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Self> {
+        let addr = match py_kwargs {
+            Some(dict) => ParsecAddr::new(
+                match dict.get_item("hostname")? {
+                    Some(hostname) => hostname.to_string(),
+                    None => String::from(""),
+                },
+                match dict.get_item("port")? {
+                    Some(port) => port.extract::<u16>().ok(),
+                    None => None,
+                },
+                match dict.get_item("use_ssl")? {
+                    Some(use_ssl) => use_ssl
+                        .extract::<bool>()
+                        .expect("`use_ssl` should be a boolean value"),
+                    None => true,
+                },
+            ),
+            None => return Err(PyValueError::new_err("Missing parameters")),
+        };
+        Ok(Self(libparsec_types::ParsecAccountDeletionAddr::new(
+            addr.0, token.0,
+        )))
+    }
+
+    #[getter]
+    fn hostname(&self) -> &str {
+        self.0.hostname()
+    }
+
+    #[getter]
+    fn port(&self) -> u16 {
+        self.0.port()
+    }
+
+    #[getter]
+    fn use_ssl(&self) -> bool {
+        self.0.use_ssl()
+    }
+
+    #[getter]
+    fn netloc(&self) -> String {
+        if self.0.is_default_port() {
+            String::from(self.0.hostname())
+        } else {
+            format!("{}:{}", self.0.hostname(), self.0.port())
+        }
+    }
+
+    #[getter]
+    fn token(&self) -> AccountDeletionToken {
+        AccountDeletionToken(self.0.token())
+    }
+
+    fn to_url(&self) -> String {
+        self.0.to_url().to_string()
+    }
+
+    fn to_http_redirection_url(&self) -> String {
+        self.0.to_http_redirection_url().to_string()
+    }
+
+    fn get_server_addr(&self) -> ParsecAddr {
+        ParsecAddr::new(
+            String::from(self.0.hostname()),
+            if !self.0.is_default_port() {
+                Some(self.0.port())
+            } else {
+                None
+            },
+            self.0.use_ssl(),
+        )
+    }
+
+    #[classmethod]
+    #[pyo3(signature = (url, allow_http_redirection = false))]
+    fn from_url(
+        _cls: Bound<'_, PyType>,
+        url: &str,
+        allow_http_redirection: bool,
+    ) -> PyResult<Self> {
+        match allow_http_redirection {
+            true => match libparsec_types::ParsecAccountDeletionAddr::from_any(url) {
+                Ok(addr) => Ok(Self(addr)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
+            },
+            false => match libparsec_types::ParsecAccountDeletionAddr::from_str(url) {
+                Ok(addr) => Ok(Self(addr)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
+            },
+        }
+    }
+
+    #[classmethod]
+    fn build(
+        _cls: Bound<'_, PyType>,
+        server_addr: ParsecAddr,
+        token: AccountDeletionToken,
+    ) -> Self {
+        Self(libparsec_types::ParsecAccountDeletionAddr::new(
             server_addr.0,
             token.0,
         ))
