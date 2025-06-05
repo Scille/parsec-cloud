@@ -125,8 +125,12 @@ def test_good(field: str):
         case unknown:
             assert False, unknown
 
+    # deserialization
     out = AllTypesSchema(**data)  # type: ignore
     assert getattr(out, field) == expected
+    # serialization
+    dump = {k: v for k, v in out.model_dump().items() if k in data.keys()}
+    assert dump == data
 
 
 @pytest.mark.parametrize("field", AllTypesSchema.model_fields.keys())
