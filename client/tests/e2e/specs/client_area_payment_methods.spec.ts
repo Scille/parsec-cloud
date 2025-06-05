@@ -47,7 +47,11 @@ msTest('List payment methods', async ({ clientArea }) => {
       .locator('.InputContainer')
       .locator('input')
       .fill(DateTime.now().plus({ years: 3 }).toFormat('MM/yy'));
-    await inputs.nth(2).frameLocator('iframe').locator('.InputContainer').locator('input').fill('123');
+    const crcInput = inputs.nth(2).frameLocator('iframe').locator('.InputContainer').locator('input');
+    await crcInput.fill('123');
+    await crcInput.blur();
+    await expect(crcInput).not.toBeFocused();
+    await expect(crcInput).toHaveValue('123');
     await expect(modalButton).toBeTrulyEnabled();
     if (setDefault.set) {
       await toggle.click();

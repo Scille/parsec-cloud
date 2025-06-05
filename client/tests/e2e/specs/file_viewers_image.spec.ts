@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, fillIonInput, msTest, openFileType, testFileViewerZoomLevel } from '@tests/e2e/helpers';
+import { expect, msTest, openFileType, testFileViewerZoomLevel } from '@tests/e2e/helpers';
 
 msTest('Image viewer', async ({ documents }) => {
   await openFileType(documents, 'png');
@@ -68,7 +68,13 @@ msTest('Image viewer zoom', async ({ documents }) => {
   await zoomLevel.click();
   await expect(zoomLevel).toBeHidden();
   await expect(zoomLevelInput).toBeVisible();
-  await fillIonInput(zoomLevelInput, '42');
+
+  // Can't use fillIonInput because the input disappears once filled
+  const input = zoomLevelInput.locator('input');
+  await input.fill('42');
+  await input.blur();
+  await expect(zoomLevelInput).toBeHidden();
+  await expect(zoomLevel).toBeVisible();
   await expect(zoomLevel).toHaveText('40 %');
   await testFileViewerZoomLevel(wrapper, '0.4');
 });
