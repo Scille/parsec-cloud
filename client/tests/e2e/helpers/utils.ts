@@ -63,6 +63,8 @@ export async function fillIonInput(ionInput: Locator, text: string): Promise<voi
   const input = ionInput.locator('input');
   await input.fill(text);
   await input.blur();
+  await expect(input).toHaveValue(text);
+  await expect(ionInput).not.toBeFocused();
 }
 
 export async function fillInputModal(root: Locator | Page, text: string, clear?: boolean): Promise<void> {
@@ -280,7 +282,9 @@ export async function createWorkspace(workspacesPage: Page, name: string, displa
 
 export async function createFolder(documentsPage: Page, name: string): Promise<void> {
   const actionBar = documentsPage.locator('#folders-ms-action-bar');
-  await actionBar.locator('.ms-action-bar-button:visible').nth(0).click();
+  const createFolderButton = actionBar.locator('.ms-action-bar-button:visible').nth(0);
+  await expect(createFolderButton).toHaveText('New folder');
+  await createFolderButton.click();
   await fillInputModal(documentsPage, name);
 }
 

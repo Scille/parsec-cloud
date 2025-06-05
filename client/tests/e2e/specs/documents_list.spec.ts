@@ -152,7 +152,9 @@ msTest('Delete all documents', async ({ documents }) => {
   await globalCheckbox.click();
 
   const actionBar = documents.locator('#folders-ms-action-bar');
-  await actionBar.locator('.ms-action-bar-button:visible').nth(2).click();
+  const deleteButton = actionBar.locator('.ms-action-bar-button:visible').nth(2);
+  await expect(deleteButton).toHaveText('Delete');
+  await deleteButton.click();
   await answerQuestion(documents, true, {
     expectedTitleText: 'Delete multiple items',
     expectedQuestionText: /Are you sure you want to delete these \d+ items\?/,

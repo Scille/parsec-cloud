@@ -137,7 +137,10 @@ for (const frozen of [false, true]) {
     await button.click();
     await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
-    await home.locator('.saas-login-button__item').nth(1).click();
+    const loginButton = home.locator('.saas-login-button__item').nth(1);
+    await expect(loginButton).toHaveText('Log in');
+    await expect(loginButton).toBeTrulyEnabled();
+    await loginButton.click();
     const orgSwitchButton = home.locator('.sidebar-header').locator('.card-header-title');
     await expect(orgSwitchButton).toHaveText('All organizations');
     await orgSwitchButton.click();

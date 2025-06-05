@@ -165,6 +165,8 @@ msTest('Open documentation', async ({ myProfilePage }) => {
   const newTab = await myProfilePage.waitForEvent('popup');
   await newTab.waitForLoadState();
   await expect(newTab).toHaveURL(new RegExp('https://docs.parsec.cloud/(en|fr)/[a-z0-9-+.]+'));
+  // Re-check, just to for it to wait
+  await expect(myProfilePage.locator('.item-container__text').nth(4)).toHaveText('Documentation');
 });
 
 msTest('Open feedback', async ({ myProfilePage }) => {

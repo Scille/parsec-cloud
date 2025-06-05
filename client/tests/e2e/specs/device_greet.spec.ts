@@ -102,39 +102,42 @@ msTest('Greet device whole process on small display', async ({ myProfilePage }) 
 
   const [greetData, joinData] = await initModals(myProfilePage, secondTab, 'small');
 
+  await expect(greetData.modal.locator('.modal-header-stepper__text')).toHaveText('Greet a new device');
+  await expect(joinData.modal.locator('.modal-header-stepper__text')).toHaveText('Add a new device');
+
   // Check the provide code page from the host and retrieve the code
 
   await expect(greetData.title).toHaveText('Share your code');
-
+  await expect(greetData.modal.locator('.modal-header__step')).toHaveText('Step 1 of 3');
   const greetCode = (await greetData.content.locator('.host-code').locator('.code').textContent()) ?? '';
   expect(greetCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the guest and select the code
   await expect(joinData.title).toHaveText('Get host code');
-
+  await expect(joinData.modal.locator('.modal-header__step')).toHaveText('Step 1 of 3');
   await expect(joinData.content.locator('.button-choice')).toHaveCount(4);
   await joinData.content.locator('.button-choice', { hasText: greetCode }).click();
 
   // Check the provide code page from the guest and retrieve the code
   await expect(joinData.title).toHaveText('Share guest code');
-  await expect(myProfilePage.locator('.modal-header__step')).toHaveText('Step 1 of 3');
+  await expect(joinData.modal.locator('.modal-header__step')).toHaveText('Step 2 of 3');
   const joinCode = (await joinData.content.locator('.guest-code').locator('.code').textContent()) ?? '';
   expect(joinCode).toMatch(/^[A-Z0-9]{4}$/);
 
   // Check the enter code page from the host and select the code
   await expect(greetData.title).toHaveText('Get guest code');
-  await expect(myProfilePage.locator('.modal-header__step')).toHaveText('Step 2 of 3');
+  await expect(greetData.modal.locator('.modal-header__step')).toHaveText('Step 2 of 3');
 
   await expect(greetData.content.locator('.button-choice')).toHaveCount(4);
   await greetData.content.locator('.button-choice', { hasText: joinCode }).click();
 
   // Host waits for guest to choose auth
-  await expect(myProfilePage.locator('.modal-header__step')).toHaveText('Step 3 of 3');
+  await expect(greetData.modal.locator('.modal-header__step')).toHaveText('Step 3 of 3');
   await expect(greetData.title).toHaveText('Waiting for device information');
-
   await expect(greetData.nextButton).toBeHidden();
 
   // Guest choose auth
+  await expect(joinData.modal.locator('.modal-header__step')).toHaveText('Step 3 of 3');
   await expect(joinData.title).toHaveText('Authentication');
   await expect(joinData.nextButton).toHaveText('Confirm');
   await expect(joinData.nextButton).toHaveDisabledAttribute();
