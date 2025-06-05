@@ -66,6 +66,7 @@ from parsec._parsec_pyi.enumerate import (
 )
 from parsec._parsec_pyi.ids import (
     AccountAuthMethodID,
+    AccountDeletionToken,
     BlockID,
     BootstrapToken,
     ChunkID,
@@ -176,6 +177,7 @@ __all__ = [
     "HumanHandle",
     "InvitationToken",
     "EmailValidationToken",
+    "AccountDeletionToken",
     "OrganizationID",
     "SequesterServiceID",
     "UserID",
