@@ -1,7 +1,7 @@
 {
     "name": "client-vite",
     "private": true,
-    "version": "3.4.0-rc.7",
+    "version": "3.4.0-rc.8+dev",
     "type": "module",
     "license": "BUSL-1.1",
     "scripts": {
