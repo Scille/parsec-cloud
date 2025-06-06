@@ -47,7 +47,7 @@
         />
       </ion-button>
       <!-- error -->
-      <ms-informative-text v-show="error"> {{ $msTranslate(error) }}; </ms-informative-text>
+      <ms-informative-text v-show="error"> {{ $msTranslate(error) }} </ms-informative-text>
     </div>
   </div>
 </template>

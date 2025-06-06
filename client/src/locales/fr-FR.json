@@ -1465,7 +1465,7 @@
             "nextButton": "Suivant",
             "resendCode": "Renvoyer un code",
             "welcome": "Bienvenue sur Parsec",
-            "welcomeDescription": "Votre compte Parsec Share a bien été créé. Vous avez désormais accès à Parsec.",
+            "welcomeDescription": "Votre compte Parsec a bien été créé. Vous avez désormais accès à Parsec.",
             "accessToOrganizationButton": "Accéder aux organisations",
             "errors": {
                 "invalidCode": "Le code est incorrect.",
