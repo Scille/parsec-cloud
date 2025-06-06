@@ -136,7 +136,7 @@ defineExpose({
 .login-popup {
   height: auto;
   width: 100%;
-  max-width: 25rem;
+  max-width: 28rem;
   margin: 2rem auto;
   display: flex;
   gap: 1.5rem;
