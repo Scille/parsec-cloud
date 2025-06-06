@@ -19,6 +19,11 @@ ion-title {
   padding: 0;
 }
 
+svg {
+  width: 100%;
+  height: 100%;
+}
+
 .scroll {
   overflow-y: auto;
   overflow-x: hidden;

@@ -56,7 +56,7 @@
               >
                 <ms-image
                   :image="DownloadIcon"
-                  class="file-icon download-icon"
+                  class="download-icon"
                 />
                 {{ $msTranslate('fileViewers.download') }}
               </ion-button>
@@ -462,10 +462,11 @@ async function downloadFile(path: FsPath): Promise<void> {
   background-color: var(--parsec-color-light-secondary-premiere);
 
   .file-viewer {
-    height: 100%;
     display: flex;
+    gap: 1rem;
     flex-direction: column;
-    justify-content: space-between;
+    height: 100%;
+    justify-content: center;
 
     &-topbar {
       display: flex;
@@ -478,6 +479,8 @@ async function downloadFile(path: FsPath): Promise<void> {
       .file-icon {
         width: 2rem;
         height: 2rem;
+        min-width: 2rem;
+        min-height: 2rem;
         margin-left: 0.5rem;
       }
 
@@ -485,9 +488,13 @@ async function downloadFile(path: FsPath): Promise<void> {
         display: flex;
         flex-direction: column;
         gap: 0.25rem;
+        overflow: hidden;
 
         .title-h3 {
           color: var(--parsec-color-light-secondary-text);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .subtitles-sm {
