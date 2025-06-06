@@ -202,7 +202,9 @@ defineEmits<{
 
   .file-icon {
     min-width: 2rem;
+    max-width: 2rem;
     min-height: 2rem;
+    max-height: 2rem;
   }
 
   &-details {

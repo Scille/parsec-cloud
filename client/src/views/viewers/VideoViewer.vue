@@ -234,13 +234,12 @@ function updateMediaData(event: Event): void {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 2rem;
+  padding: 1rem;
 }
 
 .video {
   border-radius: var(--parsec-radius-8);
   overflow: hidden;
-  width: fit-content;
   height: fit-content;
   max-height: 100%;
   box-shadow: var(--parsec-shadow-light);
