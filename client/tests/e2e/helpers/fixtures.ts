@@ -12,16 +12,17 @@ interface SetupOptions {
   testbedPath?: string;
   location?: string;
   skipGoto?: boolean;
+  withParsecAccount?: boolean;
 }
 
-export async function setupNewPage(
-  page: MsPage,
-  opts: SetupOptions = { testbedPath: undefined, location: '/', skipGoto: false },
-): Promise<void> {
+export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promise<void> {
   page.on('console', (msg) => console.log('> ', msg.text()));
 
-  await page.addInitScript(() => {
+  await page.addInitScript((withParsecAccount: boolean) => {
     (window as any).TESTING = true;
+    if (withParsecAccount) {
+      (window as any).TESTING_ENABLE_ACCOUNT = true;
+    }
     (window as any).showSaveFilePicker = async (): Promise<FileSystemFileHandle> => {
       console.log('Show save file Picker');
       return {
@@ -71,7 +72,7 @@ export async function setupNewPage(
         isSameEntry: async (_other: FileSystemHandle): Promise<boolean> => false,
       };
     };
-  });
+  }, opts.withParsecAccount === true);
   if (!opts.skipGoto) {
     await page.goto(opts.location ?? '/');
   }
@@ -163,6 +164,7 @@ export const msTest = debugTest.extend<{
       }
     >
   >;
+  parsecAccount: MsPage;
 }>({
   context: async ({ browser }, use) => {
     const context = await browser.newContext();
@@ -459,4 +461,12 @@ export const msTest = debugTest.extend<{
     },
     { option: true },
   ],
+
+  parsecAccount: async ({ context }, use) => {
+    const page = (await context.newPage()) as MsPage;
+    await setupNewPage(page, { withParsecAccount: true });
+    await use(page);
+    await expect(page).toHaveURL(/.+\/account$/);
+    await page.release();
+  },
 });

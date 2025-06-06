@@ -112,7 +112,7 @@ function isAccountMocked(): boolean {
 }
 
 function isAccountEnabled(): boolean {
-  return import.meta.env[ENABLE_ACCOUNT_ENV_VARIABLE] === 'true';
+  return import.meta.env[ENABLE_ACCOUNT_ENV_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_ACCOUNT === true;
 }
 
 /*

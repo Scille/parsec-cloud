@@ -202,7 +202,7 @@ async function setupApp(): Promise<void> {
   });
   await megasharkPlugin.init();
 
-  if (!Env.isAccountEnabled() || config.skipAccount || ('TESTING' in window && window.TESTING)) {
+  if (!Env.isAccountEnabled() || config.skipAccount) {
     ParsecAccount.markSkipped();
   }
 
