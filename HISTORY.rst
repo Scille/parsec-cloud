@@ -7,7 +7,7 @@ History
 Parsec v3.4.0-rc.6 (2025-06-04)
 -------------------------------
 
-  This is the first release to include Parsec-cloud on the Web 🎉
+This is the first release to include Parsec web app 🎉
 
 Features
 ~~~~~~~~
