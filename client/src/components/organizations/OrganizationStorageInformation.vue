@@ -8,6 +8,12 @@
       </ion-title>
     </div>
     <div class="card-content">
+      <ms-report-text
+        :theme="MsReportTheme.Info"
+        class="card-content__info"
+      >
+        {{ $msTranslate('OrganizationPage.size.information') }}
+      </ms-report-text>
       <div class="storage-list">
         <div class="storage-list-item">
           <ion-label class="storage-list-item__title body">
@@ -16,12 +22,12 @@
           <ion-text
             class="storage-list-item__value title-h5"
             slot="end"
-            v-show="orgInfo.size.data + orgInfo.size.metadata > 0"
+            v-if="orgInfo.size"
           >
-            {{ formatFileSize(orgInfo.size.data + orgInfo.size.metadata) }}
+            {{ $msTranslate(formatFileSize(orgInfo.size.data + orgInfo.size.metadata)) }}
           </ion-text>
           <div
-            v-show="orgInfo.size.data + orgInfo.size.metadata === 0"
+            v-else
             class="warning body-sm"
           >
             {{ $msTranslate('OrganizationPage.size.unavailable') }}
@@ -34,12 +40,12 @@
           </ion-label>
           <ion-text
             class="storage-list-item__value title-h5"
-            v-show="orgInfo.size.metadata > 0"
+            v-if="orgInfo.size"
           >
-            {{ formatFileSize(orgInfo.size.metadata) }}
+            {{ $msTranslate(formatFileSize(orgInfo.size.metadata)) }}
           </ion-text>
           <div
-            v-show="orgInfo.size.metadata === 0"
+            v-else
             class="warning body-sm"
           >
             {{ $msTranslate('OrganizationPage.size.unavailable') }}
@@ -54,6 +60,7 @@
 import { IonLabel, IonText, IonTitle } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
 import { OrganizationInfo } from '@/parsec';
+import { MsReportText, MsReportTheme } from 'megashark-lib';
 
 defineProps<{
   orgInfo: OrganizationInfo;
@@ -68,6 +75,7 @@ defineProps<{
   gap: 1rem;
   width: 100%;
   max-width: 30rem;
+  height: fit-content;
 
   .card-header {
     display: flex;
@@ -88,6 +96,10 @@ defineProps<{
     border-radius: var(--parsec-radius-8);
     width: 100%;
     gap: 1rem;
+
+    &__info {
+      padding: 0.5rem 0.75rem;
+    }
   }
 
   .storage-list {
@@ -104,6 +116,7 @@ defineProps<{
 
       &__title {
         color: var(--parsec-color-light-secondary-hard-grey);
+        flex-shrink: 0;
       }
 
       .warning {
