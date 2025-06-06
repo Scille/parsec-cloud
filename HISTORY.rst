@@ -7,6 +7,8 @@ History
 Parsec v3.4.0-a.6 (2025-03-31)
 ------------------------------
 
+This is the first release to include Parsec web app 🎉
+
 Features
 ~~~~~~~~
 
@@ -39,6 +41,35 @@ Features
 * Added top bar responsive for organization page, files page, and users page
   (`#9984 <https://github.com/Scille/parsec-cloud/issues/9984>`__)
 
+* Add new commands in the client CLI: `certificate poll`, `certificate forget-
+  all-certificates`, `device change-authentication`, `device overwrite-server-
+  url`
+  (`#10017 <https://github.com/Scille/parsec-cloud/issues/10017>`__)
+
+* Update responsive for Organization information page
+  (`#10061 <https://github.com/Scille/parsec-cloud/issues/10061>`__)
+
+* Added small-display global and specific contextual menus for members and
+  files, as well as correct handling of contextual menu when selecting multiple
+  members
+  (`#9505 <https://github.com/Scille/parsec-cloud/issues/9505>`__)
+
+* Add responsive for create trial organization
+  (`#10143 <https://github.com/Scille/parsec-cloud/issues/10143>`__)
+
+* Added responsive for profile menu
+  (`#10165 <https://github.com/Scille/parsec-cloud/issues/10165>`__)
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Fix incompatibility with Outsider users created with Parsec < v3.3 preventing
+  them to start a client with Parsec >= 3.3
+  (`#10041 <https://github.com/Scille/parsec-cloud/issues/10041>`__)
+
+* Hosting Guide: add database and S3 backup and restore instructions
+  (`#6174 <https://github.com/Scille/parsec-cloud/issues/6174>`__)
 
 Bugfixes
 ~~~~~~~~
