@@ -32,7 +32,7 @@ impl KeyDerivation {
     }
 
     pub fn derive_secret_key_from_uuid(&self, id: uuid::Uuid) -> SecretKey {
-        let raw: [u8; SecretKey::SIZE] = self.derive_raw_form_uuid(id).into();
+        let raw: [u8; SecretKey::SIZE] = self.derive_raw_from_uuid(id).into();
         SecretKey::from(raw)
     }
 
