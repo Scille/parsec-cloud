@@ -111,7 +111,9 @@ impl Storage {
                 todo!("Access keyring device")
             }
             (DeviceAccessStrategy::Password { password, .. }, DeviceFile::Password(device)) => {
-                let key = crate::secret_key_from_password(password, &device.algorithm)
+                let key = device
+                    .algorithm
+                    .compute_secret_key(password)
                     .map_err(LoadDeviceError::GetSecretKey)?;
                 Ok((key, device.created_on))
             }
@@ -138,8 +140,9 @@ impl Storage {
         match access {
             DeviceAccessStrategy::Keyring { .. } => todo!("Save keyring device"),
             DeviceAccessStrategy::Password { password, .. } => {
-                let key_algo = crate::generate_default_password_algorithm_parameters();
-                let key = crate::secret_key_from_password(password, &key_algo)
+                let key_algo = PasswordAlgorithm::generate_argon2id();
+                let key = key_algo
+                    .compute_secret_key(password)
                     .expect("Failed to derive key from password");
                 let ciphertext = crate::encrypt_device(device, &key);
                 let file_data = DeviceFile::Password(DeviceFilePassword {

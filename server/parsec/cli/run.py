@@ -4,12 +4,13 @@ from __future__ import annotations
 import asyncio
 import secrets
 import tempfile
+from hashlib import blake2b
 from pathlib import Path
 from typing import Any
 
 import click
 
-from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr
+from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr, SecretKey
 from parsec._version import __version__ as server_version
 from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import backend_factory
@@ -254,9 +255,11 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     show_default=True,
     envvar="PARSEC_FAKE_ACCOUNT_PASSWORD_ALGORITHM_SEED",
     show_envvar=True,
-    callback=lambda ctx, param, value: secrets.token_bytes()
-    if value is None
-    else value.encode("utf8"),
+    callback=(
+        lambda ctx, param, value: SecretKey(secrets.token_bytes(32))
+        if not value
+        else SecretKey(blake2b(b"fake_account_password_algorithm_seed" + value.encode("utf8"), digest_size=32).digest())
+    ),
     help="""Random value used to make unpredictable the password algorithm configuration
     returned for non-existing accounts.
 
@@ -429,7 +432,7 @@ def run_cmd(
     organization_initial_allowed_client_agent: AllowedClientAgent,
     organization_initial_account_vault_strategy: AccountVaultStrategy,
     account_confirmation_email_resend_delay: int,
-    fake_account_password_algorithm_seed: bytes,
+    fake_account_password_algorithm_seed: SecretKey,
     server_addr: ParsecAddr,
     email_host: str,
     email_port: int,

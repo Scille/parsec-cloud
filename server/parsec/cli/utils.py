@@ -21,7 +21,7 @@ from typing import (
 import anyio
 import click
 
-from parsec._parsec import DateTime, ParsecAddr
+from parsec._parsec import DateTime, ParsecAddr, SecretKey
 from parsec.backend import Backend, backend_factory
 from parsec.config import (
     BackendConfig,
@@ -291,7 +291,7 @@ async def start_backend(
             assert False, "Unused configuration"
 
         @property
-        def fake_account_password_algorithm_seed(self) -> bytes:  # type: ignore[reportIncompatibleVariableOverride]
+        def fake_account_password_algorithm_seed(self) -> SecretKey:  # type: ignore[reportIncompatibleVariableOverride]
             assert False, "Unused configuration"
 
         @property

@@ -1,11 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-mod account;
 mod certif;
 mod manifest;
 mod pki;
 
-pub(crate) use account::*;
 pub(crate) use certif::*;
 pub(crate) use manifest::*;
 pub(crate) use pki::*;
@@ -50,10 +48,6 @@ pub(crate) fn add_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PkiEnrollmentSubmitPayload>()?;
     m.add_class::<X509Certificate>()?;
     m.add_class::<LocalPendingEnrollment>()?;
-
-    // Account
-    m.add_class::<PasswordAlgorithm>()?;
-    m.add_class::<PasswordAlgorithmArgon2id>()?;
 
     Ok(())
 }

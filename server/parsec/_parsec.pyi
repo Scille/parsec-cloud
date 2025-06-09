@@ -5,10 +5,6 @@ from __future__ import annotations
 from parsec._parsec_pyi import (
     testbed,  # Only define when build with `test-utils` feature
 )
-from parsec._parsec_pyi.account import (
-    PasswordAlgorithm,
-    PasswordAlgorithmArgon2id,
-)
 from parsec._parsec_pyi.addrs import (
     ParsecAccountActionAddr,
     ParsecAccountDeletionAddr,
@@ -55,6 +51,8 @@ from parsec._parsec_pyi.crypto import (
     SigningKey,
     VerifyKey,
     generate_nonce,
+    PasswordAlgorithm,
+    PasswordAlgorithmArgon2id,
 )
 from parsec._parsec_pyi.enumerate import (
     CancelledGreetingAttemptReason,
@@ -119,9 +117,6 @@ from parsec._parsec_pyi.time import DateTime
 
 __all__ = [
     "ApiVersion",
-    # Account
-    "PasswordAlgorithm",
-    "PasswordAlgorithmArgon2id",
     # Data Error
     # Certif
     "DeviceCertificate",
@@ -156,6 +151,8 @@ __all__ = [
     "SequesterVerifyKeyDer",
     "SigningKey",
     "VerifyKey",
+    "PasswordAlgorithm",
+    "PasswordAlgorithmArgon2id",
     # Enumerate
     "CancelledGreetingAttemptReason",
     "DevicePurpose",

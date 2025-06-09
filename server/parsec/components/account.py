@@ -6,6 +6,7 @@ from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import auto
+from hashlib import blake2b
 from typing import Literal
 
 from parsec._parsec import (
@@ -114,14 +115,7 @@ class BaseAccountComponent:
         raise NotImplementedError
 
     def _generate_fake_password_algorithm(self, email: EmailAddress) -> PasswordAlgorithm:
-        # TODO: the generated config must be realistic, unpredictable and stable
-        #       (introduce a `SECRET_KEY` environ variable and derive from there ?)
-        return PasswordAlgorithmArgon2id(
-            memlimit_kb=128 * 1024,  # 128 Mo
-            opslimit=3,
-            parallelism=1,
-            salt=b"0" * 16,
-        )
+        return PasswordAlgorithm.generate_fake_from_seed(email.str, self._config.fake_account_password_algorithm_seed)
 
     async def create_email_validation_token(
         self, email: EmailAddress, now: DateTime

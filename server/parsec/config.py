@@ -7,7 +7,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlparse, urlunparse
 
-from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr
+from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr, SecretKey
 
 if TYPE_CHECKING:
     from parsec.components.memory.organization import MemoryOrganization, OrganizationID
@@ -241,7 +241,7 @@ class BackendConfig:
     # Random value used to make unpredictable (but still stable & realistic) the password
     # algorithm configuration returned for non-existing accounts, hence preventing an
     # attacker from using it as an oracle do determine if a given email has an account.
-    fake_account_password_algorithm_seed: bytes
+    fake_account_password_algorithm_seed: SecretKey
 
     # Amount of time (in seconds) before a keep alive message is sent to an SSE
     # connection. Set to `None` to disable keep alive messages.

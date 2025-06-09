@@ -45,6 +45,7 @@ fn password_protected_device_file(alice: &Device) {
         "a3e543012c3ed270ff12cd481df5"
     );
     let _password = "P@ssw0rd.";
+    println!("***expected: {:?}", filedata);
 
     let expected = DeviceFilePassword {
         ciphertext: hex!(
@@ -75,16 +76,25 @@ fn password_protected_device_file(alice: &Device) {
         device_id: alice.device_id,
         human_handle: alice.human_handle.clone(),
         device_label: alice.device_label.clone(),
-        algorithm: DeviceFilePasswordAlgorithm::Argon2id {
+        algorithm: PasswordAlgorithm::Argon2id {
             salt: hex!("2ae6167f0f7472b8565c390df3af4a8b").as_ref().into(),
             opslimit: 1,
             memlimit_kb: 8,
             parallelism: 1,
         },
     };
+    println!("***expected: {:?}", rmp_serde::to_vec(&expected).unwrap());
 
     let file_device = rmp_serde::from_slice::<DeviceFilePassword>(&filedata).unwrap();
     p_assert_eq!(file_device, expected);
+
+    // // Also test serialization round trip
+    // rmp_serde::to_vec(val)
+    // let data2 = manifest.dump_and_encrypt(&key);
+
+    // // Note we cannot just compare with `data` due to signature and keys order
+    // let manifest2 = LocalDevice::decrypt_and_load(&data2, &key).unwrap();
+    // p_assert_eq!(manifest2, expected);
 
     // TODO: Test ciphertext decryption
 }

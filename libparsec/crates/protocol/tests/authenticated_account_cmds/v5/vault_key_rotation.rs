@@ -21,25 +21,22 @@ pub fn req() {
             //   cmd: 'vault_key_rotation'
             //   new_auth_method_id: ext(2, 0x96691586ce5b4789ae8a0a4c052e8986)
             //   new_auth_method_mac_key: 0xa2754dba7066a49f487737790388548c2af0ddfbed609805184ca5023afe1983
-            //   new_auth_method_password_algorithm: { Argon2id: { salt: 0x3c73616c7420323e, opslimit: 65536, memlimit_kb: 3, parallelism: 1, }, }
+            //   new_auth_method_password_algorithm: { type: 'ARGON2ID', memlimit_kb: 3, opslimit: 65536, parallelism: 1, salt: 0x3c73616c7420323e, }
             //   new_vault_key_access: 0x3c6b6579206163636573733e
-            //   items: {
-            //     0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560: 0x646174612031,
-            //     0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6: 0x646174612032,
-            //   }
+            //   items: { 0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6: 0x646174612032, 0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560: 0x646174612031, }
             hex!(
                 "86a3636d64b27661756c745f6b65795f726f746174696f6eb26e65775f617574685f6d"
                 "6574686f645f6964d80296691586ce5b4789ae8a0a4c052e8986b76e65775f61757468"
                 "5f6d6574686f645f6d61635f6b6579c420a2754dba7066a49f487737790388548c2af0"
                 "ddfbed609805184ca5023afe1983d9226e65775f617574685f6d6574686f645f706173"
-                "73776f72645f616c676f726974686d81a84172676f6e32696484a473616c74c4083c73"
-                "616c7420323ea86f70736c696d6974ce00010000ab6d656d6c696d69745f6b6203ab70"
-                "6172616c6c656c69736d01b46e65775f7661756c745f6b65795f616363657373c40c3c"
-                "6b6579206163636573733ea56974656d7382c420076a27c79e5ace2a3d47f9dd2e83e4"
-                "ff6ea8872b3c2218f66c92b89b55f36560c406646174612031c420e37ce3b00a1f15b3"
-                "de62029972345420b76313a885c6ccc6e3b5547857b3ecc6c406646174612032"
-            )
-            .as_ref(),
+                "73776f72645f616c676f726974686d85a474797065a84152474f4e324944ab6d656d6c"
+                "696d69745f6b6203a86f70736c696d6974ce00010000ab706172616c6c656c69736d01"
+                "a473616c74c4083c73616c7420323eb46e65775f7661756c745f6b65795f6163636573"
+                "73c40c3c6b6579206163636573733ea56974656d7382c420e37ce3b00a1f15b3de6202"
+                "9972345420b76313a885c6ccc6e3b5547857b3ecc6c406646174612032c420076a27c7"
+                "9e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560c4066461746120"
+                "31"
+            ).as_ref(),
             authenticated_account_cmds::vault_key_rotation::Req {
                 new_auth_method_id: AccountAuthMethodID::from_hex(
                     "96691586ce5b4789ae8a0a4c052e8986",
@@ -49,7 +46,7 @@ pub fn req() {
                     "a2754dba7066a49f487737790388548c2af0ddfbed609805184ca5023afe1983"
                 )),
                 new_auth_method_password_algorithm: Some(PasswordAlgorithm::Argon2id {
-                    salt: Bytes::from_static(b"<salt 2>"),
+                    salt: b"<salt 2>".to_vec(),
                     opslimit: 65536,
                     memlimit_kb: 3,
                     parallelism: 1,

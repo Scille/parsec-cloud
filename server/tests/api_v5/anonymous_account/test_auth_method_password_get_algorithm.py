@@ -43,7 +43,7 @@ async def test_anonymous_account_auth_method_password_get_algorithm_ok_stable_fa
     rep = await anonymous_account.auth_method_password_get_algorithm(email=unknown_email)
     assert rep == anonymous_account_cmds.latest.auth_method_password_get_algorithm.RepOk(
         password_algorithm=PasswordAlgorithmArgon2id(
-            salt=b"0000000000000000",
+            salt=b"j\xe2J\x1b\xb8\x9c\xdf_}\x13\xac\x1e\x8b\x1f\xec\x1c",
             opslimit=3,
             memlimit_kb=131072,
             parallelism=1,

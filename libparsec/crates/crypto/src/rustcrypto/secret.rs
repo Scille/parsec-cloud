@@ -17,7 +17,7 @@ use generic_array::{
 use serde::Deserialize;
 use serde_bytes::Bytes;
 
-use crate::{from_argon2id_password, CryptoError, Password};
+use crate::CryptoError;
 
 // https://github.com/sodiumoxide/sodiumoxide/blob/3057acb1a030ad86ed8892a223d64036ab5e8523/libsodium-sys/src/sodium_bindings.rs#L137
 const SALTBYTES: usize = 16;
@@ -86,18 +86,6 @@ impl SecretKey {
         OsRng.fill_bytes(&mut salt);
 
         salt
-    }
-
-    pub fn from_argon2id_password(
-        password: &Password,
-        salt: &[u8],
-        opslimit: u32,
-        memlimit_kb: u32,
-        parallelism: u32,
-    ) -> Result<Self, CryptoError> {
-        let raw: [u8; Self::SIZE] =
-            from_argon2id_password(password, salt, opslimit, memlimit_kb, parallelism)?.into();
-        Ok(Self::from(raw))
     }
 }
 
