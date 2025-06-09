@@ -30,7 +30,7 @@ impl KeyDerivation {
     }
 
     pub fn derive_secret_key_from_uuid(&self, id: uuid::Uuid) -> SecretKey {
-        SecretKey(self.derive_raw_form_uuid(id))
+        SecretKey(self.derive_raw_from_uuid(id))
     }
 
     pub fn derive_uuid_from_uuid(&self, id: uuid::Uuid) -> uuid::Uuid {
