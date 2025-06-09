@@ -37,7 +37,7 @@ impl KeyDerivation {
         uuid::Uuid::from_bytes(self.derive_raw_from_uuid(id).into())
     }
 
-    fn derive_raw_form_uuid<Size>(&self, id: uuid::Uuid) -> GenericArray<u8, Size>
+    fn derive_raw_from_uuid<Size>(&self, id: uuid::Uuid) -> GenericArray<u8, Size>
     where
         Size: ArrayLength<u8> + IsLessOrEqual<U64>,
         LeEq<Size, U64>: NonZero,
