@@ -65,7 +65,7 @@ impl Display for InvitationType {
  */
 
 #[derive(Debug, Copy, Clone, Hash, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InvitationStatus {
     Pending,
     Finished,
@@ -88,7 +88,7 @@ impl std::fmt::Display for GreeterOrClaimerParseError {
 }
 
 #[derive(Debug, Copy, Clone, Hash, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum GreeterOrClaimer {
     Greeter,
     Claimer,
