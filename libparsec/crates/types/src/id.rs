@@ -804,7 +804,7 @@ impl TryFrom<email_address_parser::EmailAddress> for EmailAddress {
  */
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 /// `UserProfile` represents the different profiles a user can have in the organization.
 ///
 /// This should not be confused with `RealmRole` (which represents the different roles
