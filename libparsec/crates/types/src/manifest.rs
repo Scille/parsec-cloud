@@ -180,7 +180,7 @@ pub struct BlockAccess {
  */
 
 #[derive(Copy, Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum RealmRole {
     /// Owner can give/remove all roles (including Owner) and have read/write access
     Owner,
