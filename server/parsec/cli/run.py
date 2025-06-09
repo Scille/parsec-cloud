@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 import asyncio
+import secrets
 import tempfile
+from hashlib import blake2b
 from pathlib import Path
 from typing import Any
 
 import click
 
-from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr
+from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr, SecretKey
 from parsec._version import __version__ as server_version
 from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import backend_factory
@@ -86,6 +88,7 @@ class DevOption(click.Option):
                 ("email_host", "MOCKED"),
                 ("blockstore", ("MOCKED",)),
                 ("administration_token", "s3cr3t"),
+                ("fake_account_password_algorithm_seed", "F4k3"),
             ):
                 if key not in opts:
                     opts[key] = value
@@ -248,6 +251,31 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     help="Delay before resending an account creation confirmation email (in seconds)",
 )
 @click.option(
+    "--fake-account-password-algorithm-seed",
+    show_default=True,
+    envvar="PARSEC_FAKE_ACCOUNT_PASSWORD_ALGORITHM_SEED",
+    show_envvar=True,
+    callback=(
+        lambda ctx, param, value: SecretKey(secrets.token_bytes(32))
+        if not value
+        else SecretKey(
+            blake2b(
+                b"fake_account_password_algorithm_seed" + value.encode("utf8"), digest_size=32
+            ).digest()
+        )
+    ),
+    help="""Random value used to make unpredictable the password algorithm configuration
+    returned for non-existing accounts.
+
+    By default a random value will be generated at each startup, however setting a value
+    once and for all offers better protection against attackers trying to determine
+    if a given email has an account.
+
+    A typical way to generate a good seed is to use:
+        $ openssl rand -hex 32
+""",
+)
+@click.option(
     "--server-addr",
     envvar="PARSEC_SERVER_ADDR",
     show_envvar=True,
@@ -383,6 +411,7 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
         "Equivalent to `--debug --db=MOCKED"
         " --blockstore=MOCKED --administration-token=s3cr3t"
         " --email-sender=no-reply@parsec.com --email-host=MOCKED"
+        " --fake-account-password-algorithm-seed=F4k3"
         " --server-addr=parsec3://localhost:<port>(?no_ssl=False if ssl is not set)`"
     ),
 )
@@ -407,6 +436,7 @@ def run_cmd(
     organization_initial_allowed_client_agent: AllowedClientAgent,
     organization_initial_account_vault_strategy: AccountVaultStrategy,
     account_confirmation_email_resend_delay: int,
+    fake_account_password_algorithm_seed: SecretKey,
     server_addr: ParsecAddr,
     email_host: str,
     email_port: int,
@@ -475,6 +505,7 @@ def run_cmd(
             account_config=AccountConfig(
                 account_confirmation_email_resend_delay=account_confirmation_email_resend_delay
             ),
+            fake_account_password_algorithm_seed=fake_account_password_algorithm_seed,
         )
 
         click.echo(

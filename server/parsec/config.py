@@ -7,7 +7,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlparse, urlunparse
 
-from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr
+from parsec._parsec import ActiveUsersLimit, EmailAddress, ParsecAddr, SecretKey
 
 if TYPE_CHECKING:
     from parsec.components.memory.organization import MemoryOrganization, OrganizationID
@@ -238,6 +238,11 @@ class BackendConfig:
     # Bearer token used to authenticate the administration API
     administration_token: str
 
+    # Random value used to make unpredictable (but still stable & realistic) the password
+    # algorithm configuration returned for non-existing accounts, hence preventing an
+    # attacker from using it as an oracle to determine if a given email has an account.
+    fake_account_password_algorithm_seed: SecretKey
+
     # Amount of time (in seconds) before a keep alive message is sent to an SSE
     # connection. Set to `None` to disable keep alive messages.
     sse_keepalive: int | None = None
@@ -269,6 +274,7 @@ class BackendConfig:
         """
         kwargs = {field.name: repr(getattr(self, field.name)) for field in fields(self)}
         kwargs["administration_token"] = "***"
+        kwargs["fake_account_password_algorithm_seed"] = "***"
         return kwargs
 
     def __post_init__(self):

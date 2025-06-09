@@ -18,7 +18,7 @@ from typing import (
 import anyio
 import click
 
-from parsec._parsec import DateTime, ParsecAddr
+from parsec._parsec import DateTime, ParsecAddr, SecretKey
 from parsec.backend import Backend, backend_factory
 from parsec.config import (
     BackendConfig,
@@ -273,7 +273,8 @@ async def start_backend(
 
     This differs from server usage (i.e. `run` and `testbed`) in which CLI usage is:
     - Short lived (run the command then exit, while server usage run forever).
-    - Don't need configuration for `administration_token`, `email_config` and `server_addr`.
+    - Don't need configuration related to API routes handling, i.e. `administration_token`,
+      `fake_account_password_algorithm_seed`, `email_config` and `server_addr`.
 
     Due to the short lived nature, `populate_with_template` can be used to easily
     configure the state the backend should be on.
@@ -284,6 +285,10 @@ async def start_backend(
 
         @property
         def administration_token(self) -> str:  # type: ignore[reportIncompatibleVariableOverride]
+            assert False, "Unused configuration"
+
+        @property
+        def fake_account_password_algorithm_seed(self) -> SecretKey:  # type: ignore[reportIncompatibleVariableOverride]
             assert False, "Unused configuration"
 
         @property
@@ -299,11 +304,12 @@ async def start_backend(
         db_config=db_config,
         blockstore_config=blockstore_config,
         administration_token=None,  # type: ignore
+        fake_account_password_algorithm_seed=None,  # type: ignore
         email_config=None,
         server_addr=None,
     )
     # Cannot directly initialize a `CliBackendConfig` since its
-    # `administration_token`/`email_config`/`server_addr` fields have not setter.
+    # `administration_token`/`email_config`/`server_addr`/etc. fields have no setter.
     #
     # Also note that swapping the class of an existing instance is totally fine
     # as long as both classes have the same fields.
