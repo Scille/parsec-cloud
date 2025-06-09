@@ -259,6 +259,7 @@ async def testbed_backend_factory(
         email_config=MockedEmailConfig(EmailAddress("no-reply@parsec.com"), tmpdir),
         blockstore_config=blockstore_config,
         administration_token="s3cr3t",
+        fake_account_password_algorithm_seed=b"F4k3",
         organization_spontaneous_bootstrap=True,
         account_config=AccountConfig(account_confirmation_email_resend_delay=60),
     )
