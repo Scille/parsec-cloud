@@ -167,6 +167,19 @@ def decode_expected_raw(raw: bytes) -> dict[str, object]:
     if deserialized is None:
         # ...or not signed ?
         deserialized = attempt_format_0x00_deserialization(decrypted)
+
+    if deserialized is None:
+        # For historical reason, `LocalDevice` & `LocalDeviceFile` don't use
+        # format 0x00 encoding, but instead serialize as msgpack without headers.
+        deserialized = attempt_msgpack_deserialization(decrypted)
+        assert deserialized is None or deserialized.get("type") == (
+            "local_device",
+            "keyring",
+            "password",
+            "recovery",
+            "smartcard",
+        ), "Only `LocalDevice`&`LocalDeviceFile` are allowed not to use format 0x00"
+
     assert deserialized is not None, "Cannot deserialize this payload..."
     return deserialized
 
