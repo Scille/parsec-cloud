@@ -16,7 +16,7 @@ pub const AUTH_METHOD_SECRET_KEY_DERIVATION_UUID: uuid::Uuid =
 
 #[derive(Debug)]
 pub struct Account {
-    #[allow(unused)]
+    #[expect(unused)]
     cmds: AuthenticatedAccountCmds,
 }
 
