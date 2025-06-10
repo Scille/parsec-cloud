@@ -465,8 +465,8 @@ export const msTest = debugTest.extend<{
   parsecAccount: async ({ context }, use) => {
     const page = (await context.newPage()) as MsPage;
     await setupNewPage(page, { withParsecAccount: true });
-    await use(page);
     await expect(page).toHaveURL(/.+\/account$/);
+    await use(page);
     await page.release();
   },
 });
