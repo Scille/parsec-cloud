@@ -13,6 +13,8 @@ use pyo3::{
     Bound,
 };
 
+use crate::BytesWrapper;
+
 create_exception!(_parsec, CryptoError, PyException);
 
 pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -26,6 +28,8 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SequesterPublicKeyDer>()?;
     m.add_class::<SequesterSigningKeyDer>()?;
     m.add_class::<SequesterVerifyKeyDer>()?;
+    m.add_class::<PasswordAlgorithm>()?;
+    m.add_class::<PasswordAlgorithmArgon2id>()?;
     m.add_function(wrap_pyfunction!(generate_nonce, m)?)?;
 
     m.add("CryptoError", py.get_type_bound::<CryptoError>())?;
@@ -230,26 +234,6 @@ impl SecretKey {
     #[classmethod]
     fn generate_salt<'py>(_cls: Bound<'_, PyType>, py: Python<'py>) -> Bound<'py, PyBytes> {
         PyBytes::new_bound(py, &libparsec_crypto::SecretKey::generate_salt())
-    }
-
-    #[classmethod]
-    fn from_argon2id_password(
-        _cls: Bound<'_, PyType>,
-        password: &str,
-        salt: &[u8],
-        opslimit: u32,
-        memlimit_kb: u32,
-        parallelism: u32,
-    ) -> PyResult<Self> {
-        libparsec_crypto::SecretKey::from_argon2id_password(
-            &password.to_owned().into(),
-            salt,
-            opslimit,
-            memlimit_kb,
-            parallelism,
-        )
-        .map(Self)
-        .map_err(|err| CryptoError::new_err(err.to_string()))
     }
 
     #[classmethod]
@@ -552,4 +536,118 @@ impl SequesterVerifyKeyDer {
 #[pyfunction]
 pub(crate) fn generate_nonce(py: Python) -> Bound<'_, PyBytes> {
     PyBytes::new_bound(py, &libparsec_crypto::generate_nonce())
+}
+
+#[pyclass(subclass)]
+#[derive(Clone)]
+pub struct PasswordAlgorithm(pub libparsec_types::PasswordAlgorithm);
+
+crate::binding_utils::gen_proto!(PasswordAlgorithm, __repr__);
+crate::binding_utils::gen_proto!(PasswordAlgorithm, __copy__);
+crate::binding_utils::gen_proto!(PasswordAlgorithm, __deepcopy__);
+crate::binding_utils::gen_proto!(PasswordAlgorithm, __richcmp__, eq);
+
+impl PasswordAlgorithm {
+    pub fn convert(
+        py: Python,
+        item: libparsec_types::PasswordAlgorithm,
+    ) -> PyResult<Bound<'_, PyAny>> {
+        let init = PyClassInitializer::from(PasswordAlgorithm(item));
+        match item {
+            libparsec_types::PasswordAlgorithm::Argon2id { .. } => {
+                Ok(Bound::new(py, init.add_subclass(PasswordAlgorithmArgon2id {}))?.into_any())
+            }
+        }
+    }
+}
+
+#[pymethods]
+impl PasswordAlgorithm {
+    #[classmethod]
+    fn generate_argon2id<'py>(
+        _cls: Bound<'py, PyType>,
+        py: Python<'py>,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        Self::convert(py, libparsec_types::PasswordAlgorithm::generate_argon2id())
+    }
+
+    #[classmethod]
+    fn generate_fake_from_seed<'py>(
+        _cls: Bound<'py, PyType>,
+        py: Python<'py>,
+        email: &str,
+        seed: SecretKey,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        Self::convert(
+            py,
+            libparsec_types::PasswordAlgorithm::generate_fake_from_seed(email, &seed.0),
+        )
+    }
+
+    fn compute_secret_key(&self, password: String) -> PyResult<SecretKey> {
+        self.0
+            .compute_secret_key(&password.into())
+            .map(SecretKey)
+            .map_err(|err| CryptoError::new_err(err.to_string()))
+    }
+}
+
+#[pyclass(extends=PasswordAlgorithm, subclass)]
+#[derive(Clone)]
+pub struct PasswordAlgorithmArgon2id {}
+
+#[pymethods]
+impl PasswordAlgorithmArgon2id {
+    #[new]
+    #[pyo3(signature = (salt, opslimit, memlimit_kb, parallelism))]
+    fn new(
+        salt: BytesWrapper,
+        opslimit: u32,
+        memlimit_kb: u32,
+        parallelism: u32,
+    ) -> (Self, PasswordAlgorithm) {
+        (
+            Self {},
+            PasswordAlgorithm(libparsec_types::PasswordAlgorithm::Argon2id {
+                salt: salt.into(),
+                opslimit,
+                memlimit_kb,
+                parallelism,
+            }),
+        )
+    }
+
+    #[getter]
+    fn salt<'py>(self_: PyRef<Self>, py: Python<'py>) -> Bound<'py, PyBytes> {
+        let super_: &PasswordAlgorithm = self_.as_ref();
+        match &super_.0 {
+            libparsec_types::PasswordAlgorithm::Argon2id { salt, .. } => {
+                PyBytes::new_bound(py, salt)
+            }
+        }
+    }
+
+    #[getter]
+    fn opslimit(self_: PyRef<Self>) -> u32 {
+        let super_: &PasswordAlgorithm = self_.as_ref();
+        match &super_.0 {
+            libparsec_types::PasswordAlgorithm::Argon2id { opslimit, .. } => *opslimit,
+        }
+    }
+
+    #[getter]
+    fn memlimit_kb(self_: PyRef<Self>) -> u32 {
+        let super_: &PasswordAlgorithm = self_.as_ref();
+        match &super_.0 {
+            libparsec_types::PasswordAlgorithm::Argon2id { memlimit_kb, .. } => *memlimit_kb,
+        }
+    }
+
+    #[getter]
+    fn parallelism(self_: PyRef<Self>) -> u32 {
+        let super_: &PasswordAlgorithm = self_.as_ref();
+        match &super_.0 {
+            libparsec_types::PasswordAlgorithm::Argon2id { parallelism, .. } => *parallelism,
+        }
+    }
 }

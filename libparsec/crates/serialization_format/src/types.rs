@@ -258,9 +258,8 @@ generate_field_type_enum!(
     GreetingAttemptID => libparsec_types::GreetingAttemptID,
     GreeterOrClaimer => libparsec_types::GreeterOrClaimer,
     CancelledGreetingAttemptReason => libparsec_types::CancelledGreetingAttemptReason,
+    PasswordAlgorithm => libparsec_types::PasswordAlgorithm,
     // Used only in shamir
     ShamirRecoveryShareData => libparsec_types::ShamirRecoveryShareData,
     ShamirShare =>  libparsec_types::ShamirShare,
-    // Used only in account
-    PasswordAlgorithm => libparsec_types::PasswordAlgorithm,
 );
