@@ -419,6 +419,10 @@ class SellsyInvoice implements Invoice {
     return this.invoice.amountWithTaxes;
   }
 
+  getDueAmount(): number {
+    return this.invoice.amountDue;
+  }
+
   getOrganizationId(): OrganizationID {
     return this.invoice.organizationId;
   }

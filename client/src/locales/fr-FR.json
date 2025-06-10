@@ -1721,7 +1721,7 @@
             },
             "status": {
                 "paid": "Payée",
-                "toPay": "À payer",
+                "toPaid": "À payer",
                 "draft": "En cours de création",
                 "uncollectible": "Impayée",
                 "void": "Vide"
