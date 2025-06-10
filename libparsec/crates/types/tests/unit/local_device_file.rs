@@ -21,7 +21,7 @@ fn password_protected_device_file(alice: &Device) {
     //     opslimit: 1
     //     memlimit_kb: 8
     //     parallelism: 1
-    let filedata = hex!(
+    let raw = hex!(
         "9ba870617373776f7264d70100047c0f0d84c000d70100047cc41a172000b668747470"
         "733a2f2f7061727365632e696e76616c6964a7436f6f6c4f7267d802a11cec00100000"
         "000000000000000000d802de10a11cec001000000000000000000092b1616c69636540"
@@ -46,7 +46,7 @@ fn password_protected_device_file(alice: &Device) {
     );
     let _password = "P@ssw0rd.";
 
-    let expected = DeviceFilePassword {
+    let expected = DeviceFile::Password(DeviceFilePassword {
         ciphertext: hex!(
             "9743c0a4c62a016e8c1afd000197ecdc6a589ccbc5a97e323eb2a0ad4304f2e2a04dc5"
             "6fcdda1bf857ca6ef5c8a63c1485b65d333da166f59395ef12381016d5d7edc934d112"
@@ -81,10 +81,18 @@ fn password_protected_device_file(alice: &Device) {
             memlimit_kb: 8,
             parallelism: 1,
         },
-    };
+    });
+    println!("***expected: {:?}", expected.dump());
 
-    let file_device = rmp_serde::from_slice::<DeviceFilePassword>(&filedata).unwrap();
-    p_assert_eq!(file_device, expected);
+    let device = DeviceFile::load(&raw).unwrap();
+    p_assert_eq!(device, expected);
+
+    // Also test roundtrip
+
+    let raw2 = device.dump();
+    let device2 = DeviceFile::load(&raw2).unwrap();
+
+    p_assert_eq!(device2, expected);
 
     // TODO: Test ciphertext decryption
 }
@@ -100,7 +108,7 @@ fn keyring_device_file(alice: &Device) {
     //   organization_id: "CoolOrg"
     //   device_id: ext(2, de10a11cec0010000000000000000000)
     //   keyring_user: "keyring_user"
-    let filedata = hex!(
+    let raw = hex!(
         "9ca76b657972696e67d70100047c0f0d84c000d70100047cc41a172000b66874747073"
         "3a2f2f7061727365632e696e76616c6964a7436f6f6c4f7267d802a11cec0010000000"
         "0000000000000000d802de10a11cec001000000000000000000092b1616c6963654065"
@@ -124,7 +132,7 @@ fn keyring_device_file(alice: &Device) {
         "2dc7"
     );
 
-    let expected = DeviceFileKeyring {
+    let expected = DeviceFile::Keyring(DeviceFileKeyring {
         ciphertext: hex!(
             "41d162cceacbc6845a582ee1497e37469ce46e6e09b33e1cd5d68d0e054188e38aa85e"
             "2a02d0a344cd986e712274f8824f9464fa5a27f7f2291f42cf579b6be44e0733f89a07"
@@ -155,10 +163,18 @@ fn keyring_device_file(alice: &Device) {
         device_label: alice.device_label.clone(),
         keyring_service: "parsec".into(),
         keyring_user: "keyring_user".into(),
-    };
+    });
+    println!("***expected: {:?}", expected.dump());
 
-    let file_device = rmp_serde::from_slice::<DeviceFileKeyring>(&filedata).unwrap();
-    p_assert_eq!(file_device, expected);
+    let device = DeviceFile::load(&raw).unwrap();
+    p_assert_eq!(device, expected);
+
+    // Also test roundtrip
+
+    let raw2 = device.dump();
+    let device2 = DeviceFile::load(&raw2).unwrap();
+
+    p_assert_eq!(device2, expected);
 
     // TODO: Test ciphertext decryption
 }
@@ -173,7 +189,7 @@ fn recovery_device_file(alice: &Device) {
     //   device_label: "My dev1 machine"
     //   organization_id: "CoolOrg"
     //   device_id: ext(2, de10a11cec0010000000000000000000)
-    let filedata = hex!(
+    let raw = hex!(
         "9aa87265636f76657279d70100047c0f0d84c000d70100047cc41a172000b668747470"
         "733a2f2f7061727365632e696e76616c6964a7436f6f6c4f7267d802a11cec00100000"
         "000000000000000000d802de10a11cec001000000000000000000092b1616c69636540"
@@ -197,7 +213,7 @@ fn recovery_device_file(alice: &Device) {
     );
     let _recovery_password = "F4D4-ZGIQ-3DYH-WPFF-QPIM-DWXJ-VFKA-Z7FT-K444-EU2Q-7DAI-QPGW-NNWQ";
 
-    let expected = DeviceFileRecovery {
+    let expected = DeviceFile::Recovery(DeviceFileRecovery {
         ciphertext: hex!(
             "41d162cceacbc6845a582ee1497e37469ce46e6e09b33e1cd5d68d0e054188e38aa85e"
             "2a02d0a344cd986e712274f8824f9464fa5a27f7f2291f42cf579b6be44e0733f89a07"
@@ -226,10 +242,18 @@ fn recovery_device_file(alice: &Device) {
         device_id: alice.device_id,
         human_handle: alice.human_handle.clone(),
         device_label: alice.device_label.clone(),
-    };
+    });
+    println!("***expected: {:?}", expected.dump());
 
-    let file_device = rmp_serde::from_slice::<DeviceFileRecovery>(&filedata).unwrap();
-    p_assert_eq!(file_device, expected);
+    let device = DeviceFile::load(&raw).unwrap();
+    p_assert_eq!(device, expected);
+
+    // Also test roundtrip
+
+    let raw2 = device.dump();
+    let device2 = DeviceFile::load(&raw2).unwrap();
+
+    p_assert_eq!(device2, expected);
 
     // TODO: Test ciphertext decryption
 }
@@ -318,6 +342,7 @@ fn smartcard_device_file(alice: &Device) {
         human_handle: alice.human_handle.clone(),
         device_label: alice.device_label.clone(),
     });
+    println!("***expected: {:?}", expected.dump());
 
     let device = DeviceFile::load(&raw).unwrap();
     p_assert_eq!(device, expected);
