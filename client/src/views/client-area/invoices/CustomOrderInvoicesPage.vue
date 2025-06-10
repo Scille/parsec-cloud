@@ -38,7 +38,6 @@ onMounted(async () => {
     const filteredInvoices = response.data.invoices.sort((invoice1, invoice2) => {
       return invoice2.getDate().diff(invoice1.getDate()).toMillis();
     });
-
     filteredInvoices.forEach((invoice) => {
       const year = invoice.getDate().year;
       if (!invoices.value.has(year)) {

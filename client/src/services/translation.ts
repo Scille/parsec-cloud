@@ -22,7 +22,7 @@ export function getInvoiceStatusTranslationKey(status: InvoiceStatus): Translata
     case InvoiceStatus.Draft:
       return 'clientArea.invoices.status.draft';
     case InvoiceStatus.Open:
-      return 'clientArea.invoices.status.toPay';
+      return 'clientArea.invoices.status.toBePaid';
     case InvoiceStatus.Uncollectible:
       return 'clientArea.invoices.status.uncollectible';
     default:

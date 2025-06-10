@@ -5,6 +5,11 @@
     <ms-modal
       :title="`${translationPrefix}.title`"
       :close-button="{ visible: true }"
+      :cancel-button="{
+        label: 'lib.components.msTextInputModal.cancelButtonLabel',
+        disabled: false,
+        onClick: dismissModal,
+      }"
       :confirm-button="{
         label: `${translationPrefix}.nextButton`,
         disabled: !isFormValid() || querying,
@@ -32,6 +37,7 @@
             v-model="phoneRef"
             @on-enter-keyup="submit"
           />
+          {{ phoneRef }}
           <div
             class="form-error form-helperText body"
             v-if="fieldHasError(Fields.Phone)"
@@ -78,6 +84,10 @@ enum Fields {
 onMounted(async () => {
   await firstnameInput.value.setFocus();
 });
+
+async function dismissModal(): Promise<boolean> {
+  return await modalController.dismiss(undefined, MsModalResult.Cancel);
+}
 
 function fieldHasError(field: Fields): boolean {
   return errors.value.find((error) => error.attr === field) !== undefined;

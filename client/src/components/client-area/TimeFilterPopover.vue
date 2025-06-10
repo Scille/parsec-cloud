@@ -58,6 +58,7 @@ async function select(selected: any): Promise<void> {
     display: flex;
     flex-wrap: wrap;
     padding: 0;
+    gap: 0.125rem;
 
     &-item {
       display: flex;

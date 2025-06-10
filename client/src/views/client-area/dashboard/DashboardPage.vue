@@ -115,7 +115,10 @@
                 <ion-text class="invoices-list-item__data invoices-status">
                   <span
                     class="badge-status body-sm"
-                    :class="invoice.getStatus()"
+                    :class="{
+                      paid: invoice.getStatus() === 'paid',
+                      toBePaid: invoice.getStatus() === 'open',
+                    }"
                   >
                     {{ $msTranslate(getInvoiceStatusTranslationKey(invoice.getStatus())) }}
                   </span>
