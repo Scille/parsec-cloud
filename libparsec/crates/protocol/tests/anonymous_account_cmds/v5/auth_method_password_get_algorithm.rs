@@ -4,8 +4,6 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use bytes::Bytes;
-
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -52,17 +50,17 @@ pub fn rep_ok() {
     // Generated from Parsec 3.4.0-a.7+dev
     // Content:
     //   status: 'ok'
-    //   password_algorithm: { Argon2id: { salt: 0x3c73616c7420323e, opslimit: 65536, memlimit_kb: 3, parallelism: 1, }, }
+    //   password_algorithm: { type: 'ARGON2ID', memlimit_kb: 3, opslimit: 65536, parallelism: 1, salt: 0x3c73616c7420323e, }
     let raw: &[u8] = hex!(
-        "82a6737461747573a26f6bb270617373776f72645f616c676f726974686d81a8417267"
-        "6f6e32696484a473616c74c4083c73616c7420323ea86f70736c696d6974ce00010000"
-        "ab6d656d6c696d69745f6b6203ab706172616c6c656c69736d01"
+        "82a6737461747573a26f6bb270617373776f72645f616c676f726974686d85a4747970"
+        "65a84152474f4e324944ab6d656d6c696d69745f6b6203a86f70736c696d6974ce0001"
+        "0000ab706172616c6c656c69736d01a473616c74c4083c73616c7420323e"
     )
     .as_ref();
 
     let expected = anonymous_account_cmds::auth_method_password_get_algorithm::Rep::Ok {
         password_algorithm: PasswordAlgorithm::Argon2id {
-            salt: Bytes::from_static(b"<salt 2>"),
+            salt: b"<salt 2>".to_vec(),
             opslimit: 65536,
             memlimit_kb: 3,
             parallelism: 1,
