@@ -1471,7 +1471,10 @@
                 "invalidCode": "Le code est incorrect.",
                 "resendCodeFailed": "Impossible de renvoyer le code.",
                 "accountCreationFailed": "Impossible de créer votre compte.",
-                "accountCreationOkLoginFailed": "Votre compte a été créé mais nous n'avons pas pu vous connecter automatiquement."
+                "accountCreationOkLoginFailed": "Votre compte a été créé mais nous n'avons pas pu vous connecter automatiquement.",
+                "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet.",
+                "invalidEmail": "Cet email ne semble pas valide.",
+                "generic": "Une erreur inconnue est survenue."
             }
         },
         "inputFields": {

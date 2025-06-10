@@ -1,102 +1,119 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { wait } from '@/parsec/internals';
+import { getClientConfig, wait } from '@/parsec/internals';
 import {
+  AccountAccess,
+  AccountAccessStrategy,
+  AccountCreateProceedError,
+  AccountCreateProceedErrorTag,
   AccountError,
   AccountErrorTag,
   AccountHandle,
-  DeviceAccessStrategy,
-  DeviceAccessStrategyTag,
-  DeviceSaveStrategy,
+  AccountSendEmailValidationTokenError,
+  AccountSendEmailValidationTokenErrorTag,
   Result,
 } from '@/parsec/types';
+import { libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 
 class AccountCreationStepper {
-  stepHandle?: number;
-  server?: string;
-  email?: string;
-  public firstName?: string;
-  public lastName?: string;
+  accountInfo?: {
+    server: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
 
-  async start(firstName: string, lastName: string, email: string, server: string): Promise<Result<number, AccountError>> {
-    let result!: Result<number, AccountError>;
+  public get lastName(): string {
+    return this.accountInfo?.lastName ?? '';
+  }
+
+  public get firstName(): string {
+    return this.accountInfo?.firstName ?? '';
+  }
+
+  public get email(): string {
+    return this.accountInfo?.email ?? '';
+  }
+
+  public get server(): string {
+    return this.accountInfo?.server ?? '';
+  }
+
+  async start(
+    firstName: string,
+    lastName: string,
+    email: string,
+    server: string,
+  ): Promise<Result<null, AccountSendEmailValidationTokenError>> {
+    let result!: Result<null, AccountSendEmailValidationTokenError>;
     if (Env.isAccountMocked()) {
       await wait(1500);
-      this.stepHandle = 1;
-      result = { ok: true, value: 1 };
+      result = { ok: true, value: null };
     } else {
-      throw new Error('NOT IMPLEMENTED');
-      /*
-      const result = await parsecAccountStartProcess(firstName, lastName, email, server);
-      if (result.ok) {
-        stepHandle = result.value
-      } else {
+      result = await libparsec.accountSendEmailValidationToken(email, getClientConfig().configDir, server);
+      if (!result.ok) {
         return result;
       }
-      */
     }
-    this.server = server;
-    this.email = email;
-    this.firstName = firstName;
-    this.lastName = lastName;
+    this.accountInfo = {
+      server: server,
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+    };
     return result;
   }
 
-  async resendCode(): Promise<Result<null, AccountError>> {
-    if (Env.isAccountMocked()) {
-      await wait(1500);
-      return { ok: true, value: null };
-    } else {
-      throw new Error('NOT IMPLEMENTED');
-      /*
-      return await parsecAccountResendEmail();
-      */
-    }
-  }
-
-  async validateEmail(code: Array<string>): Promise<Result<number, AccountError>> {
-    if (this.stepHandle !== 1) {
-      throw new Error('INVALID STEP');
-    }
-    if (Env.isAccountMocked()) {
-      await wait(1500);
-      if (!code.every((v, i) => v === ['1', '2', '3', '4', '5', '6'][i])) {
-        return { ok: false, error: { tag: AccountErrorTag.InvalidCode, error: 'INVALID CODE' } };
-      }
-      this.stepHandle = 2;
-      return { ok: true, value: 2 };
-    } else {
-      throw new Error('NOT IMPLEMENTED');
-      /*
-      const result = await parsecAccountValidateEmail(code);
-      if (result.ok) {
-        stepHandle = result.value;
-      }
-      return result;
-      */
-    }
-  }
-
-  async createAccount(_authentication: DeviceSaveStrategy): Promise<Result<null, AccountError>> {
-    if (this.stepHandle !== 2) {
-      throw new Error('INVALID STEP');
+  async resendCode(): Promise<Result<null, AccountSendEmailValidationTokenError>> {
+    if (!this.accountInfo) {
+      return { ok: false, error: { tag: AccountSendEmailValidationTokenErrorTag.Internal, error: 'invalid_state' } };
     }
     if (Env.isAccountMocked()) {
       await wait(1500);
       return { ok: true, value: null };
     } else {
-      throw new Error('NOT IMPLEMENTED');
-      /*
-      return await parsecAccountCreate(authentication);
-      */
+      return await libparsec.accountSendEmailValidationToken(this.accountInfo.email, getClientConfig().configDir, this.accountInfo.server);
+    }
+  }
+
+  async createAccount(code: Array<string>, authentication: AccountAccess): Promise<Result<null, AccountCreateProceedError>> {
+    if (!this.accountInfo) {
+      return { ok: false, error: { tag: AccountCreateProceedErrorTag.Internal, error: 'invalid_state' } };
+    }
+    if (authentication.strategy !== AccountAccessStrategy.Password) {
+      return { ok: false, error: { tag: AccountCreateProceedErrorTag.Internal, error: 'invalid_authentication' } };
+    }
+    if (code.join('') !== 'ABCDEF') {
+      return { ok: false, error: { tag: AccountCreateProceedErrorTag.InvalidValidationToken, error: 'invalid_token' } };
+    }
+    if (Env.isAccountMocked()) {
+      await wait(1500);
+      return { ok: true, value: null };
+    } else {
+      return await libparsec.accountCreateProceed(
+        `${this.accountInfo.firstName} ${this.accountInfo.lastName}`,
+        code.join(''),
+        getClientConfig().configDir,
+        this.accountInfo.server,
+        authentication.password,
+      );
     }
   }
 
   async reset(): Promise<void> {
-    this.stepHandle = undefined;
+    this.accountInfo = undefined;
   }
 }
+
+export const ParsecAccountAccess = {
+  usePassword(password: string): AccountAccess {
+    return {
+      strategy: AccountAccessStrategy.Password,
+      password: password,
+    };
+  },
+};
 
 class _ParsecAccount {
   handle: AccountHandle | undefined = undefined;
@@ -118,13 +135,13 @@ class _ParsecAccount {
     return this.skipped;
   }
 
-  async login(email: string, authentication: DeviceAccessStrategy, _server: string): Promise<Result<AccountHandle, AccountError>> {
+  async login(email: string, authentication: AccountAccess, _server: string): Promise<Result<AccountHandle, AccountError>> {
     if (this.skipped) {
       window.electronAPI.log('warn', 'Parsec Auth marked as skipped but login() called');
     }
     if (Env.isAccountMocked()) {
       await wait(2000);
-      if (email === 'a@b.c' && authentication.tag === DeviceAccessStrategyTag.Password && authentication.password === 'BigP@ssw0rd.') {
+      if (email === 'a@b.c' && authentication.strategy === AccountAccessStrategy.Password && authentication.password === 'BigP@ssw0rd.') {
         this.handle = 1;
         return { ok: true, value: 1 };
       }
