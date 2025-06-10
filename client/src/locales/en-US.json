@@ -1542,13 +1542,17 @@
                 "invalidCode": "The code is invalid.",
                 "resendCodeFailed": "Could not resend the code.",
                 "accountCreationFailed": "Failed to create your account.",
-                "accountCreationOkLoginFailed": "Your account has been created but we could not log you in automatically."
+                "accountCreationOkLoginFailed": "Your account has been created but we could not log you in automatically.",
+                "offline": "Failed to contact server. Please make sure you are online.",
+                "offlineOrIncorrectServer": "Failed to contact server. Please make sure you are online or that the server address is correct",
+                "invalidEmail": "This email is not recognized as a valid email.",
+                "generic": "An unknown error occurred."
             }
         },
         "inputFields": {
             "server": "Server address",
-            "firstname": "Firstname",
-            "lastname": "Lastname",
+            "firstname": "First name",
+            "lastname": "Last name",
             "email": "Email address",
             "password": "Password",
             "confirmPassword": "Confirm password"

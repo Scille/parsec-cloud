@@ -62,9 +62,19 @@
             <ms-code-validation-input
               ref="codeValidationInputRef"
               :code-length="6"
+              :allowed-input="AllowedInput.UpperAlphaNumeric"
               @code-complete="onCodeComplete"
               :disabled="querying"
             />
+
+            <ion-button
+              class="primary-button"
+              @click="validateCode"
+              :disabled="code.length === 0"
+            >
+              {{ $msTranslate('loginPage.createAccount.createAccountButton') }}
+            </ion-button>
+
             <div class="validation-email-step-footer">
               <ion-text
                 v-show="error"
@@ -97,17 +107,17 @@
           class="step-content authentication-step"
         >
           <div class="authentication-step-content">
-            <choose-authentication
-              :disable-keyring="true"
-              @enter-pressed="createAccount"
-              ref="chooseAuthRef"
+            <ms-choose-password-input
+              ref="choosePasswordRef"
+              class="choose-password"
+              @on-enter-keyup="createAccount"
             />
             <ion-button
               class="primary-button"
               @click="createAccount"
-              :disabled="!canCreate"
+              :disabled="!validAuth"
             >
-              {{ $msTranslate('loginPage.createAccount.createAccountButton') }}
+              {{ $msTranslate('loginPage.createAccount.nextButton') }}
             </ion-button>
           </div>
         </div>
@@ -167,17 +177,19 @@
 
 <script setup lang="ts">
 import { IonPage, IonContent, IonButton, IonText, IonIcon } from '@ionic/vue';
-import { asyncComputed, MsCodeValidationInput, MsSpinner, Translatable, MsReportText, MsReportTheme } from 'megashark-lib';
+import {
+  asyncComputed,
+  MsCodeValidationInput,
+  MsSpinner,
+  Translatable,
+  MsReportText,
+  MsReportTheme,
+  MsChoosePasswordInput,
+  AllowedInput,
+} from 'megashark-lib';
 import { onUnmounted, ref } from 'vue';
 import AccountUserInformation from '@/components/account/AccountUserInformation.vue';
-import {
-  AccountCreationStepper,
-  DeviceAccessStrategyPassword,
-  DeviceAccessStrategyTag,
-  DeviceSaveStrategyPassword,
-  ParsecAccount,
-} from '@/parsec';
-import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
+import { AccountCreateErrorTag, AccountCreationStepper, ParsecAccount, ParsecAccountAccess } from '@/parsec';
 import { wait } from '@/parsec/internals';
 import { getCurrentRouteParams, getCurrentRouteQuery, navigateTo, Routes, watchRoute } from '@/router';
 import { DateTime } from 'luxon';
@@ -197,8 +209,9 @@ const codeValidationInputRef = ref<typeof MsCodeValidationInput>();
 const creationStepper = new AccountCreationStepper();
 const error = ref('');
 const querying = ref(false);
-const chooseAuthRef = ref<typeof ChooseAuthentication>();
+const choosePasswordRef = ref<typeof MsChoosePasswordInput>();
 const refreshKey = ref(0);
+const code = ref<Array<string>>([]);
 
 const TITLES: Array<{ title?: Translatable; subtitle?: Translatable }> = [
   {
@@ -219,8 +232,8 @@ const TITLES: Array<{ title?: Translatable; subtitle?: Translatable }> = [
   {},
 ];
 
-const canCreate = asyncComputed(async () => {
-  return step.value === Steps.Authentication && chooseAuthRef.value && (await chooseAuthRef.value.areFieldsCorrect());
+const validAuth = asyncComputed(async () => {
+  return step.value === Steps.Authentication && choosePasswordRef.value && (await choosePasswordRef.value.areFieldsCorrect());
 });
 
 // As always with Vue, you cannot trust mounted/on mounted
@@ -245,19 +258,32 @@ async function onCreationStarted(): Promise<void> {
   }, 300);
 }
 
-async function onCodeComplete(code: Array<string>): Promise<void> {
+async function validateCode(): Promise<void> {
+  if (!code.value.length) {
+    return;
+  }
+  error.value = '';
+  querying.value = true;
   try {
-    querying.value = true;
-    const result = await creationStepper.validateEmail(code);
-    if (!result.ok) {
-      // Check errors (offline, invalid code, ...);
-      error.value = 'loginPage.createAccount.errors.invalidCode';
-    } else {
+    const result = await creationStepper.validateCode(code.value);
+    if (result.ok) {
       step.value = Steps.Authentication;
+    } else {
+      if (result.error.tag === AccountCreateErrorTag.InvalidValidationCode) {
+        error.value = 'loginPage.createAccount.errors.invalidCode';
+      } else if (result.error.tag === AccountCreateErrorTag.Offline) {
+        error.value = 'loginPage.createAccount.errors.offlineOrIncorrectServer';
+      } else {
+        window.electronAPI.log('error', `Failed to validated the code: ${result.error.tag} (${result.error.error})`);
+      }
     }
   } finally {
     querying.value = false;
   }
+}
+
+async function onCodeComplete(completeCode: Array<string>): Promise<void> {
+  code.value = completeCode;
 }
 
 async function resendCode(): Promise<void> {
@@ -269,7 +295,7 @@ async function resendCode(): Promise<void> {
   // Limit the spam
   setTimeout(() => {
     querying.value = false;
-  }, 2000);
+  }, 10000);
 }
 
 async function goToHome(): Promise<void> {
@@ -284,15 +310,13 @@ async function goToLogin(): Promise<void> {
 }
 
 async function createAccount(): Promise<void> {
-  if (!canCreate.value) {
-    return;
-  }
   error.value = '';
   querying.value = true;
   try {
     step.value = Steps.Creating;
     const start = DateTime.now().toMillis();
-    const result = await creationStepper.createAccount(chooseAuthRef.value!.getSaveStrategy());
+    const access = ParsecAccountAccess.usePassword(creationStepper.email!, choosePasswordRef.value?.password);
+    const result = await creationStepper.createAccount(access);
     const end = DateTime.now().toMillis();
     // Wait for a bit if it's too fast
     const diff = end - start;
@@ -300,17 +324,13 @@ async function createAccount(): Promise<void> {
       await wait(2000 - diff);
     }
     if (!result.ok) {
-      step.value = Steps.Authentication;
-      // Check errors (offline, ...);
-      error.value = 'loginPage.createAccount.errors.accountCreationFailed';
+      if (result.error.tag === AccountCreateErrorTag.Offline) {
+        error.value = 'loginPage.createAccount.errors.offline';
+      } else {
+        error.value = 'loginPage.createAccount.errors.accountCreationFailed';
+      }
     } else {
-      // Taking a few shortcuts because those types will change
-      const accessStrategy: DeviceAccessStrategyPassword = {
-        tag: DeviceAccessStrategyTag.Password,
-        password: (chooseAuthRef.value!.getSaveStrategy() as DeviceSaveStrategyPassword).password,
-        keyFile: '/',
-      };
-      const loginResult = await ParsecAccount.login(creationStepper.email!, accessStrategy, creationStepper.server!);
+      const loginResult = await ParsecAccount.login(access, creationStepper.server!);
       if (!loginResult.ok) {
         error.value = 'loginPage.createAccount.errors.accountCreationOkLoginFailed';
       }

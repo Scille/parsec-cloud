@@ -1,6 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 export {
+  AccountCreateErrorTag,
+  AccountCreateSendValidationEmailErrorTag,
+  AccountGetHumanHandleErrorTag,
+  AccountLoginWithMasterSecretErrorTag,
+  AccountLoginWithPasswordErrorTag,
   AnyClaimRetrievedInfoTag,
   BootstrapOrganizationErrorTag,
   CancelledGreetingAttemptReason,
@@ -78,6 +83,11 @@ export {
   WorkspaceStopErrorTag,
 } from '@/plugins/libparsec';
 export type {
+  AccountCreateError,
+  AccountCreateSendValidationEmailError,
+  AccountGetHumanHandleError,
+  AccountLoginWithMasterSecretError,
+  AccountLoginWithPasswordError,
   AnyClaimRetrievedInfoDevice,
   AnyClaimRetrievedInfoUser,
   ApiVersion,
@@ -361,30 +371,28 @@ interface OrganizationInfo {
   organizationId: OrganizationID;
 }
 
-// Replace later
-enum AccountErrorTag {
-  InvalidAuthentication = 'invalid-authentication',
-  InvalidCode = 'invalid-code',
-  Internal = 'internal',
-  NotLoggedIn = 'not-logged-in',
+enum AccountAccessStrategy {
+  Password = 'password',
+  MasterSecret = 'master-secret',
 }
 
-// Replace later
-interface AccountError {
-  tag: AccountErrorTag;
-  error: string;
-}
-
-interface AccountInfo {
-  name: string;
+interface AccountAccessPassword {
+  strategy: AccountAccessStrategy.Password;
   email: string;
+  password: string;
 }
+
+interface AccountAccessMasterSecret {
+  strategy: AccountAccessStrategy.MasterSecret;
+  secret: Uint8Array;
+}
+
+type AccountAccess = AccountAccessPassword | AccountAccessMasterSecret;
 
 export {
-  AccountError,
-  AccountErrorTag,
+  AccountAccess,
+  AccountAccessStrategy,
   AccountHandle,
-  AccountInfo,
   ConnectionHandle,
   DateTime,
   EntryID,

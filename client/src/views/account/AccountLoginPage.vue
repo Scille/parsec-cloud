@@ -73,7 +73,7 @@ import { emailValidator, parsecAddrValidator } from '@/common/validators';
 import { warning } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';
 import { Env } from '@/services/environment';
-import { AccountHandle, DeviceAccessStrategyTag, ParsecAccount } from '@/parsec';
+import { AccountHandle, ParsecAccount, ParsecAccountAccess } from '@/parsec';
 
 defineProps<{
   disabled?: boolean;
@@ -122,15 +122,7 @@ async function onLoginClicked(): Promise<void> {
   }
   querying.value = true;
   try {
-    const result = await ParsecAccount.login(
-      email.value,
-      {
-        tag: DeviceAccessStrategyTag.Password,
-        password: password.value,
-        keyFile: '/',
-      },
-      server.value,
-    );
+    const result = await ParsecAccount.login(ParsecAccountAccess.usePassword(email.value, password.value), server.value);
 
     if (result.ok) {
       emits('loginSuccess', result.value);

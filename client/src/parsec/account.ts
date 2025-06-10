@@ -1,103 +1,161 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { wait } from '@/parsec/internals';
+import { getClientConfig, wait } from '@/parsec/internals';
 import {
-  AccountError,
-  AccountErrorTag,
+  AccountAccess,
+  AccountAccessStrategy,
+  AccountCreateError,
+  AccountCreateErrorTag,
+  AccountCreateSendValidationEmailError,
+  AccountCreateSendValidationEmailErrorTag,
+  AccountGetHumanHandleErrorTag,
   AccountHandle,
-  AccountInfo,
-  DeviceAccessStrategy,
-  DeviceAccessStrategyTag,
-  DeviceSaveStrategy,
+  AccountLoginWithMasterSecretError,
+  AccountLoginWithPasswordError,
+  AccountLoginWithPasswordErrorTag,
+  HumanHandle,
   Result,
 } from '@/parsec/types';
+import { AccountGetHumanHandleError, libparsec } from '@/plugins/libparsec';
 import { Env } from '@/services/environment';
 
 class AccountCreationStepper {
-  stepHandle?: number;
-  server?: string;
-  email?: string;
-  public firstName?: string;
-  public lastName?: string;
+  accountInfo?: {
+    server: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+  code?: Array<string>;
 
-  async start(firstName: string, lastName: string, email: string, server: string): Promise<Result<number, AccountError>> {
-    let result!: Result<number, AccountError>;
+  public get lastName(): string {
+    return this.accountInfo?.lastName ?? '';
+  }
+
+  public get firstName(): string {
+    return this.accountInfo?.firstName ?? '';
+  }
+
+  public get email(): string {
+    return this.accountInfo?.email ?? '';
+  }
+
+  public get server(): string {
+    return this.accountInfo?.server ?? '';
+  }
+
+  async start(
+    firstName: string,
+    lastName: string,
+    email: string,
+    server: string,
+  ): Promise<Result<null, AccountCreateSendValidationEmailError>> {
+    let result!: Result<null, AccountCreateSendValidationEmailError>;
     if (Env.isAccountMocked()) {
       await wait(1500);
-      this.stepHandle = 1;
-      result = { ok: true, value: 1 };
+      result = { ok: true, value: null };
     } else {
-      throw new Error('NOT IMPLEMENTED');
-      /*
-      const result = await parsecAccountStartProcess(firstName, lastName, email, server);
-      if (result.ok) {
-        stepHandle = result.value
-      } else {
+      console.log(server);
+      result = await libparsec.accountCreate1SendValidationEmail(getClientConfig().configDir, server, email);
+      if (!result.ok) {
         return result;
       }
-      */
     }
-    this.server = server;
-    this.email = email;
-    this.firstName = firstName;
-    this.lastName = lastName;
+    this.accountInfo = {
+      server: server,
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+    };
     return result;
   }
 
-  async resendCode(): Promise<Result<null, AccountError>> {
+  async resendCode(): Promise<Result<null, AccountCreateSendValidationEmailError>> {
+    if (!this.accountInfo) {
+      return { ok: false, error: { tag: AccountCreateSendValidationEmailErrorTag.Internal, error: 'invalid_state' } };
+    }
     if (Env.isAccountMocked()) {
       await wait(1500);
       return { ok: true, value: null };
     } else {
-      throw new Error('NOT IMPLEMENTED');
-      /*
-      return await parsecAccountResendEmail();
-      */
+      return await libparsec.accountCreate1SendValidationEmail(
+        getClientConfig().configDir,
+        this.accountInfo.server,
+        this.accountInfo.email,
+      );
     }
   }
 
-  async validateEmail(code: Array<string>): Promise<Result<number, AccountError>> {
-    if (this.stepHandle !== 1) {
-      throw new Error('INVALID STEP');
+  async validateCode(code: Array<string>): Promise<Result<null, AccountCreateError>> {
+    if (!this.accountInfo) {
+      return { ok: false, error: { tag: AccountCreateErrorTag.Internal, error: 'invalid_state' } };
     }
     if (Env.isAccountMocked()) {
       await wait(1500);
-      if (!code.every((v, i) => v === ['1', '2', '3', '4', '5', '6'][i])) {
-        return { ok: false, error: { tag: AccountErrorTag.InvalidCode, error: 'INVALID CODE' } };
+      if (code.join('') === 'ABCDEF') {
+        return { ok: true, value: null };
       }
-      this.stepHandle = 2;
-      return { ok: true, value: 2 };
+      return { ok: false, error: { tag: AccountCreateErrorTag.InvalidValidationCode, error: 'invalid-token' } };
     } else {
-      throw new Error('NOT IMPLEMENTED');
-      /*
-      const result = await parsecAccountValidateEmail(code);
+      const result = await libparsec.accountCreate2CheckValidationCode(
+        getClientConfig().configDir,
+        this.accountInfo.server,
+        code.join(''),
+        this.accountInfo.email,
+      );
       if (result.ok) {
-        stepHandle = result.value;
+        this.code = code;
       }
       return result;
-      */
     }
   }
 
-  async createAccount(_authentication: DeviceSaveStrategy): Promise<Result<null, AccountError>> {
-    if (this.stepHandle !== 2) {
-      throw new Error('INVALID STEP');
+  async createAccount(authentication: AccountAccess): Promise<Result<null, AccountCreateError>> {
+    if (!this.accountInfo || !this.code) {
+      return { ok: false, error: { tag: AccountCreateErrorTag.Internal, error: 'invalid_state' } };
+    }
+    if (authentication.strategy !== AccountAccessStrategy.Password) {
+      return { ok: false, error: { tag: AccountCreateErrorTag.Internal, error: 'invalid_authentication' } };
     }
     if (Env.isAccountMocked()) {
       await wait(1500);
       return { ok: true, value: null };
     } else {
-      throw new Error('NOT IMPLEMENTED');
-      /*
-      return await parsecAccountCreate(authentication);
-      */
+      return await libparsec.accountCreate3Proceed(
+        getClientConfig().configDir,
+        this.accountInfo.server,
+        this.code.join(''),
+        {
+          label: `${this.accountInfo.firstName} ${this.accountInfo.lastName}`,
+          email: this.accountInfo.email,
+        },
+        authentication.password,
+      );
     }
   }
 
   async reset(): Promise<void> {
-    this.stepHandle = undefined;
+    this.accountInfo = undefined;
+    this.code = undefined;
   }
 }
+
+export const ParsecAccountAccess = {
+  usePassword(email: string, password: string): AccountAccess {
+    return {
+      strategy: AccountAccessStrategy.Password,
+      email: email,
+      password: password,
+    };
+  },
+
+  useMasterSecret(secret: Uint8Array): AccountAccess {
+    return {
+      strategy: AccountAccessStrategy.MasterSecret,
+      secret: secret,
+    };
+  },
+};
 
 class _ParsecAccount {
   handle: AccountHandle | undefined = undefined;
@@ -105,7 +163,14 @@ class _ParsecAccount {
 
   constructor() {
     if (Env.isAccountAutoLoginEnabled()) {
-      this.login('a@b.c', { tag: DeviceAccessStrategyTag.Password, password: 'BigP@ssw0rd.', keyFile: '' }, Env.getAccountServer());
+      console.log('Using Parsec Account auto-login');
+      libparsec.testNewAccount(Env.getAccountServer()).then((result) => {
+        if (!result.ok) {
+          console.error(`No auto-login possible, testNewAccount failed: ${result.error.tag} (${result.error.error})`);
+          return;
+        }
+        this.login(ParsecAccountAccess.useMasterSecret(result.value[1]), Env.getAccountServer());
+      });
     }
   }
 
@@ -125,36 +190,52 @@ class _ParsecAccount {
     return this.skipped;
   }
 
-  async login(email: string, authentication: DeviceAccessStrategy, _server: string): Promise<Result<AccountHandle, AccountError>> {
+  async login(
+    authentication: AccountAccess,
+    server: string,
+  ): Promise<Result<AccountHandle, AccountLoginWithMasterSecretError | AccountLoginWithPasswordError>> {
     if (Env.isAccountMocked()) {
       if (!Env.isAccountAutoLoginEnabled()) {
         await wait(2000);
       }
-      if (email === 'a@b.c' && authentication.tag === DeviceAccessStrategyTag.Password && authentication.password === 'BigP@ssw0rd.') {
+      if (authentication.strategy === AccountAccessStrategy.Password && authentication.password === 'BigP@ssw0rd.') {
         this.handle = 1;
         return { ok: true, value: 1 };
       }
-      return { ok: false, error: { tag: AccountErrorTag.InvalidAuthentication, error: 'Invalid authentication' } };
+      return { ok: false, error: { tag: AccountLoginWithPasswordErrorTag.BadPasswordAlgorithm, error: 'Invalid authentication' } };
     } else {
-      throw new Error('NOT IMPLEMENTED');
-      // return await parsecAccountLogin(email, password, _server);
+      if (authentication.strategy === AccountAccessStrategy.Password) {
+        const result = await libparsec.accountLoginWithPassword(
+          getClientConfig().configDir,
+          server,
+          authentication.email,
+          authentication.password,
+        );
+        if (result.ok) {
+          this.handle = result.value;
+        }
+        return result;
+      } else if (authentication.strategy === AccountAccessStrategy.MasterSecret) {
+        const result = await libparsec.accountLoginWithMasterSecret(getClientConfig().configDir, server, authentication.secret);
+        if (result.ok) {
+          this.handle = result.value;
+        }
+        return result;
+      } else {
+        return { ok: false, error: { tag: AccountLoginWithPasswordErrorTag.BadPasswordAlgorithm, error: 'Unknown authentication method' } };
+      }
     }
   }
 
-  async getInfo(): Promise<Result<AccountInfo, AccountError>> {
-    if (this.skipped) {
-      window.electronAPI.log('warn', 'Parsec Auth marked as skipped but getInfo() called');
-      return { ok: false, error: { tag: AccountErrorTag.Internal, error: 'marked as skipped' } };
-    }
+  async getInfo(): Promise<Result<HumanHandle, AccountGetHumanHandleError>> {
     if (!this.handle) {
-      return { ok: false, error: { tag: AccountErrorTag.NotLoggedIn, error: 'not logged in' } };
+      return { ok: false, error: { tag: AccountGetHumanHandleErrorTag.Internal, error: 'not logged in' } };
     }
     if (Env.isAccountMocked()) {
       await wait(2000);
-      return { ok: true, value: { email: 'gordon.freeman@blackmesa.nm', name: 'Gordon Freeman' } };
+      return { ok: true, value: { email: 'gordon.freeman@blackmesa.nm', label: 'Gordon Freeman' } };
     } else {
-      throw new Error('NOT IMPLEMENTED');
-      // return await libparsec.accountGetInfo(handle);
+      return await libparsec.accountGetHumanHandle(this.handle);
     }
   }
 
@@ -169,39 +250,39 @@ class _ParsecAccount {
     this.handle = undefined;
   }
 
-  async requestAccountDeletion(): Promise<Result<null, AccountError>> {
-    if (!this.handle) {
-      return { ok: false, error: { tag: AccountErrorTag.NotLoggedIn, error: 'not-logged-in' } };
-    }
-    if (Env.isAccountMocked()) {
-      await wait(2000);
-      return { ok: true, value: null };
-    } else {
-      throw new Error('NOT IMPLEMENTED');
-      // return await libparsec.requestAccountDeletion(this.handle);
-    }
-  }
+  // async requestAccountDeletion(): Promise<Result<null, AccountError>> {
+  //   if (!this.handle) {
+  //     return { ok: false, error: { tag: AccountErrorTag.NotLoggedIn, error: 'not-logged-in' } };
+  //   }
+  //   if (Env.isAccountMocked()) {
+  //     await wait(2000);
+  //     return { ok: true, value: null };
+  //   } else {
+  //     throw new Error('NOT IMPLEMENTED');
+  //     // return await libparsec.requestAccountDeletion(this.handle);
+  //   }
+  // }
 
-  async confirmAccountDeletion(code: Array<string>): Promise<Result<null, AccountError>> {
-    if (!this.handle) {
-      return { ok: false, error: { tag: AccountErrorTag.NotLoggedIn, error: 'not-logged-in' } };
-    }
-    if (Env.isAccountMocked()) {
-      await wait(2000);
-      if (code.join('') !== 'ABCDEF') {
-        return { ok: false, error: { tag: AccountErrorTag.InvalidCode, error: 'invalid-code' } };
-      }
-      this.handle = undefined;
-      return { ok: true, value: null };
-    } else {
-      throw new Error('NOT IMPLEMENTED');
-      // const result = await libparsec.confirmAccountDeletion(this.handle, code);
-      // if (result.ok) {
-      //   this.handle = undefined;
-      // }
-      // return result;
-    }
-  }
+  // async confirmAccountDeletion(code: Array<string>): Promise<Result<null, AccountError>> {
+  //   if (!this.handle) {
+  //     return { ok: false, error: { tag: AccountErrorTag.NotLoggedIn, error: 'not-logged-in' } };
+  //   }
+  //   if (Env.isAccountMocked()) {
+  //     await wait(2000);
+  //     if (code.join('') !== 'ABCDEF') {
+  //       return { ok: false, error: { tag: AccountErrorTag.InvalidCode, error: 'invalid-code' } };
+  //     }
+  //     this.handle = undefined;
+  //     return { ok: true, value: null };
+  //   } else {
+  //     throw new Error('NOT IMPLEMENTED');
+  //     // const result = await libparsec.confirmAccountDeletion(this.handle, code);
+  //     // if (result.ok) {
+  //     //   this.handle = undefined;
+  //     // }
+  //     // return result;
+  //   }
+  // }
 }
 
 const ParsecAccount = new _ParsecAccount();

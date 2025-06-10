@@ -119,7 +119,7 @@
 
         <profile-header-homepage
           v-if="isLargeDisplay && Env.isAccountEnabled() && accountLoggedIn && accountInfo"
-          :name="accountInfo.name"
+          :name="accountInfo.label"
           :email="accountInfo.email"
           :is-online="true"
           class="profile-header-homepage"
@@ -157,7 +157,7 @@ import { APP_VERSION } from '@/services/environment';
 import { openSettingsModal } from '@/views/settings';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { openAboutModal } from '@/views/about';
-import { ParsecAccount, AccountInfo } from '@/parsec';
+import { ParsecAccount, HumanHandle } from '@/parsec';
 import { AccountSettingsTabs } from '@/views/account/types';
 import { navigateTo, Routes, watchRoute } from '@/router';
 
@@ -170,7 +170,7 @@ const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
 let hotkeys: HotkeyGroup | null = null;
 const accountLoggedIn = ref(false);
-const accountInfo = ref<AccountInfo | undefined>();
+const accountInfo = ref<HumanHandle | undefined>();
 const activeTab = ref<AccountSettingsTabs>(AccountSettingsTabs.Settings);
 
 const routeWatchCancel = watchRoute(async () => {
