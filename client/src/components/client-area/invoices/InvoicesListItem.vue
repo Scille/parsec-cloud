@@ -33,12 +33,29 @@
       </ion-text>
     </template>
     <ion-text class="invoices-year-content-list-item__data invoices-status">
-      <span
-        class="badge-status body-sm"
-        :class="invoice.getStatus()"
-      >
-        {{ $msTranslate(getInvoiceStatusTranslationKey(invoice.getStatus())) }}
-      </span>
+      <template v-if="invoice.getType() === InvoiceType.Sellsy">
+        <span
+          class="badge-status body-sm"
+          :class="{
+            paid: (invoice as SellsyInvoice).getDueAmount() > 0,
+            toBePaid: (invoice as SellsyInvoice).getDueAmount() === 0,
+          }"
+        >
+          {{ $msTranslate(getCustomOrderStatusInvoiceStep()) }}
+        </span>
+      </template>
+      <template v-if="invoice.getType() === InvoiceType.Stripe">
+        <span
+          class="badge-status body-sm"
+          :class="{
+            paid: invoice.getStatus() === 'paid',
+            toBePaid: invoice.getStatus() === 'open',
+            unavailable: invoice.getStatus() === 'uncollectible' || invoice.getStatus() === 'draft' || invoice.getStatus() === 'void',
+          }"
+        >
+          {{ $msTranslate(getInvoiceStatusTranslationKey(invoice.getStatus())) }}
+        </span>
+      </template>
       <a
         class="custom-button custom-button-ghost button-medium"
         @click="Env.Links.openUrl(invoice.getLink())"
@@ -48,7 +65,7 @@
           :image="DownloadIcon"
           class="custom-button__icon"
         />
-        {{ $msTranslate('clientArea.invoices.cell.download') }}
+        <span class="custom-button__label">{{ $msTranslate('clientArea.invoices.cell.download') }}</span>
       </a>
     </ion-text>
   </ion-item>
@@ -59,11 +76,19 @@ import { Invoice, InvoiceType, SellsyInvoice } from '@/services/bms';
 import { Env } from '@/services/environment';
 import { getInvoiceStatusTranslationKey } from '@/services/translation';
 import { IonItem, IonText } from '@ionic/vue';
-import { MsImage, DownloadIcon, I18n } from 'megashark-lib';
+import { MsImage, DownloadIcon, I18n, Translatable } from 'megashark-lib';
 
-defineProps<{
+const props = defineProps<{
   invoice: Invoice;
 }>();
+
+function getCustomOrderStatusInvoiceStep(): Translatable {
+  if ((props.invoice as SellsyInvoice).getDueAmount() > 0) {
+    return 'clientArea.invoices.status.paid';
+  } else {
+    return 'clientArea.invoices.status.toBePaid';
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -94,13 +119,24 @@ defineProps<{
     .custom-button-ghost {
       color: var(--parsec-color-light-primary-500);
 
+      .custom-button__icon {
+        width: 1rem;
+        --fill-color: var(--parsec-color-light-primary-500);
+      }
+
       &:hover {
         color: var(--parsec-color-light-primary-600);
+        --fill-color: var(--parsec-color-light-primary-600);
+      }
+    }
+
+    .custom-button__label {
+      @include ms.responsive-breakpoint('xl') {
+        display: none;
       }
     }
   }
 
-  // eslint-disable-next-line vue-scoped-css/no-unused-selector
   .badge-status {
     border-radius: var(--parsec-radius-32);
     padding-inline: 0.5rem;
@@ -113,9 +149,14 @@ defineProps<{
       color: var(--parsec-color-light-success-700);
     }
 
-    &.open {
+    &.toBePaid {
       background: var(--parsec-color-light-info-100);
       color: var(--parsec-color-light-info-700);
+    }
+
+    &.unavailable {
+      background: var(--parsec-color-light-secondary-medium);
+      color: var(--parsec-color-light-secondary-text);
     }
   }
 
