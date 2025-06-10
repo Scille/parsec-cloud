@@ -132,21 +132,6 @@ fn invalid_passphrase(#[case] bad_passphrase: &str, #[case] key_length: usize) {
 }
 
 #[test]
-fn from_argon2id_password() {
-    let password = "P@ssw0rd.".to_owned().into();
-    let salt = hex!("cffcc16d78cbc0e773aa5ee7b2210159");
-
-    let expected = SecretKey::from(hex!(
-        "a2754dba7066a49f487737790388548c2af0ddfbed609805184ca5023afe1983"
-    ));
-
-    assert_eq!(
-        SecretKey::from_argon2id_password(&password, &salt, 1, 8, 1,).unwrap(),
-        expected
-    );
-}
-
-#[test]
 fn secretkey_from_too_small_data() {
     assert!(matches!(
         SecretKey::try_from(b"dummy".as_ref()),
@@ -162,46 +147,6 @@ fn encrypted_too_small() {
     ));
 
     assert!(matches!(sk.decrypt(too_small), Err(CryptoError::Nonce)));
-}
-
-#[test]
-fn from_argon2id_password_salt_too_small() {
-    let too_small = b"dummy";
-
-    assert!(matches!(
-        SecretKey::from_argon2id_password(&"Passw0rd".to_owned().into(), too_small, 1, 8, 1,),
-        Err(CryptoError::DataSize)
-    ));
-}
-
-#[test]
-fn from_argon2id_password_opslimit_too_small() {
-    let salt = hex!("cffcc16d78cbc0e773aa5ee7b2210159");
-
-    assert!(matches!(
-        SecretKey::from_argon2id_password(&"Passw0rd".to_owned().into(), &salt, 0, 8, 1,),
-        Err(CryptoError::DataSize)
-    ));
-}
-
-#[test]
-fn from_argon2id_password_memlimit_too_small() {
-    let salt = hex!("cffcc16d78cbc0e773aa5ee7b2210159");
-
-    assert!(matches!(
-        SecretKey::from_argon2id_password(&"Passw0rd".to_owned().into(), &salt, 1, 7, 1,),
-        Err(CryptoError::DataSize)
-    ));
-}
-
-#[test]
-fn from_argon2id_password_parallelism_too_small() {
-    let salt = hex!("cffcc16d78cbc0e773aa5ee7b2210159");
-
-    assert!(matches!(
-        SecretKey::from_argon2id_password(&"Passw0rd".to_owned().into(), &salt, 1, 8, 0,),
-        Err(CryptoError::DataSize)
-    ));
 }
 
 #[test]
