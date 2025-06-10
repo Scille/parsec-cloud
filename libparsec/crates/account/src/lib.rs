@@ -85,21 +85,9 @@ impl Account {
             }
         };
 
-        let auth_method_master_secret = match password_algorithm {
-            PasswordAlgorithm::Argon2id {
-                salt,
-                opslimit,
-                memlimit_kb,
-                parallelism,
-            } => KeyDerivation::from_argon2id_password(
-                &password,
-                &salt,
-                opslimit,
-                memlimit_kb,
-                parallelism,
-            )
-            .map_err(AccountFromPasswordError::BadPasswordAlgorithm)?,
-        };
+        let auth_method_master_secret = password_algorithm
+            .compute_key_derivation(&password)
+            .map_err(AccountFromPasswordError::BadPasswordAlgorithm)?;
 
         Self::new(config_dir, proxy, addr, auth_method_master_secret).map_err(|err| err.into())
     }
