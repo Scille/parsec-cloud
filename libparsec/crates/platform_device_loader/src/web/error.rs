@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use libparsec_types::anyhow;
+use libparsec_types::prelude::*;
 use web_sys::wasm_bindgen::JsValue;
 
 error_set::error_set! {
