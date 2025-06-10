@@ -108,8 +108,8 @@ async fn list_devices(tmp_path: TmpPath) {
         device_id: "bob@dev1".parse().unwrap(),
         human_handle: "Boby McBobFace <bob@parsec.invalid>".parse().unwrap(),
         device_label: "My dev2 machine".parse().unwrap(),
-        algorithm: DeviceFilePasswordAlgorithm::Argon2id {
-            salt: b"salt".as_ref().into(),
+        algorithm: PasswordAlgorithm::Argon2id {
+            salt: b"salt".to_vec(),
             opslimit: 1,
             memlimit_kb: 8,
             parallelism: 1,
