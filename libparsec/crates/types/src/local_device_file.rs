@@ -10,7 +10,7 @@ use libparsec_serialization_format::parsec_data;
 use crate::{self as libparsec_types};
 use crate::{
     impl_transparent_data_format_conversion, DateTime, DeviceID, DeviceLabel, HumanHandle,
-    OrganizationID, UserID,
+    OrganizationID, PasswordAlgorithm, UserID,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -58,7 +58,7 @@ pub struct DeviceFilePassword {
     pub device_id: DeviceID,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
-    pub algorithm: DeviceFilePasswordAlgorithm,
+    pub algorithm: PasswordAlgorithm,
     pub ciphertext: Bytes,
 }
 

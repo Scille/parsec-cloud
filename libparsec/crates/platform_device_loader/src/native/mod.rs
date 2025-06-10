@@ -137,7 +137,9 @@ pub async fn load_device(
         }
 
         (DeviceAccessStrategy::Password { password, .. }, DeviceFile::Password(device)) => {
-            let key = super::secret_key_from_password(password, &device.algorithm)
+            let key = device
+                .algorithm
+                .compute_secret_key(password)
                 .map_err(|_| LoadDeviceError::InvalidData)?;
 
             Ok((key, device.created_on))
@@ -266,8 +268,9 @@ pub async fn save_device(
         }
 
         DeviceAccessStrategy::Password { key_file, password } => {
-            let key_algo = super::generate_default_password_algorithm_parameters();
-            let key = super::secret_key_from_password(password, &key_algo)
+            let key_algo = PasswordAlgorithm::generate_argon2id();
+            let key = key_algo
+                .compute_secret_key(password)
                 .expect("Failed to derive key from password");
 
             let ciphertext = super::encrypt_device(device, &key);
