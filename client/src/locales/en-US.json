@@ -1485,7 +1485,7 @@
         "login": "Log in",
         "loginFailed": "Failed to log in. Please check your email and password.",
         "clientArea": {
-            "title": "Client area",
+            "title": "Customer area",
             "button": "Access"
         },
         "logOut": "Log out",
