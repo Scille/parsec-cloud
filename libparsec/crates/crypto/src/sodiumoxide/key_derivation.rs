@@ -8,7 +8,7 @@ use serde::Deserialize;
 use serde_bytes::Bytes;
 use sodiumoxide::crypto::kdf::{derive_from_key, gen_key, Key, KEYBYTES};
 
-use crate::{from_argon2id_password, CryptoError, Password, SecretKey};
+use crate::SecretKey;
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
@@ -56,18 +56,6 @@ impl KeyDerivation {
             .expect("subkey has always a valid size");
 
         subkey
-    }
-
-    pub fn from_argon2id_password(
-        password: &Password,
-        salt: &[u8],
-        opslimit: u32,
-        memlimit_kb: u32,
-        parallelism: u32,
-    ) -> Result<Self, CryptoError> {
-        let raw: [u8; Self::SIZE] =
-            from_argon2id_password(password, salt, opslimit, memlimit_kb, parallelism)?.into();
-        Ok(Self::from(raw))
     }
 }
 
