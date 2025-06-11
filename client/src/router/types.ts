@@ -23,6 +23,7 @@ export enum Routes {
   ClientArea = 'clientArea',
   History = 'history',
   Viewer = 'viewer',
+  Editor = 'editor',
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -165,6 +166,11 @@ const routes: Array<RouteRecordRaw> = [
                     path: `/:handle(\\d+)/${Routes.Viewer}`,
                     name: Routes.Viewer,
                     component: () => import('@/views/viewers/FileViewer.vue'),
+                  },
+                  {
+                    path: `/:handle(\\d+)/${Routes.Editor}`,
+                    name: Routes.Editor,
+                    component: () => import('@/views/editors/FileEditor.vue'),
                   },
                 ],
               },
