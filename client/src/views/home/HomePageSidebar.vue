@@ -1,18 +1,41 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="sidebar-container">
+  <!-- prettier-ignore -->
+  <div
+    class="sidebar-container"
+    :class="{'sidebar-container--custom': ResourcesManager.instance().get(Resources.ParsecLogo)}"
+  >
     <ms-image
-      :image="LogoRowWhite"
+      :image="(ResourcesManager.instance().get(Resources.LogoFull, LogoRowWhite) as string)"
       class="logo-img"
     />
-    <ion-text class="sidebar-tagline subtitles-lg">{{ $msTranslate('HomePage.sidebar.tagline') }}</ion-text>
+    <div class="sidebar-bottom">
+      <ion-text class="sidebar-tagline subtitles-lg">{{ $msTranslate('HomePage.sidebar.tagline') }}</ion-text>
+      <ms-image
+        class="logo-icon"
+        v-if="ResourcesManager.instance().get(Resources.ParsecLogo)"
+        :image="(ResourcesManager.instance().get(Resources.ParsecLogo) as string)"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { MsImage, LogoRowWhite } from 'megashark-lib';
 import { IonText } from '@ionic/vue';
+import { ResourcesManager, Resources } from '@/services/resourcesManager';
+import { onMounted, ref } from 'vue';
+
+const backgroundImage = ref('url("@/assets/images/background/shapes-circles.svg")');
+
+onMounted(() => {
+  const sidebarImage = ResourcesManager.instance().get(Resources.HomeSidebar) as Uint8Array;
+  if (sidebarImage) {
+    const blob = new Blob([sidebarImage], { type: 'image/png' });
+    backgroundImage.value = `url("${window.URL.createObjectURL(blob)}")`;
+  }
+});
 </script>
 
 <style lang="scss" scoped>
@@ -37,10 +60,16 @@ import { IonText } from '@ionic/vue';
     max-height: 70vh;
     top: 0;
     right: 0;
-    background-image: url('@/assets/images/background/shapes-circles.svg');
+    background-image: v-bind(backgroundImage);
     background-size: cover;
     background-repeat: no-repeat;
     background-position: top left;
+  }
+
+  .sidebar-bottom {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .logo-img {
@@ -52,6 +81,67 @@ import { IonText } from '@ionic/vue';
     text-align: center;
     margin-bottom: 20%;
     margin-inline: 2rem;
+  }
+}
+
+.sidebar-container--custom {
+  background-image: v-bind(backgroundImage);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: top left;
+  display: flex;
+  justify-content: end;
+  padding-bottom: 5%;
+
+  &::before {
+    content: '';
+    opacity: 0.5;
+    background: var(--parsec-color-light-gradient-background);
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    max-height: 100%;
+    top: 0;
+    right: 0;
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    opacity: 0.5;
+    background: linear-gradient(180deg, rgba(27, 27, 40, 0) 0%, var(--parsec-color-light-secondary-black) 100%);
+    position: absolute;
+    width: 100%;
+    height: 15rem;
+    flex-shrink: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 0;
+  }
+
+  .sidebar-bottom {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .sidebar-tagline {
+    position: relative;
+    z-index: 1;
+    margin-bottom: 0;
+    margin-inline: 0;
+  }
+
+  .logo-img {
+    max-width: 10rem;
+    width: 100%;
+    z-index: 2;
+  }
+
+  .logo-icon {
+    width: 6rem;
+    position: relative;
+    z-index: 2;
   }
 }
 </style>

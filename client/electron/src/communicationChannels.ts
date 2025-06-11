@@ -26,4 +26,5 @@ export enum WindowToPageChannel {
   IsDevMode = 'parsec-is-dev-mode',
   PrintToConsole = 'parsec-print-to-console',
   LongPathsDisabled = 'parsec-long-paths-disabled',
+  CustomBrandingFolder = 'parsec-custom-branding-folder',
 }

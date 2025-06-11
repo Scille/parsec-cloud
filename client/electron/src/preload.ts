@@ -2,11 +2,19 @@
 
 require('./rt/electron-rt');
 import log from 'electron-log/main';
+import * as fs from 'fs';
 
 // User Defined Preload scripts below
 
 import { contextBridge, ipcRenderer } from 'electron';
+import path from 'path';
 import { PageToWindowChannel } from './communicationChannels';
+
+let CUSTOM_BRANDING_FOLDER = './';
+
+ipcRenderer.on('parsec-custom-branding-folder', (_event, ...args: any[]) => {
+  CUSTOM_BRANDING_FOLDER = args[0];
+});
 
 process.once('loaded', async () => {
   contextBridge.exposeInMainWorld('electronAPI', {
@@ -52,6 +60,19 @@ process.once('loaded', async () => {
     getLogs: (): Promise<Array<string>> => {
       return new Promise((resolve, _reject) => {
         resolve(log.transports.file.readAllLogs().flatMap((v) => v.lines));
+      });
+    },
+    readCustomFile: (file: string): Promise<ArrayBuffer> => {
+      return new Promise((resolve, _reject) => {
+        // make sure that it's only a file name to avoid path injections
+        file = path.basename(file);
+        const fullPath = path.join(CUSTOM_BRANDING_FOLDER, file);
+        try {
+          const data = fs.readFileSync(fullPath);
+          resolve(data);
+        } catch (e) {
+          resolve(undefined);
+        }
       });
     },
   });

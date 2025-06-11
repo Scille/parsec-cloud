@@ -63,7 +63,7 @@ try {
   fs.mkdirSync(newConfigDir, { recursive: true });
   app.setPath('userData', newConfigDir);
 } catch (e: any) {
-  console.log(`Failed to set config path to '{$newConfigDir}'`);
+  console.log(`Failed to set config path to '${newConfigDir}'`);
 }
 
 // Configure Sentry
@@ -112,6 +112,7 @@ if (!lock) {
     setupContentSecurityPolicy(myCapacitorApp.getCustomURLScheme());
     // Initialize our app, build windows, and load content.
     await myCapacitorApp.init();
+    myCapacitorApp.sendEvent(WindowToPageChannel.CustomBrandingFolder, path.join(app.getPath('userData'), 'custom'));
 
     process.on('SIGINT', () => {
       if (!sigProcessed) {
