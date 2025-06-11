@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, DisplaySize, expect, fillIonInput, initGreetUserModals, msTest, setSmallDisplay } from '@tests/e2e/helpers';
+import { answerQuestion, DisplaySize, expect, fillIonInput, initGreetUserModals, msTest } from '@tests/e2e/helpers';
 
 msTest('Greet user whole process in small display', async ({ usersPage }) => {
   // Very slow test since it syncs the greet and join
@@ -8,10 +8,10 @@ msTest('Greet user whole process in small display', async ({ usersPage }) => {
 
   const secondTab = await usersPage.openNewTab();
 
-  await setSmallDisplay(usersPage);
-  await setSmallDisplay(secondTab);
+  await usersPage.setDisplaySize(DisplaySize.Small);
+  await secondTab.setDisplaySize(DisplaySize.Small);
 
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', DisplaySize.Small);
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.title).toHaveText('Share your code');
@@ -130,7 +130,7 @@ msTest('Greet user whole process in large display', async ({ usersPage }) => {
 
   const secondTab = await usersPage.openNewTab();
 
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', DisplaySize.Large);
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
@@ -256,7 +256,7 @@ msTest('Host selects invalid SAS code', async ({ usersPage }) => {
 
   const secondTab = await usersPage.openNewTab();
 
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', DisplaySize.Large);
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
@@ -301,7 +301,7 @@ msTest('Host selects no SAS code', async ({ usersPage }) => {
 
   const secondTab = await usersPage.openNewTab();
 
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', DisplaySize.Large);
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
   await expect(greetData.title).toHaveText('Share your code');
@@ -349,7 +349,7 @@ msTest('Host closes greet process', async ({ usersPage }) => {
   msTest.setTimeout(120_000);
 
   const secondTab = await usersPage.openNewTab();
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', DisplaySize.Large);
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
@@ -407,7 +407,7 @@ msTest('Guest selects invalid SAS code', async ({ usersPage }) => {
   msTest.setTimeout(120_000);
 
   const secondTab = await usersPage.openNewTab();
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', DisplaySize.Large);
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
@@ -439,7 +439,7 @@ msTest('Guest selects no SAS code', async ({ usersPage }) => {
   msTest.setTimeout(120_000);
 
   const secondTab = await usersPage.openNewTab();
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', DisplaySize.Large);
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);
@@ -474,7 +474,7 @@ msTest('Guest closes greet process', async ({ usersPage }) => {
   msTest.setTimeout(120_000);
 
   const secondTab = await usersPage.openNewTab();
-  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm', DisplaySize.Large);
+  const [greetData, joinData] = await initGreetUserModals(usersPage, secondTab, 'gordon.freeman@blackmesa.nm');
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 0);

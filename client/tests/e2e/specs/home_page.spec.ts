@@ -1,13 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, fillIonInput, logout, msTest, setSmallDisplay, sortBy } from '@tests/e2e/helpers';
+import { DisplaySize, expect, fillIonInput, logout, msTest, sortBy } from '@tests/e2e/helpers';
 
 const USER_NAMES = ['Alicey McAliceFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
 
 for (const displaySize of ['small', 'large']) {
   msTest(`Home default state with devices on ${displaySize} display`, async ({ home }) => {
     if (displaySize === 'small') {
-      await setSmallDisplay(home);
+      await home.setDisplaySize(DisplaySize.Small);
     }
 
     const topBar = home.locator('.topbar');

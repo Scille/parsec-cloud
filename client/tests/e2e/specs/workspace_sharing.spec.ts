@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { createWorkspace, expect, fillIonInput, login, MsPage, msTest, setSmallDisplay } from '@tests/e2e/helpers';
+import { createWorkspace, DisplaySize, expect, fillIonInput, login, MsPage, msTest } from '@tests/e2e/helpers';
 
 for (const displaySize of ['small', 'large']) {
   msTest(`Workspace sharing modal default state on ${displaySize} display`, async ({ workspaceSharingModal }) => {
     if (displaySize === 'small') {
-      await setSmallDisplay(workspaceSharingModal.page() as MsPage);
+      await (workspaceSharingModal.page() as MsPage).setDisplaySize(DisplaySize.Small);
     }
 
     await expect(workspaceSharingModal.locator('.ms-modal-header__title')).toHaveText('wksp1');
@@ -29,7 +29,7 @@ for (const displaySize of ['small', 'large']) {
 for (const displaySize of ['small', 'large']) {
   msTest(`Update user role on ${displaySize} display`, async ({ workspaceSharingModal }) => {
     if (displaySize === 'small') {
-      await setSmallDisplay(workspaceSharingModal.page() as MsPage);
+      await (workspaceSharingModal.page() as MsPage).setDisplaySize(DisplaySize.Small);
     }
     const content = workspaceSharingModal.locator('.ms-modal-content');
     const users = content.locator('.user-member-item');

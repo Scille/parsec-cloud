@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page, TestInfo } from '@playwright/test';
-import { createFolder, createWorkspace, DisplaySize, dragAndDropFile, expect, msTest, setSmallDisplay } from '@tests/e2e/helpers';
+import { createFolder, createWorkspace, DisplaySize, dragAndDropFile, expect, msTest } from '@tests/e2e/helpers';
 import * as fs from 'fs';
 import path from 'path';
 
@@ -104,11 +104,11 @@ for (const mode of ['list', 'grid']) {
 for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
   msTest(`Import folder with button ${displaySize} display`, async ({ workspaces }, testInfo: TestInfo) => {
     if (displaySize === DisplaySize.Small) {
-      await setSmallDisplay(workspaces);
+      await workspaces.setDisplaySize(DisplaySize.Small);
     }
 
     // Start with an empty workspace
-    await createWorkspace(workspaces, 'New_Workspace', displaySize);
+    await createWorkspace(workspaces, 'New_Workspace');
     await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
     await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
     const documents = workspaces;
@@ -144,11 +144,11 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
 for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
   msTest(`Import files with button ${displaySize} display`, async ({ workspaces }, testInfo: TestInfo) => {
     if (displaySize === DisplaySize.Small) {
-      await setSmallDisplay(workspaces);
+      await workspaces.setDisplaySize(DisplaySize.Small);
     }
 
     // Start with an empty workspace
-    await createWorkspace(workspaces, 'New_Workspace', displaySize);
+    await createWorkspace(workspaces, 'New_Workspace');
     await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
     await expect(workspaces).toHaveHeader(['New_Workspace'], true, true);
     const documents = workspaces;

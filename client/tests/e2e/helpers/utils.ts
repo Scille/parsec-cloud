@@ -2,6 +2,7 @@
 
 import { BrowserContext, Locator, Page, TestInfo } from '@playwright/test';
 import { expect } from '@tests/e2e/helpers/assertions';
+import { DisplaySize, MsPage } from '@tests/e2e/helpers/types';
 import { readFileSync } from 'fs';
 import path from 'path';
 
@@ -12,17 +13,8 @@ interface QuestionOptions {
   expectedNegativeText?: string | RegExp;
 }
 
-export enum DisplaySize {
-  Small = 'small',
-  Large = 'large',
-}
-
-export async function answerQuestion(
-  page: Page,
-  positiveAnswer: boolean,
-  options?: QuestionOptions,
-  smallDisplay?: boolean,
-): Promise<void> {
+export async function answerQuestion(page: MsPage, positiveAnswer: boolean, options?: QuestionOptions): Promise<void> {
+  const smallDisplay = (await page.getDisplaySize()) === DisplaySize.Small;
   const modal = page.locator('.question-modal');
   const positiveButton = modal.locator(smallDisplay ? '#confirm-button' : '#next-button');
   const negativeButton = modal.locator('#cancel-button');
@@ -249,7 +241,8 @@ export async function workspacesInGridMode(workspacesPage: Page): Promise<boolea
   return (await workspacesPage.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
 }
 
-export async function createWorkspace(workspacesPage: Page, name: string, displaySize?: DisplaySize): Promise<void> {
+export async function createWorkspace(workspacesPage: MsPage, name: string): Promise<void> {
+  const displaySize = await workspacesPage.getDisplaySize();
   let workspacesCount = 0;
   await expect(workspacesPage.locator('.no-workspaces-loading')).toBeHidden();
 
@@ -320,11 +313,6 @@ export function getServerAddr(): string {
   return process.env.TESTBED_SERVER ?? '';
 }
 
-export async function setSmallDisplay(page: Page): Promise<void> {
-  const viewport = page.viewportSize();
-  await page.setViewportSize({ width: 700, height: viewport ? viewport.height : 700 });
-}
-
 export async function login(homePage: Page, name: string): Promise<void> {
   await homePage.locator('.organization-card', { hasText: name }).click();
   await expect(homePage.locator('#password-input')).toBeVisible();
@@ -338,7 +326,7 @@ export async function login(homePage: Page, name: string): Promise<void> {
   await expect(homePage).toBeWorkspacePage();
 }
 
-export async function logout(page: Page): Promise<void> {
+export async function logout(page: MsPage): Promise<void> {
   await page.locator('.topbar').locator('.profile-header').click();
   const buttons = page.locator('.profile-header-popover').locator('.main-list').getByRole('listitem');
   await buttons.nth(4).click();

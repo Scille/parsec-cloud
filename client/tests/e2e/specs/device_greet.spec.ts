@@ -1,14 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Locator, Page } from '@playwright/test';
+import { Locator } from '@playwright/test';
 import {
   answerQuestion,
+  DisplaySize,
   expect,
   fillInputModal,
   fillIonInput,
   getClipboardText,
+  MsPage,
   msTest,
-  setSmallDisplay,
   setWriteClipboardPermission,
 } from '@tests/e2e/helpers';
 
@@ -21,7 +22,8 @@ interface ModalData {
   closeButton: Locator;
 }
 
-async function initModals(hostPage: Page, guestPage: Page, displaySize?: 'small' | 'large'): Promise<[ModalData, ModalData]> {
+async function initModals(hostPage: MsPage, guestPage: MsPage): Promise<[ModalData, ModalData]> {
+  const displaySize = await hostPage.getDisplaySize();
   if (displaySize === 'small') {
     await hostPage.locator('.header-selected-item__back').click();
   }
@@ -97,10 +99,10 @@ msTest('Greet device whole process on small display', async ({ myProfilePage }) 
 
   const secondTab = await myProfilePage.openNewTab();
 
-  await setSmallDisplay(myProfilePage);
-  await setSmallDisplay(secondTab);
+  await myProfilePage.setDisplaySize(DisplaySize.Small);
+  await secondTab.setDisplaySize(DisplaySize.Small);
 
-  const [greetData, joinData] = await initModals(myProfilePage, secondTab, 'small');
+  const [greetData, joinData] = await initModals(myProfilePage, secondTab);
 
   await expect(greetData.modal.locator('.modal-header-stepper__text')).toHaveText('Greet a new device');
   await expect(joinData.modal.locator('.modal-header-stepper__text')).toHaveText('Add a new device');
@@ -190,7 +192,7 @@ msTest('Greet device whole process on large display', async ({ myProfilePage }) 
 
   const secondTab = await myProfilePage.openNewTab();
 
-  const [greetData, joinData] = await initModals(myProfilePage, secondTab, 'large');
+  const [greetData, joinData] = await initModals(myProfilePage, secondTab);
 
   // Check the provide code page from the host and retrieve the code
   await expect(greetData.modal).toHaveWizardStepper(['Host code', 'Guest code'], 0);

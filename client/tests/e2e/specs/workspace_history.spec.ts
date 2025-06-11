@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { answerQuestion, createFolder, expect, msTest, setSmallDisplay } from '@tests/e2e/helpers';
+import { answerQuestion, createFolder, DisplaySize, expect, msTest } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -155,7 +155,7 @@ msTest('Workspace history breadcrumbs', async ({ documents }) => {
   await clickOnBreadcrumb(0);
   await headerContentMatch(['wksp1']);
 
-  await setSmallDisplay(documents);
+  await documents.setDisplaySize(DisplaySize.Small);
   const smallBreadcrumbs = documents.locator('.navigation-breadcrumb').locator('.breadcrumb-small-container');
 
   await expect(documents.locator('.navigation-breadcrumb').locator('ion-breadcrumbs')).not.toBeVisible();

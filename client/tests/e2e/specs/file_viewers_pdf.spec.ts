@@ -108,7 +108,9 @@ msTest('PDF viewer: scroll', async ({ documents }) => {
   await expect(secondPage).not.toBeInViewport();
   await expect(thirdPage).toBeInViewport(); // the last page is an error canvas, leaving space for the previous one
   await expect(fourthPage).toBeInViewport();
-  await expect(paginationElement).toHaveText('Page 4 / 4');
+  // Depending on the viewport size, the last canvas may not take enough of the page
+  // to arrive at 4/4.
+  await expect(paginationElement).toHaveText(/^Page (3|4) \/ 4$/);
 
   await thirdPage.scrollIntoViewIfNeeded();
   await expect(firstPage).not.toBeInViewport();

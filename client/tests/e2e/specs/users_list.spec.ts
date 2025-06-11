@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Locator, Page } from '@playwright/test';
-import { addUser, answerQuestion, expect, fillInputModal, fillIonInput, msTest, setSmallDisplay, sortBy } from '@tests/e2e/helpers';
+import { addUser, answerQuestion, DisplaySize, expect, fillInputModal, fillIonInput, msTest, sortBy } from '@tests/e2e/helpers';
 
 const USERS = [
   {
@@ -52,7 +52,7 @@ function getStatusForUser(user: any): string {
 for (const displaySize of ['small', 'large']) {
   msTest(`Check user list items on ${displaySize} display`, async ({ usersPage }) => {
     if (displaySize === 'small') {
-      await setSmallDisplay(usersPage);
+      await usersPage.setDisplaySize(DisplaySize.Small);
     }
 
     const usersList = usersPage.locator('#users-page-user-list');
@@ -652,7 +652,7 @@ msTest('Update multiple profiles', async ({ usersPage }) => {
 });
 
 msTest('Small display selection', async ({ usersPage }) => {
-  await setSmallDisplay(usersPage);
+  await usersPage.setDisplaySize(DisplaySize.Small);
 
   const headerTexts = usersPage.locator('.small-display-header-title').locator('ion-text');
   const headerOption = usersPage.locator('.small-display-header-title').locator('ion-icon');
@@ -695,7 +695,7 @@ msTest('Small display selection', async ({ usersPage }) => {
 });
 
 msTest('Small display member context menu', async ({ usersPage }) => {
-  await setSmallDisplay(usersPage);
+  await usersPage.setDisplaySize(DisplaySize.Small);
   const user1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   const modal = usersPage.locator('.user-context-sheet-modal');
 
@@ -711,7 +711,7 @@ msTest('Small display member context menu', async ({ usersPage }) => {
 });
 
 msTest('Small display external context menu', async ({ usersPage }) => {
-  await setSmallDisplay(usersPage);
+  await usersPage.setDisplaySize(DisplaySize.Small);
   const user2 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(2);
   const modal = usersPage.locator('.user-context-sheet-modal');
 
@@ -722,7 +722,7 @@ msTest('Small display external context menu', async ({ usersPage }) => {
 });
 
 msTest('Small display multiple users context menu', async ({ usersPage }) => {
-  await setSmallDisplay(usersPage);
+  await usersPage.setDisplaySize(DisplaySize.Small);
   const user1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   const headerOption = usersPage.locator('.small-display-header-title').locator('ion-icon');
   const modal = usersPage.locator('.user-context-sheet-modal');

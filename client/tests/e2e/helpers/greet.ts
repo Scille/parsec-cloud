@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Locator, Page } from '@playwright/test';
+import { Locator } from '@playwright/test';
 import {
   DisplaySize,
   expect,
@@ -21,12 +21,12 @@ interface GreetUserModalData {
 }
 
 export async function initGreetUserModals(
-  hostPage: Page,
-  guestPage: Page,
+  hostPage: MsPage,
+  guestPage: MsPage,
   email: string,
-  displaySize?: DisplaySize,
 ): Promise<[GreetUserModalData, GreetUserModalData]> {
   // Invite a new user and retrieve the invitation link
+  const displaySize = await hostPage.getDisplaySize();
   if (displaySize === DisplaySize.Small) {
     await hostPage.locator('.tab-bar-menu').locator('#add-menu-fab-button').click();
     await hostPage.locator('.list-group-item').nth(0).click();

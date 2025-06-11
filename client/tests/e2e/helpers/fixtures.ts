@@ -5,7 +5,7 @@ import { expect } from '@tests/e2e/helpers/assertions';
 import { MockBms, MockClientAreaOverload, MockRouteOptions } from '@tests/e2e/helpers/bms';
 import { DEFAULT_USER_INFORMATION, generateDefaultOrganizationInformation, generateDefaultUserData } from '@tests/e2e/helpers/data';
 import { dropTestbed, initTestBed } from '@tests/e2e/helpers/testbed';
-import { MsContext, MsPage } from '@tests/e2e/helpers/types';
+import { DisplaySize, MsContext, MsPage } from '@tests/e2e/helpers/types';
 import { createWorkspace, fillInputModal, fillIonInput, importDefaultFiles, logout } from '@tests/e2e/helpers/utils';
 
 interface SetupOptions {
@@ -13,7 +13,10 @@ interface SetupOptions {
   location?: string;
   skipGoto?: boolean;
   withParsecAccount?: boolean;
+  displaySize?: DisplaySize;
 }
+
+const DEV_TOOLS_OFFSET = 400;
 
 export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promise<void> {
   page.on('console', (msg) => console.log('> ', msg.text()));
@@ -100,14 +103,23 @@ export async function setupNewPage(page: MsPage, opts: SetupOptions = {}): Promi
     page.isReleased = true;
   };
 
-  if (process.env.PWDEBUG) {
-    // Resize the viewport in debug mode to accomodate for the dev tools
-    const viewport = page.viewportSize();
-
-    if (viewport) {
-      await page.setViewportSize({ width: viewport.width + 400, height: viewport.height });
-    }
-  }
+  page.isDebugEnabled = (): boolean => {
+    return process.env.PWDEBUG === 'true';
+  };
+  page.defaultLargeSize = [1600, 900];
+  page.defaultSmallSize = [700, 700];
+  page.setDisplaySize = async (displaySize: DisplaySize): Promise<void> => {
+    page.displaySize = displaySize;
+    const width =
+      (displaySize === DisplaySize.Large ? page.defaultLargeSize[0] : page.defaultSmallSize[0]) +
+      (page.isDebugEnabled() ? DEV_TOOLS_OFFSET : 0);
+    const height = displaySize === DisplaySize.Large ? page.defaultLargeSize[1] : page.defaultSmallSize[1];
+    await page.setViewportSize({ width: width, height: height });
+  };
+  page.getDisplaySize = async (): Promise<DisplaySize> => {
+    return page.displaySize;
+  };
+  await page.setDisplaySize(opts.displaySize ?? DisplaySize.Large);
 
   await expect(page.locator('#app')).toHaveAttribute('app-state', 'ready');
 }
@@ -167,7 +179,7 @@ export const msTest = debugTest.extend<{
   parsecAccount: MsPage;
 }>({
   context: async ({ browser }, use) => {
-    const context = await browser.newContext();
+    const context = (await browser.newContext()) as MsContext;
     await context.grantPermissions(['clipboard-read']);
     await use(context);
     await context.close();

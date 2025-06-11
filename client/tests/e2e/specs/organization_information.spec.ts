@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { answerQuestion, DisplaySize, expect, msTest, setSmallDisplay } from '@tests/e2e/helpers';
+import { answerQuestion, DisplaySize, expect, msTest } from '@tests/e2e/helpers';
 
 for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
   msTest(`Org info default state on ${displaySize} display`, async ({ organizationPage }) => {
@@ -11,7 +11,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
     await usersContainer.locator('#invitations-button').isVisible();
 
     if (displaySize === DisplaySize.Small) {
-      await setSmallDisplay(organizationPage);
+      await organizationPage.setDisplaySize(DisplaySize.Small);
       await expect(usersContainer.locator('.gradient-button-text').locator('.button-large')).toHaveText('pending invitation');
       await usersContainer.locator('.user-invite-button').isVisible();
       await usersContainer.locator('.card-header__button').click();
@@ -47,7 +47,7 @@ for (const displaySize of [DisplaySize.Large, DisplaySize.Small]) {
       .getByRole('listitem');
 
     if (displaySize === DisplaySize.Small) {
-      await setSmallDisplay(usersPage);
+      await usersPage.setDisplaySize(DisplaySize.Small);
       const userSmall = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
       await userSmall.hover();
       await userSmall.locator('.options-button').click();

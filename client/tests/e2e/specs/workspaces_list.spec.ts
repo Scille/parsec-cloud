@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { createWorkspace, DisplaySize, expect, fillIonInput, msTest, setSmallDisplay } from '@tests/e2e/helpers';
+import { createWorkspace, DisplaySize, expect, fillIonInput, msTest } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -119,9 +119,9 @@ async function toggleFavorite(page: Page, index: number, displaySize: DisplaySiz
 for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
   msTest(`Checks favorites ${displaySize} display`, async ({ workspaces }) => {
     if (displaySize === DisplaySize.Small) {
-      await setSmallDisplay(workspaces);
+      await workspaces.setDisplaySize(DisplaySize.Small);
     }
-    await createWorkspace(workspaces, 'The Copper Coronet', displaySize);
+    await createWorkspace(workspaces, 'The Copper Coronet');
     await expect(workspaces.locator('.workspace-card-item').locator('.workspace-card-content__title')).toHaveText([
       'The Copper Coronet',
       'wksp1',
