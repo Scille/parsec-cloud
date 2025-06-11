@@ -60,7 +60,7 @@ With this RFC, the enrollment process must occur within the context of a Parsec 
 - If the user is connected to Parsec Account and opens an invitation URL:
   - If the invitation's email correspond to the Parsec Account, the enrollment can start
     right away.
-  - Otherwise the Parsec client will ask the user to connect to the Parsec Account
+  - Otherwise, the Parsec client will ask the user to connect to the Parsec Account
     matching the invitation (while also prompting the possibility to create such
     Parsec Account).
 
@@ -71,10 +71,10 @@ hard disk. As its name suggest, this file contains, among other things, the devi
 
 There is no change needed to this behavior.
 
-Indeed: once logged in to Parsec Account, the user should see the list of identities
+Indeed: once logged into Parsec Account, the user should see the list of identities
 (i.e. couple organization ID + user ID) he can connect to.
 
-Typically identities can be in the following states:
+Typically, identities can be in the following states:
 
 1. Organization expired
 2. User revoked
@@ -82,7 +82,7 @@ Typically identities can be in the following states:
 4. Valid, no device locally and registration device available
 5. Valid, and device present locally
 
-The Parsec Account API allows to obtain:
+The Parsec Account API allows obtaining:
 
 - The full list of identities
 - Which organization is expired
@@ -91,7 +91,7 @@ The Parsec Account API allows to obtain:
 - The list of registration devices
 
 From there, listing the available devices locally allows to fully determine which
-identity can connected to.
+identity can be connected to.
 
 > [!NOTE]
 > In case of offline login (logged into an organization but not to Parsec Account), we only use the login as a filter
@@ -112,7 +112,7 @@ re-create a registration device.
 
 To simplify user experience, we want to default to the OS keyring when protecting the device keys files.
 
-Similarly, we want to be provide an option "remember me" that would store the Parsec Account
+Similarly, we want to provide an option "remember me" that would store the Parsec Account
 password in the OS keyring.
 
 > [!NOTE]
@@ -158,14 +158,14 @@ This feature is described in detail in [RFC 1014](1014-account-vault-for-device-
 From the client point of view, account authentication always starts by retrieving `auth_method_master_secret`,
 from which all `auth_method_id`/`auth_method_mac_key`/`auth_method_secret_key` are derived (see [`Keys`]).
 
-The detail of how to retrieve `auth_method_master_secret` depends of the authentication method, which can be of two types:
+The detail of how to retrieve `auth_method_master_secret` depends on the authentication method, which can be of two types:
 
-- ClientProvided, for which the client is able to store `auth_method_master_secret` all by itself.
+- `ClientProvided`, for which the client is able to store `auth_method_master_secret` all by itself.
 
-- Password, for which the client must obtain some configuration from the server in order to know how
+- `Password`, for which the client must obtain some configuration from the server in order to know how
   to turn the password into `auth_method_master_secret`.
 
-## 3 - Datamodel
+## 3 - Data model
 
 ### 3.1 - Glossary
 
@@ -249,7 +249,7 @@ Attributes:
 - `vault_key_access: Bytes`. Vault key encrypted with the `auth_method_secret_key`
   (see [RFC 1014](1014-account-vault-for-device-stored-on-server.md) for its internal format).
 - `password_algorithm: PasswordAlgorithm`. The algorithm to derive `auth_method_master_secret`
-  given the password. This attribute should contains the full configuration needed to do this
+  given the password. This attribute should contain the full configuration needed to do this
   operation (e.g.`{"name": "ARGON2ID", "salt": b"<salt>", "opslimit": 65536, "memlimit_kb": 3, "parallelism": 1}`).
   This field is left empty for authentication methods that don't rely on password.
 - `disabled_on: DateTime` (server side-only): Indicate if this method is enabled or not.
@@ -262,10 +262,10 @@ Attributes:
 > - In case of password change, the previous password authentication method is kept
 >   in the server database (but marked as inactive). This way the old password can
 >   still be used to recover the vault in case of account recovery (see below).
-> - Currently only password authentication is supported, other authentication
+> - Currently, only password authentication is supported, other authentication
 >   methods (such as FIDO2) may be added in the future.
 
-In case the user loses access to all his authentication methods (e.g. he forget his password),
+In case the user loses access to all his authentication methods (e.g. it forgets its password),
 the account must be recovered to re-gain access (i.e. email-based identity validation, then
 re-creation from scratch of authentication method & vault).
 
@@ -302,7 +302,7 @@ The main idea behind the vault is to encrypt arbitrary data with a symmetric key
 
 This means the `vault_key` doesn't change when authentication methods are added or removed.
 
-However it is still possible for the user to force a manual vault key rotation. In this
+However, it is still possible for the user to force a manual vault key rotation. In this
 case a new vault (with a new corresponding `vault_key`) is created and all vault items
 from the old vault are re-encrypted and transferred to the new one.
 
@@ -318,15 +318,15 @@ The Parse Account relies on email address validation for multiple operations:
 - [Recovering an account](#46---account-recovery-validation) (e.g. in case of password loss)
 - [Deleting an account](#48---account-deletion-validation)
 
-For all those cases, the logic is as follow:
+For all those cases, the logic is as follows:
 
-1. The Parsec client sends an initial API request to the server
+1. The Parsec client sends an initial API request to the server.
 2. The server sends a confirmation email to the user containing a link with a validation token.
-3. The user clicks on the link in the email, which open the Parsec client
+3. The user clicks on the link in the email, which open the Parsec client.
 4. The Parsec client sends a second API request with the validation token to the server.
 5. The server proceed with the actual operation.
 
-Hence the need to define a new type of URL link: `ParsecAccountActionAddr`.
+Hence, the need to define a new type of URL link: `ParsecAccountActionAddr`.
 
 The format is similar to the existing `ParsecActionAddr`, the only difference being
 that `ParsecActionAddr` specifies the organization ID.
@@ -372,7 +372,7 @@ The signature is generated like so:
 
 ```math
 \begin{gather}
-content = \text{"PARSEC-MAC-BLAKE2B"} \Vert \text{"."} \Vert hex(auth_method_id) \Vert \text{"."} \Vert timestamp \\
+content = \text{"PARSEC-MAC-BLAKE2B"} \Vert \text{"."} \Vert hex(auth\_method\_id) \Vert \text{"."} \Vert timestamp \\
 code = mac_{black2b}(shared\_secret, content) \\
 signature = base64(code)
 \end{gather}
@@ -508,7 +508,7 @@ Anonymous account API:
 > Since the request is authenticated with the token field it contains, it could
 > be tempting to introduce an "invited account" API family that would authenticate on
 > the token similarly to the regular `invited` API family used for user/device enrollment.
-> However this is not worth the effort since, unlike for enrollment, this token only
+> However, this is not worth the effort since, unlike for enrollment, this token only
 > authenticates a single API command (and we would need to introduce a separate API
 > family for other token-for-single-API-command such as account recovery & deletion).
 
@@ -593,13 +593,13 @@ Authenticated account API:
 }
 ```
 
-In essence, this replace the password authentication method from the current active vault
+In essence, this replaces the password authentication method from the current active vault
 and replace it by a new one.
 
 > [!NOTE]
 > In practice the old password authentication is not removed but only marked as
 > inactive. This way it can still be used to recover the vault in case of account recovery
-> if the user still remember the old password (see [RFC 1014](1014-account-vault-for-device-stored-on-server.md)).
+> if the user still remembers the old password (see [RFC 1014](1014-account-vault-for-device-stored-on-server.md)).
 
 The IP address and User-agent of the creator are recorded (see Data Model).
 
@@ -640,8 +640,7 @@ Anonymous account API:
 The server will send an email with a token (similar to the creation token) to confirm the operation.
 
 > [!NOTE]
-> To avoid DOS attack, the server will limit the number of requests in a similar
-> way as for `account_create_send_validation_email`.
+> To avoid DOS attack, the server will limit the number of requests similarly to `account_create_send_validation_email`.
 
 ### 4.7 - Account recovery: actual operation
 
@@ -771,5 +770,5 @@ At that point the server can remove the client, and its related data.
 ### Remarks & open questions
 
 - The client will interact with parsec-account via `libparsec`, that way we reuse our RPC communication stack.
-- Parsec Account will only list devices, it will not perform cleanup automatically, it's up to the user to do that.
+- Parsec Account will only list devices, it will not perform clean up automatically, it's up to the user to do that.
   That mean in case of revocation, the server will not remove the device (but will display that the device was revoked).
