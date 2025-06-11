@@ -47,12 +47,13 @@ import { Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationDataType, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { Resources, ResourcesManager } from '@/services/resourcesManager';
 import { Sentry } from '@/services/sentry';
 import { initViewers } from '@/services/viewers';
 import { LogLevel, WebLogger } from '@/services/webLogger';
 import LongPathsSupportModal from '@/views/about/LongPathsSupportModal.vue';
 import IncompatibleEnvironmentModal from '@/views/home/IncompatibleEnvironmentModal.vue';
-import { Answer, Base64, I18n, Locale, MegaSharkPlugin, StripeConfig, ThemeManager, Validity, askQuestion } from 'megashark-lib';
+import { Answer, Base64, I18n, Locale, MegaSharkPlugin, Obj, StripeConfig, ThemeManager, Validity, askQuestion } from 'megashark-lib';
 
 enum AppState {
   Ready = 'ready',
@@ -165,12 +166,33 @@ function warnRefresh(): void {
 const injectionProvider = new InjectionProvider();
 
 async function setupApp(): Promise<void> {
+  await WebLogger.init();
+
+  const configDir = await libparsec.getDefaultConfigDir();
+  const dataBaseDir = await libparsec.getDefaultDataBaseDir();
+  const mountpointBaseDir = await libparsec.getDefaultMountpointBaseDir();
+  const isDesktop = !('TESTING' in window) && isPlatform('electron');
+  const platform = await libparsec.getPlatform();
+  const isLinux = isDesktop && platform === Platform.Linux;
+
+  window.getConfigDir = (): string => configDir;
+  window.getDataBaseDir = (): string => dataBaseDir;
+  window.getMountpointBaseDir = (): string => mountpointBaseDir;
+  window.getPlatform = (): Platform => platform;
+  window.isDesktop = (): boolean => isDesktop;
+  window.isDev = (): boolean => false;
+  window.isLinux = (): boolean => isLinux;
+  window.isTesting = (): boolean => 'TESTING' in window && (window.TESTING as boolean);
+
+  if (!isElectron()) {
+    setupMockElectronAPI(injectionProvider);
+  }
+  await ResourcesManager.instance().loadAll();
+
   await storageManagerInstance.init();
   const storageManager = storageManagerInstance.get();
 
   const config = await storageManager.retrieveConfig();
-
-  await WebLogger.init();
 
   const hotkeyManager = new HotkeyManager();
   const router = getRouter();
@@ -184,6 +206,16 @@ async function setupApp(): Promise<void> {
       environment: Env.getStripeApiKey().mode,
       locale: config.locale,
     };
+  }
+
+  const customFrFr = ResourcesManager.instance().get(Resources.TranslationFrFr);
+  const customEnUs = ResourcesManager.instance().get(Resources.TranslationEnUs);
+
+  if (customFrFr) {
+    Obj.mergeDeep(appFrFR, customFrFr);
+  }
+  if (customEnUs) {
+    Obj.mergeDeep(appEnUS, customEnUs);
   }
 
   const megasharkPlugin = new MegaSharkPlugin({
@@ -221,10 +253,6 @@ async function setupApp(): Promise<void> {
   app.provide(InjectionProviderKey, injectionProvider);
   app.provide(HotkeyManagerKey, hotkeyManager);
 
-  if (!isElectron()) {
-    setupMockElectronAPI(injectionProvider);
-  }
-
   await initViewers();
 
   // We get the app element
@@ -240,22 +268,6 @@ async function setupApp(): Promise<void> {
   // obtained through `window.nextStageHook`, see below)
   const nextStage = async (testbedDiscriminantPath?: string, locale?: Locale): Promise<void> => {
     await router.isReady();
-
-    const configDir = await libparsec.getDefaultConfigDir();
-    const dataBaseDir = await libparsec.getDefaultDataBaseDir();
-    const mountpointBaseDir = await libparsec.getDefaultMountpointBaseDir();
-    const isDesktop = !('TESTING' in window) && isPlatform('electron');
-    const platform = await libparsec.getPlatform();
-    const isLinux = isDesktop && platform === Platform.Linux;
-
-    window.getConfigDir = (): string => configDir;
-    window.getDataBaseDir = (): string => dataBaseDir;
-    window.getMountpointBaseDir = (): string => mountpointBaseDir;
-    window.getPlatform = (): Platform => platform;
-    window.isDesktop = (): boolean => isDesktop;
-    window.isDev = (): boolean => false;
-    window.isLinux = (): boolean => isLinux;
-    window.isTesting = (): boolean => 'TESTING' in window && (window.TESTING as boolean);
 
     if (testbedDiscriminantPath) {
       window.usesTestbed = (): boolean => true;
@@ -545,6 +557,12 @@ function setupMockElectronAPI(injectionProvider: InjectionProvider): void {
         });
       });
     },
+    readCustomFile: (_file: string): Promise<ArrayBuffer | undefined> => {
+      console.log('readCustomFile: Not available');
+      return new Promise((resolve, _reject) => {
+        resolve(undefined);
+      });
+    },
   };
 }
 
@@ -674,6 +692,7 @@ declare global {
       seeInExplorer: (path: string) => void;
       getLogs: () => Promise<Array<string>>;
       initError: (error?: string) => void;
+      readCustomFile: (file: string) => Promise<ArrayBuffer | undefined>;
     };
   }
 }

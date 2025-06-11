@@ -43,3 +43,5 @@ npm-debug.log*
 /playwright-report/
 /playwright/.cache/
 .env.development.local
+# Resources for custom branding
+/public/custom
