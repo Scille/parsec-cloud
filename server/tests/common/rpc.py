@@ -30,6 +30,15 @@ from parsec._parsec import (
     tos_cmds,
 )
 
+# Command families
+
+TOS_FAMILY = "tos"
+INVITED_FAMILY = "invited"
+ANONYMOUS_FAMILY = "anonymous"
+AUTHENTICATED_FAMILY = "authenticated"
+ANONYMOUS_ACCOUNT_FAMILY = "anonymous_account"
+AUTHENTICATED_ACCOUNT_FAMILY = "authenticated_account"
+
 
 class BaseAnonymousRpcClient:
     async def _do_request(self, req: bytes, family: str) -> bytes:
@@ -54,19 +63,19 @@ class BaseAnonymousRpcClient:
             redacted_device_certificate=redacted_device_certificate,
             sequester_authority_certificate=sequester_authority_certificate,
         )
-        raw_rep = await self._do_request(req.dump(), "anonymous")
+        raw_rep = await self._do_request(req.dump(), ANONYMOUS_FAMILY)
         return anonymous_cmds.latest.organization_bootstrap.Rep.load(raw_rep)
 
     async def ping(self, ping: str) -> anonymous_cmds.latest.ping.Rep:
         req = anonymous_cmds.latest.ping.Req(ping=ping)
-        raw_rep = await self._do_request(req.dump(), "anonymous")
+        raw_rep = await self._do_request(req.dump(), ANONYMOUS_FAMILY)
         return anonymous_cmds.latest.ping.Rep.load(raw_rep)
 
     async def pki_enrollment_info(
         self, enrollment_id: EnrollmentID
     ) -> anonymous_cmds.latest.pki_enrollment_info.Rep:
         req = anonymous_cmds.latest.pki_enrollment_info.Req(enrollment_id=enrollment_id)
-        raw_rep = await self._do_request(req.dump(), "anonymous")
+        raw_rep = await self._do_request(req.dump(), ANONYMOUS_FAMILY)
         return anonymous_cmds.latest.pki_enrollment_info.Rep.load(raw_rep)
 
     async def pki_enrollment_submit(
@@ -86,7 +95,7 @@ class BaseAnonymousRpcClient:
             submit_payload_signature=submit_payload_signature,
             submit_payload=submit_payload,
         )
-        raw_rep = await self._do_request(req.dump(), "anonymous")
+        raw_rep = await self._do_request(req.dump(), ANONYMOUS_FAMILY)
         return anonymous_cmds.latest.pki_enrollment_submit.Rep.load(raw_rep)
 
 
@@ -111,26 +120,26 @@ class BaseAnonymousAccountRpcClient:
             auth_method_id=auth_method_id,
             vault_key_access=vault_key_access,
         )
-        raw_rep = await self._do_request(req.dump(), "anonymous_account")
+        raw_rep = await self._do_request(req.dump(), ANONYMOUS_ACCOUNT_FAMILY)
         return anonymous_account_cmds.latest.account_create_proceed.Rep.load(raw_rep)
 
     async def account_create_send_validation_email(
         self, email: EmailAddress
     ) -> anonymous_account_cmds.latest.account_create_send_validation_email.Rep:
         req = anonymous_account_cmds.latest.account_create_send_validation_email.Req(email=email)
-        raw_rep = await self._do_request(req.dump(), "anonymous_account")
+        raw_rep = await self._do_request(req.dump(), ANONYMOUS_ACCOUNT_FAMILY)
         return anonymous_account_cmds.latest.account_create_send_validation_email.Rep.load(raw_rep)
 
     async def auth_method_password_get_algorithm(
         self, email: EmailAddress
     ) -> anonymous_account_cmds.latest.auth_method_password_get_algorithm.Rep:
         req = anonymous_account_cmds.latest.auth_method_password_get_algorithm.Req(email=email)
-        raw_rep = await self._do_request(req.dump(), "anonymous_account")
+        raw_rep = await self._do_request(req.dump(), ANONYMOUS_ACCOUNT_FAMILY)
         return anonymous_account_cmds.latest.auth_method_password_get_algorithm.Rep.load(raw_rep)
 
     async def ping(self, ping: str) -> anonymous_account_cmds.latest.ping.Rep:
         req = anonymous_account_cmds.latest.ping.Req(ping=ping)
-        raw_rep = await self._do_request(req.dump(), "anonymous_account")
+        raw_rep = await self._do_request(req.dump(), ANONYMOUS_ACCOUNT_FAMILY)
         return anonymous_account_cmds.latest.ping.Rep.load(raw_rep)
 
 
@@ -144,14 +153,14 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.block_create.Req(
             block_id=block_id, realm_id=realm_id, key_index=key_index, block=block
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.block_create.Rep.load(raw_rep)
 
     async def block_read(
         self, block_id: BlockID, realm_id: VlobID
     ) -> authenticated_cmds.latest.block_read.Rep:
         req = authenticated_cmds.latest.block_read.Req(block_id=block_id, realm_id=realm_id)
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.block_read.Rep.load(raw_rep)
 
     async def certificate_get(
@@ -167,7 +176,7 @@ class BaseAuthenticatedRpcClient:
             shamir_recovery_after=shamir_recovery_after,
             realm_after=realm_after,
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.certificate_get.Rep.load(raw_rep)
 
     async def device_create(
@@ -177,28 +186,28 @@ class BaseAuthenticatedRpcClient:
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.device_create.Rep.load(raw_rep)
 
     async def events_listen(
         self,
     ) -> authenticated_cmds.latest.events_listen.Rep:
         req = authenticated_cmds.latest.events_listen.Req()
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.events_listen.Rep.load(raw_rep)
 
     async def invite_cancel(
         self, token: InvitationToken
     ) -> authenticated_cmds.latest.invite_cancel.Rep:
         req = authenticated_cmds.latest.invite_cancel.Req(token=token)
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.invite_cancel.Rep.load(raw_rep)
 
     async def invite_complete(
         self, token: InvitationToken
     ) -> authenticated_cmds.latest.invite_complete.Rep:
         req = authenticated_cmds.latest.invite_complete.Req(token=token)
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.invite_complete.Rep.load(raw_rep)
 
     async def invite_greeter_cancel_greeting_attempt(
@@ -207,14 +216,14 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.Req(
             greeting_attempt=greeting_attempt, reason=reason
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.Rep.load(raw_rep)
 
     async def invite_greeter_start_greeting_attempt(
         self, token: InvitationToken
     ) -> authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Rep:
         req = authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Req(token=token)
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Rep.load(raw_rep)
 
     async def invite_greeter_step(
@@ -225,21 +234,21 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.invite_greeter_step.Req(
             greeting_attempt=greeting_attempt, greeter_step=greeter_step
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.invite_greeter_step.Rep.load(raw_rep)
 
     async def invite_list(
         self,
     ) -> authenticated_cmds.latest.invite_list.Rep:
         req = authenticated_cmds.latest.invite_list.Req()
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.invite_list.Rep.load(raw_rep)
 
     async def invite_new_device(
         self, send_email: bool
     ) -> authenticated_cmds.latest.invite_new_device.Rep:
         req = authenticated_cmds.latest.invite_new_device.Req(send_email=send_email)
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.invite_new_device.Rep.load(raw_rep)
 
     async def invite_new_shamir_recovery(
@@ -248,7 +257,7 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.invite_new_shamir_recovery.Req(
             claimer_user_id=claimer_user_id, send_email=send_email
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.invite_new_shamir_recovery.Rep.load(raw_rep)
 
     async def invite_new_user(
@@ -257,26 +266,26 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.invite_new_user.Req(
             claimer_email=claimer_email, send_email=send_email
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.invite_new_user.Rep.load(raw_rep)
 
     async def list_frozen_users(
         self,
     ) -> authenticated_cmds.latest.list_frozen_users.Rep:
         req = authenticated_cmds.latest.list_frozen_users.Req()
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.list_frozen_users.Rep.load(raw_rep)
 
     async def organization_info(
         self,
     ) -> authenticated_cmds.latest.organization_info.Rep:
         req = authenticated_cmds.latest.organization_info.Req()
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.organization_info.Rep.load(raw_rep)
 
     async def ping(self, ping: str) -> authenticated_cmds.latest.ping.Rep:
         req = authenticated_cmds.latest.ping.Req(ping=ping)
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.ping.Rep.load(raw_rep)
 
     async def pki_enrollment_accept(
@@ -300,21 +309,21 @@ class BaseAuthenticatedRpcClient:
             redacted_device_certificate=redacted_device_certificate,
             redacted_user_certificate=redacted_user_certificate,
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.pki_enrollment_accept.Rep.load(raw_rep)
 
     async def pki_enrollment_list(
         self,
     ) -> authenticated_cmds.latest.pki_enrollment_list.Rep:
         req = authenticated_cmds.latest.pki_enrollment_list.Req()
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.pki_enrollment_list.Rep.load(raw_rep)
 
     async def pki_enrollment_reject(
         self, enrollment_id: EnrollmentID
     ) -> authenticated_cmds.latest.pki_enrollment_reject.Rep:
         req = authenticated_cmds.latest.pki_enrollment_reject.Req(enrollment_id=enrollment_id)
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.pki_enrollment_reject.Rep.load(raw_rep)
 
     async def realm_create(
@@ -323,7 +332,7 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.realm_create.Req(
             realm_role_certificate=realm_role_certificate
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.realm_create.Rep.load(raw_rep)
 
     async def realm_get_keys_bundle(
@@ -332,7 +341,7 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.realm_get_keys_bundle.Req(
             realm_id=realm_id, key_index=key_index
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.realm_get_keys_bundle.Rep.load(raw_rep)
 
     async def realm_rename(
@@ -341,7 +350,7 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.realm_rename.Req(
             realm_name_certificate=realm_name_certificate, initial_name_or_fail=initial_name_or_fail
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.realm_rename.Rep.load(raw_rep)
 
     async def realm_rotate_key(
@@ -357,7 +366,7 @@ class BaseAuthenticatedRpcClient:
             per_sequester_service_keys_bundle_access=per_sequester_service_keys_bundle_access,
             keys_bundle=keys_bundle,
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.realm_rotate_key.Rep.load(raw_rep)
 
     async def realm_share(
@@ -368,7 +377,7 @@ class BaseAuthenticatedRpcClient:
             recipient_keys_bundle_access=recipient_keys_bundle_access,
             key_index=key_index,
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.realm_share.Rep.load(raw_rep)
 
     async def realm_unshare(
@@ -377,7 +386,7 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.realm_unshare.Req(
             realm_role_certificate=realm_role_certificate
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.realm_unshare.Rep.load(raw_rep)
 
     async def shamir_recovery_delete(
@@ -386,7 +395,7 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.shamir_recovery_delete.Req(
             shamir_recovery_deletion_certificate=shamir_recovery_deletion_certificate
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.shamir_recovery_delete.Rep.load(raw_rep)
 
     async def shamir_recovery_setup(
@@ -402,7 +411,7 @@ class BaseAuthenticatedRpcClient:
             shamir_recovery_brief_certificate=shamir_recovery_brief_certificate,
             shamir_recovery_share_certificates=shamir_recovery_share_certificates,
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.shamir_recovery_setup.Rep.load(raw_rep)
 
     async def user_create(
@@ -418,7 +427,7 @@ class BaseAuthenticatedRpcClient:
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.user_create.Rep.load(raw_rep)
 
     async def user_revoke(
@@ -427,7 +436,7 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.user_revoke.Req(
             revoked_user_certificate=revoked_user_certificate
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.user_revoke.Rep.load(raw_rep)
 
     async def user_update(
@@ -436,7 +445,7 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.user_update.Req(
             user_update_certificate=user_update_certificate
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.user_update.Rep.load(raw_rep)
 
     async def vlob_create(
@@ -445,7 +454,7 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.vlob_create.Req(
             realm_id=realm_id, vlob_id=vlob_id, key_index=key_index, timestamp=timestamp, blob=blob
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.vlob_create.Rep.load(raw_rep)
 
     async def vlob_poll_changes(
@@ -454,21 +463,21 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.vlob_poll_changes.Req(
             realm_id=realm_id, last_checkpoint=last_checkpoint
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.vlob_poll_changes.Rep.load(raw_rep)
 
     async def vlob_read_batch(
         self, realm_id: VlobID, vlobs: list[VlobID], at: DateTime | None
     ) -> authenticated_cmds.latest.vlob_read_batch.Rep:
         req = authenticated_cmds.latest.vlob_read_batch.Req(realm_id=realm_id, vlobs=vlobs, at=at)
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.vlob_read_batch.Rep.load(raw_rep)
 
     async def vlob_read_versions(
         self, realm_id: VlobID, items: list[tuple[VlobID, int]]
     ) -> authenticated_cmds.latest.vlob_read_versions.Rep:
         req = authenticated_cmds.latest.vlob_read_versions.Req(realm_id=realm_id, items=items)
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.vlob_read_versions.Rep.load(raw_rep)
 
     async def vlob_update(
@@ -488,7 +497,7 @@ class BaseAuthenticatedRpcClient:
             version=version,
             blob=blob,
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_FAMILY)
         return authenticated_cmds.latest.vlob_update.Rep.load(raw_rep)
 
 
@@ -500,28 +509,28 @@ class BaseAuthenticatedAccountRpcClient:
         self,
     ) -> authenticated_account_cmds.latest.account_delete_send_validation_token.Rep:
         req = authenticated_account_cmds.latest.account_delete_send_validation_token.Req()
-        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_ACCOUNT_FAMILY)
         return authenticated_account_cmds.latest.account_delete_send_validation_token.Rep.load(
             raw_rep
         )
 
     async def ping(self, ping: str) -> authenticated_account_cmds.latest.ping.Rep:
         req = authenticated_account_cmds.latest.ping.Req(ping=ping)
-        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_ACCOUNT_FAMILY)
         return authenticated_account_cmds.latest.ping.Rep.load(raw_rep)
 
     async def vault_item_list(
         self,
     ) -> authenticated_account_cmds.latest.vault_item_list.Rep:
         req = authenticated_account_cmds.latest.vault_item_list.Req()
-        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_ACCOUNT_FAMILY)
         return authenticated_account_cmds.latest.vault_item_list.Rep.load(raw_rep)
 
     async def vault_item_recovery_list(
         self,
     ) -> authenticated_account_cmds.latest.vault_item_recovery_list.Rep:
         req = authenticated_account_cmds.latest.vault_item_recovery_list.Req()
-        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_ACCOUNT_FAMILY)
         return authenticated_account_cmds.latest.vault_item_recovery_list.Rep.load(raw_rep)
 
     async def vault_item_upload(
@@ -530,7 +539,7 @@ class BaseAuthenticatedAccountRpcClient:
         req = authenticated_account_cmds.latest.vault_item_upload.Req(
             item_fingerprint=item_fingerprint, item=item
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_ACCOUNT_FAMILY)
         return authenticated_account_cmds.latest.vault_item_upload.Rep.load(raw_rep)
 
     async def vault_key_rotation(
@@ -548,7 +557,7 @@ class BaseAuthenticatedAccountRpcClient:
             new_vault_key_access=new_vault_key_access,
             items=items,
         )
-        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        raw_rep = await self._do_request(req.dump(), AUTHENTICATED_ACCOUNT_FAMILY)
         return authenticated_account_cmds.latest.vault_key_rotation.Rep.load(raw_rep)
 
 
@@ -562,14 +571,14 @@ class BaseInvitedRpcClient:
         req = invited_cmds.latest.invite_claimer_cancel_greeting_attempt.Req(
             greeting_attempt=greeting_attempt, reason=reason
         )
-        raw_rep = await self._do_request(req.dump(), "invited")
+        raw_rep = await self._do_request(req.dump(), INVITED_FAMILY)
         return invited_cmds.latest.invite_claimer_cancel_greeting_attempt.Rep.load(raw_rep)
 
     async def invite_claimer_start_greeting_attempt(
         self, greeter: UserID
     ) -> invited_cmds.latest.invite_claimer_start_greeting_attempt.Rep:
         req = invited_cmds.latest.invite_claimer_start_greeting_attempt.Req(greeter=greeter)
-        raw_rep = await self._do_request(req.dump(), "invited")
+        raw_rep = await self._do_request(req.dump(), INVITED_FAMILY)
         return invited_cmds.latest.invite_claimer_start_greeting_attempt.Rep.load(raw_rep)
 
     async def invite_claimer_step(
@@ -580,26 +589,26 @@ class BaseInvitedRpcClient:
         req = invited_cmds.latest.invite_claimer_step.Req(
             greeting_attempt=greeting_attempt, claimer_step=claimer_step
         )
-        raw_rep = await self._do_request(req.dump(), "invited")
+        raw_rep = await self._do_request(req.dump(), INVITED_FAMILY)
         return invited_cmds.latest.invite_claimer_step.Rep.load(raw_rep)
 
     async def invite_info(
         self,
     ) -> invited_cmds.latest.invite_info.Rep:
         req = invited_cmds.latest.invite_info.Req()
-        raw_rep = await self._do_request(req.dump(), "invited")
+        raw_rep = await self._do_request(req.dump(), INVITED_FAMILY)
         return invited_cmds.latest.invite_info.Rep.load(raw_rep)
 
     async def invite_shamir_recovery_reveal(
         self, reveal_token: InvitationToken
     ) -> invited_cmds.latest.invite_shamir_recovery_reveal.Rep:
         req = invited_cmds.latest.invite_shamir_recovery_reveal.Req(reveal_token=reveal_token)
-        raw_rep = await self._do_request(req.dump(), "invited")
+        raw_rep = await self._do_request(req.dump(), INVITED_FAMILY)
         return invited_cmds.latest.invite_shamir_recovery_reveal.Rep.load(raw_rep)
 
     async def ping(self, ping: str) -> invited_cmds.latest.ping.Rep:
         req = invited_cmds.latest.ping.Req(ping=ping)
-        raw_rep = await self._do_request(req.dump(), "invited")
+        raw_rep = await self._do_request(req.dump(), INVITED_FAMILY)
         return invited_cmds.latest.ping.Rep.load(raw_rep)
 
 
@@ -609,12 +618,12 @@ class BaseTosRpcClient:
 
     async def tos_accept(self, tos_updated_on: DateTime) -> tos_cmds.latest.tos_accept.Rep:
         req = tos_cmds.latest.tos_accept.Req(tos_updated_on=tos_updated_on)
-        raw_rep = await self._do_request(req.dump(), "tos")
+        raw_rep = await self._do_request(req.dump(), TOS_FAMILY)
         return tos_cmds.latest.tos_accept.Rep.load(raw_rep)
 
     async def tos_get(
         self,
     ) -> tos_cmds.latest.tos_get.Rep:
         req = tos_cmds.latest.tos_get.Req()
-        raw_rep = await self._do_request(req.dump(), "tos")
+        raw_rep = await self._do_request(req.dump(), TOS_FAMILY)
         return tos_cmds.latest.tos_get.Rep.load(raw_rep)
