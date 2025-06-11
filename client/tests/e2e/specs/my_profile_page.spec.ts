@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { expect, fillIonInput, logout, msTest, selectDropdown, setSmallDisplay } from '@tests/e2e/helpers';
+import { DisplaySize, expect, fillIonInput, logout, msTest, selectDropdown } from '@tests/e2e/helpers';
 
 msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.menu-list__item').nth(1)).toHaveText('My devices');
@@ -211,7 +211,7 @@ msTest('Profile page back button', async ({ workspaces }) => {
 });
 
 msTest('Open modal to greet user from ProfilePage in small display', async ({ usersPage }) => {
-  await setSmallDisplay(usersPage);
+  await usersPage.setDisplaySize(DisplaySize.Small);
 
   await usersPage.locator('.tab-bar-menu').locator('.tab-bar-menu-button').nth(3).click();
   await usersPage.locator('.tab-bar-menu').locator('#add-menu-fab-button').click();

@@ -116,7 +116,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
       await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
     } else if (mode === 'list') {
       await toggleViewMode(workspaces);
-      await workspaces.locator('.workspaces-container').locator('.workspace-list-item').nth(0).click();
+      await workspaces.locator('.workspaces-container').locator('.workspace-list-item').locator('.workspace-name').nth(0).click();
     } else {
       await workspaces.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0).click();
       await workspaces.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumb').nth(0).click();

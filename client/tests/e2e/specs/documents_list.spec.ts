@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { answerQuestion, createFolder, DisplaySize, expect, fillInputModal, msTest, setSmallDisplay } from '@tests/e2e/helpers';
+import { answerQuestion, createFolder, DisplaySize, expect, fillInputModal, msTest } from '@tests/e2e/helpers';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#folders-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -28,7 +28,7 @@ for (const displaySize of ['small', 'large']) {
   msTest(`Documents page default state on ${displaySize} display`, async ({ documents }) => {
     const entries = documents.locator('.folder-container').locator('.file-list-item');
     if (displaySize === DisplaySize.Small) {
-      await setSmallDisplay(documents);
+      await documents.setDisplaySize(DisplaySize.Small);
       await expect(entries.locator('.file-name').locator('.file-name__label')).toHaveText(NAME_MATCHER_ARRAY);
       await expect(entries.locator('.data-date')).toHaveText(TIME_MATCHER_ARRAY);
       await expect(entries.locator('.data-size')).toHaveText(SIZE_MATCHER_ARRAY.slice(1));
@@ -168,7 +168,7 @@ msTest('Delete all documents', async ({ documents }) => {
 for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
   msTest(`Create a folder ${displaySize} display`, async ({ documents }) => {
     if (displaySize === DisplaySize.Small) {
-      await setSmallDisplay(documents);
+      await documents.setDisplaySize(DisplaySize.Small);
     }
 
     const entries = documents.locator('.folder-container').locator('.file-list-item');
@@ -208,7 +208,7 @@ for (const displaySize of [DisplaySize.Small, DisplaySize.Large]) {
     }
 
     if (displaySize === DisplaySize.Small) {
-      await setSmallDisplay(documents);
+      await documents.setDisplaySize(DisplaySize.Small);
       const smallBreadcrumbs = documents.locator('#connected-header').locator('.topbar-left').locator('.breadcrumb-small-container');
 
       await expect(documents.locator('#connected-header').locator('.topbar-left').locator('ion-breadcrumbs')).not.toBeVisible();

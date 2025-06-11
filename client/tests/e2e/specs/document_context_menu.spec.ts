@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Locator, Page } from '@playwright/test';
-import { answerQuestion, expandSheetModal, expect, fillInputModal, msTest, setSmallDisplay } from '@tests/e2e/helpers';
+import { Locator } from '@playwright/test';
+import { answerQuestion, DisplaySize, expandSheetModal, expect, fillInputModal, MsPage, msTest } from '@tests/e2e/helpers';
 
-async function isInGridMode(page: Page, smallDisplay?: boolean): Promise<boolean> {
+async function isInGridMode(page: MsPage): Promise<boolean> {
+  const smallDisplay = (await page.getDisplaySize()) === DisplaySize.Small;
   return (
     (await page
       .locator(smallDisplay ? '.action-bar-mobile-filter' : '#folders-ms-action-bar')
@@ -12,17 +13,19 @@ async function isInGridMode(page: Page, smallDisplay?: boolean): Promise<boolean
   );
 }
 
-async function toggleViewMode(page: Page, smallDisplay?: boolean): Promise<void> {
+async function toggleViewMode(page: MsPage): Promise<void> {
+  const smallDisplay = (await page.getDisplaySize()) === DisplaySize.Small;
   const locator = smallDisplay ? '.action-bar-mobile-filter' : '#folders-ms-action-bar';
-  if (await isInGridMode(page, smallDisplay)) {
+  if (await isInGridMode(page)) {
     await page.locator(locator).locator('#list-view').click();
   } else {
     await page.locator(locator).locator('#grid-view').click();
   }
 }
 
-async function openPopover(page: Page, index: number, smallDisplay?: boolean): Promise<Locator> {
-  if (await isInGridMode(page, smallDisplay)) {
+async function openPopover(page: MsPage, index: number): Promise<Locator> {
+  const smallDisplay = (await page.getDisplaySize()) === DisplaySize.Small;
+  if (await isInGridMode(page)) {
     const entry = page.locator('.folder-container').locator('.file-card-item').nth(index);
     await entry.hover();
     await entry.locator('.card-option').click();
@@ -345,14 +348,14 @@ for (const gridMode of [false, true]) {
 
 for (const gridMode of [false, true]) {
   msTest(`Small display document actions default state in ${gridMode ? 'grid' : 'list'} mode for file`, async ({ documents }) => {
-    await setSmallDisplay(documents);
+    await documents.setDisplaySize(DisplaySize.Small);
     await expect(documents.locator('.file-context-menu')).toBeHidden();
     if (!gridMode) {
       const entry = documents.locator('.folder-container').locator('.file-list-item').nth(1);
       await entry.hover();
       await entry.locator('.options-button').click();
     } else {
-      await toggleViewMode(documents, true);
+      await toggleViewMode(documents);
       const entry = documents.locator('.folder-container').locator('.file-card-item').nth(1);
       await entry.hover();
       await entry.locator('.card-option').click();
@@ -373,14 +376,14 @@ for (const gridMode of [false, true]) {
   });
 
   msTest(`Small display document actions default state in ${gridMode ? 'grid' : 'list'} mode for folder`, async ({ documents }) => {
-    await setSmallDisplay(documents);
+    await documents.setDisplaySize(DisplaySize.Small);
     await expect(documents.locator('.file-context-menu')).toBeHidden();
     if (!gridMode) {
       const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
       await entry.hover();
       await entry.locator('.options-button').click();
     } else {
-      await toggleViewMode(documents, true);
+      await toggleViewMode(documents);
       const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
       await entry.hover();
       await entry.locator('.card-option').click();
@@ -392,13 +395,13 @@ for (const gridMode of [false, true]) {
   });
 
   msTest(`Small display document popover on right click in ${gridMode ? 'grid' : 'list'} mode for file`, async ({ documents }) => {
-    await setSmallDisplay(documents);
+    await documents.setDisplaySize(DisplaySize.Small);
     await expect(documents.locator('.file-context-menu')).toBeHidden();
     if (!gridMode) {
       const entry = documents.locator('.folder-container').locator('.file-list-item').nth(1);
       await entry.click({ button: 'right' });
     } else {
-      await toggleViewMode(documents, true);
+      await toggleViewMode(documents);
       const entry = documents.locator('.folder-container').locator('.file-card-item').nth(1);
       await entry.click({ button: 'right' });
     }
@@ -418,13 +421,13 @@ for (const gridMode of [false, true]) {
   });
 
   msTest(`Small display document popover on right click in ${gridMode ? 'grid' : 'list'} mode for folder`, async ({ documents }) => {
-    await setSmallDisplay(documents);
+    await documents.setDisplaySize(DisplaySize.Small);
     await expect(documents.locator('.file-context-menu')).toBeHidden();
     if (!gridMode) {
       const entry = documents.locator('.folder-container').locator('.file-list-item').nth(0);
       await entry.click({ button: 'right' });
     } else {
-      await toggleViewMode(documents, true);
+      await toggleViewMode(documents);
       const entry = documents.locator('.folder-container').locator('.file-card-item').nth(0);
       await entry.click({ button: 'right' });
     }
@@ -435,11 +438,11 @@ for (const gridMode of [false, true]) {
   });
 
   msTest(`Small display popover with right click on empty space in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
-    await setSmallDisplay(documents);
+    await documents.setDisplaySize(DisplaySize.Small);
     await expect(documents.locator('.folder-global-context-menu')).toBeHidden();
 
     if (gridMode) {
-      await toggleViewMode(documents, true);
+      await toggleViewMode(documents);
     }
     await documents.locator('.folder-container').click({ button: 'right', position: { x: 100, y: 10 } });
     await expect(documents.locator('.file-context-sheet-modal')).toBeVisible();
@@ -468,14 +471,14 @@ for (const gridMode of [false, true]) {
   msTest(
     `Small display document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} only files`,
     async ({ documents }) => {
-      await setSmallDisplay(documents);
+      await documents.setDisplaySize(DisplaySize.Small);
       await expect(documents.locator('.file-context-menu')).toBeHidden();
       let entries: Locator;
 
       if (!gridMode) {
         entries = documents.locator('.folder-container').locator('.file-list-item');
       } else {
-        await toggleViewMode(documents, true);
+        await toggleViewMode(documents);
         entries = documents.locator('.folder-container').locator('.file-card-item');
       }
       await documents.locator('.folder-container').click({ button: 'right', position: { x: 100, y: 10 } });
@@ -500,14 +503,14 @@ for (const gridMode of [false, true]) {
   msTest(
     `Small display document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} with a folder`,
     async ({ documents }) => {
-      await setSmallDisplay(documents);
+      await documents.setDisplaySize(DisplaySize.Small);
       await expect(documents.locator('.file-context-menu')).toBeHidden();
       let entries: Locator;
 
       if (!gridMode) {
         entries = documents.locator('.folder-container').locator('.file-list-item');
       } else {
-        await toggleViewMode(documents, true);
+        await toggleViewMode(documents);
         entries = documents.locator('.folder-container').locator('.file-card-item');
       }
       await documents.locator('.folder-container').click({ button: 'right', position: { x: 100, y: 10 } });
@@ -528,11 +531,11 @@ for (const gridMode of [false, true]) {
   );
 
   msTest(`Small display get document link in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents, context }) => {
-    await setSmallDisplay(documents);
+    await documents.setDisplaySize(DisplaySize.Small);
     if (gridMode) {
-      await toggleViewMode(documents, true);
+      await toggleViewMode(documents);
     }
-    await clickAction(await openPopover(documents, 1, true), 'Copy link');
+    await clickAction(await openPopover(documents, 1), 'Copy link');
 
     // Fail to copy because no permission
     await expect(documents).toShowToast('Failed to copy link. Your browser or device does not seem to support copy/paste.', 'Error');
@@ -540,23 +543,23 @@ for (const gridMode of [false, true]) {
     // Grant the permissions
     await context.grantPermissions(['clipboard-write']);
 
-    await clickAction(await openPopover(documents, 1, true), 'Copy link');
+    await clickAction(await openPopover(documents, 1), 'Copy link');
     await expect(documents).toShowToast('Link has been copied to clipboard.', 'Info');
     const filePath = await documents.evaluate(() => navigator.clipboard.readText());
     expect(filePath).toMatch(/^parsec3:\/\/.+$/);
   });
 
   msTest(`Small display rename document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
-    await setSmallDisplay(documents);
+    await documents.setDisplaySize(DisplaySize.Small);
     let entry;
     if (gridMode) {
-      await toggleViewMode(documents, true);
+      await toggleViewMode(documents);
       entry = documents.locator('.folder-container').locator('.file-card-item').nth(1);
     } else {
       entry = documents.locator('.folder-container').locator('.file-list-item').nth(1);
     }
 
-    await clickAction(await openPopover(documents, 1, true), 'Rename');
+    await clickAction(await openPopover(documents, 1), 'Rename');
     await fillInputModal(documents, 'New Name', true);
     if (!gridMode) {
       await expect(entry.locator('.file-name').locator('.file-name__label')).toHaveText('New Name');
@@ -566,9 +569,9 @@ for (const gridMode of [false, true]) {
   });
 
   msTest(`Small display delete document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
-    await setSmallDisplay(documents);
+    await documents.setDisplaySize(DisplaySize.Small);
     if (gridMode) {
-      await toggleViewMode(documents, true);
+      await toggleViewMode(documents);
     }
     let fileName;
     let count = 0;
@@ -586,19 +589,14 @@ for (const gridMode of [false, true]) {
       count = await documents.locator('.folder-container').locator('.file-list-item').count();
     }
 
-    await clickAction(await openPopover(documents, 2, true), 'Delete');
+    await clickAction(await openPopover(documents, 2), 'Delete');
 
-    await answerQuestion(
-      documents,
-      true,
-      {
-        expectedTitleText: 'Delete one file',
-        expectedQuestionText: `Are you sure you want to delete file \`${fileName}\`?`,
-        expectedNegativeText: 'Keep file',
-        expectedPositiveText: 'Delete file',
-      },
-      true,
-    );
+    await answerQuestion(documents, true, {
+      expectedTitleText: 'Delete one file',
+      expectedQuestionText: `Are you sure you want to delete file \`${fileName}\`?`,
+      expectedNegativeText: 'Keep file',
+      expectedPositiveText: 'Delete file',
+    });
     if (gridMode) {
       await expect(documents.locator('.folder-container').locator('.file-card-item')).toHaveCount(count - 1);
     } else {
@@ -609,14 +607,14 @@ for (const gridMode of [false, true]) {
   msTest(
     `Small display folder actions default state in a read only workspace in ${gridMode ? 'grid' : 'list'} mode`,
     async ({ documentsReadOnly }) => {
-      await setSmallDisplay(documentsReadOnly);
+      await documentsReadOnly.setDisplaySize(DisplaySize.Small);
       await expect(documentsReadOnly.locator('.file-context-menu')).toBeHidden();
       if (!gridMode) {
         const entry = documentsReadOnly.locator('.folder-container').locator('.file-list-item').nth(0);
         await entry.hover();
         await entry.locator('.options-button').click();
       } else {
-        await toggleViewMode(documentsReadOnly, true);
+        await toggleViewMode(documentsReadOnly);
         const entry = documentsReadOnly.locator('.folder-container').locator('.file-card-item').nth(0);
         await entry.hover();
         await entry.locator('.card-option').click();
@@ -631,14 +629,14 @@ for (const gridMode of [false, true]) {
   msTest(
     `Small display file actions default state in a read only workspace in ${gridMode ? 'grid' : 'list'} mode`,
     async ({ documentsReadOnly }) => {
-      await setSmallDisplay(documentsReadOnly);
+      await documentsReadOnly.setDisplaySize(DisplaySize.Small);
       await expect(documentsReadOnly.locator('.file-context-menu')).toBeHidden();
       if (!gridMode) {
         const entry = documentsReadOnly.locator('.folder-container').locator('.file-list-item').nth(1);
         await entry.hover();
         await entry.locator('.options-button').click();
       } else {
-        await toggleViewMode(documentsReadOnly, true);
+        await toggleViewMode(documentsReadOnly);
         const entry = documentsReadOnly.locator('.folder-container').locator('.file-card-item').nth(1);
         await entry.hover();
         await entry.locator('.card-option').click();
@@ -651,12 +649,12 @@ for (const gridMode of [false, true]) {
   );
 
   msTest(`Small display move document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
-    await setSmallDisplay(documents);
+    await documents.setDisplaySize(DisplaySize.Small);
     if (gridMode) {
-      await toggleViewMode(documents, true);
+      await toggleViewMode(documents);
     }
     await expect(documents.locator('.folder-selection-modal')).toBeHidden();
-    await clickAction(await openPopover(documents, 1, true), 'Move to');
+    await clickAction(await openPopover(documents, 1), 'Move to');
     const modal = documents.locator('.folder-selection-modal');
     await expect(modal).toBeVisible();
     await expect(modal.locator('.ms-modal-header__title')).toHaveText('Move one item');
