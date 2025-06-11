@@ -20,6 +20,8 @@ import { Information, InformationLevel, InformationManager, PresentationMode } f
 import { recentDocumentManager } from '@/services/recentDocuments';
 import { DateTime } from 'luxon';
 import { Base64, openSpinnerModal } from 'megashark-lib';
+import { Env } from '@/services/environment';
+import { isEnabledCryptpadDocumentType } from '@/services/cryptpad';
 
 interface OpenPathOptions {
   skipViewers?: boolean;
@@ -158,6 +160,33 @@ async function openPath(
   const contentType = await detectFileContentType(entry.name);
 
   try {
+    if (Env.isCryptpadEnabled()) {
+      if (contentType && contentType.type !== FileContentType.Unknown && isEnabledCryptpadDocumentType(contentType.extension)) {
+        // Handle Cryptpad supported document types
+        if ((entry as any).size <= OPEN_FILE_SIZE_LIMIT) {
+          if (!options.atTime) {
+            recentDocumentManager.addFile({
+              entryId: entry.id,
+              path: entry.path,
+              workspaceHandle: workspaceHandle,
+              name: entry.name,
+              contentType: contentType,
+            });
+          }
+          await navigateTo(Routes.Editor, {
+            query: {
+              workspaceHandle: workspaceHandle,
+              documentPath: entry.path,
+              timestamp: options.atTime?.toMillis().toString(),
+              fileTypeInfo: Base64.fromObject(contentType),
+            },
+          });
+          return;
+        }
+      }
+    }
+
+    // eslint-disable-next-line max-len
     if (!contentType || contentType.type === FileContentType.Unknown || (isDesktop() && !ENABLED_FILE_VIEWERS.includes(contentType.type))) {
       if (!isWeb() && !options.onlyViewers) {
         await openWithSystem(workspaceHandle, entry, informationManager);
