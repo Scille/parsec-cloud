@@ -6,7 +6,7 @@
       v-show="isLargeDisplay"
       class="breadcrumb"
       @ion-collapsed-click="openPopover($event)"
-      :max-items="maxBreadcrumbs"
+      :max-items="maxShown"
       :items-before-collapse="itemsBeforeCollapse"
       :items-after-collapse="itemsAfterCollapse"
     >
@@ -91,18 +91,61 @@ export interface RouterPathNode {
 import { Query, Routes } from '@/router';
 import { Translatable, useWindowSize } from 'megashark-lib';
 import { IonBreadcrumb, IonBreadcrumbs, IonButton, IonIcon, IonText, popoverController } from '@ionic/vue';
-import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import HeaderBreadcrumbPopover from '@/components/header/HeaderBreadcrumbPopover.vue';
 import { caretDown } from 'ionicons/icons';
+
+const props = withDefaults(
+  defineProps<{
+    pathNodes: RouterPathNode[];
+    itemsBeforeCollapse?: number;
+    itemsAfterCollapse?: number;
+    maxShown?: number;
+    fromHeaderPage?: boolean;
+    availableWidth?: number;
+  }>(),
+  {
+    itemsBeforeCollapse: 2,
+    itemsAfterCollapse: 1,
+    maxShown: 3,
+    fromHeaderPage: false,
+    availableWidth: 0,
+  },
+);
 
 const { windowWidth, isLargeDisplay, isSmallDisplay } = useWindowSize();
 const breadcrumbRef = ref();
 const smallDisplayButtonRef = ref();
 const breadcrumbWidthProperty = ref('');
+let ignoreNextEvent = false;
+
+const watchWindowWidthCancel = watch(windowWidth, () => {
+  setBreadcrumbWidth();
+});
+
+const watchNodeSizeCancel = watch(
+  () => props.pathNodes.length,
+  () => {
+    setBreadcrumbWidth();
+  },
+);
+
+const emits = defineEmits<{
+  (e: 'change', node: RouterPathNode): void;
+}>();
+
+onMounted(() => {
+  setBreadcrumbWidth();
+});
+
+onUnmounted(() => {
+  watchWindowWidthCancel();
+  watchNodeSizeCancel();
+});
 
 function setBreadcrumbWidth(): void {
   if (props.availableWidth > 0 && breadcrumbRef.value) {
-    let visibleNodes = props.pathNodes.length > props.maxShown ? props.maxShown : props.pathNodes.length;
+    let visibleNodes = Math.min(props.pathNodes.length, props.maxShown);
     let breadcrumbWidth = props.availableWidth - 1;
 
     if (isSmallDisplay.value && props.fromHeaderPage && props.pathNodes.length === props.maxShown) {
@@ -130,51 +173,6 @@ function setBreadcrumbWidth(): void {
     breadcrumbWidthProperty.value = `${breadcrumbWidth}rem`;
   }
 }
-
-const props = withDefaults(
-  defineProps<{
-    pathNodes: RouterPathNode[];
-    itemsBeforeCollapse?: number;
-    itemsAfterCollapse?: number;
-    maxShown?: number;
-    fromHeaderPage?: boolean;
-    availableWidth?: number;
-  }>(),
-  {
-    itemsBeforeCollapse: 2,
-    itemsAfterCollapse: 1,
-    maxShown: 3,
-    fromHeaderPage: false,
-    availableWidth: 0,
-  },
-);
-
-const watchWindowWidthCancel = watch(windowWidth, () => {
-  setBreadcrumbWidth();
-});
-
-const watchNodeSizeCancel = watch(
-  () => props.pathNodes.length,
-  () => {
-    setBreadcrumbWidth();
-  },
-);
-
-const emits = defineEmits<{
-  (e: 'change', node: RouterPathNode): void;
-}>();
-
-onMounted(() => {
-  setBreadcrumbWidth();
-});
-
-onUnmounted(() => {
-  watchWindowWidthCancel();
-  watchNodeSizeCancel();
-});
-
-const maxBreadcrumbs: Ref<number | undefined> = ref(props.maxShown);
-let ignoreNextEvent = false;
 
 function getCollapsedItems(): Array<RouterPathNode> {
   if (isLargeDisplay.value) {

@@ -47,7 +47,6 @@
                     class="navigation-back-button"
                     :disabled="backStack.length === 0"
                     :class="{ disabled: backStack.length === 0 }"
-                    ref="backButtonDisabled"
                   >
                     <ion-icon :icon="chevronBack" />
                   </ion-button>
