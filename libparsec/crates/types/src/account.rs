@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use bytes::Bytes;
+use libparsec_crypto::SecretKey;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 
@@ -60,6 +61,14 @@ pub enum PasswordAlgorithm {
         memlimit_kb: u32,
         parallelism: u32,
     },
+}
+
+/*
+*  VaultKeyAccess
+*/
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct VaultKeyAccess {
+    pub vault_key: SecretKey,
 }
 
 /*
