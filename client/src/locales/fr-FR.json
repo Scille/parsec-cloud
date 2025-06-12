@@ -1444,6 +1444,7 @@
     },
     "loginPage": {
         "title": "Mon compte Parsec",
+        "logIn": "Se connecter",
         "forgotPassword": "Mot de passe oublié ?",
         "noAccount": "Pas de compte Parsec ?",
         "createAccount": {
