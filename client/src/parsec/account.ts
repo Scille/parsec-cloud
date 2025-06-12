@@ -5,6 +5,7 @@ import {
   AccountError,
   AccountErrorTag,
   AccountHandle,
+  AccountInfo,
   DeviceAccessStrategy,
   DeviceAccessStrategyTag,
   DeviceSaveStrategy,
@@ -140,6 +141,23 @@ class _ParsecAccount {
     } else {
       throw new Error('NOT IMPLEMENTED');
       // return await parsecAccountLogin(email, password, _server);
+    }
+  }
+
+  async getInfo(): Promise<Result<AccountInfo, AccountError>> {
+    if (this.skipped) {
+      window.electronAPI.log('warn', 'Parsec Auth marked as skipped but getInfo() called');
+      return { ok: false, error: { tag: AccountErrorTag.Internal, error: 'marked as skipped' } };
+    }
+    if (!this.handle) {
+      return { ok: false, error: { tag: AccountErrorTag.NotLoggedIn, error: 'not logged in' } };
+    }
+    if (Env.isAccountMocked()) {
+      await wait(2000);
+      return { ok: true, value: { email: 'gordon.freeman@blackmesa.nm', name: 'Gordon Freeman' } };
+    } else {
+      throw new Error('NOT IMPLEMENTED');
+      // return await libparsec.accountGetInfo(handle);
     }
   }
 

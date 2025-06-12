@@ -367,10 +367,16 @@ interface AccountError {
   error: string;
 }
 
+interface AccountInfo {
+  name: string;
+  email: string;
+}
+
 export {
   AccountError,
   AccountErrorTag,
   AccountHandle,
+  AccountInfo,
   ConnectionHandle,
   DateTime,
   EntryID,
