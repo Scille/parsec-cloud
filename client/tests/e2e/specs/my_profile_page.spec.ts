@@ -189,7 +189,7 @@ msTest('Logout from my profile page', async ({ myProfilePage }) => {
 
 msTest('Profile page back button', async ({ workspaces }) => {
   await workspaces.locator('.topbar').locator('.profile-header').click();
-  const myProfileButton = workspaces.locator('.profile-header-popover').locator('.main-list').getByRole('listitem').nth(0);
+  const myProfileButton = workspaces.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0);
   await myProfileButton.click();
   await expect(workspaces).toHavePageTitle('My profile');
   await expect(workspaces).toBeMyProfilePage();

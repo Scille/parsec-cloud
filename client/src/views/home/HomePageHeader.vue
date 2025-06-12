@@ -2,7 +2,10 @@
 
 <template>
   <div class="homepage-header">
-    <div class="menu-secondary">
+    <div
+      class="menu-secondary"
+      v-if="showSecondaryMenu"
+    >
       <ion-button
         v-if="updateAvailability !== null"
         class="update-button form-label"
@@ -46,7 +49,7 @@
         <ion-button
           id="trigger-settings-button"
           class="menu-secondary-buttons__item"
-          @click="openSettingsModal"
+          @click="openSettings"
         >
           <ion-icon
             :icon="cog"
@@ -70,12 +73,17 @@
     </div>
     <div class="topbar">
       <div class="topbar-left">
-        <ion-text
-          class="topbar-left__title title-h1"
+        <div
+          class="topbar-left-text"
           v-if="!showBackButton"
         >
-          {{ $msTranslate('HomePage.topbar.welcome') }}
-        </ion-text>
+          <ion-text class="topbar-left-text__title title-h1">
+            {{ $msTranslate('HomePage.topbar.welcome') }}
+          </ion-text>
+          <ion-text class="topbar-left-text__subtitle subtitles-normal">
+            {{ $msTranslate('HomePage.organizationList.title') }}
+          </ion-text>
+        </div>
         <!-- back button -->
         <ion-button
           @click="$emit('backClick')"
@@ -94,28 +102,33 @@
           @click="emits('createOrJoinOrganizationClick', $event)"
           size="default"
           id="create-organization-button"
-          class="button-default"
+          class="button-default topbar-right-button"
           v-if="displayCreateJoin && !showBackButton"
         >
-          <ion-icon :icon="add" />
-          <span v-if="isLargeDisplay">{{ $msTranslate('HomePage.noExistingOrganization.createOrJoin') }}</span>
+          <span class="topbar-right-button__text">{{ $msTranslate('HomePage.noExistingOrganization.createOrJoin') }}</span>
+          <ion-icon :icon="caretDown" />
         </ion-button>
 
-        <ion-button
-          v-if="accountLoggedIn && !showBackButton"
-          @click="logOutParsecAccount"
-          class="logout-button"
-        >
-          {{ $msTranslate('loginPage.logOut') }}
-        </ion-button>
+        <profile-header-homepage
+          v-if="isLargeDisplay && Env.isAccountEnabled() && accountLoggedIn && accountInfo"
+          :name="accountInfo.name"
+          :email="accountInfo.email"
+          :is-online="true"
+          class="profile-header-homepage"
+          @change-tab="onChangeTab"
+        />
 
         <ion-button
-          v-else-if="Env.isAccountEnabled() && !showBackButton"
+          v-else-if="Env.isAccountEnabled()"
           @click="goToParsecAccountLogin"
           class="login-button"
+          fill="clear"
         >
-          <ion-icon :icon="personCircle" />
-          {{ $msTranslate('loginPage.title') }}
+          <ion-icon
+            :icon="personCircle"
+            class="login-button-icon"
+          />
+          <ion-text class="login-button-text subtitles-sm">{{ $msTranslate('loginPage.logIn') }}</ion-text>
         </ion-button>
       </div>
     </div>
@@ -124,7 +137,8 @@
 
 <script setup lang="ts">
 import { IonButton, IonButtons, IonIcon, modalController, IonText } from '@ionic/vue';
-import { add, arrowBack, cog, informationCircle, open, personCircle } from 'ionicons/icons';
+import { arrowBack, caretDown, cog, informationCircle, open, personCircle } from 'ionicons/icons';
+import ProfileHeaderHomepage from '@/views/header/ProfileHeaderHomePage.vue';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Translatable, MsModalResult, useWindowSize } from 'megashark-lib';
@@ -135,7 +149,8 @@ import { APP_VERSION } from '@/services/environment';
 import { openSettingsModal } from '@/views/settings';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { openAboutModal } from '@/views/about';
-import { ParsecAccount } from '@/parsec';
+import { ParsecAccount, AccountInfo } from '@/parsec';
+import { AccountSettingsTabs } from '@/views/account/types';
 import { navigateTo, Routes, watchRoute } from '@/router';
 
 const { isSmallDisplay, isLargeDisplay } = useWindowSize();
@@ -147,10 +162,25 @@ const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
 let hotkeys: HotkeyGroup | null = null;
 const accountLoggedIn = ref(false);
+const accountInfo = ref<AccountInfo | undefined>();
+const activeTab = ref<AccountSettingsTabs>(AccountSettingsTabs.Settings);
 
 const routeWatchCancel = watchRoute(async () => {
   accountLoggedIn.value = ParsecAccount.isLoggedIn();
+  if (accountLoggedIn.value) {
+    const result = await ParsecAccount.getInfo();
+    if (result.ok) {
+      accountInfo.value = result.value;
+    } else {
+      accountInfo.value = undefined;
+    }
+  }
 });
+
+async function onChangeTab(tab: AccountSettingsTabs): Promise<void> {
+  activeTab.value = tab;
+  emits('changeTab', tab);
+}
 
 onMounted(async () => {
   hotkeys = hotkeyManager.newHotkeys();
@@ -162,6 +192,13 @@ onMounted(async () => {
       updateAvailability.value = data as UpdateAvailabilityData;
     }
   });
+  accountLoggedIn.value = ParsecAccount.isLoggedIn();
+  const result = await ParsecAccount.getInfo();
+  if (result.ok) {
+    accountInfo.value = result.value;
+  } else {
+    accountInfo.value = undefined;
+  }
   window.electronAPI.getUpdateAvailability();
   accountLoggedIn.value = ParsecAccount.isLoggedIn();
 });
@@ -205,11 +242,6 @@ async function update(): Promise<void> {
   }
 }
 
-async function logOutParsecAccount(): Promise<void> {
-  await ParsecAccount.logout();
-  await navigateTo(Routes.Account, { skipHandle: true });
-}
-
 async function goToParsecAccountLogin(): Promise<void> {
   if (ParsecAccount.isLoggedIn()) {
     await ParsecAccount.logout();
@@ -217,8 +249,17 @@ async function goToParsecAccountLogin(): Promise<void> {
   await navigateTo(Routes.Account, { skipHandle: true });
 }
 
+async function openSettings(): Promise<void> {
+  if (!Env.isAccountEnabled()) {
+    return openSettingsModal();
+  } else {
+    emits('settingsClick');
+  }
+}
+
 defineProps<{
   showBackButton: boolean;
+  showSecondaryMenu?: boolean;
   backButtonTitle?: Translatable;
   displayCreateJoin: boolean;
 }>();
@@ -227,15 +268,17 @@ const emits = defineEmits<{
   (e: 'backClick'): void;
   (e: 'customerAreaClick'): void;
   (e: 'createOrJoinOrganizationClick', event: Event): void;
+  (e: 'changeTab', tab: AccountSettingsTabs): void;
+  (e: 'settingsClick'): void;
 }>();
 </script>
 
 <style lang="scss" scoped>
 .menu-secondary {
   display: flex;
-  justify-content: flex-end;
   width: 100%;
   padding: 0 0 2rem;
+  justify-content: space-between;
 
   @include ms.responsive-breakpoint('md') {
     flex-direction: column;
@@ -269,22 +312,22 @@ const emits = defineEmits<{
 
   &-buttons {
     display: flex;
-
-    @include ms.responsive-breakpoint('md') {
-      margin-left: auto;
-    }
-
-    @include ms.responsive-breakpoint('xs') {
-      margin-left: 0;
-    }
+    gap: 1rem;
 
     &__item {
       background: none;
       color: var(--parsec-color-light-secondary-hard-grey);
       transition: all 150ms linear;
       position: relative;
-      padding: 0 0.5rem;
       --background-hover: none;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      &::part(native) {
+        padding: 0;
+        border-radius: var(--parsec-radius-8);
+      }
 
       @include ms.responsive-breakpoint('sm') {
         padding: 0;
@@ -330,13 +373,11 @@ const emits = defineEmits<{
         }
       }
 
-      &:not(:first-child)::after {
+      &:not(:last-child)::after {
         content: '';
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        left: 0;
-        height: 80%;
+        position: relative;
+        display: block;
+        height: 1rem;
         width: 1px;
         background: var(--parsec-color-light-secondary-disabled);
         transition: all 150ms linear;
@@ -376,7 +417,6 @@ const emits = defineEmits<{
         content: '';
         position: absolute;
         bottom: 0.125rem;
-        left: 1rem;
         height: 1px;
         width: 0px;
         background: transparent;
@@ -387,7 +427,7 @@ const emits = defineEmits<{
         color: var(--parsec-color-light-primary-600);
 
         &::before {
-          width: calc(100% - 2rem);
+          width: 100%;
           background: var(--parsec-color-light-primary-600);
         }
       }
@@ -402,7 +442,6 @@ const emits = defineEmits<{
   width: 100%;
   padding: 0 0 2rem;
   gap: 1rem;
-  margin-bottom: 2rem;
   position: relative;
   border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
 
@@ -422,15 +461,26 @@ const emits = defineEmits<{
     width: 100%;
     gap: 1.5rem;
 
-    &__title {
-      background: var(--parsec-color-light-gradient-background);
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin: 0.25rem 0;
+    &-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
 
-      @include ms.responsive-breakpoint('sm') {
-        max-width: 16rem;
+      &__title {
+        background: var(--parsec-color-light-gradient-background);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0.25rem 0;
+
+        @include ms.responsive-breakpoint('sm') {
+          max-width: 16rem;
+        }
+      }
+
+      &__subtitle {
+        color: var(--parsec-color-light-secondary-hard-grey);
+        margin: 0;
       }
     }
 
@@ -471,83 +521,58 @@ const emits = defineEmits<{
     gap: 1.25rem;
     justify-content: flex-end;
     width: fit-content;
+    align-items: center;
     margin-left: auto;
   }
 }
 
 #create-organization-button {
   color: var(--parsec-color-light-secondary-soft-text);
-  border-radius: var(--parsec-radius-32);
+  border-radius: var(--parsec-radius-12);
   transition: all 150ms linear;
-  border: 1px solid transparent;
-  height: fit-content;
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+
+  & * {
+    pointer-events: none;
+  }
 
   &::part(native) {
-    --background: var(--parsec-color-light-secondary-premiere);
+    border-radius: var(--parsec-radius-12);
+    padding: 0.625rem 0.75rem;
+    --background: none;
     --background-hover: none;
-    border-radius: var(--parsec-radius-32);
-    padding: 0.5rem 0.825rem;
-    height: auto;
   }
 
   ion-icon {
     font-size: 1rem;
-    margin-right: 0.5rem;
-
-    @include ms.responsive-breakpoint('sm') {
-      margin: 0;
-    }
+    margin-left: 0.5rem;
   }
 
   &:hover {
-    border: 1px solid var(--parsec-color-light-secondary-light);
     color: var(--parsec-color-light-secondary-text);
-  }
-}
-
-.login-button,
-.logout-button {
-  border-radius: var(--parsec-radius-32);
-  transition: all 150ms linear;
-  height: fit-content;
-  min-height: 1rem;
-
-  &::part(native) {
-    --background-hover: none;
-    border-radius: var(--parsec-radius-32);
-    padding: 0.5rem 0.825rem;
-  }
-
-  ion-icon {
-    font-size: 1rem;
-    margin-right: 0.5rem;
+    border: 1px solid var(--parsec-color-light-secondary-light);
   }
 }
 
 .login-button {
-  color: var(--parsec-color-light-primary-700);
-  border: 1px solid var(--parsec-color-light-primary-100);
-
-  &::part(native) {
-    --background: var(--parsec-color-light-primary-50);
-  }
-
-  &:hover {
-    color: var(--parsec-color-light-primary-600);
-    box-shadow: var(--parsec-shadow-light);
-  }
-}
-
-.logout-button {
-  color: var(--parsec-color-light-danger-500);
+  border-radius: var(--parsec-radius-12);
   border: 1px solid transparent;
+  --background: var(--parsec-color-light-gradient-background);
+  --background-hover: var(--parsec-color-light-primary-600);
 
   &::part(native) {
-    --background: transparent;
+    border-radius: var(--parsec-radius-12);
   }
 
-  &:hover {
-    background: var(--parsec-color-light-danger-50);
+  &-icon {
+    font-size: 1.25rem;
+    color: var(--parsec-color-light-secondary-white);
+    margin-right: 0.5rem;
+  }
+
+  &-text {
+    color: var(--parsec-color-light-secondary-white);
+    display: flex;
   }
 }
 </style>

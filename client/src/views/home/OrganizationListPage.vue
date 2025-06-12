@@ -2,12 +2,6 @@
 
 <template>
   <div class="organization">
-    <ion-text
-      class="organization-title title-h3"
-      v-if="deviceList.length > 0"
-    >
-      {{ $msTranslate('HomePage.organizationList.title') }}
-    </ion-text>
     <template v-if="deviceList.length === 0 && !querying">
       <!-- No organization -->
       <div class="organization-content no-devices">
@@ -341,15 +335,6 @@ const filteredDevices = computed(() => {
   flex-direction: column;
   gap: 2rem;
   flex-grow: 1;
-
-  &-title {
-    padding: 0;
-    color: var(--parsec-color-light-secondary-text);
-
-    @include ms.responsive-breakpoint('sm') {
-      display: none;
-    }
-  }
 }
 
 .organization-content {

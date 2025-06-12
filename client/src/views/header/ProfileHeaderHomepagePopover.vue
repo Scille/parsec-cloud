@@ -1,31 +1,16 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-list class="container">
+  <ion-list class="profile-header-popover-container">
     <div class="header-list">
       <ion-text class="body-sm header-list-email">
         {{ email }}
       </ion-text>
-      <tag-profile :profile="profile" />
     </div>
     <div class="main-list">
-      <div
-        button
-        class="main-list__item update-item"
-        @click="onOptionClick(ProfilePopoverOption.Update)"
-        v-show="updateAvailability.updateAvailable"
-      >
-        <ion-text class="update-item-text subtitles-normal">
-          {{ $msTranslate('HomePage.topbar.newVersionAvailable') }}
-        </ion-text>
-        <ion-text class="update-item-version body">
-          <span>{{ $msTranslate('app.name') }}</span>
-          <span>{{ $msTranslate({ key: 'formatter.version', data: { version: updateAvailability.version } }) }}</span>
-        </ion-text>
-      </div>
       <ion-item
         class="main-list__item"
-        @click="onOptionClick(ProfilePopoverOption.Settings)"
+        @click="onOptionClick(ProfilePopoverHomepageOption.Settings)"
       >
         <ion-icon
           :icon="cog"
@@ -37,19 +22,19 @@
       </ion-item>
       <ion-item
         class="main-list__item"
-        @click="onOptionClick(ProfilePopoverOption.Device)"
+        @click="onOptionClick(ProfilePopoverHomepageOption.Account)"
       >
         <ion-icon
-          :icon="phonePortrait"
+          :icon="person"
           slot="start"
         />
         <ion-label class="body item-label">
-          {{ $msTranslate('HomePage.topbar.devices') }}
+          {{ $msTranslate('HomePage.topbar.account') }}
         </ion-label>
       </ion-item>
       <ion-item
         class="main-list__item"
-        @click="onOptionClick(ProfilePopoverOption.Authentication)"
+        @click="onOptionClick(ProfilePopoverHomepageOption.Authentication)"
       >
         <ion-icon
           :icon="fingerPrint"
@@ -60,20 +45,8 @@
         </ion-label>
       </ion-item>
       <ion-item
-        class="main-list__item"
-        @click="onOptionClick(ProfilePopoverOption.Recovery)"
-      >
-        <ion-icon
-          :icon="idCard"
-          slot="start"
-        />
-        <ion-label class="body item-label">
-          {{ $msTranslate('HomePage.topbar.recovery') }}
-        </ion-label>
-      </ion-item>
-      <ion-item
         class="main-list__item logout"
-        @click="onOptionClick(ProfilePopoverOption.LogOut)"
+        @click="logOutParsecAccount"
       >
         <ion-icon
           :icon="logOut"
@@ -87,19 +60,19 @@
     <div class="footer-list">
       <ion-item
         class="footer-list__item"
-        @click="onOptionClick(ProfilePopoverOption.Documentation)"
+        @click="onOptionClick(ProfilePopoverHomepageOption.Documentation)"
       >
         <ion-text class="body-sm"> {{ $msTranslate('HomePage.topbar.documentation') }} </ion-text>
       </ion-item>
       <ion-item
         class="footer-list__item"
-        @click="onOptionClick(ProfilePopoverOption.Feedback)"
+        @click="onOptionClick(ProfilePopoverHomepageOption.Feedback)"
       >
         <ion-text class="body-sm"> {{ $msTranslate('HomePage.topbar.feedback') }} </ion-text>
       </ion-item>
       <ion-item
         class="footer-list__item"
-        @click="onOptionClick(ProfilePopoverOption.About)"
+        @click="onOptionClick(ProfilePopoverHomepageOption.About)"
       >
         <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.about') }} (v{{ APP_VERSION }}) </ion-text>
       </ion-item>
@@ -108,43 +81,54 @@
 </template>
 
 <script lang="ts">
-export enum ProfilePopoverOption {
+export enum ProfilePopoverHomepageOption {
   Settings = 0,
-  Device = 1,
+  Account = 1,
   Authentication = 2,
-  Recovery = 3,
-  Documentation = 4,
-  LogOut = 5,
-  Feedback = 6,
-  About = 7,
-  Update = 8,
+  Documentation = 3,
+  LogOut = 4,
+  Feedback = 5,
+  About = 6,
 }
 </script>
 
 <script setup lang="ts">
 import { APP_VERSION } from '@/services/environment';
-import TagProfile from '@/components/users/TagProfile.vue';
-import { UserProfile } from '@/parsec';
-import { UpdateAvailabilityData } from '@/services/eventDistributor';
 import { popoverController } from '@ionic/core';
 import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
-import { cog, fingerPrint, idCard, logOut, phonePortrait } from 'ionicons/icons';
+import { ParsecAccount } from '@/parsec/account';
+import { AccountSettingsTabs } from '@/views/account/types';
+import { navigateTo, Routes } from '@/router';
+import { cog, fingerPrint, logOut, person } from 'ionicons/icons';
 
 defineProps<{
   email: string;
-  profile: UserProfile;
-  updateAvailability: UpdateAvailabilityData;
 }>();
 
-async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
+async function onOptionClick(option: ProfilePopoverHomepageOption): Promise<void> {
+  let tab = null;
+  if (option === ProfilePopoverHomepageOption.Settings) {
+    tab = AccountSettingsTabs.Settings;
+  } else if (option === ProfilePopoverHomepageOption.Account) {
+    tab = AccountSettingsTabs.Account;
+  } else if (option === ProfilePopoverHomepageOption.Authentication) {
+    tab = AccountSettingsTabs.Authentication;
+  }
   await popoverController.dismiss({
-    option: option,
+    option,
+    tab,
   });
+}
+
+async function logOutParsecAccount(): Promise<void> {
+  await popoverController.dismiss();
+  await ParsecAccount.logout();
+  await navigateTo(Routes.Account, { skipHandle: true });
 }
 </script>
 
 <style lang="scss" scoped>
-.container {
+.profile-header-popover-container {
   padding: 0;
 }
 
@@ -175,7 +159,7 @@ async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
     cursor: pointer;
     color: var(--parsec-color-light-secondary-text);
     margin-inline-end: 2px;
-    padding: 0.5rem 0.75rem;
+    padding: 0.375rem 0.5rem;
     --min-height: 1rem;
     width: 100%;
     border-radius: var(--parsec-radius-6);
@@ -203,7 +187,7 @@ async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
       }
 
       &:hover {
-        background: var(--parsec-color-light-danger-100);
+        background: var(--parsec-color-light-danger-50);
         color: var(--parsec-color-light-danger-700);
 
         ion-icon {
@@ -219,43 +203,6 @@ async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
       ion-icon {
         color: var(--parsec-color-light-primary-700);
       }
-    }
-  }
-
-  .update-item {
-    background: var(--parsec-color-light-gradient);
-    color: var(--parsec-color-light-secondary-white);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 1rem 0.875rem;
-    position: relative;
-
-    &::after {
-      content: url('@/assets/images/background/logo-icon-white.svg');
-      opacity: 0.1;
-      width: 100%;
-      max-width: 80px;
-      max-height: 32px;
-      position: absolute;
-      bottom: 30px;
-      right: -16px;
-      z-index: 0;
-    }
-
-    &-text {
-      flex: 1;
-    }
-
-    &-version {
-      opacity: 0.8;
-      display: flex;
-      gap: 0.375rem;
-      z-index: 1;
-    }
-
-    &:hover {
-      opacity: 0.9;
     }
   }
 }

@@ -11,10 +11,10 @@ for (const displaySize of ['small', 'large']) {
     }
 
     const topBar = home.locator('.topbar');
-    await expect(topBar.locator('.topbar-left__title')).toHaveText('Welcome to Parsec');
+    await expect(topBar.locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
+    await expect(topBar.locator('.topbar-left-text__subtitle')).toHaveText('Access your organizations');
 
     const container = home.locator('.slider-container');
-    await expect(container.locator('.organization-title')).toHaveText('Access your organizations');
     await expect(container.locator('#search-input-organization')).toBeVisible();
 
     const cards = home.locator('.organization-list').locator('.organization-card');
@@ -39,7 +39,7 @@ for (const displaySize of ['small', 'large']) {
         'Customer area',
       ]);
     } else {
-      await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['']);
+      await expect(topBar.locator('.topbar-right').locator('ion-button')).toHaveText(['Create or join']);
       await expect(home.locator('.homepage-sidebar')).toBeHidden();
       await expect(home.locator('.menu-secondary-buttons').locator('ion-button')).toHaveText([
         'About',

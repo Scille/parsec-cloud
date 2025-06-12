@@ -177,6 +177,7 @@ export const msTest = debugTest.extend<{
     >
   >;
   parsecAccount: MsPage;
+  parsecAccountLoggedIn: MsPage;
 }>({
   context: async ({ browser }, use) => {
     const context = (await browser.newContext()) as MsContext;
@@ -319,7 +320,7 @@ export const msTest = debugTest.extend<{
 
   myProfilePage: async ({ connected }, use) => {
     await connected.locator('.topbar').locator('.profile-header').click();
-    const myProfileButton = connected.locator('.profile-header-popover').locator('.main-list').getByRole('listitem').nth(0);
+    const myProfileButton = connected.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(0);
     await expect(myProfileButton).toHaveText('Settings');
     await myProfileButton.click();
     await expect(connected).toHavePageTitle('My profile');
@@ -360,7 +361,7 @@ export const msTest = debugTest.extend<{
 
   deviceGreetModal: async ({ connected }, use) => {
     await connected.locator('.topbar').locator('.profile-header').click();
-    const myProfileButton = connected.locator('.profile-header-popover').locator('.main-list').getByRole('listitem').nth(1);
+    const myProfileButton = connected.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem').nth(1);
     await expect(myProfileButton).toHaveText('My devices');
     await myProfileButton.click();
     await expect(connected).toHavePageTitle('My profile');
@@ -480,5 +481,14 @@ export const msTest = debugTest.extend<{
     await expect(page).toHaveURL(/.+\/account$/);
     await use(page);
     await page.release();
+  },
+
+  parsecAccountLoggedIn: async ({ parsecAccount }, use) => {
+    const accountLogin = parsecAccount.locator('.account-login-container');
+    await accountLogin.locator('.account-login-content__input').nth(2).locator('input').fill('a@b.c');
+    await accountLogin.locator('.account-login-content__input').nth(4).locator('input').fill('BigP@ssw0rd.');
+    await accountLogin.locator('.account-login-button__item').click();
+    await expect(parsecAccount).toHaveURL(/.+\/home$/);
+    await use(parsecAccount);
   },
 });

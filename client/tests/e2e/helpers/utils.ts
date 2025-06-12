@@ -328,11 +328,12 @@ export async function login(homePage: Page, name: string): Promise<void> {
 
 export async function logout(page: MsPage): Promise<void> {
   await page.locator('.topbar').locator('.profile-header').click();
-  const buttons = page.locator('.profile-header-popover').locator('.main-list').getByRole('listitem');
+  const buttons = page.locator('.profile-header-organization-popover').locator('.main-list').getByRole('listitem');
   await buttons.nth(4).click();
   await answerQuestion(page, true);
   await expect(page).toBeHomePage();
-  await expect(page.locator('.homepage-header').locator('.topbar-left')).toHaveText('Welcome to Parsec');
+  await expect(page.locator('.homepage-header').locator('.topbar-left-text__title')).toHaveText('Welcome to Parsec');
+  await expect(page.locator('.homepage-header').locator('.topbar-left-text__subtitle')).toHaveText('Access your organizations');
 }
 
 export async function importDefaultFiles(documentsPage: Page, testInfo: TestInfo): Promise<void> {

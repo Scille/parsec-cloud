@@ -105,6 +105,25 @@
         "sidebar": {
             "tagline": "Gardez le contrôle sur la confidentialité de vos données"
         },
+        "tabs": {
+            "settings": "Paramètres",
+            "account": "Mon compte",
+            "authentication": "Authentification"
+        },
+        "profile": {
+            "settings": {
+                "title": "Paramètres",
+                "description": "Gérer vos paramètres Parsec"
+            },
+            "account": {
+                "title": "Mon compte",
+                "description": "Gérer votre compte Parsec"
+            },
+            "authentication": {
+                "title": "Authentification",
+                "description": "Gérer vos méthodes d'authentification"
+            }
+        },
         "topbar": {
             "welcome": "Bienvenue sur Parsec",
             "backToList": "Retour aux organisations",
@@ -112,6 +131,7 @@
             "settings": "Paramètres",
             "devices": "Mes appareils",
             "authentication": "Authentification",
+            "account": "Compte",
             "recovery": "Fichier de récupération",
             "contactUs": "Nous contacter",
             "documentation": "Documentation",
@@ -1444,6 +1464,7 @@
     },
     "loginPage": {
         "title": "Mon compte Parsec",
+        "logIn": "Se connecter",
         "forgotPassword": "Mot de passe oublié ?",
         "noAccount": "Pas de compte Parsec ?",
         "createAccount": {

@@ -79,7 +79,7 @@ onMounted(() => {
   .sidebar-tagline {
     color: var(--parsec-color-light-secondary-white);
     text-align: center;
-    margin-bottom: 20%;
+    margin-bottom: 30%;
     margin-inline: 2rem;
   }
 }
