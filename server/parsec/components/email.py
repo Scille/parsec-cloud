@@ -64,7 +64,12 @@ def _mocked_send_email(
     email_config: MockedEmailConfig, to_addr: EmailAddress, message: Message
 ) -> None | SendEmailBadOutcome:
     with tempfile.NamedTemporaryFile(
-        prefix="tmp-email-", suffix=".html", dir=email_config.tmpdir, mode="w"
+        prefix="tmp-email-",
+        suffix=".html",
+        dir=email_config.tmpdir,
+        mode="w",
+        delete_on_close=False,
+        delete=False,
     ) as tmpfile:
         tmpfile.write(message.as_string())
     print(
