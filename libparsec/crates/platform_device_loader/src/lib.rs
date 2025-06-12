@@ -23,14 +23,6 @@ use native as platform;
 #[cfg(target_arch = "wasm32")]
 use web as platform;
 
-// ⚠️ Changing Argon2id default config also requires updating the fake config generator
-// on server side (see `server/parsec/components/account.py`), otherwise it would
-// become trivial for a attacker to determine which config is fake !
-pub const ARGON2ID_DEFAULT_MEMLIMIT_KB: u32 = 128 * 1024; // 128 Mo
-pub const ARGON2ID_DEFAULT_OPSLIMIT: u32 = 3;
-// Be careful when changing parallelism: libsodium only supports 1 thread !
-pub const ARGON2ID_DEFAULT_PARALLELISM: u32 = 1;
-
 pub(crate) const DEVICE_FILE_EXT: &str = "keys";
 pub(crate) const ARCHIVE_DEVICE_EXT: &str = "archived";
 
@@ -497,35 +489,6 @@ fn decrypt_device_file(
         .map_err(DecryptDeviceFileError::Decrypt)
         .map(zeroize::Zeroizing::new)?;
     LocalDevice::load(&cleartext).map_err(DecryptDeviceFileError::Load)
-}
-
-fn generate_default_password_algorithm_parameters() -> DeviceFilePasswordAlgorithm {
-    DeviceFilePasswordAlgorithm::Argon2id {
-        memlimit_kb: ARGON2ID_DEFAULT_MEMLIMIT_KB.into(),
-        opslimit: ARGON2ID_DEFAULT_OPSLIMIT.into(),
-        parallelism: ARGON2ID_DEFAULT_PARALLELISM.into(),
-        salt: SecretKey::generate_salt().into(),
-    }
-}
-
-fn secret_key_from_password(
-    password: &Password,
-    algorithm: &DeviceFilePasswordAlgorithm,
-) -> Result<SecretKey, CryptoError> {
-    match algorithm {
-        DeviceFilePasswordAlgorithm::Argon2id {
-            memlimit_kb,
-            opslimit,
-            parallelism,
-            salt,
-        } => SecretKey::from_argon2id_password(
-            password,
-            salt,
-            (*opslimit).try_into().or(Err(CryptoError::DataSize))?,
-            (*memlimit_kb).try_into().or(Err(CryptoError::DataSize))?,
-            (*parallelism).try_into().or(Err(CryptoError::DataSize))?,
-        ),
-    }
 }
 
 fn server_url_from_device(device: &LocalDevice) -> String {

@@ -21,7 +21,7 @@ pub fn req() {
             //   cmd: 'account_create_proceed'
             //   validation_token: 0x672bc6ba9c43455da28344e975dc72b7
             //   human_label: 'Anonymous Alice'
-            //   auth_method_password_algorithm: { Argon2id: { salt: 0x706570706572, opslimit: 65536, memlimit_kb: 3, parallelism: 1, }, }
+            //   auth_method_password_algorithm: { type: 'ARGON2ID', memlimit_kb: 3, opslimit: 65536, parallelism: 1, salt: 0x706570706572, }
             //   auth_method_hmac_key: 0x2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1
             //   auth_method_id: ext(2, 0x9aae259f748045cc9fe7146eab0b132e)
             //   vault_key_access: 0x7661756c745f6b65795f616363657373
@@ -29,12 +29,12 @@ pub fn req() {
                 "87a3636d64b66163636f756e745f6372656174655f70726f63656564b076616c696461"
                 "74696f6e5f746f6b656ec410672bc6ba9c43455da28344e975dc72b7ab68756d616e5f"
                 "6c6162656caf416e6f6e796d6f757320416c696365be617574685f6d6574686f645f70"
-                "617373776f72645f616c676f726974686d81a84172676f6e32696484a473616c74c406"
-                "706570706572a86f70736c696d6974ce00010000ab6d656d6c696d69745f6b6203ab70"
-                "6172616c6c656c69736d01b4617574685f6d6574686f645f686d61635f6b6579c4202f"
-                "f13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1ae617574"
-                "685f6d6574686f645f6964d8029aae259f748045cc9fe7146eab0b132eb07661756c74"
-                "5f6b65795f616363657373c4107661756c745f6b65795f616363657373"
+                "617373776f72645f616c676f726974686d85a474797065a84152474f4e324944ab6d65"
+                "6d6c696d69745f6b6203a86f70736c696d6974ce00010000ab706172616c6c656c6973"
+                "6d01a473616c74c406706570706572b4617574685f6d6574686f645f686d61635f6b65"
+                "79c4202ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
+                "ae617574685f6d6574686f645f6964d8029aae259f748045cc9fe7146eab0b132eb076"
+                "61756c745f6b65795f616363657373c4107661756c745f6b65795f616363657373"
             )
             .as_ref(),
             anonymous_account_cmds::account_create_proceed::Req {
@@ -53,7 +53,7 @@ pub fn req() {
                     memlimit_kb: 3,
                     opslimit: 65536,
                     parallelism: 1,
-                    salt: Bytes::from_static(b"pepper"),
+                    salt: b"pepper".to_vec(),
                 }),
             },
         ),

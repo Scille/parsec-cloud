@@ -2,6 +2,7 @@
 
 mod hash;
 mod key_derivation;
+mod password;
 mod private;
 mod secret;
 mod sequester;
@@ -10,6 +11,7 @@ mod utils;
 
 pub use hash::*;
 pub use key_derivation::*;
+pub(crate) use password::*;
 pub use private::*;
 pub use secret::*;
 pub use sequester::*;

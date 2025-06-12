@@ -28,7 +28,7 @@ pub const PARSEC_AUTH_METHOD: &str = "PARSEC-MAC-BLAKE2B";
 pub struct AccountAuthMethod {
     pub time_provider: TimeProvider,
     pub id: AccountAuthMethodID,
-    pub hmac_key: SecretKey,
+    pub mac_key: SecretKey,
 }
 
 /// Send commands in an authenticated account context.
@@ -36,7 +36,7 @@ pub struct AccountAuthMethod {
 pub struct AuthenticatedAccountCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
     client: Client,
-    addr: ParsecAuthenticatedAccountAddr,
+    addr: ParsecAddr,
     url: Url,
     #[cfg(feature = "test-with-testbed")]
     send_hook: SendHookConfig,
@@ -47,7 +47,7 @@ pub struct AuthenticatedAccountCmds {
 impl AuthenticatedAccountCmds {
     pub fn new(
         config_dir: &Path,
-        addr: ParsecAuthenticatedAccountAddr,
+        addr: ParsecAddr,
         proxy: ProxyConfig,
         account: AccountAuthMethod,
     ) -> anyhow::Result<Self> {
@@ -58,7 +58,7 @@ impl AuthenticatedAccountCmds {
     pub fn from_client(
         client: Client,
         _config_dir: &Path,
-        addr: ParsecAuthenticatedAccountAddr,
+        addr: ParsecAddr,
         account: AccountAuthMethod,
     ) -> Self {
         let url = addr.to_authenticated_account_url();
@@ -77,7 +77,7 @@ impl AuthenticatedAccountCmds {
         }
     }
 
-    pub fn addr(&self) -> &ParsecAuthenticatedAccountAddr {
+    pub fn addr(&self) -> &ParsecAddr {
         &self.addr
     }
 
@@ -205,7 +205,7 @@ fn generate_authorization_header_value(auth_method: &AccountAuthMethod, now: Dat
         "{}.{}.{}",
         PARSEC_AUTH_METHOD, &auth_method_id_hex, &timestamp
     );
-    let signature = auth_method.hmac_key.mac_512(header_and_body.as_bytes());
+    let signature = auth_method.mac_key.mac_512(header_and_body.as_bytes());
     let b64_signature = BASE64URL.encode(&signature);
 
     format!("Bearer {}.{}", &header_and_body, &b64_signature)

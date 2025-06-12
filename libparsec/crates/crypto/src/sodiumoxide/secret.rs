@@ -9,7 +9,7 @@ use serde::Deserialize;
 use serde_bytes::Bytes;
 use sodiumoxide::{
     crypto::{
-        pwhash::argon2id13::{derive_key, MemLimit, OpsLimit, Salt, SALTBYTES},
+        pwhash::argon2id13::SALTBYTES,
         secretbox::{
             gen_nonce, open, seal,
             xsalsa20poly1305::{gen_key, Key, KEYBYTES, MACBYTES, NONCEBYTES},
@@ -19,7 +19,7 @@ use sodiumoxide::{
     randombytes::randombytes,
 };
 
-use crate::{CryptoError, Password};
+use crate::CryptoError;
 
 #[derive(Clone, PartialEq, Eq, Deserialize)]
 #[serde(try_from = "&Bytes")]
@@ -113,32 +113,6 @@ impl SecretKey {
 
     pub fn generate_salt() -> Vec<u8> {
         randombytes(SALTBYTES)
-    }
-
-    pub fn from_argon2id_password(
-        password: &Password,
-        salt: &[u8],
-        opslimit: u32,
-        memlimit_kb: u32,
-        parallelism: u32,
-    ) -> Result<Self, CryptoError> {
-        let mut key = [0; KEYBYTES];
-
-        // Libsodium only support parallelism of 1
-        if parallelism != 1 {
-            return Err(CryptoError::DataSize);
-        }
-
-        let salt = Salt::from_slice(salt).ok_or(CryptoError::DataSize)?;
-
-        let opslimit = OpsLimit(opslimit.try_into().map_err(|_| CryptoError::DataSize)?);
-        let memlimit_kb: usize = memlimit_kb.try_into().map_err(|_| CryptoError::DataSize)?;
-        let memlimit = MemLimit(memlimit_kb * 1024);
-
-        derive_key(&mut key, password.as_bytes(), &salt, opslimit, memlimit)
-            .map_err(|_| CryptoError::DataSize)?;
-
-        Ok(Self::from(key))
     }
 }
 
