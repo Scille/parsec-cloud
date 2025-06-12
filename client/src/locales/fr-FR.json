@@ -105,6 +105,11 @@
         "sidebar": {
             "tagline": "Gardez le contrôle sur la confidentialité de vos données"
         },
+        "tabs": {
+            "settings": "Paramètres",
+            "account": "Mon compte",
+            "authentication": "Authentification"
+        },
         "topbar": {
             "welcome": "Bienvenue sur Parsec",
             "backToList": "Retour aux organisations",
@@ -112,6 +117,7 @@
             "settings": "Paramètres",
             "devices": "Mes appareils",
             "authentication": "Authentification",
+            "account": "Compte",
             "recovery": "Fichier de récupération",
             "contactUs": "Nous contacter",
             "documentation": "Documentation",

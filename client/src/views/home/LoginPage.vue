@@ -148,6 +148,13 @@ defineExpose({
     margin: 0 auto;
   }
 
+  .login-header__title {
+    background: var(--parsec-color-light-gradient-background);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
   .login-card {
     background: var(--parsec-color-light-secondary-white);
     border: 1px solid var(--parsec-color-light-secondary-medium);

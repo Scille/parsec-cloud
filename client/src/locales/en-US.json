@@ -105,6 +105,11 @@
         "sidebar": {
             "tagline": "Keep control over your data confidentiality"
         },
+        "tabs": {
+            "settings": "Settings",
+            "account": "My Account",
+            "authentication": "Authentication"
+        },
         "topbar": {
             "welcome": "Welcome to Parsec",
             "backToList": "Return to organizations",
@@ -112,6 +117,7 @@
             "settings": "Settings",
             "devices": "My devices",
             "authentication": "Authentication",
+            "account": "Account",
             "recovery": "Recovery file",
             "contactUs": "Contact us",
             "documentation": "Documentation",

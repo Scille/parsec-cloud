@@ -17,11 +17,11 @@
             @back-click="backToPreviousPage"
             @customer-area-click="goToCustomerAreaLogin"
             @create-or-join-organization-click="openCreateOrJoin"
+            @change-tab="onChangeTab"
             :display-create-join="deviceList.length > 0"
             :back-button-title="getBackButtonTitle()"
-            :show-back-button="
-              state === HomePageState.Login || state === HomePageState.ForgottenPassword || state === HomePageState.CustomerArea
-            "
+            :show-secondary-menu="state !== HomePageState.AccountSettings"
+            :show-back-button="showBackButton()"
           />
           <slide-horizontal
             :appear-from="slidePositions.appearFrom"
@@ -60,6 +60,9 @@
                 @organization-selected="login"
               />
             </template>
+            <template v-else-if="state === HomePageState.AccountSettings">
+              <account-settings-page :active-tab="activeTab" />
+            </template>
           </slide-horizontal>
         </div>
         <!-- end of organization -->
@@ -90,6 +93,7 @@ import {
   listAvailableDevices,
   listAvailableDevicesWithError,
   login as parsecLogin,
+  ParsecAccount,
 } from '@/parsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
@@ -98,6 +102,7 @@ import { Information, InformationLevel, InformationManager, PresentationMode } f
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.vue';
+import AccountSettingsPage from '@/views/account/AccountSettingsPage.vue';
 import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
 import HomePageHeader from '@/views/home/HomePageHeader.vue';
@@ -106,6 +111,7 @@ import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
 import { IonContent, IonPage, modalController, popoverController } from '@ionic/vue';
+import { AccountSettingsTabs } from '@/views/account/types';
 import { DateTime } from 'luxon';
 import {
   Base64,
@@ -131,12 +137,14 @@ enum HomePageState {
   Login = 'login',
   ForgottenPassword = 'forgotten-password',
   CustomerArea = 'customer-area',
+  AccountSettings = 'account-settings',
 }
 
 const { isLargeDisplay } = useWindowSize();
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
+const accountLoggedIn = ref(ParsecAccount.isLoggedIn());
 const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [deviceId: string]: StoredDeviceData }>({});
 const selectedDevice: Ref<AvailableDevice | undefined> = ref();
@@ -148,6 +156,7 @@ const queryInProgress = ref(false);
 const organizationListRef = ref<typeof OrganizationListPage>();
 const querying = ref(true);
 const deviceList: Ref<AvailableDevice[]> = ref([]);
+const activeTab = ref(AccountSettingsTabs.Settings);
 let eventCallbackId!: string;
 
 useSmallDisplayWarning(informationManager);
@@ -155,6 +164,11 @@ useSmallDisplayWarning(informationManager);
 const slidePositions = ref({ appearFrom: Position.Left, disappearTo: Position.Right });
 
 let hotkeys: HotkeyGroup | null = null;
+
+async function onChangeTab(tab: AccountSettingsTabs): Promise<void> {
+  state.value = HomePageState.AccountSettings;
+  activeTab.value = tab;
+}
 
 const stateWatchCancel = watch(state, (newState, oldState) => {
   // we use the enum ordering to determine the direction of the slide
@@ -169,6 +183,7 @@ const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Home)) {
     return;
   }
+  accountLoggedIn.value = ParsecAccount.isLoggedIn();
   await handleQuery();
 });
 
@@ -246,6 +261,12 @@ async function openCreateOrJoin(event: Event): Promise<void> {
   } else if (result.data.action === HomePageAction.JoinOrganization) {
     await onJoinOrganizationClicked();
   }
+}
+
+function showBackButton(): boolean {
+  return [HomePageState.Login, HomePageState.ForgottenPassword, HomePageState.CustomerArea, HomePageState.AccountSettings].includes(
+    state.value,
+  );
 }
 
 async function refreshDeviceList(): Promise<void> {
@@ -637,6 +658,8 @@ function getBackButtonTitle(): string {
     return 'HomePage.topbar.backToLogin';
   } else if (state.value === HomePageState.CustomerArea) {
     return 'HomePage.topbar.backToList';
+  } else if (state.value === HomePageState.AccountSettings) {
+    return 'HomePage.topbar.backToList';
   }
   return '';
 }
@@ -682,6 +705,8 @@ function getBackButtonTitle(): string {
 
   // Should be edited later with responsive
   .homepage-header {
+    padding: 2rem 5rem 0;
+
     @include ms.responsive-breakpoint('lg') {
       flex-direction: column-reverse;
       gap: 1rem;
@@ -693,7 +718,6 @@ function getBackButtonTitle(): string {
     height: 100%;
     position: relative;
     max-width: var(--parsec-max-content-width);
-    padding: 2rem 5rem 0;
     display: flex;
     flex-direction: column;
 
