@@ -280,11 +280,6 @@ async function onLoginClicked(): Promise<void> {
   padding: 2rem;
   min-height: 28em;
 
-  @include ms.responsive-breakpoint('sm') {
-    min-height: 32em;
-    padding: 0;
-  }
-
   &::before {
     content: url('@/assets/images/background/background-shapes.svg');
     position: absolute;
@@ -319,7 +314,7 @@ async function onLoginClicked(): Promise<void> {
     gap: 1rem;
 
     @include ms.responsive-breakpoint('sm') {
-      padding: 0.5rem 2rem;
+      padding: 0.5rem 0;
     }
 
     .input-skeleton {
@@ -424,15 +419,10 @@ async function onLoginClicked(): Promise<void> {
   &-footer {
     margin-top: 2rem;
 
-    @include ms.responsive-breakpoint('sm') {
-      padding: 0 2rem 1.5rem 2rem;
-    }
-
     .create-account {
       display: flex;
       gap: 1rem;
       flex-direction: column;
-      margin-bottom: 1.5rem;
 
       @include ms.responsive-breakpoint('sm') {
         justify-content: space-between;
@@ -534,6 +524,10 @@ async function onLoginClicked(): Promise<void> {
     display: flex;
     align-items: flex-end;
     scale: 1.2;
+
+    @include ms.responsive-breakpoint('sm') {
+      display: none;
+    }
   }
 }
 </style>

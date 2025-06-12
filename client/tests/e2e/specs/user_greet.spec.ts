@@ -398,7 +398,7 @@ msTest('Host closes greet process', async ({ usersPage }) => {
 
   // Does not seem to work properly on guest side
   // await expect(secondTab).toShowToast('The host has cancelled the process.', 'Error');
-  // await expect(joinTitle).toHaveText('Welcome to Parsec!');
+  // await expect(joinTitle).toHaveText('Welcome to Parsec');
   // await expect(joinNextButton).toHaveText('I understand!');
 });
 

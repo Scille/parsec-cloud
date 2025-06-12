@@ -145,7 +145,14 @@ defineExpose({
   box-shadow: none;
 
   @include ms.responsive-breakpoint('sm') {
-    margin: 0 auto;
+    margin: 0;
+  }
+
+  .login-header__title {
+    background: var(--parsec-color-light-gradient-background);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   .login-card {

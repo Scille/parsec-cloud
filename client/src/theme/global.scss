@@ -159,3 +159,20 @@ svg {
     flex-direction: column;
   }
 }
+
+// manage homepage content inside the slider
+.homepage-content .slider-container {
+  padding: 2rem 5rem 0;
+
+  @include ms.responsive-breakpoint('md') {
+    padding: 2rem 3rem 0;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    padding: 2rem 1.5rem 0;
+  }
+
+  &:has(.account-settings-page-container) {
+    background: var(--parsec-color-light-secondary-premiere);
+  }
+}
