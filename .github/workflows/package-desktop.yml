@@ -292,14 +292,14 @@ jobs:
       - name: Install client dependencies
         # Use `--ignore-scripts` to prevent the postinstall script trying to be smarter than us and
         # install electron dependencies (as it would use `npm install` instead of `npm clean-install`).
-        run: npm clean-install --ignore-scripts
+        run: npm clean-install --ignore-scripts --verbose
         working-directory: client
-        timeout-minutes: 10
+        timeout-minutes: 30
 
       - name: Install electron dependencies
-        run: npm clean-install
+        run: npm clean-install --verbose
         working-directory: client/electron
-        timeout-minutes: 2
+        timeout-minutes: 10
 
       - name: Install electron bindings dependencies
         run: npm clean-install
