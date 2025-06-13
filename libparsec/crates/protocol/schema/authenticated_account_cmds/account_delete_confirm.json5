@@ -1,0 +1,27 @@
+[
+    {
+        "major_versions": [
+            5
+        ],
+        "cmd": "account_delete_confirm",
+        "req": {
+            "fields": [
+                {
+                    "name": "deletion_code",
+                    "type": "ValidationCode"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "invalid_deletion_code"
+            },
+            {
+                "status": "new_code_needed"
+            }
+        ]
+    }
+]
