@@ -72,7 +72,7 @@ jobs:
             os: macos-15
           - name: 🏁 Windows
             platform: windows
-            os: windows-2022
+            os: windows-2025
     name: "${{ matrix.name }}: 📦 Packaging (build Wheel)"
     runs-on: ${{ matrix.os }}
     steps:

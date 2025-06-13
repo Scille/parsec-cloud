@@ -184,7 +184,7 @@ jobs:
         include:
           - name: 🏁 Windows
             platform: windows
-            os: windows-2022
+            os: windows-2025
             raw_latest_file: latest.yml
             extensions: exe
             os_alias: win
