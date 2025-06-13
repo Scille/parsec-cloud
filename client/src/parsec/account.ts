@@ -120,7 +120,7 @@ class _ParsecAccount {
 
   async login(email: string, authentication: DeviceAccessStrategy, _server: string): Promise<Result<AccountHandle, AccountError>> {
     if (this.skipped) {
-      window.electronAPI.log('warn', 'Parsec Auth marked as skipped but login() called');
+      throw new Error('Parsec Account marked as skipped but "login" called');
     }
     if (Env.isAccountMocked()) {
       await wait(2000);
@@ -136,7 +136,57 @@ class _ParsecAccount {
   }
 
   async logout(): Promise<void> {
+    if (this.skipped) {
+      throw new Error('Parsec Account marked as skipped but "logout" called');
+    }
+    if (!this.handle) {
+      return;
+    }
+    if (!Env.isAccountMocked()) {
+      console.log('Log out');
+      // await libparsec.accountLogOut(this.handle);
+    }
     this.handle = undefined;
+  }
+
+  async requestAccountDeletion(): Promise<Result<null, AccountError>> {
+    if (this.skipped) {
+      throw new Error('Parsec Account marked as skipped but "requestAccountDeletion" called');
+    }
+    if (!this.handle) {
+      return { ok: false, error: { tag: AccountErrorTag.NotLoggedIn, error: 'not-logged-in' } };
+    }
+    if (Env.isAccountMocked()) {
+      await wait(2000);
+      return { ok: true, value: null };
+    } else {
+      throw new Error('NOT IMPLEMENTED');
+      // return await libparsec.requestAccountDeletion(this.handle);
+    }
+  }
+
+  async confirmAccountDeletion(code: Array<string>): Promise<Result<null, AccountError>> {
+    if (this.skipped) {
+      throw new Error('Parsec Account marked as skipped but "confirmAccountDeletion" called');
+    }
+    if (!this.handle) {
+      return { ok: false, error: { tag: AccountErrorTag.NotLoggedIn, error: 'not-logged-in' } };
+    }
+    if (Env.isAccountMocked()) {
+      await wait(2000);
+      if (code.join('') !== 'ABCDEF') {
+        return { ok: false, error: { tag: AccountErrorTag.InvalidCode, error: 'invalid-code' } };
+      }
+      this.handle = undefined;
+      return { ok: true, value: null };
+    } else {
+      throw new Error('NOT IMPLEMENTED');
+      // const result = await libparsec.confirmAccountDeletion(this.handle, code);
+      // if (result.ok) {
+      //   this.handle = undefined;
+      // }
+      // return result;
+    }
   }
 }
 
