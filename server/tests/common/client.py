@@ -35,6 +35,7 @@ from parsec._parsec import (
     testbed as tb,
 )
 from parsec.asgi import AsgiApp
+from parsec.client_context import AuthenticatedAccountClientContext
 from parsec.components.auth import (
     AccountAuthenticationToken,
     AuthenticatedToken,
@@ -119,6 +120,16 @@ class AuthenticatedAccountRpcClient(BaseAuthenticatedAccountRpcClient):
         if rep.status_code != 200:
             raise RpcTransportError(rep)
         return rep.content
+
+    def to_context(self) -> AuthenticatedAccountClientContext:
+        return AuthenticatedAccountClientContext(
+            client_api_version=ApiVersion.API_LATEST_VERSION,
+            settled_api_version=ApiVersion.API_LATEST_VERSION,
+            account_email=self.account_email,
+            auth_method_id=self.auth_method_id,
+            client_user_agent="Test",
+            client_ip_address="",
+        )
 
 
 @dataclass(slots=True)

@@ -19,6 +19,7 @@ from parsec._parsec import (
     SequesterServiceID,
     UntrustedPasswordAlgorithm,
     UserID,
+    ValidationCode,
     VerifyKey,
     VlobID,
     anonymous_account_cmds,
@@ -484,6 +485,15 @@ class BaseAuthenticatedRpcClient:
 class BaseAuthenticatedAccountRpcClient:
     async def _do_request(self, req: bytes, family: str) -> bytes:
         raise NotImplementedError
+
+    async def account_delete_confirm(
+        self, deletion_code: ValidationCode
+    ) -> authenticated_account_cmds.latest.account_delete_confirm.Rep:
+        req = authenticated_account_cmds.latest.account_delete_confirm.Req(
+            deletion_code=deletion_code
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        return authenticated_account_cmds.latest.account_delete_confirm.Rep.load(raw_rep)
 
     async def account_delete_send_code(
         self,

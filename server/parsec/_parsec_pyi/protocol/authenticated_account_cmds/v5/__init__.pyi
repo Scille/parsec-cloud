@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from . import (
+    account_delete_confirm,
     account_delete_send_code,
     account_info,
     invite_self_list,
@@ -20,7 +21,8 @@ class AnyCmdReq:
     def load(
         cls, raw: bytes
     ) -> (
-        account_delete_send_code.Req
+        account_delete_confirm.Req
+        | account_delete_send_code.Req
         | account_info.Req
         | invite_self_list.Req
         | ping.Req
@@ -32,6 +34,7 @@ class AnyCmdReq:
 
 __all__ = [
     "AnyCmdReq",
+    "account_delete_confirm",
     "account_delete_send_code",
     "account_info",
     "invite_self_list",
