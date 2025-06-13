@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from parsec._parsec import (
     AccountAuthMethodID,
+    AccountDeletionToken,
     BlockID,
     BootstrapToken,
     CancelledGreetingAttemptReason,
@@ -495,6 +496,15 @@ class BaseAuthenticatedRpcClient:
 class BaseAuthenticatedAccountRpcClient:
     async def _do_request(self, req: bytes, family: str) -> bytes:
         raise NotImplementedError
+
+    async def account_delete_confirm(
+        self, deletion_token: AccountDeletionToken
+    ) -> authenticated_account_cmds.latest.account_delete_confirm.Rep:
+        req = authenticated_account_cmds.latest.account_delete_confirm.Req(
+            deletion_token=deletion_token
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated_account")
+        return authenticated_account_cmds.latest.account_delete_confirm.Rep.load(raw_rep)
 
     async def account_delete_send_validation_token(
         self,
