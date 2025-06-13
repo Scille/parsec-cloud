@@ -103,7 +103,7 @@
             </ion-button>
           </div>
 
-          <profile-header
+          <profile-header-organization
             v-if="isLargeDisplay"
             id="profile-button"
             :name="userInfo ? userInfo.humanHandle.label : ''"
@@ -146,7 +146,7 @@ import { InformationManager, InformationManagerKey } from '@/services/informatio
 import useSidebarMenu from '@/services/sidebarMenu';
 import { Translatable, MsImage, SidebarToggle, useWindowSize } from 'megashark-lib';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
-import ProfileHeader from '@/views/header/ProfileHeader.vue';
+import ProfileHeaderOrganization from '@/views/header/ProfileHeaderOrganization.vue';
 import { openSettingsModal } from '@/views/settings';
 import {
   IonButton,

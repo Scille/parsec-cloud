@@ -4,17 +4,22 @@
   <ion-item
     button
     id="click-trigger"
-    class="container ion-no-padding"
-    @click="openPopover($event)"
+    class="profile-header ion-no-padding"
+    :class="{ 'profile-header-clicked': isPopoverOpen }"
+    @click="openOrganizationPopover($event)"
   >
-    <user-avatar-name
-      :user-avatar="name"
-      class="avatar medium"
+    <div
+      class="avatar small"
       :class="{ online: isOnline, offline: !isOnline }"
-    />
+    >
+      <ion-icon
+        :icon="personCircle"
+        class="avatar-icon"
+      />
+    </div>
     <div class="text-content">
       <div class="text-content-name">
-        <ion-text class="text-content-name__text body">
+        <ion-text class="text-content-name__text subtitles-normal">
           {{ name }}
         </ion-text>
         <ion-icon
@@ -34,15 +39,14 @@
 </template>
 
 <script setup lang="ts">
-import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserProfile, getClientInfo } from '@/parsec';
 import { Routes, navigateTo, ProfilePages } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
-import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
+import ProfileHeaderOrganizationPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderOrganizationPopover.vue';
 import { IonIcon, IonItem, IonText, modalController, popoverController } from '@ionic/vue';
-import { chevronDown } from 'ionicons/icons';
+import { chevronDown, personCircle } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 import { Env } from '@/services/environment';
 import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
@@ -90,11 +94,11 @@ onUnmounted(async () => {
   }
 });
 
-async function openPopover(event: Event): Promise<void> {
+async function openOrganizationPopover(event: Event): Promise<void> {
   isPopoverOpen.value = !isPopoverOpen.value;
   const popover = await popoverController.create({
-    component: ProfileHeaderPopover,
-    cssClass: 'profile-header-popover',
+    component: ProfileHeaderOrganizationPopover,
+    cssClass: 'profile-header-organization-popover',
     componentProps: {
       email: props.email,
       profile: props.profile,
@@ -163,38 +167,55 @@ async function openPopover(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.container {
-  display: flex;
-  flex-direction: column;
+.profile-header {
   --background: none;
-  cursor: pointer;
-
-  &:hover {
-    --background-hover: none;
-  }
+  --background-hover: none;
+  border-radius: var(--parsec-radius-12);
+  padding: 0.375rem 0.5rem 0.375rem 0.25rem;
+  border: 1px solid transparent;
+  transition: all ease-in-out 200ms;
+  flex-shrink: 0;
 
   & * {
     pointer-events: none;
   }
+
+  &:hover {
+    --background-hover: none;
+    border-color: var(--parsec-color-light-secondary-medium);
+    background: var(--parsec-color-light-secondary-background);
+  }
+
+  &-clicked {
+    border-color: var(--parsec-color-light-secondary-medium);
+    background: var(--parsec-color-light-secondary-background);
+  }
 }
 
 .avatar {
-  margin: 0 0.75em 0 0;
   position: relative;
+  color: var(--parsec-color-light-primary-600);
+  display: flex;
+  margin-right: 0.5rem;
 
   @include ms.responsive-breakpoint('md') {
     margin: 0;
   }
 
+  &-icon {
+    font-size: 2rem;
+  }
+
   &::after {
     content: '';
     position: absolute;
-    bottom: 0;
-    right: -3px;
-    height: 0.625rem;
-    width: 0.625rem;
+    bottom: 0px;
+    right: 0px;
+    height: 0.5rem;
+    width: 0.5rem;
     border-radius: 50%;
-    border: var(--parsec-color-light-secondary-white) solid 3px;
+    border: var(--parsec-color-light-secondary-white) solid 2px;
+    z-index: 2;
   }
 
   &.online::after {
@@ -209,13 +230,17 @@ async function openPopover(event: Event): Promise<void> {
 .text-content {
   display: flex;
   flex-direction: column;
+  width: 100%;
 
   &-name {
     display: flex;
     align-items: center;
-    color: var(--parsec-color-light-secondary-text);
+    gap: 0.5rem;
+    color: var(--parsec-color-light-secondary-soft-text);
 
     &__text {
+      font-size: 0.9375rem;
+
       @include ms.responsive-breakpoint('md') {
         display: none;
       }
@@ -223,7 +248,7 @@ async function openPopover(event: Event): Promise<void> {
 
     ion-icon {
       transition: transform ease-out 300ms;
-      font-size: 1.125rem;
+      font-size: 1rem;
 
       &.popover-is-open {
         transform: rotate(180deg);
