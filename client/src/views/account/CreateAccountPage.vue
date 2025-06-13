@@ -219,12 +219,12 @@ const TITLES: Array<{ title?: Translatable; subtitle?: Translatable }> = [
     subtitle: 'loginPage.createAccount.subtitle.default',
   },
   {
-    title: 'loginPage.createAccount.title.codeTitle',
-    subtitle: 'loginPage.createAccount.subtitle.codeSubtitle',
-  },
-  {
     title: 'loginPage.createAccount.title.authenticationTitle',
     subtitle: 'loginPage.createAccount.subtitle.authenticationSubtitle',
+  },
+  {
+    title: 'loginPage.createAccount.title.codeTitle',
+    subtitle: 'loginPage.createAccount.subtitle.codeSubtitle',
   },
   {
     title: 'loginPage.createAccount.title.creatingTitle',

@@ -108,7 +108,7 @@ function getAccountServer(): string {
 }
 
 function isAccountMocked(): boolean {
-  return import.meta.env[MOCK_ACCOUNT_ENV_VARIABLE] === 'true';
+  return import.meta.env[MOCK_ACCOUNT_ENV_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_ACCOUNT === true;
 }
 
 function isAccountEnabled(): boolean {

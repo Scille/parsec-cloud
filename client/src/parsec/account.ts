@@ -141,7 +141,7 @@ class _ParsecAccount {
     }
     if (Env.isAccountMocked()) {
       await wait(2000);
-      if (email === 'a@b.c' && authentication.strategy === AccountAccessStrategy.Password && authentication.password === 'BigP@ssw0rd.') {
+      if (authentication.strategy === AccountAccessStrategy.Password && authentication.password === 'BigP@ssw0rd.') {
         this.handle = 1;
         return { ok: true, value: 1 };
       }
