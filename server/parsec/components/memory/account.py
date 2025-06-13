@@ -15,6 +15,7 @@ from parsec.components.account import (
     AccountCreateAccountBadOutcome,
     AccountCreateAccountDeletionTokenBadOutcome,
     AccountCreateEmailValidationTokenBadOutcome,
+    AccountDeletionConfirmBadOutcome,
     AccountVaultItemListBadOutcome,
     AccountVaultItemRecoveryList,
     AccountVaultItemUploadBadOutcome,
@@ -258,3 +259,21 @@ class MemoryAccountComponent(BaseAccountComponent):
         token = AccountDeletionToken.new()
         self._data.accounts_deletion_requested[email] = (token, now)
         return token
+
+    @override
+    async def confirm_account_deletion(
+        self, email: EmailAddress, deletion_token: AccountDeletionToken, now: DateTime
+    ) -> None | AccountDeletionConfirmBadOutcome:
+        try:
+            (token, token_created_at) = self._data.accounts_deletion_requested[email]
+        except KeyError:
+            return AccountDeletionConfirmBadOutcome.INVALID_TOKEN
+        if token != deletion_token or not self.is_deletion_token_still_valid(token_created_at, now):
+            return AccountDeletionConfirmBadOutcome.INVALID_TOKEN
+
+        account = self._data.accounts[email]
+
+        for auth_method in account.current_vault.authentication_methods.values():
+            auth_method.disabled_on = now
+
+        account.deleted_on = now
