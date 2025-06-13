@@ -217,7 +217,7 @@ jobs:
           - name: 🍎 macOS
             os: macos-14
           - name: 🏁 Windows
-            os: windows-2022
+            os: windows-2025
     name: "${{ matrix.name }}: 🦀 Rust tests"
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 60
