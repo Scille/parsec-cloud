@@ -12,7 +12,7 @@ msTest('Test all orgs', async ({ clientAreaCustomOrder }) => {
   for (const invoice of await invoices.all()) {
     await expect(invoice.locator('.invoices-organization')).toHaveText(/^BlackMesa(-2)?$/);
     await expect(invoice.locator('.invoices-amount')).toHaveText(/^€\d+\.\d{2}$/);
-    await expect(invoice.locator('.badge-status')).toHaveText(/^To pay|Paid|Void|In progress|Uncollectible$/);
+    await expect(invoice.locator('.badge-status')).toHaveText(/^To pay|Paid|Unavailable$/);
   }
 });
 
@@ -27,7 +27,7 @@ msTest('Test only one org', async ({ clientAreaCustomOrder }) => {
   for (const invoice of await invoices.all()) {
     await expect(invoice.locator('.invoices-organization')).toHaveText('BlackMesa');
     await expect(invoice.locator('.invoices-amount')).toHaveText(/^€\d+\.\d{2}$/);
-    await expect(invoice.locator('.badge-status')).toHaveText(/^To pay|Paid|Void|In progress|Uncollectible$/);
+    await expect(invoice.locator('.badge-status')).toHaveText(/^To pay|Paid|Unavailable$/);
   }
 });
 
