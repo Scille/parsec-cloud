@@ -2,6 +2,7 @@
 
 #![doc = include_str!("../README.md")]
 
+mod account;
 mod addr;
 mod cancel;
 mod client;
@@ -19,6 +20,7 @@ mod workspace;
 mod workspace_history;
 mod workspace_history2;
 
+pub use account::*;
 pub use addr::*;
 pub use cancel::*;
 pub use client::*;

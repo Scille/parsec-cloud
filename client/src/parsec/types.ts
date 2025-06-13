@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 export {
+  AccountCreateProceedErrorTag,
+  AccountSendEmailValidationTokenErrorTag,
   AnyClaimRetrievedInfoTag,
   BootstrapOrganizationErrorTag,
   CancelledGreetingAttemptReason,
@@ -76,6 +78,8 @@ export {
   WorkspaceStopErrorTag,
 } from '@/plugins/libparsec';
 export type {
+  AccountCreateProceedError,
+  AccountSendEmailValidationTokenError,
   AnyClaimRetrievedInfoDevice,
   AnyClaimRetrievedInfoUser,
   ApiVersion,
@@ -365,7 +369,20 @@ interface AccountError {
   error: string;
 }
 
+enum AccountAccessStrategy {
+  Password = 'password',
+}
+
+interface AccountAccessPassword {
+  strategy: AccountAccessStrategy.Password;
+  password: string;
+}
+
+type AccountAccess = AccountAccessPassword;
+
 export {
+  AccountAccess,
+  AccountAccessStrategy,
   AccountError,
   AccountErrorTag,
   AccountHandle,
