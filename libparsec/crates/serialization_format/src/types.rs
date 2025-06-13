@@ -242,6 +242,7 @@ generate_field_type_enum!(
     BootstrapToken => libparsec_types::BootstrapToken,
     InvitationToken => libparsec_types::InvitationToken,
     EmailValidationToken => libparsec_types::EmailValidationToken,
+    AccountDeletionToken => libparsec_types::AccountDeletionToken,
     InvitationStatus => libparsec_types::InvitationStatus,
     CertificateSigner => libparsec_types::CertificateSigner,
     BlockAccess => libparsec_types::BlockAccess,
