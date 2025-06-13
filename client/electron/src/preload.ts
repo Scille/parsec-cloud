@@ -2,10 +2,12 @@
 
 require('./rt/electron-rt');
 import log from 'electron-log/main';
+import * as fs from 'fs';
 
 // User Defined Preload scripts below
 
 import { contextBridge, ipcRenderer } from 'electron';
+import path from 'path';
 import { PageToWindowChannel } from './communicationChannels';
 
 process.once('loaded', async () => {
@@ -52,6 +54,20 @@ process.once('loaded', async () => {
     getLogs: (): Promise<Array<string>> => {
       return new Promise((resolve, _reject) => {
         resolve(log.transports.file.readAllLogs().flatMap((v) => v.lines));
+      });
+    },
+    readCustomFile: (file: string): Promise<ArrayBuffer> => {
+      return new Promise((resolve, _reject) => {
+        // make it sure that we're only opening file in the custom folder, no `../../`
+        // shenanigans allowed.
+        file = path.normalize(file);
+        const fullPath = path.join('./custom', file);
+        try {
+          const data = fs.readFileSync(fullPath);
+          resolve(data);
+        } catch (e) {
+          resolve(undefined);
+        }
       });
     },
   });
