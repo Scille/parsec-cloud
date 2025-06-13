@@ -949,7 +949,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         }
         FieldType::GreeterOrClaimer => quote_rs_to_py_class!(crate::enumerate::GreeterOrClaimer),
         FieldType::EmailAddress => quote_rs_to_py_class!(crate::ids::EmailAddress),
-        FieldType::ValidationCode => quote_rs_to_py_class!(crate::ids::ValidationCode),
+        FieldType::ValidationCode => quote_rs_to_py_class!(crate::misc::ValidationCode),
     }
 }
 
@@ -1046,7 +1046,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         }
         FieldType::GreeterOrClaimer => quote! { crate::enumerate::GreeterOrClaimer },
         FieldType::EmailAddress => quote! { crate::ids::EmailAddress },
-        FieldType::ValidationCode => quote! { crate::ids::ValidationCode },
+        FieldType::ValidationCode => quote! { crate::misc::ValidationCode },
     }
 }
 

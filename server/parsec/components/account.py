@@ -73,6 +73,13 @@ class AccountCreateAccountDeletionTokenBadOutcome(BadOutcomeEnum):
     TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
 
 
+class AccountDeletionConfirmBadOutcome(BadOutcomeEnum):
+    NEW_CODE_NEEDED = auto()
+    INVALID_CODE = auto()
+    ACCOUNT_NOT_FOUND = auto()
+    ALREADY_DELETED = auto()
+
+
 @dataclass(slots=True)
 class AccountInfo:
     human_handle: HumanHandle
@@ -519,6 +526,44 @@ class BaseAccountComponent:
                     human_handle=info.human_handle
                 )
             case AccountInfoBadOutcome.ACCOUNT_NOT_FOUND:
+                client_ctx.account_not_found_abort()
+
+    async def delete_account(
+        self, auth_method_id: AccountAuthMethodID, now: DateTime
+    ) -> None | AccountDeletionConfirmBadOutcome:
+        raise NotImplementedError
+
+    async def confirm_account_deletion(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        deletion_code: ValidationCode,
+        now: DateTime,
+    ) -> None | AccountDeletionConfirmBadOutcome:
+        code_info = await self.get_account_deletion_code_info(client_ctx.account_email)
+        if code_info is None or not code_info.can_be_used(now):
+            return AccountDeletionConfirmBadOutcome.NEW_CODE_NEEDED
+        if code_info.code != deletion_code:
+            code_info.failed_attempts += 1
+            await self.set_account_deletion_code_info(client_ctx.account_email, code_info)
+            return AccountDeletionConfirmBadOutcome.INVALID_CODE
+
+        return await self.delete_account(client_ctx.auth_method_id, now)
+
+    @api
+    async def api_account_delete_confirm(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.account_delete_confirm.Req,
+    ) -> authenticated_account_cmds.latest.account_delete_confirm.Rep:
+        outcome = await self.confirm_account_deletion(client_ctx, req.deletion_code, DateTime.now())
+        match outcome:
+            case None | AccountDeletionConfirmBadOutcome.ALREADY_DELETED:
+                return authenticated_account_cmds.latest.account_delete_confirm.RepOk()
+            case AccountDeletionConfirmBadOutcome.INVALID_CODE:
+                return authenticated_account_cmds.latest.account_delete_confirm.RepInvalidDeletionCode()
+            case AccountDeletionConfirmBadOutcome.NEW_CODE_NEEDED:
+                return authenticated_account_cmds.latest.account_delete_confirm.RepNewCodeNeeded()
+            case AccountDeletionConfirmBadOutcome.ACCOUNT_NOT_FOUND:
                 client_ctx.account_not_found_abort()
 
 
