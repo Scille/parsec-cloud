@@ -18,6 +18,7 @@ from parsec._parsec import (
 from parsec.components.account import (
     AccountCreateAccountBadOutcome,
     AccountCreateEmailValidationTokenBadOutcome,
+    AccountDeletionConfirmBadOutcome,
     AccountInfo,
     AccountInfoBadOutcome,
     AccountInviteListBadOutcome,
@@ -331,3 +332,20 @@ class MemoryAccountComponent(BaseAccountComponent):
             )
 
         return res
+
+    @override
+    async def delete_account(
+        self, auth_method_id: AccountAuthMethodID, now: DateTime
+    ) -> None | AccountDeletionConfirmBadOutcome:
+        match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
+            case (account, _):
+                pass
+            case None:
+                return AccountDeletionConfirmBadOutcome.ACCOUNT_NOT_FOUND
+
+        if account.deleted_on is not None:
+            return AccountDeletionConfirmBadOutcome.ALREADY_DELETED
+
+        account.deleted_on = now
+        for method in account.current_vault.authentication_methods.values():
+            method.disabled_on = now
