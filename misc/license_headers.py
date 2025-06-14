@@ -91,7 +91,7 @@ class Licenser:
         with open(file, "r", encoding="utf-8") as fd:
             lines: list[str] = []
             need_rewrite = False
-            for line in fd.readlines():
+            for line in fd:
                 if cls.is_possible_license_line(line):
                     print(f"{DIM}{file}:{RESET_DIM} Removing license header")
                     need_rewrite = True

@@ -138,6 +138,8 @@ select = [
     "ASYNC",
     # Perflint, linter for performance anti-patterns
     "PERF",
+    # refurb, a tool for refurbishing and modernizing Python codebases
+    "FURB",
     # flake8-debugger, check for presence of debugger
     "T10",
     # Pyflakes

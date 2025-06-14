@@ -150,8 +150,7 @@ def generate_invite_email(
     greeter_name: str | None = None,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
-    if server_url.endswith("/"):
-        server_url = server_url[:-1]
+    server_url = server_url.removesuffix("/")
 
     is_user_invitation = invitation_type == invitation_type.USER
     is_device_invitation = invitation_type == invitation_type.DEVICE

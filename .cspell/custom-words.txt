@@ -73,6 +73,7 @@ footgun
 fqcn
 FRFX
 frsize
+furb
 fusepy
 getcapacitor
 ghijklmnopqrstu
@@ -150,6 +151,7 @@ PAPEROPT
 parsecdoc
 Passw
 patchelf
+perflint
 pdflatex
 pemfile
 pems
@@ -178,6 +180,7 @@ qhcp
 qthelp
 reencrypted
 refreshiconhandler
+refurb
 releasedir
 renamesourcefileattribute
 reparenting

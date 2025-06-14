@@ -474,8 +474,7 @@ def generate_email_validation_email(
     server_url: str,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
-    if server_url.endswith("/"):
-        server_url = server_url[:-1]
+    server_url = server_url.removesuffix("/")
 
     html = get_template("account_email_validation.html").render(
         validation_url=validation_url,
@@ -512,8 +511,7 @@ def generate_email_deletion_email(
     server_url: str,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
-    if server_url.endswith("/"):
-        server_url = server_url[:-1]
+    server_url = server_url.removesuffix("/")
 
     html = get_template("account_email_deletion.html").render(
         deletion_url=deletion_url,

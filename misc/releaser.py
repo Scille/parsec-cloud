@@ -115,8 +115,7 @@ class Version:
     @classmethod
     def parse(cls, raw: str, git: bool = False) -> Version:
         raw = raw.strip()
-        if raw.startswith("v"):
-            raw = raw[1:]
+        raw = raw.removeprefix("v")
         if git:
             # Git describe show our position relative to an existing release.
             # `git describe` could return for example `1.2.3-15-g3b5f5762`, here:
