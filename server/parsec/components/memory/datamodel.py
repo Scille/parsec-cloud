@@ -329,10 +329,18 @@ class MemoryOrganization:
                     )
                 )
 
-            for update in user.profile_updates:
-                common_certificates_unordered.append(
-                    (update.cooked.timestamp, 1, update.user_update_certificate, update.cooked)
-                )
+            # user's profile update certificates
+            common_certificates_unordered.extend(
+                [
+                    (
+                        profile_update.cooked.timestamp,
+                        1,
+                        profile_update.user_update_certificate,
+                        profile_update.cooked,
+                    )
+                    for profile_update in user.profile_updates
+                ]
+            )
 
         for device in self.devices.values():
             if redacted:
@@ -453,8 +461,7 @@ class MemoryOrganization:
         all_vlob_atoms: list[MemoryVlobAtom] = []
         for realm in self.realms.values():
             for vlob in realm.vlobs.values():
-                for vlob_atom in vlob:
-                    all_vlob_atoms.append(vlob_atom)
+                all_vlob_atoms.extend(vlob)
 
         # Note we also order by vlob ID to ensure a stable order in case of same creation date
         all_vlob_atoms.sort(key=lambda vlob_atom: (vlob_atom.created_on, vlob_atom.vlob_id))
