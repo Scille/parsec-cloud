@@ -778,8 +778,8 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         granted_roles: list[RealmGrantedRole] = []
         for realm in org.realms.values():
-            for role in realm.roles:
-                granted_roles.append(
+            granted_roles.extend(
+                [
                     RealmGrantedRole(
                         realm_id=realm.realm_id,
                         certificate=role.realm_role_certificate,
@@ -788,7 +788,9 @@ class MemoryRealmComponent(BaseRealmComponent):
                         granted_by=role.cooked.author,
                         granted_on=role.cooked.timestamp,
                     )
-                )
+                    for role in realm.roles
+                ]
+            )
 
         return granted_roles
 

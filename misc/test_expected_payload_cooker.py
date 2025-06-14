@@ -240,8 +240,7 @@ def parse_lines(lines):
         output_lines.append("    let raw: &[u8] = hex!(")
 
         # The raw value (payload) to be used in the test
-        for part in textwrap.wrap(expected_raw.hex()):
-            output_lines.append(f'    "{part}"')
+        output_lines.extend([f'    "{part}"' for part in textwrap.wrap(expected_raw.hex())])
 
         output_lines.append("    ).as_ref();")
 

@@ -136,6 +136,8 @@ select = [
     "FAST",
     # flake8-async, flake8 plugin for problems related to Trio, AnyIO, or asyncio.
     "ASYNC",
+    # Perflint, linter for performance anti-patterns
+    "PERF",
     # flake8-debugger, check for presence of debugger
     "T10",
     # Pyflakes

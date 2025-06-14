@@ -510,10 +510,13 @@ class MemoryUserComponent(BaseUserComponent):
                     (user.cooked_revoked.timestamp, 1, user.revoked_user_certificate)
                 )
 
-            for update in user.profile_updates:
-                common_certificates_unordered.append(
-                    (update.cooked.timestamp, 1, update.user_update_certificate)
-                )
+            # user's profile update certificates
+            common_certificates_unordered.extend(
+                [
+                    (profile_update.cooked.timestamp, 1, profile_update.user_update_certificate)
+                    for profile_update in user.profile_updates
+                ]
+            )
 
         for device in org.devices.values():
             if redacted:
@@ -601,7 +604,7 @@ class MemoryUserComponent(BaseUserComponent):
         # 4) Shamir recovery certificates
 
         shamir_certificates_unordered: list[tuple[DateTime, int, bytes]] = []
-        for _, user_shamir_recoveries in org.shamir_recoveries.items():
+        for user_shamir_recoveries in org.shamir_recoveries.values():
             for shamir_recovery in user_shamir_recoveries:
                 if shamir_recovery.cooked_brief.user_id == author_user_id:
                     # Current user is the author of this shamir recovery
@@ -726,17 +729,14 @@ class MemoryUserComponent(BaseUserComponent):
         except KeyError:
             return UserListUsersBadOutcome.ORGANIZATION_NOT_FOUND
 
-        users = []
-        for user in org.users.values():
-            users.append(
-                UserInfo(
-                    user_id=user.cooked.user_id,
-                    human_handle=user.cooked.human_handle,
-                    frozen=user.is_frozen,
-                )
+        return [
+            UserInfo(
+                user_id=user.cooked.user_id,
+                human_handle=user.cooked.human_handle,
+                frozen=user.is_frozen,
             )
-
-        return users
+            for user in org.users.values()
+        ]
 
     @override
     async def list_frozen_users(
@@ -755,12 +755,7 @@ class MemoryUserComponent(BaseUserComponent):
         if user.current_profile != UserProfile.ADMIN:
             return UserListFrozenUsersBadOutcome.AUTHOR_NOT_ALLOWED
 
-        users = []
-        for user in org.users.values():
-            if user.is_frozen:
-                users.append(user.cooked.user_id)
-
-        return users
+        return [user.cooked.user_id for user in org.users.values() if user.is_frozen]
 
     @override
     async def freeze_user(
