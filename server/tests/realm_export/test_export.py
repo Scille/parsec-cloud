@@ -571,7 +571,7 @@ async def test_export_ok_sequestered(
             # be ignored (see documentation of the `sequestered` testbed template).
             events = iter(sequestered_org.testbed_template.events)
             expected_snapshot_timestamp = next(
-                (e for e in events if isinstance(e, tb.TestbedEventRevokeSequesterService))
+                e for e in events if isinstance(e, tb.TestbedEventRevokeSequesterService)
             ).timestamp
             # Sanity check to ensure our snapshot will skip some data
             assert (
@@ -655,7 +655,7 @@ async def test_restart_partially_exported(
     blocks_events = (
         e
         for e in workspace_history_org.testbed_template.events
-        if isinstance(e, (tb.TestbedEventCreateBlock, tb.TestbedEventCreateOpaqueBlock))
+        if isinstance(e, tb.TestbedEventCreateBlock | tb.TestbedEventCreateOpaqueBlock)
     )
     monkeypatch.setattr(
         "parsec.realm_export.BLOCK_DATA_EXPORT_RAM_LIMIT",
@@ -929,12 +929,9 @@ async def test_export_snapshot_timestamp_older_than_realm_creation(
     tmp_path: Path,
 ):
     wksp1_created_on = next(
-        (
-            e
-            for e in workspace_history_org.testbed_template.events
-            if isinstance(e, tb.TestbedEventNewRealm)
-            and e.realm_id == workspace_history_org.wksp1_id
-        )
+        e
+        for e in workspace_history_org.testbed_template.events
+        if isinstance(e, tb.TestbedEventNewRealm) and e.realm_id == workspace_history_org.wksp1_id
     ).timestamp
     bad_snapshot_timestamp = wksp1_created_on.subtract(seconds=1)
 

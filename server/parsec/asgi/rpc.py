@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator, AsyncIterator, Mapping, Sequence
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
 from typing import (
     Any,
-    AsyncGenerator,
-    AsyncIterator,
-    Mapping,
     NoReturn,
-    Sequence,
 )
 from uuid import UUID
 

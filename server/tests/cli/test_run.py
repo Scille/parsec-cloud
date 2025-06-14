@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 import sys
+from collections.abc import Generator
 from dataclasses import dataclass
 from pathlib import Path
 from ssl import PROTOCOL_TLS_CLIENT, SSLContext
 from time import sleep
-from typing import Generator
 from urllib.error import URLError
 from urllib.request import urlopen
 

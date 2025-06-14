@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import ssl
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import Any
 
 import httpx
 

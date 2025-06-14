@@ -175,6 +175,7 @@ pulseaudio
 pydeps
 pypa
 pytools
+pyupgrade
 qcollectiongenerator
 qhcp
 qthelp

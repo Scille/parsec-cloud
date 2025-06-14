@@ -2,16 +2,14 @@
 from __future__ import annotations
 
 import csv
+from collections.abc import Awaitable, Callable
 from enum import Enum
 from functools import wraps
 from io import StringIO
 from typing import (
     TYPE_CHECKING,
     Annotated,
-    Awaitable,
-    Callable,
     Literal,
-    Union,
     cast,
 )
 
@@ -582,7 +580,7 @@ class SequesterServiceConfigInWebhook(BaseModel):
 
 
 SequesterServiceConfigField = Annotated[
-    Union[SequesterServiceConfigInStorage, SequesterServiceConfigInWebhook],
+    SequesterServiceConfigInStorage | SequesterServiceConfigInWebhook,
     Field(
         discriminator="type",
     ),

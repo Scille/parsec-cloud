@@ -3,12 +3,13 @@ from __future__ import annotations
 
 from asyncio import Event
 from collections import defaultdict
+from collections.abc import AsyncIterator, Iterable, Iterator
 from contextlib import asynccontextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from itertools import chain
-from typing import AsyncIterator, Iterable, Iterator, Literal
+from typing import Literal
 
 from parsec._parsec import (
     AccountAuthMethodID,

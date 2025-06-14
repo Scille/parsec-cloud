@@ -407,9 +407,7 @@ async def test_authenticated_realm_rotate_key_timestamp_out_of_ballpark(
     )
     rep = await coolorg.alice.realm_rotate_key(
         realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
-        per_participant_keys_bundle_access={
-            coolorg.alice.user_id: "<alice keys bundle access>".encode()
-        },
+        per_participant_keys_bundle_access={coolorg.alice.user_id: b"<alice keys bundle access>"},
         per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
@@ -464,7 +462,7 @@ async def test_authenticated_realm_rotate_key_require_greater_timestamp(
     rep = await coolorg.alice.realm_rotate_key(
         realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         per_participant_keys_bundle_access={
-            coolorg.alice.user_id: "<alice keys bundle access>".encode(),
+            coolorg.alice.user_id: b"<alice keys bundle access>",
             coolorg.bob.user_id: b"<bob keys bundle access>",
         },
         per_sequester_service_keys_bundle_access=None,
@@ -737,10 +735,8 @@ async def test_authenticated_realm_rotate_key_concurrency(
         for rep in reps
         if isinstance(
             rep,
-            (
-                authenticated_cmds.latest.realm_rotate_key.RepBadKeyIndex,
-                authenticated_cmds.latest.realm_rotate_key.RepRequireGreaterTimestamp,
-            ),
+            authenticated_cmds.latest.realm_rotate_key.RepBadKeyIndex
+            | authenticated_cmds.latest.realm_rotate_key.RepRequireGreaterTimestamp,
         )
     ]
     assert len(non_ok_reps) == 10

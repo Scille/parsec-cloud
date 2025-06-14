@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import asyncio
 from collections import deque
+from collections.abc import AsyncIterator, Callable, Iterator, Sequence
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from enum import auto
-from typing import AsyncIterator, Callable, Iterator, Sequence, Type, TypeAlias
 from unittest.mock import ANY
 from uuid import UUID
 
@@ -31,7 +31,7 @@ from parsec.types import BadOutcomeEnum
 PER_CLIENT_MAX_BUFFER_EVENTS = 100
 
 
-ClientBroadcastableEventStream: TypeAlias = MemoryObjectReceiveStream[
+type ClientBroadcastableEventStream = MemoryObjectReceiveStream[
     tuple[ClientBroadcastableEvent, bytes | None] | None
 ]
 
@@ -85,14 +85,14 @@ class EventBusSpy:
     def clear(self):
         self.events.clear()
 
-    async def wait(self, expected_event_type: Type[Event]) -> Event:
+    async def wait(self, expected_event_type: type[Event]) -> Event:
         for occurred_event in reversed(self.events):
             if isinstance(occurred_event, expected_event_type):
                 return occurred_event
 
         return await self._wait(expected_event_type)
 
-    async def _wait(self, expected_event_type: Type[Event]) -> Event:
+    async def _wait(self, expected_event_type: type[Event]) -> Event:
         send_channel, receive_channel = anyio.create_memory_object_stream(1)
 
         def _waiter(event: Event):
@@ -104,7 +104,7 @@ class EventBusSpy:
         return await receive_channel.receive()
 
     async def wait_multiple(
-        self, expected_event_types: Sequence[Type[Event]], in_order: bool = True
+        self, expected_event_types: Sequence[type[Event]], in_order: bool = True
     ) -> None:
         try:
             self.assert_events_occurred(expected_event_types, in_order=in_order)
@@ -146,7 +146,7 @@ class EventBusSpy:
 
     def assert_events_occurred(
         self,
-        events: Sequence[Event | Type[Event]],
+        events: Sequence[Event | type[Event]],
         in_order: bool = True,
         ignore_event_id: bool = True,
     ) -> None:

@@ -46,7 +46,7 @@ def test_load_testbed_customization(
 
 class TestbedTemplateContent:
     id: str
-    events: list["TestbedEvent"]
+    events: list[TestbedEvent]
 
     def compute_crc(self) -> int: ...
 

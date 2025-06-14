@@ -3,15 +3,13 @@ from __future__ import annotations
 
 import sys
 from collections import defaultdict
+from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from functools import wraps
 from itertools import count
 from typing import (
     Any,
-    Callable,
     Concatenate,
-    Iterable,
-    Iterator,
     ParamSpec,
     TextIO,
     TypeVar,

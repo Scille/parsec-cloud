@@ -1,13 +1,11 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from typing import (
     TYPE_CHECKING,
     Any,
-    Awaitable,
-    Callable,
     ForwardRef,
-    Type,
     TypeVar,
     get_type_hints,
 )
@@ -91,8 +89,8 @@ def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:  # pyright: ignore[reportMissingTyp
     return fn
 
 
-def collect_apis(*components: Any, include_ping: bool) -> dict[Type[Any], ApiFn]:  # pyright: ignore[reportMissingTypeArgument] see TODO for Req/Rep above
-    apis: dict[Type[Any], ApiFn] = {}  # pyright: ignore[reportMissingTypeArgument] see TODO for Req/Rep above
+def collect_apis(*components: Any, include_ping: bool) -> dict[type[Any], ApiFn]:  # pyright: ignore[reportMissingTypeArgument] see TODO for Req/Rep above
+    apis: dict[type[Any], ApiFn] = {}  # pyright: ignore[reportMissingTypeArgument] see TODO for Req/Rep above
     for component in components:
         for methname in dir(component):
             meth = getattr(component, methname)

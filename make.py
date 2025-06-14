@@ -12,8 +12,8 @@ import shutil
 import subprocess
 import sys
 import textwrap
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable, Union
 
 CYAN = "\x1b[36m"
 GREY = "\x1b[37m"
@@ -216,7 +216,7 @@ class CmdWithConfigurableWebZstd(Cmd):
             self.extra_env.update(USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV)
 
 
-COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
+COMMANDS: dict[tuple[str, ...], Op | tuple[Op, ...]] = {
     #
     # Python bindings for the server
     #

@@ -7,9 +7,10 @@ import importlib
 import sys
 import traceback
 from argparse import ArgumentParser
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Iterable, Iterator, Literal, cast
+from typing import Any, Literal, cast
 
 import sqlfluff
 

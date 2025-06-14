@@ -1,14 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from collections.abc import Buffer
+from collections.abc import Buffer, Callable
 from dataclasses import dataclass
 from email.header import Header
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import auto
-from typing import Callable, TypeAlias
 
 from parsec._parsec import (
     CancelledGreetingAttemptReason,
@@ -39,11 +38,11 @@ from parsec.types import BadOutcome, BadOutcomeEnum
 
 logger = get_logger()
 
-ShamirRecoveryRecipient: TypeAlias = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
-UserOnlineStatus: TypeAlias = invited_cmds.latest.invite_info.UserOnlineStatus
-UserGreetingAdministrator: TypeAlias = invited_cmds.latest.invite_info.UserGreetingAdministrator
-InviteInfoInvitationCreatedBy: TypeAlias = invited_cmds.latest.invite_info.InvitationCreatedBy
-InviteListInvitationCreatedBy: TypeAlias = authenticated_cmds.latest.invite_list.InvitationCreatedBy
+ShamirRecoveryRecipient = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
+UserOnlineStatus = invited_cmds.latest.invite_info.UserOnlineStatus
+UserGreetingAdministrator = invited_cmds.latest.invite_info.UserGreetingAdministrator
+InviteInfoInvitationCreatedBy = invited_cmds.latest.invite_info.InvitationCreatedBy
+InviteListInvitationCreatedBy = authenticated_cmds.latest.invite_list.InvitationCreatedBy
 
 
 @dataclass(slots=True)

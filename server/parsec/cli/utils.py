@@ -3,15 +3,12 @@ from __future__ import annotations
 
 import datetime
 import traceback
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from contextlib import asynccontextmanager, contextmanager
 from functools import partial
 from typing import (
     Any,
-    AsyncIterator,
-    Awaitable,
-    Callable,
     ClassVar,
-    Iterator,
     NoReturn,
     ParamSpec,
     TypedDict,
@@ -259,7 +256,7 @@ class ParsecDateTimeClickType(click.ParamType):
 
         # strptime consider the provided datetime to be in local time,
         # so we must correct it given we know it is in fact a UTC
-        py_datetime = py_datetime.replace(tzinfo=datetime.timezone.utc)
+        py_datetime = py_datetime.replace(tzinfo=datetime.UTC)
 
         return DateTime.from_timestamp_micros(int(py_datetime.timestamp() * 1_000_000))
 
