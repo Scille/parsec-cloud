@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Any, Iterator, NotRequired, TypedDict
+from collections.abc import Iterator
+from typing import Any, NotRequired, TypedDict
 from unittest.mock import ANY
 
 import httpx

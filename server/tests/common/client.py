@@ -1,9 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from base64 import b64decode
-from contextlib import asynccontextmanager
+from collections.abc import AsyncGenerator, AsyncIterator
+from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from dataclasses import dataclass
-from typing import AsyncContextManager, AsyncGenerator, AsyncIterator
 
 import pytest
 from httpx import ASGITransport, AsyncClient, Response
@@ -217,7 +217,9 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient, BaseTosRpcClient):
         ) as event_source:
             yield EventsListenSSE(event_source)
 
-    def raw_sse_connection(self, now: DateTime | None = None) -> AsyncContextManager[Response]:
+    def raw_sse_connection(
+        self, now: DateTime | None = None
+    ) -> AbstractAsyncContextManager[Response]:
         now = now or DateTime.now()
         token = AuthenticatedToken.generate_raw(
             device_id=self.device_id,

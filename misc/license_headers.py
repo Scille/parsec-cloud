@@ -4,9 +4,10 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from collections.abc import Iterable, Iterator
 from itertools import chain, dropwhile
 from pathlib import Path
-from typing import Iterable, Iterator, TextIO, Type
+from typing import TextIO
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
@@ -46,7 +47,7 @@ class Licenser:
 
     @classmethod
     def check_header(cls, file: Path) -> bool:
-        with open(file, "r", encoding="utf-8") as fd:
+        with open(file, encoding="utf-8") as fd:
             shebang_line, header_line = extract_shebang_and_header_lines(fd)
             expected_license_line = cls.generate_license_line()
             if header_line != expected_license_line:
@@ -68,7 +69,7 @@ class Licenser:
         # Ratio at which we will consider the header line to be almost similar to the expected header line and need only replacement.
         DIFF_MIN_RATIO = 0.75
 
-        with open(file, "r", encoding="utf-8") as fd:
+        with open(file, encoding="utf-8") as fd:
             shebang_line, header_line = extract_shebang_and_header_lines(fd)
             expected_license_line = cls.generate_license_line()
             if header_line != expected_license_line:
@@ -88,7 +89,7 @@ class Licenser:
 
     @classmethod
     def remove_header(cls, file: Path) -> bool:
-        with open(file, "r", encoding="utf-8") as fd:
+        with open(file, encoding="utf-8") as fd:
             lines: list[str] = []
             need_rewrite = False
             for line in fd:
@@ -265,7 +266,7 @@ def get_files(paths: Iterable[Path]) -> Iterator[Path]:
             raise SystemExit(f"Error: Path `{path}` doesn't exist !")
 
 
-def get_licenser(path: Path) -> Type[Licenser] | None:
+def get_licenser(path: Path) -> type[Licenser] | None:
     for regex, licenser in LICENSERS_MAP.items():
         if regex.match(path.absolute().relative_to(PROJECT_DIR).as_posix()):
             return licenser

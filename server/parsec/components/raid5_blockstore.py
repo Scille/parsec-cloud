@@ -113,14 +113,11 @@ class RAID5BlockStoreComponent(BaseBlockStoreComponent):
             checksum = fetch_results[-1]
             # Sanity check: one error and we have fetched the checksum
             assert len([res for res in fetch_results if res is None]) == 0
-            assert isinstance(checksum, (bytes, bytearray))
+            assert isinstance(checksum, bytes | bytearray)
             assert len([isinstance(res, BlockStoreReadBadOutcome) for res in fetch_results]) == 1
 
             return rebuild_block_from_chunks(
-                [
-                    res if isinstance(res, (bytes, bytearray)) else None
-                    for res in fetch_results[:-1]
-                ],
+                [res if isinstance(res, bytes | bytearray) else None for res in fetch_results[:-1]],
                 checksum,
             )
 

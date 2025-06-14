@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Type, TypeAlias
+from typing import TYPE_CHECKING, Any
 
 from parsec._parsec import (
     BootstrapToken,
@@ -51,11 +52,11 @@ if TYPE_CHECKING:
     try:
         from parsec._parsec import testbed
 
-        TestbedEvent: TypeAlias = testbed.TestbedEvent  # pyright: ignore[reportRedeclaration]
-        TestbedTemplateContent: TypeAlias = testbed.TestbedTemplateContent  # pyright: ignore[reportRedeclaration]
+        type TestbedEvent = testbed.TestbedEvent  # pyright: ignore[reportRedeclaration]
+        type TestbedTemplateContent = testbed.TestbedTemplateContent  # pyright: ignore[reportRedeclaration]
     except ImportError:
-        TestbedEvent: TypeAlias = Any  # pyright: ignore[reportRedeclaration]
-        TestbedTemplateContent: TypeAlias = Any  # pyright: ignore[reportRedeclaration]
+        type TestbedEvent = Any  # pyright: ignore[reportRedeclaration]
+        type TestbedTemplateContent = Any  # pyright: ignore[reportRedeclaration]
 
 logger = get_logger()
 
@@ -116,7 +117,7 @@ class Backend:
     # Only available if `config.db_config.type == "MOCKED"`
     mocked_data: MemoryDatamodel | None = None
 
-    apis: dict[Type[Any], ApiFn] = field(init=False)  # pyright: ignore[reportMissingTypeArgument] Req/Rep are currently untyped
+    apis: dict[type[Any], ApiFn] = field(init=False)  # pyright: ignore[reportMissingTypeArgument] Req/Rep are currently untyped
 
     def __post_init__(self) -> None:
         self.apis = collect_apis(

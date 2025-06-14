@@ -3,7 +3,8 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import click
 

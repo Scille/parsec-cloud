@@ -10,12 +10,13 @@ import glob
 import re
 import tomllib
 from argparse import ArgumentParser
+from collections.abc import Callable
 from dataclasses import dataclass
 from fileinput import FileInput
 from pathlib import Path
-from typing import Callable, Pattern, Union
+from re import Pattern
 
-ReplacementPattern = Union[str, Callable[[str], str]]
+ReplacementPattern = str | Callable[[str], str]
 
 RawRegexes = list["ReplaceRegex"]
 

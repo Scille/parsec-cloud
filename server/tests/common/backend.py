@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import asyncio
-from typing import AsyncIterator, Awaitable, Callable, TypeAlias
+from collections.abc import AsyncIterator, Awaitable, Callable
 
 import pytest
 
@@ -115,7 +115,7 @@ def app(backend: Backend, monkeypatch: pytest.MonkeyPatch) -> AsgiApp:
 
 
 # TODO: Replace with `type` once the linter supports it
-TestbedTemplateDict: TypeAlias = dict[str, TestbedTemplate]
+type TestbedTemplateDict = dict[str, TestbedTemplate]
 
 
 @pytest.fixture(scope="session")

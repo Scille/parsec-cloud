@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import enum
 import sqlite3
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path, PurePath
-from typing import TYPE_CHECKING, Iterator, Mapping
+from typing import TYPE_CHECKING
 
 from parsec._parsec import (
     CryptoError,

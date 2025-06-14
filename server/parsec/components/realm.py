@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
-from typing import TypeAlias
 
 from parsec._parsec import (
     BlockID,
@@ -31,7 +30,7 @@ from parsec.components.sequester import RejectedBySequesterService, SequesterSer
 from parsec.types import BadOutcome, BadOutcomeEnum
 from parsec.webhooks import WebhooksComponent
 
-KeyIndex: TypeAlias = int
+type KeyIndex = int
 
 
 @dataclass(slots=True)

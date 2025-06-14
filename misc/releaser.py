@@ -37,10 +37,11 @@ import subprocess
 import sys
 import textwrap
 from collections import defaultdict
+from collections.abc import Callable
 from copy import copy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import version_updater  # type: ignore (pyright struggles with this when run from server folder)
 
@@ -265,7 +266,7 @@ class Version:
             string_other = (
                 "v"
                 + ".".join([str(i) for i in other[:3]])
-                + (f"-{str().join(other[3:])}" if len(other) > 3 else "")
+                + (f"-{''.join(other[3:])}" if len(other) > 3 else "")
             )
         else:
             raise TypeError(f"Unsupported type `{type(other).__name__}`")
@@ -390,7 +391,7 @@ def run_git(*cmd: Any, verbose: bool = False) -> str:
 
 def run_cmd(*cmd: Any, verbose: bool = False) -> str:
     print(f"{COLOR_DIM}>> {' '.join(map(str, cmd))}{COLOR_END}", file=sys.stderr)
-    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.run(cmd, capture_output=True)
     if proc.returncode != 0:
         raise RuntimeError(
             f"Error while running `{cmd}`: returned {proc.returncode}\n"
@@ -806,7 +807,7 @@ def build_main(args: argparse.Namespace) -> None:
             release_branch, base_ref, release_version, args.nightly
         )
 
-    release_date = datetime.now(tz=timezone.utc)
+    release_date = datetime.now(tz=UTC)
     license_eol_date = get_licence_eol_date(release_date)
 
     updated_files: set[Path] = set()
@@ -936,7 +937,7 @@ def version_main(args: argparse.Namespace) -> None:
 
 def generate_uniq_version(version: Version) -> Version:
     SECONDS_IN_A_DAY = 24 * 3600
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     short_commit = run_git("rev-parse", "--short", "HEAD").strip()
     days_since_epoch = math.floor(now.timestamp() / SECONDS_IN_A_DAY)
     return version.evolve(dev=days_since_epoch, local=short_commit)
@@ -984,7 +985,7 @@ def acknowledge_main(args: argparse.Namespace) -> None:
 
 def history_main(args: argparse.Namespace) -> None:
     version: Version = get_version_from_code()
-    release_date: datetime = datetime.now(tz=timezone.utc)
+    release_date: datetime = datetime.now(tz=UTC)
     newsfragments = collect_newsfragments()
     newsfragment_rst: defaultdict[str, list[str]] = convert_newsfragments_to_rst(newsfragments)
 

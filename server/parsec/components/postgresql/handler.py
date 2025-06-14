@@ -4,11 +4,12 @@ from __future__ import annotations
 import importlib.resources
 import json
 import re
+from collections.abc import AsyncIterator, Awaitable, Callable, Coroutine, Iterable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from functools import wraps
-from typing import AsyncIterator, Awaitable, Callable, Coroutine, Iterable, ParamSpec
+from typing import ParamSpec
 from uuid import uuid4
 
 import asyncpg

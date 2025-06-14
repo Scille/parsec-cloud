@@ -244,9 +244,7 @@ async def test_require_greater_timestamp(
     last_sequester_event = next(
         e
         for e in reversed(sequestered_org.testbed_template.events)
-        if isinstance(
-            e, (tb.TestbedEventNewSequesterService, tb.TestbedEventRevokeSequesterService)
-        )
+        if isinstance(e, tb.TestbedEventNewSequesterService | tb.TestbedEventRevokeSequesterService)
     )
     certif = SequesterServiceCertificate(
         timestamp=last_sequester_event.timestamp,

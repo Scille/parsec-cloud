@@ -64,7 +64,7 @@ async def patch_handle_async_request(
 
     # ASGI callables.
 
-    async def receive() -> typing.Dict[str, typing.Any]:
+    async def receive() -> dict[str, typing.Any]:
         nonlocal request_complete
 
         if request_complete:

@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import tempfile
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, Callable, TypeAlias
+from typing import Any
 
 import anyio
 import click
@@ -20,12 +21,12 @@ try:
 
     TESTBED_AVAILABLE = True
 
-    TestbedTemplateContent: TypeAlias = testbed.TestbedTemplateContent  # pyright: ignore[reportRedeclaration]
-    TestbedTemplate: TypeAlias = tuple[OrganizationID, int, testbed.TestbedTemplateContent]  # pyright: ignore[reportRedeclaration]
+    type TestbedTemplateContent = testbed.TestbedTemplateContent  # pyright: ignore[reportRedeclaration]
+    type TestbedTemplate = tuple[OrganizationID, int, testbed.TestbedTemplateContent]  # pyright: ignore[reportRedeclaration]
 except ImportError:
     TESTBED_AVAILABLE = False
-    TestbedTemplate: TypeAlias = tuple[OrganizationID, int, Any]  # pyright: ignore[reportRedeclaration]
-    TestbedTemplateContent: TypeAlias = Any  # pyright: ignore[reportRedeclaration]
+    type TestbedTemplate = tuple[OrganizationID, int, Any]  # pyright: ignore[reportRedeclaration]
+    type TestbedTemplateContent = Any  # pyright: ignore[reportRedeclaration]
 
 from parsec.asgi import AsgiApp, app_factory, serve_parsec_asgi_app
 from parsec.backend import Backend, backend_factory
@@ -199,7 +200,7 @@ async def test_new(template: str, request: Request, background_tasks: Background
 
     return Response(
         status_code=200,
-        content=f"{new_org_id.str}\n{template_crc}".encode("utf8"),
+        content=f"{new_org_id.str}\n{template_crc}".encode(),
     )
 
 

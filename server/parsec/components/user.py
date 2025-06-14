@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import auto
-from typing import Iterable
 
 from parsec._parsec import (
     DateTime,

@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncGenerator, NewType, cast
+from typing import NewType, cast
 
 import anyio
 
@@ -320,7 +321,7 @@ class RealmExporter:
         output_db_path: Path,
         input_pool: AsyncpgPool,
         input_blockstore: BaseBlockStoreComponent,
-    ) -> AsyncGenerator["RealmExporter", None]:
+    ) -> AsyncGenerator[RealmExporter, None]:
         async with input_pool.acquire() as input_conn:
             input_conn = cast(AsyncpgConnection, input_conn)
             await _init_output_db(

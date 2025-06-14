@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any
 
 from parsec._parsec import (
     BlockID,
@@ -14,11 +14,6 @@ from parsec._parsec import (
     VerifyKey,
     VlobID,
 )
-
-ChildManifest = Union[
-    FolderManifest,
-    FileManifest,
-]
 
 class EntryName:
     def __init__(self, name: str) -> None:
@@ -184,6 +179,8 @@ class UserManifest:
     ) -> UserManifest:
         """Raise `ValueError` if invalid"""
         ...
+
+ChildManifest = FolderManifest | FileManifest
 
 def child_manifest_decrypt_verify_and_load(
     encrypted: bytes,

@@ -140,6 +140,8 @@ select = [
     "PERF",
     # refurb, a tool for refurbishing and modernizing Python codebases
     "FURB",
+    # pyupgrade, a tool to automatically upgrade syntax for newer versions
+    "UP",
     # flake8-debugger, check for presence of debugger
     "T10",
     # Pyflakes

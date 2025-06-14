@@ -7,8 +7,9 @@ import argparse
 import json
 import os
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, NotRequired, TypeAlias, TypedDict, cast
+from typing import NotRequired, TypedDict, cast
 
 BASEDIR = Path(__file__).parent.parent.resolve()
 PROTOCOL_SCHEMA_DIR = BASEDIR / "libparsec/crates/protocol/schema/"
@@ -29,7 +30,7 @@ class CmdSpec(TypedDict):
     nested_types: list[NestedType]
 
 
-MajorVersion: TypeAlias = int
+type MajorVersion = int
 
 
 class CmdReq(TypedDict):
@@ -60,10 +61,10 @@ class Variant(TypedDict):
     fields: list[Field]
 
 
-CmdSpecs: TypeAlias = list[CmdSpec]
+type CmdSpecs = list[CmdSpec]
 
-SpecsByMajor: TypeAlias = dict[MajorVersion, CmdSpecs]
-SpecsByFamily: TypeAlias = dict[str, SpecsByMajor]
+type SpecsByMajor = dict[MajorVersion, CmdSpecs]
+type SpecsByFamily = dict[str, SpecsByMajor]
 
 
 def snake_case_to_upper_camel_case(name: str) -> str:

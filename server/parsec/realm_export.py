@@ -6,9 +6,10 @@ import queue
 import sqlite3
 import threading
 from collections import deque
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, AsyncGenerator, Callable, Literal
+from typing import Any, Literal
 
 import anyio
 

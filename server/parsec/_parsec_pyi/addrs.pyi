@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Union
-
 from parsec._parsec_pyi.crypto import VerifyKey
 from parsec._parsec_pyi.enumerate import InvitationType
 from parsec._parsec_pyi.ids import (
@@ -75,18 +73,18 @@ class ParsecActionAddr:
     @classmethod
     def from_url(
         cls, url: str, allow_http_redirection: bool = False
-    ) -> Union[
-        ParsecOrganizationBootstrapAddr,
-        ParsecWorkspacePathAddr,
-        ParsecInvitationAddr,
-        ParsecPkiEnrollmentAddr,
-    ]: ...
+    ) -> (
+        ParsecOrganizationBootstrapAddr
+        | ParsecWorkspacePathAddr
+        | ParsecInvitationAddr
+        | ParsecPkiEnrollmentAddr
+    ): ...
 
 class ParsecAccountActionAddr:
     @classmethod
     def from_url(
         cls, url: str, allow_http_redirection: bool = False
-    ) -> Union[ParsecAccountEmailValidationAddr, None]: ...
+    ) -> ParsecAccountEmailValidationAddr | None: ...
 
 class ParsecOrganizationBootstrapAddr(ParsecAddr):
     def __init__(

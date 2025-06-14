@@ -74,7 +74,7 @@ async def test_authenticated_vlob_read_versions_ok(
         realm_id=coolorg.wksp1_id,
         vlob_id=vlob1_id,
         key_index=1,
-        blob="<block 1 content v1>".encode(),
+        blob=b"<block 1 content v1>",
         timestamp=dt1,
     )
     assert outcome is None
@@ -86,7 +86,7 @@ async def test_authenticated_vlob_read_versions_ok(
         realm_id=coolorg.wksp1_id,
         vlob_id=vlob2_id,
         key_index=1,
-        blob="<block 2 content v1>".encode(),
+        blob=b"<block 2 content v1>",
         timestamp=dt1,
     )
     assert outcome is None
@@ -121,7 +121,7 @@ async def test_authenticated_vlob_read_versions_ok(
         vlob_id=vlob1_id,
         key_index=2,
         version=2,
-        blob="<block 1 content v2>".encode(),
+        blob=b"<block 1 content v2>",
         timestamp=dt3,
     )
     assert outcome is None
@@ -134,7 +134,7 @@ async def test_authenticated_vlob_read_versions_ok(
         vlob_id=vlob1_id,
         key_index=2,
         version=3,
-        blob="<block 1 content v3>".encode(),
+        blob=b"<block 1 content v3>",
         timestamp=dt3,
     )
     assert outcome is None

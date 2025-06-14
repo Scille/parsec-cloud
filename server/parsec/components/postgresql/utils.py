@@ -4,9 +4,10 @@ from __future__ import annotations
 import importlib
 import re
 import traceback
+from collections.abc import Callable, Iterable
 from functools import wraps
 from types import CoroutineType
-from typing import Any, Callable, Concatenate, Iterable, ParamSpec, Protocol, TypeVar, cast
+from typing import Any, Concatenate, ParamSpec, Protocol, TypeVar, cast
 
 from parsec._parsec import (
     ActiveUsersLimit,

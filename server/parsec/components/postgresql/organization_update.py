@@ -24,7 +24,7 @@ from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
 from parsec.types import Unset, UnsetType
 
 
-@lru_cache()
+@lru_cache
 def _q_update_factory(
     with_is_expired: bool,
     with_active_users_limit: bool,

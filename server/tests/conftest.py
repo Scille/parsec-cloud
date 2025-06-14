@@ -4,7 +4,8 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import Generator, Literal
+from collections.abc import Generator
+from typing import Literal
 
 import pytest
 import structlog

@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections.abc import Buffer
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import TypeAlias, override
+from typing import override
 
 from asyncpg import Record
 
@@ -74,7 +74,7 @@ from parsec.events import (
     EventInvitation,
 )
 
-ShamirRecoveryRecipient: TypeAlias = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
+ShamirRecoveryRecipient = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
 
 
 @dataclass(frozen=True)

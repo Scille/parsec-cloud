@@ -116,7 +116,7 @@ async def test_create_service_require_greater_timestamp(
     for event in reversed(sequestered_org.testbed_template.events):
         if isinstance(
             event,
-            (testbed.TestbedEventNewSequesterService, testbed.TestbedEventRevokeSequesterService),
+            testbed.TestbedEventNewSequesterService | testbed.TestbedEventRevokeSequesterService,
         ):
             last_sequester_topic_timestamp = event.timestamp
             break
@@ -343,7 +343,7 @@ async def test_revoke_service_require_greater_timestamp(
     for event in reversed(sequestered_org.testbed_template.events):
         if isinstance(
             event,
-            (testbed.TestbedEventNewSequesterService, testbed.TestbedEventRevokeSequesterService),
+            testbed.TestbedEventNewSequesterService | testbed.TestbedEventRevokeSequesterService,
         ):
             last_sequester_topic_timestamp = event.timestamp
             break

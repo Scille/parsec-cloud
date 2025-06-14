@@ -4,8 +4,9 @@ from __future__ import annotations
 import enum
 import logging
 import sys
-from datetime import datetime, timezone
-from typing import Any, Callable, Literal, MutableMapping, TextIO, Union, cast
+from collections.abc import Callable, MutableMapping
+from datetime import UTC, datetime
+from typing import Any, Literal, TextIO, cast
 
 import sentry_sdk
 import structlog
@@ -155,7 +156,7 @@ def _add_timestamp_processor(
     logger: logging.Logger, method_name: str, event: MutableMapping[str, object]
 ) -> MutableMapping[str, object]:
     # Use UTC to avoid confusions
-    event["timestamp"] = datetime.now(timezone.utc)
+    event["timestamp"] = datetime.now(UTC)
     return event
 
 
@@ -247,7 +248,7 @@ def _structlog_to_sentry_processor(
             # NOTE: Why not directly using structlog's internal function?
             #       v = cast(Union[ExcInfo, Exception, None], data.pop("exc_info", None))
             #       exc_info: ExcInfo | None = _figure_out_exc_info(v)
-            v = cast(Union[ExcInfo, Exception, None], data.pop("exc_info", None))
+            v = cast(ExcInfo | Exception | None, data.pop("exc_info", None))
             exc_info: ExcInfo | None
             if isinstance(v, BaseException):
                 exc_info = (v.__class__, v, v.__traceback__)

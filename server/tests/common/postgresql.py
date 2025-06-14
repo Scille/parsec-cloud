@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 import atexit
 import os
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 import asyncpg
 from asyncpg.cluster import TempCluster
