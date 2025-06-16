@@ -153,14 +153,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.38.32"
-description = "Type annotations for boto3 1.38.32 generated with mypy-boto3-builder 8.11.0"
+version = "1.38.36"
+description = "Type annotations for boto3 1.38.36 generated with mypy-boto3-builder 8.11.0"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "boto3_stubs-1.38.32-py3-none-any.whl", hash = "sha256:20f493bfdd44e4e1a76ab76e22e32256e6ba3d8cfae07b066c7878cc61e7c37d"},
-    {file = "boto3_stubs-1.38.32.tar.gz", hash = "sha256:f57cdb44f87baf52e236951dcf9d32b93a906e21d5c0fe394b4166a5c0e16734"},
+    {file = "boto3_stubs-1.38.36-py3-none-any.whl", hash = "sha256:1f79b85f93772df94854e9e570a917f1d762f4080a88ed16b9f2e4b98b24f1f1"},
+    {file = "boto3_stubs-1.38.36.tar.gz", hash = "sha256:8de916b9433e9224f3bd4a79ed41e508dc532bfee7db34bfd3752901bcd7e69f"},
 ]
 
 [package.dependencies]
@@ -215,7 +215,7 @@ bedrock-data-automation-runtime = ["mypy-boto3-bedrock-data-automation-runtime (
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.38.0,<1.39.0)"]
 billing = ["mypy-boto3-billing (>=1.38.0,<1.39.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.38.0,<1.39.0)"]
-boto3 = ["boto3 (==1.38.32)"]
+boto3 = ["boto3 (==1.38.36)"]
 braket = ["mypy-boto3-braket (>=1.38.0,<1.39.0)"]
 budgets = ["mypy-boto3-budgets (>=1.38.0,<1.39.0)"]
 ce = ["mypy-boto3-ce (>=1.38.0,<1.39.0)"]
@@ -1992,14 +1992,14 @@ crt = ["botocore[crt] (>=1.20.29,<2.0a.0)"]
 
 [[package]]
 name = "sentry-sdk"
-version = "2.29.1"
+version = "2.30.0"
 description = "Python client for Sentry (https://sentry.io)"
 optional = false
 python-versions = ">=3.6"
 groups = ["main"]
 files = [
-    {file = "sentry_sdk-2.29.1-py2.py3-none-any.whl", hash = "sha256:90862fe0616ded4572da6c9dadb363121a1ae49a49e21c418f0634e9d10b4c19"},
-    {file = "sentry_sdk-2.29.1.tar.gz", hash = "sha256:8d4a0206b95fa5fe85e5e7517ed662e3888374bdc342c00e435e10e6d831aa6d"},
+    {file = "sentry_sdk-2.30.0-py2.py3-none-any.whl", hash = "sha256:59391db1550662f746ea09b483806a631c3ae38d6340804a1a4c0605044f6877"},
+    {file = "sentry_sdk-2.30.0.tar.gz", hash = "sha256:436369b02afef7430efb10300a344fb61a11fe6db41c2b11f41ee037d2dd7f45"},
 ]
 
 [package.dependencies]
@@ -2094,19 +2094,19 @@ files = [
 
 [[package]]
 name = "sqlfluff"
-version = "3.4.0"
+version = "3.4.1"
 description = "The SQL Linter for Humans"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "sqlfluff-3.4.0-py3-none-any.whl", hash = "sha256:115e3f1bf1dc1318c58426ba3299eb682642cb67b5d12d9ea7c42b5e23aeabd6"},
-    {file = "sqlfluff-3.4.0.tar.gz", hash = "sha256:6e1ea2d39b20cc791a1a009c234afaf043b448c7f2eb1c11551316fb41f36f47"},
+    {file = "sqlfluff-3.4.1-py3-none-any.whl", hash = "sha256:caa262247763dd2cb10bc437cb91d57e0b8e534277b30d7e3beae6dfec946422"},
+    {file = "sqlfluff-3.4.1.tar.gz", hash = "sha256:3c03464be46cfe7c83d11a753d5aa76f7b8e030ff018d5e61a8683d43002f31e"},
 ]
 
 [package.dependencies]
 chardet = "*"
-click = "*"
+click = "<=8.3.0"
 colorama = ">=0.3"
 diff-cover = ">=2.5.0"
 Jinja2 = "*"
@@ -2326,4 +2326,4 @@ standard = ["colorama (>=0.4) ; sys_platform == \"win32\"", "httptools (>=0.6.3)
 [metadata]
 lock-version = "2.1"
 python-versions = "~3.12.0"
-content-hash = "6cb35f18b2dc6fdcbb117ec8a8881774dcc62279b6adb7469d91aec46576f9ea"
+content-hash = "34952a7d877e7a3276846b503709c4079a9d5184712599dee3ba12d72c3fe2ad"
