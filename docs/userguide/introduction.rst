@@ -1,8 +1,8 @@
 .. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-.. _doc_introduction:
+.. _doc_userguide_introduction:
 
-============
+
 Introduction
 ============
 
@@ -11,7 +11,7 @@ Parsec allows you to easily share your work and data in the cloud in total
 privacy thanks to end-to-end cryptographic security.
 
 
-.. image:: parsec_snapshot.png
+.. image:: screens/parsec_snapshot.png
     :align: center
 
 

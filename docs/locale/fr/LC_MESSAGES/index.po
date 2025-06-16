@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-06-03 18:59+0200\n"
+"POT-Creation-Date: 2025-06-16 12:07+0200\n"
 "PO-Revision-Date: 2024-09-18 17:46+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -21,11 +21,11 @@ msgstr ""
 msgid "User Guide"
 msgstr "Guide Utilisateur"
 
-#: ../../index.rst:41
+#: ../../index.rst:42
 msgid "Hosting Guide"
 msgstr "Guide d'Hébergement"
 
-#: ../../index.rst:55
+#: ../../index.rst:56
 msgid "Development"
 msgstr "Développement"
 
@@ -49,7 +49,8 @@ msgstr "bannière parsec"
 #: ../../index.rst:18
 msgid ""
 "Welcome to the Parsec documentation. Take a look at the :ref:`Introduction "
-"<doc_introduction>` to get an overview of what Parsec can do for you."
+"<doc_userguide_introduction>` to get an overview of what Parsec can do for "
+"you."
 msgstr ""
 "Bienvenue dans la documentation de Parsec. Nous vous recommandons de lire "
 "la :ref:`page d’introduction <doc_introduction>` pour avoir un aperçu de ce "
