@@ -69,6 +69,10 @@ class AccountCreateAccountDeletionTokenBadOutcome(BadOutcomeEnum):
     TOO_SOON_AFTER_PREVIOUS_DEMAND = auto()
 
 
+class AccountDeletionConfirmBadOutcome(BadOutcomeEnum):
+    INVALID_TOKEN = auto()
+
+
 @dataclass(slots=True)
 class VaultItemRecoveryAuthMethod:
     created_on: DateTime
@@ -465,6 +469,32 @@ class BaseAccountComponent:
                 return (
                     authenticated_account_cmds.latest.account_delete_send_validation_token.RepOk()
                 )
+
+    def is_deletion_token_still_valid(self, created_at: DateTime, now: DateTime) -> bool:
+        return created_at.add(seconds=self._config.account_config.deletion_token_duration) >= now
+
+    async def confirm_account_deletion(
+        self,
+        email: EmailAddress,
+        deletion_token: AccountDeletionToken,
+        now: DateTime,
+    ) -> None | AccountDeletionConfirmBadOutcome:
+        raise NotImplementedError
+
+    @api
+    async def api_account_delete_confirm(
+        self,
+        client_ctx: AuthenticatedAccountClientContext,
+        req: authenticated_account_cmds.latest.account_delete_confirm.Req,
+    ) -> authenticated_account_cmds.latest.account_delete_confirm.Rep:
+        outcome = await self.confirm_account_deletion(
+            client_ctx.account_email, req.deletion_token, DateTime.now()
+        )
+        match outcome:
+            case None:
+                return authenticated_account_cmds.latest.account_delete_confirm.RepOk()
+            case _:
+                return authenticated_account_cmds.latest.account_delete_confirm.RepInvalidDeletionToken()
 
 
 def generate_email_validation_email(
