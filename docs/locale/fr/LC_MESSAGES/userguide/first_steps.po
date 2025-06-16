@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-02-04 14:20+0100\n"
+"POT-Creation-Date: 2025-06-16 12:02+0200\n"
 "PO-Revision-Date: 2024-09-18 18:36+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -56,37 +56,3 @@ msgid "\\4. **Workspace section**: access a workspace and its documents."
 msgstr ""
 "\\4. **Section espace de travail** : accès à un espace de travail et à ses "
 "documents."
-
-#: ../../userguide/first_steps.rst:24
-msgid "Security best practices"
-msgstr "Bonnes pratiques en matière de sécurité"
-
-#: ../../userguide/first_steps.rst:26
-msgid "To avoid losing access to your data you should always:"
-msgstr "Pour éviter de perdre l'accès à vos données, vous devez toujours :"
-
-#: ../../userguide/first_steps.rst:28
-msgid ""
-":ref:`Add multiple devices <doc_userguide_manage_devices>` to access Parsec"
-msgstr ""
-":ref:`Ajouter plusieurs appareils <doc_userguide_manage_devices>` pour "
-"accéder à Parsec"
-
-#: ../../userguide/first_steps.rst:29
-msgid ""
-":ref:`Share your workspaces <doc_userguide_parsec_workspaces_share>` with "
-"other users"
-msgstr ""
-":ref:`Partagez vos espaces de travail "
-"<doc_userguide_parsec_workspaces_share>` avec d'autres utilisateurs"
-
-#: ../../userguide/first_steps.rst:34
-msgid ""
-"Strong cryptographic security prevents data recovery. This means that if you "
-"lose access to your computer, or cannot log in for any reason, there is no "
-"way to recover your data."
-msgstr ""
-"La sécurité cryptographique forte empêche la récupération des données. Cela "
-"signifie que si vous perdez l'accès à votre ordinateur ou si vous ne pouvez "
-"pas vous connecter pour une raison quelconque, il n'y a aucun moyen de "
-"récupérer vos données."
