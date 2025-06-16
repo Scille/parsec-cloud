@@ -260,7 +260,9 @@ async def testbed_backend_factory(
         blockstore_config=blockstore_config,
         administration_token="s3cr3t",
         organization_spontaneous_bootstrap=True,
-        account_config=AccountConfig(account_confirmation_email_resend_delay=60),
+        account_config=AccountConfig(
+            account_confirmation_email_resend_delay=60, creation_token_duration=120
+        ),
     )
     async with backend_factory(config=config) as backend:
         yield TestbedBackend(backend=backend)

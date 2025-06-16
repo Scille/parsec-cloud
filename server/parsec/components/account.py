@@ -128,6 +128,9 @@ class BaseAccountComponent:
     ) -> EmailValidationToken | AccountCreateEmailValidationTokenBadOutcome:
         raise NotImplementedError
 
+    def is_creation_token_still_valid(self, created_at: DateTime, now: DateTime) -> bool:
+        return created_at.add(seconds=self._config.account_config.creation_token_duration) >= now
+
     async def create_account(
         self,
         token: EmailValidationToken,

@@ -3,13 +3,26 @@
 
 from parsec._parsec import (
     AccountAuthMethodID,
+    DateTime,
     EmailAddress,
     EmailValidationToken,
     PasswordAlgorithmArgon2id,
     SecretKey,
     anonymous_account_cmds,
 )
+from parsec.components.account import AccountCreateAccountBadOutcome
 from tests.common import AnonymousAccountRpcClient, Backend, HttpCommonErrorsTester
+
+
+async def request_account_validation_email(
+    backend: Backend, email: EmailAddress, now: DateTime
+) -> EmailValidationToken:
+    res = await backend.account.create_email_validation_token(email, now)
+    match res:
+        case EmailValidationToken() as token:
+            return token
+        case _:
+            raise ValueError(f"Unexpected outcome {res}")
 
 
 async def test_anonymous_account_account_create_proceed_ok(
@@ -18,14 +31,10 @@ async def test_anonymous_account_account_create_proceed_ok(
     backend: Backend,
 ) -> None:
     email = EmailAddress("alice@invalid.com")
+    now = DateTime.now()
     # 1st account creation request
 
-    rep = await anonymous_account.account_create_send_validation_email(email=email)
-    assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
-
-    # retrieve alice's token that was sent by email
-    token = backend.account.test_get_token_by_email(email)
-    assert token is not None
+    token = await request_account_validation_email(backend, email, now)
 
     rep = await anonymous_account.account_create_proceed(
         validation_token=token,
@@ -52,16 +61,13 @@ async def test_anonymous_account_account_create_proceed_invalid_validation_token
     backend: Backend,
 ):
     email = EmailAddress("alice@invalid.com")
+    now = DateTime.now()
     # 1st account creation request
 
-    rep = await anonymous_account.account_create_send_validation_email(email=email)
-    assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
-
-    # retrieve alice's token that was sent by email
-    token = backend.account.test_get_token_by_email(email)
-    assert token is not None
+    token = await request_account_validation_email(backend, email, now)
 
     other_token = EmailValidationToken.new()
+    assert other_token != token  # Sanity check
 
     rep = await anonymous_account.account_create_proceed(
         validation_token=other_token,
@@ -78,6 +84,39 @@ async def test_anonymous_account_account_create_proceed_invalid_validation_token
     # Alice's mail kept in unverified emails
     token = backend.account.test_get_token_by_email(email)
     assert token is not None
+
+
+async def test_anonymous_account_acount_create_proceed_token_too_old(
+    xfail_if_postgresql: None, anonymous_account: AnonymousAccountRpcClient, backend: Backend
+):
+    import functools
+
+    email = EmailAddress("alice@example.com")
+    now = DateTime.now()
+
+    token = await request_account_validation_email(backend, email, now)
+
+    create_account = functools.partial(
+        backend.account.create_account,
+        token=token,
+        mac_key=SecretKey.generate(),
+        vault_key_access=b"vault_key_access",
+        human_label="Alice",
+        created_by_user_agent="Test",
+        created_by_ip="",
+        auth_method_id=AccountAuthMethodID.new(),
+        auth_method_password_algorithm=None,
+    )
+
+    outcome = await create_account(
+        now=now.add(seconds=backend.config.account_config.creation_token_duration + 1)
+    )
+    assert outcome == AccountCreateAccountBadOutcome.INVALID_TOKEN
+
+    outcome = await create_account(
+        now=now.add(seconds=backend.config.account_config.creation_token_duration)
+    )
+    assert outcome is None
 
 
 async def test_anonymous_account_account_create_proceed_http_common_errors(
@@ -107,16 +146,13 @@ async def test_anonymous_account_account_create_proceed_auth_method_id_already_e
     anonymous_account: AnonymousAccountRpcClient,
     backend: Backend,
 ):
+    auth_method_id = AccountAuthMethodID.from_hex("9aae259f748045cc9fe7146eab0b132e")
     # 1st ok account creation
     email = EmailAddress("alice@invalid.com")
+    now = DateTime.now()
     # 1st account creation request
 
-    rep = await anonymous_account.account_create_send_validation_email(email=email)
-    assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
-
-    # retrieve alice's token that was sent by email
-    token = backend.account.test_get_token_by_email(email)
-    assert token is not None
+    token = await request_account_validation_email(backend, email, now)
 
     rep = await anonymous_account.account_create_proceed(
         validation_token=token,
@@ -126,19 +162,14 @@ async def test_anonymous_account_account_create_proceed_auth_method_id_already_e
         ),
         auth_method_hmac_key=SecretKey.generate(),
         vault_key_access=b"vault_key_access",
-        auth_method_id=AccountAuthMethodID.from_hex("9aae259f748045cc9fe7146eab0b132e"),
+        auth_method_id=auth_method_id,
     )
 
     assert rep == anonymous_account_cmds.latest.account_create_proceed.RepOk()
 
     # Second account creation
     email = EmailAddress("bob@invalid.com")
-    rep = await anonymous_account.account_create_send_validation_email(email=email)
-    assert rep == anonymous_account_cmds.latest.account_create_send_validation_email.RepOk()
-
-    # retrieve bob's token that was sent by email
-    token = backend.account.test_get_token_by_email(email)
-    assert token is not None
+    token = await request_account_validation_email(backend, email, now)
 
     rep = await anonymous_account.account_create_proceed(
         validation_token=token,
@@ -149,7 +180,7 @@ async def test_anonymous_account_account_create_proceed_auth_method_id_already_e
         auth_method_hmac_key=SecretKey.generate(),
         vault_key_access=b"vault_key_access",
         # Same auth method id as previous
-        auth_method_id=AccountAuthMethodID.from_hex("9aae259f748045cc9fe7146eab0b132e"),
+        auth_method_id=auth_method_id,
     )
 
     assert (

@@ -92,11 +92,16 @@ class MemoryAccountComponent(BaseAccountComponent):
         auth_method_password_algorithm: PasswordAlgorithm | None,
     ) -> None | AccountCreateAccountBadOutcome:
         # look for an email linked to the provided token
-        unverified_email = next(
-            (k for (k, v) in self._data.unverified_emails.items() if v[0] == token), None
+        (unverified_email, token_created_at) = next(
+            ((k, v[1]) for (k, v) in self._data.unverified_emails.items() if v[0] == token),
+            (None, None),
         )
-        if unverified_email is None:
-            # the provided token is not in unverified emails
+        if (
+            unverified_email is None
+            or token_created_at is None
+            or not self.is_creation_token_still_valid(token_created_at, now)
+        ):
+            # the provided token is not in unverified emails or no longer valid
             return AccountCreateAccountBadOutcome.INVALID_TOKEN
         email = unverified_email
 

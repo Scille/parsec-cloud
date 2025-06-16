@@ -46,7 +46,9 @@ def backend_config(
         organization_spontaneous_bootstrap=False,
         organization_bootstrap_webhook_url=None,
         backend_mocked_data=backend_mocked_data,
-        account_config=AccountConfig(account_confirmation_email_resend_delay=5),
+        account_config=AccountConfig(
+            account_confirmation_email_resend_delay=5, creation_token_duration=10
+        ),
     )
 
 

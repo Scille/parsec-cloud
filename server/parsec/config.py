@@ -26,6 +26,7 @@ def hide_password(url: str) -> str:
 @dataclass(slots=True)
 class AccountConfig:
     account_confirmation_email_resend_delay: int
+    creation_token_duration: int
 
 
 class BaseDatabaseConfig:

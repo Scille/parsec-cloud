@@ -248,6 +248,13 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     help="Delay before resending an account creation confirmation email (in seconds)",
 )
 @click.option(
+    "--account-creation-token-duration",
+    default=120,
+    show_default=True,
+    envvar="PARSEC_ACCOUNT_CREATION_TOKEN_DURATION",
+    help="How long a creation token stay valid in seconds",
+)
+@click.option(
     "--server-addr",
     envvar="PARSEC_SERVER_ADDR",
     show_envvar=True,
@@ -407,6 +414,7 @@ def run_cmd(
     organization_initial_allowed_client_agent: AllowedClientAgent,
     organization_initial_account_vault_strategy: AccountVaultStrategy,
     account_confirmation_email_resend_delay: int,
+    account_creation_token_duration: int,
     server_addr: ParsecAddr,
     email_host: str,
     email_port: int,
@@ -473,7 +481,8 @@ def run_cmd(
             organization_initial_allowed_client_agent=organization_initial_allowed_client_agent,
             organization_initial_account_vault_strategy=organization_initial_account_vault_strategy,
             account_config=AccountConfig(
-                account_confirmation_email_resend_delay=account_confirmation_email_resend_delay
+                account_confirmation_email_resend_delay=account_confirmation_email_resend_delay,
+                creation_token_duration=account_creation_token_duration,
             ),
         )
 
