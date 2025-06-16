@@ -1,0 +1,255 @@
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# Parsec dev <dev-parsec@scille.fr>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.4.1-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-06-20 00:56+0200\n"
+"PO-Revision-Date: 2025-06-20 01:03+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.17.0\n"
+"X-Generator: Poedit 3.6\n"
+
+#: ../../userguide/security.rst:6
+msgid "Security best practices"
+msgstr "Meilleures pratiques de sécurité"
+
+#: ../../userguide/security.rst:8
+msgid ""
+"This section contains security best practices addressed to all Parsec users, "
+"regardless of their role or technical knowledge."
+msgstr ""
+"Cette section contient les meilleures pratiques en matière de sécurité qui "
+"s'adressent à tous les utilisateurs de Parsec, indépendamment de leur rôle "
+"ou de leurs connaissances techniques."
+
+#: ../../userguide/security.rst:11
+msgid ""
+"Parsec will always do its best to ensure your data is secure. These best "
+"practices describe what you can do to protect your data, reducing even "
+"further the risk of data leaks or loss."
+msgstr ""
+"Parsec fera toujours de son mieux pour assurer la sécurité de vos données. "
+"Ces bonnes pratiques décrivent ce que vous pouvez faire pour protéger vos "
+"données et réduire encore davantage le risque de fuite ou de perte de "
+"données."
+
+#: ../../userguide/security.rst:14
+msgid ""
+"Keep in mind that risk can never be completely eliminated. Always assess the "
+"confidentiality needs of the data you need to access and take precautionary "
+"measures accordingly. If in doubt, contact the owner of the organization or "
+"a security expert."
+msgstr ""
+"Gardez à l'esprit que le risque ne peut jamais être totalement éliminé. "
+"Évaluez toujours les besoins de confidentialité des données auxquelles vous "
+"devez accéder et prenez des mesures de précaution en conséquence. En cas de "
+"doute, contactez le propriétaire de l'organisation ou un expert en sécurité."
+
+#: ../../userguide/security.rst:19
+msgid "How to prevent data loss"
+msgstr "Comment prévenir la perte de données"
+
+#: ../../userguide/security.rst:22
+msgid "What is data loss?"
+msgstr "Qu'est-ce que la perte de données ?"
+
+#: ../../userguide/security.rst:24
+msgid ""
+"Data loss refer to the permanent and definitive loss of data, which can no "
+"longer be recovered by no means (such as backup or administrator access)."
+msgstr ""
+"La perte de données fait référence à la perte permanente et définitive de "
+"données, qui ne peuvent plus être récupérées par aucun moyen (comme la "
+"sauvegarde ou l'accès de l'administrateur)."
+
+#: ../../userguide/security.rst:27
+msgid ""
+"This usually happens when only a single user has access to data and later on "
+"it loses access."
+msgstr ""
+"Cela se produit généralement lorsqu'un seul utilisateur a accès aux données "
+"et que, par la suite, il en perd l'accès."
+
+#: ../../userguide/security.rst:30
+msgid "How Parsec helps me reducing the risk of data loss"
+msgstr "Comment Parsec m'aide à réduire le risque de perte de données"
+
+#: ../../userguide/security.rst:32
+msgid ""
+"In Parsec, you and only you are the owner of the keys to decrypt your data. "
+"These keys are never stored by Parsec so that, even if the server is "
+"compromised, an attacker will never be able to access your data."
+msgstr ""
+"Dans Parsec, c'est vous et vous seul qui possédez les clés de décryptage de "
+"vos données. Ces clés ne sont jamais stockées par Parsec, de sorte que, même "
+"si le serveur est compromis, un attaquant ne sera jamais en mesure d'accéder "
+"à vos données."
+
+#: ../../userguide/security.rst:36
+msgid ""
+"This strong cryptographic security means that if you lose access to your "
+"computer, or cannot login for any reason, there is no way to recover data "
+"that only you had access to."
+msgstr ""
+"Cette sécurité cryptographique forte signifie que si vous perdez l'accès à "
+"votre ordinateur, ou si vous ne pouvez pas vous connecter pour une raison "
+"quelconque, il n'y a aucun moyen de récupérer les données auxquelles vous "
+"seul aviez accès."
+
+#: ../../userguide/security.rst:39
+msgid ""
+"Parsec offer important features to make sure you reduce the risk of data "
+"loss."
+msgstr ""
+"Parsec offre des fonctionnalités importantes pour réduire le risque de perte "
+"de données."
+
+#: ../../userguide/security.rst:42
+msgid "How can I reduce the risk of data loss?"
+msgstr "Comment réduire le risque de perte de données ?"
+
+#: ../../userguide/security.rst:44
+msgid ""
+"To avoid losing access to your data you should always considering the "
+"following actions."
+msgstr ""
+"Pour éviter de perdre l'accès à vos données, vous devriez toujours envisager "
+"les actions suivantes."
+
+#: ../../userguide/security.rst:46
+msgid ""
+":ref:`Add multiple devices <doc_userguide_manage_devices>` to access your "
+"organization. You should *set up at least up two devices* so that if you "
+"lose access to one device, you can still login with the other one."
+msgstr ""
+":ref:`Ajouter plusieurs appareils <doc_userguide_manage_devices>` pour "
+"accéder à votre organisation. Vous devriez *configurer au moins deux "
+"appareils* de sorte que si vous perdez l'accès à un appareil, vous puissiez "
+"toujours vous connecter avec l'autre."
+
+#: ../../userguide/security.rst:50
+msgid ""
+":ref:`Create a recovery file <doc_userguide_recovery_files>` to access your "
+"organization. A recovery file is a special file that, together with its "
+"password, will allow you to connect to your organization even if you lose "
+"access to all your devices. You should *always create a recovery file* and "
+"store it securely."
+msgstr ""
+":ref:`Créer un fichier de récupération <doc_userguide_recovery_files>` pour "
+"accéder à votre organisation. Un fichier de récupération est un fichier "
+"spécial qui, avec son mot de passe, vous permettra de vous connecter à votre "
+"organisation même si vous perdez l'accès à tous vos appareils. Vous devez "
+"*toujours créer un fichier de récupération* et le conserver en toute "
+"sécurité."
+
+#: ../../userguide/security.rst:54
+msgid ""
+":ref:`Share your workspaces <doc_userguide_parsec_workspaces_share>` with "
+"other users. This simple step will ensure that even if you lose access to "
+"all your devices AND you don't have a recovery file, there will be at least "
+"another user that can share the data back to you."
+msgstr ""
+":ref:`Partagez vos espaces de travail "
+"<doc_userguide_parsec_workspaces_share>` avec d'autres utilisateurs. Cette "
+"simple étape vous permettra de vous assurer que même si vous perdez l'accès "
+"à tous vos appareils ET que vous n'avez pas de fichier de récupération, il y "
+"aura au moins un autre utilisateur qui pourra partager les données avec vous."
+
+#: ../../userguide/security.rst:59
+msgid "How to prevent data leaks"
+msgstr "Comment prévenir les fuites de données"
+
+#: ../../userguide/security.rst:62
+msgid "What are data leaks?"
+msgstr "Qu'est-ce qu'une fuite de données ?"
+
+#: ../../userguide/security.rst:64
+msgid ""
+"Data leaks refer to the unauthorized exposure or disclosure of sensitive "
+"information, often resulting from hacking, accidental sharing, or poor "
+"security practices."
+msgstr ""
+"Les fuites de données désignent l'exposition ou la divulgation non autorisée "
+"d'informations sensibles, souvent à la suite d'un piratage, d'un partage "
+"accidentel ou de mauvaises pratiques de sécurité."
+
+#: ../../userguide/security.rst:67
+msgid ""
+"They can lead to identity theft and other cybercrimes, making it crucial for "
+"individuals and organizations to protect their data effectively."
+msgstr ""
+"Elles peuvent conduire à l'usurpation d'identité et à d'autres formes de "
+"cybercriminalité, d'où la nécessité pour les particuliers et les "
+"organisations de protéger efficacement leurs données."
+
+#: ../../userguide/security.rst:71
+msgid "How Parsec helps me reducing the risk of data leaks"
+msgstr "Comment Parsec m'aide à réduire le risque de fuites de données"
+
+#: ../../userguide/security.rst:73
+msgid ""
+"When you access your files locally, or open them with Parsec's integrated "
+"viewer, Parsec does not actually store them in your disk. Instead, files are "
+"only maintained in the computer memory and kept always up to date with with "
+"your Parsec cloud storage."
+msgstr ""
+"Lorsque vous accédez à vos fichiers localement, ou que vous les ouvrez avec "
+"la visionneuse intégrée de Parsec, Parsec ne les stocke pas sur votre "
+"disque. Au contraire, les fichiers sont uniquement conservés dans la mémoire "
+"de l'ordinateur et sont toujours mis à jour grâce au stockage dans le nuage "
+"de Parsec."
+
+#: ../../userguide/security.rst:77
+msgid ""
+"This security guarantee means that, even in case of critical events such as "
+"a sudden computer shutdown, Parsec ensures that your files will never be "
+"persisted nor stored in your disk."
+msgstr ""
+"Cette garantie de sécurité signifie que, même en cas d'événements critiques "
+"tels qu'un arrêt soudain de l'ordinateur, Parsec s'assure que vos fichiers "
+"ne seront jamais conservés ou stockés sur votre disque."
+
+#: ../../userguide/security.rst:81
+msgid "How can I reduce the risk of data leaks?"
+msgstr "Comment réduire le risque de fuite de données ?"
+
+#: ../../userguide/security.rst:83
+msgid ""
+"As soon you download a file from Parsec to your computer, or copy a file "
+"from a Parsec drive to a directory in your computer, Parsec can no longer "
+"secure them."
+msgstr ""
+"Dès que vous téléchargez un fichier de Parsec vers votre ordinateur ou que "
+"vous copiez un fichier d'un lecteur Parsec vers un répertoire de votre "
+"ordinateur, Parsec ne peut plus les sécuriser."
+
+#: ../../userguide/security.rst:86
+msgid ""
+"This does not necessarily mean they are at risk, but they are certainly "
+"exposed. The risk of data leak will greatly depend on multiple aspects such "
+"as your system configuration, the location where the files will be stored, "
+"your company security policy, etc."
+msgstr ""
+"Cela ne signifie pas nécessairement qu'ils sont en danger, mais ils sont "
+"certainement exposés. Le risque de fuite de données dépend de nombreux "
+"aspects tels que la configuration de votre système, l'endroit où les "
+"fichiers seront stockés, la politique de sécurité de votre entreprise, etc."
+
+#: ../../userguide/security.rst:90
+msgid ""
+"Keep in mind that some software, like Microsoft Word or Google Drive, may "
+"automatically upload your files to the cloud without your necessarily being "
+"aware of it."
+msgstr ""
+"Gardez à l'esprit que certains logiciels, comme Microsoft Word ou Google "
+"Drive, peuvent télécharger automatiquement vos fichiers dans le nuage sans "
+"que vous en soyez nécessairement conscient."

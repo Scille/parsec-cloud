@@ -53,8 +53,8 @@ msgid ""
 "you."
 msgstr ""
 "Bienvenue dans la documentation de Parsec. Nous vous recommandons de lire "
-"la :ref:`page d’introduction <doc_introduction>` pour avoir un aperçu de ce "
-"que Parsec peut vous apporter."
+"la :ref:`page d’introduction <doc_userguide_introduction>` pour avoir un "
+"aperçu de ce que Parsec peut vous apporter."
 
 #: ../../index.rst:21
 msgid ""
