@@ -15,7 +15,7 @@ Parsec Documentation
     :alt: parsec banner
     :class: extra-margin-bottom·
 
-Welcome to the Parsec documentation. Take a look at the :ref:`Introduction <doc_introduction>`
+Welcome to the Parsec documentation. Take a look at the :ref:`Introduction <doc_userguide_introduction>`
 to get an overview of what Parsec can do for you.
 
 The table of contents displayed below and in the sidebar should let you easily
@@ -27,7 +27,7 @@ You can also use the search function in the top left corner.
     :caption: User Guide
     :name: section-user-guide
 
-    introduction
+    userguide/introduction
     userguide/installation
     userguide/new_organization
     userguide/first_steps
@@ -36,6 +36,7 @@ You can also use the search function in the top left corner.
     userguide/parsec_workspaces
     userguide/manage_files
     userguide/manage_devices
+    userguide/security
     userguide/troubleshooting
 
 .. toctree::
