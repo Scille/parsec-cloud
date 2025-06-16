@@ -30,6 +30,7 @@ A typical release process looks as follow:
 from __future__ import annotations
 
 import argparse
+import enum
 import math
 import os
 import re
@@ -560,11 +561,13 @@ def create_bump_commit_to_new_version(
     )
 
 
-def create_tag_for_new_version(version: Version, tag: str, gpg_sign: bool, force: bool) -> None:
+def create_tag_for_new_version(
+    version: Version, tag: str, gpg_sign: bool, force_mode: GitForceMode
+) -> None:
     print(f"Create tag {COLOR_GREEN}{tag}{COLOR_END}")
     run_git(
         "tag",
-        *(["--force"] if force else []),
+        *(force_mode.tag_args),
         tag,
         f"--message=Release version {version}",
         "--annotate",
@@ -628,7 +631,7 @@ assert generate_next_dev_version(Version(1, 2, 3, prerelease="a0")) == Version(
 
 
 def push_release(
-    tag: str, release_branch: str, yes: bool, force_push: bool, skip_tag: bool
+    tag: str, release_branch: str, yes: bool, force_mode: GitForceMode, skip_tag: bool
 ) -> None:
     print("Pushing changes to remote...")
 
@@ -640,7 +643,7 @@ def push_release(
             "push",
             "--set-upstream",
             "--atomic",
-            *(["--force-with-lease"] if force_push else []),
+            *(force_mode.push_args),
             "origin",
             release_branch,
             *([] if skip_tag else [tag]),
@@ -763,10 +766,12 @@ def build_main(args: argparse.Namespace) -> None:
     current_version = get_version_from_code()
     skip_tag = args.skip_tag
     same_version = False
+    git_force_mode: GitForceMode = args.git_force
 
     if args.nightly:
         release_version = generate_uniq_version(current_version)
         release_branch = "releases/nightly"
+        git_force_mode = GitForceMode.Force
         tag = "nightly"
     else:
         if args.current:
@@ -825,7 +830,9 @@ def build_main(args: argparse.Namespace) -> None:
     )
 
     if not skip_tag:
-        create_tag_for_new_version(release_version, tag, gpg_sign=args.gpg_sign, force=args.nightly)
+        create_tag_for_new_version(
+            release_version, tag, gpg_sign=args.gpg_sign, force_mode=git_force_mode
+        )
 
         inspect_tag(tag, yes, gpg_sign=args.gpg_sign)
 
@@ -842,7 +849,7 @@ def build_main(args: argparse.Namespace) -> None:
         tag,
         release_branch,
         yes,
-        force_push=args.nightly or args.force_push,
+        force_mode=git_force_mode,
         skip_tag=skip_tag,
     )
 
@@ -992,6 +999,34 @@ def history_main(args: argparse.Namespace) -> None:
     print(gen_rst_release_entry(version, release_date, newsfragment_rst))
 
 
+class GitForceMode(enum.Enum):
+    Force = "force"
+    NoForce = "none"
+    WithLease = "with-lease"
+
+    @classmethod
+    def values(cls) -> list[str]:
+        return list(e.value for e in cls)
+
+    @property
+    def tag_args(self) -> list[str]:
+        match self:
+            case GitForceMode.NoForce:
+                return []
+            case GitForceMode.WithLease | GitForceMode.Force:
+                return ["--force"]
+
+    @property
+    def push_args(self) -> list[str]:
+        match self:
+            case GitForceMode.NoForce:
+                return []
+            case GitForceMode.WithLease:
+                return ["--force-with-lease"]
+            case GitForceMode.Force:
+                return ["--force"]
+
+
 def cli(description: str) -> argparse.Namespace:
     def new_parser(
         name: str,
@@ -1046,7 +1081,13 @@ def cli(description: str) -> argparse.Namespace:
         help="Do not sign the commit or tag",
     )
     build.add_argument(
-        "--force-push", action="store_true", help="Force push the release branch & tag"
+        "--git-force",
+        default=GitForceMode.NoForce,
+        const=GitForceMode.Force,
+        type=GitForceMode,
+        choices=GitForceMode.values(),
+        nargs="?",
+        help="Force push the release branch & tag",
     )
     build.add_argument(
         "--base",
