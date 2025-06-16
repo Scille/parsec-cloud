@@ -163,6 +163,23 @@ async function openLogs(): Promise<void> {
   window.open(url, '_blank');
 }
 
+/* Cryptpad edition POC */
+
+const ENABLE_CRYPTPAD_EDITION_VARIABLE = 'PARSEC_APP_ENABLE_CRYPTPAD_EDITION';
+const CRYPTPAD_EDITION_SERVER_VARIABLE = 'PARSEC_APP_CRYPTPAD_EDITION_SERVER';
+const DEFAULT_CRYPTPAD_EDITION_SERVER = 'https://api-secure.demo.cryptpad.cloud';
+
+function isCryptpadEnabled(): boolean {
+  return import.meta.env[ENABLE_CRYPTPAD_EDITION_VARIABLE] === 'true';
+}
+
+function getCryptpadServer(): string {
+  if (import.meta.env[CRYPTPAD_EDITION_SERVER_VARIABLE]) {
+    return import.meta.env[CRYPTPAD_EDITION_SERVER_VARIABLE];
+  }
+  return DEFAULT_CRYPTPAD_EDITION_SERVER;
+}
+
 export const Env = {
   getStripeApiKey,
   getBmsUrl,
@@ -174,6 +191,8 @@ export const Env = {
   getAccountServer,
   isAccountMocked,
   isAccountEnabled,
+  isCryptpadEnabled,
+  getCryptpadServer,
   Links: {
     openDocumentationLink,
     openContactLink,
