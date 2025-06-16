@@ -159,7 +159,7 @@ jobs:
           yq --null-input ".linux-gnu.$ARCH.client.snap = \"$FINAL_ARTIFACT_NAME\"" | tee artifacts.yml
 
       # Install syft
-      - uses: taiki-e/install-action@735e5933943122c5ac182670a935f54a949265c1 # pin v2.52.4
+      - uses: taiki-e/install-action@7b20dfd705618832f20d29066e34aa2f2f6194c2 # pin v2.52.8
         with:
           tool: syft@0.84.0
 
@@ -386,7 +386,7 @@ jobs:
         timeout-minutes: 1
 
       # Install syft
-      - uses: taiki-e/install-action@735e5933943122c5ac182670a935f54a949265c1 # pin v2.52.4
+      - uses: taiki-e/install-action@7b20dfd705618832f20d29066e34aa2f2f6194c2 # pin v2.52.8
         with:
           tool: syft@0.84.0
 
