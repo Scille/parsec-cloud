@@ -47,7 +47,7 @@ async def test_authenticated_account_account_delete_send_validation_token_ok_edg
 
     rep3 = await backend.account.create_email_deletion_token(
         alice_account.account_email,
-        now.add(seconds=backend.config.account_config.account_confirmation_email_resend_delay + 1),
+        now.add(seconds=backend.config.account_confirmation_email_resend_delay + 1),
     )
     assert isinstance(rep3, AccountDeletionToken)
 
