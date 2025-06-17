@@ -45,10 +45,10 @@ impl KeyDerivation {
         // We follow what libsodium does here
         // (see https://github.com/jedisct1/libsodium/blob/4a15ab7cd0a4b78a7356e5f488d5345b8d314549/src/libsodium/crypto_kdf/blake2b/kdf_blake2b.c#L31-L52)
 
-        let mut salt: [u8; 16] = [0u8; 16];
+        let mut salt = [0u8; 16];
         salt[..8].copy_from_slice(&id.as_bytes()[..8]);
 
-        let mut personal: [u8; 16] = [0u8; 16];
+        let mut personal = [0u8; 16];
         personal[..8].copy_from_slice(&id.as_bytes()[8..]);
 
         let subkey = Blake2bMac::new_with_salt_and_personal(&self.0, &salt, &personal)
