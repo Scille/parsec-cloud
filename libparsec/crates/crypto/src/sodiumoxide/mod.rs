@@ -16,4 +16,4 @@ pub use private::*;
 pub use secret::*;
 pub use sequester::*;
 pub use sign::*;
-pub use utils::*;
+pub(crate) use utils::*;

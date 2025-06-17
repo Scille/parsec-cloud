@@ -11,7 +11,7 @@ from parsec._parsec import (
     PrivateKey,
     PublicKey,
     authenticated_cmds,
-    generate_nonce,
+    generate_sas_code_nonce,
     invited_cmds,
 )
 from parsec.asgi.rpc import CustomHttpStatus
@@ -325,7 +325,7 @@ async def test_full_greeting_attempt(
     )
 
     # Claimer perform step 1 first
-    claimer_nonce = generate_nonce()
+    claimer_nonce = generate_sas_code_nonce()
     hashed_nonce = HashDigest.from_data(claimer_nonce)
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
@@ -360,7 +360,7 @@ async def test_full_greeting_attempt(
     )
 
     # Greeter performs step 2 first
-    greeter_nonce = generate_nonce()
+    greeter_nonce = generate_sas_code_nonce()
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
         greeter_step=authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber2SendNonce(

@@ -3,12 +3,14 @@
 mod error;
 mod key_derivation;
 mod password;
+mod sas;
 mod secret;
 mod sequester;
 
 pub use error::*;
 pub(crate) use key_derivation::*;
 pub use password::*;
+pub use sas::*;
 pub(crate) use secret::*;
 pub use sequester::*;
 

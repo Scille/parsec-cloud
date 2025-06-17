@@ -52,7 +52,7 @@ from parsec._parsec_pyi.crypto import (
     SequesterVerifyKeyDer,
     SigningKey,
     VerifyKey,
-    generate_nonce,
+    generate_sas_code_nonce,
 )
 from parsec._parsec_pyi.enumerate import (
     CancelledGreetingAttemptReason,
@@ -140,7 +140,7 @@ __all__ = [
     "UserUpdateCertificate",
     # Crypto
     "CryptoError",
-    "generate_nonce",
+    "generate_sas_code_nonce",
     "HashDigest",
     "PrivateKey",
     "PublicKey",

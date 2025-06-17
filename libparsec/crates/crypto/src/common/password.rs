@@ -2,7 +2,12 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{compute_from_password, CryptoError, KeyDerivation, Password, SecretKey};
+use crate::{
+    compute_from_password, generate_rand, CryptoError, KeyDerivation, Password, SecretKey,
+};
+
+// https://github.com/sodiumoxide/sodiumoxide/blob/3057acb1a030ad86ed8892a223d64036ab5e8523/libsodium-sys/src/sodium_bindings.rs#L137
+pub const ARGON2ID_SALTBYTES: usize = 16;
 
 // ⚠️ Changing Argon2id default config also requires updating the fake config generator
 // on server side (see `server/parsec/components/account.py`), otherwise it would
@@ -39,11 +44,14 @@ pub enum PasswordAlgorithm {
 
 impl PasswordAlgorithm {
     pub fn generate_argon2id() -> Self {
+        let mut salt = vec![0; ARGON2ID_SALTBYTES];
+        generate_rand(&mut salt);
+
         Self::Argon2id {
             memlimit_kb: ARGON2ID_DEFAULT_MEMLIMIT_KB,
             opslimit: ARGON2ID_DEFAULT_OPSLIMIT,
             parallelism: ARGON2ID_DEFAULT_PARALLELISM,
-            salt: SecretKey::generate_salt(),
+            salt,
         }
     }
 
