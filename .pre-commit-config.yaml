@@ -30,6 +30,14 @@ repos:
       #   language_version: python3
       #   pass_filenames: false
       #   require_serial: true
+      - id: server_cli_doc
+        name: Server CLI documentation
+        entry: python ./misc/server_cli_doc.py
+        language: python
+        language_version: python3
+        files: ^(docs/HOSTING.md)|(server/parsec/cli/run.py)
+        pass_filenames: false
+        require_serial: true
       - id: license_headers
         name: license_headers
         alias: headers
