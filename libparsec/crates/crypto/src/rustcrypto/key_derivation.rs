@@ -15,6 +15,10 @@ use serde_bytes::Bytes;
 
 use crate::SecretKey;
 
+// see https://github.com/jedisct1/libsodium/blob/fd8c876bb5ad9d5ad79074ccd6b509f845631807/src/libsodium/include/sodium/crypto_generichash_blake2b.h#L61-L65
+const BLAKE2B_SALTBYTES: usize = 16;
+const BLAKE2B_PERSONALBYTES: usize = 16;
+
 #[derive(Clone, PartialEq, Eq, Deserialize, Hash)]
 #[serde(try_from = "&Bytes")]
 pub struct KeyDerivation(GenericArray<u8, U32>);
@@ -45,10 +49,10 @@ impl KeyDerivation {
         // We follow what libsodium does here
         // (see https://github.com/jedisct1/libsodium/blob/4a15ab7cd0a4b78a7356e5f488d5345b8d314549/src/libsodium/crypto_kdf/blake2b/kdf_blake2b.c#L31-L52)
 
-        let mut salt = [0u8; 16];
+        let mut salt = [0u8; BLAKE2B_SALTBYTES];
         salt[..8].copy_from_slice(&id.as_bytes()[..8]);
 
-        let mut personal = [0u8; 16];
+        let mut personal = [0u8; BLAKE2B_PERSONALBYTES];
         personal[..8].copy_from_slice(&id.as_bytes()[8..]);
 
         let subkey = Blake2bMac::new_with_salt_and_personal(&self.0, &salt, &personal)

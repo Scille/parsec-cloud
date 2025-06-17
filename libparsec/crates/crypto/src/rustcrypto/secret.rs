@@ -2,10 +2,7 @@
 
 use blake2::Blake2bMac;
 use crypto_box::aead::Aead;
-use crypto_secretbox::{
-    aead::{rand_core::RngCore, OsRng},
-    AeadCore, Key, XSalsa20Poly1305,
-};
+use crypto_secretbox::{AeadCore, Key, XSalsa20Poly1305};
 use digest::{KeyInit, Mac};
 use generic_array::{
     typenum::{
@@ -18,9 +15,6 @@ use serde::Deserialize;
 use serde_bytes::Bytes;
 
 use crate::CryptoError;
-
-// https://github.com/sodiumoxide/sodiumoxide/blob/3057acb1a030ad86ed8892a223d64036ab5e8523/libsodium-sys/src/sodium_bindings.rs#L137
-const SALTBYTES: usize = 16;
 
 #[derive(Clone, PartialEq, Eq, Deserialize, Hash)]
 #[serde(try_from = "&Bytes")]
@@ -79,13 +73,6 @@ impl SecretKey {
 
     pub fn sas_code(&self, data: &[u8]) -> [u8; 5] {
         self.mac::<U5>(data).into()
-    }
-
-    pub fn generate_salt() -> Vec<u8> {
-        let mut salt = vec![0; SALTBYTES];
-        OsRng.fill_bytes(&mut salt);
-
-        salt
     }
 }
 

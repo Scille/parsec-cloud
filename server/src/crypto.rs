@@ -30,7 +30,7 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SequesterVerifyKeyDer>()?;
     m.add_class::<PasswordAlgorithm>()?;
     m.add_class::<PasswordAlgorithmArgon2id>()?;
-    m.add_function(wrap_pyfunction!(generate_nonce, m)?)?;
+    m.add_function(wrap_pyfunction!(generate_sas_code_nonce, m)?)?;
 
     m.add("CryptoError", py.get_type_bound::<CryptoError>())?;
 
@@ -229,11 +229,6 @@ impl SecretKey {
 
     fn sas_code<'py>(&self, py: Python<'py>, data: &[u8]) -> Bound<'py, PyBytes> {
         PyBytes::new_bound(py, &self.0.sas_code(data))
-    }
-
-    #[classmethod]
-    fn generate_salt<'py>(_cls: Bound<'_, PyType>, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, &libparsec_crypto::SecretKey::generate_salt())
     }
 
     #[classmethod]
@@ -534,8 +529,8 @@ impl SequesterVerifyKeyDer {
 }
 
 #[pyfunction]
-pub(crate) fn generate_nonce(py: Python) -> Bound<'_, PyBytes> {
-    PyBytes::new_bound(py, &libparsec_crypto::generate_nonce())
+pub(crate) fn generate_sas_code_nonce(py: Python) -> Bound<'_, PyBytes> {
+    PyBytes::new_bound(py, &libparsec_crypto::generate_sas_code_nonce())
 }
 
 #[pyclass(subclass)]

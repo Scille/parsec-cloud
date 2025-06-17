@@ -547,7 +547,7 @@ impl BaseGreetInitialCtx {
         };
 
         let shared_secret_key = greeter_private_key.generate_shared_secret_key(&claimer_public_key);
-        let greeter_nonce: Bytes = generate_nonce().into();
+        let greeter_nonce: Bytes = generate_sas_code_nonce().into();
 
         let claimer_hashed_nonce = {
             let claimer_step = run_greeter_step_until_ready(

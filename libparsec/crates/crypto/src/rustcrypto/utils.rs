@@ -2,9 +2,6 @@
 
 use rand::{rngs::OsRng, RngCore};
 
-pub fn generate_nonce() -> Vec<u8> {
-    let mut nonce = vec![0; 64];
-    OsRng.fill_bytes(&mut nonce);
-
-    nonce
+pub(crate) fn generate_rand(out: &mut [u8]) {
+    OsRng.fill_bytes(out);
 }

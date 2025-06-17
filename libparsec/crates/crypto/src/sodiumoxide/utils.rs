@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use sodiumoxide::randombytes::randombytes;
+use sodiumoxide::randombytes::randombytes_into;
 
 macro_rules! impl_try_from {
     ($name: ident, $sub_type: expr) => {
@@ -23,6 +23,6 @@ macro_rules! impl_try_from {
 
 pub(super) use impl_try_from;
 
-pub fn generate_nonce() -> Vec<u8> {
-    randombytes(64)
+pub(crate) fn generate_rand(out: &mut [u8]) {
+    randombytes_into(out)
 }
