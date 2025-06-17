@@ -152,6 +152,7 @@ parsecdoc
 Passw
 patchelf
 perflint
+PERSONALBYTES
 pdflatex
 pemfile
 pems
