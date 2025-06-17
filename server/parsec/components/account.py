@@ -274,7 +274,7 @@ class BaseAccountComponent:
 
     def should_resend_token(self, now: DateTime, last_email_datetime: DateTime) -> bool:
         return now > last_email_datetime.add(
-            seconds=self._config.account_config.account_confirmation_email_resend_delay
+            seconds=self._config.account_confirmation_email_resend_delay
         )
 
     def test_get_token_by_email(self, email: EmailAddress) -> EmailValidationToken | None:

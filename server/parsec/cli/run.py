@@ -27,7 +27,6 @@ from parsec.cli.utils import (
 )
 from parsec.components.organization import TosLocale, TosUrl
 from parsec.config import (
-    AccountConfig,
     AccountVaultStrategy,
     AllowedClientAgent,
     BackendConfig,
@@ -502,9 +501,7 @@ def run_cmd(
             organization_initial_tos=organization_initial_tos,
             organization_initial_allowed_client_agent=organization_initial_allowed_client_agent,
             organization_initial_account_vault_strategy=organization_initial_account_vault_strategy,
-            account_config=AccountConfig(
-                account_confirmation_email_resend_delay=account_confirmation_email_resend_delay
-            ),
+            account_confirmation_email_resend_delay=account_confirmation_email_resend_delay,
             fake_account_password_algorithm_seed=fake_account_password_algorithm_seed,
         )
 

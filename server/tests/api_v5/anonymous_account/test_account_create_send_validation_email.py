@@ -51,7 +51,7 @@ async def test_anonymous_account_account_create_send_validation_email_ok_edge_ca
 
     rep3 = await backend.account.create_email_validation_token(
         email,
-        now.add(seconds=backend.config.account_config.account_confirmation_email_resend_delay + 1),
+        now.add(seconds=backend.config.account_confirmation_email_resend_delay + 1),
     )
     assert isinstance(rep3, EmailValidationToken)
 

@@ -23,11 +23,6 @@ def hide_password(url: str) -> str:
     return urlunparse(args)
 
 
-@dataclass(slots=True)
-class AccountConfig:
-    account_confirmation_email_resend_delay: int
-
-
 class BaseDatabaseConfig:
     # Overloaded by children
     type: Literal["POSTGRESQL", "MOCKED"]
@@ -227,7 +222,6 @@ class BackendConfig:
     db_config: BaseDatabaseConfig
     blockstore_config: BaseBlockStoreConfig
     email_config: SmtpEmailConfig | MockedEmailConfig
-    account_config: AccountConfig
 
     # URL of the server to use when generating redirect URLs.
     # This is currently used for two things:
@@ -237,6 +231,8 @@ class BackendConfig:
 
     # Bearer token used to authenticate the administration API
     administration_token: str
+
+    account_confirmation_email_resend_delay: int
 
     # Random value used to make unpredictable (but still stable & realistic) the password
     # algorithm configuration returned for non-existing accounts, hence preventing an
