@@ -99,6 +99,7 @@ const ACCOUNT_DEFAULT_SERVER = 'saas-v3.parsec.cloud';
 const ACCOUNT_SERVER_ENV_VARIABLE = 'PARSEC_APP_ACCOUNT_SERVER';
 const MOCK_ACCOUNT_ENV_VARIABLE = 'PARSEC_APP_MOCK_ACCOUNT';
 const ENABLE_ACCOUNT_ENV_VARIABLE = 'PARSEC_APP_ENABLE_ACCOUNT';
+const ENABLE_ACCOUNT_AUTO_LOGIN_ENV_VARIABLE = 'PARSEC_APP_ENABLE_ACCOUNT_AUTO_LOGIN';
 
 function getAccountServer(): string {
   if (import.meta.env[ACCOUNT_SERVER_ENV_VARIABLE]) {
@@ -113,6 +114,10 @@ function isAccountMocked(): boolean {
 
 function isAccountEnabled(): boolean {
   return import.meta.env[ENABLE_ACCOUNT_ENV_VARIABLE] === 'true' || (window as any).TESTING_ENABLE_ACCOUNT === true;
+}
+
+function isAccountAutoLoginEnabled(): boolean {
+  return isAccountEnabled() && isAccountMocked() && import.meta.env[ENABLE_ACCOUNT_AUTO_LOGIN_ENV_VARIABLE] === 'true';
 }
 
 /*
@@ -174,6 +179,7 @@ export const Env = {
   getAccountServer,
   isAccountMocked,
   isAccountEnabled,
+  isAccountAutoLoginEnabled,
   Links: {
     openDocumentationLink,
     openContactLink,
