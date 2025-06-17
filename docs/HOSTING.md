@@ -239,6 +239,29 @@ Note that ``--email-use-tls``/``--email-use-ssl`` are mutually exclusive, so onl
 
 Language used in email (Allowed values: ``en`` or ``fr``).
 
+### Account
+
+- ``--account-confirmation-email-resend-delay``
+- Environ: ``PARSEC_ACCOUNT_CONFIRMATION_EMAIL_RESEND_DELAY``
+
+Delay before resending an account creation confirmation email (in seconds).
+
+- ``--fake-account-password-algorithm-seed``
+- Environ: ``PARSEC_FAKE_ACCOUNT_PASSWORD_ALGORITHM_SEED``
+
+Random value used to make unpredictable the password algorithm configuration
+returned for non-existing accounts.
+
+By default a random value will be generated at each startup, however setting a value
+once and for all offers better protection against attackers trying to determine
+if a given email has an account.
+
+A typical way to generate a good seed is to use:
+
+```shell
+openssl rand -hex 32
+```
+
 ### Webhooks
 
 - ``--spontaneous-organization-bootstrap``
@@ -310,5 +333,6 @@ Equivalent to:
 ```txt
 --debug --db=MOCKED --blockstore=MOCKED --administration-token=s3cr3t
 --email-sender=no-reply@parsec.com --email-host=MOCKED
+--fake-account-password-algorithm-seed=F4k3
 --server-addr=parsec3://localhost:<port>(?no_ssl=False if ssl is not set)
 ```
