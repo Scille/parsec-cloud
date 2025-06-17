@@ -252,11 +252,11 @@ Delay before resending an account creation confirmation email (in seconds).
 Random value used to make unpredictable the password algorithm configuration
 returned for non-existing accounts.
 
-By default a random value will be generated at each startup, however setting a value
-once and for all offers better protection against attackers trying to determine
-if a given email has an account.
+It is recommended to set this value once and for all, since changing it (or
+setting a different one for different server instances) lowers the protection
+against attackers trying to determine if a given email has an account.
 
-A typical way to generate a good seed is to use:
+A typical way to generate a good value is to use:
 
 ```shell
 openssl rand -hex 32

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import secrets
 import tempfile
 from hashlib import blake2b
 from pathlib import Path
@@ -153,7 +152,10 @@ For instance:
     envvar="PARSEC_ADMINISTRATION_TOKEN",
     show_envvar=True,
     metavar="TOKEN",
-    help="Secret token to access the Administration API",
+    help="""Secret token to access the Administration API
+
+    A typical way to generate a good value is to use `openssl rand -hex 32`
+    """,
 )
 @click.option(
     "--spontaneous-organization-bootstrap",
@@ -254,10 +256,9 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     show_default=True,
     envvar="PARSEC_FAKE_ACCOUNT_PASSWORD_ALGORITHM_SEED",
     show_envvar=True,
+    required=True,
     callback=(
-        lambda ctx, param, value: SecretKey(secrets.token_bytes(32))
-        if not value
-        else SecretKey(
+        lambda ctx, param, value: SecretKey(
             blake2b(
                 b"fake_account_password_algorithm_seed" + value.encode("utf8"), digest_size=32
             ).digest()
@@ -266,12 +267,11 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     help="""Random value used to make unpredictable the password algorithm configuration
     returned for non-existing accounts.
 
-    By default a random value will be generated at each startup, however setting a value
-    once and for all offers better protection against attackers trying to determine
-    if a given email has an account.
+    It is recommended to set this value once and for all, since changing it (or
+    setting a different one for different server instances) lowers the protection
+    against attackers trying to determine if a given email has an account.
 
-    A typical way to generate a good seed is to use:
-        $ openssl rand -hex 32
+    A typical way to generate a good value is to use `openssl rand -hex 32`
 """,
 )
 @click.option(
