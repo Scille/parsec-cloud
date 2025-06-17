@@ -64,6 +64,7 @@ def test_run(coolorg: CoolorgRpcClients, unused_tcp_port: int, tmp_path: Path, s
             f" --server-addr=parsec3://127.0.0.1:{unused_tcp_port}"
             f" --email-host=MOCKED"
             f" --log-level=INFO"
+            f" --fake-account-password-algorithm-seed=F4k3"
             f" {ssl_conf.backend_opts}"
         ),
         wait_for="Starting Parsec server",
