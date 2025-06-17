@@ -118,6 +118,9 @@ The script will generate a random token (:bash:`openssl rand -hex 32`) and creat
 
   The token doesn't have to be a valid hexadecimal value: any string with enough entropy can be used.
 
+  On top of the administration token, ``gen-admin-token.sh`` also generates `FAKE_ACCOUNT_PASSWORD_ALGORITHM_SEED` which
+  is a secret used to make unpredictable the password algorithm configuration returned for non-existing accounts.
+
 Database configuration
 ^^^^^^^^^^^^^^^^^^^^^^
 
