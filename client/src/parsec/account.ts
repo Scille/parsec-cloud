@@ -102,6 +102,12 @@ class _ParsecAccount {
   handle: AccountHandle | undefined = undefined;
   skipped: boolean = false;
 
+  constructor() {
+    if (Env.isAccountAutoLoginEnabled()) {
+      this.login('a@b.c', { tag: DeviceAccessStrategyTag.Password, password: 'BigP@ssw0rd.', keyFile: '' }, Env.getAccountServer());
+    }
+  }
+
   getHandle(): AccountHandle | undefined {
     return this.handle;
   }
@@ -123,7 +129,9 @@ class _ParsecAccount {
       throw new Error('Parsec Account marked as skipped but "login" called');
     }
     if (Env.isAccountMocked()) {
-      await wait(2000);
+      if (!Env.isAccountAutoLoginEnabled()) {
+        await wait(2000);
+      }
       if (email === 'a@b.c' && authentication.tag === DeviceAccessStrategyTag.Password && authentication.password === 'BigP@ssw0rd.') {
         this.handle = 1;
         return { ok: true, value: 1 };
