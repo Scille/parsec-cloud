@@ -146,7 +146,7 @@ const updateAvailability: Ref<UpdateAvailabilityData | null> = ref(null);
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
 let hotkeys: HotkeyGroup | null = null;
-const accountLoggedIn = ref(ParsecAccount.isLoggedIn());
+const accountLoggedIn = ref(false);
 
 const routeWatchCancel = watchRoute(async () => {
   accountLoggedIn.value = ParsecAccount.isLoggedIn();
@@ -163,6 +163,7 @@ onMounted(async () => {
     }
   });
   window.electronAPI.getUpdateAvailability();
+  accountLoggedIn.value = ParsecAccount.isLoggedIn();
 });
 
 onUnmounted(async () => {
