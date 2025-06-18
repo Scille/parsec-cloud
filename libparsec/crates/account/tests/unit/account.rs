@@ -36,10 +36,9 @@ async fn from_password(env: &TestbedEnv) {
         move |req: anonymous_account_cmds::latest::auth_method_password_get_algorithm::Req| {
             p_assert_eq!(req.email, email);
             anonymous_account_cmds::latest::auth_method_password_get_algorithm::Rep::Ok {
-                password_algorithm: PasswordAlgorithm::Argon2id {
-                    salt: b"s4lT-s4lt".to_vec(),
-                    opslimit: 1,
-                    memlimit_kb: 1024,
+                password_algorithm: UntrustedPasswordAlgorithm::Argon2id {
+                    opslimit: 3,
+                    memlimit_kb: 128 * 1024,
                     parallelism: 1,
                 },
             }
@@ -68,9 +67,8 @@ async fn from_password_server_returns_bad_config(env: &TestbedEnv) {
         move |req: anonymous_account_cmds::latest::auth_method_password_get_algorithm::Req| {
             p_assert_eq!(req.email, email);
             anonymous_account_cmds::latest::auth_method_password_get_algorithm::Rep::Ok {
-                password_algorithm: PasswordAlgorithm::Argon2id {
-                    salt: b"s4lT-s4lt".to_vec(),
-                    opslimit: 1,
+                password_algorithm: UntrustedPasswordAlgorithm::Argon2id {
+                    opslimit: 3,
                     memlimit_kb: 1, // Too small !
                     parallelism: 1,
                 },

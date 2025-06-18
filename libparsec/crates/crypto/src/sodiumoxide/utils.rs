@@ -1,5 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use generic_array::{
+    typenum::{consts::U64, IsLessOrEqual, LeEq, NonZero},
+    ArrayLength, GenericArray,
+};
 use sodiumoxide::randombytes::randombytes_into;
 
 macro_rules! impl_try_from {
@@ -25,4 +29,41 @@ pub(super) use impl_try_from;
 
 pub(crate) fn generate_rand(out: &mut [u8]) {
     randombytes_into(out)
+}
+
+pub(crate) fn blake2b_hash<'a, Size>(data: impl Iterator<Item = &'a [u8]>) -> GenericArray<u8, Size>
+where
+    Size: ArrayLength<u8> + IsLessOrEqual<U64>,
+    LeEq<Size, U64>: NonZero,
+{
+    let mut state = libsodium_sys::crypto_generichash_blake2b_state {
+        opaque: [0u8; 384usize],
+    };
+    // TODO: replace `from_exact_iter` by `from_array` once generic-array is updated to v1.0+
+    let mut out =
+        GenericArray::<u8, Size>::from_exact_iter(std::iter::repeat(0u8).take(Size::USIZE))
+            .expect("correct iterator size");
+
+    // SAFETY: Sodiumoxide doesn't expose those methods, so we have to access
+    // the libsodium C API directly.
+    // this remains safe because we provide bounds defined in Rust land when passing vectors.
+    // The only data structure provided by remote code is dropped
+    // at the end of the function.
+    unsafe {
+        libsodium_sys::crypto_generichash_blake2b_init(
+            &mut state,
+            std::ptr::null(),
+            0,
+            Size::USIZE,
+        );
+        for part in data {
+            libsodium_sys::crypto_generichash_blake2b_update(
+                &mut state,
+                part.as_ptr(),
+                part.len() as u64,
+            );
+        }
+        libsodium_sys::crypto_generichash_blake2b_final(&mut state, out.as_mut_ptr(), Size::USIZE);
+        out
+    }
 }

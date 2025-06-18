@@ -896,8 +896,11 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::SequesterPublicKeyDer => {
             quote_rs_to_py_class!(crate::crypto::SequesterPublicKeyDer)
         }
-        FieldType::PasswordAlgorithm => {
-            quote! { crate::crypto::PasswordAlgorithm::convert(py, #field_path.to_owned())? }
+        FieldType::TrustedPasswordAlgorithm => {
+            quote! { crate::crypto::TrustedPasswordAlgorithm::convert(py, #field_path.to_owned())? }
+        }
+        FieldType::UntrustedPasswordAlgorithm => {
+            quote! { crate::crypto::UntrustedPasswordAlgorithm::convert(py, #field_path.to_owned())? }
         }
         FieldType::DateTime => quote_rs_to_py_class!(crate::time::DateTime),
         FieldType::BlockID => quote_rs_to_py_class!(crate::ids::BlockID),
@@ -1000,7 +1003,8 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::HashDigest => quote! { crate::crypto::HashDigest },
         FieldType::SequesterVerifyKeyDer => quote! { crate::crypto::SequesterVerifyKeyDer },
         FieldType::SequesterPublicKeyDer => quote! { crate::crypto::SequesterPublicKeyDer },
-        FieldType::PasswordAlgorithm => quote!(crate::crypto::PasswordAlgorithm),
+        FieldType::TrustedPasswordAlgorithm => quote!(crate::crypto::TrustedPasswordAlgorithm),
+        FieldType::UntrustedPasswordAlgorithm => quote!(crate::crypto::UntrustedPasswordAlgorithm),
         FieldType::DateTime => quote! { crate::time::DateTime },
         FieldType::BlockID => quote! { crate::ids::BlockID },
         FieldType::DeviceID => quote! { crate::ids::DeviceID },
@@ -1176,8 +1180,9 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::GreetingAttemptID
         | FieldType::CancelledGreetingAttemptReason
         | FieldType::GreeterOrClaimer
-        | FieldType::PasswordAlgorithm
-        | FieldType::ValidationCode => quote! { #field_name.0 },
+        | FieldType::ValidationCode
+        | FieldType::TrustedPasswordAlgorithm
+        | FieldType::UntrustedPasswordAlgorithm => quote! { #field_name.0 },
         // No conversion for the rest
         _ => quote! { #field_name },
     }

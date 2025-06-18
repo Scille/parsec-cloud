@@ -8,7 +8,7 @@ from parsec._parsec import (
     authenticated_account_cmds,
 )
 from parsec.backend import Backend
-from parsec.components.account import PasswordAlgorithmArgon2id
+from parsec.components.account import UntrustedPasswordAlgorithmArgon2id
 from tests.common import AuthenticatedAccountRpcClient, HttpCommonErrorsTester
 
 
@@ -27,8 +27,7 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
                     created_by_ip="127.0.0.1",
                     created_by_user_agent="Parsec-Client/3.4.0 Linux",
                     vault_key_access=b"<alice_vault_key_access>",
-                    password_algorithm=PasswordAlgorithmArgon2id(
-                        salt=b"<alice_dummy_salt>",
+                    password_algorithm=UntrustedPasswordAlgorithmArgon2id(
                         opslimit=65536,
                         memlimit_kb=3,
                         parallelism=1,
@@ -61,8 +60,7 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
         created_by_user_agent="dummy-user-agent",
         new_auth_method_id=new_auth_method_id,
         new_auth_method_mac_key=new_auth_method_mac_key,
-        new_auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-            salt=b"<alice_new_dummy_salt>",
+        new_auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
             opslimit=42,
             memlimit_kb=4,
             parallelism=2,
@@ -93,8 +91,7 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
                     created_by_ip="",
                     created_by_user_agent="dummy-user-agent",
                     vault_key_access=b"<alice_new_vault_key_access>",
-                    password_algorithm=PasswordAlgorithmArgon2id(
-                        salt=b"<alice_new_dummy_salt>",
+                    password_algorithm=UntrustedPasswordAlgorithmArgon2id(
                         opslimit=42,
                         memlimit_kb=4,
                         parallelism=2,
@@ -115,8 +112,7 @@ async def test_authenticated_account_vault_item_recovery_list_ok(
                         created_by_ip="127.0.0.1",
                         created_by_user_agent="Parsec-Client/3.4.0 Linux",
                         vault_key_access=b"<alice_vault_key_access>",
-                        password_algorithm=PasswordAlgorithmArgon2id(
-                            salt=b"<alice_dummy_salt>",
+                        password_algorithm=UntrustedPasswordAlgorithmArgon2id(
                             opslimit=65536,
                             memlimit_kb=3,
                             parallelism=1,

@@ -13,8 +13,6 @@ use pyo3::{
     Bound,
 };
 
-use crate::BytesWrapper;
-
 create_exception!(_parsec, CryptoError, PyException);
 
 pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -28,8 +26,8 @@ pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SequesterPublicKeyDer>()?;
     m.add_class::<SequesterSigningKeyDer>()?;
     m.add_class::<SequesterVerifyKeyDer>()?;
-    m.add_class::<PasswordAlgorithm>()?;
-    m.add_class::<PasswordAlgorithmArgon2id>()?;
+    m.add_class::<UntrustedPasswordAlgorithm>()?;
+    m.add_class::<UntrustedPasswordAlgorithmArgon2id>()?;
     m.add_function(wrap_pyfunction!(generate_sas_code_nonce, m)?)?;
 
     m.add("CryptoError", py.get_type_bound::<CryptoError>())?;
@@ -535,37 +533,31 @@ pub(crate) fn generate_sas_code_nonce(py: Python) -> Bound<'_, PyBytes> {
 
 #[pyclass(subclass)]
 #[derive(Clone)]
-pub struct PasswordAlgorithm(pub libparsec_types::PasswordAlgorithm);
+pub struct UntrustedPasswordAlgorithm(pub libparsec_types::UntrustedPasswordAlgorithm);
 
-crate::binding_utils::gen_proto!(PasswordAlgorithm, __repr__);
-crate::binding_utils::gen_proto!(PasswordAlgorithm, __copy__);
-crate::binding_utils::gen_proto!(PasswordAlgorithm, __deepcopy__);
-crate::binding_utils::gen_proto!(PasswordAlgorithm, __richcmp__, eq);
+crate::binding_utils::gen_proto!(UntrustedPasswordAlgorithm, __repr__);
+crate::binding_utils::gen_proto!(UntrustedPasswordAlgorithm, __copy__);
+crate::binding_utils::gen_proto!(UntrustedPasswordAlgorithm, __deepcopy__);
+crate::binding_utils::gen_proto!(UntrustedPasswordAlgorithm, __richcmp__, eq);
 
-impl PasswordAlgorithm {
+impl UntrustedPasswordAlgorithm {
     pub fn convert(
         py: Python,
-        item: libparsec_types::PasswordAlgorithm,
+        item: libparsec_types::UntrustedPasswordAlgorithm,
     ) -> PyResult<Bound<'_, PyAny>> {
-        let init = PyClassInitializer::from(PasswordAlgorithm(item));
+        let init = PyClassInitializer::from(UntrustedPasswordAlgorithm(item));
         match item {
-            libparsec_types::PasswordAlgorithm::Argon2id { .. } => {
-                Ok(Bound::new(py, init.add_subclass(PasswordAlgorithmArgon2id {}))?.into_any())
-            }
+            libparsec_types::UntrustedPasswordAlgorithm::Argon2id { .. } => Ok(Bound::new(
+                py,
+                init.add_subclass(UntrustedPasswordAlgorithmArgon2id {}),
+            )?
+            .into_any()),
         }
     }
 }
 
 #[pymethods]
-impl PasswordAlgorithm {
-    #[classmethod]
-    fn generate_argon2id<'py>(
-        _cls: Bound<'py, PyType>,
-        py: Python<'py>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        Self::convert(py, libparsec_types::PasswordAlgorithm::generate_argon2id())
-    }
-
+impl UntrustedPasswordAlgorithm {
     #[classmethod]
     fn generate_fake_from_seed<'py>(
         _cls: Bound<'py, PyType>,
@@ -575,36 +567,27 @@ impl PasswordAlgorithm {
     ) -> PyResult<Bound<'py, PyAny>> {
         Self::convert(
             py,
-            libparsec_types::PasswordAlgorithm::generate_fake_from_seed(email, &seed.0),
+            libparsec_types::UntrustedPasswordAlgorithm::generate_fake_from_seed(email, &seed.0),
         )
-    }
-
-    fn compute_secret_key(&self, password: String) -> PyResult<SecretKey> {
-        self.0
-            .compute_secret_key(&password.into())
-            .map(SecretKey)
-            .map_err(|err| CryptoError::new_err(err.to_string()))
     }
 }
 
-#[pyclass(extends=PasswordAlgorithm, subclass)]
+#[pyclass(extends=UntrustedPasswordAlgorithm, subclass)]
 #[derive(Clone)]
-pub struct PasswordAlgorithmArgon2id {}
+pub struct UntrustedPasswordAlgorithmArgon2id {}
 
 #[pymethods]
-impl PasswordAlgorithmArgon2id {
+impl UntrustedPasswordAlgorithmArgon2id {
     #[new]
-    #[pyo3(signature = (salt, opslimit, memlimit_kb, parallelism))]
+    #[pyo3(signature = (opslimit, memlimit_kb, parallelism))]
     fn new(
-        salt: BytesWrapper,
         opslimit: u32,
         memlimit_kb: u32,
         parallelism: u32,
-    ) -> (Self, PasswordAlgorithm) {
+    ) -> (Self, UntrustedPasswordAlgorithm) {
         (
             Self {},
-            PasswordAlgorithm(libparsec_types::PasswordAlgorithm::Argon2id {
-                salt: salt.into(),
+            UntrustedPasswordAlgorithm(libparsec_types::UntrustedPasswordAlgorithm::Argon2id {
                 opslimit,
                 memlimit_kb,
                 parallelism,
@@ -613,36 +596,30 @@ impl PasswordAlgorithmArgon2id {
     }
 
     #[getter]
-    fn salt<'py>(self_: PyRef<Self>, py: Python<'py>) -> Bound<'py, PyBytes> {
-        let super_: &PasswordAlgorithm = self_.as_ref();
-        match &super_.0 {
-            libparsec_types::PasswordAlgorithm::Argon2id { salt, .. } => {
-                PyBytes::new_bound(py, salt)
-            }
-        }
-    }
-
-    #[getter]
     fn opslimit(self_: PyRef<Self>) -> u32 {
-        let super_: &PasswordAlgorithm = self_.as_ref();
+        let super_: &UntrustedPasswordAlgorithm = self_.as_ref();
         match &super_.0 {
-            libparsec_types::PasswordAlgorithm::Argon2id { opslimit, .. } => *opslimit,
+            libparsec_types::UntrustedPasswordAlgorithm::Argon2id { opslimit, .. } => *opslimit,
         }
     }
 
     #[getter]
     fn memlimit_kb(self_: PyRef<Self>) -> u32 {
-        let super_: &PasswordAlgorithm = self_.as_ref();
+        let super_: &UntrustedPasswordAlgorithm = self_.as_ref();
         match &super_.0 {
-            libparsec_types::PasswordAlgorithm::Argon2id { memlimit_kb, .. } => *memlimit_kb,
+            libparsec_types::UntrustedPasswordAlgorithm::Argon2id { memlimit_kb, .. } => {
+                *memlimit_kb
+            }
         }
     }
 
     #[getter]
     fn parallelism(self_: PyRef<Self>) -> u32 {
-        let super_: &PasswordAlgorithm = self_.as_ref();
+        let super_: &UntrustedPasswordAlgorithm = self_.as_ref();
         match &super_.0 {
-            libparsec_types::PasswordAlgorithm::Argon2id { parallelism, .. } => *parallelism,
+            libparsec_types::UntrustedPasswordAlgorithm::Argon2id { parallelism, .. } => {
+                *parallelism
+            }
         }
     }
 }

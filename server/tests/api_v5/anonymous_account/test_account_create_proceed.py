@@ -5,8 +5,8 @@ from parsec._parsec import (
     AccountAuthMethodID,
     EmailAddress,
     EmailValidationToken,
-    PasswordAlgorithmArgon2id,
     SecretKey,
+    UntrustedPasswordAlgorithmArgon2id,
     anonymous_account_cmds,
 )
 from tests.common import AnonymousAccountRpcClient, Backend, HttpCommonErrorsTester
@@ -30,8 +30,8 @@ async def test_anonymous_account_account_create_proceed_ok(
     rep = await anonymous_account.account_create_proceed(
         validation_token=token,
         human_label="Anonymous Alice",
-        auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-            salt=b"pepper", opslimit=1, memlimit_kb=2, parallelism=3
+        auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
+            opslimit=1, memlimit_kb=2, parallelism=3
         ),
         auth_method_hmac_key=SecretKey.generate(),
         vault_key_access=b"vault_key_access",
@@ -66,8 +66,8 @@ async def test_anonymous_account_account_create_proceed_invalid_validation_token
     rep = await anonymous_account.account_create_proceed(
         validation_token=other_token,
         human_label="Anonymous Alice",
-        auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-            salt=b"pepper", opslimit=1, memlimit_kb=2, parallelism=3
+        auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
+            opslimit=1, memlimit_kb=2, parallelism=3
         ),
         auth_method_hmac_key=SecretKey.generate(),
         vault_key_access=b"vault_key_access",
@@ -91,8 +91,8 @@ async def test_anonymous_account_account_create_proceed_http_common_errors(
         await anonymous_account.account_create_proceed(
             validation_token=other_token,
             human_label="Anonymous Alice",
-            auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-                salt=b"pepper", opslimit=1, memlimit_kb=2, parallelism=3
+            auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
+                opslimit=1, memlimit_kb=2, parallelism=3
             ),
             auth_method_hmac_key=SecretKey.generate(),
             vault_key_access=b"vault_key_access",
@@ -121,8 +121,8 @@ async def test_anonymous_account_account_create_proceed_auth_method_id_already_e
     rep = await anonymous_account.account_create_proceed(
         validation_token=token,
         human_label="Anonymous Alice",
-        auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-            salt=b"pepper", opslimit=1, memlimit_kb=2, parallelism=3
+        auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
+            opslimit=1, memlimit_kb=2, parallelism=3
         ),
         auth_method_hmac_key=SecretKey.generate(),
         vault_key_access=b"vault_key_access",
@@ -143,8 +143,8 @@ async def test_anonymous_account_account_create_proceed_auth_method_id_already_e
     rep = await anonymous_account.account_create_proceed(
         validation_token=token,
         human_label="Anonymous Bob",
-        auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-            salt=b"pepper", opslimit=1, memlimit_kb=2, parallelism=3
+        auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
+            opslimit=1, memlimit_kb=2, parallelism=3
         ),
         auth_method_hmac_key=SecretKey.generate(),
         vault_key_access=b"vault_key_access",

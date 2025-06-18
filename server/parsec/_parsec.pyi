@@ -41,8 +41,6 @@ from parsec._parsec_pyi.certif import (
 from parsec._parsec_pyi.crypto import (
     CryptoError,
     HashDigest,
-    PasswordAlgorithm,
-    PasswordAlgorithmArgon2id,
     PrivateKey,
     PublicKey,
     SecretKey,
@@ -51,6 +49,8 @@ from parsec._parsec_pyi.crypto import (
     SequesterSigningKeyDer,
     SequesterVerifyKeyDer,
     SigningKey,
+    UntrustedPasswordAlgorithm,
+    UntrustedPasswordAlgorithmArgon2id,
     VerifyKey,
     generate_sas_code_nonce,
 )
@@ -152,8 +152,8 @@ __all__ = [
     "SequesterVerifyKeyDer",
     "SigningKey",
     "VerifyKey",
-    "PasswordAlgorithm",
-    "PasswordAlgorithmArgon2id",
+    "UntrustedPasswordAlgorithm",
+    "UntrustedPasswordAlgorithmArgon2id",
     # Enumerate
     "CancelledGreetingAttemptReason",
     "DevicePurpose",

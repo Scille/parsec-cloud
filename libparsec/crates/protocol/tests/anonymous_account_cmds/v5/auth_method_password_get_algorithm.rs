@@ -47,22 +47,21 @@ pub fn req() {
 // Responses
 
 pub fn rep_ok() {
-    // Generated from Parsec 3.4.0-a.7+dev
+    // Generated from Parsec 3.4.1-a.0+dev
     // Content:
     //   status: 'ok'
-    //   password_algorithm: { type: 'ARGON2ID', memlimit_kb: 3, opslimit: 65536, parallelism: 1, salt: 0x3c73616c7420323e, }
+    //   password_algorithm: { type: 'ARGON2ID', memlimit_kb: 131072, opslimit: 3, parallelism: 1, }
     let raw: &[u8] = hex!(
-        "82a6737461747573a26f6bb270617373776f72645f616c676f726974686d85a4747970"
-        "65a84152474f4e324944ab6d656d6c696d69745f6b6203a86f70736c696d6974ce0001"
-        "0000ab706172616c6c656c69736d01a473616c74c4083c73616c7420323e"
+        "82a6737461747573a26f6bb270617373776f72645f616c676f726974686d84a4747970"
+        "65a84152474f4e324944ab6d656d6c696d69745f6b62ce00020000a86f70736c696d69"
+        "7403ab706172616c6c656c69736d01"
     )
     .as_ref();
 
     let expected = anonymous_account_cmds::auth_method_password_get_algorithm::Rep::Ok {
-        password_algorithm: PasswordAlgorithm::Argon2id {
-            salt: b"<salt 2>".to_vec(),
-            opslimit: 65536,
-            memlimit_kb: 3,
+        password_algorithm: UntrustedPasswordAlgorithm::Argon2id {
+            opslimit: 3,
+            memlimit_kb: 128 * 1024,
             parallelism: 1,
         },
     };
