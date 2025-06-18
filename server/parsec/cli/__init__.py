@@ -10,6 +10,7 @@ import click
 
 from parsec.cli.export import export_realm
 from parsec.cli.inspect import human_accesses
+from parsec.cli.mail_templates import export_email
 from parsec.cli.migration import migrate
 from parsec.cli.options import version_option
 from parsec.cli.run import run_cmd
@@ -49,6 +50,7 @@ cli.add_command(migrate, "migrate")
 cli.add_command(export_realm, "export_realm")
 cli.add_command(human_accesses, "human_accesses")
 cli.add_command(server_sequester_cmd, "sequester")
+cli.add_command(export_email)
 if TESTBED_AVAILABLE:
     cli.add_command(testbed_cmd, "testbed")
 
