@@ -131,6 +131,10 @@
           </div>
         </div>
       </div>
+      <tab-bar-options
+        v-if="customTabBar.isVisible.value"
+        :actions="tabBarActions"
+      />
     </ion-content>
   </ion-page>
 </template>
@@ -181,12 +185,13 @@ import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
 import { IonContent, IonPage, IonText, modalController } from '@ionic/vue';
-import { informationCircle, personAdd, personRemove, repeat } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, ref, toRaw, computed } from 'vue';
+import { informationCircle, personAdd, personRemove, repeat, returnUpForward } from 'ionicons/icons';
+import { Ref, inject, onMounted, onUnmounted, ref, toRaw, computed, watch } from 'vue';
 import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 import { openUserContextMenu as _openUserContextMenu, openGlobalUserContextMenu as _openGlobalUserContextMenu } from '@/views/users/utils';
+import { MenuAction, TabBarOptions, useCustomTabBar } from '@/views/menu';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -205,6 +210,36 @@ let eventCbId: string | null = null;
 
 const USERS_PAGE_DATA_KEY = 'UsersPage';
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+
+const customTabBar = useCustomTabBar();
+
+const tabBarActions = computed(() => {
+  const selectedUsers = users.value.getSelectedUsers();
+  const actions: MenuAction[] = [];
+  if (selectedUsers.length === 1) {
+    actions.push({ label: 'UsersPage.tabbar.details', action: async () => await openSelectedUserDetails(), icon: informationCircle });
+    actions.push({
+      label: 'UsersPage.tabbar.roles',
+      action: async () => await assignWorkspaceRoles(selectedUsers[0]),
+      icon: returnUpForward,
+    });
+  }
+  if (isAdmin.value) {
+    if (selectedUsers.some((u: UserModel) => u.currentProfile !== UserProfile.Outsider)) {
+      actions.push({ label: 'UsersPage.tabbar.update', action: async () => await updateSelectedUserProfiles(), icon: repeat });
+    }
+    actions.push({ label: 'UsersPage.tabbar.revoke', action: async () => await revokeSelectedUsers(), icon: personRemove, danger: true });
+  }
+  return actions;
+});
+
+const tabBarWatchCancel = watch([(): boolean => isSmallDisplay.value, (): number => users.value.getSelectedUsers().length], () => {
+  if (isSmallDisplay.value && users.value.hasSelected() && tabBarActions.value.length > 0) {
+    customTabBar.show();
+  } else {
+    customTabBar.hide();
+  }
+});
 
 interface UsersPageSavedData {
   displayState: DisplayState;
@@ -404,8 +439,8 @@ async function openUserContextMenu(event: Event, user: UserModel, onFinished?: (
     selectedUsers = [user];
   }
 
-  // a Standard user can't do anything with multiple users
-  if (clientInfo.value?.currentProfile === UserProfile.Standard && selectedUsers.length > 1) {
+  // a Standard or Outsider user can't do anything with multiple users
+  if (!isAdmin.value && selectedUsers.length > 1) {
     return;
   }
 
@@ -724,7 +759,10 @@ onUnmounted(async () => {
   if (eventCbId) {
     await eventDistributor.removeCallback(eventCbId);
   }
+  selectionEnabled.value = false;
+  customTabBar.hide();
   routeWatchCancel();
+  tabBarWatchCancel();
 });
 
 const actionBarOptionsUsersPage = computed(() => {

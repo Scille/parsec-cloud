@@ -723,7 +723,19 @@
         "movesLeft": "{amount} moves pending",
         "itemsDoneAmount": "One more operation done | {amount} more operations done",
         "itemsErrorAmount": "One more operation cancelled or failed | {amount} more operations cancelled or failed",
-        "operationAmount": "{amount} operations"
+        "operationAmount": "{amount} operations",
+        "tabbar": {
+            "rename": "Rename",
+            "move": "Move",
+            "duplicate": "Copy",
+            "delete": "Delete",
+            "share": "Share",
+            "download": "Download",
+            "copyLink": "Copy link",
+            "history": "History",
+            "open": "Open",
+            "details": "Details"
+        }
     },
     "FileDetails": {
         "title": "Details on {name}",
@@ -824,6 +836,10 @@
             "scanDocument": "Scan document",
             "importPhoto": "Import photo",
             "addUser": "Add user"
+        },
+        "tabbarOptions": {
+            "more": "More",
+            "less": "Less"
         },
         "trial": {
             "tag": "Trial version",
@@ -1287,6 +1303,12 @@
             "processing": "Processing the changes to be made...",
             "noRoles": "No new roles to transfer to {user}.",
             "close": "Close"
+        },
+        "tabbar": {
+            "details": "Details",
+            "update": "Profile",
+            "revoke": "Revoke",
+            "roles": "Roles"
         }
     },
     "AboutPage": {
