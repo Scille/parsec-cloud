@@ -310,7 +310,7 @@ Similarly, in case of account recovery (see previous paragraph) a new vault is c
 from scratch (i.e. the user has lost access to his previous vault). Further operations
 are then needed (see [RFC 1014](1014-account-vault-for-device-stored-on-server.md)) to regain access to the content of the old vault.
 
-### 3.6 - New Parsec action URL for email-validated operations
+### 3.6 - New validation code for email-validated operations
 
 The Parse Account relies on email address validation for multiple operations:
 
@@ -320,31 +320,32 @@ The Parse Account relies on email address validation for multiple operations:
 
 For all those cases, the logic is as follows:
 
-1. The Parsec client sends an initial API request to the server.
-2. The server sends a confirmation email to the user containing a link with a validation token.
-3. The user clicks on the link in the email, which open the Parsec client.
-4. The Parsec client sends a second API request with the validation token to the server.
-5. The server proceed with the actual operation.
+1. The user select the operation from his Parsec client.
+2. The Parsec client sends an initial API request to the server.
+3. The server sends a confirmation email to the user containing a validation code.
+4. The user checks his email to get the validation code, and pastes it in his Parsec client.
+5. The Parsec client sends a second API request with the validation code to the server.
+6. The server proceed with the actual operation.
 
-Hence, the need to define a new type of URL link: `ParsecAccountActionAddr`.
+Regarding its format, the validation code is composed of 6 characters using the base32
+RFC4648 alphabet (i.e. numbers + uppercase letters, minus `0/1/8` to avoid confusion with `O/I/B`).
 
-The format is similar to the existing `ParsecActionAddr`, the only difference being
-that `ParsecActionAddr` specifies the organization ID.
+Since this validation code must be copy&pasted by an end user, it is of much lower entropy
+than the tokens are used in `ParsecInvitationAddr`/`ParsecOrganizationBootstrapAddr`.
+For this reason:
 
-`ParsecAccountActionAddr` format: `parsec3://parsec.example.com?a=<action>&p=<payload>`
+- A validation code can only be attempted three times before becoming invalid.
+- A validation code has a validity period of 1 hour, after which it becomes invalid.
 
-New `ParsecAccountActionAddr` format can have three variants:
-
-name              | `action` value     | `payload` value
-------------------|--------------------|------------------
-`AccountCreation` | `account_create`   | `base64(msgpack(<validation_token>))`
-`AccountRecovery` | `account_recovery` | `base64(msgpack(<validation_token>))`
-`AccountDeletion` | `account_delete`   | `base64(msgpack(<validation_token>))`
+Once the validation code invalid, the process has to be retried from the beginning
+(i.e. another confirmation email with a new code has to be requested).
 
 > [!NOTE]
-> We should probably rename `ParsecActionAddr` -> `ParsecOrganizationActionAddr`
-> to avoid confusion with this new `ParsecAccountActionAddr` (this is a purely internal
-> code change, so no risk of backward compatibility issue).
+> The low entropy of the validation code also means it cannot be solely used as
+> unique ID: the account's email address is used instead.
+>
+> Also, for each kind of operation (i.e. account create, reset, and delete), there
+> is at most a single validation code valid at any given moment.
 
 ## 4 - API
 
@@ -383,7 +384,7 @@ signature = base64(code)
 
 ### 4.3 - Account creation: validate email
 
-To create an account, the client starts by requesting an email validation token.
+To create an account, the client starts by requesting an email validation code.
 
 Anonymous account API:
 
@@ -417,14 +418,13 @@ Anonymous account API:
 > [!NOTE]
 > `EmailAddress` is a new type allowing to validate the email address format.
 
-On `ok`, the server would have sent a mail with a unique token used for the next request used to register the authentication method.
+On `ok`, the server would have sent a mail with a unique validation code to use in the next part of account creation.
 
 If an account already exists with this email, a `ok` response will still be sent (without sending an email)
 to avoid creating an oracle about emails registered in the service.
-If an account creation has already been requested for an email and the email is not validated yet, a new email with a new token may or may not been sent depending on how long ago the previous one was sent.
 
-The token is valid for a default duration of 24h, which can be changed in the server configuration (
-`PARSEC_ACCOUNT_EMAIL_VALIDATION_TOKEN_VALIDITY` specifying the duration in seconds).
+If an account creation has already been requested for an email and the email is not validated yet, a new email with a
+new validation code may or may not been sent depending on how long ago the previous one was sent.
 
 TODO: Use a Proof of work based solution (see [Anubis](https://anubis.techaro.lol/)) to protect against DOS
 
@@ -447,9 +447,14 @@ Anonymous account API:
     "req": {
       "fields": [
         {
-          // Token received by email following use of `account_create_send_validation_email`
-          "name": "validation_token",
-          "type": "EmailValidationToken"
+          "name": "email",
+          "type": "EmailAddress"
+        },
+        {
+          // Code received by email following use of `account_create_send_validation_email`
+          // Should be 6 base32 characters.
+          "name": "validation_code",
+          "type": "ValidationCode"
         },
         {
           // Quality-of-life field to pre-fill the human handle's label during enrollment
@@ -492,7 +497,12 @@ Anonymous account API:
         "status": "ok"
       },
       {
-        "status": "invalid_validation_token"
+        "status": "invalid_validation_code"
+      },
+      {
+        // No validation code exists, or 3 bad attempts have been done on the
+        // current validation code.
+        "status": "send_validation_code_required"
       },
       {
       // In practice this error should never occur since collision on the ID is
@@ -503,14 +513,6 @@ Anonymous account API:
   }
 ]
 ```
-
-> [!NOTE]
-> Since the request is authenticated with the token field it contains, it could
-> be tempting to introduce an "invited account" API family that would authenticate on
-> the token similarly to the regular `invited` API family used for user/device enrollment.
-> However, this is not worth the effort since, unlike for enrollment, this token only
-> authenticates a single API command (and we would need to introduce a separate API
-> family for other token-for-single-API-command such as account recovery & deletion).
 
 Upon receiving the request, the server will create the [`Account`], [`Authentication Method`], and [`Vault`].
 
@@ -612,7 +614,7 @@ Anonymous account API:
 
 ```json5
 {
-  "cmd": "account_recovery_send_validation_token",
+  "cmd": "account_recovery_send_validation_code",
   "req": {
     "fields": [
       {
@@ -637,7 +639,7 @@ Anonymous account API:
 }
 ```
 
-The server will send an email with a token (similar to the creation token) to confirm the operation.
+The server will send an email with a validation code (similar to the creation validation code) to confirm the operation.
 
 > [!NOTE]
 > To avoid DOS attack, the server will limit the number of requests similarly to `account_create_send_validation_email`.
@@ -652,8 +654,14 @@ Anonymous account API:
   "req": {
     "fields": [
       {
-        "name": "validation_token",
-        "type": "Token"
+        "name": "email",
+        "type": "EmailAddress"
+      },
+      {
+        // Code received by email following use of `account_create_send_validation_email`
+        // Should be 6 base32 characters.
+        "name": "validation_code",
+        "type": "ValidationCode"
       },
       {
           // Auth method can be of two types:
@@ -677,7 +685,12 @@ Anonymous account API:
       "status": "ok"
     },
     {
-      "status": "invalid_validation_token"
+      "status": "invalid_validation_code"
+    },
+    {
+      // No validation code exists, or 3 bad attempts have been done on the
+      // current validation code.
+      "status": "send_validation_code_required"
     }
   ]
 }
@@ -687,13 +700,13 @@ The server will create a new [`Vault`] & [`Authentication Method`]
 
 ### 4.8 - Account deletion: validation
 
-The server will send an email with a token (similar to the creation token) to confirm the suppression of the account.
+The server will send an email with a validation code (similar to the creation validation code) to confirm the suppression of the account.
 
 Authenticated account API:
 
 ```json5
 {
-  "cmd": "account_delete_send_validation_token",
+  "cmd": "account_delete_send_validation_code",
   "req": {
     // No email to provide: the email of the authenticated user will be used.
   },
@@ -719,15 +732,17 @@ Authenticated account API:
 
 ### 4.9 - Account deletion: actual operation
 
-Anonymous account API:
+Authenticated account API:
 
 ```json5
 {
   "cmd": "account_delete_proceed",
   "req": [
     {
-      "name": "validation_token",
-      "type": "Token"
+      // Code received by email following use of `account_create_send_validation_email`
+      // Should be 6 base32 characters.
+      "name": "validation_code",
+      "type": "ValidationCode"
     }
   ]
   "reps": {
@@ -735,7 +750,12 @@ Anonymous account API:
       "status": "ok"
     },
     {
-      "status": "invalid_validation_token"
+      "status": "invalid_validation_code"
+    },
+    {
+      // No validation code exists, or 3 bad attempts have been done on the
+      // current validation code.
+      "status": "send_validation_code_required"
     }
   }
 }
@@ -745,14 +765,18 @@ At that point the server can remove the client, and its related data.
 
 > [!NOTE]
 > In theory this operation doesn't involve the Parsec client since we only need
-> a way to provide the validation token to the server (given, unlike for account
+> a way to provide the validation code to the server (given, unlike for account
 > creation & recovery, we just want to remove data from the server).
 >
-> For this reason, we could in the validation email a link to a simple HTTP GET
-> route in the server that would do the removal (so no Parsec client involved).
+> For this reason, we could have in the validation email a link to a simple
+> HTTP GET route in the server that would do the removal (so no Parsec client
+> involved).
 >
-> Instead, we still use a regular validation link that redirect to the Parsec client
-> to be consistent with other operations.
+> Instead, we still use a regular validation code that has to be inputted into
+> the Parsec client to be consistent with other operations.
+>
+> On top of that, it allows the `account_delete_proceed` command to be authenticated,
+> which improves security.
 
 ## 5 - Misc
 
