@@ -127,9 +127,6 @@ const disableGoTo = ref(false);
 const refreshKey = ref(0);
 
 onMounted(async () => {
-  if (ParsecAccount.isSkipped()) {
-    return await onSkipClicked();
-  }
   if (ParsecAccount.isLoggedIn()) {
     await onLoginSuccess();
   }

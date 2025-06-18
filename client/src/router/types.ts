@@ -39,12 +39,6 @@ const routes: Array<RouteRecordRaw> = [
     path: `/${Routes.Home}`,
     name: Routes.Home,
     component: () => import('@/views/home/HomePage.vue'),
-    beforeEnter: (): boolean => {
-      if (!ParsecAccount.isSkipped() && !ParsecAccount.isLoggedIn()) {
-        ParsecAccount.markSkipped();
-      }
-      return true;
-    },
   },
   {
     path: `/${Routes.Account}`,

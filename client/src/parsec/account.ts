@@ -126,9 +126,6 @@ class _ParsecAccount {
   }
 
   async login(email: string, authentication: DeviceAccessStrategy, _server: string): Promise<Result<AccountHandle, AccountError>> {
-    if (this.skipped) {
-      throw new Error('Parsec Account marked as skipped but "login" called');
-    }
     if (Env.isAccountMocked()) {
       if (!Env.isAccountAutoLoginEnabled()) {
         await wait(2000);
@@ -162,9 +159,6 @@ class _ParsecAccount {
   }
 
   async logout(): Promise<void> {
-    if (this.skipped) {
-      throw new Error('Parsec Account marked as skipped but "logout" called');
-    }
     if (!this.handle) {
       return;
     }
@@ -176,9 +170,6 @@ class _ParsecAccount {
   }
 
   async requestAccountDeletion(): Promise<Result<null, AccountError>> {
-    if (this.skipped) {
-      throw new Error('Parsec Account marked as skipped but "requestAccountDeletion" called');
-    }
     if (!this.handle) {
       return { ok: false, error: { tag: AccountErrorTag.NotLoggedIn, error: 'not-logged-in' } };
     }
@@ -192,9 +183,6 @@ class _ParsecAccount {
   }
 
   async confirmAccountDeletion(code: Array<string>): Promise<Result<null, AccountError>> {
-    if (this.skipped) {
-      throw new Error('Parsec Account marked as skipped but "confirmAccountDeletion" called');
-    }
     if (!this.handle) {
       return { ok: false, error: { tag: AccountErrorTag.NotLoggedIn, error: 'not-logged-in' } };
     }
