@@ -10,6 +10,7 @@
         <div class="homepage-content">
           <div class="homepage-parsec-account account">
             <account-login-page
+              :key="refreshKey"
               @login-success="onLoginSuccess"
               :disabled="disableGoTo"
             />
@@ -123,6 +124,7 @@ import { openSettingsModal } from '@/views/settings';
 import { Env } from '@/services/environment';
 
 const disableGoTo = ref(false);
+const refreshKey = ref(0);
 
 onMounted(async () => {
   if (ParsecAccount.isSkipped()) {
@@ -137,12 +139,14 @@ onMounted(async () => {
 async function onLoginSuccess(): Promise<void> {
   disableGoTo.value = true;
   await navigateTo(Routes.Home, { skipHandle: true, params: getCurrentRouteParams(), query: getCurrentRouteQuery() });
+  refreshKey.value += 1;
   disableGoTo.value = false;
 }
 
 async function onSkipClicked(): Promise<void> {
   disableGoTo.value = true;
   await navigateTo(Routes.Home, { skipHandle: true, params: getCurrentRouteParams(), query: getCurrentRouteQuery() });
+  refreshKey.value += 1;
   disableGoTo.value = false;
 }
 
