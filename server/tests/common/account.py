@@ -20,7 +20,7 @@ from parsec._parsec import (
     SecretKey,
 )
 from parsec.backend import Backend
-from parsec.components.account import BaseAccountComponent, PasswordAlgorithmArgon2id
+from parsec.components.account import BaseAccountComponent, UntrustedPasswordAlgorithmArgon2id
 from parsec.components.memory.account import MemoryAccountComponent
 from tests.common.client import AnonymousAccountRpcClient, AuthenticatedAccountRpcClient
 
@@ -50,7 +50,7 @@ async def create_account(
     created_on: DateTime,
     human_label: str,
     mac_key: SecretKey,
-    auth_method_password_algorithm: PasswordAlgorithmArgon2id,
+    auth_method_password_algorithm: UntrustedPasswordAlgorithmArgon2id,
     vault_key_access: bytes,
 ):
     email_token = await account_component.create_email_validation_token(account_email, created_on)
@@ -85,8 +85,7 @@ async def alice_account(
         human_label="Alicey McAliceFace",
         mac_key=ALICE_ACCOUNT_AUTH_METHOD_MAC_KEY,
         vault_key_access=b"<alice_vault_key_access>",
-        auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-            salt=b"<alice_dummy_salt>",
+        auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
             opslimit=65536,
             memlimit_kb=3,
             parallelism=1,
@@ -113,8 +112,7 @@ async def bob_account(
         human_label="Boby McBobFace",
         mac_key=BOB_ACCOUNT_AUTH_METHOD_MAC_KEY,
         vault_key_access=b"<bob_vault_key_access>",
-        auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-            salt=b"<bob_dummy_salt>",
+        auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
             opslimit=65536,
             memlimit_kb=3,
             parallelism=1,

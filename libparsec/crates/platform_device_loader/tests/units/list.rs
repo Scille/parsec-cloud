@@ -109,7 +109,7 @@ async fn list_devices(tmp_path: TmpPath) {
         human_handle: "Boby McBobFace <bob@parsec.invalid>".parse().unwrap(),
         device_label: "My dev2 machine".parse().unwrap(),
         algorithm: PasswordAlgorithm::Argon2id {
-            salt: b"salt".to_vec(),
+            salt: *b"1234567890123456",
             opslimit: 1,
             memlimit_kb: 8,
             parallelism: 1,
@@ -121,7 +121,7 @@ async fn list_devices(tmp_path: TmpPath) {
         DeviceFile::Password(password_expected.clone()).dump()
     );
 
-    // Generated from Parsec 3.3.0-rc.12+dev
+    // Generated from Parsec 3.4.1-a.0+dev
     // Content:
     //   type: 'password'
     //   created_on: ext(1, 946684800000000) i.e. 2000-01-01T01:00:00Z
@@ -132,7 +132,7 @@ async fn list_devices(tmp_path: TmpPath) {
     //   device_id: ext(2, 0xde10808c001000000000000000000000)
     //   human_handle: [ 'bob@parsec.invalid', 'Boby McBobFace', ]
     //   device_label: 'My dev2 machine'
-    //   algorithm: { type: 'ARGON2ID', memlimit_kb: 8, opslimit: 1, parallelism: 1, salt: 0x73616c74, }
+    //   algorithm: { type: 'ARGON2ID', memlimit_kb: 8, opslimit: 1, parallelism: 1, salt: 0x31323334353637383930313233343536, }
     //   ciphertext: 0x3c636970686572746578743e
     let password_raw: &[u8] = hex!(
         "8ba474797065a870617373776f7264aa637265617465645f6f6ed70100035d013b37e0"
@@ -144,7 +144,8 @@ async fn list_devices(tmp_path: TmpPath) {
         "4d63426f6246616365ac6465766963655f6c6162656caf4d792064657632206d616368"
         "696e65a9616c676f726974686d85a474797065a84152474f4e324944ab6d656d6c696d"
         "69745f6b6208a86f70736c696d697401ab706172616c6c656c69736d01a473616c74c4"
-        "0473616c74aa63697068657274657874c40c3c636970686572746578743e"
+        "1031323334353637383930313233343536aa63697068657274657874c40c3c63697068"
+        "6572746578743e"
     )
     .as_ref();
 

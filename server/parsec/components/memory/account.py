@@ -20,7 +20,7 @@ from parsec.components.account import (
     AccountVaultItemUploadBadOutcome,
     AccountVaultKeyRotation,
     BaseAccountComponent,
-    PasswordAlgorithm,
+    UntrustedPasswordAlgorithm,
     VaultItemRecoveryAuthMethod,
     VaultItemRecoveryList,
     VaultItemRecoveryVault,
@@ -48,7 +48,9 @@ class MemoryAccountComponent(BaseAccountComponent):
         self._event_bus = event_bus
 
     @override
-    async def get_password_algorithm_or_fake_it(self, email: EmailAddress) -> PasswordAlgorithm:
+    async def get_password_algorithm_or_fake_it(
+        self, email: EmailAddress
+    ) -> UntrustedPasswordAlgorithm:
         try:
             account = self._data.accounts[email]
             active_authentication_methods = account.current_vault.active_authentication_methods
@@ -89,7 +91,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         created_by_user_agent: str,
         created_by_ip: str | Literal[""],
         auth_method_id: AccountAuthMethodID,
-        auth_method_password_algorithm: PasswordAlgorithm | None,
+        auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
     ) -> None | AccountCreateAccountBadOutcome:
         # look for an email linked to the provided token
         unverified_email = next(
@@ -177,7 +179,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         created_by_user_agent: str,
         new_auth_method_id: AccountAuthMethodID,
         new_auth_method_mac_key: SecretKey,
-        new_auth_method_password_algorithm: PasswordAlgorithm | None,
+        new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         new_vault_key_access: bytes,
         items: dict[HashDigest, bytes],
     ) -> None | AccountVaultKeyRotation:

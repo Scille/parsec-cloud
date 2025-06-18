@@ -76,7 +76,7 @@ fn password_protected_device_file(alice: &Device) {
         human_handle: alice.human_handle.clone(),
         device_label: alice.device_label.clone(),
         algorithm: PasswordAlgorithm::Argon2id {
-            salt: hex!("2ae6167f0f7472b8565c390df3af4a8b").as_ref().into(),
+            salt: hex!("2ae6167f0f7472b8565c390df3af4a8b"),
             opslimit: 1,
             memlimit_kb: 8,
             parallelism: 1,

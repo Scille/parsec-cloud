@@ -103,26 +103,17 @@ def generate_sas_code_nonce() -> bytes: ...
 
 class CryptoError(Exception): ...
 
-class PasswordAlgorithm:
+class UntrustedPasswordAlgorithm:
     @staticmethod
-    def generate_argon2id() -> PasswordAlgorithm: ...
-    @staticmethod
-    def generate_fake_from_seed(email: str, seed: SecretKey) -> PasswordAlgorithm: ...
-    def compute_secret_key(
-        self,
-        password: str,
-    ) -> SecretKey: ...
+    def generate_fake_from_seed(email: str, seed: SecretKey) -> UntrustedPasswordAlgorithm: ...
 
-class PasswordAlgorithmArgon2id(PasswordAlgorithm):
+class UntrustedPasswordAlgorithmArgon2id(UntrustedPasswordAlgorithm):
     def __init__(
         self,
-        salt: bytes,
         opslimit: int,
         memlimit_kb: int,
         parallelism: int,
     ) -> None: ...
-    @property
-    def salt(self) -> bytes: ...
     @property
     def opslimit(self) -> int: ...
     @property

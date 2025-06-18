@@ -248,9 +248,9 @@ Attributes:
 - `mac_key: SecretKey`. Secret key used for MAC based authentication with the server.
 - `vault_key_access: Bytes`. Vault key encrypted with the `auth_method_secret_key`
   (see [RFC 1014](1014-account-vault-for-device-stored-on-server.md) for its internal format).
-- `password_algorithm: PasswordAlgorithm`. The algorithm to derive `auth_method_master_secret`
+- `password_algorithm: UntrustedPasswordAlgorithm`. The algorithm to derive `auth_method_master_secret`
   given the password. This attribute should contain the full configuration needed to do this
-  operation (e.g.`{"name": "ARGON2ID", "salt": b"<salt>", "opslimit": 65536, "memlimit_kb": 3, "parallelism": 1}`).
+  operation (e.g.`{"name": "ARGON2ID", "opslimit": 65536, "memlimit_kb": 3, "parallelism": 1}`).
   This field is left empty for authentication methods that don't rely on password.
 - `disabled_on: DateTime` (server side-only): Indicate if this method is enabled or not.
 
@@ -264,6 +264,10 @@ Attributes:
 >   still be used to recover the vault in case of account recovery (see below).
 > - Currently, only password authentication is supported, other authentication
 >   methods (such as FIDO2) may be added in the future.
+> - Given the server control the password algorithm, the client must ensure the
+>   provided configuration is not too weak (which would allow the server to brute
+>   force the password by using `auth_method_id` as oracle).
+>   Similarly, the server shouldn't control the salt to avoid rainbow-table attacks.
 
 In case the user loses access to all his authentication methods (e.g. it forgets its password),
 the account must be recovered to re-gain access (i.e. email-based identity validation, then
@@ -464,7 +468,7 @@ Anonymous account API:
             //   (i.e. this field !) from the server in order to know how
             //   to turn the password into `auth_method_master_secret`.
             "name": "auth_method_password_algorithm",
-            "type": "RequiredOption<PasswordAlgorithm>"
+            "type": "RequiredOption<UntrustedPasswordAlgorithm>"
         }
         {
           // Secret key shared between the client and the server and used for
@@ -542,7 +546,7 @@ Anonymous account API:
                     // Algorithm used to turn the password into the `auth_method_master_secret`
                     // (itself used to generate `auth_method_mac_key` and `auth_method_secret_key`).
                     "name": "password_algorithm",
-                    "type": "PasswordAlgorithm"
+                    "type": "UntrustedPasswordAlgorithm"
                 }
             }
         }
@@ -570,7 +574,7 @@ Authenticated account API:
         // Algorithm used to turn the password into the `auth_method_master_secret`
         // (itself used to generate `auth_method_mac_key` and `auth_method_secret_key`).
         "name": "password_algorithm",
-        "type": "PasswordAlgorithm"
+        "type": "UntrustedPasswordAlgorithm"
       },
       {
         // Secret key shared between the client and the server and used for
@@ -663,7 +667,7 @@ Anonymous account API:
           //   (i.e. this field !) from the server in order to know how
           //   to turn the password into `auth_method_master_secret`.
           "name": "auth_method_password_algorithm",
-          "type": "RequiredOption<PasswordAlgorithm>"
+          "type": "RequiredOption<UntrustedPasswordAlgorithm>"
       },
       {
         "name": "vault_key_access",

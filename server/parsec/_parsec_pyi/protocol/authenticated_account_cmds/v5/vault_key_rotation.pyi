@@ -4,14 +4,14 @@
 
 from __future__ import annotations
 
-from parsec._parsec import AccountAuthMethodID, HashDigest, PasswordAlgorithm, SecretKey
+from parsec._parsec import AccountAuthMethodID, HashDigest, SecretKey, UntrustedPasswordAlgorithm
 
 class Req:
     def __init__(
         self,
         new_auth_method_id: AccountAuthMethodID,
         new_auth_method_mac_key: SecretKey,
-        new_auth_method_password_algorithm: PasswordAlgorithm | None,
+        new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         new_vault_key_access: bytes,
         items: dict[HashDigest, bytes],
     ) -> None: ...
@@ -23,7 +23,7 @@ class Req:
     @property
     def new_auth_method_mac_key(self) -> SecretKey: ...
     @property
-    def new_auth_method_password_algorithm(self) -> PasswordAlgorithm | None: ...
+    def new_auth_method_password_algorithm(self) -> UntrustedPasswordAlgorithm | None: ...
     @property
     def new_vault_key_access(self) -> bytes: ...
 

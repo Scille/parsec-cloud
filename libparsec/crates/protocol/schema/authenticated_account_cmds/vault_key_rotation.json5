@@ -25,7 +25,7 @@
                     //   (i.e. this field !) from the server in order to know how
                     //   to turn the password into `auth_method_master_secret`.
                     "name": "new_auth_method_password_algorithm",
-                    "type": "RequiredOption<PasswordAlgorithm>"
+                    "type": "RequiredOption<UntrustedPasswordAlgorithm>"
                 },
                 {
                     "name": "new_vault_key_access",

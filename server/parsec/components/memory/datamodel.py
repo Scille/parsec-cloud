@@ -31,7 +31,6 @@ from parsec._parsec import (
     InvitationToken,
     InvitationType,
     OrganizationID,
-    PasswordAlgorithm,
     RealmArchivingCertificate,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
@@ -46,6 +45,7 @@ from parsec._parsec import (
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryDeletionCertificate,
     ShamirRecoveryShareCertificate,
+    UntrustedPasswordAlgorithm,
     UserCertificate,
     UserID,
     UserProfile,
@@ -953,6 +953,6 @@ class MemoryAuthenticationMethod:
     # - Password, for which the client must obtain some configuration
     #   (i.e. this field !) from the server in order to know how
     #   to turn the password into `auth_method_master_secret`.
-    password_algorithm: PasswordAlgorithm | None
+    password_algorithm: UntrustedPasswordAlgorithm | None
     # Note that only the current vault contains auth methods that are not disabled
     disabled_on: DateTime | None = None

@@ -17,9 +17,9 @@ from parsec._parsec import (
     HashDigest,
     ParsecAccountDeletionAddr,
     ParsecAccountEmailValidationAddr,
-    PasswordAlgorithm,
-    PasswordAlgorithmArgon2id,
     SecretKey,
+    UntrustedPasswordAlgorithm,
+    UntrustedPasswordAlgorithmArgon2id,
     anonymous_account_cmds,
     authenticated_account_cmds,
 )
@@ -76,7 +76,7 @@ class VaultItemRecoveryAuthMethod:
     created_by_ip: str | Literal[""]
     created_by_user_agent: str
     vault_key_access: bytes
-    password_algorithm: PasswordAlgorithm | None
+    password_algorithm: UntrustedPasswordAlgorithm | None
     disabled_on: DateTime | None
 
 
@@ -102,7 +102,9 @@ class BaseAccountComponent:
     def __init__(self, config: BackendConfig):
         self._config = config
 
-    async def get_password_algorithm_or_fake_it(self, email: EmailAddress) -> PasswordAlgorithm:
+    async def get_password_algorithm_or_fake_it(
+        self, email: EmailAddress
+    ) -> UntrustedPasswordAlgorithm:
         """
         Return the password algorithm configuration corresponding to the account
         of the given email address.
@@ -113,8 +115,8 @@ class BaseAccountComponent:
         """
         raise NotImplementedError
 
-    def _generate_fake_password_algorithm(self, email: EmailAddress) -> PasswordAlgorithm:
-        return PasswordAlgorithm.generate_fake_from_seed(
+    def _generate_fake_password_algorithm(self, email: EmailAddress) -> UntrustedPasswordAlgorithm:
+        return UntrustedPasswordAlgorithm.generate_fake_from_seed(
             email.str, self._config.fake_account_password_algorithm_seed
         )
 
@@ -133,7 +135,7 @@ class BaseAccountComponent:
         created_by_user_agent: str,
         created_by_ip: str | Literal[""],
         auth_method_id: AccountAuthMethodID,
-        auth_method_password_algorithm: PasswordAlgorithm | None,
+        auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
     ) -> None | AccountCreateAccountBadOutcome:
         raise NotImplementedError
 
@@ -156,7 +158,7 @@ class BaseAccountComponent:
         created_by_user_agent: str,
         new_auth_method_id: AccountAuthMethodID,
         new_auth_method_mac_key: SecretKey,
-        new_auth_method_password_algorithm: PasswordAlgorithm | None,
+        new_auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         new_vault_key_access: bytes,
         items: dict[HashDigest, bytes],
     ) -> None | AccountVaultKeyRotation:
@@ -214,7 +216,7 @@ class BaseAccountComponent:
     ) -> anonymous_account_cmds.latest.account_create_proceed.Rep:
         now = DateTime.now()
         match req.auth_method_password_algorithm:
-            case PasswordAlgorithmArgon2id() as algo:
+            case UntrustedPasswordAlgorithmArgon2id() as algo:
                 pass
             case _:
                 # No other algorithm is supported/implemented for now
@@ -229,8 +231,7 @@ class BaseAccountComponent:
             created_by_user_agent=client_ctx.client_user_agent,
             created_by_ip=client_ctx.client_ip_address,
             auth_method_id=req.auth_method_id,
-            auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-                salt=algo.salt,
+            auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
                 opslimit=algo.opslimit,
                 memlimit_kb=algo.memlimit_kb,
                 parallelism=algo.parallelism,
@@ -323,15 +324,14 @@ class BaseAccountComponent:
         match req.new_auth_method_password_algorithm:
             case None as new_auth_method_password_algorithm:
                 pass
-            case PasswordAlgorithmArgon2id() as raw:
-                new_auth_method_password_algorithm = PasswordAlgorithmArgon2id(
-                    salt=raw.salt,
+            case UntrustedPasswordAlgorithmArgon2id() as raw:
+                new_auth_method_password_algorithm = UntrustedPasswordAlgorithmArgon2id(
                     opslimit=raw.opslimit,
                     memlimit_kb=raw.memlimit_kb,
                     parallelism=raw.parallelism,
                 )
-            # `PasswordAlgorithm` is an abstract type
-            case PasswordAlgorithm() as unknown:
+            # `UntrustedPasswordAlgorithm` is an abstract type
+            case UntrustedPasswordAlgorithm() as unknown:
                 assert False, unknown
 
         outcome = await self.vault_key_rotation(
@@ -373,15 +373,14 @@ class BaseAccountComponent:
                     match auth_method.password_algorithm:
                         case None:
                             password_algorithm = None
-                        case PasswordAlgorithmArgon2id() as a:
-                            password_algorithm = PasswordAlgorithmArgon2id(
-                                salt=a.salt,
+                        case UntrustedPasswordAlgorithmArgon2id() as a:
+                            password_algorithm = UntrustedPasswordAlgorithmArgon2id(
                                 opslimit=a.opslimit,
                                 memlimit_kb=a.memlimit_kb,
                                 parallelism=a.parallelism,
                             )
-                        # `PasswordAlgorithm` is an abstract type
-                        case PasswordAlgorithm() as unknown:
+                        # `UntrustedPasswordAlgorithm` is an abstract type
+                        case UntrustedPasswordAlgorithm() as unknown:
                             assert False, unknown
 
                     return authenticated_account_cmds.latest.vault_item_recovery_list.VaultItemRecoveryAuthMethod(

@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, HashDigest, PasswordAlgorithm
+from parsec._parsec import DateTime, HashDigest, UntrustedPasswordAlgorithm
 
 class VaultItemRecoveryVault:
     def __init__(
@@ -23,7 +23,7 @@ class VaultItemRecoveryAuthMethod:
         created_by_ip: str,
         created_by_user_agent: str,
         vault_key_access: bytes,
-        password_algorithm: PasswordAlgorithm | None,
+        password_algorithm: UntrustedPasswordAlgorithm | None,
     ) -> None: ...
     @property
     def created_by_ip(self) -> str: ...
@@ -34,7 +34,7 @@ class VaultItemRecoveryAuthMethod:
     @property
     def disabled_on(self) -> DateTime | None: ...
     @property
-    def password_algorithm(self) -> PasswordAlgorithm | None: ...
+    def password_algorithm(self) -> UntrustedPasswordAlgorithm | None: ...
     @property
     def vault_key_access(self) -> bytes: ...
 

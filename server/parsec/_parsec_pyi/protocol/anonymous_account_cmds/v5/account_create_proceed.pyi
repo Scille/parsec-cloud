@@ -4,14 +4,19 @@
 
 from __future__ import annotations
 
-from parsec._parsec import AccountAuthMethodID, EmailValidationToken, PasswordAlgorithm, SecretKey
+from parsec._parsec import (
+    AccountAuthMethodID,
+    EmailValidationToken,
+    SecretKey,
+    UntrustedPasswordAlgorithm,
+)
 
 class Req:
     def __init__(
         self,
         validation_token: EmailValidationToken,
         human_label: str,
-        auth_method_password_algorithm: PasswordAlgorithm | None,
+        auth_method_password_algorithm: UntrustedPasswordAlgorithm | None,
         auth_method_hmac_key: SecretKey,
         auth_method_id: AccountAuthMethodID,
         vault_key_access: bytes,
@@ -22,7 +27,7 @@ class Req:
     @property
     def auth_method_id(self) -> AccountAuthMethodID: ...
     @property
-    def auth_method_password_algorithm(self) -> PasswordAlgorithm | None: ...
+    def auth_method_password_algorithm(self) -> UntrustedPasswordAlgorithm | None: ...
     @property
     def human_label(self) -> str: ...
     @property

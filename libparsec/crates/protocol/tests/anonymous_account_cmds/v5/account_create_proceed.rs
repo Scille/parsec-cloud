@@ -16,12 +16,12 @@ use super::anonymous_account_cmds;
 pub fn req() {
     let raw_req = [
         (
-            // Generated from Parsec 3.4.0-a.7+dev
+            // Generated from Parsec 3.4.1-a.0+dev
             // Content:
             //   cmd: 'account_create_proceed'
             //   validation_token: 0x672bc6ba9c43455da28344e975dc72b7
             //   human_label: 'Anonymous Alice'
-            //   auth_method_password_algorithm: { type: 'ARGON2ID', memlimit_kb: 3, opslimit: 65536, parallelism: 1, salt: 0x706570706572, }
+            //   auth_method_password_algorithm: { type: 'ARGON2ID', memlimit_kb: 131072, opslimit: 3, parallelism: 1, }
             //   auth_method_hmac_key: 0x2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1
             //   auth_method_id: ext(2, 0x9aae259f748045cc9fe7146eab0b132e)
             //   vault_key_access: 0x7661756c745f6b65795f616363657373
@@ -29,12 +29,12 @@ pub fn req() {
                 "87a3636d64b66163636f756e745f6372656174655f70726f63656564b076616c696461"
                 "74696f6e5f746f6b656ec410672bc6ba9c43455da28344e975dc72b7ab68756d616e5f"
                 "6c6162656caf416e6f6e796d6f757320416c696365be617574685f6d6574686f645f70"
-                "617373776f72645f616c676f726974686d85a474797065a84152474f4e324944ab6d65"
-                "6d6c696d69745f6b6203a86f70736c696d6974ce00010000ab706172616c6c656c6973"
-                "6d01a473616c74c406706570706572b4617574685f6d6574686f645f686d61635f6b65"
-                "79c4202ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
-                "ae617574685f6d6574686f645f6964d8029aae259f748045cc9fe7146eab0b132eb076"
-                "61756c745f6b65795f616363657373c4107661756c745f6b65795f616363657373"
+                "617373776f72645f616c676f726974686d84a474797065a84152474f4e324944ab6d65"
+                "6d6c696d69745f6b62ce00020000a86f70736c696d697403ab706172616c6c656c6973"
+                "6d01b4617574685f6d6574686f645f686d61635f6b6579c4202ff13803789977db4f8c"
+                "cabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1ae617574685f6d6574686f645f"
+                "6964d8029aae259f748045cc9fe7146eab0b132eb07661756c745f6b65795f61636365"
+                "7373c4107661756c745f6b65795f616363657373"
             )
             .as_ref(),
             anonymous_account_cmds::account_create_proceed::Req {
@@ -49,11 +49,10 @@ pub fn req() {
                 auth_method_hmac_key: SecretKey::from(hex!(
                     "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
                 )),
-                auth_method_password_algorithm: Some(PasswordAlgorithm::Argon2id {
-                    memlimit_kb: 3,
-                    opslimit: 65536,
+                auth_method_password_algorithm: Some(UntrustedPasswordAlgorithm::Argon2id {
+                    memlimit_kb: 128 * 1024,
+                    opslimit: 3,
                     parallelism: 1,
-                    salt: b"pepper".to_vec(),
                 }),
             },
         ),

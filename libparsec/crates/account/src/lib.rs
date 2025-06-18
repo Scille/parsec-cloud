@@ -68,13 +68,16 @@ impl Account {
     ) -> Result<Self, AccountFromPasswordError> {
         // The password algorithm configuration is obtained from the server
         // to know how to turn the password into `auth_method_master_secret`.
-        let password_algorithm = {
+
+        let untrusted_password_algorithm = {
             let cmds = AnonymousAccountCmds::new(config_dir, addr.clone(), proxy.clone())
                 .context("Cannot configure server connection")?;
 
             use libparsec_protocol::anonymous_account_cmds::latest::auth_method_password_get_algorithm::{Rep, Req};
 
-            let req = Req { email };
+            let req = Req {
+                email: email.clone(),
+            };
             let rep = cmds.send(req).await?;
 
             match rep {
@@ -84,6 +87,10 @@ impl Account {
                 }
             }
         };
+
+        let password_algorithm = untrusted_password_algorithm
+            .validate(email.as_ref())
+            .map_err(AccountFromPasswordError::BadPasswordAlgorithm)?;
 
         let auth_method_master_secret = password_algorithm
             .compute_key_derivation(&password)

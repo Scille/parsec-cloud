@@ -10,7 +10,7 @@ from parsec._parsec import (
     authenticated_account_cmds,
 )
 from parsec.backend import Backend
-from parsec.components.account import PasswordAlgorithmArgon2id, VaultItems
+from parsec.components.account import UntrustedPasswordAlgorithmArgon2id, VaultItems
 from tests.common import AuthenticatedAccountRpcClient, HttpCommonErrorsTester
 
 
@@ -36,8 +36,7 @@ async def test_authenticated_account_vault_key_rotation_ok(
     rep = await alice_account.vault_key_rotation(
         new_auth_method_id=new_auth_method_id,
         new_auth_method_mac_key=new_auth_method_mac_key,
-        new_auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-            salt=b"<new salt>",
+        new_auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
             opslimit=65536,
             memlimit_kb=3,
             parallelism=1,
@@ -91,8 +90,7 @@ async def test_authenticated_account_vault_key_rotation_items_mismatch(
     rep = await alice_account.vault_key_rotation(
         new_auth_method_id=new_auth_method_id,
         new_auth_method_mac_key=new_auth_method_mac_key,
-        new_auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-            salt=b"<new salt>",
+        new_auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
             opslimit=65536,
             memlimit_kb=3,
             parallelism=1,
@@ -128,8 +126,7 @@ async def test_authenticated_account_vault_key_rotation_new_auth_method_id_alrea
                 created_by_user_agent="test-user-agent",
                 new_auth_method_id=new_auth_method_id,
                 new_auth_method_mac_key=new_key,
-                new_auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-                    salt=b"<new salt>",
+                new_auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
                     opslimit=65536,
                     memlimit_kb=3,
                     parallelism=1,
@@ -152,8 +149,7 @@ async def test_authenticated_account_vault_key_rotation_new_auth_method_id_alrea
     rep = await alice_account.vault_key_rotation(
         new_auth_method_id=bad_new_auth_method_id,
         new_auth_method_mac_key=new_auth_method_mac_key,
-        new_auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-            salt=b"<new salt>",
+        new_auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
             opslimit=65536,
             memlimit_kb=3,
             parallelism=1,
@@ -179,8 +175,7 @@ async def test_authenticated_account_vault_key_rotation_http_common_errors(
         await alice_account.vault_key_rotation(
             new_auth_method_id=new_auth_method_id,
             new_auth_method_mac_key=new_auth_method_mac_key,
-            new_auth_method_password_algorithm=PasswordAlgorithmArgon2id(
-                salt=b"<new salt>",
+            new_auth_method_password_algorithm=UntrustedPasswordAlgorithmArgon2id(
                 opslimit=65536,
                 memlimit_kb=3,
                 parallelism=1,
