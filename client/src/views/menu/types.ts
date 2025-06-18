@@ -6,6 +6,7 @@ interface MenuAction {
   icon?: string;
   label: Translatable;
   action: any;
+  danger?: boolean;
 }
 
 export { MenuAction };

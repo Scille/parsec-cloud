@@ -152,6 +152,10 @@
           </div>
         </div>
       </div>
+      <tab-bar-options
+        v-if="isSmallDisplay && selectedFilesCount > 0"
+        :actions="tabBarActions"
+      />
     </ion-content>
   </ion-page>
 </template>
@@ -238,12 +242,27 @@ import {
   isFolderGlobalAction,
 } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
-import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin, download } from 'ionicons/icons';
+import {
+  arrowRedo,
+  copy,
+  folderOpen,
+  informationCircle,
+  link,
+  open,
+  pencil,
+  trashBin,
+  download,
+  create,
+  time,
+  shareSocial,
+  duplicate,
+} from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick } from 'vue';
 import { EntrySyncData, EventData, EventDistributor, EventDistributorKey, Events, MenuActionData } from '@/services/eventDistributor';
 import { openPath, showInExplorer } from '@/services/fileOpener';
 import { WorkspaceTagRole } from '@/components/workspaces';
 import { showDirectoryPicker, showSaveFilePicker } from 'native-file-system-adapter';
+import { MenuAction, TabBarOptions } from '@/views/menu';
 
 interface FoldersPageSavedData {
   displayState?: DisplayState;
@@ -265,6 +284,39 @@ const msSorterLabels = {
   asc: 'FoldersPage.sort.asc',
   desc: 'FoldersPage.sort.desc',
 };
+
+const tabBarActions = computed(() => {
+  const selectedEntries = getSelectedEntries();
+  const actions: MenuAction[] = [];
+  if (selectedEntries.length === 1) {
+    actions.push({ label: 'FoldersPage.tabbar.rename', action: async () => await renameEntries(getSelectedEntries()), icon: create });
+  } else {
+    actions.push({ label: 'FoldersPage.tabbar.duplicate', action: async () => await copyEntries(getSelectedEntries()), icon: duplicate });
+  }
+  actions.push({ label: 'FoldersPage.tabbar.move', action: async () => await moveEntriesTo(getSelectedEntries()), icon: arrowRedo });
+  actions.push({
+    label: 'FoldersPage.tabbar.delete',
+    action: async () => await deleteEntries(getSelectedEntries()),
+    icon: trashBin,
+    danger: true,
+  });
+  if (selectedEntries.length === 1 && selectedEntries[0].isFile()) {
+    actions.push({ label: 'FoldersPage.tabbar.open', action: async () => await openEntries(getSelectedEntries()), icon: open });
+  }
+  if (selectedEntries.length > folders.value.getSelectedEntries().length) {
+    actions.push({ label: 'FoldersPage.tabbar.download', action: async () => await downloadEntries(getSelectedEntries()), icon: download });
+  }
+  if (selectedEntries.length === 1) {
+    actions.push(
+      { label: 'FoldersPage.tabbar.duplicate', action: async () => await copyEntries(getSelectedEntries()), icon: duplicate },
+      { label: 'FoldersPage.tabbar.copyLink', action: async () => await copyLink(getSelectedEntries()), icon: link },
+      { label: 'FoldersPage.tabbar.share', action: async () => await shareEntries(), icon: shareSocial },
+      { label: 'FoldersPage.tabbar.history', action: async () => await showHistory(getSelectedEntries()), icon: time },
+      { label: 'FoldersPage.tabbar.details', action: async () => await showDetails(getSelectedEntries()), icon: informationCircle },
+    );
+  }
+  return actions;
+});
 
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Documents)) {
