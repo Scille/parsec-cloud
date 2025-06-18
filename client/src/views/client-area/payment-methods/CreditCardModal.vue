@@ -8,6 +8,7 @@
       label: 'clientArea.paymentMethodsPage.addPaymentMethod.confirm',
       disabled: !cardForm?.isValid || querying,
       onClick: confirm,
+      queryingSpinner: querying,
     }"
     class="creditCard-modal"
   >
@@ -20,10 +21,6 @@
     >
       <span class="subtitles-normal">{{ $msTranslate('clientArea.paymentMethodsPage.useAsDefault') }}</span>
     </ion-toggle>
-    <ms-spinner
-      v-show="querying"
-      class="loading-spinner"
-    />
     <span
       v-show="error"
       id="modal-error"
@@ -34,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal, MsModalResult, MsStripeCardForm, PaymentMethodResult, MsSpinner, I18n, Translatable } from 'megashark-lib';
+import { MsModal, MsModalResult, MsStripeCardForm, PaymentMethodResult, I18n, Translatable } from 'megashark-lib';
 import { IonToggle, modalController } from '@ionic/vue';
 import { ref } from 'vue';
 import { BmsAccessInstance } from '@/services/bms';
@@ -99,13 +96,5 @@ async function confirm(): Promise<boolean> {
   gap: 1rem;
   color: var(--parsec-color-light-secondary-hard-grey);
   margin-top: 1.5rem;
-}
-
-.loading-spinner {
-  position: absolute;
-  right: 11rem;
-  z-index: 4;
-  bottom: 2.05rem;
-  transform: translate(-50%, -50%);
 }
 </style>
