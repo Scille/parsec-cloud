@@ -324,7 +324,7 @@
     </ion-menu>
     <tab-bar-menu
       class="tab-bar-menu"
-      v-if="isSmallDisplay"
+      v-if="isSmallDisplay && !customTabBar.isVisible.value"
       :user-info="userInfo"
       @action-clicked="onActionClicked"
       :actions="actions"
@@ -415,6 +415,7 @@ import { MenuAction, SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData
 import { FolderGlobalAction } from '@/views/files';
 import { WorkspaceAction } from '@/views/workspaces';
 import { isUserAction, UserAction } from '@/views/users';
+import { useCustomTabBar } from '@/views/menu/utils';
 
 defineProps<{
   userInfo: ClientInfo;
@@ -424,6 +425,7 @@ const emits = defineEmits<{
   (event: 'sidebarWidthChanged', value: number): void;
 }>();
 
+const customTabBar = useCustomTabBar();
 const isManagement = currentRouteIsOrganizationManagementRoute;
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;

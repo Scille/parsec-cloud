@@ -721,7 +721,19 @@
         "movesLeft": "{amount} déplacements en attente",
         "itemsDoneAmount": "Une autre opération terminée | {amount} autres opérations terminées",
         "itemsErrorAmount": "Une autre opération annulée ou échouée | {amount} autres opérations annulées ou échouées",
-        "operationAmount": "{amount} opération"
+        "operationAmount": "{amount} opération",
+        "tabbar": {
+            "rename": "Renommer",
+            "move": "Déplacer",
+            "duplicate": "Copier",
+            "delete": "Supprimer",
+            "share": "Partager",
+            "download": "Télécharger",
+            "copyLink": "Copier le lien",
+            "history": "Historique",
+            "open": "Ouvrir",
+            "details": "Détails"
+        }
     },
     "FileDetails": {
         "title": "Détails de {name}",
@@ -822,6 +834,10 @@
             "scanDocument": "Scanner un document",
             "importPhoto": "Importer une photo",
             "addUser": "Ajouter un utilisateur"
+        },
+        "tabbarOptions": {
+            "more": "Plus",
+            "less": "Moins"
         },
         "trial": {
             "tag": "Version d'essai",
@@ -1285,6 +1301,12 @@
             "processing": "Calcul des changements...",
             "noRoles": "Aucun nouveau rôle à transférer à {user}",
             "close": "Fermer"
+        },
+        "tabbar": {
+            "details": "Détails",
+            "update": "Profil",
+            "revoke": "Révoquer",
+            "roles": "Rôles"
         }
     },
     "AboutPage": {
