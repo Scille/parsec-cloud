@@ -21,6 +21,7 @@
         {{ $msTranslate(customLogo ? 'HomePage.sidebar.poweredBy' : 'HomePage.sidebar.tagline') }}
       </ion-text>
       <ms-image
+        @click="Env.Links.openDeveloperLink()"
         class="logo-icon"
         v-if="customLogo"
         :image="LogoRowWhite"
@@ -34,6 +35,7 @@ import { MsImage, LogoRowWhite } from 'megashark-lib';
 import { IonText } from '@ionic/vue';
 import { ResourcesManager, Resources } from '@/services/resourcesManager';
 import { onMounted, ref } from 'vue';
+import { Env } from '@/services/environment';
 
 const backgroundImage = ref();
 const customLogo = ref(ResourcesManager.instance().get(Resources.LogoFull) !== undefined);
@@ -194,6 +196,7 @@ onMounted(() => {
     width: 6rem;
     position: relative;
     z-index: 2;
+    cursor: pointer;
   }
 }
 </style>
