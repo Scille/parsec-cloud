@@ -7,7 +7,7 @@ Parsec application can be partially customized to better fit your brand.
 
 Customization is done by adding specific files in certain locations. If Parsec detects the presence of these files, it will use them instead of the regular ones.
 
-- In web mode, the files have to be placed inside a ``custom`` folder in the static directory. A file should be reachable by doing ``/custom/<file>`` on the server.
+- In web mode, the files have to be placed inside a ``custom`` folder in the server's static files directory. A file should be reachable by doing ``/custom/<file>`` on the server.
 - In desktop mode, the files have to be placed inside a ``custom`` folder in the configuration directory. The configuration directory will depend on the OS.
 
     - Windows: ``%APPDATA%/parsec3/app``
@@ -18,12 +18,13 @@ The following files can be customized at the moment:
 
 - ``logo.svg``: the logo displayed in the bottom left corner of the home page.
 - ``logo_icon.svg``: the icon version of the logo, it will be used for your organizations.
+- ``home_sidebar.png``: the image displayed in the home page sidebar.
 
 Specifically for the desktop app, you may also add:
 
-- ``app_icon.png``: the app icon, use in the taskbar or in the title of the window.
-- ``tray_icon.png``: the app tray icon, used in the tray.
-- ``splash.png``: the app splash screen. We recommend you match the size of the original splash screen, which is 624x424.
+- ``app_icon.png``: the icon displayed in the taskbar and window title (doesn't work on MacOS).
+- ``tray_icon.png``: the icon displayed in the system tray or notification area.
+- ``splash.png``: the splash screen image. We recommend you match the size of the original splash screen, which is 624x424.
 
 .. note::
 
