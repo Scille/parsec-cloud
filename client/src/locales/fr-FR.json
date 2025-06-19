@@ -967,15 +967,13 @@
             "recoveryKey": "Clé secrète"
         },
         "subtitles": {
-            "aboutRecoveryFiles": "Un fichier de récupération vous permet de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
+            "aboutRecoveryFiles": "Les fichiers de récupération vous permettent de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
             "keepFilesSeparate": "Vous devez enregistrer le fichier de récupération et sa clé secrète. Assurez-vous que les deux ne sont pas stockés au même endroit.",
             "warningUniqueness": "Veuillez noter que ces fichiers ne sont pas stockés par Parsec. Si vous perdez l'un de ces fichiers ou les deux, vous devrez créer un nouveau fichier de récupération.",
-            "fileExplanation": "Le fichier de récupération vous permet de réinitialiser votre mot de passe à l'aide de la clé secrète correspondante.",
-            "keyExplanation": "La clé secrète est un code qui doit être utilisé avec le fichier de récupération pour créer un nouveau mot de passe.",
-            "fileDownloaded": "Fichier téléchargé"
+            "keyExplanation": "La clé secrète est un code qui doit être utilisé avec le fichier de récupération pour créer un nouveau mot de passe."
         },
         "actions": {
-            "createRecoveryButton": "Créer un fichier de récupération",
+            "createRecoveryButton": "Créer des fichiers de récupération",
             "download": "Télécharger",
             "downloadAgain": "Télécharger à nouveau",
             "backToDevices": "Retour à mes appareils"
@@ -1364,7 +1362,7 @@
                 "settings": "Paramètres",
                 "devices": "Mes appareils",
                 "authentication": "Authentification",
-                "recovery": "Fichier de récupération"
+                "recovery": "Fichiers de récupération"
             },
             "support": {
                 "title": "Support",
@@ -1380,24 +1378,25 @@
         }
     },
     "OrganizationRecovery": {
-        "title": "Fichier de récupération",
-        "recoveryFile": "Fichier de récupération",
+        "title": "Fichiers de récupération d'organisation",
+        "recoveryFile": "Fichiers de récupération",
         "recoveryKey": "Clé secrète",
-        "advice": "Nous vous conseillons de créer un fichier de récupération pour chaque organisation.",
-        "adviceDone": "Vous avez déjà créé un fichier de récupération.",
+        "advice": "Nous vous conseillons de créer des fichiers de récupération pour chaque organisation.",
+        "adviceDone": "Vous avez déjà créé des fichiers de récupération.",
         "done": {
-            "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
-            "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
+            "subtitle": "Les fichiers de récupération vous permettent de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
+            "subtitle2": "Sans fichiers de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
+            "subtitle3": "Ils comportent un fichier de récupération et une clé de récupération. Il est nécessaire de les sauvegarder dans des emplacements sûrs, de préférence dans deux emplacements séparés, sachant que les deux sont nécessaires pour restaurer un accès perdu d'un appareil à une organisation.",
             "button": "Créer un fichier de récupération",
-            "recreateQuestionTitle": "Créer un nouveau fichier de récupération ?",
-            "recreateQuestionMessage": "Vous avez déjà créé un fichier de récupération dans le passé. Souhaitez-vous en créer un nouveau ?",
-            "recreateYes": "Créer un nouveau fichier",
+            "recreateQuestionTitle": "Nouveaux fichiers de récupération",
+            "recreateQuestionMessage": "Vous avez déjà créé des fichiers de récupération dans le passé. Souhaitez-vous en créer de nouveaux ?",
+            "recreateYes": "Créer de nouveaux fichiers",
             "recreateNo": "Annuler"
         },
         "notDone": {
             "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à cette organisation en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
             "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré dans une telle situation et vous devrez être réinvité à rejoindre l'organisation.",
-            "button": "Créer un fichier de récupération"
+            "button": "Créer des fichiers de récupération"
         }
     },
     "validators": {

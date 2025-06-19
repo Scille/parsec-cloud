@@ -25,6 +25,7 @@
         <ion-text class="restore-password__description body">
           <span>{{ $msTranslate('OrganizationRecovery.done.subtitle') }}</span>
           <span>{{ $msTranslate('OrganizationRecovery.done.subtitle2') }}</span>
+          <span>{{ $msTranslate('OrganizationRecovery.done.subtitle3') }}</span>
         </ion-text>
 
         <ion-button
@@ -38,89 +39,84 @@
     </template>
     <template v-else>
       <div class="recovery-list">
+        <ion-text class="restore-password__description body">
+          <span>{{ $msTranslate('OrganizationRecovery.done.subtitle') }}</span>
+          <span>{{ $msTranslate('OrganizationRecovery.done.subtitle2') }}</span>
+          <span>{{ $msTranslate('OrganizationRecovery.done.subtitle3') }}</span>
+        </ion-text>
         <!-- item -->
         <div class="recovery-item">
-          <div class="recovery-item-text">
-            <div class="recovery-item-text__title subtitles-normal">
-              <ion-icon :icon="documentIcon" />
-              <span>{{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryFile') }}</span>
-            </div>
-            <ion-text class="recovery-item-text__description body">
-              {{ $msTranslate('ExportRecoveryDevicePage.subtitles.fileExplanation') }}
-            </ion-text>
-          </div>
-          <div class="recovery-item-download">
-            <div class="recovery-item-download__button">
-              <ion-button
-                @click="downloadRecoveryFile()"
-                :disabled="disableFileDownload"
-                id="downloadFileButton"
-                size="default"
-                :fill="recoveryFileDownloaded ? 'outline' : 'solid'"
-              >
-                <ion-icon :icon="recoveryFileDownloaded ? reload : download" />
-                {{
-                  recoveryFileDownloaded
-                    ? $msTranslate('ExportRecoveryDevicePage.actions.downloadAgain')
-                    : $msTranslate('ExportRecoveryDevicePage.actions.download')
-                }}
-              </ion-button>
-            </div>
-            <ion-text
-              class="recovery-item-download__downloaded body"
+          <ion-text class="recovery-item-text subtitles-normal">
+            <span>{{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryFile') }}</span>
+            <ion-icon
               v-show="recoveryFileDownloaded"
+              :icon="checkmarkCircle"
+              class="checked"
+            />
+          </ion-text>
+          <div class="recovery-item-download">
+            <ion-button
+              @click="downloadRecoveryFile()"
+              :disabled="disableFileDownload"
+              id="downloadFileButton"
+              :class="{ 'file-downloaded': recoveryFileDownloaded }"
+              fill="solid"
             >
-              <ion-icon
-                :icon="checkmarkCircle"
-                class="checked"
+              <ms-image
+                class="download-icon"
+                v-if="!recoveryFileDownloaded"
+                :image="DownloadIcon"
               />
-              {{ $msTranslate('ExportRecoveryDevicePage.subtitles.fileDownloaded') }}
-            </ion-text>
+              <ion-icon
+                v-else
+                :icon="reload"
+              />
+              {{
+                recoveryFileDownloaded
+                  ? $msTranslate('ExportRecoveryDevicePage.actions.downloadAgain')
+                  : $msTranslate('ExportRecoveryDevicePage.actions.download')
+              }}
+            </ion-button>
           </div>
         </div>
 
         <div class="recovery-item">
-          <div class="recovery-item-text">
-            <div class="recovery-item-text__title subtitles-normal">
-              <ion-icon :icon="documentLock" />
-              <span>{{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryKey') }}</span>
-            </div>
-            <ion-text class="recovery-item-text__description body">
-              {{ $msTranslate('ExportRecoveryDevicePage.subtitles.keyExplanation') }}
-            </ion-text>
-          </div>
+          <ion-text class="recovery-item-text subtitles-normal">
+            <span>{{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryKey') }}</span>
+            <ion-icon
+              v-show="recoveryKeyDownloaded"
+              :icon="checkmarkCircle"
+              class="checked"
+            />
+          </ion-text>
 
           <div class="recovery-item-download">
             <a
               ref="downloadLink"
               v-show="false"
             />
-            <div class="recovery-item-download__button">
-              <ion-button
-                @click="downloadRecoveryKey()"
-                id="downloadPassphraseButton"
-                :disabled="disableKeyDownload"
-                size="default"
-                :fill="recoveryKeyDownloaded ? 'outline' : 'solid'"
-              >
-                <ion-icon :icon="recoveryKeyDownloaded ? reload : download" />
-                {{
-                  recoveryKeyDownloaded
-                    ? $msTranslate('ExportRecoveryDevicePage.actions.downloadAgain')
-                    : $msTranslate('ExportRecoveryDevicePage.actions.download')
-                }}
-              </ion-button>
-            </div>
-            <ion-text
-              class="recovery-item-download__downloaded body"
-              v-show="recoveryKeyDownloaded"
+            <ion-button
+              @click="downloadRecoveryKey()"
+              id="downloadPassphraseButton"
+              :disabled="disableKeyDownload"
+              :class="{ 'file-downloaded': recoveryKeyDownloaded }"
+              fill="solid"
             >
-              <ion-icon
-                :icon="checkmarkCircle"
-                class="checked"
+              <ms-image
+                class="download-icon"
+                v-if="!recoveryKeyDownloaded"
+                :image="DownloadIcon"
               />
-              {{ $msTranslate('ExportRecoveryDevicePage.subtitles.fileDownloaded') }}
-            </ion-text>
+              <ion-icon
+                v-else
+                :icon="reload"
+              />
+              {{
+                recoveryKeyDownloaded
+                  ? $msTranslate('ExportRecoveryDevicePage.actions.downloadAgain')
+                  : $msTranslate('ExportRecoveryDevicePage.actions.download')
+              }}
+            </ion-button>
           </div>
         </div>
       </div>
@@ -132,8 +128,8 @@
 import { listOwnDevices, OwnDeviceInfo, getClientInfo, exportRecoveryDevice } from '@/parsec';
 import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { I18n, Translatable, askQuestion, Answer } from 'megashark-lib';
-import { checkmarkCircle, document as documentIcon, download, documentLock, reload, informationCircle } from 'ionicons/icons';
+import { I18n, Translatable, askQuestion, Answer, DownloadIcon, MsImage } from 'megashark-lib';
+import { checkmarkCircle, reload, informationCircle } from 'ionicons/icons';
 import { inject, onMounted, ref } from 'vue';
 
 let code = '';
@@ -297,15 +293,12 @@ async function downloadFile(
 
     @include ms.responsive-breakpoint('xs') {
       position: fixed;
-      bottom: 7rem;
+      bottom: 2rem;
       left: 2rem;
-      transform: translateX(50%, 50%);
       width: calc(100% - 4rem);
       margin: auto;
       z-index: 2;
       box-shadow: var(--parsec-shadow-strong);
-      --overflow: visible;
-      overflow: visible;
     }
   }
 }
@@ -313,85 +306,87 @@ async function downloadFile(
 .recovery-list {
   display: flex;
   flex-wrap: wrap;
+  flex-direction: column;
   gap: 1.5rem;
 
   .recovery-item {
-    padding: 1.5rem;
-    border-radius: var(--parsec-radius-8);
-    background: var(--parsec-color-light-secondary-background);
-    max-width: 26rem;
     gap: 0.5rem;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    flex-wrap: wrap;
+
+    &:last-of-type::before {
+      content: '';
+      position: absolute;
+      top: -0.5rem;
+      height: 1px;
+      width: 100%;
+      background: var(--parsec-color-light-secondary-medium);
+    }
+
+    @include ms.responsive-breakpoint('sm') {
+      max-width: 100%;
+    }
 
     &-text {
+      color: var(--parsec-color-light-secondary-text);
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 0.5rem;
 
-      &__title {
-        gap: 0.5rem;
-        display: flex;
-        align-items: center;
-        color: var(--parsec-color-light-primary-700);
-
-        ion-icon {
-          font-size: 1.5rem;
-        }
+      span {
+        flex-shrink: 0;
       }
 
-      &__description {
-        color: var(--parsec-color-light-secondary-hard-grey);
+      .checked {
+        font-size: 1rem;
+        color: var(--parsec-color-light-success-700);
       }
     }
 
     &-download {
       display: flex;
-      gap: 1rem;
+      gap: 2rem;
       margin-top: 0.5rem;
+      align-items: center;
 
       @include ms.responsive-breakpoint('sm') {
         gap: 0.5rem;
-        flex-direction: column;
       }
 
-      &__button {
+      #downloadPassphraseButton,
+      #downloadFileButton {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        color: var(--parsec-color-light-primary-700);
+        --background: var(--parsec-color-light-secondary-text);
+        --background-hover: var(--parsec-color-light-secondary-contrast);
 
-        &::part(native) {
-          padding: 0.75rem 1.125rem;
+        ion-icon,
+        .download-icon {
+          font-size: 0.875rem;
+          margin-right: 0.625rem;
+          width: 0.875rem;
         }
 
-        ion-button {
-          margin: 0;
+        .download-icon {
+          --fill-color: var(--parsec-color-light-secondary-white);
         }
 
-        #downloadPassphraseButton,
-        #downloadFileButton {
-          display: flex;
-          align-items: center;
-          --background: var(--parsec-color-light-secondary-text);
+        ion-icon {
+          color: var(--parsec-color-light-secondary-text);
+        }
 
-          ion-icon {
-            font-size: 1rem;
-            margin-right: 0.625rem;
+        &.file-downloaded {
+          --background: var(--parsec-color-light-secondary-premiere);
+          --background-hover: var(--parsec-color-light-secondary-medium);
+          color: var(--parsec-color-light-secondary-text);
+
+          &::part(native) {
+            box-shadow: var(--parsec-shadow-soft);
+            border: 1px solid var(--parsec-color-light-secondary-disabled);
           }
-        }
-      }
-
-      &__downloaded {
-        display: flex;
-        align-items: center;
-        padding: 0.375rem 0;
-        gap: 0.5rem;
-        color: var(--parsec-color-light-secondary-grey);
-
-        .checked {
-          font-size: 1.125rem;
-          color: var(--parsec-color-light-success-700);
         }
       }
     }
