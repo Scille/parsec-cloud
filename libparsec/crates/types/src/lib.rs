@@ -42,6 +42,10 @@ pub const REALM_RENAME_KEY_DERIVATION_UUID: uuid::Uuid =
 pub const PATH_URL_KEY_DERIVATION_UUID: uuid::Uuid =
     uuid::uuid!("00000000-0000-0000-0000-000000000003");
 
+/// Base32 alphabet used for human facing codes (see `SASCode` & `ValidationCode`)
+/// (Note I/1 and 0/O are skipped to avoid visual confusion)
+const BASE32_ALPHABET: &[u8; 32] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
 #[cfg(any(test, feature = "test-fixtures"))]
 /// We define test fixtures here and not in a different crate to prevent cyclic dependencies.
 ///

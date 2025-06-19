@@ -107,3 +107,32 @@ impl ApiVersion {
         API_LATEST_VERSION
     }
 }
+
+crate::binding_utils::gen_py_wrapper_class!(
+    ValidationCode,
+    libparsec_types::ValidationCode,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
+
+#[pymethods]
+impl ValidationCode {
+    #[new]
+    fn new(data: &str) -> PyResult<Self> {
+        data.parse::<libparsec_types::ValidationCode>()
+            .map(Self)
+            .map_err(|err| PyValueError::new_err(err.to_string()))
+    }
+
+    #[getter]
+    fn str(&self) -> &str {
+        self.0.as_ref()
+    }
+
+    #[staticmethod]
+    fn generate() -> Self {
+        Self(libparsec_types::ValidationCode::default())
+    }
+}
