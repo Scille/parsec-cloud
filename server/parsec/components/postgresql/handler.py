@@ -9,7 +9,6 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from functools import wraps
-from typing import ParamSpec
 from uuid import uuid4
 
 import asyncpg
@@ -21,8 +20,6 @@ from parsec.events import AnyEvent, Event
 from parsec.logging import get_logger
 
 from . import migrations as migrations_module
-
-P = ParamSpec("P")
 
 logger = get_logger()
 
@@ -146,7 +143,7 @@ async def _get_last_migration_index(conn: AsyncpgConnection) -> int | None:
         return None
 
 
-def retry_on_unique_violation(
+def retry_on_unique_violation[**P](
     fn: Callable[P, Awaitable[None]],
 ) -> Callable[P, Coroutine[None, None, None]]:
     @wraps(fn)
