@@ -46,15 +46,15 @@ jinja2 = { version = "^3.0" }
 # PostgreSQL
 asyncpg = "^0.29.0"
 # S3
-boto3 = { version = "^1.23" }
-botocore = { version = "^1.26" }
+boto3 = { version = "^1.38" }
+botocore = { version = "^1.38" }
 # Swift
 python-swiftclient = { version = ">=3.13,<5.0" }
 
 [tool.poetry.group.dev.dependencies]
 asyncpg-stubs = "^0.29.0"
 Babel = "^2.10"
-boto3-stubs = "^1.26"
+boto3-stubs = "^1.38"
 cibuildwheel = "3.0.0"
 deptry = ">=0.16.1,<0.24.0"
 editorconfig-checker = "3.2.1"
