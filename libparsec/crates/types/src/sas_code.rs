@@ -7,7 +7,7 @@ use rand::{seq::SliceRandom, Rng};
 use libparsec_crypto::SecretKey;
 
 // (Note I/1 and 0/O are skipped to avoid visual confusion)
-const SAS_CODE_CHARS: &[u8; 32] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const SAS_CODE_CHARS: &[u8; 32] = crate::BASE32_ALPHABET;
 const SAS_CODE_LEN: usize = 4;
 const SAS_CODE_BITS: usize = 20;
 const SAS_CODE_MASK: usize = (1 << SAS_CODE_BITS) - 1;

@@ -89,6 +89,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
 
     // Misc
     m.add_class::<ApiVersion>()?;
+    m.add_class::<ValidationCode>()?;
 
     // Testbed stuff
     #[cfg(feature = "test-utils")]

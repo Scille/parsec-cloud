@@ -4,6 +4,52 @@ use libparsec_tests_lite::prelude::*;
 
 use crate::prelude::*;
 
+#[test]
+fn validation_code_base() {
+    let c = ValidationCode::default();
+    let c2 = ValidationCode::default();
+    assert_ne!(c, c2);
+    // Round-trip check
+    let c_raw = std::str::from_utf8(c.0.as_ref()).unwrap();
+    p_assert_eq!(c_raw.parse::<ValidationCode>().unwrap(), c);
+
+    let j: ValidationCode = "AD3FXJ".parse().unwrap();
+    let j2: ValidationCode = "AD3FXJ".parse().unwrap();
+    let h: ValidationCode = "AD3FXH".parse().unwrap();
+    p_assert_eq!(j, j2);
+    assert_ne!(j, h);
+
+    p_assert_eq!(j.as_ref(), "AD3FXJ");
+    p_assert_eq!(format!("{:?}", j), "ValidationCode(\"AD3FXJ\")");
+
+    // Bad size
+    p_assert_matches!(
+        "I2345".parse::<ValidationCode>(),
+        Err(ValidationCodeParseError::BadSize)
+    );
+
+    p_assert_matches!(
+        "I234567".parse::<ValidationCode>(),
+        Err(ValidationCodeParseError::BadSize)
+    );
+
+    // Not base32
+    p_assert_matches!(
+        "123456".parse::<ValidationCode>(), // 1 is not a valid character
+        Err(ValidationCodeParseError::NotBase32)
+    );
+    p_assert_matches!(
+        "ABC+EF".parse::<ValidationCode>(),
+        Err(ValidationCodeParseError::NotBase32)
+    );
+}
+
+#[test]
+fn serde_validation_code() {
+    let code: ValidationCode = "AD3FXJ".parse().unwrap();
+    serde_test::assert_tokens(&code, &[serde_test::Token::BorrowedStr("AD3FXJ")]);
+}
+
 #[rstest]
 fn serde_account_vault_item_web_local_device_key() {
     let key = SecretKey::from(hex!(
