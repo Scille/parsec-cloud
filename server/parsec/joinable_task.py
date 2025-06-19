@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 import anyio
 from anyio.abc import TaskGroup, TaskStatus
@@ -11,10 +11,7 @@ from anyio.abc import TaskGroup, TaskStatus
 __all__ = ("JoinableTaskStatus", "start_joinable_task")
 
 
-T = TypeVar("T")
-
-
-class JoinableTaskStatus(Generic[T]):
+class JoinableTaskStatus[T]:
     def __init__(self, task_status: TaskStatus[JoinableTaskStatus[T]]):
         # Internal state
         self._task_status = task_status
@@ -79,7 +76,7 @@ class JoinableTaskStatus(Generic[T]):
             status._set_finished()
 
 
-async def start_joinable_task(
+async def start_joinable_task[T](
     task_group: TaskGroup,
     corofn: Callable[..., Awaitable[T]],
     *args: Any,

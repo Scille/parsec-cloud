@@ -10,9 +10,7 @@ from itertools import count
 from typing import (
     Any,
     Concatenate,
-    ParamSpec,
     TextIO,
-    TypeVar,
     cast,
 )
 
@@ -35,9 +33,6 @@ from parsec.config import (
 )
 from parsec.logging import LogFormat, configure_logging, enable_sentry_logging
 
-P = ParamSpec("P")
-R = TypeVar("R")
-
 
 def logging_config_options(
     default_log_level: str,
@@ -45,7 +40,9 @@ def logging_config_options(
     LOG_LEVELS = ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL")
     assert default_log_level in LOG_LEVELS
 
-    def _logging_config_options(fn: Callable[P, R]) -> Callable[Concatenate[str, str, str, P], R]:
+    def _logging_config_options[**P, R](
+        fn: Callable[P, R],
+    ) -> Callable[Concatenate[str, str, str, P], R]:
         @click.option(
             "--log-level",
             "-l",
@@ -115,7 +112,7 @@ def logging_config_options(
 def sentry_config_options(
     configure_sentry: bool,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    def _sentry_config_options(fn: Callable[P, R]) -> Callable[Concatenate[str, str, P], R]:
+    def _sentry_config_options[**P, R](fn: Callable[P, R]) -> Callable[Concatenate[str, str, P], R]:
         # Sentry SKD uses 3 environ variables during it configuration phase:
         # - `SENTRY_DSN`
         # - `SENTRY_ENVIRONMENT`
@@ -158,11 +155,11 @@ def sentry_config_options(
     return _sentry_config_options
 
 
-def version_option(fn: Callable[P, R]) -> Callable[P, R]:
+def version_option[**P, R](fn: Callable[P, R]) -> Callable[P, R]:
     return click.version_option(version=__version__, prog_name="parsec")(fn)
 
 
-def debug_config_options(fn: Callable[P, R]) -> Callable[Concatenate[bool, P], R]:
+def debug_config_options[**P, R](fn: Callable[P, R]) -> Callable[Concatenate[bool, P], R]:
     for decorator in (
         click.option(
             "--debug",
@@ -262,11 +259,7 @@ class DBMaxConnectionsOption(click.Option):
         return value, args
 
 
-T = TypeVar("T")
-Q = ParamSpec("Q")
-
-
-def db_server_options(fn: Callable[Q, T]) -> Callable[Q, T]:
+def db_server_options[**Q, T](fn: Callable[Q, T]) -> Callable[Q, T]:
     decorators = [
         click.option(
             "--db",
@@ -451,14 +444,14 @@ def _parse_blockstore_params(raw_params: Iterable[str]) -> BaseBlockStoreConfig:
         raise click.BadParameter(f"Invalid multi blockstore mode `{raid_mode}`")
 
 
-def blockstore_server_options(fn: Callable[P, T]) -> Callable[P, T]:
+def blockstore_server_options[**P, T](fn: Callable[P, T]) -> Callable[P, T]:
     decorators = [
         click.option(
             "--blockstore",
             "-b",
             required=True,
             multiple=True,
-            callback=lambda ctx, param, value: _parse_blockstore_params(value),
+            callback=lambda _ctx, _param, value: _parse_blockstore_params(value),
             envvar="PARSEC_BLOCKSTORE",
             show_envvar=True,
             metavar="CONFIG",

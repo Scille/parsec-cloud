@@ -10,9 +10,7 @@ from typing import (
     Any,
     ClassVar,
     NoReturn,
-    ParamSpec,
     TypedDict,
-    TypeVar,
 )
 
 import anyio
@@ -166,11 +164,7 @@ def generate_not_available_cmd(exc: BaseException, hint: str | None = None) -> c
     return bad_cmd
 
 
-P = ParamSpec("P")
-R = TypeVar("R")
-
-
-def async_wrapper(fn: Callable[P, R]) -> Callable[P, Awaitable[R]]:
+def async_wrapper[**P, R](fn: Callable[P, R]) -> Callable[P, Awaitable[R]]:
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
         return await anyio.to_thread.run_sync(partial(fn, *args, **kwargs))
 

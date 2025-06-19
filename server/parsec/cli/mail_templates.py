@@ -6,7 +6,6 @@ from collections.abc import Callable
 from email.message import Message
 from email.mime.text import MIMEText
 from pathlib import Path
-from typing import ParamSpec, TypeVar
 
 import click
 
@@ -20,9 +19,6 @@ DEFAULT_INVITATION_URL = "https://invitation.parsec.example.com"
 DEFAULT_ACCOUNT_VALIDATION_URL = "https://validate.parsec.example.com"
 DEFAULT_ACCOUNT_DELETION_URL = "https://del.parsec.example.com"
 DEFAULT_BASE_SERVER_URL = "https://parsec.example.com"
-
-P = ParamSpec("P")
-T = TypeVar("T")
 
 
 def write_mail_file_to_filesystem(message: Message, output_dir: Path, file_prefix: str):
@@ -56,7 +52,7 @@ def write_mail_file_to_filesystem(message: Message, output_dir: Path, file_prefi
         output_file.write_text(data)
 
 
-def mail_templates_shared_options(fn: Callable[P, T]) -> Callable[P, T]:
+def mail_templates_shared_options[**P, T](fn: Callable[P, T]) -> Callable[P, T]:
     decorators = [
         click.option(
             "--output-dir",
