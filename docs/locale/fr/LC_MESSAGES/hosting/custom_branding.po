@@ -1,0 +1,199 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.4.1-a.0+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-06-19 14:40+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: ../../hosting/custom_branding.rst:4
+msgid "Parsec customization"
+msgstr "Personnalisation de Parsec"
+
+#: ../../hosting/custom_branding.rst:6
+msgid ""
+"Parsec application can be partially customized to better fit your brand."
+msgstr ""
+"L'application Parsec peut être partiellement personnalisée pour mieux "
+"correspondre à votre marque."
+
+#: ../../hosting/custom_branding.rst:8
+msgid ""
+"Customization is done by adding specific files in certain locations. If "
+"Parsec detects the presence of these files, it will use them instead of the "
+"regular ones."
+msgstr ""
+"La personnalisation se fait en ajoutant des fichiers spécifiques à certains "
+"emplacements. Si Parsec détecte la présence de ces fichiers, il les "
+"utilisera à la place des fichiers habituels."
+
+#: ../../hosting/custom_branding.rst:10
+msgid ""
+"In web mode, the files have to be placed inside a ``custom`` folder in the "
+"server's static files directory. A file should be reachable by doing ``/"
+"custom/<file>`` on the server."
+msgstr ""
+"En mode web, les fichiers doivent être placés dans un dossier ``custom`` "
+"dans le répertoire de fichiers statiques du serveur. Un fichier doit être "
+"accessible via ``/custom/<file>`` sur le serveur."
+
+#: ../../hosting/custom_branding.rst:11
+msgid ""
+"In desktop mode, the files have to be placed inside a ``custom`` folder in "
+"the configuration directory. The configuration directory will depend on the "
+"OS."
+msgstr ""
+"En mode bureau, les fichiers doivent être placés dans un dossier ``custom`` "
+"dans le répertoire de configuration. Le répertoire de configuration dépendra "
+"du système d'exploitation."
+
+#: ../../hosting/custom_branding.rst:13
+msgid "Windows: ``%APPDATA%/parsec3/app``"
+msgstr "Windows : ``%APPDATA%/parsec3/app``"
+
+#: ../../hosting/custom_branding.rst:14
+msgid "Linux ``~/.config/parsec3/app``"
+msgstr "Linux : ``~/.config/parsec3/app``"
+
+#: ../../hosting/custom_branding.rst:15
+msgid "MacOS ``~/Library/Application Support/parsec3/app``"
+msgstr "MacOS : ``~/Library/Application Support/parsec3/app``"
+
+#: ../../hosting/custom_branding.rst:17
+msgid "The following files can be customized at the moment:"
+msgstr "Les fichiers suivants peuvent être personnalisés pour le moment :"
+
+#: ../../hosting/custom_branding.rst:19
+msgid ""
+"``logo.svg``: the logo displayed in the bottom left corner of the home page."
+msgstr ""
+"``logo.svg`` : le logo affiché dans le coin inférieur gauche de la page "
+"d'accueil."
+
+#: ../../hosting/custom_branding.rst:20
+msgid ""
+"``logo_icon.svg``: the icon version of the logo, it will be used for your "
+"organizations."
+msgstr ""
+"``logo_icon.svg`` : la version icône du logo, elle sera utilisée pour vos "
+"organisations."
+
+#: ../../hosting/custom_branding.rst:21
+msgid "``home_sidebar.png``: the image displayed in the home page sidebar."
+msgstr ""
+
+#: ../../hosting/custom_branding.rst:23
+msgid "Specifically for the desktop app, you may also add:"
+msgstr ""
+"Spécifiquement pour l'application de bureau, vous pouvez également ajouter :"
+
+#: ../../hosting/custom_branding.rst:25
+#, fuzzy
+msgid ""
+"``app_icon.png``: the icon displayed in the taskbar and window title "
+"(doesn't work on MacOS)."
+msgstr ""
+"``app_icon.png`` : 'icône affichée dans la barre des tâches ou dans le titre "
+"de la fenêtre (ne fonctionne pas sur MacOS)."
+
+#: ../../hosting/custom_branding.rst:26
+#, fuzzy
+msgid ""
+"``tray_icon.png``: the icon displayed in the system tray or notification "
+"area."
+msgstr ""
+"``tray_icon.png`` : l'icône affichée dans la barre d'état système ou de "
+"notifications."
+
+#: ../../hosting/custom_branding.rst:27
+#, fuzzy
+msgid ""
+"``splash.png``: the splash screen image. We recommend you match the size of "
+"the original splash screen, which is 624x424."
+msgstr ""
+"``splash.png`` : l'écran de démarrage de l'application. Nous vous "
+"recommandons de respecter la taille de l'écran de démarrage original, qui "
+"est de 624x424."
+
+#: ../../hosting/custom_branding.rst:31
+msgid "The file extension and type matter."
+msgstr "L'extension et le type de fichier sont importants."
+
+#: ../../hosting/custom_branding.rst:35
+msgid ""
+"We recommend that you check the app using different display resolutions, as "
+"some images may look great on your screen, but completely off on another. If "
+"you use the recommended sizes when mentioned, you shouldn't have any problem."
+msgstr ""
+"Nous vous recommandons de vérifier l'application avec différentes "
+"résolutions d'affichage, car certaines images peuvent sembler parfaites sur "
+"votre écran, mais complètement décalées sur un autre. Si vous utilisez les "
+"tailles recommandées lorsqu'elles sont mentionnées, vous ne devriez pas "
+"rencontrer de problème."
+
+#: ../../hosting/custom_branding.rst:37
+msgid "You can also customize the texts, by adding:"
+msgstr "Vous pouvez également personnaliser les textes, en ajoutant :"
+
+#: ../../hosting/custom_branding.rst:39
+msgid ""
+"``en_US.json``: the English translations, based on `en_US.json <https://"
+"github.com/Scille/parsec-cloud/blob/e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/"
+"client/src/locales/en-US.json>`_"
+msgstr ""
+"``en_US.json`` : les traductions en anglais, basées sur `en_US.json <https://"
+"github.com/Scille/parsec-cloud/blob/e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/"
+"client/src/locales/en-US.json>`_"
+
+#: ../../hosting/custom_branding.rst:41
+msgid ""
+"``fr_FR.json``: the French translations, based on `fr_FR.json <https://"
+"github.com/Scille/parsec-cloud/blob/e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/"
+"client/src/locales/fr-FR.json>`_"
+msgstr ""
+"``fr_FR.json`` : les traductions en français, basées sur `fr_FR.json "
+"<https://github.com/Scille/parsec-cloud/blob/"
+"e7c5cdbc4234f606ccf3ab2be7e9edc22db16feb/client/src/locales/fr-FR.json>`_"
+
+#: ../../hosting/custom_branding.rst:43
+msgid ""
+"You do not need to replace every element in those files, only the values you "
+"want to change. For example, to replace the ``Welcome to Parsec`` message of "
+"the homepage with ``Welcome to MyApp``, your ``en_US.json`` file should look "
+"like this:"
+msgstr ""
+"Vous n'avez pas besoin de remplacer chaque élément dans ces fichiers, "
+"seulement les valeurs que vous souhaitez modifier. Par exemple, pour "
+"remplacer le message ``Welcome to Parsec`` de la page d'accueil par "
+"``Welcome to MyApp``, votre fichier ``en_US.json`` devrait ressembler à "
+"ceci :"
+
+#: ../../hosting/custom_branding.rst:56
+msgid ""
+"It will only replace the value with the key ``HomePage.topbar.welcome`` and "
+"leave the default values for every other key."
+msgstr ""
+"Cela remplacera uniquement la valeur avec la clé ``HomePage.topbar.welcome`` "
+"et laissera les valeurs par défaut pour toutes les autres clés."
+
+#: ../../hosting/custom_branding.rst:60
+msgid ""
+"The files containing the texts are not particularly well ordered and are in "
+"need of some cleaning. You may struggle to find the right texts to replace."
+msgstr ""
+"Les fichiers contenant les textes ne sont pas particulièrement bien "
+"organisés et nécessitent un peu de nettoyage. Vous pourriez avoir du mal à "
+"trouver les bons textes à remplacer."
