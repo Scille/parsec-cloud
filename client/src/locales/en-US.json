@@ -103,7 +103,8 @@
     },
     "HomePage": {
         "sidebar": {
-            "tagline": "Keep control over your data confidentiality"
+            "tagline": "Keep control over your data confidentiality",
+            "poweredBy": "Powered by"
         },
         "tabs": {
             "settings": "Settings",

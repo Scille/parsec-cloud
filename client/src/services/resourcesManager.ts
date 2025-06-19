@@ -6,7 +6,6 @@ import axios from 'axios';
 enum Resources {
   LogoFull = 'logo.svg',
   LogoIcon = 'logo_icon.svg',
-  ParsecLogo = 'parsec_logo.svg',
   TranslationEnUs = 'en_US.json',
   TranslationFrFr = 'fr_FR.json',
   HomeSidebar = 'home_sidebar.png',
@@ -31,7 +30,6 @@ const ResourceConverters = new Map<Resources, convertFunction>([
   [Resources.TranslationFrFr, convertJSON],
   [Resources.LogoFull, convertSVG],
   [Resources.LogoIcon, convertSVG],
-  [Resources.ParsecLogo, convertSVG],
   [Resources.HomeSidebar, convertBinary],
 ]);
 
