@@ -9,8 +9,8 @@ from typing import Any
 import click
 
 from parsec.cli.export import export_realm
+from parsec.cli.export_email import export_email
 from parsec.cli.inspect import human_accesses
-from parsec.cli.mail_templates import export_email
 from parsec.cli.migration import migrate
 from parsec.cli.options import version_option
 from parsec.cli.run import run_cmd

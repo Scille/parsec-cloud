@@ -58,7 +58,7 @@ def mail_templates_shared_options[**P, T](fn: Callable[P, T]) -> Callable[P, T]:
             "--output-dir",
             show_default=True,
             callback=lambda ctx, param, value: value or Path(tempfile.gettempdir()),
-            type=click.Path(dir_okay=True, file_okay=False, exists=True, path_type=Path),
+            type=click.Path(dir_okay=True, file_okay=False, path_type=Path),
             help="The output directory to save the email file",
         ),
         click.option(
@@ -90,7 +90,7 @@ def export_email():
 @click.option("--organization-id", type=OrganizationID, required=True)
 @click.option("--invitation-url", default=DEFAULT_INVITATION_URL, show_default=True)
 @click.option("--greeter-name", default=None, type=str, show_default=True, help="The greeter name")
-def invite_mail(
+def invite(
     invitation_type: InvitationType,
     organization_id: OrganizationID,
     invitation_url: str,
