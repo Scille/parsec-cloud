@@ -68,6 +68,7 @@ updates:
     directories:
       - /server
       - /docs
+    versioning-strategy: increase-if-necessary
     ignore:
       - dependency-name: typing-extensions
       - dependency-name: anyio
