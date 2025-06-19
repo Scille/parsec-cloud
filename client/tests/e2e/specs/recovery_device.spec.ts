@@ -3,25 +3,25 @@
 import { DEFAULT_USER_INFORMATION, expect, fillIonInput, logout, msTest } from '@tests/e2e/helpers';
 
 msTest('Export and use recovery files', async ({ myProfilePage }) => {
-  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery file');
+  await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
   await myProfilePage.locator('.menu-list__item').nth(3).click();
   const recovery = myProfilePage.locator('.recovery');
-  await expect(recovery.locator('.item-header__title')).toHaveText('Recovery file');
+  await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery files');
   await expect(recovery.locator('.organization-recovery-container').locator('.restore-password__advice')).toBeVisible();
-  await expect(recovery.locator('.restore-password-button')).toHaveText('Create a recovery file');
+  await expect(recovery.locator('.restore-password-button')).toHaveText('Create recovery files');
   const recoveryFiles = recovery.locator('.recovery-list');
   await expect(recoveryFiles).toBeHidden();
   await recovery.locator('.restore-password-button').click();
   await expect(recoveryFiles).toBeVisible();
   const recoveryItems = recoveryFiles.locator('.recovery-item');
   await expect(recoveryItems).toHaveCount(2);
-  await expect(recoveryItems.locator('.recovery-item-text__title')).toHaveText(['Recovery File', 'Secret Key']);
-  await expect(recoveryItems.locator('.recovery-item-download__button')).toHaveText(['Download', 'Download']);
-  await expect(recoveryItems.nth(0).locator('.recovery-item-download__downloaded')).toBeHidden();
-  await expect(recoveryItems.nth(0).locator('.recovery-item-download__downloaded')).toBeHidden();
+  await expect(recoveryItems.locator('.recovery-item-text span')).toHaveText(['Recovery File', 'Secret Key']);
+  await expect(recoveryItems.locator('.recovery-item-download ion-button')).toHaveText(['Download', 'Download']);
+  await expect(recoveryItems.nth(0).locator('.checked')).toBeHidden();
+  await expect(recoveryItems.nth(0).locator('.checked')).toBeHidden();
 
   const fileDownloadPromise = myProfilePage.waitForEvent('download');
-  await recoveryItems.nth(0).locator('.recovery-item-download__button').locator('ion-button').click();
+  await recoveryItems.nth(0).locator('.recovery-item-download').locator('ion-button').click();
   const fileDownload = await fileDownloadPromise;
   expect(fileDownload.suggestedFilename()).toMatch(/^Parsec_Recovery_File_Org\d+\.psrk$/);
   const fileStream = await fileDownload.createReadStream();
@@ -32,11 +32,10 @@ msTest('Export and use recovery files', async ({ myProfilePage }) => {
   const fileContent = Buffer.concat(chunks);
   expect(fileContent.byteLength).toBeGreaterThan(0);
   await expect(myProfilePage).toShowToast('The recovery file was successfully downloaded', 'Success');
-  await expect(recoveryItems.nth(0).locator('.recovery-item-download__downloaded')).toBeVisible();
-  await expect(recoveryItems.nth(0).locator('.recovery-item-download__downloaded')).toHaveText('File downloaded');
+  await expect(recoveryItems.nth(0).locator('.checked')).toBeVisible();
 
   const passphraseDownloadPromise = myProfilePage.waitForEvent('download');
-  await recoveryItems.nth(1).locator('.recovery-item-download__button').locator('ion-button').click();
+  await recoveryItems.nth(1).locator('.recovery-item-download').locator('ion-button').click();
   const passphraseDownload = await passphraseDownloadPromise;
   expect(passphraseDownload.suggestedFilename()).toMatch(/Parsec_Recovery_Code_Org\d+\.txt/);
   const passphraseStream = await passphraseDownload.createReadStream();
@@ -49,8 +48,7 @@ msTest('Export and use recovery files', async ({ myProfilePage }) => {
   const passphraseContent = codes.join();
   expect(passphraseContent).toMatch(/^([A-Z0-9]{4}-?){13}$/);
   await expect(myProfilePage).toShowToast('The secret key was successfully downloaded', 'Success');
-  await expect(recoveryItems.nth(1).locator('.recovery-item-download__downloaded')).toBeVisible();
-  await expect(recoveryItems.nth(1).locator('.recovery-item-download__downloaded')).toHaveText('File downloaded');
+  await expect(recoveryItems.nth(1).locator('.checked')).toBeVisible();
 
   await logout(myProfilePage);
   await expect(myProfilePage.locator('.recovery-devices').locator('ion-button')).toHaveText('Recover my session');
@@ -100,25 +98,24 @@ msTest('Export and use recovery files', async ({ myProfilePage }) => {
 
 for (const error of ['invalid-passphrase', 'invalid-file']) {
   msTest(`Export and use recovery files with errors (${error})`, async ({ myProfilePage }) => {
-    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery file');
+    await expect(myProfilePage.locator('.menu-list__item').nth(3)).toHaveText('Recovery files');
     await myProfilePage.locator('.menu-list__item').nth(3).click();
     const recovery = myProfilePage.locator('.recovery');
-    await expect(recovery.locator('.item-header__title')).toHaveText('Recovery file');
+    await expect(recovery.locator('.item-header__title')).toHaveText('Organization recovery files');
     await expect(recovery.locator('.organization-recovery-container').locator('.restore-password__advice')).toBeVisible();
-    await expect(recovery.locator('.restore-password-button')).toHaveText('Create a recovery file');
+    await expect(recovery.locator('.restore-password-button')).toHaveText('Create recovery files');
     const recoveryFiles = recovery.locator('.recovery-list');
     await expect(recoveryFiles).toBeHidden();
     await recovery.locator('.restore-password-button').click();
     await expect(recoveryFiles).toBeVisible();
     const recoveryItems = recoveryFiles.locator('.recovery-item');
     await expect(recoveryItems).toHaveCount(2);
-    await expect(recoveryItems.locator('.recovery-item-text__title')).toHaveText(['Recovery File', 'Secret Key']);
-    await expect(recoveryItems.locator('.recovery-item-download__button')).toHaveText(['Download', 'Download']);
-    await expect(recoveryItems.nth(0).locator('.recovery-item-download__downloaded')).toBeHidden();
-    await expect(recoveryItems.nth(0).locator('.recovery-item-download__downloaded')).toBeHidden();
+    await expect(recoveryItems.locator('.recovery-item-text span')).toHaveText(['Recovery File', 'Secret Key']);
+    await expect(recoveryItems.locator('.recovery-item-download ion-button')).toHaveText(['Download', 'Download']);
+    await expect(recoveryItems.nth(0).locator('.checked')).toBeHidden();
 
     const fileDownloadPromise = myProfilePage.waitForEvent('download');
-    await recoveryItems.nth(0).locator('.recovery-item-download__button').locator('ion-button').click();
+    await recoveryItems.nth(0).locator('.recovery-item-download ion-button').click();
     const fileDownload = await fileDownloadPromise;
     expect(fileDownload.suggestedFilename()).toMatch(/^Parsec_Recovery_File_Org\d+\.psrk$/);
     const fileStream = await fileDownload.createReadStream();
@@ -129,11 +126,10 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     const fileContent = Buffer.concat(chunks);
     expect(fileContent.byteLength).toBeGreaterThan(0);
     await expect(myProfilePage).toShowToast('The recovery file was successfully downloaded', 'Success');
-    await expect(recoveryItems.nth(0).locator('.recovery-item-download__downloaded')).toBeVisible();
-    await expect(recoveryItems.nth(0).locator('.recovery-item-download__downloaded')).toHaveText('File downloaded');
+    await expect(recoveryItems.nth(0).locator('.checked')).toBeVisible();
 
     const passphraseDownloadPromise = myProfilePage.waitForEvent('download');
-    await recoveryItems.nth(1).locator('.recovery-item-download__button').locator('ion-button').click();
+    await recoveryItems.nth(1).locator('.recovery-item-download').locator('ion-button').click();
     const passphraseDownload = await passphraseDownloadPromise;
     expect(passphraseDownload.suggestedFilename()).toMatch(/Parsec_Recovery_Code_Org\d+\.txt/);
     const passphraseStream = await passphraseDownload.createReadStream();
@@ -146,8 +142,7 @@ for (const error of ['invalid-passphrase', 'invalid-file']) {
     const passphraseContent = codes.join();
     expect(passphraseContent).toMatch(/^([A-Z0-9]{4}-?){13}$/);
     await expect(myProfilePage).toShowToast('The secret key was successfully downloaded', 'Success');
-    await expect(recoveryItems.nth(1).locator('.recovery-item-download__downloaded')).toBeVisible();
-    await expect(recoveryItems.nth(1).locator('.recovery-item-download__downloaded')).toHaveText('File downloaded');
+    await expect(recoveryItems.nth(1).locator('.checked')).toBeVisible();
 
     await logout(myProfilePage);
     await expect(myProfilePage.locator('.recovery-devices').locator('ion-button')).toHaveText('Recover my session');

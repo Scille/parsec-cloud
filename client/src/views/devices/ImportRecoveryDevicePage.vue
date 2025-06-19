@@ -113,7 +113,10 @@
       </ion-title>
     </div>
     <ion-card class="recovery-card">
-      <choose-authentication ref="chooseAuthRef" />
+      <choose-authentication
+        ref="chooseAuthRef"
+        class="authentication-content"
+      />
       <ion-button
         id="validate-password-btn"
         class="validate-button"

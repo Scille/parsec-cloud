@@ -629,6 +629,10 @@ onUnmounted(async () => {
           --fill-color: var(--parsec-color-light-secondary-hard-grey);
           opacity: 0.8;
           flex-shrink: 0;
+          position: relative;
+          top: 0;
+          right: 0;
+          transition: all 0.2s ease-in-out;
         }
       }
 
@@ -644,6 +648,11 @@ onUnmounted(async () => {
       &:hover:not(.radio-checked) {
         background: var(--parsec-color-light-secondary-premiere);
         color: var(--parsec-color-light-secondary-text);
+
+        .item-container__open-icon {
+          top: -0.125rem;
+          right: -0.125rem;
+        }
       }
 
       ion-icon {
