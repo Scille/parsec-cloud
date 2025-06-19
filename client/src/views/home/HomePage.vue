@@ -683,34 +683,6 @@ function getBackButtonTitle(): string {
   background: var(--parsec-color-light-secondary-inversed-contrast);
   z-index: -10;
 
-  // Should be edited later with responsive
-  .homepage-sidebar {
-    @include ms.responsive-breakpoint('xxl') {
-      max-width: 35rem;
-    }
-
-    @include ms.responsive-breakpoint('xl') {
-      max-width: 30rem;
-
-      &:before {
-        height: 560px;
-        max-height: 50vh;
-      }
-    }
-
-    @include ms.responsive-breakpoint('lg') {
-      max-width: 22rem;
-    }
-
-    @include ms.responsive-breakpoint('md') {
-      max-width: 17rem;
-    }
-
-    @include ms.responsive-breakpoint('sm') {
-      display: none;
-    }
-  }
-
   .homepage-content {
     width: 100%;
     height: 100%;

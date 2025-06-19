@@ -4,18 +4,26 @@
   <!-- prettier-ignore -->
   <div
     class="sidebar-container"
-    :class="{'sidebar-container--custom': ResourcesManager.instance().get(Resources.ParsecLogo)}"
+    :class="{
+      'sidebar-container--custom-logo': customLogo,
+      'sidebar-container--custom-image': ResourcesManager.instance().get(Resources.HomeSidebar) !== undefined
+    }"
   >
     <ms-image
       :image="(ResourcesManager.instance().get(Resources.LogoFull, LogoRowWhite) as string)"
       class="logo-img"
     />
     <div class="sidebar-bottom">
-      <ion-text class="sidebar-tagline subtitles-lg">{{ $msTranslate('HomePage.sidebar.tagline') }}</ion-text>
+      <ion-text
+        class="sidebar-tagline "
+        :class="customLogo ? 'subtitles-normal' : 'subtitles-lg'"
+      >
+        {{ $msTranslate(customLogo ? 'HomePage.sidebar.poweredBy' : 'HomePage.sidebar.tagline') }}
+      </ion-text>
       <ms-image
         class="logo-icon"
-        v-if="ResourcesManager.instance().get(Resources.ParsecLogo)"
-        :image="(ResourcesManager.instance().get(Resources.ParsecLogo) as string)"
+        v-if="customLogo"
+        :image="LogoRowWhite"
       />
     </div>
   </div>
@@ -27,7 +35,8 @@ import { IonText } from '@ionic/vue';
 import { ResourcesManager, Resources } from '@/services/resourcesManager';
 import { onMounted, ref } from 'vue';
 
-const backgroundImage = ref('url("@/assets/images/background/shapes-circles.svg")');
+const backgroundImage = ref();
+const customLogo = ref(ResourcesManager.instance().get(Resources.LogoFull) !== undefined);
 
 onMounted(() => {
   const sidebarImage = ResourcesManager.instance().get(Resources.HomeSidebar) as Uint8Array;
@@ -52,15 +61,40 @@ onMounted(() => {
   gap: 1.5rem;
   transition: all 0.3s ease;
 
+  @include ms.responsive-breakpoint('xxl') {
+    max-width: 35rem;
+  }
+
+  @include ms.responsive-breakpoint('xl') {
+    max-width: 30rem;
+
+    &:before {
+      height: 560px;
+      max-height: 50vh;
+    }
+  }
+
+  @include ms.responsive-breakpoint('lg') {
+    max-width: 22rem;
+  }
+
+  @include ms.responsive-breakpoint('md') {
+    max-width: 17rem;
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    display: none;
+  }
+
   &::before {
     content: '';
     position: absolute;
     height: 580px;
     width: 100%;
-    max-height: 70vh;
+    max-height: 60vh;
     top: 0;
     right: 0;
-    background-image: v-bind(backgroundImage);
+    background-image: url('@/assets/images/background/shapes-circles.svg');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: top left;
@@ -70,10 +104,14 @@ onMounted(() => {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    position: relative;
+    z-index: 3;
   }
 
   .logo-img {
     width: 8.5rem;
+    position: relative;
+    z-index: 3;
   }
 
   .sidebar-tagline {
@@ -84,14 +122,11 @@ onMounted(() => {
   }
 }
 
-.sidebar-container--custom {
+.sidebar-container--custom-image {
   background-image: v-bind(backgroundImage);
   background-size: cover;
   background-repeat: no-repeat;
   background-position: top left;
-  display: flex;
-  justify-content: end;
-  padding-bottom: 5%;
 
   &::before {
     content: '';
@@ -99,12 +134,27 @@ onMounted(() => {
     background: var(--parsec-color-light-gradient-background);
     position: absolute;
     height: 100%;
-    width: 100%;
     max-height: 100%;
-    top: 0;
+    z-index: 0;
+  }
+
+  &::after {
+    content: '';
+    opacity: 0.5;
+    background: linear-gradient(180deg, rgba(27, 27, 40, 0) 0%, var(--parsec-color-light-secondary-black) 100%);
+    position: absolute;
+    width: 100%;
+    height: 15rem;
+    flex-shrink: 0;
+    bottom: 0;
     right: 0;
     z-index: 0;
   }
+}
+
+.sidebar-container--custom-logo {
+  justify-content: end;
+  padding-bottom: 5%;
 
   &::after {
     content: '';
@@ -134,7 +184,9 @@ onMounted(() => {
 
   .logo-img {
     max-width: 10rem;
+    max-height: 10rem;
     width: 100%;
+    height: fit-content;
     z-index: 2;
   }
 
