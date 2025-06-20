@@ -470,11 +470,11 @@ def generate_email_validation_email(
     # Quick fix to have a similar behavior between Rust and Python
     server_url = server_url.removesuffix("/")
 
-    html = get_template("account_email_validation.html").render(
+    html = get_template("email/account_validation.html.j2").render(
         validation_url=validation_url,
         server_url=server_url,
     )
-    text = get_template("account_email_validation.txt").render(
+    text = get_template("email/account_validation.txt.j2").render(
         validation_url=validation_url,
         server_url=server_url,
     )
@@ -507,11 +507,11 @@ def generate_email_deletion_email(
     # Quick fix to have a similar behavior between Rust and Python
     server_url = server_url.removesuffix("/")
 
-    html = get_template("account_email_deletion.html").render(
+    html = get_template("email/account_deletion.html.j2").render(
         deletion_url=deletion_url,
         server_url=server_url,
     )
-    text = get_template("account_email_deletion.txt").render(
+    text = get_template("email/account_deletion.txt.j2").render(
         deletion_url=deletion_url,
         server_url=server_url,
     )
