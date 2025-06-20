@@ -352,7 +352,8 @@
         "settings": "Paramètres",
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
-        "documentationLink": "https://docs.parsec.cloud/fr/{version}"
+        "documentationLink": "https://docs.parsec.cloud/fr/{version}",
+        "documentationGuideLink": "https://docs.parsec.cloud/fr/{version}/userguide/{page}.html"
     },
     "HeaderPage": {
         "titles": {
