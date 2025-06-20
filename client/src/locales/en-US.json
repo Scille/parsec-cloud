@@ -331,7 +331,8 @@
         "settings": "Settings",
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
-        "documentationLink": "https://docs.parsec.cloud/en/{version}"
+        "documentationLink": "https://docs.parsec.cloud/en/{version}",
+        "documentationGuideLink": "https://docs.parsec.cloud/en/{version}/userguide/{page}.html"
     },
     "HeaderPage": {
         "titles": {
@@ -631,7 +632,9 @@
             "fileFailedGeneric": "Failed to open this file.",
             "folderFailed": "Failed to open folder `{name}`",
             "unavailableOnWeb": "This feature is not yet available in web mode.",
-            "unhandledFileType": "Cannot show a preview of this file."
+            "unhandledFileType": "Cannot show a preview of this file.",
+            "noVisibleOnWeb": "Cannot preview this file. You will need to download it",
+            "noVisibleOnWebTitle": "No preview"
         },
         "linkNotCopiedToClipboard": "Failed to copy link. Your browser or device does not seem to support copy/paste.",
         "linkCopiedToClipboard": "Link has been copied to clipboard.",
@@ -679,6 +682,10 @@
             "failedDetails": "Could not restore this file or folder."
         },
         "DownloadFile": {
+            "downloadWarningTitle": "",
+            "downloadWarningText": "",
+            "downloadWarningDocMessage": "To find more information, you can read our {0}.",
+            "downloadWarningDoc": "documentation",
             "cannotDownloadFolders": "Cannot download folders.",
             "foldersNotDownloaded": "Folders will not be downloaded.",
             "allFailed": "Could not start the download of any file.",

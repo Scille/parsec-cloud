@@ -104,21 +104,24 @@ export interface InformationOptions {
   level: InformationLevel;
   data?: InformationData;
   unique?: boolean;
+  title?: Translatable;
 }
 
 export class Information {
   id: string;
   message: Translatable;
   level: InformationLevel;
+  title?: Translatable;
   data?: InformationData;
   unique?: boolean;
 
-  constructor({ message, level, data, unique }: InformationOptions) {
+  constructor({ message, level, data, unique, title }: InformationOptions) {
     this.id = uuid4();
     this.message = message;
     this.level = level;
     this.data = data;
     this.unique = unique;
+    this.title = title;
   }
 
   get theme(): MsReportTheme {
@@ -155,6 +158,7 @@ export class InformationManager {
 
   private async showModal(information: Information): Promise<void> {
     const alertModalConfig: MsAlertModalConfig = {
+      title: information.title,
       theme: information.theme,
       message: information.message,
     };
