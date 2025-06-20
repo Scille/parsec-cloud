@@ -1976,9 +1976,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.173"
+version = "0.2.174"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8cfeafaffdbc32176b64fb251369d52ea9f0a8fbc6f8759edffef7b525d64bb"
+checksum = "1171693293099992e19cddea4e8b849964e9846f4acee11b3948bcc337be8776"
 
 [[package]]
 name = "libdbus-sys"
@@ -3595,9 +3595,9 @@ dependencies = [
 
 [[package]]
 name = "rexpect"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fac38595028b44c3b3ac4bd87c126636a2d84d6d7c18f626779c6d5117d3cf1"
+checksum = "2c1bcd4ac488e9d2d726d147031cceff5cff6425011ff1914049739770fa4726"
 dependencies = [
  "comma",
  "nix 0.30.1",
