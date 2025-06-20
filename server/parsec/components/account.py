@@ -10,16 +10,15 @@ from typing import Literal
 
 from parsec._parsec import (
     AccountAuthMethodID,
-    AccountDeletionToken,
     DateTime,
     EmailAddress,
     EmailValidationToken,
     HashDigest,
-    ParsecAccountDeletionAddr,
     ParsecAccountEmailValidationAddr,
     SecretKey,
     UntrustedPasswordAlgorithm,
     UntrustedPasswordAlgorithmArgon2id,
+    ValidationCode,
     anonymous_account_cmds,
     authenticated_account_cmds,
 )
@@ -407,21 +406,16 @@ class BaseAccountComponent:
             case AccountVaultItemRecoveryList.ACCOUNT_NOT_FOUND:
                 client_ctx.account_not_found_abort()
 
-    async def _send_email_deletion_token(
-        self, token: AccountDeletionToken, email: EmailAddress
+    async def _send_email_deletion_code(
+        self, code: ValidationCode, email: EmailAddress
     ) -> None | SendEmailBadOutcome:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
-        deletion_url = ParsecAccountDeletionAddr.build(
-            server_addr=self._config.server_addr,
-            token=token,
-        ).to_http_redirection_url()
-
         message = generate_email_deletion_email(
             from_addr=self._config.email_config.sender,
             to_addr=email,
-            deletion_url=deletion_url,
+            deletion_code=code,
             server_url=self._config.server_addr.to_http_url(),
         )
 
@@ -433,32 +427,30 @@ class BaseAccountComponent:
         self,
         email: EmailAddress,
         now: DateTime,
-    ) -> AccountDeletionToken | AccountCreateAccountDeletionTokenBadOutcome:
+    ) -> ValidationCode | AccountCreateAccountDeletionTokenBadOutcome:
         raise NotImplementedError
 
     @api
     async def api_account_delete_send_validation_email(
         self,
         client_ctx: AuthenticatedAccountClientContext,
-        req: authenticated_account_cmds.latest.account_delete_send_validation_token.Req,
-    ) -> authenticated_account_cmds.latest.account_delete_send_validation_token.Rep:
+        req: authenticated_account_cmds.latest.account_delete_send_code.Req,
+    ) -> authenticated_account_cmds.latest.account_delete_send_code.Rep:
         outcome = await self.create_email_deletion_token(client_ctx.account_email, DateTime.now())
         match outcome:
-            case AccountDeletionToken() as token:
-                outcome = await self._send_email_deletion_token(token, client_ctx.account_email)
+            case ValidationCode() as code:
+                outcome = await self._send_email_deletion_code(code, client_ctx.account_email)
                 match outcome:
                     case None:
-                        return authenticated_account_cmds.latest.account_delete_send_validation_token.RepOk()
+                        return authenticated_account_cmds.latest.account_delete_send_code.RepOk()
                     case (
                         SendEmailBadOutcome.BAD_SMTP_CONFIG | SendEmailBadOutcome.SERVER_UNAVAILABLE
                     ):
-                        return authenticated_account_cmds.latest.account_delete_send_validation_token.RepEmailServerUnavailable()
+                        return authenticated_account_cmds.latest.account_delete_send_code.RepEmailServerUnavailable()
                     case SendEmailBadOutcome.RECIPIENT_REFUSED:
-                        return authenticated_account_cmds.latest.account_delete_send_validation_token.RepEmailRecipientRefused()
+                        return authenticated_account_cmds.latest.account_delete_send_code.RepEmailRecipientRefused()
             case AccountCreateAccountDeletionTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND:
-                return (
-                    authenticated_account_cmds.latest.account_delete_send_validation_token.RepOk()
-                )
+                return authenticated_account_cmds.latest.account_delete_send_code.RepOk()
 
 
 def generate_email_validation_email(
@@ -501,18 +493,18 @@ def generate_email_validation_email(
 def generate_email_deletion_email(
     from_addr: EmailAddress,
     to_addr: EmailAddress,
-    deletion_url: str,
+    deletion_code: ValidationCode,
     server_url: str,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
     server_url = server_url.removesuffix("/")
 
     html = get_template("email/account_deletion.html.j2").render(
-        deletion_url=deletion_url,
+        deletion_code=deletion_code.str,
         server_url=server_url,
     )
     text = get_template("email/account_deletion.txt.j2").render(
-        deletion_url=deletion_url,
+        deletion_code=deletion_code.str,
         server_url=server_url,
     )
 

@@ -7,7 +7,6 @@ from parsec._parsec_pyi import (
 )
 from parsec._parsec_pyi.addrs import (
     ParsecAccountActionAddr,
-    ParsecAccountDeletionAddr,
     ParsecAccountEmailValidationAddr,
     ParsecActionAddr,
     ParsecAddr,
@@ -65,7 +64,6 @@ from parsec._parsec_pyi.enumerate import (
 )
 from parsec._parsec_pyi.ids import (
     AccountAuthMethodID,
-    AccountDeletionToken,
     BlockID,
     BootstrapToken,
     ChunkID,
@@ -176,7 +174,6 @@ __all__ = [
     "HumanHandle",
     "InvitationToken",
     "EmailValidationToken",
-    "AccountDeletionToken",
     "OrganizationID",
     "SequesterServiceID",
     "UserID",
@@ -188,7 +185,6 @@ __all__ = [
     "ParsecAddr",
     "ParsecInvitationAddr",
     "ParsecAccountEmailValidationAddr",
-    "ParsecAccountDeletionAddr",
     "ParsecAccountActionAddr",
     "ParsecOrganizationAddr",
     "ParsecOrganizationBootstrapAddr",

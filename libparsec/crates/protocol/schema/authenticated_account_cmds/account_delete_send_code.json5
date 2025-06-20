@@ -3,7 +3,7 @@
         "major_versions": [
             5
         ],
-        "cmd": "account_delete_send_validation_token",
+        "cmd": "account_delete_send_code",
         "req": {},
         "reps": [
             {

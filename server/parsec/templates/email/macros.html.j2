@@ -59,3 +59,7 @@ origin page using window.opener unless link type noopener or noreferrer is speci
 </p>
 <a href="{{ url }}" style="font-size: 13px; color: #51517B;" rel="noopener noreferrer" target="_blank">{{ url }}</a>
 {% endmacro %}
+
+{% macro render_code(code) %}
+<pre>{{ code }}</pre>
+{% endmacro %}
