@@ -36,16 +36,16 @@ async def test_authenticated_account_account_delete_send_code_ok_edge_cases(
 ) -> None:
     # 1st account deletion request
     now = DateTime.now()
-    rep1 = await backend.account.create_email_deletion_token(alice_account.account_email, now)
+    rep1 = await backend.account.create_email_deletion_code(alice_account.account_email, now)
     assert isinstance(rep1, ValidationCode)
 
     # 2nd account deletion request send too soon for a new email + token
-    rep2 = await backend.account.create_email_deletion_token(
+    rep2 = await backend.account.create_email_deletion_code(
         alice_account.account_email, now.add(microseconds=1)
     )
     assert rep2 is AccountCreateAccountDeletionTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
 
-    rep3 = await backend.account.create_email_deletion_token(
+    rep3 = await backend.account.create_email_deletion_code(
         alice_account.account_email,
         now.add(seconds=backend.config.account_confirmation_email_resend_delay + 1),
     )

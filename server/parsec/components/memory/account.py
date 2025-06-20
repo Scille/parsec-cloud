@@ -9,11 +9,9 @@ from parsec._parsec import (
     EmailValidationToken,
     HashDigest,
     SecretKey,
-    ValidationCode,
 )
 from parsec.components.account import (
     AccountCreateAccountBadOutcome,
-    AccountCreateAccountDeletionTokenBadOutcome,
     AccountCreateEmailValidationTokenBadOutcome,
     AccountVaultItemListBadOutcome,
     AccountVaultItemRecoveryList,
@@ -21,6 +19,7 @@ from parsec.components.account import (
     AccountVaultKeyRotation,
     BaseAccountComponent,
     UntrustedPasswordAlgorithm,
+    ValidationCodeInfo,
     VaultItemRecoveryAuthMethod,
     VaultItemRecoveryList,
     VaultItemRecoveryVault,
@@ -73,7 +72,7 @@ class MemoryAccountComponent(BaseAccountComponent):
             return AccountCreateEmailValidationTokenBadOutcome.ACCOUNT_ALREADY_EXISTS
         elif email in self._data.unverified_emails:
             (_, last_email_datetime) = self._data.unverified_emails[email]
-            if not self.should_resend_token(now, last_email_datetime):
+            if not self.can_send_new_code_email(last_email_datetime, now):
                 return AccountCreateEmailValidationTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
 
         token = EmailValidationToken.new()
@@ -248,15 +247,11 @@ class MemoryAccountComponent(BaseAccountComponent):
         )
 
     @override
-    async def create_email_deletion_token(
-        self, email: EmailAddress, now: DateTime
-    ) -> ValidationCode | AccountCreateAccountDeletionTokenBadOutcome:
-        try:
-            (_, last_email_datetime) = self._data.accounts_deletion_requested[email]
-            if not self.should_resend_token(now, last_email_datetime):
-                return AccountCreateAccountDeletionTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
-        except KeyError:
-            pass
-        code = ValidationCode.generate()
-        self._data.accounts_deletion_requested[email] = (code, now)
-        return code
+    async def get_account_deletion_code_info(
+        self, email: EmailAddress
+    ) -> ValidationCodeInfo | None:
+        return self._data.accounts_deletion_requested.get(email)
+
+    @override
+    async def set_account_deletion_code_info(self, email: EmailAddress, info: ValidationCodeInfo):
+        self._data.accounts_deletion_requested[email] = info
