@@ -617,9 +617,6 @@ impl HumanHandle {
     ///
     /// - label is user ID unchanged
     /// - email is `<user ID as hex>@redacted.invalid``
-    ///
-    /// Note given user_id is case sensitive and email address is not, `uncaseify`
-    /// is used to do the conversion while retaining ID unicity.
     pub fn new_redacted(user_id: UserID) -> Self {
         let label = user_id.hex();
         let email = EmailAddress::new(
