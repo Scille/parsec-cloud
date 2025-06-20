@@ -13,7 +13,6 @@ from typing import Literal
 
 from parsec._parsec import (
     AccountAuthMethodID,
-    AccountDeletionToken,
     ActiveUsersLimit,
     BlockID,
     BootstrapToken,
@@ -50,6 +49,7 @@ from parsec._parsec import (
     UserID,
     UserProfile,
     UserUpdateCertificate,
+    ValidationCode,
     VerifyKey,
     VlobID,
 )
@@ -108,7 +108,7 @@ class MemoryDatamodel:
     unverified_emails: dict[EmailAddress, tuple[EmailValidationToken, DateTime]] = field(
         default_factory=dict
     )
-    accounts_deletion_requested: dict[EmailAddress, tuple[AccountDeletionToken, DateTime]] = field(
+    accounts_deletion_requested: dict[EmailAddress, tuple[ValidationCode, DateTime]] = field(
         default_factory=dict
     )
 
