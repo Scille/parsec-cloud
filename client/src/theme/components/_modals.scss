@@ -660,6 +660,23 @@
   }
 }
 
+.tab-options-modal {
+  &::part(handle) {
+    top: 1rem;
+    background: var(--parsec-color-light-secondary-light);
+    display: none;
+
+    @include ms.responsive-breakpoint('sm') {
+      display: inline-block;
+    }
+  }
+
+  @include ms.responsive-breakpoint('sm') {
+    margin-bottom: 10.58rem;
+    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
+  }
+}
+
 .incompatible-environment-modal {
   .ms-modal-header {
     display: none;

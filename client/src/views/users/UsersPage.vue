@@ -131,6 +131,10 @@
           </div>
         </div>
       </div>
+      <tab-bar-options
+        v-if="isSmallDisplay && users.hasSelected()"
+        :actions="tabBarActions"
+      />
     </ion-content>
   </ion-page>
 </template>
@@ -187,6 +191,7 @@ import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 import UpdateProfileModal from '@/views/users/UpdateProfileModal.vue';
 import { openUserContextMenu as _openUserContextMenu, openGlobalUserContextMenu as _openGlobalUserContextMenu } from '@/views/users/utils';
+import { MenuAction, TabBarOptions } from '@/views/menu';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -205,6 +210,18 @@ let eventCbId: string | null = null;
 
 const USERS_PAGE_DATA_KEY = 'UsersPage';
 const { isLargeDisplay, isSmallDisplay } = useWindowSize();
+const tabBarActions = computed(() => {
+  const selectedUsers = users.value.getSelectedUsers();
+  const actions: MenuAction[] = [];
+  if (selectedUsers.length === 1) {
+    actions.push({ label: 'UsersPage.tabbar.details', action: async () => await openSelectedUserDetails(), icon: informationCircle });
+  }
+  if (users.value.getSelectedUsers().some((u: UserModel) => u.currentProfile !== UserProfile.Outsider) && isAdmin.value) {
+    actions.push({ label: 'UsersPage.tabbar.update', action: async () => await updateSelectedUserProfiles(), icon: repeat });
+  }
+  actions.push({ label: 'UsersPage.tabbar.revoke', action: async () => await revokeSelectedUsers(), icon: personRemove, danger: true });
+  return actions;
+});
 
 interface UsersPageSavedData {
   displayState: DisplayState;
