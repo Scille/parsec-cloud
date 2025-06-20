@@ -343,8 +343,13 @@ const filteredDevices = computed(() => {
   gap: 1.5rem;
   overflow: hidden;
   margin-bottom: 4.3125rem;
+  height: 100%;
+  border-radius: var(--parsec-radius-12) var(--parsec-radius-12) 0 0;
+  box-shadow: var(--parsec-shadow-soft);
+  padding: 2rem 2rem 0 2rem;
   width: 100%;
-  max-width: var(--parsec-max-content-width);
+  max-width: 40rem;
+  background: var(--parsec-color-light-secondary-white);
 
   .organization-filter {
     display: flex;
@@ -352,7 +357,6 @@ const filteredDevices = computed(() => {
     align-items: center;
     width: 100%;
     gap: 1rem;
-    max-width: 34.5rem;
 
     #search-input-organization:focus-within {
       outline: none;
@@ -384,7 +388,7 @@ const filteredDevices = computed(() => {
   .organization-list {
     margin: 0;
     overflow-y: auto;
-    max-width: 34.5rem;
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 1rem;

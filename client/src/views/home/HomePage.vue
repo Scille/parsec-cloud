@@ -680,7 +680,7 @@ function getBackButtonTitle(): string {
   display: flex;
   overflow: hidden;
   align-items: self-start;
-  background: var(--parsec-color-light-secondary-inversed-contrast);
+  background: var(--parsec-color-light-secondary-background);
   z-index: -10;
 
   .homepage-content {
