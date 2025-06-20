@@ -352,7 +352,8 @@
         "settings": "Paramètres",
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
-        "documentationLink": "https://docs.parsec.cloud/fr/{version}"
+        "documentationLink": "https://docs.parsec.cloud/fr/{version}",
+        "documentationGuideLink": "https://docs.parsec.cloud/fr/{version}/userguide/{page}.html"
     },
     "HeaderPage": {
         "titles": {
@@ -700,13 +701,20 @@
             "failedDetails": "Impossible de restaurer ce fichier ou dossier."
         },
         "DownloadFile": {
+            "downloadWarningTitle": "Êtes-vous sûr de vouloir télécharger ce fichier ?",
+            "downloadWarningText": "Si vous téléchargez ce fichier en dehors de Parsec, nous ne pourrons plus garantir sa sécurité.",
+            "downloadWarningDocMessage": "Pour plus d'informations, vous pouvez consulter notre {0}.",
+            "downloadWarningDoc": "documentation",
             "cannotDownloadFolders": "Impossible de télécharger des dossiers.",
             "foldersNotDownloaded": "Les dossiers ne seront pas téléchargés.",
             "allFailed": "Impossible de démarrer le téléchargement des fichiers.",
             "someFailed": "Impossible de démarrer le téléchargement de certains fichiers.",
             "selectFolderFailed": "Impossible de sauvegarder des fichiers dans ce dossier. Assurez-vous d'avoir les permissions suffisantes.",
             "noPermissions": "Ce site n'a pas les autorisations requises pour sauvegarder un fichier sur votre disque. Veuillez donner les permissions d'édition de fichier à ce site si vous souhaitez télécharger un fichier.",
-            "openFailed": "Impossible d'ouvrir le fichier. Vous pouvez essayer en utilisant la liste des téléchargement de votre navigateur."
+            "openFailed": "Impossible d'ouvrir le fichier. Vous pouvez essayer en utilisant la liste des téléchargement de votre navigateur.",
+            "cancel": "Annuler",
+            "download": "Télécharger le fichier",
+            "notRemindMe": "Ne plus me le rappeler"
         },
         "uploadsLeft": "{amount} imports en attente",
         "copiesLeft": "{amount} copies en attente",

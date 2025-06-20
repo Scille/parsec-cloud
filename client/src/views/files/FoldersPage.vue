@@ -236,6 +236,7 @@ import {
   openEntryContextMenu as _openEntryContextMenu,
   openGlobalContextMenu as _openGlobalContextMenu,
   isFolderGlobalAction,
+  askDownloadConfirmation,
 } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin, download } from 'ionicons/icons';
@@ -1189,6 +1190,19 @@ async function downloadEntries(entries: EntryModel[]): Promise<void> {
       }),
       PresentationMode.Toast,
     );
+  }
+
+  const config = await storageManager.retrieveConfig();
+  if (!config.disableDownloadWarning) {
+    const { result, noReminder } = await askDownloadConfirmation();
+
+    if (noReminder) {
+      config.disableDownloadWarning = true;
+      await storageManager.storeConfig(config);
+    }
+    if (result !== MsModalResult.Confirm) {
+      return;
+    }
   }
 
   if (filesOnly.length === 1) {

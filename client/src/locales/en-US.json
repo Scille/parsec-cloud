@@ -352,7 +352,8 @@
         "settings": "Settings",
         "helpLink": "{signUrl}/contact",
         "contactLink": "{signUrl}/contact",
-        "documentationLink": "https://docs.parsec.cloud/en/{version}"
+        "documentationLink": "https://docs.parsec.cloud/en/{version}",
+        "documentationGuideLink": "https://docs.parsec.cloud/en/{version}/userguide/{page}.html"
     },
     "HeaderPage": {
         "titles": {
@@ -652,7 +653,9 @@
             "fileFailedGeneric": "Failed to open this file.",
             "folderFailed": "Failed to open folder `{name}`",
             "unavailableOnWeb": "This feature is not yet available in web mode.",
-            "unhandledFileType": "Cannot show a preview of this file."
+            "unhandledFileType": "Cannot show a preview of this file.",
+            "noVisibleOnWeb": "Parsec cannot preview this type of document. You can download it by selecting the file or showing options then click 'Download'.",
+            "noVisibleOnWebTitle": "Cannot preview this file"
         },
         "linkNotCopiedToClipboard": "Failed to copy link. Your browser or device does not seem to support copy/paste.",
         "linkCopiedToClipboard": "Link has been copied to clipboard.",
@@ -700,13 +703,20 @@
             "failedDetails": "Could not restore this file or folder."
         },
         "DownloadFile": {
+            "downloadWarningTitle": "Are you sure you want to download this file?",
+            "downloadWarningText": "If you download this file outside of Parsec, we can no longer guarantee its security.",
+            "downloadWarningDocMessage": "To find more information, you can read our {0}.",
+            "downloadWarningDoc": "documentation",
             "cannotDownloadFolders": "Cannot download folders.",
             "foldersNotDownloaded": "Folders will not be downloaded.",
             "allFailed": "Could not start the download of any file.",
             "someFailed": "Unable to start downloading some files.",
             "selectFolderFailed": "Unable to save files in this folder. Make sure you have enough permissions.",
             "noPermissions": "Parsec doesn't have the necessary permissions to save a file on your disk. Please allow file editing permissions on this website if you want to be able to download a file.",
-            "openFailed": "Could not open the file. You can try using your browser's downloads list."
+            "openFailed": "Could not open the file. You can try using your browser's downloads list.",
+            "cancel": "Cancel",
+            "download": "Download file",
+            "notRemindMe": "Do not remind me"
         },
         "uploadsLeft": "{amount} imports pending",
         "copiesLeft": "{amount} copies pending",

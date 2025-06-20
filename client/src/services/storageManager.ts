@@ -29,6 +29,7 @@ export interface Config {
   skipAccount: boolean;
   defaultAccountServer?: string;
   skipLongPathsSupportWarning: boolean;
+  disableDownloadWarning: boolean;
 }
 
 export class StorageManager {
@@ -51,6 +52,7 @@ export class StorageManager {
       skipAccount: false,
       defaultAccountServer: undefined,
       skipLongPathsSupportWarning: false,
+      disableDownloadWarning: false,
     };
   }
 
@@ -158,6 +160,7 @@ export class StorageManager {
       skipAccount: data.skipAccount,
       defaultAccountServer: data.defaultAccountServer,
       skipLongPathsSupportWarning: data.skipLongPathsSupportWarning,
+      disableDownloadWarning: data.disableDownloadWarning,
     });
     window.electronAPI.sendConfig(data);
   }
@@ -185,8 +188,23 @@ export class StorageManager {
       skipAccount: data.skipAccount ?? StorageManager.DEFAULT_CONFIG.skipAccount,
       defaultAccountServer: data.defaultAccountServer ?? StorageManager.DEFAULT_CONFIG.defaultAccountServer,
       skipLongPathsSupportWarning: data.skipLongPathsSupportWarning ?? StorageManager.DEFAULT_CONFIG.skipLongPathsSupportWarning,
+      disableDownloadWarning: data.disableDownloadWarning ?? StorageManager.DEFAULT_CONFIG.disableDownloadWarning,
     };
     return config;
+  }
+
+  async updateConfig(data: Partial<Config>): Promise<void> {
+    const config = await this.retrieveConfig();
+
+    for (const key of Object.keys(data) as (keyof Config)[]) {
+      const value = data[key];
+      if (value !== undefined) {
+        // Don't understand why this doesn't work. `key` is of type `keyof Config`,
+        // yet I cannot do `config[key]`.
+        (config as any)[key] = value;
+      }
+    }
+    await this.storeConfig(config);
   }
 
   async storeBmsAccess(tokens: BmsAccessData): Promise<void> {

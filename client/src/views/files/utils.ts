@@ -4,7 +4,9 @@ import { EntryModel } from '@/components/files';
 import { SmallDisplayCategoryFileContextMenu, SmallDisplayFileContextMenu } from '@/components/small-display';
 import { WorkspaceRole } from '@/parsec';
 import { FileAction, FileContextMenu, FolderGlobalAction, FolderGlobalContextMenu } from '@/views/files';
+import DownloadWarningModal from '@/views/files/DownloadWarningModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
+import { MsModalResult } from 'megashark-lib';
 
 export async function openGlobalContextMenu(
   event: Event,
@@ -106,4 +108,16 @@ export async function openEntryContextMenu(
   }
 
   return data;
+}
+
+export async function askDownloadConfirmation(): Promise<{ result: MsModalResult; noReminder?: boolean }> {
+  const modal = await modalController.create({
+    cssClass: 'download-warning-modal',
+    showBackdrop: true,
+    component: DownloadWarningModal,
+  });
+  await modal.present();
+  const { data, role } = await modal.onDidDismiss();
+  await modal.dismiss();
+  return { result: role ? (role as MsModalResult) : MsModalResult.Cancel, noReminder: data?.noReminder };
 }

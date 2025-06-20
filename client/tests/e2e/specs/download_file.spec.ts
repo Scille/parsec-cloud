@@ -1,6 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { expect, getDownloadedFile, msTest } from '@tests/e2e/helpers';
+import { expect, getDownloadedFile, MsPage, msTest } from '@tests/e2e/helpers';
+
+async function confirmDownload(page: MsPage, noReminder = false): Promise<void> {
+  const modal = page.locator('.download-warning-modal');
+
+  await expect(modal).toBeVisible();
+  if (noReminder) {
+    await modal.locator('.download-warning-checkbox').click();
+  }
+  await modal.locator('#next-button').click();
+  await expect(modal).toBeHidden();
+}
 
 msTest('Download file', async ({ documents }) => {
   // showSaveFilePicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
@@ -17,6 +28,7 @@ msTest('Download file', async ({ documents }) => {
       break;
     }
   }
+  await confirmDownload(documents, true);
   await documents.waitForTimeout(1000);
 
   const uploadMenu = documents.locator('.upload-menu');
@@ -65,6 +77,7 @@ msTest('Download multiple files', async ({ documents }) => {
   await expect(actionBar.locator('.counter')).toHaveText('3 selected items');
   await expect(actionBar.locator('.ms-action-bar-button:visible').nth(3)).toHaveText('Download');
   await actionBar.locator('.ms-action-bar-button:visible').nth(3).click();
+  await confirmDownload(documents, true);
 
   await documents.waitForTimeout(1000);
 
@@ -139,7 +152,7 @@ msTest('Download file and folder', async ({ documents }) => {
   await actionBar.locator('.ms-action-bar-button:visible').nth(3).click();
 
   await expect(documents).toShowToast('Folders will not be downloaded.', 'Warning');
-
+  await confirmDownload(documents, true);
   await documents.waitForTimeout(1000);
 
   const uploadMenu = documents.locator('.upload-menu');
@@ -161,4 +174,65 @@ msTest('Download file and folder', async ({ documents }) => {
   if (content) {
     expect(content.length).toEqual(41866);
   }
+});
+
+msTest('Download warning', async ({ documents }) => {
+  // showSaveFilePicker is not yet supported by Playwright: https://github.com/microsoft/playwright/issues/31162
+  const entries = documents.locator('.folder-container').locator('.file-list-item');
+
+  for (const entry of await entries.all()) {
+    const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
+    if (entryName.endsWith('.mp3')) {
+      await entry.hover();
+      await entry.locator('.options-button').click();
+      const popover = documents.locator('.file-context-menu');
+      await popover.getByRole('listitem').filter({ hasText: 'Download' }).click();
+      break;
+    }
+  }
+
+  // Download warning modal is visible
+  const warningModal = documents.locator('.download-warning-modal');
+  await expect(warningModal).toBeVisible();
+  await expect(warningModal.locator('.ms-modal-header__title')).toHaveText('Are you sure you want to download this file?');
+  const docLink = warningModal.locator('.download-warning-documentation').locator('a');
+
+  // Check the link to the doc
+  await expect(docLink).toHaveText('documentation');
+  const newTabPromise = documents.waitForEvent('popup');
+  await docLink.click();
+  const newTab = await newTabPromise;
+  await expect(newTab).toHaveURL(new RegExp('^https://docs.parsec.cloud/.+$'));
+  await newTab.close();
+
+  // Check the do not remind me
+  await warningModal.locator('.download-warning-checkbox').click();
+
+  await warningModal.locator('#next-button').click();
+  await expect(warningModal).toBeHidden();
+
+  await documents.waitForTimeout(1000);
+
+  // File was downloaded
+  const uploadMenu = documents.locator('.upload-menu');
+  await expect(uploadMenu).toBeVisible();
+  const tabs = uploadMenu.locator('.upload-menu-tabs').getByRole('listitem');
+  await expect(tabs.locator('.text-counter')).toHaveText(['0', '9', '0']);
+  const elements = uploadMenu.locator('.element-container').locator('.element');
+  await expect(elements).toHaveCount(9);
+
+  for (const entry of await entries.all()) {
+    const entryName = (await entry.locator('.file-name').locator('.file-name__label').textContent()) ?? '';
+    if (entryName.endsWith('.py')) {
+      await entry.hover();
+      await entry.locator('.options-button').click();
+      const popover = documents.locator('.file-context-menu');
+      await popover.getByRole('listitem').filter({ hasText: 'Download' }).click();
+      break;
+    }
+  }
+  // This time the warning doesn't show up
+  await documents.waitForTimeout(1000);
+  await expect(tabs.locator('.text-counter')).toHaveText(['0', '10', '0']);
+  await expect(elements).toHaveCount(10);
 });
