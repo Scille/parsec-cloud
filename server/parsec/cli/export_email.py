@@ -9,7 +9,7 @@ from pathlib import Path
 
 import click
 
-from parsec._parsec import EmailAddress, InvitationType, OrganizationID
+from parsec._parsec import EmailAddress, InvitationType, OrganizationID, ValidationCode
 from parsec.components.account import generate_email_deletion_email, generate_email_validation_email
 from parsec.components.invite import generate_invite_email
 
@@ -19,6 +19,8 @@ DEFAULT_INVITATION_URL = "https://invitation.parsec.example.com"
 DEFAULT_ACCOUNT_VALIDATION_URL = "https://validate.parsec.example.com"
 DEFAULT_ACCOUNT_DELETION_URL = "https://del.parsec.example.com"
 DEFAULT_BASE_SERVER_URL = "https://parsec.example.com"
+# cspell: words DELC8D
+DEFAULT_ACCOUNT_DELETION_CODE = ValidationCode("DELC8D")
 
 
 def write_mail_file_to_filesystem(message: Message, output_dir: Path, file_prefix: str):
@@ -129,12 +131,17 @@ def account_validation(validation_url: str, server_url: str, output_dir: Path):
 
 @export_email.command(short_help="Export account deletion email")
 @mail_templates_shared_options
-@click.option("--deletion-url", type=str, default=DEFAULT_ACCOUNT_DELETION_URL, show_default=True)
-def account_deletion(deletion_url: str, server_url: str, output_dir: Path):
+@click.option(
+    "--deletion-code",
+    type=ValidationCode,
+    default=DEFAULT_ACCOUNT_DELETION_CODE.str,
+    show_default=True,
+)
+def account_deletion(deletion_code: ValidationCode, server_url: str, output_dir: Path):
     message = generate_email_deletion_email(
         from_addr=PARSEC_EMAIL_ADDR,
         to_addr=ALICE_EMAIL_ADDR,
-        deletion_url=deletion_url,
+        deletion_code=deletion_code,
         server_url=server_url,
     )
 

@@ -6,24 +6,16 @@
 {% block title %}To confirm your Parsec Account deletion:{% endblock %}
 
 {% block main_content %}
-{% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link %}
+{% from "email/macros.html.j2" import gen_contents, render_code %}
 {{
   gen_contents([
     namespace(
-      title="Download Parsec application",
-      text="Make sure to download and install Parsec:",
+      title="Use deletion code",
+      text="To confirm the deletion of your account, use the following code:",
       extras=[
-        render_link("https://parsec.cloud/en/start-parsec", "Download Parsec", extra_class="button-secondary"),
-        render_fallback_link("https://parsec.cloud/en/start-parsec")
+        render_code(deletion_code)
       ]
     ),
-    namespace(
-      text="Once installed, click on the link below to delete your Parsec Account.",
-      extras=[
-        render_link(deletion_url, "Delete my Parsec Account"),
-        render_fallback_link(deletion_url)
-      ]
-    )
   ])
 }}
 {% endblock %}

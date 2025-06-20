@@ -496,14 +496,12 @@ class BaseAuthenticatedAccountRpcClient:
     async def _do_request(self, req: bytes, family: str) -> bytes:
         raise NotImplementedError
 
-    async def account_delete_send_validation_token(
+    async def account_delete_send_code(
         self,
-    ) -> authenticated_account_cmds.latest.account_delete_send_validation_token.Rep:
-        req = authenticated_account_cmds.latest.account_delete_send_validation_token.Req()
+    ) -> authenticated_account_cmds.latest.account_delete_send_code.Rep:
+        req = authenticated_account_cmds.latest.account_delete_send_code.Req()
         raw_rep = await self._do_request(req.dump(), "authenticated_account")
-        return authenticated_account_cmds.latest.account_delete_send_validation_token.Rep.load(
-            raw_rep
-        )
+        return authenticated_account_cmds.latest.account_delete_send_code.Rep.load(raw_rep)
 
     async def ping(self, ping: str) -> authenticated_account_cmds.latest.ping.Rep:
         req = authenticated_account_cmds.latest.ping.Req(ping=ping)

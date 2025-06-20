@@ -2,7 +2,7 @@
 
 import pytest
 
-from parsec._parsec import AccountDeletionToken, DateTime, EmailAddress, authenticated_account_cmds
+from parsec._parsec import DateTime, EmailAddress, ValidationCode, authenticated_account_cmds
 from parsec.backend import Backend
 from parsec.components.account import AccountCreateAccountDeletionTokenBadOutcome
 from parsec.components.email import SendEmailBadOutcome
@@ -11,33 +11,33 @@ from tests.common.data import HttpCommonErrorsTester
 from tests.common.letter_box import LetterBox
 
 
-async def test_authenticated_account_account_delete_send_validation_token_ok(
+async def test_authenticated_account_account_delete_send_code_ok(
     xfail_if_postgresql: None,
     backend: Backend,
     alice_account: AuthenticatedAccountRpcClient,
     email_account_letterbox: LetterBox,
 ) -> None:
-    rep = await alice_account.account_delete_send_validation_token()
-    assert rep == authenticated_account_cmds.latest.account_delete_send_validation_token.RepOk()
+    rep = await alice_account.account_delete_send_code()
+    assert rep == authenticated_account_cmds.latest.account_delete_send_code.RepOk()
 
     assert email_account_letterbox.count() == 1
     (sent_to, _) = await email_account_letterbox.get_next()
     assert sent_to == alice_account.account_email
 
     # 2nd deletion request too soon for a new email
-    rep = await alice_account.account_delete_send_validation_token()
-    assert rep == authenticated_account_cmds.latest.account_delete_send_validation_token.RepOk()
+    rep = await alice_account.account_delete_send_code()
+    assert rep == authenticated_account_cmds.latest.account_delete_send_code.RepOk()
 
     assert email_account_letterbox.count() == 1
 
 
-async def test_authenticated_account_account_delete_send_validation_token_ok_edge_cases(
+async def test_authenticated_account_account_delete_send_code_ok_edge_cases(
     xfail_if_postgresql: None, backend: Backend, alice_account: AuthenticatedAccountRpcClient
 ) -> None:
     # 1st account deletion request
     now = DateTime.now()
     rep1 = await backend.account.create_email_deletion_token(alice_account.account_email, now)
-    assert isinstance(rep1, AccountDeletionToken)
+    assert isinstance(rep1, ValidationCode)
 
     # 2nd account deletion request send too soon for a new email + token
     rep2 = await backend.account.create_email_deletion_token(
@@ -49,13 +49,13 @@ async def test_authenticated_account_account_delete_send_validation_token_ok_edg
         alice_account.account_email,
         now.add(seconds=backend.config.account_confirmation_email_resend_delay + 1),
     )
-    assert isinstance(rep3, AccountDeletionToken)
+    assert isinstance(rep3, ValidationCode)
 
     # A new token should have been generated
     assert rep1 != rep3
 
 
-async def test_authenticated_account_account_delete_send_validation_token_email_recipient_refused(
+async def test_authenticated_account_account_delete_send_code_email_recipient_refused(
     xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     monkeypatch: pytest.MonkeyPatch,
@@ -65,10 +65,9 @@ async def test_authenticated_account_account_delete_send_validation_token_email_
 
     monkeypatch.setattr("parsec.components.account.send_email", _mocked_send_email)
     alice_account.account_email = EmailAddress("foo@invalid.com")
-    rep = await alice_account.account_delete_send_validation_token()
+    rep = await alice_account.account_delete_send_code()
     assert (
-        rep
-        == authenticated_account_cmds.latest.account_delete_send_validation_token.RepEmailRecipientRefused()
+        rep == authenticated_account_cmds.latest.account_delete_send_code.RepEmailRecipientRefused()
     )
 
 
@@ -79,7 +78,7 @@ async def test_authenticated_account_account_delete_send_validation_token_email_
         SendEmailBadOutcome.SERVER_UNAVAILABLE,
     ),
 )
-async def test_authenticated_account_account_delete_send_validation_token_email_server_unavailable(
+async def test_authenticated_account_account_delete_send_code_email_server_unavailable(
     xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     bad_outcome: SendEmailBadOutcome,
@@ -90,19 +89,19 @@ async def test_authenticated_account_account_delete_send_validation_token_email_
 
     monkeypatch.setattr("parsec.components.account.send_email", _mocked_send_email)
     alice_account.account_email = EmailAddress("foo@invalid.com")
-    rep = await alice_account.account_delete_send_validation_token()
+    rep = await alice_account.account_delete_send_code()
     assert (
         rep
-        == authenticated_account_cmds.latest.account_delete_send_validation_token.RepEmailServerUnavailable()
+        == authenticated_account_cmds.latest.account_delete_send_code.RepEmailServerUnavailable()
     )
 
 
-async def test_authenticated_account_account_delete_send_validation_token_http_common_errors(
+async def test_authenticated_account_account_delete_send_code_http_common_errors(
     xfail_if_postgresql: None,
     alice_account: AuthenticatedAccountRpcClient,
     authenticated_account_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:
     async def do():
-        await alice_account.account_delete_send_validation_token()
+        await alice_account.account_delete_send_code()
 
     await authenticated_account_http_common_errors_tester(do)

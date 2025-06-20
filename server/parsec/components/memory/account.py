@@ -4,12 +4,12 @@ from typing import Literal, override
 
 from parsec._parsec import (
     AccountAuthMethodID,
-    AccountDeletionToken,
     DateTime,
     EmailAddress,
     EmailValidationToken,
     HashDigest,
     SecretKey,
+    ValidationCode,
 )
 from parsec.components.account import (
     AccountCreateAccountBadOutcome,
@@ -250,13 +250,13 @@ class MemoryAccountComponent(BaseAccountComponent):
     @override
     async def create_email_deletion_token(
         self, email: EmailAddress, now: DateTime
-    ) -> AccountDeletionToken | AccountCreateAccountDeletionTokenBadOutcome:
+    ) -> ValidationCode | AccountCreateAccountDeletionTokenBadOutcome:
         try:
             (_, last_email_datetime) = self._data.accounts_deletion_requested[email]
             if not self.should_resend_token(now, last_email_datetime):
                 return AccountCreateAccountDeletionTokenBadOutcome.TOO_SOON_AFTER_PREVIOUS_DEMAND
         except KeyError:
             pass
-        token = AccountDeletionToken.new()
-        self._data.accounts_deletion_requested[email] = (token, now)
-        return token
+        code = ValidationCode.generate()
+        self._data.accounts_deletion_requested[email] = (code, now)
+        return code
