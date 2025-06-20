@@ -11,11 +11,12 @@ use libparsec_types::prelude::*;
 // all other data used for authentication and end-2-end encryption:
 // - ID & MAC key: used for server authentication.
 // - Secret key: used for end-2-end encryption.
-pub const AUTH_METHOD_ID_DERIVATION_UUID: uuid::Uuid =
+const AUTH_METHOD_ID_DERIVATION_UUID: uuid::Uuid =
     uuid::uuid!("00000000-0000-0000-0000-000000000000");
-pub const AUTH_METHOD_MAC_KEY_DERIVATION_UUID: uuid::Uuid =
+const AUTH_METHOD_MAC_KEY_DERIVATION_UUID: uuid::Uuid =
     uuid::uuid!("11111111-1111-1111-1111-111111111111");
-pub const AUTH_METHOD_SECRET_KEY_DERIVATION_UUID: uuid::Uuid =
+#[expect(unused)] // TODO: will be used when `auth_method_secret_key` is needed
+const AUTH_METHOD_SECRET_KEY_DERIVATION_UUID: uuid::Uuid =
     uuid::uuid!("22222222-2222-2222-2222-222222222222");
 
 #[derive(Debug)]
