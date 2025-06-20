@@ -1,119 +1,61 @@
-<html>
+{% extends "email/base.html.j2" %}
+{% block document_title %}Parsec Invitation{% endblock %}
 
-<head>
-  <meta name="viewport" content="width=device-width" />
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <link rel="noopener" href="https://fonts.googleapis.com/css2?family=Albert+Sans" rel="stylesheet">
-  <title>Parsec Invitation</title>
-  <style>{%- include "email/base.css" without context -%}</style>
-</head>
+{% block preheader %}Follow these steps to join your new workspace on Parsec.{% endblock %}
 
-<body>
-  <!-- These lines are used to isolate the preheader and avoid a preview of the mail's content -->
-  <span class="preheader" style="color: transparent; display: none; height: 0; max-height: 0; max-width: 0; mso-hide: all; visibility: hidden; width: 0;">
-    Follow these steps to join your new workspace on Parsec.
-  </span>
+{% block title %}
+{% if is_user_invitation %}
+Invitation to join the organization {{ organization_id}}
+{% endif %}
+{% endblock %}
 
-  <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="main-table" style="background-color: #fff; width: 100%;">
-    <tr>
-      <td align="center">
-        <table cellspacing="0" cellpadding="0" width="600" class="card-table">
-          <!-- Header Section -->
-          <tr class="header-section">
-            <td>
-              <table cellspacing="0" cellpadding="0" width="100%">
-                <tr class="logo">
-                  <td>
-                    <img src="{{ server_url }}/static/logo-parsec-row.png" alt="Parsec Logo" title="Parsec" width="128" style="height: 21.9px;"/>
-                  </td>
-                </tr>
-                <tr class="title">
-                  <td>
-                    <h1>
-                      {% if is_user_invitation %}
-                      Invitation to join the organization {{ organization_id}}
-                      {% endif %}
-                    </h1>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <p style="line-height: 28.9px; color: #51517B; font-size: 14px;">{% if is_user_invitation %}
-                    You have received an invitation from <b>{{ greeter }}</b> to join the <b>{{ organization_id}}</b> organization on Parsec.
-                    {% elif is_device_invitation %}
-                    You have received an invitation to add a new device to the <b>{{ organization_id }}</b>
-                    organization on Parsec.
-                    {% elif is_shamir_recovery_invitation %}
-                    You have received an invitation to start a recovery procedure on the <b>{{ organization_id }}</b>
-                    organization on Parsec.
-                    {% endif %}
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+{% block description %}
+<p style="line-height: 28.9px; color: #51517B; font-size: 14px;">
+{% if is_user_invitation %}
+You have received an invitation from <b>{{ greeter }}</b> to join the <b>{{ organization_id }}</b> organization on Parsec.
+{% elif is_device_invitation %}
+You have received an invitation to add a new device to the <b>{{ organization_id }}</b>
+organization on Parsec.
+{% elif is_shamir_recovery_invitation %}
+You have received an invitation to start a recovery procedure on the <b>{{ organization_id }}</b>
+organization on Parsec.
+{% endif %}
+</p>
+{% endblock %}
 
-          <!-- Main Body Content Placeholder -->
-          <tr class="body-section">
-            <td>
-              <table cellspacing="0" cellpadding="0" width="100%">
-                <tr>
-                  <td class="content-wrapper">
-                    <table
-                      cellspacing="0"
-                      cellpadding="0"
-                      align="center"
-                      width="100%"
-                      style="border-collapse: collapse;"
-                    >
-                      {% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link, render_note %}
-                      {{
-                        gen_contents([
-                          namespace(
-                            title="Download Parsec application",
-                            text="Make sure to download and install Parsec:",
-                            extras=[
-                              render_link("https://parsec.cloud/en/start-parsec", "Download Parsec", extra_class="button-secondary"),
-                              render_fallback_link("https://parsec.cloud/en/start-parsec")
-                            ]
-                          ),
-                          namespace(
-                            title="Join the organization",
-                            text= ("To join the organization please accept the invitation and follow the steps with <b>%s</b>." | format(greeter)) if greeter else "Start the invitation process from a device already part of the organization, then follow the steps on Parsec.",
-                            extras=[
-                              render_link(invitation_url, "Accept invitation"),
-                              render_fallback_link(invitation_url)
-                            ]
-                          )
-                        ])
-                      }}
+{% block main_content %}
+{% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link, render_note %}
+{{
+  gen_contents([
+    namespace(
+      title="Download Parsec application",
+      text="Make sure to download and install Parsec:",
+      extras=[
+        render_link("https://parsec.cloud/en/start-parsec", "Download Parsec", extra_class="button-secondary"),
+        render_fallback_link("https://parsec.cloud/en/start-parsec")
+      ]
+    ),
+    namespace(
+      title="Join the organization",
+      text= ("To join the organization please accept the invitation and follow the steps with <b>%s</b>." | format(greeter)) if greeter else "Start the invitation process from a device already part of the organization, then follow the steps on Parsec.",
+      extras=[
+        render_link(invitation_url, "Accept invitation"),
+        render_fallback_link(invitation_url)
+      ]
+    )
+  ])
+}}
 
-                      {% call render_note() %}
-                          <p style="font-size: 14px; color: #51517B; padding-bottom: 8px;">
-                            <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
-                            origin page using window.opener unless link type noopener or noreferrer is specified. -->
-                            For more information on how to join an organization, please consult the
-                            <a style="color: #0058CC;" href="https://docs.parsec.cloud" rel="noopener noreferrer" target="_blank">Parsec documentation</a>.
-                          </p>
-                          <p>
-                            You can also consult the user guide:
-                            <a style="color: #0058CC;" href="https://docs.parsec.cloud/en/stable/userguide/join_organization.html" rel="noopener noreferrer" target="_blank">Join an organization</a>.
-                          </p>
-                      {% endcall %}
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Footer Section -->
-          {%- include "email/footer.html.j2" -%}
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-
-</html>
+{% call render_note() %}
+<p style="font-size: 14px; color: #51517B; padding-bottom: 8px;">
+  <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+  origin page using window.opener unless link type noopener or noreferrer is specified. -->
+  For more information on how to join an organization, please consult the
+  <a style="color: #0058CC;" href="https://docs.parsec.cloud" rel="noopener noreferrer" target="_blank">Parsec documentation</a>.
+</p>
+<p>
+  You can also consult the user guide:
+  <a style="color: #0058CC;" href="https://docs.parsec.cloud/en/stable/userguide/join_organization.html" rel="noopener noreferrer" target="_blank">Join an organization</a>.
+</p>
+{% endcall %}
+{% endblock %}
