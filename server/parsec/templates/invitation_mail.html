@@ -67,106 +67,40 @@
                       width="100%"
                       style="border-collapse: collapse;"
                     >
-                      <tr class="content-section first-section">
-                        <td class="info-frame">
-                          <table class="section-content" role="presentation" border="0" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td>
-                                <table>
-                                  <tr class="content-number">
-                                    <td class="content-number-circle">
-                                      <p class="content-number-item">1</p>
-                                    </td>
-                                  </tr>
-                                  <tr style="float: left; display: block;">
-                                    <td>
-                                      <p class="content-title">Download Parsec application</p>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding-top: 16px;">
-                                      <p class="content-section-text">
-                                        If you haven't yet installed, please download it from the following link:</p>
-                                      </p>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding-top: 16px;">
-                                      <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
-                                        origin page using window.opener unless link type noopener or noreferrer is specified. -->
-                                      <a class="button button-secondary" href="https://parsec.cloud/en/start-parsec" rel="noopener noreferrer" target="_blank" class="button">Download Parsec</a>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding-top: 16px;">
-                                      <a href="https://parsec.cloud/en/start-parsec" style="font-size: 13px; color: #51517B;" rel="noopener noreferrer" target="_blank">https://parsec.cloud/en/start-parsec</a>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
+                      {% from "email/macros.html.j2" import gen_contents, render_link, render_fallback_link, render_note %}
+                      {{
+                        gen_contents([
+                          namespace(
+                            title="Download Parsec application",
+                            text="Make sure to download and install Parsec:",
+                            extras=[
+                              render_link("https://parsec.cloud/en/start-parsec", "Download Parsec", extra_class="button-secondary"),
+                              render_fallback_link("https://parsec.cloud/en/start-parsec")
+                            ]
+                          ),
+                          namespace(
+                            title="Join the organization",
+                            text= ("To join the organization please accept the invitation and follow the steps with <b>%s</b>." | format(greeter)) if greeter else "Start the invitation process from a device already part of the organization, then follow the steps on Parsec.",
+                            extras=[
+                              render_link(invitation_url, "Accept invitation"),
+                              render_fallback_link(invitation_url)
+                            ]
+                          )
+                        ])
+                      }}
 
-                      <tr class="content-section second-section">
-                        <td class="info-frame">
-                          <table class="section-content" role="presentation" border="0" cellpadding="0" cellspacing="0">
-                            <tr>
-                              <td>
-                                <table>
-                                  <tr class="content-number">
-                                    <td class="content-number-circle">
-                                      <p class="content-number-item">2</p>
-                                    </td>
-                                  </tr>
-                                  <tr style="float: left; display: block;">
-                                    <td>
-                                      <p class="content-title">Join the organization</p>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding-top: 16px;">
-                                      <p class="content-section-text">
-                                        {% if greeter %}
-                                        To join the organization please accept the invitation and follow the steps with <b>{{ greeter }}</b>.
-                                        {% else %}
-                                          Start the invitation process from a device already part of the organization, then follow the steps on Parsec.
-                                        {% endif %}
-                                      </p>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding-top: 16px;">
-                                      <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
-                                        origin page using window.opener unless link type noopener or noreferrer is specified. -->
-                                      <a class="button" href="{{ invitation_url }}" rel="noopener noreferrer" target="_blank" class="button">Accept invitation</a>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style="padding-top: 16px;">
-                                      <p style="font-size: 14px; color: #51517B;">If the button does not work, please click on the following link:</p>
-                                      <a href="{{ invitation_url }}" style="font-size: 13px; color: #51517B;" rel="noopener noreferrer" target="_blank">{{ invitation_url }}</a>
-                                    </td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-
-                      <tr class="content-footer">
-                        <td class="note">
+                      {% call render_note() %}
                           <p style="font-size: 14px; color: #51517B; padding-bottom: 8px;">
                             <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
                             origin page using window.opener unless link type noopener or noreferrer is specified. -->
-                            For more information on how to join an organization, please consult the <a style="color: #0058CC;" href="https://docs.parsec.cloud" rel="noopener noreferrer" target="_blank">Parsec documentation</a>.
+                            For more information on how to join an organization, please consult the
+                            <a style="color: #0058CC;" href="https://docs.parsec.cloud" rel="noopener noreferrer" target="_blank">Parsec documentation</a>.
                           </p>
-                          <p>You can also consult the user guide: <a style="color: #0058CC;" href="https://docs.parsec.cloud/en/stable/userguide/join_organization.html" rel="noopener noreferrer" target="_blank">Join an organization</a>.</p>
-                        </td>
-                      </tr>
-
+                          <p>
+                            You can also consult the user guide:
+                            <a style="color: #0058CC;" href="https://docs.parsec.cloud/en/stable/userguide/join_organization.html" rel="noopener noreferrer" target="_blank">Join an organization</a>.
+                          </p>
+                      {% endcall %}
                     </table>
                   </td>
                 </tr>
