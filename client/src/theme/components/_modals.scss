@@ -572,8 +572,7 @@
   }
 }
 
-.question-modal,
-.information-modal {
+.question-modal {
   padding: 2rem;
 
   &::part(content) {
@@ -590,6 +589,20 @@
 
     .button {
       margin: 0;
+    }
+  }
+}
+
+.information-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+    width: var(--parsec-modal-width-sm);
+  }
+
+  @include ms.responsive-breakpoint('xs') {
+    &::part(content) {
+      max-width: 100%;
+      width: 100%;
     }
   }
 }

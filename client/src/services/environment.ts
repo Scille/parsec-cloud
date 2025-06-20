@@ -132,6 +132,23 @@ async function openUrl(url: string): Promise<void> {
   window.open(url, '_blank');
 }
 
+type Pages =
+  | 'troubleshooting'
+  | 'introduction'
+  | 'installation'
+  | 'new_organization'
+  | 'first_steps'
+  | 'manage_organization'
+  | 'join_organization'
+  | 'parsec_workspaces'
+  | 'manage_files'
+  | 'manage_devices'
+  | 'security';
+
+async function openDocumentationUserGuideLink(page: Pages): Promise<void> {
+  await openUrl(I18n.translate({ key: 'MenuPage.documentationGuideLink', data: { version: APP_VERSION_PREFIX, page: page } }));
+}
+
 async function openDocumentationLink(): Promise<void> {
   await openUrl(I18n.translate({ key: 'MenuPage.documentationLink', data: { version: APP_VERSION_PREFIX } }));
 }
@@ -182,6 +199,7 @@ export const Env = {
   isAccountAutoLoginEnabled,
   Links: {
     openDocumentationLink,
+    openDocumentationUserGuideLink,
     openContactLink,
     openLicenseLink,
     openChangelogLink,

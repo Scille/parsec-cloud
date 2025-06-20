@@ -149,8 +149,9 @@ async function openPath(
         await modal.dismiss();
         await informationManager.present(
           new Information({
-            message: 'FoldersPage.open.unhandledFileType',
-            level: InformationLevel.Error,
+            title: isWeb() ? 'FoldersPage.open.noVisibleOnWebTitle' : undefined,
+            message: isWeb() ? 'FoldersPage.open.noVisibleOnWeb' : 'FoldersPage.open.unhandledFileType',
+            level: isWeb() ? InformationLevel.Info : InformationLevel.Error,
           }),
           PresentationMode.Modal,
         );

@@ -228,6 +228,7 @@ onUnmounted(() => {
     }
 
     @include ms.responsive-breakpoint('sm') {
+      width: 100%;
       gap: 1.5rem;
       justify-content: center;
     }
