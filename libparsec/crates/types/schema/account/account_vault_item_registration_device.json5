@@ -1,6 +1,6 @@
 {
     "label": "AccountVaultItemRegistrationDevice",
-    "type": "account_vault_item_auto_enrollment_device",
+    "type": "account_vault_item_registration_device",
     // Introduced in Parsec 3.5.0
     "introduced_in_revision": 350,
     "other_fields": [

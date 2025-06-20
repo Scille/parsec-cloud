@@ -89,23 +89,23 @@ fn serde_account_vault_item_web_local_device_key() {
 }
 
 #[rstest]
-fn serde_account_vault_item_auto_enrollment_device() {
+fn serde_account_vault_item_registration_device() {
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    // Generated from Parsec 3.4.0-a.7+dev
+    // Generated from Parsec 3.4.1-a.0+dev
     // Content:
-    //   type: 'account_vault_item_auto_enrollment_device'
+    //   type: 'account_vault_item_registration_device'
     //   organization_id: 'CoolOrg'
     //   user_id: ext(2, 0xac42ef607148434a94cc502fd5e61bad)
     //   encrypted_data: 0x3c656e637279707465645f646174613e
     let raw: &[u8] = hex!(
-        "116aa8ab4985b55bb699e9fe2f644e7679a1f2be36448b400146b31355028c326900f8"
-        "b1ecc83b2c5d13dad3d4afe2dd0529d9050dec75c9c3da9d2f676e4034b4714d3f719b"
-        "644c75f9ccb32e2d573bedc163bbbcdc60ae0d1045ee21f77f01823bc8c41783229828"
-        "badab1df9538849df3b8489bfbbe2d95ae80a7536015b4ec7be6799517201a3fe578cf"
-        "7c2874b2896aa290dfd1918c83f4a5dca4bdaa7c7bbb58b4962aa223688a25fe"
+        "f9e614a821a5728f55552bd27e3137926dafe0cbef13b07fb45c7ccd71eaa43c11f569"
+        "247901e1d38e080f6b795e451f7734f03784578cf56a62898dcaed5a20fa57481393bb"
+        "7a6d52ec672bc3099a82a00e8e238a2ce008925b287265e65269c2c3cb64447891c54c"
+        "7fea41a44a78593e7c6fa230f7f3b5d5453ecf0e4bf46c4cc0cfd9fdc51c1af777ed3c"
+        "d5b7f13a288a8389659f9b174c4887ecf3160b46a87d587b82cd240a1d2c"
     )
     .as_ref();
 

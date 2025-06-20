@@ -166,7 +166,7 @@ pub struct AccountVaultItemRegistrationDevice {
     encrypted_data: Bytes,
 }
 
-parsec_data!("schema/account/account_vault_item_auto_enrollment_device.json5");
+parsec_data!("schema/account/account_vault_item_registration_device.json5");
 
 impl_transparent_data_format_conversion!(
     AccountVaultItemRegistrationDevice,
